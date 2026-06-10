@@ -1,19 +1,7 @@
 import { api } from '@/lib/axios';
 
-export interface UserProfile {
-  id: string;
-  email: string;
-  fullName: string;
-  phoneNumber?: string;
-  bio?: string;
-  avatarUrl?: string;
-  dateOfBirth?: string;
-  gender?: string;
-  address?: string;
-  role: string;
-  isActive: boolean;
-  createdAt: string;
-}
+import { UserProfile } from '@/types/user';
+export type { UserProfile };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const mapUserProfile = (data: any): UserProfile => {
@@ -30,14 +18,14 @@ const mapUserProfile = (data: any): UserProfile => {
 };
 
 export const usersApi = {
-  getUsers: (params?: Record<string, unknown>) => api.get('/users', { params }).then(res => res.data.data),
-  searchUsers: (q: string) => api.get(`/users/search/public?q=${encodeURIComponent(q)}`).then(res => res.data.data),
+  getUsers: (params?: Record<string, unknown>) => api.get('/users', { params }).then(res => res.data),
+  searchUsers: (q: string) => api.get(`/users/search/public?q=${encodeURIComponent(q)}`).then(res => res.data),
   getProfile: () => api.get('/users/profile').then(res => {
-    const mapped = mapUserProfile(res.data.data);
+    const mapped = mapUserProfile(res.data);
     return mapped;
   }),
-  getUserById: (id: string) => api.get(`/users/${id}`).then(res => res.data.data),
-  updateProfile: <T>(data: T) => api.patch('/users/profile', data).then(res => mapUserProfile(res.data.data)),
+  getUserById: (id: string) => api.get(`/users/${id}`).then(res => res.data),
+  updateProfile: <T>(data: T) => api.patch('/users/profile', data).then(res => mapUserProfile(res.data)),
   uploadAvatar: (file: File) => {
     const formData = new FormData();
     formData.append('file', file);
@@ -45,8 +33,8 @@ export const usersApi = {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
-    }).then(res => mapUserProfile(res.data.data));
+    }).then(res => mapUserProfile(res.data));
   },
-  changePassword: <T>(data: T) => api.patch('/users/change-password', data).then(res => res.data.data),
-  deleteUser: (id: string) => api.delete(`/users/${id}`).then(res => res.data.data),
+  changePassword: <T>(data: T) => api.patch('/users/change-password', data).then(res => res.data),
+  deleteUser: (id: string) => api.delete(`/users/${id}`).then(res => res.data),
 };

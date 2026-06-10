@@ -1,5 +1,4 @@
 import { io, Socket } from 'socket.io-client';
-import { useAuthStore } from './zustand/authStore';
 
 const getSocketUrl = () => {
   if (process.env.NEXT_PUBLIC_SOCKET_URL) return process.env.NEXT_PUBLIC_SOCKET_URL;
@@ -15,6 +14,7 @@ class SocketClient {
   private static instance: SocketClient;
   private chatSocket: Socket | null = null;
   private matchSocket: Socket | null = null;
+  private notificationSocket: Socket | null = null;
 
   private constructor() {}
 
@@ -42,8 +42,9 @@ class SocketClient {
 
   public getMatchSocket(): Socket {
     if (!this.matchSocket) {
-      this.matchSocket = io(`${SOCKET_URL}/matches`, {
+      this.matchSocket = io(`${SOCKET_URL}/live`, {
         autoConnect: false,
+        withCredentials: true,
         transports: ['websocket', 'polling'],
       });
 
@@ -54,14 +55,31 @@ class SocketClient {
     return this.matchSocket;
   }
 
+  public getNotificationSocket(): Socket {
+    if (!this.notificationSocket) {
+      this.notificationSocket = io(`${SOCKET_URL}/notifications`, {
+        autoConnect: false,
+        withCredentials: true,
+        transports: ['websocket', 'polling'],
+      });
+
+      this.notificationSocket.on('connect_error', (err) => {
+        console.error('Notification Socket connect_error:', err);
+      });
+    }
+    return this.notificationSocket;
+  }
+
   public connectAll() {
     this.getChatSocket().connect();
     this.getMatchSocket().connect();
+    this.getNotificationSocket().connect();
   }
 
   public disconnectAll() {
     if (this.chatSocket) this.chatSocket.disconnect();
     if (this.matchSocket) this.matchSocket.disconnect();
+    if (this.notificationSocket) this.notificationSocket.disconnect();
   }
 }
 

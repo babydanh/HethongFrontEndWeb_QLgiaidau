@@ -4,11 +4,13 @@ import Link from 'next/link';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { api } from '@/lib/axios';
 import { getButtonClasses } from '@/components/ui/Button';
-import { Plus, Bell, Mail, LogOut, LayoutDashboard, User } from 'lucide-react';
+import { Bell, Mail, LogOut, LayoutDashboard, User, Trophy } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/utils/cn';
 import { useState, useEffect } from 'react';
 import { usersApi } from '@/features/users/api';
+import { notificationsApi, Notification } from '@/features/notifications/api';
+import { socketClient } from '@/lib/socket';
 
 export function Header() {
   const { isAuthenticated, user, logout, setUser } = useAuthStore();
@@ -16,6 +18,45 @@ export function Header() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+
+  useEffect(() => {
+    if (!isAuthenticated || !user) return;
+
+    notificationsApi.getMyNotifications()
+      .then(data => {
+        setNotifications(data || []);
+      })
+      .catch(err => {
+        console.error('Failed to fetch notifications:', err);
+      });
+
+    const socket = socketClient.getNotificationSocket();
+    if (!socket.connected) {
+      socket.connect();
+    }
+
+    const handleConnect = () => {
+      socket.emit('subscribe', user.id);
+    };
+
+    if (socket.connected) {
+      handleConnect();
+    } else {
+      socket.on('connect', handleConnect);
+    }
+
+    socket.on('notification:new', (notification: Notification) => {
+      setNotifications(prev => [notification, ...prev]);
+    });
+
+    return () => {
+      socket.off('connect', handleConnect);
+      socket.off('notification:new');
+    };
+  }, [isAuthenticated, user]);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsClient(true), 0);
@@ -39,13 +80,13 @@ export function Header() {
               id: profile.id,
               email: profile.email,
               fullName: profile.fullName,
-              avatarUrl: profile.avatarUrl,
+              avatarUrl: profile.avatarUrl || undefined,
               roles: profile.role ? [profile.role] : [],
-              phoneNumber: profile.phoneNumber,
-              dateOfBirth: profile.dateOfBirth,
-              gender: profile.gender,
-              address: profile.address,
-              bio: profile.bio
+              phoneNumber: profile.phoneNumber || undefined,
+              dateOfBirth: profile.dateOfBirth || undefined,
+              gender: profile.gender || undefined,
+              address: profile.address || undefined,
+              bio: profile.bio || undefined
             });
           }
         })
@@ -101,14 +142,71 @@ export function Header() {
 
         {/* Right: Actions & Auth */}
         <div className="flex items-center gap-4">
-          <Link href="/organizer/tournaments/create" className={getButtonClasses("default", "default", "hidden md:flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-all active:scale-95")}>
-            <Plus className="w-5 h-5" />
-            Tạo giải đấu
-          </Link>
-          
-          <button className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-all active:scale-95">
-            <Bell className="w-6 h-6" />
-          </button>
+
+
+          <div className="relative">
+            <button 
+              onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+              className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-all active:scale-95 relative"
+            >
+              <Bell className="w-6 h-6" />
+              {notifications.filter(n => !n.isRead).length > 0 && (
+                <span className="absolute top-1 right-1 w-4 h-4 bg-rose-500 text-[9px] font-bold text-white rounded-full flex items-center justify-center animate-pulse">
+                  {notifications.filter(n => !n.isRead).length}
+                </span>
+              )}
+            </button>
+
+            {isNotificationOpen && (
+              <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 z-50">
+                <div className="px-4 py-2 border-b border-slate-100 flex justify-between items-center mb-1">
+                  <span className="text-sm font-bold text-slate-900">Thông báo</span>
+                  {notifications.filter(n => !n.isRead).length > 0 && (
+                    <span className="text-[10px] bg-rose-50 text-rose-600 px-2 py-0.5 rounded-full font-bold">
+                      {notifications.filter(n => !n.isRead).length} mới
+                    </span>
+                  )}
+                </div>
+                <div className="max-h-64 overflow-y-auto no-scrollbar">
+                  {notifications.length > 0 ? (
+                    notifications.map(n => (
+                      <div 
+                        key={n.id}
+                        onClick={async () => {
+                          if (!n.isRead) {
+                            try {
+                              await notificationsApi.markAsRead(n.id);
+                              setNotifications(prev => prev.map(item => item.id === n.id ? { ...item, isRead: true } : item));
+                            } catch (e) {
+                              console.error(e);
+                            }
+                          }
+                          setIsNotificationOpen(false);
+                          if (n.redirectUrl) {
+                            window.location.href = n.redirectUrl;
+                          }
+                        }}
+                        className={cn(
+                          "px-4 py-3 hover:bg-slate-50 transition-colors cursor-pointer border-b border-slate-100 flex flex-col gap-0.5 text-left",
+                          !n.isRead ? "bg-blue-50/45" : ""
+                        )}
+                      >
+                        <span className={cn("text-xs font-bold", !n.isRead ? "text-slate-900" : "text-slate-700")}>{n.title}</span>
+                        <span className="text-xs text-slate-500">{n.content}</span>
+                        <span className="text-[9px] text-slate-400 font-medium mt-1">
+                          {new Date(n.createdAt).toLocaleDateString('vi-VN')} {new Date(n.createdAt).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})}
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="p-8 text-center text-xs text-slate-400 font-semibold">
+                      Chưa có thông báo nào
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
           
           <button className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-all active:scale-95">
             <Mail className="w-6 h-6" />
@@ -145,6 +243,12 @@ export function Header() {
                       </div>
                     </Link>
                   )}
+                  <Link href="/organizer/tournaments" onClick={() => setIsDropdownOpen(false)}>
+                    <div className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
+                      <Trophy className="w-4 h-4 text-slate-400" />
+                      Giải đấu của tôi
+                    </div>
+                  </Link>
                   <Link href="/profile" onClick={() => setIsDropdownOpen(false)}>
                     <div className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
                       <User className="w-4 h-4 text-slate-400" />

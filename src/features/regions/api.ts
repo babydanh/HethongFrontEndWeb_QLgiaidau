@@ -1,27 +1,17 @@
 import { api } from '@/lib/axios';
 
-export interface Region {
-  code: string;
-  name: string;
-  fullName: string;
-  codeName?: string;
-  provinceCode?: string;
-  districtCode?: string;
-}
+import { Region } from '@/types/region';
+import { ApiResponse } from '@/types/api';
+
+export type { Region };
 
 export const regionsApi = {
-  getProvinces: async (search?: string): Promise<Region[]> => {
-    const res = await api.get('/regions/provinces', { params: { search } });
-    return res.data.data;
-  },
+  getProvinces: (search?: string) => 
+    api.get<ApiResponse<Region[]>>('/regions/provinces', { params: { search } }).then(res => res.data),
 
-  getDistricts: async (provinceCode: string, search?: string): Promise<Region[]> => {
-    const res = await api.get('/regions/districts', { params: { provinceCode, search } });
-    return res.data.data;
-  },
+  getDistricts: (provinceCode: string, search?: string) => 
+    api.get<ApiResponse<Region[]>>('/regions/districts', { params: { provinceCode, search } }).then(res => res.data),
 
-  getWards: async (districtCode: string, search?: string): Promise<Region[]> => {
-    const res = await api.get('/regions/wards', { params: { districtCode, search } });
-    return res.data.data;
-  },
+  getWards: (districtCode: string, search?: string) => 
+    api.get<ApiResponse<Region[]>>('/regions/wards', { params: { districtCode, search } }).then(res => res.data),
 };

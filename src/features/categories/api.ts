@@ -1,19 +1,9 @@
 import { api } from '@/lib/axios';
+import { Category } from '@/types/category';
+import { ApiResponse } from '@/types/api';
 
-export interface Category {
-  id: string;
-  name: string;
-  slug: string;
-  description: string | null;
-  categoryConfig: Record<string, unknown>;
-}
-
-export interface ApiResponse<T> {
-  statusCode: number;
-  message: string;
-  data: T;
-}
+export type { Category };
 
 export const categoriesApi = {
-  getCategories: () => api.get<ApiResponse<Category[]>>('/categories').then(res => res.data),
+  getCategories: () => api.get<ApiResponse<Category[]>>('/categories'),
 };

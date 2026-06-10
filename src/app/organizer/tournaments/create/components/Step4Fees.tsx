@@ -11,6 +11,7 @@ import { ChevronLeft, CheckCircle, Info } from 'lucide-react';
 import { tournamentsApi } from '@/features/tournaments/api';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
+import { getErrorMessage } from '@/utils/error';
 
 const step4Schema = z.object({
   entryFee: z.number().min(0, 'Lệ phí không được là số âm'),
@@ -33,11 +34,42 @@ export default function Step4Fees() {
   const onSubmit = async (data: Step4Values) => {
     try {
       setIsSubmitting(true);
-      // Combine all data
-      const finalData = {
-        ...formData,
+      
+      // Transform and Clean data to match backend CreateTournamentDto
+      const { format, ...rest } = formData;
+      
+      const finalData: any = {
+        ...rest,
         entryFee: data.entryFee,
+        tournamentConfig: {
+          bracketType: format,
+          maxTeams: rest.maxParticipants || 16,
+        },
       };
+
+      // UUID Validation Regex
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[4][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      const simpleUuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+      // Clean venueId: If not a valid UUID, remove it
+      if (finalData.venueId && !simpleUuidRegex.test(finalData.venueId)) {
+        delete finalData.venueId;
+      }
+      if (finalData.venueId === '') {
+        delete finalData.venueId;
+      }
+
+      // Clean communityId: Ensure it's valid if provided
+      if (finalData.communityId && !simpleUuidRegex.test(finalData.communityId)) {
+        delete finalData.communityId;
+      }
+
+      // Ensure empty strings are not sent for date fields
+      ['registrationStartDate', 'registrationEndDate', 'startDate', 'endDate'].forEach(key => {
+        if (finalData[key] === '') {
+          delete finalData[key];
+        }
+      });
 
       // Call API
       const res = await tournamentsApi.createTournament(finalData);
@@ -47,14 +79,14 @@ export default function Step4Fees() {
       
       // Navigate to the newly created tournament or dashboard
       // Usually the API returns the created resource inside data object
-      const tournamentId = res?.data?.id || res?.id;
+      const tournamentId = res?.data?.id;
       if (tournamentId) {
         router.push(`/tournaments/${tournamentId}`);
       } else {
         router.push('/dashboard');
       }
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Đã có lỗi xảy ra khi tạo giải đấu');
+    } catch (error) {
+      toast.error(getErrorMessage(error));
     } finally {
       setIsSubmitting(false);
     }

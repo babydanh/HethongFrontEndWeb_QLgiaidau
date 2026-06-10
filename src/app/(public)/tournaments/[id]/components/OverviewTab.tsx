@@ -48,7 +48,9 @@ export default function OverviewTab({ tournament }: Props) {
               <span className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-2">Trạng thái</span>
               <p className="text-slate-700 font-medium text-sm">
                 {tournament.status === 'UPCOMING' ? 'Sắp diễn ra' : 
-                 tournament.status === 'ONGOING' ? 'Đang diễn ra' : 
+                 tournament.status === 'REGISTRATION_OPEN' ? 'Mở đăng ký' :
+                 tournament.status === 'REGISTRATION_CLOSED' ? 'Đóng đăng ký' :
+                 (tournament.status === 'ONGOING' || tournament.status === 'IN_PROGRESS') ? 'Đang diễn ra' : 
                  tournament.status === 'COMPLETED' ? 'Đã kết thúc' : 
                  tournament.status === 'CANCELLED' ? 'Đã hủy' : 
                  tournament.status === 'DRAFT' ? 'Bản nháp' : tournament.status}
@@ -83,12 +85,12 @@ export default function OverviewTab({ tournament }: Props) {
             <p className="text-xs text-slate-500 mt-1">Phí đăng ký tham gia</p>
           </div>
 
-          {tournament.status === 'UPCOMING' && !isOwner && (
+          {(tournament.status === 'UPCOMING' || tournament.status === 'REGISTRATION_OPEN') && !isOwner && (
             <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white mt-2">
               Đăng ký ngay
             </Button>
           )}
-          {isOwner && tournament.status === 'UPCOMING' && (
+          {isOwner && (tournament.status === 'UPCOMING' || tournament.status === 'REGISTRATION_OPEN') && (
             <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mt-2">
               <p className="text-sm text-blue-800 font-medium text-center">
                 Bạn là chủ sở hữu giải đấu này

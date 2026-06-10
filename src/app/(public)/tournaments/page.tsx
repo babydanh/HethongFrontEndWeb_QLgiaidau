@@ -4,19 +4,43 @@ import { useState, useEffect } from 'react';
 import { Search, ChevronDown, SlidersHorizontal, Bookmark, MapPin, Calendar, CircleDollarSign, ChevronLeft, ChevronRight, Trophy, Activity, Target } from 'lucide-react';
 import Link from 'next/link';
 import { tournamentsApi, Tournament } from '@/features/tournaments/api';
+import { categoriesApi, Category } from '@/features/categories/api';
 
 export default function TournamentsListPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
+  const [selectedStatus, setSelectedStatus] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   
   useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await categoriesApi.getCategories();
+        if (res && res.data) {
+          setCategories(res.data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch categories", error);
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  useEffect(() => {
     const fetchTournaments = async () => {
       setIsLoading(true);
       try {
-        const res = await tournamentsApi.getTournaments({ page, limit: 9, search: searchTerm });
+        const res = await tournamentsApi.getTournaments({ 
+          page, 
+          limit: 9, 
+          search: searchTerm || undefined,
+          categoryId: selectedCategoryId || undefined,
+          status: selectedStatus || undefined
+        });
         setTournaments(res.data);
         setTotalPages(res.meta.totalPages);
       } catch (error) {
@@ -26,7 +50,7 @@ export default function TournamentsListPage() {
       }
     };
     fetchTournaments();
-  }, [page, searchTerm]);
+  }, [page, searchTerm, selectedCategoryId, selectedStatus]);
 
   const handleSearch = () => {
     setPage(1); // Reset to page 1 on new search
@@ -39,7 +63,7 @@ export default function TournamentsListPage() {
       <div className="mb-8">
         <h1 className="text-2xl md:text-3xl font-bold text-slate-900 mb-2">Khám phá Giải đấu</h1>
         <p className="text-base text-slate-500 max-w-2xl">
-          Tìm kiếm và tham gia các giải đấu thể thao phù hợp với trình độ của bạn. Từ bóng đá, bóng rổ đến e-sports.
+          Tìm kiếm và tham gia các giải đấu thể thao phù hợp với trình độ của bạn.
         </p>
       </div>
 
@@ -53,7 +77,10 @@ export default function TournamentsListPage() {
               <input 
                 type="text"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setPage(1);
+                }}
                 className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-slate-50 text-slate-900"
                 placeholder="Tên giải đấu, địa điểm..."
               />
@@ -63,12 +90,18 @@ export default function TournamentsListPage() {
           <div className="w-full md:w-auto min-w-[150px]">
             <label className="block text-sm font-medium text-slate-500 mb-1">Môn thể thao</label>
             <div className="relative">
-              <select className="w-full pl-3 pr-10 py-2 border border-slate-200 rounded-lg text-base appearance-none focus:outline-none focus:ring-2 focus:ring-blue-600 bg-slate-50 text-slate-900 font-medium">
-                <option>Tất cả</option>
-                <option>Bóng đá</option>
-                <option>Bóng rổ</option>
-                <option>Tennis</option>
-                <option>Cầu lông</option>
+              <select 
+                value={selectedCategoryId}
+                onChange={(e) => {
+                  setSelectedCategoryId(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full pl-3 pr-10 py-2 border border-slate-200 rounded-lg text-base appearance-none focus:outline-none focus:ring-2 focus:ring-blue-600 bg-slate-50 text-slate-900 font-medium"
+              >
+                <option value="">Tất cả</option>
+                {categories.map(cat => (
+                  <option key={cat.id} value={cat.id}>{cat.name}</option>
+                ))}
               </select>
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5 pointer-events-none" />
             </div>
@@ -77,11 +110,18 @@ export default function TournamentsListPage() {
           <div className="w-full md:w-auto min-w-[150px]">
             <label className="block text-sm font-medium text-slate-500 mb-1">Trạng thái</label>
             <div className="relative">
-              <select className="w-full pl-3 pr-10 py-2 border border-slate-200 rounded-lg text-base appearance-none focus:outline-none focus:ring-2 focus:ring-blue-600 bg-slate-50 text-slate-900 font-medium">
-                <option>Đang đăng ký</option>
-                <option>Đang diễn ra</option>
-                <option>Sắp tới</option>
-                <option>Đã kết thúc</option>
+              <select 
+                value={selectedStatus}
+                onChange={(e) => {
+                  setSelectedStatus(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full pl-3 pr-10 py-2 border border-slate-200 rounded-lg text-base appearance-none focus:outline-none focus:ring-2 focus:ring-blue-600 bg-slate-50 text-slate-900 font-medium"
+              >
+                <option value="">Tất cả</option>
+                <option value="UPCOMING">Sắp diễn ra</option>
+                <option value="ONGOING">Đang diễn ra</option>
+                <option value="COMPLETED">Đã kết thúc</option>
               </select>
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5 pointer-events-none" />
             </div>
@@ -118,13 +158,27 @@ export default function TournamentsListPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
           {tournaments.map(tournament => (
             <div key={tournament.id} className="bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden flex flex-col group">
-              <div className={`relative h-48 w-full ${tournament.status === 'COMPLETED' ? 'bg-slate-800 grayscale' : 'bg-slate-100'} overflow-hidden`}>
-                <div className={`absolute inset-0 ${tournament.status === 'COMPLETED' ? 'bg-slate-900/60' : 'bg-gradient-to-br from-green-500 to-emerald-700 opacity-90'} group-hover:scale-105 transition-transform duration-500`}></div>
+              <div className="relative h-48 w-full bg-slate-100 overflow-hidden">
+                {tournament.bannerUrl ? (
+                  <img 
+                    src={tournament.bannerUrl} 
+                    alt={tournament.name} 
+                    className={`absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${tournament.status === 'COMPLETED' ? 'grayscale opacity-60' : ''}`}
+                  />
+                ) : (
+                  <div className={`absolute inset-0 bg-gradient-to-br from-green-500 to-emerald-700 opacity-90 group-hover:scale-105 transition-transform duration-500`}></div>
+                )}
+                <div className="absolute inset-0 bg-slate-950/15"></div>
                 
-                {tournament.status === 'UPCOMING' && (
-                  <div className="absolute top-3 left-3 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 shadow-sm border border-blue-200">
-                    <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
-                    Đang đăng ký
+                {(tournament.status === 'UPCOMING' || tournament.status === 'REGISTRATION_OPEN') && (
+                  <div className="absolute top-3 left-3 bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 shadow-sm border border-emerald-200">
+                    <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
+                    Mở đăng ký
+                  </div>
+                )}
+                {tournament.status === 'REGISTRATION_CLOSED' && (
+                  <div className="absolute top-3 left-3 bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-xs font-semibold shadow-sm border border-amber-200">
+                    Đóng đăng ký
                   </div>
                 )}
                 {tournament.status === 'COMPLETED' && (
@@ -132,8 +186,9 @@ export default function TournamentsListPage() {
                     Đã kết thúc
                   </div>
                 )}
-                {tournament.status === 'ONGOING' && (
-                  <div className="absolute top-3 left-3 bg-slate-100 text-slate-900 px-3 py-1 rounded-full text-xs font-semibold shadow-sm border border-slate-200">
+                {(tournament.status === 'ONGOING' || tournament.status === 'IN_PROGRESS') && (
+                  <div className="absolute top-3 left-3 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-semibold shadow-sm border border-blue-200 flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
                     Đang diễn ra
                   </div>
                 )}

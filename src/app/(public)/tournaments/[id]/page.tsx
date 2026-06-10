@@ -7,7 +7,8 @@ export default async function TournamentDetailPage({ params }: { params: Promise
     // In Next.js App Router (especially > 15), params can be an async promise, but Next.js backwards compat usually allows synchronous.
     // However, it's safer to await params if migrating to latest Next.
     const resolvedParams = await params;
-    const tournament = await tournamentsApi.getTournamentById(resolvedParams.id);
+    const res = await tournamentsApi.getTournamentById(resolvedParams.id);
+    const tournament = res.data;
     
     if (!tournament) {
       return notFound();

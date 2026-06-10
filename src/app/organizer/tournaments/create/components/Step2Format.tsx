@@ -72,7 +72,7 @@ export default function Step2Format() {
               return (
                 <div 
                   key={opt.id}
-                  onClick={() => setValue('format', opt.id as any)}
+                  onClick={() => setValue('format', opt.id as 'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION' | 'ROUND_ROBIN')}
                   className={`cursor-pointer rounded-xl border p-4 transition-all ${
                     isSelected ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500' : 'border-slate-200 bg-white hover:border-slate-300'
                   }`}

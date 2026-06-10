@@ -71,26 +71,42 @@ export default function HomePage() {
                 </div>
               ) : tournaments.length > 0 ? (
                 tournaments.map((tournament) => (
-                  <div key={tournament.id} className="min-w-[300px] w-[300px] bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col snap-start shrink-0">
-                    <div className="h-32 bg-slate-200 relative">
-                      <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-indigo-600"></div>
-                      <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full border border-slate-200">
-                        <span className="text-xs font-semibold text-blue-600 flex items-center gap-1">
-                          <Trophy className="w-3.5 h-3.5" /> {tournament.format || 'Giải đấu'}
+                  <div key={tournament.id} className="min-w-[300px] w-[300px] bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col snap-start shrink-0 group">
+                    <div className="h-32 bg-slate-100 relative overflow-hidden">
+                      {tournament.bannerUrl ? (
+                        <img 
+                          src={tournament.bannerUrl} 
+                          alt={tournament.name} 
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
+                        />
+                      ) : (
+                        <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-indigo-600 transition-transform duration-500 group-hover:scale-105"></div>
+                      )}
+                      <div className="absolute top-2 left-2 bg-white/95 backdrop-blur-sm px-2.5 py-1 rounded-full border border-slate-200 shadow-sm">
+                        <span className="text-[10px] font-extrabold text-blue-600 flex items-center gap-1 uppercase tracking-wide">
+                          <Trophy className="w-3.5 h-3.5 text-amber-500" /> {
+                            tournament.format === 'SINGLE_ELIMINATION' ? 'Loại trực tiếp' :
+                            tournament.format === 'DOUBLE_ELIMINATION' ? 'Nhánh thắng/thua' :
+                            tournament.format === 'ROUND_ROBIN' ? 'Vòng tròn' : (tournament.format || 'Giải đấu')
+                          }
                         </span>
                       </div>
                     </div>
                     <div className="p-5 flex flex-col gap-3 flex-grow">
-                      <h3 className="text-lg font-bold text-slate-900 line-clamp-2 leading-snug">{tournament.name}</h3>
+                      <h3 className="text-lg font-bold text-slate-900 line-clamp-2 leading-snug group-hover:text-blue-600 transition-colors">{tournament.name}</h3>
                       <div className="flex flex-col gap-2 text-sm text-slate-500">
-                        <div className="flex items-center gap-2"><Calendar className="w-4 h-4" /> {tournament.startDate ? new Date(tournament.startDate).toLocaleDateString('vi-VN') : 'Sắp tới'}</div>
-                        <div className="flex items-center gap-2"><MapPin className="w-4 h-4" /> {tournament.locationAddress || 'Chưa cập nhật'}</div>
-                        <div className="flex items-center gap-2"><Users className="w-4 h-4" /> {tournament._count?.participants || 0}/{tournament.maxParticipants || 0}</div>
+                        <div className="flex items-center gap-2 font-medium"><Calendar className="w-4 h-4 text-slate-400" /> {tournament.startDate ? new Date(tournament.startDate).toLocaleDateString('vi-VN') : 'Sắp tới'}</div>
+                        <div className="flex items-center gap-2 font-medium"><MapPin className="w-4 h-4 text-slate-400" /> {tournament.locationAddress || 'Chưa cập nhật'}</div>
+                        <div className="flex items-center gap-2 font-medium"><Users className="w-4 h-4 text-slate-400" /> {tournament._count?.participants || 0}/{tournament.maxParticipants || 16}</div>
                       </div>
                       <div className="mt-auto pt-4 flex justify-between items-center border-t border-slate-100">
-                        <span className="text-sm font-semibold text-slate-900">{tournament.entryFee ? `${tournament.entryFee}đ` : 'Miễn phí'}</span>
+                        <span className="text-sm font-extrabold text-emerald-600">
+                          {tournament.entryFee && Number(tournament.entryFee) > 0 
+                            ? `${Number(tournament.entryFee).toLocaleString('vi-VN')} VNĐ` 
+                            : 'Miễn phí'}
+                        </span>
                         <Link href={`/tournaments/${tournament.id}`}>
-                          <Button size="sm" variant="secondary" className="bg-blue-50 text-blue-700 hover:bg-blue-100">Xem chi tiết</Button>
+                          <Button size="sm" variant="secondary" className="bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold">Xem chi tiết</Button>
                         </Link>
                       </div>
                     </div>

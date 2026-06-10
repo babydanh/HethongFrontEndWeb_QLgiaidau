@@ -43,7 +43,10 @@ export default function Step3Venue() {
   });
 
   const onSubmit = (data: Step3Values) => {
-    updateFormData(data);
+    updateFormData({
+      ...data,
+      venueId: data.venueId === '' ? undefined : data.venueId,
+    });
     nextStep();
   };
 
@@ -103,10 +106,10 @@ export default function Step3Venue() {
             className="border border-slate-300 rounded-lg px-3 py-2.5 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">-- Tùy chọn (Chưa xác định) --</option>
-            {/* We would fetch real venues here. Mock for UI structure purposes. */}
-            <option value="v1">Cụm sân Tennis Lan Anh</option>
-            <option value="v2">Sân Pickleball Quận 7</option>
-            <option value="v3">Nhà thi đấu Phú Thọ</option>
+            {/* Use valid UUIDs for mock values to pass backend validation */}
+            <option value="00000000-0000-0000-0000-000000000001">Cụm sân Tennis Lan Anh</option>
+            <option value="00000000-0000-0000-0000-000000000002">Sân Pickleball Quận 7</option>
+            <option value="00000000-0000-0000-0000-000000000003">Nhà thi đấu Phú Thọ</option>
           </select>
           <p className="text-xs text-slate-500 mt-1">Việc chọn sẵn Venue hệ thống sẽ giúp bạn quản lý sơ đồ sân dễ dàng hơn.</p>
         </div>

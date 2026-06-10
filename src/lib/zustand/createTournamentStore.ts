@@ -7,6 +7,8 @@ interface TournamentFormData {
   description: string;
   categoryId: string;
   communityId: string;
+  tournamentType: 'CLUB' | 'PUBLIC';
+  matchType: 'SINGLES' | 'DOUBLES' | 'MIXED_DOUBLES';
   // Step 2: Format
   format: 'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION' | 'ROUND_ROBIN';
   maxParticipants: number | null;
@@ -40,6 +42,8 @@ const defaultFormData: TournamentFormData = {
   description: '',
   categoryId: '',
   communityId: '',
+  tournamentType: 'PUBLIC',
+  matchType: 'DOUBLES',
   format: 'SINGLE_ELIMINATION',
   maxParticipants: null,
   sportRules: {

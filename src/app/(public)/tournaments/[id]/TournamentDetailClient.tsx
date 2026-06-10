@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Tournament } from '@/features/tournaments/api';
 import { Button } from '@/components/ui/Button';
-import { Calendar, MapPin, Users, Trophy, ChevronRight, Share2, AlertCircle } from 'lucide-react';
+import { Calendar, MapPin, Users, Trophy, ChevronRight, Share2, AlertCircle, User } from 'lucide-react';
 import Link from 'next/link';
 import OverviewTab from './components/OverviewTab';
 import TeamsTab from './components/TeamsTab';
@@ -11,6 +11,7 @@ import BracketTab from './components/BracketTab';
 import MatchesTab from './components/MatchesTab';
 import RegisterModal from './components/RegisterModal';
 import { useAuthStore } from '@/lib/zustand/authStore';
+import GalleryCarousel from '@/components/ui/GalleryCarousel';
 
 interface Props {
   tournament: Tournament;
@@ -22,7 +23,7 @@ export default function TournamentDetailClient({ tournament }: Props) {
   const [activeTab, setActiveTab] = useState<'overview' | 'teams' | 'bracket' | 'matches'>('overview');
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
 
-  const tabs = [
+  const tabs: { id: 'overview' | 'teams' | 'bracket' | 'matches'; label: string }[] = [
     { id: 'overview', label: 'Tổng quan' },
     { id: 'teams', label: 'Đội tham gia' },
     { id: 'bracket', label: 'Bảng đấu' },
@@ -31,85 +32,104 @@ export default function TournamentDetailClient({ tournament }: Props) {
 
   return (
     <div className="bg-slate-50 min-h-screen pb-12">
-      {/* Banner & Header */}
-      <div className="bg-slate-900 text-white pt-16 pb-12 px-4 md:px-8 relative overflow-hidden">
-        {tournament.bannerUrl && (
-          <img 
-            src={tournament.bannerUrl} 
-            alt="Banner" 
-            className="absolute inset-0 w-full h-full object-cover opacity-20"
-          />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/80 to-transparent"></div>
-        
-        <div className="max-w-7xl mx-auto relative z-10 flex flex-col gap-6">
+      {/* Banner Carousel Showcase */}
+      <div className="relative w-full h-[250px] sm:h-[350px] md:h-[420px] bg-slate-950 overflow-hidden">
+        <GalleryCarousel 
+          images={tournament.galleryImages} 
+          defaultBanner={tournament.bannerUrl || undefined}
+          className="w-full h-full"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 to-transparent pointer-events-none"></div>
+      </div>
+      
+      {/* Overlapping Info Card */}
+      <div className="max-w-7xl mx-auto px-4 md:px-8 -mt-16 relative z-10">
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 md:p-8 shadow-xl flex flex-col gap-6 text-slate-900">
           {/* Breadcrumb */}
-          <div className="flex items-center gap-2 text-sm text-slate-400 font-medium">
-            <Link href="/tournaments" className="hover:text-white transition-colors">Giải đấu</Link>
-            <ChevronRight className="w-4 h-4" />
-            <span className="text-white truncate">{tournament.name}</span>
+          <div className="flex items-center gap-2 text-sm text-slate-500 font-medium">
+            <Link href="/tournaments" className="hover:text-blue-600 transition-colors">Giải đấu</Link>
+            <ChevronRight className="w-4 h-4 text-slate-400" />
+            <span className="text-slate-800 font-semibold truncate">{tournament.name}</span>
           </div>
 
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-4">
-                <span className={`px-4 py-2 text-sm font-bold rounded-lg flex items-center gap-2 ${
-                  tournament.status === 'UPCOMING' ? 'bg-blue-500 text-white' :
-                  tournament.status === 'ONGOING' ? 'bg-amber-500 text-white' :
-                  tournament.status === 'COMPLETED' ? 'bg-emerald-600 text-white' :
-                  tournament.status === 'CANCELLED' ? 'bg-rose-600 text-white' :
-                  'bg-slate-700 text-slate-300'
-                }`}>
-                  <div className="w-2 h-2 rounded-full bg-white/80 animate-pulse"></div>
-                  {tournament.status === 'UPCOMING' ? 'SẮP DIỄN RA' : 
-                   tournament.status === 'ONGOING' ? 'ĐANG DIỄN RA' : 
-                   tournament.status === 'COMPLETED' ? 'ĐÃ KẾT THÚC' : 
-                   tournament.status === 'CANCELLED' ? 'ĐÃ HỦY' : 
-                   tournament.status === 'DRAFT' ? 'BẢN NHÁP' : tournament.status}
-                </span>
-                <span className="px-4 py-2 text-sm font-bold rounded-lg bg-slate-800/80 text-slate-200 border border-slate-700/50 flex items-center gap-2 backdrop-blur-sm">
-                  <Trophy className="w-4 h-4 text-amber-400" /> 
-                  {tournament.format === 'SINGLE_ELIMINATION' ? 'LOẠI TRỰC TIẾP' : 
-                   tournament.format === 'DOUBLE_ELIMINATION' ? 'NHÁNH THẮNG/THUA' : 
-                   tournament.format === 'ROUND_ROBIN' ? 'VÒNG TRÒN' : tournament.format}
-                </span>
-              </div>
-              <h1 className="text-3xl md:text-5xl font-black leading-tight text-white mb-4">
-                {tournament.name}
-              </h1>
-              
-              <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-slate-300 text-sm font-medium">
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-blue-400" />
-                  {tournament.startDate ? new Date(tournament.startDate).toLocaleDateString('vi-VN') : 'Chưa có ngày'}
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+            <div className="flex flex-col md:flex-row gap-5 items-start flex-1 w-full">
+              {tournament.logoUrl && (
+                <div className="w-20 h-20 md:w-24 md:h-24 bg-white rounded-2xl p-1.5 flex items-center justify-center border border-slate-200 shadow-md flex-shrink-0">
+                  <img 
+                    src={tournament.logoUrl} 
+                    alt="Logo" 
+                    className="w-full h-full object-contain rounded-xl"
+                  />
                 </div>
-                <div className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-rose-400" />
-                  {tournament.locationAddress || 'Chưa cập nhật địa điểm'}
+              )}
+              <div className="space-y-3 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className={`px-3 py-1 text-xs font-bold rounded-lg flex items-center gap-1.5 ${
+                    (tournament.status === 'UPCOMING' || tournament.status === 'REGISTRATION_OPEN') ? 'bg-blue-100 text-blue-800' :
+                    (tournament.status === 'ONGOING' || tournament.status === 'IN_PROGRESS') ? 'bg-amber-100 text-amber-800 animate-pulse' :
+                    tournament.status === 'COMPLETED' ? 'bg-emerald-100 text-emerald-800' :
+                    tournament.status === 'CANCELLED' ? 'bg-rose-100 text-rose-800' :
+                    'bg-slate-100 text-slate-800'
+                  }`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${
+                      (tournament.status === 'UPCOMING' || tournament.status === 'REGISTRATION_OPEN') ? 'bg-blue-600' :
+                      (tournament.status === 'ONGOING' || tournament.status === 'IN_PROGRESS') ? 'bg-amber-600' :
+                      tournament.status === 'COMPLETED' ? 'bg-emerald-600' :
+                      'bg-slate-600'
+                    }`}></span>
+                    {tournament.status === 'UPCOMING' ? 'SẮP DIỄN RA' : 
+                     tournament.status === 'REGISTRATION_OPEN' ? 'MỞ ĐĂNG KÝ' :
+                     tournament.status === 'REGISTRATION_CLOSED' ? 'ĐÓNG ĐĂNG KÝ' :
+                     (tournament.status === 'ONGOING' || tournament.status === 'IN_PROGRESS') ? 'ĐANG DIỄN RA' : 
+                     tournament.status === 'COMPLETED' ? 'ĐÃ KẾT THÚC' : 
+                     tournament.status === 'CANCELLED' ? 'ĐÃ HỦY' : 
+                     tournament.status === 'DRAFT' ? 'BẢN NHÁP' : tournament.status}
+                  </span>
+                  <span className="px-3 py-1 text-xs font-bold rounded-lg bg-slate-100 text-slate-800 border border-slate-200 flex items-center gap-1.5">
+                    <Trophy className="w-3.5 h-3.5 text-amber-500" /> 
+                    {tournament.format === 'SINGLE_ELIMINATION' ? 'LOẠI TRỰC TIẾP' : 
+                     tournament.format === 'DOUBLE_ELIMINATION' ? 'NHÁNH THẮNG/THUA' : 
+                     tournament.format === 'ROUND_ROBIN' ? 'VÒNG TRÒN' : tournament.format}
+                  </span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Users className="w-4 h-4 text-emerald-400" />
-                  {tournament._count?.participants || 0} / {tournament.maxParticipants || '∞'} Đội
+                <h1 className="text-2xl md:text-4xl font-black text-slate-900 leading-tight">
+                  {tournament.name}
+                </h1>
+                
+                <div className="flex flex-wrap items-center gap-3 pt-1">
+                  <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-100 rounded-lg px-3 py-1.5 text-slate-700 text-xs font-bold shadow-2xs">
+                    <Calendar className="w-3.5 h-3.5 text-blue-500" />
+                    {tournament.startDate ? new Date(tournament.startDate).toLocaleDateString('vi-VN') : 'Chưa thiết lập ngày'}
+                  </div>
+                  <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-100 rounded-lg px-3 py-1.5 text-slate-700 text-xs font-bold shadow-2xs">
+                    <MapPin className="w-3.5 h-3.5 text-rose-500" />
+                    {tournament.locationAddress || 'Chưa cập nhật địa điểm'}
+                  </div>
+                  <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-100 rounded-lg px-3 py-1.5 text-slate-700 text-xs font-bold shadow-2xs">
+                    <Users className="w-3.5 h-3.5 text-emerald-500" />
+                    {tournament._count?.participants || 0} / {tournament.maxParticipants || '∞'} Đội
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div className="flex gap-3 w-full md:w-auto">
-              <Button variant="outline" className="border-slate-700 text-slate-300 hover:bg-slate-800 flex-1 md:flex-none">
+            <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto items-stretch lg:items-center">
+              <Button variant="outline" className="border-slate-200 text-slate-700 hover:bg-slate-50 flex-1 sm:flex-none font-bold">
                 <Share2 className="w-4 h-4 mr-2" /> Chia sẻ
               </Button>
-              {tournament.status === 'UPCOMING' && !isOwner && (
+              {(tournament.status === 'UPCOMING' || tournament.status === 'REGISTRATION_OPEN') && !isOwner && (
                 <Button 
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white mt-2"
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold flex-1 sm:flex-none"
                   onClick={() => setIsRegisterModalOpen(true)}
                 >
                   Đăng ký ngay
                 </Button>
               )}
-              {isOwner && tournament.status === 'UPCOMING' && (
-                <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 mt-2 w-full">
-                  <p className="text-sm text-blue-800 font-medium text-center">
-                    Bạn là chủ sở hữu giải đấu này
+              {isOwner && (tournament.status === 'UPCOMING' || tournament.status === 'REGISTRATION_OPEN') && (
+                <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-2.5 text-center flex-1 sm:flex-none">
+                  <p className="text-xs text-blue-800 font-bold whitespace-nowrap">
+                    Bạn là chủ sở hữu giải đấu
                   </p>
                 </div>
               )}
@@ -124,7 +144,7 @@ export default function TournamentDetailClient({ tournament }: Props) {
           {tabs.map(tab => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
+              onClick={() => setActiveTab(tab.id)}
               className={`px-6 py-3 rounded-lg font-bold text-sm whitespace-nowrap transition-all ${
                 activeTab === tab.id 
                   ? 'bg-blue-50 text-blue-700 shadow-sm' 
@@ -148,30 +168,10 @@ export default function TournamentDetailClient({ tournament }: Props) {
       <RegisterModal 
         tournamentId={tournament.id} 
         tournamentName={tournament.name} 
+        entryFee={Number(tournament.entryFee) || 0}
         isOpen={isRegisterModalOpen} 
         onClose={() => setIsRegisterModalOpen(false)} 
       />
     </div>
-  );
-}
-
-// Temporary fallback for User icon since it's used above but not imported at top
-function User(props: any) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-      <circle cx="12" cy="7" r="4" />
-    </svg>
   );
 }

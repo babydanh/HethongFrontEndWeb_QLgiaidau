@@ -23,12 +23,13 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 interface Props {
   tournamentId: string;
   tournamentName: string;
+  entryFee: number;
   isOpen: boolean;
   onClose: () => void;
 }
 
-export default function RegisterModal({ tournamentId, tournamentName, isOpen, onClose }: Props) {
-  const { isAuthenticated } = useAuthStore();
+export default function RegisterModal({ tournamentId, tournamentName, entryFee, isOpen, onClose }: Props) {
+  const { user, isAuthenticated } = useAuthStore();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -39,7 +40,7 @@ export default function RegisterModal({ tournamentId, tournamentName, isOpen, on
   if (!isOpen) return null;
 
   const onSubmit = async (data: RegisterFormValues) => {
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !user) {
       toast.error('Vui lòng đăng nhập để đăng ký tham gia giải đấu');
       router.push(`/login?redirect=/tournaments/${tournamentId}`);
       return;
@@ -49,15 +50,22 @@ export default function RegisterModal({ tournamentId, tournamentName, isOpen, on
       setIsSubmitting(true);
       const cleanData = {
         teamName: trimAndNormalizeSpaces(data.teamName),
+        memberIds: [user.id],
       };
 
-      const res = await api.post(`/tournaments/${tournamentId}/register`, cleanData);
+      const res = await api.post<{ data?: { id: string }, id?: string }>(`/tournaments/${tournamentId}/register`, cleanData);
+      
+      const participantId = res?.data?.id || res?.id;
       
       toast.success('Đăng ký thành công!');
       reset();
       onClose();
-      // Normally, here we would redirect to a payment page if the tournament requires an entry fee
-      // router.push(`/payments/checkout?participantId=${res.data.data.participantId}`);
+      
+      if (entryFee > 0 && participantId) {
+        router.push(`/payments/checkout?participantId=${participantId}&tournamentId=${tournamentId}`);
+      } else {
+        router.refresh();
+      }
     } catch (error) {
       toast.error(getErrorMessage(error));
     } finally {

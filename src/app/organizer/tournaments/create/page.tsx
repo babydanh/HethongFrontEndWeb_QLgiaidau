@@ -1,36 +1,33 @@
 'use client';
 
 import { useCreateTournamentStore } from '@/lib/zustand/createTournamentStore';
-import { Button } from '@/components/ui/Button';
-import { Trophy, Info, Target, MapPin, DollarSign, ChevronRight, ChevronLeft, Check, Loader2 } from 'lucide-react';
+import { Trophy, Info, CheckCircle, Check, Loader2 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, Suspense } from 'react';
 import Step1Info from './components/Step1Info';
-import Step2Format from './components/Step2Format';
-import Step3Venue from './components/Step3Venue';
-import Step4Fees from './components/Step4Fees';
+import Step2Confirm from './components/Step2Confirm';
 
 const STEPS = [
-  { id: 1, label: 'Thông tin cơ bản', icon: Info },
-  { id: 2, label: 'Thể thức thi đấu', icon: Target },
-  { id: 3, label: 'Thời gian & Địa điểm', icon: MapPin },
-  { id: 4, label: 'Lệ phí & Xác nhận', icon: DollarSign },
+  { id: 1, label: 'Thông tin giải đấu', icon: Info },
+  { id: 2, label: 'Xác nhận bản nháp', icon: CheckCircle },
 ];
 
 function CreateTournamentForm() {
   const searchParams = useSearchParams();
   const communityId = searchParams.get('communityId');
-  const { currentStep, nextStep, prevStep, updateFormData } = useCreateTournamentStore();
+  const { currentStep, updateFormData, setStep } = useCreateTournamentStore();
 
   useEffect(() => {
+    // Reset wizard to Step 1 on page load
+    setStep(1);
     if (communityId) {
       updateFormData({ communityId });
     }
-  }, [communityId, updateFormData]);
+  }, [communityId, updateFormData, setStep]);
 
   return (
     <div className="bg-slate-50 min-h-screen py-12 px-4 md:px-8">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-3xl mx-auto">
         
         {/* Header */}
         <div className="mb-8 text-center">
@@ -38,11 +35,11 @@ function CreateTournamentForm() {
             <Trophy className="w-8 h-8" />
           </div>
           <h1 className="text-3xl font-black text-slate-900">Tạo Giải Đấu Mới</h1>
-          <p className="text-slate-500 mt-2 font-medium">Thiết lập giải đấu chuyên nghiệp chỉ trong 4 bước đơn giản</p>
+          <p className="text-slate-500 mt-2 font-medium">Lập giải đấu nháp nhanh chóng trong 2 bước</p>
         </div>
 
         {/* Stepper */}
-        <div className="mb-10">
+        <div className="mb-10 max-w-md mx-auto">
           <div className="flex justify-between items-center relative before:absolute before:inset-0 before:top-1/2 before:-translate-y-1/2 before:h-1 before:bg-slate-200 before:z-0">
             {STEPS.map((step) => {
               const isActive = step.id === currentStep;
@@ -72,9 +69,7 @@ function CreateTournamentForm() {
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mt-16">
           <div className="p-6 md:p-8">
             {currentStep === 1 && <Step1Info />}
-            {currentStep === 2 && <Step2Format />}
-            {currentStep === 3 && <Step3Venue />}
-            {currentStep === 4 && <Step4Fees />}
+            {currentStep === 2 && <Step2Confirm />}
           </div>
         </div>
 
@@ -94,4 +89,3 @@ export default function CreateTournamentPage() {
     </Suspense>
   );
 }
-

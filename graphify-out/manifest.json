@@ -1,0 +1,532 @@
+{
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\eslint.config.mjs": {
+    "mtime": 1780480443.2710905,
+    "ast_hash": "dfa1f5f6a7037bf39dc510f30b180002",
+    "semantic_hash": "dfa1f5f6a7037bf39dc510f30b180002"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\next.config.ts": {
+    "mtime": 1780561530.5056431,
+    "ast_hash": "a27ed84ff99aa5c827ecaa9e1e241725",
+    "semantic_hash": "a27ed84ff99aa5c827ecaa9e1e241725"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\package.json": {
+    "mtime": 1780543976.57522,
+    "ast_hash": "df37c07abf71456439439bd6df60ab71",
+    "semantic_hash": "df37c07abf71456439439bd6df60ab71"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\postcss.config.mjs": {
+    "mtime": 1780480443.3091993,
+    "ast_hash": "239f3ebf717465dc636818a1a619398d",
+    "semantic_hash": "239f3ebf717465dc636818a1a619398d"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\app\\(player)\\dashboard\\page.tsx": {
+    "mtime": 1780563419.6643696,
+    "ast_hash": "32772e55a4a888e76ef8afd57e09fdaa",
+    "semantic_hash": "32772e55a4a888e76ef8afd57e09fdaa"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\app\\(player)\\profile\\edit\\page.tsx": {
+    "mtime": 1780560962.24383,
+    "ast_hash": "55ae666ed748c2b45420d37482dd97b4",
+    "semantic_hash": "55ae666ed748c2b45420d37482dd97b4"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\app\\(player)\\profile\\page.tsx": {
+    "mtime": 1780563212.744995,
+    "ast_hash": "a60a83565a54bd9b28c6934003772278",
+    "semantic_hash": "a60a83565a54bd9b28c6934003772278"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\app\\(public)\\communities\\page.tsx": {
+    "mtime": 1780562329.6684575,
+    "ast_hash": "28714bacec5f24a3a6bb93880616e71d",
+    "semantic_hash": "28714bacec5f24a3a6bb93880616e71d"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\app\\(public)\\leaderboard\\page.tsx": {
+    "mtime": 1780562617.514325,
+    "ast_hash": "346e3321b74254cef0baab1ffa51e0c1",
+    "semantic_hash": "346e3321b74254cef0baab1ffa51e0c1"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\app\\(public)\\login\\page.tsx": {
+    "mtime": 1780972153.3590484,
+    "ast_hash": "2a0ef272f98e2983dd8474d4bdfb50a7",
+    "semantic_hash": "2a0ef272f98e2983dd8474d4bdfb50a7"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\app\\(public)\\register\\page.tsx": {
+    "mtime": 1780555622.489986,
+    "ast_hash": "08505f1d41d0b35f55f16e16d7a08159",
+    "semantic_hash": "08505f1d41d0b35f55f16e16d7a08159"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\app\\(public)\\tournaments\\[id]\\page.tsx": {
+    "mtime": 1780972180.2108433,
+    "ast_hash": "f2e4ae345a050e138e82fb19fa143299",
+    "semantic_hash": "f2e4ae345a050e138e82fb19fa143299"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\app\\(public)\\tournaments\\page.tsx": {
+    "mtime": 1780562920.1765552,
+    "ast_hash": "27245508af8bf108ffc0b778a3f26cfc",
+    "semantic_hash": "27245508af8bf108ffc0b778a3f26cfc"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\app\\auth\\callback\\page.tsx": {
+    "mtime": 1780972155.960917,
+    "ast_hash": "59f0cca82f04cdffafd90d2723d161be",
+    "semantic_hash": "59f0cca82f04cdffafd90d2723d161be"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\app\\layout.tsx": {
+    "mtime": 1780555016.554268,
+    "ast_hash": "60ae71cad14ef1eba5db441c1adb12c5",
+    "semantic_hash": "60ae71cad14ef1eba5db441c1adb12c5"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\app\\live\\page.tsx": {
+    "mtime": 1780561048.148734,
+    "ast_hash": "0ffe54c260f750f86e7dc78f205ddeb0",
+    "semantic_hash": "0ffe54c260f750f86e7dc78f205ddeb0"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\app\\page.tsx": {
+    "mtime": 1780972457.3968768,
+    "ast_hash": "206fb3659e6b7ac1ec025448c79bc83a",
+    "semantic_hash": "206fb3659e6b7ac1ec025448c79bc83a"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\components\\icons\\GoogleIcon.tsx": {
+    "mtime": 1780542414.6813643,
+    "ast_hash": "a9e06d71cbc7929245b4aed89917aab0",
+    "semantic_hash": "a9e06d71cbc7929245b4aed89917aab0"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\components\\layout\\Footer.tsx": {
+    "mtime": 1780544219.2907958,
+    "ast_hash": "441175348ec876dc53359145d5bec961",
+    "semantic_hash": "441175348ec876dc53359145d5bec961"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\components\\layout\\Header.tsx": {
+    "mtime": 1780555456.44488,
+    "ast_hash": "7ca770810a205b4745d6e70864f22421",
+    "semantic_hash": "7ca770810a205b4745d6e70864f22421"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\components\\ui\\Avatar.tsx": {
+    "mtime": 1780539038.5671327,
+    "ast_hash": "52ff9b701abf61e7ffc1f7ec7da51fd1",
+    "semantic_hash": "52ff9b701abf61e7ffc1f7ec7da51fd1"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\components\\ui\\Badge.tsx": {
+    "mtime": 1780538904.5212371,
+    "ast_hash": "a925f300a261e9d4d3ab91198a94a2bf",
+    "semantic_hash": "a925f300a261e9d4d3ab91198a94a2bf"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\components\\ui\\Button.tsx": {
+    "mtime": 1780552523.8161242,
+    "ast_hash": "ad5080e380ab75d25f259dfdcf2d1cff",
+    "semantic_hash": "ad5080e380ab75d25f259dfdcf2d1cff"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\components\\ui\\DropdownMenu.tsx": {
+    "mtime": 1780540299.0403788,
+    "ast_hash": "5e35afac5b6a42708da228c380152efd",
+    "semantic_hash": "5e35afac5b6a42708da228c380152efd"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\components\\ui\\Input.tsx": {
+    "mtime": 1780552450.276108,
+    "ast_hash": "d0aa868938fc1cd880429a4e51f39697",
+    "semantic_hash": "d0aa868938fc1cd880429a4e51f39697"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\components\\ui\\LoadingSpinner.tsx": {
+    "mtime": 1780538915.7871358,
+    "ast_hash": "73308279bb6ce698aaea72740e54298c",
+    "semantic_hash": "73308279bb6ce698aaea72740e54298c"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\components\\ui\\Modal.tsx": {
+    "mtime": 1780539319.763888,
+    "ast_hash": "b6f1f052ba4b93d4affb4cb73e91f484",
+    "semantic_hash": "b6f1f052ba4b93d4affb4cb73e91f484"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\components\\ui\\Select.tsx": {
+    "mtime": 1780540124.6993089,
+    "ast_hash": "55514546f1c5f6c02767a8cc0c397f31",
+    "semantic_hash": "55514546f1c5f6c02767a8cc0c397f31"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\components\\ui\\Skeleton.tsx": {
+    "mtime": 1780538950.172241,
+    "ast_hash": "2b03dc5e415edfc7594a55b6286d0f97",
+    "semantic_hash": "2b03dc5e415edfc7594a55b6286d0f97"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\components\\ui\\Textarea.tsx": {
+    "mtime": 1780539049.324607,
+    "ast_hash": "58537cb01b8992e234e0b1b8ada815f0",
+    "semantic_hash": "58537cb01b8992e234e0b1b8ada815f0"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\components\\ui\\Toaster.tsx": {
+    "mtime": 1780540787.3282833,
+    "ast_hash": "95cda9f692845f9ca1af26c65e4d1a07",
+    "semantic_hash": "95cda9f692845f9ca1af26c65e4d1a07"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\features\\auth\\api.ts": {
+    "mtime": 1780552247.0276885,
+    "ast_hash": "e41a9fee929f2d5f657a70264e02b54a",
+    "semantic_hash": "e41a9fee929f2d5f657a70264e02b54a"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\features\\auth\\components\\LoginForm.tsx": {
+    "mtime": 1780564574.0519648,
+    "ast_hash": "4efa16c5238333ac312777c351c124cd",
+    "semantic_hash": "4efa16c5238333ac312777c351c124cd"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\features\\auth\\components\\RegisterForm.tsx": {
+    "mtime": 1780552289.2659016,
+    "ast_hash": "a87b330232bd1753d599da9c764c390f",
+    "semantic_hash": "a87b330232bd1753d599da9c764c390f"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\features\\categories\\api.ts": {
+    "mtime": 1780562455.979348,
+    "ast_hash": "803df7726a3273555d36d00b9d0b91ef",
+    "semantic_hash": "803df7726a3273555d36d00b9d0b91ef"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\features\\communities\\api.ts": {
+    "mtime": 1780562256.2968693,
+    "ast_hash": "cf004476976113634b40a3b251bce008",
+    "semantic_hash": "cf004476976113634b40a3b251bce008"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\features\\matches\\api.ts": {
+    "mtime": 1780552287.5798154,
+    "ast_hash": "f829c0f07d0771befcdf18e4dcb78e73",
+    "semantic_hash": "f829c0f07d0771befcdf18e4dcb78e73"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\features\\rankings\\api.ts": {
+    "mtime": 1780562434.594072,
+    "ast_hash": "05fabf72c092422dc378abe32972613a",
+    "semantic_hash": "05fabf72c092422dc378abe32972613a"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\features\\tournaments\\api.ts": {
+    "mtime": 1780562709.4428043,
+    "ast_hash": "d2cc2005a1f33d668cf8826e8bbafd69",
+    "semantic_hash": "d2cc2005a1f33d668cf8826e8bbafd69"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\features\\users\\api.ts": {
+    "mtime": 1780563115.3927715,
+    "ast_hash": "ab0f9cd073917a4b2178be63044cad56",
+    "semantic_hash": "ab0f9cd073917a4b2178be63044cad56"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\features\\venues\\api.ts": {
+    "mtime": 1780552267.0970304,
+    "ast_hash": "3f112b9a57daaf69a52bc761ea45da57",
+    "semantic_hash": "3f112b9a57daaf69a52bc761ea45da57"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\lib\\axios.ts": {
+    "mtime": 1780564521.2815008,
+    "ast_hash": "da5eb9449b99890961d5c8fadcaa2c4d",
+    "semantic_hash": "da5eb9449b99890961d5c8fadcaa2c4d"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\lib\\zustand\\authStore.ts": {
+    "mtime": 1780564539.3918755,
+    "ast_hash": "febb0eef8317fcfb45e72aa2723c7d5f",
+    "semantic_hash": "febb0eef8317fcfb45e72aa2723c7d5f"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\types\\user.ts": {
+    "mtime": 1780540834.4687455,
+    "ast_hash": "2fa25835c258b97b556110f60682d0a9",
+    "semantic_hash": "2fa25835c258b97b556110f60682d0a9"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\utils\\cn.ts": {
+    "mtime": 1780538694.2534945,
+    "ast_hash": "cb81258fe699949e5dcee44ef5a101ba",
+    "semantic_hash": "cb81258fe699949e5dcee44ef5a101ba"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\tailwind.config.ts": {
+    "mtime": 1780972158.736953,
+    "ast_hash": "44ce2f14d84fbadedc2db7bacc6bfa1f",
+    "semantic_hash": "44ce2f14d84fbadedc2db7bacc6bfa1f"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\tsconfig.json": {
+    "mtime": 1780504535.1413004,
+    "ast_hash": "ee17fd1c97c735e9f3564e3f5251f125",
+    "semantic_hash": "ee17fd1c97c735e9f3564e3f5251f125"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\INSTRUCTIONS.md": {
+    "mtime": 1780505446.8157947,
+    "ast_hash": "ed9cda3deb9ceac7de3d60a71b2a5a22",
+    "semantic_hash": "ed9cda3deb9ceac7de3d60a71b2a5a22"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\README.md": {
+    "mtime": 1780480443.2409713,
+    "ast_hash": "f15aaa42d5d299d091b1171097ea56ad",
+    "semantic_hash": "f15aaa42d5d299d091b1171097ea56ad"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\api_endpoints.md": {
+    "mtime": 1780560133.8842864,
+    "ast_hash": "72265b50feb68dadc2631323897017c8",
+    "semantic_hash": "72265b50feb68dadc2631323897017c8"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\architecture.md": {
+    "mtime": 1780505170.9165099,
+    "ast_hash": "15e472960022fe935cbe21ac534a05fd",
+    "semantic_hash": "15e472960022fe935cbe21ac534a05fd"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienpicturehtml\\athletic_synergy\\DESIGN.md": {
+    "mtime": 1780560589.4117618,
+    "ast_hash": "ddd222d74ad6813b80278771b2697d0d",
+    "semantic_hash": "ddd222d74ad6813b80278771b2697d0d"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienpicturehtml\\c_ng_ng\\code.html": {
+    "mtime": 1780560589.2133996,
+    "ast_hash": "a1a847ab85953cfa16bed452dd780eed",
+    "semantic_hash": "a1a847ab85953cfa16bed452dd780eed"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienpicturehtml\\ch_nh_s_a_h_s\\code.html": {
+    "mtime": 1780560589.3791907,
+    "ast_hash": "c7ac07cb9f3d7b2bc00b1d83d6994848",
+    "semantic_hash": "c7ac07cb9f3d7b2bc00b1d83d6994848"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienpicturehtml\\chi_ti_t_gi_i_u\\code.html": {
+    "mtime": 1780560589.157032,
+    "ast_hash": "ef2dbbf66cbbec439de8de69a9b4cca2",
+    "semantic_hash": "ef2dbbf66cbbec439de8de69a9b4cca2"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienpicturehtml\\component_library\\code.html": {
+    "mtime": 1780560589.1863942,
+    "ast_hash": "3643620de43c2cedbc84f39d585f6252",
+    "semantic_hash": "3643620de43c2cedbc84f39d585f6252"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienpicturehtml\\danh_s_ch_gi_i_u\\code.html": {
+    "mtime": 1780560589.1245112,
+    "ast_hash": "b3cbe16897f8e6c181e76ee81dba7960",
+    "semantic_hash": "b3cbe16897f8e6c181e76ee81dba7960"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienpicturehtml\\h_s_c_nh_n\\code.html": {
+    "mtime": 1780560589.3506413,
+    "ast_hash": "b408ad28533e2fb5b4a618008a274da1",
+    "semantic_hash": "b408ad28533e2fb5b4a618008a274da1"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienpicturehtml\\live_score\\code.html": {
+    "mtime": 1780560589.268661,
+    "ast_hash": "3f86151adfe1a652e986037d5da9752f",
+    "semantic_hash": "3f86151adfe1a652e986037d5da9752f"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienpicturehtml\\ng_k\\code.html": {
+    "mtime": 1780560589.2963872,
+    "ast_hash": "3c4ad0f54811d41894483b6f2ed92b2f",
+    "semantic_hash": "3c4ad0f54811d41894483b6f2ed92b2f"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienpicturehtml\\ng_nh_p\\code.html": {
+    "mtime": 1780560589.241935,
+    "ast_hash": "df99934466d7473d0706c27de6c5e01f",
+    "semantic_hash": "df99934466d7473d0706c27de6c5e01f"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienpicturehtml\\trang_ch\\code.html": {
+    "mtime": 1780560589.0852406,
+    "ast_hash": "79f31698a8304a55c2b9dd801dd6b27b",
+    "semantic_hash": "79f31698a8304a55c2b9dd801dd6b27b"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienpicturehtml\\x_p_h_ng\\code.html": {
+    "mtime": 1780560589.3221157,
+    "ast_hash": "8320d13e370eb020a5de57955b874555",
+    "semantic_hash": "8320d13e370eb020a5de57955b874555"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienthieu\\athletic_synergy\\DESIGN.md": {
+    "mtime": 1780566431.8363292,
+    "ast_hash": "ddd222d74ad6813b80278771b2697d0d",
+    "semantic_hash": "ddd222d74ad6813b80278771b2697d0d"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienthieu\\ch_nh_s_a_h_s\\code.html": {
+    "mtime": 1780566431.549912,
+    "ast_hash": "c7ac07cb9f3d7b2bc00b1d83d6994848",
+    "semantic_hash": "c7ac07cb9f3d7b2bc00b1d83d6994848"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienthieu\\chi_ti_t_c_ng_ng_updated\\code.html": {
+    "mtime": 1780566431.6591294,
+    "ast_hash": "61f01e0c3baeef5b65f216b5d71af4a7",
+    "semantic_hash": "61f01e0c3baeef5b65f216b5d71af4a7"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienthieu\\dashboard_ng_i_d_ng_updated\\code.html": {
+    "mtime": 1780566433.5914736,
+    "ast_hash": "ea25be8ffb2fee58df83115571accc13",
+    "semantic_hash": "ea25be8ffb2fee58df83115571accc13"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienthieu\\duy_t_l_nh_r_t_ti_n_admin\\code.html": {
+    "mtime": 1780566431.8023746,
+    "ast_hash": "4d664eaebe617a3ecae4d463a7255183",
+    "semantic_hash": "4d664eaebe617a3ecae4d463a7255183"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienthieu\\i_u_h_nh_nh_p_t_s\\code.html": {
+    "mtime": 1780566431.7353196,
+    "ast_hash": "d7bd45476439e91cd5ba3ad41d1ddbf9",
+    "semantic_hash": "d7bd45476439e91cd5ba3ad41d1ddbf9"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienthieu\\qu_n_l_r_t_ti_n_gi_i_u\\code.html": {
+    "mtime": 1780566431.7680347,
+    "ast_hash": "8e71df3f56163e828dfe3ae0ca15af7e",
+    "semantic_hash": "8e71df3f56163e828dfe3ae0ca15af7e"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienthieu\\t_o_gi_i_u_m_i_wizard\\code.html": {
+    "mtime": 1780566431.6238143,
+    "ast_hash": "cdb2dc2bf0b5c948e2e662076ec943bc",
+    "semantic_hash": "cdb2dc2bf0b5c948e2e662076ec943bc"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienthieu\\tin_nh_n_chi_ti_t\\code.html": {
+    "mtime": 1780566431.7000556,
+    "ast_hash": "67b21de38e8b37d849e07e9aa03bb1d1",
+    "semantic_hash": "67b21de38e8b37d849e07e9aa03bb1d1"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\missing_pages.md": {
+    "mtime": 1780561897.0490685,
+    "ast_hash": "c0cb0b6f8882da2568676ca273711884",
+    "semantic_hash": "c0cb0b6f8882da2568676ca273711884"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\pages.md": {
+    "mtime": 1780505417.2020264,
+    "ast_hash": "3dc61061fc80f6f48c4ef65f73142d33",
+    "semantic_hash": "3dc61061fc80f6f48c4ef65f73142d33"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\plan.md": {
+    "mtime": 1780542126.7925696,
+    "ast_hash": "aa66f11599491c9e3e68e8579e6455ec",
+    "semantic_hash": "aa66f11599491c9e3e68e8579e6455ec"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\project_overview.md": {
+    "mtime": 1780505302.410113,
+    "ast_hash": "022e5a218b5a582aaf6bfa294cbd0b85",
+    "semantic_hash": "022e5a218b5a582aaf6bfa294cbd0b85"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\rules.md": {
+    "mtime": 1780505415.184662,
+    "ast_hash": "0236bbab302d6169b7386d0f289712b3",
+    "semantic_hash": "0236bbab302d6169b7386d0f289712b3"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\skills.md": {
+    "mtime": 1780564013.0961967,
+    "ast_hash": "bbd8ed4a6c1762172cf6f63a1f10228b",
+    "semantic_hash": "bbd8ed4a6c1762172cf6f63a1f10228b"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\spec.md": {
+    "mtime": 1780505372.309077,
+    "ast_hash": "a23c40ea54e81e866002608ecd502333",
+    "semantic_hash": "a23c40ea54e81e866002608ecd502333"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\ui.md": {
+    "mtime": 1780536848.3197527,
+    "ast_hash": "772a1f0b47735ae1f3bd084c70db8d1f",
+    "semantic_hash": "772a1f0b47735ae1f3bd084c70db8d1f"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\login_curl.txt": {
+    "mtime": 1780555255.9489305,
+    "ast_hash": "7dc40a0168e8a4907f0c6a6062ba1b20",
+    "semantic_hash": "7dc40a0168e8a4907f0c6a6062ba1b20"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\pnpm-workspace.yaml": {
+    "mtime": 1780504641.592129,
+    "ast_hash": "e7f697500f143b1886baa80d4356f42c",
+    "semantic_hash": "e7f697500f143b1886baa80d4356f42c"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienpicturehtml\\c_ng_ng\\screen.png": {
+    "mtime": 1780560589.226915,
+    "ast_hash": "9e883e9ddf23b37e7d96b596ed5e981d",
+    "semantic_hash": "9e883e9ddf23b37e7d96b596ed5e981d"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienpicturehtml\\ch_nh_s_a_h_s\\screen.png": {
+    "mtime": 1780560589.396192,
+    "ast_hash": "c2011caefeb941e44db78b78d567d330",
+    "semantic_hash": "c2011caefeb941e44db78b78d567d330"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienpicturehtml\\chi_ti_t_gi_i_u\\screen.png": {
+    "mtime": 1780560589.1727993,
+    "ast_hash": "a70841c8dd57892441fe0ed49b8d751e",
+    "semantic_hash": "a70841c8dd57892441fe0ed49b8d751e"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienpicturehtml\\component_library\\screen.png": {
+    "mtime": 1780560589.199392,
+    "ast_hash": "49aab9205287f8419efc4ca00358755a",
+    "semantic_hash": "49aab9205287f8419efc4ca00358755a"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienpicturehtml\\danh_s_ch_gi_i_u\\screen.png": {
+    "mtime": 1780560589.1415114,
+    "ast_hash": "89a34c8b6c1e47a85bb73854987d23e4",
+    "semantic_hash": "89a34c8b6c1e47a85bb73854987d23e4"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienpicturehtml\\h_s_c_nh_n\\screen.png": {
+    "mtime": 1780560589.3656633,
+    "ast_hash": "d8c90d0f8125fa6cd7924e0ef19da118",
+    "semantic_hash": "d8c90d0f8125fa6cd7924e0ef19da118"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienpicturehtml\\live_score\\screen.png": {
+    "mtime": 1780560589.2823925,
+    "ast_hash": "0785f16a7f67bca41bdad6d56979b419",
+    "semantic_hash": "0785f16a7f67bca41bdad6d56979b419"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienpicturehtml\\ng_k\\screen.png": {
+    "mtime": 1780560589.308407,
+    "ast_hash": "b0f817da80632ef92676139365f1836f",
+    "semantic_hash": "b0f817da80632ef92676139365f1836f"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienpicturehtml\\ng_nh_p\\screen.png": {
+    "mtime": 1780560589.2539387,
+    "ast_hash": "92b3b5618711d816448abcca08532753",
+    "semantic_hash": "92b3b5618711d816448abcca08532753"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienpicturehtml\\trang_ch\\screen.png": {
+    "mtime": 1780560589.1102445,
+    "ast_hash": "029db32af10a4baf1403b1e6f01eeb08",
+    "semantic_hash": "029db32af10a4baf1403b1e6f01eeb08"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienpicturehtml\\x_p_h_ng\\screen.png": {
+    "mtime": 1780560589.336632,
+    "ast_hash": "7b6ee14166b3fe52f2099dfec43f5e03",
+    "semantic_hash": "7b6ee14166b3fe52f2099dfec43f5e03"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienthieu\\ch_nh_s_a_h_s\\screen.png": {
+    "mtime": 1780566431.5759358,
+    "ast_hash": "c2011caefeb941e44db78b78d567d330",
+    "semantic_hash": "c2011caefeb941e44db78b78d567d330"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienthieu\\chi_ti_t_c_ng_ng_updated\\screen.png": {
+    "mtime": 1780566431.6825325,
+    "ast_hash": "bf2b03de48f4c07b552c96974b653705",
+    "semantic_hash": "bf2b03de48f4c07b552c96974b653705"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienthieu\\dashboard_ng_i_d_ng_updated\\screen.png": {
+    "mtime": 1780566431.606485,
+    "ast_hash": "086cb90e99b9a6d428657f06bb9a6398",
+    "semantic_hash": "086cb90e99b9a6d428657f06bb9a6398"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienthieu\\duy_t_l_nh_r_t_ti_n_admin\\screen.png": {
+    "mtime": 1780566431.820529,
+    "ast_hash": "dd778653cb2beca7c4423509a15fd7ba",
+    "semantic_hash": "dd778653cb2beca7c4423509a15fd7ba"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienthieu\\i_u_h_nh_nh_p_t_s\\screen.png": {
+    "mtime": 1780566431.7495067,
+    "ast_hash": "80acb43bc935917f1cf9dcad2c401d85",
+    "semantic_hash": "80acb43bc935917f1cf9dcad2c401d85"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienthieu\\qu_n_l_r_t_ti_n_gi_i_u\\screen.png": {
+    "mtime": 1780566431.7828183,
+    "ast_hash": "d32dc2bba7e9797ff1f0aaa5acf1cd8d",
+    "semantic_hash": "d32dc2bba7e9797ff1f0aaa5acf1cd8d"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienthieu\\t_o_gi_i_u_m_i_wizard\\screen.png": {
+    "mtime": 1780566431.638816,
+    "ast_hash": "4a4a811ecc922815b112d9d33844ba7e",
+    "semantic_hash": "4a4a811ecc922815b112d9d33844ba7e"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienthieu\\tin_nh_n_chi_ti_t\\screen.png": {
+    "mtime": 1780566431.7172124,
+    "ast_hash": "d36f23947b5dc2e581a66fd063136a72",
+    "semantic_hash": "d36f23947b5dc2e581a66fd063136a72"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\public\\file.svg": {
+    "mtime": 1780480443.3211646,
+    "ast_hash": "d09f95206c3fa0bb9bd9fefabfd0ea71",
+    "semantic_hash": "d09f95206c3fa0bb9bd9fefabfd0ea71"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\public\\globe.svg": {
+    "mtime": 1780480443.3421657,
+    "ast_hash": "2aaafa6a49b6563925fe440891e32717",
+    "semantic_hash": "2aaafa6a49b6563925fe440891e32717"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\public\\next.svg": {
+    "mtime": 1780480443.3587532,
+    "ast_hash": "8e061864f388b47f33a1c3780831193e",
+    "semantic_hash": "8e061864f388b47f33a1c3780831193e"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\public\\vercel.svg": {
+    "mtime": 1780480443.3781102,
+    "ast_hash": "c0af2f507b369b085b35ef4bbe3bcf1e",
+    "semantic_hash": "c0af2f507b369b085b35ef4bbe3bcf1e"
+  },
+  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\public\\window.svg": {
+    "mtime": 1780480443.393108,
+    "ast_hash": "a2760511c65806022ad20adf74370ff3",
+    "semantic_hash": "a2760511c65806022ad20adf74370ff3"
+  }
+}

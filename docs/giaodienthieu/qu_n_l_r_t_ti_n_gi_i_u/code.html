@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+
+<html class="light" lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Organizer Payouts Manager - TournaHub</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-high": "#e6e8ea",
+                    "on-background": "#191c1e",
+                    "secondary-fixed-dim": "#89ceff",
+                    "on-surface": "#191c1e",
+                    "surface-tint": "#0053db",
+                    "on-error-container": "#93000a",
+                    "surface-dim": "#d8dadc",
+                    "tertiary-fixed-dim": "#b7c8e1",
+                    "on-primary-fixed-variant": "#003ea8",
+                    "on-tertiary-fixed": "#0b1c30",
+                    "on-error": "#ffffff",
+                    "inverse-surface": "#2d3133",
+                    "surface-container-low": "#f2f4f6",
+                    "secondary": "#006591",
+                    "primary-fixed-dim": "#b4c5ff",
+                    "surface-container-highest": "#e0e3e5",
+                    "secondary-container": "#39b8fd",
+                    "surface-container-lowest": "#ffffff",
+                    "primary-container": "#2563eb",
+                    "secondary-fixed": "#c9e6ff",
+                    "on-primary": "#ffffff",
+                    "on-surface-variant": "#434655",
+                    "surface-container": "#eceef0",
+                    "surface-bright": "#f7f9fb",
+                    "tertiary-container": "#5e6e85",
+                    "on-secondary-fixed-variant": "#004c6e",
+                    "surface": "#f7f9fb",
+                    "primary-fixed": "#dbe1ff",
+                    "outline": "#737686",
+                    "error": "#ba1a1a",
+                    "inverse-primary": "#b4c5ff",
+                    "tertiary": "#46566c",
+                    "on-secondary-container": "#004666",
+                    "on-primary-container": "#eeefff",
+                    "on-tertiary-container": "#e9f0ff",
+                    "tertiary-fixed": "#d3e4fe",
+                    "primary": "#004ac6",
+                    "inverse-on-surface": "#eff1f3",
+                    "error-container": "#ffdad6",
+                    "on-tertiary-fixed-variant": "#38485d",
+                    "on-tertiary": "#ffffff",
+                    "on-secondary": "#ffffff",
+                    "on-secondary-fixed": "#001e2f",
+                    "surface-variant": "#e0e3e5",
+                    "on-primary-fixed": "#00174b",
+                    "background": "#f7f9fb",
+                    "outline-variant": "#c3c6d7"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "unit": "4px",
+                    "container-max-width": "1200px",
+                    "margin-desktop": "32px",
+                    "section-padding": "64px",
+                    "gutter": "24px",
+                    "margin-mobile": "16px"
+            },
+            "fontFamily": {
+                    "label-md": ["Inter"],
+                    "display": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "label-sm": ["Inter"],
+                    "headline-lg-mobile": ["Inter"],
+                    "body-sm": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "body-md": ["Inter"]
+            },
+            "fontSize": {
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "display": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                    "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "headline-lg": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-background text-on-surface">
+<!-- Top Navigation Bar -->
+<header class="sticky top-0 z-50 flex justify-between items-center w-full px-margin-desktop max-w-container-max-width mx-auto bg-surface-container-lowest border-b border-outline-variant shadow-sm h-16">
+<div class="flex items-center gap-8">
+<span class="text-headline-lg font-headline-lg font-bold text-primary">TournaHub</span>
+<nav class="hidden md:flex gap-6 items-center h-full">
+<a class="text-on-surface-variant font-label-md text-label-md hover:text-primary transition-colors duration-200" href="#">Trang chủ</a>
+<a class="text-on-surface-variant font-label-md text-label-md hover:text-primary transition-colors duration-200" href="#">Giải đấu</a>
+<a class="text-on-surface-variant font-label-md text-label-md hover:text-primary transition-colors duration-200" href="#">Cộng đồng</a>
+<a class="text-on-surface-variant font-label-md text-label-md hover:text-primary transition-colors duration-200" href="#">Xếp hạng</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2">
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-high rounded-full transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-high rounded-full transition-colors">
+<span class="material-symbols-outlined">chat</span>
+</button>
+</div>
+<button class="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg font-label-md text-label-md hover:opacity-90 active:scale-95 transition-all">
+                Create Tournament
+            </button>
+<div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center border border-outline-variant overflow-hidden">
+<span class="material-symbols-outlined">account_circle</span>
+</div>
+</div>
+</header>
+<main class="max-w-container-max-width mx-auto px-margin-desktop py-8 min-h-screen">
+<div class="mb-8">
+<h1 class="text-headline-lg font-headline-lg text-on-background mb-2">Quản lý thanh toán</h1>
+<p class="text-body-md font-body-md text-on-surface-variant">Quản lý số dư, yêu cầu rút tiền và theo dõi lịch sử giao dịch của bạn.</p>
+</div>
+<!-- Financial Stats Grid -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-gutter mb-8">
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 shadow-sm">
+<div class="flex items-center justify-between mb-4">
+<span class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Tổng doanh thu vé giải</span>
+<span class="material-symbols-outlined text-on-background">payments</span>
+</div>
+<div class="text-headline-md font-headline-md text-on-background">125.400.000 <span class="text-body-sm">VND</span></div>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 shadow-sm border-l-4 border-l-primary">
+<div class="flex items-center justify-between mb-4">
+<span class="text-label-sm font-label-sm text-primary uppercase tracking-wider">Số dư khả dụng</span>
+<span class="material-symbols-outlined text-primary">account_balance_wallet</span>
+</div>
+<div class="text-headline-md font-headline-md text-primary">42.150.000 <span class="text-body-sm">VND</span></div>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 shadow-sm border-l-4 border-l-amber-500">
+<div class="flex items-center justify-between mb-4">
+<span class="text-label-sm font-label-sm text-amber-600 uppercase tracking-wider">Đang chờ xử lý duyệt</span>
+<span class="material-symbols-outlined text-amber-500">pending_actions</span>
+</div>
+<div class="text-headline-md font-headline-md text-amber-600">5.000.000 <span class="text-body-sm">VND</span></div>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 shadow-sm border-l-4 border-l-green-600">
+<div class="flex items-center justify-between mb-4">
+<span class="text-label-sm font-label-sm text-green-600 uppercase tracking-wider">Đã rút thành công</span>
+<span class="material-symbols-outlined text-green-600">task_alt</span>
+</div>
+<div class="text-headline-md font-headline-md text-green-600">78.250.000 <span class="text-body-sm">VND</span></div>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+<!-- New Payout Request Form -->
+<section class="lg:col-span-4">
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 shadow-sm sticky top-24">
+<h2 class="text-headline-md font-headline-md text-on-surface mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">add_circle</span>
+                        Yêu cầu rút tiền mới
+                    </h2>
+<form class="space-y-5" id="payoutForm">
+<div class="space-y-2">
+<label class="text-label-md font-label-md text-on-surface-variant block">Giải đấu nguồn tiền</label>
+<select class="w-full bg-surface-bright border border-outline-variant rounded-lg p-3 text-body-md focus:ring-2 focus:ring-primary focus:outline-none transition-all appearance-none cursor-pointer">
+<option value="">Chọn giải đấu...</option>
+<option value="1">Vietnam Summer Open 2024</option>
+<option value="2">Pro League Season 5</option>
+<option value="3">Community Cup #12</option>
+</select>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between items-center">
+<label class="text-label-md font-label-md text-on-surface-variant">Số tiền muốn rút (VND)</label>
+<button class="text-primary text-label-sm font-label-sm hover:underline" onclick="setMaxAmount()" type="button">Rút toàn bộ</button>
+</div>
+<input class="w-full bg-surface-bright border border-outline-variant rounded-lg p-3 text-body-md focus:ring-2 focus:ring-primary focus:outline-none transition-all" id="amountInput" placeholder="Ví dụ: 10,000,000" type="text"/>
+<p class="text-error text-label-sm hidden" id="amountError">Số tiền không hợp lệ hoặc vượt quá số dư.</p>
+</div>
+<hr class="border-outline-variant"/>
+<div class="space-y-4">
+<h3 class="text-label-md font-label-md text-on-surface-variant uppercase tracking-widest">Thông tin ngân hàng</h3>
+<div class="space-y-2">
+<label class="text-label-sm font-label-sm text-on-surface-variant">Ngân hàng</label>
+<select class="w-full bg-surface-bright border border-outline-variant rounded-lg p-3 text-body-md focus:ring-2 focus:ring-primary focus:outline-none transition-all" id="bankSelect">
+<option value="">Chọn ngân hàng...</option>
+<option value="vcb">Vietcombank</option>
+<option value="tcb">Techcombank</option>
+<option value="mb">MB Bank</option>
+<option value="bidv">BIDV</option>
+</select>
+</div>
+<div class="space-y-2">
+<label class="text-label-sm font-label-sm text-on-surface-variant">Số tài khoản</label>
+<input class="w-full bg-surface-bright border border-outline-variant rounded-lg p-3 text-body-md focus:ring-2 focus:ring-primary focus:outline-none transition-all" id="accountNumber" placeholder="Nhập số tài khoản" type="text"/>
+</div>
+<div class="space-y-2">
+<label class="text-label-sm font-label-sm text-on-surface-variant">Tên chủ tài khoản (Viết hoa không dấu)</label>
+<input class="w-full bg-surface-bright border border-outline-variant rounded-lg p-3 text-body-md uppercase focus:ring-2 focus:ring-primary focus:outline-none transition-all" id="accountName" placeholder="NGUYEN VAN A" type="text"/>
+</div>
+</div>
+<button class="w-full bg-primary text-white py-4 rounded-lg font-headline-md text-headline-md hover:bg-opacity-90 active:scale-[0.98] transition-all shadow-md mt-4" type="submit">
+                            Gửi yêu cầu rút tiền
+                        </button>
+</form>
+</div>
+</section>
+<!-- Payout History Table -->
+<section class="lg:col-span-8">
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm overflow-hidden">
+<div class="p-6 border-b border-outline-variant flex justify-between items-center bg-white">
+<h2 class="text-headline-md font-headline-md text-on-surface">Lịch sử rút tiền</h2>
+<div class="flex gap-2">
+<button class="p-2 border border-outline-variant rounded-lg hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant">filter_list</span>
+</button>
+<button class="p-2 border border-outline-variant rounded-lg hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant">download</span>
+</button>
+</div>
+</div>
+<div class="overflow-x-auto custom-scrollbar">
+<table class="w-full text-left">
+<thead class="bg-surface-container-low border-b border-outline-variant">
+<tr>
+<th class="px-6 py-4 text-label-sm font-label-sm text-on-surface-variant uppercase">Mã GD</th>
+<th class="px-6 py-4 text-label-sm font-label-sm text-on-surface-variant uppercase">Ngày yêu cầu</th>
+<th class="px-6 py-4 text-label-sm font-label-sm text-on-surface-variant uppercase">Giải đấu</th>
+<th class="px-6 py-4 text-label-sm font-label-sm text-on-surface-variant uppercase text-right">Số tiền</th>
+<th class="px-6 py-4 text-label-sm font-label-sm text-on-surface-variant uppercase">Tài khoản</th>
+<th class="px-6 py-4 text-label-sm font-label-sm text-on-surface-variant uppercase">Trạng thái</th>
+<th class="px-6 py-4 text-label-sm font-label-sm text-on-surface-variant uppercase text-center">Minh chứng</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant">
+<!-- Row 1: Success -->
+<tr class="hover:bg-surface-bright transition-colors">
+<td class="px-6 py-4 font-label-md text-label-md">#TH-00124</td>
+<td class="px-6 py-4 text-body-sm">15/05/2024</td>
+<td class="px-6 py-4 text-body-sm font-medium">Summer Open</td>
+<td class="px-6 py-4 text-body-sm text-right font-bold">12,000,000</td>
+<td class="px-6 py-4">
+<div class="text-body-sm">007100...</div>
+<div class="text-label-sm text-on-surface-variant">VCB</div>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                            Thành công
+                                        </span>
+</td>
+<td class="px-6 py-4 text-center">
+<a class="text-primary text-label-sm font-label-sm hover:underline inline-flex items-center gap-1" href="#">
+<span class="material-symbols-outlined text-[16px]">receipt_long</span>
+                                            Xem ảnh CK
+                                        </a>
+</td>
+</tr>
+<!-- Row 2: Pending -->
+<tr class="hover:bg-surface-bright transition-colors">
+<td class="px-6 py-4 font-label-md text-label-md">#TH-00129</td>
+<td class="px-6 py-4 text-body-sm">20/05/2024</td>
+<td class="px-6 py-4 text-body-sm font-medium">Community Cup</td>
+<td class="px-6 py-4 text-body-sm text-right font-bold">5,000,000</td>
+<td class="px-6 py-4">
+<div class="text-body-sm">190345...</div>
+<div class="text-label-sm text-on-surface-variant">TCB</div>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                                            Đang duyệt
+                                        </span>
+</td>
+<td class="px-6 py-4 text-center text-on-surface-variant">-</td>
+</tr>
+<!-- Row 3: Rejected -->
+<tr class="hover:bg-surface-bright transition-colors">
+<td class="px-6 py-4 font-label-md text-label-md">#TH-00115</td>
+<td class="px-6 py-4 text-body-sm">10/05/2024</td>
+<td class="px-6 py-4 text-body-sm font-medium">Pro League S5</td>
+<td class="px-6 py-4 text-body-sm text-right font-bold">2,500,000</td>
+<td class="px-6 py-4">
+<div class="text-body-sm">007100...</div>
+<div class="text-label-sm text-on-surface-variant">VCB</div>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                            Bị từ chối
+                                        </span>
+</td>
+<td class="px-6 py-4 text-center text-on-surface-variant">-</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-4 border-t border-outline-variant bg-surface-container-low flex justify-between items-center">
+<span class="text-label-sm text-on-surface-variant">Hiển thị 3 giao dịch gần nhất</span>
+<div class="flex gap-2">
+<button class="p-1 text-on-surface-variant hover:text-primary transition-colors disabled:opacity-30" disabled="">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<button class="p-1 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Withdrawal Info Alert -->
+<div class="mt-6 p-4 bg-primary-fixed text-on-primary-fixed rounded-xl flex gap-3 items-start border border-primary-container">
+<span class="material-symbols-outlined mt-0.5" data-weight="fill">info</span>
+<div class="space-y-1">
+<p class="font-label-md text-label-md">Lưu ý về rút tiền</p>
+<p class="text-body-sm opacity-90">Yêu cầu rút tiền thường được xử lý trong vòng 24h làm việc (trừ Thứ 7, Chủ nhật). Vui lòng kiểm tra kỹ thông tin ngân hàng trước khi gửi yêu cầu. Mỗi giao dịch có thể mất phí chuyển khoản liên ngân hàng tùy theo chính sách ngân hàng.</p>
+</div>
+</div>
+</section>
+</div>
+</main>
+<footer class="w-full py-section-padding px-margin-desktop max-w-container-max-width mx-auto flex flex-col md:flex-row justify-between items-center bg-surface-container-highest border-t border-outline-variant mt-12">
+<div class="mb-6 md:mb-0">
+<span class="text-headline-md font-headline-md font-bold text-primary">TournaHub</span>
+<p class="text-body-sm font-body-sm text-on-surface-variant mt-2">© 2024 TournaHub. All rights reserved.</p>
+</div>
+<div class="flex gap-8">
+<a class="text-on-surface-variant hover:text-primary transition-colors text-label-sm font-label-sm" href="#">Về chúng tôi</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors text-label-sm font-label-sm" href="#">Điều khoản sử dụng</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors text-label-sm font-label-sm" href="#">Chính sách bảo mật</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors text-label-sm font-label-sm" href="#">Liên hệ</a>
+</div>
+</footer>
+<script>
+        const amountInput = document.getElementById('amountInput');
+        const amountError = document.getElementById('amountError');
+        const payoutForm = document.getElementById('payoutForm');
+        const availableBalance = 42150000;
+
+        // Auto format currency as typing
+        amountInput.addEventListener('input', (e) => {
+            let value = e.target.value.replace(/\D/g, "");
+            if (value) {
+                value = parseInt(value, 10).toLocaleString('vi-VN');
+                e.target.value = value;
+            }
+        });
+
+        function setMaxAmount() {
+            amountInput.value = availableBalance.toLocaleString('vi-VN');
+            validateAmount();
+        }
+
+        function validateAmount() {
+            const rawValue = parseInt(amountInput.value.replace(/\D/g, ""), 10);
+            if (isNaN(rawValue) || rawValue <= 0 || rawValue > availableBalance) {
+                amountError.classList.remove('hidden');
+                amountInput.classList.add('border-error');
+                return false;
+            } else {
+                amountError.classList.add('hidden');
+                amountInput.classList.remove('border-error');
+                return true;
+            }
+        }
+
+        payoutForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const isAmountValid = validateAmount();
+            const bankSelect = document.getElementById('bankSelect');
+            const accountNumber = document.getElementById('accountNumber');
+            const accountName = document.getElementById('accountName');
+
+            let isFormValid = isAmountValid;
+
+            // Simple validation highlighting
+            [bankSelect, accountNumber, accountName].forEach(field => {
+                if (!field.value.trim()) {
+                    field.classList.add('border-error');
+                    isFormValid = false;
+                } else {
+                    field.classList.remove('border-error');
+                }
+            });
+
+            if (isFormValid) {
+                alert('Yêu cầu rút tiền đã được gửi thành công! Chúng tôi sẽ xét duyệt trong 24h tới.');
+                payoutForm.reset();
+            }
+        });
+
+        // Account name auto caps
+        document.getElementById('accountName').addEventListener('input', (e) => {
+            e.target.value = e.target.value.toUpperCase();
+        });
+    </script>
+</body></html>

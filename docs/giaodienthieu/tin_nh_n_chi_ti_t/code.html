@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+
+<html class="light" lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Tin nhắn | TournaHub</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-bright": "#f7f9fb",
+                    "on-tertiary-fixed": "#0b1c30",
+                    "on-tertiary-container": "#e9f0ff",
+                    "on-background": "#191c1e",
+                    "error": "#ba1a1a",
+                    "on-secondary-fixed-variant": "#004c6e",
+                    "primary-container": "#2563eb",
+                    "surface-container": "#eceef0",
+                    "primary-fixed-dim": "#b4c5ff",
+                    "tertiary-fixed": "#d3e4fe",
+                    "tertiary-fixed-dim": "#b7c8e1",
+                    "background": "#f7f9fb",
+                    "tertiary": "#46566c",
+                    "on-error": "#ffffff",
+                    "inverse-on-surface": "#eff1f3",
+                    "surface-container-high": "#e6e8ea",
+                    "error-container": "#ffdad6",
+                    "surface-variant": "#e0e3e5",
+                    "inverse-surface": "#2d3133",
+                    "on-error-container": "#93000a",
+                    "primary": "#004ac6",
+                    "inverse-primary": "#b4c5ff",
+                    "tertiary-container": "#5e6e85",
+                    "surface-container-lowest": "#ffffff",
+                    "on-primary-fixed-variant": "#003ea8",
+                    "outline-variant": "#c3c6d7",
+                    "on-secondary-fixed": "#001e2f",
+                    "outline": "#737686",
+                    "secondary-fixed-dim": "#89ceff",
+                    "secondary": "#006591",
+                    "secondary-fixed": "#c9e6ff",
+                    "surface-tint": "#0053db",
+                    "on-secondary": "#ffffff",
+                    "surface-container-low": "#f2f4f6",
+                    "on-primary-fixed": "#00174b",
+                    "on-secondary-container": "#004666",
+                    "surface": "#f7f9fb",
+                    "on-surface": "#191c1e",
+                    "surface-dim": "#d8dadc",
+                    "on-tertiary": "#ffffff",
+                    "on-primary-container": "#eeefff",
+                    "on-primary": "#ffffff",
+                    "on-tertiary-fixed-variant": "#38485d",
+                    "secondary-container": "#39b8fd",
+                    "surface-container-highest": "#e0e3e5",
+                    "on-surface-variant": "#434655",
+                    "primary-fixed": "#dbe1ff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.8rem",
+                    "xl": "1rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "unit": "4px",
+                    "container-max-width": "1200px",
+                    "section-padding": "64px",
+                    "margin-desktop": "32px",
+                    "gutter": "24px",
+                    "margin-mobile": "16px"
+            },
+            "fontFamily": {
+                "body-md": ["Inter", "sans-serif"],
+                "headline-md": ["Inter", "sans-serif"],
+                "label-md": ["Inter", "sans-serif"]
+            },
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .message-area::-webkit-scrollbar { width: 6px; }
+        .message-area::-webkit-scrollbar-track { background: transparent; }
+        .message-area::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+        .chat-list::-webkit-scrollbar { width: 4px; }
+        .chat-list::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-surface-bright text-on-surface overflow-hidden">
+<!-- TopNavBar (Shared Component Shell) -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-margin-desktop h-16 max-w-container-max-width mx-auto bg-surface-container-lowest border-b border-outline-variant shadow-sm">
+<div class="flex items-center gap-8">
+<h1 class="font-headline-md text-headline-md text-primary font-bold tracking-tight">TournaHub</h1>
+<nav class="hidden md:flex items-center gap-6">
+<a class="text-on-surface-variant font-medium hover:text-primary transition-colors duration-200" href="#">Home</a>
+<a class="text-on-surface-variant font-medium hover:text-primary transition-colors duration-200" href="#">Tournaments</a>
+<a class="text-primary border-b-2 border-primary pb-1 font-semibold" href="#">Community</a>
+<a class="text-on-surface-variant font-medium hover:text-primary transition-colors duration-200" href="#">Rankings</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-on-surface-variant p-2 hover:bg-surface-container rounded-full transition-colors" data-icon="notifications">notifications</button>
+<button class="material-symbols-outlined text-on-surface-variant p-2 hover:bg-surface-container rounded-full transition-colors" data-icon="mail">mail</button>
+<div class="h-8 w-8 rounded-full bg-slate-200 overflow-hidden border border-outline-variant">
+<img alt="Profile" data-alt="A professional headshot of a young male with a friendly expression, set against a neutral, high-key studio background. The lighting is soft and even, highlighting the clear skin and modern hairstyle, perfectly fitting a clean and professional user interface design." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCqJdPqopRZXT6VUgStSuaREqRCHCZ3jPvQPoiwALxUFXVKvdYu3dz6PwvYGnaL52b0aBUu4ALwVlS1YsOPZy3QP_oTRVXRgHcO_oiyJ-UcrP0bzJ_vSTDmW20X0F1AbtPC6g1tbX_SkyHwTS6mDjxqXVgyiI7oNVjmSNw8_WflxJcfXnL5ZG0LCY8rVij8DvV_RFUknK3A9tJQ1tcmbw6w-q1UhrUbQ6v7IagypisVr5KAfv0oXAvAFAJ_c5cOcN9orsOXA8WtadSH"/>
+</div>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="mt-16 h-[calc(100vh-64px)] flex overflow-hidden max-w-container-max-width mx-auto bg-white shadow-sm">
+<!-- Left Panel: Conversation List -->
+<aside class="w-full md:w-96 flex flex-col border-r border-outline-variant transition-all duration-300 z-20" id="left-panel">
+<!-- Header -->
+<div class="p-4 flex items-center justify-between">
+<h2 class="text-lg font-semibold text-on-surface">Tin nhắn</h2>
+<button class="p-2 hover:bg-surface-container rounded-lg text-primary flex items-center justify-center transition-colors">
+<span class="material-symbols-outlined" data-icon="edit_square">edit_square</span>
+</button>
+</div>
+<!-- Search Bar -->
+<div class="px-4 pb-4">
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-3 text-on-surface-variant" data-icon="search" style="font-size: 20px;">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-full text-body-sm focus:ring-2 focus:ring-primary/20 placeholder:text-on-surface-variant/60" placeholder="Tìm kiếm người chơi, nhóm..." type="text"/>
+</div>
+</div>
+<!-- Chat List -->
+<div class="flex-1 overflow-y-auto chat-list">
+<!-- Chat Item (Active) -->
+<div class="chat-item flex items-center gap-3 p-4 bg-primary-container/10 border-r-4 border-primary cursor-pointer" onclick="selectChat(1)">
+<div class="relative shrink-0">
+<img class="h-11 w-11 rounded-full object-cover" data-alt="Close up portrait of Sarah Nguyen, a young athletic woman with a ponytail, smiling warmly. The setting is an outdoor tennis court during golden hour with soft sunlight. Professional quality photography for a high-end social app interface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA67--ftocLsyf6pFE62xc83XCIEdrJEjZ3aJcuGJiblgRCf9dQ3K4iV5i2gXn8YF9Cb681mD53SBJdj_T9r6hzHR23YNqnj48Zu9WyHQHzyQBFn85_Opj_81DVxHOP8yROSnkdLQC7UBxFjoXRMdFjVI-wJLhtUZPjXTpPCP3bec2ugXP1gJPigqe1dhFucjZ14dmxM2MNsKtBOQsYKzzkBxzxangj3wGbRm_zXN64Jx7XPEpqB4Wy_gE9QwajoOsPNzjIiUvLhijS"/>
+<span class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-baseline">
+<h3 class="font-semibold text-on-surface truncate">Sarah Nguyen</h3>
+<span class="text-[11px] text-on-surface-variant">14:20</span>
+</div>
+<p class="text-sm text-on-surface-variant truncate">Sáng mai mình tập trung lúc mấy giờ vậy bạn?</p>
+</div>
+</div>
+<!-- Chat Item (Unread) -->
+<div class="chat-item flex items-center gap-3 p-4 hover:bg-surface-container-low cursor-pointer transition-colors" onclick="selectChat(2)">
+<div class="relative shrink-0">
+<img class="h-11 w-11 rounded-full object-cover" data-alt="A portrait of a male badminton player in his late 20s, looking focused and determined. The background is a slightly blurred indoor sports hall with vibrant stadium lighting. The image style is clean, modern, and energetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCxNnPimfGs04vc9TRmRiUs7WNYtiQeTkft8Onnnd9iQipAdxKDShAt7pR7mQ4iNo28396W8sUhxNUlU8RUTBJvlFAEAd0Jf_9pKoQZbgsQRDiKCW6JrOpxJIQlpUmx_yNlKs-BniYNiEeMXtyZT0rEf6rmSjILYn5reXM6JUh_lS3Y9t4SF-0VguHyECh2Hscnz6MrgiWXxu7Iiw0zg3Wnq0cTyPxu01cc6syEmcuA9oRR-svYUjLltvbgeVBNgEDpjio03ARmuReg"/>
+<span class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-baseline">
+<h3 class="font-bold text-on-surface truncate">Minh Trần</h3>
+<span class="text-[11px] text-primary font-bold">Vừa xong</span>
+</div>
+<div class="flex justify-between items-center">
+<p class="text-sm font-semibold text-on-surface truncate">Đã gửi một ảnh</p>
+<span class="w-2 h-2 bg-primary rounded-full"></span>
+</div>
+</div>
+</div>
+<!-- Chat Item (Group) -->
+<div class="chat-item flex items-center gap-3 p-4 hover:bg-surface-container-low cursor-pointer transition-colors" onclick="selectChat(3)">
+<div class="relative shrink-0">
+<div class="h-11 w-11 rounded-full bg-secondary-fixed flex items-center justify-center border border-outline-variant">
+<span class="material-symbols-outlined text-secondary" data-icon="groups">groups</span>
+</div>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-baseline">
+<h3 class="font-semibold text-on-surface truncate">Giải Tennis Hè 2024</h3>
+<span class="text-[11px] text-on-surface-variant">Hôm qua</span>
+</div>
+<p class="text-sm text-on-surface-variant truncate"><span class="font-medium">Lê Hùng:</span> Danh sách thi đấu đã có rồi nhé mọi người.</p>
+</div>
+</div>
+<!-- More Chat Items... -->
+<div class="chat-item flex items-center gap-3 p-4 hover:bg-surface-container-low cursor-pointer transition-colors opacity-70">
+<div class="relative shrink-0">
+<img class="h-11 w-11 rounded-full object-cover" data-alt="Professional portrait of a middle-aged sports coach with a friendly yet authoritative demeanor. He is wearing a blue polo shirt, shot against a clean white studio background with soft ambient lighting for a high-utility professional interface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDHvKbrur_tcp9I1lEYjg70c9gsj49L8y7FML1XllekiYHYvixkeZxQjRvDUp6qLYM1q1XrGplWisLD3KDKufB7I5QS2gmtWbTR5w9cQA1Yy9AI3Ig3xibppVZY4AWXLhrEHG518PJDzDRG5pLU7A8TPBbBOpf25EppTK2CmrKS5QkIMiUk-oPAgsJn2__J-Ra24-dwPRPrpERhAMA1iyfnN_XogjanpTybxGS1Shr4UG6i-nuiB8BIlkit4TPpl-fhfyZb-RuJ_A8i"/>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-baseline">
+<h3 class="font-semibold text-on-surface truncate">Huấn luyện viên Nam</h3>
+<span class="text-[11px] text-on-surface-variant">Thứ 3</span>
+</div>
+<p class="text-sm text-on-surface-variant truncate">Cảm ơn em nhiều.</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Right Panel: Chat Content -->
+<section class="hidden md:flex flex-1 flex-col relative bg-surface-container-lowest" id="chat-content">
+<!-- Header -->
+<div class="h-16 px-4 md:px-6 border-b border-outline-variant flex items-center justify-between shrink-0 bg-white">
+<div class="flex items-center gap-3">
+<button class="md:hidden p-2 -ml-2 text-on-surface-variant material-symbols-outlined" data-icon="arrow_back" onclick="hideChat()">arrow_back</button>
+<div class="relative shrink-0">
+<img class="h-10 w-10 rounded-full object-cover" data-alt="Portrait of Sarah Nguyen for the chat header, highlighting her active and approachable personality. Soft cinematic lighting with a shallow depth of field." id="chat-avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCe8dE5RQCAFjqItm5Fhvtc9avbbgibtzaHP6YyfcIhDLv5gZiQ4zi9C5K2-uFUs2q9KeyI7JQgHzdzl84UKyOh4gEVzUZoOPn6Cl1O5phLkzCoGp6y4WvFxj2yHfyDIYBCHvfHeK-ahx38mUQH16G9UJEFtTRnpu-gjbuXlIFa2Luw52Mspb-ApmGpaIVsK9MJf1kAf3EhrqrSqlD27bkvaaaFN7fLKGP0l_X9_muJE3_jdOlQ4XpnBQphVamsAjRJI1uaSFIVj1WO"/>
+<span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full"></span>
+</div>
+<div>
+<h2 class="font-semibold text-on-surface leading-tight" id="chat-name">Sarah Nguyen</h2>
+<span class="text-xs text-green-600 font-medium">Đang hoạt động</span>
+</div>
+</div>
+<div class="flex items-center gap-1 md:gap-4">
+<button class="p-2 hover:bg-surface-container-low rounded-full text-on-surface-variant material-symbols-outlined" data-icon="call">call</button>
+<button class="p-2 hover:bg-surface-container-low rounded-full text-on-surface-variant material-symbols-outlined" data-icon="videocam">videocam</button>
+<button class="p-2 hover:bg-surface-container-low rounded-full text-on-surface-variant material-symbols-outlined" data-icon="info">info</button>
+</div>
+</div>
+<!-- Messages Area -->
+<div class="flex-1 overflow-y-auto p-4 md:p-6 bg-surface-bright message-area space-y-6">
+<!-- Date Separator -->
+<div class="flex justify-center">
+<span class="px-3 py-1 bg-surface-container text-[11px] font-semibold text-on-surface-variant rounded-full uppercase tracking-wider">Hôm nay</span>
+</div>
+<!-- Others Message -->
+<div class="flex items-start gap-3 max-w-[85%] md:max-w-[70%]">
+<img class="h-7 w-7 rounded-full shrink-0 object-cover mt-1" data-alt="Small profile avatar for Sarah Nguyen, maintaining visual consistency across the UI." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBRtvyA6qfjIhj0ZMFN0FyC-HtrCD1tLKseFXhzdH8bWzRK2iBojRTugenBJDWcHciEhs_FFaUkUZz8cTZlnS1upHUSJNRZC4toG6OtEEr-IrL2MRBF9jlcJqJX7GjHPbpc1WvwoA9BTAch1SmsYxZbhlmNSMOcgFceSo6aqpPbswTqNXwsNQ86PLfMoAH2vDZUr5yTEUHKgOFhwqBHQ4VByjCpgRRJ0UcMhS0xclhpV_z5VZIrAg_8UQJjAQn4HJiMTWuVcI6fz3l7"/>
+<div class="space-y-1">
+<div class="bg-white border border-outline-variant p-3 rounded-2xl rounded-tl-none shadow-sm">
+<p class="text-sm text-on-surface">Chào bạn, mình thấy bạn đăng tin tìm đối thủ đánh tennis sáng mai ở cụm sân Lan Anh.</p>
+</div>
+<span class="text-[10px] text-on-surface-variant ml-1">14:15</span>
+</div>
+</div>
+<!-- Self Message -->
+<div class="flex items-start gap-3 justify-end ml-auto max-w-[85%] md:max-w-[70%]">
+<div class="space-y-1 items-end flex flex-col">
+<div class="bg-primary text-white p-3 rounded-2xl rounded-tr-none shadow-sm">
+<p class="text-sm">Chào Sarah! Đúng rồi ạ, mình đang tìm người đánh cùng từ 7h đến 9h sáng.</p>
+</div>
+<span class="text-[10px] text-on-surface-variant mr-1">14:18</span>
+</div>
+</div>
+<!-- Others Message -->
+<div class="flex items-start gap-3 max-w-[85%] md:max-w-[70%]">
+<img class="h-7 w-7 rounded-full shrink-0 object-cover mt-1" data-alt="Consistent avatar image of Sarah Nguyen for chat bubbles." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBPldIKIJilrk67Y1_kI1wzPEyTTsIR4t3b5GCU41lfAvT6uwBQGh5rY77b3priVukCEWBvwn5MEcBqNcES3rr1U7zDq_ALHSceVZAS03xKR1UXoPhhFlw0-bMqj76TCVDpSTVM_2rqzQ1QZ_5oH03X_8P9ypJMYVFH2T2u8LMCltUEl5duyXy_yu4CSO_XWZw2rewcg9Nh_KcXIb2-bSZhZQsz6mrLmGtxYuj_IMQmo3dYJdbrIdRF6diRSNivPtvw_IE5qDAKO_vY"/>
+<div class="space-y-1">
+<div class="bg-white border border-outline-variant p-3 rounded-2xl rounded-tl-none shadow-sm">
+<p class="text-sm text-on-surface">OK mình tham gia được nhé. Sáng mai mình tập trung lúc mấy giờ vậy bạn?</p>
+</div>
+<span class="text-[10px] text-on-surface-variant ml-1">14:20</span>
+</div>
+</div>
+<!-- Typing indicator (hidden by default) -->
+<div class="hidden flex items-center gap-2 text-xs text-on-surface-variant italic ml-10" id="typing-indicator">
+                    Sarah đang nhập...
+                </div>
+</div>
+<!-- Input Bar -->
+<div class="p-4 bg-white border-t border-outline-variant shrink-0">
+<div class="flex items-center gap-2 md:gap-4">
+<div class="flex items-center">
+<button class="p-2 hover:bg-surface-container-low rounded-full text-on-surface-variant material-symbols-outlined" data-icon="attach_file">attach_file</button>
+<button class="p-2 hover:bg-surface-container-low rounded-full text-on-surface-variant material-symbols-outlined" data-icon="image">image</button>
+</div>
+<div class="flex-1 relative">
+<input class="w-full pl-4 pr-12 py-2.5 bg-surface-container-low border-none rounded-full text-sm focus:ring-2 focus:ring-primary/20 placeholder:text-on-surface-variant/60" id="message-input" placeholder="Nhập tin nhắn..." type="text"/>
+<button class="absolute right-2 top-1/2 -translate-y-1/2 material-symbols-outlined text-primary p-1 hover:scale-110 transition-transform" data-icon="sentiment_satisfied">sentiment_satisfied</button>
+</div>
+<button class="h-10 w-10 shrink-0 bg-primary text-white rounded-full flex items-center justify-center hover:bg-on-primary-fixed-variant active:scale-95 transition-all shadow-md" id="send-button">
+<span class="material-symbols-outlined" data-icon="send">send</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Placeholder for no chat selected (mobile initially) -->
+<div class="flex-1 hidden md:flex flex-col items-center justify-center bg-surface-bright p-8 text-center" id="no-chat">
+<div class="w-24 h-24 bg-surface-container-high rounded-full flex items-center justify-center mb-6">
+<span class="material-symbols-outlined text-outline text-5xl" data-icon="forum">forum</span>
+</div>
+<h3 class="text-xl font-semibold text-on-surface mb-2">Chọn một cuộc hội thoại</h3>
+<p class="text-on-surface-variant max-w-xs">Bắt đầu kết nối với các vận động viên khác trong cộng đồng TournaHub ngay bây giờ.</p>
+</div>
+</main>
+<script>
+        const leftPanel = document.getElementById('left-panel');
+        const chatContent = document.getElementById('chat-content');
+        const noChat = document.getElementById('no-chat');
+        const chatName = document.getElementById('chat-name');
+        const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-button');
+        const chatItems = document.querySelectorAll('.chat-item');
+
+        function selectChat(id) {
+            // Update active state in list
+            chatItems.forEach((item, index) => {
+                if (index === id - 1) {
+                    item.classList.add('bg-primary-container/10', 'border-r-4', 'border-primary');
+                    item.classList.remove('hover:bg-surface-container-low');
+                } else {
+                    item.classList.remove('bg-primary-container/10', 'border-r-4', 'border-primary');
+                    item.classList.add('hover:bg-surface-container-low');
+                }
+            });
+
+            // Handle responsive layout
+            if (window.innerWidth < 768) {
+                leftPanel.classList.add('hidden');
+                chatContent.classList.remove('hidden');
+                chatContent.classList.add('flex');
+            } else {
+                noChat.classList.add('hidden');
+                chatContent.classList.remove('hidden');
+                chatContent.classList.add('flex');
+            }
+
+            // Mock name update
+            const names = ["Sarah Nguyen", "Minh Trần", "Giải Tennis Hè 2024"];
+            chatName.innerText = names[id-1];
+
+            // Focus input
+            setTimeout(() => messageInput.focus(), 100);
+        }
+
+        function hideChat() {
+            chatContent.classList.add('hidden');
+            chatContent.classList.remove('flex');
+            leftPanel.classList.remove('hidden');
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            if (window.innerWidth >= 768) {
+                leftPanel.classList.remove('hidden');
+                if (chatContent.classList.contains('hidden') && !noChat.classList.contains('hidden')) {
+                    // Do nothing
+                } else {
+                    chatContent.classList.add('flex');
+                }
+            }
+        });
+
+        // Send message simulation
+        sendButton.addEventListener('click', () => {
+            const text = messageInput.value.trim();
+            if (text) {
+                const msgArea = document.querySelector('.message-area');
+                const msgDiv = document.createElement('div');
+                msgDiv.className = "flex items-start gap-3 justify-end ml-auto max-w-[85%] md:max-w-[70%]";
+                msgDiv.innerHTML = `
+                    <div class="space-y-1 items-end flex flex-col">
+                        <div class="bg-primary text-white p-3 rounded-2xl rounded-tr-none shadow-sm">
+                            <p class="text-sm">${text}</p>
+                        </div>
+                        <span class="text-[10px] text-on-surface-variant mr-1">Vừa xong</span>
+                    </div>
+                `;
+                msgArea.appendChild(msgDiv);
+                messageInput.value = '';
+                msgArea.scrollTop = msgArea.scrollHeight;
+
+                // Simple auto-reply simulation
+                setTimeout(() => {
+                    const typing = document.getElementById('typing-indicator');
+                    typing.classList.remove('hidden');
+                    msgArea.scrollTop = msgArea.scrollHeight;
+                    
+                    setTimeout(() => {
+                        typing.classList.add('hidden');
+                        const replyDiv = document.createElement('div');
+                        replyDiv.className = "flex items-start gap-3 max-w-[85%] md:max-w-[70%]";
+                        replyDiv.innerHTML = `
+                            <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=80" class="h-7 w-7 rounded-full shrink-0 object-cover mt-1" data-alt="Sarah Nguyen avatar for automated reply.">
+                            <div class="space-y-1">
+                                <div class="bg-white border border-outline-variant p-3 rounded-2xl rounded-tl-none shadow-sm">
+                                    <p class="text-sm text-on-surface">Đã rõ! Hẹn gặp bạn sáng mai nhé.</p>
+                                </div>
+                                <span class="text-[10px] text-on-surface-variant ml-1">Vừa xong</span>
+                            </div>
+                        `;
+                        msgArea.appendChild(replyDiv);
+                        msgArea.scrollTop = msgArea.scrollHeight;
+                    }, 2000);
+                }, 1000);
+            }
+        });
+
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendButton.click();
+        });
+    </script>
+</body></html>

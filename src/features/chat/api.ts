@@ -1,27 +1,9 @@
 import { api } from '@/lib/axios';
 
-export interface ChatMessage {
-  id: string;
-  senderId: string;
-  sender: {
-    id: string;
-    fullName: string;
-    avatarUrl?: string;
-  };
-  content: string;
-  createdAt: string;
-}
-
-export interface ChatConversation {
-  id: string;
-  name?: string;
-  type: 'PRIVATE' | 'GROUP';
-  lastMessage?: ChatMessage;
-  participants: { id: string; fullName: string; avatarUrl?: string }[];
-  updatedAt: string;
-}
+import { ChatMessage, ChatConversation } from '@/types/chat';
+export type { ChatMessage, ChatConversation };
 
 export const chatApi = {
-  getConversations: () => api.get<{ data: ChatConversation[] }>('/chat/conversations').then(res => res.data.data),
-  getMessages: (conversationId: string) => api.get<{ data: ChatMessage[] }>(`/chat/conversations/${conversationId}/messages`).then(res => res.data.data),
+  getConversations: () => api.get<{ data: ChatConversation[] }>('/chat/rooms').then(res => res.data),
+  getMessages: (roomId: string) => api.get<{ data: ChatMessage[] }>(`/chat/rooms/${roomId}/messages`).then(res => res.data),
 };

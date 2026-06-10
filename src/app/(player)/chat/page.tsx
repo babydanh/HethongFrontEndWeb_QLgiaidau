@@ -55,19 +55,40 @@ export default function ChatPage() {
 
     // Socket Setup for the active conversation
     const socket = socketClient.getChatSocket();
-    socket.connect();
-    socket.emit('joinConversation', activeConvId);
+    if (!socket.connected) {
+      socket.connect();
+    }
+    
+    socket.emit('joinChatRoom', activeConvId);
 
-    socket.on('newMessage', (msg: ChatMessage) => {
-      setMessages(prev => [...prev, msg]);
+    socket.on('chat:message', (msg: { id?: string; senderId: string; senderName?: string; senderAvatar?: string; content?: string; messageText?: string; createdAt?: string; timestamp?: string }) => {
+      const activeConversation = conversations.find(c => c.id === activeConvId);
+      const senderObj = activeConversation?.participants.find(p => p.id === msg.senderId) || {
+        id: msg.senderId,
+        fullName: msg.senderName || 'Người dùng',
+        avatarUrl: msg.senderAvatar || undefined
+      };
+
+      const normalizedMsg: ChatMessage = {
+        id: msg.id || Math.random().toString(),
+        senderId: msg.senderId,
+        sender: senderObj,
+        content: msg.content || msg.messageText || '',
+        createdAt: msg.createdAt || msg.timestamp || new Date().toISOString()
+      };
+
+      setMessages(prev => {
+        if (prev.some(m => m.id === normalizedMsg.id)) return prev;
+        return [...prev, normalizedMsg];
+      });
       scrollToBottom();
     });
 
     return () => {
-      socket.emit('leaveConversation', activeConvId);
-      socket.off('newMessage');
+      socket.emit('leaveChatRoom', activeConvId);
+      socket.off('chat:message');
     };
-  }, [activeConvId]);
+  }, [activeConvId, conversations]);
 
   const scrollToBottom = () => {
     setTimeout(() => {
@@ -81,13 +102,11 @@ export default function ChatPage() {
 
     const socket = socketClient.getChatSocket();
     
-    // In a real implementation, you might want to call REST API or just emit via socket
     socket.emit('sendMessage', {
-      conversationId: activeConvId,
+      roomId: activeConvId,
       content: inputText,
     });
 
-    // Optimistic UI update (optional, usually backend responds via 'newMessage' event)
     setInputText('');
   };
 

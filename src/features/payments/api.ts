@@ -17,4 +17,24 @@ export const paymentsApi = {
   
   getMyPayouts: () => 
     api.get<ApiResponse<PayoutRequest[]>>('/payments/payouts'),
+
+  getAdminStats: () =>
+    api.get<ApiResponse<{
+      totalUsers: number;
+      totalCommunities: number;
+      totalTournaments: number;
+      totalAmountProcessed: string;
+      totalPlatformFee: string;
+      totalPayoutProcessed: string;
+    }>>('/payments/admin/stats'),
+
+  getAdminPayouts: () =>
+    api.get<ApiResponse<PayoutRequest[]>>('/payments/admin/payouts'),
+
+  reviewPayout: (id: string, data: { status: 'APPROVED' | 'REJECTED'; transactionProofUrl?: string; note?: string }) =>
+    api.patch<ApiResponse<PayoutRequest>>(`/payments/admin/payouts/${id}/review`, data),
+
+  getAdminTransactions: () =>
+    api.get<ApiResponse<Payment[]>>('/payments/admin/transactions'),
 };
+

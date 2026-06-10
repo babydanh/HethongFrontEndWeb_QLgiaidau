@@ -14,8 +14,9 @@ export const communitiesApi = {
   getCommunityById: (id: string) => api.get<ApiResponse<Community>>(`/communities/${id}`),
   createCommunity: <T>(data: T) => api.post('/communities', data),
   updateCommunity: <T>(id: string, data: T) => api.patch(`/communities/${id}`, data),
-  reviewCommunity: (id: string, data: { status: 'APPROVED' | 'REJECTED', reviewNotes?: string }) => api.patch(`/communities/${id}/review`, data),
+  reviewCommunity: (id: string, data: { status: 'APPROVED' | 'REJECTED', rejectedReason?: string }) => api.patch(`/communities/${id}/review`, data),
   deleteCommunity: (id: string) => api.delete(`/communities/${id}`),
+
   
   // Members
   getMembers: (id: string, params?: Record<string, unknown>) => api.get(`/communities/${id}/members`, { params }),

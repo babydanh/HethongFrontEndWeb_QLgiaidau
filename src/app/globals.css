@@ -1,0 +1,38 @@
+@import "tailwindcss";
+@config "../../tailwind.config.ts";
+
+:root {
+    --color-background: #f8fafc; /* slate-50 */
+    --color-foreground: #1e293b; /* slate-800 */
+
+    --color-primary: #2563eb; /* blue-600 */
+    --color-primary-foreground: #ffffff;
+    --color-primary-light: #dbeafe; /* blue-100 */
+
+    --color-secondary: #0ea5e9; /* sky-500 */
+
+    --color-card: #ffffff;
+    --color-card-foreground: #1e293b; /* slate-800 */
+
+    --color-muted: #64748b; /* slate-500 */
+    --color-muted-foreground: #94a3b8; /* slate-400 */
+
+    --color-accent: #dbeafe; /* blue-100 */
+    --color-accent-foreground: #1e40af; /* blue-800 */
+
+    --color-border: #e2e8f0; /* slate-200 */
+    --color-input: #e2e8f0; /* slate-200 */
+    --color-ring: #2563eb; /* blue-600 */
+
+    --color-success: #16a34a; /* green-600 */
+    --color-warning: #d97706; /* amber-600 */
+    --color-danger: #dc2626; /* red-600 */
+
+    --radius: 0.5rem; /* rounded-lg */
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+}

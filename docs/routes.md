@@ -311,3 +311,40 @@ app/
     ├── disputes/page.tsx                 # /admin/disputes 🔴
     └── payouts/page.tsx                  # /admin/payouts 🔴
 ```
+
+---
+
+## 6. PHASE 5 ROUTES — Trang mới cần xây
+
+### 6.1 Đăng Ký Giải Qua Invite Link
+| Thuộc tính | Giá trị |
+|------------|---------|
+| **Status** | 🔴 TODO |
+| **URL** | `/tournaments/[id]/register?invite={code}` |
+| **File** | `app/(public)/tournaments/[id]/register/page.tsx` |
+| **Rendering** | `CSR` |
+| **APIs** | `POST /tournaments/:id/validate-invite`, `POST /tournaments/:id/register` |
+| **Flow** | Validate invite → Check auth → Form đăng ký → Thanh toán (nếu có phí) |
+
+### 6.2 Join Team (Doubles Partner)
+| Thuộc tính | Giá trị |
+|------------|---------|
+| **Status** | 🔴 TODO |
+| **URL** | `/tournaments/[id]/join-team?pid={participantId}&token={teamInviteToken}` |
+| **File** | `app/(public)/tournaments/[id]/join-team/page.tsx` |
+| **Rendering** | `CSR` |
+| **APIs** | `GET /tournaments/:id`, `POST /tournaments/:id/join-team` |
+| **Flow** | Check auth → Validate token → Check giới tính → Join team → Thanh toán |
+
+### 6.3 Cấu trúc File Route Bổ Sung (Phase 5)
+
+```text
+app/
+├── (public)/
+│   └── tournaments/
+│       ├── [id]/
+│       │   ├── register/page.tsx        # /tournaments/:id/register 🔴 (invite link)
+│       │   └── join-team/page.tsx        # /tournaments/:id/join-team 🔴 (doubles partner)
+│       └── page.tsx                      # /tournaments 🟡 (nâng cấp filter + card)
+```
+

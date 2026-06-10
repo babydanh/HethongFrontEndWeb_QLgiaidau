@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+
+<html lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>TournaHub - Cộng đồng</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-container-high": "#e6e8ea",
+                      "on-error-container": "#93000a",
+                      "tertiary": "#46566c",
+                      "secondary-fixed-dim": "#89ceff",
+                      "secondary-fixed": "#c9e6ff",
+                      "primary-container": "#2563eb",
+                      "error": "#ba1a1a",
+                      "tertiary-fixed": "#d3e4fe",
+                      "on-tertiary-container": "#e9f0ff",
+                      "on-error": "#ffffff",
+                      "on-surface-variant": "#434655",
+                      "secondary": "#006591",
+                      "on-background": "#191c1e",
+                      "surface-container": "#eceef0",
+                      "surface-bright": "#f7f9fb",
+                      "on-tertiary-fixed-variant": "#38485d",
+                      "inverse-primary": "#b4c5ff",
+                      "inverse-on-surface": "#eff1f3",
+                      "background": "#f7f9fb",
+                      "surface-dim": "#d8dadc",
+                      "on-tertiary": "#ffffff",
+                      "tertiary-fixed-dim": "#b7c8e1",
+                      "on-secondary-container": "#004666",
+                      "surface-tint": "#0053db",
+                      "outline-variant": "#c3c6d7",
+                      "secondary-container": "#39b8fd",
+                      "primary": "#004ac6",
+                      "outline": "#737686",
+                      "on-primary": "#ffffff",
+                      "on-primary-fixed": "#00174b",
+                      "surface-variant": "#e0e3e5",
+                      "on-secondary": "#ffffff",
+                      "primary-fixed": "#dbe1ff",
+                      "surface": "#f7f9fb",
+                      "primary-fixed-dim": "#b4c5ff",
+                      "on-secondary-fixed-variant": "#004c6e",
+                      "on-surface": "#191c1e",
+                      "on-secondary-fixed": "#001e2f",
+                      "on-primary-fixed-variant": "#003ea8",
+                      "surface-container-highest": "#e0e3e5",
+                      "error-container": "#ffdad6",
+                      "surface-container-low": "#f2f4f6",
+                      "on-primary-container": "#eeefff",
+                      "tertiary-container": "#5e6e85",
+                      "on-tertiary-fixed": "#0b1c30",
+                      "surface-container-lowest": "#ffffff",
+                      "inverse-surface": "#2d3133"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "margin-desktop": "32px",
+                      "gutter": "24px",
+                      "container-max-width": "1200px",
+                      "unit": "4px",
+                      "section-padding": "64px",
+                      "margin-mobile": "16px"
+              },
+              "fontFamily": {
+                      "display": ["Inter"],
+                      "label-sm": ["Inter"],
+                      "headline-md": ["Inter"],
+                      "headline-lg-mobile": ["Inter"],
+                      "body-md": ["Inter"],
+                      "headline-lg": ["Inter"],
+                      "body-sm": ["Inter"],
+                      "label-md": ["Inter"],
+                      "body-lg": ["Inter"]
+              },
+              "fontSize": {
+                      "display": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                      "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                      "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                      "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "headline-lg": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                      "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                      "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-background text-on-surface min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<header class="bg-surface-container-lowest full-width top-0 sticky z-50 border-b border-outline-variant shadow-sm">
+<div class="flex justify-between items-center w-full px-margin-desktop max-w-container-max-width mx-auto h-16">
+<div class="flex items-center gap-8">
+<a class="font-display text-display font-bold text-primary" href="#">TournaHub</a>
+<nav class="hidden md:flex gap-6">
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors py-5" href="#">Trang chủ</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors py-5" href="#">Giải đấu</a>
+<a class="font-label-md text-label-md text-primary font-bold border-b-2 border-primary pb-1 py-5" href="#">Cộng đồng</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors py-5" href="#">Xếp hạng</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="hidden md:flex font-label-md text-label-md bg-primary text-on-primary px-4 py-2 rounded-lg hover:bg-surface-tint transition-all items-center gap-2">
+                    Tạo giải đấu
+                </button>
+<button class="text-on-surface-variant hover:bg-surface-container rounded-full p-2 transition-all w-10 h-10 flex items-center justify-center">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:bg-surface-container rounded-full p-2 transition-all w-10 h-10 flex items-center justify-center">
+<span class="material-symbols-outlined">mail</span>
+</button>
+<button class="rounded-full w-10 h-10 overflow-hidden border border-outline-variant ml-2">
+<img alt="User Avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCRbZVvoQceGMs08NLcYSoNb7KKH_qqeeWoovN83ijfO3QicrmAl1b39LxXp8MOrfLT8Qgg--V6kvzvrJzy13KQ0Bkd6-j0_RjVuZfj2I2-VGH7o0j-0vDbjWUPlv9e4qh4vsi9C6-rA_YyqOC8VBrF00sYIb048FsQ614JP6wrOEfMkw1RAlrltzTK7fsBk0sPZCilAe-zPa7PlXA26mWCBEV83ICg5er9D0965bKbhtqa5WxtiqXV94i6cCxfPEnpQH3_Sz3t92Oh"/>
+</button>
+</div>
+</div>
+</header>
+<!-- Main Content -->
+<main class="flex-grow w-full max-w-container-max-width mx-auto px-margin-mobile md:px-margin-desktop py-8 md:py-12">
+<!-- Header Section -->
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+<div>
+<h1 class="font-headline-lg text-headline-lg md:font-display md:text-display text-on-surface mb-2">Cộng đồng</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Khám phá và tham gia các cộng đồng thể thao tại Việt Nam.</p>
+</div>
+<button class="bg-primary text-on-primary font-label-md text-label-md px-5 py-2.5 rounded-lg hover:bg-surface-tint transition-all shadow-sm flex items-center gap-2">
+<span class="material-symbols-outlined" style="font-size: 20px;">add</span>
+                Tạo cộng đồng
+            </button>
+</div>
+<!-- Tabs -->
+<div class="flex border-b border-outline-variant mb-6">
+<button class="font-label-md text-label-md text-primary border-b-2 border-primary pb-3 px-4 -mb-[1px]">Tất cả</button>
+<button class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface pb-3 px-4 transition-colors">Của tôi</button>
+</div>
+<!-- Filter Bar -->
+<div class="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant shadow-sm mb-6 flex flex-col md:flex-row gap-4">
+<div class="relative flex-grow">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="w-full pl-10 pr-4 py-2 border border-outline-variant rounded-lg bg-surface focus:ring-2 focus:ring-primary focus:border-primary font-body-sm text-body-sm text-on-surface outline-none transition-all" placeholder="Tìm kiếm cộng đồng..." type="text"/>
+</div>
+<div class="flex gap-4 md:w-auto w-full">
+<select class="w-full md:w-48 px-4 py-2 border border-outline-variant rounded-lg bg-surface font-body-sm text-body-sm text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none appearance-none">
+<option value="">Tất cả môn thể thao</option>
+<option value="football">Bóng đá</option>
+<option value="tennis">Tennis</option>
+<option value="badminton">Cầu lông</option>
+</select>
+<select class="w-full md:w-48 px-4 py-2 border border-outline-variant rounded-lg bg-surface font-body-sm text-body-sm text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none appearance-none">
+<option value="popular">Phổ biến nhất</option>
+<option value="newest">Mới nhất</option>
+<option value="active">Hoạt động sôi nổi</option>
+</select>
+</div>
+</div>
+<!-- Community List -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm overflow-hidden flex flex-col">
+<!-- Item 1 -->
+<div class="p-6 border-b border-outline-variant hover:bg-surface-bright transition-colors flex flex-col md:flex-row items-start md:items-center gap-4">
+<img alt="Football Community Logo" class="w-14 h-14 rounded-full object-cover border border-outline-variant shrink-0" data-alt="A clean, modern logo for a local football community club featuring a stylized soccer ball on a green and white background. Professional sports branding style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD2VRy4FH0f08-AE9E1aVdJ3x95GtAJHG5sM1qV3UwIvTeBY-Ps8L6GV_TqeJ-2OIKPXo-4Sru4FyUPX28yC17CTPV1uEt147EN2lc-QW6GtrgdxjNqDtGKcmbykfR1_KLIh8Em309hcueizcN5x3ItbP-ir9FSH942-oPlreuQN0SSEitMHUOc-81mykCU0X0GAvpBZE3P3htanCAtQp0UVbIJmoahD5vvr4lcd_QDyoFPUETk1z-GkSwzh-bVK0gj5YKU69zIbFtO"/>
+<div class="flex-grow">
+<div class="flex items-center gap-2 mb-1">
+<h3 class="font-headline-md text-headline-md text-on-surface">Cộng đồng Bóng đá Sài Gòn</h3>
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1; font-size: 16px;">verified</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-2">Nơi giao lưu, học hỏi và tổ chức các giải đấu phong trào cho những người đam mê bóng đá tại khu vực TPHCM.</p>
+<div class="flex flex-wrap items-center gap-3">
+<span class="inline-flex items-center px-2 py-1 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm">
+                            Bóng đá
+                        </span>
+<span class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined" style="font-size: 16px;">group</span> 2,540 thành viên
+                        </span>
+<span class="text-outline-variant">•</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined" style="font-size: 16px;">emoji_events</span> 12 giải đấu
+                        </span>
+</div>
+</div>
+<div class="mt-4 md:mt-0 md:ml-4 shrink-0 w-full md:w-auto">
+<button class="w-full md:w-auto font-label-md text-label-md border border-outline-variant bg-surface text-on-surface px-6 py-2 rounded-lg hover:bg-surface-container transition-all">
+                        Tham gia
+                    </button>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="p-6 border-b border-outline-variant hover:bg-surface-bright transition-colors flex flex-col md:flex-row items-start md:items-center gap-4">
+<img alt="Tennis Community Logo" class="w-14 h-14 rounded-full object-cover border border-outline-variant shrink-0" data-alt="A modern minimalist logo for a tennis club featuring crossed rackets in subtle blue and yellow tones. High quality sports team identity design." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAPiYVVDcJRqtQ_-BPg_-6ntRbqGa_Jd07lAtTZ500pItNfH0CISSE3q4USPzIbHQCtsyBT0e3C6utcj565m6LQm6IKgUxE8dYlx64cw8lQ3Q2pVoSOsnyQ4IAMI6Y3aAkiX6-D1cZMy8Ip7n4qk9QV3CUMhXeyxIpyqL63xK7rSaneQwlHQ0WFWpxDMO25wGJRiF8_f8clm8vq8sWz7CQe-s4sQp-irvUIWzBoXlOzZfeuR8gYL8bSopIPAY1ym0LG8a5kRZPhZ2Xr"/>
+<div class="flex-grow">
+<div class="flex items-center gap-2 mb-1">
+<h3 class="font-headline-md text-headline-md text-on-surface">Vietnam Tennis Association</h3>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-2">Cộng đồng người chơi tennis lớn nhất Việt Nam. Chia sẻ kỹ thuật, tìm đối tác và tổ chức giải đấu thường xuyên.</p>
+<div class="flex flex-wrap items-center gap-3">
+<span class="inline-flex items-center px-2 py-1 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm">
+                            Tennis
+                        </span>
+<span class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined" style="font-size: 16px;">group</span> 1,205 thành viên
+                        </span>
+<span class="text-outline-variant">•</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined" style="font-size: 16px;">emoji_events</span> 8 giải đấu
+                        </span>
+</div>
+</div>
+<div class="mt-4 md:mt-0 md:ml-4 shrink-0 w-full md:w-auto">
+<button class="w-full md:w-auto font-label-md text-label-md border border-outline-variant bg-surface text-on-surface px-6 py-2 rounded-lg hover:bg-surface-container transition-all">
+                        Tham gia
+                    </button>
+</div>
+</div>
+<!-- Item 3 -->
+<div class="p-6 hover:bg-surface-bright transition-colors flex flex-col md:flex-row items-start md:items-center gap-4">
+<img alt="Badminton Community Logo" class="w-14 h-14 rounded-full object-cover border border-outline-variant shrink-0" data-alt="A dynamic logo design for a badminton club, showing a stylized shuttlecock in motion with energetic orange and blue accents. Professional sporting vector aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAy8OnQkH5EWe4naJcGNv0me3h-iq6sV0UKWPbr5_c70fuCRGDLH6WAizjiJcflipIPjPbGLxuA1v8jAOVNmSe9IXYXZPtmdmC2uuHHlP0P49lWjzURgMvdJ8TYhwBUNKfXqWQgaW4L_LRYmZUUPGa0j8EKbbvxqR_ovDdlwKULfxEphpmxUTtt2cck5LTDS6wo7M4NGuXdMnH_tLENKLYj53ibpdhM2AYJoA2bccDtqJL0nKUc-OAJjGW9El3NdeHOntAsuTfFrzL3"/>
+<div class="flex-grow">
+<div class="flex items-center gap-2 mb-1">
+<h3 class="font-headline-md text-headline-md text-on-surface">Hội Cầu Lông Phong Trào Hà Nội</h3>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-2">Tập hợp những anh chị em đam mê cầu lông khu vực Hà Nội. Sinh hoạt thường xuyên vào các buổi tối trong tuần.</p>
+<div class="flex flex-wrap items-center gap-3">
+<span class="inline-flex items-center px-2 py-1 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm">
+                            Cầu lông
+                        </span>
+<span class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined" style="font-size: 16px;">group</span> 850 thành viên
+                        </span>
+<span class="text-outline-variant">•</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined" style="font-size: 16px;">emoji_events</span> 4 giải đấu
+                        </span>
+</div>
+</div>
+<div class="mt-4 md:mt-0 md:ml-4 shrink-0 w-full md:w-auto">
+<button class="w-full md:w-auto font-label-md text-label-md bg-primary text-on-primary px-6 py-2 rounded-lg hover:bg-surface-tint transition-all">
+                        Đã tham gia
+                    </button>
+</div>
+</div>
+</div>
+<!-- Pagination -->
+<div class="flex justify-center items-center mt-8 gap-2">
+<button class="w-10 h-10 flex items-center justify-center rounded-lg border border-outline-variant text-on-surface-variant hover:bg-surface-container transition-colors" disabled="">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-lg bg-primary text-on-primary font-label-md text-label-md">1</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-lg border border-outline-variant text-on-surface hover:bg-surface-container transition-colors font-label-md text-label-md">2</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-lg border border-outline-variant text-on-surface hover:bg-surface-container transition-colors font-label-md text-label-md">3</button>
+<span class="text-on-surface-variant">...</span>
+<button class="w-10 h-10 flex items-center justify-center rounded-lg border border-outline-variant text-on-surface hover:bg-surface-container transition-colors font-label-md text-label-md">12</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-lg border border-outline-variant text-on-surface-variant hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</main>
+<!-- Footer -->
+<footer class="bg-surface-container-lowest full-width bottom-0 border-t border-outline-variant mt-auto">
+<div class="flex flex-col md:flex-row justify-between items-center w-full py-8 px-margin-desktop max-w-container-max-width mx-auto gap-4">
+<div class="font-display text-headline-md font-bold text-primary">
+                TournaHub
+            </div>
+<div class="flex gap-6">
+<a class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Giới thiệu</a>
+<a class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Điều khoản</a>
+<a class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Chính sách</a>
+<a class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Liên hệ</a>
+</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant">
+                © 2026 TournaHub. All rights reserved.
+            </div>
+</div>
+</footer>
+</body></html>

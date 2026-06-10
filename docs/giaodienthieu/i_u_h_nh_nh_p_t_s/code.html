@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+
+<html class="light" lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Điều hành &amp; Nhập tỷ số - TournaHub</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+        }
+        @keyframes pulse-red {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(186, 26, 26, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(186, 26, 26, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(186, 26, 26, 0); }
+        }
+        .animate-pulse-red {
+            animation: pulse-red 2s infinite;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-high": "#e6e8ea",
+                        "on-background": "#191c1e",
+                        "secondary-fixed-dim": "#89ceff",
+                        "on-surface": "#191c1e",
+                        "surface-tint": "#0053db",
+                        "on-error-container": "#93000a",
+                        "surface-dim": "#d8dadc",
+                        "tertiary-fixed-dim": "#b7c8e1",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "on-tertiary-fixed": "#0b1c30",
+                        "on-error": "#ffffff",
+                        "inverse-surface": "#2d3133",
+                        "surface-container-low": "#f2f4f6",
+                        "secondary": "#006591",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "surface-container-highest": "#e0e3e5",
+                        "secondary-container": "#39b8fd",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-container": "#2563eb",
+                        "secondary-fixed": "#c9e6ff",
+                        "on-primary": "#ffffff",
+                        "on-surface-variant": "#434655",
+                        "surface-container": "#eceef0",
+                        "surface-bright": "#f7f9fb",
+                        "tertiary-container": "#5e6e85",
+                        "on-secondary-fixed-variant": "#004c6e",
+                        "surface": "#f7f9fb",
+                        "primary-fixed": "#dbe1ff",
+                        "outline": "#737686",
+                        "error": "#ba1a1a",
+                        "inverse-primary": "#b4c5ff",
+                        "tertiary": "#46566c",
+                        "on-secondary-container": "#004666",
+                        "on-primary-container": "#eeefff",
+                        "on-tertiary-container": "#e9f0ff",
+                        "tertiary-fixed": "#d3e4fe",
+                        "primary": "#004ac6",
+                        "inverse-on-surface": "#eff1f3",
+                        "error-container": "#ffdad6",
+                        "on-tertiary-fixed-variant": "#38485d",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary": "#ffffff",
+                        "on-secondary-fixed": "#001e2f",
+                        "surface-variant": "#e0e3e5",
+                        "on-primary-fixed": "#00174b",
+                        "background": "#f7f9fb",
+                        "outline-variant": "#c3c6d7"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "container-max-width": "1200px",
+                        "margin-desktop": "32px",
+                        "section-padding": "64px",
+                        "gutter": "24px",
+                        "margin-mobile": "16px"
+                    },
+                    "fontFamily": {
+                        "label-md": ["Inter"],
+                        "display": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "display": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                        "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                        "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "headline-lg": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-surface font-body-md min-h-screen">
+<!-- Top Navigation Bar -->
+<nav class="sticky top-0 z-50 flex justify-between items-center w-full px-margin-desktop max-w-container-max-width mx-auto bg-surface-container-lowest border-b border-outline-variant py-3 shadow-sm">
+<div class="flex items-center gap-8">
+<span class="text-headline-lg font-headline-lg font-bold text-primary">TournaHub</span>
+<div class="hidden md:flex gap-6">
+<a class="text-on-surface-variant font-label-md text-label-md hover:text-primary transition-colors" href="#">Trang chủ</a>
+<a class="text-primary font-bold border-b-2 border-primary pb-1" href="#">Giải đấu</a>
+<a class="text-on-surface-variant font-label-md text-label-md hover:text-primary transition-colors" href="#">Cộng đồng</a>
+<a class="text-on-surface-variant font-label-md text-label-md hover:text-primary transition-colors" href="#">Xếp hạng</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary">notifications</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary">chat</button>
+<button class="material-symbols-outlined text-primary" data-weight="fill">account_circle</button>
+</div>
+</nav>
+<main class="max-w-container-max-width mx-auto px-margin-mobile md:px-margin-desktop py-8">
+<!-- Header & Filters -->
+<header class="mb-8">
+<h1 class="text-headline-lg font-headline-lg text-on-surface mb-6">Điều hành &amp; Nhập tỷ số</h1>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 p-6 bg-white rounded-xl border border-outline-variant shadow-sm">
+<div class="flex flex-col gap-2">
+<label class="text-label-md font-label-md text-on-surface-variant">Giải đấu</label>
+<select class="form-select rounded-lg border-outline-variant focus:ring-primary focus:border-primary bg-surface-bright">
+<option>Vietnam Open Pickleball 2024</option>
+<option>Hanoi Community Cup</option>
+</select>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-label-md font-label-md text-on-surface-variant">Vòng đấu</label>
+<select class="form-select rounded-lg border-outline-variant focus:ring-primary focus:border-primary bg-surface-bright">
+<option>Vòng Bảng</option>
+<option>Bán Kết</option>
+<option>Chung Kết</option>
+</select>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-label-md font-label-md text-on-surface-variant">Sân đấu</label>
+<select class="form-select rounded-lg border-outline-variant focus:ring-primary focus:border-primary bg-surface-bright">
+<option>Tất cả các sân</option>
+<option>Sân số 1</option>
+<option>Sân số 2</option>
+<option>Sân số 3</option>
+</select>
+</div>
+</div>
+</header>
+<!-- Match List & Input Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+<!-- Side Match List (Desktop) / Scroll List (Mobile) -->
+<aside class="lg:col-span-4 flex flex-col gap-4">
+<div class="flex items-center justify-between mb-2">
+<h2 class="text-headline-md font-headline-md">Trận đấu</h2>
+<span class="bg-primary-fixed text-on-primary-fixed text-label-sm px-2 py-1 rounded-full">4 LIVE</span>
+</div>
+<!-- Match Card: Active -->
+<div class="bg-white border-2 border-primary rounded-xl p-5 shadow-md relative overflow-hidden group cursor-pointer">
+<div class="absolute top-0 right-0 p-2">
+<span class="flex items-center gap-1.5 text-error font-bold text-label-sm">
+<span class="w-2 h-2 rounded-full bg-error animate-pulse-red"></span>
+                            Đang thi đấu (LIVE)
+                        </span>
+</div>
+<div class="text-label-sm text-outline mb-2">ID: #MS204 • Sân số 2</div>
+<div class="flex flex-col gap-3">
+<div class="flex justify-between items-center">
+<span class="font-bold text-body-md">Trần Văn A &amp; Nguyễn B</span>
+<span class="text-headline-md font-headline-md text-primary">1</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="font-bold text-body-md">Lê Minh C &amp; Phạm D</span>
+<span class="text-headline-md font-headline-md text-primary">0</span>
+</div>
+</div>
+<div class="mt-4 pt-4 border-t border-outline-variant flex justify-between text-label-sm text-on-surface-variant">
+<span>Bắt đầu: 14:30</span>
+<span class="italic">Set 2: 4-2</span>
+</div>
+</div>
+<!-- Match Card: Upcoming -->
+<div class="bg-white border border-outline-variant rounded-xl p-5 shadow-sm hover:border-primary transition-colors cursor-pointer">
+<div class="flex justify-between items-center mb-2">
+<span class="text-label-sm text-outline">ID: #MS205 • Sân số 3</span>
+<span class="bg-surface-container-high text-on-surface-variant text-label-sm px-2 py-1 rounded-full">Chờ thi đấu</span>
+</div>
+<div class="flex flex-col gap-3 opacity-70">
+<div class="flex justify-between items-center">
+<span class="font-bold text-body-md">Hoàng Hải &amp; Quốc Bảo</span>
+<span class="text-headline-md font-headline-md">0</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="font-bold text-body-md">Minh Quân &amp; Đức Tài</span>
+<span class="text-headline-md font-headline-md">0</span>
+</div>
+</div>
+<div class="mt-4 pt-4 border-t border-outline-variant text-label-sm text-on-surface-variant">
+<span>Dự kiến: 15:15</span>
+</div>
+</div>
+</aside>
+<!-- Main Score Input Area -->
+<section class="lg:col-span-8">
+<div class="bg-white border border-outline-variant rounded-xl shadow-sm overflow-hidden flex flex-col h-full">
+<!-- Detail Header -->
+<div class="bg-surface-container-low p-6 border-b border-outline-variant flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+<div>
+<div class="flex items-center gap-2 mb-1">
+<span class="bg-primary-container text-on-primary-container px-2 py-0.5 rounded text-label-sm">Sân số 2</span>
+<span class="text-label-md font-label-md text-on-surface-variant">Match ID: #MS204</span>
+</div>
+<h3 class="text-headline-md font-headline-md">Trận đấu Bán kết 1</h3>
+</div>
+<div class="flex items-center gap-2 bg-error-container text-on-error-container px-4 py-2 rounded-lg font-bold">
+<span class="material-symbols-outlined text-[20px]">timer</span>
+<span class="timer-display">42:15</span>
+</div>
+</div>
+<!-- Score Entry Content -->
+<div class="p-6 md:p-10 flex-grow">
+<div class="grid grid-cols-1 gap-12">
+<!-- Team A Row -->
+<div class="flex flex-col md:flex-row md:items-center gap-6">
+<div class="md:w-1/3">
+<div class="text-primary font-bold text-label-sm uppercase tracking-wider mb-1">Đội A</div>
+<h4 class="text-headline-md font-bold mb-1">Trần Văn A</h4>
+<p class="text-on-surface-variant text-body-sm">Nguyễn Văn B</p>
+</div>
+<div class="flex-grow grid grid-cols-3 gap-3 md:gap-6">
+<!-- Set 1 -->
+<div class="flex flex-col gap-2 items-center">
+<label class="text-label-sm font-label-sm text-outline">Set 1</label>
+<div class="flex items-center gap-1">
+<button class="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface-variant active:scale-90 transition-all shadow-sm">-</button>
+<input class="w-12 h-12 md:w-16 md:h-16 text-center text-headline-md font-bold bg-white border-2 border-primary rounded-xl focus:ring-0" type="number" value="11"/>
+<button class="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-lg bg-primary-container text-on-primary-container hover:bg-primary active:scale-90 transition-all shadow-sm">+</button>
+</div>
+</div>
+<!-- Set 2 -->
+<div class="flex flex-col gap-2 items-center">
+<label class="text-label-sm font-label-sm text-outline">Set 2</label>
+<div class="flex items-center gap-1">
+<button class="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface-variant active:scale-90 transition-all shadow-sm">-</button>
+<input class="w-12 h-12 md:w-16 md:h-16 text-center text-headline-md font-bold bg-white border-2 border-primary rounded-xl focus:ring-0" type="number" value="4"/>
+<button class="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-lg bg-primary-container text-on-primary-container hover:bg-primary active:scale-90 transition-all shadow-sm">+</button>
+</div>
+</div>
+<!-- Set 3 -->
+<div class="flex flex-col gap-2 items-center">
+<label class="text-label-sm font-label-sm text-outline">Set 3</label>
+<div class="flex items-center gap-1">
+<button class="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface-variant active:scale-90 transition-all shadow-sm">-</button>
+<input class="w-12 h-12 md:w-16 md:h-16 text-center text-headline-md font-bold bg-surface-container-low border border-outline-variant rounded-xl focus:ring-0" type="number" value="0"/>
+<button class="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-lg bg-surface-container text-on-surface-variant hover:bg-surface-container-high active:scale-90 transition-all shadow-sm">+</button>
+</div>
+</div>
+</div>
+</div>
+<div class="h-px bg-outline-variant w-full"></div>
+<!-- Team B Row -->
+<div class="flex flex-col md:flex-row md:items-center gap-6">
+<div class="md:w-1/3">
+<div class="text-secondary font-bold text-label-sm uppercase tracking-wider mb-1">Đội B</div>
+<h4 class="text-headline-md font-bold mb-1">Lê Minh C</h4>
+<p class="text-on-surface-variant text-body-sm">Phạm Thành D</p>
+</div>
+<div class="flex-grow grid grid-cols-3 gap-3 md:gap-6">
+<!-- Set 1 -->
+<div class="flex flex-col gap-2 items-center">
+<label class="text-label-sm font-label-sm text-outline">Set 1</label>
+<div class="flex items-center gap-1">
+<button class="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface-variant active:scale-90 transition-all shadow-sm">-</button>
+<input class="w-12 h-12 md:w-16 md:h-16 text-center text-headline-md font-bold bg-white border-2 border-outline rounded-xl focus:ring-0" type="number" value="8"/>
+<button class="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-lg bg-primary-container text-on-primary-container hover:bg-primary active:scale-90 transition-all shadow-sm">+</button>
+</div>
+</div>
+<!-- Set 2 -->
+<div class="flex flex-col gap-2 items-center">
+<label class="text-label-sm font-label-sm text-outline">Set 2</label>
+<div class="flex items-center gap-1">
+<button class="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface-variant active:scale-90 transition-all shadow-sm">-</button>
+<input class="w-12 h-12 md:w-16 md:h-16 text-center text-headline-md font-bold bg-white border-2 border-outline rounded-xl focus:ring-0" type="number" value="2"/>
+<button class="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-lg bg-primary-container text-on-primary-container hover:bg-primary active:scale-90 transition-all shadow-sm">+</button>
+</div>
+</div>
+<!-- Set 3 -->
+<div class="flex flex-col gap-2 items-center">
+<label class="text-label-sm font-label-sm text-outline">Set 3</label>
+<div class="flex items-center gap-1">
+<button class="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface-variant active:scale-90 transition-all shadow-sm">-</button>
+<input class="w-12 h-12 md:w-16 md:h-16 text-center text-headline-md font-bold bg-surface-container-low border border-outline-variant rounded-xl focus:ring-0" type="number" value="0"/>
+<button class="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-lg bg-surface-container text-on-surface-variant hover:bg-surface-container-high active:scale-90 transition-all shadow-sm">+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Action Area -->
+<div class="mt-12 flex flex-col sm:flex-row gap-4">
+<button class="flex-1 flex items-center justify-center gap-2 py-4 bg-primary text-white font-bold rounded-xl hover:bg-primary-container transition-colors shadow-lg active:scale-[0.98]">
+<span class="material-symbols-outlined" data-weight="fill">sync</span>
+                                Cập nhật trực tiếp (Live Update)
+                            </button>
+<button class="flex-1 flex items-center justify-center gap-2 py-4 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition-colors shadow-lg active:scale-[0.98]" onclick="document.getElementById('confirmation-modal').classList.remove('hidden')">
+<span class="material-symbols-outlined">check_circle</span>
+                                Hoàn thành trận đấu &amp; Chốt kết quả
+                            </button>
+</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- Confirmation Modal (Hidden by default) -->
+<div class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4" id="confirmation-modal">
+<div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="document.getElementById('confirmation-modal').classList.add('hidden')"></div>
+<div class="bg-white rounded-2xl p-8 max-w-md w-full relative z-10 shadow-2xl animate-in zoom-in-95 duration-200">
+<h3 class="text-headline-md font-bold mb-4">Xác nhận kết quả?</h3>
+<p class="text-on-surface-variant mb-8">Hành động này sẽ chốt tỷ số trận đấu và cập nhật lên bảng xếp hạng giải đấu. Bạn không thể chỉnh sửa sau khi đã chốt.</p>
+<div class="flex gap-4">
+<button class="flex-1 py-3 border border-outline-variant rounded-xl font-bold text-on-surface hover:bg-surface-container-low transition-colors" onclick="document.getElementById('confirmation-modal').classList.add('hidden')">
+                    Hủy bỏ
+                </button>
+<button class="flex-1 py-3 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-colors">
+                    Chốt kết quả
+                </button>
+</div>
+</div>
+</div>
+<!-- Footer -->
+<footer class="w-full py-section-padding px-margin-desktop max-w-container-max-width mx-auto flex flex-col md:flex-row justify-between items-center border-t border-outline-variant mt-12 bg-surface-container-highest">
+<div class="mb-4 md:mb-0">
+<span class="text-headline-md font-headline-md font-bold text-primary">TournaHub</span>
+<p class="text-body-sm text-on-surface-variant mt-2">© 2024 TournaHub. All rights reserved.</p>
+</div>
+<div class="flex gap-6 text-label-sm font-label-sm text-on-surface-variant">
+<a class="hover:text-primary transition-colors" href="#">Về chúng tôi</a>
+<a class="hover:text-primary transition-colors" href="#">Điều khoản sử dụng</a>
+<a class="hover:text-primary transition-colors" href="#">Chính sách bảo mật</a>
+<a class="hover:text-primary transition-colors" href="#">Liên hệ</a>
+</div>
+</footer>
+<script>
+        // Micro-interactions for score adjustments
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const isPlus = this.innerText === '+';
+                const isMinus = this.innerText === '-';
+                if (isPlus || isMinus) {
+                    const input = this.parentElement.querySelector('input');
+                    let val = parseInt(input.value) || 0;
+                    if (isPlus) val++;
+                    if (isMinus && val > 0) val--;
+                    input.value = val;
+                }
+            });
+        });
+
+        // Simple Timer Logic
+        let seconds = 2535; // 42:15
+        const timerDisplay = document.querySelector('.timer-display');
+        setInterval(() => {
+            seconds++;
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            timerDisplay.innerText = `${mins}:${secs.toString().padStart(2, '0')}`;
+        }, 1000);
+    </script>
+</body></html>

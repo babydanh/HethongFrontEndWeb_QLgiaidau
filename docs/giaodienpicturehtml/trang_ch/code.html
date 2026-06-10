@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+
+<html lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>TournaHub - Trang chủ</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-container": "#39b8fd",
+                        "primary": "#004ac6",
+                        "surface-tint": "#0053db",
+                        "surface-dim": "#d8dadc",
+                        "outline": "#737686",
+                        "tertiary-fixed": "#d3e4fe",
+                        "on-error-container": "#93000a",
+                        "on-surface": "#191c1e",
+                        "inverse-surface": "#2d3133",
+                        "tertiary": "#46566c",
+                        "surface": "#f7f9fb",
+                        "surface-variant": "#e0e3e5",
+                        "surface-container-low": "#f2f4f6",
+                        "secondary-fixed-dim": "#89ceff",
+                        "on-primary-fixed": "#00174b",
+                        "secondary-fixed": "#c9e6ff",
+                        "inverse-on-surface": "#eff1f3",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "on-secondary-fixed": "#001e2f",
+                        "background": "#f7f9fb",
+                        "on-tertiary-container": "#e9f0ff",
+                        "surface-container-high": "#e6e8ea",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-bright": "#f7f9fb",
+                        "on-secondary-fixed-variant": "#004c6e",
+                        "on-secondary-container": "#004666",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "error-container": "#ffdad6",
+                        "tertiary-container": "#5e6e85",
+                        "surface-container-highest": "#e0e3e5",
+                        "primary-fixed": "#dbe1ff",
+                        "on-background": "#191c1e",
+                        "primary-container": "#2563eb",
+                        "on-tertiary-fixed-variant": "#38485d",
+                        "inverse-primary": "#b4c5ff",
+                        "on-primary": "#ffffff",
+                        "on-tertiary-fixed": "#0b1c30",
+                        "on-secondary": "#ffffff",
+                        "outline-variant": "#c3c6d7",
+                        "tertiary-fixed-dim": "#b7c8e1",
+                        "secondary": "#006591",
+                        "on-primary-container": "#eeefff",
+                        "on-surface-variant": "#434655",
+                        "error": "#ba1a1a",
+                        "on-error": "#ffffff",
+                        "surface-container": "#eceef0"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "24px",
+                        "unit": "4px",
+                        "margin-desktop": "32px",
+                        "margin-mobile": "16px",
+                        "container-max-width": "1200px",
+                        "section-padding": "64px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "label-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "display": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "headline-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "display": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .card-shadow {
+            box-shadow: 0px 1px 3px rgba(15, 23, 42, 0.05);
+        }
+    </style>
+</head>
+<body class="bg-surface font-body-md text-on-background text-body-md antialiased selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopNavBar -->
+<nav class="bg-surface-container-lowest border-b border-outline-variant shadow-sm w-full top-0 sticky z-50">
+<div class="flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop max-w-container-max-width mx-auto h-16">
+<div class="flex items-center gap-8">
+<a class="font-display text-display font-bold text-primary" href="#">TournaHub</a>
+<div class="hidden md:flex gap-6">
+<a class="text-primary font-bold border-b-2 border-primary pb-1 font-label-md text-label-md" href="#">Trang chủ</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors font-label-md text-label-md" href="#">Giải đấu</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors font-label-md text-label-md" href="#">Cộng đồng</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors font-label-md text-label-md" href="#">Xếp hạng</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="hidden md:flex bg-primary text-on-primary hover:bg-surface-tint rounded-lg transition-all font-label-md text-label-md px-4 py-2 items-center gap-2">
+<span class="material-symbols-outlined" style="font-size: 20px;">add</span>
+                    Tạo giải đấu
+                </button>
+<div class="flex items-center gap-2">
+<button class="text-on-surface-variant hover:bg-surface-container rounded-lg p-2 transition-all">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:bg-surface-container rounded-lg p-2 transition-all">
+<span class="material-symbols-outlined">mail</span>
+</button>
+<img alt="User Avatar" class="w-8 h-8 rounded-full border border-outline-variant ml-2 cursor-pointer hover:ring-2 hover:ring-primary hover:ring-offset-2 transition-all" data-alt="A close up portrait photo of a young man smiling lightly, looking straight into the camera. The background is a clean, modern blurred light-mode white environment. The lighting is soft and natural, emphasizing the professional and community-driven aesthetic. He looks friendly and approachable." src="https://lh3.googleusercontent.com/aida-public/AB6AXuATCLEMpzIqQRDa7k6tMOuKlW2FIbc0_yoFWFm2D2U1AMfiaIiN6LimLWqj1sZs3Ka9KS_UMdEizmxOWnu95kCF7ZwoZIYuVpdfvNwHs3998n0m5UNBPMxRsg6H7qHmY5bF13zEzfAagiVnlt5BUHombgPjHMtLC1FnEjeRCsr7sBQrSt4EMZgWyNnrGCXwvSIu2Za8tr8oc93PSm1laLnswT3bPcvrXto43skrcB2Qq_sCPNfxEElxS4a4yEkygzmsA8KRENnD9_yQ"/>
+</div>
+</div>
+</div>
+</nav>
+<!-- Main Content -->
+<main class="max-w-container-max-width mx-auto px-margin-mobile md:px-margin-desktop py-8 grid grid-cols-1 md:grid-cols-12 gap-gutter">
+<!-- Left Column (8/12) -->
+<div class="col-span-1 md:col-span-8 flex flex-col gap-8">
+<!-- Section 1: Giải đấu sắp diễn ra -->
+<section class="flex flex-col gap-4">
+<div class="flex justify-between items-end">
+<h2 class="font-headline-md text-headline-md text-on-surface">Giải đấu sắp diễn ra</h2>
+<a class="font-label-sm text-label-sm text-primary hover:underline flex items-center gap-1" href="#">
+                        Xem tất cả <span class="material-symbols-outlined" style="font-size: 16px;">arrow_forward</span>
+</a>
+</div>
+<div class="flex overflow-x-auto gap-4 pb-4 hide-scrollbar -mx-margin-mobile px-margin-mobile md:mx-0 md:px-0 snap-x">
+<!-- Card 1 -->
+<div class="min-w-[300px] w-[300px] bg-surface-container-lowest rounded-xl border border-surface-variant card-shadow overflow-hidden flex flex-col snap-start shrink-0">
+<div class="h-32 bg-slate-200 relative">
+<img alt="Tennis Tournament" class="w-full h-full object-cover" data-alt="A dynamic action shot of two people playing tennis on a brightly lit indoor court. The ball is mid-air. The scene uses a modern, clean light-mode visual style with crisp details, emphasizing the professional and community sports aspect of the platform. The colors are vibrant with a lot of natural light." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAGJyM5nEN0dykmwuVjXsSBGDk_AImJVcZREXRbQToHyslKy0MJKaS9q6pw_xOaxIJSaqsr1jyGZF-HSEbVRNnj0H1bj60xm17JlBiPlunS1Dq59BAC6shZk_DsdURDaXXS8-xI3eCWH8_ipDhlfTJM0Wheso-P8-ADc9-TRoqOYpW0bgGO-jafqzXTvMSHUQIQGrIAerEqNtHC4oJg3bBWyOnr8wZSniyHYK20xrieDR3bBHggtEwfGH8t9knNBEy6KH54A_1lI4Pt"/>
+<div class="absolute top-2 left-2 bg-surface-container-lowest/90 backdrop-blur-sm px-2 py-1 rounded-full border border-surface-variant">
+<span class="font-label-sm text-label-sm text-primary flex items-center gap-1">
+<span class="material-symbols-outlined" style="font-size: 14px;">sports_tennis</span> Tennis
+                                </span>
+</div>
+</div>
+<div class="p-6 flex flex-col gap-3 flex-grow">
+<h3 class="font-headline-md text-[18px] leading-[24px] font-semibold text-on-surface line-clamp-2">Hanoi Open Spring 2026 - Men's Singles</h3>
+<div class="flex flex-col gap-2 font-body-sm text-body-sm text-on-surface-variant">
+<div class="flex items-center gap-2"><span class="material-symbols-outlined" style="font-size: 16px;">calendar_month</span> 15/03/2026 - 17/03/2026</div>
+<div class="flex items-center gap-2"><span class="material-symbols-outlined" style="font-size: 16px;">location_on</span> Sân Cầu Giấy, Hà Nội</div>
+<div class="flex items-center gap-2"><span class="material-symbols-outlined" style="font-size: 16px;">groups</span> 32/64 VĐV</div>
+</div>
+<div class="mt-auto pt-4 flex justify-between items-center border-t border-surface-variant">
+<span class="font-label-md text-label-md text-on-surface">500.000đ/slot</span>
+<button class="bg-surface-container text-primary hover:bg-tertiary-fixed rounded-lg px-3 py-1.5 font-label-sm text-label-sm transition-colors">Xem chi tiết</button>
+</div>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="min-w-[300px] w-[300px] bg-surface-container-lowest rounded-xl border border-surface-variant card-shadow overflow-hidden flex flex-col snap-start shrink-0">
+<div class="h-32 bg-slate-200 relative">
+<img alt="Badminton Tournament" class="w-full h-full object-cover" data-alt="A wide shot of a modern indoor badminton court viewed from behind one player about to serve. The lighting is bright and clean, typical of a professional sports facility. The overall mood is energetic and focused, fitting a modern light-mode community sports platform." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC0X_KCxgIfe6GkTv1Z5_m5oUL7b9q5_RkTI8BL080ADxa_cQjxoZ6QAMSCpWr7_rPBJr3kCjRoYcziCY8GwkAV57VefOvgsFvFnFJ4khIfJdqUwAmayygfkert1PaKcYED300LeYFitxKGhpwrzUs-JhujevgjSgbPYA0qhInimw0lRgWgtLEqVqhqjJX1qeoy-tVCRwGcw1CXk-pClt0myKVihylClH8fFfP2Lm9GaFUhZw5Y9sAbfNdjGLroJ1HjMnA7cIiOnmnf"/>
+<div class="absolute top-2 left-2 bg-surface-container-lowest/90 backdrop-blur-sm px-2 py-1 rounded-full border border-surface-variant">
+<span class="font-label-sm text-label-sm text-secondary flex items-center gap-1">
+<span class="material-symbols-outlined" style="font-size: 14px;">sports_esports</span> Cầu lông <!-- Assuming no specific badminton icon in material symbols, using esports as placeholder or standardizing -->
+</span>
+</div>
+</div>
+<div class="p-6 flex flex-col gap-3 flex-grow">
+<h3 class="font-headline-md text-[18px] leading-[24px] font-semibold text-on-surface line-clamp-2">Giải Cầu Lông Cộng Đồng HCM Q7 Mở Rộng</h3>
+<div class="flex flex-col gap-2 font-body-sm text-body-sm text-on-surface-variant">
+<div class="flex items-center gap-2"><span class="material-symbols-outlined" style="font-size: 16px;">calendar_month</span> 22/03/2026</div>
+<div class="flex items-center gap-2"><span class="material-symbols-outlined" style="font-size: 16px;">location_on</span> Sân Lông Vàng, Q7, TP.HCM</div>
+<div class="flex items-center gap-2"><span class="material-symbols-outlined" style="font-size: 16px;">groups</span> 12/16 Đôi</div>
+</div>
+<div class="mt-auto pt-4 flex justify-between items-center border-t border-surface-variant">
+<span class="font-label-md text-label-md text-on-surface">300.000đ/team</span>
+<button class="bg-surface-container text-primary hover:bg-tertiary-fixed rounded-lg px-3 py-1.5 font-label-sm text-label-sm transition-colors">Xem chi tiết</button>
+</div>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="min-w-[300px] w-[300px] bg-surface-container-lowest rounded-xl border border-surface-variant card-shadow overflow-hidden flex flex-col snap-start shrink-0">
+<div class="h-32 bg-slate-200 relative">
+<img alt="Billiards Tournament" class="w-full h-full object-cover" data-alt="A close up of a shiny green pool table with colorful billiard balls scattered across it. A cue stick is visible in the foreground, out of focus. The setting is a well-lit, modern billiards club with clean white accents, fitting a premium, functional light-mode sports community aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDf1lpulryt3BR_68hK_O8icl1naWnn8obZHVqvhvsWSegn_1-8867a2X3NETKRf7SUcqGbwLp6B9tM3fzhjFMX1GHdR8n44ymJHQYdkEuGC1NRGZrDUxnnUuJE6LBYp3NhSRzhlmDJT2rxyQwDJEgpX6H0kY6o-HUrd_-P_v4EAChnDuRzueUxDHw_VjVYSX4UhXI6Bve54__GZa1dFXIqTy__N2ryiRDQdYO3cJp09d5CQSs2GQvBahhFm80yPMm3TcyeZb1517ru"/>
+<div class="absolute top-2 left-2 bg-surface-container-lowest/90 backdrop-blur-sm px-2 py-1 rounded-full border border-surface-variant">
+<span class="font-label-sm text-label-sm text-tertiary flex items-center gap-1">
+<span class="material-symbols-outlined" style="font-size: 14px;">pool</span> Billiards
+                                </span>
+</div>
+</div>
+<div class="p-6 flex flex-col gap-3 flex-grow">
+<h3 class="font-headline-md text-[18px] leading-[24px] font-semibold text-on-surface line-clamp-2">Bida Lỗ 9 Ball - Danang City Cup Chuyên Nghiệp</h3>
+<div class="flex flex-col gap-2 font-body-sm text-body-sm text-on-surface-variant">
+<div class="flex items-center gap-2"><span class="material-symbols-outlined" style="font-size: 16px;">calendar_month</span> 01/04/2026</div>
+<div class="flex items-center gap-2"><span class="material-symbols-outlined" style="font-size: 16px;">location_on</span> Club 88, Đà Nẵng</div>
+<div class="flex items-center gap-2"><span class="material-symbols-outlined" style="font-size: 16px;">groups</span> 60/64 Cơ thủ</div>
+</div>
+<div class="mt-auto pt-4 flex justify-between items-center border-t border-surface-variant">
+<span class="font-label-md text-label-md text-on-surface">1.000.000đ/slot</span>
+<button class="bg-surface-container text-primary hover:bg-tertiary-fixed rounded-lg px-3 py-1.5 font-label-sm text-label-sm transition-colors">Xem chi tiết</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 2: Cộng đồng của tôi -->
+<section class="flex flex-col gap-4">
+<div class="flex justify-between items-end">
+<h2 class="font-headline-md text-headline-md text-on-surface">Cộng đồng của tôi</h2>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+<!-- Community 1 -->
+<div class="bg-surface-container-lowest rounded-xl border border-surface-variant card-shadow p-4 flex items-center gap-4 hover:border-outline transition-colors cursor-pointer group">
+<img alt="Tennis Club Logo" class="w-12 h-12 rounded-full border border-surface-variant object-cover" data-alt="A stylized, clean logo graphic representing a tennis community, featuring a minimalist tennis ball icon on a white background. The image is bright and professional, fitting seamlessly into a modern light-mode user interface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAOiPCzUbABhGyFDJCLrNyYnzUmMq3fZhV1ozIzVQLHrHFHisZcASzmjp2LIH1PaNqKwBLzPwT0-u_wrEWn0pFSLrXveJoHEHkm8Ui1x4rUptMClTXxSddrBaJDF1hL4Ta5lD_0o8IG8MvuMgW7rlVabhXdmFBr7_VJg4cwuZLwu6_B99ZUmmXCYHTsfXnNj54gcqnuZxPFq5uMm5ZHimMU6eJ_I2oAnpoDPRmeg6Qo8yYsZBgu-e-hBaHGMDz9MQUtCZUv7FeYgXcS"/>
+<div class="flex flex-col flex-grow">
+<div class="flex items-center gap-2">
+<h3 class="font-label-md text-label-md text-on-surface group-hover:text-primary transition-colors">Hanoi Tennis Fellowship</h3>
+<span class="bg-tertiary-fixed text-on-tertiary-container px-1.5 py-0.5 rounded text-[10px] font-bold">PRO</span>
+</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">1.2k Thành viên</div>
+</div>
+<span class="material-symbols-outlined text-outline-variant group-hover:text-primary transition-colors">chevron_right</span>
+</div>
+<!-- Community 2 -->
+<div class="bg-surface-container-lowest rounded-xl border border-surface-variant card-shadow p-4 flex items-center gap-4 hover:border-outline transition-colors cursor-pointer group">
+<div class="w-12 h-12 rounded-full bg-secondary-fixed flex items-center justify-center border border-surface-variant text-on-secondary-container font-headline-md">
+<span class="material-symbols-outlined">sports_esports</span>
+</div>
+<div class="flex flex-col flex-grow">
+<div class="flex items-center gap-2">
+<h3 class="font-label-md text-label-md text-on-surface group-hover:text-primary transition-colors">Hội Lông Thủ Q7</h3>
+</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">850 Thành viên</div>
+</div>
+<span class="material-symbols-outlined text-outline-variant group-hover:text-primary transition-colors">chevron_right</span>
+</div>
+<!-- Community 3 -->
+<div class="bg-surface-container-lowest rounded-xl border border-surface-variant card-shadow p-4 flex items-center gap-4 hover:border-outline transition-colors cursor-pointer group">
+<div class="w-12 h-12 rounded-full bg-surface-container-highest flex items-center justify-center border border-surface-variant text-on-surface-variant font-headline-md">
+<span class="material-symbols-outlined">group</span>
+</div>
+<div class="flex flex-col flex-grow">
+<div class="flex items-center gap-2">
+<h3 class="font-label-md text-label-md text-on-surface group-hover:text-primary transition-colors">CLB Bóng Bàn KTX</h3>
+</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">320 Thành viên</div>
+</div>
+<span class="material-symbols-outlined text-outline-variant group-hover:text-primary transition-colors">chevron_right</span>
+</div>
+<!-- Add New Community -->
+<div class="bg-surface rounded-xl border border-dashed border-outline-variant p-4 flex items-center justify-center gap-2 hover:border-primary hover:text-primary text-on-surface-variant transition-colors cursor-pointer h-full min-h-[82px]">
+<span class="material-symbols-outlined">add_circle</span>
+<span class="font-label-md text-label-md">Tham gia cộng đồng mới</span>
+</div>
+</div>
+</section>
+<!-- Section 3: Hoạt động gần đây (Timeline) -->
+<section class="flex flex-col gap-4">
+<h2 class="font-headline-md text-headline-md text-on-surface">Hoạt động gần đây</h2>
+<div class="bg-surface-container-lowest rounded-xl border border-surface-variant card-shadow p-6">
+<div class="relative border-l-2 border-surface-variant ml-4 flex flex-col gap-8 pb-4">
+<!-- Item 1 -->
+<div class="relative pl-6">
+<div class="absolute -left-[11px] top-0 w-5 h-5 rounded-full bg-primary flex items-center justify-center border-4 border-surface-container-lowest">
+</div>
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2">
+<img alt="Avatar" class="w-6 h-6 rounded-full" data-alt="Small circular avatar of the same young man as the header, looking friendly. Clean white background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCH-pX8v2BaXGZ2wY4sVHjfgBx8RsNYhr9KKJWsC1Ma_1yPcZdyWO6jKYMLbw7gh73PbJ_SJevkqFY9t3g47upB_sPvzG2m3kaPL3-HZNkX78QT2MIW2RllxgQ0IA8AiAWBVmsiqR6-_pxl1kJtTweYkhxmxNz_UdXnZftIWjPm_skOWms5Yz_jRfXafPmN_FlGHWt29iHH9G0tVB436UVXdgQEPoN3QoE2PUYylucJfUCyy64boNYk0QozxR4idTaawl03w9rvxHRF"/>
+<span class="font-body-sm text-body-sm text-on-surface">Bạn vừa đăng ký tham gia <strong>Hanoi Open Spring 2026</strong></span>
+</div>
+<span class="font-label-sm text-label-sm text-outline">2 giờ trước</span>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="relative pl-6">
+<div class="absolute -left-[11px] top-0 w-5 h-5 rounded-full bg-secondary-fixed flex items-center justify-center border-4 border-surface-container-lowest text-on-secondary-container">
+<span class="material-symbols-outlined" style="font-size: 10px;">campaign</span>
+</div>
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2">
+<span class="font-body-sm text-body-sm text-on-surface"><strong>Hội Lông Thủ Q7</strong> vừa tạo một bài viết mới: "Lịch sinh hoạt tháng 3"</span>
+</div>
+<span class="font-label-sm text-label-sm text-outline">Hôm qua lúc 14:30</span>
+<div class="mt-2 p-3 bg-surface rounded-lg border border-surface-variant font-body-sm text-body-sm text-on-surface-variant">
+                                    "Chào mọi người, tháng này chúng ta vẫn sinh hoạt cố định vào T3-T5-T7 từ 18h-20h tại sân Lông Vàng nhé..."
+                                </div>
+</div>
+</div>
+<!-- Item 3 -->
+<div class="relative pl-6">
+<div class="absolute -left-[11px] top-0 w-5 h-5 rounded-full bg-surface-variant flex items-center justify-center border-4 border-surface-container-lowest">
+</div>
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2">
+<img alt="Avatar" class="w-6 h-6 rounded-full" data-alt="Small circular avatar of a young woman smiling brightly. Clean white background, light-mode style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA7-EN1uUuOF-Ssi7BWsKutinKD5jXB1en_FKZNKOZEBjwGav5GsEIk_AM8r-JYCGkbqy3sw1eJdy8xU2tnwHVsYYzIOjgZJGGZNpsapTJt0jvSpGuBEvv5u-ueoqmFre5itRxQ2euKxHqFy-WJC_y4KFo5qMX96sGBHzifsZ5_bDhfGn9_6LBw6_5a_9XdrAMEJA24Bo8T3l5VG08XyVzzKoO7LwLAaTy3BTKWd8zDk_JsCEmSWw4Ga8e_XtpMkpR1H5ETX_1D-qyw"/>
+<span class="font-body-sm text-body-sm text-on-surface"><strong>Trần Thị B</strong> đã xác nhận kết quả trận đấu với bạn.</span>
+</div>
+<span class="font-label-sm text-label-sm text-outline">3 ngày trước</span>
+<div class="mt-2 flex items-center gap-4 p-2 border border-surface-variant rounded-lg w-max bg-surface-container-lowest">
+<span class="font-label-md text-label-md text-on-surface">Bạn (Thắng)</span>
+<span class="font-headline-md text-primary">2 - 0</span>
+<span class="font-label-md text-label-md text-on-surface-variant">Trần Thị B</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Right Column (4/12) -->
+<div class="col-span-1 md:col-span-4 flex flex-col gap-6">
+<!-- Widget 1: Cá nhân -->
+<div class="bg-surface-container-lowest rounded-xl border border-surface-variant card-shadow p-6 flex flex-col items-center text-center relative overflow-hidden">
+<div class="absolute top-0 left-0 w-full h-16 bg-gradient-to-r from-primary-container to-secondary-container opacity-20"></div>
+<img alt="Avatar" class="w-20 h-20 rounded-full border-4 border-surface-container-lowest shadow-sm z-10 mt-2 relative" data-alt="A portrait of a young professional man, matching the user avatar. Clean, light-mode background, soft natural lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDFXda4zl0DG9yfK3prpcjBamsj6hBQtWRvyxjTaECeB1K2XjlHMg_qfT3CPMjlDRjVgjFhHzbBJvnkL0o6ik_QviP-yQQg8S_MqL_vZ87V1rdSg34qKF6WLk5rS0enfSA06vA-lWmvcleRs1-gyV8CsQhID2UKENLpON91Lm-Mn6R8YX0OmwQTX6lNn0JRAqp_rFFIo5OUw6Bex4eu0SvTp1iCrM8AJkwqvq2ksgGwvZgU3nOClAfpjRL8KII4ebK3jUntRMDg0Ztk"/>
+<h3 class="font-headline-md text-headline-md text-on-surface mt-3">Nguyễn Văn A</h3>
+<p class="font-body-sm text-body-sm text-outline">@nguyenvana_tennis</p>
+<div class="flex justify-center gap-2 mt-3">
+<span class="bg-surface-container px-2 py-1 rounded font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined" style="font-size: 14px;">sports_tennis</span> Hạng A
+                    </span>
+<span class="bg-primary-fixed text-on-primary-fixed-variant px-2 py-1 rounded font-label-sm text-label-sm font-bold">
+                        ELO 1850
+                    </span>
+</div>
+<div class="grid grid-cols-3 w-full gap-4 mt-6 pt-4 border-t border-surface-variant">
+<div class="flex flex-col items-center">
+<span class="font-headline-md text-headline-md text-on-surface">12</span>
+<span class="font-label-sm text-label-sm text-outline">Giải đấu</span>
+</div>
+<div class="flex flex-col items-center border-l border-r border-surface-variant">
+<span class="font-headline-md text-headline-md text-on-surface">45</span>
+<span class="font-label-sm text-label-sm text-outline">Trận thắng</span>
+</div>
+<div class="flex flex-col items-center">
+<span class="font-headline-md text-headline-md text-on-surface">65%</span>
+<span class="font-label-sm text-label-sm text-outline">Tỉ lệ thắng</span>
+</div>
+</div>
+</div>
+<!-- Widget 2: Trận đấu sắp tới -->
+<div class="bg-surface-container-lowest rounded-xl border border-surface-variant card-shadow p-6">
+<div class="flex justify-between items-center mb-4">
+<h3 class="font-label-md text-label-md text-on-surface font-bold">Trận đấu tiếp theo</h3>
+</div>
+<div class="bg-surface rounded-lg p-4 border border-surface-variant flex flex-col gap-3">
+<div class="flex justify-between items-center font-body-sm text-body-sm text-on-surface-variant">
+<span class="bg-error-container text-on-error-container px-2 py-0.5 rounded font-label-sm text-label-sm">Hôm nay, 18:00</span>
+<span>Sân Cầu Giấy</span>
+</div>
+<div class="flex justify-between items-center mt-2">
+<div class="flex flex-col items-center gap-1">
+<img alt="Avatar" class="w-10 h-10 rounded-full border border-surface-variant" data-alt="Small user avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB35c4iuO_M7TDzw1XbajydlqEdr-O86DJBQVzjGUemjqQdaPnd2UqGK0FQWzKSWdqHbxzKtG9r663iYsiU6xmNSMTXIhDkiuo9dXv6J6kXwvZLOicF4r2cQG6ZZaIG5rfYxU5qQ5RisFtqWvPUuaH3mn1doye9doloAjM25G__n2KbRTsbMZpIyg-3YemLybp7TQ-Wr11M1RS6wBxJv6dJ3G1N_zPATy3YX4_npmyC2XBIZ5PbHoe3db1gprVVHg9gXEV_sLEK01NL"/>
+<span class="font-label-sm text-label-sm text-on-surface">Bạn</span>
+</div>
+<div class="font-headline-md text-outline">VS</div>
+<div class="flex flex-col items-center gap-1">
+<img alt="Opponent" class="w-10 h-10 rounded-full border border-surface-variant" data-alt="Small circular avatar of a young man with short dark hair. Light background, professional sports platform style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCsVMv-cPphYbTed69Uyw5EPhcnyrw4G-sTCofP36_phHxywIrZsnEuRfdiZIArzAO36wIAS1t311Nx83CzCSkIgrW2zyTkWrTD94si51_kMN0fe8a1SxeflovIBg644vgK3HILlX4DH8aVvT7FMOclYlW3eHyt_OgkhEqR-gbBrj07vUNQsr0CEB9N7gYb3wgnEXKN5OB8SqLxy0ZF72538x6Xf5LTj906jPyAYbRSdbVmBvbm64sEHVM_OUyjsPfC8f5ksgDXv9Eq"/>
+<span class="font-label-sm text-label-sm text-on-surface">Lê Văn C</span>
+</div>
+</div>
+<div class="text-center font-label-sm text-label-sm text-outline mt-1">Vòng Bảng - Hanoi Open</div>
+<button class="w-full mt-2 bg-surface-container-lowest border border-outline-variant text-on-surface-variant hover:bg-surface-container py-2 rounded-lg font-label-md text-label-md transition-colors">Cập nhật kết quả</button>
+</div>
+</div>
+<!-- Widget 3: Bảng xếp hạng nhanh -->
+<div class="bg-surface-container-lowest rounded-xl border border-surface-variant card-shadow p-6">
+<div class="flex justify-between items-center mb-4">
+<h3 class="font-label-md text-label-md text-on-surface font-bold">BXH Hanoi Tennis (Hạng A)</h3>
+<a class="text-primary hover:underline font-label-sm text-label-sm" href="#">Xem đầy đủ</a>
+</div>
+<div class="flex flex-col">
+<!-- Rank 1 -->
+<div class="flex items-center gap-3 py-2 border-b border-surface-variant">
+<span class="font-headline-md text-primary w-4 text-center">1</span>
+<img alt="Avatar" class="w-8 h-8 rounded-full border border-surface-variant" data-alt="Small avatar photo of a man. Clean style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCTPJ9-qTG6d7T50YbxAO0uQP0FfZdPbiLWvBWBECnve8Yvc8rZHUWU2GXEQ0NCx92EPXYLsQIpa1z1hJb0UiN17s5O6bHLtIobXw-5Uy3TxBkAyI3191xOC2EhECFqg39MiPzRZ7FfVRFXTd1agoZJ-OA8S1m5TqGcRScOimoABcKiQ31WZ6IegO3BIC6Vpx9PRrjLYPL01LhJNbF4Gkfd0DbX_hzCCuBtYYmzttXzIbfFp6VA20-tdk-jde96AZm6j-ijgdQMS_9Y"/>
+<div class="flex flex-col flex-grow">
+<span class="font-label-md text-label-md text-on-surface">Phạm D</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface-variant">1920</span>
+</div>
+<!-- Rank 2 -->
+<div class="flex items-center gap-3 py-2 border-b border-surface-variant">
+<span class="font-headline-md text-on-surface-variant w-4 text-center">2</span>
+<img alt="Avatar" class="w-8 h-8 rounded-full border border-surface-variant" data-alt="Small avatar photo of a man. Clean style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAhUsigbSBqbkCFSSEfOV8uCudDTGSMT4t430LjXahgDcPNj_vP6O15eLMyPWJus7A6qP8PMCfzvv_BqcRd34hIWh-f1S4AevMceslg9qJ8l3NSx4Rup0dM31MqCfybwAivoLsM8GMCmSAe-FNCsuMxbvvekoFayGasrOh9uywdJ3IydAl3peBXw4JGYZ4f26UL1Qlw3t7bUer-95_Tauc_r_1qWf4_3CchvdngVHi5Fo-WkVHhRiBxh4Ogm8v3xgjGVAGwGxFWw2e_"/>
+<div class="flex flex-col flex-grow">
+<span class="font-label-md text-label-md text-on-surface">Hoàng E</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface-variant">1895</span>
+</div>
+<!-- Rank 3 -->
+<div class="flex items-center gap-3 py-2 border-b border-surface-variant bg-tertiary-fixed/30 rounded-lg -mx-2 px-2">
+<span class="font-headline-md text-on-surface w-4 text-center">3</span>
+<img alt="Avatar" class="w-8 h-8 rounded-full border border-surface-variant ring-2 ring-primary" data-alt="User avatar small" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCLqQHMapC3RD2zBacLe8Mf-527IcDVO1kRLZj3CdtNxtJdGGyRKWUtOPw3Xn7j3ZvQ5nzYseV4Hf5mOpd2g0sQz6WZ2IUHhn_VoqCXIWwHsRYgrPGm_GotqdGlDCyP0GuzSBUpDBBkBYJTt73G5iGHPTc-mRXTXeEXN9XKj8exzENK1np6d7EmwV5RbygdbhCLYmW0JSmd6i-0B0iolmycTVuCavL7g6H1eL15cwcJsxJPP5BMo8PvUI6yBDqSgCxJFaxjwlFeffrK"/>
+<div class="flex flex-col flex-grow">
+<span class="font-label-md text-label-md text-primary font-bold">Bạn</span>
+</div>
+<span class="font-label-md text-label-md text-primary font-bold">1850</span>
+</div>
+<!-- Rank 4 -->
+<div class="flex items-center gap-3 py-2 border-b border-surface-variant">
+<span class="font-body-md text-outline w-4 text-center">4</span>
+<img alt="Avatar" class="w-8 h-8 rounded-full border border-surface-variant" data-alt="Small avatar photo of a man. Clean style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD0F2CGUve7DhfEIt4NvPzk-CkbVQztqCLEQJ0nEODADSD0HiFXXTekPtuAV-WEpnNggyTX60PhNT_YiSoFEoVV97wvjJW3SE9EcQVVlDaMFrheyoNYc7zgD_R4soWARcO0hvmdRWgGiJgbcuSOz65tmio2--fLPJPJgIYTeWNbJMN67dYkumPOPuiqcbtfJbRxP2cUHko79cxDJ-kgeAAjQpF29SYLI9-HQzkl08_raZKnGbKziztGbiqt83-5suz9QDTmGBraZAhS"/>
+<div class="flex flex-col flex-grow">
+<span class="font-body-sm text-body-sm text-on-surface">Bùi G</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">1830</span>
+</div>
+<!-- Rank 5 -->
+<div class="flex items-center gap-3 py-2">
+<span class="font-body-md text-outline w-4 text-center">5</span>
+<img alt="Avatar" class="w-8 h-8 rounded-full border border-surface-variant" data-alt="Small avatar photo of a man. Clean style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAxoXENJeh2XZpvbqae1goEzNz2TEMJ_mnSBeR76ZhD4gBAb0knkU99IIObJ_guNamzYE-Jz7Oxcv6qXrOiE6_P64KKTQJUFZN5-2PAI5Div1pBKX7KUyUTXbvl2iOPMAiKf4UYJ8jCjo47AszkqrncabRX4dIcNOu37Wy7UZW_o4l4FREEnl-LBQmUIZHwMWmMLpAXIlnL9sv5rHdmrSuKR8ttTyLIbE8bW71NxXpAzAWho_xn8qvx4sxZp_L7QT2LdOJMSJyBVC1p"/>
+<div class="flex flex-col flex-grow">
+<span class="font-body-sm text-body-sm text-on-surface">Lý H</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">1815</span>
+</div>
+</div>
+</div>
+<!-- Widget 4: Banner Ads 4:3 -->
+<div class="bg-surface-container-lowest rounded-xl border border-surface-variant card-shadow overflow-hidden flex flex-col cursor-pointer group">
+<div class="aspect-[4/3] bg-slate-100 relative">
+<img alt="Sports Equipment Ad" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="A clean, highly stylized product shot of modern tennis racquets and neon green tennis balls resting on a sleek white surface. The lighting is bright and studio-quality, emphasizing the premium nature of the sports equipment. The overall aesthetic is modern, light-mode, and professional." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCWJyy5lxSwLn_quvwixa0Epob3XRIAioPRNqk919GgZbWj1HxJAZQ1f99yFj2Zw8XL0HTfQjkH9QMl1bH7jjzob2smEuNZDp3Jl9foHigl9WerQuc1bx8dv0kT-NTIDVb3nkHaSbbbCyqXNKPhTkA9_Mgx3sZVN9VTLXJFqy9SK9J48T7Gmx5Ua_3vbcMwvbwM0m0RMkGkjBvoEbP0-EgCaJmJHHWg-StMBunY7IAKjSXoAXexHVyo9INSbbmlGr675vug7axpX2ev"/>
+<div class="absolute top-2 right-2 bg-surface-container-lowest/80 backdrop-blur text-outline text-[10px] px-1.5 py-0.5 rounded font-label-sm">Ad</div>
+</div>
+<div class="p-4 border-t border-surface-variant">
+<h4 class="font-label-md text-label-md text-on-surface mb-1">Vợt Tennis PRO 2026 - Giảm 20%</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Trang bị chuyên nghiệp cho mọi trận đấu. Độc quyền tại TournaShop.</p>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="bg-surface-container-lowest border-t border-outline-variant w-full mt-8">
+<div class="flex flex-col md:flex-row justify-between items-center w-full py-8 px-margin-mobile md:px-margin-desktop max-w-container-max-width mx-auto gap-4">
+<div class="font-display text-headline-md font-bold text-primary">TournaHub</div>
+<div class="flex flex-wrap justify-center gap-6">
+<a class="text-on-surface-variant hover:text-primary transition-colors font-body-sm text-body-sm" href="#">Giới thiệu</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors font-body-sm text-body-sm" href="#">Điều khoản</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors font-body-sm text-body-sm" href="#">Chính sách</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors font-body-sm text-body-sm" href="#">Liên hệ</a>
+</div>
+<div class="text-on-surface-variant font-body-sm text-body-sm">© 2026 TournaHub. All rights reserved.</div>
+</div>
+</footer>
+</body></html>

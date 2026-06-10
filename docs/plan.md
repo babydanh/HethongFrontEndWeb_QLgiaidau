@@ -145,40 +145,76 @@
 
 ---
 
-## Phase 5: Admin Panel & Polish 🛡️
-**Mục tiêu:** Admin quản trị toàn hệ thống. Tối ưu UX.  
-**Phụ thuộc Backend:** Tất cả API đã sẵn sàng.
+## Phase 5: Nâng Cấp Toàn Diện — Registration, ELO, Filter 🚀
+**Mục tiêu:** Tournament visibility UI, đăng ký doubles, ELO leaderboard, region filter.
+**Chi tiết đầy đủ:** Xem file `docs/phase5-plan.md`
 
-### 5.1 Admin Feature (`features/admin/`)
-- [ ] `components/AdminDashboard.tsx` — Thống kê: users, tournaments, revenue (charts).
-- [ ] `components/CommunityApproval.tsx` — Danh sách community chờ duyệt + approve/reject.
-- [ ] `components/PaymentManagement.tsx` — Danh sách payments + filter status.
-- [ ] `components/PayoutApproval.tsx` — Duyệt lệnh rút tiền + upload bill.
-- [ ] `components/UserManagement.tsx` — CRUD users + assign roles.
-- [ ] `components/DisputeReview.tsx` — Xem khiếu nại + ra quyết định.
-- [ ] Trang `app/admin/page.tsx` — Dashboard.
-- [ ] Trang `app/admin/communities/page.tsx`.
-- [ ] Trang `app/admin/payments/page.tsx`.
-- [ ] Trang `app/admin/users/page.tsx`.
-- [ ] Trang `app/admin/disputes/page.tsx`.
+### 5.1 Tournament List Nâng Cấp
+- [ ] `TournamentCard.tsx` — Hiển thị đầy đủ: địa chỉ, phí, số đội, giới tính, trạng thái.
+- [ ] FilterBar nâng cấp: Môn, Trạng thái, Khu vực, Phí, Loại (Singles/Doubles).
+- [ ] Chỉ hiện giải `visibility=PUBLIC` + `tournamentType=PUBLIC`.
 
-### 5.2 Landing Page & SEO
-- [ ] Trang `app/(public)/page.tsx` — Landing page ấn tượng:
-  - [ ] Hero section (headline + CTA).
-  - [ ] Features showcase (giải đấu, ELO, live score, community).
-  - [ ] Testimonials / Partners.
-  - [ ] Footer với links.
-- [ ] SEO: Meta tags, Open Graph, structured data cho tournament pages.
+### 5.2 Tournament Visibility & Registration
+- [ ] Setting visibility (PUBLIC/PRIVATE) trong manage page.
+- [ ] Invite link copy + QR Code cho giải PRIVATE.
+- [ ] Trang `/tournaments/[id]/register` — Đăng ký qua invite link.
+- [ ] Auth redirect flow (login → quay lại trang đăng ký).
 
-### 5.3 Polish & Optimization
-- [ ] Dark mode toggle.
-- [ ] Responsive hoàn chỉnh (mobile-first).
-- [ ] Skeleton loading cho mọi data-fetching page.
-- [ ] Error boundaries cho mọi route.
-- [ ] PWA config (optional — installable trên mobile).
-- [ ] Performance: Image optimization (next/image), code splitting, lazy load.
+### 5.3 Doubles Registration Flow
+- [ ] `DoublesRegistrationFlow` component — Multi-step: Đăng ký → Mời partner → Chờ → Thanh toán.
+- [ ] Trang `/tournaments/[id]/join-team` — Partner join team.
+- [ ] Hiển thị trạng thái đăng ký trên trang chi tiết giải.
+- [ ] Nút "Rút khỏi giải" + ConfirmDialog.
+
+### 5.4 Community Tournaments
+- [ ] Tab "Giải đấu" trong trang CLB (`/communities/[id]`).
+- [ ] Nút "Tạo giải CLB" (chỉ admin CLB).
+- [ ] Trang `/tournaments` chỉ hiện giải PUBLIC (không hiện CLUB).
+
+### 5.5 Bracket & Scoring UI
+- [ ] Setting số set nâng cao cho mỗi vòng (BO1/BO3/BO5/BO7).
+- [ ] Lưu `roundConfig` vào tournament_stages.
+
+### 5.6 ELO & Leaderboard
+- [ ] `EloTierBadge.tsx` — Badge hiển thị hạng (Bronze → Grand Master).
+- [ ] Leaderboard page nâng cấp: Tab "Xếp hạng chung" + "Xếp hạng CLB".
+- [ ] ELO Chart (biểu đồ biến động ELO theo thời gian).
+- [ ] Bảng xếp hạng CLB riêng trong trang community.
+
+### 5.7 Region Filtering
+- [ ] Dropdown "Khu vực" trong FilterBar (tournaments + communities).
+- [ ] Gọi `GET /regions` populate danh sách.
+
+### 5.8 Missing Pages (Gap Closure)
+- [ ] Profile page (avatar, ELO, match history, edit form).
+- [ ] Dashboard (upcoming tournaments, recent matches, quick actions).
+- [ ] Live Score page (WebSocket real-time).
 
 ---
 
-> **Nguyên tắc:** Frontend Phase N chỉ bắt đầu khi Backend Phase N đã có API + Swagger.  
-> Trong lúc chờ API, có thể mock data bằng MSW (Mock Service Worker) hoặc JSON files.
+## Phase 6: Admin Panel & Polish 🛡️
+**Mục tiêu:** Admin quản trị toàn hệ thống. Tối ưu UX.
+**Phụ thuộc Backend:** Tất cả API đã sẵn sàng.
+
+### 6.1 Admin Feature (`features/admin/`)
+- [ ] `components/AdminDashboard.tsx` — Thống kê: users, tournaments, revenue (charts).
+- [ ] `components/CommunityApproval.tsx` — Duyệt community.
+- [ ] `components/PaymentManagement.tsx` — Quản lý payments.
+- [ ] `components/PayoutApproval.tsx` — Duyệt rút tiền.
+- [ ] `components/UserManagement.tsx` — CRUD users + assign roles.
+- [ ] `components/DisputeReview.tsx` — Xem khiếu nại.
+
+### 6.2 Landing Page & SEO
+- [ ] Hero section + Features showcase.
+- [ ] SEO: Meta tags, Open Graph.
+
+### 6.3 Polish & Optimization
+- [ ] Dark mode toggle.
+- [ ] Responsive hoàn chỉnh.
+- [ ] Skeleton loading + Error boundaries.
+- [ ] Performance: next/image, code splitting, lazy load.
+
+---
+
+> **Nguyên tắc:** Frontend Phase N chỉ bắt đầu khi Backend Phase N đã có API + Swagger.
+> Trong lúc chờ API, có thể mock data bằng MSW hoặc JSON files.

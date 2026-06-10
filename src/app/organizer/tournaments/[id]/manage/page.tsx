@@ -75,6 +75,8 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
   const [logoUrl, setLogoUrl] = useState('');
   const [prizeDescription, setPrizeDescription] = useState('');
   const [contactInfo, setContactInfo] = useState({ phone: '', email: '' });
+  const [visibility, setVisibility] = useState<'PUBLIC' | 'PRIVATE'>('PUBLIC');
+  const [genderRestriction, setGenderRestriction] = useState<'MALE' | 'FEMALE' | 'MIXED' | ''>('');
 
   // Time & Location Settings
   const [venueId, setVenueId] = useState('');
@@ -135,6 +137,8 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
           phone: t.contactInfo?.phone || '',
           email: t.contactInfo?.email || '',
         });
+        setVisibility(t.visibility || 'PUBLIC');
+        setGenderRestriction(t.genderRestriction || '');
 
         setVenueId(t.venueId || '');
         setStartDate(t.startDate ? t.startDate.substring(0, 16) : '');
@@ -219,6 +223,8 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
         logoUrl: logoUrl || null,
         prizeDescription: prizeDescription || null,
         contactInfo,
+        visibility,
+        genderRestriction: genderRestriction === '' ? null : genderRestriction,
       };
       await tournamentsApi.updateTournament(id, data);
       toast.success('Lưu thông tin cơ bản thành công!');
@@ -520,7 +526,9 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
     );
   }
 
-  const inviteLink = `${window.location.origin}/tournaments/join/${tournament.inviteCode}`;
+  const inviteLink = tournament.visibility === 'PRIVATE'
+    ? `${window.location.origin}/tournaments/${tournament.id}/register?invite=${tournament.inviteCode}`
+    : `${window.location.origin}/tournaments/join/${tournament.inviteCode}`;
 
   return (
     <div className="min-h-screen bg-slate-50 py-8 px-4 md:px-8">
@@ -626,6 +634,34 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                   {categories.map(cat => (
                     <option key={cat.id} value={cat.id}>{cat.name}</option>
                   ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 border-t pt-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-semibold text-slate-700">Chế độ hiển thị (Visibility)</label>
+                <select
+                  value={visibility}
+                  onChange={(e) => setVisibility(e.target.value as 'PUBLIC' | 'PRIVATE')}
+                  className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                >
+                  <option value="PUBLIC">Công khai (Hiển thị trên danh sách tìm kiếm)</option>
+                  <option value="PRIVATE">Riêng tư (Ẩn, chỉ đăng ký qua link mời)</option>
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-semibold text-slate-700">Ràng buộc giới tính (Gender Restriction)</label>
+                <select
+                  value={genderRestriction}
+                  onChange={(e) => setGenderRestriction(e.target.value as any)}
+                  className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                >
+                  <option value="">Không ràng buộc (Tự do Nam/Nữ)</option>
+                  <option value="MALE">Chỉ Nam</option>
+                  <option value="FEMALE">Chỉ Nữ</option>
+                  <option value="MIXED">Mixed Doubles (Đôi Nam Nữ - 1 Nam & 1 Nữ)</option>
                 </select>
               </div>
             </div>
@@ -848,30 +884,54 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
 
             {/* Invite Code Section */}
             {tournament.status !== 'DRAFT' && (
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="space-y-1">
-                  <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Mã mời đăng ký nhanh</p>
-                  <p className="text-base font-black text-blue-600 tracking-widest">{tournament.inviteCode}</p>
+              <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-4">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Mã mời đăng ký nhanh</p>
+                    <p className="text-base font-black text-blue-600 tracking-widest">{tournament.inviteCode}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        navigator.clipboard.writeText(tournament.inviteCode || '');
+                        toast.success('Đã sao chép mã mời!');
+                      }}
+                      className="border-slate-200 hover:bg-slate-100 text-slate-700 font-bold text-xs"
+                    >
+                      Copy Mã
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={handleRegenerateInviteCode}
+                      className="border-slate-200 hover:bg-slate-100 text-slate-700 font-bold text-xs flex items-center gap-1"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" /> Tạo lại mã mời
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      navigator.clipboard.writeText(tournament.inviteCode || '');
-                      toast.success('Đã sao chép mã mời!');
-                    }}
-                    className="border-slate-200 hover:bg-slate-100 text-slate-700 font-bold text-xs"
-                  >
-                    Copy Mã
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={handleRegenerateInviteCode}
-                    className="border-slate-200 hover:bg-slate-100 text-slate-700 font-bold text-xs flex items-center gap-1"
-                  >
-                    <RefreshCw className="w-3.5 h-3.5" /> Tạo lại mã mời
-                  </Button>
-                </div>
+
+                {visibility === 'PRIVATE' && (
+                  <div className="flex items-center gap-3 border p-3.5 rounded-xl bg-white mt-2">
+                    <LinkIcon className="w-5 h-5 text-slate-400 flex-shrink-0" />
+                    <div className="flex-grow min-w-0">
+                      <p className="text-xs text-slate-450 font-bold uppercase tracking-wider">Đường dẫn đăng ký riêng tư (Private Invite Link)</p>
+                      <p className="text-sm font-semibold text-slate-800 truncate select-all">
+                        {`${window.location.origin}/tournaments/${tournament.id}/register?invite=${tournament.inviteCode}`}
+                      </p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        navigator.clipboard.writeText(`${window.location.origin}/tournaments/${tournament.id}/register?invite=${tournament.inviteCode}`);
+                        toast.success('Đã sao chép link đăng ký riêng tư!');
+                      }}
+                      className="border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-bold"
+                    >
+                      Copy Link
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
 
@@ -1092,13 +1152,13 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                       <span className="bg-blue-50 text-blue-700 text-[10px] font-black px-2 py-0.5 rounded border border-blue-100 uppercase">{stage.type}</span>
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                       <div className="flex flex-col gap-1.5">
-                        <label className="text-xs font-bold text-slate-650">Số set chạm thắng</label>
+                        <label className="text-xs font-bold text-slate-655">Số set chạm thắng</label>
                         <select
                           value={stage.roundConfig?.sets_to_win ?? setsToWin}
                           onChange={(e) => handleUpdateStageRoundConfig(stage.id, { sets_to_win: Number(e.target.value) })}
-                          className="border border-slate-300 rounded-lg px-2.5 py-1.5 bg-white text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className="border border-slate-300 rounded-lg px-2.5 py-1.5 bg-white text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500 h-9"
                         >
                           <option value={1}>1 Set</option>
                           <option value={2}>2 Set (Best of 3)</option>
@@ -1106,24 +1166,45 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                         </select>
                       </div>
                       <div className="flex flex-col gap-1.5">
-                        <label className="text-xs font-bold text-slate-650">Điểm mỗi set</label>
+                        <label className="text-xs font-bold text-slate-655">Điểm mỗi set</label>
                         <input
                           type="number"
                           value={stage.roundConfig?.points_per_set ?? pointsPerSet}
                           onChange={(e) => handleUpdateStageRoundConfig(stage.id, { points_per_set: Number(e.target.value) })}
-                          className="border border-slate-300 rounded-lg px-2.5 py-1.5 bg-white text-xs text-slate-750 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className="border border-slate-300 rounded-lg px-2.5 py-1.5 bg-white text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500 h-9"
                         />
                       </div>
                       <div className="flex flex-col gap-1.5">
-                        <label className="text-xs font-bold text-slate-650">Phương thức tính điểm</label>
+                        <label className="text-xs font-bold text-slate-655">Phương thức tính điểm</label>
                         <select
                           value={stage.roundConfig?.scoring_type ?? 'RALLY_POINT'}
                           onChange={(e) => handleUpdateStageRoundConfig(stage.id, { scoring_type: e.target.value })}
-                          className="border border-slate-300 rounded-lg px-2.5 py-1.5 bg-white text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className="border border-slate-300 rounded-lg px-2.5 py-1.5 bg-white text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500 h-9"
                         >
-                          <option value="RALLY_POINT">Rally Point (Tính điểm trực tiếp)</option>
-                          <option value="TRADITIONAL">Traditional (Chỉ giao bóng ăn điểm)</option>
+                          <option value="RALLY_POINT">Rally Point (Trực tiếp)</option>
+                          <option value="TRADITIONAL">Traditional (Giao bóng ăn điểm)</option>
                         </select>
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-xs font-bold text-slate-655">Luật Deuce (Cách biệt 2)</label>
+                        <select
+                          value={stage.roundConfig?.deuce_enabled === false ? 'FALSE' : 'TRUE'}
+                          onChange={(e) => handleUpdateStageRoundConfig(stage.id, { deuce_enabled: e.target.value === 'TRUE' })}
+                          className="border border-slate-300 rounded-lg px-2.5 py-1.5 bg-white text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500 h-9"
+                        >
+                          <option value="TRUE">Bật</option>
+                          <option value="FALSE">Tắt</option>
+                        </select>
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-xs font-bold text-slate-655">Chạm Deuce ở điểm</label>
+                        <input
+                          type="number"
+                          value={stage.roundConfig?.tiebreak_at ?? (stage.roundConfig?.points_per_set ? (stage.roundConfig.points_per_set - 1) : 20)}
+                          onChange={(e) => handleUpdateStageRoundConfig(stage.id, { tiebreak_at: Number(e.target.value) })}
+                          disabled={stage.roundConfig?.deuce_enabled === false}
+                          className="border border-slate-300 rounded-lg px-2.5 py-1.5 bg-white text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50 h-9"
+                        />
                       </div>
                     </div>
                   </div>
@@ -1180,14 +1261,16 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                   <div className="flex items-center gap-3 border p-3.5 rounded-xl bg-slate-50">
                     <LinkIcon className="w-5 h-5 text-slate-400 flex-shrink-0" />
                     <div className="flex-grow min-w-0">
-                      <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Đường dẫn đăng ký công khai</p>
+                      <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">
+                        {tournament.visibility === 'PRIVATE' ? 'Đường dẫn đăng ký riêng tư' : 'Đường dẫn đăng ký công khai'}
+                      </p>
                       <p className="text-sm font-semibold text-slate-800 truncate select-all">{inviteLink}</p>
                     </div>
                     <Button
                       variant="outline"
                       onClick={() => {
                         navigator.clipboard.writeText(inviteLink);
-                        toast.success('Đã sao chép link đăng ký!');
+                        toast.success(tournament.visibility === 'PRIVATE' ? 'Đã sao chép link đăng ký riêng tư!' : 'Đã sao chép link đăng ký công khai!');
                       }}
                       className="border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-bold"
                     >

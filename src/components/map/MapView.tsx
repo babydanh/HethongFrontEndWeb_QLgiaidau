@@ -25,7 +25,7 @@ export function MapView({ lat, lng, zoom = 14, className = '', popupText }: MapV
     <div className={`relative rounded-lg overflow-hidden border border-slate-200 ${className}`} style={{ height: '300px' }}>
       <Map
         {...viewState}
-        onMove={(evt: any) => setViewState(evt.viewState)}
+        onMove={(evt: { viewState: typeof viewState }) => setViewState(evt.viewState)}
         mapStyle="mapbox://styles/mapbox/streets-v12"
         mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN || 'pk.eyJ1IjoiZHVjbWluaGRldjI4IiwiYSI6ImNsd3ZpM281czB6M3MybG14dHB0eHZvdGgifQ.R280oJt8g_j9XfKzGZQ4aQ'}
         scrollZoom={false}

@@ -11,6 +11,11 @@ import { useAuthStore } from '@/lib/zustand/authStore';
 import { JoinCommunityModal } from '@/components/shared/JoinCommunityModal';
 import toast from 'react-hot-toast';
 
+interface CommunityMemberRecord {
+  member?: { id?: string; userId?: string; role?: string; status?: string };
+  user?: { id?: string; email?: string };
+}
+
 // Tabs
 import AboutTab from './components/AboutTab';
 import TournamentsTab from './components/TournamentsTab';
@@ -42,7 +47,7 @@ export default function CommunityDetailPage() {
     try {
       const res = await communitiesApi.getMembers(id);
       const memberList = res.data || res || [];
-      const current = memberList.find((m: any) => m.member?.userId === user.id || m.user?.id === user.id);
+      const current = memberList.find((m: CommunityMemberRecord) => m.member?.userId === user.id || m.user?.id === user.id);
       if (current) {
         setMembership({
           role: current.member?.role || 'MEMBER',
@@ -61,7 +66,7 @@ export default function CommunityDetailPage() {
     try {
       setIsLoading(true);
       const res = await communitiesApi.getCommunityById(id);
-      const data = (res as any)?.data || res;
+      const data = (res as { data?: Community })?.data ?? (res as unknown as Community);
       setCommunity(data);
     } catch (error) {
       console.error('Failed to fetch community details', error);
@@ -300,7 +305,7 @@ export default function CommunityDetailPage() {
           ].map(tab => (
             <button 
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
+              onClick={() => setActiveTab(tab.id as typeof activeTab)}
               className={`whitespace-nowrap py-3 px-5 font-bold text-xs border-b-2 -mb-[2px] transition-all ${
                 activeTab === tab.id 
                   ? 'border-emerald-600 text-emerald-700 font-extrabold' 

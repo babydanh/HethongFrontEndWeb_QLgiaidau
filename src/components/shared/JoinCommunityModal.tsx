@@ -5,6 +5,7 @@ import { Community, communitiesApi } from '@/features/communities/api';
 import { Button } from '@/components/ui/Button';
 import { Modal, ModalContent, ModalHeader, ModalTitle } from '@/components/ui/Modal';
 import toast from 'react-hot-toast';
+import { getErrorMessage } from '@/utils/error';
 
 interface JoinCommunityModalProps {
   community: Community;
@@ -42,8 +43,8 @@ export function JoinCommunityModal({ community, isOpen, onClose, onSuccess }: Jo
       
       onSuccess();
       onClose();
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Có lỗi xảy ra khi tham gia câu lạc bộ.');
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error));
     } finally {
       setIsSubmitting(false);
     }

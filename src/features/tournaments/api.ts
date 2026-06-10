@@ -43,5 +43,5 @@ export const tournamentsApi = {
   withdraw: (id: string) =>
     api.post<ApiResponse<{ message: string; refundAmount?: number }>>(`/tournaments/${id}/withdraw`, {}),
   getMyRegistration: (id: string) =>
-    api.get<ApiResponse<{ registered: boolean; participant?: TournamentParticipant & { teamMembers?: any[]; teamInviteLink?: string } }>>(`/tournaments/${id}/my-registration`),
+    api.get<ApiResponse<{ registered: boolean; participant?: TournamentParticipant & { teamMembers?: TournamentParticipant['members']; teamInviteLink?: string } }>>(`/tournaments/${id}/my-registration`),
 };

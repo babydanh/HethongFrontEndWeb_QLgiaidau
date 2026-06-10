@@ -24,10 +24,8 @@ export function MapPicker({ defaultLat = 21.028511, defaultLng = 105.804817, onC
     zoom: 13
   });
 
-  const onMapClick = useCallback((evt: any) => {
-    // @ts-ignore
+  const onMapClick = useCallback((evt: { lngLat: { lat: number; lng: number } }) => {
     const lat = evt.lngLat.lat;
-    // @ts-ignore
     const lng = evt.lngLat.lng;
     setMarker({ lat, lng });
     onChange(lat, lng);
@@ -37,7 +35,7 @@ export function MapPicker({ defaultLat = 21.028511, defaultLng = 105.804817, onC
     <div className={`relative rounded-lg overflow-hidden border border-slate-200 ${className}`} style={{ height: '300px' }}>
       <Map
         {...viewState}
-        onMove={(evt: any) => setViewState(evt.viewState)}
+        onMove={(evt: { viewState: typeof viewState }) => setViewState(evt.viewState)}
         onClick={onMapClick}
         mapStyle="mapbox://styles/mapbox/streets-v12"
         mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN || 'pk.eyJ1IjoiZHVjbWluaGRldjI4IiwiYSI6ImNsd3ZpM281czB6M3MybG14dHB0eHZvdGgifQ.R280oJt8g_j9XfKzGZQ4aQ'} // Fallback demo token

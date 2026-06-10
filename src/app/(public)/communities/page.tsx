@@ -24,7 +24,7 @@ export default function CommunitiesPage() {
       try {
         const res = await communitiesApi.getMyCommunities();
         const list = res.data || res || [];
-        setMyCommunityIds(new Set(list.map((c: any) => c.id)));
+        setMyCommunityIds(new Set(list.map((c: Community) => c.id)));
       } catch (err) {
         console.error("Failed to load my communities", err);
       }
@@ -47,7 +47,7 @@ export default function CommunitiesPage() {
     const fetchCommunities = async () => {
       setIsLoading(true);
       try {
-        const query: any = { page, limit: 10 };
+        const query: Record<string, unknown> = { page, limit: 10 };
         if (search) query.search = search;
         if (provinceCode) query.provinceCode = provinceCode;
         if (categoryId) query.categoryId = categoryId;

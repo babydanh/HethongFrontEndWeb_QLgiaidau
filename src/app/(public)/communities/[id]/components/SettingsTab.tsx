@@ -14,9 +14,32 @@ import { usersApi } from '@/features/users/api';
 import { categoriesApi, Category } from '@/features/categories/api';
 import { regionsApi, Region } from '@/features/regions/api';
 import toast from 'react-hot-toast';
+import { getErrorMessage } from '@/utils/error';
+
+interface JoinRequest {
+  id: string;
+  joinedAt: string;
+  joinAnswers?: Record<string, string>;
+  user?: {
+    email?: string;
+    profile?: { fullName?: string };
+  };
+}
+
+interface CommunityMemberRecord {
+  member?: { id?: string; userId?: string; status?: string; role?: string };
+  user?: { id?: string; email?: string; avatarUrl?: string; fullName?: string; profile?: { fullName?: string } };
+}
+
+interface UserSearchResult {
+  id: string;
+  email: string;
+  fullName?: string;
+  avatarUrl?: string;
+}
 
 export default function SettingsTab({ community }: { community: Community }) {
-  const [requests, setRequests] = useState<any[]>([]);
+  const [requests, setRequests] = useState<JoinRequest[]>([]);
   const [isLoadingRequests, setIsLoadingRequests] = useState(true);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   
@@ -24,8 +47,8 @@ export default function SettingsTab({ community }: { community: Community }) {
   const [name, setName] = useState(community.name);
   const [description, setDescription] = useState(community.description || '');
   const [rules, setRules] = useState(community.rules || '');
-  const [visibility, setVisibility] = useState<any>(community.visibility || 'PUBLIC');
-  const [joinMode, setJoinMode] = useState<any>(community.joinMode || 'OPEN');
+  const [visibility, setVisibility] = useState<'PUBLIC' | 'RESTRICTED' | 'PRIVATE'>(community.visibility || 'PUBLIC');
+  const [joinMode, setJoinMode] = useState<'OPEN' | 'APPROVAL' | 'INVITE_ONLY'>(community.joinMode || 'OPEN');
   const [maxMembers, setMaxMembers] = useState(community.maxMembers || '');
   const [locationAddress, setLocationAddress] = useState(community.locationAddress || '');
   
@@ -58,9 +81,9 @@ export default function SettingsTab({ community }: { community: Community }) {
 
   // Invite Members States
   const [userSearchQuery, setUserSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<UserSearchResult[]>([]);
   const [isSearchingUsers, setIsSearchingUsers] = useState(false);
-  const [invitedMembers, setInvitedMembers] = useState<any[]>([]);
+  const [invitedMembers, setInvitedMembers] = useState<CommunityMemberRecord[]>([]);
   const [isInviting, setIsInviting] = useState<Record<string, boolean>>({});
 
   const [isSaving, setIsSaving] = useState(false);
@@ -142,7 +165,7 @@ export default function SettingsTab({ community }: { community: Community }) {
         if (!active) return;
         setRequests(reqRes.data || reqRes || []);
         const allMembers = memRes.data || memRes || [];
-        setInvitedMembers(allMembers.filter((m: any) => m.member?.status === 'INVITED'));
+        setInvitedMembers((allMembers as CommunityMemberRecord[]).filter((m) => m.member?.status === 'INVITED'));
       } catch (error) {
         console.error('Failed to fetch requests/invitations', error);
       } finally {
@@ -203,9 +226,9 @@ export default function SettingsTab({ community }: { community: Community }) {
       setUserSearchQuery('');
       setSearchResults([]);
       triggerRefresh();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to invite member', error);
-      toast.error(error.response?.data?.message || 'Lỗi khi gửi lời mời.');
+      toast.error(getErrorMessage(error));
     } finally {
       setIsInviting(prev => ({ ...prev, [targetUserId]: false }));
     }
@@ -809,7 +832,7 @@ export default function SettingsTab({ community }: { community: Community }) {
                         </div>
                       </div>
                       <button 
-                        onClick={() => handleCancelInvite(inv.user?.id)}
+                        onClick={() => inv.user?.id && handleCancelInvite(inv.user.id)}
                         className="text-slate-400 hover:text-red-500 p-1 bg-white hover:bg-red-50 rounded border border-slate-200 shadow-sm"
                         title="Thu hồi lời mời"
                       >

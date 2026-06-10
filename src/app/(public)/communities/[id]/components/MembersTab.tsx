@@ -8,6 +8,13 @@ import { usersApi } from '@/features/users/api';
 import toast from 'react-hot-toast';
 import Image from 'next/image';
 
+interface UserSearchResult {
+  id: string;
+  email: string;
+  fullName?: string;
+  avatarUrl?: string;
+}
+
 interface MemberData {
   member: {
     id: string;
@@ -47,7 +54,7 @@ export default function MembersTab({
   // Invite Modal state
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [inviteSearch, setInviteSearch] = useState('');
-  const [inviteResults, setInviteResults] = useState<any[]>([]);
+  const [inviteResults, setInviteResults] = useState<UserSearchResult[]>([]);
   const [isSearchingUsers, setIsSearchingUsers] = useState(false);
   const [isInvitingId, setIsInvitingId] = useState<string | null>(null);
 
@@ -86,7 +93,7 @@ export default function MembersTab({
           const results = await usersApi.searchUsers(inviteSearch);
           // Filter out existing members
           const filtered = results.filter(
-            (u: any) => !members.some(m => m.user?.id === u.id)
+            (u: UserSearchResult) => !members.some(m => m.user?.id === u.id)
           );
           setInviteResults(filtered || []);
         } catch (error) {
@@ -147,7 +154,7 @@ export default function MembersTab({
     }
   };
 
-  const handleInviteUser = async (targetUser: any) => {
+  const handleInviteUser = async (targetUser: UserSearchResult) => {
     try {
       setIsInvitingId(targetUser.id);
       await communitiesApi.inviteMember(communityId, { userId: targetUser.id, role: 'MEMBER' });
@@ -445,9 +452,9 @@ export default function MembersTab({
                       <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden relative">
                           {user.avatarUrl ? (
-                            <Image src={user.avatarUrl} alt={user.fullName} fill className="object-cover" />
+                            <Image src={user.avatarUrl} alt={user.fullName ?? 'User avatar'} fill className="object-cover" />
                           ) : (
-                            getInitials(user.fullName)
+                            getInitials(user.fullName ?? '')
                           )}
                         </div>
                         <div className="text-left">

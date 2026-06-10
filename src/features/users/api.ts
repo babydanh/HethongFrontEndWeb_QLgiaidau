@@ -3,8 +3,23 @@ import { api } from '@/lib/axios';
 import { UserProfile } from '@/types/user';
 export type { UserProfile };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const mapUserProfile = (data: any): UserProfile => {
+interface RawUserProfileResponse {
+  id?: string;
+  email?: string;
+  profile?: {
+    fullName?: string;
+    avatarUrl?: string;
+    bio?: string;
+    phone?: string;
+    phoneNumber?: string;
+    dateOfBirth?: string;
+    gender?: string;
+    address?: string;
+  };
+  [key: string]: unknown;
+}
+
+const mapUserProfile = (data: RawUserProfileResponse): UserProfile => {
   return {
     ...data,
     fullName: data.profile?.fullName,

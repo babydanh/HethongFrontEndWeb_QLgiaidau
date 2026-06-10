@@ -19,6 +19,18 @@ const step4Schema = z.object({
 
 type Step4Values = z.infer<typeof step4Schema>;
 
+interface CreateTournamentPayload {
+  entryFee: number;
+  tournamentConfig: Record<string, unknown>;
+  venueId?: string;
+  communityId?: string;
+  registrationStartDate?: string;
+  registrationEndDate?: string;
+  startDate?: string;
+  endDate?: string;
+  [key: string]: unknown;
+}
+
 export default function Step4Fees() {
   const { formData, updateFormData, prevStep, reset } = useCreateTournamentStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -38,7 +50,7 @@ export default function Step4Fees() {
       // Transform and Clean data to match backend CreateTournamentDto
       const { format, ...rest } = formData;
       
-      const finalData: any = {
+      const finalData: CreateTournamentPayload = {
         ...rest,
         entryFee: data.entryFee,
         tournamentConfig: {

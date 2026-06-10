@@ -318,7 +318,7 @@ export default function DoublesRegistrationFlow({ tournament, inviteCode }: Prop
             <div className="bg-slate-50 px-4 py-2.5 text-xs font-bold text-slate-500 uppercase tracking-wider">
               Thành viên đội: {participant.teamName}
             </div>
-            {participant.members?.map((m: any, idx: number) => (
+            {participant.members?.map((m: TournamentParticipant['members'][number], idx: number) => (
               <div key={m.userId || idx} className="px-4 py-3 flex items-center justify-between text-sm">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs uppercase">

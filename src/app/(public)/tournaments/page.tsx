@@ -5,13 +5,17 @@ import { Search, ChevronDown, SlidersHorizontal, Bookmark, MapPin, Calendar, Cir
 import Link from 'next/link';
 import { tournamentsApi, Tournament } from '@/features/tournaments/api';
 import { categoriesApi, Category } from '@/features/categories/api';
+import { regionsApi, Region } from '@/features/regions/api';
+import { formatDate, formatCurrency } from '@/utils/format';
 
 export default function TournamentsListPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [regions, setRegions] = useState<Region[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
   const [selectedStatus, setSelectedStatus] = useState<string>('');
+  const [selectedRegion, setSelectedRegion] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -27,7 +31,20 @@ export default function TournamentsListPage() {
         console.error("Failed to fetch categories", error);
       }
     };
+    
+    const fetchRegions = async () => {
+      try {
+        const res = await regionsApi.getProvinces();
+        if (res) {
+          setRegions(res);
+        }
+      } catch (error) {
+        console.error("Failed to fetch regions", error);
+      }
+    };
+
     fetchCategories();
+    fetchRegions();
   }, []);
 
   useEffect(() => {
@@ -39,7 +56,9 @@ export default function TournamentsListPage() {
           limit: 9, 
           search: searchTerm || undefined,
           categoryId: selectedCategoryId || undefined,
-          status: selectedStatus || undefined
+          status: selectedStatus || undefined,
+          region: selectedRegion || undefined,
+          tournamentType: 'PUBLIC'
         });
         setTournaments(res.data);
         setTotalPages(res.meta.totalPages);
@@ -50,7 +69,7 @@ export default function TournamentsListPage() {
       }
     };
     fetchTournaments();
-  }, [page, searchTerm, selectedCategoryId, selectedStatus]);
+  }, [page, searchTerm, selectedCategoryId, selectedStatus, selectedRegion]);
 
   const handleSearch = () => {
     setPage(1); // Reset to page 1 on new search
@@ -128,6 +147,26 @@ export default function TournamentsListPage() {
           </div>
 
           <div className="w-full md:w-auto min-w-[150px]">
+            <label className="block text-sm font-medium text-slate-500 mb-1">Khu vực</label>
+            <div className="relative">
+              <select 
+                value={selectedRegion}
+                onChange={(e) => {
+                  setSelectedRegion(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full pl-3 pr-10 py-2 border border-slate-200 rounded-lg text-base appearance-none focus:outline-none focus:ring-2 focus:ring-blue-600 bg-slate-50 text-slate-900 font-medium"
+              >
+                <option value="">Tất cả</option>
+                {regions.map(reg => (
+                  <option key={reg.code} value={reg.name.replace(/^(Thành phố|Tỉnh)\s+/i, '')}>{reg.name}</option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5 pointer-events-none" />
+            </div>
+          </div>
+
+          <div className="w-full md:w-auto min-w-[150px]">
             <label className="block text-sm font-medium text-slate-500 mb-1">Sắp xếp</label>
             <div className="relative">
               <select className="w-full pl-3 pr-10 py-2 border border-slate-200 rounded-lg text-base appearance-none focus:outline-none focus:ring-2 focus:ring-blue-600 bg-slate-50 text-slate-900 font-medium">
@@ -193,9 +232,22 @@ export default function TournamentsListPage() {
                   </div>
                 )}
 
-                <button className="absolute top-3 right-3 p-1.5 bg-white/80 backdrop-blur-sm rounded-full text-slate-500 hover:text-blue-600 transition-colors shadow-sm">
+                <button className="absolute top-3 right-3 p-1.5 bg-white/80 backdrop-blur-sm rounded-full text-slate-500 hover:text-blue-600 transition-colors shadow-sm z-10">
                   <Bookmark className="w-5 h-5" />
                 </button>
+
+                <div className="absolute bottom-3 right-3 flex flex-wrap gap-1.5 z-10">
+                  {tournament.genderRestriction && (
+                    <span className="bg-slate-900/70 backdrop-blur-sm text-amber-300 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider border border-amber-500/20 shadow-sm">
+                      {tournament.genderRestriction === 'MALE' ? 'Chỉ Nam' :
+                       tournament.genderRestriction === 'FEMALE' ? 'Chỉ Nữ' : 'Nam & Nữ'}
+                    </span>
+                  )}
+                  <span className="bg-slate-900/70 backdrop-blur-sm text-blue-300 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider border border-blue-500/20 shadow-sm">
+                    {tournament.matchType === 'SINGLES' ? 'Đấu Đơn' :
+                     tournament.matchType === 'DOUBLES' ? 'Đấu Đôi' : 'Đôi Nam-Nữ'}
+                  </span>
+                </div>
               </div>
               <div className={`p-6 flex flex-col flex-grow ${tournament.status === 'COMPLETED' ? 'opacity-80' : ''}`}>
                 <div className="flex items-start justify-between mb-2">
@@ -215,11 +267,13 @@ export default function TournamentsListPage() {
                   </div>
                   <div className="flex items-center gap-2 text-slate-500 text-sm font-medium">
                     <Calendar className="w-4 h-4 text-slate-400" />
-                    <span>{tournament.startDate ? new Date(tournament.startDate).toLocaleDateString('vi-VN') : 'Đang cập nhật'}</span>
+                    <span>{tournament.startDate ? formatDate(tournament.startDate) : 'Đang cập nhật'}</span>
                   </div>
                   <div className="flex items-center gap-2 text-slate-500 text-sm font-medium">
                     <CircleDollarSign className="w-4 h-4 text-slate-400" />
-                    <span className="font-bold text-blue-600">{tournament.entryFee ? tournament.entryFee.toLocaleString('vi-VN') : 'Miễn phí'} {tournament.entryFee ? (tournament.currency || 'VND') : ''}</span>
+                    <span className="font-bold text-blue-600">
+                      {tournament.entryFee ? formatCurrency(tournament.entryFee) : 'Miễn phí'}
+                    </span>
                   </div>
                 </div>
                 <div className={`mb-6 ${tournament.status === 'COMPLETED' ? 'opacity-60' : ''}`}>

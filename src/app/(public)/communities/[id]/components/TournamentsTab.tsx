@@ -6,19 +6,7 @@ import { Trophy, Calendar, Users, DollarSign, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { communitiesApi } from '@/features/communities/api';
 import { formatDate } from '@/utils/format';
-
-interface Tournament {
-  id: string;
-  name: string;
-  description?: string;
-  status: 'UPCOMING' | 'ONGOING' | 'COMPLETED' | 'CANCELLED' | 'REGISTRATION_OPEN';
-  matchType: string;
-  entryFee: string;
-  startDate?: string;
-  endDate?: string;
-  maxParticipants?: number;
-  createdAt: string;
-}
+import { Tournament } from '@/types/tournament';
 
 export default function TournamentsTab({ 
   communityId, 
@@ -36,7 +24,7 @@ export default function TournamentsTab({
     try {
       setIsLoading(true);
       const res = await communitiesApi.getTournaments(communityId);
-      const data = res.data || res || [];
+      const data = res.data?.data || (Array.isArray(res.data) ? res.data : []);
       setTournaments(data);
     } catch (error) {
       console.error('Failed to fetch community tournaments', error);

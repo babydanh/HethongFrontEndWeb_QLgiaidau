@@ -24,6 +24,8 @@ export interface Tournament {
   matchType?: 'SINGLES' | 'DOUBLES' | 'MIXED_DOUBLES';
   communityId?: string | null;
   inviteCode?: string | null;
+  visibility?: 'PUBLIC' | 'PRIVATE';
+  genderRestriction?: 'MALE' | 'FEMALE' | 'MIXED' | null;
   venueId?: string | null;
   currency: string;
   categoryId: string;
@@ -62,6 +64,8 @@ export interface TournamentParticipant {
   seed: number | null;
   isPaid: boolean;
   registeredAt: string;
+  teamInviteToken?: string | null;
+  teamStatus?: 'PENDING' | 'COMPLETE' | 'WITHDRAWN';
   registeredBy: {
     id: string;
     fullName: string | null;

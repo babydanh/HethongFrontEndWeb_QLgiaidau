@@ -9,7 +9,7 @@ export const tournamentsApi = {
   getTournaments: (params?: Record<string, unknown>) => api.get<PaginatedTournaments>('/tournaments', { params }),
   getPublicTournaments: (params?: Record<string, unknown>) => api.get<PaginatedTournaments>('/tournaments/public', { params }),
   getMyTournaments: () => api.get<ApiResponse<Tournament[]>>('/tournaments/my'),
-  getTournamentById: (id: string) => api.get<ApiResponse<Tournament>>(`/tournaments/${id}`),
+  getTournamentById: (id: string, params?: Record<string, unknown>) => api.get<ApiResponse<Tournament>>(`/tournaments/${id}`, { params }),
   getTournamentByInviteCode: (inviteCode: string) => api.get<ApiResponse<Tournament>>(`/tournaments/join/${inviteCode}`),
   joinTournamentByInviteCode: <T>(inviteCode: string, data: T) => api.post<ApiResponse<{ participantId: string }>>(`/tournaments/join/${inviteCode}`, data),
   createTournament: <T>(data: T) => api.post<ApiResponse<Tournament>>('/tournaments', data),
@@ -34,4 +34,14 @@ export const tournamentsApi = {
   updateMatchSchedule: (matchId: string, data: { courtId?: string | null; refereeId?: string | null; scheduledAt?: string | null }) =>
     api.patch<ApiResponse<BracketMatch>>(`/matches/${matchId}/schedule`, data),
   updateStage: <T>(stageId: string, data: T) => api.patch<ApiResponse<BracketStage>>(`/tournaments/stages/${stageId}`, data),
+  validateInvite: (id: string, inviteCode: string) =>
+    api.post<ApiResponse<Tournament>>(`/tournaments/${id}/validate-invite`, { inviteCode }),
+  register: (id: string, data: { teamName: string; inviteCode?: string }) =>
+    api.post<ApiResponse<{ participant: TournamentParticipant; paymentUrl?: string; teamInviteLink?: string }>>(`/tournaments/${id}/register`, data),
+  joinTeam: (id: string, data: { participantId: string; teamInviteToken: string }) =>
+    api.post<ApiResponse<{ participant: TournamentParticipant; paymentUrl?: string }>>(`/tournaments/${id}/join-team`, data),
+  withdraw: (id: string) =>
+    api.post<ApiResponse<{ message: string; refundAmount?: number }>>(`/tournaments/${id}/withdraw`, {}),
+  getMyRegistration: (id: string) =>
+    api.get<ApiResponse<{ registered: boolean; participant?: TournamentParticipant & { teamMembers?: any[]; teamInviteLink?: string } }>>(`/tournaments/${id}/my-registration`),
 };

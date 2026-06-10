@@ -692,7 +692,7 @@ export default function SettingsTab({ community }: { community: Community }) {
                   <div className="flex justify-between items-start">
                     <div className="flex-grow">
                       <h4 className="font-bold text-slate-900 text-sm">{req.user?.profile?.fullName || req.user?.email || 'Người dùng'}</h4>
-                      <p className="text-[10px] text-slate-400 mb-2">Gửi: {new Date(req.joinedAt).toLocaleDateString()}</p>
+                      <p className="text-[10px] text-slate-400 mb-2">Gửi: {new Date(req.joinedAt).toLocaleDateString('vi-VN')}</p>
                       
                       {req.joinAnswers && Object.keys(req.joinAnswers).length > 0 && (
                         <div className="space-y-1 mt-1 bg-white p-2 rounded border border-slate-100">

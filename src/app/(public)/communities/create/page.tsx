@@ -173,6 +173,7 @@ export default function CreateCommunityPage() {
       const payload = {
         ...data,
         locationAddress: combinedAddress,
+        districtCode: data.districtCode || null,
         wardCode: null,
         joinQuestions: data.joinQuestions?.map(q => q.value).filter(Boolean) || [],
       };

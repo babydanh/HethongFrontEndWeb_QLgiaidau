@@ -1,13 +1,18 @@
-# Graph Report - .  (2026-06-09)
+# Graph Report - frontend-web_qlgiaidau  (2026-06-10)
 
 ## Corpus Check
-- 106 files · ~251,794 words
+- 136 files · ~305,772 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 198 nodes · 276 edges · 18 communities (13 shown, 5 thin omitted)
-- Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS
+- 822 nodes · 1411 edges · 56 communities (50 shown, 6 thin omitted)
+- Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 6 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
+
+## Graph Freshness
+- Built from commit: `94191909`
+- Run `git rev-parse HEAD` and compare to check if the graph is stale.
+- Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
 - [[_COMMUNITY_Community 0|Community 0]]
@@ -20,95 +25,276 @@
 - [[_COMMUNITY_Community 7|Community 7]]
 - [[_COMMUNITY_Community 8|Community 8]]
 - [[_COMMUNITY_Community 9|Community 9]]
+- [[_COMMUNITY_Community 10|Community 10]]
 - [[_COMMUNITY_Community 11|Community 11]]
 - [[_COMMUNITY_Community 14|Community 14]]
 - [[_COMMUNITY_Community 15|Community 15]]
 - [[_COMMUNITY_Community 16|Community 16]]
+- [[_COMMUNITY_Community 18|Community 18]]
+- [[_COMMUNITY_Community 19|Community 19]]
+- [[_COMMUNITY_Community 20|Community 20]]
+- [[_COMMUNITY_Community 21|Community 21]]
+- [[_COMMUNITY_Community 22|Community 22]]
+- [[_COMMUNITY_Community 23|Community 23]]
+- [[_COMMUNITY_Community 24|Community 24]]
+- [[_COMMUNITY_Community 25|Community 25]]
+- [[_COMMUNITY_Community 26|Community 26]]
+- [[_COMMUNITY_Community 27|Community 27]]
+- [[_COMMUNITY_Community 28|Community 28]]
+- [[_COMMUNITY_Community 29|Community 29]]
+- [[_COMMUNITY_Community 30|Community 30]]
+- [[_COMMUNITY_Community 31|Community 31]]
+- [[_COMMUNITY_Community 32|Community 32]]
+- [[_COMMUNITY_Community 33|Community 33]]
+- [[_COMMUNITY_Community 34|Community 34]]
+- [[_COMMUNITY_Community 35|Community 35]]
+- [[_COMMUNITY_Community 36|Community 36]]
+- [[_COMMUNITY_Community 37|Community 37]]
+- [[_COMMUNITY_Community 38|Community 38]]
+- [[_COMMUNITY_Community 39|Community 39]]
+- [[_COMMUNITY_Community 40|Community 40]]
+- [[_COMMUNITY_Community 41|Community 41]]
+- [[_COMMUNITY_Community 42|Community 42]]
+- [[_COMMUNITY_Community 43|Community 43]]
+- [[_COMMUNITY_Community 46|Community 46]]
+- [[_COMMUNITY_Community 47|Community 47]]
+- [[_COMMUNITY_Community 48|Community 48]]
+- [[_COMMUNITY_Community 49|Community 49]]
+- [[_COMMUNITY_Community 50|Community 50]]
+- [[_COMMUNITY_Community 51|Community 51]]
+- [[_COMMUNITY_Community 52|Community 52]]
+- [[_COMMUNITY_Community 53|Community 53]]
+- [[_COMMUNITY_Community 54|Community 54]]
+- [[_COMMUNITY_Community 55|Community 55]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `cn()` - 19 edges
-2. `compilerOptions` - 16 edges
-3. `api` - 11 edges
-4. `useAuthStore` - 10 edges
-5. `Button` - 7 edges
-6. `scripts` - 5 edges
-7. `Input` - 5 edges
-8. `Tournament` - 5 edges
-9. `Header()` - 4 edges
-10. `Category` - 4 edges
+1. `useAuthStore` - 43 edges
+2. `Button` - 38 edges
+3. `Tournament` - 27 edges
+4. `api` - 23 edges
+5. `cn()` - 22 edges
+6. `Input` - 19 edges
+7. `tournamentsApi` - 18 edges
+8. `formatCurrency()` - 18 edges
+9. `🎨 UI Prompts cho Stitch — Tournament Management Platform` - 18 edges
+10. `getErrorMessage()` - 17 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `HomePage()` --calls--> `useAuthStore`  [EXTRACTED]
-  src/app/page.tsx → src/lib/zustand/authStore.ts
-- `LoginPage()` --calls--> `useAuthStore`  [EXTRACTED]
-  src/app/(public)/login/page.tsx → src/lib/zustand/authStore.ts
-- `Header()` --calls--> `cn()`  [EXTRACTED]
-  src/components/layout/Header.tsx → src/utils/cn.ts
-- `DropdownMenuShortcut()` --calls--> `cn()`  [EXTRACTED]
-  src/components/ui/DropdownMenu.tsx → src/utils/cn.ts
-- `ModalHeader()` --calls--> `cn()`  [EXTRACTED]
-  src/components/ui/Modal.tsx → src/utils/cn.ts
+- `CreateCommunityPage()` --calls--> `useAuthStore`  [INFERRED]
+  src/app/(public)/communities/create/page.tsx → src/lib/zustand/authStore.ts
+- `ChatPage()` --calls--> `useAuthStore`  [EXTRACTED]
+  src/app/(player)/chat/page.tsx → src/lib/zustand/authStore.ts
+- `AboutTab()` --calls--> `formatDate()`  [EXTRACTED]
+  src/app/(public)/communities/[id]/components/AboutTab.tsx → src/utils/format.ts
+- `CommunityDetailPage()` --calls--> `useAuthStore`  [INFERRED]
+  src/app/(public)/communities/[id]/page.tsx → src/lib/zustand/authStore.ts
+- `CommunitiesPage()` --calls--> `useAuthStore`  [EXTRACTED]
+  src/app/(public)/communities/page.tsx → src/lib/zustand/authStore.ts
 
 ## Import Cycles
 - None detected.
 
-## Communities (18 total, 5 thin omitted)
+## Communities (56 total, 6 thin omitted)
 
 ### Community 0 - "Community 0"
-Cohesion: 0.07
-Nodes (31): Avatar, AvatarFallback, AvatarImage, Badge(), BadgeProps, getVariantClasses(), DropdownMenuCheckboxItem, DropdownMenuContent (+23 more)
+Cohesion: 0.08
+Nodes (27): Avatar, AvatarFallback, AvatarImage, Badge(), BadgeProps, getVariantClasses(), DropdownMenuCheckboxItem, DropdownMenuContent (+19 more)
 
 ### Community 1 - "Community 1"
-Cohesion: 0.12
-Nodes (18): authApi, LoginFormValues, loginSchema, RegisterFormValues, registerSchema, Header(), LoginForm, LoginPage() (+10 more)
+Cohesion: 0.08
+Nodes (36): categoriesApi, communitiesApi, challengesApi, CommunityChallenge, CommunitiesPage(), Props, StandingRow, step1Schema (+28 more)
 
 ### Community 2 - "Community 2"
-Cohesion: 0.14
-Nodes (12): categoriesApi, Category, PaginatedCategories, api, matchesApi, PaginatedRankings, PlayerRanking, rankingsApi (+4 more)
+Cohesion: 0.06
+Nodes (23): inter, metadata, authApi, Match, Props, RegisterFormValues, registerSchema, Footer() (+15 more)
 
 ### Community 3 - "Community 3"
 Cohesion: 0.10
 Nodes (19): compilerOptions, allowJs, esModuleInterop, incremental, isolatedModules, jsx, lib, module (+11 more)
 
 ### Community 4 - "Community 4"
-Cohesion: 0.11
-Nodes (19): dependencies, axios, clsx, framer-motion, @hookform/resolvers, lucide-react, next, @radix-ui/react-avatar (+11 more)
+Cohesion: 0.05
+Nodes (41): dependencies, axios, clsx, framer-motion, @hookform/resolvers, lucide-react, mapbox-gl, next (+33 more)
 
 ### Community 5 - "Community 5"
-Cohesion: 0.11
-Nodes (17): devDependencies, eslint, eslint-config-next, tailwindcss, @tailwindcss/postcss, @types/node, @types/react, @types/react-dom (+9 more)
+Cohesion: 0.21
+Nodes (8): Props, OverviewTab(), Props, Props, Props, TournamentDetailClient(), tournamentsApi, Tournament
+
+### Community 6 - "Community 6"
+Cohesion: 0.06
+Nodes (34): 1.1 Trang chủ / Homepage, 1.2 Đăng nhập, 1.3 Đăng ký, 1.4 Bảng xếp hạng (Leaderboard), 1.5 Danh sách Giải đấu, 1.6 Chi tiết Giải đấu, 1.7 Danh sách Cộng đồng, 1.8 Chi tiết Cộng đồng (+26 more)
 
 ### Community 7 - "Community 7"
-Cohesion: 0.33
-Nodes (5): HomePage(), Category, communitiesApi, Community, PaginatedResponse
+Cohesion: 0.06
+Nodes (30): 🛠️ 9 Kỹ Năng Cốt Lõi Frontend (Tech Skills Map), 🚫 Công Nghệ KHÔNG ĐƯỢC Dùng (Cấm), Dùng ở đâu trong dự án?, Dùng ở đâu trong dự án?, Dùng ở đâu trong dự án?, Dùng ở đâu trong dự án?, Dùng ở đâu trong dự án?, Dùng ở đâu trong dự án? (+22 more)
 
 ### Community 8 - "Community 8"
-Cohesion: 0.40
-Nodes (3): inter, metadata, Footer()
+Cohesion: 0.13
+Nodes (19): CheckoutContent(), DoublesRegistrationFlow(), JoinTournamentPage(), RegisterFormValues, registerSchema, JoinTeamPage(), paymentsApi, PaymentsPage() (+11 more)
 
 ### Community 9 - "Community 9"
+Cohesion: 0.07
+Nodes (27): Admin Dashboard, 🛡️ ADMIN PAGES (Role ADMIN), Chat, 📄 Chi Tiết Các Trang (Pages Specification), Chi tiết giải đấu, Communities, Danh sách giải đấu, Dashboard (+19 more)
+
+### Community 10 - "Community 10"
+Cohesion: 0.13
+Nodes (17): Step1Info(), Step2Confirm(), Step2Format(), Step2FormInput, step2Schema, step3Schema, Step3Values, Step3Venue() (+9 more)
+
+### Community 18 - "Community 18"
+Cohesion: 0.13
+Nodes (12): chatApi, ChatPage(), useLiveMatch(), SOCKET_URL, SocketClient, matchesApi, LiveMatchPage(), Props (+4 more)
+
+### Community 19 - "Community 19"
+Cohesion: 0.06
+Nodes (31): 1.1 Design System & Components, 1.2 Layout Components, 1.3 Auth Feature (`features/auth/`), 1.4 Profile Feature (`features/auth/` mở rộng), 2.1 Tournaments Feature (`features/tournaments/`), 2.2 Matches & Live Score Feature (`features/matches/`), 2.3 ELO & Leaderboard Feature (`features/elo/`), 2.4 Communities Feature (`features/communities/`) (+23 more)
+
+### Community 20 - "Community 20"
+Cohesion: 0.09
+Nodes (22): 1. API Communication, 2. Authentication Flow, 3. Cấu trúc File trong mỗi Feature, 4. Component Convention, 5. Styling Convention, 6. Environment Variables, 7. Error Handling, 8. HTTP Status Handling (+14 more)
+
+### Community 21 - "Community 21"
+Cohesion: 0.11
+Nodes (18): 🎯 Design System, 📄 PROMPT 10 — Thanh toán, 📄 PROMPT 11 — Tin nhắn, 📄 PROMPT 12 — Thông báo, 📄 PROMPT 13 — Admin Dashboard, 📄 PROMPT 14 — Form Tạo Giải đấu (Wizard), 📄 PROMPT 15 — Component Library, 📄 PROMPT 1 — Layout chính (+10 more)
+
+### Community 22 - "Community 22"
+Cohesion: 0.11
+Nodes (17): 1. Quy tắc cho AI Agent 🤖, 2. Quy tắc Viết Code (Code Convention), 3. Quy tắc Component, 4. Quy trình Git (Git Workflow), 5. Quy tắc Performance, 6. Quy tắc Accessibility (a11y), Branches, Bắt buộc: (+9 more)
+
+### Community 23 - "Community 23"
+Cohesion: 0.12
+Nodes (16): 🎯 DESIGN SYSTEM (Paste vào đầu mỗi session), PROMPT 10: Profile cá nhân, PROMPT 11: Chat, PROMPT 12: Admin Dashboard, PROMPT 13: Form Tạo Giải đấu (Wizard), PROMPT 1: Component Library, PROMPT 2: Layout (Header + Footer), PROMPT 3: Auth (Login + Register) (+8 more)
+
+### Community 24 - "Community 24"
+Cohesion: 0.13
+Nodes (14): 10. Chat Types (`types/chat.ts`), 11. Social Types (`types/social.ts`), 1. API Types (`types/api.ts`), 2. User Types (`types/user.ts`), 3. Tournament Types (`types/tournament.ts`), 4. Match Types (`types/match.ts`), 5. ELO Types (`types/elo.ts`), 6. Community Types (`types/community.ts`) (+6 more)
+
+### Community 25 - "Community 25"
+Cohesion: 0.14
+Nodes (13): 1. Tầm nhìn (Vision), 2. Đối tượng & Giao diện tương ứng, 3. Tính năng theo nhóm, 4. Kiến trúc tổng thể, 5. Tài liệu liên quan, 🟢 Nhóm 1 — Authentication & Profile, 🟡 Nhóm 2 — Giải đấu & Trận đấu, 🔴 Nhóm 3 — ELO & Xếp hạng (+5 more)
+
+### Community 26 - "Community 26"
+Cohesion: 0.15
+Nodes (12): 1. Auth & Users (Phase 1), 2. Giải đấu & Trận đấu (Phase 2), 3. Thanh toán (Phase 3), 4. Tương tác cộng đồng (Phase 4), Categories & Communities, Chat, Friendships, Matches & Live Score (+4 more)
+
+### Community 27 - "Community 27"
+Cohesion: 0.17
+Nodes (11): 1. Cấu Trúc Thư Mục Tiêu Chuẩn (Directory Structure), 2. Phân Tích Mô Hình 3 Tầng (3-Layer Architecture), 3. Chiến Lược Rendering (Rendering Strategies), 4.1 REST API Flow (Đa số trang), 4.2 Real-time Flow (Live Score & Chat), 4. Luồng Dữ Liệu (Data Flow), 5. Tài Liệu Liên Quan, Deep-dive: Cấu trúc bên trong mỗi Feature (+3 more)
+
+### Community 28 - "Community 28"
+Cohesion: 0.20
+Nodes (9): API, CÔNG NGHỆ, CẤM, CẤU TRÚC FEATURE, CẤU TRÚC THƯ MỤC, NAMING, QUY TẮC BẮT BUỘC — Frontend Quản Lý Giải Đấu, RENDERING (+1 more)
+
+### Community 29 - "Community 29"
+Cohesion: 0.22
+Nodes (8): 🔗 BACKEND INFO, ❌ Chưa làm (theo plan.md):, 📖 HƯỚNG DẪN ĐỌC TÀI LIỆU (BẮT BUỘC), 🚀 MASTER PROMPT — Frontend Quản Lý Giải Đấu, ⚡ QUY TẮC VÀNG (GOLDEN RULES), 🏗️ TECH STACK, 🎯 TRẠNG THÁI HIỆN TẠI (Current State), ✅ Đã hoàn thành:
+
+### Community 30 - "Community 30"
+Cohesion: 0.25
+Nodes (7): 10. HTTP Error Handling (Frontend), 8. RANKINGS (`/rankings`), 📡 API Contract — Frontend ↔ Backend, Base Configuration, `GET /rankings`, `POST /rankings/update-elo`, Response Wrapper (Mọi API đều trả về format này)
+
+### Community 31 - "Community 31"
+Cohesion: 0.25
+Nodes (8): 4. COMMUNITIES (`/communities`), `GET /communities`, `GET /communities/:id`, `GET /communities/:id/members`, `PATCH /communities/:id`, `PATCH /communities/:id/review`, `POST /communities`, `POST /communities/:id/members`
+
+### Community 32 - "Community 32"
+Cohesion: 0.29
+Nodes (7): 1. AUTH (`/auth`), `GET /auth/google`, `GET /auth/google/callback`, `POST /auth/login`, `POST /auth/logout`, `POST /auth/refresh`, `POST /auth/register`
+
+### Community 33 - "Community 33"
+Cohesion: 0.29
+Nodes (7): 6. TOURNAMENTS (`/tournaments`), `GET /tournaments`, `GET /tournaments/:id`, `PATCH /tournaments/:id`, `POST /tournaments`, `POST /tournaments/:id/generate-bracket`, `POST /tournaments/:id/register`
+
+### Community 34 - "Community 34"
+Cohesion: 0.33
+Nodes (6): 2. USERS (`/users`), `GET /users`, `GET /users/:id`, `GET /users/profile`, `PATCH /users/change-password`, `PATCH /users/profile`
+
+### Community 35 - "Community 35"
 Cohesion: 0.40
-Nodes (4): AuthTokens, Profile, User, UserRole
+Nodes (5): 7. MATCHES (`/matches`), `GET /matches`, `GET /matches/:id`, `PATCH /matches/:id/score`, `PATCH /matches/:id/status`
+
+### Community 36 - "Community 36"
+Cohesion: 0.40
+Nodes (5): 9. WEBSOCKET EVENTS, Authentication cho WebSocket:, Chat (`ws://localhost:3000/chat`), Live Score (`ws://localhost:3000/live`), Notifications (`ws://localhost:3000/notifications`)
+
+### Community 37 - "Community 37"
+Cohesion: 0.40
+Nodes (4): 1. Player Pages (Cần đăng nhập), 2. Organizer Pages (Dành cho Ban tổ chức), 3. Admin Pages (Dành cho Quản trị viên), Danh Sách Các Trang Còn Thiếu (Missing Pages)
+
+### Community 38 - "Community 38"
+Cohesion: 0.40
+Nodes (3): config, GUEST_ROUTES, PROTECTED_ROUTES
+
+### Community 39 - "Community 39"
+Cohesion: 0.50
+Nodes (3): APP_CONFIG, DATE_FORMATS, ERROR_CODES
+
+### Community 40 - "Community 40"
+Cohesion: 0.50
+Nodes (4): 3. CATEGORIES (`/categories`), `GET /categories`, `GET /categories/:id`, `GET /categories/:id/elo-tiers`
+
+### Community 41 - "Community 41"
+Cohesion: 0.50
+Nodes (3): Deploy on Vercel, Getting Started, Learn More
+
+### Community 42 - "Community 42"
+Cohesion: 0.07
+Nodes (28): 1.1 Setting Visibility trong Manage Page, 1.2 Trang Đăng Ký Qua Invite Link, 1.3 Auth Redirect Flow, 2.1 Component DoublesRegistrationFlow, 2.2 Trang Join Team (Partner), 2.3 Rút Lui (Withdraw), 3.1 Tournament Card — Hiển thị đầy đủ thông tin, 3.2 Filter Bar Nâng Cấp (+20 more)
+
+### Community 46 - "Community 46"
+Cohesion: 0.15
+Nodes (16): Props, RegisterFormValues, RegisterModal(), registerSchema, PasswordFormValues, passwordSchema, ProfileFormValues, profileSchema (+8 more)
+
+### Community 47 - "Community 47"
+Cohesion: 0.09
+Nodes (21): 10. EloTierBadge Component, 11. Leaderboard Page Nâng Cấp, 12. Region Filtering, 1. Tournament Card Nâng Cấp, 2. Filter Bar Nâng Cấp (trang /tournaments), 3. Visibility Setting trong Manage Page, 4. Trang Đăng Ký Qua Invite Link, 5. Login Redirect Flow (+13 more)
+
+### Community 48 - "Community 48"
+Cohesion: 0.13
+Nodes (13): HomePage(), LoginFormValues, loginSchema, DashboardPage(), EditProfilePage(), CommunityDetailPage(), LoginForm, LoginPage() (+5 more)
+
+### Community 49 - "Community 49"
+Cohesion: 0.24
+Nodes (4): MemberData, Button, ButtonProps, usersApi
+
+### Community 50 - "Community 50"
+Cohesion: 0.25
+Nodes (7): Brand & Style, Colors, Components, Elevation & Depth, Layout & Spacing, Shapes, Typography
+
+### Community 51 - "Community 51"
+Cohesion: 0.25
+Nodes (7): Brand & Style, Colors, Components, Elevation & Depth, Layout & Spacing, Shapes, Typography
+
+### Community 52 - "Community 52"
+Cohesion: 0.48
+Nodes (5): CreatePaymentDto, Payment, PaymentHistoryStats, PayoutRequest, PayoutRequestDto
+
+### Community 53 - "Community 53"
+Cohesion: 0.50
+Nodes (3): AboutTab(), MapView(), MapViewProps
+
+### Community 54 - "Community 54"
+Cohesion: 0.67
+Nodes (3): 5. VENUES (`/venues`), `GET /venues`, `GET /venues/:id`
 
 ## Knowledge Gaps
-- **103 isolated node(s):** `eslintConfig`, `nextConfig`, `name`, `version`, `private` (+98 more)
+- **448 isolated node(s):** `eslintConfig`, `nextConfig`, `name`, `version`, `private` (+443 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **5 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **6 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `cn()` connect `Community 0` to `Community 1`?**
-  _High betweenness centrality (0.117) - this node is a cross-community bridge._
-- **Why does `api` connect `Community 2` to `Community 1`, `Community 6`, `Community 7`?**
-  _High betweenness centrality (0.043) - this node is a cross-community bridge._
-- **Why does `useAuthStore` connect `Community 1` to `Community 2`, `Community 6`, `Community 7`?**
-  _High betweenness centrality (0.039) - this node is a cross-community bridge._
+- **Why does `useAuthStore` connect `Community 48` to `Community 1`, `Community 2`, `Community 5`, `Community 8`, `Community 46`, `Community 49`, `Community 18`?**
+  _High betweenness centrality (0.018) - this node is a cross-community bridge._
+- **Why does `cn()` connect `Community 0` to `Community 1`, `Community 2`, `Community 46`, `Community 48`, `Community 49`?**
+  _High betweenness centrality (0.016) - this node is a cross-community bridge._
+- **Why does `Button` connect `Community 49` to `Community 0`, `Community 1`, `Community 2`, `Community 5`, `Community 8`, `Community 10`, `Community 46`, `Community 48`?**
+  _High betweenness centrality (0.014) - this node is a cross-community bridge._
+- **Are the 3 inferred relationships involving `useAuthStore` (e.g. with `CreateCommunityPage()` and `CommunityDetailPage()`) actually correct?**
+  _`useAuthStore` has 3 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `eslintConfig`, `nextConfig`, `name` to the rest of the system?**
-  _103 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _448 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
-  _Cohesion score 0.06923076923076923 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.07957957957957958 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
-  _Cohesion score 0.11724137931034483 - nodes in this community are weakly interconnected._
-- **Should `Community 2` be split into smaller, more focused modules?**
-  _Cohesion score 0.14492753623188406 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.0773405698778833 - nodes in this community are weakly interconnected._

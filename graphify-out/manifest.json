@@ -1,532 +1,907 @@
 {
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\eslint.config.mjs": {
+  "eslint.config.mjs": {
     "mtime": 1780480443.2710905,
     "ast_hash": "dfa1f5f6a7037bf39dc510f30b180002",
     "semantic_hash": "dfa1f5f6a7037bf39dc510f30b180002"
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\next.config.ts": {
-    "mtime": 1780561530.5056431,
-    "ast_hash": "a27ed84ff99aa5c827ecaa9e1e241725",
-    "semantic_hash": "a27ed84ff99aa5c827ecaa9e1e241725"
+  "next.config.ts": {
+    "mtime": 1780989920.98318,
+    "ast_hash": "101571f740d4b82a9928c3c76f21b89c",
+    "semantic_hash": ""
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\package.json": {
-    "mtime": 1780543976.57522,
-    "ast_hash": "df37c07abf71456439439bd6df60ab71",
-    "semantic_hash": "df37c07abf71456439439bd6df60ab71"
+  "package.json": {
+    "mtime": 1780994981.5416653,
+    "ast_hash": "b8a4c660a44e9f7cf0ca74fe1ad9c8f1",
+    "semantic_hash": ""
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\postcss.config.mjs": {
+  "postcss.config.mjs": {
     "mtime": 1780480443.3091993,
     "ast_hash": "239f3ebf717465dc636818a1a619398d",
     "semantic_hash": "239f3ebf717465dc636818a1a619398d"
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\app\\(player)\\dashboard\\page.tsx": {
-    "mtime": 1780563419.6643696,
-    "ast_hash": "32772e55a4a888e76ef8afd57e09fdaa",
-    "semantic_hash": "32772e55a4a888e76ef8afd57e09fdaa"
+  "src/app/(player)/dashboard/page.tsx": {
+    "mtime": 1780990340.6212075,
+    "ast_hash": "dd3a86aa6ba0c1537d133192a487e5d5",
+    "semantic_hash": ""
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\app\\(player)\\profile\\edit\\page.tsx": {
-    "mtime": 1780560962.24383,
-    "ast_hash": "55ae666ed748c2b45420d37482dd97b4",
-    "semantic_hash": "55ae666ed748c2b45420d37482dd97b4"
+  "src/app/(player)/profile/edit/page.tsx": {
+    "mtime": 1780995862.5536046,
+    "ast_hash": "a92d8781f24f9bb0df8d3fccd0695145",
+    "semantic_hash": ""
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\app\\(player)\\profile\\page.tsx": {
-    "mtime": 1780563212.744995,
-    "ast_hash": "a60a83565a54bd9b28c6934003772278",
-    "semantic_hash": "a60a83565a54bd9b28c6934003772278"
+  "src/app/(player)/profile/page.tsx": {
+    "mtime": 1781054638.4929457,
+    "ast_hash": "3fa460adfae517c0b8c4a10b52a397a2",
+    "semantic_hash": ""
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\app\\(public)\\communities\\page.tsx": {
-    "mtime": 1780562329.6684575,
-    "ast_hash": "28714bacec5f24a3a6bb93880616e71d",
-    "semantic_hash": "28714bacec5f24a3a6bb93880616e71d"
+  "src/app/(public)/communities/page.tsx": {
+    "mtime": 1781054631.5532854,
+    "ast_hash": "d258d98254afb624fc2624d1486841ee",
+    "semantic_hash": ""
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\app\\(public)\\leaderboard\\page.tsx": {
-    "mtime": 1780562617.514325,
-    "ast_hash": "346e3321b74254cef0baab1ffa51e0c1",
-    "semantic_hash": "346e3321b74254cef0baab1ffa51e0c1"
+  "src/app/(public)/leaderboard/page.tsx": {
+    "mtime": 1781095221.7625828,
+    "ast_hash": "e26e5d895bfb0d3b68dfb50dc0300108",
+    "semantic_hash": ""
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\app\\(public)\\login\\page.tsx": {
+  "src/app/(public)/login/page.tsx": {
     "mtime": 1780972153.3590484,
     "ast_hash": "2a0ef272f98e2983dd8474d4bdfb50a7",
     "semantic_hash": "2a0ef272f98e2983dd8474d4bdfb50a7"
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\app\\(public)\\register\\page.tsx": {
+  "src/app/(public)/register/page.tsx": {
     "mtime": 1780555622.489986,
     "ast_hash": "08505f1d41d0b35f55f16e16d7a08159",
     "semantic_hash": "08505f1d41d0b35f55f16e16d7a08159"
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\app\\(public)\\tournaments\\[id]\\page.tsx": {
-    "mtime": 1780972180.2108433,
-    "ast_hash": "f2e4ae345a050e138e82fb19fa143299",
-    "semantic_hash": "f2e4ae345a050e138e82fb19fa143299"
+  "src/app/(public)/tournaments/[id]/page.tsx": {
+    "mtime": 1781064051.9702873,
+    "ast_hash": "71596b363631cc28be3cab7671af1222",
+    "semantic_hash": ""
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\app\\(public)\\tournaments\\page.tsx": {
-    "mtime": 1780562920.1765552,
-    "ast_hash": "27245508af8bf108ffc0b778a3f26cfc",
-    "semantic_hash": "27245508af8bf108ffc0b778a3f26cfc"
+  "src/app/(public)/tournaments/page.tsx": {
+    "mtime": 1781095276.5940573,
+    "ast_hash": "0c55abcb7341a94a8d5b85fcc49c3212",
+    "semantic_hash": ""
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\app\\auth\\callback\\page.tsx": {
-    "mtime": 1780972155.960917,
-    "ast_hash": "59f0cca82f04cdffafd90d2723d161be",
-    "semantic_hash": "59f0cca82f04cdffafd90d2723d161be"
+  "src/app/auth/callback/page.tsx": {
+    "mtime": 1780979524.9967003,
+    "ast_hash": "bc45b76391212fe93f985f68ec813503",
+    "semantic_hash": ""
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\app\\layout.tsx": {
-    "mtime": 1780555016.554268,
-    "ast_hash": "60ae71cad14ef1eba5db441c1adb12c5",
-    "semantic_hash": "60ae71cad14ef1eba5db441c1adb12c5"
+  "src/app/layout.tsx": {
+    "mtime": 1781054573.5644567,
+    "ast_hash": "1b54804d91857f650861d7f7054070d2",
+    "semantic_hash": ""
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\app\\live\\page.tsx": {
+  "src/app/live/page.tsx": {
     "mtime": 1780561048.148734,
     "ast_hash": "0ffe54c260f750f86e7dc78f205ddeb0",
     "semantic_hash": "0ffe54c260f750f86e7dc78f205ddeb0"
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\app\\page.tsx": {
-    "mtime": 1780972457.3968768,
-    "ast_hash": "206fb3659e6b7ac1ec025448c79bc83a",
-    "semantic_hash": "206fb3659e6b7ac1ec025448c79bc83a"
+  "src/app/page.tsx": {
+    "mtime": 1781082341.37524,
+    "ast_hash": "42d06d7bdb8595c592fe35529c6cd44e",
+    "semantic_hash": ""
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\components\\icons\\GoogleIcon.tsx": {
+  "src/components/icons/GoogleIcon.tsx": {
     "mtime": 1780542414.6813643,
     "ast_hash": "a9e06d71cbc7929245b4aed89917aab0",
     "semantic_hash": "a9e06d71cbc7929245b4aed89917aab0"
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\components\\layout\\Footer.tsx": {
+  "src/components/layout/Footer.tsx": {
     "mtime": 1780544219.2907958,
     "ast_hash": "441175348ec876dc53359145d5bec961",
     "semantic_hash": "441175348ec876dc53359145d5bec961"
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\components\\layout\\Header.tsx": {
-    "mtime": 1780555456.44488,
-    "ast_hash": "7ca770810a205b4745d6e70864f22421",
-    "semantic_hash": "7ca770810a205b4745d6e70864f22421"
+  "src/components/layout/Header.tsx": {
+    "mtime": 1781076674.8176053,
+    "ast_hash": "fc0a0ee532e038988dbce38e94f35ddf",
+    "semantic_hash": ""
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\components\\ui\\Avatar.tsx": {
+  "src/components/ui/Avatar.tsx": {
     "mtime": 1780539038.5671327,
     "ast_hash": "52ff9b701abf61e7ffc1f7ec7da51fd1",
     "semantic_hash": "52ff9b701abf61e7ffc1f7ec7da51fd1"
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\components\\ui\\Badge.tsx": {
+  "src/components/ui/Badge.tsx": {
     "mtime": 1780538904.5212371,
     "ast_hash": "a925f300a261e9d4d3ab91198a94a2bf",
     "semantic_hash": "a925f300a261e9d4d3ab91198a94a2bf"
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\components\\ui\\Button.tsx": {
-    "mtime": 1780552523.8161242,
-    "ast_hash": "ad5080e380ab75d25f259dfdcf2d1cff",
-    "semantic_hash": "ad5080e380ab75d25f259dfdcf2d1cff"
+  "src/components/ui/Button.tsx": {
+    "mtime": 1780978325.6495008,
+    "ast_hash": "03f5b1400c54d7557339c60b4ad9d1b4",
+    "semantic_hash": ""
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\components\\ui\\DropdownMenu.tsx": {
+  "src/components/ui/DropdownMenu.tsx": {
     "mtime": 1780540299.0403788,
     "ast_hash": "5e35afac5b6a42708da228c380152efd",
     "semantic_hash": "5e35afac5b6a42708da228c380152efd"
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\components\\ui\\Input.tsx": {
-    "mtime": 1780552450.276108,
-    "ast_hash": "d0aa868938fc1cd880429a4e51f39697",
-    "semantic_hash": "d0aa868938fc1cd880429a4e51f39697"
+  "src/components/ui/Input.tsx": {
+    "mtime": 1781083590.807944,
+    "ast_hash": "0becb12c80297df0de1932097425c5ed",
+    "semantic_hash": ""
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\components\\ui\\LoadingSpinner.tsx": {
+  "src/components/ui/LoadingSpinner.tsx": {
     "mtime": 1780538915.7871358,
     "ast_hash": "73308279bb6ce698aaea72740e54298c",
     "semantic_hash": "73308279bb6ce698aaea72740e54298c"
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\components\\ui\\Modal.tsx": {
+  "src/components/ui/Modal.tsx": {
     "mtime": 1780539319.763888,
     "ast_hash": "b6f1f052ba4b93d4affb4cb73e91f484",
     "semantic_hash": "b6f1f052ba4b93d4affb4cb73e91f484"
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\components\\ui\\Select.tsx": {
+  "src/components/ui/Select.tsx": {
     "mtime": 1780540124.6993089,
     "ast_hash": "55514546f1c5f6c02767a8cc0c397f31",
     "semantic_hash": "55514546f1c5f6c02767a8cc0c397f31"
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\components\\ui\\Skeleton.tsx": {
+  "src/components/ui/Skeleton.tsx": {
     "mtime": 1780538950.172241,
     "ast_hash": "2b03dc5e415edfc7594a55b6286d0f97",
     "semantic_hash": "2b03dc5e415edfc7594a55b6286d0f97"
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\components\\ui\\Textarea.tsx": {
+  "src/components/ui/Textarea.tsx": {
     "mtime": 1780539049.324607,
     "ast_hash": "58537cb01b8992e234e0b1b8ada815f0",
     "semantic_hash": "58537cb01b8992e234e0b1b8ada815f0"
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\components\\ui\\Toaster.tsx": {
+  "src/components/ui/Toaster.tsx": {
     "mtime": 1780540787.3282833,
     "ast_hash": "95cda9f692845f9ca1af26c65e4d1a07",
     "semantic_hash": "95cda9f692845f9ca1af26c65e4d1a07"
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\features\\auth\\api.ts": {
-    "mtime": 1780552247.0276885,
-    "ast_hash": "e41a9fee929f2d5f657a70264e02b54a",
-    "semantic_hash": "e41a9fee929f2d5f657a70264e02b54a"
+  "src/features/auth/api.ts": {
+    "mtime": 1781060914.9344795,
+    "ast_hash": "b5c1f65b0e15315a61f7e70cb7571612",
+    "semantic_hash": ""
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\features\\auth\\components\\LoginForm.tsx": {
-    "mtime": 1780564574.0519648,
+  "src/features/auth/components/LoginForm.tsx": {
+    "mtime": 1780564573.0519648,
     "ast_hash": "4efa16c5238333ac312777c351c124cd",
     "semantic_hash": "4efa16c5238333ac312777c351c124cd"
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\features\\auth\\components\\RegisterForm.tsx": {
+  "src/features/auth/components/RegisterForm.tsx": {
     "mtime": 1780552289.2659016,
     "ast_hash": "a87b330232bd1753d599da9c764c390f",
     "semantic_hash": "a87b330232bd1753d599da9c764c390f"
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\features\\categories\\api.ts": {
-    "mtime": 1780562455.979348,
-    "ast_hash": "803df7726a3273555d36d00b9d0b91ef",
-    "semantic_hash": "803df7726a3273555d36d00b9d0b91ef"
+  "src/features/categories/api.ts": {
+    "mtime": 1781061295.0866685,
+    "ast_hash": "cb52569532b0a342cdcbce94bb36b590",
+    "semantic_hash": ""
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\features\\communities\\api.ts": {
-    "mtime": 1780562256.2968693,
-    "ast_hash": "cf004476976113634b40a3b251bce008",
-    "semantic_hash": "cf004476976113634b40a3b251bce008"
+  "src/features/communities/api.ts": {
+    "mtime": 1781079770.720874,
+    "ast_hash": "586eaec05e8e979189b629c01960a382",
+    "semantic_hash": ""
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\features\\matches\\api.ts": {
-    "mtime": 1780552287.5798154,
-    "ast_hash": "f829c0f07d0771befcdf18e4dcb78e73",
-    "semantic_hash": "f829c0f07d0771befcdf18e4dcb78e73"
+  "src/features/matches/api.ts": {
+    "mtime": 1781064467.0507927,
+    "ast_hash": "54ec39bf1378b674df05326e1b2ba5fa",
+    "semantic_hash": ""
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\features\\rankings\\api.ts": {
-    "mtime": 1780562434.594072,
-    "ast_hash": "05fabf72c092422dc378abe32972613a",
-    "semantic_hash": "05fabf72c092422dc378abe32972613a"
+  "src/features/rankings/api.ts": {
+    "mtime": 1781061309.271165,
+    "ast_hash": "7cd2830504cd6ad941c5be1ed3701e6c",
+    "semantic_hash": ""
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\features\\tournaments\\api.ts": {
-    "mtime": 1780562709.4428043,
-    "ast_hash": "d2cc2005a1f33d668cf8826e8bbafd69",
-    "semantic_hash": "d2cc2005a1f33d668cf8826e8bbafd69"
+  "src/features/tournaments/api.ts": {
+    "mtime": 1781095038.4915833,
+    "ast_hash": "59b2dd67c0068d7dd153eb532e74cda0",
+    "semantic_hash": ""
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\features\\users\\api.ts": {
-    "mtime": 1780563115.3927715,
-    "ast_hash": "ab0f9cd073917a4b2178be63044cad56",
-    "semantic_hash": "ab0f9cd073917a4b2178be63044cad56"
+  "src/features/users/api.ts": {
+    "mtime": 1781061318.3014107,
+    "ast_hash": "47fdfcd638ae360b0f6df22f56ad9d18",
+    "semantic_hash": ""
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\features\\venues\\api.ts": {
-    "mtime": 1780552267.0970304,
-    "ast_hash": "3f112b9a57daaf69a52bc761ea45da57",
-    "semantic_hash": "3f112b9a57daaf69a52bc761ea45da57"
+  "src/features/venues/api.ts": {
+    "mtime": 1781061001.7756553,
+    "ast_hash": "d0c1795ffcc960694bd92e1c359551e7",
+    "semantic_hash": ""
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\lib\\axios.ts": {
-    "mtime": 1780564521.2815008,
-    "ast_hash": "da5eb9449b99890961d5c8fadcaa2c4d",
-    "semantic_hash": "da5eb9449b99890961d5c8fadcaa2c4d"
+  "src/lib/axios.ts": {
+    "mtime": 1781061097.813561,
+    "ast_hash": "389e7023c43b27e75f492a1f07ca5fc8",
+    "semantic_hash": ""
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\lib\\zustand\\authStore.ts": {
-    "mtime": 1780564539.3918755,
-    "ast_hash": "febb0eef8317fcfb45e72aa2723c7d5f",
-    "semantic_hash": "febb0eef8317fcfb45e72aa2723c7d5f"
+  "src/lib/zustand/authStore.ts": {
+    "mtime": 1780991001.115143,
+    "ast_hash": "68e1c79fb8e4a21184397aa525413aa8",
+    "semantic_hash": ""
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\types\\user.ts": {
-    "mtime": 1780540834.4687455,
-    "ast_hash": "2fa25835c258b97b556110f60682d0a9",
-    "semantic_hash": "2fa25835c258b97b556110f60682d0a9"
+  "src/types/user.ts": {
+    "mtime": 1781061276.5208483,
+    "ast_hash": "e183cd6243076562567822998bf9ba73",
+    "semantic_hash": ""
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\src\\utils\\cn.ts": {
+  "src/utils/cn.ts": {
     "mtime": 1780538694.2534945,
     "ast_hash": "cb81258fe699949e5dcee44ef5a101ba",
     "semantic_hash": "cb81258fe699949e5dcee44ef5a101ba"
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\tailwind.config.ts": {
+  "tailwind.config.ts": {
     "mtime": 1780972158.736953,
     "ast_hash": "44ce2f14d84fbadedc2db7bacc6bfa1f",
     "semantic_hash": "44ce2f14d84fbadedc2db7bacc6bfa1f"
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\tsconfig.json": {
+  "tsconfig.json": {
     "mtime": 1780504535.1413004,
     "ast_hash": "ee17fd1c97c735e9f3564e3f5251f125",
     "semantic_hash": "ee17fd1c97c735e9f3564e3f5251f125"
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\INSTRUCTIONS.md": {
+  "INSTRUCTIONS.md": {
     "mtime": 1780505446.8157947,
     "ast_hash": "ed9cda3deb9ceac7de3d60a71b2a5a22",
     "semantic_hash": "ed9cda3deb9ceac7de3d60a71b2a5a22"
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\README.md": {
+  "README.md": {
     "mtime": 1780480443.2409713,
     "ast_hash": "f15aaa42d5d299d091b1171097ea56ad",
     "semantic_hash": "f15aaa42d5d299d091b1171097ea56ad"
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\api_endpoints.md": {
+  "docs/api_endpoints.md": {
     "mtime": 1780560133.8842864,
     "ast_hash": "72265b50feb68dadc2631323897017c8",
     "semantic_hash": "72265b50feb68dadc2631323897017c8"
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\architecture.md": {
+  "docs/architecture.md": {
     "mtime": 1780505170.9165099,
     "ast_hash": "15e472960022fe935cbe21ac534a05fd",
     "semantic_hash": "15e472960022fe935cbe21ac534a05fd"
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienpicturehtml\\athletic_synergy\\DESIGN.md": {
-    "mtime": 1780560589.4117618,
-    "ast_hash": "ddd222d74ad6813b80278771b2697d0d",
-    "semantic_hash": "ddd222d74ad6813b80278771b2697d0d"
-  },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienpicturehtml\\c_ng_ng\\code.html": {
-    "mtime": 1780560589.2133996,
-    "ast_hash": "a1a847ab85953cfa16bed452dd780eed",
-    "semantic_hash": "a1a847ab85953cfa16bed452dd780eed"
-  },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienpicturehtml\\ch_nh_s_a_h_s\\code.html": {
-    "mtime": 1780560589.3791907,
-    "ast_hash": "c7ac07cb9f3d7b2bc00b1d83d6994848",
-    "semantic_hash": "c7ac07cb9f3d7b2bc00b1d83d6994848"
-  },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienpicturehtml\\chi_ti_t_gi_i_u\\code.html": {
-    "mtime": 1780560589.157032,
-    "ast_hash": "ef2dbbf66cbbec439de8de69a9b4cca2",
-    "semantic_hash": "ef2dbbf66cbbec439de8de69a9b4cca2"
-  },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienpicturehtml\\component_library\\code.html": {
-    "mtime": 1780560589.1863942,
-    "ast_hash": "3643620de43c2cedbc84f39d585f6252",
-    "semantic_hash": "3643620de43c2cedbc84f39d585f6252"
-  },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienpicturehtml\\danh_s_ch_gi_i_u\\code.html": {
-    "mtime": 1780560589.1245112,
-    "ast_hash": "b3cbe16897f8e6c181e76ee81dba7960",
-    "semantic_hash": "b3cbe16897f8e6c181e76ee81dba7960"
-  },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienpicturehtml\\h_s_c_nh_n\\code.html": {
-    "mtime": 1780560589.3506413,
-    "ast_hash": "b408ad28533e2fb5b4a618008a274da1",
-    "semantic_hash": "b408ad28533e2fb5b4a618008a274da1"
-  },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienpicturehtml\\live_score\\code.html": {
-    "mtime": 1780560589.268661,
-    "ast_hash": "3f86151adfe1a652e986037d5da9752f",
-    "semantic_hash": "3f86151adfe1a652e986037d5da9752f"
-  },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienpicturehtml\\ng_k\\code.html": {
-    "mtime": 1780560589.2963872,
-    "ast_hash": "3c4ad0f54811d41894483b6f2ed92b2f",
-    "semantic_hash": "3c4ad0f54811d41894483b6f2ed92b2f"
-  },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienpicturehtml\\ng_nh_p\\code.html": {
-    "mtime": 1780560589.241935,
-    "ast_hash": "df99934466d7473d0706c27de6c5e01f",
-    "semantic_hash": "df99934466d7473d0706c27de6c5e01f"
-  },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienpicturehtml\\trang_ch\\code.html": {
-    "mtime": 1780560589.0852406,
-    "ast_hash": "79f31698a8304a55c2b9dd801dd6b27b",
-    "semantic_hash": "79f31698a8304a55c2b9dd801dd6b27b"
-  },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienpicturehtml\\x_p_h_ng\\code.html": {
-    "mtime": 1780560589.3221157,
-    "ast_hash": "8320d13e370eb020a5de57955b874555",
-    "semantic_hash": "8320d13e370eb020a5de57955b874555"
-  },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienthieu\\athletic_synergy\\DESIGN.md": {
-    "mtime": 1780566431.8363292,
-    "ast_hash": "ddd222d74ad6813b80278771b2697d0d",
-    "semantic_hash": "ddd222d74ad6813b80278771b2697d0d"
-  },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienthieu\\ch_nh_s_a_h_s\\code.html": {
-    "mtime": 1780566431.549912,
-    "ast_hash": "c7ac07cb9f3d7b2bc00b1d83d6994848",
-    "semantic_hash": "c7ac07cb9f3d7b2bc00b1d83d6994848"
-  },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienthieu\\chi_ti_t_c_ng_ng_updated\\code.html": {
-    "mtime": 1780566431.6591294,
-    "ast_hash": "61f01e0c3baeef5b65f216b5d71af4a7",
-    "semantic_hash": "61f01e0c3baeef5b65f216b5d71af4a7"
-  },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienthieu\\dashboard_ng_i_d_ng_updated\\code.html": {
-    "mtime": 1780566433.5914736,
-    "ast_hash": "ea25be8ffb2fee58df83115571accc13",
-    "semantic_hash": "ea25be8ffb2fee58df83115571accc13"
-  },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienthieu\\duy_t_l_nh_r_t_ti_n_admin\\code.html": {
-    "mtime": 1780566431.8023746,
-    "ast_hash": "4d664eaebe617a3ecae4d463a7255183",
-    "semantic_hash": "4d664eaebe617a3ecae4d463a7255183"
-  },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienthieu\\i_u_h_nh_nh_p_t_s\\code.html": {
-    "mtime": 1780566431.7353196,
-    "ast_hash": "d7bd45476439e91cd5ba3ad41d1ddbf9",
-    "semantic_hash": "d7bd45476439e91cd5ba3ad41d1ddbf9"
-  },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienthieu\\qu_n_l_r_t_ti_n_gi_i_u\\code.html": {
-    "mtime": 1780566431.7680347,
-    "ast_hash": "8e71df3f56163e828dfe3ae0ca15af7e",
-    "semantic_hash": "8e71df3f56163e828dfe3ae0ca15af7e"
-  },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienthieu\\t_o_gi_i_u_m_i_wizard\\code.html": {
-    "mtime": 1780566431.6238143,
-    "ast_hash": "cdb2dc2bf0b5c948e2e662076ec943bc",
-    "semantic_hash": "cdb2dc2bf0b5c948e2e662076ec943bc"
-  },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienthieu\\tin_nh_n_chi_ti_t\\code.html": {
-    "mtime": 1780566431.7000556,
-    "ast_hash": "67b21de38e8b37d849e07e9aa03bb1d1",
-    "semantic_hash": "67b21de38e8b37d849e07e9aa03bb1d1"
-  },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\missing_pages.md": {
+  "docs/missing_pages.md": {
     "mtime": 1780561897.0490685,
     "ast_hash": "c0cb0b6f8882da2568676ca273711884",
     "semantic_hash": "c0cb0b6f8882da2568676ca273711884"
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\pages.md": {
+  "docs/pages.md": {
     "mtime": 1780505417.2020264,
     "ast_hash": "3dc61061fc80f6f48c4ef65f73142d33",
     "semantic_hash": "3dc61061fc80f6f48c4ef65f73142d33"
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\plan.md": {
-    "mtime": 1780542126.7925696,
-    "ast_hash": "aa66f11599491c9e3e68e8579e6455ec",
-    "semantic_hash": "aa66f11599491c9e3e68e8579e6455ec"
+  "docs/plan.md": {
+    "mtime": 1781094090.4794302,
+    "ast_hash": "237bde3096f6bae4313b40dc9c13882f",
+    "semantic_hash": ""
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\project_overview.md": {
+  "docs/project_overview.md": {
     "mtime": 1780505302.410113,
     "ast_hash": "022e5a218b5a582aaf6bfa294cbd0b85",
     "semantic_hash": "022e5a218b5a582aaf6bfa294cbd0b85"
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\rules.md": {
+  "docs/rules.md": {
     "mtime": 1780505415.184662,
     "ast_hash": "0236bbab302d6169b7386d0f289712b3",
     "semantic_hash": "0236bbab302d6169b7386d0f289712b3"
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\skills.md": {
-    "mtime": 1780564013.0961967,
-    "ast_hash": "bbd8ed4a6c1762172cf6f63a1f10228b",
-    "semantic_hash": "bbd8ed4a6c1762172cf6f63a1f10228b"
+  "docs/skills.md": {
+    "mtime": 1780975717.2303543,
+    "ast_hash": "342a4bee20ad163cd26d69923da38b2a",
+    "semantic_hash": ""
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\spec.md": {
+  "docs/spec.md": {
     "mtime": 1780505372.309077,
     "ast_hash": "a23c40ea54e81e866002608ecd502333",
     "semantic_hash": "a23c40ea54e81e866002608ecd502333"
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\ui.md": {
+  "docs/ui.md": {
     "mtime": 1780536848.3197527,
     "ast_hash": "772a1f0b47735ae1f3bd084c70db8d1f",
     "semantic_hash": "772a1f0b47735ae1f3bd084c70db8d1f"
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\login_curl.txt": {
+  "login_curl.txt": {
     "mtime": 1780555255.9489305,
     "ast_hash": "7dc40a0168e8a4907f0c6a6062ba1b20",
     "semantic_hash": "7dc40a0168e8a4907f0c6a6062ba1b20"
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\pnpm-workspace.yaml": {
+  "pnpm-workspace.yaml": {
     "mtime": 1780504641.592129,
     "ast_hash": "e7f697500f143b1886baa80d4356f42c",
     "semantic_hash": "e7f697500f143b1886baa80d4356f42c"
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienpicturehtml\\c_ng_ng\\screen.png": {
-    "mtime": 1780560589.226915,
-    "ast_hash": "9e883e9ddf23b37e7d96b596ed5e981d",
-    "semantic_hash": "9e883e9ddf23b37e7d96b596ed5e981d"
-  },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienpicturehtml\\ch_nh_s_a_h_s\\screen.png": {
-    "mtime": 1780560589.396192,
-    "ast_hash": "c2011caefeb941e44db78b78d567d330",
-    "semantic_hash": "c2011caefeb941e44db78b78d567d330"
-  },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienpicturehtml\\chi_ti_t_gi_i_u\\screen.png": {
-    "mtime": 1780560589.1727993,
-    "ast_hash": "a70841c8dd57892441fe0ed49b8d751e",
-    "semantic_hash": "a70841c8dd57892441fe0ed49b8d751e"
-  },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienpicturehtml\\component_library\\screen.png": {
-    "mtime": 1780560589.199392,
-    "ast_hash": "49aab9205287f8419efc4ca00358755a",
-    "semantic_hash": "49aab9205287f8419efc4ca00358755a"
-  },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienpicturehtml\\danh_s_ch_gi_i_u\\screen.png": {
-    "mtime": 1780560589.1415114,
-    "ast_hash": "89a34c8b6c1e47a85bb73854987d23e4",
-    "semantic_hash": "89a34c8b6c1e47a85bb73854987d23e4"
-  },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienpicturehtml\\h_s_c_nh_n\\screen.png": {
-    "mtime": 1780560589.3656633,
-    "ast_hash": "d8c90d0f8125fa6cd7924e0ef19da118",
-    "semantic_hash": "d8c90d0f8125fa6cd7924e0ef19da118"
-  },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienpicturehtml\\live_score\\screen.png": {
-    "mtime": 1780560589.2823925,
-    "ast_hash": "0785f16a7f67bca41bdad6d56979b419",
-    "semantic_hash": "0785f16a7f67bca41bdad6d56979b419"
-  },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienpicturehtml\\ng_k\\screen.png": {
-    "mtime": 1780560589.308407,
-    "ast_hash": "b0f817da80632ef92676139365f1836f",
-    "semantic_hash": "b0f817da80632ef92676139365f1836f"
-  },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienpicturehtml\\ng_nh_p\\screen.png": {
-    "mtime": 1780560589.2539387,
-    "ast_hash": "92b3b5618711d816448abcca08532753",
-    "semantic_hash": "92b3b5618711d816448abcca08532753"
-  },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienpicturehtml\\trang_ch\\screen.png": {
-    "mtime": 1780560589.1102445,
-    "ast_hash": "029db32af10a4baf1403b1e6f01eeb08",
-    "semantic_hash": "029db32af10a4baf1403b1e6f01eeb08"
-  },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienpicturehtml\\x_p_h_ng\\screen.png": {
-    "mtime": 1780560589.336632,
-    "ast_hash": "7b6ee14166b3fe52f2099dfec43f5e03",
-    "semantic_hash": "7b6ee14166b3fe52f2099dfec43f5e03"
-  },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienthieu\\ch_nh_s_a_h_s\\screen.png": {
-    "mtime": 1780566431.5759358,
-    "ast_hash": "c2011caefeb941e44db78b78d567d330",
-    "semantic_hash": "c2011caefeb941e44db78b78d567d330"
-  },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienthieu\\chi_ti_t_c_ng_ng_updated\\screen.png": {
-    "mtime": 1780566431.6825325,
-    "ast_hash": "bf2b03de48f4c07b552c96974b653705",
-    "semantic_hash": "bf2b03de48f4c07b552c96974b653705"
-  },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienthieu\\dashboard_ng_i_d_ng_updated\\screen.png": {
-    "mtime": 1780566431.606485,
-    "ast_hash": "086cb90e99b9a6d428657f06bb9a6398",
-    "semantic_hash": "086cb90e99b9a6d428657f06bb9a6398"
-  },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienthieu\\duy_t_l_nh_r_t_ti_n_admin\\screen.png": {
-    "mtime": 1780566431.820529,
-    "ast_hash": "dd778653cb2beca7c4423509a15fd7ba",
-    "semantic_hash": "dd778653cb2beca7c4423509a15fd7ba"
-  },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienthieu\\i_u_h_nh_nh_p_t_s\\screen.png": {
-    "mtime": 1780566431.7495067,
-    "ast_hash": "80acb43bc935917f1cf9dcad2c401d85",
-    "semantic_hash": "80acb43bc935917f1cf9dcad2c401d85"
-  },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienthieu\\qu_n_l_r_t_ti_n_gi_i_u\\screen.png": {
-    "mtime": 1780566431.7828183,
-    "ast_hash": "d32dc2bba7e9797ff1f0aaa5acf1cd8d",
-    "semantic_hash": "d32dc2bba7e9797ff1f0aaa5acf1cd8d"
-  },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienthieu\\t_o_gi_i_u_m_i_wizard\\screen.png": {
-    "mtime": 1780566431.638816,
-    "ast_hash": "4a4a811ecc922815b112d9d33844ba7e",
-    "semantic_hash": "4a4a811ecc922815b112d9d33844ba7e"
-  },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\docs\\giaodienthieu\\tin_nh_n_chi_ti_t\\screen.png": {
-    "mtime": 1780566431.7172124,
-    "ast_hash": "d36f23947b5dc2e581a66fd063136a72",
-    "semantic_hash": "d36f23947b5dc2e581a66fd063136a72"
-  },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\public\\file.svg": {
+  "public/file.svg": {
     "mtime": 1780480443.3211646,
     "ast_hash": "d09f95206c3fa0bb9bd9fefabfd0ea71",
     "semantic_hash": "d09f95206c3fa0bb9bd9fefabfd0ea71"
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\public\\globe.svg": {
+  "public/globe.svg": {
     "mtime": 1780480443.3421657,
     "ast_hash": "2aaafa6a49b6563925fe440891e32717",
     "semantic_hash": "2aaafa6a49b6563925fe440891e32717"
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\public\\next.svg": {
+  "public/next.svg": {
     "mtime": 1780480443.3587532,
     "ast_hash": "8e061864f388b47f33a1c3780831193e",
     "semantic_hash": "8e061864f388b47f33a1c3780831193e"
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\public\\vercel.svg": {
+  "public/vercel.svg": {
     "mtime": 1780480443.3781102,
     "ast_hash": "c0af2f507b369b085b35ef4bbe3bcf1e",
     "semantic_hash": "c0af2f507b369b085b35ef4bbe3bcf1e"
   },
-  "D:\\Duancanhan\\Project_QuanLyGiaiDau\\frontend-web_qlgiaidau\\public\\window.svg": {
+  "public/window.svg": {
     "mtime": 1780480443.393108,
     "ast_hash": "a2760511c65806022ad20adf74370ff3",
     "semantic_hash": "a2760511c65806022ad20adf74370ff3"
+  },
+  "src/app/(player)/chat/page.tsx": {
+    "mtime": 1781064549.499748,
+    "ast_hash": "231959acc49a183dd252f9b06c57ee04",
+    "semantic_hash": ""
+  },
+  "src/app/(public)/communities/[id]/components/AboutTab.tsx": {
+    "mtime": 1781054666.0659983,
+    "ast_hash": "574ba86c8d844023e341be978b2745e9",
+    "semantic_hash": ""
+  },
+  "src/app/(public)/communities/[id]/components/GalleryTab.tsx": {
+    "mtime": 1781054677.9803295,
+    "ast_hash": "f36b86b735af1ccfaa2dd280364402a6",
+    "semantic_hash": ""
+  },
+  "src/app/(public)/communities/[id]/components/MembersTab.tsx": {
+    "mtime": 1781054706.79135,
+    "ast_hash": "52dcbfb27cad7d4bcd4696e579caa38a",
+    "semantic_hash": ""
+  },
+  "src/app/(public)/communities/[id]/components/RankingsTab.tsx": {
+    "mtime": 1780994880.103131,
+    "ast_hash": "659474665470008083ccb615f4d7669f",
+    "semantic_hash": ""
+  },
+  "src/app/(public)/communities/[id]/components/SettingsTab.tsx": {
+    "mtime": 1781080028.3853078,
+    "ast_hash": "944b371525bd9f64160cff9ebb07fba3",
+    "semantic_hash": ""
+  },
+  "src/app/(public)/communities/[id]/components/TournamentsTab.tsx": {
+    "mtime": 1781095138.8475187,
+    "ast_hash": "11fb43c51d68f42cb8300da06e3f8973",
+    "semantic_hash": ""
+  },
+  "src/app/(public)/communities/[id]/page.tsx": {
+    "mtime": 1781054660.007467,
+    "ast_hash": "031fd5efbe3f581be7e4988b1f65ccbe",
+    "semantic_hash": ""
+  },
+  "src/app/(public)/communities/create/page.tsx": {
+    "mtime": 1781056873.3382986,
+    "ast_hash": "ca7debbd77502ad952eed956d2f25185",
+    "semantic_hash": ""
+  },
+  "src/app/(public)/live/[matchId]/page.tsx": {
+    "mtime": 1781064539.0648012,
+    "ast_hash": "f97d6bad5518bb81ddb36e47e9f4256b",
+    "semantic_hash": ""
+  },
+  "src/app/(public)/tournaments/[id]/TournamentDetailClient.tsx": {
+    "mtime": 1781083154.87166,
+    "ast_hash": "00e54009923728b7d2b92931d1fe5302",
+    "semantic_hash": ""
+  },
+  "src/app/(public)/tournaments/[id]/components/BracketTab.tsx": {
+    "mtime": 1781064067.1170197,
+    "ast_hash": "b27336aba514da95eb431df9d9953b7a",
+    "semantic_hash": ""
+  },
+  "src/app/(public)/tournaments/[id]/components/MatchesTab.tsx": {
+    "mtime": 1780976500.2743132,
+    "ast_hash": "9230778cc65e2edc7095c2a1008ed49f",
+    "semantic_hash": ""
+  },
+  "src/app/(public)/tournaments/[id]/components/OverviewTab.tsx": {
+    "mtime": 1781080405.8455734,
+    "ast_hash": "77fce8b5b5be37a5cbc8eade0d01c490",
+    "semantic_hash": ""
+  },
+  "src/app/(public)/tournaments/[id]/components/RegisterModal.tsx": {
+    "mtime": 1781063653.8554873,
+    "ast_hash": "8a0580cc26bce30f69a643e5d57dbe50",
+    "semantic_hash": ""
+  },
+  "src/app/(public)/tournaments/[id]/components/TeamsTab.tsx": {
+    "mtime": 1781064055.5894644,
+    "ast_hash": "73ca548830059c2c6030fb9da3728e16",
+    "semantic_hash": ""
+  },
+  "src/app/organizer/tournaments/create/components/Step1Info.tsx": {
+    "mtime": 1781074461.117084,
+    "ast_hash": "c7f858d41a0636c313f10ef5d3934a2e",
+    "semantic_hash": ""
+  },
+  "src/app/organizer/tournaments/create/components/Step2Format.tsx": {
+    "mtime": 1781063709.5019038,
+    "ast_hash": "2923206dc09eb583b3489751f8a004f9",
+    "semantic_hash": ""
+  },
+  "src/app/organizer/tournaments/create/components/Step3Venue.tsx": {
+    "mtime": 1781065924.5170896,
+    "ast_hash": "5326f5595184293f38ef6b7e456cc564",
+    "semantic_hash": ""
+  },
+  "src/app/organizer/tournaments/create/components/Step4Fees.tsx": {
+    "mtime": 1781066326.4269278,
+    "ast_hash": "fb9ad2737f5545a5532333e806cab3be",
+    "semantic_hash": ""
+  },
+  "src/app/organizer/tournaments/create/page.tsx": {
+    "mtime": 1781074473.9611957,
+    "ast_hash": "b1afd63974abe3cc6a88aff3ca0fe354",
+    "semantic_hash": ""
+  },
+  "src/components/layout/PageTransition.tsx": {
+    "mtime": 1780975890.2386935,
+    "ast_hash": "816622289529d0ab5e8770f73eee3c5d",
+    "semantic_hash": ""
+  },
+  "src/components/map/MapPicker.tsx": {
+    "mtime": 1780996812.6373217,
+    "ast_hash": "25bb1be54cdd960911073105b34de7a2",
+    "semantic_hash": ""
+  },
+  "src/components/map/MapView.tsx": {
+    "mtime": 1780996816.5367403,
+    "ast_hash": "3aab7452570da4671aaf98a96c1f91f1",
+    "semantic_hash": ""
+  },
+  "src/components/shared/JoinCommunityModal.tsx": {
+    "mtime": 1781054674.113561,
+    "ast_hash": "cf6c49e81c7c19c8034ee31d5e8ff995",
+    "semantic_hash": ""
+  },
+  "src/constants/config.ts": {
+    "mtime": 1780975574.064857,
+    "ast_hash": "e41402c03428630b35d058be5c586e94",
+    "semantic_hash": ""
+  },
+  "src/features/chat/api.ts": {
+    "mtime": 1781064471.7661324,
+    "ast_hash": "064231ddbe9c6048bf3c51429f4a68e2",
+    "semantic_hash": ""
+  },
+  "src/features/regions/api.ts": {
+    "mtime": 1781061312.0953789,
+    "ast_hash": "8a642ad1a899e3bbd1cfa77d38567c44",
+    "semantic_hash": ""
+  },
+  "src/features/upload/api.ts": {
+    "mtime": 1781061270.220074,
+    "ast_hash": "442db897344dc39932d62d6976a74b67",
+    "semantic_hash": ""
+  },
+  "src/features/users/api/getProfile.ts": {
+    "mtime": 1781060990.428341,
+    "ast_hash": "76376ad96f4f2f762ed8908a876c0a7b",
+    "semantic_hash": ""
+  },
+  "src/features/users/api/index.ts": {
+    "mtime": 1780976055.4964278,
+    "ast_hash": "6f051232f57d5d92e4bcd594c2ba2915",
+    "semantic_hash": ""
+  },
+  "src/features/users/api/updateProfile.ts": {
+    "mtime": 1781060997.277407,
+    "ast_hash": "ec15d978ea882c0270431aaf0d839d40",
+    "semantic_hash": ""
+  },
+  "src/hooks/useDebounce.ts": {
+    "mtime": 1780975571.037037,
+    "ast_hash": "fcf0c5f04a09258fb31d5a983719110d",
+    "semantic_hash": ""
+  },
+  "src/hooks/useMediaQuery.ts": {
+    "mtime": 1780975573.0551875,
+    "ast_hash": "783d04567a7fc0e131f56710d3931bc3",
+    "semantic_hash": ""
+  },
+  "src/lib/socket.ts": {
+    "mtime": 1781064455.4851735,
+    "ast_hash": "89599d999cbd2ba8f53ce4b8104be5d7",
+    "semantic_hash": ""
+  },
+  "src/lib/zustand/createTournamentStore.ts": {
+    "mtime": 1781066626.2357526,
+    "ast_hash": "bda38c810da9d27319ce3d38dde78d60",
+    "semantic_hash": ""
+  },
+  "src/middleware.ts": {
+    "mtime": 1780976031.8482313,
+    "ast_hash": "8c0b7cf605f9fbe656664ae6fc4181b2",
+    "semantic_hash": ""
+  },
+  "src/types/api.ts": {
+    "mtime": 1781061204.570598,
+    "ast_hash": "29e1111dac04f18eebd08e79b9e4559e",
+    "semantic_hash": ""
+  },
+  "src/types/category.ts": {
+    "mtime": 1781061208.1475027,
+    "ast_hash": "c692e1920842736ae1f533a9b014927e",
+    "semantic_hash": ""
+  },
+  "src/types/chat.ts": {
+    "mtime": 1781061236.040706,
+    "ast_hash": "11705682e4fb74f5ee8aad5ca843d36b",
+    "semantic_hash": ""
+  },
+  "src/types/community.ts": {
+    "mtime": 1781061211.987478,
+    "ast_hash": "8f3ccf95ae9c0981170d89739313768f",
+    "semantic_hash": ""
+  },
+  "src/types/match.ts": {
+    "mtime": 1781064625.3384948,
+    "ast_hash": "f663dcfa3c1f2817080bef598cd1ede4",
+    "semantic_hash": ""
+  },
+  "src/types/ranking.ts": {
+    "mtime": 1781061232.0659246,
+    "ast_hash": "9b0e10b87f463f4dfea31fbe7a3f8ebd",
+    "semantic_hash": ""
+  },
+  "src/types/region.ts": {
+    "mtime": 1781061228.576134,
+    "ast_hash": "43ed63b8b1e050e3b43fff90b59b10e6",
+    "semantic_hash": ""
+  },
+  "src/types/tournament.ts": {
+    "mtime": 1781094969.8102264,
+    "ast_hash": "df948aece39e54f683f960ec64ed7a2f",
+    "semantic_hash": ""
+  },
+  "src/utils/error.ts": {
+    "mtime": 1780995844.0135603,
+    "ast_hash": "55fa5823f79dd1992b95c795b35c3cfa",
+    "semantic_hash": ""
+  },
+  "src/utils/format.ts": {
+    "mtime": 1780979275.7794547,
+    "ast_hash": "1429e587e113bc12be5489102f89ba3c",
+    "semantic_hash": ""
+  },
+  "src/utils/string.ts": {
+    "mtime": 1780975436.8329728,
+    "ast_hash": "68688dfa0418aebc00f439da0b53a988",
+    "semantic_hash": ""
+  },
+  "docs/api-contract.md": {
+    "mtime": 1780975156.5940053,
+    "ast_hash": "d0cf67835979cfe076bed17c9e03eb2b",
+    "semantic_hash": ""
+  },
+  "docs/data-types.md": {
+    "mtime": 1780975219.932292,
+    "ast_hash": "b9d1c05b8a0ec8502426d9e8780a3c62",
+    "semantic_hash": ""
+  },
+  "docs/master-prompt.md": {
+    "mtime": 1780975034.118758,
+    "ast_hash": "d5fe1a3a5f7be71f42bcd5ac5a8a95df",
+    "semantic_hash": ""
+  },
+  "docs/routes.md": {
+    "mtime": 1781094090.484735,
+    "ast_hash": "28551da8794834663a702ee70c6aa09d",
+    "semantic_hash": ""
+  },
+  "docs/stitch-prompts.md": {
+    "mtime": 1780975306.9160144,
+    "ast_hash": "9c68a78c098ceebfc28c5907b3f985fc",
+    "semantic_hash": ""
+  },
+  "src/app/(player)/payments/checkout/page.tsx": {
+    "mtime": 1781064079.0549366,
+    "ast_hash": "b0eea9b48ca67031e64ce99a98eb8474",
+    "semantic_hash": ""
+  },
+  "src/app/(player)/payments/page.tsx": {
+    "mtime": 1781063684.7932909,
+    "ast_hash": "9f6e0b60a4042b72293aa89e98e1489d",
+    "semantic_hash": ""
+  },
+  "src/app/(player)/payments/result/page.tsx": {
+    "mtime": 1781063677.718377,
+    "ast_hash": "29aceaad5ea68fd45e63a37ee594a19b",
+    "semantic_hash": ""
+  },
+  "src/app/(public)/tournaments/[id]/join-team/page.tsx": {
+    "mtime": 1781095068.915115,
+    "ast_hash": "c5ec3c3bf7337a27a0ddecc9bed8f3af",
+    "semantic_hash": ""
+  },
+  "src/app/(public)/tournaments/[id]/register/components/DoublesRegistrationFlow.tsx": {
+    "mtime": 1781095049.3480375,
+    "ast_hash": "4430603245e3336d010180bbb8ef78cc",
+    "semantic_hash": ""
+  },
+  "src/app/(public)/tournaments/[id]/register/page.tsx": {
+    "mtime": 1781095545.8175929,
+    "ast_hash": "c68cf3dd912b46a33794c9cda706e898",
+    "semantic_hash": ""
+  },
+  "src/app/(public)/tournaments/join/[inviteCode]/page.tsx": {
+    "mtime": 1781080903.600389,
+    "ast_hash": "1f13940c723fb3c57da9735cb7462aef",
+    "semantic_hash": ""
+  },
+  "src/app/communities/[id]/manage/challenges/page.tsx": {
+    "mtime": 1781083636.7134936,
+    "ast_hash": "4c4e7fd07ab50608adff57f6f899993e",
+    "semantic_hash": ""
+  },
+  "src/app/communities/[id]/manage/tournaments/page.tsx": {
+    "mtime": 1781074981.5649476,
+    "ast_hash": "103d392a1135b366d290f6f5880355f4",
+    "semantic_hash": ""
+  },
+  "src/app/organizer/payouts/page.tsx": {
+    "mtime": 1781063692.5156374,
+    "ast_hash": "9dfc2dfa820e9ee80c221dbbf13fe7c9",
+    "semantic_hash": ""
+  },
+  "src/app/organizer/tournaments/[id]/manage/page.tsx": {
+    "mtime": 1781095200.1607754,
+    "ast_hash": "66b2b32bed803601244a9d439b22996d",
+    "semantic_hash": ""
+  },
+  "src/app/organizer/tournaments/create/components/Step2Confirm.tsx": {
+    "mtime": 1781078367.2190917,
+    "ast_hash": "787215990ef69f1bfc3146577e7f392d",
+    "semantic_hash": ""
+  },
+  "src/app/organizer/tournaments/page.tsx": {
+    "mtime": 1781074485.1429293,
+    "ast_hash": "07c293d625c3724556f9f2f267e2b8b4",
+    "semantic_hash": ""
+  },
+  "src/components/ui/EloTierBadge.tsx": {
+    "mtime": 1781094898.5199387,
+    "ast_hash": "12cd99e81a9296ebcec031e93aeb8e2f",
+    "semantic_hash": ""
+  },
+  "src/components/ui/GalleryCarousel.tsx": {
+    "mtime": 1781083131.7354245,
+    "ast_hash": "d3902f82fef2c54d7c18eb829f62011b",
+    "semantic_hash": ""
+  },
+  "src/features/communities/challenges.ts": {
+    "mtime": 1781074424.0518043,
+    "ast_hash": "90edbe6ce9b0888525c09b7c13d0afe4",
+    "semantic_hash": ""
+  },
+  "src/features/notifications/api.ts": {
+    "mtime": 1781064479.6387722,
+    "ast_hash": "d7c01878dfd2616db6c0faadee079171",
+    "semantic_hash": ""
+  },
+  "src/features/payments/api.ts": {
+    "mtime": 1781064045.221412,
+    "ast_hash": "7b09fe2e300c2c69e3833fde2216351e",
+    "semantic_hash": ""
+  },
+  "src/hooks/useLiveMatch.ts": {
+    "mtime": 1781064513.2937202,
+    "ast_hash": "8a00330e9981e3b823330597f1d8e477",
+    "semantic_hash": ""
+  },
+  "src/types/payment.ts": {
+    "mtime": 1781063623.9377,
+    "ast_hash": "a0e11f7d062032904f9c0cb08c78d51a",
+    "semantic_hash": ""
+  },
+  "docs/giaodienpicturehtml/athletic_synergy/DESIGN.md": {
+    "mtime": 1781094090.3186276,
+    "ast_hash": "38415169c281141d9b0a1c76047828b2",
+    "semantic_hash": ""
+  },
+  "docs/giaodienpicturehtml/c_ng_ng/code.html": {
+    "mtime": 1781094090.3206244,
+    "ast_hash": "0ba8753e2bd25e952b069be7ea4658d7",
+    "semantic_hash": ""
+  },
+  "docs/giaodienpicturehtml/ch_nh_s_a_h_s/code.html": {
+    "mtime": 1781094090.3271477,
+    "ast_hash": "47d84a4332a26426453365f9a708dd3b",
+    "semantic_hash": ""
+  },
+  "docs/giaodienpicturehtml/chi_ti_t_gi_i_u/code.html": {
+    "mtime": 1781094090.3331506,
+    "ast_hash": "f770e17c83dc71515a1a4bf5d03407b4",
+    "semantic_hash": ""
+  },
+  "docs/giaodienpicturehtml/component_library/code.html": {
+    "mtime": 1781094090.343174,
+    "ast_hash": "aa9d63f16039b5b46ce1436d01cdf66e",
+    "semantic_hash": ""
+  },
+  "docs/giaodienpicturehtml/danh_s_ch_gi_i_u/code.html": {
+    "mtime": 1781094090.3542886,
+    "ast_hash": "0293d0cb4370b200633884912f373479",
+    "semantic_hash": ""
+  },
+  "docs/giaodienpicturehtml/h_s_c_nh_n/code.html": {
+    "mtime": 1781094090.363294,
+    "ast_hash": "3c7341fbb6a27bb894669b6d8f6fc2ff",
+    "semantic_hash": ""
+  },
+  "docs/giaodienpicturehtml/live_score/code.html": {
+    "mtime": 1781094090.37042,
+    "ast_hash": "3bd6af09d0a04d1da5128b97aa634113",
+    "semantic_hash": ""
+  },
+  "docs/giaodienpicturehtml/ng_k/code.html": {
+    "mtime": 1781094090.3777792,
+    "ast_hash": "3285e349c59bf337b3e49100aacfeb08",
+    "semantic_hash": ""
+  },
+  "docs/giaodienpicturehtml/ng_nh_p/code.html": {
+    "mtime": 1781094090.3835585,
+    "ast_hash": "eb01d01d394b7b4b960203ba445c0b2a",
+    "semantic_hash": ""
+  },
+  "docs/giaodienpicturehtml/trang_ch/code.html": {
+    "mtime": 1781094090.3888688,
+    "ast_hash": "585d6710b941a94c3444a490489b9c09",
+    "semantic_hash": ""
+  },
+  "docs/giaodienpicturehtml/x_p_h_ng/code.html": {
+    "mtime": 1781094090.3979938,
+    "ast_hash": "a5362b044d025b20eddab9f84bfedefb",
+    "semantic_hash": ""
+  },
+  "docs/giaodienthieu/athletic_synergy/DESIGN.md": {
+    "mtime": 1781094090.4078307,
+    "ast_hash": "38415169c281141d9b0a1c76047828b2",
+    "semantic_hash": ""
+  },
+  "docs/giaodienthieu/ch_nh_s_a_h_s/code.html": {
+    "mtime": 1781094090.410108,
+    "ast_hash": "47d84a4332a26426453365f9a708dd3b",
+    "semantic_hash": ""
+  },
+  "docs/giaodienthieu/chi_ti_t_c_ng_ng_updated/code.html": {
+    "mtime": 1781094090.4173138,
+    "ast_hash": "5fe488104d4b5cf0b9bd94ad2aa9e35a",
+    "semantic_hash": ""
+  },
+  "docs/giaodienthieu/dashboard_ng_i_d_ng_updated/code.html": {
+    "mtime": 1781094090.4304137,
+    "ast_hash": "ba2ede6643a8d80e09d142357f0e92da",
+    "semantic_hash": ""
+  },
+  "docs/giaodienthieu/duy_t_l_nh_r_t_ti_n_admin/code.html": {
+    "mtime": 1781094090.440124,
+    "ast_hash": "bf634c8278d9d7f26962fb2f340ae807",
+    "semantic_hash": ""
+  },
+  "docs/giaodienthieu/i_u_h_nh_nh_p_t_s/code.html": {
+    "mtime": 1781094090.448628,
+    "ast_hash": "f732ca8401dfecdc4533aae445ffa108",
+    "semantic_hash": ""
+  },
+  "docs/giaodienthieu/qu_n_l_r_t_ti_n_gi_i_u/code.html": {
+    "mtime": 1781094090.4557757,
+    "ast_hash": "780fa41115e7b7fc58feaef157a31121",
+    "semantic_hash": ""
+  },
+  "docs/giaodienthieu/t_o_gi_i_u_m_i_wizard/code.html": {
+    "mtime": 1781094090.4631765,
+    "ast_hash": "74fddbee21de9ec376a8f012b5ee9837",
+    "semantic_hash": ""
+  },
+  "docs/giaodienthieu/tin_nh_n_chi_ti_t/code.html": {
+    "mtime": 1781094090.4706855,
+    "ast_hash": "46ac7c706649fb46bcf1bfd383c3e127",
+    "semantic_hash": ""
+  },
+  "docs/phase5-plan.md": {
+    "mtime": 1781094090.4776413,
+    "ast_hash": "fc6f14641e2ca475639a2c60a950eef0",
+    "semantic_hash": ""
+  },
+  "docs/prompt.md": {
+    "mtime": 1781094090.4804387,
+    "ast_hash": "17243fc6e04b2a3ff5010b93b3c39310",
+    "semantic_hash": ""
+  },
+  "docs/giaodienpicturehtml/c_ng_ng/screen.png": {
+    "mtime": 1781094090.3261476,
+    "ast_hash": "9e883e9ddf23b37e7d96b596ed5e981d",
+    "semantic_hash": ""
+  },
+  "docs/giaodienpicturehtml/ch_nh_s_a_h_s/screen.png": {
+    "mtime": 1781094090.3311532,
+    "ast_hash": "c2011caefeb941e44db78b78d567d330",
+    "semantic_hash": ""
+  },
+  "docs/giaodienpicturehtml/chi_ti_t_gi_i_u/screen.png": {
+    "mtime": 1781094090.3416598,
+    "ast_hash": "a70841c8dd57892441fe0ed49b8d751e",
+    "semantic_hash": ""
+  },
+  "docs/giaodienpicturehtml/component_library/screen.png": {
+    "mtime": 1781094090.349786,
+    "ast_hash": "49aab9205287f8419efc4ca00358755a",
+    "semantic_hash": ""
+  },
+  "docs/giaodienpicturehtml/danh_s_ch_gi_i_u/screen.png": {
+    "mtime": 1781094090.3612938,
+    "ast_hash": "89a34c8b6c1e47a85bb73854987d23e4",
+    "semantic_hash": ""
+  },
+  "docs/giaodienpicturehtml/h_s_c_nh_n/screen.png": {
+    "mtime": 1781094090.3684132,
+    "ast_hash": "d8c90d0f8125fa6cd7924e0ef19da118",
+    "semantic_hash": ""
+  },
+  "docs/giaodienpicturehtml/live_score/screen.png": {
+    "mtime": 1781094090.375773,
+    "ast_hash": "0785f16a7f67bca41bdad6d56979b419",
+    "semantic_hash": ""
+  },
+  "docs/giaodienpicturehtml/ng_k/screen.png": {
+    "mtime": 1781094090.3825588,
+    "ast_hash": "b0f817da80632ef92676139365f1836f",
+    "semantic_hash": ""
+  },
+  "docs/giaodienpicturehtml/ng_nh_p/screen.png": {
+    "mtime": 1781094090.3858805,
+    "ast_hash": "92b3b5618711d816448abcca08532753",
+    "semantic_hash": ""
+  },
+  "docs/giaodienpicturehtml/trang_ch/screen.png": {
+    "mtime": 1781094090.395996,
+    "ast_hash": "029db32af10a4baf1403b1e6f01eeb08",
+    "semantic_hash": ""
+  },
+  "docs/giaodienpicturehtml/x_p_h_ng/screen.png": {
+    "mtime": 1781094090.4045,
+    "ast_hash": "7b6ee14166b3fe52f2099dfec43f5e03",
+    "semantic_hash": ""
+  },
+  "docs/giaodienthieu/ch_nh_s_a_h_s/screen.png": {
+    "mtime": 1781094090.4133048,
+    "ast_hash": "c2011caefeb941e44db78b78d567d330",
+    "semantic_hash": ""
+  },
+  "docs/giaodienthieu/chi_ti_t_c_ng_ng_updated/screen.png": {
+    "mtime": 1781094090.4275029,
+    "ast_hash": "bf2b03de48f4c07b552c96974b653705",
+    "semantic_hash": ""
+  },
+  "docs/giaodienthieu/dashboard_ng_i_d_ng_updated/screen.png": {
+    "mtime": 1781094090.4374778,
+    "ast_hash": "086cb90e99b9a6d428657f06bb9a6398",
+    "semantic_hash": ""
+  },
+  "docs/giaodienthieu/duy_t_l_nh_r_t_ti_n_admin/screen.png": {
+    "mtime": 1781094090.4450877,
+    "ast_hash": "dd778653cb2beca7c4423509a15fd7ba",
+    "semantic_hash": ""
+  },
+  "docs/giaodienthieu/i_u_h_nh_nh_p_t_s/screen.png": {
+    "mtime": 1781094090.4526086,
+    "ast_hash": "80acb43bc935917f1cf9dcad2c401d85",
+    "semantic_hash": ""
+  },
+  "docs/giaodienthieu/qu_n_l_r_t_ti_n_gi_i_u/screen.png": {
+    "mtime": 1781094090.4610932,
+    "ast_hash": "d32dc2bba7e9797ff1f0aaa5acf1cd8d",
+    "semantic_hash": ""
+  },
+  "docs/giaodienthieu/t_o_gi_i_u_m_i_wizard/screen.png": {
+    "mtime": 1781094090.467859,
+    "ast_hash": "4a4a811ecc922815b112d9d33844ba7e",
+    "semantic_hash": ""
+  },
+  "docs/giaodienthieu/tin_nh_n_chi_ti_t/screen.png": {
+    "mtime": 1781094090.4746354,
+    "ast_hash": "d36f23947b5dc2e581a66fd063136a72",
+    "semantic_hash": ""
   }
 }

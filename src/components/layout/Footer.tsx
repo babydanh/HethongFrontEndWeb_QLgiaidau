@@ -42,8 +42,9 @@ export function Footer() {
           </div>
         </div>
         <div className="mt-8 border-t border-slate-100 pt-8 text-center text-sm text-slate-500">
-          © {new Date().getFullYear()} TournaMaster. Tất cả các quyền được bảo lưu.
+          © 2026 TournaMaster. Tất cả các quyền được bảo lưu.
         </div>
+
       </div>
     </footer>
   );

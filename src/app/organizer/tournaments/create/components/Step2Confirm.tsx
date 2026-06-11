@@ -20,7 +20,20 @@ export default function Step2Confirm() {
       
       const { format, ...rest } = formData;
 
+      // 1. Create Parent Tournament first
+      const parentRes = await tournamentsApi.createParentTournament({
+        name: rest.name,
+        description: rest.description || '',
+      });
+
+      const parentId = parentRes.data?.id;
+      if (!parentId) {
+        throw new Error('Không thể tạo Giải đấu mẹ. Vui lòng thử lại.');
+      }
+
+      // 2. Create the first division (tournament) under this parent
       const finalData: Record<string, unknown> = {
+        parentId,
         name: rest.name,
         categoryId: rest.categoryId,
         description: rest.description || '',

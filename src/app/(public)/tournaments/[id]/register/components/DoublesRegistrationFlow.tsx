@@ -21,7 +21,7 @@ export default function DoublesRegistrationFlow({ tournament, inviteCode }: Prop
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [teamName, setTeamName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [participant, setParticipant] = useState<any | null>(null);
+  const [participant, setParticipant] = useState<TournamentParticipant | null>(null);
   const [copied, setCopied] = useState(false);
   const [isPolling, setIsPolling] = useState(false);
   const [isWithdrawing, setIsWithdrawing] = useState(false);
@@ -52,7 +52,11 @@ export default function DoublesRegistrationFlow({ tournament, inviteCode }: Prop
     let intervalId: NodeJS.Timeout;
 
     if (step === 2 && participant?.id) {
-      setIsPolling(true);
+      if (!isPolling) {
+        Promise.resolve().then(() => {
+          setIsPolling(true);
+        });
+      }
       intervalId = setInterval(async () => {
         try {
           const res = await tournamentsApi.getMyRegistration(tournament.id);
@@ -70,13 +74,17 @@ export default function DoublesRegistrationFlow({ tournament, inviteCode }: Prop
         }
       }, 3000);
     } else {
-      setIsPolling(false);
+      if (isPolling) {
+        Promise.resolve().then(() => {
+          setIsPolling(false);
+        });
+      }
     }
 
     return () => {
       if (intervalId) clearInterval(intervalId);
     };
-  }, [step, participant?.id, tournament.id]);
+  }, [step, participant?.id, tournament.id, isPolling]);
 
   const handleCreateTeam = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -22,7 +22,9 @@ export default function TournamentsTab({
 
   const fetchTournaments = async () => {
     try {
-      setIsLoading(true);
+      if (!isLoading) {
+        setIsLoading(true);
+      }
       const res = await communitiesApi.getTournaments(communityId);
       const data = res.data?.data || (Array.isArray(res.data) ? res.data : []);
       setTournaments(data);
@@ -35,7 +37,9 @@ export default function TournamentsTab({
 
   useEffect(() => {
     if (communityId) {
-      fetchTournaments();
+      Promise.resolve().then(() => {
+        fetchTournaments();
+      });
     }
   }, [communityId]);
 

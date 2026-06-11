@@ -87,7 +87,7 @@ export default function ProfilePage() {
               ) : (
                 displayUser?.fullName || 'Người dùng ẩn danh'
               )}
-              {(displayUser as any)?.roles?.includes('ADMIN') && (
+              {((displayUser as unknown as Record<string, unknown>)?.roles as string[] | undefined)?.includes('ADMIN') && (
                 <span title="Admin">
                   <ShieldCheck className="w-6 h-6 text-blue-500" />
                 </span>
@@ -101,7 +101,7 @@ export default function ProfilePage() {
               )}
             </p>
             <div className="flex flex-wrap gap-2 mt-2">
-              {(user as any)?.roles?.map((role: string) => (
+              {((user as unknown as Record<string, unknown>)?.roles as string[] | undefined)?.map((role: string) => (
                 <span key={role} className="px-2 py-1 text-xs font-medium rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase">
                   {role}
                 </span>
@@ -118,15 +118,15 @@ export default function ProfilePage() {
 
       {/* Tabs */}
       <div className="flex overflow-x-auto gap-2 border-b border-slate-200 pb-1 no-scrollbar">
-        {[
+        {([
           { id: 'overview', label: 'Tổng quan' },
           { id: 'tournaments', label: 'Giải đấu' },
           { id: 'matches', label: 'Trận đấu' },
           { id: 'elo', label: 'Thống kê ELO' }
-        ].map(tab => (
+        ] as const).map(tab => (
           <button
             key={tab.id}
-            onClick={() => setActiveTab(tab.id as any)}
+            onClick={() => setActiveTab(tab.id)}
             className={`px-5 py-2.5 rounded-t-lg font-bold text-sm whitespace-nowrap transition-colors border-b-2 ${
               activeTab === tab.id 
                 ? 'text-blue-600 border-blue-600 bg-blue-50/50' 

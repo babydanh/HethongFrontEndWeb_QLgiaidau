@@ -181,7 +181,8 @@ export default function CreateCommunityPage() {
       const res = await communitiesApi.createCommunity(payload);
       toast.success('Tạo câu lạc bộ thành công! Đang chờ duyệt.');
       
-      const communityId = (res as any)?.data?.id || (res as any)?.id;
+      const responseData = res as { data?: { id?: string }, id?: string };
+      const communityId = responseData?.data?.id || responseData?.id;
       if (communityId) {
         router.push(`/communities/${communityId}`);
       } else {

@@ -29,7 +29,7 @@ export default function LeaderboardPage() {
                 }
 
                 // Fetch communities for CLB rankings
-                const comms = await communitiesApi.getCommunities({ limit: 100 });
+                const comms = await communitiesApi.getCommunities({ limit: 50 });
                 if (comms.data && comms.data.length > 0) {
                     setCommunities(comms.data);
                     setSelectedCommunityId(comms.data[0].id);
@@ -180,7 +180,7 @@ export default function LeaderboardPage() {
                                             )}
                                         </div>
                                         <h3 className="font-bold text-slate-900 text-center mb-2 truncate max-w-full">{top3[1].user?.fullName || "Người chơi"}</h3>
-                                        <EloTierBadge elo={top3[1].eloPoints} size="sm" className="mb-2" />
+                                        <EloTierBadge elo={top3[1].eloPoints} tierName={top3[1].tier?.name} size="sm" className="mb-2" />
                                         <div className="font-semibold text-slate-500 text-xs">
                                           Thắng: {top3[1].matchesWon}/{top3[1].matchesPlayed} trận
                                         </div>
@@ -202,7 +202,7 @@ export default function LeaderboardPage() {
                                             )}
                                         </div>
                                         <h3 className="font-extrabold text-slate-950 text-center text-lg mb-2 truncate max-w-full">{top3[0].user?.fullName || "Người chơi"}</h3>
-                                        <EloTierBadge elo={top3[0].eloPoints} size="md" className="mb-2" />
+                                        <EloTierBadge elo={top3[0].eloPoints} tierName={top3[0].tier?.name} size="md" className="mb-2" />
                                         <div className="font-bold text-slate-500 text-xs">
                                           Thắng: {top3[0].matchesWon}/{top3[0].matchesPlayed} trận
                                         </div>
@@ -222,7 +222,7 @@ export default function LeaderboardPage() {
                                             )}
                                         </div>
                                         <h3 className="font-bold text-slate-900 text-center mb-2 truncate max-w-full">{top3[2].user?.fullName || "Người chơi"}</h3>
-                                        <EloTierBadge elo={top3[2].eloPoints} size="sm" className="mb-2" />
+                                        <EloTierBadge elo={top3[2].eloPoints} tierName={top3[2].tier?.name} size="sm" className="mb-2" />
                                         <div className="font-semibold text-slate-500 text-xs">
                                           Thắng: {top3[2].matchesWon}/{top3[2].matchesPlayed} trận
                                         </div>
@@ -248,8 +248,16 @@ export default function LeaderboardPage() {
                                         <tbody className="divide-y text-slate-700 font-semibold">
                                             {rankings.map((rank, index) => {
                                                 const winRate = rank.matchesPlayed > 0 ? ((rank.matchesWon / rank.matchesPlayed) * 100).toFixed(1) : '0';
+                                                const isTierS = rank.tier?.name?.toLowerCase().includes('tier s');
                                                 return (
-                                                  <tr key={rank.id} className="hover:bg-slate-50/40 transition-colors">
+                                                  <tr 
+                                                    key={rank.id} 
+                                                    className={`transition-colors border-b ${
+                                                      isTierS 
+                                                        ? "bg-gradient-to-r from-amber-500/5 via-yellow-400/5 to-transparent hover:from-amber-500/10 hover:via-yellow-400/10 border-l-4 border-l-amber-500" 
+                                                        : "hover:bg-slate-50/40"
+                                                    }`}
+                                                  >
                                                       <td className="py-4 px-4 text-center font-bold text-slate-500">
                                                           {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : index + 1}
                                                       </td>
@@ -264,11 +272,14 @@ export default function LeaderboardPage() {
                                                                       </div>
                                                                   )}
                                                               </div>
-                                                              <span className="font-bold text-slate-900">{rank.user?.fullName || "Người chơi"}</span>
+                                                              <div className="flex items-center gap-1.5">
+                                                                <span className="font-bold text-slate-900">{rank.user?.fullName || "Người chơi"}</span>
+                                                                {isTierS && <span className="text-sm select-none" title="Thành Chủ (Tier S) - Top 1 khu vực">👑</span>}
+                                                              </div>
                                                           </div>
                                                       </td>
                                                       <td className="py-4 px-4">
-                                                          <EloTierBadge elo={rank.eloPoints} size="sm" />
+                                                          <EloTierBadge elo={rank.eloPoints} tierName={rank.tier?.name} size="sm" />
                                                       </td>
                                                       <td className="py-4 px-4 text-right font-black text-blue-600">{rank.eloPoints}</td>
                                                       <td className="py-4 px-4 text-right text-slate-500 hidden sm:table-cell">{rank.matchesPlayed}</td>
@@ -297,32 +308,32 @@ export default function LeaderboardPage() {
                         </div>
                         <div className="flex flex-col gap-2.5">
                             <div className="flex justify-between items-center p-3 rounded-xl border bg-slate-50 border-slate-205">
-                                <span className="bg-amber-500/10 text-amber-500 px-2 py-0.5 rounded text-[10px] font-black uppercase">Grand Master</span>
-                                <span className="font-black text-xs text-slate-800">2200+ ELO</span>
+                                <span className="bg-amber-500/10 text-amber-500 px-2 py-0.5 rounded text-[10px] font-black uppercase">Tier S</span>
+                                <span className="font-black text-xs text-slate-800">2200+ ELO (Top 1 Tỉnh)</span>
                             </div>
                             <div className="flex justify-between items-center p-3 rounded-xl border bg-slate-50 border-slate-205">
-                                <span className="bg-purple-500/10 text-purple-400 px-2 py-0.5 rounded text-[10px] font-black uppercase">Master</span>
-                                <span className="font-black text-xs text-slate-800">2000 - 2199</span>
+                                <span className="bg-rose-500/10 text-rose-550 px-2 py-0.5 rounded text-[10px] font-black uppercase">Tier A</span>
+                                <span className="font-black text-xs text-slate-800">1900 - 2199 ELO</span>
                             </div>
                             <div className="flex justify-between items-center p-3 rounded-xl border bg-slate-50 border-slate-205">
-                                <span className="bg-cyan-500/10 text-cyan-400 px-2 py-0.5 rounded text-[10px] font-black uppercase">Diamond</span>
-                                <span className="font-black text-xs text-slate-800">1800 - 1999</span>
+                                <span className="bg-violet-500/10 text-violet-550 px-2 py-0.5 rounded text-[10px] font-black uppercase">Tier B</span>
+                                <span className="font-black text-xs text-slate-800">1700 - 1899 ELO</span>
                             </div>
                             <div className="flex justify-between items-center p-3 rounded-xl border bg-slate-50 border-slate-205">
-                                <span className="bg-sky-500/10 text-sky-400 px-2 py-0.5 rounded text-[10px] font-black uppercase">Platinum</span>
-                                <span className="font-black text-xs text-slate-800">1600 - 1799</span>
+                                <span className="bg-teal-500/10 text-teal-650 px-2 py-0.5 rounded text-[10px] font-black uppercase">Tier C (High)</span>
+                                <span className="font-black text-xs text-slate-800">1500 - 1699 ELO</span>
                             </div>
                             <div className="flex justify-between items-center p-3 rounded-xl border bg-slate-50 border-slate-205">
-                                <span className="bg-yellow-500/10 text-yellow-500 px-2 py-0.5 rounded text-[10px] font-black uppercase">Gold</span>
-                                <span className="font-black text-xs text-slate-800">1400 - 1599</span>
+                                <span className="bg-cyan-500/10 text-cyan-600 px-2 py-0.5 rounded text-[10px] font-black uppercase">Tier C (Low)</span>
+                                <span className="font-black text-xs text-slate-800">1300 - 1499 ELO</span>
                             </div>
                             <div className="flex justify-between items-center p-3 rounded-xl border bg-slate-50 border-slate-205">
-                                <span className="bg-gray-400/10 text-gray-450 px-2 py-0.5 rounded text-[10px] font-black uppercase">Silver</span>
-                                <span className="font-black text-xs text-slate-800">1200 - 1399</span>
+                                <span className="bg-slate-500/10 text-slate-700 px-2 py-0.5 rounded text-[10px] font-black uppercase">Tier D (High)</span>
+                                <span className="font-black text-xs text-slate-800">1100 - 1299 ELO</span>
                             </div>
                             <div className="flex justify-between items-center p-3 rounded-xl border bg-slate-50 border-slate-205">
-                                <span className="bg-orange-700/10 text-orange-600 px-2 py-0.5 rounded text-[10px] font-black uppercase">Bronze</span>
-                                <span className="font-black text-xs text-slate-800">100 - 1199</span>
+                                <span className="bg-orange-700/10 text-orange-600 px-2 py-0.5 rounded text-[10px] font-black uppercase">Tier D (Low)</span>
+                                <span className="font-black text-xs text-slate-800">0 - 1099 ELO</span>
                             </div>
                         </div>
                     </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Tournament, tournamentsApi, TournamentParticipant } from '@/features/tournaments/api';
 import { ChevronDown, ChevronUp, User, Award } from 'lucide-react';
 
@@ -15,6 +15,7 @@ export default function TeamsTab({ tournament }: Props) {
 
   useEffect(() => {
     const fetchParticipants = async () => {
+      setIsLoading(true);
       try {
         const res = await tournamentsApi.getTournamentParticipants(tournament.id);
         setParticipants(res.data);
@@ -151,5 +152,3 @@ export default function TeamsTab({ tournament }: Props) {
     </div>
   );
 }
-
-import React from 'react';

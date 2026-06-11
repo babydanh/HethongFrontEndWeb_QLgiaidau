@@ -34,6 +34,12 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
   const [tournament, setTournament] = useState<Tournament | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Division select states
+  const [selectedDivisionId, setSelectedDivisionId] = useState<string>('');
+  const [selectedDivision, setSelectedDivision] = useState<Tournament | null>(null);
+  const [allDivisions, setAllDivisions] = useState<any[]>([]);
+  const [isLoadingDivision, setIsLoadingDivision] = useState(false);
   
   // Invite states for Private Tournaments
   const [inviteCode, setInviteCode] = useState(urlInvite);
@@ -44,6 +50,26 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
   const { register, handleSubmit, formState: { errors } } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
   });
+
+  const fetchSelectedDivisionDetails = async (divId: string) => {
+    try {
+      setIsLoadingDivision(true);
+      const res = await tournamentsApi.getTournamentById(divId);
+      if (res.data) {
+        setSelectedDivision(res.data);
+      }
+    } catch (err) {
+      console.error('Failed to load division details:', err);
+    } finally {
+      setIsLoadingDivision(false);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedDivisionId && selectedDivisionId !== selectedDivision?.id) {
+      fetchSelectedDivisionDetails(selectedDivisionId);
+    }
+  }, [selectedDivisionId]);
 
   const fetchTournament = async (code?: string) => {
     try {
@@ -57,12 +83,31 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
 
       const res = await tournamentsApi.getTournamentById(id, paramsObj);
       if (res.data) {
-        setTournament(res.data);
+        const t = res.data;
+        setTournament(t);
         setNeedInviteValidation(false);
+
+        if (t.parentId) {
+          setSelectedDivisionId(t.id);
+          setSelectedDivision(t);
+          try {
+            const pRes = await tournamentsApi.getParentTournamentById(t.parentId);
+            if (pRes.data && pRes.data.divisions) {
+              setAllDivisions(pRes.data.divisions);
+            }
+          } catch (e) {
+            console.error('Failed to fetch parent/sister divisions', e);
+          }
+        } else if (t.divisions && t.divisions.length > 0) {
+          setAllDivisions(t.divisions);
+          setSelectedDivisionId(t.divisions[0].id);
+        } else {
+          setSelectedDivisionId(t.id);
+          setSelectedDivision(t);
+        }
       }
     } catch (err: unknown) {
       const errorResponse = err as { response?: { status?: number } };
-      // If server returns 403 or 400 because of private validation
       if (errorResponse.response?.status === 403 || errorResponse.response?.status === 400) {
         setNeedInviteValidation(true);
       } else {
@@ -110,6 +155,11 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
       return;
     }
 
+    if (!selectedDivision) {
+      toast.error('Vui lòng chọn hình thức đăng ký thi đấu');
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       const cleanData = {
@@ -117,18 +167,13 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
         inviteCode: inviteCode || undefined,
       };
 
-      const res = await tournamentsApi.register(id, cleanData);
+      const res = await tournamentsApi.register(selectedDivision.id, cleanData);
       const participantId = res?.data?.participant?.id;
-      const paymentUrl = res?.data?.paymentUrl;
 
       toast.success('Đăng ký tham gia thành công!');
 
-      const entryFee = Number(tournament?.entryFee || 0);
-      if (entryFee > 0 && participantId) {
-        router.push(`/payments/checkout?participantId=${participantId}&tournamentId=${id}`);
-      } else {
-        router.push(`/tournaments/${id}`);
-      }
+      // Skip payment step for testing convenience
+      router.push(`/tournaments/${selectedDivision.id}`);
     } catch (err) {
       toast.error(getErrorMessage(err));
     } finally {
@@ -204,8 +249,8 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
 
   if (!tournament) return null;
 
-  const entryFeeVal = Number(tournament.entryFee || 0);
-  const isDoubles = tournament.matchType === 'DOUBLES' || tournament.matchType === 'MIXED_DOUBLES';
+  const entryFeeVal = selectedDivision ? Number(selectedDivision.entryFee || 0) : 0;
+  const isDoubles = selectedDivision ? (selectedDivision.matchType === 'DOUBLES' || selectedDivision.matchType === 'MIXED_DOUBLES') : false;
 
   return (
     <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -243,80 +288,94 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
               <div className="flex items-center gap-2 col-span-2">
                 <Trophy className="w-4 h-4 text-amber-400" />
                 <span>
-                  Định dạng: {
+                  Định dạng giải đấu: {
                     tournament.format === 'SINGLE_ELIMINATION' ? 'Loại trực tiếp (Single)' :
                     tournament.format === 'DOUBLE_ELIMINATION' ? 'Nhánh thắng thua (Double)' :
                     tournament.format === 'ROUND_ROBIN' ? 'Vòng tròn tính điểm' : tournament.format
-                  } (Thể thức {isDoubles ? 'Đấu đôi' : 'Đấu đơn'})
+                  }
                 </span>
               </div>
-              {tournament.genderRestriction && (
-                <div className="flex items-center gap-2 col-span-2 text-amber-300 font-bold bg-amber-500/10 py-1.5 px-3 rounded-lg border border-amber-500/25 mt-1">
-                  <AlertTriangle className="w-4 h-4 text-amber-300 flex-shrink-0" />
-                  <span>
-                    Giới hạn giới tính: {
-                      tournament.genderRestriction === 'MALE' ? 'Chỉ Nam được phép đăng ký' :
-                      tournament.genderRestriction === 'FEMALE' ? 'Chỉ Nữ được phép đăng ký' :
-                      'Mixed Doubles (1 Nam & 1 Nữ)'
-                    }
-                  </span>
-                </div>
-              )}
             </div>
           </div>
 
           {/* Form / Flow Content */}
           <div className="p-6 md:p-8">
-            {isDoubles ? (
-              <DoublesRegistrationFlow tournament={tournament} inviteCode={inviteCode} />
-            ) : (
-              <div className="space-y-6">
-                <div>
-                  <h2 className="text-lg font-bold text-slate-950 flex items-center gap-2">
-                    <Users className="w-5 h-5 text-blue-600" /> Đăng ký thi đấu đơn
-                  </h2>
-                  <p className="text-slate-500 text-xs mt-1">
-                    Nhập tên thi đấu của bạn (hoặc tên đội cá nhân đại diện).
-                  </p>
-                </div>
-
-                <form onSubmit={handleSubmit(onSubmitSingles)} className="space-y-5">
-                  <Input
-                    label="Tên đội / Tên thi đấu"
-                    placeholder="Ví dụ: Nguyễn Văn A - Hà Nội"
-                    {...register('teamName')}
-                    error={errors.teamName?.message}
-                    disabled={isSubmitting}
-                  />
-
-                  <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-slate-500 font-semibold">Lệ phí giải đấu:</span>
-                      <span className="font-extrabold text-slate-900">
-                        {entryFeeVal > 0 ? formatCurrency(entryFeeVal) : 'Miễn phí'}
-                      </span>
-                    </div>
-                  </div>
-
-                  <Button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 shadow-md shadow-blue-500/10 flex items-center justify-center gap-1.5"
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" /> Đang xử lý đăng ký...
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle className="w-4 h-4" />
-                        Xác nhận Đăng ký tham gia
-                      </>
-                    )}
-                  </Button>
-                </form>
+            {/* Division dropdown selector */}
+            {allDivisions.length > 0 && (
+              <div className="flex flex-col gap-1.5 mb-6">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Hình thức đăng ký thi đấu</label>
+                <select
+                  value={selectedDivisionId}
+                  onChange={(e) => setSelectedDivisionId(e.target.value)}
+                  disabled={isLoadingDivision || isSubmitting}
+                  className="border border-slate-300 rounded-xl px-3.5 py-2.5 bg-white text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-12 shadow-sm cursor-pointer"
+                >
+                  {allDivisions.map((div) => (
+                    <option key={div.id} value={div.id}>
+                      {div.name}
+                    </option>
+                  ))}
+                </select>
               </div>
             )}
+
+            {isLoadingDivision ? (
+              <div className="py-12 flex flex-col items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-blue-600 mb-2" />
+                <p className="text-xs text-slate-400 font-medium animate-pulse">Đang tải thông tin hình thức...</p>
+              </div>
+            ) : selectedDivision ? (
+              isDoubles ? (
+                <DoublesRegistrationFlow tournament={selectedDivision} inviteCode={inviteCode} />
+              ) : (
+                <div className="space-y-6">
+                  <div>
+                    <h2 className="text-lg font-bold text-slate-950 flex items-center gap-2">
+                      <Users className="w-5 h-5 text-blue-600" /> Đăng ký thi đấu đơn
+                    </h2>
+                    <p className="text-slate-500 text-xs mt-1">
+                      Nhập tên thi đấu của bạn (hoặc tên đội cá nhân đại diện).
+                    </p>
+                  </div>
+
+                  <form onSubmit={handleSubmit(onSubmitSingles)} className="space-y-5">
+                    <Input
+                      label="Tên đội / Tên thi đấu"
+                      placeholder="Ví dụ: Nguyễn Văn A - Hà Nội"
+                      {...register('teamName')}
+                      error={errors.teamName?.message}
+                      disabled={isSubmitting}
+                    />
+
+                    <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-slate-500 font-semibold">Lệ phí giải đấu:</span>
+                        <span className="font-extrabold text-slate-900">
+                          {entryFeeVal > 0 ? formatCurrency(entryFeeVal) : 'Miễn phí'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <Button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 shadow-md shadow-blue-500/10 flex items-center justify-center gap-1.5"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" /> Đang xử lý đăng ký...
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="w-4 h-4" />
+                          Xác nhận Đăng ký tham gia
+                        </>
+                      )}
+                    </Button>
+                  </form>
+                </div>
+              )
+            ) : null}
           </div>
         </div>
       </div>

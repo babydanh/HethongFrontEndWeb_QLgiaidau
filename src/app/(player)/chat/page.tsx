@@ -90,11 +90,11 @@ export default function ChatPage() {
     };
   }, [activeConvId, conversations]);
 
-  const scrollToBottom = () => {
+  function scrollToBottom() {
     setTimeout(() => {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, 100);
-  };
+  }
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();

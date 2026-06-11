@@ -9,39 +9,121 @@ import {
   Gamepad2, Gamepad, Target as Pool
 } from 'lucide-react';
 import Image from 'next/image';
+import { categoriesApi } from '@/features/categories/api';
+import { Category } from '@/types/category';
 
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { tournamentsApi, Tournament } from '@/features/tournaments/api';
 import { communitiesApi, Community } from '@/features/communities/api';
+import { rankingsApi, PlayerRanking } from '@/features/rankings/api';
+import { matchesApi, Match } from '@/features/matches/api';
+import TournamentHeroBanner from '@/components/ui/TournamentHeroBanner';
+import LiveMatchesWidget from '@/components/ui/LiveMatchesWidget';
 
 export default function HomePage() {
   const { isAuthenticated, user } = useAuthStore();
   const [isClient, setIsClient] = useState(false);
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [communities, setCommunities] = useState<Community[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
+
+  // Widget States
+  const [userRankings, setUserRankings] = useState<{ publicRanks: any[]; communityRanks: any[] } | null>(null);
+  const [upcomingMatch, setUpcomingMatch] = useState<Match | null>(null);
+  const [leaderboard, setLeaderboard] = useState<PlayerRanking[]>([]);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsClient(true), 0);
+    const loadCategories = async () => {
+      try {
+        const res = await categoriesApi.getCategories();
+        setCategories(res.data || []);
+      } catch (err) {
+        console.error('Failed to load categories on homepage', err);
+      }
+    };
+    loadCategories();
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
     const fetchData = async () => {
       try {
-        const [tRes, cRes] = await Promise.all([
-          tournamentsApi.getTournaments({ limit: 5 }),
-          communitiesApi.getCommunities({ limit: 4 })
-        ]);
+        setIsLoading(true);
+        const tParams: Record<string, unknown> = { limit: 5 };
+        if (selectedCategoryId) {
+          tParams.categoryId = selectedCategoryId;
+        }
+
+        const promises: Promise<any>[] = [
+          tournamentsApi.getTournaments(tParams),
+          communitiesApi.getCommunities({ limit: 10 })
+        ];
+
+        // Fetch leaderboard ranking based on selected category, or fallback to first category
+        const lbCategoryId = selectedCategoryId || categories[0]?.id;
+        if (lbCategoryId) {
+          promises.push(rankingsApi.getRankings({ categoryId: lbCategoryId, limit: 5 }));
+        } else {
+          promises.push(Promise.resolve({ data: [] }));
+        }
+
+        // If authenticated, fetch user rankings and upcoming matches
+        if (isAuthenticated && user?.id) {
+          promises.push(rankingsApi.getUserRankings(user.id));
+          promises.push(matchesApi.getMatches({ userId: user.id, limit: 10 }));
+        } else {
+          promises.push(Promise.resolve(null));
+          promises.push(Promise.resolve({ data: [] }));
+        }
+
+        const [tRes, cRes, rRes, userRankRes, userMatchesRes] = await Promise.all(promises);
+
         setTournaments(tRes.data || []);
         setCommunities(cRes.data || []);
+        setLeaderboard(rRes?.data || []);
+
+        if (userRankRes) {
+          setUserRankings(userRankRes);
+        } else {
+          setUserRankings(null);
+        }
+
+        if (userMatchesRes && userMatchesRes.data) {
+          const upcoming = userMatchesRes.data.find(
+            (m: Match) => m.status === 'SCHEDULED' || m.status === 'ONGOING'
+          );
+          setUpcomingMatch(upcoming || null);
+        } else {
+          setUpcomingMatch(null);
+        }
       } catch (error: unknown) {
-        const err = error as { response?: { data?: unknown }, message?: string };
-        console.error("Failed to fetch homepage data", err.response?.data || err.message);
+        console.error("Failed to fetch homepage data", error);
       } finally {
         setIsLoading(false);
       }
     };
     fetchData();
-    return () => clearTimeout(timer);
-  }, []);
+  }, [selectedCategoryId, isAuthenticated, user?.id, categories]);
+
+  const filteredCommunities = selectedCategoryId 
+    ? communities.filter(c => c.categories?.some(cat => cat.id === selectedCategoryId))
+    : communities;
+
+  // Compute stats for current active category
+  const activeRankInfo = userRankings?.publicRanks?.find(
+    r => selectedCategoryId ? r.categoryId === selectedCategoryId : true
+  ) || userRankings?.publicRanks?.[0];
+
+  const eloPoints = activeRankInfo ? activeRankInfo.eloPoints : 1000;
+  const tierName = activeRankInfo?.tierName || 'Chưa xếp hạng';
+  const matchesPlayed = activeRankInfo ? activeRankInfo.matchesPlayed : 0;
+  const matchesWon = activeRankInfo ? activeRankInfo.matchesWon : 0;
+  const winRate = matchesPlayed > 0 ? Math.round((matchesWon / matchesPlayed) * 100) : 0;
+  const sportName = activeRankInfo?.categoryName || (selectedCategoryId ? categories.find(c => c.id === selectedCategoryId)?.name : 'Chung');
 
   return (
     <div className="bg-slate-50 min-h-screen text-slate-900 font-sans selection:bg-blue-100 selection:text-blue-900">
@@ -49,78 +131,67 @@ export default function HomePage() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 md:px-8 py-8 grid grid-cols-1 lg:grid-cols-12 gap-6">
         
-        {/* Left Column (8/12) */}
-        <div className="lg:col-span-8 flex flex-col gap-8">
+        {/* Left Column (9/12) */}
+        <div className="lg:col-span-9 flex flex-col gap-8">
           
-          {/* Section 1: Giải đấu sắp diễn ra */}
+          {/* Sports Selector Bar */}
+          <div className="flex overflow-x-auto gap-2 pb-2 no-scrollbar">
+            <button
+              onClick={() => setSelectedCategoryId('')}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-full border text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                selectedCategoryId === ''
+                  ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                  : 'bg-white text-slate-600 border-slate-200 hover:border-slate-350 hover:text-slate-900'
+              }`}
+            >
+              <Trophy className="w-3.5 h-3.5" />
+              Tất cả
+            </button>
+            {categories.map((cat) => {
+              const isActive = selectedCategoryId === cat.id;
+              // Map slugs to icons
+              const IconComponent = 
+                cat.slug.includes('tennis') && !cat.slug.includes('table') ? Trophy :
+                cat.slug.includes('badminton') || cat.slug.includes('cau-long') ? Gamepad :
+                cat.slug.includes('pickleball') ? Target :
+                cat.slug.includes('table-tennis') || cat.slug.includes('bong-ban') ? Gamepad2 :
+                Activity;
+
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => setSelectedCategoryId(cat.id)}
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-full border text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                    isActive
+                      ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                      : 'bg-white text-slate-600 border-slate-200 hover:border-slate-350 hover:text-slate-900'
+                  }`}
+                >
+                  <IconComponent className="w-3.5 h-3.5" />
+                  {cat.name}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Section 1: Giải đấu nổi bật */}
           <section className="flex flex-col gap-4">
             <div className="flex justify-between items-end">
-              <h2 className="text-xl font-bold text-slate-900">Giải đấu sắp diễn ra</h2>
+              <h2 className="text-xl font-bold text-slate-900">Giải đấu nổi bật</h2>
               <Link href="/tournaments" className="text-sm font-semibold text-blue-600 hover:underline flex items-center gap-1">
                 Xem tất cả <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
             
-            <div className="flex overflow-x-auto gap-4 pb-4 no-scrollbar snap-x">
-              
-              {isLoading ? (
-                <div className="flex gap-4">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="min-w-[300px] w-[300px] h-[320px] bg-slate-200 animate-pulse rounded-xl shrink-0"></div>
-                  ))}
-                </div>
-              ) : tournaments.length > 0 ? (
-                tournaments.map((tournament) => (
-                  <div key={tournament.id} className="min-w-[300px] w-[300px] bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col snap-start shrink-0 group">
-                    <div className="h-32 bg-slate-100 relative overflow-hidden">
-                      {tournament.bannerUrl ? (
-                        <img 
-                          src={tournament.bannerUrl} 
-                          alt={tournament.name} 
-                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
-                        />
-                      ) : (
-                        <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-indigo-600 transition-transform duration-500 group-hover:scale-105"></div>
-                      )}
-                      <div className="absolute top-2 left-2 bg-white/95 backdrop-blur-sm px-2.5 py-1 rounded-full border border-slate-200 shadow-sm">
-                        <span className="text-[10px] font-extrabold text-blue-600 flex items-center gap-1 uppercase tracking-wide">
-                          <Trophy className="w-3.5 h-3.5 text-amber-500" /> {
-                            tournament.format === 'SINGLE_ELIMINATION' ? 'Loại trực tiếp' :
-                            tournament.format === 'DOUBLE_ELIMINATION' ? 'Nhánh thắng/thua' :
-                            tournament.format === 'ROUND_ROBIN' ? 'Vòng tròn' : (tournament.format || 'Giải đấu')
-                          }
-                        </span>
-                      </div>
-                    </div>
-                    <div className="p-5 flex flex-col gap-3 flex-grow">
-                      <h3 className="text-lg font-bold text-slate-900 line-clamp-2 leading-snug group-hover:text-blue-600 transition-colors">{tournament.name}</h3>
-                      <div className="flex flex-col gap-2 text-sm text-slate-500">
-                        <div className="flex items-center gap-2 font-medium"><Calendar className="w-4 h-4 text-slate-400" /> {tournament.startDate ? new Date(tournament.startDate).toLocaleDateString('vi-VN') : 'Sắp tới'}</div>
-                        <div className="flex items-center gap-2 font-medium"><MapPin className="w-4 h-4 text-slate-400" /> {tournament.locationAddress || 'Chưa cập nhật'}</div>
-                        <div className="flex items-center gap-2 font-medium"><Users className="w-4 h-4 text-slate-400" /> {tournament._count?.participants || 0}/{tournament.maxParticipants || 16}</div>
-                      </div>
-                      <div className="mt-auto pt-4 flex justify-between items-center border-t border-slate-100">
-                        <span className="text-sm font-extrabold text-emerald-600">
-                          {tournament.entryFee && Number(tournament.entryFee) > 0 
-                            ? `${Number(tournament.entryFee).toLocaleString('vi-VN')} VNĐ` 
-                            : 'Miễn phí'}
-                        </span>
-                        <Link href={`/tournaments/${tournament.id}`}>
-                          <Button size="sm" variant="secondary" className="bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold">Xem chi tiết</Button>
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="w-full text-center py-12 bg-white rounded-xl border border-slate-200 border-dashed">
-                  <Trophy className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                  <p className="text-slate-500">Chưa có giải đấu nào sắp diễn ra.</p>
-                </div>
-              )}
-
-            </div>
+            {isLoading ? (
+              <div className="w-full h-[220px] md:h-[300px] bg-slate-200 animate-pulse rounded-2xl"></div>
+            ) : (
+              <TournamentHeroBanner tournaments={tournaments} heightClass="h-[350px] md:h-[480px]" />
+            )}
           </section>
+
+          {/* Section: Trận đấu đang diễn ra */}
+          <LiveMatchesWidget limit={3} showAllLink={true} />
 
           {/* Section 2: Câu lạc bộ của tôi */}
           <section className="flex flex-col gap-4">
@@ -137,8 +208,8 @@ export default function HomePage() {
                   <div className="bg-slate-200 animate-pulse h-[82px] rounded-xl border border-slate-200"></div>
                   <div className="bg-slate-200 animate-pulse h-[82px] rounded-xl border border-slate-200"></div>
                 </>
-              ) : communities.length > 0 ? (
-                communities.map((community) => (
+              ) : filteredCommunities.length > 0 ? (
+                filteredCommunities.slice(0, 4).map((community) => (
                   <Link href={`/communities/${community.id}`} key={community.id}>
                     <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex items-center gap-4 hover:border-slate-300 transition-colors cursor-pointer group h-full">
                       <div className="w-12 h-12 rounded-full border border-slate-200 bg-blue-50 flex items-center justify-center overflow-hidden shrink-0">
@@ -160,7 +231,7 @@ export default function HomePage() {
                 ))
               ) : (
                 <div className="col-span-1 sm:col-span-2 text-center py-6 bg-white rounded-xl border border-slate-200 border-dashed text-slate-500 text-sm">
-                  Chưa có câu lạc bộ nào.
+                  Chưa có câu lạc bộ nào thi đấu môn này.
                 </div>
               )}
 
@@ -173,155 +244,198 @@ export default function HomePage() {
             </div>
           </section>
 
-
-
         </div>
 
-        {/* Right Column (4/12) */}
-        <div className="lg:col-span-4 flex flex-col gap-6">
+        {/* Right Column (3/12) */}
+        <div className="lg:col-span-3 flex flex-col gap-6">
           
           {!isClient ? (
-             <div className="animate-pulse bg-slate-200 h-[400px] rounded-xl w-full"></div>
+             <div className="animate-pulse bg-slate-200 h-[180px] rounded-xl w-full"></div>
           ) : !isAuthenticated ? (
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 flex flex-col items-center text-center">
-              <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
-                <UserPlus className="w-8 h-8 text-slate-400" />
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex flex-col items-center text-center">
+              <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mb-3 shrink-0">
+                <UserPlus className="w-6 h-6 text-slate-400" />
               </div>
-              <h3 className="text-lg font-bold text-slate-900 mb-2">Chưa đăng nhập</h3>
-              <p className="text-sm text-slate-500 mb-6">Vui lòng đăng nhập để xem thông tin cá nhân, quản lý giải đấu và tham gia câu lạc bộ của bạn.</p>
-              <div className="flex flex-col w-full gap-3">
-                <Link href="/login" className={getButtonClasses("default", "default", "w-full bg-blue-600 hover:bg-blue-700 shadow-sm")}>
+              <h3 className="text-sm font-bold text-slate-900 mb-1">Chưa đăng nhập</h3>
+              <p className="text-xs text-slate-500 mb-4">Đăng nhập để xem giải đấu và CLB của bạn.</p>
+              <div className="flex flex-col w-full gap-2">
+                <Link href="/login" className={getButtonClasses("default", "default", "w-full bg-blue-600 hover:bg-blue-700 shadow-sm text-xs py-2")}>
                   Đăng nhập ngay
                 </Link>
-                <Link href="/register" className={getButtonClasses("outline", "default", "w-full text-slate-600 hover:bg-slate-50 border-slate-200")}>
+                <Link href="/register" className={getButtonClasses("outline", "default", "w-full text-slate-600 hover:bg-slate-50 border-slate-200 text-xs py-2")}>
                   Đăng ký tài khoản
                 </Link>
               </div>
             </div>
           ) : (
-            <>
-              {/* Widget 1: Cá nhân */}
-              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 flex flex-col items-center text-center relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-16 bg-gradient-to-r from-blue-500 to-cyan-500 opacity-20"></div>
-                <div className="w-20 h-20 rounded-full border-4 border-white shadow-sm z-10 mt-2 relative bg-blue-100 flex items-center justify-center overflow-hidden">
-                  {user?.avatarUrl ? (
-                    <img src={user.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="text-2xl font-bold text-blue-600 uppercase">{user?.fullName?.charAt(0) || 'U'}</span>
-                  )}
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex flex-col items-center text-center relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-12 bg-gradient-to-r from-blue-500 to-cyan-500 opacity-20"></div>
+              <div className="w-16 h-16 rounded-full border-4 border-white shadow-sm z-10 mt-1 relative bg-blue-100 flex items-center justify-center overflow-hidden shrink-0">
+                {user?.avatarUrl ? (
+                  <img src={user.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-xl font-bold text-blue-600 uppercase">{user?.fullName?.charAt(0) || 'U'}</span>
+                )}
+              </div>
+              <h3 className="text-base font-bold text-slate-900 mt-2 line-clamp-1">{user?.fullName || 'Người dùng'}</h3>
+              <p className="text-xs text-slate-400 truncate w-full mb-3">{user?.email}</p>
+              
+              {/* ELO & Rank display */}
+              <div className="flex items-center gap-2 bg-slate-50 px-3 py-1 rounded-full border border-slate-100">
+                <Trophy className="w-3.5 h-3.5 text-amber-500" />
+                <span className="text-[10px] font-bold text-slate-700 max-w-[100px] truncate">{sportName}: {tierName}</span>
+                <span className="text-[10px] bg-blue-600 text-white px-2 py-0.5 rounded-full font-bold">
+                  ELO {eloPoints}
+                </span>
+              </div>
+
+              {/* Stats Grid */}
+              <div className="grid grid-cols-3 w-full gap-2 mt-4 pt-4 border-t border-slate-100">
+                <div className="flex flex-col items-center">
+                  <span className="text-base font-bold text-slate-800">{matchesPlayed}</span>
+                  <span className="text-[10px] font-semibold text-slate-400">Trận đấu</span>
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 mt-3">{user?.fullName || 'Người dùng'}</h3>
-                <p className="text-sm text-slate-400">{user?.email}</p>
-            <div className="flex justify-center gap-2 mt-3">
-              <span className="bg-slate-100 px-2 py-1 rounded text-xs font-semibold text-slate-600 flex items-center gap-1">
-                <Trophy className="w-3.5 h-3.5" /> Hạng A
-              </span>
-              <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-bold">
-                ELO 1850
-              </span>
+                <div className="flex flex-col items-center border-l border-r border-slate-100">
+                  <span className="text-base font-bold text-slate-800">{matchesWon}</span>
+                  <span className="text-[10px] font-semibold text-slate-400">Thắng</span>
+                </div>
+                <div className="flex flex-col items-center">
+                  <span className="text-base font-bold text-slate-800">{winRate}%</span>
+                  <span className="text-[10px] font-semibold text-slate-400">Tỷ lệ thắng</span>
+                </div>
+              </div>
+
+              <Link href="/profile" className="w-full mt-4">
+                <Button variant="outline" className="w-full text-xs py-2 border-slate-200 text-slate-650 hover:bg-slate-50 font-bold">
+                  Trang cá nhân
+                </Button>
+              </Link>
             </div>
-            <div className="grid grid-cols-3 w-full gap-4 mt-6 pt-4 border-t border-slate-100">
-              <div className="flex flex-col items-center">
-                <span className="text-xl font-bold text-slate-900">12</span>
-                <span className="text-xs font-semibold text-slate-400">Giải đấu</span>
-              </div>
-              <div className="flex flex-col items-center border-l border-r border-slate-100">
-                <span className="text-xl font-bold text-slate-900">45</span>
-                <span className="text-xs font-semibold text-slate-400">Trận thắng</span>
-              </div>
-              <div className="flex flex-col items-center">
-                <span className="text-xl font-bold text-slate-900">65%</span>
-                <span className="text-xs font-semibold text-slate-400">Tỉ lệ thắng</span>
-              </div>
-            </div>
-          </div>
+          )}
 
           {/* Widget 2: Trận đấu sắp tới */}
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-sm font-bold text-slate-900">Trận đấu tiếp theo</h3>
-            </div>
-            <div className="bg-slate-50 rounded-lg p-4 border border-slate-200 flex flex-col gap-3">
-              <div className="flex justify-between items-center text-sm text-slate-500">
-                <span className="bg-red-100 text-red-700 px-2 py-0.5 rounded text-xs font-semibold">Hôm nay, 18:00</span>
-                <span className="font-medium">Sân Cầu Giấy</span>
-              </div>
-              <div className="flex justify-between items-center mt-2">
-                <div className="flex flex-col items-center gap-1">
-                  <div className="w-10 h-10 rounded-full border border-slate-200 bg-white"></div>
-                  <span className="text-xs font-semibold text-slate-900">Bạn</span>
+          {isClient && isAuthenticated && upcomingMatch && (
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Trận đấu tiếp theo</h3>
+              <div className="bg-slate-50 rounded-lg p-4 border border-slate-150 flex flex-col gap-3">
+                <div className="flex justify-between items-center text-[10px] text-slate-500">
+                  <span className="bg-emerald-500 text-white px-2 py-0.5 rounded font-bold uppercase tracking-wider">
+                    {upcomingMatch.status === 'ONGOING' ? 'Đang diễn ra' : 'Sắp diễn ra'}
+                  </span>
+                  <span className="font-semibold">{upcomingMatch.courtName || 'Sân chưa xếp'}</span>
                 </div>
-                <div className="text-xl font-bold text-slate-300">VS</div>
-                <div className="flex flex-col items-center gap-1">
-                  <div className="w-10 h-10 rounded-full border border-slate-200 bg-white"></div>
-                  <span className="text-xs font-semibold text-slate-900">Lê Văn C</span>
+                <div className="flex justify-between items-center mt-2">
+                  <div className="flex flex-col items-center gap-1 w-5/12 text-center">
+                    <div className="w-8 h-8 rounded-full border border-slate-200 bg-white flex items-center justify-center font-bold text-xs text-slate-600 shadow-sm">
+                      {upcomingMatch.participant1?.teamName.charAt(0) || 'P1'}
+                    </div>
+                    <span className="text-[10px] font-bold text-slate-700 line-clamp-1">{upcomingMatch.participant1?.teamName || 'Chưa rõ'}</span>
+                  </div>
+                  <div className="text-xs font-black text-slate-400 w-2/12 text-center">VS</div>
+                  <div className="flex flex-col items-center gap-1 w-5/12 text-center">
+                    <div className="w-8 h-8 rounded-full border border-slate-200 bg-white flex items-center justify-center font-bold text-xs text-slate-600 shadow-sm">
+                      {upcomingMatch.participant2?.teamName.charAt(0) || 'P2'}
+                    </div>
+                    <span className="text-[10px] font-bold text-slate-700 line-clamp-1">{upcomingMatch.participant2?.teamName || 'Chưa rõ'}</span>
+                  </div>
                 </div>
+                <div className="text-center text-[10px] font-bold text-slate-400 mt-1 uppercase line-clamp-1">
+                  {upcomingMatch.tournament?.name || 'Giải đấu'}
+                </div>
+                <Link href={`/tournaments/${upcomingMatch.tournamentId}`} className="w-full mt-1">
+                  <Button variant="outline" className="w-full text-[10px] py-1.5 border-slate-200 text-slate-650 bg-white hover:bg-slate-50 font-bold">
+                    Chi tiết trận đấu
+                  </Button>
+                </Link>
               </div>
-              <div className="text-center text-xs font-semibold text-slate-400 mt-1">Vòng Bảng - Hanoi Open</div>
-              <Button variant="outline" className="w-full mt-2 border-slate-200 text-slate-600 bg-white hover:bg-slate-50">Cập nhật kết quả</Button>
             </div>
-          </div>
+          )}
+
+          {isClient && isAuthenticated && !upcomingMatch && (
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex flex-col items-center text-center">
+              <Calendar className="w-8 h-8 text-slate-300 mb-2" />
+              <h4 className="text-xs font-bold text-slate-800">Chưa có lịch thi đấu tiếp theo</h4>
+              <p className="text-[10px] text-slate-500 mt-1 max-w-[200px]">Hãy đăng ký tham gia các giải đấu để có tên trên bảng đấu!</p>
+              <Link href="/tournaments" className="w-full mt-3">
+                <Button variant="outline" className="w-full text-xs py-1.5 border-slate-200 text-slate-650 bg-white hover:bg-slate-50 font-bold">
+                  Tìm giải đấu ngay
+                </Button>
+              </Link>
+            </div>
+          )}
 
           {/* Widget 3: Bảng xếp hạng nhanh */}
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-sm font-bold text-slate-900">BXH Hanoi Tennis (Hạng A)</h3>
-              <a href="#" className="text-blue-600 hover:underline text-xs font-semibold">Xem đầy đủ</a>
+          {leaderboard.length > 0 ? (
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+              <div className="flex justify-between items-center mb-3">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                  BXH {selectedCategoryId ? categories.find(c => c.id === selectedCategoryId)?.name : categories[0]?.name || 'Giải đấu'}
+                </h3>
+                <Link href="/rankings" className="text-blue-600 hover:underline text-[10px] font-bold">
+                  Xem tất cả
+                </Link>
+              </div>
+              <div className="flex flex-col gap-2">
+                {leaderboard.slice(0, 5).map((item, index) => {
+                  const isCurrentUser = user && item.userId === user.id;
+                  return (
+                    <div
+                      key={item.id}
+                      className={`flex items-center gap-2.5 py-1.5 px-2 rounded-lg border transition-colors ${
+                        isCurrentUser
+                          ? 'bg-blue-50 border-blue-200'
+                          : 'border-transparent hover:bg-slate-50'
+                      }`}
+                    >
+                      <span className={`text-xs font-black w-4 text-center ${
+                        index === 0 ? 'text-amber-500' :
+                        index === 1 ? 'text-slate-400' :
+                        index === 2 ? 'text-amber-705' : 'text-slate-400'
+                      }`}>
+                        {index + 1}
+                      </span>
+                      <div className="w-7 h-7 rounded-full border border-slate-200 bg-blue-50 flex items-center justify-center overflow-hidden shrink-0">
+                        {item.user?.avatarUrl ? (
+                          <img src={item.user.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-[10px] font-bold text-blue-600 uppercase">
+                            {item.user?.fullName?.charAt(0) || 'U'}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex flex-col flex-grow min-w-0">
+                        <span className={`text-xs truncate ${isCurrentUser ? 'font-bold text-blue-700' : 'font-semibold text-slate-800'}`}>
+                          {item.user?.fullName || 'Người dùng'}
+                        </span>
+                      </div>
+                      <div className="flex flex-col items-end shrink-0">
+                        <span className="text-xs font-bold text-slate-700">{item.eloPoints}</span>
+                        <span className="text-[8px] font-bold text-slate-405 uppercase">{item.tier?.name || 'Hạng E'}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-            <div className="flex flex-col">
-              
-              <div className="flex items-center gap-3 py-2 border-b border-slate-100">
-                <span className="text-lg font-bold text-blue-600 w-4 text-center">1</span>
-                <div className="w-8 h-8 rounded-full border border-slate-200 bg-slate-100"></div>
-                <div className="flex flex-col flex-grow">
-                  <span className="text-sm font-semibold text-slate-900">Phạm D</span>
-                </div>
-                <span className="text-sm font-semibold text-slate-500">1920</span>
-              </div>
-
-              <div className="flex items-center gap-3 py-2 border-b border-slate-100">
-                <span className="text-lg font-bold text-slate-400 w-4 text-center">2</span>
-                <div className="w-8 h-8 rounded-full border border-slate-200 bg-slate-100"></div>
-                <div className="flex flex-col flex-grow">
-                  <span className="text-sm font-semibold text-slate-900">Hoàng E</span>
-                </div>
-                <span className="text-sm font-semibold text-slate-500">1895</span>
-              </div>
-
-              <div className="flex items-center gap-3 py-2 border-b border-slate-100 bg-blue-50/50 rounded-lg -mx-2 px-2">
-                <span className="text-lg font-bold text-slate-900 w-4 text-center">3</span>
-                <div className="w-8 h-8 rounded-full border-2 border-blue-600 bg-slate-100"></div>
-                <div className="flex flex-col flex-grow">
-                  <span className="text-sm font-bold text-blue-600">Bạn</span>
-                </div>
-                <span className="text-sm font-bold text-blue-600">1850</span>
-              </div>
-
-              <div className="flex items-center gap-3 py-2 border-b border-slate-100">
-                <span className="text-sm font-medium text-slate-400 w-4 text-center">4</span>
-                <div className="w-8 h-8 rounded-full border border-slate-200 bg-slate-100"></div>
-                <div className="flex flex-col flex-grow">
-                  <span className="text-sm font-medium text-slate-900">Bùi G</span>
-                </div>
-                <span className="text-sm font-medium text-slate-500">1830</span>
-              </div>
-
+          ) : (
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex flex-col items-center text-center">
+              <Trophy className="w-8 h-8 text-slate-300 mb-2" />
+              <h4 className="text-xs font-bold text-slate-800">Bảng xếp hạng</h4>
+              <p className="text-[10px] text-slate-500 mt-1">Chưa có dữ liệu xếp hạng cho môn thi đấu này.</p>
             </div>
-          </div>
-          </>
           )}
 
           {/* Widget 4: Banner Ads 4:3 */}
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col cursor-pointer group">
-            <div className="aspect-[4/3] bg-slate-900 relative p-6 flex flex-col justify-end">
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-10"></div>
-              {/* Replace with actual image later */}
-              <div className="absolute inset-0 bg-blue-600 opacity-20 group-hover:opacity-30 transition-opacity"></div>
-              <div className="absolute top-2 right-2 bg-white/20 backdrop-blur-md text-white/80 text-[10px] px-1.5 py-0.5 rounded font-semibold z-20">Ad</div>
+            <div className="aspect-[4/3] bg-slate-900 relative p-5 flex flex-col justify-end">
+              <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/35 to-transparent z-10"></div>
+              <div className="absolute inset-0 bg-blue-600 opacity-20 group-hover:opacity-35 transition-opacity duration-300"></div>
+              <div className="absolute top-3 right-3 bg-white/20 backdrop-blur-md text-white/90 text-[9px] px-2 py-0.5 rounded font-black tracking-wider uppercase z-20">QUẢNG CÁO</div>
               
               <div className="relative z-20 mt-auto">
-                 <h4 className="text-lg font-bold text-white mb-1">Vợt Tennis PRO 2026</h4>
-                 <p className="text-sm text-white/80 font-medium">Độc quyền tại TournaShop. Giảm 20%.</p>
+                 <span className="text-[9px] font-bold text-blue-400 uppercase tracking-widest block mb-1">CỬA HÀNG TOURNA</span>
+                 <h4 className="text-sm font-bold text-white mb-0.5 group-hover:text-blue-200 transition-colors">Vợt Tennis PRO 2026</h4>
+                 <p className="text-[10px] text-white/80 font-medium line-clamp-2">Ưu đãi độc quyền giảm giá 20% cho tất cả người chơi đạt ELO trên 1200.</p>
               </div>
             </div>
           </div>

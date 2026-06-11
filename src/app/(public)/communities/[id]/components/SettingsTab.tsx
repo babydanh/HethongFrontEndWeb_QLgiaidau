@@ -132,8 +132,16 @@ export default function SettingsTab({ community }: { community: Community }) {
         .then(setDistricts)
         .catch(err => console.error('Failed to load districts', err));
     } else {
-      setDistricts([]);
-      setWards([]);
+      if (districts.length > 0) {
+        Promise.resolve().then(() => {
+          setDistricts([]);
+        });
+      }
+      if (wards.length > 0) {
+        Promise.resolve().then(() => {
+          setWards([]);
+        });
+      }
     }
   }, [provinceCode]);
 
@@ -144,7 +152,11 @@ export default function SettingsTab({ community }: { community: Community }) {
         .then(setWards)
         .catch(err => console.error('Failed to load wards', err));
     } else {
-      setWards([]);
+      if (wards.length > 0) {
+        Promise.resolve().then(() => {
+          setWards([]);
+        });
+      }
     }
   }, [districtCode]);
 
@@ -537,7 +549,7 @@ export default function SettingsTab({ community }: { community: Community }) {
                           name="visibility" 
                           value={item.val} 
                           checked={visibility === item.val}
-                          onChange={() => setVisibility(item.val as any)}
+                          onChange={() => setVisibility(item.val as 'PUBLIC' | 'RESTRICTED' | 'PRIVATE')}
                           className="mt-1 text-emerald-600 focus:ring-emerald-500" 
                         />
                         <div>
@@ -575,7 +587,7 @@ export default function SettingsTab({ community }: { community: Community }) {
                         name="joinMode" 
                         value={item.val} 
                         checked={joinMode === item.val}
-                        onChange={() => setJoinMode(item.val as any)}
+                        onChange={() => setJoinMode(item.val as 'OPEN' | 'APPROVAL' | 'INVITE_ONLY')}
                         className="mt-1 text-emerald-600 focus:ring-emerald-500" 
                       />
                       <div>

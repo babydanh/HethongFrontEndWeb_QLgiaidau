@@ -7,15 +7,22 @@ import { communitiesApi } from '@/features/communities/api';
 import { uploadApi } from '@/features/upload/api';
 import toast from 'react-hot-toast';
 
+interface GalleryImage {
+  id: string;
+  imageUrl: string;
+}
+
 export default function GalleryTab({ communityId, isOwnerOrMod }: { communityId: string, isOwnerOrMod: boolean }) {
-  const [images, setImages] = useState<any[]>([]);
+  const [images, setImages] = useState<GalleryImage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchGallery = async () => {
     try {
-      setIsLoading(true);
+      if (!isLoading) {
+        setIsLoading(true);
+      }
       const res = await communitiesApi.getGallery(communityId);
       setImages(res.data || []);
     } catch (error) {
@@ -26,7 +33,9 @@ export default function GalleryTab({ communityId, isOwnerOrMod }: { communityId:
   };
 
   useEffect(() => {
-    fetchGallery();
+    Promise.resolve().then(() => {
+      fetchGallery();
+    });
   }, [communityId]);
 
   const handleUploadClick = () => {

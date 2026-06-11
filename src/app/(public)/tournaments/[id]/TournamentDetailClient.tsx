@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
-import { Tournament } from '@/features/tournaments/api';
+import { useState, useEffect } from 'react';
+import { Tournament, tournamentsApi } from '@/features/tournaments/api';
 import { Button } from '@/components/ui/Button';
-import { Calendar, MapPin, Users, Trophy, ChevronRight, Share2, AlertCircle, User } from 'lucide-react';
+import { Calendar, MapPin, Users, Trophy, ChevronRight, Share2, AlertCircle, User, Phone, Mail, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import OverviewTab from './components/OverviewTab';
 import TeamsTab from './components/TeamsTab';
@@ -19,12 +19,85 @@ interface Props {
 
 export default function TournamentDetailClient({ tournament }: Props) {
   const { user } = useAuthStore();
-  const isOwner = user?.id === tournament.organizerId;
-  const [activeTab, setActiveTab] = useState<'overview' | 'teams' | 'bracket' | 'matches'>('overview');
+  const [activeTournament, setActiveTournament] = useState<Tournament>(tournament);
+  const [selectedDivisionId, setSelectedDivisionId] = useState<string>(tournament.id);
+  const [selectedDivision, setSelectedDivision] = useState<Tournament | null>(null);
+  const [divisionsList, setDivisionsList] = useState<NonNullable<Tournament['divisions']>>([]);
+  const [isLoadingDivision, setIsLoadingDivision] = useState(false);
+
+  const isOwner = user?.id === activeTournament.organizerId;
+  const [activeTab, setActiveTab] = useState<'overview' | 'prizes' | 'teams' | 'bracket' | 'matches'>('overview');
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
 
-  const tabs: { id: 'overview' | 'teams' | 'bracket' | 'matches'; label: string }[] = [
+  useEffect(() => {
+    const loadParentAndDivisions = async () => {
+      try {
+        if (tournament.parentId) {
+          const pRes = await tournamentsApi.getParentTournamentById(tournament.parentId);
+          if (pRes.data) {
+            const parentTourney = pRes.data;
+            const divisionsData = (parentTourney.divisions || []) as unknown as NonNullable<Tournament['divisions']>;
+            setActiveTournament({
+              ...tournament,
+              id: parentTourney.id,
+              name: parentTourney.name,
+              description: parentTourney.description,
+              bannerUrl: parentTourney.bannerUrl,
+              logoUrl: parentTourney.logoUrl,
+              parentId: null,
+              divisions: divisionsData,
+            });
+            setDivisionsList(divisionsData);
+            setSelectedDivisionId(tournament.id);
+            setSelectedDivision(tournament);
+          }
+        } else if (tournament.divisions && tournament.divisions.length > 0) {
+          setDivisionsList(tournament.divisions);
+          setSelectedDivisionId(tournament.divisions[0].id);
+        } else {
+          setSelectedDivisionId(tournament.id);
+          setSelectedDivision(tournament);
+        }
+      } catch (err) {
+        console.error('Failed to load parent/divisions context:', err);
+      }
+    };
+    loadParentAndDivisions();
+  }, [tournament]);
+
+  useEffect(() => {
+    const fetchDivisionDetails = async () => {
+      if (!selectedDivisionId) return;
+      if (selectedDivisionId === selectedDivision?.id) return;
+      try {
+        setIsLoadingDivision(true);
+        const res = await tournamentsApi.getTournamentById(selectedDivisionId);
+        if (res.data) {
+          setSelectedDivision(res.data);
+        }
+      } catch (err) {
+        console.error('Failed to load division details:', err);
+      } finally {
+        setIsLoadingDivision(false);
+      }
+    };
+    fetchDivisionDetails();
+  }, [selectedDivisionId]);
+
+  const participantCount = selectedDivision ? (selectedDivision._summary?.participantCount ?? selectedDivision._count?.participants ?? 0) : 0;
+  const maxParticipants = selectedDivision ? (selectedDivision.maxParticipants ?? 0) : 0;
+  const percentageFilled = maxParticipants > 0 ? Math.min(100, Math.round((participantCount / maxParticipants) * 100)) : 0;
+
+  const formatDateRange = (start?: string, end?: string) => {
+    if (!start && !end) return 'Chưa cập nhật';
+    const sStr = start ? new Date(start).toLocaleDateString('vi-VN', { day: 'numeric', month: 'short' }) : '...';
+    const eStr = end ? new Date(end).toLocaleDateString('vi-VN', { day: 'numeric', month: 'short', year: 'numeric' }) : '...';
+    return `${sStr} - ${eStr}`;
+  };
+
+  const tabs: { id: 'overview' | 'prizes' | 'teams' | 'bracket' | 'matches'; label: string }[] = [
     { id: 'overview', label: 'Tổng quan' },
+    { id: 'prizes', label: 'Giải thưởng' },
     { id: 'teams', label: 'Đội tham gia' },
     { id: 'bracket', label: 'Bảng đấu' },
     { id: 'matches', label: 'Lịch thi đấu' },
@@ -33,142 +106,297 @@ export default function TournamentDetailClient({ tournament }: Props) {
   return (
     <div className="bg-slate-50 min-h-screen pb-12">
       {/* Banner Carousel Showcase */}
-      <div className="relative w-full h-[250px] sm:h-[350px] md:h-[420px] bg-slate-950 overflow-hidden">
-        <GalleryCarousel 
-          images={tournament.galleryImages} 
-          defaultBanner={tournament.bannerUrl || undefined}
-          className="w-full h-full"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 to-transparent pointer-events-none"></div>
+      <div className="max-w-screen-2xl mx-auto px-4 md:px-8 pt-4 md:pt-6">
+        <div className="relative w-full h-auto rounded-2xl md:rounded-3xl overflow-hidden shadow-xl">
+          <GalleryCarousel 
+            images={activeTournament.galleryImages && activeTournament.galleryImages.length > 0 ? activeTournament.galleryImages : []} 
+            defaultBanner={activeTournament.bannerUrl || undefined}
+            className="w-full h-auto"
+          />
+          
+          {/* Only name inside banner, at bottom-left */}
+          <div className="absolute bottom-4 left-6 md:bottom-6 md:left-8 z-10 space-y-1">
+            <h1 className="text-xl md:text-2xl font-black text-slate-900 drop-shadow-sm tracking-wide uppercase truncate">
+              {activeTournament.name}
+            </h1>
+          </div>
+        </div>
       </div>
-      
-      {/* Overlapping Info Card */}
-      <div className="max-w-7xl mx-auto px-4 md:px-8 -mt-16 relative z-10">
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 md:p-8 shadow-xl flex flex-col gap-6 text-slate-900">
-          {/* Breadcrumb */}
-          <div className="flex items-center gap-2 text-sm text-slate-500 font-medium">
-            <Link href="/tournaments" className="hover:text-blue-600 transition-colors">Giải đấu</Link>
-            <ChevronRight className="w-4 h-4 text-slate-400" />
-            <span className="text-slate-800 font-semibold truncate">{tournament.name}</span>
+
+      {/* Info Panel below banner */}
+      <div className="max-w-screen-2xl mx-auto px-4 md:px-8 mt-6">
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-5 md:p-6 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 w-full md:w-auto">
+            {activeTournament.logoUrl && (
+              <div className="w-20 h-20 md:w-24 md:h-24 bg-white rounded-2xl p-1.5 flex items-center justify-center border border-slate-200 shadow-md flex-shrink-0">
+                <img 
+                  src={activeTournament.logoUrl} 
+                  alt="Logo" 
+                  className="w-full h-full object-contain rounded-xl"
+                />
+              </div>
+            )}
+            <div className="space-y-2.5">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className={`px-2.5 py-0.5 text-[10px] uppercase font-bold rounded-md border shadow-sm ${
+                  (activeTournament.status === 'UPCOMING' || activeTournament.status === 'REGISTRATION_OPEN') ? 'bg-blue-50 border-blue-200 text-blue-700' :
+                  (activeTournament.status === 'ONGOING' || activeTournament.status === 'IN_PROGRESS') ? 'bg-amber-50 border-amber-200 text-amber-700 animate-pulse' :
+                  activeTournament.status === 'COMPLETED' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' :
+                  'bg-slate-50 border-slate-200 text-slate-700'
+                }`}>
+                  {activeTournament.status === 'UPCOMING' ? 'SẮP DIỄN RA' : 
+                   activeTournament.status === 'REGISTRATION_OPEN' ? 'MỞ ĐĂNG KÝ' :
+                   activeTournament.status === 'REGISTRATION_CLOSED' ? 'ĐÓNG ĐĂNG KÝ' :
+                   (activeTournament.status === 'ONGOING' || activeTournament.status === 'IN_PROGRESS') ? 'ĐANG DIỄN RA' : 
+                   activeTournament.status === 'COMPLETED' ? 'ĐÃ KẾT THÚC' : 
+                   activeTournament.status === 'CANCELLED' ? 'ĐÃ HỦY' : 
+                   activeTournament.status === 'DRAFT' ? 'BẢN NHÁP' : activeTournament.status}
+                </span>
+                <span className="px-2.5 py-0.5 text-[10px] uppercase font-bold rounded-md bg-slate-100 text-slate-700 border border-slate-200/80 shadow-sm flex items-center gap-1">
+                  <Trophy className="w-3 h-3 text-amber-500" /> 
+                  {activeTournament.format === 'SINGLE_ELIMINATION' ? 'LOẠI TRỰC TIẾP' : 
+                   activeTournament.format === 'DOUBLE_ELIMINATION' ? 'NHÁNH THẮNG/THUA' : 
+                   activeTournament.format === 'ROUND_ROBIN' ? 'VÒNG TRÒN' : activeTournament.format}
+                </span>
+              </div>
+              
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-600 font-medium">
+                <span className="flex items-center gap-1.5">
+                  <Calendar className="w-4 h-4 text-slate-400" />
+                  {activeTournament.startDate ? (
+                    <>
+                      {new Date(activeTournament.startDate).toLocaleDateString('vi-VN')}
+                      {activeTournament.endDate && ` - ${new Date(activeTournament.endDate).toLocaleDateString('vi-VN')}`}
+                    </>
+                  ) : 'Chưa thiết lập ngày'}
+                </span>
+                <span className="flex items-center gap-1.5"><MapPin className="w-4 h-4 text-slate-400" /> {activeTournament.locationAddress || 'Chưa cập nhật địa điểm'}</span>
+                <span className="flex items-center gap-1.5"><Users className="w-4 h-4 text-slate-400" /> {participantCount} / {maxParticipants || '∞'} Đội</span>
+              </div>
+            </div>
           </div>
 
-          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
-            <div className="flex flex-col md:flex-row gap-5 items-start flex-1 w-full">
-              {tournament.logoUrl && (
-                <div className="w-20 h-20 md:w-24 md:h-24 bg-white rounded-2xl p-1.5 flex items-center justify-center border border-slate-200 shadow-md flex-shrink-0">
-                  <img 
-                    src={tournament.logoUrl} 
-                    alt="Logo" 
-                    className="w-full h-full object-contain rounded-xl"
-                  />
+          <div className="flex flex-row gap-3 w-full md:w-auto items-center justify-start md:justify-end">
+            <Button variant="outline" className="bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200/80 flex-1 md:flex-none font-bold shadow-sm">
+              <Share2 className="w-4 h-4 mr-2" /> Chia sẻ
+            </Button>
+            {(activeTournament.status === 'UPCOMING' || activeTournament.status === 'REGISTRATION_OPEN') && !isOwner && (
+              <Button 
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold flex-1 md:flex-none shadow-sm shadow-blue-900/10"
+                onClick={() => setIsRegisterModalOpen(true)}
+              >
+                Đăng ký ngay
+              </Button>
+            )}
+            {isOwner && (activeTournament.status === 'UPCOMING' || activeTournament.status === 'REGISTRATION_OPEN') && (
+              <div className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-center flex-1 md:flex-none shadow-sm">
+                <p className="text-xs text-slate-600 font-bold whitespace-nowrap">
+                  Bạn là chủ sở hữu
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-screen-2xl mx-auto px-4 md:px-8 mt-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
+          
+          {/* Left Area - Tabs & Content (takes 3 cols) */}
+          <div className="lg:col-span-3 space-y-6">
+            {/* Tabs */}
+            <div className="flex overflow-x-auto gap-2 mb-2 no-scrollbar">
+              {tabs.map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`px-5 py-2.5 rounded-lg font-bold text-sm whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
+                    activeTab === tab.id 
+                      ? 'bg-emerald-600 text-white shadow-sm' 
+                      : 'bg-slate-200/60 text-slate-600 hover:bg-slate-300/60 hover:text-slate-900'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Tab Content */}
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 md:p-8 min-h-[500px]">
+              {/* Division selector inside tab card */}
+              {divisionsList.length > 0 && (
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b pb-4 mb-6 gap-3">
+                  <div className="space-y-0.5">
+                    <h3 className="font-extrabold text-slate-900 text-sm">Nội dung thi đấu</h3>
+                    <p className="text-[11px] text-slate-400 font-bold">Chọn phân hạng hoặc hình thức thi đấu để xem chi tiết</p>
+                  </div>
+                  <select
+                    value={selectedDivisionId}
+                    onChange={(e) => setSelectedDivisionId(e.target.value)}
+                    disabled={isLoadingDivision}
+                    className="border border-slate-200 rounded-xl px-3 py-2 bg-white text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500 text-xs h-10 w-full sm:w-60 shadow-sm cursor-pointer"
+                  >
+                    {divisionsList.map((div) => (
+                      <option key={div.id} value={div.id}>
+                        {div.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               )}
-              <div className="space-y-3 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className={`px-3 py-1 text-xs font-bold rounded-lg flex items-center gap-1.5 ${
-                    (tournament.status === 'UPCOMING' || tournament.status === 'REGISTRATION_OPEN') ? 'bg-blue-100 text-blue-800' :
-                    (tournament.status === 'ONGOING' || tournament.status === 'IN_PROGRESS') ? 'bg-amber-100 text-amber-800 animate-pulse' :
-                    tournament.status === 'COMPLETED' ? 'bg-emerald-100 text-emerald-800' :
-                    tournament.status === 'CANCELLED' ? 'bg-rose-100 text-rose-800' :
-                    'bg-slate-100 text-slate-800'
-                  }`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${
-                      (tournament.status === 'UPCOMING' || tournament.status === 'REGISTRATION_OPEN') ? 'bg-blue-600' :
-                      (tournament.status === 'ONGOING' || tournament.status === 'IN_PROGRESS') ? 'bg-amber-600' :
-                      tournament.status === 'COMPLETED' ? 'bg-emerald-600' :
-                      'bg-slate-600'
-                    }`}></span>
-                    {tournament.status === 'UPCOMING' ? 'SẮP DIỄN RA' : 
-                     tournament.status === 'REGISTRATION_OPEN' ? 'MỞ ĐĂNG KÝ' :
-                     tournament.status === 'REGISTRATION_CLOSED' ? 'ĐÓNG ĐĂNG KÝ' :
-                     (tournament.status === 'ONGOING' || tournament.status === 'IN_PROGRESS') ? 'ĐANG DIỄN RA' : 
-                     tournament.status === 'COMPLETED' ? 'ĐÃ KẾT THÚC' : 
-                     tournament.status === 'CANCELLED' ? 'ĐÃ HỦY' : 
-                     tournament.status === 'DRAFT' ? 'BẢN NHÁP' : tournament.status}
-                  </span>
-                  <span className="px-3 py-1 text-xs font-bold rounded-lg bg-slate-100 text-slate-800 border border-slate-200 flex items-center gap-1.5">
-                    <Trophy className="w-3.5 h-3.5 text-amber-500" /> 
-                    {tournament.format === 'SINGLE_ELIMINATION' ? 'LOẠI TRỰC TIẾP' : 
-                     tournament.format === 'DOUBLE_ELIMINATION' ? 'NHÁNH THẮNG/THUA' : 
-                     tournament.format === 'ROUND_ROBIN' ? 'VÒNG TRÒN' : tournament.format}
-                  </span>
+
+              {isLoadingDivision ? (
+                <div className="flex flex-col items-center justify-center py-24">
+                  <Loader2 className="w-8 h-8 animate-spin text-emerald-600 mb-2" />
+                  <p className="text-xs text-slate-400 font-medium animate-pulse">Đang tải dữ liệu phân hạng...</p>
                 </div>
-                <h1 className="text-2xl md:text-4xl font-black text-slate-900 leading-tight">
-                  {tournament.name}
-                </h1>
-                
-                <div className="flex flex-wrap items-center gap-3 pt-1">
-                  <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-100 rounded-lg px-3 py-1.5 text-slate-700 text-xs font-bold shadow-2xs">
-                    <Calendar className="w-3.5 h-3.5 text-blue-500" />
-                    {tournament.startDate ? new Date(tournament.startDate).toLocaleDateString('vi-VN') : 'Chưa thiết lập ngày'}
-                  </div>
-                  <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-100 rounded-lg px-3 py-1.5 text-slate-700 text-xs font-bold shadow-2xs">
-                    <MapPin className="w-3.5 h-3.5 text-rose-500" />
-                    {tournament.locationAddress || 'Chưa cập nhật địa điểm'}
-                  </div>
-                  <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-100 rounded-lg px-3 py-1.5 text-slate-700 text-xs font-bold shadow-2xs">
-                    <Users className="w-3.5 h-3.5 text-emerald-500" />
-                    {tournament._count?.participants || 0} / {tournament.maxParticipants || '∞'} Đội
+              ) : selectedDivision ? (
+                <>
+                  {activeTab === 'overview' && <OverviewTab tournament={selectedDivision} />}
+                  {activeTab === 'prizes' && (
+                    <div className="prose prose-slate max-w-none text-slate-800 text-base leading-relaxed editorjs-content-view">
+                      {selectedDivision.prizeDescription ? (
+                        <div dangerouslySetInnerHTML={{ __html: selectedDivision.prizeDescription }} />
+                      ) : (
+                        <p className="italic text-slate-400 text-center">Ban tổ chức chưa cập nhật cơ cấu giải thưởng cho giải đấu này.</p>
+                      )}
+                    </div>
+                  )}
+                  {activeTab === 'teams' && <TeamsTab tournament={selectedDivision} />}
+                  {activeTab === 'bracket' && <BracketTab tournament={selectedDivision} />}
+                  {activeTab === 'matches' && <MatchesTab tournament={selectedDivision} />}
+                </>
+              ) : (
+                <p className="text-center text-slate-400 italic py-12">Không tìm thấy dữ liệu phân hạng.</p>
+              )}
+            </div>
+          </div>
+
+          {/* Right Area - Registration & Info Card (takes 1 col) */}
+          <div className="lg:col-span-1 lg:sticky lg:top-6">
+            <div className="bg-white rounded-2xl border border-slate-250/80 p-6 flex flex-col gap-6 shadow-sm">
+              {/* Entry Fee */}
+              <div>
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Lệ phí tham gia</span>
+                <div className="text-2xl font-black text-emerald-600">
+                  {selectedDivision?.entryFee && selectedDivision.entryFee > 0 
+                    ? `${Number(selectedDivision.entryFee).toLocaleString('vi-VN')} VNĐ` 
+                    : 'Miễn phí'}
+                </div>
+                <p className="text-[11px] text-slate-500 mt-0.5">Lệ phí đóng khi đăng ký</p>
+              </div>
+
+              {/* Organizer Info */}
+              <div className="border-t border-slate-100 pt-4">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Ban tổ chức</span>
+                <div className="flex items-center gap-3">
+                  {activeTournament.organizer?.avatarUrl ? (
+                    <img
+                      src={activeTournament.organizer.avatarUrl}
+                      alt={activeTournament.organizer?.fullName || 'BTC'}
+                      className="w-10 h-10 rounded-full border border-slate-200 object-cover"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center border border-indigo-100">
+                      <User className="w-5 h-5 text-indigo-500" />
+                    </div>
+                  )}
+                  <div>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <p className="text-slate-900 font-bold text-sm">{activeTournament.organizer?.fullName || 'Ban Tổ Chức'}</p>
+                      {activeTournament.organizer?.isTrusted ? (
+                        <span className="inline-flex items-center text-[9px] font-extrabold bg-blue-100 text-blue-700 px-1.5 py-0.2 rounded-md" title="Ban tổ chức uy tín">
+                          👑 Uy Tín
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center text-[9px] font-extrabold bg-slate-100 text-slate-650 px-1.5 py-0.2 rounded-md" title="BTC Mới">
+                          🔰 Mới Tạo
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-slate-500">Người sáng lập giải đấu</p>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto items-stretch lg:items-center">
-              <Button variant="outline" className="border-slate-200 text-slate-700 hover:bg-slate-50 flex-1 sm:flex-none font-bold">
-                <Share2 className="w-4 h-4 mr-2" /> Chia sẻ
-              </Button>
-              {(tournament.status === 'UPCOMING' || tournament.status === 'REGISTRATION_OPEN') && !isOwner && (
-                <Button 
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold flex-1 sm:flex-none"
-                  onClick={() => setIsRegisterModalOpen(true)}
-                >
-                  Đăng ký ngay
-                </Button>
+              {/* Slots Progress Bar */}
+              {maxParticipants > 0 && (
+                <div className="border-t border-slate-100 pt-4">
+                  <div className="flex justify-between items-center text-xs mb-1.5 font-bold">
+                    <span className="text-slate-500 uppercase tracking-wider">Số lượng đội</span>
+                    <span className="text-slate-800">{participantCount} / {maxParticipants}</span>
+                  </div>
+                  <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div 
+                      className={`h-full rounded-full transition-all duration-500 ${
+                        percentageFilled >= 90 ? 'bg-rose-500' : percentageFilled >= 70 ? 'bg-amber-500' : 'bg-indigo-650'
+                      }`}
+                      style={{ width: `${percentageFilled}%` }}
+                    />
+                  </div>
+                  <p className="text-[10px] text-slate-400 mt-1">Đã điền đầy {percentageFilled}% tổng số slots trống</p>
+                </div>
               )}
-              {isOwner && (tournament.status === 'UPCOMING' || tournament.status === 'REGISTRATION_OPEN') && (
-                <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-2.5 text-center flex-1 sm:flex-none">
-                  <p className="text-xs text-blue-800 font-bold whitespace-nowrap">
-                    Bạn là chủ sở hữu giải đấu
+
+              {/* Registration Period */}
+              <div className="border-t border-slate-100 pt-4">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Thời gian đăng ký</span>
+                <div className="flex items-start gap-2.5">
+                  <Calendar className="w-4 h-4 text-slate-450 mt-0.5 shrink-0" />
+                  <div className="text-xs font-semibold text-slate-700 leading-normal">
+                    {formatDateRange(activeTournament.registrationStartDate, activeTournament.registrationEndDate)}
+                  </div>
+                </div>
+              </div>
+
+              {/* Contact Info */}
+              {activeTournament.contactInfo && (
+                <div className="border-t border-slate-100 pt-4 flex flex-col gap-2">
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Thông tin liên hệ</span>
+                  {activeTournament.contactInfo.phone && (
+                    <div className="flex items-center gap-2.5">
+                      <Phone className="w-4 h-4 text-slate-450 shrink-0" />
+                      <span className="text-xs font-semibold text-slate-700">{activeTournament.contactInfo.phone}</span>
+                    </div>
+                  )}
+                  {activeTournament.contactInfo.email && (
+                    <div className="flex items-center gap-2.5">
+                      <Mail className="w-4 h-4 text-slate-450 shrink-0" />
+                      <span className="text-xs font-semibold text-slate-700 truncate">{activeTournament.contactInfo.email}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Action Button */}
+              {(activeTournament.status === 'UPCOMING' || activeTournament.status === 'REGISTRATION_OPEN') && !isOwner && (
+                <Link href={`/tournaments/${activeTournament.id}/register`} className="mt-1 block w-full">
+                  <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl shadow-md cursor-pointer text-sm">
+                    Đăng ký ngay
+                  </Button>
+                </Link>
+              )}
+
+              {isOwner && (activeTournament.status === 'UPCOMING' || activeTournament.status === 'REGISTRATION_OPEN') && (
+                <div className="bg-slate-50 border border-slate-100 rounded-xl p-3.5 mt-1 text-center">
+                  <p className="text-xs text-slate-800 font-bold">
+                    Bạn là quản trị viên giải đấu
                   </p>
+                  <Link href={`/organizer/tournaments/${activeTournament.id}/manage`} className="mt-1.5 block text-xs text-blue-600 font-bold hover:underline">
+                    Quản lý sơ đồ & lịch thi đấu
+                  </Link>
                 </div>
               )}
             </div>
           </div>
-        </div>
-      </div>
 
-      <div className="max-w-7xl mx-auto px-4 md:px-8 mt-6">
-        {/* Tabs */}
-        <div className="flex overflow-x-auto gap-2 border-b border-slate-200 pb-px mb-8 no-scrollbar bg-white p-2 rounded-t-2xl shadow-sm">
-          {tabs.map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`px-6 py-3 rounded-lg font-bold text-sm whitespace-nowrap transition-all ${
-                activeTab === tab.id 
-                  ? 'bg-blue-50 text-blue-700 shadow-sm' 
-                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Tab Content */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 md:p-8 min-h-[500px]">
-          {activeTab === 'overview' && <OverviewTab tournament={tournament} />}
-          {activeTab === 'teams' && <TeamsTab tournament={tournament} />}
-          {activeTab === 'bracket' && <BracketTab tournament={tournament} />}
-          {activeTab === 'matches' && <MatchesTab tournament={tournament} />}
         </div>
       </div>
       
       <RegisterModal 
-        tournamentId={tournament.id} 
-        tournamentName={tournament.name} 
-        entryFee={Number(tournament.entryFee) || 0}
+        tournamentId={activeTournament.id} 
+        tournamentName={activeTournament.name} 
+        entryFee={selectedDivision ? (Number(selectedDivision.entryFee) || 0) : 0}
         isOpen={isRegisterModalOpen} 
         onClose={() => setIsRegisterModalOpen(false)} 
       />

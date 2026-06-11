@@ -64,7 +64,9 @@ export default function MembersTab({
 
   const fetchMembers = async () => {
     try {
-      setIsLoading(true);
+      if (!isLoading) {
+        setIsLoading(true);
+      }
       const res = await communitiesApi.getMembers(communityId);
       const data = res.data || res || [];
       // Only keep JOINED status members for the active list
@@ -80,7 +82,9 @@ export default function MembersTab({
 
   useEffect(() => {
     if (communityId) {
-      fetchMembers();
+      Promise.resolve().then(() => {
+        fetchMembers();
+      });
     }
   }, [communityId]);
 
@@ -493,7 +497,7 @@ export default function MembersTab({
               </div>
               <h3 className="font-bold text-slate-900 text-base">Xác nhận chuyển chủ câu lạc bộ</h3>
               <p className="text-xs text-slate-500 leading-relaxed">
-                Bạn đang thực hiện chuyển quyền sở hữu câu lạc bộ sang cho <strong className="text-slate-800">"{confirmTransferName}"</strong>. 
+                Bạn đang thực hiện chuyển quyền sở hữu câu lạc bộ sang cho <strong className="text-slate-800">&quot;{confirmTransferName}&quot;</strong>. 
                 Sau khi chuyển, vai trò của bạn sẽ bị hạ chức thành <strong className="text-slate-800">Quản trị viên (Mod)</strong> và không thể hoàn tác.
               </p>
             </div>

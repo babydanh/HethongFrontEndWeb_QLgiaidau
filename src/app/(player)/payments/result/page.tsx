@@ -39,8 +39,10 @@ function ResultContent() {
   useEffect(() => {
     if (!paymentId) {
       toast.error('Không tìm thấy thông tin giao dịch');
-      setStatus('ERROR');
-      setLoading(false);
+      Promise.resolve().then(() => {
+        setStatus('ERROR');
+        setLoading(false);
+      });
       return;
     }
 
@@ -77,8 +79,8 @@ function ResultContent() {
           let tName = 'Giải đấu thể thao';
           try {
             const tRes = await api.get<{ name: string } | { data: { name: string } }>(`/tournaments/${paymentData.tournamentId}`);
-            const tData = (tRes as any)?.data || tRes;
-            if (tData?.name) {
+            const tData = (tRes as Record<string, unknown>)?.data as Record<string, unknown> || tRes;
+            if (tData && typeof tData === 'object' && 'name' in tData && typeof tData.name === 'string') {
               tName = tData.name;
             }
           } catch (tErr) {

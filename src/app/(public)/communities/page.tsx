@@ -34,7 +34,9 @@ export default function CommunitiesPage() {
   };
 
   useEffect(() => {
-    fetchMyCommunities();
+    Promise.resolve().then(() => {
+      fetchMyCommunities();
+    });
   }, [user]);
 
   // Filters

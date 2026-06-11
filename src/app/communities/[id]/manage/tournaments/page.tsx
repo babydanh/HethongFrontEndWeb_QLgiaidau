@@ -71,7 +71,21 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
 
     try {
       setIsSubmitting(true);
+      
+      // 1. Create Parent Tournament first
+      const parentRes = await tournamentsApi.createParentTournament({
+        name: newTourneyName.trim(),
+        description: `Giải đấu nội bộ của Câu lạc bộ ${community?.name || ''}`,
+      });
+
+      const parentId = parentRes.data?.id;
+      if (!parentId) {
+        throw new Error('Không thể tạo Giải đấu mẹ. Vui lòng thử lại.');
+      }
+
+      // 2. Create the first division (tournament) under this parent
       const data = {
+        parentId,
         name: newTourneyName.trim(),
         categoryId: newTourneyCategory,
         communityId: id,

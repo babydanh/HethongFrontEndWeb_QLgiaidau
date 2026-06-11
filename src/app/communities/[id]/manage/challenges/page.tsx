@@ -56,7 +56,7 @@ export default function ClubChallengesPage({ params }: { params: Promise<{ id: s
       const chRes = await challengesApi.getChallenges(id);
       setChallenges(chRes.data || chRes || []);
 
-      const listRes = await communitiesApi.getCommunities({ limit: 100 });
+      const listRes = await communitiesApi.getCommunities({ limit: 50 });
       if (listRes.data) {
         setAllClubs(listRes.data.filter((c: Community) => c.id !== id));
       }

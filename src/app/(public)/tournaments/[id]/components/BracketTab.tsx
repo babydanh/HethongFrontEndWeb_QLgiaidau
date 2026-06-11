@@ -27,6 +27,7 @@ export default function BracketTab({ tournament }: Props) {
 
   useEffect(() => {
     const fetchBracket = async () => {
+      setIsLoading(true);
       try {
         const res = await tournamentsApi.getTournamentBracket(tournament.id);
         const bracketData = res.data;

@@ -11,8 +11,9 @@ import { Textarea } from '@/components/ui/Textarea';
 import { getErrorMessage } from '@/utils/error';
 import { trimSpaces, trimAndNormalizeSpaces } from '@/utils/string';
 import { usersApi } from '@/features/users/api';
+import { regionsApi, Region } from '@/features/regions/api';
 import toast from 'react-hot-toast';
-import { User, Lock, Save, Camera, ArrowLeft, Loader2, Shield } from 'lucide-react';
+import { User, Lock, Save, Camera, ArrowLeft, Loader2, Shield, MapPin } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -30,6 +31,7 @@ const profileSchema = z.object({
     }, 'Ngày sinh không thể ở tương lai'),
   gender: z.string().optional().or(z.literal('')),
   address: z.string().max(255, 'Địa chỉ tối đa 255 ký tự').optional().or(z.literal('')),
+  provinceCode: z.string().optional().or(z.literal('')),
   bio: z.string().max(500, 'Giới thiệu tối đa 500 ký tự').optional(),
 });
 
@@ -52,9 +54,21 @@ export default function EditProfilePage() {
   const [activeTab, setActiveTab] = useState<'profile' | 'security'>('profile');
   const [isSubmittingProfile, setIsSubmittingProfile] = useState(false);
   const [isSubmittingPassword, setIsSubmittingPassword] = useState(false);
+  const [provinces, setProvinces] = useState<Region[]>([]);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+
+  // Fetch provinces list
+  useEffect(() => {
+    regionsApi.getProvinces()
+      .then(res => {
+        setProvinces(res || []);
+      })
+      .catch(err => {
+        console.error('Failed to fetch provinces', err);
+      });
+  }, []);
 
   // Profile Form
   const profileForm = useForm<ProfileFormValues>({
@@ -65,6 +79,7 @@ export default function EditProfilePage() {
       dateOfBirth: user?.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : '',
       gender: user?.gender || '',
       address: user?.address || '',
+      provinceCode: user?.provinceCode || '',
       bio: user?.bio || '',
     },
   });
@@ -78,6 +93,7 @@ export default function EditProfilePage() {
         dateOfBirth: user.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : '',
         gender: user.gender || '',
         address: user.address || '',
+        provinceCode: user.provinceCode || '',
         bio: user.bio || '',
       });
     }
@@ -103,13 +119,15 @@ export default function EditProfilePage() {
         dateOfBirth: data.dateOfBirth || undefined,
         gender: data.gender || undefined,
         address: data.address ? trimSpaces(data.address) : undefined,
+        provinceCode: data.provinceCode || undefined,
         bio: data.bio ? trimSpaces(data.bio) : undefined,
       };
 
       const response = await usersApi.updateProfile(cleanData);
       
       // Update local state
-      setUser((response as any).data || response);
+      const responseData = ((response as unknown) as Record<string, unknown>).data || response;
+      setUser(responseData as NonNullable<typeof user>);
       toast.success('Cập nhật hồ sơ thành công');
       router.push('/profile');
     } catch (error) {
@@ -147,7 +165,9 @@ export default function EditProfilePage() {
       setIsUploadingAvatar(true);
       
       const response = await usersApi.uploadAvatar(file);
-      const url = (response as any).avatarUrl || (response as any).profile?.avatarUrl;
+      const responseObj = response as Record<string, unknown>;
+      const profileObj = responseObj.profile as Record<string, unknown> | undefined;
+      const url = (responseObj.avatarUrl as string | undefined) || (profileObj?.avatarUrl as string | undefined);
 
       
       // Update store user locally so it reflects immediately
@@ -287,12 +307,32 @@ export default function EditProfilePage() {
                     </div>
                   </div>
 
-                  <Input
-                    label="Địa chỉ"
-                    placeholder="Nhập địa chỉ của bạn (VD: TP.HCM, Việt Nam)"
-                    {...profileForm.register('address')}
-                    error={profileForm.formState.errors.address?.message}
-                  />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-sm font-semibold text-slate-700 flex items-center gap-1.5">
+                        <MapPin className="w-4 h-4 text-slate-450" /> Khu vực tranh tài (Tỉnh / Thành phố)
+                      </label>
+                      <select
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
+                        {...profileForm.register('provinceCode')}
+                      >
+                        <option value="">Chưa chọn (Không tranh hạng Tier S)</option>
+                        {provinces.map(p => (
+                          <option key={p.code} value={p.code}>{p.name}</option>
+                        ))}
+                      </select>
+                      {profileForm.formState.errors.provinceCode && (
+                        <p className="text-xs font-semibold text-red-550">{profileForm.formState.errors.provinceCode.message}</p>
+                      )}
+                    </div>
+                    
+                    <Input
+                      label="Địa chỉ chi tiết"
+                      placeholder="Nhập địa chỉ cụ thể của bạn"
+                      {...profileForm.register('address')}
+                      error={profileForm.formState.errors.address?.message}
+                    />
+                  </div>
 
                   <div className="flex flex-col gap-1.5">
                     <label className="text-sm font-semibold text-slate-700">Giới thiệu bản thân</label>

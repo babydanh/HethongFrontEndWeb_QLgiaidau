@@ -6,6 +6,10 @@ export interface PlayerRanking {
   matchesPlayed: number;
   matchesWon: number;
   updatedAt: string;
+  tier?: {
+    id: string;
+    name: string;
+  };
   user?: {
     id: string;
     fullName: string;

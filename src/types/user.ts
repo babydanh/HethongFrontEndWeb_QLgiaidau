@@ -8,6 +8,7 @@ export interface UserProfile {
   dateOfBirth?: string | null;
   gender?: string | null;
   address?: string | null;
+  provinceCode?: string | null;
   role: 'PLAYER' | 'ORGANIZER' | 'ADMIN';
   status: string;
   isActive?: boolean;

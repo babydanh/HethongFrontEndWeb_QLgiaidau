@@ -12,6 +12,7 @@ interface User {
   gender?: string;
   address?: string;
   bio?: string;
+  provinceCode?: string;
 }
 
 interface AuthState {

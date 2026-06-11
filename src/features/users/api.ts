@@ -15,6 +15,7 @@ interface RawUserProfileResponse {
     dateOfBirth?: string;
     gender?: string;
     address?: string;
+    provinceCode?: string;
   };
   [key: string]: unknown;
 }
@@ -29,6 +30,7 @@ const mapUserProfile = (data: RawUserProfileResponse): UserProfile => {
     dateOfBirth: data.profile?.dateOfBirth,
     gender: data.profile?.gender,
     address: data.profile?.address,
+    provinceCode: data.profile?.provinceCode,
   } as UserProfile;
 };
 

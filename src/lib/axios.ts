@@ -2,6 +2,7 @@ import axios, { AxiosRequestConfig } from 'axios';
 import { useAuthStore } from './zustand/authStore';
 import toast from 'react-hot-toast';
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 declare module 'axios' {
   export interface AxiosInstance {
     request<T = any, R = T, D = any>(config: AxiosRequestConfig<D>): Promise<R>;

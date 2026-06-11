@@ -1,5 +1,36 @@
 import { Category } from './category';
 
+export enum MatchTypeUI {
+  MALE_SINGLES = 'MALE_SINGLES',
+  FEMALE_SINGLES = 'FEMALE_SINGLES',
+  MALE_DOUBLES = 'MALE_DOUBLES',
+  FEMALE_DOUBLES = 'FEMALE_DOUBLES',
+  MIXED_DOUBLES = 'MIXED_DOUBLES',
+}
+
+export enum MatchTypeDB {
+  SINGLES = 'SINGLES',
+  DOUBLES = 'DOUBLES',
+  MIXED_DOUBLES = 'MIXED_DOUBLES',
+}
+
+export enum GenderRestriction {
+  MALE = 'MALE',
+  FEMALE = 'FEMALE',
+  MIXED = 'MIXED',
+}
+
+export interface ParentTournament {
+  id: string;
+  name: string;
+  description?: string;
+  bannerUrl?: string;
+  logoUrl?: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Tournament {
   id: string;
   name: string;
@@ -27,6 +58,11 @@ export interface Tournament {
   visibility?: 'PUBLIC' | 'PRIVATE';
   genderRestriction?: 'MALE' | 'FEMALE' | 'MIXED' | null;
   venueId?: string | null;
+  venue?: {
+    id: string;
+    name: string;
+    locationAddress: string;
+  } | null;
   currency: string;
   categoryId: string;
   logoUrl?: string | null;
@@ -41,11 +77,36 @@ export interface Tournament {
   organizer?: {
     id: string;
     fullName: string;
+    avatarUrl?: string | null;
+    isTrusted?: boolean;
   };
   _count?: {
     participants: number;
     matches: number;
   };
+  _summary?: {
+    participantCount: number;
+    matchesTotal: number;
+    matchesCompleted: number;
+    matchesLive: number;
+  };
+  parentId?: string | null;
+  parent?: ParentTournament | null;
+  divisions?: {
+    id: string;
+    name: string;
+    matchType: string;
+    genderRestriction?: string | null;
+    status: string;
+    categoryId: string;
+  }[] | null;
+  city?: string | null;
+  tournamentConfig?: {
+    bracketType?: string;
+    maxTeams?: number;
+    seedingMethod?: string;
+    thirdPlaceMatch?: boolean;
+  } | null;
 }
 
 export interface PaginatedTournaments {
@@ -92,6 +153,8 @@ export interface BracketMatch {
   isBye: boolean;
   participant1: { id: string; teamName: string; seed: number | null } | null;
   participant2: { id: string; teamName: string; seed: number | null } | null;
+  participant1Id?: string | null;
+  participant2Id?: string | null;
   winnerId: string | null;
   scoreDetails?: Record<string, unknown>;
   p1SetsWon: number;
@@ -100,6 +163,13 @@ export interface BracketMatch {
   scheduledAt?: string | null;
   completedAt?: string | null;
   courtName?: string | null;
+  groupId: string;
+  group?: {
+    name: string;
+    stage?: {
+      name: string;
+    };
+  } | null;
 }
 
 export interface BracketGroup {
@@ -130,4 +200,13 @@ export interface BracketStage {
   venueId?: string | null;
   scheduledDate?: string | null;
   notificationNote?: string | null;
+  matchSettings?: {
+    maxSets?: number;
+    pointsPerSet?: number;
+    winBy2Points?: boolean;
+    maxDeucePoints?: number;
+    superTiebreakEnabled?: boolean;
+    superTiebreakSetIndex?: number;
+    superTiebreakPoints?: number;
+  } | null;
 }

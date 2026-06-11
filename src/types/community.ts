@@ -17,7 +17,7 @@ export interface Community {
   locationAddress?: string;
   lat?: number;
   lng?: number;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  status: 'ACTIVE' | 'PENDING' | 'APPROVED' | 'REJECTED';
   ownerId?: string;
   creatorId?: string;
   createdAt: string;

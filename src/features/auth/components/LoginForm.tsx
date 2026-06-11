@@ -35,8 +35,16 @@ export const LoginForm = () => {
 
   const onSubmit = async (data: LoginFormValues) => {
     try {
-      const response = await authApi.login(data);
-      const { user } = response.data;
+      const response = await authApi.login(data) as unknown as {
+        user: {
+          id: string;
+          email: string;
+          fullName: string;
+          avatarUrl?: string;
+          roles: string[];
+        };
+      };
+      const { user } = response;
       
       useAuthStore.getState().setUser(user);
       

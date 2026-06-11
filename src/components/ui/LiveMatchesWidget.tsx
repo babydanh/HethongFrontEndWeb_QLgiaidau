@@ -1,0 +1,180 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { BracketMatch, tournamentsApi } from '@/features/tournaments/api';
+import Link from 'next/link';
+
+interface Props {
+  limit?: number;
+  showAllLink?: boolean;
+}
+
+export default function LiveMatchesWidget({ limit = 5, showAllLink = true }: Props) {
+  const [matches, setMatches] = useState<BracketMatch[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchLiveMatches = async () => {
+      try {
+        const res = await tournamentsApi.getOngoingMatches({ limit });
+        if (res && res.data) {
+          setMatches(res.data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch ongoing matches', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchLiveMatches();
+    // Poll every 10 seconds for real-time live score updates
+    const timer = setInterval(fetchLiveMatches, 10000);
+    return () => clearInterval(timer);
+  }, [limit]);
+
+  if (isLoading) {
+    return (
+      <div className="w-full bg-slate-900/40 border border-slate-800 rounded-2xl p-6 backdrop-blur-md animate-pulse">
+        <div className="h-6 w-36 bg-slate-800 rounded mb-4" />
+        <div className="space-y-3">
+          <div className="h-20 bg-slate-800/60 rounded-xl" />
+          <div className="h-20 bg-slate-800/60 rounded-xl" />
+        </div>
+      </div>
+    );
+  }
+
+  if (matches.length === 0) {
+    return null; // Hide the widget entirely if there are no live matches
+  }
+
+  // Helper function to extract set scores
+  const getSets = (scoreDetails?: Record<string, unknown>) => {
+    if (!scoreDetails) return [];
+    return Object.keys(scoreDetails)
+      .sort()
+      .map((key) => {
+        const value = scoreDetails[key];
+        if (typeof value === 'string' && value.includes('-')) {
+          const [p1, p2] = value.split('-');
+          return { p1, p2 };
+        }
+        return null;
+      })
+      .filter((set) => set !== null) as { p1: string; p2: string }[];
+  };
+
+  return (
+    <div className="w-full bg-slate-950/60 border border-slate-800/80 rounded-2xl p-5 md:p-6 backdrop-blur-md shadow-xl flex flex-col gap-4 relative overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-r from-rose-500/5 via-transparent to-indigo-500/5 pointer-events-none" />
+      
+      {/* Header */}
+      <div className="flex justify-between items-center border-b border-slate-800 pb-3 relative z-10">
+        <div className="flex items-center gap-2">
+          <span className="flex h-2 w-2 relative">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+          </span>
+          <h3 className="text-sm font-extrabold uppercase tracking-wider text-rose-500 font-sans">
+            Đang Thi Đấu
+          </h3>
+          <span className="text-xs bg-rose-500/10 text-rose-400 border border-rose-500/20 px-2 py-0.5 rounded-full font-bold">
+            {matches.length} Trận
+          </span>
+        </div>
+        {showAllLink && (
+          <Link
+            href="/tournaments"
+            className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition-colors"
+          >
+            Xem Tất Cả Trận →
+          </Link>
+        )}
+      </div>
+
+      {/* Matches List */}
+      <div className="flex flex-col gap-3 relative z-10">
+        {matches.map((match) => {
+          const sets = getSets(match.scoreDetails);
+          return (
+            <div
+              key={match.id}
+              className="group bg-slate-900/50 hover:bg-slate-900/80 border border-slate-800 hover:border-slate-700/80 rounded-xl p-4 transition-all duration-300 flex flex-col md:flex-row justify-between items-center gap-4"
+            >
+              {/* Match context */}
+              <div className="flex flex-col items-center md:items-start text-center md:text-left md:w-1/3">
+                <span className="text-xs font-semibold text-indigo-400 font-sans line-clamp-1">
+                  Vòng {match.roundNumber} {match.courtName ? `— Sân: ${match.courtName}` : ''}
+                </span>
+                <span className="text-xs text-slate-400 font-medium line-clamp-1">
+                  {match.group?.stage?.name || match.group?.name || 'Trận Đấu'}
+                </span>
+              </div>
+
+              {/* Opponent 1 vs Opponent 2 & Scores */}
+              <div className="flex flex-1 justify-center items-center gap-6 w-full md:w-auto">
+                {/* Team 1 */}
+                <div className="flex-1 text-right max-w-[180px]">
+                  <span className="text-sm font-bold text-white tracking-wide block truncate group-hover:text-indigo-300 transition-colors">
+                    {match.participant1?.teamName || 'Chưa xác định'}
+                  </span>
+                  {match.participant1?.seed && (
+                    <span className="text-[10px] bg-slate-800 text-slate-400 border border-slate-700 px-1 py-0.2 rounded font-semibold ml-1">
+                      #{match.participant1.seed}
+                    </span>
+                  )}
+                </div>
+
+                {/* Score Sets display */}
+                <div className="flex items-center gap-1.5 min-w-[100px] justify-center bg-slate-950/80 border border-slate-800/80 p-1.5 rounded-lg shadow-inner">
+                  {sets.length > 0 ? (
+                    sets.map((set, idx) => (
+                      <div key={idx} className="flex flex-col items-center gap-0.5 px-1.5 py-0.5 bg-slate-900 border border-slate-800 rounded">
+                        <span className={`text-xs font-extrabold ${parseInt(set.p1) > parseInt(set.p2) ? 'text-indigo-400' : 'text-slate-500'}`}>
+                          {set.p1}
+                        </span>
+                        <span className="w-4 border-t border-slate-800" />
+                        <span className={`text-xs font-extrabold ${parseInt(set.p2) > parseInt(set.p1) ? 'text-indigo-400' : 'text-slate-500'}`}>
+                          {set.p2}
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="flex items-center justify-center py-1">
+                      <span className="text-xs font-bold text-indigo-400 animate-pulse">
+                        {match.p1SetsWon} : {match.p2SetsWon}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Team 2 */}
+                <div className="flex-1 text-left max-w-[180px]">
+                  <span className="text-sm font-bold text-white tracking-wide block truncate group-hover:text-indigo-300 transition-colors">
+                    {match.participant2?.teamName || 'Chưa xác định'}
+                  </span>
+                  {match.participant2?.seed && (
+                    <span className="text-[10px] bg-slate-800 text-slate-400 border border-slate-700 px-1 py-0.2 rounded font-semibold ml-1">
+                      #{match.participant2.seed}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* View Match Details Button */}
+              <div className="md:w-1/3 flex justify-center md:justify-end w-full">
+                <Link
+                  href={`/tournaments/${match.groupId}`} 
+                  className="w-full md:w-auto px-4 py-2 rounded-lg text-xs font-bold text-slate-300 hover:text-white bg-slate-800/50 hover:bg-indigo-600 border border-slate-700/50 hover:border-indigo-500 transition-all text-center cursor-pointer"
+                >
+                  Xem Trận
+                </Link>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}

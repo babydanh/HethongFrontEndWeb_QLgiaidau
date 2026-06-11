@@ -10,7 +10,10 @@ interface GalleryCarouselProps {
 }
 
 export default function GalleryCarousel({ images = [], defaultBanner, className = '' }: GalleryCarouselProps) {
-  const allImages = images.length > 0 ? images : (defaultBanner ? [defaultBanner] : []);
+  const allImages = [
+    ...(defaultBanner ? [defaultBanner] : []),
+    ...images.filter((img) => img !== defaultBanner)
+  ];
   const [activeIndex, setActiveIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
 
@@ -44,32 +47,23 @@ export default function GalleryCarousel({ images = [], defaultBanner, className 
 
   return (
     <div
-      className={`relative overflow-hidden group select-none bg-slate-950 ${className}`}
+      className={`relative overflow-hidden group select-none ${className}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Slides Container */}
       <div 
-        className="flex h-full w-full transition-transform duration-[800ms] [transition-timing-function:cubic-bezier(0.16,1,0.3,1)]"
+        className="flex w-full transition-transform duration-[800ms] [transition-timing-function:cubic-bezier(0.16,1,0.3,1)]"
         style={{ transform: `translateX(-${activeIndex * 100}%)` }}
       >
         {allImages.map((src, idx) => (
-          <div key={idx} className="w-full h-full flex-shrink-0 relative flex items-center justify-center overflow-hidden bg-slate-950">
-            {/* Blurred background backdrop to fill empty aspect ratio spaces */}
-            <div 
-              className="absolute inset-0 w-full h-full bg-cover bg-center blur-2xl opacity-35 scale-110 pointer-events-none"
-              style={{ backgroundImage: `url(${src})` }}
-            />
-            
-            {/* Sharp crisp centered image with drop shadow and border */}
+          <div key={idx} className="w-full flex-shrink-0 relative overflow-hidden flex items-center justify-center">
+            {/* Sharp crisp full-size dynamic height image */}
             <img
               src={src}
               alt={`Slide ${idx + 1}`}
-              className="relative z-10 max-w-[92%] max-h-[88%] object-contain rounded-xl shadow-[0_25px_60px_rgba(0,0,0,0.85)] border border-white/15 transition-transform duration-[4000ms] ease-out group-hover:scale-[1.01]"
+              className="w-full h-auto object-contain"
             />
-            
-            {/* Gradient overlay */}
-            <div className="absolute inset-0 z-20 bg-gradient-to-t from-slate-950/70 via-transparent to-slate-950/30 pointer-events-none"></div>
           </div>
         ))}
       </div>

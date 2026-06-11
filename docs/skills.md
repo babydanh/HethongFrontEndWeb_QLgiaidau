@@ -127,9 +127,10 @@
 ### Phải biết gì?
 - **Schema Mapping**: File validation schema của Zod ở Frontend (`tournamentSchema.ts`) **PHẢI HOÀN TOÀN KHỚP** với cấu trúc DTO bên Backend (`CreateTournamentDto`, `class-validator`).
 - **Error UI**: Render lỗi rõ ràng ngay dưới các trường Input với class chữ màu đỏ (ví dụ: `text-red-500`).
+- **Rich Text Editor (Editor.js)**: Sử dụng Editor.js làm trình soạn thảo văn bản phong phú (Rich Text) cho mô tả giải đấu. Cho phép tải ảnh trực tiếp thông qua Cloudinary Uploader API và hỗ trợ bản dịch tiếng Việt đầy đủ. Yêu cầu tải động qua component `RichTextEditor.tsx` để đảm bảo an toàn SSR trên Next.js 15 và tự động mở rộng chiều cao khi người dùng focus nhập liệu.
 
 ### Dùng ở đâu trong dự án?
-- Mọi nơi có nhập liệu: Đăng ký/Đăng nhập, Tạo/Sửa Giải đấu, Cập nhật ELO, Tạo Nhóm (Communities).
+- Mọi nơi có nhập liệu: Đăng ký/Đăng nhập, Tạo/Sửa Giải đấu (sử dụng RichTextEditor cho phần Mô tả), Cập nhật ELO, Tạo Nhóm (Communities).
 
 ---
 
@@ -231,6 +232,18 @@
     - `src/hooks/`: Chứa các custom hooks React (ví dụ: `useDebounce.ts`, `useMediaQuery.ts`).
     - `src/constants/`: Chứa các biến cấu hình, hằng số chung (ví dụ: `config.ts`).
     - Trước khi code một logic xử lý chuỗi, thời gian, hay debounce, **PHẢI** kiểm tra xem trong các thư mục này đã có hàm nào tương tự chưa để tái sử dụng.
+8. **Quy tắc React 19 & useEffect (Tránh Cascading Renders)**:
+    - **TUYỆT ĐỐI KHÔNG** gọi `setState` đồng bộ trực tiếp trong thân của hàm `useEffect` hoặc hàm được gọi đồng bộ bởi `useEffect` (gây ra cảnh báo *"Calling setState synchronously within an effect can trigger cascading renders"*).
+    - **Giải pháp khắc phục:**
+      - Kiểm tra giá trị trạng thái hiện tại trước khi gọi cập nhật (ví dụ: `if (!isLoading) setIsLoading(true)` hoặc `if (membership !== null) setMembership(null)`).
+      - Bao bọc các lời gọi hàm chứa `setState` trong `Promise.resolve().then(() => { ... })` để trì hoãn việc cập nhật sang microtask tiếp theo, thoát khỏi chu kỳ render đồng bộ hiện tại.
+9. **Quy chuẩn tỷ lệ và chiều rộng của Banner / Cover Image**:
+    - **TUYỆT ĐỐI KHÔNG** để tỷ lệ banner quá hẹp hoặc chiều rộng quá gò bó.
+    - Banner giải đấu lớn nên sử dụng chiều rộng tối đa `max-w-screen-2xl` kết hợp chiều cao `h-[320px] md:h-[460px]`.
+    - Banner câu lạc bộ / nhóm nên sử dụng chiều rộng tối đa `max-w-7xl` kết hợp chiều cao `h-[280px] md:h-[400px]`.
+    - Giao diện này đảm bảo hiển thị tối đa chi tiết của ảnh bìa mà không chiếm dụng toàn bộ màn hình của người dùng.
+
+
 
 ---
 

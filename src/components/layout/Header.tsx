@@ -104,6 +104,7 @@ export function Header() {
   const navLinks = [
     { name: 'Trang chủ', path: '/' },
     { name: 'Giải đấu', path: '/tournaments' },
+    { name: 'Chuỗi giải đấu', path: '/series' },
     { name: 'Cộng đồng', path: '/communities' },
     { name: 'Xếp hạng', path: '/leaderboard' },
   ];
@@ -246,12 +247,20 @@ export function Header() {
                     </Link>
                   )}
                   {user?.roles?.includes('ORGANIZER') && (
-                    <Link href="/organizer" onClick={() => setIsDropdownOpen(false)}>
-                      <div className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
-                        <LayoutDashboard className="w-4 h-4 text-slate-400" />
-                        Quản lý giải đấu
-                      </div>
-                    </Link>
+                    <>
+                      <Link href="/organizer" onClick={() => setIsDropdownOpen(false)}>
+                        <div className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
+                          <LayoutDashboard className="w-4 h-4 text-slate-400" />
+                          Quản lý giải đấu
+                        </div>
+                      </Link>
+                      <Link href="/organizer/series" onClick={() => setIsDropdownOpen(false)}>
+                        <div className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
+                          <Trophy className="w-4.5 h-4.5 text-slate-400" />
+                          Quản lý chuỗi giải
+                        </div>
+                      </Link>
+                    </>
                   )}
                   <Link href="/organizer/tournaments" onClick={() => setIsDropdownOpen(false)}>
 

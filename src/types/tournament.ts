@@ -46,10 +46,11 @@ export interface Tournament {
     pointsPerSet?: number;
     winByTwo?: boolean;
   };
-  status: 'DRAFT' | 'UPCOMING' | 'REGISTRATION_OPEN' | 'REGISTRATION_CLOSED' | 'IN_PROGRESS' | 'ONGOING' | 'COMPLETED' | 'CANCELLED';
+  status: 'DRAFT' | 'PENDING_APPROVAL' | 'UPCOMING' | 'REGISTRATION_OPEN' | 'REGISTRATION_CLOSED' | 'IN_PROGRESS' | 'ONGOING' | 'COMPLETED' | 'CANCELLED';
   format: 'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION' | 'ROUND_ROBIN';
   maxParticipants?: number;
   entryFee?: number;
+  platformFeePercentage?: string;
   platformFeePerPlayer?: number;
   tournamentType?: 'CLUB' | 'PUBLIC';
   matchType?: 'SINGLES' | 'DOUBLES' | 'MIXED_DOUBLES';
@@ -58,6 +59,8 @@ export interface Tournament {
   visibility?: 'PUBLIC' | 'PRIVATE';
   genderRestriction?: 'MALE' | 'FEMALE' | 'MIXED' | null;
   venueId?: string | null;
+  isRanked?: boolean;
+  isRegistrationLocked?: boolean;
   venue?: {
     id: string;
     name: string;
@@ -99,6 +102,12 @@ export interface Tournament {
     genderRestriction?: string | null;
     status: string;
     categoryId: string;
+    _count?: {
+      participants: number;
+      matches: number;
+    };
+    maxParticipants?: number;
+    inviteCode?: string | null;
   }[] | null;
   city?: string | null;
   tournamentConfig?: {
@@ -106,7 +115,13 @@ export interface Tournament {
     maxTeams?: number;
     seedingMethod?: string;
     thirdPlaceMatch?: boolean;
+    minElo?: number | null;
+    maxElo?: number | null;
+    maxCombinedElo?: number | null;
+    maxTeammateGap?: number | null;
   } | null;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface PaginatedTournaments {
@@ -137,6 +152,7 @@ export interface TournamentParticipant {
     fullName: string | null;
     avatarUrl: string | null;
     role: string;
+    isMock?: boolean;
     elo: {
       eloPoints: number;
       tierName: string;
@@ -151,8 +167,8 @@ export interface BracketMatch {
   bracketBranch: string;
   status: string;
   isBye: boolean;
-  participant1: { id: string; teamName: string; seed: number | null } | null;
-  participant2: { id: string; teamName: string; seed: number | null } | null;
+  participant1: { id: string; teamName: string; seed: number | null; members?: { userId: string; fullName: string | null }[] } | null;
+  participant2: { id: string; teamName: string; seed: number | null; members?: { userId: string; fullName: string | null }[] } | null;
   participant1Id?: string | null;
   participant2Id?: string | null;
   winnerId: string | null;
@@ -160,9 +176,12 @@ export interface BracketMatch {
   p1SetsWon: number;
   p2SetsWon: number;
   nextMatchId?: string | null;
+  loserNextMatchId?: string | null;
   scheduledAt?: string | null;
   completedAt?: string | null;
   courtName?: string | null;
+  courtAddress?: string | null;
+  refereeId?: string | null;
   groupId: string;
   group?: {
     name: string;

@@ -5,11 +5,13 @@ export interface UserProfile {
   phoneNumber?: string | null;
   bio?: string | null;
   avatarUrl?: string | null;
+  coverUrl?: string | null;
   dateOfBirth?: string | null;
   gender?: string | null;
   address?: string | null;
   provinceCode?: string | null;
   role: 'PLAYER' | 'ORGANIZER' | 'ADMIN';
+  roles?: string[];
   status: string;
   isActive?: boolean;
   createdAt: string;

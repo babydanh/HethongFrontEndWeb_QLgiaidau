@@ -2,7 +2,7 @@ export interface Payment {
   id: string;
   userId: string;
   tournamentId: string;
-  participantId?: string;
+  participantId?: string | null;
   amount: string;
   platformFeeAmount?: string;
   status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED';

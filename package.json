@@ -2,6 +2,7 @@
   "name": "frontend-web_qlgiaidau",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev -p 3001",
     "build": "next build",
@@ -13,6 +14,7 @@
     "@editorjs/header": "^2.8.9",
     "@editorjs/image": "^2.10.3",
     "@editorjs/list": "^2.0.9",
+    "@g-loot/react-tournament-brackets": "1.0.31-rc",
     "@hookform/resolvers": "^5.4.0",
     "@radix-ui/react-avatar": "^1.1.11",
     "@radix-ui/react-dialog": "^1.1.15",

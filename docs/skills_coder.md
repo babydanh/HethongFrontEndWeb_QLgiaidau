@@ -1,3 +1,5 @@
+# Coder Skills
+
 # 🛠️ 9 Kỹ Năng Cốt Lõi Frontend (Tech Skills Map)
 
 > **🚨 LƯU Ý TỐI QUAN TRỌNG DÀNH CHO AI AGENT:** 
@@ -8,6 +10,7 @@
 > **AI Agent hoặc thành viên mới:** Hãy đọc file này TRƯỚC KHI viết bất kỳ dòng code Frontend nào.
 
 ---
+
 
 ## Skill 1: Web Core — Next.js 15 + React 19 + TypeScript 🏗️
 
@@ -73,27 +76,6 @@
 
 ---
 
-## Skill 4: API & HTTP Client — Axios + Interceptors 🌐
-
-> **Cầu nối giao tiếp.** Nơi Frontend lấy dữ liệu từ Backend REST APIs.
-
-| Công nghệ | Phiên bản | Vai trò trong dự án |
-|---|---|---|
-| **Axios** | Latest | Gọi REST API |
-
-### Phải biết gì?
-- **Cấu hình Instance (`lib/axios.ts`)**: Cài đặt `baseURL` trỏ thẳng tới Backend (vd: `http://localhost:3000/api/v1`).
-- **Request Interceptor**: Tự động lấy `accessToken` từ Zustand và gán vào header `Authorization: Bearer <token>`.
-- **Response Interceptor (Cực kỳ quan trọng)**:
-  - Nếu API Backend trả về `401 Unauthorized`: Tạm ngưng (pause) request, gọi API `/auth/refresh` kèm `refreshToken` để lấy token mới, sau đó gán lại vào request cũ và chạy tiếp (Silent Refresh).
-  - Nếu API trả về `403`: Bắn Toast "Không có quyền".
-- **Typing**: Khai báo Interface mapping CHÍNH XÁC với DTOs của Backend (`CreateTournamentDto`, `UserResponse`...).
-
-### Dùng ở đâu trong dự án?
-- Nằm trong các file thuộc thư mục `features/*/api/*.ts`.
-
----
-
 ## Skill 5: Real-time Communication — Socket.io-client ⚡
 
 > **Dữ liệu tức thời.** Nhận tỷ số Live, Chat, và thông báo Notification.
@@ -151,22 +133,6 @@
 - Trang **Profile cá nhân** (Biểu đồ ELO).
 - Trang **Admin Dashboard** (Doanh thu, số user mới).
 - Trang **Tournament Detail** (Xem nhánh đấu Bracket).
-
----
-
-## Skill 8: DevOps & Tooling — pnpm + ESLint 🛠️
-
-> **Chuẩn mực code.** Giữ dự án sạch sẽ và đồng bộ.
-
-| Công nghệ | Vai trò trong dự án |
-|---|---|
-| **pnpm** | Package manager bắt buộc (nhanh, đồng bộ workspace với Backend) |
-| **ESLint** + **Prettier** | Linting & Format (sửa hết warning trước khi push code) |
-| **TypeScript (tsc)** | Chạy type-check kỹ càng |
-
-### Phải biết gì?
-- Không dùng `npm` hay `yarn` để tránh xung đột file lock.
-- Trước khi báo cáo hoàn thành phase, phải chạy `pnpm lint` và `pnpm build` thành công.
 
 ---
 

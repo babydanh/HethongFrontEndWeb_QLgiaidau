@@ -3,6 +3,14 @@ export interface ApiError {
   error?: string;
   statusCode?: number;
 }
+
+interface ErrorWithResponse {
+  response?: {
+    status?: number;
+    data?: ApiError;
+  };
+  message?: string;
+}
 /**
  * Trích xuất câu báo lỗi có ý nghĩa từ object error `unknown` (thường bắt từ try/catch Axios)
  */
@@ -10,7 +18,7 @@ export const getErrorMessage = (error: unknown, fallbackMessage = 'Đã có lỗ
   if (!error) return fallbackMessage;
 
   // Lỗi từ Axios response mapping với ApiError của backend
-  const err = error as { response?: { data?: ApiError }, message?: string };
+  const err = error as ErrorWithResponse;
   
   if (err.response?.data?.message) {
     // Backend thường trả về string hoặc mảng validation strings
@@ -27,4 +35,14 @@ export const getErrorMessage = (error: unknown, fallbackMessage = 'Đã có lỗ
   }
 
   return fallbackMessage;
+};
+
+export const isHttpStatusError = (error: unknown, status: number): boolean => {
+  const err = error as ErrorWithResponse;
+  return err.response?.status === status;
+};
+
+export const isNetworkError = (error: unknown): boolean => {
+  const err = error as ErrorWithResponse;
+  return !err.response && err.message === 'Network Error';
 };

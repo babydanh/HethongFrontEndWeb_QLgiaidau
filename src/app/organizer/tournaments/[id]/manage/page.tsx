@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState, use } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState, use, useCallback } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Input, DateTimePicker } from '@/components/ui/Input';
@@ -11,26 +11,31 @@ import RichTextEditor from '@/components/ui/RichTextEditor';
 import { Modal, ModalContent, ModalHeader, ModalTitle } from '@/components/ui/Modal';
 import {
   tournamentsApi,
+  divisionsApi,
   Tournament,
+  TournamentFeesConfig,
   TournamentParticipant,
   BracketStage,
   BracketMatch,
   MatchTypeUI,
   MatchTypeDB,
   GenderRestriction,
+  Division,
 } from '@/features/tournaments/api';
 import { venuesApi } from '@/features/venues/api';
 import { paymentsApi } from '@/features/payments/api';
 import { categoriesApi, Category } from '@/features/categories/api';
 import { regionsApi, Region } from '@/features/regions/api';
 import { uploadApi } from '@/features/upload/api';
+import BracketTab from '@/app/(public)/tournaments/[id]/components/BracketTab';
 import {
   Settings,
   Calendar,
   Users,
   Trophy,
   MapPin,
-  Clock,
+  SlidersHorizontal,
+  GitBranch,
   DollarSign,
   Info,
   Link as LinkIcon,
@@ -46,10 +51,10 @@ import {
   Trash2,
   UserPlus,
   Loader2,
-  X,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '@/utils/error';
+import { TournamentStepper } from './components/TournamentStepper';
 
 interface Venue {
   id: string;
@@ -64,6 +69,7 @@ interface Court {
 
 export default function TournamentManagePage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const resolvedParams = use(params);
   const id = resolvedParams.id;
   const [tournament, setTournament] = useState<Tournament | null>(null);
@@ -71,6 +77,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
   const [bracket, setBracket] = useState<{ stages: BracketStage[] } | null>(null);
   const [venues, setVenues] = useState<Venue[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [feesConfig, setFeesConfig] = useState<TournamentFeesConfig | null>(null);
   const [courts, setCourts] = useState<Court[]>([]);
   
   const getFormatLabel = (matchType: string, genderRestriction?: string | null) => {
@@ -88,14 +95,34 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
     return mt;
   };
 
+  const getBracketLabel = (bracketType?: Division['bracketType'] | null) => {
+    if (bracketType === 'DOUBLE_ELIMINATION') return 'Loại kép';
+    if (bracketType === 'ROUND_ROBIN') return 'Vòng tròn';
+    return 'Loại trực tiếp';
+  };
+
+  const resolvePublishFeeAmount = useCallback(
+    (targetTournament: Tournament | null, targetFees: TournamentFeesConfig | null) => {
+      if (!targetTournament || !targetFees) return 0;
+      if (targetTournament.tournamentType === 'CLUB') {
+        return targetFees.feeClub;
+      }
+      return targetTournament.isRanked ? targetFees.feePublicRanked : targetFees.feePublicUnranked;
+    },
+    [],
+  );
+
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'basic' | 'schedule' | 'config' | 'registration' | 'bracket' | 'finance'>('basic');
   const [basicSubTab, setBasicSubTab] = useState<'general' | 'branding' | 'prizes' | 'contact'>('general');
-  const [divisions, setDivisions] = useState<any[]>([]);
+  const [divisions, setDivisions] = useState<Division[]>([]);
+  const [selectedDivisionId, setSelectedDivisionId] = useState<string>('');
   const [isCreateDivisionModalOpen, setIsCreateDivisionModalOpen] = useState(false);
-  const [newDivisionName, setNewDivisionName] = useState('');
   const [newDivisionMatchType, setNewDivisionMatchType] = useState('MALE_DOUBLES');
+  const [newDivisionBracketType, setNewDivisionBracketType] = useState('SINGLE_ELIMINATION');
   const [isCreatingDivision, setIsCreatingDivision] = useState(false);
+  const [divisionPendingDelete, setDivisionPendingDelete] = useState<Division | null>(null);
+  const [isDeletingDivision, setIsDeletingDivision] = useState(false);
 
   // Basic info tab form states
   const [name, setName] = useState('');
@@ -170,6 +197,8 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
   const [isScheduling, setIsScheduling] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isPayingPlatformFee, setIsPayingPlatformFee] = useState(false);
+  const [isPayingPublishFee, setIsPayingPublishFee] = useState(false);
+  const [publishFeeAmount, setPublishFeeAmount] = useState(0);
   const [newGalleryUrl, setNewGalleryUrl] = useState('');
   const [isAddingImage, setIsAddingImage] = useState(false);
 
@@ -182,14 +211,36 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
   const [isGeneratingBracket, setIsGeneratingBracket] = useState(false);
   const [isAssigningWildcard, setIsAssigningWildcard] = useState(false);
 
+  // Hàm refetch participants + bracket theo division hiện tại
+  // Khai báo sớm để dùng trong handleGenerateBracket và các handlers bên dưới
+  const refetchDivisionData = useCallback(async () => {
+    if (!selectedDivisionId) return;
+    try {
+      const [participantsRes, bracketRes] = await Promise.all([
+        divisionsApi.getDivisionParticipants(id, selectedDivisionId),
+        tournamentsApi.getTournamentBracket(id, selectedDivisionId),
+      ]);
+      if (participantsRes.data) setParticipants(participantsRes.data);
+      if (bracketRes.data) setBracket(bracketRes.data);
+      else setBracket(null);
+    } catch (err) {
+      console.error('Failed to fetch division scoped data:', err);
+    }
+  }, [id, selectedDivisionId]);
+
   const handleGenerateBracket = async () => {
     try {
+      if (divisions.length > 0 && !selectedDivisionId) {
+        toast.error('Vui lòng chọn hình thức trước khi khởi tạo bracket');
+        return;
+      }
       setIsGeneratingBracket(true);
       toast.loading('Đang khởi tạo sơ đồ thi đấu...', { id: 'gen-bracket' });
-      const res = await tournamentsApi.generateBracket(id);
+      const res = await tournamentsApi.generateBracket(id, selectedDivisionId || undefined);
       if (res.data) {
         toast.success('Khởi tạo sơ đồ thi đấu thành công!', { id: 'gen-bracket' });
-        fetchTournamentData();
+        // Dù có hay không có divisionId, refetchDivisionData sẽ fetch đúng bracket
+        await refetchDivisionData();
       }
     } catch (err) {
       toast.error(getErrorMessage(err), { id: 'gen-bracket' });
@@ -251,41 +302,44 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
 
         if (t.parentId) {
           fetchDivisions(t.parentId);
+        } else {
+          // Nếu không có parentId, fetch divisions của tournament này
+          fetchDivisions(t.id);
         }
         if (t.venueId) {
           fetchVenueCourts(t.venueId);
         }
       }
 
-      // Fetch participants
-      const pRes = await tournamentsApi.getTournamentParticipants(id);
-      if (pRes.data) {
-        setParticipants(pRes.data);
-      }
-
-      // Fetch bracket
-      try {
-        const bRes = await tournamentsApi.getTournamentBracket(id);
-        if (bRes.data) {
-          setBracket(bRes.data);
-        }
-      } catch (err) {
-        setBracket(null);
-      }
+      // Participants & bracket are fetched per-division in useEffect([selectedDivisionId])
+      // Do NOT fetch all-division data here — it causes stale cross-division data flash
       return tRes.data;
     } catch (err) {
       toast.error('Không thể tải thông tin giải đấu');
     }
   };
 
-  const fetchDivisions = async (parentId: string) => {
+  const fetchDivisions = async (tournamentId: string) => {
     try {
-      const res = await tournamentsApi.getParentTournamentById(parentId);
-      if (res.data && res.data.divisions) {
-        setDivisions(res.data.divisions);
+      const res = await divisionsApi.getDivisions(tournamentId);
+      if (res.data && Array.isArray(res.data)) {
+        setDivisions(res.data);
+        setSelectedDivisionId((current) => {
+          if (res.data.length === 0) return '';
+          const requestedDivisionId = searchParams.get('divisionId');
+          if (requestedDivisionId && res.data.some((division) => division.id === requestedDivisionId)) {
+            return requestedDivisionId;
+          }
+          return res.data.some((division) => division.id === current) ? current : res.data[0].id;
+        });
+      } else {
+        setDivisions([]);
+        setSelectedDivisionId('');
       }
     } catch (err) {
       console.error('Failed to fetch divisions:', err);
+      setDivisions([]);
+      setSelectedDivisionId('');
     }
   };
 
@@ -303,36 +357,32 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
   };
 
   const handleCreateDivision = async () => {
-    if (!newDivisionName.trim()) {
-      toast.error('Vui lòng nhập tên hình thức đăng ký');
-      return;
-    }
-    if (!tournament || !tournament.parentId) {
-      toast.error('Giải đấu này không có Giải đấu mẹ để thêm hình thức');
+    if (!tournament || !tournament.id) {
+      toast.error('Không tìm thấy giải đấu');
       return;
     }
 
     try {
       setIsCreatingDivision(true);
 
-      let payloadMatchType = 'DOUBLES';
-      let payloadGenderRestriction: 'MALE' | 'FEMALE' | 'MIXED' | null = null;
+      let payloadMatchType: MatchTypeDB = MatchTypeDB.DOUBLES;
+      let payloadGenderRestriction: GenderRestriction | null = null;
 
       if (newDivisionMatchType === 'MALE_SINGLES') {
-        payloadMatchType = 'SINGLES';
-        payloadGenderRestriction = 'MALE';
+        payloadMatchType = MatchTypeDB.SINGLES;
+        payloadGenderRestriction = GenderRestriction.MALE;
       } else if (newDivisionMatchType === 'FEMALE_SINGLES') {
-        payloadMatchType = 'SINGLES';
-        payloadGenderRestriction = 'FEMALE';
+        payloadMatchType = MatchTypeDB.SINGLES;
+        payloadGenderRestriction = GenderRestriction.FEMALE;
       } else if (newDivisionMatchType === 'MALE_DOUBLES') {
-        payloadMatchType = 'DOUBLES';
-        payloadGenderRestriction = 'MALE';
+        payloadMatchType = MatchTypeDB.DOUBLES;
+        payloadGenderRestriction = GenderRestriction.MALE;
       } else if (newDivisionMatchType === 'FEMALE_DOUBLES') {
-        payloadMatchType = 'DOUBLES';
-        payloadGenderRestriction = 'FEMALE';
+        payloadMatchType = MatchTypeDB.DOUBLES;
+        payloadGenderRestriction = GenderRestriction.FEMALE;
       } else if (newDivisionMatchType === 'MIXED_DOUBLES') {
-        payloadMatchType = 'MIXED_DOUBLES';
-        payloadGenderRestriction = 'MIXED';
+        payloadMatchType = MatchTypeDB.MIXED_DOUBLES;
+        payloadGenderRestriction = GenderRestriction.MIXED;
       }
 
       // Prevent creating duplicate divisions
@@ -346,45 +396,26 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
         return;
       }
 
-      const data = {
-        parentId: tournament.parentId,
-        categoryId: tournament.categoryId,
-        name: newDivisionName.trim(),
+      // Auto-generate name từ matchType
+      const generatedName = getFormatLabel(payloadMatchType, payloadGenderRestriction);
+
+      const divisionPayload = {
+        name: generatedName,
         matchType: payloadMatchType,
         genderRestriction: payloadGenderRestriction,
-        bannerUrl: tournament.bannerUrl || null,
-        logoUrl: tournament.logoUrl || null,
-        description: tournament.description || '',
-        tournamentType: tournament.tournamentType || 'PUBLIC',
-        communityId: tournament.communityId || null,
-        visibility: tournament.visibility || 'PUBLIC',
-        venueId: tournament.venueId || null,
-        city: (tournament as any).city || null,
-        startDate: tournament.startDate || null,
-        endDate: tournament.endDate || null,
-        registrationStartDate: tournament.registrationStartDate || null,
-        registrationEndDate: tournament.registrationEndDate || null,
-        entryFee: tournament.entryFee ?? 0,
-        platformFeePerPlayer: tournament.platformFeePerPlayer ?? 10000,
-        sportRules: tournament.sportRules || {
-          setsToWin: 2,
-          pointsPerSet: 21,
-          winByTwo: true,
-        },
-        tournamentConfig: tournament.tournamentConfig || {
-          bracketType: 'SINGLE_ELIMINATION',
-          maxTeams: 16,
-          seedingMethod: 'RANDOM',
-          thirdPlaceMatch: false,
-        },
+        bracketType: newDivisionBracketType as Division['bracketType'],
+        isConfigOverride: true,
       };
 
-      const res = await tournamentsApi.createTournament(data);
+      const res = await divisionsApi.createDivision(tournament.id, divisionPayload);
       if (res.data) {
-        toast.success(`Đã thêm hình thức "${newDivisionName}" thành công!`);
+        toast.success(`Đã thêm hình thức "${generatedName}" thành công!`);
         setIsCreateDivisionModalOpen(false);
-        setNewDivisionName('');
-        router.push(`/organizer/tournaments/${res.data.id}/manage`);
+        setNewDivisionMatchType('MALE_DOUBLES');
+        setNewDivisionBracketType('SINGLE_ELIMINATION');
+        // Refresh divisions + select new division
+        await fetchDivisions(tournament.id);
+        setSelectedDivisionId(res.data.id);
       }
     } catch (err) {
       toast.error(getErrorMessage(err));
@@ -393,26 +424,33 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
     }
   };
 
-  const handleDeleteDivisionInline = async (e: React.MouseEvent, divId: string, divName: string) => {
-    e.stopPropagation();
-    if (!confirm(`Bạn có chắc chắn muốn xóa hình thức "${divName}"?`)) return;
-    
+  const requestDeleteDivision = (division: Division) => {
+    if (divisions.length <= 1) {
+      toast.error('Không thể xóa hình thức duy nhất. Giải đấu phải có ít nhất 1 hình thức thi đấu.');
+      return;
+    }
+    setDivisionPendingDelete(division);
+  };
+
+  const handleConfirmDeleteDivision = async () => {
+    if (!divisionPendingDelete || !tournament?.id) return;
+
     try {
+      setIsDeletingDivision(true);
       toast.loading('Đang xóa hình thức...', { id: 'delete-division' });
-      await tournamentsApi.deleteTournament(divId);
+      await divisionsApi.deleteDivision(divisionPendingDelete.id);
       toast.success('Đã xóa hình thức thành công!', { id: 'delete-division' });
       
-      if (tournament && divId === tournament.id) {
-        router.push('/organizer/tournaments');
-      } else {
-        if (tournament && tournament.parentId) {
-          fetchDivisions(tournament.parentId);
-        } else {
-          fetchTournamentData();
-        }
+      // Refresh divisions + clear selection nếu xoá division đang chọn
+      if (selectedDivisionId === divisionPendingDelete.id) {
+        setSelectedDivisionId('');
       }
+      setDivisionPendingDelete(null);
+      await fetchDivisions(tournament.id);
     } catch (err) {
-      toast.error('Lỗi khi xóa hình thức', { id: 'delete-division' });
+      toast.error(getErrorMessage(err), { id: 'delete-division' });
+    } finally {
+      setIsDeletingDivision(false);
     }
   };
 
@@ -420,12 +458,19 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
     const init = async () => {
       setIsLoading(true);
       const t = await fetchTournamentData();
+      if (t?.id) await fetchDivisions(t.id);
       try {
         const vRes = await venuesApi.getVenues();
-        if (vRes.data) setVenues(vRes.data.data || vRes.data);
+        if (vRes.data) setVenues(vRes.data);
         
         const cRes = await categoriesApi.getCategories();
         if (cRes.data) setCategories(cRes.data);
+
+        const feesRes = await tournamentsApi.getFeesConfig();
+        if (feesRes.data) {
+          setFeesConfig(feesRes.data);
+          setPublishFeeAmount(resolvePublishFeeAmount(t, feesRes.data));
+        }
 
         const pList = await regionsApi.getProvinces();
         setProvinces(pList);
@@ -460,6 +505,45 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
       }
     };
     init();
+  }, [id, resolvePublishFeeAmount]);
+
+  useEffect(() => {
+    setPublishFeeAmount(resolvePublishFeeAmount(tournament, feesConfig));
+  }, [tournament, feesConfig, resolvePublishFeeAmount]);
+
+  // Watch selectedDivisionId - khi user click division, load config của division đó
+  useEffect(() => {
+    if (selectedDivisionId && divisions.length > 0) {
+      const selected = divisions.find(d => d.id === selectedDivisionId);
+      if (selected) {
+        // Update form fields từ selected division
+        setMatchType(
+          selected.genderRestriction === 'FEMALE' 
+            ? (selected.matchType === 'SINGLES' ? MatchTypeUI.FEMALE_SINGLES : MatchTypeUI.FEMALE_DOUBLES)
+            : selected.genderRestriction === 'MIXED'
+            ? MatchTypeUI.MIXED_DOUBLES
+            : (selected.matchType === 'SINGLES' ? MatchTypeUI.MALE_SINGLES : MatchTypeUI.MALE_DOUBLES)
+        );
+        setMaxParticipants(selected.maxParticipants || 16);
+        setIsLimitEnabled(!!selected.maxParticipants);
+        setEntryFee(selected.entryFee || 0);
+        const rules = selected.roundConfig || {};
+        setSetsToWin(rules.setsToWin || 2);
+        setPointsPerSet(rules.pointsPerSet || 21);
+        setWinByTwo(rules.winByTwo !== undefined ? rules.winByTwo : true);
+      }
+    }
+  }, [selectedDivisionId, divisions]);
+
+  // refetchDivisionData đã được khai báo ở trên (trước handleGenerateBracket)
+  // useEffect dùng lại cùng tham chiếu
+  useEffect(() => {
+    refetchDivisionData();
+  }, [refetchDivisionData]);
+
+  // Fetch divisions khi page load
+  useEffect(() => {
+    fetchDivisions(id);
   }, [id]);
 
   // Fetch districts when provinceCode changes
@@ -595,41 +679,46 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
 
   const handleSaveMatchConfig = async () => {
     try {
+      if (!tournament || !selectedDivisionId) {
+        toast.error('Vui lòng chọn hình thức trước khi lưu');
+        return;
+      }
       setIsSavingConfig(true);
 
-      let payloadMatchType = 'DOUBLES';
-      let payloadGenderRestriction: 'MALE' | 'FEMALE' | 'MIXED' | null = null;
+      let payloadMatchType: MatchTypeDB = MatchTypeDB.DOUBLES;
+      let payloadGenderRestriction: GenderRestriction | null = null;
 
       if (matchType === 'MALE_SINGLES') {
-        payloadMatchType = 'SINGLES';
-        payloadGenderRestriction = 'MALE';
+        payloadMatchType = MatchTypeDB.SINGLES;
+        payloadGenderRestriction = GenderRestriction.MALE;
       } else if (matchType === 'FEMALE_SINGLES') {
-        payloadMatchType = 'SINGLES';
-        payloadGenderRestriction = 'FEMALE';
+        payloadMatchType = MatchTypeDB.SINGLES;
+        payloadGenderRestriction = GenderRestriction.FEMALE;
       } else if (matchType === 'MALE_DOUBLES') {
-        payloadMatchType = 'DOUBLES';
-        payloadGenderRestriction = 'MALE';
+        payloadMatchType = MatchTypeDB.DOUBLES;
+        payloadGenderRestriction = GenderRestriction.MALE;
       } else if (matchType === 'FEMALE_DOUBLES') {
-        payloadMatchType = 'DOUBLES';
-        payloadGenderRestriction = 'FEMALE';
+        payloadMatchType = MatchTypeDB.DOUBLES;
+        payloadGenderRestriction = GenderRestriction.FEMALE;
       } else if (matchType === 'MIXED_DOUBLES') {
-        payloadMatchType = 'MIXED_DOUBLES';
-        payloadGenderRestriction = 'MIXED';
+        payloadMatchType = MatchTypeDB.MIXED_DOUBLES;
+        payloadGenderRestriction = GenderRestriction.MIXED;
       }
 
       const data = {
         matchType: payloadMatchType,
         genderRestriction: payloadGenderRestriction,
         maxParticipants: isLimitEnabled ? maxParticipants : null,
-        sportRules: {
+        isConfigOverride: true,
+        roundConfig: {
           setsToWin,
           pointsPerSet,
           winByTwo,
         },
       };
-      await tournamentsApi.updateTournament(id, data);
+      await divisionsApi.updateDivisionConfig(tournament.id, selectedDivisionId, data);
       toast.success('Lưu cấu hình thi đấu thành công!');
-      fetchTournamentData();
+      await fetchDivisions(tournament.id);
     } catch (err) {
       toast.error(getErrorMessage(err));
     } finally {
@@ -639,14 +728,17 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
 
   const handleSaveFinanceConfig = async () => {
     try {
+      if (!tournament || !selectedDivisionId) {
+        toast.error('Vui lòng chọn hình thức trước khi lưu');
+        return;
+      }
       setIsSavingConfig(true);
       const data = {
         entryFee,
-        platformFeePerPlayer,
       };
-      await tournamentsApi.updateTournament(id, data);
+      await divisionsApi.updateDivision(selectedDivisionId, data);
       toast.success('Lưu cài đặt tài chính thành công!');
-      fetchTournamentData();
+      await fetchDivisions(tournament.id);
     } catch (err) {
       toast.error(getErrorMessage(err));
     } finally {
@@ -677,6 +769,36 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
       toast.error(getErrorMessage(err));
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handlePayPublishFee = async () => {
+    try {
+      if (!tournament) {
+        toast.error('Không tìm thấy thông tin giải đấu.');
+        return;
+      }
+      if (publishFeeAmount <= 0) {
+        await handlePublish();
+        return;
+      }
+
+      setIsPayingPublishFee(true);
+      const res = await paymentsApi.createPaymentLink({
+        tournamentId: id,
+        amount: publishFeeAmount,
+      });
+
+      if (res.data?.paymentUrl) {
+        toast.success('Đang chuyển đến bước thanh toán phí công bố giải đấu.');
+        router.push(res.data.paymentUrl);
+      } else {
+        toast.error('Không tìm thấy liên kết thanh toán phí công bố.');
+      }
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setIsPayingPublishFee(false);
     }
   };
 
@@ -715,6 +837,28 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
       toast.error(getErrorMessage(err));
     } finally {
       setIsPayingPlatformFee(false);
+    }
+  };
+
+  const handleTournamentStepTransition = async (nextStatus: Tournament['status']) => {
+    try {
+      if (nextStatus === 'UPCOMING') {
+        handleOpenLockModal();
+        return;
+      }
+
+      setIsLoading(true);
+      await tournamentsApi.updateTournament(id, { status: nextStatus });
+      toast.success(
+        nextStatus === 'IN_PROGRESS'
+          ? 'Giải đấu đã chuyển sang trạng thái đang thi đấu.'
+          : 'Giải đấu đã được đánh dấu hoàn thành.',
+      );
+      await fetchTournamentData();
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -766,7 +910,9 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
       await tournamentsApi.lockTournament(id);
       toast.success('Chốt danh sách và tạo sơ đồ thi đấu thành công!');
       setIsLockModalOpen(false);
+      // fetchTournamentData vì lock có thể thay đổi tournament status
       fetchTournamentData();
+      await refetchDivisionData();
     } catch (err) {
       toast.error(getErrorMessage(err));
     } finally {
@@ -786,10 +932,10 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
     }
     try {
       setIsSeedingMock(true);
-      await tournamentsApi.seedMockParticipants(id, names);
+      await tournamentsApi.seedMockParticipants(id, names, selectedDivisionId || undefined);
       toast.success(`Đã sinh ${names.length} người chơi/đội ảo thành công!`);
       setMockNamesText('');
-      fetchTournamentData();
+      await refetchDivisionData();
     } catch (err) {
       toast.error(getErrorMessage(err));
     } finally {
@@ -803,9 +949,9 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
     }
     try {
       setIsClearingMock(true);
-      await tournamentsApi.clearMockParticipants(id);
+      await tournamentsApi.clearMockParticipants(id, selectedDivisionId || undefined);
       toast.success('Đã dọn dẹp dữ liệu người chơi ảo thành công!');
-      fetchTournamentData();
+      await refetchDivisionData();
     } catch (err) {
       toast.error(getErrorMessage(err));
     } finally {
@@ -828,7 +974,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
       toast.success('Đã gán suất đặc cách Wildcard thành công!');
       setWildcardEmailOrPhone('');
       setWildcardTeamName('');
-      fetchTournamentData();
+      await refetchDivisionData();
     } catch (err) {
       toast.error(getErrorMessage(err));
     } finally {
@@ -840,7 +986,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
     try {
       await tournamentsApi.updateParticipantStatus(id, participantId, status);
       toast.success(`Đã cập nhật trạng thái đăng ký thành công!`);
-      fetchTournamentData();
+      await refetchDivisionData();
     } catch (err) {
       toast.error(getErrorMessage(err));
     }
@@ -1010,60 +1156,106 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
           </div>
         </div>
 
-        {/* Divisions / Sub-tournaments / Registration Formats */}
-        {divisions.length > 0 && (
-          <div className="bg-white rounded-2xl border border-slate-200 p-5 mb-8 shadow-sm space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-black text-slate-400 uppercase tracking-wider block">
-                Danh sách hình thức đăng ký trong giải
-              </span>
-              <Button
-                size="sm"
-                onClick={() => setIsCreateDivisionModalOpen(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5 h-8 px-3 rounded-lg animate-none"
-              >
-                <Plus className="w-3.5 h-3.5" /> Thêm hình thức mới
-              </Button>
+        <TournamentStepper
+          tournament={tournament}
+          onPublish={publishFeeAmount > 0 ? handlePayPublishFee : handlePublish}
+          onNextStep={handleTournamentStepTransition}
+          isLoading={isLoading || isPayingPublishFee}
+        />
+
+        {/* Divisions Selector & Quick Switch */}
+        <div className="bg-white rounded-2xl border border-slate-200 p-4 mb-4 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+            <div>
+              <p className="text-xs font-black text-slate-500 uppercase tracking-wider">Hình thức thi đấu</p>
+              <p className="text-xs text-slate-400">Chọn hình thức để xem danh sách, bracket và cấu hình riêng</p>
             </div>
+            <Button
+              size="sm"
+              onClick={() => setIsCreateDivisionModalOpen(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5 h-9 px-3 rounded-lg whitespace-nowrap"
+            >
+              <Plus className="w-3.5 h-3.5" /> Thêm hình thức
+            </Button>
+          </div>
+
+          {divisions.length > 0 ? (
             <div className="flex flex-wrap gap-2">
               {divisions.map((div) => {
-                const isActive = div.id === tournament.id;
+                const isActive = div.id === selectedDivisionId;
                 return (
                   <div
                     key={div.id}
-                    className={`flex items-center gap-1.5 pl-3 pr-2 py-1.5 rounded-xl font-bold text-xs transition-all border ${
+                    className={`group inline-flex items-center rounded-xl border transition-all ${
                       isActive
-                        ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-500/10'
-                        : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                        ? 'border-blue-600 bg-blue-600 text-white shadow-md'
+                        : 'border-slate-200 bg-white text-slate-650 hover:border-blue-300 hover:bg-blue-50'
                     }`}
                   >
                     <button
-                      onClick={() => {
-                        if (!isActive) {
-                          router.push(`/organizer/tournaments/${div.id}/manage`);
-                        }
-                      }}
-                      className="flex items-center gap-1.5 cursor-pointer text-left focus:outline-none"
+                      type="button"
+                      onClick={() => setSelectedDivisionId(div.id)}
+                      className="flex items-center gap-2 px-3 py-2 text-left"
+                      title={`${div.name} • ${getFormatLabel(div.matchType, div.genderRestriction)}`}
                     >
-                      <span>{div.name}</span>
-                      <span className="text-[9px] opacity-70 px-1.5 py-0.5 bg-black/10 rounded">
-                        {getFormatLabel(div.matchType, div.genderRestriction)}
+                      <span className="min-w-0">
+                        <span className="block max-w-[150px] truncate text-xs font-black">{div.name}</span>
+                        <span className={`block text-[10px] font-semibold ${isActive ? 'text-blue-100' : 'text-slate-400'}`}>
+                          {getFormatLabel(div.matchType, div.genderRestriction)}
+                        </span>
+                        <span className={`mt-1 inline-flex rounded-full px-1.5 py-0.5 text-[9px] font-black ${isActive ? 'bg-white/15 text-white' : 'bg-emerald-50 text-emerald-700'}`}>
+                          {getBracketLabel(div.bracketType)}
+                        </span>
                       </span>
+                      {div._count?.participants !== undefined && (
+                        <span className={`text-[10px] font-black rounded-full px-2 py-0.5 ${isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'}`}>
+                          {div._count.participants}
+                        </span>
+                      )}
                     </button>
-                    
                     <button
-                      onClick={(e) => handleDeleteDivisionInline(e, div.id, div.name)}
-                      className={`p-0.5 rounded-full hover:bg-black/15 transition-all text-xs flex items-center justify-center cursor-pointer ${
-                        isActive ? 'text-white/80 hover:text-white' : 'text-slate-400 hover:text-rose-600'
+                      type="button"
+                      onClick={() => requestDeleteDivision(div)}
+                      className={`mr-1 rounded-lg p-1.5 transition-colors ${
+                        isActive ? 'text-white/70 hover:bg-white/15 hover:text-white' : 'text-slate-400 hover:bg-red-50 hover:text-red-600'
                       }`}
-                      title="Xóa hình thức thi đấu này"
+                      title={`Xóa ${div.name}`}
                     >
-                      <X className="w-3 h-3" />
+                      <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 );
               })}
             </div>
+          ) : (
+            <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
+              <AlertTriangle className="mx-auto mb-3 h-8 w-8 text-amber-500" />
+              <p className="text-base font-black text-slate-900">Chưa có hình thức thi đấu</p>
+              <p className="mx-auto mt-1 max-w-md text-sm text-slate-500">
+                Hãy thêm ít nhất 1 hình thức để quản lý người chơi, cấu hình luật và tạo bracket.
+              </p>
+              <Button
+                size="sm"
+                onClick={() => setIsCreateDivisionModalOpen(true)}
+                className="mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold"
+              >
+                <Plus className="w-3.5 h-3.5 mr-1" /> Thêm hình thức thi đấu
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {selectedDivisionId && (
+          <div className="mb-6 flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
+            <span className="font-semibold">Đang quản lý:</span>
+            <span className="font-black text-slate-900">
+              {divisions.find((division) => division.id === selectedDivisionId)?.name}
+            </span>
+            <span className="text-slate-300">•</span>
+            <span>{getFormatLabel(
+              divisions.find((division) => division.id === selectedDivisionId)?.matchType || '',
+              divisions.find((division) => division.id === selectedDivisionId)?.genderRestriction,
+            )}</span>
           </div>
         )}
 
@@ -1091,7 +1283,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
               activeTab === 'config' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-850 hover:bg-slate-50'
             }`}
           >
-            <Trophy className="w-3.5 h-3.5" /> Cấu Hình Thi Đấu
+            <SlidersHorizontal className="w-3.5 h-3.5" /> Cấu Hình Thi Đấu
           </button>
           <button
             onClick={() => setActiveTab('registration')}
@@ -1107,7 +1299,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
               activeTab === 'bracket' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-850 hover:bg-slate-50'
             }`}
           >
-            <Clock className="w-3.5 h-3.5" /> Sơ đồ Bracket
+            <GitBranch className="w-3.5 h-3.5" /> Sơ đồ Bracket
           </button>
           <button
             onClick={() => setActiveTab('finance')}
@@ -2176,127 +2368,37 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
           </div>
         )}
 
-        {/* TAB 5: BRACKET */}
-        {activeTab === 'bracket' && (
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 md:p-8 shadow-sm space-y-6 animate-in fade-in duration-200">
-            <div>
-              <h2 className="text-xl font-bold text-slate-900 mb-2">Sơ đồ thi đấu Bracket</h2>
-              <p className="text-sm text-slate-500">Cây thi đấu chi tiết và lịch phân sân thi đấu con cho các trận.</p>
-            </div>
-
-            {false && tournament.status === 'REGISTRATION_CLOSED' ? (
-              <div className="text-center py-16 px-4 bg-slate-50 rounded-2xl border border-dashed flex flex-col items-center">
-                <Lock className="w-12 h-12 text-blue-500 mb-3" />
-                <h4 className="font-bold text-slate-850 text-lg">Chưa thanh toán lệ phí sàn</h4>
-                <p className="text-slate-500 text-sm mt-1 max-w-sm mb-6">
-                  Giải đấu đã chốt danh sách VĐV nhưng chưa thanh toán lệ phí sàn ({((participants.reduce((sum, p) => sum + (p.members?.length || 0), 0)) * platformFeePerPlayer).toLocaleString('vi-VN')}đ). Vui lòng thanh toán để mở khóa sơ đồ đấu và hệ thống chấm điểm live.
-                </p>
-                <Button 
-                  onClick={handlePayPlatformFee}
-                  disabled={isPayingPlatformFee}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2 rounded-lg"
-                >
-                  {isPayingPlatformFee ? 'Đang kết nối cổng thanh toán...' : 'Thanh toán lệ phí sàn'}
-                </Button>
-              </div>
-            ) : !bracket || bracket.stages.length === 0 ? (
-              <div className="text-center py-16 text-slate-400 bg-slate-50 rounded-2xl border border-dashed flex flex-col items-center">
-                <Trophy className="w-12 h-12 text-slate-300 mb-3" />
-                <h4 className="font-bold text-slate-850 text-lg">Chưa có sơ đồ thi đấu</h4>
-                <p className="text-slate-500 text-sm mt-1 max-w-sm mb-5">
-                  Hãy hoàn tất chốt danh sách vận động viên tại tab <strong>Đăng ký & Chốt DS</strong> để hệ thống tự động sinh nhánh đấu, hoặc bấm nút dưới đây để khởi tạo sơ đồ thi đấu thủ công.
-                </p>
+        {/* TAB 5: BRACKET — dùng BracketTab component (đã có visual tree đẹp + organizer mode) */}
+        {activeTab === 'bracket' && tournament && (
+          <div className="space-y-4 animate-in fade-in duration-200">
+            {/* Nút khởi tạo bracket nếu chưa có */}
+            {(!bracket || bracket.stages.length === 0) && (
+              <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col items-center gap-4">
+                <div className="text-center">
+                  <h2 className="text-xl font-bold text-slate-900 mb-1">Sơ đồ thi đấu Bracket</h2>
+                  <p className="text-sm text-slate-500">Chưa có sơ đồ. Hãy khởi tạo để bắt đầu.</p>
+                </div>
                 <Button
                   onClick={handleGenerateBracket}
-                  disabled={isGeneratingBracket || participants.length < 2}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2 rounded-lg"
+                  disabled={isGeneratingBracket || !selectedDivisionId || participants.length < 2}
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-2.5 rounded-xl"
                 >
                   {isGeneratingBracket ? 'Đang khởi tạo...' : 'Khởi tạo sơ đồ thi đấu'}
                 </Button>
-              </div>
-            ) : (
-              <div className="space-y-8">
-                {bracket.stages.map((stage) => (
-                  <div key={stage.id} className="space-y-6">
-                    <div className="border-b border-slate-200 pb-2 flex items-center justify-between">
-                      <h3 className="text-lg font-black text-slate-900">{stage.name}</h3>
-                      <span className="bg-blue-50 text-blue-700 text-xs font-bold px-2.5 py-1 rounded-md border border-blue-100 uppercase">
-                        {stage.type === 'SINGLE_ELIMINATION' ? 'Loại trực tiếp' :
-                         stage.type === 'DOUBLE_ELIMINATION' ? 'Nhánh thắng/thua' :
-                         stage.type === 'ROUND_ROBIN' ? 'Vòng tròn tính điểm' : stage.type}
-                      </span>
-                    </div>
-
-                    {stage.groups.map((group) => (
-                      <div key={group.id} className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {group.matches.map((match) => (
-                            <div
-                              key={match.id}
-                              className="bg-white border rounded-xl p-4 shadow-sm hover:border-slate-350 transition-all flex flex-col justify-between gap-4"
-                            >
-                              <div className="flex items-center justify-between border-b pb-2 text-xs font-bold text-slate-400">
-                                <span>Trận {match.matchOrder} - Vòng {match.roundNumber}</span>
-                                {match.isBye ? (
-                                  <Badge className="bg-slate-100 text-slate-650 font-black">BYE (Miễn đấu)</Badge>
-                                ) : (
-                                  <Badge className="capitalize">
-                                    {match.status === 'COMPLETED' ? 'Hoàn thành' : match.status === 'ONGOING' ? 'Đang đấu' : 'Chờ đấu'}
-                                  </Badge>
-                                )}
-                              </div>
-
-                              {/* Competitors */}
-                              <div className="space-y-2">
-                                <div className="flex items-center justify-between text-sm">
-                                  <span className={`font-semibold ${match.winnerId === match.participant1?.id && match.winnerId ? 'text-emerald-600 font-black' : 'text-slate-800'}`}>
-                                    {match.participant1?.teamName || (match.isBye ? '—' : 'Chờ đối thủ')}
-                                    {match.participant1?.seed ? ` [Hạt giống ${match.participant1.seed}]` : ''}
-                                  </span>
-                                  {match.status === 'COMPLETED' && !match.isBye && <span className="font-bold text-slate-900">{match.p1SetsWon}</span>}
-                                </div>
-                                <div className="flex items-center justify-between text-sm border-t pt-2 border-dashed">
-                                  <span className={`font-semibold ${match.winnerId === match.participant2?.id && match.winnerId ? 'text-emerald-600 font-black' : 'text-slate-800'}`}>
-                                    {match.participant2?.teamName || (match.isBye ? '—' : 'Chờ đối thủ')}
-                                    {match.participant2?.seed ? ` [Hạt giống ${match.participant2.seed}]` : ''}
-                                  </span>
-                                  {match.status === 'COMPLETED' && !match.isBye && <span className="font-bold text-slate-900">{match.p2SetsWon}</span>}
-                                </div>
-                              </div>
-
-                              {/* Time & Court Details */}
-                              {!match.isBye && (
-                                <div className="bg-slate-50 p-2.5 rounded-lg text-xs font-semibold text-slate-500 space-y-1">
-                                  <div className="flex items-center gap-1.5">
-                                    <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                                    <span>Thời gian: {match.scheduledAt ? new Date(match.scheduledAt).toLocaleString('vi-VN') : 'Chưa xếp'}</span>
-                                  </div>
-                                  <div className="flex items-center gap-1.5">
-                                    <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                                    <span>Sân: {match.courtName || 'Chưa xếp'}</span>
-                                  </div>
-                                </div>
-                              )}
-
-                              {match.status !== 'COMPLETED' && !match.isBye && (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleOpenScheduling(match)}
-                                  className="w-full text-blue-600 border-blue-200 hover:bg-blue-50 font-bold text-xs"
-                                >
-                                  Xếp Sân & Giờ thi đấu
-                                </Button>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ))}
+                {!selectedDivisionId && (
+                  <p className="text-xs text-amber-600 font-semibold">⚠ Vui lòng chọn hình thức thi đấu trước</p>
+                )}
+                {participants.length < 2 && selectedDivisionId && (
+                  <p className="text-xs text-amber-600 font-semibold">⚠ Cần ít nhất 2 đội/VĐV để tạo bracket</p>
+                )}
               </div>
             )}
+            {/* Visual bracket tree — dùng lại BracketTab đã có, truyền onScheduleMatch cho organizer */}
+            <BracketTab
+              tournament={tournament}
+              divisionId={selectedDivisionId || undefined}
+              onScheduleMatch={handleOpenScheduling}
+            />
           </div>
         )}
 
@@ -2305,7 +2407,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
           <div className="bg-white rounded-2xl border border-slate-200 p-6 md:p-8 shadow-sm space-y-6 animate-in fade-in duration-200">
             <h2 className="text-xl font-bold text-slate-900 border-b pb-2 mb-4">Quản lý Tài chính</h2>
 
-            {false && tournament.status === 'REGISTRATION_CLOSED' ? (
+            {false && tournament?.status === 'REGISTRATION_CLOSED' ? (
               <div className="text-center py-16 px-4 bg-slate-50 rounded-2xl border border-dashed flex flex-col items-center">
                 <Lock className="w-12 h-12 text-blue-500 mb-3" />
                 <h4 className="font-bold text-slate-850 text-lg">Chưa thanh toán lệ phí sàn</h4>
@@ -2672,6 +2774,46 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
         </Modal>
       )}
 
+      {/* Delete Division Confirm Modal */}
+      {divisionPendingDelete && (
+        <Modal open={!!divisionPendingDelete} onOpenChange={(open) => !open && setDivisionPendingDelete(null)}>
+          <ModalContent className="max-w-md bg-white p-6 rounded-2xl shadow-xl border">
+            <ModalHeader>
+              <ModalTitle className="text-lg font-black text-slate-900">
+                Xóa hình thức thi đấu?
+              </ModalTitle>
+            </ModalHeader>
+            <div className="mt-4 space-y-4">
+              <div className="rounded-xl border border-red-100 bg-red-50 p-4">
+                <p className="text-sm font-bold text-red-900">
+                  Xác nhận xóa hình thức "{divisionPendingDelete.name}".
+                </p>
+                <p className="mt-1 text-xs text-red-700">
+                  Hành động này chỉ được phép khi hình thức chưa có người chơi đang hoạt động.
+                </p>
+              </div>
+              <div className="flex justify-end gap-3 border-t pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setDivisionPendingDelete(null)}
+                  disabled={isDeletingDivision}
+                  className="border-slate-200 text-slate-650 hover:bg-slate-50 font-bold"
+                >
+                  Hủy
+                </Button>
+                <Button
+                  onClick={handleConfirmDeleteDivision}
+                  disabled={isDeletingDivision}
+                  className="bg-red-600 hover:bg-red-700 text-white font-bold"
+                >
+                  {isDeletingDivision ? 'Đang xóa...' : 'Xóa hình thức'}
+                </Button>
+              </div>
+            </div>
+          </ModalContent>
+        </Modal>
+      )}
+
       {/* Create Division Modal */}
       {isCreateDivisionModalOpen && (
         <Modal open={isCreateDivisionModalOpen} onOpenChange={setIsCreateDivisionModalOpen}>
@@ -2682,33 +2824,77 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
               </ModalTitle>
             </ModalHeader>
             <div className="space-y-4 mt-4">
-              <Input
-                label="Tên hình thức thi đấu"
-                placeholder="Ví dụ: Đôi Nam, Đơn Nữ U18..."
-                value={newDivisionName}
-                onChange={(e) => setNewDivisionName(e.target.value)}
-                className="bg-white"
-              />
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <p className="text-xs font-semibold text-blue-900">
+                  Tên hình thức sẽ tự động được tạo dựa trên loại thi đấu bạn chọn.
+                </p>
+              </div>
               
-              <div className="flex flex-col gap-1.5">
+              <div className="flex flex-col gap-2">
                 <label className="text-sm font-semibold text-slate-700">Thể thức thi đấu</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { value: 'MALE_SINGLES', label: 'Đơn Nam', icon: '1' },
+                    { value: 'FEMALE_SINGLES', label: 'Đơn Nữ', icon: '1' },
+                    { value: 'MALE_DOUBLES', label: 'Đôi Nam', icon: '2' },
+                    { value: 'FEMALE_DOUBLES', label: 'Đôi Nữ', icon: '2' },
+                    { value: 'MIXED_DOUBLES', label: 'Nam Nữ', icon: 'M' },
+                  ].map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => setNewDivisionMatchType(option.value)}
+                      className={`rounded-xl border p-3 text-left transition-all ${
+                        newDivisionMatchType === option.value
+                          ? 'border-blue-600 bg-blue-50 ring-2 ring-blue-100'
+                          : 'border-slate-200 bg-white hover:border-blue-300 hover:bg-slate-50'
+                      }`}
+                    >
+                      <span className={`mb-2 inline-flex h-7 w-7 items-center justify-center rounded-lg text-xs font-black ${
+                        newDivisionMatchType === option.value ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-500'
+                      }`}>
+                        {option.icon}
+                      </span>
+                      <span className="block text-sm font-black text-slate-900">{option.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-semibold text-slate-700">Loại giải đấu</label>
                 <select
-                  value={newDivisionMatchType}
-                  onChange={(e) => setNewDivisionMatchType(e.target.value)}
+                  value={newDivisionBracketType}
+                  onChange={(e) => setNewDivisionBracketType(e.target.value)}
                   className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-11"
                 >
-                  <option value="MALE_SINGLES">Đơn Nam</option>
-                  <option value="FEMALE_SINGLES">Đơn Nữ</option>
-                  <option value="MALE_DOUBLES">Đôi Nam</option>
-                  <option value="FEMALE_DOUBLES">Đôi Nữ</option>
-                  <option value="MIXED_DOUBLES">Đôi Nam Nữ (Mixed Doubles)</option>
+                  <option value="SINGLE_ELIMINATION">Loại đơn (Single Elimination)</option>
+                  <option value="DOUBLE_ELIMINATION">Loại kép (Double Elimination)</option>
+                  <option value="ROUND_ROBIN">Vòng tròn (Round Robin)</option>
                 </select>
               </div>
+
+              {divisions.length > 0 && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-2">
+                  <p className="text-xs font-semibold text-amber-900">Hình thức đã có:</p>
+                  <div className="space-y-1">
+                    {divisions.map((div) => (
+                      <div key={div.id} className="text-xs text-amber-800 flex items-center gap-1.5">
+                        <span>{div.name || getFormatLabel(div.matchType || '', div.genderRestriction)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="flex justify-end gap-3 pt-4 border-t mt-4">
                 <Button
                   variant="outline"
-                  onClick={() => setIsCreateDivisionModalOpen(false)}
+                  onClick={() => {
+                    setIsCreateDivisionModalOpen(false);
+                    setNewDivisionMatchType('MALE_DOUBLES');
+                    setNewDivisionBracketType('SINGLE_ELIMINATION');
+                  }}
                   disabled={isCreatingDivision}
                   className="border-slate-200 text-slate-650 hover:bg-slate-50 font-bold"
                 >
@@ -2716,7 +2902,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                 </Button>
                 <Button
                   onClick={handleCreateDivision}
-                  disabled={isCreatingDivision || !newDivisionName.trim()}
+                  disabled={isCreatingDivision}
                   className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5"
                 >
                   {isCreatingDivision ? 'Đang tạo...' : 'Khởi tạo'}

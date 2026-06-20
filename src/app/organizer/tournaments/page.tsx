@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
@@ -8,26 +9,86 @@ import { tournamentsApi } from '@/features/tournaments/api';
 import { Trophy, Calendar, Users, Plus, Eye, Settings, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
+import { getErrorMessage } from '@/utils/error';
+import { Tournament } from '@/types/tournament';
+
+interface ParentWithDivisions {
+  id: string;
+  name: string;
+  description?: string | null;
+  bannerUrl?: string | null;
+  logoUrl?: string | null;
+  divisions: Tournament[];
+  isStandalone?: boolean;
+}
 
 const stripHtml = (html?: string | null) => {
   if (!html) return '';
   return html.replace(/<[^>]*>/g, '').trim();
 };
 
+const getDefaultBanner = (categoryName?: string | null) => {
+  const name = (categoryName || '').toLowerCase();
+  if (name.includes('cầu lông') || name.includes('badminton')) {
+    return 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=800&auto=format&fit=crop&q=80';
+  }
+  if (name.includes('tennis') || name.includes('quần vợt')) {
+    return 'https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?w=800&auto=format&fit=crop&q=80';
+  }
+  if (name.includes('bóng bàn') || name.includes('ping pong') || name.includes('table tennis')) {
+    return 'https://images.unsplash.com/photo-1534158914592-062992fbe900?w=800&auto=format&fit=crop&q=80';
+  }
+  if (name.includes('bóng đá') || name.includes('soccer') || name.includes('football')) {
+    return 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=800&auto=format&fit=crop&q=80';
+  }
+  if (name.includes('bóng rổ') || name.includes('basketball')) {
+    return 'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=800&auto=format&fit=crop&q=80';
+  }
+  return 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=800&auto=format&fit=crop&q=80';
+};
+
+const getFormatLabel = (matchType: string, genderRestriction?: string | null) => {
+  const mt = matchType || '';
+  const gr = genderRestriction || '';
+  if (mt === 'SINGLES') {
+    return gr === 'FEMALE' ? 'Đơn Nữ' : 'Đơn Nam';
+  }
+  if (mt === 'DOUBLES') {
+    return gr === 'FEMALE' ? 'Đôi Nữ' : 'Đôi Nam';
+  }
+  if (mt === 'MIXED_DOUBLES' || mt === 'MIXED' || gr === 'MIXED') {
+    return 'Đôi Nam Nữ';
+  }
+  return mt;
+};
+
+const getDivisionIcon = (matchType?: string, genderRestriction?: string | null) => {
+  const mt = matchType || '';
+  const gr = genderRestriction || '';
+  if (mt === 'SINGLES') {
+    return gr === 'FEMALE' ? '♀️' : '♂️';
+  }
+  if (mt === 'DOUBLES' || mt === 'MIXED_DOUBLES' || mt === 'MIXED') {
+    return gr === 'FEMALE' ? '👩‍👩' : gr === 'MIXED' ? '👥' : '👨‍👨';
+  }
+  return '🏆';
+};
+
 export default function MyTournamentsPage() {
-  const [parents, setParents] = useState<any[]>([]);
+  const router = useRouter();
+  const [parents, setParents] = useState<ParentWithDivisions[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchTournaments = async () => {
       try {
-        // Fetch Parent Tournaments which group divisions
+        // Fetch giải đấu lớn (parent tournaments) - mỗi giải chứa nhiều hình thức thi đấu
         const res = await tournamentsApi.getMyParentTournaments();
-        let parentsWithDivisions: any[] = [];
+        let parentsWithDivisions: ParentWithDivisions[] = [];
         
         if (res.data) {
           parentsWithDivisions = await Promise.all(
-            res.data.map(async (p) => {
+            res.data.map(async (p: { id: string }) => {
               const detail = await tournamentsApi.getParentTournamentById(p.id);
               return detail.data;
             })
@@ -62,7 +123,7 @@ export default function MyTournamentsPage() {
 
   const handleDeleteParent = async (id: string, isStandalone: boolean, e: React.MouseEvent) => {
     e.preventDefault();
-    if (!confirm('Bạn có chắc chắn muốn xoá giải đấu này không? Toàn bộ các hình thức/vòng đấu bên trong (nếu có) cũng sẽ bị xoá và không thể khôi phục.')) return;
+    if (!confirm('Bạn có chắc chắn muốn xoá giải đấu này không? Toàn bộ các hình thức thi đấu bên trong (nếu có) cũng sẽ bị xoá và không thể khôi phục.')) return;
     try {
       if (isStandalone) {
         await tournamentsApi.deleteTournament(id);
@@ -72,7 +133,7 @@ export default function MyTournamentsPage() {
       setParents(parents.filter(p => p.id !== id));
       toast.success('Đã xoá giải đấu thành công');
     } catch (err) {
-      toast.error('Có lỗi xảy ra khi xoá giải đấu');
+      toast.error(getErrorMessage(err, 'Có lỗi xảy ra khi xoá giải đấu'));
     }
   };
 
@@ -121,7 +182,7 @@ export default function MyTournamentsPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
             <h1 className="text-3xl font-black text-slate-900">Giải Đấu Của Tôi</h1>
-            <p className="text-slate-500 mt-1 font-medium">Quản lý các chuỗi giải đấu và hình thức thi đấu đã tạo</p>
+            <p className="text-slate-500 mt-1 font-medium">Quản lý các Giải đấu đã tạo</p>
           </div>
           <Link href="/organizer/tournaments/create">
             <Button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold flex items-center gap-2 px-5 py-2.5 shadow-md shadow-blue-500/20">
@@ -137,7 +198,7 @@ export default function MyTournamentsPage() {
             </div>
             <h3 className="text-xl font-bold text-slate-900">Chưa có giải đấu nào</h3>
             <p className="text-slate-500 mt-2 font-medium max-w-sm">
-              Bạn chưa tạo bất kỳ giải đấu nào. Hãy tạo giải đấu đầu tiên của bạn để kết nối những người đam mê thể thao!
+              Bạn chưa tạo bất kỳ Giải đấu nào. Hãy tạo Giải đấu đầu tiên của bạn để kết nối những người đam mê thể thao!
             </p>
             <Link href="/organizer/tournaments/create" className="mt-6">
               <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6">Tạo giải đấu đầu tiên</Button>
@@ -148,7 +209,11 @@ export default function MyTournamentsPage() {
             {parents.map((parent) => {
               const divisions = parent.divisions || [];
               const firstDivision = divisions[0];
-              const totalParticipants = divisions.reduce((acc: number, div: any) => acc + (div._summary?.participantCount || 0), 0);
+              const totalParticipants = divisions.reduce((acc: number, div: Tournament) => acc + (div._summary?.participantCount || 0), 0);
+              const publicHref = `/tournaments/${parent.isStandalone ? (firstDivision?.id || parent.id) : parent.id}`;
+              const manageHref = parent.isStandalone
+                ? `/organizer/tournaments/${firstDivision?.id || parent.id}/manage`
+                : `/organizer/tournaments/${parent.id}/manage`;
 
               return (
                 <div 
@@ -157,89 +222,88 @@ export default function MyTournamentsPage() {
                 >
                   {/* Visual Header */}
                   <div className="relative h-32 bg-slate-100 overflow-hidden group">
-                    {parent.bannerUrl ? (
-                      <Link href={`/tournaments/${firstDivision?.id || parent.id}`} target="_blank" className="block w-full h-full">
-                        <img 
-                          src={parent.bannerUrl} 
-                          alt={parent.name} 
-                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" 
-                        />
-                      </Link>
-                    ) : (
-                      <Link href={`/tournaments/${firstDivision?.id || parent.id}`} target="_blank" className="block w-full h-full bg-slate-200 flex items-center justify-center">
-                        <Trophy className="w-8 h-8 text-slate-400" />
-                      </Link>
-                    )}
+                    <Link href={publicHref} target="_blank" className="block w-full h-full">
+                      <img 
+                        src={parent.bannerUrl || firstDivision?.bannerUrl || getDefaultBanner(firstDivision?.category?.name || parent.name)} 
+                        alt={parent.name} 
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" 
+                      />
+                    </Link>
                     
                     {/* Status & Action Badges */}
-                    <div className="absolute top-2 right-2 flex items-center gap-1 z-10">
+                    <div className="absolute top-1.5 right-1.5 flex items-center gap-1 z-10">
                       {firstDivision && getStatusBadge(firstDivision.status)}
-                      <span className="px-1.5 py-0.5 bg-blue-600 text-white rounded text-[8px] font-black uppercase tracking-wider">
-                        {divisions.length} Hình thức
+                      <span className="px-1 py-0.5 bg-blue-600 text-white rounded text-[7px] font-black uppercase tracking-wider">
+                        {divisions.length} Hình thức thi đấu
                       </span>
                       <button
                         type="button"
-                        className="w-5 h-5 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center transition-colors shadow-sm cursor-pointer"
+                        className="w-4 h-4 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center transition-colors shadow-sm cursor-pointer"
                         onClick={(e) => handleDeleteParent(parent.id, parent.isStandalone || false, e)}
                         title="Xoá giải đấu"
                       >
-                        <Trash2 className="w-3 h-3" />
+                        <Trash2 className="w-2.5 h-2.5" />
                       </button>
                     </div>
 
                     {/* Category Name Badge (neatly positioned, high contrast, no blur) */}
-                    <div className="absolute bottom-2 left-2 z-10">
-                      <span className="bg-slate-900/90 text-white px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider">
+                    <div className="absolute bottom-1.5 left-1.5 z-10">
+                      <span className="bg-slate-900/90 text-white px-1 py-0.5 rounded text-[7px] font-black uppercase tracking-wider">
                         {firstDivision?.category?.name || 'MULTISPORT'}
                       </span>
                     </div>
                   </div>
 
                   {/* Content */}
-                  <div className="p-4 flex-grow">
-                    <h3 className="text-sm font-black text-slate-900 line-clamp-1">
+                  <div className="p-2.5 flex-grow">
+                    <h3 className="text-xs font-black text-slate-900 line-clamp-1">
                       {parent.name}
                     </h3>
-                    <p className="text-slate-500 text-[11px] mt-1.5 line-clamp-2 h-7 font-medium leading-relaxed">
-                      {stripHtml(parent.description) || 'Giải đấu tập hợp nhiều hình thức thi đấu chuyên nghiệp.'}
-                    </p>
 
                     {/* Division Tags */}
-                    <div className="flex flex-wrap gap-1 mt-3">
-                      {divisions.slice(0, 3).map((div: any) => (
-                        <span key={div.id} className="px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded text-[8px] font-bold border border-slate-200">
-                          {div.matchType}
-                        </span>
+                    <div className="flex flex-wrap gap-1 mt-1.5">
+                      {divisions.slice(0, 3).map((div: Tournament) => (
+                        <button
+                          key={div.id}
+                          onClick={() => router.push(parent.isStandalone ? `/organizer/tournaments/${div.id}/manage` : `/organizer/tournaments/${parent.id}/manage?divisionId=${div.id}`)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-xs font-extrabold border border-slate-200 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-colors cursor-pointer active:scale-95"
+                        >
+                          <span>{getDivisionIcon(div.matchType, div.genderRestriction)}</span>
+                          <span>{div.name || getFormatLabel(div.matchType || '', div.genderRestriction)}</span>
+                          {div.tournamentConfig?.bracketType && (
+                            <span className="text-[8px] opacity-60">• {div.tournamentConfig.bracketType === 'SINGLE_ELIMINATION' ? 'Loại đơn' : div.tournamentConfig.bracketType === 'DOUBLE_ELIMINATION' ? 'Loại kép' : 'Vòng tròn'}</span>
+                          )}
+                        </button>
                       ))}
                       {divisions.length > 3 && (
-                        <span className="px-1.5 py-0.5 bg-slate-50 text-slate-400 rounded text-[8px] font-bold">
+                        <span className="px-2 py-1 bg-slate-50 text-slate-400 rounded text-xs font-bold">
                           +{divisions.length - 3} khác
                         </span>
                       )}
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-slate-100 text-slate-500 text-[9px] font-bold uppercase tracking-wider">
+                    <div className="grid grid-cols-2 gap-1.5 mt-2 pt-2 border-t border-slate-100 text-slate-500 text-[8px] font-bold uppercase tracking-wider">
                       <div className="flex items-center gap-1">
-                        <Calendar className="w-3 h-3 text-slate-400" />
+                        <Calendar className="w-2.5 h-2.5 text-slate-400" />
                         <span>{firstDivision?.startDate ? new Date(firstDivision.startDate).toLocaleDateString('vi-VN') : 'Chưa xếp lịch'}</span>
                       </div>
                       <div className="flex items-center gap-1">
-                        <Users className="w-3 h-3 text-slate-400" />
+                        <Users className="w-2.5 h-2.5 text-slate-400" />
                         <span>{totalParticipants} VĐV đã ĐK</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Action Footer */}
-                  <div className="bg-slate-50 border-t border-slate-100 p-3">
+                  <div className="bg-slate-50 border-t border-slate-100 p-2">
                     {firstDivision ? (
-                      <Link href={`/organizer/tournaments/${firstDivision.id}/manage`} className="block">
-                        <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-1.5 font-bold shadow-sm shadow-blue-500/10 h-9 text-xs">
-                          <Settings className="w-3.5 h-3.5" /> Quản lý giải đấu
+                      <Link href={manageHref} className="block">
+                        <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-1 font-bold shadow-sm shadow-blue-500/10 h-7 text-[10px] active:scale-95 transition-transform duration-100">
+                          <Settings className="w-3 h-3" /> Quản lý giải đấu
                         </Button>
                       </Link>
                     ) : (
-                      <Button disabled className="w-full bg-slate-300 text-white font-bold h-9 text-xs">
+                      <Button disabled className="w-full bg-slate-300 text-white font-bold h-7 text-[10px]">
                         Chưa có vòng đấu
                       </Button>
                     )}

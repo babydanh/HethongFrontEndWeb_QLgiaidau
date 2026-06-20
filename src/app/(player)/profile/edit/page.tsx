@@ -58,6 +58,7 @@ export default function EditProfilePage() {
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [isUploadingCover, setIsUploadingCover] = useState(false);
 
   // Fetch provinces list
   useEffect(() => {
@@ -165,9 +166,7 @@ export default function EditProfilePage() {
       setIsUploadingAvatar(true);
       
       const response = await usersApi.uploadAvatar(file);
-      const responseObj = response as Record<string, unknown>;
-      const profileObj = responseObj.profile as Record<string, unknown> | undefined;
-      const url = (responseObj.avatarUrl as string | undefined) || (profileObj?.avatarUrl as string | undefined);
+      const url = response.avatarUrl || undefined;
 
       
       // Update store user locally so it reflects immediately
@@ -181,6 +180,32 @@ export default function EditProfilePage() {
       toast.error(getErrorMessage(error));
     } finally {
       setIsUploadingAvatar(false);
+    }
+  };
+
+  const handleCoverChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Kích thước ảnh không được vượt quá 5MB');
+      return;
+    }
+
+    try {
+      setIsUploadingCover(true);
+      const response = await usersApi.uploadCover(file);
+      const url = response.coverUrl || undefined;
+
+      const currentUser = useAuthStore.getState().user;
+      if (currentUser && url) {
+        useAuthStore.getState().setUser({ ...currentUser, coverUrl: url });
+      }
+      toast.success('Đã cập nhật ảnh bìa');
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    } finally {
+      setIsUploadingCover(false);
     }
   };
 
@@ -264,6 +289,37 @@ export default function EditProfilePage() {
           
           {activeTab === 'profile' && (
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
+              {/* Cover Photo Banner Preview & Upload */}
+              <div className="h-32 bg-slate-900 relative group overflow-hidden">
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  className="hidden" 
+                  id="profile-cover-upload"
+                  onChange={handleCoverChange} 
+                />
+                {user?.coverUrl ? (
+                  <img 
+                    src={user.coverUrl} 
+                    alt="Cover" 
+                    className="w-full h-full object-cover" 
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 opacity-80"></div>
+                )}
+                <label 
+                  htmlFor="profile-cover-upload"
+                  className="absolute bottom-3 right-3 bg-black/60 hover:bg-black/85 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors backdrop-blur-sm"
+                >
+                  {isUploadingCover ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Camera className="w-3.5 h-3.5" />
+                  )}
+                  {isUploadingCover ? 'Đang tải...' : 'Thay đổi ảnh bìa'}
+                </label>
+              </div>
+
               <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
                 <User className="w-5 h-5 text-blue-600" />
                 <h2 className="text-lg font-bold text-slate-900">Thông tin cá nhân</h2>
@@ -305,12 +361,10 @@ export default function EditProfilePage() {
                         <p className="text-xs font-semibold text-red-500">{profileForm.formState.errors.gender.message}</p>
                       )}
                     </div>
-                  </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <div className="flex flex-col gap-1.5">
                       <label className="text-sm font-semibold text-slate-700 flex items-center gap-1.5">
-                        <MapPin className="w-4 h-4 text-slate-450" /> Khu vực tranh tài (Tỉnh / Thành phố)
+                        <MapPin className="w-4 h-4 text-slate-400" /> Khu vực tranh tài
                       </label>
                       <select
                         className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
@@ -322,17 +376,17 @@ export default function EditProfilePage() {
                         ))}
                       </select>
                       {profileForm.formState.errors.provinceCode && (
-                        <p className="text-xs font-semibold text-red-550">{profileForm.formState.errors.provinceCode.message}</p>
+                        <p className="text-xs font-semibold text-red-500">{profileForm.formState.errors.provinceCode.message}</p>
                       )}
                     </div>
-                    
-                    <Input
-                      label="Địa chỉ chi tiết"
-                      placeholder="Nhập địa chỉ cụ thể của bạn"
-                      {...profileForm.register('address')}
-                      error={profileForm.formState.errors.address?.message}
-                    />
                   </div>
+
+                  <Input
+                    label="Địa chỉ chi tiết"
+                    placeholder="Nhập địa chỉ cụ thể của bạn"
+                    {...profileForm.register('address')}
+                    error={profileForm.formState.errors.address?.message}
+                  />
 
                   <div className="flex flex-col gap-1.5">
                     <label className="text-sm font-semibold text-slate-700">Giới thiệu bản thân</label>

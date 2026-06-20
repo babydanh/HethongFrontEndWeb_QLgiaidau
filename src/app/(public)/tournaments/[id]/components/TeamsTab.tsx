@@ -1,14 +1,17 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Tournament, tournamentsApi, TournamentParticipant } from '@/features/tournaments/api';
+import { Tournament, tournamentsApi, TournamentParticipant, divisionsApi } from '@/features/tournaments/api';
 import { ChevronDown, ChevronUp, User, Award } from 'lucide-react';
+import Link from 'next/link';
 
 interface Props {
   tournament: Tournament;
+  tournamentId?: string;
+  divisionId?: string;
 }
 
-export default function TeamsTab({ tournament }: Props) {
+export default function TeamsTab({ tournament, tournamentId, divisionId }: Props) {
   const [participants, setParticipants] = useState<TournamentParticipant[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [expandedTeamId, setExpandedTeamId] = useState<string | null>(null);
@@ -17,7 +20,9 @@ export default function TeamsTab({ tournament }: Props) {
     const fetchParticipants = async () => {
       setIsLoading(true);
       try {
-        const res = await tournamentsApi.getTournamentParticipants(tournament.id);
+        const res = divisionId
+          ? await divisionsApi.getDivisionParticipants(tournamentId ?? tournament.id, divisionId)
+          : await tournamentsApi.getTournamentParticipants(tournamentId ?? tournament.id);
         setParticipants(res.data);
       } catch (error) {
         console.warn('Could not fetch participants:', error);
@@ -26,7 +31,7 @@ export default function TeamsTab({ tournament }: Props) {
       }
     };
     fetchParticipants();
-  }, [tournament.id]);
+  }, [divisionId, tournament.id, tournamentId]);
 
   const toggleExpand = (teamId: string) => {
     setExpandedTeamId(expandedTeamId === teamId ? null : teamId);
@@ -108,7 +113,7 @@ export default function TeamsTab({ tournament }: Props) {
                                   key={member.userId} 
                                   className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between"
                                 >
-                                  <div className="flex items-center gap-3">
+                                  <Link href={`/users/${member.userId}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
                                     <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center font-bold text-slate-600 text-sm overflow-hidden">
                                       {member.avatarUrl ? (
                                         <img src={member.avatarUrl} alt={member.fullName || ''} className="w-full h-full object-cover" />
@@ -123,7 +128,7 @@ export default function TeamsTab({ tournament }: Props) {
                                         <span>{member.elo.tierName} • <strong>{member.elo.eloPoints}</strong> ELO</span>
                                       </p>
                                     </div>
-                                  </div>
+                                  </Link>
                                   <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold uppercase border ${
                                     member.role === 'CAPTAIN' 
                                       ? 'bg-blue-50 text-blue-700 border-blue-200' 

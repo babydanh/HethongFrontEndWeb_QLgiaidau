@@ -37,10 +37,10 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
   const fetchData = async () => {
     try {
       const cRes = await communitiesApi.getCommunityById(id);
-      setCommunity((cRes as any)?.data || cRes);
+      setCommunity((cRes as { data?: Community })?.data || (cRes as unknown as Community));
 
       const tRes = await communitiesApi.getTournaments(id);
-      setTournaments((tRes as any)?.data || tRes || []);
+      setTournaments((tRes as { data?: Tournament[] })?.data || (tRes as unknown as Tournament[]) || []);
 
       const catRes = await categoriesApi.getCategories();
       if (catRes.data) {
@@ -93,7 +93,6 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
         matchType: newTourneyMatchType,
         maxParticipants: newTourneyMaxParticipants,
         entryFee: 0,
-        platformFeePerPlayer: 0,
         sportRules: {
           setsToWin: 2,
           pointsPerSet: 21,

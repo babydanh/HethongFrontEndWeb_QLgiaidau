@@ -68,7 +68,7 @@ export default function MembersTab({
         setIsLoading(true);
       }
       const res = await communitiesApi.getMembers(communityId);
-      const data = res.data || res || [];
+      const data = res.data || [];
       // Only keep JOINED status members for the active list
       const joinedOnly = data.filter((m: MemberData) => m.member?.status === 'JOINED');
       setMembers(joinedOnly);
@@ -96,10 +96,15 @@ export default function MembersTab({
           setIsSearchingUsers(true);
           const results = await usersApi.searchUsers(inviteSearch);
           // Filter out existing members
-          const filtered = results.filter(
-            (u: UserSearchResult) => !members.some(m => m.user?.id === u.id)
-          );
-          setInviteResults(filtered || []);
+          const filtered: UserSearchResult[] = (results || []).filter(
+            (u) => !members.some(m => m.user?.id === u.id)
+          ).map(u => ({
+            id: u.id,
+            email: u.email || '',
+            fullName: u.fullName || undefined,
+            avatarUrl: u.avatarUrl || undefined,
+          }));
+          setInviteResults(filtered);
         } catch (error) {
           console.error(error);
         } finally {

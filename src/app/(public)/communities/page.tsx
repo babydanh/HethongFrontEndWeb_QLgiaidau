@@ -23,7 +23,7 @@ export default function CommunitiesPage() {
     if (user) {
       try {
         const res = await communitiesApi.getMyCommunities();
-        const list = res.data || res || [];
+        const list = res.data || [];
         setMyCommunityIds(new Set(list.map((c: Community) => c.id)));
       } catch (err) {
         console.error("Failed to load my communities", err);

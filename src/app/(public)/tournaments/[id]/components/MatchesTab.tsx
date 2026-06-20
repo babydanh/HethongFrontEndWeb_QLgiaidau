@@ -2,14 +2,17 @@
 
 import { useEffect, useState } from 'react';
 import { Tournament, BracketMatch, tournamentsApi } from '@/features/tournaments/api';
-import { Calendar, Play, Trophy, MapPin } from 'lucide-react';
+import { Calendar, Play, Trophy, MapPin, Info } from 'lucide-react';
 import Link from 'next/link';
 
 interface Props {
   tournament: Tournament;
+  tournamentId?: string;
+  divisionId?: string;
 }
 
-export default function MatchesTab({ tournament }: Props) {
+export default function MatchesTab({ tournament, tournamentId, divisionId }: Props) {
+  const effectiveTournamentId = tournamentId ?? tournament.id;
   const [matches, setMatches] = useState<BracketMatch[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -17,24 +20,28 @@ export default function MatchesTab({ tournament }: Props) {
     const fetchMatches = async () => {
       setIsLoading(true);
       try {
-        // Fetch all matches for this tournament by overriding the default status filter
-        const res = await tournamentsApi.getOngoingMatches({
-          tournament_id: tournament.id,
-          status: '', // Overrides default status filter
+        const matchParams: Record<string, string | number> = {
+          tournament_id: effectiveTournamentId,
+          status: '', // Overrides default status filter to get all matches
           limit: 100,
-        });
+        };
+        if (divisionId) {
+          matchParams.division_id = divisionId;
+        }
+
+        const res = await tournamentsApi.getOngoingMatches(matchParams);
         if (res && res.data) {
           setMatches(res.data);
         }
       } catch (error) {
-        console.error('Failed to fetch matches', error);
+        console.error('Failed to fetch matches for division:', { tournamentId: effectiveTournamentId, divisionId }, error);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchMatches();
-  }, [tournament.id]);
+  }, [divisionId, effectiveTournamentId]);
 
   if (isLoading) {
     return <div className="animate-pulse bg-slate-900/10 h-64 rounded-2xl w-full"></div>;
@@ -79,9 +86,47 @@ export default function MatchesTab({ tournament }: Props) {
     }
   };
 
+  const renderParticipantName = (
+    participant: { id: string; teamName: string; members?: { userId: string; fullName: string | null }[] } | null,
+    isWinner: boolean,
+    isCompleted: boolean
+  ) => {
+    if (!participant) return <span className="text-slate-400 font-medium">TBD</span>;
+    if (participant.members && participant.members.length > 0) {
+      return (
+        <span className={`text-sm font-bold flex items-center gap-1.5 flex-wrap ${
+          isCompleted ? (isWinner ? 'text-slate-900' : 'text-slate-400') : 'text-slate-800'
+        }`}>
+          {participant.members.map((m, idx) => (
+            <span key={m.userId} className="inline-flex items-center">
+              <Link href={`/users/${m.userId}`} className="hover:text-indigo-600 hover:underline transition-colors">
+                {m.fullName || 'Thành viên'}
+              </Link>
+              {idx < participant.members!.length - 1 && <span className="text-slate-450 mx-1">/</span>}
+            </span>
+          ))}
+        </span>
+      );
+    }
+    return (
+      <span className={`text-sm font-bold truncate ${
+        isCompleted ? (isWinner ? 'text-slate-900' : 'text-slate-400') : 'text-slate-800'
+      }`}>
+        {participant.teamName}
+      </span>
+    );
+  };
+
+  const sortedMatches = [...matches].sort((a, b) => {
+    if (a.roundNumber !== b.roundNumber) {
+      return a.roundNumber - b.roundNumber;
+    }
+    return a.matchOrder - b.matchOrder;
+  });
+
   // Group matches by Stage / Group name
   const groupedMatches: Record<string, BracketMatch[]> = {};
-  for (const m of matches) {
+  for (const m of sortedMatches) {
     const stageName = m.group?.stage?.name || m.group?.name || 'Vòng Đấu';
     if (!groupedMatches[stageName]) {
       groupedMatches[stageName] = [];
@@ -93,6 +138,15 @@ export default function MatchesTab({ tournament }: Props) {
 
   return (
     <div className="flex flex-col gap-6">
+      {/* Division Info Header */}
+      <div className="flex items-center gap-2 text-xs text-slate-500 font-semibold pb-3 border-b border-slate-150">
+        <Info className="w-3.5 h-3.5 text-slate-400" />
+        <span>Phân hạng: <strong className="text-slate-700">{tournament.name}</strong></span>
+        {tournament.genderRestriction && (
+          <span className="text-slate-400">• {tournament.genderRestriction}</span>
+        )}
+      </div>
+
       <div className="flex justify-between items-center pb-2 border-b border-slate-100">
         <h3 className="text-lg font-bold text-slate-900">Lịch Thi Đấu & Kết Quả</h3>
         <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full">
@@ -144,9 +198,7 @@ export default function MatchesTab({ tournament }: Props) {
                         <div className="flex justify-between items-center">
                           <div className="flex items-center gap-2 max-w-[70%]">
                             {isP1Winner && <Trophy className="w-4 h-4 text-amber-500 shrink-0" />}
-                            <span className={`text-sm font-bold truncate ${isCompleted ? (isP1Winner ? 'text-slate-900' : 'text-slate-400') : 'text-slate-800'}`}>
-                              {match.participant1?.teamName || 'TBD'}
-                            </span>
+                            {renderParticipantName(match.participant1, isP1Winner, isCompleted)}
                             {match.participant1?.seed && (
                               <span className="text-[10px] bg-slate-100 text-slate-400 border border-slate-200 px-1 py-0.2 rounded font-semibold shrink-0">
                                 #{match.participant1.seed}
@@ -177,9 +229,7 @@ export default function MatchesTab({ tournament }: Props) {
                         <div className="flex justify-between items-center">
                           <div className="flex items-center gap-2 max-w-[70%]">
                             {isP2Winner && <Trophy className="w-4 h-4 text-amber-500 shrink-0" />}
-                            <span className={`text-sm font-bold truncate ${isCompleted ? (isP2Winner ? 'text-slate-900' : 'text-slate-400') : 'text-slate-800'}`}>
-                              {match.participant2?.teamName || 'TBD'}
-                            </span>
+                            {renderParticipantName(match.participant2, isP2Winner, isCompleted)}
                             {match.participant2?.seed && (
                               <span className="text-[10px] bg-slate-100 text-slate-400 border border-slate-200 px-1 py-0.2 rounded font-semibold shrink-0">
                                 #{match.participant2.seed}
@@ -239,7 +289,7 @@ export default function MatchesTab({ tournament }: Props) {
       ) : (
         <div className="text-center py-16 border-2 border-dashed border-slate-100 rounded-2xl text-slate-450 bg-white">
           <Calendar className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-          <p className="font-semibold text-sm text-slate-500">Chưa có lịch thi đấu.</p>
+          <p className="font-semibold text-sm text-slate-500">Chưa có lịch thi đấu cho phân hạng này.</p>
           <p className="text-xs text-slate-400 mt-1">Lịch đấu sẽ được tạo sau khi ban tổ chức bốc thăm sơ đồ.</p>
         </div>
       )}

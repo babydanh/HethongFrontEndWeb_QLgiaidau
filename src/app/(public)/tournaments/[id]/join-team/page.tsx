@@ -122,6 +122,44 @@ export default function JoinTeamPage({ params }: { params: Promise<{ id: string 
 
   if (!tournament || !participant) return null;
 
+  const isLocked = tournament.isRegistrationLocked;
+  const isExpired = tournament.registrationEndDate ? new Date() > new Date(tournament.registrationEndDate) : false;
+  const isNotOpen = tournament.status !== 'REGISTRATION_OPEN';
+
+  if (isLocked || isExpired || isNotOpen) {
+    let title = 'Đăng ký đã đóng';
+    let message = 'Giải đấu hiện không nhận đăng ký mới.';
+    if (isLocked) {
+      title = 'Đăng ký đã khóa';
+      message = 'Giải đấu đã tạm ngưng nhận đăng ký mới từ Ban tổ chức.';
+    } else if (isExpired) {
+      title = 'Đăng ký hết hạn';
+      message = 'Hạn đăng ký giải đấu này đã kết thúc.';
+    }
+
+    return (
+      <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
+        <div className="max-w-md w-full bg-white p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+          <div className="flex flex-col items-center text-center space-y-3">
+            <div className="w-12 h-12 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center">
+              <AlertTriangle className="w-6 h-6 text-rose-600" />
+            </div>
+            <h2 className="text-xl font-bold text-slate-900">{title}</h2>
+            <p className="text-slate-550 text-xs leading-relaxed font-semibold">{message}</p>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => router.push(`/tournaments/${tournament.id}`)}
+            className="w-full border-slate-200 hover:bg-slate-50 text-slate-650 text-xs font-bold"
+          >
+            Quay lại trang giải đấu
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   const leader = participant.members?.find(m => m.role === 'MAIN') || participant.members?.[0];
   const isTeamFull = participant.members?.length >= 2;
 

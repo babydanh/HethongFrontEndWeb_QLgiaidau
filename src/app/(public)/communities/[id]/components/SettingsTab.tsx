@@ -8,7 +8,7 @@ import {
   Trash2, ShieldCheck, MapPin, AlignLeft, ListChecks
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { Community, communitiesApi } from '@/features/communities/api';
+import { Community, communitiesApi, CommunityMemberRecord } from '@/features/communities/api';
 import { uploadApi } from '@/features/upload/api';
 import { usersApi } from '@/features/users/api';
 import { categoriesApi, Category } from '@/features/categories/api';
@@ -26,10 +26,7 @@ interface JoinRequest {
   };
 }
 
-interface CommunityMemberRecord {
-  member?: { id?: string; userId?: string; status?: string; role?: string };
-  user?: { id?: string; email?: string; avatarUrl?: string; fullName?: string; profile?: { fullName?: string } };
-}
+
 
 interface UserSearchResult {
   id: string;
@@ -39,7 +36,7 @@ interface UserSearchResult {
 }
 
 export default function SettingsTab({ community }: { community: Community }) {
-  const [requests, setRequests] = useState<JoinRequest[]>([]);
+  const [requests, setRequests] = useState<CommunityMemberRecord[]>([]);
   const [isLoadingRequests, setIsLoadingRequests] = useState(true);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   
@@ -175,9 +172,9 @@ export default function SettingsTab({ community }: { community: Community }) {
           communitiesApi.getMembers(community.id)
         ]);
         if (!active) return;
-        setRequests(reqRes.data || reqRes || []);
-        const allMembers = memRes.data || memRes || [];
-        setInvitedMembers((allMembers as CommunityMemberRecord[]).filter((m) => m.member?.status === 'INVITED'));
+        setRequests(reqRes.data || []);
+        const allMembers = memRes.data || [];
+        setInvitedMembers(allMembers.filter((m) => m.member?.status === 'INVITED'));
       } catch (error) {
         console.error('Failed to fetch requests/invitations', error);
       } finally {
@@ -217,7 +214,13 @@ export default function SettingsTab({ community }: { community: Community }) {
         setIsSearchingUsers(true);
         const list = await usersApi.searchUsers(userSearchQuery);
         // Exclude users already invited or in requests
-        setSearchResults(list.data || list || []);
+        const mappedList: UserSearchResult[] = (list || []).map(u => ({
+          id: u.id,
+          email: u.email || '',
+          fullName: u.fullName || undefined,
+          avatarUrl: u.avatarUrl || undefined,
+        }));
+        setSearchResults(mappedList);
       } catch (error) {
         console.error('Search users error', error);
       } finally {
@@ -722,43 +725,53 @@ export default function SettingsTab({ community }: { community: Community }) {
             <div className="text-slate-500 text-center py-4 text-sm">Chưa có đơn xin nào.</div>
           ) : (
             <div className="space-y-4 max-h-[300px] overflow-y-auto pr-1">
-              {requests.map(req => (
-                <div key={req.id} className="border border-slate-200 rounded-lg p-3 bg-slate-50 text-xs">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-grow">
-                      <h4 className="font-bold text-slate-900 text-sm">{req.user?.profile?.fullName || req.user?.email || 'Người dùng'}</h4>
-                      <p className="text-[10px] text-slate-400 mb-2">Gửi: {new Date(req.joinedAt).toLocaleDateString('vi-VN')}</p>
-                      
-                      {req.joinAnswers && Object.keys(req.joinAnswers).length > 0 && (
-                        <div className="space-y-1 mt-1 bg-white p-2 rounded border border-slate-100">
-                          {Object.entries(req.joinAnswers).map(([q, a]) => (
-                            <div key={q} className="text-[11px] leading-tight">
-                              <span className="font-bold text-slate-600">{q}</span>
-                              <p className="text-slate-500 mt-0.5 italic">↳ {a as string}</p>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex flex-col gap-1.5 shrink-0 ml-3">
-                      <button 
-                        onClick={() => handleReview(req.id, 'APPROVE')}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white p-1.5 rounded-md flex items-center justify-center"
-                        title="Duyệt"
-                      >
-                        <Check className="w-3.5 h-3.5" />
-                      </button>
-                      <button 
-                        onClick={() => handleReview(req.id, 'REJECT')}
-                        className="border border-red-200 text-red-600 hover:bg-red-50 p-1.5 rounded-md flex items-center justify-center bg-white"
-                        title="Từ chối"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
+              {requests.map(req => {
+                const userId = req.member?.userId || '';
+                const memberId = req.member?.id || '';
+                const fullName = req.user?.fullName || req.user?.email || 'Người dùng';
+                const joinedAt = req.member?.joinedAt;
+                const joinAnswers = req.member?.joinAnswers;
+                
+                return (
+                  <div key={memberId} className="border border-slate-200 rounded-lg p-3 bg-slate-50 text-xs">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-grow">
+                        <h4 className="font-bold text-slate-900 text-sm">{fullName}</h4>
+                        <p className="text-[10px] text-slate-400 mb-2">
+                          Gửi: {joinedAt ? new Date(joinedAt).toLocaleDateString('vi-VN') : 'Không rõ ngày'}
+                        </p>
+                        
+                        {joinAnswers && Object.keys(joinAnswers).length > 0 && (
+                          <div className="space-y-1 mt-1 bg-white p-2 rounded border border-slate-100">
+                            {Object.entries(joinAnswers).map(([q, a]) => (
+                              <div key={q} className="text-[11px] leading-tight">
+                                <span className="font-bold text-slate-650">{q}</span>
+                                <p className="text-slate-500 mt-0.5 italic">↳ {a as string}</p>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex flex-col gap-1.5 shrink-0 ml-3">
+                        <button 
+                          onClick={() => handleReview(userId, 'APPROVE')}
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white p-1.5 rounded-md flex items-center justify-center"
+                          title="Duyệt"
+                        >
+                          <Check className="w-3.5 h-3.5" />
+                        </button>
+                        <button 
+                          onClick={() => handleReview(userId, 'REJECT')}
+                          className="border border-red-200 text-red-600 hover:bg-red-50 p-1.5 rounded-md flex items-center justify-center bg-white"
+                          title="Từ chối"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

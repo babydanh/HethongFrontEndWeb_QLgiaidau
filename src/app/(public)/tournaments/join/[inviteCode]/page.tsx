@@ -17,6 +17,7 @@ import toast from 'react-hot-toast';
 
 const registerSchema = z.object({
   teamName: z.string().min(3, 'Tên đội phải có ít nhất 3 ký tự').max(100, 'Tên đội quá dài'),
+  partnerEmailOrPhone: z.string().optional(),
 });
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
@@ -28,6 +29,7 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
   const router = useRouter();
   const { user, isAuthenticated } = useAuthStore();
   const [tournament, setTournament] = useState<Tournament | null>(null);
+  const [divisions, setDivisions] = useState<Tournament[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -42,6 +44,13 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
         const res = await tournamentsApi.getTournamentByInviteCode(inviteCode);
         if (res.data) {
           setTournament(res.data);
+          
+          if (res.data.parentId) {
+            const parentRes = await tournamentsApi.getParentTournamentById(res.data.parentId);
+            if (parentRes.data && parentRes.data.divisions) {
+              setDivisions(parentRes.data.divisions);
+            }
+          }
         } else {
           toast.error('Không tìm thấy giải đấu hoặc mã mời không hợp lệ');
           router.push('/tournaments');
@@ -71,6 +80,7 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
       const cleanData = {
         teamName: trimAndNormalizeSpaces(data.teamName),
         memberIds: [user.id],
+        partnerEmailOrPhone: data.partnerEmailOrPhone ? trimAndNormalizeSpaces(data.partnerEmailOrPhone) : undefined,
       };
 
       const res = await tournamentsApi.joinTournamentByInviteCode(inviteCode, cleanData);
@@ -162,6 +172,30 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
               </p>
             </div>
 
+            {divisions.length > 1 && (
+              <div className="space-y-1.5 pb-2 border-b border-slate-100">
+                <label className="text-xs font-bold text-slate-700 block">Hình thức thi đấu</label>
+                <select
+                  value={inviteCode}
+                  onChange={(e) => router.push(`/tournaments/join/${e.target.value}`)}
+                  className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
+                >
+                  {divisions.map((div) => {
+                    const label = div.matchType === 'SINGLES' 
+                      ? (div.genderRestriction === 'FEMALE' ? 'Đơn Nữ' : 'Đơn Nam')
+                      : div.matchType === 'DOUBLES'
+                      ? (div.genderRestriction === 'FEMALE' ? 'Đôi Nữ' : 'Đôi Nam')
+                      : 'Đôi Nam Nữ';
+                    return (
+                      <option key={div.id} value={div.inviteCode || ''}>
+                        {div.name} ({label})
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+            )}
+
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
               <Input
                 label="Tên đội / Tên thi đấu"
@@ -169,6 +203,15 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
                 {...register('teamName')}
                 error={errors.teamName?.message}
               />
+
+              {(tournament.matchType === 'DOUBLES' || tournament.matchType === 'MIXED_DOUBLES') && (
+                <Input
+                  label="Tài khoản Baseline của đồng đội (Email hoặc SĐT)"
+                  placeholder="partner@baseline.vn hoặc 08xxxx (Không bắt buộc)"
+                  {...register('partnerEmailOrPhone')}
+                  error={errors.partnerEmailOrPhone?.message}
+                />
+              )}
 
               <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
                 <div className="flex justify-between items-center text-sm">

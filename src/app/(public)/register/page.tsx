@@ -73,9 +73,11 @@ export default function RegisterPage() {
         className="w-full max-w-md space-y-8 rounded-2xl bg-white p-8 shadow-xl"
       >
         <div className="flex flex-col items-center text-center">
-          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600 shadow-lg shadow-blue-600/20">
-            <Trophy className="h-6 w-6 text-white" />
-          </div>
+          <img 
+            src="/images/vndc_sport.png" 
+            alt="VNDC Sport Logo" 
+            className="h-[200px] w-auto object-contain mt-[-20px] mb-[-25px] transition-transform duration-200 hover:scale-105"
+          />
           <h2 className="text-2xl font-bold tracking-tight text-slate-900">Tạo tài khoản mới</h2>
           <p className="mt-2 text-sm text-slate-500">
             Bắt đầu tổ chức hoặc tham gia các giải đấu thể thao

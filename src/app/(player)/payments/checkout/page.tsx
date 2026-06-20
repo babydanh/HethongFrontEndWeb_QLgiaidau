@@ -70,9 +70,7 @@ function CheckoutContent() {
         paymentGateway: gateway,
       });
 
-      // API wraps it inside { statusCode, message, data: { paymentUrl } } or direct
-      const responseData = (res as unknown) as Record<string, any>;
-      const paymentUrl = responseData?.data?.paymentUrl || responseData?.paymentUrl as string | undefined;
+      const paymentUrl = res.data?.paymentUrl;
       
       if (paymentUrl) {
         toast.success('Đang chuyển hướng đến cổng thanh toán...');

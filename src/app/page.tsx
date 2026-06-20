@@ -20,6 +20,7 @@ import { rankingsApi, PlayerRanking } from '@/features/rankings/api';
 import { matchesApi, Match } from '@/features/matches/api';
 import TournamentHeroBanner from '@/components/ui/TournamentHeroBanner';
 import LiveMatchesWidget from '@/components/ui/LiveMatchesWidget';
+import { isNetworkError } from '@/utils/error';
 
 export default function HomePage() {
   const { isAuthenticated, user } = useAuthStore();
@@ -31,7 +32,7 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true);
 
   // Widget States
-  const [userRankings, setUserRankings] = useState<{ publicRanks: any[]; communityRanks: any[] } | null>(null);
+  const [userRankings, setUserRankings] = useState<{ publicRanks: PlayerRanking[]; communityRanks: PlayerRanking[] } | null>(null);
   const [upcomingMatch, setUpcomingMatch] = useState<Match | null>(null);
   const [leaderboard, setLeaderboard] = useState<PlayerRanking[]>([]);
 
@@ -41,8 +42,11 @@ export default function HomePage() {
       try {
         const res = await categoriesApi.getCategories();
         setCategories(res.data || []);
-      } catch (err) {
-        console.error('Failed to load categories on homepage', err);
+      } catch (error: unknown) {
+        if (!isNetworkError(error)) {
+          console.error('Failed to load categories on homepage', error);
+        }
+        setCategories([]);
       }
     };
     loadCategories();
@@ -58,50 +62,66 @@ export default function HomePage() {
           tParams.categoryId = selectedCategoryId;
         }
 
-        const promises: Promise<any>[] = [
-          tournamentsApi.getTournaments(tParams),
-          communitiesApi.getCommunities({ limit: 10 })
-        ];
+        type RankingsResponse = Awaited<ReturnType<typeof rankingsApi.getRankings>>;
+        type UserRankingsResponse = Awaited<ReturnType<typeof rankingsApi.getUserRankings>>;
+        type UserMatchesResponse = Awaited<ReturnType<typeof matchesApi.getMatches>>;
 
-        // Fetch leaderboard ranking based on selected category, or fallback to first category
+        const tournamentsPromise = tournamentsApi.getTournaments(tParams);
+        const communitiesPromise = communitiesApi.getCommunities({ limit: 10 });
         const lbCategoryId = selectedCategoryId || categories[0]?.id;
-        if (lbCategoryId) {
-          promises.push(rankingsApi.getRankings({ categoryId: lbCategoryId, limit: 5 }));
-        } else {
-          promises.push(Promise.resolve({ data: [] }));
-        }
+        const rankingsPromise: Promise<RankingsResponse> = lbCategoryId
+          ? rankingsApi.getRankings({ categoryId: lbCategoryId, limit: 5 })
+          : Promise.resolve({
+              data: [],
+              meta: {
+                page: 1,
+                limit: 5,
+                total: 0,
+              },
+            });
+        const userRankingsPromise: Promise<UserRankingsResponse | null> =
+          isAuthenticated && user?.id
+            ? rankingsApi.getUserRankings(user.id)
+            : Promise.resolve(null);
+        const userMatchesPromise: Promise<UserMatchesResponse> =
+          isAuthenticated && user?.id
+            ? matchesApi.getMatches({ userId: user.id, limit: 10 })
+            : Promise.resolve({
+                data: [],
+                meta: {
+                  currentPage: 1,
+                  totalPages: 0,
+                  totalItems: 0,
+                  itemsPerPage: 10,
+                },
+              });
 
-        // If authenticated, fetch user rankings and upcoming matches
-        if (isAuthenticated && user?.id) {
-          promises.push(rankingsApi.getUserRankings(user.id));
-          promises.push(matchesApi.getMatches({ userId: user.id, limit: 10 }));
-        } else {
-          promises.push(Promise.resolve(null));
-          promises.push(Promise.resolve({ data: [] }));
-        }
+        const [tRes, cRes, rRes, userRankRes, userMatchesRes] = await Promise.allSettled([
+          tournamentsPromise,
+          communitiesPromise,
+          rankingsPromise,
+          userRankingsPromise,
+          userMatchesPromise,
+        ] as const);
 
-        const [tRes, cRes, rRes, userRankRes, userMatchesRes] = await Promise.all(promises);
+        setTournaments(tRes.status === 'fulfilled' ? tRes.value.data || [] : []);
+        setCommunities(cRes.status === 'fulfilled' ? cRes.value.data || [] : []);
+        setLeaderboard(rRes.status === 'fulfilled' ? rRes.value.data || [] : []);
 
-        setTournaments(tRes.data || []);
-        setCommunities(cRes.data || []);
-        setLeaderboard(rRes?.data || []);
-
-        if (userRankRes) {
-          setUserRankings(userRankRes);
+        if (userRankRes.status === 'fulfilled' && userRankRes.value) {
+          setUserRankings(userRankRes.value);
         } else {
           setUserRankings(null);
         }
 
-        if (userMatchesRes && userMatchesRes.data) {
-          const upcoming = userMatchesRes.data.find(
+        if (userMatchesRes.status === 'fulfilled') {
+          const upcoming = userMatchesRes.value.data.find(
             (m: Match) => m.status === 'SCHEDULED' || m.status === 'ONGOING'
           );
           setUpcomingMatch(upcoming || null);
         } else {
           setUpcomingMatch(null);
         }
-      } catch (error: unknown) {
-        console.error("Failed to fetch homepage data", error);
       } finally {
         setIsLoading(false);
       }
@@ -119,11 +139,11 @@ export default function HomePage() {
   ) || userRankings?.publicRanks?.[0];
 
   const eloPoints = activeRankInfo ? activeRankInfo.eloPoints : 1000;
-  const tierName = activeRankInfo?.tierName || 'Chưa xếp hạng';
+  const tierName = activeRankInfo?.tier?.name || 'Chưa xếp hạng';
   const matchesPlayed = activeRankInfo ? activeRankInfo.matchesPlayed : 0;
   const matchesWon = activeRankInfo ? activeRankInfo.matchesWon : 0;
   const winRate = matchesPlayed > 0 ? Math.round((matchesWon / matchesPlayed) * 100) : 0;
-  const sportName = activeRankInfo?.categoryName || (selectedCategoryId ? categories.find(c => c.id === selectedCategoryId)?.name : 'Chung');
+  const sportName = categories.find(c => c.id === activeRankInfo?.categoryId)?.name || (selectedCategoryId ? categories.find(c => c.id === selectedCategoryId)?.name : 'Chung');
 
   return (
     <div className="bg-slate-50 min-h-screen text-slate-900 font-sans selection:bg-blue-100 selection:text-blue-900">

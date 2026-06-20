@@ -9,20 +9,54 @@ import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { useCreateTournamentStore } from '@/lib/zustand/createTournamentStore';
 import { categoriesApi, Category } from '@/features/categories/api';
+import { api } from '@/lib/axios';
+import type { ApiResponse } from '@/types/api';
 import { trimAndNormalizeSpaces } from '@/utils/string';
 import { ChevronRight } from 'lucide-react';
 
+
+
 const step1Schema = z.object({
-  name: z.string().min(5, 'Tên giải đấu phải có ít nhất 5 ký tự').max(150, 'Tên giải đấu quá dài'),
+  name: z.string().min(5, 'Tên Giải đấu phải có ít nhất 5 ký tự').max(150, 'Tên Giải đấu quá dài'),
   description: z.string().max(1000, 'Mô tả tối đa 1000 ký tự').optional(),
   categoryId: z.string().min(1, 'Vui lòng chọn bộ môn thi đấu'),
   tournamentType: z.enum(['CLUB', 'PUBLIC']),
-  matchType: z.enum(['SINGLES', 'DOUBLES', 'MIXED_DOUBLES']),
+  isRanked: z.boolean(),
   maxParticipants: z.string().refine((val) => {
     if (val === '') return true;
     const num = Number(val);
     return !isNaN(num) && num >= 2;
   }, 'Số đội tối đa phải là số lớn hơn hoặc bằng 2'),
+  minElo: z.string().optional().refine((val) => {
+    if (!val || val === '') return true;
+    const num = Number(val);
+    return !isNaN(num) && num >= 0;
+  }, 'Điểm ELO tối thiểu phải là số lớn hơn hoặc bằng 0'),
+  maxElo: z.string().optional().refine((val) => {
+    if (!val || val === '') return true;
+    const num = Number(val);
+    return !isNaN(num) && num >= 0;
+  }, 'Điểm ELO tối đa phải là số lớn hơn hoặc bằng 0'),
+  maxCombinedElo: z.string().optional().refine((val) => {
+    if (!val || val === '') return true;
+    const num = Number(val);
+    return !isNaN(num) && num >= 0;
+  }, 'Tổng ELO tối đa phải là số lớn hơn hoặc bằng 0'),
+  maxTeammateGap: z.string().optional().refine((val) => {
+    if (!val || val === '') return true;
+    const num = Number(val);
+    return !isNaN(num) && num >= 0;
+  }, 'Chênh lệch ELO tối đa phải là số lớn hơn hoặc bằng 0'),
+}).superRefine((data, ctx) => {
+  if (data.minElo && data.maxElo) {
+    if (Number(data.minElo) > Number(data.maxElo)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Điểm ELO tối thiểu không được lớn hơn ELO tối đa',
+        path: ['minElo'],
+      });
+    }
+  }
 });
 
 type Step1Values = z.infer<typeof step1Schema>;
@@ -32,30 +66,59 @@ export default function Step1Info() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const { register, handleSubmit, formState: { errors } } = useForm<Step1Values>({
+  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<Step1Values>({
     resolver: zodResolver(step1Schema),
     defaultValues: {
       name: formData.name,
       description: formData.description,
       categoryId: formData.categoryId,
-      tournamentType: formData.communityId ? 'CLUB' : formData.tournamentType,
-      matchType: formData.matchType,
+      tournamentType: formData.communityId ? (formData.tournamentType || 'CLUB') : 'PUBLIC',
+      isRanked: formData.isRanked ?? true,
       maxParticipants: formData.maxParticipants ? String(formData.maxParticipants) : '16',
+      minElo: formData.minElo !== null && formData.minElo !== undefined ? String(formData.minElo) : '',
+      maxElo: formData.maxElo !== null && formData.maxElo !== undefined ? String(formData.maxElo) : '',
+      maxCombinedElo: formData.maxCombinedElo !== null && formData.maxCombinedElo !== undefined ? String(formData.maxCombinedElo) : '',
+      maxTeammateGap: formData.maxTeammateGap !== null && formData.maxTeammateGap !== undefined ? String(formData.maxTeammateGap) : '',
     },
   });
 
+  const watchIsRanked = watch('isRanked');
+  const watchTournamentType = watch('tournamentType') || (formData.communityId ? 'CLUB' : 'PUBLIC');
+  const [fees, setFees] = useState({
+    feePublicRanked: 100000,
+    feePublicUnranked: 50000,
+    feeClub: 0,
+    pctPublicRanked: 5,
+    pctPublicUnranked: 5,
+    pctClub: 0,
+  });
+
   useEffect(() => {
-    const fetchCategories = async () => {
+    const fetchCategoriesAndFees = async () => {
       try {
-        const res = await categoriesApi.getCategories();
-        if (res.data) setCategories(res.data);
+        const catRes = await categoriesApi.getCategories();
+        if (catRes.data) setCategories(catRes.data);
       } catch (error) {
         console.error('Failed to fetch categories:', error);
       } finally {
         setIsLoading(false);
       }
+
+      try {
+        const feesRes = await api.get<ApiResponse<{
+          feePublicRanked: number;
+          feePublicUnranked: number;
+          feeClub: number;
+          pctPublicRanked: number;
+          pctPublicUnranked: number;
+          pctClub: number;
+        }>>('/tournaments/fees');
+        if (feesRes.data) setFees(feesRes.data);
+      } catch (error) {
+        console.error('Failed to fetch fees config:', error);
+      }
     };
-    fetchCategories();
+    fetchCategoriesAndFees();
   }, []);
 
   const onSubmit = (data: Step1Values) => {
@@ -63,9 +126,13 @@ export default function Step1Info() {
       name: trimAndNormalizeSpaces(data.name),
       description: data.description ? trimAndNormalizeSpaces(data.description) : '',
       categoryId: data.categoryId,
-      tournamentType: data.tournamentType,
-      matchType: data.matchType,
+      tournamentType: formData.communityId ? data.tournamentType : 'PUBLIC',
+      isRanked: data.isRanked,
       maxParticipants: data.maxParticipants === '' ? null : Number(data.maxParticipants),
+      minElo: data.minElo === '' || data.minElo === undefined ? null : Number(data.minElo),
+      maxElo: data.maxElo === '' || data.maxElo === undefined ? null : Number(data.maxElo),
+      maxCombinedElo: data.maxCombinedElo === '' || data.maxCombinedElo === undefined ? null : Number(data.maxCombinedElo),
+      maxTeammateGap: data.maxTeammateGap === '' || data.maxTeammateGap === undefined ? null : Number(data.maxTeammateGap),
     });
     nextStep();
   };
@@ -73,13 +140,13 @@ export default function Step1Info() {
   return (
     <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-right-4 duration-300">
       <div>
-        <h2 className="text-xl font-bold text-slate-900 mb-2">Thông tin giải đấu</h2>
-        <p className="text-sm text-slate-500">Cấu hình nhanh các thông số cơ bản cho giải đấu của bạn.</p>
+        <h2 className="text-xl font-bold text-slate-900 mb-2">Tạo Giải đấu mới</h2>
+        <p className="text-sm text-slate-500">Cấu hình nhanh các thông số cơ bản cho Giải đấu của bạn.</p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
         <Input
-          label="Tên giải đấu"
+          label="Tên Giải đấu"
           placeholder="Ví dụ: Hanoi Open Spring 2026"
           {...register('name')}
           error={errors.name?.message}
@@ -101,21 +168,6 @@ export default function Step1Info() {
             {errors.categoryId && <p className="text-xs font-semibold text-red-500">{errors.categoryId.message}</p>}
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-semibold text-slate-700">Hình thức thi đấu <span className="text-red-500">*</span></label>
-            <select 
-              {...register('matchType')} 
-              className="border border-slate-300 rounded-lg px-3 py-2.5 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="SINGLES">Đơn (Singles)</option>
-              <option value="DOUBLES">Đôi (Doubles)</option>
-              <option value="MIXED_DOUBLES">Đôi nam nữ (Mixed)</option>
-            </select>
-            {errors.matchType && <p className="text-xs font-semibold text-red-500">{errors.matchType.message}</p>}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <Input
             label="Số đội tham gia tối đa"
             placeholder="Ví dụ: 16"
@@ -123,8 +175,10 @@ export default function Step1Info() {
             {...register('maxParticipants')}
             error={errors.maxParticipants?.message}
           />
+        </div>
 
-          {!formData.communityId && (
+        {formData.communityId && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-semibold text-slate-700">Phạm vi giải đấu <span className="text-red-500">*</span></label>
               <div className="flex gap-4 mt-3">
@@ -139,11 +193,98 @@ export default function Step1Info() {
               </div>
               {errors.tournamentType && <p className="text-xs font-semibold text-red-500">{errors.tournamentType.message}</p>}
             </div>
-          )}
+          </div>
+        )}
+
+        {/* Ranked or Unranked Option */}
+        <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 flex flex-col gap-3">
+          <label className="text-sm font-semibold text-slate-900">Tính chất giải đấu <span className="text-red-500">*</span></label>
+          <div className="flex gap-6 mt-1">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input 
+                type="radio" 
+                name="isRanked" 
+                checked={watchIsRanked === true} 
+                onChange={() => setValue('isRanked', true)} 
+                className="w-4 h-4 text-blue-600 focus:ring-blue-500" 
+              />
+              <span className="text-sm font-semibold text-slate-800">Xếp hạng hệ thống (Ranked)</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input 
+                type="radio" 
+                name="isRanked" 
+                checked={watchIsRanked === false} 
+                onChange={() => setValue('isRanked', false)} 
+                className="w-4 h-4 text-blue-600 focus:ring-blue-500" 
+              />
+              <span className="text-sm font-semibold text-slate-800">Giải phong trào (Unranked)</span>
+            </label>
+          </div>
+          
+          <div className="mt-1 text-xs leading-relaxed text-slate-500 border-t border-slate-200/60 pt-3">
+            {watchTournamentType === 'CLUB' ? (
+              <p className="text-emerald-700 font-medium bg-emerald-50/50 p-2.5 rounded-lg border border-emerald-100/50">
+                💡 <strong>Giải đấu Nội bộ CLB:</strong> Miễn phí xuất bản hoàn toàn (0đ). Phí sàn lệ phí tham gia là <strong>{fees.pctClub}%</strong>. Điểm xếp hạng chỉ được tính nội bộ trong câu lạc bộ của bạn, Giải đấu tự động hoạt động ngay lập tức mà không cần Admin duyệt.
+              </p>
+            ) : watchIsRanked ? (
+              <p className="text-amber-700 font-medium bg-amber-50/50 p-2.5 rounded-lg border border-amber-100/50">
+                💡 <strong>Giải đấu Xếp hạng:</strong> Phí xuất bản Giải đấu là <strong>{(fees.feePublicRanked / 1000).toString()}k VND</strong> (thanh toán khi xuất bản). Phí sàn <strong>{fees.pctPublicRanked}%</strong> trên lệ phí tham gia của mỗi người nếu có thu phí. Điểm ELO của người chơi sẽ được tính toán trên bảng xếp hạng chung. Giải đấu cần sự phê duyệt của Admin trước khi hoạt động công khai.
+              </p>
+            ) : (
+              <p className="text-emerald-700 font-medium bg-emerald-50/50 p-2.5 rounded-lg border border-emerald-100/50">
+                💡 <strong>Giải phong trào:</strong> Phí xuất bản Giải đấu là <strong>{(fees.feePublicUnranked / 1000).toString()}k VND</strong> (thanh toán khi xuất bản). Phí sàn <strong>{fees.pctPublicUnranked}%</strong> trên lệ phí tham gia của mỗi người nếu có thu phí. Không tính điểm ELO, Giải đấu tự động hoạt động ngay lập tức mà không cần Admin kiểm duyệt.
+              </p>
+            )}
+          </div>
         </div>
 
+        {/* ELO Constraints Section */}
+        {watchIsRanked && (
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 space-y-4">
+            <div>
+              <h4 className="text-sm font-bold text-slate-800">Giới hạn trình độ ELO (Tùy chọn)</h4>
+              <p className="text-xs text-slate-500 mt-1">Thiết lập khoảng ELO cho phép của các vận động viên đăng ký giải đấu này.</p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Input
+                label="ELO tối thiểu (Min ELO)"
+                placeholder="Ví dụ: 800"
+                type="number"
+                {...register('minElo')}
+                error={errors.minElo?.message}
+              />
+              <Input
+                label="ELO tối đa (Max ELO)"
+                placeholder="Ví dụ: 1500"
+                type="number"
+                {...register('maxElo')}
+                error={errors.maxElo?.message}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-slate-200/60 pt-3">
+              <Input
+                label="Tổng ELO cặp đôi tối đa"
+                placeholder="Ví dụ: 2800"
+                type="number"
+                {...register('maxCombinedElo')}
+                error={errors.maxCombinedElo?.message}
+              />
+              <Input
+                label="Chênh lệch ELO tối đa giữa đồng đội"
+                placeholder="Ví dụ: 300"
+                type="number"
+                {...register('maxTeammateGap')}
+                error={errors.maxTeammateGap?.message}
+              />
+            </div>
+          </div>
+        )}
+
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-semibold text-slate-700">Mô tả giải đấu</label>
+          <label className="text-sm font-semibold text-slate-700">Mô tả Giải đấu</label>
           <Textarea
             placeholder="Giới thiệu sơ lược về giải đấu..."
             className="h-24 resize-none"

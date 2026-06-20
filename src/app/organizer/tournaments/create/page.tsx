@@ -1,15 +1,19 @@
 'use client';
 
 import { useCreateTournamentStore } from '@/lib/zustand/createTournamentStore';
-import { Trophy, Info, CheckCircle, Check, Loader2 } from 'lucide-react';
+import { Trophy, Info, Zap, Calendar, CheckCircle, Check, Loader2 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, Suspense } from 'react';
 import Step1Info from './components/Step1Info';
-import Step2Confirm from './components/Step2Confirm';
+import Step2FormatMulti from './components/Step2Format_Multi';
+import Step3ScheduleFees from './components/Step3ScheduleFees';
+import Step4ReviewSubmit from './components/Step4ReviewSubmit';
 
 const STEPS = [
-  { id: 1, label: 'Thông tin giải đấu', icon: Info },
-  { id: 2, label: 'Xác nhận bản nháp', icon: CheckCircle },
+  { id: 1, label: 'Thông Tin', icon: Info },
+  { id: 2, label: 'Hình Thức', icon: Zap },
+  { id: 3, label: 'Lịch & Lệ Phí', icon: Calendar },
+  { id: 4, label: 'Xác Nhận', icon: CheckCircle },
 ];
 
 function CreateTournamentForm() {
@@ -22,6 +26,8 @@ function CreateTournamentForm() {
     setStep(1);
     if (communityId) {
       updateFormData({ communityId });
+    } else {
+      updateFormData({ communityId: '' });
     }
   }, [communityId, updateFormData, setStep]);
 
@@ -39,7 +45,7 @@ function CreateTournamentForm() {
         </div>
 
         {/* Stepper */}
-        <div className="mb-10 max-w-md mx-auto">
+        <div className="mb-10 max-w-2xl mx-auto">
           <div className="flex justify-between items-center relative before:absolute before:inset-0 before:top-1/2 before:-translate-y-1/2 before:h-1 before:bg-slate-200 before:z-0">
             {STEPS.map((step) => {
               const isActive = step.id === currentStep;
@@ -54,7 +60,7 @@ function CreateTournamentForm() {
                   }`}>
                     {isPast ? <Check className="w-5 h-5" /> : <Icon className="w-5 h-5" />}
                   </div>
-                  <span className={`text-xs font-bold whitespace-nowrap absolute -bottom-6 ${
+                  <span className={`text-xs font-bold whitespace-nowrap absolute -bottom-6 text-center ${
                     isActive ? 'text-blue-600' : isPast ? 'text-emerald-600' : 'text-slate-400'
                   }`}>
                     {step.label}
@@ -69,7 +75,9 @@ function CreateTournamentForm() {
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mt-16">
           <div className="p-6 md:p-8">
             {currentStep === 1 && <Step1Info />}
-            {currentStep === 2 && <Step2Confirm />}
+            {currentStep === 2 && <Step2FormatMulti />}
+            {currentStep === 3 && <Step3ScheduleFees />}
+            {currentStep === 4 && <Step4ReviewSubmit />}
           </div>
         </div>
 

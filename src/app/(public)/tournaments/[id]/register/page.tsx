@@ -8,7 +8,7 @@ import { z } from 'zod';
 import { Trophy, Calendar, MapPin, Users, ArrowLeft, Loader2, CheckCircle, AlertTriangle, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { tournamentsApi, Tournament } from '@/features/tournaments/api';
+import { Division, tournamentsApi, Tournament } from '@/features/tournaments/api';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { getErrorMessage } from '@/utils/error';
 import { trimAndNormalizeSpaces } from '@/utils/string';
@@ -38,7 +38,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
   // Division select states
   const [selectedDivisionId, setSelectedDivisionId] = useState<string>('');
   const [selectedDivision, setSelectedDivision] = useState<Tournament | null>(null);
-  const [allDivisions, setAllDivisions] = useState<any[]>([]);
+  const [allDivisions, setAllDivisions] = useState<Division[]>([]);
   const [isLoadingDivision, setIsLoadingDivision] = useState(false);
   
   // Invite states for Private Tournaments
@@ -51,12 +51,41 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
     resolver: zodResolver(registerSchema),
   });
 
+  const normalizeDivision = (division: {
+    id: string;
+    name: string;
+    matchType?: string | null;
+    genderRestriction?: string | null;
+    status?: string;
+    categoryId?: string;
+    maxParticipants?: number;
+    entryFee?: number;
+  }): Division => ({
+    id: division.id,
+    name: division.name,
+    matchType: (division.matchType || 'DOUBLES') as Division['matchType'],
+    genderRestriction: (division.genderRestriction ?? null) as Division['genderRestriction'],
+    status: division.status || 'DRAFT',
+    categoryId: division.categoryId,
+    maxParticipants: division.maxParticipants,
+    entryFee: division.entryFee,
+  });
+
   const fetchSelectedDivisionDetails = async (divId: string) => {
     try {
       setIsLoadingDivision(true);
-      const res = await tournamentsApi.getTournamentById(divId);
-      if (res.data) {
-        setSelectedDivision(res.data);
+      const division = allDivisions.find((item) => item.id === divId);
+      if (division && tournament) {
+        setSelectedDivision({
+          ...tournament,
+          name: division.name,
+          matchType: division.matchType,
+          genderRestriction: division.genderRestriction,
+          entryFee: division.entryFee ?? tournament.entryFee,
+          maxParticipants: division.maxParticipants ?? tournament.maxParticipants,
+        });
+      } else if (!division && tournament) {
+        setSelectedDivision(tournament);
       }
     } catch (err) {
       console.error('Failed to load division details:', err);
@@ -69,7 +98,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
     if (selectedDivisionId && selectedDivisionId !== selectedDivision?.id) {
       fetchSelectedDivisionDetails(selectedDivisionId);
     }
-  }, [selectedDivisionId]);
+  }, [selectedDivisionId, allDivisions, tournament]);
 
   const fetchTournament = async (code?: string) => {
     try {
@@ -93,13 +122,13 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
           try {
             const pRes = await tournamentsApi.getParentTournamentById(t.parentId);
             if (pRes.data && pRes.data.divisions) {
-              setAllDivisions(pRes.data.divisions);
+              setAllDivisions(pRes.data.divisions.map(normalizeDivision));
             }
           } catch (e) {
             console.error('Failed to fetch parent/sister divisions', e);
           }
         } else if (t.divisions && t.divisions.length > 0) {
-          setAllDivisions(t.divisions);
+          setAllDivisions(t.divisions.map(normalizeDivision));
           setSelectedDivisionId(t.divisions[0].id);
         } else {
           setSelectedDivisionId(t.id);
@@ -165,15 +194,16 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
       const cleanData = {
         teamName: trimAndNormalizeSpaces(data.teamName),
         inviteCode: inviteCode || undefined,
+        tournamentDivisionId: selectedDivisionId || undefined,
       };
 
-      const res = await tournamentsApi.register(selectedDivision.id, cleanData);
+      const res = await tournamentsApi.register(id, cleanData);
       const participantId = res?.data?.participant?.id;
 
       toast.success('Đăng ký tham gia thành công!');
 
       // Skip payment step for testing convenience
-      router.push(`/tournaments/${selectedDivision.id}`);
+      router.push(`/tournaments/${id}`);
     } catch (err) {
       toast.error(getErrorMessage(err));
     } finally {
@@ -248,6 +278,44 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
   }
 
   if (!tournament) return null;
+
+  const isLocked = tournament.isRegistrationLocked;
+  const isExpired = tournament.registrationEndDate ? new Date() > new Date(tournament.registrationEndDate) : false;
+  const isNotOpen = tournament.status !== 'REGISTRATION_OPEN';
+
+  if (isLocked || isExpired || isNotOpen) {
+    let title = 'Đăng ký đã đóng';
+    let message = 'Giải đấu hiện không nhận đăng ký mới.';
+    if (isLocked) {
+      title = 'Đăng ký đã khóa';
+      message = 'Giải đấu đã tạm ngưng nhận đăng ký mới từ Ban tổ chức.';
+    } else if (isExpired) {
+      title = 'Đăng ký hết hạn';
+      message = 'Hạn đăng ký giải đấu này đã kết thúc.';
+    }
+
+    return (
+      <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
+        <div className="max-w-md w-full bg-white p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+          <div className="flex flex-col items-center text-center space-y-3">
+            <div className="w-12 h-12 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center">
+              <AlertTriangle className="w-6 h-6 text-rose-600" />
+            </div>
+            <h2 className="text-xl font-bold text-slate-900">{title}</h2>
+            <p className="text-slate-550 text-xs leading-relaxed font-semibold">{message}</p>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => router.push(`/tournaments/${tournament.id}`)}
+            className="w-full border-slate-200 hover:bg-slate-50 text-slate-600 text-xs font-bold"
+          >
+            Quay lại trang giải đấu
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   const entryFeeVal = selectedDivision ? Number(selectedDivision.entryFee || 0) : 0;
   const isDoubles = selectedDivision ? (selectedDivision.matchType === 'DOUBLES' || selectedDivision.matchType === 'MIXED_DOUBLES') : false;
@@ -326,7 +394,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
               </div>
             ) : selectedDivision ? (
               isDoubles ? (
-                <DoublesRegistrationFlow tournament={selectedDivision} inviteCode={inviteCode} />
+                <DoublesRegistrationFlow tournament={selectedDivision} inviteCode={inviteCode} divisionId={selectedDivisionId || undefined} />
               ) : (
                 <div className="space-y-6">
                   <div>

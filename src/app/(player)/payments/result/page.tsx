@@ -7,12 +7,14 @@ import { Button } from '@/components/ui/Button';
 import { getErrorMessage } from '@/utils/error';
 import { formatCurrency } from '@/utils/format';
 import { api } from '@/lib/axios';
+import type { Payment } from '@/types/payment';
 import toast from 'react-hot-toast';
 import { Loader2, CheckCircle2, XCircle, AlertCircle, Calendar, Trophy, TrophyIcon } from 'lucide-react';
 
 interface PaymentDetails {
   id: string;
   tournamentId: string;
+  participantId?: string | null;
   amount: string;
   status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED';
   paymentGateway?: string;
@@ -72,7 +74,7 @@ function ResultContent() {
         const res = await paymentsApi.getPaymentById(paymentId);
         
         // API response mapping
-        const paymentData = res?.data || res;
+        const paymentData: Payment | undefined = res?.data;
         
         if (paymentData) {
           // Fetch tournament details to get name
@@ -90,6 +92,7 @@ function ResultContent() {
           setDetails({
             id: paymentData.id,
             tournamentId: paymentData.tournamentId,
+            participantId: paymentData.participantId,
             amount: paymentData.amount,
             status: paymentData.status,
             paymentGateway: paymentData.paymentGateway,
@@ -144,7 +147,9 @@ function ResultContent() {
               </div>
               <h1 className="text-2xl font-bold text-slate-900 mb-2">Thành Công!</h1>
               <p className="text-slate-500 text-sm mb-6 leading-relaxed">
-                Đăng ký và thanh toán của bạn đã hoàn tất. Bạn đã chính thức có suất tham gia giải đấu.
+                {details?.participantId
+                  ? 'Đăng ký và thanh toán của bạn đã hoàn tất. Bạn đã chính thức có suất tham gia giải đấu.'
+                  : 'Phí công bố giải đấu đã được thanh toán. Trạng thái giải đấu đã được cập nhật.'}
               </p>
             </div>
           )}
@@ -198,7 +203,7 @@ function ResultContent() {
                   <span className="font-semibold text-slate-800 text-xs truncate max-w-[150px]">{details.id}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Lệ phí:</span>
+                  <span>{details.participantId ? 'Lệ phí tham gia:' : 'Phí công bố:'}</span>
                   <span className="font-bold text-slate-900">{formatCurrency(Number(details.amount))}</span>
                 </div>
                 <div className="flex justify-between">
@@ -221,10 +226,10 @@ function ResultContent() {
           <div className="flex flex-col gap-3">
             {details?.tournamentId && (
               <Button
-                onClick={() => router.push(`/tournaments/${details.tournamentId}`)}
+                onClick={() => router.push(details.participantId ? `/tournaments/${details.tournamentId}` : `/organizer/tournaments/${details.tournamentId}/manage`)}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl py-2.5 font-bold"
               >
-                Về Trang Giải Đấu
+                {details.participantId ? 'Về Trang Giải Đấu' : 'Về Trang Quản Lý Giải'}
               </Button>
             )}
             <Button

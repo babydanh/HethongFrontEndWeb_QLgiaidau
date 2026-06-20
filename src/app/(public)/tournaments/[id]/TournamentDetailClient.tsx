@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Tournament, tournamentsApi } from '@/features/tournaments/api';
+import { Division, Tournament, divisionsApi } from '@/features/tournaments/api';
 import { Button } from '@/components/ui/Button';
 import { Calendar, MapPin, Users, Trophy, ChevronRight, Share2, AlertCircle, User, Phone, Mail, Loader2 } from 'lucide-react';
 import Link from 'next/link';
@@ -20,42 +20,56 @@ interface Props {
 export default function TournamentDetailClient({ tournament }: Props) {
   const { user } = useAuthStore();
   const [activeTournament, setActiveTournament] = useState<Tournament>(tournament);
-  const [selectedDivisionId, setSelectedDivisionId] = useState<string>(tournament.id);
+  const [selectedDivisionId, setSelectedDivisionId] = useState<string>('');
   const [selectedDivision, setSelectedDivision] = useState<Tournament | null>(null);
-  const [divisionsList, setDivisionsList] = useState<NonNullable<Tournament['divisions']>>([]);
+  const [divisionsList, setDivisionsList] = useState<Division[]>([]);
   const [isLoadingDivision, setIsLoadingDivision] = useState(false);
 
   const isOwner = user?.id === activeTournament.organizerId;
   const [activeTab, setActiveTab] = useState<'overview' | 'prizes' | 'teams' | 'bracket' | 'matches'>('overview');
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
 
+  const isRegistrationLocked = activeTournament.isRegistrationLocked;
+  const isRegistrationExpired = activeTournament.registrationEndDate ? new Date() > new Date(activeTournament.registrationEndDate) : false;
+  const isRegistrationOpen = activeTournament.status === 'REGISTRATION_OPEN';
+
+  let registrationButtonLabel = 'Đăng ký ngay';
+  let isRegistrationButtonDisabled = false;
+
+  if (isRegistrationOpen) {
+    if (isRegistrationLocked) {
+      registrationButtonLabel = 'Đã khóa đăng ký';
+      isRegistrationButtonDisabled = true;
+    } else if (isRegistrationExpired) {
+      registrationButtonLabel = 'Hết hạn đăng ký';
+      isRegistrationButtonDisabled = true;
+    }
+  } else if (['UPCOMING', 'REGISTRATION_CLOSED'].includes(activeTournament.status)) {
+    registrationButtonLabel = 'Đã đóng đăng ký';
+    isRegistrationButtonDisabled = true;
+  } else if (['ONGOING', 'IN_PROGRESS'].includes(activeTournament.status)) {
+    registrationButtonLabel = 'Đang diễn ra';
+    isRegistrationButtonDisabled = true;
+  } else if (activeTournament.status === 'COMPLETED') {
+    registrationButtonLabel = 'Đã kết thúc';
+    isRegistrationButtonDisabled = true;
+  } else if (activeTournament.status === 'CANCELLED') {
+    registrationButtonLabel = 'Đã hủy';
+    isRegistrationButtonDisabled = true;
+  } else {
+    isRegistrationButtonDisabled = true;
+    registrationButtonLabel = 'Chưa mở đăng ký';
+  }
+
   useEffect(() => {
     const loadParentAndDivisions = async () => {
       try {
-        if (tournament.parentId) {
-          const pRes = await tournamentsApi.getParentTournamentById(tournament.parentId);
-          if (pRes.data) {
-            const parentTourney = pRes.data;
-            const divisionsData = (parentTourney.divisions || []) as unknown as NonNullable<Tournament['divisions']>;
-            setActiveTournament({
-              ...tournament,
-              id: parentTourney.id,
-              name: parentTourney.name,
-              description: parentTourney.description,
-              bannerUrl: parentTourney.bannerUrl,
-              logoUrl: parentTourney.logoUrl,
-              parentId: null,
-              divisions: divisionsData,
-            });
-            setDivisionsList(divisionsData);
-            setSelectedDivisionId(tournament.id);
-            setSelectedDivision(tournament);
-          }
-        } else if (tournament.divisions && tournament.divisions.length > 0) {
-          setDivisionsList(tournament.divisions);
-          setSelectedDivisionId(tournament.divisions[0].id);
+        const divisionsRes = await divisionsApi.getDivisions(tournament.id);
+        if (divisionsRes.data && divisionsRes.data.length > 0) {
+          setDivisionsList(divisionsRes.data);
+          setSelectedDivisionId(divisionsRes.data[0].id);
         } else {
-          setSelectedDivisionId(tournament.id);
+          setSelectedDivisionId('');
           setSelectedDivision(tournament);
         }
       } catch (err) {
@@ -66,23 +80,34 @@ export default function TournamentDetailClient({ tournament }: Props) {
   }, [tournament]);
 
   useEffect(() => {
-    const fetchDivisionDetails = async () => {
-      if (!selectedDivisionId) return;
-      if (selectedDivisionId === selectedDivision?.id) return;
-      try {
-        setIsLoadingDivision(true);
-        const res = await tournamentsApi.getTournamentById(selectedDivisionId);
-        if (res.data) {
-          setSelectedDivision(res.data);
-        }
-      } catch (err) {
-        console.error('Failed to load division details:', err);
-      } finally {
-        setIsLoadingDivision(false);
-      }
+    if (!selectedDivisionId) {
+      setSelectedDivision(tournament);
+      return;
+    }
+
+    const division = divisionsList.find((item) => item.id === selectedDivisionId);
+    if (!division) return;
+
+    setIsLoadingDivision(true);
+      const nextDivision: Tournament = {
+        ...tournament,
+        id: tournament.id,
+        name: division.name || tournament.name,
+        matchType: division.matchType,
+        genderRestriction: division.genderRestriction ?? null,
+        format: division.bracketType ?? tournament.format,
+        prizeDescription: division.prizeDescription ?? tournament.prizeDescription,
+        status: tournament.status,
+        maxParticipants: division.maxParticipants ?? tournament.maxParticipants,
+        entryFee: division.entryFee ?? tournament.entryFee,
+      _count: {
+        ...(tournament._count || { matches: 0, participants: 0 }),
+        participants: division._count?.participants ?? 0,
+      },
     };
-    fetchDivisionDetails();
-  }, [selectedDivisionId]);
+    setSelectedDivision(nextDivision);
+    setIsLoadingDivision(false);
+  }, [selectedDivisionId, divisionsList, tournament]);
 
   const participantCount = selectedDivision ? (selectedDivision._summary?.participantCount ?? selectedDivision._count?.participants ?? 0) : 0;
   const maxParticipants = selectedDivision ? (selectedDivision.maxParticipants ?? 0) : 0;
@@ -180,15 +205,20 @@ export default function TournamentDetailClient({ tournament }: Props) {
             <Button variant="outline" className="bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200/80 flex-1 md:flex-none font-bold shadow-sm">
               <Share2 className="w-4 h-4 mr-2" /> Chia sẻ
             </Button>
-            {(activeTournament.status === 'UPCOMING' || activeTournament.status === 'REGISTRATION_OPEN') && !isOwner && (
+            {!isOwner && activeTournament.status !== 'DRAFT' && (
               <Button 
-                className="bg-blue-600 hover:bg-blue-700 text-white font-bold flex-1 md:flex-none shadow-sm shadow-blue-900/10"
-                onClick={() => setIsRegisterModalOpen(true)}
+                disabled={isRegistrationButtonDisabled}
+                className={`${
+                  isRegistrationButtonDisabled 
+                    ? 'bg-slate-200 text-slate-400 cursor-not-allowed border-slate-200 hover:bg-slate-200' 
+                    : 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-900/10'
+                } font-bold flex-1 md:flex-none shadow-sm`}
+                onClick={() => !isRegistrationButtonDisabled && setIsRegisterModalOpen(true)}
               >
-                Đăng ký ngay
+                {registrationButtonLabel}
               </Button>
             )}
-            {isOwner && (activeTournament.status === 'UPCOMING' || activeTournament.status === 'REGISTRATION_OPEN') && (
+            {isOwner && activeTournament.status !== 'DRAFT' && (
               <div className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-center flex-1 md:flex-none shadow-sm">
                 <p className="text-xs text-slate-600 font-bold whitespace-nowrap">
                   Bạn là chủ sở hữu
@@ -262,9 +292,15 @@ export default function TournamentDetailClient({ tournament }: Props) {
                       )}
                     </div>
                   )}
-                  {activeTab === 'teams' && <TeamsTab tournament={selectedDivision} />}
-                  {activeTab === 'bracket' && <BracketTab tournament={selectedDivision} />}
-                  {activeTab === 'matches' && <MatchesTab tournament={selectedDivision} />}
+                  {activeTab === 'teams' && (
+                    <TeamsTab tournament={selectedDivision} tournamentId={tournament.id} divisionId={selectedDivisionId || undefined} />
+                  )}
+                  {activeTab === 'bracket' && (
+                    <BracketTab tournament={selectedDivision} tournamentId={tournament.id} divisionId={selectedDivisionId || undefined} />
+                  )}
+                  {activeTab === 'matches' && (
+                    <MatchesTab tournament={selectedDivision} tournamentId={tournament.id} divisionId={selectedDivisionId || undefined} />
+                  )}
                 </>
               ) : (
                 <p className="text-center text-slate-400 italic py-12">Không tìm thấy dữ liệu phân hạng.</p>
@@ -368,16 +404,42 @@ export default function TournamentDetailClient({ tournament }: Props) {
                 </div>
               )}
 
-              {/* Action Button */}
-              {(activeTournament.status === 'UPCOMING' || activeTournament.status === 'REGISTRATION_OPEN') && !isOwner && (
-                <Link href={`/tournaments/${activeTournament.id}/register`} className="mt-1 block w-full">
-                  <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl shadow-md cursor-pointer text-sm">
-                    Đăng ký ngay
-                  </Button>
-                </Link>
+              {/* Warnings and Info Banners */}
+              {isRegistrationOpen && isRegistrationLocked && (
+                <div className="bg-amber-50 border border-amber-250/60 rounded-xl p-3.5 flex items-start gap-2.5">
+                  <AlertCircle className="w-4.5 h-4.5 text-amber-600 shrink-0 mt-0.5" />
+                  <p className="text-xs font-semibold text-amber-800 leading-normal">
+                    Giải đấu đã tạm ngưng nhận đăng ký mới từ Ban tổ chức.
+                  </p>
+                </div>
+              )}
+              {isRegistrationOpen && isRegistrationExpired && (
+                <div className="bg-rose-50 border border-rose-250/60 rounded-xl p-3.5 flex items-start gap-2.5">
+                  <AlertCircle className="w-4.5 h-4.5 text-rose-600 shrink-0 mt-0.5" />
+                  <p className="text-xs font-semibold text-rose-800 leading-normal">
+                    Hạn đăng ký giải đấu đã kết thúc.
+                  </p>
+                </div>
               )}
 
-              {isOwner && (activeTournament.status === 'UPCOMING' || activeTournament.status === 'REGISTRATION_OPEN') && (
+              {/* Action Button */}
+              {!isOwner && activeTournament.status !== 'DRAFT' && (
+                <div className="mt-1 block w-full">
+                  {isRegistrationButtonDisabled ? (
+                    <Button disabled className="w-full bg-slate-100 text-slate-400 font-bold py-2.5 rounded-xl border border-slate-200 text-sm cursor-not-allowed">
+                      {registrationButtonLabel}
+                    </Button>
+                  ) : (
+                    <Link href={`/tournaments/${activeTournament.id}/register`} className="block w-full">
+                      <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl shadow-md cursor-pointer text-sm">
+                        Đăng ký ngay
+                      </Button>
+                    </Link>
+                  )}
+                </div>
+              )}
+
+              {isOwner && activeTournament.status !== 'DRAFT' && (
                 <div className="bg-slate-50 border border-slate-100 rounded-xl p-3.5 mt-1 text-center">
                   <p className="text-xs text-slate-800 font-bold">
                     Bạn là quản trị viên giải đấu

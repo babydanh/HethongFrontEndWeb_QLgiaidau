@@ -42,8 +42,12 @@ const CallbackContent = () => {
           <div className="absolute inset-0 bg-blue-600 rounded-2xl animate-ping opacity-20"></div>
         </div>
         
-        <div className="space-y-2">
-          <h2 className="text-2xl font-bold tracking-tight text-slate-900">TournaHub</h2>
+        <div className="space-y-2 flex flex-col items-center">
+          <img 
+            src="/images/vndc_sport.png" 
+            alt="VNDC Sport Logo" 
+            className="h-12 w-auto object-contain mb-2"
+          />
           <p className="text-slate-500 font-medium">Đang đồng bộ tài khoản Google của bạn...</p>
         </div>
 

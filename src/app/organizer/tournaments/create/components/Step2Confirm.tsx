@@ -2,12 +2,14 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
-import { useCreateTournamentStore } from '@/lib/zustand/createTournamentStore';
+import { useCreateTournamentStore, resolveMatchFormat } from '@/lib/zustand/createTournamentStore';
 import { ChevronLeft, CheckCircle, Info, Loader2 } from 'lucide-react';
-import { tournamentsApi } from '@/features/tournaments/api';
+import { divisionsApi, tournamentsApi } from '@/features/tournaments/api';
+import type { CreateDivisionInput } from '@/features/tournaments/api';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { getErrorMessage } from '@/utils/error';
+import { GenderRestriction } from '@/types/tournament';
 
 export default function Step2Confirm() {
   const { formData, prevStep, reset } = useCreateTournamentStore();
@@ -20,28 +22,20 @@ export default function Step2Confirm() {
       
       const { format, ...rest } = formData;
 
-      // 1. Create Parent Tournament first
-      const parentRes = await tournamentsApi.createParentTournament({
-        name: rest.name,
-        description: rest.description || '',
-      });
+      // 1. Resolve backend matchType + genderRestriction + divisionName from the UI matchFormat
+      const { matchType, genderRestriction, divisionName } = resolveMatchFormat(rest.matchFormat || 'MALE_DOUBLES');
 
-      const parentId = parentRes.data?.id;
-      if (!parentId) {
-        throw new Error('Không thể tạo Giải đấu mẹ. Vui lòng thử lại.');
-      }
-
-      // 2. Create the first division (tournament) under this parent
+      // 2. Tạo một giải đấu; hình thức thi đấu lưu riêng ở tournament_divisions.
       const finalData: Record<string, unknown> = {
-        parentId,
         name: rest.name,
         categoryId: rest.categoryId,
         description: rest.description || '',
         tournamentType: rest.tournamentType || 'PUBLIC',
-        matchType: rest.matchType || 'DOUBLES',
+        matchType,
+        genderRestriction,
+        isRanked: rest.isRanked,
         maxParticipants: rest.maxParticipants || 16,
         entryFee: 0,
-        platformFeePerPlayer: rest.tournamentType === 'CLUB' ? 0 : 10000,
         sportRules: {
           setsToWin: 2,
           pointsPerSet: 21,
@@ -50,6 +44,10 @@ export default function Step2Confirm() {
         tournamentConfig: {
           bracketType: 'SINGLE_ELIMINATION',
           maxTeams: rest.maxParticipants || 16,
+          minElo: rest.minElo,
+          maxElo: rest.maxElo,
+          maxCombinedElo: rest.maxCombinedElo,
+          maxTeammateGap: rest.maxTeammateGap,
         },
       };
 
@@ -59,17 +57,24 @@ export default function Step2Confirm() {
 
       // Call API to create draft
       const res = await tournamentsApi.createTournament(finalData);
+      const tournamentId = res?.data?.id;
+      if (!tournamentId) {
+        throw new Error('Không thể tạo Giải đấu. Vui lòng thử lại.');
+      }
+
+      const divisionInput: CreateDivisionInput = {
+        name: divisionName,
+        matchType,
+        genderRestriction: genderRestriction as GenderRestriction,
+        maxParticipants: rest.maxParticipants,
+        entryFee: 0,
+      };
+      await divisionsApi.createDivision(tournamentId, divisionInput);
       
       toast.success('Tạo bản nháp giải đấu thành công!');
       reset(); // Clear persist storage
       
-      const tournamentId = res?.data?.id;
-      if (tournamentId) {
-        // Redirect to detail manage dashboard
-        router.push(`/organizer/tournaments/${tournamentId}/manage`);
-      } else {
-        router.push('/organizer/tournaments');
-      }
+      router.push(`/organizer/tournaments/${tournamentId}/manage`);
     } catch (error) {
       toast.error(getErrorMessage(error));
     } finally {
@@ -97,8 +102,7 @@ export default function Step2Confirm() {
           <div className="flex flex-col gap-1">
             <span className="text-slate-400 font-medium">Hình thức thi đấu</span>
             <span className="font-semibold text-slate-900">
-              {formData.matchType === 'SINGLES' ? 'Đơn (Singles)' :
-               formData.matchType === 'DOUBLES' ? 'Đôi (Doubles)' : 'Đôi nam nữ (Mixed)'}
+              {resolveMatchFormat(formData.matchFormat || 'MALE_DOUBLES').divisionName}
             </span>
           </div>
 
@@ -110,11 +114,38 @@ export default function Step2Confirm() {
           </div>
 
           <div className="flex flex-col gap-1">
+            <span className="text-slate-400 font-medium">Tính chất giải đấu</span>
+            <span className="font-semibold text-slate-950">
+              {formData.isRanked ? 'Xếp hạng hệ thống (Ranked)' : 'Giải phong trào (Unranked)'}
+            </span>
+          </div>
+
+          <div className="flex flex-col gap-1">
             <span className="text-slate-400 font-medium">Số đội tối đa</span>
             <span className="font-semibold text-slate-900">
               {formData.maxParticipants || 16} đội
             </span>
           </div>
+
+          {formData.isRanked && (formData.minElo !== null || formData.maxElo !== null) && (
+            <div className="flex flex-col gap-1">
+              <span className="text-slate-400 font-medium">Giới hạn ELO cá nhân</span>
+              <span className="font-semibold text-slate-900">
+                {formData.minElo !== null ? `${formData.minElo}` : '0'} - {formData.maxElo !== null ? `${formData.maxElo}` : 'Không giới hạn'}
+              </span>
+            </div>
+          )}
+
+          {formData.isRanked && (formData.matchFormat === 'MALE_DOUBLES' || formData.matchFormat === 'FEMALE_DOUBLES' || formData.matchFormat === 'MIXED_DOUBLES') && (formData.maxCombinedElo !== null || formData.maxTeammateGap !== null) && (
+            <div className="flex flex-col gap-1">
+              <span className="text-slate-400 font-medium">Giới hạn ELO đồng đội</span>
+              <span className="font-semibold text-slate-900">
+                {formData.maxCombinedElo !== null ? `Tổng ELO ≤ ${formData.maxCombinedElo}` : ''}
+                {formData.maxCombinedElo !== null && formData.maxTeammateGap !== null ? ' | ' : ''}
+                {formData.maxTeammateGap !== null ? `Chênh lệch ≤ ${formData.maxTeammateGap}` : ''}
+              </span>
+            </div>
+          )}
 
           {formData.description && (
             <div className="flex flex-col gap-1 md:col-span-2">
@@ -132,7 +163,7 @@ export default function Step2Confirm() {
           <ul className="list-disc pl-4 space-y-1">
             <li>Sau khi xác nhận, giải đấu sẽ được tạo ở trạng thái <strong>Bản nháp (DRAFT)</strong>.</li>
             <li>Giải đấu sẽ ẩn khỏi danh sách công khai và chỉ xuất hiện ở trang quản trị của bạn.</li>
-            <li>Bạn có thể tùy biến các thông số chi tiết như lịch thi đấu, sơ đồ thi đấu, lệ phí sàn, địa điểm cụ thể và luật thể thao trong trang Quản lý giải đấu trước khi chính thức công bố.</li>
+            <li>Bạn có thể tùy biến các thông số chi tiết như lịch thi đấu, sơ đồ thi đấu, phí nền tảng theo phần trăm, địa điểm cụ thể và luật thể thao trong trang Quản lý giải đấu trước khi chính thức công bố.</li>
           </ul>
         </div>
       </div>

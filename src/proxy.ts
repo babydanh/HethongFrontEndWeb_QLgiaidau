@@ -16,7 +16,7 @@ const GUEST_ROUTES = [
   '/register'
 ];
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
   // Backend set refreshToken trong cookie, ta dùng nó làm dấu hiệu nhận biết user đã login hay chưa

@@ -35,16 +35,12 @@ export const LoginForm = () => {
 
   const onSubmit = async (data: LoginFormValues) => {
     try {
-      const response = await authApi.login(data) as unknown as {
-        user: {
-          id: string;
-          email: string;
-          fullName: string;
-          avatarUrl?: string;
-          roles: string[];
-        };
-      };
-      const { user } = response;
+      const response = await authApi.login(data);
+      const user = response.user;
+      
+      if (!user) {
+        throw new Error('Không nhận được thông tin người dùng từ máy chủ.');
+      }
       
       useAuthStore.getState().setUser(user);
       

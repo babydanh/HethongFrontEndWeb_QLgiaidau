@@ -3,8 +3,15 @@ import { api } from '@/lib/axios';
 import { Match, MatchScore } from '@/types/match';
 export type { Match, MatchScore };
 
+interface PaginationMeta {
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  itemsPerPage: number;
+}
+
 export const matchesApi = {
-  getMatches: (params?: Record<string, unknown>) => api.get<{ data: Match[]; meta: any }>('/matches', { params }).then(res => res.data),
+  getMatches: (params?: Record<string, unknown>) => api.get<{ data: Match[]; meta: PaginationMeta }>('/matches', { params }),
   getMatchById: (id: string) => api.get<{ data: Match }>(`/matches/${id}`).then(res => res.data),
   updateScore: (
     id: string,

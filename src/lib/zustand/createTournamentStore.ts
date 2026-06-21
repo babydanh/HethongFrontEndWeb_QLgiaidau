@@ -1,5 +1,34 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { MatchTypeDB, GenderRestriction } from '@/types/tournament';
+
+// UI-level combined match format (matchType + gender in one pick)
+export type MatchFormat =
+  | 'MALE_SINGLES'
+  | 'FEMALE_SINGLES'
+  | 'MALE_DOUBLES'
+  | 'FEMALE_DOUBLES'
+  | 'MIXED_DOUBLES';
+
+// Map UI matchFormat → backend fields
+export function resolveMatchFormat(format: MatchFormat): {
+  matchType: MatchTypeDB;
+  genderRestriction: GenderRestriction;
+  divisionName: string;
+} {
+  switch (format) {
+    case 'MALE_SINGLES':
+      return { matchType: MatchTypeDB.SINGLES, genderRestriction: GenderRestriction.MALE, divisionName: 'Đơn Nam' };
+    case 'FEMALE_SINGLES':
+      return { matchType: MatchTypeDB.SINGLES, genderRestriction: GenderRestriction.FEMALE, divisionName: 'Đơn Nữ' };
+    case 'MALE_DOUBLES':
+      return { matchType: MatchTypeDB.DOUBLES, genderRestriction: GenderRestriction.MALE, divisionName: 'Đôi Nam' };
+    case 'FEMALE_DOUBLES':
+      return { matchType: MatchTypeDB.DOUBLES, genderRestriction: GenderRestriction.FEMALE, divisionName: 'Đôi Nữ' };
+    case 'MIXED_DOUBLES':
+      return { matchType: MatchTypeDB.MIXED_DOUBLES, genderRestriction: GenderRestriction.MIXED, divisionName: 'Đôi Nam Nữ' };
+  }
+}
 
 interface TournamentFormData {
   // Step 1: Info
@@ -8,8 +37,15 @@ interface TournamentFormData {
   categoryId: string;
   communityId: string;
   tournamentType: 'CLUB' | 'PUBLIC';
-  matchType: 'SINGLES' | 'DOUBLES' | 'MIXED_DOUBLES';
-  // Step 2: Format
+  // UI-only: unified match format (for single format backward compatibility)
+  matchFormat: MatchFormat;
+  // Step 2: Multiple formats
+  selectedFormats: MatchFormat[];
+  minElo: number | null;
+  maxElo: number | null;
+  maxCombinedElo: number | null;
+  maxTeammateGap: number | null;
+  // Step 3: Format & rules
   format: 'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION' | 'ROUND_ROBIN';
   maxParticipants: number | null;
   sportRules: {
@@ -17,14 +53,15 @@ interface TournamentFormData {
     pointsPerSet: number;
     winByTwo: boolean;
   };
-  // Step 3: Schedule & Venue
+  // Step 4: Schedule & Venue
   startDate: string;
   endDate: string;
   registrationStartDate: string;
   registrationEndDate: string;
   venueId: string;
-  // Step 4: Fees
+  // Step 5: Fees
   entryFee: number;
+  isRanked: boolean;
 }
 
 interface CreateTournamentState {
@@ -34,6 +71,7 @@ interface CreateTournamentState {
   nextStep: () => void;
   prevStep: () => void;
   updateFormData: (data: Partial<TournamentFormData>) => void;
+  getDivisionsFromFormats: () => Array<{ matchType: MatchTypeDB; genderRestriction: GenderRestriction; name: string }>;
   reset: () => void;
 }
 
@@ -43,7 +81,12 @@ const defaultFormData: TournamentFormData = {
   categoryId: '',
   communityId: '',
   tournamentType: 'PUBLIC',
-  matchType: 'DOUBLES',
+  matchFormat: 'MALE_DOUBLES',
+  selectedFormats: [],
+  minElo: null,
+  maxElo: null,
+  maxCombinedElo: null,
+  maxTeammateGap: null,
   format: 'SINGLE_ELIMINATION',
   maxParticipants: null,
   sportRules: {
@@ -57,25 +100,74 @@ const defaultFormData: TournamentFormData = {
   registrationEndDate: '',
   venueId: '',
   entryFee: 0,
+  isRanked: true,
 };
+
+type PersistedCreateTournamentState = Partial<Omit<CreateTournamentState, 'formData'>> & {
+  formData?: Partial<TournamentFormData>;
+};
+
+const normalizeFormData = (formData?: Partial<TournamentFormData>): TournamentFormData => ({
+  ...defaultFormData,
+  ...formData,
+  sportRules: {
+    ...defaultFormData.sportRules,
+    ...formData?.sportRules,
+  },
+  matchFormat: formData?.matchFormat ?? defaultFormData.matchFormat,
+  selectedFormats: Array.isArray(formData?.selectedFormats) ? formData.selectedFormats : [],
+});
 
 export const useCreateTournamentStore = create<CreateTournamentState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       currentStep: 1,
       formData: defaultFormData,
       setStep: (step) => set({ currentStep: step }),
-      nextStep: () => set((state) => ({ currentStep: Math.min(state.currentStep + 1, 4) })),
+      nextStep: () => set((state) => ({ currentStep: Math.min(state.currentStep + 1, 5) })),
       prevStep: () => set((state) => ({ currentStep: Math.max(state.currentStep - 1, 1) })),
       updateFormData: (data) =>
         set((state) => ({
-          formData: { ...state.formData, ...data },
+          formData: normalizeFormData({ ...state.formData, ...data }),
         })),
+      getDivisionsFromFormats: () => {
+        const state = get();
+        const formData = normalizeFormData(state.formData);
+        const formats = formData.selectedFormats.length > 0
+          ? formData.selectedFormats
+          : [formData.matchFormat];
+        
+        return formats.map((format) => {
+          const resolved = resolveMatchFormat(format);
+          return {
+            matchType: resolved.matchType,
+            genderRestriction: resolved.genderRestriction,
+            name: resolved.divisionName,
+          };
+        });
+      },
       reset: () => set({ currentStep: 1, formData: defaultFormData }),
     }),
     {
-      name: 'create-tournament-storage', // key in local storage
-      // Only persist formData and currentStep
+      name: 'create-tournament-storage-v2',
+      version: 1,
+      migrate: (persistedState) => {
+        const persisted = persistedState as PersistedCreateTournamentState | undefined;
+
+        return {
+          currentStep: persisted?.currentStep ?? 1,
+          formData: normalizeFormData(persisted?.formData),
+        };
+      },
+      merge: (persistedState, currentState) => {
+        const persisted = persistedState as PersistedCreateTournamentState | undefined;
+
+        return {
+          ...currentState,
+          ...persisted,
+          formData: normalizeFormData(persisted?.formData),
+        };
+      },
     }
   )
 );

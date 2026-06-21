@@ -1,12 +1,27 @@
 import { api } from '@/lib/axios';
+import { ApiResponse } from '@/types/api';
+
+export interface Venue {
+  id: string;
+  name: string;
+  locationAddress: string;
+  description?: string;
+  city?: string;
+  district?: string;
+  ward?: string;
+  images?: string[];
+  lat?: number;
+  lng?: number;
+  courts?: any[];
+}
 
 export const venuesApi = {
-  getVenues: () => api.get('/venues'),
-  getVenueById: (id: string) => api.get(`/venues/${id}`),
-  createVenue: <T>(data: T) => api.post('/venues', data),
-  updateVenue: <T>(id: string, data: T) => api.patch(`/venues/${id}`, data),
-  deleteVenue: (id: string) => api.delete(`/venues/${id}`),
+  getVenues: () => api.get<ApiResponse<Venue[]>>('/venues'),
+  getVenueById: (id: string) => api.get<ApiResponse<Venue>>(`/venues/${id}`),
+  createVenue: <T>(data: T) => api.post<ApiResponse<Venue>>('/venues', data),
+  updateVenue: <T>(id: string, data: T) => api.patch<ApiResponse<Venue>>(`/venues/${id}`, data),
+  deleteVenue: (id: string) => api.delete<ApiResponse<void>>(`/venues/${id}`),
 
-  addCourt: <T>(id: string, data: T) => api.post(`/venues/${id}/courts`, data),
-  deleteCourt: (id: string, courtId: string) => api.delete(`/venues/${id}/courts/${courtId}`),
+  addCourt: <T>(id: string, data: T) => api.post<ApiResponse<any>>(`/venues/${id}/courts`, data),
+  deleteCourt: (id: string, courtId: string) => api.delete<ApiResponse<void>>(`/venues/${id}/courts/${courtId}`),
 };

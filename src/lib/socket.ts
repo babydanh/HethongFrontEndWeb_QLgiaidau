@@ -9,12 +9,14 @@ const getSocketUrl = () => {
 };
 
 const SOCKET_URL = getSocketUrl();
+const isSocketDebugEnabled = process.env.NEXT_PUBLIC_SOCKET_DEBUG === 'true';
 
 class SocketClient {
   private static instance: SocketClient;
   private chatSocket: Socket | null = null;
   private matchSocket: Socket | null = null;
   private notificationSocket: Socket | null = null;
+  private loggedSocketErrors = new Set<string>();
 
   private constructor() {}
 
@@ -25,6 +27,13 @@ class SocketClient {
     return SocketClient.instance;
   }
 
+  private logConnectError(scope: string, err: Error) {
+    if (!isSocketDebugEnabled || this.loggedSocketErrors.has(scope)) return;
+
+    this.loggedSocketErrors.add(scope);
+    console.warn(`${scope} Socket connect_error:`, err.message);
+  }
+
   public getChatSocket(): Socket {
     if (!this.chatSocket) {
       this.chatSocket = io(`${SOCKET_URL}/chat`, {
@@ -33,8 +42,8 @@ class SocketClient {
         transports: ['websocket', 'polling'],
       });
 
-      this.chatSocket.on('connect_error', (err) => {
-        console.error('Chat Socket connect_error:', err);
+      this.chatSocket.on('connect_error', (err: Error) => {
+        this.logConnectError('Chat', err);
       });
     }
     return this.chatSocket;
@@ -48,8 +57,8 @@ class SocketClient {
         transports: ['websocket', 'polling'],
       });
 
-      this.matchSocket.on('connect_error', (err) => {
-        console.error('Match Socket connect_error:', err);
+      this.matchSocket.on('connect_error', (err: Error) => {
+        this.logConnectError('Match', err);
       });
     }
     return this.matchSocket;
@@ -61,10 +70,12 @@ class SocketClient {
         autoConnect: false,
         withCredentials: true,
         transports: ['websocket', 'polling'],
+        reconnectionAttempts: 2,
+        timeout: 5000,
       });
 
-      this.notificationSocket.on('connect_error', (err) => {
-        console.error('Notification Socket connect_error:', err);
+      this.notificationSocket.on('connect_error', (err: Error) => {
+        this.logConnectError('Notification', err);
       });
     }
     return this.notificationSocket;

@@ -9,11 +9,17 @@ export function Footer() {
       <div className="container mx-auto px-4 py-8 md:px-6 md:py-12">
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
           <div>
-            <Link href="/" className="flex items-center gap-2 mb-4">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600">
-                <Trophy className="h-5 w-5 text-white" />
-              </div>
-              <span className="text-xl font-bold tracking-tight text-slate-900">TournaMaster</span>
+            <Link href="/" className="flex items-center gap-0.5 mb-3">
+              <img 
+                src="/images/vndc_sport_logo.png" 
+                alt="VNDC Sport Logo Main" 
+                className="h-[130px] w-auto object-contain transition-transform duration-200 hover:scale-105"
+              />
+              <img 
+                src="/images/vndc_sport.png" 
+                alt="VNDC Sport Logo Sub" 
+                className="h-[104px] w-auto object-contain transition-transform duration-200 hover:scale-105"
+              />
             </Link>
             <p className="text-sm text-slate-500">
               Nền tảng quản lý giải đấu chuyên nghiệp và dễ sử dụng nhất.
@@ -44,7 +50,7 @@ export function Footer() {
           </div>
         </div>
         <div className="mt-8 border-t border-slate-100 pt-8 text-center text-sm text-slate-500 select-none">
-          © 2026 TournaMaster. Tất cả các quyền được bảo lưu.
+          © 2026 VNDC Sport. Tất cả các quyền được bảo lưu.
         </div>
       </div>
     </footer>

@@ -48,14 +48,16 @@ export interface DateTimePickerProps {
   onChange: (val: string) => void;
   error?: string;
   className?: string;
+  disabled?: boolean;
 }
 
 export const DateTimePicker = React.forwardRef<HTMLInputElement, DateTimePickerProps>(
-  ({ label, value, onChange, error, className }, ref) => {
+  ({ label, value, onChange, error, className, disabled }, ref) => {
     const defaultRef = React.useRef<HTMLInputElement>(null);
     const activeRef = (ref as React.RefObject<HTMLInputElement>) || defaultRef;
 
     const handleWrapperClick = () => {
+      if (disabled) return;
       if (activeRef.current) {
         try {
           activeRef.current.showPicker();
@@ -97,6 +99,7 @@ export const DateTimePicker = React.forwardRef<HTMLInputElement, DateTimePickerP
           onClick={handleWrapperClick}
           className={cn(
             "relative w-full cursor-pointer flex h-11 items-center justify-between rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus-within:ring-2 focus-within:ring-blue-600 focus-within:border-blue-600 transition-colors duration-200 select-none",
+            disabled && "cursor-not-allowed opacity-50 bg-slate-50",
             error && "border-red-500 focus-within:ring-red-500 focus-within:border-red-500",
             className
           )}
@@ -126,6 +129,7 @@ export const DateTimePicker = React.forwardRef<HTMLInputElement, DateTimePickerP
             type="datetime-local"
             ref={activeRef}
             value={value}
+            disabled={disabled}
             onChange={(e) => onChange(e.target.value)}
             className="absolute inset-0 opacity-0 pointer-events-none w-full h-full"
           />

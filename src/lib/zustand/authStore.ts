@@ -1,18 +1,19 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-interface User {
+export interface User {
   id: string;
   email: string;
   fullName: string;
-  avatarUrl?: string;
+  avatarUrl?: string | null;
+  coverUrl?: string | null;
   roles: string[];
-  phoneNumber?: string;
-  dateOfBirth?: string;
-  gender?: string;
-  address?: string;
-  bio?: string;
-  provinceCode?: string;
+  phoneNumber?: string | null;
+  dateOfBirth?: string | null;
+  gender?: string | null;
+  address?: string | null;
+  bio?: string | null;
+  provinceCode?: string | null;
 }
 
 interface AuthState {

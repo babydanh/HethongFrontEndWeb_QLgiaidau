@@ -10,6 +10,7 @@ interface RichTextEditorProps {
   placeholder?: string;
   error?: string;
   label?: string;
+  disabled?: boolean;
 }
 
 interface EditorJSBlock {
@@ -184,7 +185,7 @@ interface EditorJSAPI {
   };
 }
 
-export default function RichTextEditor({ value, onChange, placeholder, error, label }: RichTextEditorProps) {
+export default function RichTextEditor({ value, onChange, placeholder, error, label, disabled }: RichTextEditorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isFocused, setIsFocused] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -221,6 +222,7 @@ export default function RichTextEditor({ value, onChange, placeholder, error, la
       editorInstance = new EditorJS.default({
         holder: containerRef.current,
         data: initialData,
+        readOnly: disabled,
         placeholder: placeholder || 'Nhấn Tab để bắt đầu viết...',
         tools: {
           header: {
@@ -329,7 +331,7 @@ export default function RichTextEditor({ value, onChange, placeholder, error, la
         editorInstance.destroy();
       }
     };
-  }, [isMounted]);
+  }, [isMounted, disabled]);
 
   if (!isMounted) {
     return (

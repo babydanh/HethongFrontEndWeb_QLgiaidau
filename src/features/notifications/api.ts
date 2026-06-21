@@ -17,4 +17,7 @@ export const notificationsApi = {
     api.get<{ data: Notification[] }>('/notifications').then((res) => res.data),
   markAsRead: (id: string) =>
     api.patch<{ data: Notification }>(`/notifications/${id}/read`, {}).then((res) => res.data),
+  markAllAsRead: () =>
+    api.patch<{ data: Notification[] }>('/notifications/read-all', {}).then((res) => res.data),
 };
+

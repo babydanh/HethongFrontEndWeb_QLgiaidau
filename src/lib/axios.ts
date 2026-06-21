@@ -5,14 +5,14 @@ import toast from 'react-hot-toast';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 declare module 'axios' {
   export interface AxiosInstance {
-    request<T = any, R = T, D = any>(config: AxiosRequestConfig<D>): Promise<R>;
-    get<T = any, R = T, D = any>(url: string, config?: AxiosRequestConfig<D>): Promise<R>;
-    delete<T = any, R = T, D = any>(url: string, config?: AxiosRequestConfig<D>): Promise<R>;
-    head<T = any, R = T, D = any>(url: string, config?: AxiosRequestConfig<D>): Promise<R>;
-    options<T = any, R = T, D = any>(url: string, config?: AxiosRequestConfig<D>): Promise<R>;
-    post<T = any, R = T, D = any>(url: string, data?: any, config?: AxiosRequestConfig<D>): Promise<R>;
-    put<T = any, R = T, D = any>(url: string, data?: any, config?: AxiosRequestConfig<D>): Promise<R>;
-    patch<T = any, R = T, D = any>(url: string, data?: any, config?: AxiosRequestConfig<D>): Promise<R>;
+    request<T = unknown, R = T, D = unknown>(config: AxiosRequestConfig<D>): Promise<R>;
+    get<T = unknown, R = T, D = unknown>(url: string, config?: AxiosRequestConfig<D>): Promise<R>;
+    delete<T = unknown, R = T, D = unknown>(url: string, config?: AxiosRequestConfig<D>): Promise<R>;
+    head<T = unknown, R = T, D = unknown>(url: string, config?: AxiosRequestConfig<D>): Promise<R>;
+    options<T = unknown, R = T, D = unknown>(url: string, config?: AxiosRequestConfig<D>): Promise<R>;
+    post<T = unknown, R = T, D = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig<D>): Promise<R>;
+    put<T = unknown, R = T, D = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig<D>): Promise<R>;
+    patch<T = unknown, R = T, D = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig<D>): Promise<R>;
   }
 }
 
@@ -38,16 +38,28 @@ api.interceptors.response.use(
     const originalRequest = error.config;
 
     // Handle 401 Unauthorized for token refresh
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    const isAuthRoute = ['/auth/login', '/auth/register', '/auth/refresh', '/auth/logout'].some(
+      (route) => originalRequest.url?.includes(route)
+    );
+
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthRoute) {
       originalRequest._retry = true;
       
       // Prevent infinite loop if refresh itself fails
       if (originalRequest.url === '/auth/refresh') {
-        const wasAuthenticated = useAuthStore.getState().isAuthenticated;
         useAuthStore.getState().logout();
-        if (wasAuthenticated) {
-          toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
-          if (typeof window !== 'undefined') window.location.href = '/login';
+        try {
+          await axios.post(`${api.defaults.baseURL}/auth/logout`, {}, { withCredentials: true });
+        } catch (e) {
+          console.error('Failed to clear cookies:', e);
+        }
+        if (typeof window !== 'undefined') {
+          const isProtectedRoute = ['/organizer', '/admin', '/profile', '/dashboard'].some(
+            (route) => window.location.pathname.startsWith(route)
+          );
+          if (isProtectedRoute && window.location.pathname !== '/login') {
+            window.location.href = '/login';
+          }
         }
         return Promise.reject(error);
       }
@@ -59,11 +71,19 @@ api.interceptors.response.use(
         // Retry the original request. Browser will now send the newly set accessToken cookie
         return api(originalRequest);
       } catch (refreshError) {
-        const wasAuthenticated = useAuthStore.getState().isAuthenticated;
         useAuthStore.getState().logout();
-        if (wasAuthenticated) {
-          toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
-          if (typeof window !== 'undefined') window.location.href = '/login';
+        try {
+          await axios.post(`${api.defaults.baseURL}/auth/logout`, {}, { withCredentials: true });
+        } catch (e) {
+          console.error('Failed to clear cookies:', e);
+        }
+        if (typeof window !== 'undefined') {
+          const isProtectedRoute = ['/organizer', '/admin', '/profile', '/dashboard'].some(
+            (route) => window.location.pathname.startsWith(route)
+          );
+          if (isProtectedRoute && window.location.pathname !== '/login') {
+            window.location.href = '/login';
+          }
         }
         return Promise.reject(refreshError);
       }

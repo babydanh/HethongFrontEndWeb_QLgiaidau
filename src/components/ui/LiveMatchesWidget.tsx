@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { BracketMatch, tournamentsApi } from '@/features/tournaments/api';
 import Link from 'next/link';
+import { isNetworkError } from '@/utils/error';
 
 interface Props {
   limit?: number;
@@ -20,8 +21,11 @@ export default function LiveMatchesWidget({ limit = 5, showAllLink = true }: Pro
         if (res && res.data) {
           setMatches(res.data);
         }
-      } catch (error) {
-        console.error('Failed to fetch ongoing matches', error);
+      } catch (error: unknown) {
+        if (!isNetworkError(error)) {
+          console.error('Failed to fetch ongoing matches', error);
+        }
+        setMatches([]);
       } finally {
         setIsLoading(false);
       }

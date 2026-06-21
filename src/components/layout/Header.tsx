@@ -10,7 +10,9 @@ import { cn } from '@/utils/cn';
 import { useState, useEffect } from 'react';
 import { usersApi } from '@/features/users/api';
 import { notificationsApi, Notification } from '@/features/notifications/api';
-import { socketClient } from '@/lib/socket';
+import { useSocket } from '@/hooks/useSocket';
+import toast from 'react-hot-toast';
+import { isHttpStatusError } from '@/utils/error';
 
 export function Header() {
   const { isAuthenticated, user, logout, setUser } = useAuthStore();
@@ -19,44 +21,8 @@ export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isClient, setIsClient] = useState(false);
   
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const { notifications, setNotifications } = useSocket();
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
-
-  useEffect(() => {
-    if (!isAuthenticated || !user) return;
-
-    notificationsApi.getMyNotifications()
-      .then(data => {
-        setNotifications(data || []);
-      })
-      .catch(err => {
-        console.error('Failed to fetch notifications:', err);
-      });
-
-    const socket = socketClient.getNotificationSocket();
-    if (!socket.connected) {
-      socket.connect();
-    }
-
-    const handleConnect = () => {
-      socket.emit('subscribe', user.id);
-    };
-
-    if (socket.connected) {
-      handleConnect();
-    } else {
-      socket.on('connect', handleConnect);
-    }
-
-    socket.on('notification:new', (notification: Notification) => {
-      setNotifications(prev => [notification, ...prev]);
-    });
-
-    return () => {
-      socket.off('connect', handleConnect);
-      socket.off('notification:new');
-    };
-  }, [isAuthenticated, user]);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsClient(true), 0);
@@ -71,30 +37,35 @@ export function Header() {
   }, []);
 
   useEffect(() => {
-    if (isClient && !isAuthenticated) {
-      usersApi.getProfile()
-        .then(profile => {
-          if (profile) {
-            // Map UserProfile properties to User store structure
-            setUser({
-              id: profile.id,
-              email: profile.email,
-              fullName: profile.fullName,
-              avatarUrl: profile.avatarUrl || undefined,
-              roles: profile.role ? [profile.role] : [],
-              phoneNumber: profile.phoneNumber || undefined,
-              dateOfBirth: profile.dateOfBirth || undefined,
-              gender: profile.gender || undefined,
-              address: profile.address || undefined,
-              bio: profile.bio || undefined
-            });
-          }
-        })
-        .catch(() => {
-          // Ignore 401/error, user remains logged out
-        });
+    const isGuestRoute = ['/login', '/register'].some(route => pathname.startsWith(route));
+    if (isClient && !isGuestRoute) {
+      // Fetch profile if authenticated (to sync state) OR if not authenticated but browser has active session cookies
+      if (!isAuthenticated || !user) {
+        usersApi.getProfile()
+          .then(profile => {
+            if (profile) {
+              setUser({
+                id: profile.id,
+                email: profile.email,
+                fullName: profile.fullName,
+                avatarUrl: profile.avatarUrl || undefined,
+                roles: profile.roles || (profile.role ? [profile.role] : []),
+                phoneNumber: profile.phoneNumber || undefined,
+                dateOfBirth: profile.dateOfBirth || undefined,
+                gender: profile.gender || undefined,
+                address: profile.address || undefined,
+                bio: profile.bio || undefined
+              });
+            }
+          })
+          .catch((error: unknown) => {
+            if (isAuthenticated && (isHttpStatusError(error, 401) || isHttpStatusError(error, 403))) {
+              logout();
+            }
+          });
+      }
     }
-  }, [isClient, isAuthenticated, setUser]);
+  }, [isClient, setUser, logout, pathname, isAuthenticated, user]);
 
   const isActive = (path: string) => {
     if (path === '/') return pathname === '/';
@@ -120,8 +91,12 @@ export function Header() {
         
         {/* Left: Logo & Nav */}
         <div className="flex items-center gap-8 h-full">
-          <Link href="/" className="text-xl md:text-2xl font-bold text-blue-600 tracking-tight">
-            TournaHub
+          <Link href="/" className="flex items-center h-full py-0 relative">
+            <img 
+              src="/images/vndc_sport.png" 
+              alt="VNDC Sport Logo" 
+              className="h-[140px] w-auto object-contain transition-transform duration-200 hover:scale-105"
+            />
           </Link>
           <nav className="hidden md:flex gap-6 h-full items-center">
             {navLinks.map((link) => (
@@ -162,11 +137,30 @@ export function Header() {
               <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 z-50">
                 <div className="px-4 py-2 border-b border-slate-100 flex justify-between items-center mb-1">
                   <span className="text-sm font-bold text-slate-900">Thông báo</span>
-                  {notifications.filter(n => !n.isRead).length > 0 && (
-                    <span className="text-[10px] bg-rose-50 text-rose-600 px-2 py-0.5 rounded-full font-bold">
-                      {notifications.filter(n => !n.isRead).length} mới
-                    </span>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {notifications.filter(n => !n.isRead).length > 0 && (
+                      <button 
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          try {
+                            await notificationsApi.markAllAsRead();
+                            setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+                            toast.success('Đã đọc tất cả thông báo');
+                          } catch (err) {
+                            console.error(err);
+                          }
+                        }}
+                        className="text-[10px] text-blue-600 hover:text-blue-800 font-bold hover:underline"
+                      >
+                        Đọc tất cả
+                      </button>
+                    )}
+                    {notifications.filter(n => !n.isRead).length > 0 && (
+                      <span className="text-[10px] bg-rose-50 text-rose-600 px-2 py-0.5 rounded-full font-bold">
+                        {notifications.filter(n => !n.isRead).length} mới
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="max-h-64 overflow-y-auto no-scrollbar">
                   {notifications.length > 0 ? (
@@ -204,6 +198,15 @@ export function Header() {
                       Chưa có thông báo nào
                     </div>
                   )}
+                </div>
+                <div className="px-4 pt-2 pb-1 border-t border-slate-100 text-center">
+                  <Link 
+                    href="/notifications" 
+                    onClick={() => setIsNotificationOpen(false)}
+                    className="text-xs text-blue-600 hover:text-blue-800 font-bold hover:underline block w-full py-1"
+                  >
+                    Xem tất cả
+                  </Link>
                 </div>
               </div>
             )}
@@ -246,9 +249,9 @@ export function Header() {
                       </div>
                     </Link>
                   )}
-                  {user?.roles?.includes('ORGANIZER') && (
+                  {(user?.roles?.includes('ORGANIZER') || user?.roles?.includes('ADMIN')) ? (
                     <>
-                      <Link href="/organizer" onClick={() => setIsDropdownOpen(false)}>
+                      <Link href="/organizer/tournaments" onClick={() => setIsDropdownOpen(false)}>
                         <div className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
                           <LayoutDashboard className="w-4 h-4 text-slate-400" />
                           Quản lý giải đấu
@@ -261,14 +264,14 @@ export function Header() {
                         </div>
                       </Link>
                     </>
+                  ) : (
+                    <Link href="/dashboard" onClick={() => setIsDropdownOpen(false)}>
+                      <div className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
+                        <Trophy className="w-4 h-4 text-slate-400" />
+                        Giải đấu của tôi
+                      </div>
+                    </Link>
                   )}
-                  <Link href="/organizer/tournaments" onClick={() => setIsDropdownOpen(false)}>
-
-                    <div className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
-                      <Trophy className="w-4 h-4 text-slate-400" />
-                      Giải đấu của tôi
-                    </div>
-                  </Link>
                   <Link href="/profile" onClick={() => setIsDropdownOpen(false)}>
                     <div className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
                       <User className="w-4 h-4 text-slate-400" />
@@ -293,6 +296,7 @@ export function Header() {
                       }
                       logout();
                       setIsDropdownOpen(false);
+                      window.location.href = '/login';
                     }}
                     className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors cursor-pointer mt-1 border-t border-slate-100 pt-2"
                   >

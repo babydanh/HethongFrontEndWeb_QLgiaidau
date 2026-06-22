@@ -7,10 +7,11 @@ interface TournamentStepperProps {
   tournament: Tournament;
   onPublish: () => void;
   onNextStep: (nextStatus: Tournament['status']) => void;
+  onPayPlatformFee?: () => void;
   isLoading?: boolean;
 }
 
-export function TournamentStepper({ tournament, onPublish, onNextStep, isLoading }: TournamentStepperProps) {
+export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlatformFee, isLoading }: TournamentStepperProps) {
   const getStepIndex = () => {
     switch (tournament.status) {
       case 'DRAFT':
@@ -31,6 +32,7 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, isLoading
   };
 
   const currentStep = getStepIndex();
+  const isRegistrationClosed = tournament.status === 'REGISTRATION_CLOSED';
 
   const steps = [
     {
@@ -38,15 +40,21 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, isLoading
       icon: <Users className="w-4 h-4" />,
       description: 'VĐV đăng ký tham gia',
       actionText: 'Chốt đăng ký',
-      nextStatus: 'UPCOMING' as const,
+      onClick: () => onNextStep('UPCOMING'),
       canProgress: currentStep === 0,
     },
     {
       title: 'Sơ đồ & Lịch đấu',
       icon: <GitMerge className="w-4 h-4" />,
       description: 'Chốt sơ đồ nháp, phân lịch',
-      actionText: 'Khai mạc giải đấu',
-      nextStatus: 'IN_PROGRESS' as const,
+      actionText: isRegistrationClosed ? 'Thanh toán phí sàn' : 'Khai mạc giải đấu',
+      onClick: () => {
+        if (isRegistrationClosed) {
+          onPayPlatformFee?.();
+        } else {
+          onNextStep('IN_PROGRESS');
+        }
+      },
       canProgress: currentStep === 1,
     },
     {
@@ -54,7 +62,7 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, isLoading
       icon: <Play className="w-4 h-4" />,
       description: 'Cập nhật điểm số, kết quả',
       actionText: 'Kết thúc giải đấu',
-      nextStatus: 'COMPLETED' as const,
+      onClick: () => onNextStep('COMPLETED'),
       canProgress: currentStep === 2,
     },
     {
@@ -62,7 +70,7 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, isLoading
       icon: <Trophy className="w-4 h-4" />,
       description: 'Giải đấu hoàn thành',
       actionText: null,
-      nextStatus: null,
+      onClick: () => {},
       canProgress: false,
     },
   ];
@@ -75,7 +83,7 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, isLoading
       
       {tournament.status === 'DRAFT' && (
         <div className="flex flex-col items-center justify-center py-6 bg-slate-50/50 rounded-xl border border-dashed border-slate-300 mb-6">
-          <h4 className="font-bold text-slate-700 mb-2">Giải đấu chưa được Công bố</h4>
+          <h4 className="font-bold text-slate-700 mb-2">Giải đấu chưa được Công bộ</h4>
           <p className="text-sm text-slate-500 mb-3 max-w-md text-center">
             Bạn cần phải Công bố giải đấu (Publish) để kích hoạt Thanh tiến trình và bắt đầu nhận đăng ký.
           </p>
@@ -144,7 +152,7 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, isLoading
                 <div className="mt-4">
                   <Button
                     size="sm"
-                    onClick={() => step.nextStatus && onNextStep(step.nextStatus)}
+                    onClick={step.onClick}
                     disabled={isLoading}
                     className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5 h-8 px-4 rounded-full shadow-md shadow-blue-500/20"
                   >

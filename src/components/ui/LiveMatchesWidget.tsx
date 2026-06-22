@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { BracketMatch, tournamentsApi } from '@/features/tournaments/api';
+import { matchesApi } from '@/features/matches/api';
 import Link from 'next/link';
 import { isNetworkError } from '@/utils/error';
 
@@ -17,9 +18,9 @@ export default function LiveMatchesWidget({ limit = 5, showAllLink = true }: Pro
   useEffect(() => {
     const fetchLiveMatches = async () => {
       try {
-        const res = await tournamentsApi.getOngoingMatches({ limit });
+        const res = await matchesApi.getMatches({ status: 'ONGOING', limit });
         if (res && res.data) {
-          setMatches(res.data);
+          setMatches(res.data as unknown as BracketMatch[]);
         }
       } catch (error: unknown) {
         if (!isNetworkError(error)) {

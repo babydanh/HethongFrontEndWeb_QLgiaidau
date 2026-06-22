@@ -95,9 +95,15 @@ export default function Step4ReviewSubmit() {
       }
 
       // 2. Create divisions for each selected format under the tournament.
-      const divisionPromises = divisions.map((div) => {
+      // Deduplicate to prevent unique constraint violations on parallel requests
+      const uniqueDivisions = divisions.filter((div, index, self) =>
+        index === self.findIndex((t) => (
+          t.matchType === div.matchType && t.genderRestriction === div.genderRestriction
+        ))
+      );
+
+      const divisionPromises = uniqueDivisions.map((div) => {
         const divisionInput: CreateDivisionInput = {
-          tournamentId,
           name: div.name,
           matchType: div.matchType,
           genderRestriction: div.genderRestriction as GenderRestriction,

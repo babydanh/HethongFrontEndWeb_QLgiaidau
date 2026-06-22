@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { tournamentsApi, Tournament, TournamentParticipant } from '@/features/tournaments/api';
-import { usersApi } from '@/features/users/api';
+import { usersApi, UserProfile } from '@/features/users/api';
 import { getErrorMessage } from '@/utils/error';
 import { trimAndNormalizeSpaces } from '@/utils/string';
 import { formatCurrency } from '@/utils/format';
@@ -30,7 +30,7 @@ export default function DoublesRegistrationFlow({ tournament, inviteCode, divisi
 
   // Partner search states
   const [partnerQuery, setPartnerQuery] = useState('');
-  const [searchedPartner, setSearchedPartner] = useState<any>(null);
+  const [searchedPartner, setSearchedPartner] = useState<UserProfile | null>(null);
   const [isSearchingPartner, setIsSearchingPartner] = useState(false);
   const [partnerSearchError, setPartnerSearchError] = useState('');
   const [inviteLater, setInviteLater] = useState(false);
@@ -62,9 +62,7 @@ export default function DoublesRegistrationFlow({ tournament, inviteCode, divisi
 
     if (step === 2 && participant?.id) {
       if (!isPolling) {
-        Promise.resolve().then(() => {
-          setIsPolling(true);
-        });
+        Promise.resolve().then(() => setIsPolling(true));
       }
       intervalId = setInterval(async () => {
         try {
@@ -84,9 +82,7 @@ export default function DoublesRegistrationFlow({ tournament, inviteCode, divisi
       }, 3000);
     } else {
       if (isPolling) {
-        Promise.resolve().then(() => {
-          setIsPolling(false);
-        });
+        Promise.resolve().then(() => setIsPolling(false));
       }
     }
 
@@ -105,7 +101,7 @@ export default function DoublesRegistrationFlow({ tournament, inviteCode, divisi
       setIsSearchingPartner(true);
       setPartnerSearchError('');
       const res = await usersApi.searchUsersByQuery(q);
-      const results = (res as any)?.data || res || [];
+      const results = res || [];
       if (Array.isArray(results) && results.length > 0) {
         setSearchedPartner(results[0]);
       } else {
@@ -137,425 +133,6 @@ export default function DoublesRegistrationFlow({ tournament, inviteCode, divisi
       setIsSubmitting(true);
       const partnerEmailOrPhone = inviteLater ? undefined : (searchedPartner?.email || searchedPartner?.phoneNumber || partnerQuery);
       const res = await tournamentsApi.register(tournament.id, {
-        teamName: cleanName,
-        partnerEmailOrPhone,
-        divisionId,
-        inviteCode,
-      });
-
-      if (res.data?.participant) {
-        const part = res.data.participant;
-        setParticipant(part);
-        if (part.teamStatus === 'COMPLETE') {
-          setStep(3);
-        } else {
-          setStep(2);
-        }
-      }
-    } catch (err) {
-      toast.error(getErrorMessage(err));
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleCopyInviteLink = async () => {
-    const teamInviteLink =
-      participant && 'teamInviteLink' in participant ? participant.teamInviteLink : undefined;
-    const link = teamInviteLink || (typeof window !== 'undefined' ? `${window.location.origin}/tournaments/${tournament.id}/register` : '');
-
-    if (!link) {
-      toast.error('Không tìm thấy link mời.');
-      return;
-    }
-
-    try {
-      await navigator.clipboard.writeText(link);
-      setCopied(true);
-      toast.success('Đã sao chép link mời');
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      toast.error(getErrorMessage(err));
-    }
-  };
-
-  const handleManualCheck = async () => {
-    try {
-      toast.loading('Đang kiểm tra trạng thái...', { id: 'manual-check' });
-      const res = await tournamentsApi.getMyRegistration(tournament.id);
-      if (res.data && res.data.registered && res.data.participant) {
-        const part = res.data.participant;
-        setParticipant(part);
-        if (part.teamStatus === 'COMPLETE') {
-          setStep(3);
-          toast.success('Đồng đội của bạn đã tham gia!', { id: 'manual-check' });
-        } else {
-          toast.error('Vẫn chưa có đồng đội nào tham gia.', { id: 'manual-check' });
-        }
-      } else {
-        toast.error('Có lỗi xảy ra khi kiểm tra đăng ký.', { id: 'manual-check' });
-      }
-    } catch (err) {
-      toast.error(getErrorMessage(err), { id: 'manual-check' });
-    }
-  };
-
-  const handleWithdraw = async () => {
-    if (!confirm('Bạn có chắc chắn muốn hủy đăng ký và rút lui khỏi giải đấu? Nếu đã đóng lệ phí, việc hoàn trả sẽ cần được BTC giải quyết.')) {
-      return;
-    }
-
-    try {
-      setIsWithdrawing(true);
-      await tournamentsApi.withdraw(tournament.id);
-      toast.success('Đã rút khỏi giải đấu thành công.');
-      setParticipant(null);
-      setTeamName('');
-      setPartnerQuery('');
-      setSearchedPartner(null);
-      setInviteLater(false);
-      setStep(1);
-    } catch (err) {
-      toast.error(getErrorMessage(err));
-    } finally {
-      setIsWithdrawing(false);
-    }
-  };
-
-  const handlePayment = () => {
-    toast.success('Chuyển sang bước thanh toán');
-    router.push(`/tournaments/${tournament.id}`);
-  };
-
-  const teamInviteLink =
-    participant && 'teamInviteLink' in participant
-      ? participant.teamInviteLink
-      : undefined;
-
-  return (
-    <div className="space-y-6">
-      {step === 1 && (
-        <form onSubmit={handleCreateTeam} className="space-y-4 rounded-lg border p-4">
-          <div className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            <h3 className="text-lg font-semibold">Đăng ký nội dung đôi</h3>
-          </div>
-
-          {inviteCode && (
-            <div className="flex items-start gap-2 rounded-md bg-blue-50 p-3 text-sm text-blue-700">
-              <QrCode className="mt-0.5 h-4 w-4" />
-              <span>Bạn đang tham gia bằng mã mời.</span>
-            </div>
-          )}
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Tên đội</label>
-            <Input value={teamName} onChange={(e) => setTeamName(e.target.value)} placeholder="Nhập tên đội" />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Tìm đồng đội</label>
-            <div className="flex gap-2">
-              <Input
-                value={partnerQuery}
-                onChange={(e) => setPartnerQuery(e.target.value)}
-                placeholder="Email hoặc số điện thoại"
-                disabled={inviteLater}
-              />
-              <Button type="button" variant="outline" onClick={handleSearchPartner} disabled={isSearchingPartner || inviteLater}>
-                {isSearchingPartner ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-              </Button>
-            </div>
-
-            {partnerSearchError && (
-              <div className="flex items-start gap-2 rounded-md bg-red-50 p-3 text-sm text-red-600">
-                <AlertTriangle className="mt-0.5 h-4 w-4" />
-                <span>{partnerSearchError}</span>
-              </div>
-            )}
-
-            {searchedPartner && (
-              <div className="flex items-center justify-between rounded-md border p-3">
-                <div>
-                  <div className="font-medium">{searchedPartner.fullName || searchedPartner.name || searchedPartner.email || searchedPartner.phoneNumber}</div>
-                  <div className="text-sm text-gray-500">{searchedPartner.email || searchedPartner.phoneNumber}</div>
-                </div>
-                <CheckCircle className="h-5 w-5 text-green-600" />
-              </div>
-            )}
-
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={inviteLater}
-                onChange={(e) => {
-                  setInviteLater(e.target.checked);
-                  if (e.target.checked) {
-                    setSearchedPartner(null);
-                    setPartnerSearchError('');
-                  }
-                }}
-              />
-              Mời đồng đội sau
-            </label>
-          </div>
-
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ArrowRight className="mr-2 h-4 w-4" />}
-            Tạo đội và đăng ký
-          </Button>
-        </form>
-      )}
-
-      {step === 2 && (
-        <div className="space-y-4 rounded-lg border p-4">
-          <div className="flex items-center gap-2">
-            <UserMinus className="h-5 w-5" />
-            <h3 className="text-lg font-semibold">Chờ đồng đội xác nhận</h3>
-          </div>
-
-          <div className="rounded-md bg-yellow-50 p-3 text-sm text-yellow-800">
-            Đội của bạn đã được tạo. Hãy gửi link mời để đồng đội tham gia.
-          </div>
-
-          <div className="rounded-md border p-3 text-sm break-all">
-            {teamInviteLink || `${typeof window !== 'undefined' ? window.location.origin : ''}/tournaments/${tournament.id}/register`}
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            <Button type="button" onClick={handleCopyInviteLink}>
-              {copied ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}
-              {copied ? 'Đã sao chép' : 'Sao chép link mời'}
-            </Button>
-            <Button type="button" variant="outline" onClick={handleManualCheck}>
-              {isPolling ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}
-              Kiểm tra lại
-            </Button>
-            <Button type="button" variant="destructive" onClick={handleWithdraw} disabled={isWithdrawing}>
-              {isWithdrawing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
-              Hủy đăng ký
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {step === 3 && (
-        <div className="space-y-4 rounded-lg border p-4">
-          <div className="flex items-center gap-2 text-green-700">
-            <CheckCircle className="h-5 w-5" />
-            <h3 className="text-lg font-semibold">Đăng ký hoàn tất</h3>
-          </div>
-
-          <div className="rounded-md bg-green-50 p-3 text-sm text-green-800">
-            Đội của bạn đã đủ thành viên và hoàn tất đăng ký giải đấu.
-          </div>
-
-          <div className="rounded-md border p-4">
-            <div className="mb-2 flex items-center gap-2 font-medium">
-              <CreditCard className="h-4 w-4" />
-              Lệ phí tham gia
-            </div>
-            <div className="text-sm text-gray-600">
-              {formatCurrency(Number(tournament.entryFee || 0))}
-            </div>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            <Button type="button" onClick={handlePayment}>Tiến hành thanh toán</Button>
-            <Button type="button" variant="destructive" onClick={handleWithdraw} disabled={isWithdrawing}>
-              {isWithdrawing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
-              Rút lui
-            </Button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}tournament.id, {
-        teamName: cleanName,
-        inviteCode,
-        partnerEmailOrPhone,
-        tournamentDivisionId: divisionId,
-      });
-
-      if (res.data) {
-        const part = res.data.participant;
-        setParticipant(part);
-        toast.success(partnerEmailOrPhone ? 'Đăng ký ghép cặp thành công!' : 'Tạo đội thành công! Bây giờ hãy gửi link mời đồng đội.');
-        if (part.teamStatus === 'COMPLETE') {
-          setStep(3);
-        } else {
-          setStep(2);
-        }
-      }
-    } catch (err) {
-      toast.error(getErrorMessage(err));
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleManualCheck = async () => {
-    try {
-      toast.loading('Đang kiểm tra trạng thái...', { id: 'manual-check' });
-      const res = await tournamentsApi.getMyRegistration(tournament.id);
-      if (res.data && res.data.registered && res.data.participant) {
-        const part = res.data.participant;
-        setParticipant(part);
-        if (part.teamStatus === 'COMPLETE') {
-          setStep(3);
-          toast.success('Đồng đội của bạn đã tham gia!', { id: 'manual-check' });
-        } else {
-          toast.error('Vẫn chưa có đồng đội nào tham gia.', { id: 'manual-check' });
-        }
-      } else {
-        toast.error('Có lỗi xảy ra khi kiểm tra đăng ký.', { id: 'manual-check' });
-      }
-    } catch (err) {
-      toast.error(getErrorMessage(err), { id: 'manual-check' });
-    }
-  };
-
-  const handleWithdraw = async () => {
-    if (!confirm('Bạn có chắc chắn muốn hủy đăng ký và rút lui khỏi giải đấu? Nếu đã đóng lệ phí, việc hoàn trả sẽ cần được BTC giải quyết.')) {
-      return;
-    }
-
-    try {
-      setIsWithdrawing(true);
-      await tournamentsApi.withdraw(tournament.id);
-      toast.success('Đã rút khỏi giải đấu thành công.');
-      setParticipant(null);
-      setTeamName('');
-      setStep(1);
-    } catch (err) {
-      toast.error(getErrorMessage(err));
-    } finally {
-      setIsWithdrawing(false);
-    }
-  };
-
-  const handlePayment = () => {
-    toast.success('Thông tin thanh toán sẽ được cập nhật bởi BTC.');
-  };
-
-  const inviteLink = participant?.teamInviteLink || (typeof window !== 'undefined' ? `${window.location.origin}/tournaments/${tournament.id}/register${inviteCode ? `?inviteCode=${inviteCode}` : ''}` : '');
-
-  const handleCopyInviteLink = async () => {
-    if (!inviteLink) return;
-    try {
-      await navigator.clipboard.writeText(inviteLink);
-      setCopied(true);
-      toast.success('Đã sao chép link mời!');
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      toast.error('Không thể sao chép link mời.');
-    }
-  };
-
-  return (
-    <div className="space-y-6">
-      <div className="rounded-lg border p-4 space-y-2">
-        <div className="flex items-center justify-between">
-          <h3 className="font-semibold">Đăng ký đánh đôi</h3>
-          {participant && (
-            <Button variant="outline" onClick={handleWithdraw} disabled={isWithdrawing}>
-              {isWithdrawing ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserMinus className="h-4 w-4" />}
-            </Button>
-          )}
-        </div>
-        <p className="text-sm text-gray-600">
-          Lệ phí: {formatCurrency((tournament as any).entryFee || 0)}
-        </p>
-      </div>
-
-      {step === 1 && (
-        <form onSubmit={handleCreateTeam} className="space-y-4">
-          <Input
-            value={teamName}
-            onChange={(e) => setTeamName(e.target.value)}
-            placeholder="Nhập tên đội"
-          />
-
-          <div className="space-y-2">
-            <Input
-              value={partnerQuery}
-              onChange={(e) => setPartnerQuery(e.target.value)}
-              placeholder="Email hoặc số điện thoại đồng đội"
-              disabled={inviteLater}
-            />
-            <div className="flex gap-2">
-              <Button type="button" variant="outline" onClick={handleSearchPartner} disabled={isSearchingPartner || inviteLater}>
-                {isSearchingPartner ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-              </Button>
-              <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={inviteLater} onChange={(e) => setInviteLater(e.target.checked)} />
-                Mời đồng đội sau
-              </label>
-            </div>
-            {partnerSearchError && <p className="text-sm text-red-500">{partnerSearchError}</p>}
-            {searchedPartner && (
-              <div className="rounded border p-3 text-sm">
-                <div className="font-medium">{searchedPartner.fullName || searchedPartner.name}</div>
-                <div className="text-gray-500">{searchedPartner.email || searchedPartner.phoneNumber}</div>
-              </div>
-            )}
-          </div>
-
-          <Button type="submit" disabled={isSubmitting} className="w-full">
-            {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Users className="h-4 w-4" />}
-            <span>Tạo đội</span>
-          </Button>
-        </form>
-      )}
-
-      {step === 2 && participant && (
-        <div className="space-y-4 rounded-lg border p-4">
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-amber-500" />
-            <p className="font-medium">Đội đang chờ đồng đội xác nhận</p>
-          </div>
-
-          {inviteLink && (
-            <div className="space-y-2">
-              <p className="text-sm text-gray-600">Gửi link này cho đồng đội của bạn:</p>
-              <div className="flex gap-2">
-                <Input value={inviteLink} readOnly />
-                <Button type="button" variant="outline" onClick={handleCopyInviteLink}>
-                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                </Button>
-              </div>
-            </div>
-          )}
-
-          <div className="flex gap-2">
-            <Button type="button" variant="outline" onClick={handleManualCheck}>
-              <CheckCircle className="h-4 w-4" />
-              <span>Kiểm tra lại</span>
-            </Button>
-            <Button type="button" onClick={handlePayment}>
-              <CreditCard className="h-4 w-4" />
-              <span>Thanh toán</span>
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {step === 3 && participant && (
-        <div className="space-y-4 rounded-lg border p-4">
-          <div className="flex items-center gap-2 text-green-600">
-            <CheckCircle className="h-5 w-5" />
-            <p className="font-medium">Đăng ký đội thành công</p>
-          </div>
-          <Button type="button" onClick={() => router.refresh()}>
-            <ArrowRight className="h-4 w-4" />
-            <span>Làm mới</span>
-          </Button>
-        </div>
-      )}
-    </div>
-  );
-}tournament.id, {
         teamName: cleanName,
         inviteCode,
         partnerEmailOrPhone,
@@ -904,7 +481,7 @@ export default function DoublesRegistrationFlow({ tournament, inviteCode, divisi
             <div className="bg-slate-50 px-4 py-2.5 text-xs font-bold text-slate-500 uppercase tracking-wider">
               Thành viên đội: {participant.teamName}
             </div>
-            {participant.members?.map((m: TournamentParticipant['members'][number], idx: number) => (
+            {participant.members?.map((m, idx: number) => (
               <div key={m.userId || idx} className="px-4 py-3 flex items-center justify-between text-sm">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs uppercase">
@@ -962,7 +539,7 @@ export default function DoublesRegistrationFlow({ tournament, inviteCode, divisi
               {participant.isPaid && (
                 <Button
                   onClick={() => router.push(`/tournaments/${tournament.id}`)}
-                  className="w-full bg-slate-900 hover:bg-slate-850 text-white font-bold py-3 text-sm"
+                  className="w-full bg-slate-900 hover:bg-slate-855 text-white font-bold py-3 text-sm"
                 >
                   Xem trang giải đấu
                 </Button>

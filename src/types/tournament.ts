@@ -183,6 +183,13 @@ export interface BracketMatch {
   courtAddress?: string | null;
   refereeId?: string | null;
   groupId: string;
+  matchConfig?: {
+    setsToWin?: number;
+    pointsPerSet?: number;
+    deuceEnabled?: boolean;
+    tiebreakAt?: number;
+    maxPoints?: number;
+  } | null;
   group?: {
     name: string;
     stage?: {
@@ -215,6 +222,14 @@ export interface BracketStage {
     allow_player_choice_court?: boolean;
     time_limit_minutes?: number;
     custom_notes?: string;
+    max_points?: number;
+    rounds?: Record<string, {
+      sets_to_win?: number;
+      points_per_set?: number;
+      deuce_enabled?: boolean;
+      tiebreak_at?: number;
+      max_points?: number;
+    }>;
   } | null;
   venueId?: string | null;
   scheduledDate?: string | null;

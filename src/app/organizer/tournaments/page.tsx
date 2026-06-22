@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { tournamentsApi } from '@/features/tournaments/api';
+import { tournamentsApi, divisionsApi } from '@/features/tournaments/api';
 import { Trophy, Calendar, Users, Plus, Eye, Settings, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
@@ -99,15 +99,43 @@ export default function MyTournamentsPage() {
         const oldRes = await tournamentsApi.getMyTournaments();
         if (oldRes.data) {
           const standaloneTournaments = oldRes.data.filter(t => !t.parentId);
-          const pseudoParents = standaloneTournaments.map(t => ({
-            id: t.id,
-            name: t.name,
-            description: t.description,
-            bannerUrl: t.bannerUrl,
-            logoUrl: t.logoUrl,
-            divisions: [t],
-            isStandalone: true
-          }));
+          const pseudoParents = await Promise.all(
+            standaloneTournaments.map(async (t) => {
+              let divisionsList: Tournament[] = [];
+              try {
+                const divRes = await divisionsApi.getDivisions(t.id);
+                if (divRes.data) {
+                  divisionsList = divRes.data.map((div) => ({
+                    ...div,
+                    tournamentConfig: {
+                      bracketType: div.bracketType || undefined,
+                      roundConfig: div.roundConfig || undefined,
+                    },
+                    format: div.bracketType || '',
+                    currency: 'VND',
+                    organizerId: t.organizerId || '',
+                  })) as unknown as Tournament[];
+                }
+              } catch (err) {
+                console.error(`Failed to fetch divisions for tournament ${t.id}:`, err);
+              }
+
+              // Fallback to the tournament itself if no divisions are found to preserve compatibility
+              if (divisionsList.length === 0) {
+                divisionsList = [t];
+              }
+
+              return {
+                id: t.id,
+                name: t.name,
+                description: t.description,
+                bannerUrl: t.bannerUrl,
+                logoUrl: t.logoUrl,
+                divisions: divisionsList,
+                isStandalone: true
+              };
+            })
+          );
           parentsWithDivisions = [...parentsWithDivisions, ...pseudoParents];
         }
 
@@ -210,10 +238,10 @@ export default function MyTournamentsPage() {
               const divisions = parent.divisions || [];
               const firstDivision = divisions[0];
               const totalParticipants = divisions.reduce((acc: number, div: Tournament) => acc + (div._summary?.participantCount || 0), 0);
-              const publicHref = `/tournaments/${parent.isStandalone ? (firstDivision?.id || parent.id) : parent.id}`;
+              const publicHref = `/tournaments/${parent.isStandalone ? parent.id : (firstDivision?.id || parent.id)}`;
               const manageHref = parent.isStandalone
-                ? `/organizer/tournaments/${firstDivision?.id || parent.id}/manage`
-                : `/organizer/tournaments/${parent.id}/manage`;
+                ? `/organizer/tournaments/${parent.id}/manage`
+                : `/organizer/tournaments/${firstDivision?.id || parent.id}/manage`;
 
               return (
                 <div 
@@ -221,7 +249,7 @@ export default function MyTournamentsPage() {
                   className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col justify-between"
                 >
                   {/* Visual Header */}
-                  <div className="relative h-32 bg-slate-100 overflow-hidden group">
+                  <div className="relative h-44 bg-slate-100 overflow-hidden group">
                     <Link href={publicHref} target="_blank" className="block w-full h-full">
                       <img 
                         src={parent.bannerUrl || firstDivision?.bannerUrl || getDefaultBanner(firstDivision?.category?.name || parent.name)} 
@@ -231,79 +259,89 @@ export default function MyTournamentsPage() {
                     </Link>
                     
                     {/* Status & Action Badges */}
-                    <div className="absolute top-1.5 right-1.5 flex items-center gap-1 z-10">
+                    <div className="absolute top-3 right-3 flex items-center gap-2 z-10">
                       {firstDivision && getStatusBadge(firstDivision.status)}
-                      <span className="px-1 py-0.5 bg-blue-600 text-white rounded text-[7px] font-black uppercase tracking-wider">
-                        {divisions.length} Hình thức thi đấu
+                      <span className="px-2.5 py-1 bg-blue-600 text-white rounded-full text-xs font-bold shadow-sm">
+                        {divisions.length} Hình thức
                       </span>
                       <button
                         type="button"
-                        className="w-4 h-4 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center transition-colors shadow-sm cursor-pointer"
+                        className="w-7 h-7 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center transition-colors shadow-sm cursor-pointer"
                         onClick={(e) => handleDeleteParent(parent.id, parent.isStandalone || false, e)}
                         title="Xoá giải đấu"
                       >
-                        <Trash2 className="w-2.5 h-2.5" />
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
 
                     {/* Category Name Badge (neatly positioned, high contrast, no blur) */}
-                    <div className="absolute bottom-1.5 left-1.5 z-10">
-                      <span className="bg-slate-900/90 text-white px-1 py-0.5 rounded text-[7px] font-black uppercase tracking-wider">
+                    <div className="absolute bottom-3 left-3 z-10">
+                      <span className="bg-slate-900/95 text-white px-2.5 py-1 rounded text-xs font-bold uppercase tracking-wider">
                         {firstDivision?.category?.name || 'MULTISPORT'}
                       </span>
                     </div>
                   </div>
 
                   {/* Content */}
-                  <div className="p-2.5 flex-grow">
-                    <h3 className="text-xs font-black text-slate-900 line-clamp-1">
-                      {parent.name}
-                    </h3>
+                  <div className="p-5 flex-grow flex flex-col justify-between">
+                    <div>
+                      <h3 className="text-lg font-bold text-slate-900 line-clamp-1 mb-3" title={parent.name}>
+                        {parent.name}
+                      </h3>
 
-                    {/* Division Tags */}
-                    <div className="flex flex-wrap gap-1 mt-1.5">
-                      {divisions.slice(0, 3).map((div: Tournament) => (
-                        <button
-                          key={div.id}
-                          onClick={() => router.push(parent.isStandalone ? `/organizer/tournaments/${div.id}/manage` : `/organizer/tournaments/${parent.id}/manage?divisionId=${div.id}`)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-xs font-extrabold border border-slate-200 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-colors cursor-pointer active:scale-95"
-                        >
-                          <span>{getDivisionIcon(div.matchType, div.genderRestriction)}</span>
-                          <span>{div.name || getFormatLabel(div.matchType || '', div.genderRestriction)}</span>
-                          {div.tournamentConfig?.bracketType && (
-                            <span className="text-[8px] opacity-60">• {div.tournamentConfig.bracketType === 'SINGLE_ELIMINATION' ? 'Loại đơn' : div.tournamentConfig.bracketType === 'DOUBLE_ELIMINATION' ? 'Loại kép' : 'Vòng tròn'}</span>
-                          )}
-                        </button>
-                      ))}
-                      {divisions.length > 3 && (
-                        <span className="px-2 py-1 bg-slate-50 text-slate-400 rounded text-xs font-bold">
-                          +{divisions.length - 3} khác
-                        </span>
-                      )}
+                      {/* Division Tags */}
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {divisions.slice(0, 3).map((div: Tournament) => {
+                          const displayDivName = (div.name && div.name.toLowerCase() !== parent.name.toLowerCase()) 
+                            ? div.name 
+                            : getFormatLabel(div.matchType || '', div.genderRestriction);
+                          
+                          return (
+                            <button
+                              key={div.id}
+                              onClick={() => router.push(parent.isStandalone ? `/organizer/tournaments/${parent.id}/manage?divisionId=${div.id}` : `/organizer/tournaments/${div.id}/manage`)}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-all cursor-pointer active:scale-95"
+                            >
+                              <span>{getDivisionIcon(div.matchType, div.genderRestriction)}</span>
+                              <span>{displayDivName}</span>
+                              {div.tournamentConfig?.bracketType && (
+                                <span className="text-[10px] text-slate-400 font-normal">
+                                  • {div.tournamentConfig.bracketType === 'SINGLE_ELIMINATION' ? 'Loại đơn' : div.tournamentConfig.bracketType === 'DOUBLE_ELIMINATION' ? 'Loại kép' : 'Vòng tròn'}
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })}
+                        {divisions.length > 3 && (
+                          <span className="px-2.5 py-1.5 bg-slate-50 text-slate-400 rounded-lg text-xs font-bold border border-slate-200">
+                            +{divisions.length - 3} khác
+                          </span>
+                        )}
+                      </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-1.5 mt-2 pt-2 border-t border-slate-100 text-slate-500 text-[8px] font-bold uppercase tracking-wider">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="w-2.5 h-2.5 text-slate-400" />
+                    <div className="grid grid-cols-2 gap-3 pt-3 border-t border-slate-100 text-slate-500 text-xs font-medium">
+                      <div className="flex items-center gap-1.5">
+                        <Calendar className="w-4 h-4 text-slate-400" />
                         <span>{firstDivision?.startDate ? new Date(firstDivision.startDate).toLocaleDateString('vi-VN') : 'Chưa xếp lịch'}</span>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <Users className="w-2.5 h-2.5 text-slate-400" />
+                      <div className="flex items-center gap-1.5">
+                        <Users className="w-4 h-4 text-slate-400" />
                         <span>{totalParticipants} VĐV đã ĐK</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Action Footer */}
-                  <div className="bg-slate-50 border-t border-slate-100 p-2">
+                  <div className="bg-slate-50 border-t border-slate-100 p-4">
                     {firstDivision ? (
                       <Link href={manageHref} className="block">
-                        <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-1 font-bold shadow-sm shadow-blue-500/10 h-7 text-[10px] active:scale-95 transition-transform duration-100">
-                          <Settings className="w-3 h-3" /> Quản lý giải đấu
+                        <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-2 font-bold shadow-sm shadow-blue-500/10 h-10 text-sm active:scale-95 transition-transform duration-100">
+                          <Settings className="w-4 h-4" /> Quản lý giải đấu
                         </Button>
                       </Link>
                     ) : (
-                      <Button disabled className="w-full bg-slate-300 text-white font-bold h-7 text-[10px]">
+                      <Button disabled className="w-full bg-slate-300 text-white font-bold h-10 text-sm">
                         Chưa có vòng đấu
                       </Button>
                     )}

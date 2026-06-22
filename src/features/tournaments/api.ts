@@ -134,14 +134,16 @@ export const tournamentsApi = {
   removeTournamentGalleryImage: (id: string, index: number) => api.delete<ApiResponse<Tournament>>(`/tournaments/${id}/gallery/${index}`),
   getTournamentParticipants: (id: string) => api.get<ApiResponse<TournamentParticipant[]>>(`/tournaments/${id}/participants`, { params: { _t: Date.now() } }),
   getTournamentReferees: (id: string) => api.get<ApiResponse<{ id: string; userId: string; status: string; fullName: string; avatarUrl: string | null }[]>>(`/tournaments/${id}/referees`),
+  addTournamentReferee: (id: string, email: string) =>
+    api.post<ApiResponse<void>>(`/tournaments/${id}/referees`, { email }),
   getTournamentBracket: (id: string, divisionId?: string) =>
     api.get<ApiResponse<{ stages: BracketStage[] }>>(`/tournaments/${id}/bracket`, {
       params: divisionId ? { divisionId } : undefined,
     }),
-  generateBracket: (id: string, divisionId?: string) =>
+  generateBracket: (id: string, divisionId?: string, seedingType?: 'SEEDED' | 'RANDOM') =>
     api.post<ApiResponse<{ message: string; stageId: string; totalMatches: number }>>(
       `/tournaments/${id}/generate-bracket`,
-      divisionId ? { divisionId } : undefined,
+      { divisionId, seedingType }
     ),
   regenerateInviteCode: (id: string) => api.post<ApiResponse<Tournament>>(`/tournaments/${id}/regenerate-invite`),
   publishTournament: (id: string) => api.post<ApiResponse<Tournament>>(`/tournaments/${id}/publish`),
@@ -168,13 +170,23 @@ export const tournamentsApi = {
     api.post<ApiResponse<{ guestId: string; confirmationCode: string }>>(`/tournaments/${id}/register-guest`, data),
   mockPayment: (data: MockPaymentPayload) =>
     api.post<ApiResponse<{ paymentId: string; status: 'PENDING' | 'SUCCESS'; organizationId: string }>>('/tournaments/mock-payment', data),
-  updateMatchSchedule: (matchId: string, data: { courtId?: string | null; courtName?: string | null; courtAddress?: string | null; refereeId?: string | null; scheduledAt?: string | null }) =>
+  updateMatchSchedule: (matchId: string, data: { courtId?: string | null; courtName?: string | null; courtAddress?: string | null; refereeId?: string | null; scheduledAt?: string | null; matchConfig?: Record<string, unknown> | null }) =>
     api.patch<ApiResponse<BracketMatch>>(`/matches/${matchId}/schedule`, data),
   updateStage: <T>(stageId: string, data: T) => api.patch<ApiResponse<BracketStage>>(`/tournaments/stages/${stageId}`, data),
   validateInvite: (id: string, inviteCode: string) =>
     api.post<ApiResponse<Tournament>>(`/tournaments/${id}/validate-invite`, { inviteCode }),
   joinTeam: (id: string, data: { participantId: string; teamInviteToken: string }) =>
     api.post<ApiResponse<{ participant: TournamentParticipant; paymentUrl?: string }>>(`/tournaments/${id}/join-team`, data),
+  seedMockParticipants: (id: string, names: string[], divisionId?: string) =>
+    api.post<ApiResponse<void>>(`/tournaments/${id}/mock-participants`, { names, divisionId }),
+  clearMockParticipants: (id: string, divisionId?: string) =>
+    api.delete<ApiResponse<void>>(`/tournaments/${id}/mock-participants`, {
+      params: divisionId ? { divisionId } : undefined,
+    }),
+  assignReservedSlot: (id: string, userEmailOrPhone: string, teamName: string, partnerEmailOrPhone?: string) =>
+    api.post<ApiResponse<unknown>>(`/tournaments/${id}/reserve-slots`, { userEmailOrPhone, teamName, partnerEmailOrPhone }),
+  updateParticipantStatus: (id: string, participantId: string, status: string) =>
+    api.patch<ApiResponse<TournamentParticipant>>(`/tournaments/${id}/participants/${participantId}`, { status }),
 };
 
 export const divisionsApi = {

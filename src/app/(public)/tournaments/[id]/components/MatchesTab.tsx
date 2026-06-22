@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Tournament, BracketMatch, tournamentsApi } from '@/features/tournaments/api';
+import { matchesApi } from '@/features/matches/api';
 import { Calendar, Play, Trophy, MapPin, Info } from 'lucide-react';
 import Link from 'next/link';
 
@@ -29,9 +30,9 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
           matchParams.division_id = divisionId;
         }
 
-        const res = await tournamentsApi.getOngoingMatches(matchParams);
+        const res = await matchesApi.getMatches(matchParams);
         if (res && res.data) {
-          setMatches(res.data);
+          setMatches(res.data as unknown as BracketMatch[]);
         }
       } catch (error) {
         console.error('Failed to fetch matches for division:', { tournamentId: effectiveTournamentId, divisionId }, error);

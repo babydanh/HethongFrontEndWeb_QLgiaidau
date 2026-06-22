@@ -83,12 +83,12 @@ export default function LiveMatchPage({ params }: Props) {
   const team1Name = match.participant1?.teamName || 'Chưa xác định';
   const team2Name = match.participant2?.teamName || 'Chưa xác định';
 
-  // Check referee permissions
+  // Check referee permissions (Only tournament creator/admin/organizers can edit on the web.
+  // Referees have a read-only view on the web, reserving referee score entries for the mobile app).
   const isReferee =
     user?.roles.includes('ADMIN') ||
     user?.roles.includes('ORGANIZER') ||
-    match.tournament?.createdBy === user?.id ||
-    match.refereeId === user?.id;
+    match.tournament?.createdBy === user?.id;
 
   const currentSetIdx = scores.findIndex((s) => !s.isFinished);
   const activeSetIdx = currentSetIdx !== -1 ? currentSetIdx : scores.length - 1;

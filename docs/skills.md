@@ -216,7 +216,12 @@
 ---
 
 ## 🛑 QUY TẮC NGHIÊM NGẶT (STRICT RULES)
-1. **KHÔNG BAO GIỜ SỬ DỤNG `any`**: TypeScript tồn tại để kiểm soát kiểu dữ liệu. Việc lạm dụng `any` (trong API, Params, hay Error Catching) sẽ làm mất hoàn toàn giá trị của ngôn ngữ. Nếu chưa rõ kiểu dữ liệu, hãy dùng `unknown`, `Record<string, unknown>` hoặc Generics `<T>`. Đặc biệt khi bắt lỗi try/catch, dùng `catch (error: unknown)` và ép kiểu an toàn.
+1. **KHÔNG BAO GIỜ SỬ DỤNG `any`**: 
+    - **Lý do cấm:** `any` tắt hoàn toàn trình biên dịch kiểm tra kiểu của TypeScript, làm mất tính an toàn của codebase và dễ dẫn đến lỗi crash Runtime (như `Cannot read properties of undefined`).
+    - **Cách thay thế:**
+      - Định nghĩa các `interface` hoặc `type` cụ thể cho dữ liệu API và Component State (ví dụ: `TournamentParticipant`, `UserProfile`).
+      - Khi chưa biết rõ kiểu dữ liệu trả về hoặc dữ liệu động phức tạp, hãy dùng kiểu `unknown` hoặc `Record<string, unknown>` thay cho `any`.
+      - Khi bắt lỗi trong khối catch, bắt buộc dùng `catch (err: unknown)` rồi parse lỗi qua hàm `getErrorMessage(err)` thay vì cast `err as any`.
 2. **Quy tắc Quản lý Lỗi (Exception Handling) ở Backend**: KHÔNG tạo một file chứa tất cả các lỗi của hệ thống. BẮT BUỘC sử dụng kiến trúc phân tán:
     - **Tầng Base:** Tất cả các lỗi custom phải kế thừa từ `BaseException` (đặt tại `src/common/exceptions/base.exception.ts`).
     - **Tầng Global:** Các lỗi hệ thống/HTTP chung (VD: `UnauthorizedException`) đặt tại `src/common/exceptions/`.

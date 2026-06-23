@@ -1,6 +1,14 @@
 import { api } from '@/lib/axios';
 import { ApiResponse } from '@/types/api';
 
+export interface Court {
+  id: string;
+  venueId: string;
+  name: string;
+  status: string;
+  description?: string;
+}
+
 export interface Venue {
   id: string;
   name: string;
@@ -12,7 +20,7 @@ export interface Venue {
   images?: string[];
   lat?: number;
   lng?: number;
-  courts?: any[];
+  courts?: Court[];
 }
 
 export const venuesApi = {
@@ -22,6 +30,6 @@ export const venuesApi = {
   updateVenue: <T>(id: string, data: T) => api.patch<ApiResponse<Venue>>(`/venues/${id}`, data),
   deleteVenue: (id: string) => api.delete<ApiResponse<void>>(`/venues/${id}`),
 
-  addCourt: <T>(id: string, data: T) => api.post<ApiResponse<any>>(`/venues/${id}/courts`, data),
+  addCourt: <T>(id: string, data: T) => api.post<ApiResponse<Court>>(`/venues/${id}/courts`, data),
   deleteCourt: (id: string, courtId: string) => api.delete<ApiResponse<void>>(`/venues/${id}/courts/${courtId}`),
 };

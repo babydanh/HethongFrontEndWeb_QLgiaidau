@@ -84,7 +84,7 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
       };
 
       const res = await tournamentsApi.joinTournamentByInviteCode(inviteCode, cleanData);
-      const participantId = res?.data?.participantId || (res as any)?.participantId;
+      const participantId = res?.data?.participantId;
 
       toast.success('Đăng ký tham gia thành công!');
       
@@ -115,6 +115,13 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
   if (!tournament) return null;
 
   const entryFeeVal = Number(tournament.entryFee || 0);
+  const availableDivisions = divisions.length > 0 ? divisions : [tournament];
+  const selectedDivision = availableDivisions.find((div) => div.inviteCode === inviteCode) || tournament;
+  const selectedDivisionLabel = selectedDivision.matchType === 'SINGLES'
+    ? (selectedDivision.genderRestriction === 'FEMALE' ? 'Đơn Nữ' : 'Đơn Nam')
+    : selectedDivision.matchType === 'DOUBLES'
+    ? (selectedDivision.genderRestriction === 'FEMALE' ? 'Đôi Nữ' : 'Đôi Nam')
+    : 'Đôi Nam Nữ';
 
   return (
     <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -172,27 +179,32 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
               </p>
             </div>
 
-            {divisions.length > 1 && (
+            {availableDivisions.length > 0 && (
               <div className="space-y-1.5 pb-2 border-b border-slate-100">
                 <label className="text-xs font-bold text-slate-700 block">Hình thức thi đấu</label>
-                <select
-                  value={inviteCode}
-                  onChange={(e) => router.push(`/tournaments/join/${e.target.value}`)}
-                  className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
-                >
-                  {divisions.map((div) => {
-                    const label = div.matchType === 'SINGLES' 
-                      ? (div.genderRestriction === 'FEMALE' ? 'Đơn Nữ' : 'Đơn Nam')
-                      : div.matchType === 'DOUBLES'
-                      ? (div.genderRestriction === 'FEMALE' ? 'Đôi Nữ' : 'Đôi Nam')
-                      : 'Đôi Nam Nữ';
-                    return (
-                      <option key={div.id} value={div.inviteCode || ''}>
-                        {div.name} ({label})
-                      </option>
-                    );
-                  })}
-                </select>
+                <div className="rounded-xl border border-blue-100 bg-blue-50 px-3.5 py-3 text-xs text-blue-900">
+                  Bạn đang đăng ký cho hình thức: <span className="font-black">{selectedDivision.name} ({selectedDivisionLabel})</span>
+                </div>
+                {availableDivisions.length > 1 && (
+                  <select
+                    value={inviteCode}
+                    onChange={(e) => router.push(`/tournaments/join/${e.target.value}`)}
+                    className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
+                  >
+                    {availableDivisions.map((div) => {
+                      const label = div.matchType === 'SINGLES' 
+                        ? (div.genderRestriction === 'FEMALE' ? 'Đơn Nữ' : 'Đơn Nam')
+                        : div.matchType === 'DOUBLES'
+                        ? (div.genderRestriction === 'FEMALE' ? 'Đôi Nữ' : 'Đôi Nam')
+                        : 'Đôi Nam Nữ';
+                      return (
+                        <option key={div.id} value={div.inviteCode || ''}>
+                          {div.name} ({label})
+                        </option>
+                      );
+                    })}
+                  </select>
+                )}
               </div>
             )}
 
@@ -204,7 +216,7 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
                 error={errors.teamName?.message}
               />
 
-              {(tournament.matchType === 'DOUBLES' || tournament.matchType === 'MIXED_DOUBLES') && (
+              {(selectedDivision.matchType === 'DOUBLES' || selectedDivision.matchType === 'MIXED_DOUBLES') && (
                 <Input
                   label="Tài khoản Baseline của đồng đội (Email hoặc SĐT)"
                   placeholder="partner@baseline.vn hoặc 08xxxx (Không bắt buộc)"

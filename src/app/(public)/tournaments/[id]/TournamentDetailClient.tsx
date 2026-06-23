@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Division, Tournament, divisionsApi } from '@/features/tournaments/api';
 import { Button } from '@/components/ui/Button';
-import { Calendar, MapPin, Users, Trophy, ChevronRight, Share2, AlertCircle, User, Phone, Mail, Loader2 } from 'lucide-react';
+import { Calendar, MapPin, Users, Trophy, Share2, AlertCircle, User, Phone, Mail, Globe } from 'lucide-react';
 import Link from 'next/link';
 import OverviewTab from './components/OverviewTab';
 import TeamsTab from './components/TeamsTab';
@@ -12,21 +12,59 @@ import MatchesTab from './components/MatchesTab';
 import RegisterModal from './components/RegisterModal';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import GalleryCarousel from '@/components/ui/GalleryCarousel';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 interface Props {
   tournament: Tournament;
 }
 
+type TournamentDetailTab = 'overview' | 'prizes' | 'teams' | 'bracket' | 'matches';
+
+const TOURNAMENT_DETAIL_TABS: TournamentDetailTab[] = [
+  'overview',
+  'prizes',
+  'teams',
+  'bracket',
+  'matches',
+];
+
 export default function TournamentDetailClient({ tournament }: Props) {
   const { user } = useAuthStore();
-  const [activeTournament, setActiveTournament] = useState<Tournament>(tournament);
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [selectedDivisionId, setSelectedDivisionId] = useState<string>('');
-  const [selectedDivision, setSelectedDivision] = useState<Tournament | null>(null);
   const [divisionsList, setDivisionsList] = useState<Division[]>([]);
-  const [isLoadingDivision, setIsLoadingDivision] = useState(false);
+  const selectedDivision: Tournament = (() => {
+    if (!selectedDivisionId) {
+      return tournament;
+    }
+
+    const division = divisionsList.find((item) => item.id === selectedDivisionId);
+    if (!division) {
+      return tournament;
+    }
+
+    return {
+      ...tournament,
+      id: tournament.id,
+      name: division.name || tournament.name,
+      matchType: division.matchType,
+      genderRestriction: division.genderRestriction ?? null,
+      format: division.bracketType ?? tournament.format,
+      prizeDescription: division.prizeDescription ?? tournament.prizeDescription,
+      status: tournament.status,
+      maxParticipants: division.maxParticipants ?? tournament.maxParticipants,
+      entryFee: division.entryFee ?? tournament.entryFee,
+      _count: {
+        ...(tournament._count || { matches: 0, participants: 0 }),
+        participants: division._count?.participants ?? 0,
+      },
+    };
+  })();
+  const activeTournament = selectedDivision;
 
   const isOwner = user?.id === activeTournament.organizerId;
-  const [activeTab, setActiveTab] = useState<'overview' | 'prizes' | 'teams' | 'bracket' | 'matches'>('overview');
+  const [activeTab, setActiveTab] = useState<TournamentDetailTab>('overview');
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
 
   const isRegistrationLocked = activeTournament.isRegistrationLocked;
@@ -65,49 +103,45 @@ export default function TournamentDetailClient({ tournament }: Props) {
     const loadParentAndDivisions = async () => {
       try {
         const divisionsRes = await divisionsApi.getDivisions(tournament.id);
+        const requestedDivisionId = searchParams.get('divisionId');
         if (divisionsRes.data && divisionsRes.data.length > 0) {
           setDivisionsList(divisionsRes.data);
-          setSelectedDivisionId(divisionsRes.data[0].id);
+          const preferredDivision = requestedDivisionId
+            ? divisionsRes.data.find((division) => division.id === requestedDivisionId)
+            : null;
+          const nextDivisionId = preferredDivision?.id ?? divisionsRes.data[0].id;
+          Promise.resolve().then(() => {
+            setSelectedDivisionId((currentDivisionId) =>
+              currentDivisionId === nextDivisionId ? currentDivisionId : nextDivisionId,
+            );
+          });
         } else {
-          setSelectedDivisionId('');
-          setSelectedDivision(tournament);
+          Promise.resolve().then(() => {
+            setSelectedDivisionId((currentDivisionId) =>
+              currentDivisionId === '' ? currentDivisionId : '',
+            );
+          });
         }
-      } catch (err) {
+      } catch (err: unknown) {
         console.error('Failed to load parent/divisions context:', err);
       }
     };
     loadParentAndDivisions();
-  }, [tournament]);
+  }, [searchParams, tournament]);
 
   useEffect(() => {
-    if (!selectedDivisionId) {
-      setSelectedDivision(tournament);
+    const requestedTab = searchParams.get('tab');
+
+    if (!requestedTab || !TOURNAMENT_DETAIL_TABS.includes(requestedTab as TournamentDetailTab)) {
       return;
     }
 
-    const division = divisionsList.find((item) => item.id === selectedDivisionId);
-    if (!division) return;
-
-    setIsLoadingDivision(true);
-      const nextDivision: Tournament = {
-        ...tournament,
-        id: tournament.id,
-        name: division.name || tournament.name,
-        matchType: division.matchType,
-        genderRestriction: division.genderRestriction ?? null,
-        format: division.bracketType ?? tournament.format,
-        prizeDescription: division.prizeDescription ?? tournament.prizeDescription,
-        status: tournament.status,
-        maxParticipants: division.maxParticipants ?? tournament.maxParticipants,
-        entryFee: division.entryFee ?? tournament.entryFee,
-      _count: {
-        ...(tournament._count || { matches: 0, participants: 0 }),
-        participants: division._count?.participants ?? 0,
-      },
-    };
-    setSelectedDivision(nextDivision);
-    setIsLoadingDivision(false);
-  }, [selectedDivisionId, divisionsList, tournament]);
+    if (activeTab !== requestedTab) {
+      Promise.resolve().then(() => {
+        setActiveTab(requestedTab as TournamentDetailTab);
+      });
+    }
+  }, [activeTab, searchParams]);
 
   const participantCount = selectedDivision ? (selectedDivision._summary?.participantCount ?? selectedDivision._count?.participants ?? 0) : 0;
   const maxParticipants = selectedDivision ? (selectedDivision.maxParticipants ?? 0) : 0;
@@ -120,7 +154,7 @@ export default function TournamentDetailClient({ tournament }: Props) {
     return `${sStr} - ${eStr}`;
   };
 
-  const tabs: { id: 'overview' | 'prizes' | 'teams' | 'bracket' | 'matches'; label: string }[] = [
+  const tabs: { id: TournamentDetailTab; label: string }[] = [
     { id: 'overview', label: 'Tổng quan' },
     { id: 'prizes', label: 'Giải thưởng' },
     { id: 'teams', label: 'Đội tham gia' },
@@ -213,7 +247,18 @@ export default function TournamentDetailClient({ tournament }: Props) {
                     ? 'bg-slate-200 text-slate-400 cursor-not-allowed border-slate-200 hover:bg-slate-200' 
                     : 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-900/10'
                 } font-bold flex-1 md:flex-none shadow-sm`}
-                onClick={() => !isRegistrationButtonDisabled && setIsRegisterModalOpen(true)}
+                onClick={() => {
+                  if (!isRegistrationButtonDisabled) {
+                    const needsRegistrationPage = activeTournament.visibility === 'PRIVATE' || 
+                                                  activeTournament.tournamentConfig?.registrationMode === 'INVITE_ONLY' ||
+                                                  divisionsList.length > 0;
+                    if (needsRegistrationPage) {
+                      router.push(`/tournaments/${activeTournament.id}/register`);
+                    } else {
+                      setIsRegisterModalOpen(true);
+                    }
+                  }
+                }}
               >
                 {registrationButtonLabel}
               </Button>
@@ -263,7 +308,7 @@ export default function TournamentDetailClient({ tournament }: Props) {
                   <select
                     value={selectedDivisionId}
                     onChange={(e) => setSelectedDivisionId(e.target.value)}
-                    disabled={isLoadingDivision}
+                    disabled={false}
                     className="border border-slate-200 rounded-xl px-3 py-2 bg-white text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500 text-xs h-10 w-full sm:w-60 shadow-sm cursor-pointer"
                   >
                     {divisionsList.map((div) => (
@@ -275,12 +320,7 @@ export default function TournamentDetailClient({ tournament }: Props) {
                 </div>
               )}
 
-              {isLoadingDivision ? (
-                <div className="flex flex-col items-center justify-center py-24">
-                  <Loader2 className="w-8 h-8 animate-spin text-emerald-600 mb-2" />
-                  <p className="text-xs text-slate-400 font-medium animate-pulse">Đang tải dữ liệu phân hạng...</p>
-                </div>
-              ) : selectedDivision ? (
+              {selectedDivision ? (
                 <>
                   {activeTab === 'overview' && <OverviewTab tournament={selectedDivision} />}
                   {activeTab === 'prizes' && (
@@ -385,25 +425,6 @@ export default function TournamentDetailClient({ tournament }: Props) {
                 </div>
               </div>
 
-              {/* Contact Info */}
-              {activeTournament.contactInfo && (
-                <div className="border-t border-slate-100 pt-4 flex flex-col gap-2">
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Thông tin liên hệ</span>
-                  {activeTournament.contactInfo.phone && (
-                    <div className="flex items-center gap-2.5">
-                      <Phone className="w-4 h-4 text-slate-450 shrink-0" />
-                      <span className="text-xs font-semibold text-slate-700">{activeTournament.contactInfo.phone}</span>
-                    </div>
-                  )}
-                  {activeTournament.contactInfo.email && (
-                    <div className="flex items-center gap-2.5">
-                      <Mail className="w-4 h-4 text-slate-450 shrink-0" />
-                      <span className="text-xs font-semibold text-slate-700 truncate">{activeTournament.contactInfo.email}</span>
-                    </div>
-                  )}
-                </div>
-              )}
-
               {/* Warnings and Info Banners */}
               {isRegistrationOpen && isRegistrationLocked && (
                 <div className="bg-amber-50 border border-amber-250/60 rounded-xl p-3.5 flex items-start gap-2.5">
@@ -450,6 +471,45 @@ export default function TournamentDetailClient({ tournament }: Props) {
                 </div>
               )}
             </div>
+
+            {/* Contact Info Card */}
+            {activeTournament.contactInfo && (
+              <div className="bg-white rounded-2xl border border-slate-250/80 p-6 flex flex-col gap-2.5 shadow-sm mt-4">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Thông tin liên hệ</span>
+                {activeTournament.contactInfo.phone && (
+                  <div className="flex items-center gap-2.5">
+                    <Phone className="w-4 h-4 text-slate-450 shrink-0" />
+                    <span className="text-xs font-semibold text-slate-700">{activeTournament.contactInfo.phone}</span>
+                  </div>
+                )}
+                {activeTournament.contactInfo.email && (
+                  <div className="flex items-center gap-2.5">
+                    <Mail className="w-4 h-4 text-slate-450 shrink-0" />
+                    <span className="text-xs font-semibold text-slate-700 truncate">{activeTournament.contactInfo.email}</span>
+                  </div>
+                )}
+                {Object.entries(activeTournament.contactInfo)
+                  .filter(([key]) => key !== 'phone' && key !== 'email')
+                  .map(([key, val]) => {
+                    if (!val) return null;
+                    const displayLabel = key.charAt(0).toUpperCase() + key.slice(1);
+                    const isUrl = typeof val === 'string' && (val.startsWith('http://') || val.startsWith('https://'));
+                    return (
+                      <div key={key} className="flex items-center gap-2.5">
+                        <Globe className="w-4 h-4 text-slate-450 shrink-0" />
+                        <span className="text-xs font-bold text-slate-500">{displayLabel}:</span>
+                        {isUrl ? (
+                          <a href={val as string} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-blue-600 hover:underline truncate">
+                            {val}
+                          </a>
+                        ) : (
+                          <span className="text-xs font-semibold text-slate-700 truncate">{val}</span>
+                        )}
+                      </div>
+                    );
+                  })}
+              </div>
+            )}
           </div>
 
         </div>

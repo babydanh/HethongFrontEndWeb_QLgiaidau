@@ -3,8 +3,13 @@
 import { useEffect, useState, use } from 'react';
 import { api } from '@/lib/axios';
 import { ApiResponse } from '@/types/api';
-import { Trophy, Award, Calendar, ArrowLeft, Loader2, Sparkles, Star, Zap, User } from 'lucide-react';
+import { Trophy, Award, Calendar, ArrowLeft, Loader2, Sparkles, Star, Zap, User, Camera, ShieldCheck, MapPin, Activity, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
+import { formatDate } from '@/utils/format';
+import { Button } from '@/components/ui/Button';
+import { rankingsApi, PlayerRanking, EloHistoryLog } from '@/features/rankings/api';
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+import { getErrorMessage } from '@/utils/error';
 
 interface UserRank {
   categoryId: string;
@@ -21,6 +26,7 @@ interface PublicProfile {
   createdAt: string;
   fullName: string;
   avatarUrl: string | null;
+  coverUrl: string | null;
   gender: string | null;
   bio: string | null;
   isVerified: boolean;
@@ -48,24 +54,31 @@ interface Match {
 export default function PublicUserProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const id = resolvedParams.id;
+  
   const [profile, setProfile] = useState<PublicProfile | null>(null);
   const [matches, setMatches] = useState<Match[]>([]);
+  const [eloHistory, setEloHistory] = useState<EloHistoryLog[]>([]);
+  const [activeTab, setActiveTab] = useState<'overview' | 'matches' | 'elo'>('overview');
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingTab, setIsLoadingTab] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchPublicData = async () => {
       setIsLoading(true);
       try {
-        const [profileRes, matchesRes] = await Promise.all([
+        const [profileRes, matchesRes, eloHistoryRes] = await Promise.all([
           api.get<ApiResponse<PublicProfile>>(`/users/${id}/public`),
           api.get<ApiResponse<{ data: Match[] }>>(`/matches?userId=${id}&limit=10`),
+          rankingsApi.getUserEloHistory(id).catch(() => ({ data: [] }))
         ]);
+        
         setProfile(profileRes.data);
         setMatches(matchesRes.data.data || []);
-      } catch (err: any) {
+        setEloHistory(eloHistoryRes?.data || []);
+      } catch (err: unknown) {
         console.error('Failed to fetch public profile:', err);
-        setError(err.response?.data?.message || 'Không tìm thấy hồ sơ người dùng.');
+        setError(getErrorMessage(err) || 'Không tìm thấy hồ sơ người dùng.');
       } finally {
         setIsLoading(false);
       }
@@ -75,10 +88,10 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-900 text-slate-100 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 text-slate-800 flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-10 h-10 animate-spin text-indigo-500" />
-          <p className="text-slate-450 font-medium text-sm">Đang tải hồ sơ VĐV...</p>
+          <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
+          <p className="text-slate-500 font-bold text-sm">Đang tải hồ sơ thành viên...</p>
         </div>
       </div>
     );
@@ -86,14 +99,14 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
 
   if (error || !profile) {
     return (
-      <div className="min-h-screen bg-slate-900 text-slate-100 flex items-center justify-center p-6">
-        <div className="text-center bg-slate-800 border border-slate-700 p-8 rounded-3xl max-w-md shadow-2xl">
-          <Trophy className="w-16 h-16 text-slate-600 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-white mb-2">{error || 'Không tìm thấy người dùng'}</h2>
-          <p className="text-slate-400 text-sm mb-6">Tài khoản này có thể không tồn tại hoặc đã bị khóa.</p>
+      <div className="min-h-screen bg-slate-50 text-slate-800 flex items-center justify-center p-6">
+        <div className="text-center bg-white border border-slate-200 p-8 rounded-3xl max-w-md shadow-lg">
+          <Trophy className="w-16 h-16 text-slate-350 mx-auto mb-4" />
+          <h2 className="text-xl font-black text-slate-900 mb-2">{error || 'Không tìm thấy người dùng'}</h2>
+          <p className="text-slate-500 text-sm mb-6 font-medium">Tài khoản này có thể không tồn tại hoặc đã bị khóa khỏi hệ thống.</p>
           <Link
             href="/tournaments"
-            className="inline-flex items-center justify-center px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-indigo-650/20"
+            className="inline-flex items-center justify-center px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all shadow-md"
           >
             Quay lại trang chủ
           </Link>
@@ -112,207 +125,350 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 pb-20">
-      {/* Decorative background */}
-      <div className="absolute top-0 inset-x-0 h-80 bg-gradient-to-b from-indigo-950/40 via-purple-950/20 to-transparent pointer-events-none"></div>
+    <div className="max-w-5xl mx-auto px-4 md:px-8 py-8 flex flex-col gap-6">
+      {/* Navigation */}
+      <div className="flex items-center justify-between">
+        <button
+          onClick={() => window.history.back()}
+          className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
+        >
+          <ArrowLeft className="w-4 h-4" /> Quay lại
+        </button>
+      </div>
 
-      <div className="max-w-5xl mx-auto px-4 pt-8 relative z-10">
-        {/* Navigation */}
-        <div className="mb-8">
-          <button
-            onClick={() => window.history.back()}
-            className="inline-flex items-center gap-2 text-sm font-bold text-slate-400 hover:text-white transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" /> Quay lại
-          </button>
+      {/* Profile Header */}
+      <div className="bg-white rounded-3xl border border-slate-150 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
+        {/* Cover Photo */}
+        <div className="h-56 bg-slate-900 relative group overflow-hidden">
+          {profile.coverUrl ? (
+            <img 
+              src={profile.coverUrl} 
+              alt="Cover" 
+              className="w-full h-full object-cover" 
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-indigo-650 to-purple-650 opacity-90"></div>
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/40 via-transparent to-transparent"></div>
         </div>
-
-        {/* Profile Card */}
-        <div className="bg-slate-900/80 backdrop-blur-md border border-slate-800 rounded-3xl p-6 md:p-10 shadow-2xl mb-8 flex flex-col md:flex-row items-center md:items-start gap-8">
-          {/* Avatar Section */}
-          <div className="relative">
-            <div className="w-28 h-28 md:w-36 md:h-36 rounded-full bg-slate-800 border-4 border-slate-700 flex items-center justify-center overflow-hidden shadow-xl">
+        
+        <div className="px-6 md:px-10 pb-8 relative">
+          {/* Avatar & Info */}
+          <div className="flex flex-col md:flex-row justify-between items-end md:items-center gap-4 -mt-16 mb-5 relative z-10">
+            <div className="w-32 h-32 rounded-full bg-slate-100 border-4 border-white shadow-xl flex items-center justify-center overflow-hidden transition-transform duration-300 hover:scale-[1.03]">
               {profile.avatarUrl ? (
-                <img src={profile.avatarUrl} alt={profile.fullName} className="w-full h-full object-cover" />
+                <img src={profile.avatarUrl} alt="Avatar" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
               ) : (
-                <User className="w-12 h-12 md:w-16 md:h-16 text-slate-500" />
+                <span className="text-4xl font-black text-slate-400 uppercase">{profile.fullName?.charAt(0) || 'U'}</span>
               )}
             </div>
-            {profile.isVerified && (
-              <div className="absolute bottom-2 right-2 bg-indigo-600 text-white p-1 rounded-full border-2 border-slate-900" title="VĐV Đã Xác Minh">
-                <CheckCircle className="w-4 h-4 fill-white text-indigo-600" />
-              </div>
-            )}
           </div>
-
-          {/* Info Section */}
-          <div className="flex-1 text-center md:text-left space-y-4">
-            <div className="flex flex-col md:flex-row items-center gap-3">
-              <h1 className="text-3xl font-black text-white tracking-tight">{profile.fullName}</h1>
+          
+          {/* Info */}
+          <div className="space-y-3">
+            <div>
+              <h1 className="text-3xl font-black text-slate-900 flex items-center gap-2 tracking-tight">
+                {profile.fullName}
+                {profile.isVerified && (
+                  <span title="Thành viên đã xác minh" className="bg-blue-50 p-1 rounded-full border border-blue-200">
+                    <ShieldCheck className="w-5 h-5 text-blue-600" />
+                  </span>
+                )}
+              </h1>
+            </div>
+            
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="px-3 py-1 text-xs font-black rounded-xl border bg-blue-50 text-blue-700 border-blue-200 uppercase tracking-wider">
+                Vận động viên
+              </span>
               {profile.isVerified && (
-                <span className="px-2.5 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-[10px] font-black uppercase tracking-wider">
-                  Baseline Verified
+                <span className="px-3 py-1 text-xs font-black rounded-xl border bg-emerald-50 text-emerald-700 border-emerald-250 uppercase tracking-wider">
+                  Đã xác minh
+                </span>
+              )}
+              {profile.createdAt && (
+                <span className="bg-slate-50 border border-slate-200 text-slate-650 px-3.5 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5 text-slate-400" /> Tham gia từ {formatDate(profile.createdAt, 'MM/yyyy')}
                 </span>
               )}
             </div>
-
-            <p className="text-slate-400 text-sm max-w-xl italic">
-              {profile.bio || '"Chưa cập nhật tiểu sử cá nhân."'}
-            </p>
-
-            <div className="flex flex-wrap justify-center md:justify-start gap-4 text-xs font-semibold text-slate-450 pt-2">
-              <span className="bg-slate-800/80 px-3.5 py-1.5 rounded-full border border-slate-700 flex items-center gap-1.5">
-                Giới tính: <strong className="text-slate-200">{getGenderLabel(profile.gender)}</strong>
-              </span>
-              <span className="bg-slate-800/80 px-3.5 py-1.5 rounded-full border border-slate-700 flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-slate-500" /> Gia nhập:{' '}
-                <strong className="text-slate-200">
-                  {new Date(profile.createdAt).toLocaleDateString('vi-VN', { year: 'numeric', month: 'long' })}
-                </strong>
-              </span>
-            </div>
           </div>
-        </div>
-
-        {/* ELO Rankings section */}
-        <div className="mb-10">
-          <div className="flex items-center gap-2 mb-6">
-            <Trophy className="w-5 h-5 text-indigo-500" />
-            <h2 className="text-xl font-extrabold text-white">Xếp hạng trình độ ELO</h2>
-          </div>
-
-          {profile.ranks.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {profile.ranks.map((rank) => (
-                <div
-                  key={`${rank.categoryId}-${rank.matchType}`}
-                  className="bg-slate-900 border border-slate-800 hover:border-slate-700/80 rounded-2xl p-5 shadow-lg flex items-center justify-between transition-all group"
-                >
-                  <div className="space-y-2.5 flex-1">
-                    <span className="px-2 py-0.5 rounded text-[9px] font-extrabold uppercase bg-slate-800 text-slate-400 border border-slate-700">
-                      {rank.categoryName} • {getMatchTypeLabel(rank.matchType)}
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <Award className="w-5 h-5 text-indigo-400 group-hover:scale-110 transition-transform" />
-                      <h4 className="font-extrabold text-white text-base">{rank.eloPoints} ELO</h4>
-                    </div>
-                    {/* Stats detail */}
-                    <div className="grid grid-cols-3 gap-2 pt-1.5 text-center">
-                      <div className="bg-slate-950/60 p-2 rounded-xl border border-slate-850">
-                        <div className="text-[10px] text-slate-500 font-bold uppercase">Số Trận</div>
-                        <div className="text-xs font-black text-slate-300">{rank.matchesPlayed}</div>
-                      </div>
-                      <div className="bg-slate-950/60 p-2 rounded-xl border border-slate-850">
-                        <div className="text-[10px] text-slate-500 font-bold uppercase">Thắng</div>
-                        <div className="text-xs font-black text-emerald-500">{rank.matchesWon}</div>
-                      </div>
-                      <div className="bg-slate-950/60 p-2 rounded-xl border border-slate-850">
-                        <div className="text-[10px] text-slate-500 font-bold uppercase">Chuỗi</div>
-                        <div className="text-xs font-black text-indigo-400 flex items-center justify-center gap-0.5">
-                          <Zap className="w-3 h-3 fill-indigo-400 shrink-0" /> {rank.winStreak}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="bg-slate-900 border border-slate-800 p-8 rounded-2xl text-center text-slate-400 text-sm">
-              Người chơi chưa tham gia thi đấu xếp hạng ELO chính thức.
-            </div>
-          )}
-        </div>
-
-        {/* Recent Match History */}
-        <div>
-          <div className="flex items-center gap-2 mb-6">
-            <Calendar className="w-5 h-5 text-indigo-500" />
-            <h2 className="text-xl font-extrabold text-white">Lịch sử thi đấu gần đây</h2>
-          </div>
-
-          {matches.length > 0 ? (
-            <div className="flex flex-col gap-4">
-              {matches.map((match) => {
-                const isCompleted = match.status === 'COMPLETED';
-                const isP1 = match.participant1?.teamName === profile.fullName || 
-                  (match.participant1?.id && profile.ranks.some(r => r.categoryId === match.id)); // fallback match logic
-                const isWinner = isCompleted && match.winnerId && (
-                  (match.winnerId === match.participant1?.id && match.participant1?.teamName === profile.fullName) ||
-                  (match.winnerId === match.participant2?.id && match.participant2?.teamName === profile.fullName)
-                );
-
-                const opponentName = match.participant1?.teamName === profile.fullName
-                  ? match.participant2?.teamName || 'TBD'
-                  : match.participant1?.teamName || 'TBD';
-
-                return (
-                  <div
-                    key={match.id}
-                    className="bg-slate-900 border border-slate-800 hover:border-slate-700/80 rounded-2xl p-5 shadow-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4 transition-all"
-                  >
-                    <div className="space-y-1.5">
-                      <div className="flex items-center gap-2 text-xs font-bold text-slate-500">
-                        <span>{match.group?.stage?.name || 'Giải đấu'}</span>
-                        <span>•</span>
-                        <span>Vòng {match.roundNumber}</span>
-                      </div>
-                      <div className="text-sm font-bold text-white flex items-center gap-2.5">
-                        <span className="text-slate-400">Đối thủ:</span>
-                        <span className="text-indigo-300 font-extrabold">{opponentName}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
-                      {/* Set scores details */}
-                      <div className="bg-slate-950/80 px-4 py-2 rounded-xl border border-slate-800 text-sm font-black text-slate-350 tabular-nums">
-                        {match.p1SetsWon} - {match.p2SetsWon}
-                      </div>
-
-                      {/* Result badge */}
-                      {isCompleted ? (
-                        isWinner ? (
-                          <span className="px-3 py-1 rounded-full text-[10px] font-black bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase tracking-wide">
-                            Thắng
-                          </span>
-                        ) : (
-                          <span className="px-3 py-1 rounded-full text-[10px] font-black bg-rose-500/10 text-rose-400 border border-rose-500/20 uppercase tracking-wide">
-                            Thua
-                          </span>
-                        )
-                      ) : (
-                        <span className="px-3 py-1 rounded-full text-[10px] font-black bg-blue-500/10 text-blue-400 border border-blue-500/20 uppercase tracking-wide">
-                          Đang đấu
-                        </span>
-                      )}
-
-                      <Link
-                        href={`/live/${match.id}`}
-                        className="text-xs font-bold text-indigo-400 hover:text-indigo-300 flex items-center gap-1 shrink-0"
-                      >
-                        Chi tiết <ArrowLeft className="w-3.5 h-3.5 rotate-180" />
-                      </Link>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="bg-slate-900 border border-slate-800 p-8 rounded-2xl text-center text-slate-400 text-sm">
-              Chưa ghi nhận lịch sử trận đấu nào gần đây.
-            </div>
-          )}
         </div>
       </div>
-    </div>
-  );
-}
 
-// Dummy check circle component mapping for safety
-function CheckCircle({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"></path>
-    </svg>
+      {/* Tabs */}
+      <div className="flex overflow-x-auto gap-2 border-b border-slate-200 pb-1 no-scrollbar">
+        {([
+          { id: 'overview', label: 'Tổng quan' },
+          { id: 'matches', label: 'Trận đấu' },
+          { id: 'elo', label: 'Thống kê ELO' }
+        ] as const).map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`px-5 py-3 font-bold text-sm whitespace-nowrap transition-all border-b-2 cursor-pointer -mb-[2px] ${
+              activeTab === tab.id 
+                ? 'text-blue-600 border-blue-600' 
+                : 'text-slate-550 border-transparent hover:text-slate-900'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Tab Content */}
+      <div className="min-h-[400px]">
+        {activeTab === 'overview' && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="md:col-span-1 flex flex-col gap-6">
+              {/* Giới thiệu */}
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">Giới thiệu</h3>
+                {profile.bio ? (
+                  <p className="text-slate-650 text-sm leading-relaxed whitespace-pre-wrap font-medium">
+                    {profile.bio}
+                  </p>
+                ) : (
+                  <p className="text-slate-400 text-sm italic font-medium">
+                    Chưa cập nhật phần giới thiệu bản thân.
+                  </p>
+                )}
+              </div>
+
+              {/* Thông tin chi tiết */}
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">Thông tin chi tiết</h3>
+                <div className="flex flex-col gap-4 text-sm">
+                  <div className="flex flex-col gap-1 border-b border-slate-100 pb-3">
+                    <span className="text-slate-500 font-medium">Giới tính</span>
+                    <span className="text-slate-900 font-semibold">{getGenderLabel(profile.gender)}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="md:col-span-2 space-y-6">
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 text-center py-12 border-dashed">
+                <Activity className="w-12 h-12 text-slate-350 mx-auto mb-3" />
+                <p className="text-slate-550 font-semibold text-lg">Chưa có dữ liệu hoạt động</p>
+                <p className="text-slate-450 text-xs font-medium mt-1">Hệ thống ghi nhận hoạt động tự động khi bắt đầu tham gia các giải đấu.</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'matches' && (
+          <div className="space-y-6">
+            {matches.length > 0 ? (
+              <div className="flex flex-col gap-4">
+                {matches.map((match) => {
+                  const isCompleted = match.status === 'COMPLETED';
+                  const isP1 = match.participant1?.teamName?.toLowerCase() === profile.fullName?.toLowerCase();
+                  
+                  const isWinner = isCompleted && match.winnerId && (
+                    (match.winnerId === match.participant1?.id && isP1) ||
+                    (match.winnerId === match.participant2?.id && !isP1)
+                  );
+
+                  const opponentName = isP1
+                    ? match.participant2?.teamName || 'Chưa xác định'
+                    : match.participant1?.teamName || 'Chưa xác định';
+
+                  return (
+                    <div
+                      key={match.id}
+                      className="bg-white border border-slate-200 hover:border-slate-300 rounded-2xl p-5 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4 transition-all"
+                    >
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 text-xs font-semibold text-slate-400">
+                          <span>{match.group?.stage?.name || 'Giải đấu'}</span>
+                          <span>•</span>
+                          <span>Vòng {match.roundNumber}</span>
+                        </div>
+                        <div className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                          <span className="text-slate-400">Đối thủ:</span>
+                          <span className="text-blue-600 font-extrabold">{opponentName}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
+                        <div className="bg-slate-50 px-4 py-2 rounded-xl border border-slate-100 text-sm font-black text-slate-700 tabular-nums">
+                          {match.p1SetsWon} - {match.p2SetsWon}
+                        </div>
+
+                        {isCompleted ? (
+                          isWinner ? (
+                            <span className="px-3 py-1 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase tracking-wide">
+                              Thắng
+                            </span>
+                          ) : (
+                            <span className="px-3 py-1 rounded-full text-[10px] font-black bg-rose-50 text-rose-700 border border-rose-200 uppercase tracking-wide">
+                              Thua
+                            </span>
+                          )
+                        ) : (
+                          <span className="px-3 py-1 rounded-full text-[10px] font-black bg-blue-50 text-blue-700 border border-blue-200 uppercase tracking-wide">
+                            Đang đấu
+                          </span>
+                        )}
+
+                        <Link
+                          href={`/live/${match.id}`}
+                          className="text-xs font-bold text-blue-600 hover:text-blue-750 flex items-center gap-1 shrink-0"
+                        >
+                          Chi tiết <ChevronRight className="w-4 h-4" />
+                        </Link>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-16 bg-white rounded-2xl border border-slate-200 border-dashed">
+                <Activity className="w-16 h-16 text-slate-350 mx-auto mb-4" />
+                <h3 className="text-lg font-black text-slate-700 mb-2">Chưa thi đấu trận nào</h3>
+                <p className="text-slate-500 max-w-sm mx-auto text-sm font-medium">
+                  Thành viên này chưa ghi nhận trận đấu chính thức nào gần đây trên hệ thống.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'elo' && (
+          <div className="space-y-6">
+            <div className="flex flex-col gap-6">
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <Trophy className="w-5 h-5 text-blue-600" />
+                  <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Hạng Trình Độ ELO</h3>
+                </div>
+
+                {profile.ranks && profile.ranks.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {profile.ranks.map((rank) => (
+                      <div key={`${rank.categoryId}-${rank.matchType}`} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-all flex items-center justify-between group">
+                        <div className="space-y-1.5 flex-1">
+                          <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase bg-slate-100 text-slate-500 border border-slate-200">
+                            {rank.categoryName} • {getMatchTypeLabel(rank.matchType)}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <Award className="w-5 h-5 text-blue-500 group-hover:scale-110 transition-transform" />
+                            <h4 className="font-extrabold text-slate-900 text-base">{rank.eloPoints} ELO</h4>
+                          </div>
+                          <div className="grid grid-cols-3 gap-2 pt-2 text-center text-xs">
+                            <div className="bg-slate-50 p-2 rounded-xl border border-slate-100">
+                              <div className="text-[10px] text-slate-400 font-bold uppercase">Số Trận</div>
+                              <div className="font-extrabold text-slate-700 mt-0.5">{rank.matchesPlayed}</div>
+                            </div>
+                            <div className="bg-slate-50 p-2 rounded-xl border border-slate-100">
+                              <div className="text-[10px] text-slate-400 font-bold uppercase">Thắng</div>
+                              <div className="font-extrabold text-emerald-600 mt-0.5">{rank.matchesWon}</div>
+                            </div>
+                            <div className="bg-slate-50 p-2 rounded-xl border border-slate-100">
+                              <div className="text-[10px] text-slate-400 font-bold uppercase">Chuỗi</div>
+                              <div className="font-extrabold text-blue-600 mt-0.5 flex items-center justify-center gap-0.5">
+                                <Zap className="w-3 h-3 fill-blue-500 text-blue-650" /> {rank.winStreak}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-450 text-sm font-medium">
+                    Chưa tham gia thi đấu xếp hạng ELO chính thức.
+                  </div>
+                )}
+              </div>
+
+              {eloHistory.length > 0 && (
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+                  <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-6">Biến động ELO theo thời gian</h3>
+                  <div className="h-80 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart
+                        data={[...eloHistory].reverse().map((item, index) => ({
+                          name: `Trận ${index + 1}`,
+                          'ELO': item.newElo,
+                          date: formatDate(item.createdAt, 'dd/MM/yyyy'),
+                          reason: item.reason || (item.changedPoints > 0 ? 'Thắng' : 'Thua'),
+                          tournament: item.match?.tournamentName || 'Giải đấu'
+                        }))}
+                        margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                        <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickLine={false} />
+                        <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} domain={['dataMin - 50', 'dataMax + 50']} />
+                        <Tooltip
+                          content={({ active, payload }) => {
+                            if (active && payload && payload.length) {
+                              const data = payload[0].payload;
+                              return (
+                                <div className="bg-slate-900 text-white p-3 rounded-xl border border-slate-800 text-xs shadow-md">
+                                  <p className="font-bold">{data.date}</p>
+                                  <p className="text-blue-400 mt-1 font-bold">ELO: {data.ELO}</p>
+                                  <p className="text-slate-400 mt-0.5">{data.reason}</p>
+                                  <p className="text-slate-500 text-[10px] mt-0.5">{data.tournament}</p>
+                                </div>
+                              );
+                            }
+                            return null;
+                          }}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="ELO"
+                          stroke="#2563eb"
+                          strokeWidth={3}
+                          dot={{ r: 4, stroke: '#2563eb', strokeWidth: 2, fill: '#fff' }}
+                          activeDot={{ r: 6 }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              )}
+
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">Lịch sử thay đổi ELO</h3>
+                {eloHistory.length > 0 ? (
+                  <div className="flex flex-col gap-4">
+                    {eloHistory.map((item) => {
+                      const isGain = item.changedPoints >= 0;
+                      return (
+                        <div key={item.id} className="flex justify-between items-center py-3 border-b border-slate-100 last:border-b-0">
+                          <div>
+                            <p className="text-sm font-bold text-slate-800 line-clamp-1">{item.match?.tournamentName || 'Trận đấu xếp hạng'}</p>
+                            <p className="text-xs text-slate-400 mt-0.5">{formatDate(item.createdAt, 'dd/MM/yyyy HH:mm')}</p>
+                          </div>
+                          <div className="flex items-center gap-3 text-right">
+                            <div>
+                              <span className="text-[10px] text-slate-450 block font-bold">ELO mới</span>
+                              <span className="text-sm font-extrabold text-slate-750">{item.newElo}</span>
+                            </div>
+                            <span className={`inline-block px-2 py-1 rounded text-xs font-bold min-w-[45px] text-center ${
+                              isGain ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
+                            }`}>
+                              {isGain ? `+${item.changedPoints}` : item.changedPoints}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-6 text-slate-400 text-sm font-medium">
+                    Không có lịch sử biến động ELO.
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }

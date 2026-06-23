@@ -234,14 +234,13 @@ export default function ProfilePage() {
     };
   }, [displayUser?.id, matchesPage]);
 
-
   return (
     <div className="max-w-5xl mx-auto px-4 md:px-8 py-8 flex flex-col gap-6">
       
       {/* Profile Header */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-3xl border border-slate-150 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
         {/* Cover Photo */}
-        <div className="h-48 bg-slate-900 relative group overflow-hidden">
+        <div className="h-56 bg-slate-900 relative group overflow-hidden">
           <input 
             type="file" 
             accept="image/*" 
@@ -253,17 +252,18 @@ export default function ProfilePage() {
             <img 
               src={displayUser.coverUrl} 
               alt="Cover" 
-              className="w-full h-full object-cover" 
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
             />
           ) : (
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 opacity-80"></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-indigo-650 to-purple-650 opacity-90"></div>
           )}
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/40 via-transparent to-transparent"></div>
           
           <button 
             type="button" 
             onClick={handleCoverClick}
             disabled={isUploadingCover}
-            className="absolute top-4 right-4 bg-black/50 hover:bg-black/70 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm"
+            className="absolute top-4 right-4 bg-black/40 hover:bg-black/60 text-white px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-200 backdrop-blur-md border border-white/10 shadow-lg cursor-pointer"
           >
             {isUploadingCover ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -276,17 +276,17 @@ export default function ProfilePage() {
         
         <div className="px-6 md:px-10 pb-8 relative">
           {/* Avatar & Actions */}
-          <div className="flex flex-col md:flex-row justify-between items-end md:items-center gap-4 -mt-16 mb-4 relative z-10">
-            <div className="w-32 h-32 rounded-full bg-slate-100 border-4 border-white shadow-md flex items-center justify-center overflow-hidden">
+          <div className="flex flex-col md:flex-row justify-between items-end md:items-center gap-4 -mt-16 mb-5 relative z-10">
+            <div className="w-32 h-32 rounded-full bg-slate-100 border-4 border-white shadow-xl flex items-center justify-center overflow-hidden transition-transform duration-300 hover:scale-[1.03]">
               {displayUser?.avatarUrl ? (
                 <img src={displayUser.avatarUrl} alt="Avatar" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
               ) : (
-                <span className="text-4xl font-bold text-slate-400 uppercase">{displayUser?.fullName?.charAt(0) || 'U'}</span>
+                <span className="text-4xl font-black text-slate-400 uppercase">{displayUser?.fullName?.charAt(0) || 'U'}</span>
               )}
             </div>
             <div className="flex gap-3 w-full md:w-auto mt-4 md:mt-0">
               <Link href="/profile/edit" className="w-full md:w-auto">
-                <Button variant="outline" className="w-full md:w-auto border-slate-200 text-slate-600 hover:bg-slate-50">
+                <Button variant="outline" className="w-full md:w-auto border-slate-200 text-slate-650 hover:bg-slate-50 hover:text-slate-900 rounded-xl font-bold transition-all shadow-sm">
                   <Edit3 className="w-4 h-4 mr-2" /> Chỉnh sửa hồ sơ
                 </Button>
               </Link>
@@ -294,35 +294,52 @@ export default function ProfilePage() {
           </div>
           
           {/* Info */}
-          <div>
-            <h1 className="text-3xl font-black text-slate-900 flex items-center gap-2">
-              {isLoading ? (
-                <span className="w-48 h-8 bg-slate-200 animate-pulse rounded"></span>
-              ) : (
-                displayUser?.fullName || 'Người dùng ẩn danh'
-              )}
-              {((displayUser as unknown as Record<string, unknown>)?.roles as string[] | undefined)?.includes('ADMIN') && (
-                <span title="Admin">
-                  <ShieldCheck className="w-6 h-6 text-blue-500" />
-                </span>
-              )}
-            </h1>
-            <p className="text-slate-500 font-medium mt-1">
-              {isLoading ? (
-                <span className="w-32 h-4 bg-slate-200 animate-pulse rounded inline-block mt-1"></span>
-              ) : (
-                displayUser?.email
-              )}
-            </p>
-            <div className="flex flex-wrap gap-2 mt-2">
-              {((user as unknown as Record<string, unknown>)?.roles as string[] | undefined)?.map((role: string) => (
-                <span key={role} className="px-2 py-1 text-xs font-medium rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase">
-                  {role}
-                </span>
-              ))}
+          <div className="space-y-3">
+            <div>
+              <h1 className="text-3xl font-black text-slate-900 flex items-center gap-2 tracking-tight">
+                {isLoading ? (
+                  <span className="w-48 h-8 bg-slate-200 animate-pulse rounded-lg"></span>
+                ) : (
+                  displayUser?.fullName || 'Người dùng ẩn danh'
+                )}
+                {((displayUser as unknown as Record<string, unknown>)?.roles as string[] | undefined)?.includes('ADMIN') && (
+                  <span title="Quản trị viên hệ thống" className="bg-blue-50 p-1 rounded-full border border-blue-200">
+                    <ShieldCheck className="w-5 h-5 text-blue-600" />
+                  </span>
+                )}
+              </h1>
+              <p className="text-slate-500 font-semibold mt-0.5">
+                {isLoading ? (
+                  <span className="w-32 h-4 bg-slate-200 animate-pulse rounded inline-block mt-1"></span>
+                ) : (
+                  displayUser?.email
+                )}
+              </p>
+            </div>
+            
+            <div className="flex flex-wrap items-center gap-2">
+              {((user as unknown as Record<string, unknown>)?.roles as string[] | undefined)?.map((role: string) => {
+                let roleLabel = role;
+                let roleColor = 'bg-emerald-50 text-emerald-700 border-emerald-250';
+                if (role === 'PLAYER') {
+                  roleLabel = 'Vận động viên';
+                  roleColor = 'bg-blue-50 text-blue-700 border-blue-200';
+                } else if (role === 'ORGANIZER') {
+                  roleLabel = 'Ban tổ chức';
+                  roleColor = 'bg-purple-50 text-purple-700 border-purple-200';
+                } else if (role === 'ADMIN') {
+                  roleLabel = 'Quản trị viên';
+                  roleColor = 'bg-rose-50 text-rose-700 border-rose-200';
+                }
+                return (
+                  <span key={role} className={`px-3 py-1 text-xs font-black rounded-xl border uppercase tracking-wider ${roleColor}`}>
+                    {roleLabel}
+                  </span>
+                );
+              })}
               {profileData?.createdAt && (
-                <span className="bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-1">
-                  <Calendar className="w-4 h-4" /> Tham gia từ {formatDate(profileData.createdAt, 'MM/yyyy')}
+                <span className="bg-slate-50 border border-slate-200 text-slate-650 px-3.5 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5 text-slate-400" /> Tham gia từ {formatDate(profileData.createdAt, 'MM/yyyy')}
                 </span>
               )}
             </div>
@@ -352,7 +369,6 @@ export default function ProfilePage() {
       <div className="flex overflow-x-auto gap-2 border-b border-slate-200 pb-1 no-scrollbar">
         {([
           { id: 'overview', label: 'Tổng quan' },
-          { id: 'tournaments', label: 'Giải đấu' },
           { id: 'matches', label: 'Trận đấu' },
           { id: 'elo', label: 'Thống kê ELO' }
         ] as const).map(tab => (
@@ -362,7 +378,7 @@ export default function ProfilePage() {
             className={`px-5 py-2.5 rounded-t-lg font-bold text-sm whitespace-nowrap transition-colors border-b-2 ${
               activeTab === tab.id 
                 ? 'text-blue-600 border-blue-600 bg-blue-50/50' 
-                : 'text-slate-500 border-transparent hover:text-slate-900 hover:bg-slate-50'
+                : 'text-slate-550 border-transparent hover:text-slate-900 hover:bg-slate-50'
             }`}
           >
             {tab.label}
@@ -370,7 +386,6 @@ export default function ProfilePage() {
         ))}
       </div>
 
-      {/* Tab Content */}
       <div className="min-h-[400px]">
         {activeTab === 'overview' && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -424,6 +439,46 @@ export default function ProfilePage() {
                       <span className="text-slate-500 font-medium">Email liên hệ</span>
                       <span className="text-slate-900 font-semibold">{profileData?.email || 'Chưa cập nhật'}</span>
                     </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Tài khoản hoàn tiền */}
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Tài khoản hoàn tiền</h3>
+                  <Link href="/profile/edit" className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline">
+                    Chỉnh sửa
+                  </Link>
+                </div>
+                {isLoading ? (
+                  <div className="space-y-3">
+                    <div className="h-4 bg-slate-200 animate-pulse rounded w-full"></div>
+                    <div className="h-4 bg-slate-200 animate-pulse rounded w-3/4"></div>
+                  </div>
+                ) : profileData?.bankName ? (
+                  <div className="flex flex-col gap-3 text-sm">
+                    <div className="flex flex-col gap-1 border-b border-slate-100 pb-2">
+                      <span className="text-slate-500 font-medium">Ngân hàng / Ví</span>
+                      <span className="text-slate-900 font-semibold">{profileData.bankName}</span>
+                    </div>
+                    <div className="flex flex-col gap-1 border-b border-slate-100 pb-2">
+                      <span className="text-slate-500 font-medium">Số tài khoản / SĐT ví</span>
+                      <span className="text-slate-900 font-bold text-blue-650">{profileData.bankAccountNumber}</span>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <span className="text-slate-500 font-medium">Chủ tài khoản</span>
+                      <span className="text-slate-900 font-semibold uppercase">{profileData.bankAccountName}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-4 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                    <p className="text-slate-400 text-xs italic">Chưa cấu hình tài khoản nhận hoàn tiền.</p>
+                    <Link href="/profile/edit">
+                      <Button size="sm" className="mt-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3 py-1.5 h-auto">
+                        Cấu hình ngay
+                      </Button>
+                    </Link>
                   </div>
                 )}
               </div>
@@ -550,63 +605,6 @@ export default function ProfilePage() {
                 <p className="text-slate-400 text-sm mt-1">Hãy tham gia giải đấu để bắt đầu ghi nhận thành tích!</p>
               </div>
             </div>
-          </div>
-        )}
-
-        {activeTab === 'tournaments' && (
-          <div className="space-y-6">
-            {isLoadingTab ? (
-              <div className="flex justify-center items-center py-12 bg-white rounded-2xl border border-slate-200">
-                <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-              </div>
-            ) : tournaments.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                {tournaments.map((t) => (
-                  <div key={t.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 hover:shadow-md transition-all flex flex-col justify-between gap-4">
-                    <div>
-                      <span className={`inline-block px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider ${
-                        t.status === 'REGISTRATION_OPEN' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
-                        t.status === 'IN_PROGRESS' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
-                        t.status === 'COMPLETED' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
-                        'bg-slate-100 text-slate-700 border border-slate-200'
-                      }`}>
-                        {t.status === 'REGISTRATION_OPEN' ? 'Đăng ký' :
-                         t.status === 'IN_PROGRESS' ? 'Đang đấu' :
-                         t.status === 'COMPLETED' ? 'Đã xong' : t.status}
-                      </span>
-                      <h3 className="font-bold text-slate-900 text-base mt-2 line-clamp-1">{t.name}</h3>
-                      <p className="text-slate-500 text-xs mt-1 flex items-center gap-1">
-                        <MapPin className="w-3.5 h-3.5 text-slate-400" /> {t.locationAddress || 'Chưa cập nhật'}
-                      </p>
-                    </div>
-                    <div className="flex justify-between items-center pt-3 border-t border-slate-100 text-xs text-slate-650 font-semibold">
-                      <div>
-                        <span className="text-slate-400">Thể thức:</span> <span>{t.matchType === 'SINGLES' ? 'Đánh đơn' : 'Đánh đôi'}</span>
-                      </div>
-                      <div>
-                        <span className="text-slate-400">Ngày:</span> <span>{formatDate(t.startDate, 'dd/MM/yyyy')}</span>
-                      </div>
-                    </div>
-                    <Link href={`/tournaments/${t.id}`}>
-                      <Button variant="outline" className="w-full text-xs font-bold border-slate-200 text-slate-650 hover:bg-slate-50 mt-1">
-                        Chi tiết giải đấu
-                      </Button>
-                    </Link>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-16 bg-white rounded-2xl border border-slate-200 border-dashed">
-                <Trophy className="w-16 h-16 text-slate-200 mx-auto mb-4" />
-                <h3 className="text-lg font-bold text-slate-700 mb-2">Chưa tham gia giải đấu nào</h3>
-                <p className="text-slate-500 max-w-sm mx-auto text-sm">
-                  Hãy khám phá các giải đấu đang mở đăng ký ngoài trang chủ để giao lưu cọ xát.
-                </p>
-                <Link href="/tournaments" className="mt-4 inline-block">
-                  <Button className="bg-blue-600 hover:bg-blue-700 text-white font-bold">Tìm kiếm giải đấu</Button>
-                </Link>
-              </div>
-            )}
           </div>
         )}
 

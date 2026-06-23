@@ -97,7 +97,7 @@ export default function VerificationPage() {
       {/* Header Section */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">Duyệt Đơn "Sao Uy Tín"</h2>
+          <h2 className="text-2xl font-bold text-slate-900">Duyệt Đơn &quot;Sao Uy Tín&quot;</h2>
           <p className="text-slate-500 text-sm">Xem xét hồ sơ minh chứng hoạt động và cấp chứng nhận tài khoản uy tín.</p>
         </div>
         <div className="bg-blue-50 border border-blue-100 text-blue-600 text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium">

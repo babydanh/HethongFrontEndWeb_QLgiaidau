@@ -79,73 +79,75 @@ export default function MyTournamentsPage() {
   const [parents, setParents] = useState<ParentWithDivisions[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchTournaments = async () => {
-      try {
-        // Fetch giải đấu lớn (parent tournaments) - mỗi giải chứa nhiều hình thức thi đấu
-        const res = await tournamentsApi.getMyParentTournaments();
-        let parentsWithDivisions: ParentWithDivisions[] = [];
-        
-        if (res.data) {
-          parentsWithDivisions = await Promise.all(
-            res.data.map(async (p: { id: string }) => {
-              const detail = await tournamentsApi.getParentTournamentById(p.id);
-              return detail.data;
-            })
-          );
-        }
-
-        // Fetch older standalone tournaments to prevent data loss
-        const oldRes = await tournamentsApi.getMyTournaments();
-        if (oldRes.data) {
-          const standaloneTournaments = oldRes.data.filter(t => !t.parentId);
-          const pseudoParents = await Promise.all(
-            standaloneTournaments.map(async (t) => {
-              let divisionsList: Tournament[] = [];
-              try {
-                const divRes = await divisionsApi.getDivisions(t.id);
-                if (divRes.data) {
-                  divisionsList = divRes.data.map((div) => ({
-                    ...div,
-                    tournamentConfig: {
-                      bracketType: div.bracketType || undefined,
-                      roundConfig: div.roundConfig || undefined,
-                    },
-                    format: div.bracketType || '',
-                    currency: 'VND',
-                    organizerId: t.organizerId || '',
-                  })) as unknown as Tournament[];
-                }
-              } catch (err) {
-                console.error(`Failed to fetch divisions for tournament ${t.id}:`, err);
-              }
-
-              // Fallback to the tournament itself if no divisions are found to preserve compatibility
-              if (divisionsList.length === 0) {
-                divisionsList = [t];
-              }
-
-              return {
-                id: t.id,
-                name: t.name,
-                description: t.description,
-                bannerUrl: t.bannerUrl,
-                logoUrl: t.logoUrl,
-                divisions: divisionsList,
-                isStandalone: true
-              };
-            })
-          );
-          parentsWithDivisions = [...parentsWithDivisions, ...pseudoParents];
-        }
-
-        setParents(parentsWithDivisions);
-      } catch (err) {
-        toast.error('Không thể tải danh sách giải đấu của bạn');
-      } finally {
-        setIsLoading(false);
+  const fetchTournaments = async () => {
+    try {
+      setIsLoading(true);
+      // Fetch giải đấu lớn (parent tournaments) - mỗi giải chứa nhiều hình thức thi đấu
+      const res = await tournamentsApi.getMyParentTournaments();
+      let parentsWithDivisions: ParentWithDivisions[] = [];
+      
+      if (res.data) {
+        parentsWithDivisions = await Promise.all(
+          res.data.map(async (p: { id: string }) => {
+            const detail = await tournamentsApi.getParentTournamentById(p.id);
+            return detail.data;
+          })
+        );
       }
-    };
+
+      // Fetch older standalone tournaments to prevent data loss
+      const oldRes = await tournamentsApi.getMyTournaments();
+      if (oldRes.data) {
+        const standaloneTournaments = oldRes.data.filter(t => !t.parentId);
+        const pseudoParents = await Promise.all(
+          standaloneTournaments.map(async (t) => {
+            let divisionsList: Tournament[] = [];
+            try {
+              const divRes = await divisionsApi.getDivisions(t.id);
+              if (divRes.data) {
+                divisionsList = divRes.data.map((div) => ({
+                  ...div,
+                  tournamentConfig: {
+                    bracketType: div.bracketType || undefined,
+                    roundConfig: div.roundConfig || undefined,
+                  },
+                  format: div.bracketType || '',
+                  currency: 'VND',
+                  organizerId: t.organizerId || '',
+                })) as unknown as Tournament[];
+              }
+            } catch (err) {
+              console.error(`Failed to fetch divisions for tournament ${t.id}:`, err);
+            }
+
+            // Fallback to the tournament itself if no divisions are found to preserve compatibility
+            if (divisionsList.length === 0) {
+              divisionsList = [t];
+            }
+
+            return {
+              id: t.id,
+              name: t.name,
+              description: t.description,
+              bannerUrl: t.bannerUrl,
+              logoUrl: t.logoUrl,
+              divisions: divisionsList,
+              isStandalone: true
+            };
+          })
+        );
+        parentsWithDivisions = [...parentsWithDivisions, ...pseudoParents];
+      }
+
+      setParents(parentsWithDivisions);
+    } catch (err) {
+      toast.error('Không thể tải danh sách giải đấu của bạn');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchTournaments();
   }, []);
 
@@ -153,13 +155,22 @@ export default function MyTournamentsPage() {
     e.preventDefault();
     if (!confirm('Bạn có chắc chắn muốn xoá giải đấu này không? Toàn bộ các hình thức thi đấu bên trong (nếu có) cũng sẽ bị xoá và không thể khôi phục.')) return;
     try {
+      let res;
       if (isStandalone) {
-        await tournamentsApi.deleteTournament(id);
+        res = await tournamentsApi.deleteTournament(id);
       } else {
-        await tournamentsApi.deleteParentTournament(id);
+        res = await tournamentsApi.deleteParentTournament(id);
       }
-      setParents(parents.filter(p => p.id !== id));
-      toast.success('Đã xoá giải đấu thành công');
+
+      // Check if delete is pending review
+      const resData = res?.data as unknown as { pendingDelete?: boolean; message?: string } | undefined;
+      if (resData?.pendingDelete) {
+        toast.success(resData.message || 'Yêu cầu xóa giải đấu của bạn đã được gửi tới Quản trị viên để xét duyệt.');
+        fetchTournaments();
+      } else {
+        setParents(parents.filter(p => p.id !== id));
+        toast.success('Đã xoá giải đấu thành công');
+      }
     } catch (err) {
       toast.error(getErrorMessage(err, 'Có lỗi xảy ra khi xoá giải đấu'));
     }
@@ -168,7 +179,11 @@ export default function MyTournamentsPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'DRAFT':
-        return <Badge className="bg-slate-100 text-slate-700 border-slate-200">Nháp (Private)</Badge>;
+        return <Badge className="bg-slate-100 text-slate-700 border-slate-200">Nháp</Badge>;
+      case 'PENDING_DELETE':
+        return <Badge className="bg-rose-50 text-rose-700 border-rose-200">Chờ Xóa</Badge>;
+      case 'PENDING_APPROVAL':
+        return <Badge className="bg-cyan-50 text-cyan-700 border-cyan-200">Chờ duyệt công bố</Badge>;
       case 'REGISTRATION_OPEN':
         return <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200">Mở Đăng Ký</Badge>;
       case 'REGISTRATION_CLOSED':
@@ -257,6 +272,20 @@ export default function MyTournamentsPage() {
                         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" 
                       />
                     </Link>
+
+                    {/* Scope & Rank Badges (Top-Left) */}
+                    <div className="absolute top-3 left-3 flex flex-col gap-1 z-10">
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold text-white shadow-sm w-fit ${
+                        firstDivision?.tournamentType === 'CLUB' ? 'bg-amber-600/90' : 'bg-blue-600/90'
+                      }`}>
+                        {firstDivision?.tournamentType === 'CLUB' ? 'Nội bộ CLB' : 'Mở rộng'}
+                      </span>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold text-white shadow-sm w-fit ${
+                        firstDivision?.isRanked ? 'bg-amber-500/90' : 'bg-slate-600/90'
+                      }`}>
+                        {firstDivision?.isRanked ? 'Xếp hạng ELO' : 'Phong trào'}
+                      </span>
+                    </div>
                     
                     {/* Status & Action Badges */}
                     <div className="absolute top-3 right-3 flex items-center gap-2 z-10">

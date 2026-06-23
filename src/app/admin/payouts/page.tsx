@@ -5,13 +5,20 @@ import { paymentsApi } from '@/features/payments/api';
 import { PayoutRequest } from '@/types/payment';
 import { CreditCard, Landmark, Check, X, AlertCircle, ExternalLink, Calendar } from 'lucide-react';
 
+interface PayoutRequestWithOrganizer extends PayoutRequest {
+  organizer?: {
+    fullName?: string;
+    email?: string;
+  };
+}
+
 export default function AdminPayoutsReview() {
-  const [payouts, setPayouts] = useState<PayoutRequest[]>([]);
+  const [payouts, setPayouts] = useState<PayoutRequestWithOrganizer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Review modal state
-  const [reviewingPayout, setReviewingPayout] = useState<PayoutRequest | null>(null);
+  const [reviewingPayout, setReviewingPayout] = useState<PayoutRequestWithOrganizer | null>(null);
   const [reviewAction, setReviewAction] = useState<'APPROVED' | 'REJECTED' | null>(null);
   const [proofUrl, setProofUrl] = useState('');
   const [note, setNote] = useState('');
@@ -22,13 +29,7 @@ export default function AdminPayoutsReview() {
     setLoading(true);
     paymentsApi.getAdminPayouts()
       .then((res) => {
-        if (res.data && Array.isArray(res.data)) {
-          setPayouts(res.data);
-        } else if (res.data && (res.data as any).data && Array.isArray((res.data as any).data)) {
-          setPayouts((res.data as any).data);
-        } else {
-          setPayouts([]);
-        }
+        setPayouts(Array.isArray(res.data) ? res.data : []);
       })
       .catch((err) => {
         console.error('Failed to fetch payouts:', err);
@@ -40,10 +41,12 @@ export default function AdminPayoutsReview() {
   };
 
   useEffect(() => {
-    fetchPayouts();
+    Promise.resolve().then(() => {
+      fetchPayouts();
+    });
   }, []);
 
-  const handleOpenReview = (payout: PayoutRequest, action: 'APPROVED' | 'REJECTED') => {
+  const handleOpenReview = (payout: PayoutRequestWithOrganizer, action: 'APPROVED' | 'REJECTED') => {
     setReviewingPayout(payout);
     setReviewAction(action);
     setProofUrl('');
@@ -148,7 +151,7 @@ export default function AdminPayoutsReview() {
                     {request.tournament?.name || 'Giải Đấu'}
                   </h3>
                   <p className="text-xs text-slate-500">
-                    Người yêu cầu: <span className="font-semibold text-slate-700">{(request as any).organizer?.fullName || (request as any).organizer?.email || request.organizerId}</span>
+                    Người yêu cầu: <span className="font-semibold text-slate-700">{request.organizer?.fullName || request.organizer?.email || request.organizerId}</span>
                   </p>
                 </div>
                 <div className="flex items-center gap-2">

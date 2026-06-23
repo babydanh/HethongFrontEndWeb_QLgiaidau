@@ -11,7 +11,7 @@ import { regionsApi, Region } from '@/features/regions/api';
 import { uploadApi } from '@/features/upload/api';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '@/lib/zustand/authStore';
-import { ChevronLeft, Plus, Trash2, Image as ImageIcon, MapPin, UploadCloud, X, Loader2 } from 'lucide-react';
+import { ChevronLeft, Plus, Trash2, UploadCloud, X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import Image from 'next/image';
 
@@ -23,8 +23,6 @@ const createCommunitySchema = z.object({
   districtCode: z.string().optional(),
   wardCode: z.string().optional(),
   locationAddress: z.string().max(255, "Địa chỉ quá dài").optional(),
-  lat: z.number().optional(),
-  lng: z.number().optional(),
   categoryIds: z.array(z.string().uuid()).min(1, "Vui lòng chọn ít nhất 1 môn thể thao"),
   visibility: z.enum(['PUBLIC', 'PRIVATE', 'RESTRICTED']),
   joinMode: z.enum(['OPEN', 'APPROVAL', 'INVITE_ONLY']),

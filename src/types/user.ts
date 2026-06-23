@@ -16,10 +16,24 @@ export interface UserProfile {
   isActive?: boolean;
   createdAt: string;
   updatedAt: string;
+  isEmailVerified?: boolean;
+  isPhoneVerified?: boolean;
+  isGenderLocked?: boolean;
+  bankName?: string | null;
+  bankAccountNumber?: string | null;
+  bankAccountName?: string | null;
 }
 
 export interface UpdateProfileDto {
   fullName?: string;
   avatarUrl?: string;
   phoneNumber?: string;
+  dateOfBirth?: string;
+  gender?: string;
+  address?: string;
+  provinceCode?: string;
+  bio?: string;
+  bankName?: string;
+  bankAccountNumber?: string;
+  bankAccountName?: string;
 }

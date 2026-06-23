@@ -81,6 +81,7 @@ export default function Step4ReviewSubmit() {
           maxElo: formData.maxElo,
           maxCombinedElo: formData.maxCombinedElo,
           maxTeammateGap: formData.maxTeammateGap,
+          registrationMode: formData.registrationMode || 'OPEN',
         },
       };
 
@@ -157,6 +158,17 @@ export default function Step4ReviewSubmit() {
             <span className="text-slate-400 font-medium">Tính Chất</span>
             <span className="font-semibold text-slate-900">
               {formData.isRanked ? 'Xếp Hạng' : 'Phong Trào'}
+            </span>
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <span className="text-slate-400 font-medium">Chế độ đăng ký</span>
+            <span className="font-semibold text-slate-900">
+              {formData.registrationMode === 'OPEN'
+                ? 'Tự do đăng ký'
+                : formData.registrationMode === 'APPROVAL'
+                  ? 'Cần xét duyệt'
+                  : 'Chỉ nhận mã mời'}
             </span>
           </div>
 

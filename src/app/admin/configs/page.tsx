@@ -22,11 +22,7 @@ export default function ConfigsPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [processing, setProcessing] = useState(false);
 
-  useEffect(() => {
-    fetchConfigs();
-  }, []);
-
-  const fetchConfigs = async () => {
+  async function fetchConfigs() {
     setLoading(true);
     try {
       const response = await api.get<ApiResponse<SystemConfig[]>>('/admin/configs');
@@ -37,7 +33,13 @@ export default function ConfigsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }
+
+  useEffect(() => {
+    Promise.resolve().then(() => {
+      fetchConfigs();
+    });
+  }, []);
 
   const handleEdit = (config: SystemConfig) => {
     setSelectedConfig(config);

@@ -109,14 +109,14 @@ export default function Step2Confirm() {
           <div className="flex flex-col gap-1">
             <span className="text-slate-400 font-medium">Phạm vi tổ chức</span>
             <span className="font-semibold text-slate-900">
-              {formData.tournamentType === 'CLUB' ? 'Nội bộ CLB (Club)' : 'Công khai (Public)'}
+              {formData.tournamentType === 'CLUB' ? 'Nội bộ CLB' : 'Công khai'}
             </span>
           </div>
 
           <div className="flex flex-col gap-1">
             <span className="text-slate-400 font-medium">Tính chất giải đấu</span>
             <span className="font-semibold text-slate-950">
-              {formData.isRanked ? 'Xếp hạng hệ thống (Ranked)' : 'Giải phong trào (Unranked)'}
+              {formData.isRanked ? 'Xếp hạng hệ thống' : 'Giải phong trào'}
             </span>
           </div>
 
@@ -161,7 +161,7 @@ export default function Step2Confirm() {
         <div className="text-xs leading-relaxed font-medium">
           <p className="font-bold mb-1">Quy trình lưu nháp:</p>
           <ul className="list-disc pl-4 space-y-1">
-            <li>Sau khi xác nhận, giải đấu sẽ được tạo ở trạng thái <strong>Bản nháp (DRAFT)</strong>.</li>
+            <li>Sau khi xác nhận, giải đấu sẽ được tạo ở trạng thái <strong>Bản nháp</strong>.</li>
             <li>Giải đấu sẽ ẩn khỏi danh sách công khai và chỉ xuất hiện ở trang quản trị của bạn.</li>
             <li>Bạn có thể tùy biến các thông số chi tiết như lịch thi đấu, sơ đồ thi đấu, phí nền tảng theo phần trăm, địa điểm cụ thể và luật thể thao trong trang Quản lý giải đấu trước khi chính thức công bố.</li>
           </ul>

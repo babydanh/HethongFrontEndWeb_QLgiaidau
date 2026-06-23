@@ -34,6 +34,15 @@ interface StandingRow {
   played: number; won: number; lost: number;
   setsWon: number; setsLost: number; points: number;
 }
+interface ScoreDetailsSet {
+  team1Score?: number | string | null;
+  team2Score?: number | string | null;
+}
+
+interface ScoreDetailsShape {
+  sets?: ScoreDetailsSet[];
+  [key: string]: unknown;
+}
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // MATH & LAYOUT HELPERS
@@ -160,14 +169,15 @@ function MatchCard({
   const cardH = isOrganizer ? CARD_H_ORGANIZER : CARD_H_PUBLIC;
 
   // Parse set scores
-  const parseSetScores = (scoreDetails: any) => {
+  const parseSetScores = (scoreDetails: unknown) => {
     if (!scoreDetails || typeof scoreDetails !== 'object') return { p1: [], p2: [] };
     const p1Scores: string[] = [];
     const p2Scores: string[] = [];
+    const details = scoreDetails as ScoreDetailsShape;
 
     // Format 1: { sets: [{ team1Score, team2Score, isFinished }, ...] }
-    if (Array.isArray(scoreDetails.sets)) {
-      scoreDetails.sets.forEach((set: any) => {
+    if (Array.isArray(details.sets)) {
+      details.sets.forEach((set) => {
         if (set && typeof set === 'object') {
           p1Scores.push(String(set.team1Score ?? 0));
           p2Scores.push(String(set.team2Score ?? 0));
@@ -177,9 +187,9 @@ function MatchCard({
     }
 
     // Format 2: { set1: "21-19", set2: "15-21" }
-    const sortedKeys = Object.keys(scoreDetails).sort();
+    const sortedKeys = Object.keys(details).sort();
     for (const key of sortedKeys) {
-      const scoreStr = scoreDetails[key];
+      const scoreStr = details[key];
       if (typeof scoreStr === 'string' && scoreStr.includes('-')) {
         const [s1, s2] = scoreStr.split('-');
         p1Scores.push(s1.trim());

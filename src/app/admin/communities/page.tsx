@@ -20,15 +20,7 @@ export default function AdminCommunitiesReview() {
     setLoading(true);
     communitiesApi.getPendingCommunities()
       .then((res) => {
-        // Dựa vào PaginatedResponse hoặc ApiResponse
-        // getPendingCommunities trả về PaginatedResponse nên danh sách nằm ở res.data
-        if (res.data && Array.isArray(res.data)) {
-          setCommunities(res.data);
-        } else if (res.data && (res.data as any).data && Array.isArray((res.data as any).data)) {
-          setCommunities((res.data as any).data);
-        } else {
-          setCommunities([]);
-        }
+        setCommunities(Array.isArray(res.data) ? res.data : []);
       })
       .catch((err) => {
         console.error('Failed to fetch pending communities:', err);
@@ -40,7 +32,9 @@ export default function AdminCommunitiesReview() {
   };
 
   useEffect(() => {
-    fetchPendingCommunities();
+    Promise.resolve().then(() => {
+      fetchPendingCommunities();
+    });
   }, []);
 
   const handleApprove = async (id: string) => {

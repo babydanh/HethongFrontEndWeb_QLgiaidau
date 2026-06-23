@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Settings, ImageIcon, Gift, Users, RefreshCw, Link as LinkIcon, Trash2 } from 'lucide-react';
+import { Settings, ImageIcon, Gift, Users, RefreshCw, Link as LinkIcon, Trash2, Plus, Phone, Mail, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import RichTextEditor from '@/components/ui/RichTextEditor';
@@ -36,8 +36,8 @@ interface BasicInfoTabProps {
   setIsAddingImage: (val: boolean) => void;
   prizeDescription: string;
   setPrizeDescription: (val: string) => void;
-  contactInfo: { phone: string; email: string };
-  setContactInfo: (val: { phone: string; email: string }) => void;
+  contactInfo: Record<string, string | undefined>;
+  setContactInfo: (val: Record<string, string | undefined>) => void;
   isSavingConfig: boolean;
   isDeleting: boolean;
   handleDeleteTournament: () => void;
@@ -107,6 +107,39 @@ export function BasicInfoTab({
   winByTwo,
   setWinByTwo,
 }: BasicInfoTabProps) {
+  const [newContactType, setNewContactType] = React.useState('facebook');
+  const [newContactLabel, setNewContactLabel] = React.useState('');
+  const [newContactValue, setNewContactValue] = React.useState('');
+
+  const handleAddContactLink = () => {
+    if (!newContactValue.trim()) {
+      toast.error('Vui lòng nhập giá trị liên hệ.');
+      return;
+    }
+    const finalKey = newContactType === 'custom' ? newContactLabel.trim() : newContactType;
+    if (!finalKey) {
+      toast.error('Vui lòng nhập nhãn liên hệ.');
+      return;
+    }
+    if (finalKey.toLowerCase() === 'phone' || finalKey.toLowerCase() === 'email') {
+      toast.error('Không được trùng với điện thoại hoặc email.');
+      return;
+    }
+    setContactInfo({
+      ...contactInfo,
+      [finalKey]: newContactValue.trim()
+    });
+    setNewContactValue('');
+    setNewContactLabel('');
+    toast.success('Đã thêm liên hệ mới!');
+  };
+
+  const handleRemoveContactLink = (key: string) => {
+    const next = { ...contactInfo };
+    delete next[key];
+    setContactInfo(next);
+    toast.success('Đã xóa liên hệ!');
+  };
   
   const handleAddGalleryImage = async () => {
     if (!newGalleryUrl.trim()) return;
@@ -247,42 +280,7 @@ export function BasicInfoTab({
                 />
               </div>
 
-              {/* Cấu hình giới hạn & luật thi đấu mặc định */}
-              {selectedDivisionId && (
-                <div className="border-t pt-5 space-y-4">
-                  <div>
-                    <h3 className="font-extrabold text-slate-850 text-base">Cấu hình thi đấu</h3>
-                    <p className="text-xs text-slate-450 mt-0.5 font-semibold">Thiết lập giới hạn số lượng đội hoặc vận động viên đăng ký.</p>
-                  </div>
 
-                  <div className="max-w-md">
-                    {/* Giới hạn số đội */}
-                    <div className="flex flex-col gap-2 bg-slate-50 border p-4 rounded-xl">
-                      <div className="flex items-center justify-between">
-                        <label className="text-sm font-semibold text-slate-700">Giới hạn số đội đăng ký</label>
-                        <input
-                          type="checkbox"
-                          checked={isLimitEnabled}
-                          onChange={(e) => setIsLimitEnabled(e.target.checked)}
-                          className="w-4 h-4 text-blue-650 rounded cursor-pointer"
-                        />
-                      </div>
-                      {isLimitEnabled && (
-                        <Input
-                          label="Số lượng đội đăng ký tối đa"
-                          type="number"
-                          value={maxParticipants}
-                          onChange={(e) => setMaxParticipants(Number(e.target.value))}
-                          className="bg-white text-xs mt-1"
-                        />
-                      )}
-                      {!isLimitEnabled && (
-                        <p className="text-xs font-semibold text-slate-400 mt-2">Không giới hạn số lượng đăng ký tham gia.</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           )}
 
@@ -492,22 +490,109 @@ export function BasicInfoTab({
             <div className="space-y-6 animate-in fade-in duration-200">
               <div>
                 <h3 className="font-extrabold text-slate-850 text-base">Liên hệ & Mã mời</h3>
-                <p className="text-xs text-slate-450 mt-0.5 font-semibold">Thông tin liên hệ của Ban tổ chức và quản lý lời mời.</p>
+                <p className="text-xs text-slate-455 mt-0.5 font-semibold">Thông tin liên hệ của Ban tổ chức và quản lý lời mời.</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <Input
                   label="Số điện thoại liên hệ"
-                  value={contactInfo.phone}
+                  value={contactInfo.phone || ''}
                   onChange={(e) => setContactInfo({ ...contactInfo, phone: e.target.value })}
                   placeholder="0987654321"
                 />
                 <Input
                   label="Email liên hệ"
-                  value={contactInfo.email}
+                  value={contactInfo.email || ''}
                   onChange={(e) => setContactInfo({ ...contactInfo, email: e.target.value })}
                   placeholder="btc@tournahub.vn"
                 />
+              </div>
+
+              {/* Custom Contact Links Section */}
+              <div className="border-t pt-5 mt-5 space-y-4">
+                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Liên kết mạng xã hội & liên hệ khác</h4>
+                
+                {/* Current list */}
+                <div className="space-y-2">
+                  {Object.entries(contactInfo)
+                    .filter(([key]) => key !== 'phone' && key !== 'email')
+                    .map(([key, val]) => {
+                      const displayLabel = key.charAt(0).toUpperCase() + key.slice(1);
+                      return (
+                        <div key={key} className="flex gap-2 items-center bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                          <span className="text-xs font-bold text-slate-600 min-w-[100px]">{displayLabel}:</span>
+                          <span className="text-sm text-slate-800 flex-grow truncate">{val}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveContactLink(key)}
+                            className="text-slate-400 hover:text-red-500 p-1 transition-colors"
+                            title="Xóa"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  {Object.keys(contactInfo).filter(([key]) => key !== 'phone' && key !== 'email').length === 0 && (
+                    <p className="text-xs text-slate-400 italic">Chưa có liên kết mạng xã hội nào.</p>
+                  )}
+                </div>
+
+                {/* Add Form */}
+                <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-200 flex flex-col sm:flex-row gap-3 items-end">
+                  <div className="flex-1 w-full space-y-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase">Loại liên hệ</label>
+                    <select
+                      value={newContactType}
+                      onChange={(e) => {
+                        setNewContactType(e.target.value);
+                        if (e.target.value !== 'custom') {
+                          setNewContactLabel('');
+                        }
+                      }}
+                      className="w-full border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-750 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 h-11"
+                    >
+                      <option value="facebook">Facebook</option>
+                      <option value="instagram">Instagram</option>
+                      <option value="zalo">Zalo</option>
+                      <option value="tiktok">Tiktok</option>
+                      <option value="website">Website</option>
+                      <option value="custom">Khác (Tự nhập nhãn)...</option>
+                    </select>
+                  </div>
+
+                  {newContactType === 'custom' && (
+                    <div className="flex-1 w-full space-y-1 animate-in fade-in slide-in-from-left-2 duration-150">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase">Nhãn liên hệ</label>
+                      <input
+                        type="text"
+                        placeholder="Telegram, Viber,..."
+                        value={newContactLabel}
+                        onChange={(e) => setNewContactLabel(e.target.value)}
+                        className="w-full border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-755 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 h-11"
+                      />
+                    </div>
+                  )}
+
+                  <div className="flex-[2] w-full space-y-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase">Đường dẫn / Giá trị</label>
+                    <input
+                      type="text"
+                      placeholder="https://facebook.com/... hoặc link liên kết"
+                      value={newContactValue}
+                      onChange={(e) => setNewContactValue(e.target.value)}
+                      className="w-full border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-755 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 h-11"
+                    />
+                  </div>
+
+                  <Button
+                    type="button"
+                    onClick={handleAddContactLink}
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold h-11 px-5 w-full sm:w-auto text-xs shrink-0 rounded-lg"
+                  >
+                    Thêm
+                  </Button>
+                </div>
               </div>
 
               {/* Invite Code Section */}
@@ -527,7 +612,7 @@ export function BasicInfoTab({
                         }}
                         className="border-slate-200 hover:bg-slate-100 text-slate-700 font-bold text-xs"
                       >
-                        Copy Mã
+                        Sao chép mã
                       </Button>
                       <Button
                         variant="outline"
@@ -543,7 +628,7 @@ export function BasicInfoTab({
                     <div className="flex items-center gap-3 border p-3.5 rounded-xl bg-white mt-2">
                       <LinkIcon className="w-5 h-5 text-slate-400 flex-shrink-0" />
                       <div className="flex-grow min-w-0">
-                        <p className="text-xs text-slate-455 font-bold uppercase tracking-wider">Đường dẫn đăng ký riêng tư (Private Invite Link)</p>
+                        <p className="text-xs text-slate-455 font-bold uppercase tracking-wider">Đường dẫn đăng ký riêng tư</p>
                         <p className="text-sm font-semibold text-slate-800 truncate select-all">
                           {`${window.location.origin}/tournaments/${tournament.id}/register?invite=${tournament.inviteCode}`}
                         </p>
@@ -556,7 +641,7 @@ export function BasicInfoTab({
                         }}
                         className="border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-bold"
                       >
-                        Copy Link
+                        Sao chép link
                       </Button>
                     </div>
                   )}

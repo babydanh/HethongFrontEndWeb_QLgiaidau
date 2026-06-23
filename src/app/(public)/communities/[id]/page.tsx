@@ -10,6 +10,7 @@ import { formatDate } from '@/utils/format';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { JoinCommunityModal } from '@/components/shared/JoinCommunityModal';
 import toast from 'react-hot-toast';
+import { getErrorMessage } from '@/utils/error';
 
 interface CommunityMemberRecord {
   member?: { id?: string; userId?: string; role?: string; status?: string };
@@ -38,6 +39,17 @@ export default function CommunityDetailPage() {
   // Real membership state
   const [membership, setMembership] = useState<{ role: string; status: string; memberId: string } | null>(null);
   const [isJoinLoading, setIsJoinLoading] = useState(false);
+  const [galleryImages, setGalleryImages] = useState<{ id: string; imageUrl: string }[]>([]);
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  const fetchGallery = async () => {
+    try {
+      const res = await communitiesApi.getGallery(id);
+      setGalleryImages(res.data || []);
+    } catch (err) {
+      console.error('Failed to fetch gallery', err);
+    }
+  };
 
   const fetchMembership = async () => {
     if (!user || !id) {
@@ -86,6 +98,7 @@ export default function CommunityDetailPage() {
     if (id) {
       Promise.resolve().then(() => {
         fetchCommunity();
+        fetchGallery();
       });
     }
   }, [id]);
@@ -154,6 +167,11 @@ export default function CommunityDetailPage() {
       return;
     }
 
+    if (community?.joinMode === 'INVITE_ONLY' && membership?.status !== 'INVITED') {
+      toast.error('Câu lạc bộ này ở chế độ Chỉ Mời. Bạn cần được quản trị viên mời để tham gia.');
+      return;
+    }
+
     if (community?.joinMode === 'APPROVAL') {
       setIsJoinModalOpen(true);
     } else {
@@ -163,9 +181,13 @@ export default function CommunityDetailPage() {
         toast.success('Đã tham gia câu lạc bộ thành công!');
         fetchMembership();
         fetchCommunity();
-      } catch (error) {
+      } catch (error: any) {
         console.error('Failed to join community', error);
-        toast.error('Lỗi khi tham gia câu lạc bộ.');
+        if (error?.response?.status === 403) {
+          toast.error('Câu lạc bộ này ở chế độ Chỉ Mời. Bạn không thể tự tham gia.');
+        } else {
+          toast.error(getErrorMessage(error, 'Lỗi khi tham gia câu lạc bộ.'));
+        }
       } finally {
         setIsJoinLoading(false);
       }
@@ -178,6 +200,7 @@ export default function CommunityDetailPage() {
     if (membership?.status === 'JOINED') return 'Đã tham gia';
     if (membership?.status === 'PENDING') return 'Đang chờ duyệt';
     if (membership?.status === 'INVITED') return 'Chấp nhận lời mời';
+    if (community?.joinMode === 'INVITE_ONLY') return 'Chỉ nhận lời mời';
     return community?.joinMode === 'APPROVAL' ? 'Xin tham gia' : 'Tham gia';
   };
 
@@ -186,6 +209,7 @@ export default function CommunityDetailPage() {
     if (membership?.status === 'JOINED') return 'bg-emerald-50 hover:bg-red-50 hover:text-red-600 hover:border-red-200 text-emerald-700 border border-emerald-200';
     if (membership?.status === 'PENDING') return 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200';
     if (membership?.status === 'INVITED') return 'bg-indigo-600 hover:bg-indigo-700 text-white animate-pulse';
+    if (community?.joinMode === 'INVITE_ONLY') return 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200';
     return 'bg-emerald-600 hover:bg-emerald-700 text-white';
   };
 
@@ -218,17 +242,27 @@ export default function CommunityDetailPage() {
   const isOwner = user?.id === community.creatorId || user?.id === community.ownerId;
   const isOwnerOrMod = isOwner || (membership?.role === 'OWNER' || membership?.role === 'MODERATOR');
 
+  const slides = community ? [
+    ...(community.bannerUrl ? [community.bannerUrl] : []),
+    ...galleryImages.map(img => img.imageUrl)
+  ] : [];
+
   return (
     <div className="min-h-screen bg-slate-50 pb-12">
       {/* Banner / Cover */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 md:pt-6">
-        <div className="relative h-[280px] md:h-[400px] w-full bg-slate-200 shadow-xl rounded-2xl md:rounded-3xl overflow-hidden">
-          {community.bannerUrl ? (
-            <Image src={community.bannerUrl} alt="Cover" fill className="object-cover" priority />
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 pt-4 md:pt-6">
+        <div className="relative h-[280px] md:h-[400px] w-full bg-slate-200 shadow-xl rounded-2xl md:rounded-3xl overflow-hidden group/banner">
+          {slides.length > 0 ? (
+            <Image 
+              src={slides[currentSlide]} 
+              alt="Cover" 
+              fill 
+              className="object-cover transition-all duration-700 ease-in-out" 
+              priority 
+            />
           ) : (
             <div className="absolute inset-0 bg-gradient-to-r from-slate-800 to-slate-950"></div>
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent pointer-events-none"></div>
           
           {/* Back button */}
           <button 
@@ -238,9 +272,38 @@ export default function CommunityDetailPage() {
             <ChevronLeft className="w-5 h-5" />
           </button>
 
+          {/* Carousel Controls */}
+          {slides.length > 1 && (
+            <>
+              <button 
+                onClick={() => setCurrentSlide(prev => (prev === 0 ? slides.length - 1 : prev - 1))}
+                className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white p-2 rounded-full backdrop-blur-sm opacity-0 group-hover/banner:opacity-100 transition-opacity z-20 flex items-center justify-center w-9 h-9"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button 
+                onClick={() => setCurrentSlide(prev => (prev === slides.length - 1 ? 0 : prev + 1))}
+                className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white p-2 rounded-full backdrop-blur-sm opacity-0 group-hover/banner:opacity-100 transition-opacity z-20 flex items-center justify-center w-9 h-9"
+              >
+                {/* Reusing Lucide icons correctly to prevent dynamic text issues */}
+                <ChevronLeft className="w-4 h-4 rotate-180" />
+              </button>
+              {/* Dots indicator */}
+              <div className="absolute bottom-4 right-6 flex gap-1.5 z-20">
+                {slides.map((_, idx) => (
+                  <button 
+                    key={idx}
+                    onClick={() => setCurrentSlide(idx)}
+                    className={`w-2 h-2 rounded-full transition-all ${idx === currentSlide ? 'bg-white w-4' : 'bg-white/40'}`}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+
           {/* Only name inside banner, at bottom-left */}
           <div className="absolute bottom-4 left-6 md:bottom-6 md:left-8 z-10">
-            <h1 className="text-xl md:text-2xl font-black text-white drop-shadow-lg tracking-wide uppercase">
+            <h1 className="text-xl md:text-2xl font-black text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] tracking-wide uppercase">
               {community.name}
             </h1>
           </div>
@@ -248,7 +311,7 @@ export default function CommunityDetailPage() {
       </div>
 
       {/* Info Panel below banner */}
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 mt-6">
         <div className="bg-white border border-slate-200/80 rounded-2xl p-5 md:p-6 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 w-full md:w-auto">
             <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl border border-slate-200 overflow-hidden bg-white shadow-md relative shrink-0 p-1.5">
@@ -323,7 +386,7 @@ export default function CommunityDetailPage() {
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 mt-6">
         {/* Navigation Tabs */}
         <div className="flex overflow-x-auto gap-2 mb-6 mt-4 hide-scrollbar">
           {[
@@ -362,7 +425,7 @@ export default function CommunityDetailPage() {
         {/* Tab Content */}
         <div className="grid grid-cols-1 gap-8">
           <div>
-            {activeTab === 'about' && <AboutTab community={community} />}
+            {activeTab === 'about' && <AboutTab community={community} galleryImages={galleryImages} />}
             {activeTab === 'tournaments' && <TournamentsTab communityId={id} isOwnerOrMod={isOwnerOrMod} />}
             {activeTab === 'members' && (
               <MembersTab 
@@ -377,7 +440,7 @@ export default function CommunityDetailPage() {
               />
             )}
             {activeTab === 'gallery' && <GalleryTab communityId={id} isOwnerOrMod={isOwnerOrMod} />}
-            {activeTab === 'rankings' && <RankingsTab communityId={id} />}
+            {activeTab === 'rankings' && <RankingsTab communityId={id} categories={community?.categories || []} />}
             {activeTab === 'settings' && isOwner && <SettingsTab community={community} />}
           </div>
         </div>

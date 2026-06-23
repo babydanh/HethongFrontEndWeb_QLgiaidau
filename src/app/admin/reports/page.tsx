@@ -489,7 +489,7 @@ export default function ReportsPage() {
                   </div>
                   {selectedReport.resolutionNote && (
                     <div className="text-xs text-slate-600 italic">
-                      Ghi chú: "{selectedReport.resolutionNote}"
+                      Ghi chú: &quot;{selectedReport.resolutionNote}&quot;
                     </div>
                   )}
                 </div>

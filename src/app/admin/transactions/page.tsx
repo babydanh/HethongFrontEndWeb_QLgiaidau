@@ -3,11 +3,22 @@
 import { useEffect, useState } from 'react';
 import { paymentsApi } from '@/features/payments/api';
 import { Payment } from '@/types/payment';
-import { AlertCircle, Search, Filter, ShieldCheck, RefreshCw } from 'lucide-react';
+import { AlertCircle, Search, Filter, ShieldCheck, RefreshCw, X } from 'lucide-react';
+import { api } from '@/lib/axios';
+import toast from 'react-hot-toast';
+
+interface PaymentWithUser extends Payment {
+  user?: {
+    email?: string;
+    fullName?: string;
+  };
+  refundBankName?: string;
+  refundAccountNumber?: string;
+  refundAccountName?: string;
+}
 
 export default function AdminTransactionsList() {
-  const [transactions, setTransactions] = useState<Payment[]>([]);
-  const [filteredTransactions, setFilteredTransactions] = useState<Payment[]>([]);
+  const [transactions, setTransactions] = useState<PaymentWithUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -15,20 +26,46 @@ export default function AdminTransactionsList() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
 
+  // Refund states
+  const [selectedRefundPayment, setSelectedRefundPayment] = useState<PaymentWithUser | null>(null);
+  const [vietQrUrl, setVietQrUrl] = useState('');
+  const [submittingRefund, setSubmittingRefund] = useState(false);
+
+  const handleOpenRefundModal = (payment: PaymentWithUser) => {
+    // Generate VietQR URL: compact style, dynamically calculated
+    const bankId = encodeURIComponent(payment.refundBankName || '');
+    const accountNo = encodeURIComponent(payment.refundAccountNumber || '');
+    const accountName = encodeURIComponent(payment.refundAccountName || '');
+    const amount = parseFloat(payment.amount);
+    const addInfo = encodeURIComponent(`HOAN TIEN GD ${payment.id.slice(0, 8)}`);
+    const qrUrl = `https://img.vietqr.io/image/${bankId}-${accountNo}-compact2.png?amount=${amount}&addInfo=${addInfo}&accountName=${accountName}`;
+
+    setVietQrUrl(qrUrl);
+    setSelectedRefundPayment(payment);
+  };
+
+  const handleConfirmRefund = async () => {
+    if (!selectedRefundPayment) return;
+    try {
+      setSubmittingRefund(true);
+      await api.post(`/payments/admin/payments/${selectedRefundPayment.id}/confirm-refund`);
+      toast.success('Xác nhận hoàn tiền thành công!');
+      setSelectedRefundPayment(null);
+      fetchTransactions();
+    } catch (err) {
+      console.error(err);
+      toast.error('Lỗi khi cập nhật trạng thái hoàn tiền.');
+    } finally {
+      setSubmittingRefund(false);
+    }
+  };
+
   const fetchTransactions = () => {
     setLoading(true);
     paymentsApi.getAdminTransactions()
       .then((res) => {
-        if (res.data && Array.isArray(res.data)) {
-          setTransactions(res.data);
-          setFilteredTransactions(res.data);
-        } else if (res.data && (res.data as any).data && Array.isArray((res.data as any).data)) {
-          setTransactions((res.data as any).data);
-          setFilteredTransactions((res.data as any).data);
-        } else {
-          setTransactions([]);
-          setFilteredTransactions([]);
-        }
+        const nextTransactions = Array.isArray(res.data) ? (res.data as PaymentWithUser[]) : [];
+        setTransactions(nextTransactions);
       })
       .catch((err) => {
         console.error('Failed to fetch transactions:', err);
@@ -40,31 +77,36 @@ export default function AdminTransactionsList() {
   };
 
   useEffect(() => {
-    fetchTransactions();
+    Promise.resolve().then(() => {
+      fetchTransactions();
+    });
   }, []);
 
-  // Filter logic
-  useEffect(() => {
+  const filteredTransactions = (() => {
     let result = [...transactions];
 
-    // Search by tournament name or user email
     if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(item => 
-        (item.tournament?.name || '').toLowerCase().includes(query) ||
-        ((item as any).user?.email || '').toLowerCase().includes(query) ||
-        ((item as any).user?.fullName || '').toLowerCase().includes(query) ||
-        item.id.toLowerCase().includes(query)
-      );
+       const query = searchQuery.toLowerCase();
+       result = result.filter(item =>
+         (item.tournament?.name || '').toLowerCase().includes(query) ||
+         (item.user?.email || '').toLowerCase().includes(query) ||
+         (item.user?.fullName || '').toLowerCase().includes(query) ||
+         item.id.toLowerCase().includes(query)
+       );
     }
 
-    // Filter by status
     if (statusFilter !== 'ALL') {
-      result = result.filter(item => item.status === statusFilter);
+      if (statusFilter === 'PENDING_REFUND') {
+        result = result.filter(item => item.refundStatus === 'PENDING_REFUND');
+      } else if (statusFilter === 'REFUNDED') {
+        result = result.filter(item => item.refundStatus === 'REFUNDED');
+      } else {
+        result = result.filter(item => item.status === statusFilter && item.refundStatus !== 'PENDING_REFUND' && item.refundStatus !== 'REFUNDED');
+      }
     }
 
-    setFilteredTransactions(result);
-  }, [searchQuery, statusFilter, transactions]);
+    return result;
+  })();
 
   const formatCurrency = (val: string | number) => {
     const num = typeof val === 'string' ? parseFloat(val) : val;
@@ -121,6 +163,7 @@ export default function AdminTransactionsList() {
             <option value="PENDING">Chờ thanh toán (PENDING)</option>
             <option value="COMPLETED">Thành công (COMPLETED)</option>
             <option value="FAILED">Thất bại (FAILED)</option>
+            <option value="PENDING_REFUND">Chờ hoàn tiền (PENDING_REFUND)</option>
             <option value="REFUNDED">Đã hoàn tiền (REFUNDED)</option>
           </select>
         </div>
@@ -153,6 +196,7 @@ export default function AdminTransactionsList() {
                   <th className="px-6 py-4">Phí sàn (5%)</th>
                   <th className="px-6 py-4">Cổng GD</th>
                   <th className="px-6 py-4">Trạng thái</th>
+                  <th className="px-6 py-4 text-right">Thao tác</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800 text-xs">
@@ -166,8 +210,8 @@ export default function AdminTransactionsList() {
 
                     {/* Paid by */}
                     <td className="px-6 py-4">
-                      <p className="font-bold text-slate-200">{(item as any).user?.fullName || 'N/A'}</p>
-                      <p className="text-[10px] text-slate-500">{(item as any).user?.email || 'N/A'}</p>
+                      <p className="font-bold text-slate-200">{item.user?.fullName || 'N/A'}</p>
+                      <p className="text-[10px] text-slate-500">{item.user?.email || 'N/A'}</p>
                     </td>
 
                     {/* Tournament */}
@@ -192,17 +236,43 @@ export default function AdminTransactionsList() {
 
                     {/* Status Badge */}
                     <td className="px-6 py-4">
-                      <span className={`inline-block text-[9px] font-bold px-2 py-0.5 rounded-full uppercase border ${
-                        item.status === 'COMPLETED' 
-                          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
-                          : item.status === 'PENDING'
-                          ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                          : item.status === 'FAILED'
-                          ? 'bg-rose-500/10 text-rose-400 border-rose-500/20'
-                          : 'bg-slate-500/15 text-slate-400 border-slate-500/20'
-                      }`}>
-                        {item.status === 'COMPLETED' ? 'Thành công' : item.status === 'PENDING' ? 'Chờ nộp' : item.status === 'FAILED' ? 'Thất bại' : 'Đã hoàn'}
-                      </span>
+                      {item.refundStatus === 'PENDING_REFUND' ? (
+                        <span className="inline-block text-[9px] font-bold px-2 py-0.5 rounded-full uppercase border bg-amber-500/10 text-amber-400 border-amber-500/20">
+                          Chờ hoàn tiền
+                        </span>
+                      ) : item.refundStatus === 'REFUNDED' ? (
+                        <span className="inline-block text-[9px] font-bold px-2 py-0.5 rounded-full uppercase border bg-slate-500/15 text-slate-400 border-slate-500/20">
+                          Đã hoàn tiền
+                        </span>
+                      ) : (
+                        <span className={`inline-block text-[9px] font-bold px-2 py-0.5 rounded-full uppercase border ${
+                          item.status === 'COMPLETED' 
+                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
+                            : item.status === 'PENDING'
+                            ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                            : item.status === 'FAILED'
+                            ? 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                            : 'bg-slate-500/15 text-slate-400 border-slate-500/20'
+                        }`}>
+                          {item.status === 'COMPLETED' ? 'Thành công' : item.status === 'PENDING' ? 'Chờ nộp' : item.status === 'FAILED' ? 'Thất bại' : 'Đã hoàn'}
+                        </span>
+                      )}
+                    </td>
+
+                    {/* Actions */}
+                    <td className="px-6 py-4 text-right">
+                      {item.refundStatus === 'PENDING_REFUND' ? (
+                        <button
+                          onClick={() => handleOpenRefundModal(item)}
+                          className="px-2.5 py-1 bg-amber-600 hover:bg-amber-500 text-white font-bold text-[10px] rounded-lg transition-all active:scale-95 cursor-pointer"
+                        >
+                          Xử lý hoàn
+                        </button>
+                      ) : item.refundStatus === 'REFUNDED' ? (
+                        <span className="text-[10px] text-slate-500 font-bold">Hoàn tất</span>
+                      ) : (
+                        <span className="text-slate-600">—</span>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -223,6 +293,78 @@ export default function AdminTransactionsList() {
                 )}
               </span>
             </span>
+          </div>
+        </div>
+      )}
+
+      {/* Admin Refund processing Modal */}
+      {selectedRefundPayment && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl animate-in scale-in duration-200">
+            <div className="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-950/50">
+              <h3 className="text-sm font-black text-white uppercase tracking-wider">Xử lý hoàn tiền thủ công</h3>
+              <button 
+                onClick={() => setSelectedRefundPayment(null)}
+                className="text-slate-500 hover:text-slate-300 p-1 hover:bg-slate-850 rounded-lg transition-all"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-5">
+              <div className="bg-amber-950/20 border border-amber-900/40 text-amber-300 p-4 rounded-xl text-xs leading-relaxed font-semibold">
+                Quét mã VietQR bằng ứng dụng Ngân hàng để chuyển khoản hoàn trả lệ phí cho VĐV. Sau khi chuyển khoản thành công, hãy bấm xác nhận để cập nhật hệ thống.
+              </div>
+
+              {/* VietQR display */}
+              <div className="flex flex-col items-center justify-center bg-white p-4 rounded-xl w-48 h-48 mx-auto border border-slate-800 shadow-lg">
+                <img
+                  src={vietQrUrl}
+                  alt="VietQR hoàn tiền"
+                  className="w-full h-full object-contain"
+                />
+              </div>
+
+              {/* Refund Info */}
+              <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-2 text-xs">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Người nhận:</span>
+                  <span className="font-bold text-white uppercase">{selectedRefundPayment.refundAccountName}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Số tài khoản:</span>
+                  <span className="font-mono font-bold text-white tracking-wider bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
+                    {selectedRefundPayment.refundAccountNumber}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Ngân hàng:</span>
+                  <span className="font-bold text-white">{selectedRefundPayment.refundBankName}</span>
+                </div>
+                <div className="flex justify-between border-t border-slate-800 pt-2 mt-2">
+                  <span className="text-slate-400 font-bold">Số tiền hoàn:</span>
+                  <span className="font-extrabold text-rose-400 text-sm">{formatCurrency(selectedRefundPayment.amount)}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-5 border-t border-slate-800 bg-slate-950/50 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setSelectedRefundPayment(null)}
+                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-350 text-xs font-bold rounded-xl transition-all"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                type="button"
+                disabled={submittingRefund}
+                onClick={handleConfirmRefund}
+                className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-bold rounded-xl transition-all shadow-lg active:scale-95"
+              >
+                {submittingRefund ? 'Đang cập nhật...' : 'Đã chuyển khoản thành công'}
+              </button>
+            </div>
           </div>
         </div>
       )}

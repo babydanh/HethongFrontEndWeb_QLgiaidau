@@ -189,7 +189,7 @@ export function PermissionsTab({
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
-            Khách Xem (Spectators)
+            Khách xem
           </button>
         </div>
       </div>
@@ -242,7 +242,7 @@ export function PermissionsTab({
               <div className="flex items-center gap-3 bg-white p-4 rounded-2xl border-2 border-indigo-100 shadow-sm relative group overflow-hidden">
                 <div className="w-10 h-10 rounded-full bg-indigo-50 border border-indigo-200 flex items-center justify-center font-bold text-xs text-indigo-650 shrink-0 uppercase overflow-hidden">
                   {tournament?.organizer?.avatarUrl ? (
-                    <img src={tournament.organizer.avatarUrl} alt="Owner Avatar" className="w-full h-full object-cover" />
+                      <img src={tournament.organizer.avatarUrl} alt="Ảnh đại diện trưởng ban tổ chức" className="w-full h-full object-cover" />
                   ) : (
                     tournament?.organizer?.fullName?.charAt(0) || 'O'
                   )}
@@ -328,7 +328,7 @@ export function PermissionsTab({
                 <div key={ref.id} className="flex items-center gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm relative group overflow-hidden">
                   <div className="w-10 h-10 rounded-full bg-indigo-50 border border-slate-200 flex items-center justify-center font-bold text-xs text-indigo-650 shrink-0 uppercase overflow-hidden">
                     {ref.avatarUrl ? (
-                      <img src={ref.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                      <img src={ref.avatarUrl} alt="Ảnh đại diện trọng tài" className="w-full h-full object-cover" />
                     ) : (
                       ref.fullName.charAt(0)
                     )}
@@ -351,7 +351,7 @@ export function PermissionsTab({
         </div>
       )}
 
-      {/* Subtab 3: Viewers (Spectators) */}
+      {/* Subtab 3: Viewers */}
       {subTab === 'viewers' && (
         <div className="space-y-6">
           <form

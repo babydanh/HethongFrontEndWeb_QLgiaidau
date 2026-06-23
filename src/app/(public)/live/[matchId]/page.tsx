@@ -12,6 +12,21 @@ interface Props {
   params: Promise<{ matchId: string }>;
 }
 
+const INITIAL_COMMENTS = [
+  {
+    id: 'seed-comment-1',
+    user: { fullName: 'Nguyễn Văn Hùng', avatarUrl: null },
+    commentText: 'Trận đấu hấp dẫn quá! Cố lên cả hai bên!',
+    createdAt: '2026-06-22T10:00:00.000Z',
+  },
+  {
+    id: 'seed-comment-2',
+    user: { fullName: 'Trần Thị Mai', avatarUrl: null },
+    commentText: 'Set này căng thẳng thật sự, điểm số bám đuổi từng nút.',
+    createdAt: '2026-06-22T10:03:00.000Z',
+  },
+] satisfies { id: string; user: { fullName: string; avatarUrl?: string | null }; commentText: string; createdAt: string }[];
+
 export default function LiveMatchPage({ params }: Props) {
   const resolvedParams = use(params);
   const matchId = resolvedParams.matchId;
@@ -20,20 +35,7 @@ export default function LiveMatchPage({ params }: Props) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Comments state
-  const [comments, setComments] = useState<{ id: string; user: { fullName: string; avatarUrl?: string | null }; commentText: string; createdAt: string }[]>([
-    {
-      id: '1',
-      user: { fullName: 'Nguyễn Văn Hùng', avatarUrl: null },
-      commentText: 'Trận đấu hấp dẫn quá! Cố lên cả hai bên!',
-      createdAt: new Date(Date.now() - 5 * 60000).toISOString()
-    },
-    {
-      id: '2',
-      user: { fullName: 'Trần Thị Mai', avatarUrl: null },
-      commentText: 'Set này căng thẳng thật sự, điểm số bám đuổi từng nút.',
-      createdAt: new Date(Date.now() - 2 * 60000).toISOString()
-    }
-  ]);
+  const [comments, setComments] = useState<{ id: string; user: { fullName: string; avatarUrl?: string | null }; commentText: string; createdAt: string }[]>(INITIAL_COMMENTS);
   const [commentText, setCommentText] = useState('');
 
   const handlePostComment = (e: React.FormEvent) => {

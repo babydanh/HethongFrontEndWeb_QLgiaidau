@@ -72,7 +72,7 @@ export function RefereesTab({
             <div key={ref.id} className="flex items-center gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm relative group overflow-hidden">
               <div className="w-10 h-10 rounded-full bg-indigo-50 border border-slate-200 flex items-center justify-center font-bold text-xs text-indigo-650 shrink-0 uppercase overflow-hidden">
                 {ref.avatarUrl ? (
-                  <img src={ref.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                  <img src={ref.avatarUrl} alt="Ảnh đại diện trọng tài" className="w-full h-full object-cover" />
                 ) : (
                   ref.fullName.charAt(0)
                 )}

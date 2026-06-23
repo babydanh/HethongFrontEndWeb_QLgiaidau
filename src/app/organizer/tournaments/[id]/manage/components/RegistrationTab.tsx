@@ -31,6 +31,7 @@ interface RegistrationTabProps {
   wildcardTeamName: string;
   setWildcardTeamName: (val: string) => void;
   isAssigningWildcard: boolean;
+  publishFeeAmount: number;
   handlePublish: () => void;
   handleOpenLockModal: () => void;
   handleUpdateStatus: (id: string, status: 'COMPLETE' | 'PENDING' | 'WITHDRAWN') => void;
@@ -53,6 +54,7 @@ export function RegistrationTab({
   wildcardTeamName,
   setWildcardTeamName,
   isAssigningWildcard,
+  publishFeeAmount,
   handlePublish,
   handleOpenLockModal,
   handleUpdateStatus,
@@ -76,14 +78,19 @@ export function RegistrationTab({
               <div className="flex items-start gap-3 text-slate-700 bg-slate-50 p-4 rounded-xl border border-slate-200">
                 <span className="w-5 h-5 flex-shrink-0 mt-0.5 text-slate-400">ℹ</span>
                 <p className="text-xs leading-relaxed font-medium">
-                  Giải đấu đang ở trạng thái <strong>Bản nháp (DRAFT)</strong>. Giải đấu chỉ hiển thị đối với bạn. Hãy kiểm tra kỹ thông tin cấu hình, thời gian và địa điểm thi đấu trước khi công bố.
+                  Giải đấu đang ở trạng thái <strong>Bản nháp</strong>. Giải đấu chỉ hiển thị đối với bạn. Hãy kiểm tra kỹ thông tin cấu hình, thời gian và địa điểm thi đấu trước khi công bố.
                 </p>
               </div>
+              {publishFeeAmount > 0 && (
+                <div className="text-xs font-semibold text-blue-700 bg-blue-50 p-3 rounded-xl border border-blue-200">
+                  Khi bấm nút bên dưới, hệ thống sẽ chuyển sang bước thanh toán phí công bố giải đấu: {publishFeeAmount.toLocaleString('vi-VN')}đ.
+                </div>
+              )}
               <Button
                 onClick={handlePublish}
                 className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold w-full md:w-auto flex items-center justify-center gap-1.5"
               >
-                <CheckCircle className="w-4 h-4" /> Công bố giải đấu (Publish)
+                <CheckCircle className="w-4 h-4" /> {publishFeeAmount > 0 ? 'Thanh toán phí & công bố' : 'Công bố giải đấu'}
               </Button>
             </div>
           ) : (
@@ -103,7 +110,7 @@ export function RegistrationTab({
                     onClick={handleOpenLockModal}
                     className="bg-rose-600 hover:bg-rose-700 text-white font-bold flex items-center justify-center gap-1.5 shrink-0 shadow-sm"
                   >
-                    <Lock className="w-4 h-4" /> Chốt danh sách & Sinh Bracket
+                    <Lock className="w-4 h-4" /> Chốt danh sách & Tạo sơ đồ
                   </Button>
                 )}
               </div>
@@ -121,7 +128,7 @@ export function RegistrationTab({
                   onClick={onCopyInviteLink}
                   className="border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-bold"
                 >
-                  Copy
+                  Sao chép
                 </Button>
               </div>
             </div>
@@ -160,7 +167,7 @@ export function RegistrationTab({
                         <h4 className="font-extrabold text-slate-900 text-base">{p.teamName}</h4>
                         {hasMockMembers && (
                           <span className="bg-amber-100 text-amber-700 text-[9px] font-black px-1.5 py-0.5 rounded border border-amber-200 uppercase tracking-wider">
-                            Mock
+                            Dữ liệu ảo
                           </span>
                         )}
                         {p.teamStatus === 'COMPLETE' && (
@@ -251,9 +258,9 @@ export function RegistrationTab({
         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
           <div>
             <h3 className="font-extrabold text-slate-900 text-base flex items-center gap-2">
-              <RefreshCw className="w-4 h-4 text-blue-600 animate-none" /> Bảng thử nghiệm (Mock Data)
+              <RefreshCw className="w-4 h-4 text-blue-600 animate-none" /> Bảng thử nghiệm dữ liệu ảo
             </h3>
-            <p className="text-xs text-slate-455 mt-1 font-semibold">Tạo danh sách vận động viên ảo để kiểm thử sơ đồ thi đấu (Bracket) trước khi mở đăng ký thật.</p>
+            <p className="text-xs text-slate-455 mt-1 font-semibold">Tạo danh sách vận động viên ảo để kiểm thử sơ đồ thi đấu trước khi mở đăng ký thật.</p>
           </div>
 
           <div className="flex flex-col gap-1.5">
@@ -292,9 +299,9 @@ export function RegistrationTab({
         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
           <div>
             <h3 className="font-extrabold text-slate-900 text-base flex items-center gap-2">
-              <UserPlus className="w-4 h-4 text-emerald-600" /> Wildcard / Suất đặc cách
+              <UserPlus className="w-4 h-4 text-emerald-600" /> Suất đặc cách
             </h3>
-            <p className="text-xs text-slate-455 mt-1 font-semibold">Gán trực tiếp khách mời, nhà tài trợ vào danh sách thi đấu. Suất này bỏ qua mọi quy tắc giới hạn trình độ ELO.</p>
+            <p className="text-xs text-slate-455 mt-1 font-semibold">Gán trực tiếp khách mời, nhà tài trợ vào danh sách thi đấu của hình thức đang chọn. Suất này bỏ qua mọi quy tắc giới hạn trình độ ELO.</p>
           </div>
 
           <Input
@@ -326,7 +333,7 @@ export function RegistrationTab({
               </>
             ) : (
               <>
-                <CheckCircle className="w-3.5 h-3.5" /> Gán suất Wildcard
+                <CheckCircle className="w-3.5 h-3.5" /> Gán suất đặc cách
               </>
             )}
           </Button>

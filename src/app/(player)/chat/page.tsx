@@ -5,7 +5,6 @@ import { chatApi, ChatConversation, ChatMessage } from '@/features/chat/api';
 import { socketClient } from '@/lib/socket';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { Search, Send, Paperclip, MoreVertical, MessageSquare } from 'lucide-react';
-import { Input } from '@/components/ui/Input';
 
 export default function ChatPage() {
   const { user } = useAuthStore();
@@ -16,6 +15,12 @@ export default function ChatPage() {
   const [isLoadingConversations, setIsLoadingConversations] = useState(true);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+  };
 
   // Fetch conversations initially
   useEffect(() => {
@@ -90,11 +95,7 @@ export default function ChatPage() {
     };
   }, [activeConvId, conversations]);
 
-  function scrollToBottom() {
-    setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
-  }
+
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();

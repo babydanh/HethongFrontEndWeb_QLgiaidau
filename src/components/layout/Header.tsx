@@ -1,77 +1,190 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
-import { useAuthStore } from '@/lib/zustand/authStore';
-import { api } from '@/lib/axios';
-import { getButtonClasses } from '@/components/ui/Button';
-import { Bell, Mail, LogOut, LayoutDashboard, User, Trophy, Menu, X } from 'lucide-react';
-import { usePathname } from 'next/navigation';
-import { cn } from '@/utils/cn';
-import { useState, useEffect } from 'react';
-import { usersApi } from '@/features/users/api';
-import { notificationsApi, Notification } from '@/features/notifications/api';
-import { useSocket } from '@/hooks/useSocket';
+import { usePathname, useRouter } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
-import { isHttpStatusError } from '@/utils/error';
+import { Bell, LayoutDashboard, LogOut, Menu, Trophy, User, X } from 'lucide-react';
+import { getButtonClasses } from '@/components/ui/Button';
+import {
+  formatNotificationTimestamp,
+  getNotificationTypeMeta,
+  resolveNotificationTarget,
+} from '@/features/notifications/utils';
+import { useSocket } from '@/hooks/useSocket';
+import { api } from '@/lib/axios';
+import { useAuthStore } from '@/lib/zustand/authStore';
+import { usersApi } from '@/features/users/api';
+import { cn } from '@/utils/cn';
+import { getErrorMessage, isHttpStatusError } from '@/utils/error';
+import { motion, AnimatePresence } from 'framer-motion';
+
+const GUEST_ROUTES = ['/login', '/register'];
 
 export function Header() {
   const { isAuthenticated, user, logout, setUser } = useAuthStore();
   const pathname = usePathname();
+  const router = useRouter();
+
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isClient, setIsClient] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  
-  const { notifications, setNotifications } = useSocket();
-  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+
+  const {
+    notifications,
+    unreadCount,
+    isLoading: isNotificationsLoading,
+    isInitialized: isNotificationsInitialized,
+    markAllNotificationsAsRead,
+    markNotificationAsRead,
+  } = useSocket();
+
+  const profileMenuRef = useRef<HTMLDivElement | null>(null);
+  const notificationMenuRef = useRef<HTMLDivElement | null>(null);
+
+  const notificationPreviewItems = notifications.slice(0, 5);
+
+  const isActive = (path: string) => {
+    if (path === '/') {
+      return pathname === '/';
+    }
+
+    return pathname.startsWith(path);
+  };
+
+  const closeOverlays = () => {
+    setIsDropdownOpen(false);
+    setIsNotificationOpen(false);
+    setIsMobileMenuOpen(false);
+  };
+
+  const handleNotificationNavigation = async (
+    notificationId: string,
+    redirectUrl?: string | null,
+    isRead?: boolean,
+  ) => {
+    try {
+      if (!isRead) {
+        await markNotificationAsRead(notificationId);
+      }
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Không thể cập nhật trạng thái thông báo.'));
+    }
+
+    setIsNotificationOpen(false);
+
+    const target = resolveNotificationTarget(redirectUrl);
+
+    if (!target.href) {
+      return;
+    }
+
+    if (target.isExternal) {
+      window.location.assign(target.href);
+      return;
+    }
+
+    router.push(target.href);
+  };
+
+  const handleMarkAllNotificationsAsRead = async () => {
+    try {
+      await markAllNotificationsAsRead();
+      toast.success('Đã đánh dấu tất cả là đã đọc.');
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Không thể cập nhật thông báo.'));
+    }
+  };
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsClient(true), 0);
+    const timer = window.setTimeout(() => {
+      setIsClient(true);
+    }, 0);
+
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
     };
+
     window.addEventListener('scroll', handleScroll);
+
     return () => {
-      clearTimeout(timer);
+      window.clearTimeout(timer);
       window.removeEventListener('scroll', handleScroll);
     };
   }, []);
 
   useEffect(() => {
-    const isGuestRoute = ['/login', '/register'].some(route => pathname.startsWith(route));
-    if (isClient && !isGuestRoute) {
-      // Fetch profile if authenticated (to sync state) OR if not authenticated but browser has active session cookies
-      if (!isAuthenticated || !user) {
-        usersApi.getProfile()
-          .then(profile => {
-            if (profile) {
-              setUser({
-                id: profile.id,
-                email: profile.email,
-                fullName: profile.fullName,
-                avatarUrl: profile.avatarUrl || undefined,
-                roles: profile.roles || (profile.role ? [profile.role] : []),
-                phoneNumber: profile.phoneNumber || undefined,
-                dateOfBirth: profile.dateOfBirth || undefined,
-                gender: profile.gender || undefined,
-                address: profile.address || undefined,
-                bio: profile.bio || undefined
-              });
-            }
-          })
-          .catch((error: unknown) => {
-            if (isAuthenticated && (isHttpStatusError(error, 401) || isHttpStatusError(error, 403))) {
-              logout();
-            }
-          });
-      }
-    }
-  }, [isClient, setUser, logout, pathname, isAuthenticated, user]);
+    const handlePointerDown = (event: MouseEvent) => {
+      const target = event.target as Node;
 
-  const isActive = (path: string) => {
-    if (path === '/') return pathname === '/';
-    return pathname.startsWith(path);
-  };
+      if (
+        profileMenuRef.current &&
+        !profileMenuRef.current.contains(target)
+      ) {
+        setIsDropdownOpen(false);
+      }
+
+      if (
+        notificationMenuRef.current &&
+        !notificationMenuRef.current.contains(target)
+      ) {
+        setIsNotificationOpen(false);
+      }
+    };
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        closeOverlays();
+      }
+    };
+
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('keydown', handleEscape);
+
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, []);
+
+  useEffect(() => {
+    Promise.resolve().then(() => {
+      closeOverlays();
+    });
+  }, [pathname]);
+
+  useEffect(() => {
+    const isGuestRoute = GUEST_ROUTES.some((route) => pathname.startsWith(route));
+
+    if (!isClient || isGuestRoute || (isAuthenticated && user)) {
+      return;
+    }
+
+    void usersApi
+      .getProfile()
+      .then((profile) => {
+        setUser({
+          id: profile.id,
+          email: profile.email,
+          fullName: profile.fullName,
+          avatarUrl: profile.avatarUrl || undefined,
+          roles: profile.roles || (profile.role ? [profile.role] : []),
+          phoneNumber: profile.phoneNumber || undefined,
+          dateOfBirth: profile.dateOfBirth || undefined,
+          gender: profile.gender || undefined,
+          address: profile.address || undefined,
+          bio: profile.bio || undefined,
+        });
+      })
+      .catch((error: unknown) => {
+        if (isAuthenticated && (isHttpStatusError(error, 401) || isHttpStatusError(error, 403))) {
+          logout();
+        }
+      });
+  }, [isAuthenticated, isClient, logout, pathname, setUser, user]);
 
   const navLinks = [
     { name: 'Trang chủ', path: '/' },
@@ -82,33 +195,36 @@ export function Header() {
   ];
 
   return (
-    <header className={cn(
-      "w-full top-0 sticky z-50 transition-all duration-300",
-      isScrolled 
-        ? "bg-white/80 backdrop-blur-md border-b border-slate-200 shadow-sm" 
-        : "bg-white border-b border-transparent"
-    )}>
-      <div className="flex justify-between items-center w-full px-6 md:px-16 lg:px-24 xl:px-32 h-16">
-        
-        {/* Left: Logo & Nav */}
-        <div className="flex items-center gap-8 h-full">
-          <Link href="/" className="flex items-center h-full py-0 relative">
-            <img 
-              src="/images/vndc_sport.png" 
-              alt="VNDC Sport Logo" 
+    <header
+      className={cn(
+        'sticky top-0 z-50 w-full transition-all duration-300',
+        isScrolled
+          ? 'border-b border-slate-200 bg-white/85 shadow-sm backdrop-blur-md'
+          : 'border-b border-transparent bg-white',
+      )}
+    >
+      <div className="flex h-16 w-full items-center justify-between px-6 md:px-16 lg:px-24 xl:px-32">
+        <div className="flex h-full items-center gap-8">
+          <Link href="/" className="relative flex h-full items-center py-0">
+            <Image
+              src="/images/vndc_sport.png"
+              alt="VNDC Sport Logo"
+              width={140}
+              height={140}
               className="h-[140px] w-auto object-contain transition-transform duration-200 hover:scale-105"
             />
           </Link>
-          <nav className="hidden md:flex gap-6 h-full items-center">
+
+          <nav className="hidden h-full items-center gap-6 md:flex">
             {navLinks.map((link) => (
-              <Link 
+              <Link
                 key={link.path}
-                href={link.path} 
+                href={link.path}
                 className={cn(
-                  "text-sm transition-colors flex items-center h-full border-b-2",
-                  isActive(link.path) 
-                    ? "text-blue-600 font-bold border-blue-600" 
-                    : "text-slate-500 hover:text-blue-600 border-transparent font-medium"
+                  'flex h-full items-center border-b-2 text-sm transition-colors',
+                  isActive(link.path)
+                    ? 'border-blue-600 font-bold text-blue-600'
+                    : 'border-transparent font-medium text-slate-500 hover:text-blue-600',
                 )}
               >
                 {link.name}
@@ -117,232 +233,300 @@ export function Header() {
           </nav>
         </div>
 
-        {/* Right: Actions & Auth */}
-        <div className="flex items-center gap-4">
-
-
-          <div className="relative">
-            <button 
-              onClick={() => setIsNotificationOpen(!isNotificationOpen)}
-              className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-all active:scale-95 relative"
-            >
-              <Bell className="w-6 h-6" />
-              {notifications.filter(n => !n.isRead).length > 0 && (
-                <span className="absolute top-1 right-1 w-4 h-4 bg-rose-500 text-[9px] font-bold text-white rounded-full flex items-center justify-center animate-pulse">
-                  {notifications.filter(n => !n.isRead).length}
-                </span>
-              )}
-            </button>
-
-            {isNotificationOpen && (
-              <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 z-50">
-                <div className="px-4 py-2 border-b border-slate-100 flex justify-between items-center mb-1">
-                  <span className="text-sm font-bold text-slate-900">Thông báo</span>
-                  <div className="flex items-center gap-2">
-                    {notifications.filter(n => !n.isRead).length > 0 && (
-                      <button 
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          try {
-                            await notificationsApi.markAllAsRead();
-                            setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
-                            toast.success('Đã đọc tất cả thông báo');
-                          } catch (err) {
-                            console.error(err);
-                          }
-                        }}
-                        className="text-[10px] text-blue-600 hover:text-blue-800 font-bold hover:underline"
-                      >
-                        Đọc tất cả
-                      </button>
-                    )}
-                    {notifications.filter(n => !n.isRead).length > 0 && (
-                      <span className="text-[10px] bg-rose-50 text-rose-600 px-2 py-0.5 rounded-full font-bold">
-                        {notifications.filter(n => !n.isRead).length} mới
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <div className="max-h-64 overflow-y-auto no-scrollbar">
-                  {notifications.length > 0 ? (
-                    notifications.map(n => (
-                      <div 
-                        key={n.id}
-                        onClick={async () => {
-                          if (!n.isRead) {
-                            try {
-                              await notificationsApi.markAsRead(n.id);
-                              setNotifications(prev => prev.map(item => item.id === n.id ? { ...item, isRead: true } : item));
-                            } catch (e) {
-                              console.error(e);
-                            }
-                          }
-                          setIsNotificationOpen(false);
-                          if (n.redirectUrl) {
-                            window.location.href = n.redirectUrl;
-                          }
-                        }}
-                        className={cn(
-                          "px-4 py-3 hover:bg-slate-50 transition-colors cursor-pointer border-b border-slate-100 flex flex-col gap-0.5 text-left",
-                          !n.isRead ? "bg-blue-50/45" : ""
-                        )}
-                      >
-                        <span className={cn("text-xs font-bold", !n.isRead ? "text-slate-900" : "text-slate-700")}>{n.title}</span>
-                        <span className="text-xs text-slate-500">{n.content}</span>
-                        <span className="text-[9px] text-slate-400 font-medium mt-1">
-                          {new Date(n.createdAt).toLocaleDateString('vi-VN')} {new Date(n.createdAt).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})}
-                        </span>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="p-8 text-center text-xs text-slate-400 font-semibold">
-                      Chưa có thông báo nào
-                    </div>
-                  )}
-                </div>
-                <div className="px-4 pt-2 pb-1 border-t border-slate-100 text-center">
-                  <Link 
-                    href="/notifications" 
-                    onClick={() => setIsNotificationOpen(false)}
-                    className="text-xs text-blue-600 hover:text-blue-800 font-bold hover:underline block w-full py-1"
-                  >
-                    Xem tất cả
-                  </Link>
-                </div>
-              </div>
-            )}
-          </div>
-          
-          <button className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-all active:scale-95">
-            <Mail className="w-6 h-6" />
-          </button>
-          
-          {!isClient ? (
-            <div className="flex items-center gap-2 ml-2 w-32 h-9 animate-pulse bg-slate-100 rounded-md"></div>
-          ) : isAuthenticated ? (
-            <div className="relative ml-2">
-              <button 
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="flex items-center focus:outline-none"
+        <div className="flex items-center gap-3">
+          {isAuthenticated ? (
+            <div className="relative" ref={notificationMenuRef}>
+              <button
+                type="button"
+                onClick={() => setIsNotificationOpen((current) => !current)}
+                className="relative rounded-xl p-2 text-slate-500 transition-all hover:bg-slate-100 hover:text-slate-700 active:scale-95"
+                aria-label="Mở thông báo"
+                aria-expanded={isNotificationOpen}
               >
-                <div className="w-8 h-8 rounded-full border border-slate-200 bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm uppercase cursor-pointer hover:ring-2 hover:ring-blue-600 hover:ring-offset-2 transition-all overflow-hidden">
+                <Bell className="h-6 w-6" />
+                {unreadCount > 0 ? (
+                  <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[9px] font-bold text-white">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                ) : null}
+              </button>
+
+              <AnimatePresence>
+                {isNotificationOpen && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
+                    className="absolute right-0 mt-2 w-[22rem] overflow-hidden rounded-2xl border border-slate-200/60 bg-white/95 backdrop-blur-md shadow-xl z-50"
+                  >
+                    <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+                      <div>
+                        <p className="text-sm font-bold text-slate-900">Thông báo</p>
+                        <p className="text-xs text-slate-500">
+                          {unreadCount > 0 ? `${unreadCount} chưa đọc` : 'Đã cập nhật'}
+                        </p>
+                      </div>
+
+                      {unreadCount > 0 ? (
+                        <button
+                          type="button"
+                          onClick={handleMarkAllNotificationsAsRead}
+                          className="text-xs font-semibold text-blue-600 transition-colors hover:text-blue-800"
+                        >
+                          Đánh dấu tất cả
+                        </button>
+                      ) : null}
+                    </div>
+
+                    <div className="max-h-80 overflow-y-auto">
+                      {isNotificationsLoading && !isNotificationsInitialized ? (
+                        <div className="space-y-3 p-4">
+                          {Array.from({ length: 3 }).map((_, index) => (
+                            <div
+                              key={`notification-skeleton-${index}`}
+                              className="rounded-2xl border border-slate-100 p-3"
+                            >
+                              <div className="mb-2 h-3 w-2/3 animate-pulse rounded bg-slate-100" />
+                              <div className="mb-2 h-3 w-full animate-pulse rounded bg-slate-100" />
+                              <div className="h-3 w-1/3 animate-pulse rounded bg-slate-100" />
+                            </div>
+                          ))}
+                        </div>
+                      ) : notificationPreviewItems.length > 0 ? (
+                        <div className="p-2">
+                          {notificationPreviewItems.map((notification) => (
+                            <button
+                              key={notification.id}
+                              type="button"
+                              onClick={() =>
+                                void handleNotificationNavigation(
+                                  notification.id,
+                                  notification.redirectUrl,
+                                  notification.isRead,
+                                  )
+                              }
+                              className={cn(
+                                'flex w-full flex-col gap-1 rounded-2xl px-3 py-3 text-left transition-colors',
+                                notification.isRead
+                                  ? getNotificationTypeMeta(notification.type).cardClassName
+                                  : getNotificationTypeMeta(notification.type).unreadCardClassName,
+                              )}
+                            >
+                              <div className="flex items-start justify-between gap-3">
+                                <span
+                                  className={cn(
+                                    'text-sm font-semibold',
+                                    notification.isRead ? 'text-slate-800' : 'text-slate-950',
+                                  )}
+                                >
+                                  {notification.title}
+                                </span>
+                                {!notification.isRead ? (
+                                  <span
+                                    className={cn(
+                                      'mt-1 h-2.5 w-2.5 rounded-full',
+                                      getNotificationTypeMeta(notification.type).dotClassName,
+                                    )}
+                                  />
+                                ) : null}
+                              </div>
+                              <p className="line-clamp-2 text-xs text-slate-500">
+                                {notification.content}
+                              </p>
+                              <p className="text-[11px] font-medium text-slate-400">
+                                {formatNotificationTimestamp(notification.createdAt)}
+                              </p>
+                            </button>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="px-6 py-10 text-center">
+                          <p className="text-sm font-semibold text-slate-700">
+                            Chưa có thông báo nào
+                          </p>
+                          <p className="mt-1 text-xs text-slate-500">
+                            Thông tin mới sẽ xuất hiện ở đây khi hệ thống gửi đến bạn.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="border-t border-slate-100 p-2 bg-slate-50/50">
+                      <Link
+                        href="/notifications"
+                        className="block rounded-xl px-3 py-2 text-center text-sm font-semibold text-blue-600 transition-colors hover:bg-blue-100/50 hover:text-blue-750"
+                      >
+                        Xem tất cả thông báo
+                      </Link>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          ) : null}
+
+          {!isClient ? (
+            <div className="ml-2 h-9 w-32 animate-pulse rounded-md bg-slate-100" />
+          ) : isAuthenticated ? (
+            <div className="relative ml-2" ref={profileMenuRef}>
+              <button
+                type="button"
+                onClick={() => setIsDropdownOpen((current) => !current)}
+                className="flex items-center focus:outline-none"
+                aria-label="Mở menu tài khoản"
+                aria-expanded={isDropdownOpen}
+              >
+                <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-blue-100 text-sm font-bold uppercase text-blue-600 transition-all hover:ring-2 hover:ring-blue-600 hover:ring-offset-2">
                   {user?.avatarUrl ? (
-                    <img src={user.avatarUrl} alt="Avatar" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
+                    <span
+                      role="img"
+                      aria-label="Avatar"
+                      className="h-full w-full bg-cover bg-center"
+                      style={{ backgroundImage: `url("${user.avatarUrl}")` }}
+                    />
                   ) : (
                     user?.fullName?.charAt(0) || 'U'
                   )}
                 </div>
               </button>
 
-              {isDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-slate-100 py-2 z-50">
-                  <div className="px-4 py-2 border-b border-slate-100 mb-1">
-                    <p className="text-sm font-bold text-slate-900 truncate">{user?.fullName}</p>
-                    <p className="text-xs text-slate-500 truncate">{user?.email}</p>
-                  </div>
-                  {user?.roles?.includes('ADMIN') && (
-                    <Link href="/admin" onClick={() => setIsDropdownOpen(false)}>
-                      <div className="flex items-center gap-2 px-4 py-2 text-sm text-blue-600 hover:bg-blue-50/50 font-bold transition-colors cursor-pointer">
-                        <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                        </svg>
-                        Quản trị hệ thống
-                      </div>
-                    </Link>
-                  )}
-                  {(user?.roles?.includes('ORGANIZER') || user?.roles?.includes('ADMIN')) ? (
-                    <>
-                      <Link href="/organizer/tournaments" onClick={() => setIsDropdownOpen(false)}>
-                        <div className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
-                          <LayoutDashboard className="w-4 h-4 text-slate-400" />
-                          Quản lý giải đấu
-                        </div>
-                      </Link>
-                      <Link href="/organizer/series" onClick={() => setIsDropdownOpen(false)}>
-                        <div className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
-                          <Trophy className="w-4.5 h-4.5 text-slate-400" />
-                          Quản lý chuỗi giải
-                        </div>
-                      </Link>
-                    </>
-                  ) : (
-                    <Link href="/dashboard" onClick={() => setIsDropdownOpen(false)}>
-                      <div className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
-                        <Trophy className="w-4 h-4 text-slate-400" />
-                        Giải đấu của tôi
-                      </div>
-                    </Link>
-                  )}
-                  <Link href="/profile" onClick={() => setIsDropdownOpen(false)}>
-                    <div className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
-                      <User className="w-4 h-4 text-slate-400" />
-                      Hồ sơ cá nhân
-                    </div>
-                  </Link>
-                  <Link href="/profile/edit" onClick={() => setIsDropdownOpen(false)}>
-                    <div className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
-                      <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                      Cài đặt tài khoản
-                    </div>
-                  </Link>
-                  <div 
-                    onClick={async () => {
-                      try {
-                        await api.post('/auth/logout');
-                      } catch (error) {
-                        console.error('Logout error:', error);
-                      }
-                      logout();
-                      setIsDropdownOpen(false);
-                      window.location.href = '/login';
-                    }}
-                    className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors cursor-pointer mt-1 border-t border-slate-100 pt-2"
+              <AnimatePresence>
+                {isDropdownOpen && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
+                    className="absolute right-0 mt-2 w-56 rounded-xl border border-slate-100 bg-white/95 backdrop-blur-md py-2 shadow-lg z-50"
                   >
-                    <LogOut className="w-4 h-4" />
-                    Đăng xuất
-                  </div>
-                </div>
-              )}
+                    <div className="mb-1 border-b border-slate-100 px-4 py-2">
+                      <p className="truncate text-sm font-bold text-slate-900">{user?.fullName}</p>
+                      <p className="truncate text-xs text-slate-500">{user?.email}</p>
+                    </div>
+
+                    {user?.roles?.includes('ADMIN') ? (
+                      <Link href="/admin">
+                        <div className="flex cursor-pointer items-center gap-2 px-4 py-2 text-sm font-bold text-blue-600 transition-colors hover:bg-blue-50/50">
+                          <LayoutDashboard className="h-4 w-4" />
+                          Quản trị hệ thống
+                        </div>
+                      </Link>
+                    ) : null}
+
+                    {user?.roles?.includes('ORGANIZER') || user?.roles?.includes('ADMIN') ? (
+                      <>
+                        <Link href="/organizer/tournaments">
+                          <div className="flex cursor-pointer items-center gap-2 px-4 py-2 text-sm text-slate-700 transition-colors hover:bg-slate-50">
+                            <LayoutDashboard className="h-4 w-4 text-slate-400" />
+                            Quản lý giải đấu
+                          </div>
+                        </Link>
+                        <Link href="/organizer/series">
+                          <div className="flex cursor-pointer items-center gap-2 px-4 py-2 text-sm text-slate-700 transition-colors hover:bg-slate-50">
+                            <Trophy className="h-4 w-4 text-slate-400" />
+                            Quản lý chuỗi giải
+                          </div>
+                        </Link>
+                      </>
+                    ) : (
+                      <Link href="/dashboard">
+                        <div className="flex cursor-pointer items-center gap-2 px-4 py-2 text-sm text-slate-700 transition-colors hover:bg-slate-50">
+                          <Trophy className="h-4 w-4 text-slate-400" />
+                          Giải đấu của tôi
+                        </div>
+                      </Link>
+                    )}
+
+                    <Link href="/notifications">
+                      <div className="flex cursor-pointer items-center gap-2 px-4 py-2 text-sm text-slate-700 transition-colors hover:bg-slate-50">
+                        <Bell className="h-4 w-4 text-slate-400" />
+                        Thông báo của tôi
+                      </div>
+                    </Link>
+
+                    <Link href="/profile">
+                      <div className="flex cursor-pointer items-center gap-2 px-4 py-2 text-sm text-slate-700 transition-colors hover:bg-slate-50">
+                        <User className="h-4 w-4 text-slate-400" />
+                        Hồ sơ cá nhân
+                      </div>
+                    </Link>
+
+                    <Link href="/profile/edit">
+                      <div className="flex cursor-pointer items-center gap-2 px-4 py-2 text-sm text-slate-700 transition-colors hover:bg-slate-50">
+                        <User className="h-4 w-4 text-slate-400" />
+                        Cài đặt tài khoản
+                      </div>
+                    </Link>
+
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          await api.post('/auth/logout');
+                        } catch (error: unknown) {
+                          console.error('Logout error:', error);
+                        }
+                        logout();
+                        router.push('/login');
+                      }}
+                      className="mt-1 flex w-full items-center gap-2 border-t border-slate-100 px-4 pt-2 text-sm text-red-600 transition-colors hover:bg-red-50"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      Đăng xuất
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           ) : (
-            <div className="flex items-center gap-2 ml-2">
-              <Link href="/login" className={getButtonClasses("ghost", "sm", "flex text-slate-600 hover:text-blue-600 hover:bg-blue-50")}>
+            <div className="ml-2 flex items-center gap-2">
+              <Link
+                href="/login"
+                className={getButtonClasses(
+                  'ghost',
+                  'sm',
+                  'flex text-slate-600 hover:bg-blue-50 hover:text-blue-600',
+                )}
+              >
                 Đăng nhập
               </Link>
-              <Link href="/register" className={getButtonClasses("default", "sm", "bg-slate-900 text-white hover:bg-slate-800")}>
+              <Link
+                href="/register"
+                className={getButtonClasses(
+                  'default',
+                  'sm',
+                  'bg-slate-900 text-white hover:bg-slate-800',
+                )}
+              >
                 Đăng ký
               </Link>
             </div>
           )}
 
-          {/* Hamburger Menu Button */}
           <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-2 md:hidden text-slate-500 hover:bg-slate-100 rounded-lg transition-all active:scale-95"
+            type="button"
+            onClick={() => setIsMobileMenuOpen((current) => !current)}
+            className="rounded-lg p-2 text-slate-500 transition-all hover:bg-slate-100 active:scale-95 md:hidden"
             aria-label="Toggle Menu"
           >
-            {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
         </div>
       </div>
 
-      {/* Mobile Menu Dropdown */}
-      {isMobileMenuOpen && (
-        <div className="md:hidden border-t border-slate-100 bg-white/95 backdrop-blur-md shadow-lg py-2 animate-in fade-in slide-in-from-top-5 duration-200">
-          <nav className="flex flex-col px-4 py-2 gap-1">
+      {isMobileMenuOpen ? (
+        <div className="animate-in fade-in slide-in-from-top-5 border-t border-slate-100 bg-white/95 py-2 shadow-lg backdrop-blur-md duration-200 md:hidden">
+          <nav className="flex flex-col gap-1 px-4 py-2">
             {navLinks.map((link) => (
-              <Link 
+              <Link
                 key={link.path}
-                href={link.path} 
-                onClick={() => setIsMobileMenuOpen(false)}
+                href={link.path}
                 className={cn(
-                  "px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200",
-                  isActive(link.path) 
-                    ? "bg-blue-50 text-blue-600 font-bold" 
-                    : "text-slate-600 hover:bg-slate-50 hover:text-blue-600"
+                  'rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-200',
+                  isActive(link.path)
+                    ? 'bg-blue-50 font-bold text-blue-600'
+                    : 'text-slate-600 hover:bg-slate-50 hover:text-blue-600',
                 )}
               >
                 {link.name}
@@ -350,7 +534,7 @@ export function Header() {
             ))}
           </nav>
         </div>
-      )}
+      ) : null}
     </header>
   );
 }

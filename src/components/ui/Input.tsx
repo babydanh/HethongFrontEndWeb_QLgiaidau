@@ -42,6 +42,8 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     )
   }
 )
+Input.displayName = "Input";
+
 export interface DateTimePickerProps {
   label?: string;
   value: string;

@@ -3,6 +3,7 @@
 import { useEffect, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/zustand/authStore";
+import type { User } from "@/lib/zustand/authStore";
 import { usersApi } from "@/features/users/api";
 import toast from "react-hot-toast";
 import { motion } from "framer-motion";
@@ -16,7 +17,21 @@ const CallbackContent = () => {
     // Gọi API lấy profile, axios sẽ tự động đính kèm cookie accessToken nhờ withCredentials: true.
     usersApi.getProfile()
       .then((data) => {
-        useAuthStore.getState().setUser(data as any);
+        const nextUser: User = {
+          id: data.id,
+          email: data.email,
+          fullName: data.fullName || data.email,
+          avatarUrl: data.avatarUrl ?? null,
+          coverUrl: data.coverUrl ?? null,
+          roles: Array.isArray(data.roles) ? data.roles : [],
+          phoneNumber: data.phoneNumber ?? null,
+          dateOfBirth: data.dateOfBirth ?? null,
+          gender: data.gender ?? null,
+          address: data.address ?? null,
+          provinceCode: data.provinceCode ?? null,
+          bio: data.bio ?? null,
+        };
+        useAuthStore.getState().setUser(nextUser);
         toast.success("Đăng nhập thành công!");
         router.push("/");
       })

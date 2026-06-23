@@ -8,6 +8,7 @@ import { useEffect } from 'react';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { usersApi } from '@/features/users/api';
 import { isHttpStatusError, isNetworkError } from '@/utils/error';
+import AiChatAssistant from '@/components/shared/AiChatAssistant';
 
 export default function RootLayoutClient({
   children,
@@ -50,12 +51,22 @@ export default function RootLayoutClient({
       });
   }, [pathname, setUser]);
   
-  // Exclude admin paths from user header/footer
+  // Exclude admin & auth paths from header/footer
   const hideHeaderFooter = pathname.startsWith('/admin');
+  const isGuestRoute = ['/login', '/register'].some((route) => pathname.startsWith(route));
 
   if (hideHeaderFooter) {
     return (
       <main className="flex-grow flex flex-col h-screen overflow-hidden">
+        {children}
+      </main>
+    );
+  }
+
+  // Auth pages (login / register) fill the full viewport without Header/Footer
+  if (isGuestRoute) {
+    return (
+      <main className="flex-grow flex flex-col">
         {children}
       </main>
     );
@@ -68,6 +79,8 @@ export default function RootLayoutClient({
         <PageTransition>{children}</PageTransition>
       </main>
       <Footer />
+      <AiChatAssistant />
     </>
   );
 }
+

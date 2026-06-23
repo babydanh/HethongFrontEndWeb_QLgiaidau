@@ -29,7 +29,7 @@ interface CreatorInfo {
 interface TournamentItem {
   id: string;
   name: string;
-  status: 'UPCOMING' | 'ONGOING' | 'COMPLETED' | 'CANCELLED' | 'SUSPENDED' | 'DRAFT' | 'PENDING_APPROVAL';
+  status: 'UPCOMING' | 'ONGOING' | 'COMPLETED' | 'CANCELLED' | 'SUSPENDED' | 'DRAFT' | 'PENDING_APPROVAL' | 'PENDING_DELETE';
   entryFee: string;
   matchType: string;
   tournamentType: string;
@@ -77,7 +77,7 @@ export default function AdminTournamentsPage() {
     fetchTournaments(search);
   };
 
-  const handleTournamentAction = async (id: string, action: 'suspend' | 'unsuspend' | 'ban' | 'approve' | 'reject') => {
+  const handleTournamentAction = async (id: string, action: 'suspend' | 'unsuspend' | 'ban' | 'approve' | 'reject' | 'approve-delete' | 'reject-delete') => {
     if (processing) return;
     
     const confirmMsg = 
@@ -85,6 +85,8 @@ export default function AdminTournamentsPage() {
       action === 'unsuspend' ? 'Bạn có chắc chắn muốn khôi phục hoạt động giải đấu này?' :
       action === 'approve' ? 'Bạn có chắc chắn muốn phê duyệt giải đấu này không?' :
       action === 'reject' ? 'Bạn có chắc chắn muốn từ chối/bác bỏ giải đấu này không?' :
+      action === 'approve-delete' ? 'Bạn có chắc chắn muốn phê duyệt YÊU CẦU XÓA giải đấu này không? Hành động này sẽ xóa giải đấu vĩnh viễn.' :
+      action === 'reject-delete' ? 'Bạn có chắc chắn muốn từ chối yêu cầu xóa giải đấu này không? Giải đấu sẽ được khôi phục hoạt động bình thường.' :
       'CẢNH BÁO: Bạn có chắc chắn muốn HỦY và CẤM vĩnh viễn giải đấu này? Hành động này không thể hoàn tác!';
     
     if (!window.confirm(confirmMsg)) {
@@ -99,6 +101,8 @@ export default function AdminTournamentsPage() {
         action === 'unsuspend' ? 'Đã khôi phục hoạt động giải đấu!' : 
         action === 'approve' ? 'Đã phê duyệt giải đấu thành công!' : 
         action === 'reject' ? 'Đã bác bỏ/từ chối giải đấu!' : 
+        action === 'approve-delete' ? 'Đã duyệt yêu cầu xóa giải đấu thành công!' :
+        action === 'reject-delete' ? 'Đã từ chối yêu cầu xóa giải đấu!' :
         'Đã cấm/hủy giải đấu vĩnh viễn!'
       );
       fetchTournaments(search);
@@ -114,6 +118,8 @@ export default function AdminTournamentsPage() {
     switch (status) {
       case 'PENDING_APPROVAL':
         return <span className="bg-amber-50 text-amber-600 text-xs px-2.5 py-1 rounded-full font-semibold border border-amber-200">Chờ duyệt</span>;
+      case 'PENDING_DELETE':
+        return <span className="bg-rose-50 text-rose-700 text-xs px-2.5 py-1 rounded-full font-semibold border border-rose-200">Yêu cầu xóa</span>;
       case 'SUSPENDED':
         return <span className="bg-red-50 text-red-600 text-xs px-2.5 py-1 rounded-full font-semibold border border-red-200">Bị đình chỉ</span>;
       case 'CANCELLED':
@@ -170,7 +176,8 @@ export default function AdminTournamentsPage() {
         <div className="flex gap-2">
           {[
             { label: 'Tất cả', value: '' },
-            { label: 'Chờ duyệt', value: 'PENDING_APPROVAL' },
+            { label: 'Chờ duyệt ELO', value: 'PENDING_APPROVAL' },
+            { label: 'Yêu cầu xóa', value: 'PENDING_DELETE' },
             { label: 'Đang hoạt động', value: 'ONGOING' },
             { label: 'Bị đình chỉ', value: 'SUSPENDED' },
           ].map(tab => (
@@ -258,6 +265,26 @@ export default function AdminTournamentsPage() {
                     <td className="p-4">{getStatusBadge(item.status)}</td>
                     <td className="p-4 pr-6 text-right">
                       <div className="flex items-center justify-end gap-2">
+                        {item.status === 'PENDING_DELETE' && (
+                          <>
+                            <button
+                              onClick={() => handleTournamentAction(item.id, 'approve-delete')}
+                              disabled={processing}
+                              className="bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white border border-rose-200 hover:border-transparent px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 transition-all active:scale-95 disabled:opacity-50"
+                            >
+                              <Check className="w-3.5 h-3.5" />
+                              Duyệt xóa
+                            </button>
+                            <button
+                              onClick={() => handleTournamentAction(item.id, 'reject-delete')}
+                              disabled={processing}
+                              className="bg-slate-50 hover:bg-slate-600 text-slate-600 hover:text-white border border-slate-200 hover:border-transparent px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 transition-all active:scale-95 disabled:opacity-50"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                              Từ chối
+                            </button>
+                          </>
+                        )}
                         {item.status === 'PENDING_APPROVAL' && (
                           <>
                             <button
@@ -278,7 +305,7 @@ export default function AdminTournamentsPage() {
                             </button>
                           </>
                         )}
-                        {item.status !== 'SUSPENDED' && item.status !== 'CANCELLED' && item.status !== 'PENDING_APPROVAL' && (
+                        {item.status !== 'SUSPENDED' && item.status !== 'CANCELLED' && item.status !== 'PENDING_APPROVAL' && item.status !== 'PENDING_DELETE' && (
                           <button
                             onClick={() => handleTournamentAction(item.id, 'suspend')}
                             disabled={processing}
@@ -298,7 +325,7 @@ export default function AdminTournamentsPage() {
                             Khôi phục
                           </button>
                         )}
-                        {item.status !== 'CANCELLED' && (
+                        {item.status !== 'CANCELLED' && item.status !== 'PENDING_DELETE' && (
                           <button
                             onClick={() => handleTournamentAction(item.id, 'ban')}
                             disabled={processing}

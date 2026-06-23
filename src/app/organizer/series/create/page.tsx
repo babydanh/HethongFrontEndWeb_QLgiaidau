@@ -206,8 +206,8 @@ export default function CreateSeriesPage() {
                 onChange={(e) => setVisibility(e.target.value as 'PUBLIC' | 'PRIVATE')}
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 focus:bg-white focus:border-blue-600 outline-none transition-all cursor-pointer h-[42px]"
               >
-                <option value="PUBLIC">Công khai (Public)</option>
-                <option value="PRIVATE">Riêng tư (Private)</option>
+                <option value="PUBLIC">Công khai</option>
+                <option value="PRIVATE">Riêng tư</option>
               </select>
             </div>
           </div>
@@ -271,8 +271,8 @@ export default function CreateSeriesPage() {
                     onChange={(e) => setExclusionScope(e.target.value as ExclusionScope)}
                     className="w-full max-w-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 focus:bg-white focus:border-blue-600 outline-none transition-all cursor-pointer h-[42px]"
                   >
-                    <option value="CATEGORY">Chỉ khóa trong nội dung đó (CATEGORY)</option>
-                    <option value="ALL">Khóa toàn bộ chặng đấu (ALL)</option>
+                    <option value="CATEGORY">Chỉ khóa trong nội dung đó</option>
+                    <option value="ALL">Khóa toàn bộ chặng đấu</option>
                   </select>
                 </div>
               )}

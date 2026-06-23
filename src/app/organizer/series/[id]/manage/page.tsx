@@ -78,8 +78,10 @@ export default function SeriesManagePage() {
 
   useEffect(() => {
     if (!id) return;
-    fetchDetail();
-    fetchMyTournaments();
+    Promise.resolve().then(() => {
+      fetchDetail();
+      fetchMyTournaments();
+    });
   }, [id]);
 
   const handleOpenLegModal = (leg?: SeriesLeg) => {
@@ -281,7 +283,7 @@ export default function SeriesManagePage() {
 
               {legs.length === 0 ? (
                 <div className="py-8 text-center text-slate-400 text-xs font-semibold">
-                  Chưa có chặng đấu nào. Nhấp "Thêm chặng" để tạo.
+                  Chưa có chặng đấu nào. Nhấp &quot;Thêm chặng&quot; để tạo.
                 </div>
               ) : (
                 <div className="flex flex-col gap-2">

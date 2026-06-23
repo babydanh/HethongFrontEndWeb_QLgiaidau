@@ -382,67 +382,101 @@ export default function LeaderboardPage() {
     );
 }
 
-// Separate component for list from 11 to 100 with dropdown/expanded list logic for 11-100
 function RestRankingsTable({ rankings }: { rankings: PlayerRanking[] }) {
-    const [isExpanded, setIsExpanded] = useState(false);
-    
     // Rankings starting from index 10 (Hạng 11 trở đi)
-    const listData = rankings.slice(10);
+    const realData = rankings.slice(10, 100);
     
-    // Default show ranks 11 to 20 (indices 0 to 9 of listData)
-    // When expanded, show up to rank 100 (indices 0 to 89 of listData)
-    const visibleData = isExpanded ? listData.slice(0, 90) : listData.slice(0, 10);
+    // Tạo danh sách 90 phần tử (từ hạng 11 đến 100), nếu thiếu thì điền placeholder "Đang chờ..."
+    const listData = [...realData];
+    const targetLength = 90; // 11 to 100 is 90 slots
+    
+    for (let i = listData.length; i < targetLength; i++) {
+        listData.push({
+            id: `placeholder-${i}`,
+            categoryId: "",
+            eloPoints: 0,
+            matchesPlayed: 0,
+            matchesWon: 0,
+            winStreak: 0,
+            updatedAt: new Date().toISOString(),
+            user: {
+                id: `placeholder-user-${i}`,
+                fullName: "Đang chờ...",
+                avatarUrl: undefined
+            },
+            tier: {
+                id: "",
+                name: "LOW_TIER_D"
+            }
+        });
+    }
 
-    if (listData.length === 0) return null;
+    // Split into 2 columns
+    const mid = Math.ceil(listData.length / 2);
+    const leftColumnData = listData.slice(0, mid);
+    const rightColumnData = listData.slice(mid);
 
-    return (
-        <div className="space-y-4">
-            <h3 className="text-base font-black text-slate-900 px-1">Danh sách xếp hạng</h3>
-            
+    const renderTable = (data: PlayerRanking[], startRank: number) => {
+        return (
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse text-sm">
+                    <table className="w-full text-left border-collapse text-xs">
                         <thead>
-                            <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold">
-                                <th className="py-4 px-4 w-16 text-center">Hạng</th>
-                                <th className="py-4 px-4">Đấu thủ</th>
-                                <th className="py-4 px-4">Tier Badge</th>
-                                <th className="py-4 px-4 text-right">ELO</th>
-                                <th className="py-4 px-4 text-right hidden sm:table-cell">Số Trận</th>
-                                <th className="py-4 px-4 text-right hidden sm:table-cell">Thắng</th>
-                                <th className="py-4 px-4 text-right hidden md:table-cell">Tỷ Lệ Thắng</th>
+                            <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider">
+                                <th className="py-3 px-3 w-12 text-center">Hạng</th>
+                                <th className="py-3 px-3">Đấu thủ</th>
+                                <th className="py-3 px-3">Hạng ELO</th>
+                                <th className="py-3 px-3 text-right">ELO</th>
+                                <th className="py-3 px-3 text-right">Tỷ Lệ</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y text-slate-700 font-semibold">
-                            {visibleData.map((rank, index) => {
-                                const rankNum = index + 11;
-                                const winRate = rank.matchesPlayed > 0 ? ((rank.matchesWon / rank.matchesPlayed) * 100).toFixed(1) : '0';
+                            {data.map((rank, index) => {
+                                const rankNum = startRank + index;
+                                const isPlaceholder = rank.id.startsWith("placeholder-");
+                                const winRate = rank.matchesPlayed > 0 ? ((rank.matchesWon / rank.matchesPlayed) * 100).toFixed(0) : '0';
                                 return (
                                     <tr key={rank.id} className="transition-colors hover:bg-slate-50/40 border-b">
-                                        <td className="py-4 px-4 text-center font-bold text-slate-400">
+                                        <td className="py-2.5 px-3 text-center font-black text-slate-400">
                                             #{rankNum}
                                         </td>
-                                        <td className="py-4 px-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-9 h-9 rounded-full object-cover relative overflow-hidden bg-slate-100">
+                                        <td className="py-2.5 px-3">
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-7 h-7 rounded-full object-cover relative overflow-hidden bg-slate-100 flex-shrink-0">
                                                     {rank.user?.avatarUrl ? (
                                                         <Image src={rank.user.avatarUrl} alt="Player" fill className="object-cover" />
                                                     ) : (
-                                                        <div className="w-full h-full flex items-center justify-center bg-slate-200 text-slate-500 font-black text-xs uppercase">
-                                                            {rank.user?.fullName?.substring(0, 2) || 'VĐ'}
+                                                        <div className="w-full h-full flex items-center justify-center bg-slate-200 text-slate-500 font-black text-[9px] uppercase">
+                                                            {isPlaceholder ? "?" : (rank.user?.fullName?.substring(0, 2) || 'VĐ')}
                                                         </div>
                                                     )}
                                                 </div>
-                                                <span className="font-bold text-slate-900">{rank.user?.fullName || "Người chơi"}</span>
+                                                <span className={`font-bold truncate max-w-[100px] sm:max-w-[150px] ${isPlaceholder ? "text-slate-400 font-medium" : "text-slate-900"}`}>
+                                                    {rank.user?.fullName || "Đang chờ..."}
+                                                </span>
                                             </div>
                                         </td>
-                                        <td className="py-4 px-4">
-                                            <EloTierBadge elo={rank.eloPoints} tierName={rank.tier?.name} size="sm" />
+                                        <td className="py-2.5 px-3">
+                                            {isPlaceholder ? (
+                                                <span className="text-[10px] text-slate-400 font-medium">---</span>
+                                            ) : (
+                                                <EloTierBadge elo={rank.eloPoints} tierName={rank.tier?.name} size="sm" className="scale-90 origin-left" />
+                                            )}
                                         </td>
-                                        <td className="py-4 px-4 text-right font-black text-blue-600">{rank.eloPoints}</td>
-                                        <td className="py-4 px-4 text-right text-slate-500 hidden sm:table-cell">{rank.matchesPlayed}</td>
-                                        <td className="py-4 px-4 text-right text-slate-500 hidden sm:table-cell">{rank.matchesWon}</td>
-                                        <td className="py-4 px-4 text-right text-emerald-600 hidden md:table-cell">{winRate}%</td>
+                                        <td className="py-2.5 px-3 text-right font-black text-blue-650">
+                                            {isPlaceholder ? (
+                                                <span className="text-slate-450 font-bold">---</span>
+                                            ) : (
+                                                rank.eloPoints
+                                            )}
+                                        </td>
+                                        <td className="py-2.5 px-3 text-right text-emerald-650 font-bold">
+                                            {isPlaceholder ? (
+                                                <span className="text-slate-400 font-medium">--%</span>
+                                            ) : (
+                                                `${winRate}%`
+                                            )}
+                                        </td>
                                     </tr>
                                 );
                             })}
@@ -450,27 +484,21 @@ function RestRankingsTable({ rankings }: { rankings: PlayerRanking[] }) {
                     </table>
                 </div>
             </div>
+        );
+    };
 
-            {listData.length > 10 && (
-                <div className="flex justify-center pt-2">
-                    <button
-                        onClick={() => setIsExpanded(!isExpanded)}
-                        className="flex items-center gap-2 px-6 py-3 bg-white hover:bg-slate-55 text-slate-700 font-extrabold text-xs rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow cursor-pointer active:scale-98"
-                    >
-                        {isExpanded ? (
-                            <>
-                                Thu gọn bảng xếp hạng
-                                <ChevronUp className="w-4 h-4 text-slate-500" />
-                            </>
-                        ) : (
-                            <>
-                                Xem thêm bảng xếp hạng (Hạng 21 - 100)
-                                <ChevronDown className="w-4 h-4 text-slate-500" />
-                            </>
-                        )}
-                    </button>
+    return (
+        <div className="space-y-4">
+            <h3 className="text-base font-black text-slate-900 px-1">Danh sách xếp hạng (Hạng 11 - 100)</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    {renderTable(leftColumnData, 11)}
                 </div>
-            )}
+                <div>
+                    {renderTable(rightColumnData, 11 + mid)}
+                </div>
+            </div>
         </div>
     );
 }

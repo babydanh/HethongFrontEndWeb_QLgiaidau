@@ -62,6 +62,7 @@ interface TournamentFormData {
   // Step 5: Fees
   entryFee: number;
   isRanked: boolean;
+  registrationMode: 'OPEN' | 'APPROVAL' | 'INVITE_ONLY';
 }
 
 interface CreateTournamentState {
@@ -101,6 +102,7 @@ const defaultFormData: TournamentFormData = {
   venueId: '',
   entryFee: 0,
   isRanked: true,
+  registrationMode: 'OPEN',
 };
 
 type PersistedCreateTournamentState = Partial<Omit<CreateTournamentState, 'formData'>> & {
@@ -116,6 +118,7 @@ const normalizeFormData = (formData?: Partial<TournamentFormData>): TournamentFo
   },
   matchFormat: formData?.matchFormat ?? defaultFormData.matchFormat,
   selectedFormats: Array.isArray(formData?.selectedFormats) ? formData.selectedFormats : [],
+  registrationMode: formData?.registrationMode ?? defaultFormData.registrationMode,
 });
 
 export const useCreateTournamentStore = create<CreateTournamentState>()(

@@ -22,6 +22,7 @@ export interface Community {
   creatorId?: string;
   createdAt: string;
   updatedAt: string;
+  socialLinks?: Record<string, string>;
   categories?: Category[];
   _count?: {
     members: number;

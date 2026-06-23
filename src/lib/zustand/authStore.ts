@@ -14,6 +14,12 @@ export interface User {
   address?: string | null;
   bio?: string | null;
   provinceCode?: string | null;
+  isEmailVerified?: boolean;
+  isPhoneVerified?: boolean;
+  isGenderLocked?: boolean;
+  bankName?: string | null;
+  bankAccountNumber?: string | null;
+  bankAccountName?: string | null;
 }
 
 interface AuthState {

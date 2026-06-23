@@ -9,7 +9,7 @@ import { usersApi, UserProfile } from '@/features/users/api';
 import { getErrorMessage } from '@/utils/error';
 import { trimAndNormalizeSpaces } from '@/utils/string';
 import { formatCurrency } from '@/utils/format';
-import { Copy, Check, Loader2, QrCode, Users, CreditCard, CheckCircle, AlertTriangle, ArrowRight, Trash2, Search, UserMinus } from 'lucide-react';
+import { Copy, Check, Loader2, QrCode, Users, CreditCard, CheckCircle, AlertTriangle, ArrowRight, Trash2, Search, UserMinus, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface Props {
@@ -34,6 +34,38 @@ export default function DoublesRegistrationFlow({ tournament, inviteCode, divisi
   const [isSearchingPartner, setIsSearchingPartner] = useState(false);
   const [partnerSearchError, setPartnerSearchError] = useState('');
   const [inviteLater, setInviteLater] = useState(false);
+  const [timeLeft, setTimeLeft] = useState<string>('');
+
+  useEffect(() => {
+    if (step !== 2 || !participant?.registeredAt) return;
+
+    const intervalId = setInterval(() => {
+      const regTime = new Date(participant.registeredAt).getTime();
+      const endTime = regTime + 2 * 60 * 60 * 1000; // 2 hours
+      const now = Date.now();
+      const diff = endTime - now;
+
+      if (diff <= 0) {
+        setTimeLeft('Đã hết hạn 2 giờ');
+        clearInterval(intervalId);
+        tournamentsApi.getMyRegistration(tournament.id).then((res) => {
+          if (!res.data?.registered) {
+            setParticipant(null);
+            setStep(1);
+            toast.error('Đơn đăng ký của bạn đã bị hủy do quá hạn 2 giờ.');
+          }
+        });
+      } else {
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+        const hStr = hours > 0 ? `${hours} giờ ` : '';
+        setTimeLeft(`${hStr}${minutes} phút ${seconds} giây`);
+      }
+    }, 1000);
+
+    return () => clearInterval(intervalId);
+  }, [step, participant?.registeredAt, tournament.id]);
 
   // Check if user already has an active registration when component mounts
   useEffect(() => {
@@ -177,23 +209,60 @@ export default function DoublesRegistrationFlow({ tournament, inviteCode, divisi
     }
   };
 
-  const handleWithdraw = async () => {
-    if (!confirm('Bạn có chắc chắn muốn hủy đăng ký và rút lui khỏi giải đấu? Nếu đã đóng lệ phí, việc hoàn trả sẽ cần được BTC giải quyết.')) {
-      return;
-    }
+  // Bank refund form modal states for doubles
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+  const [bankName, setBankName] = useState('');
+  const [bankAccountNumber, setBankAccountNumber] = useState('');
+  const [bankAccountName, setBankAccountName] = useState('');
+  const [bankError, setBankError] = useState('');
 
+  const handleWithdrawClick = async () => {
+    if (participant?.isPaid && Number(tournament.entryFee) > 0) {
+      try {
+        const freshProfile = await usersApi.getProfile();
+        const profile = (freshProfile as any).data || freshProfile;
+        setBankName(profile?.bankName || '');
+        setBankAccountNumber(profile?.bankAccountNumber || '');
+        setBankAccountName(profile?.bankAccountName || '');
+      } catch (err) {
+        console.error('Failed to load profile for bank autofill:', err);
+      }
+      setBankError('');
+      setShowWithdrawModal(true);
+    } else {
+      if (confirm('Bạn có chắc chắn muốn hủy đăng ký và rút lui khỏi giải đấu?')) {
+        executeWithdraw();
+      }
+    }
+  };
+
+  const executeWithdraw = async (bankData?: { bankName: string; bankAccountNumber: string; bankAccountName: string }) => {
     try {
       setIsWithdrawing(true);
-      await tournamentsApi.withdraw(tournament.id);
+      await tournamentsApi.withdraw(tournament.id, bankData);
       toast.success('Đã rút khỏi giải đấu thành công.');
       setParticipant(null);
       setTeamName('');
       setStep(1);
+      setShowWithdrawModal(false);
     } catch (err) {
       toast.error(getErrorMessage(err));
     } finally {
       setIsWithdrawing(false);
     }
+  };
+
+  const handleConfirmWithdrawWithBank = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!bankName.trim() || !bankAccountNumber.trim() || !bankAccountName.trim()) {
+      setBankError('Vui lòng điền đầy đủ thông tin ngân hàng.');
+      return;
+    }
+    executeWithdraw({
+      bankName: bankName.trim(),
+      bankAccountNumber: bankAccountNumber.trim(),
+      bankAccountName: bankAccountName.trim().toUpperCase(),
+    });
   };
 
   const handlePayment = () => {
@@ -255,6 +324,16 @@ export default function DoublesRegistrationFlow({ tournament, inviteCode, divisi
               </strong>
               . Bạn là người đại diện đăng ký đội trưởng (Leader).
             </p>
+          </div>
+
+          <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded-xl p-4 flex gap-3 text-xs leading-relaxed font-semibold">
+            <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-bold text-amber-950">Lưu ý giới hạn thời gian (2 giờ)</p>
+              <p className="mt-1">
+                Đồng đội của bạn cần xác nhận tham gia và hoàn tất thanh toán lệ phí trong vòng <strong>2 giờ</strong> kể từ lúc tạo đội, nếu không hệ thống sẽ tự động hủy đơn đăng ký của đội để nhường chỗ cho các đội khác.
+              </p>
+            </div>
           </div>
 
           <form onSubmit={handleCreateTeam} className="space-y-5">
@@ -401,6 +480,13 @@ export default function DoublesRegistrationFlow({ tournament, inviteCode, divisi
             </p>
           </div>
 
+          {timeLeft && (
+            <div className="bg-rose-50 border border-rose-100 rounded-xl p-4 text-center animate-in fade-in duration-300">
+              <span className="text-[10px] font-bold text-rose-650 block uppercase tracking-wider">Thời gian còn lại để hoàn tất đội:</span>
+              <span className="text-lg font-black text-rose-600 mt-1 block tracking-wider tabular-nums">{timeLeft}</span>
+            </div>
+          )}
+
           {/* QR Code Container */}
           <div className="flex flex-col items-center justify-center bg-slate-50 border p-6 rounded-2xl max-w-xs mx-auto">
             {qrImageUrl ? (
@@ -452,11 +538,11 @@ export default function DoublesRegistrationFlow({ tournament, inviteCode, divisi
               </Button>
               <Button
                 variant="outline"
-                onClick={handleWithdraw}
+                onClick={handleWithdrawClick}
                 disabled={isWithdrawing}
                 className="flex-1 text-rose-600 border-rose-100 hover:bg-rose-50 bg-white text-xs font-bold flex items-center justify-center gap-1.5"
               >
-                <Trash2 className="w-3.5 h-3.5" /> Hủy & Rút lui
+                <Trash2 className="w-3.5 h-3.5" /> {"Hủy & Rút lui"}
               </Button>
             </div>
           </div>
@@ -521,7 +607,7 @@ export default function DoublesRegistrationFlow({ tournament, inviteCode, divisi
                 <div className="flex gap-3 pt-2">
                   <Button
                     variant="outline"
-                    onClick={handleWithdraw}
+                    onClick={handleWithdrawClick}
                     disabled={isWithdrawing}
                     className="flex-1 border-rose-200 hover:bg-rose-50 text-rose-600 font-bold py-3 text-sm flex items-center justify-center gap-1.5"
                   >
@@ -554,11 +640,11 @@ export default function DoublesRegistrationFlow({ tournament, inviteCode, divisi
               <div className="flex gap-3">
                 <Button
                   variant="outline"
-                  onClick={handleWithdraw}
+                  onClick={handleWithdrawClick}
                   disabled={isWithdrawing}
                   className="flex-1 border-rose-200 hover:bg-rose-50 text-rose-600 font-bold py-3 text-sm flex items-center justify-center gap-1.5"
                 >
-                  <Trash2 className="w-4 h-4" /> Hủy & Rút lui
+                  <Trash2 className="w-4 h-4" /> {"Hủy & Rút lui"}
                 </Button>
                 <Button
                   onClick={() => router.push(`/tournaments/${tournament.id}`)}
@@ -569,6 +655,85 @@ export default function DoublesRegistrationFlow({ tournament, inviteCode, divisi
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Modal Hoàn Tiền Thủ Công cho Đánh Đôi */}
+      {showWithdrawModal && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-md bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-2xl animate-in zoom-in duration-200">
+            <div className="p-6 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+              <h3 className="text-base font-extrabold text-slate-900">Thông tin hoàn trả lệ phí đôi</h3>
+              <button 
+                onClick={() => setShowWithdrawModal(false)}
+                className="text-slate-400 hover:text-slate-650 p-1 rounded-lg hover:bg-slate-100 transition-all"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={handleConfirmWithdrawWithBank}>
+              <div className="p-6 space-y-4.5">
+                <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-4 text-xs text-slate-650 leading-relaxed font-semibold">
+                  Đội của bạn đã đăng ký nội dung có phí. Ban tổ chức sẽ hoàn trả lệ phí qua số tài khoản ngân hàng của Đội trưởng (người nộp lệ phí) dưới đây.
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Tên ngân hàng / Ví (Ví dụ: MB Bank, Vietcombank...)</label>
+                  <Input
+                    required
+                    value={bankName}
+                    onChange={(e) => setBankName(e.target.value)}
+                    placeholder="Nhập tên ngân hàng..."
+                    className="font-bold text-slate-800"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Số tài khoản ngân hàng</label>
+                  <Input
+                    required
+                    value={bankAccountNumber}
+                    onChange={(e) => setBankAccountNumber(e.target.value)}
+                    placeholder="Nhập số tài khoản..."
+                    className="font-bold text-slate-800 tracking-wider"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Họ và tên chủ tài khoản (Viết hoa không dấu)</label>
+                  <Input
+                    required
+                    value={bankAccountName}
+                    onChange={(e) => setBankAccountName(e.target.value)}
+                    placeholder="Ví dụ: NGUYEN VAN A"
+                    className="font-bold text-slate-800 uppercase"
+                  />
+                </div>
+
+                {bankError && (
+                  <p className="text-xs font-bold text-rose-600 animate-pulse">{bankError}</p>
+                )}
+              </div>
+              <div className="p-6 bg-slate-50 border-t border-slate-200 flex justify-end gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowWithdrawModal(false)}
+                  className="px-4 py-2 border-slate-205 hover:bg-slate-100 text-slate-700 text-xs font-bold rounded-xl"
+                >
+                  Hủy bỏ
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isWithdrawing}
+                  className="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 shadow-md shadow-rose-500/10"
+                >
+                  {isWithdrawing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                  Xác nhận rút & hoàn tiền
+                </Button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>

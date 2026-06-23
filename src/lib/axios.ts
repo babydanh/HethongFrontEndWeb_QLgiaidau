@@ -37,14 +37,25 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // Handle 401 Unauthorized for token refresh
+    // Skip refresh for auth-related routes
     const isAuthRoute = ['/auth/login', '/auth/register', '/auth/refresh', '/auth/logout'].some(
       (route) => originalRequest.url?.includes(route)
     );
 
+    // Also skip if we're currently on a guest page (login/register) — prevents stale-cookie loops
+    const isOnGuestPage =
+      typeof window !== 'undefined' &&
+      ['/login', '/register'].some((p) => window.location.pathname.startsWith(p));
+
     if (error.response?.status === 401 && !originalRequest._retry && !isAuthRoute) {
+      // If on the login/register page, just clear local state and bail out — do not try to refresh
+      if (isOnGuestPage) {
+        useAuthStore.getState().logout();
+        return Promise.reject(error);
+      }
+
       originalRequest._retry = true;
-      
+
       // Prevent infinite loop if refresh itself fails
       if (originalRequest.url === '/auth/refresh') {
         useAuthStore.getState().logout();
@@ -67,7 +78,7 @@ api.interceptors.response.use(
       try {
         // Because of withCredentials: true, the browser will automatically send the refreshToken cookie
         await axios.post(`${api.defaults.baseURL}/auth/refresh`, {}, { withCredentials: true });
-        
+
         // Retry the original request. Browser will now send the newly set accessToken cookie
         return api(originalRequest);
       } catch (refreshError) {
@@ -88,7 +99,7 @@ api.interceptors.response.use(
         return Promise.reject(refreshError);
       }
     }
-    
+
     // Catch-all server errors (500)
     if (error.response?.status >= 500) {
       toast.error('Hệ thống đang gặp sự cố. Vui lòng thử lại sau.');

@@ -67,7 +67,7 @@ export function FinanceTab({
               disabled={['UPCOMING', 'IN_PROGRESS', 'COMPLETED'].includes(tournament.status)}
             />
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-semibold text-slate-700">Lệ phí sàn / VĐV (Mặc định)</label>
+              <label className="text-sm font-semibold text-slate-700">Lệ phí sàn / VĐV (mặc định)</label>
               <Badge className="py-2.5 bg-slate-50 border-slate-200 text-slate-700 justify-center font-bold text-sm">
                 {platformFeePerPlayer.toLocaleString('vi-VN')} VNĐ / Người chơi
               </Badge>
@@ -102,7 +102,7 @@ export function FinanceTab({
               </div>
 
               <div className="bg-white p-4 rounded-xl border shadow-sm">
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Phí nền tảng (Platform Fee)</p>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Phí nền tảng</p>
                 <p className="text-2xl font-black text-red-500 mt-2">
                   {totalPlatformFee.toLocaleString('vi-VN')} VNĐ
                 </p>
@@ -127,7 +127,7 @@ export function FinanceTab({
             {tournament.status === 'COMPLETED' ? (
               <div className="bg-white border rounded-xl p-5 space-y-4">
                 <h4 className="font-bold text-slate-850 flex items-center gap-1">
-                  <Gift className="w-5 h-5 text-purple-600" /> Yêu cầu rút tiền Payout
+                  <Gift className="w-5 h-5 text-purple-600" /> Yêu cầu rút tiền
                 </h4>
                 <p className="text-xs text-slate-500 font-medium">Giải đấu đã kết thúc, bạn có thể thực hiện gửi yêu cầu rút tiền thực nhận về tài khoản ngân hàng của ban tổ chức.</p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -136,13 +136,13 @@ export function FinanceTab({
                   <Input label="Tên chủ tài khoản" placeholder="NGUYEN VAN A" />
                 </div>
                 <Button className="bg-purple-600 hover:bg-purple-700 text-white font-bold w-full md:w-auto mt-2">
-                  Gửi yêu cầu Payout
+                  Gửi yêu cầu rút tiền
                 </Button>
               </div>
             ) : (
               <div className="bg-blue-50/50 p-4 rounded-xl border flex gap-3 text-xs leading-relaxed font-semibold text-blue-900">
                 <Info className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
-                <p>Hệ thống chỉ mở cổng yêu cầu rút tiền Payout sau khi giải đấu kết thúc (Trạng thái chuyển sang <strong>Đã Kết Thúc - COMPLETED</strong>).</p>
+                <p>Hệ thống chỉ mở cổng yêu cầu rút tiền sau khi giải đấu kết thúc (trạng thái chuyển sang <strong>Đã kết thúc</strong>).</p>
               </div>
             )}
           </div>

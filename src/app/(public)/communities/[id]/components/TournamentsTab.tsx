@@ -112,6 +112,10 @@ export default function TournamentsTab({
   };
 
   const filteredTournaments = tournaments.filter(t => {
+    // Hide DRAFT tournaments from non-owners/non-moderators
+    if (!isOwnerOrMod && t.status === 'DRAFT') {
+      return false;
+    }
     // 1. Filter by Tournament Type
     if (activeTypeFilter !== 'ALL' && t.tournamentType !== activeTypeFilter) {
       return false;
@@ -292,13 +296,37 @@ export default function TournamentsTab({
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div className="flex flex-col gap-1.5 w-full">
                     <div className="flex items-center justify-between gap-2 flex-wrap">
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1.5 flex-wrap">
                         {getTypeBadge(t.tournamentType)}
                         {getStatusBadge(t.status)}
+                        
+                        {/* Ranked or Unranked Badge */}
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border ${
+                          t.divisions[0]?.isRanked
+                            ? 'bg-amber-50 text-amber-700 border-amber-200'
+                            : 'bg-slate-50 text-slate-600 border-slate-200'
+                        }`}>
+                          {t.divisions[0]?.isRanked ? 'Xếp hạng ELO' : 'Phong trào'}
+                        </span>
+
+                        {/* Series / Parent Badge */}
+                        {t.divisions[0]?.parentId && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                            Chuỗi giải đấu
+                          </span>
+                        )}
+
+                        {/* Sport Category Badge */}
+                        {t.divisions[0]?.category?.name && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                            {t.divisions[0].category.name}
+                          </span>
+                        )}
+
                         {isOwnerOrMod && (
                           <button
                             onClick={(e) => handleDeleteTournament(t.id, !!t.divisions[0].parentId, e)}
-                            className="p-1 text-slate-450 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all active:scale-95 ml-1"
+                            className="p-1 text-slate-455 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all active:scale-95 ml-1"
                             title="Xóa giải đấu"
                           >
                             <Trash2 className="w-3.5 h-3.5" />

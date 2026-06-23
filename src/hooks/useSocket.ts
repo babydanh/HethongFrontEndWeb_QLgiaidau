@@ -1,69 +1,312 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
+import { notificationsApi } from '@/features/notifications/api';
+import type {
+  NotificationItem,
+  NotificationListState,
+} from '@/features/notifications/types';
+import {
+  getUnreadNotificationsCount,
+  mergeNotifications,
+  sortNotificationsByDate,
+} from '@/features/notifications/utils';
 import { socketClient } from '@/lib/socket';
 import { useAuthStore } from '@/lib/zustand/authStore';
-import { notificationsApi, Notification } from '@/features/notifications/api';
-import { isHttpStatusError, isNetworkError } from '@/utils/error';
+import { getErrorMessage, isHttpStatusError, isNetworkError } from '@/utils/error';
 
-type NotificationResponse = {
-  data?: Notification[];
+type NotificationStoreListener = () => void;
+const NOTIFICATIONS_PAGE_LIMIT = 50;
+
+const DEFAULT_NOTIFICATION_STATE: NotificationListState = {
+  items: [],
+  unreadCount: 0,
+  isLoading: false,
+  isInitialized: false,
+  errorMessage: null,
+};
+
+let notificationState: NotificationListState = DEFAULT_NOTIFICATION_STATE;
+const notificationStoreListeners = new Set<NotificationStoreListener>();
+
+let notificationsFetchPromise: Promise<void> | null = null;
+let socketConsumerCount = 0;
+let activeSocketUserId: string | null = null;
+let isNotificationSocketBound = false;
+
+const emitNotificationStore = () => {
+  for (const listener of notificationStoreListeners) {
+    listener();
+  }
+};
+
+const getNotificationSnapshot = (): NotificationListState => notificationState;
+
+const subscribeToNotificationStore = (listener: NotificationStoreListener) => {
+  notificationStoreListeners.add(listener);
+
+  return () => {
+    notificationStoreListeners.delete(listener);
+  };
+};
+
+const updateNotificationState = (
+  updater: NotificationListState | ((current: NotificationListState) => NotificationListState),
+) => {
+  const nextState =
+    typeof updater === 'function'
+      ? updater(notificationState)
+      : updater;
+
+  notificationState = nextState;
+  emitNotificationStore();
+};
+
+const replaceNotifications = (items: NotificationItem[]) => {
+  updateNotificationState((current) => ({
+    ...current,
+    items: sortNotificationsByDate(items),
+    isLoading: false,
+    isInitialized: true,
+    errorMessage: null,
+  }));
+};
+
+const upsertNotification = (item: NotificationItem) => {
+  updateNotificationState((current) => ({
+    ...current,
+    items: mergeNotifications(current.items, [item]),
+    unreadCount:
+      item.isRead || current.items.some((currentItem) => currentItem.id === item.id)
+        ? current.unreadCount
+        : current.unreadCount + 1,
+    isInitialized: true,
+    errorMessage: null,
+  }));
+};
+
+const markNotificationReadInState = (notificationId: string) => {
+  updateNotificationState((current) => ({
+    ...current,
+    items: current.items.map((item) =>
+      item.id === notificationId ? { ...item, isRead: true } : item,
+    ),
+    unreadCount: Math.max(
+      0,
+      current.unreadCount -
+        (current.items.some((item) => item.id === notificationId && !item.isRead) ? 1 : 0),
+    ),
+  }));
+};
+
+const markAllNotificationsReadInState = () => {
+  updateNotificationState((current) => ({
+    ...current,
+    items: current.items.map((item) => ({ ...item, isRead: true })),
+    unreadCount: 0,
+  }));
+};
+
+const resetNotificationsState = () => {
+  notificationsFetchPromise = null;
+  updateNotificationState(DEFAULT_NOTIFICATION_STATE);
+};
+
+const getSocketAccessToken = (): string | null => {
+  if (typeof document === 'undefined') {
+    return null;
+  }
+
+  const bearerCookie = document.cookie
+    .split('; ')
+    .find((entry) => entry.startsWith('accessToken='));
+
+  if (!bearerCookie) {
+    return null;
+  }
+
+  const tokenValue = bearerCookie.slice('accessToken='.length);
+
+  return tokenValue ? decodeURIComponent(tokenValue) : null;
+};
+
+const bindNotificationSocket = (userId: string) => {
+  socketClient.setNotificationAuthToken(getSocketAccessToken());
+
+  const socket = socketClient.getNotificationSocket();
+
+  if (activeSocketUserId === userId && isNotificationSocketBound) {
+    if (!socket.connected) {
+      socket.connect();
+    }
+    return;
+  }
+
+  if (isNotificationSocketBound) {
+    socket.off('connect');
+    socket.off('notification:new');
+  }
+
+  const handleConnect = () => {
+    socket.emit('subscribe');
+  };
+
+  const handleNewNotification = (notification: NotificationItem) => {
+    upsertNotification(notification);
+  };
+
+  socket.on('connect', handleConnect);
+  socket.on('notification:new', handleNewNotification);
+
+  if (!socket.connected) {
+    socket.connect();
+  } else {
+    handleConnect();
+  }
+
+  activeSocketUserId = userId;
+  isNotificationSocketBound = true;
+};
+
+const releaseNotificationSocket = () => {
+  socketConsumerCount = Math.max(0, socketConsumerCount - 1);
+
+  if (socketConsumerCount > 0 || !isNotificationSocketBound) {
+    return;
+  }
+
+  const socket = socketClient.getNotificationSocket();
+  socket.off('connect');
+  socket.off('notification:new');
+  socket.disconnect();
+  activeSocketUserId = null;
+  isNotificationSocketBound = false;
+};
+
+const disconnectNotificationSocketImmediately = () => {
+  if (!isNotificationSocketBound) {
+    return;
+  }
+
+  const socket = socketClient.getNotificationSocket();
+  socket.off('connect');
+  socket.off('notification:new');
+  socket.disconnect();
+  activeSocketUserId = null;
+  isNotificationSocketBound = false;
+};
+
+const fetchNotifications = async () => {
+  if (notificationsFetchPromise) {
+    return notificationsFetchPromise;
+  }
+
+  updateNotificationState((current) => ({
+    ...current,
+    isLoading: true,
+    errorMessage: null,
+  }));
+
+  notificationsFetchPromise = notificationsApi
+    .getMyNotifications({ page: 1, limit: NOTIFICATIONS_PAGE_LIMIT })
+    .then(async ({ items }) => {
+      replaceNotifications(items);
+      const unreadCount = await notificationsApi.getUnreadCount().catch(() =>
+        getUnreadNotificationsCount(items),
+      );
+
+      updateNotificationState((current) => ({
+        ...current,
+        unreadCount,
+      }));
+    })
+    .catch((error: unknown) => {
+      if (!isNetworkError(error) && !isHttpStatusError(error, 401)) {
+        console.error('Failed to fetch notifications:', error);
+      }
+
+      updateNotificationState((current) => ({
+        ...current,
+        isLoading: false,
+        isInitialized: true,
+        errorMessage: isHttpStatusError(error, 401)
+          ? null
+          : getErrorMessage(error, 'Không thể tải thông báo lúc này.'),
+      }));
+    })
+    .finally(() => {
+      notificationsFetchPromise = null;
+    });
+
+  return notificationsFetchPromise;
+};
+
+const markNotificationAsRead = async (notificationId: string) => {
+  markNotificationReadInState(notificationId);
+
+  try {
+    const updatedNotification = await notificationsApi.markAsRead(notificationId);
+    upsertNotification(updatedNotification);
+    return updatedNotification;
+  } catch (error) {
+    await fetchNotifications();
+    throw error;
+  }
+};
+
+const markAllNotificationsAsRead = async () => {
+  markAllNotificationsReadInState();
+
+  try {
+    const updatedNotifications = await notificationsApi.markAllAsRead();
+    replaceNotifications(updatedNotifications);
+    return updatedNotifications;
+  } catch (error) {
+    await fetchNotifications();
+    throw error;
+  }
 };
 
 export function useSocket() {
   const { isAuthenticated, user } = useAuthStore();
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const state = useSyncExternalStore(
+    subscribeToNotificationStore,
+    getNotificationSnapshot,
+    getNotificationSnapshot,
+  );
 
   useEffect(() => {
-    if (!isAuthenticated || !user) {
+    socketConsumerCount += 1;
+
+    return () => {
+      releaseNotificationSocket();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated || !user?.id) {
       Promise.resolve().then(() => {
-        setNotifications((current) => (current.length > 0 ? [] : current));
+        disconnectNotificationSocketImmediately();
+        socketClient.setNotificationAuthToken(null);
+        resetNotificationsState();
       });
       return;
     }
 
-    // Tải danh sách thông báo ban đầu
-    notificationsApi.getMyNotifications()
-      .then((res: NotificationResponse | Notification[]) => {
-        // Response format is { statusCode, message, data: Notification[] }
-        const data = Array.isArray(res) ? res : res.data ?? [];
-        setNotifications(Array.isArray(data) ? data : []);
-      })
-      .catch((error: unknown) => {
-        if (!isNetworkError(error) && !isHttpStatusError(error, 401)) {
-          console.error('Failed to fetch notifications:', error);
-        }
-      });
-
-    const socket = socketClient.getNotificationSocket();
-    if (!socket.connected) {
-      socket.connect();
-    }
-
-    const handleConnect = () => {
-      socket.emit('subscribe', user.id);
-    };
-
-    if (socket.connected) {
-      handleConnect();
-    } else {
-      socket.on('connect', handleConnect);
-    }
-
-    const handleNewNotification = (notification: Notification) => {
-      setNotifications(prev => [notification, ...prev]);
-    };
-
-    socket.on('notification:new', handleNewNotification);
-
-    return () => {
-      socket.off('connect', handleConnect);
-      socket.off('notification:new', handleNewNotification);
-    };
-  }, [isAuthenticated, user]);
+    Promise.resolve().then(() => {
+      void fetchNotifications();
+      bindNotificationSocket(user.id);
+    });
+  }, [isAuthenticated, user?.id]);
 
   return {
-    notifications,
-    setNotifications,
+    notifications: state.items,
+    unreadCount: state.unreadCount,
+    isLoading: state.isLoading,
+    isInitialized: state.isInitialized,
+    errorMessage: state.errorMessage,
+    refreshNotifications: fetchNotifications,
+    markNotificationAsRead,
+    markAllNotificationsAsRead,
   };
 }

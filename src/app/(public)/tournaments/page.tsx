@@ -318,11 +318,32 @@ export default function TournamentsListPage() {
                   <div className="flex flex-col justify-between flex-grow min-w-0">
                     <div>
                       {/* Organizer / Category Header */}
-                      <div className="flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1.5">
+                      <div className="flex items-center gap-1.5 flex-wrap text-[10px] font-extrabold uppercase tracking-wider mb-1.5">
                         <span className="w-4.5 h-4.5 bg-rose-600 rounded-full flex items-center justify-center text-[9px] text-white font-black">
                           ★
                         </span>
-                        <span>{tournament.category?.name || 'MULTISPORT'}</span>
+                        <span className="text-slate-500">{tournament.category?.name || 'MULTISPORT'}</span>
+                        
+                        <span className="text-slate-350 text-slate-300">•</span>
+                        
+                        {/* Ranked or Unranked Badge */}
+                        <span className={`px-1.5 py-0.5 rounded text-[8px] font-extrabold ${
+                          tournament.isRanked
+                            ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                            : 'bg-slate-50 text-slate-600 border border-slate-200'
+                        }`}>
+                          {tournament.isRanked ? 'Xếp hạng ELO' : 'Phong trào'}
+                        </span>
+
+                        {/* Series / Parent Badge */}
+                        {tournament.parentId && (
+                          <>
+                            <span className="text-slate-300">•</span>
+                            <span className="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded text-[8px] font-extrabold border border-blue-200">
+                              Chuỗi giải đấu
+                            </span>
+                          </>
+                        )}
                       </div>
                       
                       {/* Title */}

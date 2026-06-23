@@ -8,10 +8,11 @@ interface TournamentStepperProps {
   onPublish: () => void;
   onNextStep: (nextStatus: Tournament['status']) => void;
   onPayPlatformFee?: () => void;
+  publishFeeAmount?: number;
   isLoading?: boolean;
 }
 
-export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlatformFee, isLoading }: TournamentStepperProps) {
+export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlatformFee, publishFeeAmount = 0, isLoading }: TournamentStepperProps) {
   const getStepIndex = () => {
     switch (tournament.status) {
       case 'DRAFT':
@@ -47,9 +48,9 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
       title: 'Sơ đồ & Lịch đấu',
       icon: <GitMerge className="w-4 h-4" />,
       description: 'Chốt sơ đồ nháp, phân lịch',
-      actionText: isRegistrationClosed ? 'Thanh toán phí sàn' : 'Khai mạc giải đấu',
+      actionText: (isRegistrationClosed && tournament.tournamentType !== 'CLUB') ? 'Thanh toán phí sàn' : 'Khai mạc giải đấu',
       onClick: () => {
-        if (isRegistrationClosed) {
+        if (isRegistrationClosed && tournament.tournamentType !== 'CLUB') {
           onPayPlatformFee?.();
         } else {
           onNextStep('IN_PROGRESS');
@@ -83,16 +84,21 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
       
       {tournament.status === 'DRAFT' && (
         <div className="flex flex-col items-center justify-center py-6 bg-slate-50/50 rounded-xl border border-dashed border-slate-300 mb-6">
-          <h4 className="font-bold text-slate-700 mb-2">Giải đấu chưa được Công bộ</h4>
+          <h4 className="font-bold text-slate-700 mb-2">Giải đấu chưa được công bố</h4>
           <p className="text-sm text-slate-500 mb-3 max-w-md text-center">
-            Bạn cần phải Công bố giải đấu (Publish) để kích hoạt Thanh tiến trình và bắt đầu nhận đăng ký.
+            Bạn cần công bố giải đấu để kích hoạt thanh tiến trình và bắt đầu nhận đăng ký.
           </p>
+          {publishFeeAmount > 0 && (
+            <p className="text-xs text-blue-700 font-semibold mb-3 text-center">
+              Bước tiếp theo sẽ chuyển sang thanh toán phí công bố: {publishFeeAmount.toLocaleString('vi-VN')}đ
+            </p>
+          )}
           <div className="bg-amber-50 text-amber-800 text-[13px] px-4 py-3 rounded-lg mb-5 max-w-lg border border-amber-200">
             <span className="font-bold flex items-center gap-1.5 mb-1 text-amber-900">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-              Lưu ý quan trọng trước khi Publish:
+              Lưu ý quan trọng trước khi công bố:
             </span>
-            <p className="mb-2 font-medium">Thông tin cơ bản phải được điền đầy đủ và chính xác. Vui lòng kiểm tra kĩ các trường sau trước khi Công bố:</p>
+            <p className="mb-2 font-medium">Thông tin cơ bản phải được điền đầy đủ và chính xác. Vui lòng kiểm tra kỹ các trường sau trước khi công bố:</p>
             <ul className="list-disc pl-6 space-y-0.5 mt-1 font-bold text-amber-900">
               <li>Lệ phí thi đấu</li>
               <li>Địa điểm / Sân thi đấu</li>
@@ -106,7 +112,7 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
             disabled={isLoading}
             className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 shadow-md shadow-blue-500/20"
           >
-            Công bố giải đấu <ChevronRight className="w-4 h-4 ml-1" />
+            {publishFeeAmount > 0 ? 'Thanh toán phí & công bố giải đấu' : 'Công bố giải đấu'} <ChevronRight className="w-4 h-4 ml-1" />
           </Button>
         </div>
       )}

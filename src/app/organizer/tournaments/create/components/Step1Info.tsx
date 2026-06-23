@@ -20,8 +20,9 @@ const step1Schema = z.object({
   name: z.string().min(5, 'Tên Giải đấu phải có ít nhất 5 ký tự').max(150, 'Tên Giải đấu quá dài'),
   description: z.string().max(1000, 'Mô tả tối đa 1000 ký tự').optional(),
   categoryId: z.string().min(1, 'Vui lòng chọn bộ môn thi đấu'),
-  tournamentType: z.enum(['CLUB', 'PUBLIC']),
+  tournamentType: z.enum(['CLUB', 'PUBLIC']).optional(),
   isRanked: z.boolean(),
+  registrationMode: z.enum(['OPEN', 'APPROVAL', 'INVITE_ONLY']),
   maxParticipants: z.string().refine((val) => {
     if (val === '') return true;
     const num = Number(val);
@@ -74,6 +75,7 @@ export default function Step1Info() {
       categoryId: formData.categoryId,
       tournamentType: formData.communityId ? (formData.tournamentType || 'CLUB') : 'PUBLIC',
       isRanked: formData.isRanked ?? true,
+      registrationMode: formData.registrationMode || 'OPEN',
       maxParticipants: formData.maxParticipants ? String(formData.maxParticipants) : '16',
       minElo: formData.minElo !== null && formData.minElo !== undefined ? String(formData.minElo) : '',
       maxElo: formData.maxElo !== null && formData.maxElo !== undefined ? String(formData.maxElo) : '',
@@ -84,6 +86,7 @@ export default function Step1Info() {
 
   const watchIsRanked = watch('isRanked');
   const watchTournamentType = watch('tournamentType') || (formData.communityId ? 'CLUB' : 'PUBLIC');
+  const watchRegistrationMode = watch('registrationMode') || 'OPEN';
   const [fees, setFees] = useState({
     feePublicRanked: 100000,
     feePublicUnranked: 50000,
@@ -126,8 +129,9 @@ export default function Step1Info() {
       name: trimAndNormalizeSpaces(data.name),
       description: data.description ? trimAndNormalizeSpaces(data.description) : '',
       categoryId: data.categoryId,
-      tournamentType: formData.communityId ? data.tournamentType : 'PUBLIC',
+      tournamentType: formData.communityId ? (data.tournamentType || 'CLUB') : 'PUBLIC',
       isRanked: data.isRanked,
+      registrationMode: data.registrationMode,
       maxParticipants: data.maxParticipants === '' ? null : Number(data.maxParticipants),
       minElo: data.minElo === '' || data.minElo === undefined ? null : Number(data.minElo),
       maxElo: data.maxElo === '' || data.maxElo === undefined ? null : Number(data.maxElo),
@@ -178,20 +182,42 @@ export default function Step1Info() {
         </div>
 
         {formData.communityId && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-semibold text-slate-700">Phạm vi giải đấu <span className="text-red-500">*</span></label>
-              <div className="flex gap-4 mt-3">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="radio" value="PUBLIC" {...register('tournamentType')} className="w-4 h-4 text-blue-600" />
-                  <span className="text-sm font-medium text-slate-700">Công khai (Public)</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="radio" value="CLUB" {...register('tournamentType')} className="w-4 h-4 text-blue-600" />
-                  <span className="text-sm font-medium text-slate-700">Nội bộ CLB (Club)</span>
-                </label>
-              </div>
-              {errors.tournamentType && <p className="text-xs font-semibold text-red-500">{errors.tournamentType.message}</p>}
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 flex flex-col gap-3">
+            <label className="text-sm font-semibold text-slate-900">Phạm vi giải đấu <span className="text-red-500">*</span></label>
+            <div className="flex flex-col sm:flex-row gap-4 mt-1">
+              <label className="flex-1 flex flex-col p-4 border rounded-xl bg-white hover:bg-slate-50 cursor-pointer transition-all relative border-slate-200">
+                <div className="flex items-center gap-2">
+                  <input 
+                    type="radio" 
+                    value="CLUB"
+                    {...register('tournamentType')}
+                    checked={watchTournamentType === 'CLUB'}
+                    onChange={() => setValue('tournamentType', 'CLUB')}
+                    className="w-4 h-4 text-blue-600 focus:ring-blue-500" 
+                  />
+                  <span className="text-sm font-bold text-slate-800">Giải nội bộ CLB</span>
+                </div>
+                <span className="text-[11px] text-slate-500 mt-2 pl-6 leading-relaxed">
+                  Chỉ các thành viên của câu lạc bộ này mới có quyền đăng ký tham gia. Hoàn toàn miễn phí xuất bản giải đấu.
+                </span>
+              </label>
+
+              <label className="flex-1 flex flex-col p-4 border rounded-xl bg-white hover:bg-slate-50 cursor-pointer transition-all relative border-slate-200">
+                <div className="flex items-center gap-2">
+                  <input 
+                    type="radio" 
+                    value="PUBLIC"
+                    {...register('tournamentType')}
+                    checked={watchTournamentType === 'PUBLIC'}
+                    onChange={() => setValue('tournamentType', 'PUBLIC')}
+                    className="w-4 h-4 text-blue-600 focus:ring-blue-500" 
+                  />
+                  <span className="text-sm font-bold text-slate-800">Giải đấu mở rộng</span>
+                </div>
+                <span className="text-[11px] text-slate-500 mt-2 pl-6 leading-relaxed">
+                  Cho phép tất cả người dùng trên hệ thống đăng ký tham gia. Phí xuất bản áp dụng bình thường theo tính chất giải.
+                </span>
+              </label>
             </div>
           </div>
         )}
@@ -236,6 +262,63 @@ export default function Step1Info() {
                 💡 <strong>Giải phong trào:</strong> Phí xuất bản Giải đấu là <strong>{(fees.feePublicUnranked / 1000).toString()}k VND</strong> (thanh toán khi xuất bản). Phí sàn <strong>{fees.pctPublicUnranked}%</strong> trên lệ phí tham gia của mỗi người nếu có thu phí. Không tính điểm ELO, Giải đấu tự động hoạt động ngay lập tức mà không cần Admin kiểm duyệt.
               </p>
             )}
+          </div>
+        </div>
+
+        {/* Registration Mode Option */}
+        <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 flex flex-col gap-3">
+          <label className="text-sm font-semibold text-slate-900">Chế độ đăng ký giải đấu <span className="text-red-500">*</span></label>
+          <div className="flex flex-col md:flex-row gap-4 mt-1">
+            <label className="flex-1 flex flex-col p-4 border rounded-xl bg-white hover:bg-slate-50 cursor-pointer transition-all relative border-slate-200">
+              <div className="flex items-center gap-2">
+                <input 
+                  type="radio" 
+                  value="OPEN"
+                  {...register('registrationMode')}
+                  checked={watchRegistrationMode === 'OPEN'}
+                  onChange={() => setValue('registrationMode', 'OPEN')}
+                  className="w-4 h-4 text-blue-600 focus:ring-blue-500" 
+                />
+                <span className="text-sm font-bold text-slate-800">Tự do</span>
+              </div>
+              <span className="text-[11px] text-slate-500 mt-2 pl-6 leading-relaxed">
+                Mọi VĐV đăng ký tham gia được chốt danh sách và tham gia giải ngay lập tức.
+              </span>
+            </label>
+
+            <label className="flex-1 flex flex-col p-4 border rounded-xl bg-white hover:bg-slate-50 cursor-pointer transition-all relative border-slate-200">
+              <div className="flex items-center gap-2">
+                <input 
+                  type="radio" 
+                  value="APPROVAL"
+                  {...register('registrationMode')}
+                  checked={watchRegistrationMode === 'APPROVAL'}
+                  onChange={() => setValue('registrationMode', 'APPROVAL')}
+                  className="w-4 h-4 text-blue-600 focus:ring-blue-500" 
+                />
+                <span className="text-sm font-bold text-slate-800">Xét duyệt</span>
+              </div>
+              <span className="text-[11px] text-slate-500 mt-2 pl-6 leading-relaxed">
+                Đăng ký của VĐV sẽ ở trạng thái chờ duyệt (PENDING). Người tổ chức duyệt thủ công.
+              </span>
+            </label>
+
+            <label className="flex-1 flex flex-col p-4 border rounded-xl bg-white hover:bg-slate-50 cursor-pointer transition-all relative border-slate-200">
+              <div className="flex items-center gap-2">
+                <input 
+                  type="radio" 
+                  value="INVITE_ONLY"
+                  {...register('registrationMode')}
+                  checked={watchRegistrationMode === 'INVITE_ONLY'}
+                  onChange={() => setValue('registrationMode', 'INVITE_ONLY')}
+                  className="w-4 h-4 text-blue-600 focus:ring-blue-500" 
+                />
+                <span className="text-sm font-bold text-slate-800">Chỉ nhận mã mời</span>
+              </div>
+              <span className="text-[11px] text-slate-500 mt-2 pl-6 leading-relaxed">
+                Chỉ những VĐV có mã mời/link mời mới đăng ký tham gia được.
+              </span>
+            </label>
           </div>
         </div>
 

@@ -1,5 +1,9 @@
 import { io, Socket } from 'socket.io-client';
 
+interface SocketAuthPayload {
+  token?: string;
+}
+
 const getSocketUrl = () => {
   if (process.env.NEXT_PUBLIC_SOCKET_URL) return process.env.NEXT_PUBLIC_SOCKET_URL;
   if (typeof window !== 'undefined') {
@@ -17,6 +21,7 @@ class SocketClient {
   private matchSocket: Socket | null = null;
   private notificationSocket: Socket | null = null;
   private loggedSocketErrors = new Set<string>();
+  private notificationAuthToken: string | null = null;
 
   private constructor() {}
 
@@ -68,6 +73,7 @@ class SocketClient {
     if (!this.notificationSocket) {
       this.notificationSocket = io(`${SOCKET_URL}/notifications`, {
         autoConnect: false,
+        auth: this.getNotificationAuthPayload(),
         withCredentials: true,
         transports: ['websocket', 'polling'],
         reconnectionAttempts: 2,
@@ -81,6 +87,14 @@ class SocketClient {
     return this.notificationSocket;
   }
 
+  public setNotificationAuthToken(token?: string | null) {
+    this.notificationAuthToken = token ?? null;
+
+    if (this.notificationSocket) {
+      this.notificationSocket.auth = this.getNotificationAuthPayload();
+    }
+  }
+
   public connectAll() {
     this.getChatSocket().connect();
     this.getMatchSocket().connect();
@@ -91,6 +105,18 @@ class SocketClient {
     if (this.chatSocket) this.chatSocket.disconnect();
     if (this.matchSocket) this.matchSocket.disconnect();
     if (this.notificationSocket) this.notificationSocket.disconnect();
+  }
+
+  private getNotificationAuthPayload(): SocketAuthPayload {
+    if (!this.notificationAuthToken) {
+      return {};
+    }
+
+    return {
+      token: this.notificationAuthToken.startsWith('Bearer ')
+        ? this.notificationAuthToken
+        : `Bearer ${this.notificationAuthToken}`,
+    };
   }
 }
 

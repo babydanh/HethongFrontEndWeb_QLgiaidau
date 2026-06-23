@@ -134,6 +134,23 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
   const [isCreatingDivision, setIsCreatingDivision] = useState(false);
   const [divisionPendingDelete, setDivisionPendingDelete] = useState<Division | null>(null);
   const [isDeletingDivision, setIsDeletingDivision] = useState(false);
+  useEffect(() => {
+    const requestedTab = searchParams.get('tab');
+    if (
+      requestedTab === 'basic' ||
+      requestedTab === 'schedule' ||
+      requestedTab === 'registration' ||
+      requestedTab === 'bracket' ||
+      requestedTab === 'finance' ||
+      requestedTab === 'permissions'
+    ) {
+      if (activeTab !== requestedTab) {
+        Promise.resolve().then(() => {
+          setActiveTab(requestedTab);
+        });
+      }
+    }
+  }, [activeTab, searchParams]);
 
   // Basic info tab form states
   const [name, setName] = useState('');
@@ -142,7 +159,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
   const [bannerUrl, setBannerUrl] = useState('');
   const [logoUrl, setLogoUrl] = useState('');
   const [prizeDescription, setPrizeDescription] = useState('');
-  const [contactInfo, setContactInfo] = useState({ phone: '', email: '' });
+  const [contactInfo, setContactInfo] = useState<Record<string, string | undefined>>({});
   const [visibility, setVisibility] = useState<'PUBLIC' | 'PRIVATE'>('PUBLIC');
   const [genderRestriction, setGenderRestriction] = useState<'MALE' | 'FEMALE' | 'MIXED' | ''>('');
 
@@ -173,10 +190,14 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
   const [setsToWin, setSetsToWin] = useState(2);
   const [pointsPerSet, setPointsPerSet] = useState(21);
   const [winByTwo, setWinByTwo] = useState(true);
+  const [maxDeucePoints, setMaxDeucePoints] = useState<number>(30);
+  const [superTiebreakEnabled, setSuperTiebreakEnabled] = useState<boolean>(false);
+  const [superTiebreakSetIndex, setSuperTiebreakSetIndex] = useState<number>(3);
+  const [superTiebreakPoints, setSuperTiebreakPoints] = useState<number>(10);
   const [isSavingConfig, setIsSavingConfig] = useState(false);
 
-  // Stage details modal states
   const [selectedStage, setSelectedStage] = useState<BracketStage | null>(null);
+  const [selectedRoundNumber, setSelectedRoundNumber] = useState<number | null>(null);
   const [stageVenueId, setStageVenueId] = useState('');
   const [stageScheduledDate, setStageScheduledDate] = useState('');
   const [stageNotificationNote, setStageNotificationNote] = useState('');
@@ -207,7 +228,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
   const [matchCourtName, setMatchCourtName] = useState('');
   const [matchCourtAddress, setMatchCourtAddress] = useState('');
   const [matchScheduledAt, setMatchScheduledAt] = useState('');
-  const [matchConfigType, setMatchConfigType] = useState<'tournament' | 'stage' | 'custom'>('tournament');
+  const [isCustomMatchConfig, setIsCustomMatchConfig] = useState<boolean>(false);
   const [matchSetsToWin, setMatchSetsToWin] = useState<number>(2);
   const [matchPointsPerSet, setMatchPointsPerSet] = useState<number>(21);
   const [matchDeuceEnabled, setMatchDeuceEnabled] = useState<boolean>(true);
@@ -216,7 +237,27 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
   const [isDeleting, setIsDeleting] = useState(false);
   const [isPayingPlatformFee, setIsPayingPlatformFee] = useState(false);
   const [isPayingPublishFee, setIsPayingPublishFee] = useState(false);
-  const [publishFeeAmount, setPublishFeeAmount] = useState(0);
+  const applyDivisionFormValues = useCallback((selected: Division) => {
+    setMatchType(
+      selected.genderRestriction === 'FEMALE'
+        ? (selected.matchType === 'SINGLES' ? MatchTypeUI.FEMALE_SINGLES : MatchTypeUI.FEMALE_DOUBLES)
+        : selected.genderRestriction === 'MIXED'
+          ? MatchTypeUI.MIXED_DOUBLES
+          : (selected.matchType === 'SINGLES' ? MatchTypeUI.MALE_SINGLES : MatchTypeUI.MALE_DOUBLES)
+    );
+    setMaxParticipants(selected.maxParticipants || 16);
+    setIsLimitEnabled(!!selected.maxParticipants);
+    setEntryFee(selected.entryFee || 0);
+    const rules = selected.roundConfig || {};
+    setSetsToWin(rules.setsToWin || 2);
+    setPointsPerSet(rules.pointsPerSet || 21);
+    setWinByTwo(rules.winByTwo !== undefined ? rules.winByTwo : true);
+    setMaxDeucePoints((rules.maxDeucePoints as number) || 30);
+    setSuperTiebreakEnabled(rules.superTiebreakEnabled !== undefined ? (rules.superTiebreakEnabled as boolean) : false);
+    setSuperTiebreakSetIndex((rules.superTiebreakSetIndex as number) || 3);
+    setSuperTiebreakPoints((rules.superTiebreakPoints as number) || 10);
+  }, []);
+  const publishFeeAmount = resolvePublishFeeAmount(tournament, feesConfig);
   const [newGalleryUrl, setNewGalleryUrl] = useState('');
   const [isAddingImage, setIsAddingImage] = useState(false);
 
@@ -367,10 +408,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
         setBannerUrl(t.bannerUrl || '');
         setLogoUrl(t.logoUrl || '');
         setPrizeDescription(t.prizeDescription || '');
-        setContactInfo({
-          phone: t.contactInfo?.phone || '',
-          email: t.contactInfo?.email || '',
-        });
+        setContactInfo(t.contactInfo || {});
         setVisibility(t.visibility || 'PUBLIC');
         setGenderRestriction(t.genderRestriction || '');
 
@@ -434,9 +472,18 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
           if (res.data.length === 0) return '';
           const requestedDivisionId = searchParams.get('divisionId');
           if (requestedDivisionId && res.data.some((division) => division.id === requestedDivisionId)) {
+            const requestedDivision = res.data.find((division) => division.id === requestedDivisionId);
+            if (requestedDivision) {
+              applyDivisionFormValues(requestedDivision);
+            }
             return requestedDivisionId;
           }
-          return res.data.some((division) => division.id === current) ? current : res.data[0].id;
+          const nextDivisionId = res.data.some((division) => division.id === current) ? current : res.data[0].id;
+          const nextDivision = res.data.find((division) => division.id === nextDivisionId);
+          if (nextDivision) {
+            applyDivisionFormValues(nextDivision);
+          }
+          return nextDivisionId;
         });
       } else {
         setDivisions([]);
@@ -453,7 +500,10 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
     try {
       const vRes = await venuesApi.getVenueById(vId);
       if (vRes.data && vRes.data.courts) {
-        setCourts(vRes.data.courts);
+        setCourts(vRes.data.courts.map(c => ({
+          id: c.id,
+          courtName: c.name
+        })));
       } else {
         setCourts([]);
       }
@@ -575,7 +625,6 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
         const feesRes = await tournamentsApi.getFeesConfig();
         if (feesRes.data) {
           setFeesConfig(feesRes.data);
-          setPublishFeeAmount(resolvePublishFeeAmount(t || null, feesRes.data));
         }
 
         const pList = await regionsApi.getProvinces();
@@ -613,38 +662,12 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
     init();
   }, [id, resolvePublishFeeAmount]);
 
-  useEffect(() => {
-    setPublishFeeAmount(resolvePublishFeeAmount(tournament, feesConfig));
-  }, [tournament, feesConfig, resolvePublishFeeAmount]);
-
-  // Watch selectedDivisionId - khi user click division, load config của division đó
-  useEffect(() => {
-    if (selectedDivisionId && divisions.length > 0) {
-      const selected = divisions.find(d => d.id === selectedDivisionId);
-      if (selected) {
-        // Update form fields từ selected division
-        setMatchType(
-          selected.genderRestriction === 'FEMALE' 
-            ? (selected.matchType === 'SINGLES' ? MatchTypeUI.FEMALE_SINGLES : MatchTypeUI.FEMALE_DOUBLES)
-            : selected.genderRestriction === 'MIXED'
-            ? MatchTypeUI.MIXED_DOUBLES
-            : (selected.matchType === 'SINGLES' ? MatchTypeUI.MALE_SINGLES : MatchTypeUI.MALE_DOUBLES)
-        );
-        setMaxParticipants(selected.maxParticipants || 16);
-        setIsLimitEnabled(!!selected.maxParticipants);
-        setEntryFee(selected.entryFee || 0);
-        const rules = selected.roundConfig || {};
-        setSetsToWin(rules.setsToWin || 2);
-        setPointsPerSet(rules.pointsPerSet || 21);
-        setWinByTwo(rules.winByTwo !== undefined ? rules.winByTwo : true);
-      }
-    }
-  }, [selectedDivisionId, divisions]);
-
   // refetchDivisionData đã được khai báo ở trên (trước handleGenerateBracket)
   // useEffect dùng lại cùng tham chiếu
   useEffect(() => {
-    refetchDivisionData();
+    Promise.resolve().then(() => {
+      refetchDivisionData();
+    });
   }, [refetchDivisionData]);
 
   // Fetch divisions khi page load
@@ -789,6 +812,9 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
         payloadGenderRestriction = GenderRestriction.MIXED;
       }
 
+      const selected = divisions.find(d => d.id === selectedDivisionId);
+      const currentRounds = selected?.roundConfig?.rounds || {};
+
       const data = {
         matchType: payloadMatchType,
         genderRestriction: payloadGenderRestriction,
@@ -798,6 +824,11 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
           setsToWin,
           pointsPerSet,
           winByTwo,
+          maxDeucePoints: winByTwo ? maxDeucePoints : null,
+          superTiebreakEnabled,
+          superTiebreakSetIndex: superTiebreakEnabled ? superTiebreakSetIndex : null,
+          superTiebreakPoints: superTiebreakEnabled ? superTiebreakPoints : null,
+          rounds: currentRounds,
         },
       };
       await divisionsApi.updateDivisionConfig(tournament.id, selectedDivisionId, data);
@@ -892,8 +923,15 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
     }
     try {
       setIsDeleting(true);
-      await tournamentsApi.deleteTournament(id);
-      toast.success('Đã xóa giải đấu thành công!');
+      const res = await tournamentsApi.deleteTournament(id);
+      const resData = res?.data as unknown as { pendingDelete?: boolean; message?: string } | undefined;
+
+      if (resData?.pendingDelete) {
+        toast.success(resData.message || 'Yêu cầu xóa giải đấu đã được gửi tới Quản trị viên để xét duyệt.');
+      } else {
+        toast.success('Đã xóa giải đấu thành công!');
+      }
+
       router.push('/organizer/tournaments');
     } catch (err) {
       toast.error(getErrorMessage(err));
@@ -1052,10 +1090,20 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
       toast.error('Vui lòng nhập Tên đội thi đấu');
       return;
     }
+    if (divisions.length > 0 && !selectedDivisionId) {
+      toast.error('Vui lòng chọn hình thức thi đấu trước khi gán suất đặc cách');
+      return;
+    }
     try {
       setIsAssigningWildcard(true);
-      await tournamentsApi.assignReservedSlot(id, wildcardEmailOrPhone.trim(), wildcardTeamName.trim());
-      toast.success('Đã gán suất đặc cách Wildcard thành công!');
+      await tournamentsApi.assignReservedSlot(
+        id,
+        wildcardEmailOrPhone.trim(),
+        wildcardTeamName.trim(),
+        undefined,
+        selectedDivisionId || undefined,
+      );
+      toast.success('Đã gán suất đặc cách thành công!');
       setWildcardEmailOrPhone('');
       setWildcardTeamName('');
       await refetchDivisionData();
@@ -1076,43 +1124,61 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
     }
   };
 
-  const handleOpenStageModal = (stage: BracketStage) => {
+  const handleOpenRoundModal = (stage: BracketStage, roundNumber: number) => {
     setSelectedStage(stage);
-    setStageVenueId(stage.venueId || '');
-    setStageScheduledDate(stage.scheduledDate ? stage.scheduledDate : '');
-    setStageNotificationNote(stage.notificationNote || '');
+    setSelectedRoundNumber(roundNumber);
     
-    // Populate matchSettings
-    setStageMaxSets(stage.matchSettings?.maxSets || 3);
-    setStagePointsPerSet(stage.matchSettings?.pointsPerSet || 21);
-    setStageWinBy2Points(stage.matchSettings?.winBy2Points !== undefined ? stage.matchSettings.winBy2Points : true);
-    setStageMaxDeucePoints(stage.matchSettings?.maxDeucePoints || 30);
-    setStageSuperTiebreakEnabled(stage.matchSettings?.superTiebreakEnabled || false);
-    setStageSuperTiebreakSetIndex(stage.matchSettings?.superTiebreakSetIndex || 3);
-    setStageSuperTiebreakPoints(stage.matchSettings?.superTiebreakPoints || 10);
+    // Load config for this specific round number
+    const roundConfig = stage.roundConfig?.rounds?.[roundNumber.toString()];
+    
+    if (roundConfig) {
+      setStageMaxSets(roundConfig.sets_to_win === 1 ? 1 : roundConfig.sets_to_win === 2 ? 3 : 5);
+      setStagePointsPerSet(roundConfig.points_per_set || 21);
+      setStageWinBy2Points(roundConfig.deuce_enabled !== undefined ? roundConfig.deuce_enabled : true);
+      setStageMaxDeucePoints(roundConfig.max_points || 30);
+      setStageSuperTiebreakEnabled(roundConfig.tiebreak_at !== undefined);
+      setStageSuperTiebreakSetIndex(3);
+      setStageSuperTiebreakPoints(roundConfig.tiebreak_at || 10);
+    } else {
+      // Fallback to division defaults
+      setStageMaxSets(setsToWin === 1 ? 1 : setsToWin === 2 ? 3 : 5);
+      setStagePointsPerSet(pointsPerSet);
+      setStageWinBy2Points(winByTwo);
+      setStageMaxDeucePoints(30);
+      setStageSuperTiebreakEnabled(false);
+      setStageSuperTiebreakSetIndex(3);
+      setStageSuperTiebreakPoints(10);
+    }
   };
 
   const handleSaveStageDetails = async () => {
-    if (!selectedStage) return;
+    if (!selectedStage || selectedRoundNumber === null) return;
     try {
       setIsSavingStage(true);
-      await tournamentsApi.updateStage(selectedStage.id, {
-        venueId: stageVenueId === '' ? null : stageVenueId,
-        scheduledDate: stageScheduledDate === '' ? null : stageScheduledDate,
-        notificationNote: stageNotificationNote === '' ? null : stageNotificationNote,
-        matchSettings: {
-          maxSets: stageMaxSets,
-          pointsPerSet: stagePointsPerSet,
-          winBy2Points: stageWinBy2Points,
-          maxDeucePoints: stageWinBy2Points ? stageMaxDeucePoints : null,
-          superTiebreakEnabled: stageSuperTiebreakEnabled,
-          superTiebreakSetIndex: stageSuperTiebreakEnabled ? stageSuperTiebreakSetIndex : null,
-          superTiebreakPoints: stageSuperTiebreakEnabled ? stageSuperTiebreakPoints : null,
+      
+      const currentRounds = selectedStage.roundConfig?.rounds || {};
+      const updatedRoundConfig = {
+        ...selectedStage.roundConfig,
+        rounds: {
+          ...currentRounds,
+          [selectedRoundNumber.toString()]: {
+            sets_to_win: stageMaxSets === 1 ? 1 : stageMaxSets === 3 ? 2 : 3,
+            points_per_set: stagePointsPerSet,
+            deuce_enabled: stageWinBy2Points,
+            max_points: stageWinBy2Points ? stageMaxDeucePoints : null,
+            tiebreak_at: stageSuperTiebreakEnabled ? stageSuperTiebreakPoints : undefined,
+          }
         }
+      };
+
+      await tournamentsApi.updateStage(selectedStage.id, {
+        roundConfig: updatedRoundConfig
       });
-      toast.success('Cập nhật thông tin vòng đấu thành công!');
+      
+      toast.success('Cập nhật cấu hình vòng đấu thành công!');
       setSelectedStage(null);
-      fetchTournamentData();
+      setSelectedRoundNumber(null);
+      await refetchDivisionData();
     } catch (err) {
       toast.error(getErrorMessage(err));
     } finally {
@@ -1144,22 +1210,29 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
     setMatchScheduledAt(match.scheduledAt ? match.scheduledAt.substring(0, 16) : '');
     
     if (match.matchConfig && Object.keys(match.matchConfig).length > 0) {
-      setMatchConfigType('custom');
+      setIsCustomMatchConfig(true);
       setMatchSetsToWin(match.matchConfig.setsToWin || 2);
       setMatchPointsPerSet(match.matchConfig.pointsPerSet || 21);
       setMatchDeuceEnabled(match.matchConfig.deuceEnabled !== false);
       setMatchMaxPoints(match.matchConfig.maxPoints || 30);
     } else {
+      setIsCustomMatchConfig(false);
+      
+      // Load current round settings or default settings as the starting custom values
       const stage = bracket?.stages.find(s => s.groups.some(g => g.id === match.groupId));
-      if (stage && (stage.matchSettings || stage.roundConfig)) {
-        setMatchConfigType('stage');
+      const roundConfig = stage?.roundConfig?.rounds?.[match.roundNumber?.toString()];
+      
+      if (roundConfig) {
+        setMatchSetsToWin(roundConfig.sets_to_win === 1 ? 1 : roundConfig.sets_to_win === 2 ? 2 : 3);
+        setMatchPointsPerSet(roundConfig.points_per_set || 21);
+        setMatchDeuceEnabled(roundConfig.deuce_enabled !== false);
+        setMatchMaxPoints(roundConfig.max_points || 30);
       } else {
-        setMatchConfigType('tournament');
+        setMatchSetsToWin(setsToWin);
+        setMatchPointsPerSet(pointsPerSet);
+        setMatchDeuceEnabled(winByTwo);
+        setMatchMaxPoints(30);
       }
-      setMatchSetsToWin(2);
-      setMatchPointsPerSet(21);
-      setMatchDeuceEnabled(true);
-      setMatchMaxPoints(30);
     }
   };
 
@@ -1168,26 +1241,13 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
     try {
       setIsScheduling(true);
       
-      let finalMatchConfig = null;
-      if (matchConfigType === 'custom') {
-        finalMatchConfig = {
-          setsToWin: matchSetsToWin,
-          pointsPerSet: matchPointsPerSet,
-          deuceEnabled: matchDeuceEnabled,
-          tiebreakAt: matchPointsPerSet - 1,
-          maxPoints: matchMaxPoints,
-        };
-      } else if (matchConfigType === 'tournament') {
-        finalMatchConfig = {
-          setsToWin: setsToWin,
-          pointsPerSet: pointsPerSet,
-          deuceEnabled: winByTwo,
-          tiebreakAt: pointsPerSet - 1,
-          maxPoints: pointsPerSet + 9,
-        };
-      } else if (matchConfigType === 'stage') {
-        finalMatchConfig = null;
-      }
+      const finalMatchConfig = isCustomMatchConfig ? {
+        setsToWin: matchSetsToWin,
+        pointsPerSet: matchPointsPerSet,
+        deuceEnabled: matchDeuceEnabled,
+        tiebreakAt: matchPointsPerSet - 1,
+        maxPoints: matchDeuceEnabled ? matchMaxPoints : null,
+      } : null;
 
       await tournamentsApi.updateMatchSchedule(selectedMatch.id, {
         courtName: matchCourtName === '' ? null : matchCourtName,
@@ -1211,6 +1271,8 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
         return <Badge className="bg-slate-100 text-slate-700">Nháp (Ẩn)</Badge>;
       case 'REGISTRATION_OPEN':
         return <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200">Mở Đăng Ký</Badge>;
+      case 'PENDING_APPROVAL':
+        return <Badge className="bg-cyan-50 text-cyan-700 border-cyan-200">Chờ duyệt công bố</Badge>;
       case 'REGISTRATION_CLOSED':
         return <Badge className="bg-amber-50 text-amber-700 border-amber-200">Đóng Đăng Ký</Badge>;
       case 'UPCOMING':
@@ -1288,6 +1350,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
           tournament={tournament}
           onPublish={publishFeeAmount > 0 ? handlePayPublishFee : handlePublish}
           onNextStep={handleTournamentStepTransition}
+          publishFeeAmount={publishFeeAmount}
           isLoading={isLoading || isPayingPublishFee}
         />
 
@@ -1322,7 +1385,10 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                   >
                     <button
                       type="button"
-                      onClick={() => setSelectedDivisionId(div.id)}
+                      onClick={() => {
+                        setSelectedDivisionId(div.id);
+                        applyDivisionFormValues(div);
+                      }}
                       className="flex items-center gap-2 px-3 py-2 text-left"
                       title={`${div.name} • ${getFormatLabel(div.matchType, div.genderRestriction)}`}
                     >
@@ -1419,7 +1485,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
               activeTab === 'bracket' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-850 hover:bg-slate-50'
             }`}
           >
-            <GitBranch className="w-3.5 h-3.5" /> Sơ đồ Bracket
+            <GitBranch className="w-3.5 h-3.5" /> Sơ đồ thi đấu
           </button>
           <button
             onClick={() => setActiveTab('finance')}
@@ -1427,7 +1493,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
               activeTab === 'finance' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-850 hover:bg-slate-50'
             }`}
           >
-            <DollarSign className="w-3.5 h-3.5" /> Tài Chính & Payout
+            <DollarSign className="w-3.5 h-3.5" /> Tài chính & rút tiền
           </button>
           <button
             onClick={() => setActiveTab('permissions')}
@@ -1519,7 +1585,6 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
             setRegistrationEndDate={setRegistrationEndDate}
             isSavingConfig={isSavingConfig}
             handleSaveScheduleDetails={handleSaveScheduleDetails}
-            handleOpenStageModal={handleOpenStageModal}
           />
         )}
 
@@ -1539,7 +1604,8 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
             wildcardTeamName={wildcardTeamName}
             setWildcardTeamName={setWildcardTeamName}
             isAssigningWildcard={isAssigningWildcard}
-            handlePublish={handlePublish}
+            publishFeeAmount={publishFeeAmount}
+            handlePublish={publishFeeAmount > 0 ? handlePayPublishFee : handlePublish}
             handleOpenLockModal={handleOpenLockModal}
             handleUpdateStatus={handleUpdateStatus}
             handleSeedMockData={handleSeedMockData}
@@ -1562,7 +1628,29 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
             isGeneratingBracket={isGeneratingBracket}
             handleGenerateBracket={handleGenerateBracket}
             handleOpenScheduling={handleOpenScheduling}
-            handleOpenStageModal={handleOpenStageModal}
+            handleOpenRoundModal={handleOpenRoundModal}
+            isLimitEnabled={isLimitEnabled}
+            setIsLimitEnabled={setIsLimitEnabled}
+            maxParticipants={maxParticipants}
+            setMaxParticipants={setMaxParticipants}
+            matchType={matchType}
+            setMatchType={setMatchType}
+            setsToWin={setsToWin}
+            setSetsToWin={setSetsToWin}
+            pointsPerSet={pointsPerSet}
+            setPointsPerSet={setPointsPerSet}
+            winByTwo={winByTwo}
+            setWinByTwo={setWinByTwo}
+            maxDeucePoints={maxDeucePoints}
+            setMaxDeucePoints={setMaxDeucePoints}
+            superTiebreakEnabled={superTiebreakEnabled}
+            setSuperTiebreakEnabled={setSuperTiebreakEnabled}
+            superTiebreakSetIndex={superTiebreakSetIndex}
+            setSuperTiebreakSetIndex={setSuperTiebreakSetIndex}
+            superTiebreakPoints={superTiebreakPoints}
+            setSuperTiebreakPoints={setSuperTiebreakPoints}
+            isSavingConfig={isSavingConfig}
+            handleSaveMatchConfig={handleSaveMatchConfig}
           />
         )}
 
@@ -1597,51 +1685,29 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
       </div>
 
       {/* STAGE DETAILS / OVERRIDE CONFIG MODAL */}
-      {selectedStage && (
-        <Modal open={!!selectedStage} onOpenChange={(open) => { if (!open) setSelectedStage(null); }}>
+      {selectedStage && selectedRoundNumber !== null && (
+        <Modal open={!!selectedStage} onOpenChange={(open) => { if (!open) { setSelectedStage(null); setSelectedRoundNumber(null); } }}>
           <ModalContent className="bg-white rounded-2xl p-6">
             <ModalHeader>
               <ModalTitle className="text-xl font-bold text-slate-900">
-                Cấu hình riêng cho vòng {selectedStage.name}
+                Cấu hình riêng cho vòng {(() => {
+                  const getRoundLabelText = (roundNum: number, maxRound: number) => {
+                    const ri = roundNum - 1;
+                    const fromEnd = maxRound - 1 - ri;
+                    if (fromEnd === 0) return 'Chung kết';
+                    if (fromEnd === 1) return 'Bán kết';
+                    if (fromEnd === 2) return 'Tứ kết';
+                    if (fromEnd === 3) return 'Vòng 16';
+                    return `Vòng ${roundNum}`;
+                  };
+                  const matches = selectedStage.groups?.flatMap(g => g.matches) || [];
+                  const maxRound = matches.length > 0 ? Math.max(...matches.map(m => m.roundNumber)) : 0;
+                  return getRoundLabelText(selectedRoundNumber, maxRound);
+                })()}
               </ModalTitle>
             </ModalHeader>
             <div className="space-y-4 mt-4 max-h-[70vh] overflow-y-auto pr-2">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-semibold text-slate-700">Chọn địa điểm riêng</label>
-                <select
-                  value={stageVenueId}
-                  onChange={(e) => setStageVenueId(e.target.value)}
-                  className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10"
-                >
-                  <option value="">-- Kế thừa địa điểm của giải đấu --</option>
-                  {venues.map(v => (
-                    <option key={v.id} value={v.id}>{v.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <Input
-                label="Chọn ngày thi đấu của vòng"
-                type="date"
-                value={stageScheduledDate}
-                onChange={(e) => setStageScheduledDate(e.target.value)}
-              />
-
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-semibold text-slate-700">Thông báo đặc biệt cho vòng này</label>
-                <Textarea
-                  value={stageNotificationNote}
-                  onChange={(e) => setStageNotificationNote(e.target.value)}
-                  placeholder="Vd: Vòng bán kết dời sang sân trong nhà do trời mưa..."
-                  className="h-16 text-sm"
-                />
-              </div>
-
-              <div className="border-t pt-4 space-y-4">
-                <h4 className="font-bold text-slate-800 text-sm flex items-center gap-1.5">
-                  <Trophy className="w-4 h-4 text-emerald-600" /> Thiết lập luật thi đấu nâng cao
-                </h4>
-                
+              <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1.5">
                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Số set tối đa</label>
@@ -1650,14 +1716,14 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                       onChange={(e) => setStageMaxSets(Number(e.target.value))}
                       className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10"
                     >
-                      <option value={1}>1 Set</option>
-                      <option value={3}>3 Set (Thắng 2)</option>
-                      <option value={5}>5 Set (Thắng 3)</option>
+                      <option value={1}>1 set</option>
+                      <option value={3}>Thắng 2 set</option>
+                      <option value={5}>Thắng 3 set</option>
                     </select>
                   </div>
 
                   <Input
-                    label="Số điểm mỗi Set"
+                    label="Số điểm mỗi set"
                     type="number"
                     value={stagePointsPerSet}
                     onChange={(e) => setStagePointsPerSet(Number(e.target.value))}
@@ -1673,12 +1739,12 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                       onChange={(e) => setStageWinBy2Points(e.target.checked)}
                       className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4"
                     />
-                    <span className="text-xs font-semibold text-slate-700">Yêu cầu thắng cách biệt 2 điểm (Deuce)</span>
+                    <span className="text-xs font-semibold text-slate-700">Yêu cầu thắng cách biệt 2 điểm</span>
                   </label>
 
                   {stageWinBy2Points && (
                     <Input
-                      label="Điểm chạm tối đa (Max Deuce Points - Golden Point)"
+                      label="Điểm chạm tối đa khi hòa 2 điểm"
                       type="number"
                       value={stageMaxDeucePoints}
                       onChange={(e) => setStageMaxDeucePoints(Number(e.target.value))}
@@ -1694,22 +1760,22 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                       type="checkbox"
                       checked={stageSuperTiebreakEnabled}
                       onChange={(e) => setStageSuperTiebreakEnabled(e.target.checked)}
-                      className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4"
+                      className="rounded text-blue-650 focus:ring-blue-500 w-4 h-4"
                     />
-                    <span className="text-xs font-semibold text-slate-700">Set quyết định Tie-break / Super Tie-break</span>
+                    <span className="text-xs font-semibold text-slate-700">Set quyết định dùng siêu tie-break</span>
                   </label>
 
                   {stageSuperTiebreakEnabled && (
                     <div className="grid grid-cols-2 gap-3 mt-2">
                       <Input
-                        label="Áp dụng ở Set thứ"
+                        label="Áp dụng ở set thứ"
                         type="number"
                         value={stageSuperTiebreakSetIndex}
                         onChange={(e) => setStageSuperTiebreakSetIndex(Number(e.target.value))}
                         className="bg-white h-9 text-xs"
                       />
                       <Input
-                        label="Số điểm thắng Tie-break"
+                        label="Số điểm thắng siêu tie-break"
                         type="number"
                         value={stageSuperTiebreakPoints}
                         onChange={(e) => setStageSuperTiebreakPoints(Number(e.target.value))}
@@ -1724,7 +1790,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
               <div className="flex justify-end gap-3 pt-4 border-t mt-4">
                 <Button
                   variant="outline"
-                  onClick={() => setSelectedStage(null)}
+                  onClick={() => { setSelectedStage(null); setSelectedRoundNumber(null); }}
                   disabled={isSavingStage}
                   className="border-slate-200 text-slate-650 font-semibold hover:bg-slate-50"
                 >
@@ -1839,77 +1905,34 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                 onChange={setMatchScheduledAt}
               />
 
-              {/* 3-LEVEL RULES CONFIGURATION */}
+              {/* CUSTOM RULES CHECKBOX */}
               <div className="border-t pt-4 mt-4 space-y-3">
-                <label className="text-sm font-bold text-slate-800 uppercase tracking-wider block">Thiết lập luật thi đấu (3 cấp độ)</label>
-                
-                <div className="grid grid-cols-1 gap-2 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
-                  <label className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-white transition-colors cursor-pointer select-none">
-                    <input
-                      type="radio"
-                      name="matchConfigType"
-                      value="tournament"
-                      checked={matchConfigType === 'tournament'}
-                      onChange={() => setMatchConfigType('tournament')}
-                      className="w-4 h-4 text-blue-650"
-                    />
-                    <div className="flex flex-col">
-                      <span className="text-xs font-bold text-slate-800">Cấp 1: Áp dụng Mặc định Cả Giải</span>
-                      <span className="text-[10px] text-slate-500 font-medium">({setsToWin} set chạm thắng, {pointsPerSet} điểm/set, {winByTwo ? 'Có Deuce' : 'Không Deuce'})</span>
-                    </div>
-                  </label>
-
-                  <label className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-white transition-colors cursor-pointer select-none">
-                    <input
-                      type="radio"
-                      name="matchConfigType"
-                      value="stage"
-                      checked={matchConfigType === 'stage'}
-                      onChange={() => setMatchConfigType('stage')}
-                      className="w-4 h-4 text-blue-650"
-                    />
-                    <div className="flex flex-col">
-                      <span className="text-xs font-bold text-slate-800">Cấp 2: Áp dụng Mặc định Cả Vòng Đấu</span>
-                      <span className="text-[10px] text-slate-500 font-medium">
-                        ({(() => {
-                          const stage = bracket?.stages.find(s => s.groups.some(g => g.id === selectedMatch.groupId));
-                          if (stage?.matchSettings) {
-                            return `${stage.matchSettings.maxSets === 1 ? '1' : stage.matchSettings.maxSets === 3 ? '2 (Best of 3)' : '3 (Best of 5)'} set chạm thắng, ${stage.matchSettings.pointsPerSet} điểm/set, ${stage.matchSettings.winBy2Points ? 'Có Deuce' : 'Không Deuce'}`;
-                          }
-                          return 'Theo thiết lập của Vòng đấu này';
-                        })()})
-                      </span>
-                    </div>
-                  </label>
-
-                  <label className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-white transition-colors cursor-pointer select-none">
-                    <input
-                      type="radio"
-                      name="matchConfigType"
-                      value="custom"
-                      checked={matchConfigType === 'custom'}
-                      onChange={() => setMatchConfigType('custom')}
-                      className="w-4 h-4 text-blue-650"
-                    />
-                    <div className="flex flex-col">
-                      <span className="text-xs font-bold text-slate-800">Cấp 3: Cấu hình riêng cho trận đấu này</span>
-                      <span className="text-[10px] text-slate-500 font-medium">Thiết lập tùy chỉnh chỉ áp dụng cho riêng cặp đấu này</span>
-                    </div>
+                <div className="flex items-center gap-2.5 p-2 bg-slate-50 rounded-xl border border-slate-200">
+                  <input
+                    type="checkbox"
+                    id="isCustomMatchConfig"
+                    checked={isCustomMatchConfig}
+                    onChange={(e) => setIsCustomMatchConfig(e.target.checked)}
+                    className="w-4 h-4 text-blue-600 rounded border-slate-350 cursor-pointer focus:ring-blue-500"
+                  />
+                  <label htmlFor="isCustomMatchConfig" className="flex flex-col cursor-pointer select-none">
+                    <span className="text-xs font-bold text-slate-800">Cấu hình riêng cho trận đấu này</span>
+                    <span className="text-[10px] text-slate-500 font-semibold">Tự động kế thừa luật của vòng đấu hoặc mặc định hình thức thi đấu nếu không chọn</span>
                   </label>
                 </div>
 
-                {matchConfigType === 'custom' && (
+                {isCustomMatchConfig && (
                   <div className="bg-white p-4 rounded-xl border border-slate-200 grid grid-cols-1 sm:grid-cols-2 gap-4 animate-in slide-in-from-top-2 duration-200">
                     <div className="flex flex-col gap-1.5">
                       <label className="text-xs font-bold text-slate-650 uppercase">Số set chạm thắng</label>
                       <select
                         value={matchSetsToWin}
                         onChange={(e) => setMatchSetsToWin(Number(e.target.value))}
-                        className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs h-10"
+                        className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs h-10 font-bold"
                       >
-                        <option value={1}>1 Set</option>
-                        <option value={2}>2 Set (Best of 3)</option>
-                        <option value={3}>3 Set (Best of 5)</option>
+                        <option value={1}>1 set</option>
+                        <option value={2}>Thắng 2 set</option>
+                        <option value={3}>Thắng 3 set</option>
                       </select>
                     </div>
                     <div className="flex flex-col gap-1.5">
@@ -1918,7 +1941,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                         type="number"
                         value={matchPointsPerSet}
                         onChange={(e) => setMatchPointsPerSet(Number(e.target.value))}
-                        className="bg-white text-xs h-10"
+                        className="bg-white text-xs h-10 font-bold"
                       />
                     </div>
                     <div className="flex items-center gap-2 sm:col-span-2 mt-2">
@@ -1930,20 +1953,20 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                         className="w-4 h-4 text-blue-650 rounded cursor-pointer"
                       />
                       <label htmlFor="matchDeuceEnabled" className="text-xs font-bold text-slate-700 cursor-pointer select-none">
-                        Yêu cầu cách biệt 2 điểm (Deuce)
+                        Yêu cầu cách biệt 2 điểm
                       </label>
                     </div>
                     {matchDeuceEnabled && (
                       <div className="flex flex-col gap-1.5 sm:col-span-2 border-t pt-3.5 mt-1">
-                        <label className="text-xs font-bold text-slate-650 uppercase">Điểm tối đa của Set (Giới hạn Deuce)</label>
+                        <label className="text-xs font-bold text-slate-650 uppercase">Điểm tối đa của set khi hòa 2 điểm</label>
                         <Input
                           type="number"
                           value={matchMaxPoints}
                           onChange={(e) => setMatchMaxPoints(Number(e.target.value))}
                           placeholder="Ví dụ: 30"
-                          className="bg-white text-xs h-10 max-w-xs"
+                          className="bg-white text-xs h-10 max-w-xs font-bold"
                         />
-                        <p className="text-[10px] text-slate-450 font-semibold leading-relaxed">
+                        <p className="text-[10px] text-slate-550 font-semibold leading-relaxed">
                           Khi deuce kéo dài, đội chạm mốc điểm giới hạn này trước sẽ thắng set đấu đó (mặc định là 30).
                         </p>
                       </div>
@@ -1986,7 +2009,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
             <div className="mt-4 space-y-4">
               <div className="rounded-xl border border-red-100 bg-red-50 p-4">
                 <p className="text-sm font-bold text-red-900">
-                  Xác nhận xóa hình thức "{divisionPendingDelete.name}".
+                  Xác nhận xóa hình thức &quot;{divisionPendingDelete.name}&quot;.
                 </p>
                 <p className="mt-1 text-xs text-red-700">
                   Hành động này chỉ được phép khi hình thức chưa có người chơi đang hoạt động.
@@ -2068,9 +2091,9 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                   onChange={(e) => setNewDivisionBracketType(e.target.value)}
                   className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-11"
                 >
-                  <option value="SINGLE_ELIMINATION">Loại đơn (Single Elimination)</option>
-                  <option value="DOUBLE_ELIMINATION">Loại kép (Double Elimination)</option>
-                  <option value="ROUND_ROBIN">Vòng tròn (Round Robin)</option>
+                  <option value="SINGLE_ELIMINATION">Loại trực tiếp</option>
+                  <option value="DOUBLE_ELIMINATION">Nhánh thắng nhánh thua</option>
+                  <option value="ROUND_ROBIN">Vòng tròn</option>
                 </select>
               </div>
 

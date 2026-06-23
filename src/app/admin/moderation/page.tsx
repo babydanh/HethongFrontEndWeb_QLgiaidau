@@ -24,12 +24,13 @@ interface UserItem {
 }
 
 export default function ModerationPage() {
+  type BanType = 'WARN' | 'SOFT_BAN' | 'HARD_BAN';
   const [users, setUsers] = useState<UserItem[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState<UserItem | null>(null);
   const [showBanModal, setShowBanModal] = useState(false);
-  const [banType, setBanType] = useState<'WARN' | 'SOFT_BAN' | 'HARD_BAN'>('SOFT_BAN');
+  const [banType, setBanType] = useState<BanType>('SOFT_BAN');
   const [banReason, setBanReason] = useState('');
   const [banDurationDays, setBanDurationDays] = useState('7');
   const [processing, setProcessing] = useState(false);
@@ -269,7 +270,7 @@ export default function ModerationPage() {
                 <label className="text-xs text-slate-500">Hình thức xử phạt</label>
                 <select
                   value={banType}
-                  onChange={(e) => setBanType(e.target.value as any)}
+                  onChange={(e) => setBanType(e.target.value as BanType)}
                   className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 outline-none focus:border-blue-500 transition-colors"
                 >
                   <option value="WARN">Cảnh cáo (Gửi thông báo)</option>

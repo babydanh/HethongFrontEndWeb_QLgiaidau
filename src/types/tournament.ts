@@ -74,6 +74,7 @@ export interface Tournament {
   contactInfo?: {
     phone?: string;
     email?: string;
+    [key: string]: string | undefined;
   } | null;
   category?: Category;
   organizerId: string;
@@ -119,6 +120,7 @@ export interface Tournament {
     maxElo?: number | null;
     maxCombinedElo?: number | null;
     maxTeammateGap?: number | null;
+    registrationMode?: 'OPEN' | 'APPROVAL' | 'INVITE_ONLY';
   } | null;
   createdAt?: string;
   updatedAt?: string;

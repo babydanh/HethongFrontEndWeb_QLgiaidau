@@ -71,6 +71,7 @@ export default function AdminLayout({
     { name: 'Quản lý giải đấu', path: '/admin/tournaments', icon: Trophy },
     { name: 'Duyệt rút tiền', path: '/admin/payouts', icon: CreditCard },
     { name: 'Báo cáo vi phạm', path: '/admin/reports', icon: ShieldAlert },
+    { name: 'Duyệt đổi thông tin', path: '/admin/change-requests', icon: ShieldAlert },
     { name: 'Cấu hình hệ thống', path: '/admin/configs', icon: Settings },
   ];
 
@@ -172,11 +173,11 @@ export default function AdminLayout({
           {/* User Profile Info */}
           <div className="flex items-center gap-3">
             <div className="text-right hidden sm:block">
-              <p className="text-xs font-bold text-slate-800">{user.fullName}</p>
-              <p className="text-[10px] text-slate-500">{user.email}</p>
+              <p className="text-xs font-bold text-slate-800">{user?.fullName}</p>
+              <p className="text-[10px] text-slate-500">{user?.email}</p>
             </div>
             <div className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm uppercase">
-              {user.fullName.charAt(0)}
+              {user?.fullName?.charAt(0) || 'A'}
             </div>
           </div>
         </header>

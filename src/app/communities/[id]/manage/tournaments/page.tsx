@@ -16,6 +16,7 @@ import { useRouter } from 'next/navigation';
 import { getErrorMessage } from '@/utils/error';
 
 export default function ClubTournamentsPage({ params }: { params: Promise<{ id: string }> }) {
+  type CommunityTournamentMatchType = 'SINGLES' | 'DOUBLES' | 'MIXED_DOUBLES';
   const resolvedParams = use(params);
   const id = resolvedParams.id;
   const router = useRouter();
@@ -31,7 +32,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
   // Form states
   const [newTourneyName, setNewTourneyName] = useState('');
   const [newTourneyCategory, setNewTourneyCategory] = useState('');
-  const [newTourneyMatchType, setNewTourneyMatchType] = useState<'SINGLES' | 'DOUBLES' | 'MIXED_DOUBLES'>('DOUBLES');
+  const [newTourneyMatchType, setNewTourneyMatchType] = useState<CommunityTournamentMatchType>('DOUBLES');
   const [newTourneyMaxParticipants, setNewTourneyMaxParticipants] = useState(16);
 
   const fetchData = async () => {
@@ -302,7 +303,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
                     <label className="text-sm font-semibold text-slate-700">Hình thức thi đấu</label>
                     <select
                       value={newTourneyMatchType}
-                      onChange={(e) => setNewTourneyMatchType(e.target.value as any)}
+                      onChange={(e) => setNewTourneyMatchType(e.target.value as CommunityTournamentMatchType)}
                       className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="SINGLES">Đơn (Singles)</option>

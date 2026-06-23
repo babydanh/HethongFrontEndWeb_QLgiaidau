@@ -17,6 +17,10 @@ interface RawUserProfileResponse {
     gender?: string;
     address?: string;
     provinceCode?: string;
+    isGenderLocked?: boolean;
+    bankName?: string;
+    bankAccountNumber?: string;
+    bankAccountName?: string;
   };
   [key: string]: unknown;
 }
@@ -33,6 +37,12 @@ const mapUserProfile = (data: RawUserProfileResponse): UserProfile => {
     gender: data.profile?.gender,
     address: data.profile?.address,
     provinceCode: data.profile?.provinceCode,
+    isEmailVerified: data.isEmailVerified as boolean | undefined,
+    isPhoneVerified: data.isPhoneVerified as boolean | undefined,
+    isGenderLocked: data.profile?.isGenderLocked as boolean | undefined,
+    bankName: data.profile?.bankName,
+    bankAccountNumber: data.profile?.bankAccountNumber,
+    bankAccountName: data.profile?.bankAccountName,
   } as UserProfile;
 };
 
@@ -66,4 +76,9 @@ export const usersApi = {
   },
   changePassword: <T>(data: T) => api.patch<ApiResponse<{ message: string }>>('/users/change-password', data).then(res => res.data),
   deleteUser: (id: string) => api.delete<ApiResponse<{ message: string }>>(`/users/${id}`).then(res => res.data),
+  createChangeRequest: (data: { requestType: 'GENDER' | 'EMAIL'; newValue: string }) => api.post<ApiResponse<any>>('/users/change-requests', data).then(res => res.data),
+  deleteAccount: (data: { password?: string }) => api.post<ApiResponse<{ message: string }>>('/users/delete-account', data).then(res => res.data),
+  getAdminChangeRequests: (params?: { status?: string }) => api.get<ApiResponse<any[]>>('/users/admin/change-requests', { params }).then(res => res.data),
+  approveChangeRequest: (id: string, data?: { adminNote?: string }) => api.patch<ApiResponse<any>>(`/users/admin/change-requests/${id}/approve`, data).then(res => res.data),
+  rejectChangeRequest: (id: string, data?: { adminNote?: string }) => api.patch<ApiResponse<any>>(`/users/admin/change-requests/${id}/reject`, data).then(res => res.data),
 };

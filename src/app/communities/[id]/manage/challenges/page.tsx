@@ -51,7 +51,7 @@ export default function ClubChallengesPage({ params }: { params: Promise<{ id: s
   const fetchData = async () => {
     try {
       const cRes = await communitiesApi.getCommunityById(id);
-      setCommunity((cRes as any)?.data || cRes);
+      setCommunity(cRes.data || null);
 
       const chRes = await challengesApi.getChallenges(id);
       setChallenges(chRes.data || chRes || []);
@@ -396,7 +396,7 @@ export default function ClubChallengesPage({ params }: { params: Promise<{ id: s
             </ModalHeader>
             <div className="space-y-4 mt-4">
               <div className="bg-emerald-50 border border-emerald-150 p-3 rounded-lg text-emerald-950 text-xs font-semibold leading-relaxed">
-                Lời mời thách đấu khi được chấp thuận sẽ tự động sinh ra một giải đấu giao hữu (Club) nội bộ, làm sân chơi chung cho thành viên cả 2 câu lạc bộ.
+                Lời mời thách đấu khi được chấp thuận sẽ tự động sinh ra một giải đấu giao hữu nội bộ, làm sân chơi chung cho thành viên cả 2 câu lạc bộ.
               </div>
 
               <div className="flex flex-col gap-1.5">

@@ -119,8 +119,8 @@ export const tournamentsApi = {
         teamInviteLink?: string;
       }) | null;
     }>>(`/tournaments/${id}/my-registration`, { params: { _t: Date.now() } }),
-  withdraw: (id: string) =>
-    api.post<ApiResponse<{ message: string; refundAmount?: number }>>(`/tournaments/${id}/withdraw`, {}),
+  withdraw: (id: string, bankData?: { bankName?: string; bankAccountNumber?: string; bankAccountName?: string }) =>
+    api.post<ApiResponse<{ message: string; refundAmount?: number }>>(`/tournaments/${id}/withdraw`, bankData || {}),
   createParentTournament: <T>(data: T) => api.post<ApiResponse<ParentTournament>>('/tournaments/parent', data),
   getMyParentTournaments: () => api.get<ApiResponse<ParentTournament[]>>('/tournaments/parent/my'),
   getParentTournamentById: (id: string) => api.get<ApiResponse<ParentTournament & { divisions: Tournament[] }>>(`/tournaments/parent/${id}`),
@@ -183,8 +183,8 @@ export const tournamentsApi = {
     api.delete<ApiResponse<void>>(`/tournaments/${id}/mock-participants`, {
       params: divisionId ? { divisionId } : undefined,
     }),
-  assignReservedSlot: (id: string, userEmailOrPhone: string, teamName: string, partnerEmailOrPhone?: string) =>
-    api.post<ApiResponse<unknown>>(`/tournaments/${id}/reserve-slots`, { userEmailOrPhone, teamName, partnerEmailOrPhone }),
+  assignReservedSlot: (id: string, userEmailOrPhone: string, teamName: string, partnerEmailOrPhone?: string, divisionId?: string) =>
+    api.post<ApiResponse<unknown>>(`/tournaments/${id}/reserve-slots`, { userEmailOrPhone, teamName, partnerEmailOrPhone, divisionId }),
   updateParticipantStatus: (id: string, participantId: string, status: string) =>
     api.patch<ApiResponse<TournamentParticipant>>(`/tournaments/${id}/participants/${participantId}`, { status }),
 };

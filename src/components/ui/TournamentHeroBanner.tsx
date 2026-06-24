@@ -3,6 +3,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { Tournament } from '@/features/tournaments/api';
 import Link from 'next/link';
+import { Users } from 'lucide-react';
+import { formatDate } from '@/utils/format';
+import { getSportLogo } from '@/constants/sports';
 
 interface Props {
   tournaments: Tournament[];
@@ -181,8 +184,6 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[25
                   ) : (
                     <div className={`w-full h-full bg-gradient-to-tr ${getGradientBg(tournament.category?.name)}`} />
                   )}
-                  {/* Subtle dark overlay for readability */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/45 to-transparent" />
                 </div>
 
                 {/* Clickable Overlay for the whole card */}
@@ -196,7 +197,13 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[25
                 <div className="absolute bottom-6 left-6 right-6 z-20 pointer-events-none max-w-xl flex flex-col gap-2">
                   <div className="flex items-center gap-2">
                     {tournament.category?.name && (
-                      <span className="text-[10px] font-black uppercase tracking-wider text-blue-300 font-sans [text-shadow:_0_1px_2px_rgba(0,0,0,0.8)]">
+                      <span className="flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-blue-300 font-sans [text-shadow:_0_1px_2px_rgba(0,0,0,0.8)]">
+                        {(() => {
+                          const logo = getSportLogo(tournament.category?.name);
+                          return logo ? (
+                            <img src={logo} alt={tournament.category?.name || ''} className="w-3.5 h-3.5 object-contain brightness-150" />
+                          ) : null;
+                        })()}
                         {tournament.category.name}
                       </span>
                     )}
@@ -210,8 +217,8 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[25
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] md:text-xs text-slate-200 font-semibold [text-shadow:_0_1px_2px_rgba(0,0,0,0.8)]">
                     {tournament.startDate && (
                       <span className="flex items-center gap-1">
-                        📅 {new Date(tournament.startDate).toLocaleDateString('vi-VN', { day: 'numeric', month: 'short' })}
-                        {tournament.endDate && ` - ${new Date(tournament.endDate).toLocaleDateString('vi-VN', { day: 'numeric', month: 'short', year: 'numeric' })}`}
+                        📅 {formatDate(tournament.startDate)}
+                        {tournament.endDate && ` - ${formatDate(tournament.endDate)}`}
                       </span>
                     )}
                     {tournament.locationAddress && (
@@ -226,7 +233,13 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[25
                     )}
                   </div>
 
-                  <div className="flex items-center gap-3 mt-2 pointer-events-auto relative z-20">
+                  <div className="flex items-center gap-3 mt-2 pointer-events-auto relative z-20 flex-wrap">
+                    {tournament._count?.participants !== undefined && (
+                      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-black/40 backdrop-blur-sm border border-white/10 text-white text-[10px] font-bold">
+                        <Users className="w-3 h-3" />
+                        <span>{tournament._count.participants} VĐV</span>
+                      </div>
+                    )}
                     {tournament.status === 'REGISTRATION_OPEN' && (
                       <Link
                         href={`/tournaments/${tournament.id}/register`}

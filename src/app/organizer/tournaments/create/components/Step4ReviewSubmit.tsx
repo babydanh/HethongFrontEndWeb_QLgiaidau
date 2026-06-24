@@ -9,7 +9,7 @@ import type { CreateDivisionInput } from '@/features/tournaments/api';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { getErrorMessage } from '@/utils/error';
-import { formatCurrency } from '@/utils/format';
+import { formatCurrency, formatDateTime } from '@/utils/format';
 import { GenderRestriction } from '@/types/tournament';
 import type { TournamentFeesConfig } from '@/features/tournaments/api';
 
@@ -46,9 +46,40 @@ export default function Step4ReviewSubmit() {
     void loadFees();
   }, []);
 
+  const validateTournamentDraft = () => {
+    if (!formData.name.trim()) throw new Error('Thiếu tên giải đấu ở Bước 1.');
+    if (!formData.categoryId) throw new Error('Thiếu bộ môn thi đấu ở Bước 1.');
+    if (!primaryDivision || divisions.length === 0) throw new Error('Bạn chưa chọn hình thức thi đấu ở Bước 2.');
+    if (!formData.registrationStartDate || !formData.registrationEndDate || !formData.startDate || !formData.endDate) {
+      throw new Error('Thiếu mốc thời gian ở Bước 3.');
+    }
+
+    const registrationStart = new Date(formData.registrationStartDate);
+    const registrationEnd = new Date(formData.registrationEndDate);
+    const tournamentStart = new Date(formData.startDate);
+    const tournamentEnd = new Date(formData.endDate);
+
+    if (registrationStart >= registrationEnd) {
+      throw new Error('Ngày bắt đầu đăng ký phải trước ngày kết thúc đăng ký.');
+    }
+    if (registrationEnd > tournamentStart) {
+      throw new Error('Hạn chót đăng ký phải trước hoặc bằng ngày bắt đầu thi đấu.');
+    }
+    if (tournamentStart >= tournamentEnd) {
+      throw new Error('Ngày bắt đầu thi đấu phải trước ngày kết thúc.');
+    }
+    if ((formData.maxParticipants ?? 0) < 2) {
+      throw new Error('Số đội tham gia tối đa phải lớn hơn hoặc bằng 2.');
+    }
+    if ((formData.entryFee ?? 0) < 0) {
+      throw new Error('Lệ phí tham gia không được là số âm.');
+    }
+  };
+
   const handleCreateTournament = async () => {
     try {
       setIsSubmitting(true);
+      validateTournamentDraft();
 
       if (!primaryDivision) {
         throw new Error('Vui lòng chọn ít nhất một hình thức thi đấu.');
@@ -183,6 +214,41 @@ export default function Step4ReviewSubmit() {
             <span className="text-slate-400 font-medium">Phí tạo/công bố giải</span>
             <span className="font-semibold text-slate-900">
               {formatCurrency(publishFee)}
+            </span>
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <span className="text-slate-400 font-medium">Đăng ký mở từ</span>
+            <span className="font-semibold text-slate-900">
+              {formData.registrationStartDate ? formatDateTime(formData.registrationStartDate) : 'Chưa thiết lập'}
+            </span>
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <span className="text-slate-400 font-medium">Đăng ký kết thúc</span>
+            <span className="font-semibold text-slate-900">
+              {formData.registrationEndDate ? formatDateTime(formData.registrationEndDate) : 'Chưa thiết lập'}
+            </span>
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <span className="text-slate-400 font-medium">Thi đấu bắt đầu</span>
+            <span className="font-semibold text-slate-900">
+              {formData.startDate ? formatDateTime(formData.startDate) : 'Chưa thiết lập'}
+            </span>
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <span className="text-slate-400 font-medium">Thi đấu kết thúc</span>
+            <span className="font-semibold text-slate-900">
+              {formData.endDate ? formatDateTime(formData.endDate) : 'Chưa thiết lập'}
+            </span>
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <span className="text-slate-400 font-medium">Số đội tối đa</span>
+            <span className="font-semibold text-slate-900">
+              {formData.maxParticipants ?? 'Chưa thiết lập'}
             </span>
           </div>
         </div>

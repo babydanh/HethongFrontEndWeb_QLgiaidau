@@ -7,6 +7,7 @@ import { tournamentsApi, Tournament } from '@/features/tournaments/api';
 import { categoriesApi, Category } from '@/features/categories/api';
 import { regionsApi, Region } from '@/features/regions/api';
 import { formatDate, formatCurrency } from '@/utils/format';
+import { getSportLogo } from '@/constants/sports';
 import TournamentHeroBanner from '@/components/ui/TournamentHeroBanner';
 import LiveMatchesWidget from '@/components/ui/LiveMatchesWidget';
 
@@ -319,9 +320,14 @@ export default function TournamentsListPage() {
                     <div>
                       {/* Organizer / Category Header */}
                       <div className="flex items-center gap-1.5 flex-wrap text-[10px] font-extrabold uppercase tracking-wider mb-1.5">
-                        <span className="w-4.5 h-4.5 bg-rose-600 rounded-full flex items-center justify-center text-[9px] text-white font-black">
-                          ★
-                        </span>
+                        {(() => {
+                          const logo = getSportLogo(tournament.category?.name);
+                          return logo ? (
+                            <img src={logo} alt={tournament.category?.name || ''} className="w-4 h-4 object-contain" />
+                          ) : (
+                            <span className="w-4.5 h-4.5 bg-rose-600 rounded-full flex items-center justify-center text-[9px] text-white font-black">★</span>
+                          );
+                        })()}
                         <span className="text-slate-500">{tournament.category?.name || 'MULTISPORT'}</span>
                         
                         <span className="text-slate-350 text-slate-300">•</span>

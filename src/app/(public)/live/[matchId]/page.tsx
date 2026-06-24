@@ -1,10 +1,13 @@
 'use client';
 
 import { useState, use, useEffect } from 'react';
-import { matchesApi, Match, MatchScore } from '@/features/matches/api';
+import { matchesApi, Match, MatchComment } from '@/features/matches/api';
 import { useLiveMatch } from '@/hooks/useLiveMatch';
 import { useAuthStore } from '@/lib/zustand/authStore';
-import { Trophy, Clock, MapPin, Activity, Plus, Minus, Check, Play, AlertCircle, Camera, MessageSquare, Send, ArrowLeft } from 'lucide-react';
+import { socketClient } from '@/lib/socket';
+import { getErrorMessage } from '@/utils/error';
+import { trimAndNormalizeSpaces } from '@/utils/string';
+import { Trophy, Clock, MapPin, Activity, Plus, Minus, Check, Play, AlertCircle, Camera, MessageSquare, Send, Eye } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 
@@ -12,49 +15,60 @@ interface Props {
   params: Promise<{ matchId: string }>;
 }
 
-const INITIAL_COMMENTS = [
-  {
-    id: 'seed-comment-1',
-    user: { fullName: 'Nguyễn Văn Hùng', avatarUrl: null },
-    commentText: 'Trận đấu hấp dẫn quá! Cố lên cả hai bên!',
-    createdAt: '2026-06-22T10:00:00.000Z',
-  },
-  {
-    id: 'seed-comment-2',
-    user: { fullName: 'Trần Thị Mai', avatarUrl: null },
-    commentText: 'Set này căng thẳng thật sự, điểm số bám đuổi từng nút.',
-    createdAt: '2026-06-22T10:03:00.000Z',
-  },
-] satisfies { id: string; user: { fullName: string; avatarUrl?: string | null }; commentText: string; createdAt: string }[];
-
 export default function LiveMatchPage({ params }: Props) {
   const resolvedParams = use(params);
   const matchId = resolvedParams.matchId;
-  const { match, scores, setMatch, setScores, isLoading, error } = useLiveMatch(matchId);
+  const { match, scores, viewerCount, setMatch, setScores, isLoading, error } = useLiveMatch(matchId);
   const { user } = useAuthStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCommentSubmitting, setIsCommentSubmitting] = useState(false);
 
-  // Comments state
-  const [comments, setComments] = useState<{ id: string; user: { fullName: string; avatarUrl?: string | null }; commentText: string; createdAt: string }[]>(INITIAL_COMMENTS);
+  const [comments, setComments] = useState<MatchComment[]>([]);
   const [commentText, setCommentText] = useState('');
 
-  const handlePostComment = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!commentText.trim()) return;
+  useEffect(() => {
+    let isMounted = true;
 
-    const newComment = {
-      id: Date.now().toString(),
-      user: {
-        fullName: user?.fullName || 'Người xem ẩn danh',
-        avatarUrl: user?.avatarUrl || null
-      },
-      commentText: commentText.trim(),
-      createdAt: new Date().toISOString()
+    const fetchComments = async () => {
+      try {
+        const data = await matchesApi.getComments(matchId);
+        if (isMounted) {
+          setComments(data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch match comments:', err);
+      }
     };
 
-    setComments(prev => [newComment, ...prev]);
-    setCommentText('');
-  };
+    void fetchComments();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [matchId]);
+
+  useEffect(() => {
+    const socket = socketClient.getMatchSocket();
+
+    const handleIncomingComment = (comment: MatchComment) => {
+      if (comment.matchId !== matchId) {
+        return;
+      }
+
+      setComments((prev) => {
+        if (prev.some((item) => item.id === comment.id)) {
+          return prev;
+        }
+        return [comment, ...prev];
+      });
+    };
+
+    socket.on('comment:new', handleIncomingComment);
+
+    return () => {
+      socket.off('comment:new', handleIncomingComment);
+    };
+  }, [matchId]);
 
   if (isLoading) {
     return (
@@ -84,20 +98,35 @@ export default function LiveMatchPage({ params }: Props) {
 
   const team1Name = match.participant1?.teamName || 'Chưa xác định';
   const team2Name = match.participant2?.teamName || 'Chưa xác định';
+  const hasAdminRole = user?.roles?.includes('ADMIN');
+  const hasOrganizerRole = user?.roles?.includes('ORGANIZER');
 
-  // Check referee permissions (Only tournament creator/admin/organizers can edit on the web.
-  // Referees have a read-only view on the web, reserving referee score entries for the mobile app).
-  const isReferee =
-    user?.roles.includes('ADMIN') ||
-    user?.roles.includes('ORGANIZER') ||
-    match.tournament?.createdBy === user?.id;
+  const isAssignedReferee = !!match.refereeId && match.refereeId === user?.id;
+  const canControlLiveMatch =
+    hasAdminRole ||
+    hasOrganizerRole ||
+    match.tournament?.createdBy === user?.id ||
+    isAssignedReferee;
 
   const currentSetIdx = scores.findIndex((s) => !s.isFinished);
   const activeSetIdx = currentSetIdx !== -1 ? currentSetIdx : scores.length - 1;
   const currentSet = scores[activeSetIdx] || { team1Score: 0, team2Score: 0, isFinished: false };
+  const normalizedCommentText = trimAndNormalizeSpaces(commentText);
+
+  const ensureCanControlLiveMatch = () => {
+    if (canControlLiveMatch) {
+      return true;
+    }
+
+    toast.error('Chỉ Ban tổ chức hoặc Trọng tài được phân công mới có quyền điều khiển trận này.');
+    return false;
+  };
 
   // Handle Score Updates
   const handleUpdatePoints = async (team: 1 | 2, action: 'inc' | 'dec') => {
+    if (!ensureCanControlLiveMatch()) {
+      return;
+    }
     if (isSubmitting) return;
     setIsSubmitting(true);
 
@@ -133,9 +162,13 @@ export default function LiveMatchPage({ params }: Props) {
 
       setMatch(res);
       setScores(res.scoreDetails?.sets || []);
+      toast.success(
+        `${team === 1 ? team1Name : team2Name} ${action === 'inc' ? 'được cộng' : 'bị trừ'} 1 điểm ở Set ${activeIdx + 1}.`,
+        { id: `score-${matchId}` },
+      );
     } catch (err: unknown) {
       console.error(err);
-      toast.error('Lỗi khi cập nhật điểm số');
+      toast.error(getErrorMessage(err, 'Không thể cập nhật điểm số của set đang diễn ra.'));
     } finally {
       setIsSubmitting(false);
     }
@@ -143,6 +176,9 @@ export default function LiveMatchPage({ params }: Props) {
 
   // Handle Match Status Update
   const handleUpdateStatus = async (newStatus: Match['status']) => {
+    if (!ensureCanControlLiveMatch()) {
+      return;
+    }
     if (isSubmitting) return;
     setIsSubmitting(true);
 
@@ -165,10 +201,14 @@ export default function LiveMatchPage({ params }: Props) {
 
       const res = await matchesApi.updateStatus(matchId, { status: newStatus });
       setMatch(res);
-      toast.success(newStatus === 'ONGOING' ? 'Đã bắt đầu trận đấu' : 'Trận đấu đã kết thúc');
+      toast.success(
+        newStatus === 'ONGOING'
+          ? `Đã bắt đầu trận ${team1Name} vs ${team2Name}. Bảng điểm live đang hoạt động.`
+          : `Đã chuyển trạng thái trận ${team1Name} vs ${team2Name} sang kết thúc.`,
+      );
     } catch (err: unknown) {
       console.error(err);
-      toast.error('Lỗi khi cập nhật trạng thái trận đấu');
+      toast.error(getErrorMessage(err, 'Không thể cập nhật trạng thái trận đấu.'));
     } finally {
       setIsSubmitting(false);
     }
@@ -176,6 +216,9 @@ export default function LiveMatchPage({ params }: Props) {
 
   // Handle Finish Current Set
   const handleFinishSet = async () => {
+    if (!ensureCanControlLiveMatch()) {
+      return;
+    }
     if (isSubmitting) return;
     setIsSubmitting(true);
 
@@ -216,10 +259,18 @@ export default function LiveMatchPage({ params }: Props) {
 
       setMatch(res);
       setScores(res.scoreDetails?.sets || []);
-      toast.success(`Đã kết thúc Set ${activeIdx + 1}`);
+      const setWinnerName =
+        setObj.team1Score > setObj.team2Score
+          ? team1Name
+          : setObj.team2Score > setObj.team1Score
+            ? team2Name
+            : 'Không có đội';
+      toast.success(
+        `Đã chốt Set ${activeIdx + 1}: ${team1Name} ${setObj.team1Score} - ${setObj.team2Score} ${team2Name}. ${setWinnerName !== 'Không có đội' ? `Đội dẫn set: ${setWinnerName}.` : ''}`,
+      );
     } catch (err: unknown) {
       console.error(err);
-      toast.error('Lỗi khi kết thúc set đấu');
+      toast.error(getErrorMessage(err, 'Không thể chốt set hiện tại.'));
     } finally {
       setIsSubmitting(false);
     }
@@ -227,6 +278,9 @@ export default function LiveMatchPage({ params }: Props) {
 
   // Handle End Match with Winner Selection
   const handleCompleteMatch = async (winnerTeam: 1 | 2) => {
+    if (!ensureCanControlLiveMatch()) {
+      return;
+    }
     if (isSubmitting) return;
     setIsSubmitting(true);
 
@@ -272,12 +326,40 @@ export default function LiveMatchPage({ params }: Props) {
 
       setMatch(resStatus);
       setScores(resStatus.scoreDetails?.sets || []);
-      toast.success('Trận đấu đã kết thúc thành công!');
+      toast.success(
+        `Đã hoàn tất trận đấu. Đội thắng: ${winnerTeam === 1 ? team1Name : team2Name}.`,
+      );
     } catch (err: unknown) {
       console.error(err);
-      toast.error('Lỗi khi hoàn thành trận đấu');
+      toast.error(getErrorMessage(err, 'Không thể hoàn tất trận đấu.'));
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handlePostComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!normalizedCommentText) {
+      toast.error('Bình luận đang trống. Vui lòng nhập nội dung trước khi gửi.');
+      return;
+    }
+    if (!user) {
+      toast.error('Bạn cần đăng nhập tài khoản Baseline để gửi bình luận trong trận live.');
+      return;
+    }
+    if (isCommentSubmitting) return;
+
+    setIsCommentSubmitting(true);
+
+    try {
+      await matchesApi.createComment(matchId, { commentText: normalizedCommentText });
+      setCommentText('');
+      toast.success('Đã gửi bình luận vào phòng thảo luận trận đấu.', { id: `comment-${matchId}` });
+    } catch (err: unknown) {
+      console.error(err);
+      toast.error(getErrorMessage(err, 'Không thể gửi bình luận vào trận đấu này.'));
+    } finally {
+      setIsCommentSubmitting(false);
     }
   };
 
@@ -287,7 +369,7 @@ export default function LiveMatchPage({ params }: Props) {
         
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
               match.status === 'ONGOING' 
                 ? 'bg-rose-100 text-rose-600' 
@@ -304,6 +386,14 @@ export default function LiveMatchPage({ params }: Props) {
               {match.status === 'ONGOING' ? 'Trực tiếp' : match.status === 'COMPLETED' ? 'Kết thúc' : 'Sắp diễn ra'}
             </span>
             <span className="text-sm font-semibold text-slate-500 bg-slate-200 px-3 py-1 rounded-full">Vòng {match.roundNumber}</span>
+            <span className="flex items-center gap-1.5 text-sm font-semibold text-slate-600 bg-white border border-slate-200 px-3 py-1 rounded-full">
+              <Eye className="w-4 h-4 text-blue-600" /> {viewerCount} đang xem
+            </span>
+            {!canControlLiveMatch && (
+              <span className="text-sm font-semibold text-slate-500 bg-slate-100 border border-slate-200 px-3 py-1 rounded-full">
+                Chế độ chỉ xem
+              </span>
+            )}
           </div>
           <Link href={`/tournaments/${match.tournamentId}`} className="text-sm font-bold text-slate-600 hover:text-slate-900 transition-colors">
             {match.tournament?.name || 'Quay lại giải đấu'}
@@ -453,15 +543,15 @@ export default function LiveMatchPage({ params }: Props) {
               </div>
             </div>
 
-            {/* Referee Dashboard (Control Panel) */}
-            {isReferee && (
+            {/* Live Match Control Panel */}
+            {canControlLiveMatch && (
               <div className="bg-white rounded-3xl shadow-lg border border-slate-100 p-6 md:p-8">
                 <div className="flex items-center gap-3 border-b border-slate-100 pb-4 mb-6">
                   <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
                     <Activity className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-black text-slate-900">Bảng điều khiển của Trọng tài</h3>
+                    <h3 className="text-lg font-black text-slate-900">Bảng điều khiển trận đấu</h3>
                     <p className="text-xs text-slate-500">Cập nhật điểm số và trạng thái trận đấu theo thời gian thực</p>
                   </div>
                 </div>
@@ -590,9 +680,14 @@ export default function LiveMatchPage({ params }: Props) {
           {/* Right Column: Comments & Chat */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-[550px] sticky top-6">
-              <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
-                <MessageSquare className="w-5 h-5 text-blue-650" />
-                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Thảo luận trận đấu</h3>
+              <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="w-5 h-5 text-blue-650" />
+                  <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Thảo luận trận đấu</h3>
+                </div>
+                <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500">
+                  <Eye className="w-3.5 h-3.5" /> {viewerCount}
+                </div>
               </div>
 
               {/* Comments list */}
@@ -600,15 +695,15 @@ export default function LiveMatchPage({ params }: Props) {
                 {comments.map((comment) => (
                   <div key={comment.id} className="flex gap-3 items-start animate-in fade-in slide-in-from-bottom-2 duration-300">
                     <div className="w-8 h-8 rounded-full bg-blue-50 border border-slate-200 flex items-center justify-center font-bold text-xs text-blue-600 shrink-0 uppercase overflow-hidden">
-                      {comment.user.avatarUrl ? (
+                      {comment.user?.avatarUrl ? (
                         <img src={comment.user.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
                       ) : (
-                        comment.user.fullName.charAt(0)
+                        (comment.user?.fullName || 'N').charAt(0)
                       )}
                     </div>
                     <div className="bg-slate-50 rounded-2xl p-3 border border-slate-100 flex-1 min-w-0">
                       <div className="flex justify-between items-baseline gap-2">
-                        <span className="text-xs font-bold text-slate-800 truncate">{comment.user.fullName}</span>
+                        <span className="text-xs font-bold text-slate-800 truncate">{comment.user?.fullName || 'Người dùng'}</span>
                         <span className="text-[9px] text-slate-400 font-medium shrink-0">
                           {new Date(comment.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
                         </span>
@@ -628,12 +723,17 @@ export default function LiveMatchPage({ params }: Props) {
               <form onSubmit={handlePostComment} className="p-4 border-t border-slate-100 bg-white flex gap-2">
                 <input
                   type="text"
-                  placeholder="Nhập bình luận của bạn..."
+                  placeholder={user ? 'Nhập bình luận của bạn...' : 'Đăng nhập để bình luận'}
                   value={commentText}
                   onChange={(e) => setCommentText(e.target.value)}
+                  disabled={!user || isCommentSubmitting}
                   className="flex-grow px-4 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
                 />
-                <button type="submit" className="bg-blue-650 hover:bg-blue-700 text-white rounded-xl p-2.5 flex items-center justify-center transition-colors">
+                <button
+                  type="submit"
+                  disabled={!user || isCommentSubmitting || !normalizedCommentText}
+                  className="bg-blue-650 hover:bg-blue-700 text-white rounded-xl p-2.5 flex items-center justify-center transition-colors disabled:opacity-50"
+                >
                   <Send className="w-3.5 h-3.5" />
                 </button>
               </form>

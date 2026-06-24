@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { motion } from 'framer-motion';
 import { Trophy, Calendar, MapPin, Users, ArrowLeft, Loader2, CheckCircle, AlertTriangle, ShieldAlert, CreditCard, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -14,6 +15,7 @@ import { useAuthStore } from '@/lib/zustand/authStore';
 import { getErrorMessage } from '@/utils/error';
 import { trimAndNormalizeSpaces } from '@/utils/string';
 import { formatDate, formatCurrency } from '@/utils/format';
+import { getSportLogo } from '@/constants/sports';
 import toast from 'react-hot-toast';
 import DoublesRegistrationFlow from './components/DoublesRegistrationFlow';
 
@@ -460,7 +462,13 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
               </div>
             )}
 
-            <span className="bg-blue-600/20 text-blue-300 text-[10px] font-black px-2 py-0.5 rounded border border-blue-500/20 uppercase tracking-wider">
+            <span className="flex items-center gap-1 bg-blue-600/20 text-blue-300 text-[10px] font-black px-2 py-0.5 rounded border border-blue-500/20 uppercase tracking-wider w-fit">
+              {(() => {
+                const logo = getSportLogo(tournament.category?.name);
+                return logo ? (
+                  <img src={logo} alt={tournament.category?.name || ''} className="w-3 h-3 object-contain" />
+                ) : null;
+              })()}
               {tournament.category?.name || 'Tennis'}
             </span>
             <h1 className="text-xl md:text-2xl font-black mt-2 mb-3 leading-tight text-white">{tournament.name}</h1>
@@ -489,22 +497,48 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
 
           {/* Form / Flow Content */}
           <div className="p-6 md:p-8">
-            {/* Division dropdown selector */}
+            {/* Division selector — animated cards */}
             {allDivisions.length > 0 && (
-              <div className="flex flex-col gap-1.5 mb-6">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Hình thức đăng ký thi đấu</label>
-                <select
-                  value={selectedDivisionId}
-                  onChange={(e) => setSelectedDivisionId(e.target.value)}
-                  disabled={isLoadingDivision || isSubmitting}
-                  className="border border-slate-300 rounded-xl px-3.5 py-2.5 bg-white text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-12 shadow-sm cursor-pointer"
-                >
-                  {allDivisions.map((div) => (
-                    <option key={div.id} value={div.id}>
-                      {div.name}
-                    </option>
-                  ))}
-                </select>
+              <div className="flex flex-col gap-3 mb-6">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Chọn hình thức thi đấu</label>
+                <div className="flex flex-wrap gap-2">
+                  {allDivisions.map((div) => {
+                    const isActive = selectedDivisionId === div.id;
+                    const matchLabel = div.matchType === 'SINGLES' ? 'Đơn' :
+                      div.matchType === 'DOUBLES' ? 'Đôi' :
+                      div.matchType === 'MIXED_DOUBLES' || div.matchType === 'MIXED' ? 'Đôi Nam Nữ' : '';
+                    const genderLabel = div.genderRestriction === 'MALE' ? 'Nam' :
+                      div.genderRestriction === 'FEMALE' ? 'Nữ' : '';
+                    return (
+                      <button
+                        key={div.id}
+                        onClick={() => setSelectedDivisionId(div.id)}
+                        disabled={isLoadingDivision || isSubmitting}
+                        className={`relative flex flex-col items-center gap-1 px-5 py-3 rounded-xl border text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                          isActive
+                            ? 'text-white border-transparent shadow-md'
+                            : 'bg-white text-slate-650 border-slate-200 hover:border-blue-300 hover:text-blue-700'
+                        }`}
+                      >
+                        {isActive && (
+                          <motion.div
+                            layoutId="activeDivision"
+                            className="absolute inset-0 bg-blue-600 rounded-xl z-0"
+                            transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                          />
+                        )}
+                        <span className="relative z-10 flex flex-col items-center gap-0.5">
+                          <span className="text-sm font-black leading-tight">{div.name}</span>
+                          {matchLabel && (
+                            <span className={`text-[9px] font-extrabold uppercase tracking-wider ${isActive ? 'text-blue-200' : 'text-slate-400'}`}>
+                              {matchLabel}{genderLabel ? ` • ${genderLabel}` : ''}
+                            </span>
+                          )}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             )}
 

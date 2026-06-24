@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { Toaster } from "react-hot-toast";
+import { Toaster } from "@/components/ui/Toaster";
 import RootLayoutClient from "@/components/layout/RootLayoutClient";
 
 const inter = Inter({

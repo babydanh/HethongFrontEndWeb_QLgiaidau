@@ -13,6 +13,7 @@ import RegisterModal from './components/RegisterModal';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import GalleryCarousel from '@/components/ui/GalleryCarousel';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { formatDate } from '@/utils/format';
 
 interface Props {
   tournament: Tournament;
@@ -149,8 +150,8 @@ export default function TournamentDetailClient({ tournament }: Props) {
 
   const formatDateRange = (start?: string, end?: string) => {
     if (!start && !end) return 'Chưa cập nhật';
-    const sStr = start ? new Date(start).toLocaleDateString('vi-VN', { day: 'numeric', month: 'short' }) : '...';
-    const eStr = end ? new Date(end).toLocaleDateString('vi-VN', { day: 'numeric', month: 'short', year: 'numeric' }) : '...';
+    const sStr = start ? formatDate(start) : '...';
+    const eStr = end ? formatDate(end) : '...';
     return `${sStr} - ${eStr}`;
   };
 
@@ -224,8 +225,8 @@ export default function TournamentDetailClient({ tournament }: Props) {
                   <Calendar className="w-4 h-4 text-slate-400" />
                   {activeTournament.startDate ? (
                     <>
-                      {new Date(activeTournament.startDate).toLocaleDateString('vi-VN')}
-                      {activeTournament.endDate && ` - ${new Date(activeTournament.endDate).toLocaleDateString('vi-VN')}`}
+                      {formatDate(activeTournament.startDate)}
+                      {activeTournament.endDate && ` - ${formatDate(activeTournament.endDate)}`}
                     </>
                   ) : 'Chưa thiết lập ngày'}
                 </span>

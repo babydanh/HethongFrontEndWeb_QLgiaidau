@@ -1,7 +1,7 @@
 import { api } from '@/lib/axios';
 
-import { Match, MatchScore } from '@/types/match';
-export type { Match, MatchScore };
+import { Match, MatchComment, MatchScore } from '@/types/match';
+export type { Match, MatchComment, MatchScore };
 
 interface PaginationMeta {
   currentPage: number;
@@ -34,4 +34,8 @@ export const matchesApi = {
     api
       .patch<{ data: Match }>(`/matches/${id}/status`, statusData)
       .then((res) => res.data),
+  getComments: (id: string) =>
+    api.get<{ data: MatchComment[] }>(`/matches/${id}/comments`).then((res) => res.data),
+  createComment: (id: string, payload: { commentText: string }) =>
+    api.post<{ data: MatchComment }>(`/matches/${id}/comments`, payload).then((res) => res.data),
 };

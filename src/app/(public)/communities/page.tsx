@@ -7,6 +7,7 @@ import { communitiesApi, Community } from "@/features/communities/api";
 import { JoinCommunityModal } from "@/components/shared/JoinCommunityModal";
 import { useAuthStore } from "@/lib/zustand/authStore";
 import { Shield, Users, Trophy, MapPin, Search, Star, Loader2, ArrowRight } from "lucide-react";
+import { getSportLogo } from "@/constants/sports";
 import toast from "react-hot-toast";
 
 // Sports-specific tinted styling helper
@@ -261,7 +262,14 @@ export default function CommunitiesPage() {
                         const styles = getCategoryStyles(cat.name);
                         return (
                           <span key={cat.id} className={`inline-flex items-center gap-0.5 px-2 py-0.2 rounded-full border text-[8px] font-extrabold uppercase tracking-wider ${styles.bg}`}>
-                            <span className={`w-1 h-1 rounded-full ${styles.dot}`} />
+                            {(() => {
+                              const logo = getSportLogo(cat.name);
+                              return logo ? (
+                                <img src={logo} alt={cat.name} className="w-2.5 h-2.5 object-contain" />
+                              ) : (
+                                <span className={`w-1 h-1 rounded-full ${styles.dot}`} />
+                              );
+                            })()}
                             {cat.name}
                           </span>
                         );

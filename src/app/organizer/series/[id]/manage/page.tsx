@@ -7,6 +7,7 @@ import { tournamentsApi } from '@/features/tournaments/api';
 import { Tournament } from '@/features/tournaments/api';
 import { TournamentSeries, SeriesLeg, SeriesEvent } from '@/types/series';
 import { Button } from '@/components/ui/Button';
+import { getSportLogo } from '@/constants/sports';
 import { Input } from '@/components/ui/Input';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { 

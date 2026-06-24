@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
-import { 
+import {
   Users, 
   RefreshCw, 
   Loader2, 
@@ -17,6 +17,7 @@ import {
   Lock
 } from 'lucide-react';
 import { Tournament, TournamentParticipant } from '@/types/tournament';
+import { formatDate } from '@/utils/format';
 
 interface RegistrationTabProps {
   tournament: Tournament;
@@ -188,7 +189,7 @@ export function RegistrationTab({
                       </div>
                       
                       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-semibold text-slate-400">
-                        <span>Đăng ký: {new Date(p.registeredAt).toLocaleDateString('vi-VN')}</span>
+                        <span>Đăng ký: {formatDate(p.registeredAt)}</span>
                         <span className="text-slate-300">|</span>
                         <span className="flex items-center gap-1.5">
                           Lệ phí: 

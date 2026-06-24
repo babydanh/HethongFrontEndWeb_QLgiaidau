@@ -27,6 +27,7 @@ import { paymentsApi } from '@/features/payments/api';
 import { categoriesApi, Category } from '@/features/categories/api';
 import { regionsApi, Region } from '@/features/regions/api';
 import { uploadApi } from '@/features/upload/api';
+import { getSportLogo } from '@/constants/sports';
 // Removed duplicate BracketTab import
 import {
   Settings,
@@ -55,6 +56,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '@/utils/error';
+import { formatDate } from '@/utils/format';
 import { TournamentStepper } from './components/TournamentStepper';
 import { BasicInfoTab } from './components/BasicInfoTab';
 import { ScheduleTab } from './components/ScheduleTab';
@@ -233,8 +235,11 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
   const [matchPointsPerSet, setMatchPointsPerSet] = useState<number>(21);
   const [matchDeuceEnabled, setMatchDeuceEnabled] = useState<boolean>(true);
   const [matchMaxPoints, setMatchMaxPoints] = useState<number>(30);
+  const [matchSuperTiebreakEnabled, setMatchSuperTiebreakEnabled] = useState<boolean>(false);
+  const [matchSuperTiebreakPoints, setMatchSuperTiebreakPoints] = useState<number>(10);
   const [isScheduling, setIsScheduling] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [hasConfigBeforeLock, setHasConfigBeforeLock] = useState(false);
   const [isPayingPlatformFee, setIsPayingPlatformFee] = useState(false);
   const [isPayingPublishFee, setIsPayingPublishFee] = useState(false);
   const applyDivisionFormValues = useCallback((selected: Division) => {
@@ -256,6 +261,8 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
     setSuperTiebreakEnabled(rules.superTiebreakEnabled !== undefined ? (rules.superTiebreakEnabled as boolean) : false);
     setSuperTiebreakSetIndex((rules.superTiebreakSetIndex as number) || 3);
     setSuperTiebreakPoints((rules.superTiebreakPoints as number) || 10);
+    setTiebreakerMode((rules.tiebreakerMode as 'split' | 'playoff') || 'split');
+    setRoundsToPlay((rules.roundsToPlay as number) || 1);
   }, []);
   const publishFeeAmount = resolvePublishFeeAmount(tournament, feesConfig);
   const [newGalleryUrl, setNewGalleryUrl] = useState('');
@@ -269,6 +276,8 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
   const [wildcardTeamName, setWildcardTeamName] = useState('');
   const [isGeneratingBracket, setIsGeneratingBracket] = useState(false);
   const [isAssigningWildcard, setIsAssigningWildcard] = useState(false);
+  const [tiebreakerMode, setTiebreakerMode] = useState<'split' | 'playoff'>('split');
+  const [roundsToPlay, setRoundsToPlay] = useState(1);
 
   // Hàm refetch participants + bracket theo division hiện tại
   // Khai báo sớm để dùng trong handleGenerateBracket và các handlers bên dưới
@@ -828,6 +837,8 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
           superTiebreakEnabled,
           superTiebreakSetIndex: superTiebreakEnabled ? superTiebreakSetIndex : null,
           superTiebreakPoints: superTiebreakEnabled ? superTiebreakPoints : null,
+          tiebreakerMode,
+          roundsToPlay,
           rounds: currentRounds,
         },
       };
@@ -859,6 +870,16 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
     } finally {
       setIsSavingConfig(false);
     }
+  };
+
+  const handleRequestPayout = async (data: { bankName: string; bankAccountNumber: string; bankAccountName: string; amountRequested: number }) => {
+    await paymentsApi.requestPayout({
+      tournamentId: tournament?.id || id,
+      bankName: data.bankName,
+      bankAccountNumber: data.bankAccountNumber,
+      bankAccountName: data.bankAccountName,
+      amountRequested: data.amountRequested,
+    });
   };
 
   const handleRegenerateInviteCode = async () => {
@@ -1015,6 +1036,10 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
       toast.error('Cần ít nhất 2 đội/VĐV đã đăng ký để chốt danh sách');
       return;
     }
+    const selectedDiv = divisions.find(d => d.id === selectedDivisionId);
+    const hasConfig = selectedDiv?.roundConfig?.setsToWin && selectedDiv?.roundConfig?.pointsPerSet;
+    setHasConfigBeforeLock(!!hasConfig);
+
     const totalPlayers = participants.reduce((sum, p) => sum + (p.members?.length || 0), 0);
     const totalPlatformFee = totalPlayers * platformFeePerPlayer;
     setLockSummary({
@@ -1215,6 +1240,12 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
       setMatchPointsPerSet(match.matchConfig.pointsPerSet || 21);
       setMatchDeuceEnabled(match.matchConfig.deuceEnabled !== false);
       setMatchMaxPoints(match.matchConfig.maxPoints || 30);
+      setMatchSuperTiebreakEnabled(
+        match.matchConfig.tiebreakAt != null &&
+        match.matchConfig.pointsPerSet != null &&
+        match.matchConfig.tiebreakAt < match.matchConfig.pointsPerSet
+      );
+      setMatchSuperTiebreakPoints(match.matchConfig.tiebreakAt || 10);
     } else {
       setIsCustomMatchConfig(false);
       
@@ -1245,7 +1276,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
         setsToWin: matchSetsToWin,
         pointsPerSet: matchPointsPerSet,
         deuceEnabled: matchDeuceEnabled,
-        tiebreakAt: matchPointsPerSet - 1,
+        tiebreakAt: matchSuperTiebreakEnabled ? matchSuperTiebreakPoints : (matchPointsPerSet - 1),
         maxPoints: matchDeuceEnabled ? matchMaxPoints : null,
       } : null;
 
@@ -1324,7 +1355,11 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
         <div className="bg-white rounded-2xl border border-slate-200 p-6 mb-8 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="flex items-center gap-3">
-              <span className="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+              <span className="flex items-center gap-1 bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                {(() => {
+                  const logo = getSportLogo(tournament.category?.name);
+                  return logo ? <img src={logo} alt="" className="w-3 h-3 object-contain" /> : null;
+                })()}
                 {tournament.category?.name || 'Bộ môn'}
               </span>
               {getStatusLabel(tournament.status)}
@@ -1332,7 +1367,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
             <h1 className="text-2xl md:text-3xl font-black text-slate-900">{tournament.name}</h1>
             <p className="text-slate-500 font-medium text-sm flex items-center gap-1">
               <Calendar className="w-4 h-4 text-slate-400" />
-              Khai mạc: {tournament.startDate ? new Date(tournament.startDate).toLocaleDateString('vi-VN') : 'Chưa thiết lập'}
+              Khai mạc: {tournament.startDate ? formatDate(tournament.startDate) : 'Chưa thiết lập'}
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -1364,7 +1399,12 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
             <Button
               size="sm"
               onClick={() => setIsCreateDivisionModalOpen(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5 h-9 px-3 rounded-lg whitespace-nowrap"
+              disabled={tournament.status === 'REGISTRATION_OPEN' || tournament.status === 'REGISTRATION_CLOSED'}
+              className={`font-bold text-xs flex items-center gap-1.5 h-9 px-3 rounded-lg whitespace-nowrap ${
+                tournament.status === 'REGISTRATION_OPEN' || tournament.status === 'REGISTRATION_CLOSED'
+                  ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+              }`}
             >
               <Plus className="w-3.5 h-3.5" /> Thêm hình thức
             </Button>
@@ -1651,6 +1691,10 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
             setSuperTiebreakPoints={setSuperTiebreakPoints}
             isSavingConfig={isSavingConfig}
             handleSaveMatchConfig={handleSaveMatchConfig}
+            tiebreakerMode={tiebreakerMode}
+            setTiebreakerMode={setTiebreakerMode}
+            roundsToPlay={roundsToPlay}
+            setRoundsToPlay={setRoundsToPlay}
           />
         )}
 
@@ -1667,6 +1711,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
             currentPlatformFeePerPlayer={platformFeePerPlayer}
             handlePayPlatformFee={handlePayPlatformFee}
             isPayingPlatformFee={isPayingPlatformFee}
+            handleRequestPayout={handleRequestPayout}
           />
         )}
 
@@ -1674,11 +1719,6 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
           <PermissionsTab
             id={id}
             tournament={tournament}
-            referees={referees}
-            refereeEmail={refereeEmail}
-            setRefereeEmail={setRefereeEmail}
-            isAddingReferee={isAddingReferee}
-            onAddReferee={handleAddReferee}
           />
         )}
 
@@ -1823,9 +1863,19 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                 <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5 text-amber-600" />
                 <div>
                   <p className="font-bold text-amber-950">Hành động không thể hoàn tác!</p>
-                  <p className="mt-1">Khi chốt danh sách VĐV, giải đấu sẽ khóa đăng ký, tự động sinh sơ đồ đấu loại trực tiếp và tính phí sàn.</p>
+                  <p className="mt-1">Khi chốt danh sách VĐV, giải đấu sẽ khóa đăng ký, tự động sinh sơ đồ và tính phí sàn.</p>
                 </div>
               </div>
+
+              {!hasConfigBeforeLock && (
+                <div className="bg-rose-50 text-rose-900 p-4 rounded-xl border border-rose-200 flex gap-3 text-xs leading-relaxed font-semibold">
+                  <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5 text-rose-600" />
+                  <div>
+                    <p className="font-bold text-rose-950">Chưa cấu hình luật thi đấu!</p>
+                    <p className="mt-1">Cần cài đặt số set, điểm/set trước khi chốt. Vào tab Sơ đồ thi đấu &gt; Cấu hình mặc định &gt; Lưu.</p>
+                  </div>
+                </div>
+              )}
 
               <div className="border border-slate-200 rounded-xl divide-y text-sm bg-white overflow-hidden shadow-sm">
                 <div className="p-3.5 flex justify-between">
@@ -1971,6 +2021,36 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                         </p>
                       </div>
                     )}
+                    <div className="sm:col-span-2 border-t pt-3.5 mt-1 space-y-2">
+                      <label className="flex items-center gap-2 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={matchSuperTiebreakEnabled}
+                          onChange={(e) => setMatchSuperTiebreakEnabled(e.target.checked)}
+                          className="w-4 h-4 text-blue-650 rounded cursor-pointer"
+                        />
+                        <span className="text-xs font-semibold text-slate-700">Set quyết định dùng siêu tie-break</span>
+                      </label>
+                      {matchSuperTiebreakEnabled && (
+                        <div className="grid grid-cols-2 gap-3">
+                          <Input
+                            label="Áp dụng ở set thứ"
+                            type="number"
+                            value={3}
+                            disabled
+                            className="bg-white h-9 text-xs"
+                          />
+                          <Input
+                            label="Số điểm thắng siêu tie-break"
+                            type="number"
+                            value={matchSuperTiebreakPoints}
+                            onChange={(e) => setMatchSuperTiebreakPoints(Number(e.target.value))}
+                            placeholder="Thường là 10 điểm"
+                            className="bg-white h-9 text-xs"
+                          />
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
@@ -2055,36 +2135,43 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
               
               <div className="flex flex-col gap-2">
                 <label className="text-sm font-semibold text-slate-700">Thể thức thi đấu</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {[
-                    { value: 'MALE_SINGLES', label: 'Đơn Nam', icon: '1' },
-                    { value: 'FEMALE_SINGLES', label: 'Đơn Nữ', icon: '1' },
-                    { value: 'MALE_DOUBLES', label: 'Đôi Nam', icon: '2' },
-                    { value: 'FEMALE_DOUBLES', label: 'Đôi Nữ', icon: '2' },
-                    { value: 'MIXED_DOUBLES', label: 'Nam Nữ', icon: 'M' },
-                  ].map((option) => (
-                    <button
-                      key={option.value}
-                      type="button"
-                      onClick={() => setNewDivisionMatchType(option.value)}
-                      className={`rounded-xl border p-3 text-left transition-all ${
-                        newDivisionMatchType === option.value
-                          ? 'border-blue-600 bg-blue-50 ring-2 ring-blue-100'
-                          : 'border-slate-200 bg-white hover:border-blue-300 hover:bg-slate-50'
-                      }`}
-                    >
-                      <span className={`mb-2 inline-flex h-7 w-7 items-center justify-center rounded-lg text-xs font-black ${
-                        newDivisionMatchType === option.value ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-500'
-                      }`}>
-                        {option.icon}
-                      </span>
-                      <span className="block text-sm font-black text-slate-900">{option.label}</span>
-                    </button>
-                  ))}
-                </div>
+                {tournament && (tournament.status === 'REGISTRATION_OPEN' || tournament.status === 'REGISTRATION_CLOSED') ? (
+                  <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-center">
+                    <p className="text-sm font-semibold text-amber-700">Đã khoá tất cả hình thức khi đang mở đăng ký</p>
+                    <p className="text-xs text-amber-600 mt-1">Không thể thêm hoặc thay đổi hình thức thi đấu trong giai đoạn đăng ký.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { value: 'MALE_SINGLES', label: 'Đơn Nam', icon: '1' },
+                      { value: 'FEMALE_SINGLES', label: 'Đơn Nữ', icon: '1' },
+                      { value: 'MALE_DOUBLES', label: 'Đôi Nam', icon: '2' },
+                      { value: 'FEMALE_DOUBLES', label: 'Đôi Nữ', icon: '2' },
+                      { value: 'MIXED_DOUBLES', label: 'Nam Nữ', icon: 'M' },
+                    ].map((option) => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => setNewDivisionMatchType(option.value)}
+                        className={`rounded-xl border p-3 text-left transition-all ${
+                          newDivisionMatchType === option.value
+                            ? 'border-blue-600 bg-blue-50 ring-2 ring-blue-100'
+                            : 'border-slate-200 bg-white hover:border-blue-300 hover:bg-slate-50'
+                        }`}
+                      >
+                        <span className={`mb-2 inline-flex h-7 w-7 items-center justify-center rounded-lg text-xs font-black ${
+                          newDivisionMatchType === option.value ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-500'
+                        }`}>
+                          {option.icon}
+                        </span>
+                        <span className="block text-sm font-black text-slate-900">{option.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              <div className="flex flex-col gap-1.5">
+              <div className="flex flex-col gap-2">
                 <label className="text-sm font-semibold text-slate-700">Loại giải đấu</label>
                 <select
                   value={newDivisionBracketType}
@@ -2096,6 +2183,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                   <option value="ROUND_ROBIN">Vòng tròn</option>
                 </select>
               </div>
+
 
               {divisions.length > 0 && (
                 <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-2">

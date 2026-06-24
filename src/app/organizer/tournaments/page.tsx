@@ -11,6 +11,8 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '@/utils/error';
 import { Tournament } from '@/types/tournament';
+import { formatDate } from '@/utils/format';
+import { getSportLogo } from '@/constants/sports';
 
 interface ParentWithDivisions {
   id: string;
@@ -305,7 +307,13 @@ export default function MyTournamentsPage() {
 
                     {/* Category Name Badge (neatly positioned, high contrast, no blur) */}
                     <div className="absolute bottom-3 left-3 z-10">
-                      <span className="bg-slate-900/95 text-white px-2.5 py-1 rounded text-xs font-bold uppercase tracking-wider">
+                      <span className="flex items-center gap-1 bg-slate-900/95 text-white px-2.5 py-1 rounded text-xs font-bold uppercase tracking-wider w-fit">
+                        {(() => {
+                          const logo = getSportLogo(firstDivision?.category?.name);
+                          return logo ? (
+                            <img src={logo} alt={firstDivision?.category?.name || ''} className="w-3 h-3 object-contain brightness-150" />
+                          ) : null;
+                        })()}
                         {firstDivision?.category?.name || 'MULTISPORT'}
                       </span>
                     </div>
@@ -352,7 +360,7 @@ export default function MyTournamentsPage() {
                     <div className="grid grid-cols-2 gap-3 pt-3 border-t border-slate-100 text-slate-500 text-xs font-medium">
                       <div className="flex items-center gap-1.5">
                         <Calendar className="w-4 h-4 text-slate-400" />
-                        <span>{firstDivision?.startDate ? new Date(firstDivision.startDate).toLocaleDateString('vi-VN') : 'Chưa xếp lịch'}</span>
+                        <span>{firstDivision?.startDate ? formatDate(firstDivision.startDate) : 'Chưa xếp lịch'}</span>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <Users className="w-4 h-4 text-slate-400" />

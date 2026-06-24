@@ -8,6 +8,7 @@ import { tournamentsApi, Tournament, TournamentParticipant } from '@/features/to
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { getErrorMessage } from '@/utils/error';
 import { formatDate, formatCurrency } from '@/utils/format';
+import { getSportLogo } from '@/constants/sports';
 import toast from 'react-hot-toast';
 
 export default function JoinTeamPage({ params }: { params: Promise<{ id: string }> }) {
@@ -176,7 +177,13 @@ export default function JoinTeamPage({ params }: { params: Promise<{ id: string 
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
           {/* Header */}
           <div className="p-6 md:p-8 bg-gradient-to-br from-slate-900 to-slate-800 text-white relative">
-            <span className="bg-blue-600/20 text-blue-300 text-[10px] font-black px-2 py-0.5 rounded border border-blue-500/20 uppercase tracking-wider">
+            <span className="flex items-center gap-1 bg-blue-600/20 text-blue-300 text-[10px] font-black px-2 py-0.5 rounded border border-blue-500/20 uppercase tracking-wider w-fit">
+              {(() => {
+                const logo = getSportLogo(tournament.category?.name);
+                return logo ? (
+                  <img src={logo} alt={tournament.category?.name || ''} className="w-3 h-3 object-contain" />
+                ) : null;
+              })()}
               {tournament.category?.name || 'Cầu Lông'}
             </span>
             <h1 className="text-xl md:text-2xl font-black mt-2 mb-3 text-white">{tournament.name}</h1>

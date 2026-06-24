@@ -40,6 +40,15 @@ interface BracketTabProps {
   setSuperTiebreakPoints: (val: number) => void;
   isSavingConfig: boolean;
   handleSaveMatchConfig: () => void;
+
+  // Round Robin specific
+  tiebreakerMode?: 'split' | 'playoff';
+  setTiebreakerMode?: (val: 'split' | 'playoff') => void;
+  roundsToPlay?: number;
+  setRoundsToPlay?: (val: number) => void;
+
+  // Lock state — disable config edits after lock
+  isLocked?: boolean;
 }
 
 export function BracketTab({
@@ -74,6 +83,12 @@ export function BracketTab({
   setSuperTiebreakPoints,
   isSavingConfig,
   handleSaveMatchConfig,
+
+  // Round Robin
+  tiebreakerMode = 'split',
+  setTiebreakerMode,
+  roundsToPlay = 1,
+  setRoundsToPlay,
 }: BracketTabProps) {
   // Helper to extract bracket rounds from matches inside stage groups
   const getRoundsList = () => {
@@ -114,9 +129,14 @@ export function BracketTab({
 
   const rounds = getRoundsList();
 
+  // Check if the current bracket is Round Robin
+  const isRoundRobin = bracket?.stages?.some(
+    (s) => s.type === 'ROUND_ROBIN',
+  );
+
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
-      
+
       {/* 2 Cấp độ Cấu hình bên trong tab Bracket */}
       {selectedDivisionId && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -194,38 +214,6 @@ export function BracketTab({
               />
             )}
 
-            <div className="space-y-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
-              <label className="flex items-center gap-2 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={superTiebreakEnabled}
-                  onChange={(e) => setSuperTiebreakEnabled(e.target.checked)}
-                  className="rounded text-blue-650 focus:ring-blue-500 w-4 h-4"
-                />
-                <span className="text-xs font-semibold text-slate-700">Set quyết định dùng siêu tie-break</span>
-              </label>
-
-              {superTiebreakEnabled && (
-                <div className="grid grid-cols-2 gap-3 mt-2">
-                  <Input
-                    label="Áp dụng ở set thứ"
-                    type="number"
-                    value={superTiebreakSetIndex}
-                    onChange={(e) => setSuperTiebreakSetIndex(Number(e.target.value))}
-                    className="bg-white h-9 text-xs"
-                  />
-                  <Input
-                    label="Số điểm thắng siêu tie-break"
-                    type="number"
-                    value={superTiebreakPoints}
-                    onChange={(e) => setSuperTiebreakPoints(Number(e.target.value))}
-                    placeholder="Thường là 10 điểm"
-                    className="bg-white h-9 text-xs"
-                  />
-                </div>
-              )}
-            </div>
-
             <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-3">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-bold text-slate-650 uppercase tracking-wider">Giới hạn số đội đăng ký</label>
@@ -260,51 +248,86 @@ export function BracketTab({
             </div>
           </div>
 
-          {/* Cấp độ 2: Cài đặt chi tiết theo vòng đấu */}
+          {/* Cấp độ 2: Cài đặt chi tiết theo vòng đấu (hoặc Round Robin config) */}
           <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col justify-between">
-            <div className="space-y-4">
-              <div>
-                <h3 className="font-extrabold text-slate-900 text-base flex items-center gap-2">
-                  <Settings className="w-5 h-5 text-indigo-600" />
-                  Cấu hình theo vòng đấu
-                </h3>
-                <p className="text-xs text-slate-500 mt-0.5 font-semibold">Cài đặt luật chơi ghi đè cho riêng từng vòng đấu (ví dụ: vòng ngoài đánh chạm 11, bán kết/chung kết đánh chạm 21).</p>
+            {isRoundRobin && setTiebreakerMode ? (
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-extrabold text-slate-900 text-base flex items-center gap-2">
+                    <Settings className="w-5 h-5 text-indigo-600" />
+                    Cấu hình Vòng Tròn (Round Robin)
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5 font-semibold">
+                    Thiết lập số lượt đấu và cách xử lý khi các đội bằng điểm.
+                  </p>
+                </div>
+                <div className="flex flex-col gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Số lượt đấu</label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={20}
+                      value={roundsToPlay}
+                      onChange={(e) => setRoundsToPlay?.(Math.max(1, Number(e.target.value)))}
+                      className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold w-full"
+                    />
+                    <p className="text-[9px] text-slate-400 font-semibold mt-0.5">Mỗi cặp sẽ gặp nhau N lượt (mặc định: 1)</p>
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tiebreaker khi hoà điểm</label>
+                    <select value={tiebreakerMode} onChange={(e) => setTiebreakerMode?.(e.target.value as 'split' | 'playoff')} className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold">
+                      <option value="split">Chia đôi (đồng hạng)</option>
+                      <option value="playoff">Đánh play-off (trận phụ)</option>
+                    </select>
+                  </div>
+                </div>
               </div>
+            ) : (
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-extrabold text-slate-900 text-base flex items-center gap-2">
+                    <Settings className="w-5 h-5 text-indigo-600" />
+                    Cấu hình theo vòng đấu
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5 font-semibold">Cài đặt luật chơi ghi đè cho riêng từng vòng đấu (ví dụ: vòng ngoài đánh chạm 11, bán kết/chung kết đánh chạm 21).</p>
+                </div>
 
-              {rounds.length > 0 ? (
-                <div className="divide-y divide-slate-100 max-h-[220px] overflow-y-auto pr-1 space-y-2.5">
-                  {rounds.map(({ stage, roundNumber, name, override }) => {
-                    return (
-                      <div key={`${stage.id}-${roundNumber}`} className="pt-2.5 flex items-center justify-between gap-4 first:pt-0">
-                        <div className="space-y-0.5">
-                          <p className="text-sm font-extrabold text-slate-800">{name}</p>
-                          <p className="text-[11px] text-slate-500 font-semibold">
-                            {override ? (
-                              `${override.sets_to_win === 1 ? 'Thắng 1 set' : override.sets_to_win === 2 ? 'Thắng 2 set' : 'Thắng 3 set'}, ${override.points_per_set || 21} điểm/set, ${override.deuce_enabled ? 'có cách biệt 2 điểm' : 'không áp dụng cách biệt 2 điểm'}`
-                            ) : (
-                              'Kế thừa luật mặc định của hình thức'
-                            )}
-                          </p>
+                {rounds.length > 0 ? (
+                  <div className="divide-y divide-slate-100 max-h-[220px] overflow-y-auto pr-1 space-y-2.5">
+                    {rounds.map(({ stage, roundNumber, name, override }) => {
+                      return (
+                        <div key={`${stage.id}-${roundNumber}`} className="pt-2.5 flex items-center justify-between gap-4 first:pt-0">
+                          <div className="space-y-0.5">
+                            <p className="text-sm font-extrabold text-slate-800">{name}</p>
+                            <p className="text-[11px] text-slate-500 font-semibold">
+                              {override ? (
+                                `${override.sets_to_win === 1 ? 'Thắng 1 set' : override.sets_to_win === 2 ? 'Thắng 2 set' : 'Thắng 3 set'}, ${override.points_per_set || 21} điểm/set, ${override.deuce_enabled ? 'có cách biệt 2 điểm' : 'không áp dụng cách biệt 2 điểm'}`
+                              ) : (
+                                'Kế thừa luật mặc định của hình thức'
+                              )}
+                            </p>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleOpenRoundModal?.(stage, roundNumber)}
+                            className="border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold h-8"
+                          >
+                            Cấu hình vòng
+                          </Button>
                         </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleOpenRoundModal?.(stage, roundNumber)}
-                          className="border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold h-8"
-                        >
-                          Cấu hình vòng
-                        </Button>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-8 bg-slate-50 rounded-xl border border-dashed text-center">
-                  <p className="text-xs font-semibold text-slate-455">Sơ đồ thi đấu chưa được khởi tạo.</p>
-                  <p className="text-[11px] text-slate-400 mt-0.5">Khởi tạo sơ đồ ở bên dưới để thiết lập luật thi đấu chi tiết cho từng vòng.</p>
-                </div>
-              )}
-            </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-8 bg-slate-50 rounded-xl border border-dashed text-center">
+                    <p className="text-xs font-semibold text-slate-455">Sơ đồ thi đấu chưa được khởi tạo.</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">Khởi tạo sơ đồ ở bên dưới để thiết lập luật thi đấu chi tiết cho từng vòng.</p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -340,6 +363,7 @@ export function BracketTab({
             tournament={tournament}
             divisionId={selectedDivisionId || undefined}
             onScheduleMatch={handleOpenScheduling}
+            tiebreakerMode={tiebreakerMode}
           />
         </div>
       )}

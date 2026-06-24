@@ -14,6 +14,34 @@ interface Message {
   content: string;
 }
 
+function mergeStreamContent(previous: string, incoming: string): string {
+  if (!incoming) {
+    return previous;
+  }
+
+  if (!previous) {
+    return incoming;
+  }
+
+  if (incoming.startsWith(previous)) {
+    return incoming;
+  }
+
+  if (previous.endsWith(incoming)) {
+    return previous;
+  }
+
+  const maxOverlap = Math.min(previous.length, incoming.length);
+
+  for (let overlap = maxOverlap; overlap > 0; overlap -= 1) {
+    if (previous.slice(-overlap) === incoming.slice(0, overlap)) {
+      return previous + incoming.slice(overlap);
+    }
+  }
+
+  return previous + incoming;
+}
+
 const QUICK_PROMPTS = [
   'Làm sao để đăng ký thi đấu đôi?',
   'Chính sách hoàn tiền khi rút giải?',
@@ -88,7 +116,7 @@ export default function AiChatAssistant() {
         if (done) break;
 
         buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n\n');
+        const lines = buffer.split(/\r?\n\r?\n/);
         
         // Giữ lại phần chưa hoàn thành ở cuối buffer
         buffer = lines.pop() || '';
@@ -107,7 +135,7 @@ export default function AiChatAssistant() {
                   const copy = [...prev];
                   const lastMsg = copy[copy.length - 1];
                   if (lastMsg && lastMsg.role === 'assistant') {
-                    lastMsg.content += parsed.content;
+                    lastMsg.content = mergeStreamContent(lastMsg.content, parsed.content);
                   }
                   return copy;
                 });
@@ -120,13 +148,23 @@ export default function AiChatAssistant() {
       }
     } catch (error) {
       console.error('AI chat failed:', error);
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: 'assistant',
-          content: 'Đã xảy ra lỗi kết nối với máy chủ AI. Vui lòng thử lại sau.',
-        },
-      ]);
+      setMessages((prev) => {
+        const copy = [...prev];
+        const lastMsg = copy[copy.length - 1];
+
+        if (lastMsg?.role === 'assistant' && !lastMsg.content) {
+          lastMsg.content = 'Đã xảy ra lỗi kết nối với máy chủ AI. Vui lòng thử lại sau.';
+          return copy;
+        }
+
+        return [
+          ...copy,
+          {
+            role: 'assistant',
+            content: 'Đã xảy ra lỗi kết nối với máy chủ AI. Vui lòng thử lại sau.',
+          },
+        ];
+      });
     } finally {
       setIsLoading(false);
     }

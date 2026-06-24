@@ -5,6 +5,7 @@ import { Tournament, BracketMatch, tournamentsApi } from '@/features/tournaments
 import { matchesApi } from '@/features/matches/api';
 import { Calendar, Play, Trophy, MapPin, Info } from 'lucide-react';
 import Link from 'next/link';
+import { formatDateTime } from '@/utils/format';
 
 interface Props {
   tournament: Tournament;
@@ -264,12 +265,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                           <Calendar className="w-4 h-4 shrink-0" />
                           <span>
                             {match.scheduledAt
-                              ? new Date(match.scheduledAt).toLocaleString('vi-VN', {
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                  day: 'numeric',
-                                  month: 'numeric',
-                                })
+                              ? formatDateTime(match.scheduledAt)
                               : 'Chưa xếp lịch'}
                           </span>
                         </div>

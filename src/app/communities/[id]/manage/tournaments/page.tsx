@@ -9,6 +9,7 @@ import { Modal, ModalContent, ModalHeader, ModalTitle } from '@/components/ui/Mo
 import { communitiesApi, Community } from '@/features/communities/api';
 import { tournamentsApi, Tournament } from '@/features/tournaments/api';
 import { categoriesApi, Category } from '@/features/categories/api';
+import { getSportLogo } from '@/constants/sports';
 import { Trophy, Calendar, Users, Plus, Settings, Eye, ChevronLeft, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
@@ -234,7 +235,11 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
               >
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="bg-slate-100 text-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                    <span className="flex items-center gap-1 bg-slate-100 text-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                      {(() => {
+                        const logo = getSportLogo(t.category?.name);
+                        return logo ? <img src={logo} alt="" className="w-2.5 h-2.5 object-contain" /> : null;
+                      })()}
                       {t.category?.name || 'Bộ môn'}
                     </span>
                     {getStatusBadge(t.status)}

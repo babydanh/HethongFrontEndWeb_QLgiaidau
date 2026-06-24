@@ -3,6 +3,14 @@ import { Category } from '@/types/category';
 import { Tournament, ParentTournament, PaginatedTournaments, TournamentParticipant, BracketStage, BracketMatch, MatchTypeUI, MatchTypeDB, GenderRestriction } from '@/types/tournament';
 import { ApiResponse } from '@/types/api';
 
+export interface StaffMember {
+  userId: string;
+  role: 'CO_ORGANIZER' | 'REFEREE' | 'SPECTATOR';
+  fullName: string;
+  email: string;
+  avatarUrl: string | null;
+}
+
 export interface Division {
   id: string;
   name: string;
@@ -136,6 +144,16 @@ export const tournamentsApi = {
   getTournamentReferees: (id: string) => api.get<ApiResponse<{ id: string; userId: string; status: string; fullName: string; avatarUrl: string | null }[]>>(`/tournaments/${id}/referees`),
   addTournamentReferee: (id: string, email: string) =>
     api.post<ApiResponse<void>>(`/tournaments/${id}/referees`, { email }),
+  getTournamentStaff: (id: string) =>
+    api.get<ApiResponse<StaffMember[]>>(`/tournaments/${id}/staff`),
+  addTournamentStaff: (id: string, data: { email: string; role: string }) =>
+    api.post<ApiResponse<StaffMember>>(`/tournaments/${id}/staff`, data),
+  removeTournamentStaff: (id: string, userId: string) =>
+    api.delete<ApiResponse<void>>(`/tournaments/${id}/staff/${userId}`),
+  createPlayoffMatch: (tournamentId: string, data: { stageId: string; participant1Id: string; participant2Id: string }) =>
+    api.post<ApiResponse<{ message: string; id: string }>>(`/tournaments/${tournamentId}/playoff`, data),
+  finalizeStage: (tournamentId: string, stageId: string) =>
+    api.post<ApiResponse<{ message: string }>>(`/tournaments/${tournamentId}/stages/${stageId}/finalize`),
   getTournamentBracket: (id: string, divisionId?: string) =>
     api.get<ApiResponse<{ stages: BracketStage[] }>>(`/tournaments/${id}/bracket`, {
       params: divisionId ? { divisionId } : undefined,

@@ -1,11 +1,13 @@
 'use client';
 
-import React from 'react';
-import { DollarSign, Gift, Info, Lock } from 'lucide-react';
+import React, { useState } from 'react';
+import { DollarSign, Gift, Info, Lock, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
 import { Tournament, TournamentParticipant } from '@/types/tournament';
+import { getErrorMessage } from '@/utils/error';
+import toast from 'react-hot-toast';
 
 interface FinanceTabProps {
   tournament: Tournament;
@@ -18,6 +20,7 @@ interface FinanceTabProps {
   currentPlatformFeePerPlayer: number;
   handlePayPlatformFee: () => void;
   isPayingPlatformFee: boolean;
+  handleRequestPayout?: (data: { bankName: string; bankAccountNumber: string; bankAccountName: string; amountRequested: number }) => Promise<void>;
 }
 
 export function FinanceTab({
@@ -30,12 +33,45 @@ export function FinanceTab({
   handleSaveFinanceConfig,
   currentPlatformFeePerPlayer,
   handlePayPlatformFee,
-  isPayingPlatformFee
+  isPayingPlatformFee,
+  handleRequestPayout,
 }: FinanceTabProps) {
   const totalPlayers = participants.reduce((sum, p) => sum + (p.members?.length || 0), 0);
   const totalExpectedFee = entryFee * participants.length;
   const totalPlatformFee = totalPlayers * currentPlatformFeePerPlayer;
   const netOrganizerEarnings = Math.max(0, totalExpectedFee - totalPlatformFee);
+
+  // Payout form state
+  const [bankName, setBankName] = useState('');
+  const [bankAccountNumber, setBankAccountNumber] = useState('');
+  const [bankAccountName, setBankAccountName] = useState('');
+  const [amountRequested, setAmountRequested] = useState(netOrganizerEarnings);
+  const [isPayoutLoading, setIsPayoutLoading] = useState(false);
+
+  const canPayout = (tournament.status === 'COMPLETED' || tournament.status === 'IN_PROGRESS') && !!handleRequestPayout;
+
+  const handleSubmitPayout = async () => {
+    if (!bankName.trim()) { toast.error('Vui lòng nhập tên ngân hàng'); return; }
+    if (!bankAccountNumber.trim()) { toast.error('Vui lòng nhập số tài khoản'); return; }
+    if (!bankAccountName.trim()) { toast.error('Vui lòng nhập tên chủ tài khoản'); return; }
+    if (amountRequested <= 0) { toast.error('Số tiền rút phải lớn hơn 0'); return; }
+    if (amountRequested > netOrganizerEarnings) { toast.error('Số tiền rút không được vượt quá số dư'); return; }
+
+    setIsPayoutLoading(true);
+    try {
+      await handleRequestPayout!({
+        bankName: bankName.trim(),
+        bankAccountNumber: bankAccountNumber.trim(),
+        bankAccountName: bankAccountName.trim(),
+        amountRequested,
+      });
+      toast.success('Đã gửi yêu cầu rút tiền!');
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setIsPayoutLoading(false);
+    }
+  };
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 p-6 md:p-8 shadow-sm space-y-6 animate-in fade-in duration-200">
@@ -48,7 +84,7 @@ export function FinanceTab({
           <p className="text-slate-500 text-sm mt-1 max-w-sm mb-6">
             Bạn cần hoàn tất thanh toán lệ phí sàn ({totalPlatformFee.toLocaleString('vi-VN')}đ) để xem bảng chi tiết báo cáo và quản lý các giao dịch rút tiền.
           </p>
-          <Button 
+          <Button
             onClick={handlePayPlatformFee}
             disabled={isPayingPlatformFee}
             className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2 rounded-lg"
@@ -107,8 +143,8 @@ export function FinanceTab({
                   {totalPlatformFee.toLocaleString('vi-VN')} VNĐ
                 </p>
                 <p className="text-xs text-slate-500 font-semibold mt-1">
-                  {entryFee >= 100000 
-                    ? `Phí sàn ${tournament?.platformFeePercentage || 5}% / người` 
+                  {entryFee >= 100000
+                    ? `Phí sàn ${tournament?.platformFeePercentage || 5}% / người`
                     : 'Thu cố định 5.000đ/người'}{' '}
                   ({totalPlayers} VĐV)
                 </p>
@@ -123,26 +159,33 @@ export function FinanceTab({
               </div>
             </div>
 
-            {/* Payout logic */}
-            {tournament.status === 'COMPLETED' ? (
+            {/* Payout form */}
+            {canPayout ? (
               <div className="bg-white border rounded-xl p-5 space-y-4">
                 <h4 className="font-bold text-slate-850 flex items-center gap-1">
                   <Gift className="w-5 h-5 text-purple-600" /> Yêu cầu rút tiền
                 </h4>
-                <p className="text-xs text-slate-500 font-medium">Giải đấu đã kết thúc, bạn có thể thực hiện gửi yêu cầu rút tiền thực nhận về tài khoản ngân hàng của ban tổ chức.</p>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Input label="Tên ngân hàng nhận" placeholder="Vietcombank" />
-                  <Input label="Số tài khoản ngân hàng" placeholder="1029384756" />
-                  <Input label="Tên chủ tài khoản" placeholder="NGUYEN VAN A" />
+                <p className="text-xs text-slate-500 font-medium">
+                  Giải đấu đang thi đấu hoặc đã kết thúc, bạn có thể gửi yêu cầu rút tiền thực nhận về tài khoản ngân hàng của ban tổ chức.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <Input label="Ngân hàng" placeholder="Vietcombank" value={bankName} onChange={(e) => setBankName(e.target.value)} />
+                  <Input label="Số tài khoản" placeholder="1029384756" value={bankAccountNumber} onChange={(e) => setBankAccountNumber(e.target.value)} />
+                  <Input label="Chủ tài khoản" placeholder="NGUYEN VAN A" value={bankAccountName} onChange={(e) => setBankAccountName(e.target.value)} />
+                  <Input label="Số tiền rút (VNĐ)" type="number" value={amountRequested} onChange={(e) => setAmountRequested(Number(e.target.value))} />
                 </div>
-                <Button className="bg-purple-600 hover:bg-purple-700 text-white font-bold w-full md:w-auto mt-2">
-                  Gửi yêu cầu rút tiền
+                <Button
+                  onClick={handleSubmitPayout}
+                  disabled={isPayoutLoading}
+                  className="bg-purple-600 hover:bg-purple-700 text-white font-bold w-full md:w-auto mt-2"
+                >
+                  {isPayoutLoading ? <><Loader2 className="w-4 h-4 animate-spin mr-1" /> Đang gửi...</> : 'Gửi yêu cầu rút tiền'}
                 </Button>
               </div>
             ) : (
               <div className="bg-blue-50/50 p-4 rounded-xl border flex gap-3 text-xs leading-relaxed font-semibold text-blue-900">
                 <Info className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
-                <p>Hệ thống chỉ mở cổng yêu cầu rút tiền sau khi giải đấu kết thúc (trạng thái chuyển sang <strong>Đã kết thúc</strong>).</p>
+                <p>Cổng rút tiền chỉ mở khi giải đấu <strong>đang thi đấu</strong> hoặc <strong>đã kết thúc</strong>.</p>
               </div>
             )}
           </div>

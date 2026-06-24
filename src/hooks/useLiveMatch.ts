@@ -5,6 +5,7 @@ import { matchesApi, Match, MatchScore } from '@/features/matches/api';
 export function useLiveMatch(matchId: string) {
   const [match, setMatch] = useState<Match | null>(null);
   const [scores, setScores] = useState<MatchScore[]>([]);
+  const [viewerCount, setViewerCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -67,17 +68,25 @@ export function useLiveMatch(matchId: string) {
       }
     });
 
+    socket.on('viewer:count', (payload: { matchId: string; viewerCount: number }) => {
+      if (payload.matchId === matchId) {
+        setViewerCount(payload.viewerCount);
+      }
+    });
+
     return () => {
       socket.emit('leaveMatch', matchId);
       socket.off('connect', joinRoom);
       socket.off('score:update');
       socket.off('match:status');
+      socket.off('viewer:count');
     };
   }, [matchId]);
 
   return {
     match,
     scores,
+    viewerCount,
     setMatch,
     setScores,
     isLoading,

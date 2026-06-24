@@ -4,10 +4,11 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { 
+import {
   Trophy, Calendar, Users, MapPin, ArrowRight, Shield, Heart, Share2, Play,
   Plus, Bell, Mail, ChevronRight, UserPlus, Star, Loader2, MessageSquare
 } from 'lucide-react';
+import { getSportLogo } from '@/constants/sports';
 import { categoriesApi } from '@/features/categories/api';
 import { Category } from '@/types/category';
 import { useAuthStore } from '@/lib/zustand/authStore';
@@ -20,6 +21,32 @@ import TournamentHeroBanner from '@/components/ui/TournamentHeroBanner';
 import { isNetworkError } from '@/utils/error';
 import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
+
+function CommunityLogoAvatar({ src, alt }: { src?: string | null; alt: string }) {
+  const fallbackSrc = '/images/vndc_sport_logo.png';
+  // Track only whether the image failed to load — src is derived directly from props
+  const [imgError, setImgError] = useState(false);
+  // Reset error when src changes (React recommended "derived state" pattern)
+  const [prevSrc, setPrevSrc] = useState(src);
+  if (prevSrc !== src) {
+    setPrevSrc(src);
+    setImgError(false);
+  }
+
+  const imageSrc = (!imgError && src?.trim()) ? src : fallbackSrc;
+
+  return (
+    <Image
+      src={imageSrc}
+      alt={alt}
+      fill
+      className="object-cover group-hover:scale-105 transition-transform duration-500"
+      onError={() => setImgError(true)}
+      unoptimized={imageSrc === fallbackSrc}
+    />
+  );
+}
+
 
 export default function HomePage() {
   const { isAuthenticated, user } = useAuthStore();
@@ -188,7 +215,14 @@ export default function HomePage() {
                     />
                   )}
                   <span className="relative z-10 flex items-center gap-1.5">
-                    <Trophy className="w-3.5 h-3.5" />
+                    {(() => {
+                      const logo = getSportLogo(cat.name);
+                      return logo ? (
+                        <img src={logo} alt={cat.name} className="w-4 h-4 object-contain" />
+                      ) : (
+                        <Trophy className="w-3.5 h-3.5" />
+                      );
+                    })()}
                     {cat.name}
                   </span>
                 </button>
@@ -400,12 +434,7 @@ export default function HomePage() {
                         <div className="p-4 pt-3 flex items-start gap-3 bg-white relative">
                           {/* Circular Logo - Half overlap */}
                           <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-white bg-white shadow-md -mt-8 z-10 shrink-0 relative">
-                            <Image 
-                              src={community.logoUrl || "https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=150&auto=format&fit=crop"} 
-                              alt={community.name} 
-                              fill 
-                              className="object-cover group-hover:scale-105 transition-transform duration-500" 
-                            />
+                            <CommunityLogoAvatar src={community.logoUrl} alt={community.name} />
                           </div>
 
                           {/* Text info next to logo */}
@@ -503,8 +532,12 @@ export default function HomePage() {
                whileHover={{ y: -2 }}
                className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.02)] p-5 flex flex-col items-center text-center relative overflow-hidden"
              >
-               <div className="absolute top-0 left-0 w-full h-14 bg-gradient-to-r from-blue-500/10 via-cyan-500/10 to-indigo-500/10 border-b border-slate-100"></div>
-               <div className="w-16 h-16 rounded-full border-4 border-white shadow-md z-10 mt-3 relative bg-blue-100 flex items-center justify-center overflow-hidden shrink-0">
+               {/* Sports cover banner image */}
+               <div className="absolute top-0 left-0 w-full h-16 bg-gradient-to-b from-slate-900 to-slate-950">
+                 <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.15)_0%,transparent_70%)]" />
+               </div>
+
+               <div className="w-16 h-16 rounded-full border-4 border-white shadow-md z-10 mt-5 relative bg-blue-100 flex items-center justify-center overflow-hidden shrink-0">
                  {user?.avatarUrl ? (
                    <img src={user.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
                  ) : (
@@ -513,9 +546,8 @@ export default function HomePage() {
                </div>
                <h3 className="text-base font-bold text-slate-900 mt-2.5 line-clamp-1 leading-snug">{user?.fullName || 'Người dùng'}</h3>
                <p className="text-xs text-slate-400 truncate w-full mb-3.5">{user?.email}</p>
-               
                {/* ELO & Rank display */}
-               <div className="flex items-center gap-2 bg-slate-50 px-3 py-1 rounded-full border border-slate-150 shadow-sm">
+               <div className="flex items-center gap-2 bg-slate-50 px-3 py-1 rounded-full border border-slate-150 shadow-sm z-10">
                  <Trophy className="w-3.5 h-3.5 text-amber-500" />
                  <span className="text-[10px] font-bold text-slate-700 max-w-[100px] truncate">{sportName}: {tierName}</span>
                  <span className="text-[10px] bg-blue-600 text-white px-2 py-0.5 rounded-full font-bold">
@@ -540,7 +572,7 @@ export default function HomePage() {
                </div>
 
                <Link href="/profile" className="w-full mt-4">
-                 <button className="w-full text-xs py-2.5 border border-slate-205 text-slate-655 hover:bg-slate-55 hover:text-slate-900 font-bold rounded-xl transition-all cursor-pointer">
+                 <button className="w-full text-xs py-2.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 hover:text-slate-900 font-bold rounded-xl transition-all active:scale-95 duration-150 cursor-pointer shadow-sm">
                    Trang cá nhân
                  </button>
                </Link>
@@ -581,20 +613,22 @@ export default function HomePage() {
                           {index + 1}
                         </span>
                       </div>
-                      <div className="w-7 h-7 rounded-full border border-slate-200 bg-blue-50 flex items-center justify-center overflow-hidden shrink-0">
-                        {item.user?.avatarUrl ? (
-                          <img src={item.user.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
-                        ) : (
-                          <span className="text-[10px] font-bold text-blue-600 uppercase">
-                            {item.user?.fullName?.charAt(0) || 'U'}
+                      <Link href={`/users/${item.userId}`} className="flex items-center gap-2.5 flex-1 min-w-0">
+                        <div className="w-7 h-7 rounded-full border border-slate-200 bg-blue-50 flex items-center justify-center overflow-hidden shrink-0">
+                          {item.user?.avatarUrl ? (
+                            <img src={item.user.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                          ) : (
+                            <span className="text-[10px] font-bold text-blue-600 uppercase">
+                              {item.user?.fullName?.charAt(0) || 'U'}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex flex-col flex-grow min-w-0">
+                          <span className={`text-xs truncate ${isCurrentUser ? 'font-black text-blue-700' : 'font-semibold text-slate-800 hover:text-blue-600'}`}>
+                            {item.user?.fullName || 'Người dùng'}
                           </span>
-                        )}
-                      </div>
-                      <div className="flex flex-col flex-grow min-w-0">
-                        <span className={`text-xs truncate ${isCurrentUser ? 'font-black text-blue-700' : 'font-semibold text-slate-800'}`}>
-                          {item.user?.fullName || 'Người dùng'}
-                        </span>
-                      </div>
+                        </div>
+                      </Link>
                       <div className="flex flex-col items-end shrink-0">
                         <span className="text-xs font-bold text-slate-700">{item.eloPoints}</span>
                         <span className="text-[8px] font-extrabold text-slate-400 uppercase tracking-wider">{item.tier?.name || 'Hạng E'}</span>

@@ -6,6 +6,7 @@ import { Trophy, Calendar, DollarSign, Loader2, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { communitiesApi } from '@/features/communities/api';
 import { tournamentsApi } from '@/features/tournaments/api';
+import { getSportLogo } from '@/constants/sports';
 import { formatDate } from '@/utils/format';
 import { Tournament } from '@/types/tournament';
 import toast from 'react-hot-toast';
@@ -318,7 +319,11 @@ export default function TournamentsTab({
 
                         {/* Sport Category Badge */}
                         {t.divisions[0]?.category?.name && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                            {(() => {
+                              const logo = getSportLogo(t.divisions[0].category.name);
+                              return logo ? <img src={logo} alt="" className="w-3 h-3 object-contain" /> : null;
+                            })()}
                             {t.divisions[0].category.name}
                           </span>
                         )}

@@ -45,6 +45,7 @@ export function ConfigTab({
   handleSaveMatchConfig,
   handleUpdateStageRoundConfig
 }: ConfigTabProps) {
+  const isRegistrationOpen = tournament.status === 'REGISTRATION_OPEN' || tournament.status === 'REGISTRATION_CLOSED';
   return (
     <div className="bg-white rounded-2xl border border-slate-200 p-6 md:p-8 shadow-sm space-y-6 animate-in fade-in duration-200">
       <h2 className="text-xl font-bold text-slate-900 border-b pb-2 mb-4">Cấu hình luật chơi</h2>
@@ -79,7 +80,8 @@ export function ConfigTab({
           <select
             value={matchType}
             onChange={(e) => setMatchType(e.target.value)}
-            className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-11"
+            disabled={isRegistrationOpen}
+            className={`border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-11 ${isRegistrationOpen ? 'opacity-60 cursor-not-allowed' : ''}`}
           >
             <option value="MALE_SINGLES">Đơn Nam</option>
             <option value="FEMALE_SINGLES">Đơn Nữ</option>
@@ -87,6 +89,11 @@ export function ConfigTab({
             <option value="FEMALE_DOUBLES">Đôi Nữ</option>
             <option value="MIXED_DOUBLES">Đôi Nam Nữ (Mixed Doubles)</option>
           </select>
+          {isRegistrationOpen && (
+            <p className="text-xs text-amber-600 font-semibold mt-1 flex items-center gap-1">
+              <span>⚠</span> Không thể thay đổi hình thức thi đấu khi đang mở đăng ký.
+            </p>
+          )}
         </div>
       </div>
 

@@ -4,6 +4,18 @@ export interface MatchScore {
   isFinished: boolean;
 }
 
+export interface MatchComment {
+  id: string;
+  matchId: string;
+  commentText: string;
+  createdAt: string;
+  user: {
+    id?: string | null;
+    fullName?: string | null;
+    avatarUrl?: string | null;
+  } | null;
+}
+
 export interface Match {
   id: string;
   groupId: string;

@@ -20,7 +20,7 @@ function CheckoutContent() {
   const [teamName, setTeamName] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [gateway, setGateway] = useState<'VNPAY' | 'MOMO'>('VNPAY');
+  const [gateway, setGateway] = useState<'VNPAY' | 'MOMO' | 'TRANSFER'>('VNPAY');
 
   useEffect(() => {
     if (!tournamentId || !participantId) {
@@ -74,7 +74,7 @@ function CheckoutContent() {
       
       if (paymentUrl) {
         toast.success('Đang chuyển hướng đến cổng thanh toán...');
-        window.location.href = paymentUrl;
+        router.push(paymentUrl);
       } else {
         throw new Error('Không nhận được URL thanh toán từ hệ thống');
       }
@@ -149,34 +149,54 @@ function CheckoutContent() {
         {/* Payment Gateway Selection */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 mb-6">
           <h2 className="text-slate-900 font-bold mb-4">Chọn phương thức thanh toán</h2>
-          
-          <div className="grid grid-cols-2 gap-4">
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {/* VNPAY */}
             <div
               onClick={() => setGateway('VNPAY')}
-              className={`cursor-pointer rounded-xl border p-4 flex flex-col items-center justify-center transition-all ${
+              className={`cursor-pointer rounded-xl border-2 p-5 flex flex-col items-center justify-center transition-all ${
                 gateway === 'VNPAY'
-                  ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500'
-                  : 'border-slate-200 bg-white hover:border-slate-300'
+                  ? 'border-blue-500 bg-blue-50 shadow-sm'
+                  : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm'
               }`}
             >
-              <div className="h-8 flex items-center justify-center font-black text-blue-700 tracking-wider text-lg">
-                VNPAY
+              <div className="w-14 h-14 rounded-full bg-blue-100 flex items-center justify-center mb-3">
+                <span className="text-xl font-black text-blue-700">VN</span>
               </div>
-              <span className="text-xs text-slate-500 mt-2 font-medium">Cổng VNPay</span>
+              <span className="text-sm font-extrabold text-slate-900">VNPAY</span>
+              <span className="text-[10px] text-slate-400 font-medium mt-1 text-center">Cổng thanh toán điện tử</span>
             </div>
 
+            {/* MoMo */}
             <div
               onClick={() => setGateway('MOMO')}
-              className={`cursor-pointer rounded-xl border p-4 flex flex-col items-center justify-center transition-all ${
+              className={`cursor-pointer rounded-xl border-2 p-5 flex flex-col items-center justify-center transition-all ${
                 gateway === 'MOMO'
-                  ? 'border-pink-500 bg-pink-50 ring-1 ring-pink-500'
-                  : 'border-slate-200 bg-white hover:border-slate-300'
+                  ? 'border-pink-500 bg-pink-50 shadow-sm'
+                  : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm'
               }`}
             >
-              <div className="h-8 flex items-center justify-center font-black text-pink-600 tracking-wider text-lg">
-                MoMo
+              <div className="w-14 h-14 rounded-full bg-pink-100 flex items-center justify-center mb-3">
+                <span className="text-xl font-black text-pink-600">Mo</span>
               </div>
-              <span className="text-xs text-slate-500 mt-2 font-medium">Ví điện tử MoMo</span>
+              <span className="text-sm font-extrabold text-slate-900">MoMo</span>
+              <span className="text-[10px] text-slate-400 font-medium mt-1 text-center">Ví điện tử MoMo</span>
+            </div>
+
+            {/* Bank Transfer */}
+            <div
+              onClick={() => setGateway('TRANSFER')}
+              className={`cursor-pointer rounded-xl border-2 p-5 flex flex-col items-center justify-center transition-all ${
+                gateway === 'TRANSFER'
+                  ? 'border-emerald-500 bg-emerald-50 shadow-sm'
+                  : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm'
+              }`}
+            >
+              <div className="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center mb-3">
+                <span className="text-xl font-black text-emerald-600">$</span>
+              </div>
+              <span className="text-sm font-extrabold text-slate-900">Chuyển khoản</span>
+              <span className="text-[10px] text-slate-400 font-medium mt-1 text-center">Chuyển khoản ngân hàng</span>
             </div>
           </div>
         </div>

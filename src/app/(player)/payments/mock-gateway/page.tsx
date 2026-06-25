@@ -1,318 +1,329 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState, Suspense, useRef, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, CheckCircle2, XCircle, ShieldCheck, Lock, Smartphone, CreditCard } from 'lucide-react';
+import { paymentsApi } from '@/features/payments/api';
+import { Button } from '@/components/ui/Button';
+import { getErrorMessage } from '@/utils/error';
 import { formatCurrency } from '@/utils/format';
+import toast from 'react-hot-toast';
+import { Loader2, ChevronLeft, Clock, ShieldCheck, AlertTriangle } from 'lucide-react';
 
-/* ──────────────────────────────────────────────────────────
-   Mock gateway UI — shown after checkout before the real
-   (or simulated) redirect back to /payments/result
-────────────────────────────────────────────────────────── */
-
-type Step = 'form' | 'processing' | 'done';
-type GW = 'MOMO' | 'VNPAY';
-
-function MomoLogo() {
-  return (
-    <div className="flex items-center justify-center gap-2">
-      <div className="w-10 h-10 rounded-full bg-[#ae2070] flex items-center justify-center">
-        <span className="text-white font-black text-xs leading-none">M</span>
-      </div>
-      <span className="text-2xl font-black text-[#ae2070] tracking-tight">MoMo</span>
-    </div>
-  );
-}
-
-function VnpayLogo() {
-  return (
-    <div className="flex items-center justify-center gap-2">
-      <div className="w-10 h-10 rounded-xl bg-[#0066b3] flex items-center justify-center">
-        <span className="text-white font-black text-xs leading-none">VN</span>
-      </div>
-      <span className="text-2xl font-black text-[#0066b3] tracking-tight">VNPAY</span>
-    </div>
-  );
-}
+const GATEWAY_INFO: Record<string, { name: string; color: string; bgColor: string; textColor: string; borderColor: string }> = {
+  VNPAY: {
+    name: 'VNPAY',
+    color: 'from-blue-600 to-blue-700',
+    bgColor: 'bg-blue-50',
+    textColor: 'text-blue-700',
+    borderColor: 'border-blue-200',
+  },
+  MOMO: {
+    name: 'MoMo',
+    color: 'from-pink-500 to-pink-600',
+    bgColor: 'bg-pink-50',
+    textColor: 'text-pink-600',
+    borderColor: 'border-pink-200',
+  },
+  TRANSFER: {
+    name: 'Chuyển khoản ngân hàng',
+    color: 'from-emerald-500 to-emerald-600',
+    bgColor: 'bg-emerald-50',
+    textColor: 'text-emerald-600',
+    borderColor: 'border-emerald-200',
+  },
+};
 
 function MockGatewayContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const paymentId = searchParams.get('paymentId') ?? '';
-  const gateway = (searchParams.get('gateway') ?? 'VNPAY') as GW;
-  const rawAmount = searchParams.get('amount') ?? '0';
-  const description = searchParams.get('description') ?? 'Thanh toán lệ phí giải đấu';
-  const amount = Number(rawAmount);
+  const paymentId = searchParams.get('paymentId') || '';
+  const gatewayParam = searchParams.get('gateway') || 'VNPAY';
+  const amount = searchParams.get('amount') || '0';
+  const description = searchParams.get('description') || 'Thanh toán lệ phí giải đấu';
 
-  const [step, setStep] = useState<Step>('form');
-  const [otp, setOtp] = useState(['', '', '', '', '', '']);
-  const [otpSent, setOtpSent] = useState(false);
-  const [countdown, setCountdown] = useState(0);
-  const [processingMsg, setProcessingMsg] = useState('Đang xử lý giao dịch...');
-  const [success, setSuccess] = useState<boolean | null>(null);
+  const gateway = GATEWAY_INFO[gatewayParam.toUpperCase()] || GATEWAY_INFO.VNPAY;
 
-  // OTP countdown
+  const [otp, setOtp] = useState<string[]>(Array(6).fill(''));
+  const inputRefs = useRef<(HTMLInputElement | null)[]>(Array(6).fill(null));
+  const [timeLeft, setTimeLeft] = useState(180); // 3 minutes in seconds
+  const [isExpired, setIsExpired] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+
+  // Countdown timer
   useEffect(() => {
-    if (countdown <= 0) return;
-    const t = setTimeout(() => setCountdown((c) => c - 1), 1000);
-    return () => clearTimeout(t);
-  }, [countdown]);
+    if (timeLeft <= 0) {
+      setIsExpired(true);
+      return;
+    }
 
-  const handleSendOtp = () => {
-    setOtpSent(true);
-    setCountdown(60);
-  };
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => prev - 1);
+    }, 1000);
 
-  const handleOtpChange = (idx: number, val: string) => {
-    if (!/^\d?$/.test(val)) return;
-    const next = [...otp];
-    next[idx] = val;
-    setOtp(next);
-    if (val && idx < 5) {
-      document.getElementById(`otp-${idx + 1}`)?.focus();
+    return () => clearInterval(timer);
+  }, [timeLeft]);
+
+  const formatTime = useCallback((seconds: number): string => {
+    const min = Math.floor(seconds / 60);
+    const sec = seconds % 60;
+    return `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+  }, []);
+
+  const handleOtpChange = (index: number, value: string) => {
+    if (value.length > 1) {
+      value = value.slice(0, 1);
+    }
+    if (!/^\d*$/.test(value)) return;
+
+    const newOtp = [...otp];
+    newOtp[index] = value;
+    setOtp(newOtp);
+
+    // Auto-advance to next input
+    if (value && index < 5) {
+      inputRefs.current[index + 1]?.focus();
     }
   };
 
-  const handleOtpKeyDown = (idx: number, e: React.KeyboardEvent) => {
-    if (e.key === 'Backspace' && !otp[idx] && idx > 0) {
-      document.getElementById(`otp-${idx - 1}`)?.focus();
+  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !otp[index] && index > 0) {
+      inputRefs.current[index - 1]?.focus();
     }
   };
 
-  const handleConfirmPayment = async () => {
-    setStep('processing');
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+    const newOtp = Array(6).fill('');
+    for (let i = 0; i < pastedData.length; i++) {
+      newOtp[i] = pastedData[i];
+    }
+    setOtp(newOtp);
+    const nextEmpty = newOtp.findIndex((v) => !v);
+    const focusIndex = nextEmpty >= 0 ? nextEmpty : 5;
+    inputRefs.current[focusIndex]?.focus();
+  };
 
-    // Simulate gateway processing with message sequence
-    const messages = [
-      'Đang xác thực giao dịch...',
-      'Kết nối tới ngân hàng...',
-      'Đang xử lý thanh toán...',
-      'Hoàn tất giao dịch...',
-    ];
-
-    for (let i = 0; i < messages.length; i++) {
-      await new Promise((r) => setTimeout(r, 800 + i * 400));
-      setProcessingMsg(messages[i]);
+  const handleSubmit = async () => {
+    const otpCode = otp.join('');
+    if (otpCode.length !== 6) {
+      toast.error('Vui lòng nhập đầy đủ 6 chữ số mã OTP');
+      return;
     }
 
-    await new Promise((r) => setTimeout(r, 600));
-    setSuccess(true);
+    if (isExpired) {
+      toast.error('Mã OTP đã hết hạn. Vui lòng quay lại và thử lại.');
+      return;
+    }
 
-    // After showing success, redirect to real result page
-    await new Promise((r) => setTimeout(r, 1800));
-    router.replace(`/payments/result?paymentId=${paymentId}&vnp_ResponseCode=00`);
+    if (!paymentId) {
+      toast.error('Thiếu thông tin giao dịch');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      setIsVerifying(true);
+      await paymentsApi.mockVerify(paymentId);
+      toast.success('Xác thực OTP thành công!');
+      router.push(`/payments/result?paymentId=${paymentId}&status=success`);
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setIsSubmitting(false);
+      setIsVerifying(false);
+    }
   };
 
-  const handleCancelPayment = async () => {
-    setStep('processing');
-    setProcessingMsg('Đang hủy giao dịch...');
-    await new Promise((r) => setTimeout(r, 1500));
-    setSuccess(false);
-    await new Promise((r) => setTimeout(r, 1800));
-    router.replace(`/payments/result?paymentId=${paymentId}&vnp_ResponseCode=24`);
+  const handleCancel = () => {
+    router.push('/tournaments');
   };
 
-  const isMomo = gateway === 'MOMO';
-  const accentColor = isMomo ? '#ae2070' : '#0066b3';
-  const accentBg = isMomo ? 'bg-[#ae2070]' : 'bg-[#0066b3]';
-  const accentBorder = isMomo ? 'border-[#ae2070]' : 'border-[#0066b3]';
-  const accentText = isMomo ? 'text-[#ae2070]' : 'text-[#0066b3]';
-  const accentFocus = isMomo ? 'focus:ring-[#ae2070]/30 focus:border-[#ae2070]' : 'focus:ring-[#0066b3]/30 focus:border-[#0066b3]';
+  const handleResendOtp = () => {
+    setTimeLeft(180);
+    setIsExpired(false);
+    toast.success('Mã OTP mới đã được gửi đến số điện thoại của bạn');
+  };
+
+  if (!paymentId) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center gap-4">
+        <AlertTriangle className="w-12 h-12 text-amber-500" />
+        <p className="text-slate-600 font-medium">Thiếu thông tin giao dịch</p>
+        <Button onClick={() => router.push('/tournaments')}>Quay lại danh sách giải</Button>
+      </div>
+    );
+  }
 
   return (
-    <div
-      className="min-h-screen flex flex-col items-center justify-center p-4"
-      style={{ background: isMomo ? '#f7f0f4' : '#eef4fb' }}
-    >
-      <AnimatePresence mode="wait">
-        {/* ── PROCESSING / RESULT OVERLAY ── */}
-        {step === 'processing' && (
-          <motion.div
-            key="processing"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className="bg-white rounded-2xl shadow-2xl p-10 flex flex-col items-center text-center w-full max-w-sm"
-          >
-            {success === null ? (
-              <>
-                <Loader2 className="w-14 h-14 animate-spin mb-5" style={{ color: accentColor }} />
-                <p className="font-bold text-slate-800 text-lg mb-1">{processingMsg}</p>
-                <p className="text-sm text-slate-500">Vui lòng không đóng trang này</p>
-              </>
-            ) : success ? (
-              <>
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: 'spring', stiffness: 300 }}
-                  className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-4"
-                >
-                  <CheckCircle2 className="w-10 h-10 text-green-500" />
-                </motion.div>
-                <p className="font-black text-slate-900 text-xl mb-1">Thanh toán thành công!</p>
-                <p className="text-slate-500 text-sm">Đang chuyển hướng về kết quả...</p>
-              </>
-            ) : (
-              <>
-                <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mb-4">
-                  <XCircle className="w-10 h-10 text-red-500" />
-                </div>
-                <p className="font-black text-slate-900 text-xl mb-1">Đã hủy giao dịch</p>
-                <p className="text-slate-500 text-sm">Đang chuyển hướng...</p>
-              </>
-            )}
-          </motion.div>
-        )}
+    <div className="min-h-screen bg-slate-50 py-8 px-4 md:px-8">
+      <div className="max-w-lg mx-auto">
+        {/* Back button */}
+        <button
+          onClick={() => router.back()}
+          className="flex items-center gap-1.5 text-slate-500 hover:text-slate-800 transition-colors mb-6 text-sm font-semibold"
+        >
+          <ChevronLeft className="w-4 h-4" /> Quay lại
+        </button>
 
-        {/* ── PAYMENT FORM ── */}
-        {step === 'form' && (
-          <motion.div
-            key="form"
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -16 }}
-            transition={{ duration: 0.35 }}
-            className="bg-white rounded-2xl shadow-2xl overflow-hidden w-full max-w-sm"
-          >
-            {/* Header stripe */}
-            <div className={`${accentBg} px-6 py-5 flex flex-col items-center`}>
-              {isMomo ? <MomoLogo /> : <VnpayLogo />}
-              <p className="text-white/80 text-xs mt-2 font-medium">Cổng thanh toán an toàn</p>
+        {/* Gateway Card */}
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          {/* Header */}
+          <div className={`bg-gradient-to-r ${gateway.color} p-6 text-white text-center`}>
+            <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center mx-auto mb-3">
+              <span className="text-2xl font-black tracking-wider">
+                {gatewayParam.toUpperCase() === 'VNPAY' ? 'VN' : gatewayParam.toUpperCase() === 'MOMO' ? 'Mo' : '$'}
+              </span>
+            </div>
+            <h1 className="text-xl font-black">Thanh toán qua {gateway.name}</h1>
+            <p className="text-sm text-white/70 mt-1">Cổng thanh toán mô phỏng (Mock Gateway)</p>
+          </div>
+
+          {/* Content */}
+          <div className="p-6 md:p-8 space-y-6">
+
+            {/* Amount & Transaction ID */}
+            <div className={`${gateway.bgColor} border ${gateway.borderColor} rounded-xl p-5 space-y-3`}>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-slate-600 font-medium">Số tiền</span>
+                <span className={`text-2xl font-black ${gateway.textColor}`}>
+                  {formatCurrency(Number(amount))}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-slate-600 font-medium">Mã giao dịch</span>
+                <span className="text-sm font-bold text-slate-800 font-mono">{paymentId}</span>
+              </div>
+              {description && (
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-slate-600 font-medium">Mô tả</span>
+                  <span className="text-sm font-semibold text-slate-700 text-right max-w-[200px] truncate">{description}</span>
+                </div>
+              )}
             </div>
 
-            <div className="px-6 py-5">
-              {/* Order summary */}
-              <div className="bg-slate-50 rounded-xl p-4 mb-5 border border-slate-100">
-                <p className="text-[11px] uppercase tracking-widest text-slate-400 font-bold mb-2">
-                  Thông tin thanh toán
-                </p>
-                <p className="text-sm text-slate-700 font-medium leading-snug mb-3">{description}</p>
-                <div className="flex justify-between items-center border-t border-slate-200 pt-3">
-                  <span className="text-sm text-slate-500 font-medium">Tổng tiền</span>
-                  <span className="text-xl font-black" style={{ color: accentColor }}>
-                    {formatCurrency(amount)}
-                  </span>
-                </div>
-              </div>
+            {/* OTP Input */}
+            <div className="space-y-3">
+              <label className="block text-sm font-bold text-slate-700 text-center">
+                Nhập mã OTP
+              </label>
+              <p className="text-xs text-slate-400 text-center">
+                Mã OTP gồm 6 chữ số đã được gửi đến số điện thoại đăng ký của bạn
+              </p>
 
-              {/* Phone field */}
-              <div className="mb-4">
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">
-                  {isMomo ? 'Số điện thoại MoMo' : 'Số thẻ / Tài khoản ngân hàng'}
-                </label>
-                <div className="relative">
-                  <div className="absolute left-3 top-1/2 -translate-y-1/2">
-                    {isMomo ? (
-                      <Smartphone className="w-4 h-4 text-slate-400" />
-                    ) : (
-                      <CreditCard className="w-4 h-4 text-slate-400" />
-                    )}
-                  </div>
+              <div className="flex justify-center gap-3 py-2">
+                {otp.map((digit, index) => (
                   <input
+                    key={index}
+                    ref={(el) => { inputRefs.current[index] = el; }}
                     type="text"
-                    defaultValue={isMomo ? '0901 234 567' : '9704 •••• •••• 1234'}
-                    className={`w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-800 font-medium outline-none focus:ring-2 transition-all ${accentFocus}`}
-                    readOnly
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    maxLength={1}
+                    value={digit}
+                    onChange={(e) => handleOtpChange(index, e.target.value)}
+                    onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                    onPaste={index === 0 ? handlePaste : undefined}
+                    className={`w-12 h-14 text-center text-xl font-black border-2 rounded-xl transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      digit
+                        ? 'border-blue-500 bg-blue-50'
+                        : isExpired
+                        ? 'border-red-300 bg-red-50'
+                        : 'border-slate-300 bg-white'
+                    }`}
+                    disabled={isSubmitting || isExpired}
                   />
+                ))}
+              </div>
+            </div>
+
+            {/* Countdown Timer */}
+            <div className="flex items-center justify-center gap-2 text-sm">
+              <Clock className={`w-4 h-4 ${isExpired ? 'text-red-500' : timeLeft <= 30 ? 'text-amber-500 animate-pulse' : 'text-slate-400'}`} />
+              <span className={`font-bold font-mono tracking-wider ${
+                isExpired ? 'text-red-500' : timeLeft <= 30 ? 'text-amber-500' : 'text-slate-600'
+              }`}>
+                Còn {formatTime(timeLeft)}
+              </span>
+            </div>
+
+            {/* Expired state */}
+            {isExpired && (
+              <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 flex items-start gap-3">
+                <AlertTriangle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-bold text-rose-800">Mã OTP đã hết hạn</p>
+                  <p className="text-xs text-rose-600 mt-1">Vui lòng nhấn &quot;Gửi lại mã&quot; để nhận mã OTP mới.</p>
                 </div>
               </div>
+            )}
 
-              {/* OTP section */}
-              <div className="mb-5">
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-sm font-semibold text-slate-700">Mã xác nhận OTP</label>
-                  <button
-                    type="button"
-                    onClick={handleSendOtp}
-                    disabled={countdown > 0}
-                    className={`text-xs font-bold transition-colors ${countdown > 0 ? 'text-slate-400 cursor-not-allowed' : `${accentText} hover:underline cursor-pointer`}`}
-                  >
-                    {otpSent
-                      ? countdown > 0
-                        ? `Gửi lại (${countdown}s)`
-                        : 'Gửi lại OTP'
-                      : 'Gửi OTP'}
-                  </button>
-                </div>
-
-                <div className="flex gap-2">
-                  {otp.map((digit, idx) => (
-                    <input
-                      key={idx}
-                      id={`otp-${idx}`}
-                      type="text"
-                      inputMode="numeric"
-                      maxLength={1}
-                      value={digit}
-                      onChange={(e) => handleOtpChange(idx, e.target.value)}
-                      onKeyDown={(e) => handleOtpKeyDown(idx, e)}
-                      className={`w-10 h-12 text-center text-lg font-black rounded-xl border outline-none focus:ring-2 transition-all ${accentFocus} ${digit ? `border-2 ${accentBorder}` : 'border-slate-200'}`}
-                    />
-                  ))}
-                </div>
-                {!otpSent && (
-                  <p className="text-xs text-slate-400 mt-1.5">Nhấn &quot;Gửi OTP&quot; để nhận mã xác nhận</p>
-                )}
-                {otpSent && (
-                  <p className="text-xs text-slate-400 mt-1.5">
-                    Mã OTP đã được gửi đến số điện thoại đăng ký (giả lập)
-                  </p>
-                )}
-              </div>
-
-              {/* Security note */}
-              <div className="flex items-start gap-2 mb-5 bg-green-50 border border-green-100 rounded-xl p-3">
-                <ShieldCheck className="w-4 h-4 text-green-600 shrink-0 mt-0.5" />
-                <p className="text-[11.5px] text-green-700 leading-snug">
-                  Giao dịch được mã hóa SSL 256-bit. Thông tin tài khoản của bạn được bảo mật tuyệt đối.
-                </p>
-              </div>
-
-              {/* Buttons */}
+            {/* Resend OTP */}
+            <div className="text-center">
               <button
-                type="button"
-                onClick={handleConfirmPayment}
-                className={`w-full ${accentBg} hover:opacity-90 active:scale-[0.98] text-white font-bold py-3 rounded-xl text-sm transition-all mb-2.5 flex items-center justify-center gap-2 cursor-pointer`}
+                onClick={handleResendOtp}
+                disabled={!isExpired && timeLeft > 120}
+                className="text-xs font-semibold text-blue-600 hover:text-blue-800 underline underline-offset-2 disabled:text-slate-300 disabled:no-underline disabled:cursor-not-allowed"
               >
-                <Lock className="w-4 h-4" />
-                Xác nhận thanh toán {formatCurrency(amount)}
-              </button>
-
-              <button
-                type="button"
-                onClick={handleCancelPayment}
-                className="w-full border border-slate-200 hover:bg-slate-50 text-slate-500 font-semibold py-2.5 rounded-xl text-sm transition-colors cursor-pointer"
-              >
-                Hủy giao dịch
+                Gửi lại mã OTP
               </button>
             </div>
 
-            {/* Footer */}
-            <div className="px-6 py-3 border-t border-slate-100 flex items-center justify-center gap-1.5">
-              <Lock className="w-3 h-3 text-slate-400" />
-              <p className="text-[11px] text-slate-400 font-medium">
-                Được bảo mật bởi {isMomo ? 'MoMo Security' : 'VNPAY Shield'} · Mô phỏng
+            {/* Security Notice */}
+            <div className="flex items-start gap-2 text-xs text-slate-400 bg-slate-50 rounded-xl p-4 border border-slate-100">
+              <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+              <p>
+                Đây là cổng thanh toán mô phỏng dành cho mục đích kiểm thử. Mã OTP mặc định là <strong className="text-slate-600">123456</strong>.
+                Không có giao dịch thực tế nào được xử lý.
               </p>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+
+            {/* Actions */}
+            <div className="flex gap-3 pt-2">
+              <Button
+                variant="outline"
+                onClick={handleCancel}
+                disabled={isSubmitting}
+                className="flex-1 border-slate-200 hover:bg-slate-50 text-slate-600 font-bold py-3 text-sm"
+              >
+                Hủy
+              </Button>
+              <Button
+                onClick={handleSubmit}
+                disabled={isSubmitting || otp.join('').length !== 6 || isExpired}
+                className="flex-[2] bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" /> {isVerifying ? 'Đang xác thực...' : 'Đang xử lý...'}
+                  </>
+                ) : (
+                  'Xác nhận thanh toán'
+                )}
+              </Button>
+            </div>
+
+          </div>
+        </div>
+
+        {/* Footer */}
+        <p className="text-center text-[10px] text-slate-400 mt-6">
+          &copy; {new Date().getFullYear()} Quản Lý Giải Đấu - Mock Gateway (Môi trường kiểm thử)
+        </p>
+      </div>
     </div>
   );
 }
 
 export default function MockGatewayPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center bg-slate-50">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-        </div>
-      }
-    >
+    <Suspense fallback={
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    }>
       <MockGatewayContent />
     </Suspense>
   );

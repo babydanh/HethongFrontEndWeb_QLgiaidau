@@ -36,5 +36,8 @@ export const paymentsApi = {
 
   getAdminTransactions: () =>
     api.get<ApiResponse<Payment[]>>('/payments/admin/transactions'),
+
+  mockVerify: (paymentId: string) =>
+    api.post<ApiResponse<{ message: string }>>('/payments/mock-verify', { paymentId }),
 };
 

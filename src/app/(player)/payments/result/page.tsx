@@ -1,15 +1,14 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState, Suspense, useCallback, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { paymentsApi } from '@/features/payments/api';
 import { Button } from '@/components/ui/Button';
 import { getErrorMessage } from '@/utils/error';
 import { formatCurrency } from '@/utils/format';
-import { api } from '@/lib/axios';
 import type { Payment } from '@/types/payment';
 import toast from 'react-hot-toast';
-import { Loader2, CheckCircle2, XCircle, AlertCircle, Calendar, Trophy, TrophyIcon } from 'lucide-react';
+import { Loader2, CheckCircle2, XCircle, AlertCircle, Calendar, TrophyIcon, RefreshCw } from 'lucide-react';
 
 interface PaymentDetails {
   id: string;
@@ -37,6 +36,47 @@ function ResultContent() {
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState<'PENDING' | 'SUCCESS' | 'FAILED' | 'ERROR'>('PENDING');
   const [details, setDetails] = useState<PaymentDetails | null>(null);
+  const pollingRef = useRef<NodeJS.Timeout | null>(null);
+
+  const fetchAndSetStatus = useCallback(async (id: string) => {
+    const res = await paymentsApi.getPaymentById(id);
+    const paymentData: Payment | undefined = res?.data;
+
+    if (paymentData) {
+      let tName = 'Giải đấu thể thao';
+      if (paymentData.tournament?.name) {
+        tName = paymentData.tournament.name;
+      }
+
+      setDetails({
+        id: paymentData.id,
+        tournamentId: paymentData.tournamentId,
+        participantId: paymentData.participantId,
+        amount: paymentData.amount,
+        status: paymentData.status,
+        paymentGateway: paymentData.paymentGateway,
+        paidAt: paymentData.paidAt,
+        createdAt: paymentData.createdAt,
+        tournamentName: tName,
+      });
+
+      if (paymentData.status === 'COMPLETED') {
+        setStatus('SUCCESS');
+        toast.success('Thanh toán lệ phí thành công!');
+        return true; // done
+      } else if (paymentData.status === 'FAILED') {
+        setStatus('FAILED');
+        toast.error('Thanh toán thất bại');
+        return true; // done
+      } else {
+        setStatus('PENDING');
+        return false; // still pending
+      }
+    } else {
+      setStatus('ERROR');
+      return true; // error, stop polling
+    }
+  }, []);
 
   useEffect(() => {
     if (!paymentId) {
@@ -48,81 +88,51 @@ function ResultContent() {
       return;
     }
 
+    let cancelled = false;
+
     const verifyAndLoad = async () => {
       try {
         setLoading(true);
-
-        // 1. Simulate webhook call to ensure backend is updated in local mock/sandbox environment
-        // If VNPAY returned, or we just want to ensure it works, we call the webhook endpoint
-        const responseCode = vnpResponseCode || '00';
-        try {
-          await api.post('/payments/webhook', {
-            transactionReference: paymentId,
-            responseCode: responseCode,
-            gatewayTransactionId: `MOCK_TXN_${Date.now()}`,
-            rawPayload: {
-              vnp_ResponseCode: responseCode,
-              vnp_TxnRef: paymentId,
-            }
-          });
-        } catch (webhookErr) {
-          // Webhook might already be processed or fail, we can ignore and check database state
-          console.warn('Webhook auto-simulate finished with response/error:', webhookErr);
+        const done = await fetchAndSetStatus(paymentId);
+        if (done || cancelled) {
+          setLoading(false);
+          return;
         }
 
-        // 2. Fetch payment details from database
-        const res = await paymentsApi.getPaymentById(paymentId);
-        
-        // API response mapping
-        const paymentData: Payment | undefined = res?.data;
-        
-        if (paymentData) {
-          // Fetch tournament details to get name
-          let tName = 'Giải đấu thể thao';
+        // Auto-refresh every 5 seconds for pending payments
+        pollingRef.current = setInterval(async () => {
+          if (cancelled) return;
           try {
-            const tRes = await api.get<{ name: string } | { data: { name: string } }>(`/tournaments/${paymentData.tournamentId}`);
-            const tData = (tRes as Record<string, unknown>)?.data as Record<string, unknown> || tRes;
-            if (tData && typeof tData === 'object' && 'name' in tData && typeof tData.name === 'string') {
-              tName = tData.name;
+            const finished = await fetchAndSetStatus(paymentId);
+            if (finished && !cancelled) {
+              if (pollingRef.current) clearInterval(pollingRef.current);
+              pollingRef.current = null;
+              setLoading(false);
             }
-          } catch (tErr) {
-            console.error('Failed to load tournament name in callback:', tErr);
+          } catch {
+            // Silently retry on next interval
           }
-
-          setDetails({
-            id: paymentData.id,
-            tournamentId: paymentData.tournamentId,
-            participantId: paymentData.participantId,
-            amount: paymentData.amount,
-            status: paymentData.status,
-            paymentGateway: paymentData.paymentGateway,
-            paidAt: paymentData.paidAt,
-            createdAt: paymentData.createdAt,
-            tournamentName: tName,
-          });
-
-          if (paymentData.status === 'COMPLETED') {
-            setStatus('SUCCESS');
-            toast.success('Thanh toán lệ phí thành công!');
-          } else if (paymentData.status === 'FAILED') {
-            setStatus('FAILED');
-            toast.error('Thanh toán thất bại');
-          } else {
-            setStatus('PENDING');
-          }
-        } else {
+        }, 5000);
+      } catch (error) {
+        if (!cancelled) {
+          toast.error(getErrorMessage(error));
           setStatus('ERROR');
         }
-      } catch (error) {
-        toast.error(getErrorMessage(error));
-        setStatus('ERROR');
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     verifyAndLoad();
-  }, [paymentId, vnpResponseCode]);
+
+    return () => {
+      cancelled = true;
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
+        pollingRef.current = null;
+      }
+    };
+  }, [paymentId, fetchAndSetStatus]);
 
   if (loading) {
     return (
@@ -172,9 +182,13 @@ function ResultContent() {
                 <AlertCircle className="w-10 h-10 animate-pulse" />
               </div>
               <h1 className="text-2xl font-bold text-slate-900 mb-2">Đang Chờ Xử Lý</h1>
-              <p className="text-slate-500 text-sm mb-6 leading-relaxed">
+              <p className="text-slate-500 text-sm mb-4 leading-relaxed">
                 Hóa đơn đang được kiểm tra. Trạng thái có thể cập nhật sau vài phút.
               </p>
+              <div className="flex items-center gap-2 text-xs text-slate-400 mb-6">
+                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                <span>Đang tự động kiểm tra trạng thái...</span>
+              </div>
             </div>
           )}
 

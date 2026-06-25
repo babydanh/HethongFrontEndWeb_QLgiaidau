@@ -1,16 +1,17 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useState } from 'react';
+import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { api } from '@/lib/axios';
-import { 
-  LayoutDashboard, 
-  Users, 
-  CreditCard, 
-  ArrowLeft, 
-  LogOut, 
+import { RouteGuard } from '@/components/shared/RouteGuard';
+import {
+  LayoutDashboard,
+  Users,
+  CreditCard,
+  ArrowLeft,
+  LogOut,
   ShieldCheck,
   ShieldAlert,
   Building,
@@ -26,43 +27,9 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { isAuthenticated, user, logout } = useAuthStore();
-  const router = useRouter();
+  const { user, logout } = useAuthStore();
   const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    Promise.resolve().then(() => {
-      setIsClient(true);
-    });
-  }, []);
-
-  useEffect(() => {
-    if (isClient) {
-      if (!isAuthenticated || !user) {
-        router.push('/login?redirect=' + pathname);
-      } else {
-        const isAdmin = user?.roles?.includes('ADMIN') || (user as { role?: string }).role === 'ADMIN';
-        if (!isAdmin) {
-          router.push('/');
-        }
-      }
-    }
-  }, [isClient, isAuthenticated, user, router, pathname]);
-
-  const isAdmin = user && (user.roles?.includes('ADMIN') || (user as { role?: string }).role === 'ADMIN');
-
-  if (!isClient || !user || !isAdmin) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-slate-50 text-slate-800">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-sm font-semibold text-slate-500">Đang xác thực quyền Admin...</p>
-        </div>
-      </div>
-    );
-  }
 
   const menuItems = [
     { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
@@ -82,10 +49,11 @@ export default function AdminLayout({
       console.error('Logout error:', error);
     }
     logout();
-    router.push('/login');
+    window.location.href = '/login';
   };
 
   return (
+    <RouteGuard allowedRoles={['ADMIN']}>
     <div className="min-h-screen bg-slate-50 text-slate-800 flex font-sans">
       {/* Sidebar - Desktop */}
       <aside className={cn(
@@ -190,5 +158,6 @@ export default function AdminLayout({
         </main>
       </div>
     </div>
+    </RouteGuard>
   );
 }

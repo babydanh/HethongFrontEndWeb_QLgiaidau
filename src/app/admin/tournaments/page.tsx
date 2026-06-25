@@ -41,6 +41,24 @@ interface TournamentItem {
   creator?: CreatorInfo;
 }
 
+interface TournamentDetail extends TournamentItem {
+  bannerUrl?: string | null;
+  description?: string | null;
+  isRanked?: boolean;
+  startDate?: string | null;
+  endDate?: string | null;
+  registrationStartDate?: string | null;
+  registrationEndDate?: string | null;
+  maxParticipants?: number | null;
+  category?: {
+    name?: string | null;
+  } | null;
+  venue?: {
+    name?: string | null;
+    locationAddress?: string | null;
+  } | null;
+}
+
 export default function AdminTournamentsPage() {
   const [tournaments, setTournaments] = useState<TournamentItem[]>([]);
   const [search, setSearch] = useState('');
@@ -50,7 +68,7 @@ export default function AdminTournamentsPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [processing, setProcessing] = useState(false);
   const [selectedTournamentId, setSelectedTournamentId] = useState<string | null>(null);
-  const [detailTournament, setDetailTournament] = useState<any | null>(null);
+  const [detailTournament, setDetailTournament] = useState<TournamentDetail | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
 
   const handleOpenDetail = async (id: string) => {
@@ -58,7 +76,7 @@ export default function AdminTournamentsPage() {
     setLoadingDetail(true);
     setDetailTournament(null);
     try {
-      const response = await api.get(`/tournaments/${id}`);
+      const response = await api.get<ApiResponse<TournamentDetail>>(`/tournaments/${id}`);
       setDetailTournament(response.data);
     } catch (error) {
       console.error(error);

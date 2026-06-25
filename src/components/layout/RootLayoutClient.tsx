@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { PageTransition } from '@/components/layout/PageTransition';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { usersApi } from '@/features/users/api';
 import { isHttpStatusError, isNetworkError } from '@/utils/error';
@@ -16,14 +16,20 @@ export default function RootLayoutClient({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const { setUser } = useAuthStore();
+  const { user, setUser } = useAuthStore();
+  const hasFetchedRef = useRef(false);
 
-  // Sync user profile globally on mount to ensure roles/data are always up-to-date or recover session from cookies
+  // Sync user profile only ONCE on mount, not on every route change
   useEffect(() => {
     const isGuestRoute = ['/login', '/register'].some((route) => pathname.startsWith(route));
-    if (isGuestRoute) {
-      return;
-    }
+    if (isGuestRoute) return;
+
+    // Skip if user already has data (re-hydrated from persist)
+    if (user?.id && user?.email) return;
+
+    // Only fetch once
+    if (hasFetchedRef.current) return;
+    hasFetchedRef.current = true;
 
     usersApi.getProfile()
       .then((data) => {

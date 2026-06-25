@@ -198,6 +198,11 @@ export default function LoginPage() {
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1.5">Mật khẩu</label>
                 <Input type="password" placeholder="••••••••" {...register('password')} error={errors.password?.message} />
+                <div className="flex justify-end mt-1">
+                  <Link href="/forgot-password" className="text-xs font-semibold text-blue-600 hover:underline">
+                    Quên mật khẩu?
+                  </Link>
+                </div>
               </div>
 
               <button

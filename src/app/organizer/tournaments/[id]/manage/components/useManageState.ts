@@ -1,0 +1,658 @@
+'use client';
+
+import { useEffect, useState, useCallback } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import {
+  tournamentsApi, divisionsApi, Tournament, TournamentFeesConfig, TournamentParticipant,
+  BracketStage, BracketMatch, MatchTypeUI, MatchTypeDB, GenderRestriction, Division,
+} from '@/features/tournaments/api';
+import { venuesApi } from '@/features/venues/api';
+import { paymentsApi } from '@/features/payments/api';
+import { categoriesApi, Category } from '@/features/categories/api';
+import { regionsApi, Region } from '@/features/regions/api';
+import { useOrganizerOps } from '@/features/organizer/ops/hooks/useOrganizerOps';
+import { getPlatformFeeBreakdown } from '@/utils/platform-fee';
+import { Badge } from '@/components/ui/Badge';
+import toast from 'react-hot-toast';
+import { getErrorMessage } from '@/utils/error';
+
+export type TournamentReferee = {
+  id: string; userId: string; status: string; fullName: string; avatarUrl: string | null;
+};
+export interface Venue { id: string; name: string; locationAddress: string; }
+export interface Court { id: string; courtName: string; }
+
+export function useManageState(id: string) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // ── Data ──
+  const [tournament, setTournament] = useState<Tournament | null>(null);
+  const [participants, setParticipants] = useState<TournamentParticipant[]>([]);
+  const [bracket, setBracket] = useState<{ stages: BracketStage[] } | null>(null);
+  const [venues, setVenues] = useState<Venue[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [feesConfig, setFeesConfig] = useState<TournamentFeesConfig | null>(null);
+  const [courts, setCourts] = useState<Court[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'basic'|'schedule'|'registration'|'operations'|'bracket'|'finance'|'permissions'>('basic');
+  const [basicSubTab, setBasicSubTab] = useState<'general'|'branding'|'prizes'|'contact'>('general');
+  const [referees, setReferees] = useState<TournamentReferee[]>([]);
+  const [refereeEmail, setRefereeEmail] = useState('');
+  const [isAddingReferee, setIsAddingReferee] = useState(false);
+  const [divisions, setDivisions] = useState<Division[]>([]);
+  const [selectedDivisionId, setSelectedDivisionId] = useState<string>('');
+  const [isCreateDivisionModalOpen, setIsCreateDivisionModalOpen] = useState(false);
+  const [newDivisionMatchType, setNewDivisionMatchType] = useState('MALE_DOUBLES');
+  const [newDivisionBracketType, setNewDivisionBracketType] = useState('SINGLE_ELIMINATION');
+  const [isCreatingDivision, setIsCreatingDivision] = useState(false);
+  const [divisionPendingDelete, setDivisionPendingDelete] = useState<Division | null>(null);
+  const [isDeletingDivision, setIsDeletingDivision] = useState(false);
+
+  // ── Basic form ──
+  const [name, setName] = useState('');
+  const [categoryId, setCategoryId] = useState('');
+  const [description, setDescription] = useState('');
+  const [bannerUrl, setBannerUrl] = useState('');
+  const [logoUrl, setLogoUrl] = useState('');
+  const [prizeDescription, setPrizeDescription] = useState('');
+  const [contactInfo, setContactInfo] = useState<Record<string,string|undefined>>({});
+  const [visibility, setVisibility] = useState<'PUBLIC'|'PRIVATE'>('PUBLIC');
+  const [genderRestriction, setGenderRestriction] = useState<'MALE'|'FEMALE'|'MIXED'|''>('');
+
+  // ── Schedule ──
+  const [venueId, setVenueId] = useState('');
+  const [customVenueName, setCustomVenueName] = useState('');
+  const [customVenueAddress, setCustomVenueAddress] = useState('');
+  const [provinces, setProvinces] = useState<Region[]>([]);
+  const [districts, setDistricts] = useState<Region[]>([]);
+  const [wards, setWards] = useState<Region[]>([]);
+  const [provinceCode, setProvinceCode] = useState('');
+  const [districtCode, setDistrictCode] = useState('');
+  const [wardCode, setWardCode] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [registrationStartDate, setRegistrationStartDate] = useState('');
+  const [registrationEndDate, setRegistrationEndDate] = useState('');
+
+  // ── Pricing ──
+  const [entryFee, setEntryFee] = useState(0);
+  const [platformFeePerPlayer, setPlatformFeePerPlayer] = useState(10000);
+  const [maxParticipants, setMaxParticipants] = useState(16);
+  const [isLimitEnabled, setIsLimitEnabled] = useState(true);
+  const [matchType, setMatchType] = useState('DOUBLES');
+  const [setsToWin, setSetsToWin] = useState(2);
+  const [pointsPerSet, setPointsPerSet] = useState(21);
+  const [winByTwo, setWinByTwo] = useState(true);
+  const [maxDeucePoints, setMaxDeucePoints] = useState(30);
+  const [superTiebreakEnabled, setSuperTiebreakEnabled] = useState(false);
+  const [superTiebreakSetIndex, setSuperTiebreakSetIndex] = useState(3);
+  const [superTiebreakPoints, setSuperTiebreakPoints] = useState(10);
+  const [isSavingConfig, setIsSavingConfig] = useState(false);
+  const [tiebreakerMode, setTiebreakerMode] = useState<'split'|'playoff'>('split');
+  const [roundsToPlay, setRoundsToPlay] = useState(1);
+
+  // ── Stage modal ──
+  const [selectedStage, setSelectedStage] = useState<BracketStage|null>(null);
+  const [selectedRoundNumber, setSelectedRoundNumber] = useState<number|null>(null);
+  const [stageVenueId, setStageVenueId] = useState('');
+  const [stageScheduledDate, setStageScheduledDate] = useState('');
+  const [stageNotificationNote, setStageNotificationNote] = useState('');
+  const [isSavingStage, setIsSavingStage] = useState(false);
+  const [stageMaxSets, setStageMaxSets] = useState(3);
+  const [stagePointsPerSet, setStagePointsPerSet] = useState(21);
+  const [stageWinBy2Points, setStageWinBy2Points] = useState(true);
+  const [stageMaxDeucePoints, setStageMaxDeucePoints] = useState(30);
+  const [stageSuperTiebreakEnabled, setStageSuperTiebreakEnabled] = useState(false);
+  const [stageSuperTiebreakSetIndex, setStageSuperTiebreakSetIndex] = useState(3);
+  const [stageSuperTiebreakPoints, setStageSuperTiebreakPoints] = useState(10);
+
+  // ── Lock modal ──
+  const [isLockModalOpen, setIsLockModalOpen] = useState(false);
+  const [isLocking, setIsLocking] = useState(false);
+  const [lockSummary, setLockSummary] = useState<{totalParticipants:number;totalPlayers:number;platformFeePerPlayer:number;totalPlatformFee:number;platformFeeRuleLabel:string}|null>(null);
+
+  // ── Match schedule modal ──
+  const [selectedMatch, setSelectedMatch] = useState<BracketMatch|null>(null);
+  const [matchCourtId, setMatchCourtId] = useState('');
+  const [matchCourtName, setMatchCourtName] = useState('');
+  const [matchCourtAddress, setMatchCourtAddress] = useState('');
+  const [matchScheduledAt, setMatchScheduledAt] = useState('');
+  const [isCustomMatchConfig, setIsCustomMatchConfig] = useState(false);
+  const [matchSetsToWin, setMatchSetsToWin] = useState(2);
+  const [matchPointsPerSet, setMatchPointsPerSet] = useState(21);
+  const [matchDeuceEnabled, setMatchDeuceEnabled] = useState(true);
+  const [matchMaxPoints, setMatchMaxPoints] = useState(30);
+  const [matchSuperTiebreakEnabled, setMatchSuperTiebreakEnabled] = useState(false);
+  const [matchSuperTiebreakPoints, setMatchSuperTiebreakPoints] = useState(10);
+  const [isScheduling, setIsScheduling] = useState(false);
+
+  // ── Other ──
+  const [newGalleryUrl, setNewGalleryUrl] = useState('');
+  const [isAddingImage, setIsAddingImage] = useState(false);
+  const [mockNamesText, setMockNamesText] = useState('');
+  const [isSeedingMock, setIsSeedingMock] = useState(false);
+  const [isClearingMock, setIsClearingMock] = useState(false);
+  const [wildcardEmailOrPhone, setWildcardEmailOrPhone] = useState('');
+  const [wildcardTeamName, setWildcardTeamName] = useState('');
+  const [isGeneratingBracket, setIsGeneratingBracket] = useState(false);
+  const [isAssigningWildcard, setIsAssigningWildcard] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [hasConfigBeforeLock, setHasConfigBeforeLock] = useState(false);
+  const [isPayingPlatformFee, setIsPayingPlatformFee] = useState(false);
+  const [isPayingPublishFee, setIsPayingPublishFee] = useState(false);
+
+  const getFormatLabel = (mt: string, gr?: string|null) => {
+    if (mt === 'SINGLES') return gr === 'FEMALE' ? 'Đơn Nữ' : 'Đơn Nam';
+    if (mt === 'DOUBLES') return gr === 'FEMALE' ? 'Đôi Nữ' : 'Đôi Nam';
+    if (mt === 'MIXED_DOUBLES' || mt === 'MIXED' || gr === 'MIXED') return 'Đôi Nam Nữ';
+    return mt;
+  };
+  const getBracketLabel = (bt?: Division['bracketType']|null) => bt === 'DOUBLE_ELIMINATION' ? 'Loại kép' : bt === 'ROUND_ROBIN' ? 'Vòng tròn' : 'Loại trực tiếp';
+
+  const publishFeeAmount = (() => {
+    if (!tournament || !feesConfig) return 0;
+    if (tournament.tournamentType === 'CLUB') return feesConfig.feeClub;
+    return tournament.isRanked ? feesConfig.feePublicRanked : feesConfig.feePublicUnranked;
+  })();
+
+  const getStatusLabel = (status: Tournament['status']) => {
+    const map: Record<string, string> = {
+      DRAFT: 'Nháp (Ẩn)', REGISTRATION_OPEN: 'Mở Đăng Ký', PENDING_APPROVAL: 'Chờ duyệt công bố',
+      REGISTRATION_CLOSED: 'Đóng Đăng Ký', UPCOMING: 'Sắp Khởi Tranh',
+      IN_PROGRESS: 'Đang Thi Đấu', ONGOING: 'Đang Thi Đấu', COMPLETED: 'Đã Kết Thúc', CANCELLED: 'Đã Hủy',
+    };
+    return map[status] || status;
+  };
+
+  // ── Fetch helpers ──
+  const fetchReferees = useCallback(async () => {
+    try { const r = await tournamentsApi.getTournamentReferees(id); if(r.data) setReferees(r.data); }
+    catch { /* silent */ }
+  }, [id]);
+
+  const refetchDivisionData = useCallback(async () => {
+    if (!selectedDivisionId) return;
+    try {
+      const [pRes, bRes] = await Promise.all([
+        divisionsApi.getDivisionParticipants(id, selectedDivisionId),
+        tournamentsApi.getTournamentBracket(id, selectedDivisionId),
+      ]);
+      if (pRes.data) setParticipants(pRes.data);
+      setBracket(bRes.data || null);
+    } catch { /* silent */ }
+  }, [id, selectedDivisionId]);
+
+  const fetchDivisions = useCallback(async (tournamentId: string) => {
+    try {
+      const r = await divisionsApi.getDivisions(tournamentId);
+      if (r.data && Array.isArray(r.data)) {
+        setDivisions(r.data);
+        setSelectedDivisionId(prev => {
+          if (r.data.length === 0) return '';
+          const reqDiv = searchParams.get('divisionId');
+          if (reqDiv && r.data.some(d => d.id === reqDiv)) return reqDiv;
+          return r.data.some(d => d.id === prev) ? prev : r.data[0].id;
+        });
+      } else { setDivisions([]); setSelectedDivisionId(''); }
+    } catch { setDivisions([]); setSelectedDivisionId(''); }
+  }, [id]);
+
+  const fetchVenueCourts = async (vId: string) => {
+    try { const r = await venuesApi.getVenueById(vId); setCourts(r.data?.courts?.map(c => ({id:c.id, courtName:c.name})) || []); }
+    catch { setCourts([]); }
+  };
+
+  const applyDivisionFormValues = useCallback((selected: Division) => {
+    setMatchType(
+      selected.genderRestriction === 'FEMALE'
+        ? (selected.matchType === 'SINGLES' ? MatchTypeUI.FEMALE_SINGLES : MatchTypeUI.FEMALE_DOUBLES)
+        : selected.genderRestriction === 'MIXED' ? MatchTypeUI.MIXED_DOUBLES
+        : (selected.matchType === 'SINGLES' ? MatchTypeUI.MALE_SINGLES : MatchTypeUI.MALE_DOUBLES));
+    setMaxParticipants(selected.maxParticipants || 16);
+    setIsLimitEnabled(!!selected.maxParticipants);
+    setEntryFee(selected.entryFee || 0);
+    const rules = selected.roundConfig || {};
+    const rc = rules as Record<string,unknown>;
+    setSetsToWin(rc.setsToWin as number || 2);
+    setPointsPerSet(rc.pointsPerSet as number || 21);
+    setWinByTwo(rc.winByTwo !== undefined ? rc.winByTwo as boolean : true);
+    setTiebreakerMode((rc.tiebreakerMode as 'split'|'playoff') || 'split');
+    setRoundsToPlay(rc.roundsToPlay as number || 1);
+  }, []);
+
+  // ── Handlers ──
+  const handleSaveBasicInfo = async () => {
+    setIsSavingConfig(true);
+    try {
+      await tournamentsApi.updateTournament(id, { name, categoryId, description, bannerUrl: bannerUrl||null, logoUrl: logoUrl||null, prizeDescription: prizeDescription||null, contactInfo, visibility, genderRestriction: null });
+      if (selectedDivisionId && tournament) {
+        const pm: Record<string,{mt:MatchTypeDB;gr:GenderRestriction|null}> = {
+          MALE_SINGLES: {mt:MatchTypeDB.SINGLES, gr:GenderRestriction.MALE},
+          FEMALE_SINGLES: {mt:MatchTypeDB.SINGLES, gr:GenderRestriction.FEMALE},
+          MALE_DOUBLES: {mt:MatchTypeDB.DOUBLES, gr:GenderRestriction.MALE},
+          FEMALE_DOUBLES: {mt:MatchTypeDB.DOUBLES, gr:GenderRestriction.FEMALE},
+          MIXED_DOUBLES: {mt:MatchTypeDB.MIXED_DOUBLES, gr:GenderRestriction.MIXED},
+        };
+        const mapped = pm[matchType] || {mt:MatchTypeDB.DOUBLES, gr:null};
+        await divisionsApi.updateDivisionConfig(tournament.id, selectedDivisionId, {
+          matchType: mapped.mt, genderRestriction: mapped.gr,
+          maxParticipants: isLimitEnabled ? maxParticipants : null, isConfigOverride: true,
+          roundConfig: { setsToWin, pointsPerSet, winByTwo },
+        });
+        await fetchDivisions(id);
+      }
+      toast.success('Lưu thông tin giải đấu thành công!');
+      await fetchTournamentData();
+    } catch (err) { toast.error(getErrorMessage(err)); }
+    finally { setIsSavingConfig(false); }
+  };
+
+  const handleSaveScheduleDetails = async () => {
+    setIsSavingConfig(true);
+    try {
+      const pName = provinces.find(p=>p.code===provinceCode)?.name||'';
+      const dName = districts.find(d=>d.code===districtCode)?.name||'';
+      const wName = wards.find(w=>w.code===wardCode)?.name||'';
+      const fullAddr = [customVenueAddress.trim(), wName, dName, pName].filter(Boolean).join(', ');
+      if (!customVenueName.trim() || !fullAddr) { toast.error('Vui lòng điền tên sân và địa chỉ'); setIsSavingConfig(false); return; }
+      if (startDate && endDate && new Date(endDate) <= new Date(startDate)) { toast.error('Ngày kết thúc phải sau ngày khai mạc'); setIsSavingConfig(false); return; }
+      if (registrationStartDate && registrationEndDate && new Date(registrationEndDate) <= new Date(registrationStartDate)) { toast.error('Hạn chót đăng ký phải sau ngày mở đăng ký'); setIsSavingConfig(false); return; }
+      if (startDate && registrationEndDate && new Date(startDate) < new Date(registrationEndDate)) { toast.error('Ngày khai mạc phải sau hạn chốt đăng ký'); setIsSavingConfig(false); return; }
+
+      const venueRes = await venuesApi.createVenue({ name: customVenueName.trim(), locationAddress: fullAddr });
+      const finalVenueId = venueRes?.data?.id || null;
+      await tournamentsApi.updateTournament(id, {
+        venueId: finalVenueId, city: pName || null,
+        startDate: startDate ? new Date(startDate).toISOString() : null,
+        endDate: endDate ? new Date(endDate).toISOString() : null,
+        registrationStartDate: registrationStartDate ? new Date(registrationStartDate).toISOString() : null,
+        registrationEndDate: registrationEndDate ? new Date(registrationEndDate).toISOString() : null,
+      });
+      toast.success('Lưu thông tin lịch và địa điểm thành công!');
+      await fetchTournamentData();
+    } catch (err) { toast.error(getErrorMessage(err)); }
+    finally { setIsSavingConfig(false); }
+  };
+
+  const handleSaveMatchConfig = async () => {
+    if (!tournament || !selectedDivisionId) { toast.error('Vui lòng chọn hình thức'); return; }
+    setIsSavingConfig(true);
+    try {
+      const pm: Record<string,{mt:MatchTypeDB;gr:GenderRestriction|null}> = {
+        MALE_SINGLES:{mt:MatchTypeDB.SINGLES,gr:GenderRestriction.MALE}, FEMALE_SINGLES:{mt:MatchTypeDB.SINGLES,gr:GenderRestriction.FEMALE},
+        MALE_DOUBLES:{mt:MatchTypeDB.DOUBLES,gr:GenderRestriction.MALE}, FEMALE_DOUBLES:{mt:MatchTypeDB.DOUBLES,gr:GenderRestriction.FEMALE},
+        MIXED_DOUBLES:{mt:MatchTypeDB.MIXED_DOUBLES,gr:GenderRestriction.MIXED},
+      };
+      const mapped = pm[matchType] || {mt:MatchTypeDB.DOUBLES, gr:null};
+      const selected = divisions.find(d=>d.id===selectedDivisionId);
+      await divisionsApi.updateDivisionConfig(tournament.id, selectedDivisionId, {
+        matchType: mapped.mt, genderRestriction: mapped.gr,
+        maxParticipants: isLimitEnabled ? maxParticipants : null, isConfigOverride: true,
+        roundConfig: { setsToWin, pointsPerSet, winByTwo, maxDeucePoints: winByTwo ? maxDeucePoints : null,
+          superTiebreakEnabled, superTiebreakSetIndex: superTiebreakEnabled ? superTiebreakSetIndex : null,
+          superTiebreakPoints: superTiebreakEnabled ? superTiebreakPoints : null,
+          tiebreakerMode, roundsToPlay, rounds: selected?.roundConfig?.rounds || {} },
+      });
+      toast.success('Lưu cấu hình thi đấu thành công!');
+      await fetchDivisions(tournament.id);
+    } catch (err) { toast.error(getErrorMessage(err)); }
+    finally { setIsSavingConfig(false); }
+  };
+
+  const handleSaveFinanceConfig = async () => {
+    if (!tournament || !selectedDivisionId) { toast.error('Vui lòng chọn hình thức'); return; }
+    setIsSavingConfig(true);
+    try { await divisionsApi.updateDivision(selectedDivisionId, { entryFee }); toast.success('Lưu cài đặt tài chính thành công!'); await fetchDivisions(tournament.id); }
+    catch (err) { toast.error(getErrorMessage(err)); }
+    finally { setIsSavingConfig(false); }
+  };
+
+  const handleAddReferee = async (e: React.FormEvent) => {
+    e.preventDefault(); if (!refereeEmail.trim()) return;
+    setIsAddingReferee(true);
+    try { await tournamentsApi.addTournamentReferee(id, refereeEmail.trim()); toast.success('Thêm trọng tài thành công!'); setRefereeEmail(''); await fetchReferees(); }
+    catch (err) { toast.error(getErrorMessage(err)); }
+    finally { setIsAddingReferee(false); }
+  };
+
+  const handleCreateDivision = async () => {
+    if (!tournament?.id) { toast.error('Không tìm thấy giải đấu'); return; }
+    setIsCreatingDivision(true);
+    try {
+      const pm: Record<string,{mt:MatchTypeDB;gr:GenderRestriction|null}> = {
+        MALE_SINGLES:{mt:MatchTypeDB.SINGLES,gr:GenderRestriction.MALE}, FEMALE_SINGLES:{mt:MatchTypeDB.SINGLES,gr:GenderRestriction.FEMALE},
+        MALE_DOUBLES:{mt:MatchTypeDB.DOUBLES,gr:GenderRestriction.MALE}, FEMALE_DOUBLES:{mt:MatchTypeDB.DOUBLES,gr:GenderRestriction.FEMALE},
+        MIXED_DOUBLES:{mt:MatchTypeDB.MIXED_DOUBLES,gr:GenderRestriction.MIXED},
+      };
+      const mapped = pm[newDivisionMatchType] || {mt:MatchTypeDB.DOUBLES, gr:null};
+      if (divisions.some(d=>d.matchType===mapped.mt && d.genderRestriction===mapped.gr)) {
+        toast.error('Hình thức này đã tồn tại!'); setIsCreatingDivision(false); return;
+      }
+      const generatedName = getFormatLabel(mapped.mt, mapped.gr);
+      const res = await divisionsApi.createDivision(tournament.id, { name: generatedName, matchType: mapped.mt, genderRestriction: mapped.gr, bracketType: newDivisionBracketType as Division['bracketType'], isConfigOverride: true });
+      toast.success(`Đã thêm "${generatedName}" thành công!`);
+      setIsCreateDivisionModalOpen(false); setNewDivisionMatchType('MALE_DOUBLES'); setNewDivisionBracketType('SINGLE_ELIMINATION');
+      await fetchDivisions(tournament.id);
+      if (res.data) setSelectedDivisionId(res.data.id);
+    } catch (err) { toast.error(getErrorMessage(err)); }
+    finally { setIsCreatingDivision(false); }
+  };
+
+  const requestDeleteDivision = (div: Division) => {
+    if (divisions.length <= 1) { toast.error('Giải phải có ít nhất 1 hình thức'); return; }
+    setDivisionPendingDelete(div);
+  };
+  const handleConfirmDeleteDivision = async () => {
+    if (!divisionPendingDelete || !tournament?.id) return;
+    setIsDeletingDivision(true);
+    try { await divisionsApi.deleteDivision(divisionPendingDelete.id); toast.success('Đã xóa hình thức!'); setDivisionPendingDelete(null); await fetchDivisions(tournament.id); }
+    catch (err) { toast.error(getErrorMessage(err)); }
+    finally { setIsDeletingDivision(false); }
+  };
+
+  const handleGenerateBracket = async () => {
+    setIsGeneratingBracket(true);
+    try {
+      toast.loading('Đang khởi tạo sơ đồ thi đấu...', {id:'gen-bracket'});
+      await tournamentsApi.generateBracket(id, selectedDivisionId || undefined);
+      toast.success('Khởi tạo sơ đồ thi đấu thành công!', {id:'gen-bracket'});
+      await refetchDivisionData();
+    } catch (err) { toast.error(getErrorMessage(err), {id:'gen-bracket'}); }
+    finally { setIsGeneratingBracket(false); }
+  };
+
+  const handleRequestPayout = async (data: {bankName:string;bankAccountNumber:string;bankAccountName:string;amountRequested:number}) => {
+    await paymentsApi.requestPayout({ tournamentId: tournament?.id||id, ...data });
+  };
+
+  const handleRegenerateInviteCode = async () => {
+    try { await tournamentsApi.regenerateInviteCode(id); toast.success('Mã mời đã được tạo lại!'); await fetchTournamentData(); }
+    catch (err) { toast.error(getErrorMessage(err)); }
+  };
+
+  const handlePublish = async () => {
+    try { setIsLoading(true); await tournamentsApi.publishTournament(id); toast.success('Giải đấu đã được công bố!'); await fetchTournamentData(); }
+    catch (err) { toast.error(getErrorMessage(err)); }
+    finally { setIsLoading(false); }
+  };
+
+  const handlePayPublishFee = async () => {
+    if (!tournament) return;
+    if (publishFeeAmount <= 0) { await handlePublish(); return; }
+    setIsPayingPublishFee(true);
+    try {
+      const res = await paymentsApi.createPaymentLink({ tournamentId: id, amount: publishFeeAmount });
+      if (res.data?.paymentUrl) { toast.success('Đang chuyển đến thanh toán phí công bố.'); router.push(res.data.paymentUrl); }
+      else toast.error('Không có liên kết thanh toán.');
+    } catch (err) { toast.error(getErrorMessage(err)); }
+    finally { setIsPayingPublishFee(false); }
+  };
+
+  const handleDeleteTournament = async () => {
+    if (!confirm('Bạn có chắc muốn xóa? Không thể hoàn tác.')) return;
+    setIsDeleting(true);
+    try {
+      const res = await tournamentsApi.deleteTournament(id);
+      const rd = res?.data as Record<string,unknown>|undefined;
+      toast.success((rd?.message as string) || 'Đã xóa giải đấu!');
+      router.push('/organizer/tournaments');
+    } catch (err) { toast.error(getErrorMessage(err)); }
+    finally { setIsDeleting(false); }
+  };
+
+  const handlePayPlatformFee = async () => {
+    setIsPayingPlatformFee(true);
+    try {
+      const totalPlayers = participants.reduce((s,p) => s + (p.members?.length||0), 0);
+      const pf = getPlatformFeeBreakdown(entryFee, tournament?.platformFeePercentage);
+      const amount = totalPlayers * pf.feePerPlayer;
+      const res = await paymentsApi.createPaymentLink({ tournamentId: id, amount });
+      if (res.data?.paymentUrl) { window.open(res.data.paymentUrl, '_blank'); toast.success('Đã mở liên kết thanh toán.'); }
+      else toast.error('Không có liên kết thanh toán.');
+    } catch (err) { toast.error(getErrorMessage(err)); }
+    finally { setIsPayingPlatformFee(false); }
+  };
+
+  const handleTournamentStepTransition = async (nextStatus: Tournament['status']) => {
+    if (nextStatus === 'UPCOMING') { handleOpenLockModal(); return; }
+    try { setIsLoading(true); await tournamentsApi.updateTournament(id, { status: nextStatus }); toast.success('Đã cập nhật trạng thái!'); await fetchTournamentData(); }
+    catch (err) { toast.error(getErrorMessage(err)); }
+    finally { setIsLoading(false); }
+  };
+
+  const handleOpenLockModal = () => {
+    if (!tournament) return;
+    if (participants.length < 2) { toast.error('Cần ít nhất 2 đội để chốt'); return; }
+    setHasConfigBeforeLock(!!divisions.find(d=>d.id===selectedDivisionId)?.roundConfig?.setsToWin);
+    const totalPlayers = participants.reduce((s,p) => s + (p.members?.length||0), 0);
+    const pf = getPlatformFeeBreakdown(entryFee, tournament.platformFeePercentage);
+    setLockSummary({ totalParticipants: participants.length, totalPlayers, platformFeePerPlayer: pf.feePerPlayer, totalPlatformFee: totalPlayers * pf.feePerPlayer, platformFeeRuleLabel: pf.ruleLabel });
+    setIsLockModalOpen(true);
+  };
+
+  const handleConfirmLock = async () => {
+    setIsLocking(true);
+    try { await tournamentsApi.lockTournament(id); toast.success('Chốt danh sách thành công!'); setIsLockModalOpen(false); await fetchTournamentData(); await refetchDivisionData(); }
+    catch (err) { toast.error(getErrorMessage(err)); }
+    finally { setIsLocking(false); }
+  };
+
+  const handleSeedMockData = async () => {
+    if (!mockNamesText.trim()) { toast.error('Nhập danh sách tên'); return; }
+    const names = mockNamesText.split('\n').map(n=>n.trim()).filter(Boolean);
+    if (!names.length) { toast.error('Nhập ít nhất 1 tên'); return; }
+    setIsSeedingMock(true);
+    try { await tournamentsApi.seedMockParticipants(id, names, selectedDivisionId||undefined); toast.success(`Đã sinh ${names.length} người chơi ảo!`); setMockNamesText(''); await refetchDivisionData(); }
+    catch (err) { toast.error(getErrorMessage(err)); }
+    finally { setIsSeedingMock(false); }
+  };
+
+  const handleClearMockData = async () => {
+    if (!confirm('Xóa toàn bộ dữ liệu người chơi thử nghiệm?')) return;
+    setIsClearingMock(true);
+    try { await tournamentsApi.clearMockParticipants(id, selectedDivisionId||undefined); toast.success('Đã dọn dẹp!'); await refetchDivisionData(); }
+    catch (err) { toast.error(getErrorMessage(err)); }
+    finally { setIsClearingMock(false); }
+  };
+
+  const handleAssignWildcard = async () => {
+    if (!wildcardEmailOrPhone.trim() || !wildcardTeamName.trim()) { toast.error('Nhập đầy đủ thông tin'); return; }
+    if (divisions.length > 0 && !selectedDivisionId) { toast.error('Chọn hình thức trước'); return; }
+    setIsAssigningWildcard(true);
+    try { await tournamentsApi.assignReservedSlot(id, wildcardEmailOrPhone.trim(), wildcardTeamName.trim(), undefined, selectedDivisionId||undefined); toast.success('Gán suất đặc cách thành công!'); setWildcardEmailOrPhone(''); setWildcardTeamName(''); await refetchDivisionData(); }
+    catch (err) { toast.error(getErrorMessage(err)); }
+    finally { setIsAssigningWildcard(false); }
+  };
+
+  const handleUpdateStatus = async (participantId: string, status: 'COMPLETE'|'PENDING'|'WITHDRAWN') => {
+    try { await tournamentsApi.updateParticipantStatus(id, participantId, status); toast.success('Đã cập nhật trạng thái!'); await refetchDivisionData(); }
+    catch (err) { toast.error(getErrorMessage(err)); }
+  };
+
+  const handleOpenRoundModal = (stage: BracketStage, roundNumber: number) => {
+    setSelectedStage(stage); setSelectedRoundNumber(roundNumber);
+    const rc = (stage.roundConfig?.rounds as Record<string,Record<string,unknown>>|undefined)?.[roundNumber.toString()];
+    if (rc) {
+      setStageMaxSets(rc.sets_to_win === 1 ? 1 : rc.sets_to_win === 2 ? 3 : 5);
+      setStagePointsPerSet((rc.points_per_set as number) || 21);
+      setStageWinBy2Points(rc.deuce_enabled !== undefined ? rc.deuce_enabled as boolean : true);
+      setStageMaxDeucePoints((rc.max_points as number) || 30);
+      setStageSuperTiebreakEnabled(rc.tiebreak_at !== undefined);
+      setStageSuperTiebreakPoints((rc.tiebreak_at as number) || 10);
+    } else {
+      setStageMaxSets(setsToWin === 1 ? 1 : setsToWin === 2 ? 3 : 5);
+      setStagePointsPerSet(pointsPerSet); setStageWinBy2Points(winByTwo); setStageMaxDeucePoints(30);
+      setStageSuperTiebreakEnabled(false); setStageSuperTiebreakPoints(10);
+    }
+  };
+
+  const handleSaveStageDetails = async () => {
+    if (!selectedStage || selectedRoundNumber === null) return;
+    setIsSavingStage(true);
+    try {
+      const currentRounds = (selectedStage.roundConfig?.rounds || {}) as Record<string,unknown>;
+      await tournamentsApi.updateStage(selectedStage.id, {
+        roundConfig: { ...selectedStage.roundConfig, rounds: { ...currentRounds, [selectedRoundNumber.toString()]: { sets_to_win: stageMaxSets === 1 ? 1 : stageMaxSets === 3 ? 2 : 3, points_per_set: stagePointsPerSet, deuce_enabled: stageWinBy2Points, max_points: stageWinBy2Points ? stageMaxDeucePoints : null, tiebreak_at: stageSuperTiebreakEnabled ? stageSuperTiebreakPoints : undefined } } }
+      });
+      toast.success('Cập nhật cấu hình vòng đấu thành công!');
+      setSelectedStage(null); setSelectedRoundNumber(null); await refetchDivisionData();
+    } catch (err) { toast.error(getErrorMessage(err)); }
+    finally { setIsSavingStage(false); }
+  };
+
+  const handleOpenScheduling = (match: BracketMatch) => {
+    setSelectedMatch(match); setMatchCourtName(match.courtName||''); setMatchCourtAddress(match.courtAddress||'');
+    setMatchScheduledAt(match.scheduledAt ? match.scheduledAt.substring(0,16) : '');
+    if (match.matchConfig && Object.keys(match.matchConfig).length > 0) {
+      setIsCustomMatchConfig(true);
+      setMatchSetsToWin(match.matchConfig.setsToWin||2); setMatchPointsPerSet(match.matchConfig.pointsPerSet||21);
+      setMatchDeuceEnabled(match.matchConfig.deuceEnabled !== false); setMatchMaxPoints(match.matchConfig.maxPoints||30);
+      setMatchSuperTiebreakEnabled(match.matchConfig.tiebreakAt != null && match.matchConfig.pointsPerSet != null && match.matchConfig.tiebreakAt < match.matchConfig.pointsPerSet);
+      setMatchSuperTiebreakPoints(match.matchConfig.tiebreakAt||10);
+    } else {
+      setIsCustomMatchConfig(false);
+      const stage = bracket?.stages.find(s => s.groups.some(g => g.id === match.groupId));
+      const rc = (stage?.roundConfig?.rounds as Record<string,Record<string,unknown>>|undefined)?.[match.roundNumber?.toString()];
+      if (rc) { setMatchSetsToWin(rc.sets_to_win === 1 ? 1 : rc.sets_to_win === 2 ? 2 : 3); setMatchPointsPerSet((rc.points_per_set as number)||21); setMatchDeuceEnabled(rc.deuce_enabled !== false); setMatchMaxPoints((rc.max_points as number)||30); }
+      else { setMatchSetsToWin(setsToWin); setMatchPointsPerSet(pointsPerSet); setMatchDeuceEnabled(winByTwo); setMatchMaxPoints(30); }
+    }
+  };
+
+  const handleSaveSchedule = async () => {
+    if (!selectedMatch) return;
+    setIsScheduling(true);
+    try {
+      await tournamentsApi.updateMatchSchedule(selectedMatch.id, {
+        courtName: matchCourtName || null, courtAddress: matchCourtAddress || null,
+        scheduledAt: matchScheduledAt ? new Date(matchScheduledAt).toISOString() : null,
+        matchConfig: isCustomMatchConfig ? { setsToWin: matchSetsToWin, pointsPerSet: matchPointsPerSet, deuceEnabled: matchDeuceEnabled, tiebreakAt: matchSuperTiebreakEnabled ? matchSuperTiebreakPoints : matchPointsPerSet-1, maxPoints: matchDeuceEnabled ? matchMaxPoints : null } : null,
+      });
+      toast.success('Cập nhật lịch thi đấu thành công!');
+      setSelectedMatch(null); await fetchTournamentData();
+    } catch (err) { toast.error(getErrorMessage(err)); }
+    finally { setIsScheduling(false); }
+  };
+
+  const fetchTournamentData = useCallback(async () => {
+    try {
+      const tRes = await tournamentsApi.getTournamentById(id);
+      if (tRes.data) {
+        const t = tRes.data; setTournament(t);
+        setName(t.name); setCategoryId(t.categoryId); setDescription(t.description||''); setBannerUrl(t.bannerUrl||''); setLogoUrl(t.logoUrl||'');
+        setPrizeDescription(t.prizeDescription||''); setContactInfo(t.contactInfo||{}); setVisibility(t.visibility||'PUBLIC'); setGenderRestriction(t.genderRestriction||'');
+        setVenueId(t.venueId||'');
+        if (t.venue) { setCustomVenueName(t.venue.name||''); setCustomVenueAddress(t.venue.locationAddress||''); }
+        setStartDate(t.startDate?.substring(0,16)||''); setEndDate(t.endDate?.substring(0,16)||'');
+        setRegistrationStartDate(t.registrationStartDate?.substring(0,16)||''); setRegistrationEndDate(t.registrationEndDate?.substring(0,16)||'');
+        setEntryFee(t.entryFee||0); setMaxParticipants(t.maxParticipants||16); setIsLimitEnabled(!!t.maxParticipants);
+        let ui = MatchTypeUI.MALE_DOUBLES;
+        if (t.matchType === MatchTypeDB.SINGLES) ui = t.genderRestriction === GenderRestriction.FEMALE ? MatchTypeUI.FEMALE_SINGLES : MatchTypeUI.MALE_SINGLES;
+        else if (t.matchType === MatchTypeDB.DOUBLES) ui = t.genderRestriction === GenderRestriction.FEMALE ? MatchTypeUI.FEMALE_DOUBLES : MatchTypeUI.MALE_DOUBLES;
+        else if (t.matchType === MatchTypeDB.MIXED_DOUBLES || t.matchType === 'MIXED') ui = MatchTypeUI.MIXED_DOUBLES;
+        setMatchType(ui);
+        const rules = t.sportRules || {} as Record<string,unknown>;
+        setSetsToWin(rules.setsToWin as number||2); setPointsPerSet(rules.pointsPerSet as number||21); setWinByTwo(rules.winByTwo !== undefined ? rules.winByTwo as boolean : true);
+        if (t.parentId) await fetchDivisions(t.parentId); else await fetchDivisions(id);
+        if (t.venueId) await fetchVenueCourts(t.venueId);
+      }
+      return tRes.data;
+    } catch { toast.error('Không thể tải thông tin giải đấu'); return null; }
+  }, [id]);
+
+  // ── Init ──
+  useEffect(() => {
+    const init = async () => {
+      setIsLoading(true);
+      const t = await fetchTournamentData();
+      if (t?.id) {
+        await fetchDivisions(t.id);
+        try {
+          const [vRes, cRes, fRes, pList] = await Promise.all([venuesApi.getVenues(), categoriesApi.getCategories(), tournamentsApi.getFeesConfig(), regionsApi.getProvinces()]);
+          if (vRes.data) setVenues(vRes.data);
+          if (cRes.data) setCategories(cRes.data);
+          if (fRes.data) setFeesConfig(fRes.data);
+          setProvinces(pList);
+        } catch { /* silent */ }
+      }
+      setIsLoading(false);
+    };
+    init();
+  }, []);
+
+  useEffect(() => { if (selectedDivisionId) refetchDivisionData(); }, [selectedDivisionId]);
+  useEffect(() => { fetchDivisions(id); }, [id]);
+
+  useEffect(() => {
+    if (provinceCode) regionsApi.getDistricts(provinceCode).then(setDistricts).catch(()=>{});
+    else { setDistricts([]); setWards([]); }
+  }, [provinceCode]);
+  useEffect(() => {
+    if (districtCode) regionsApi.getWards(districtCode).then(setWards).catch(()=>{});
+    else setWards([]);
+  }, [districtCode]);
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (['basic','schedule','registration','operations','bracket','finance','permissions'].includes(tab||'')) setActiveTab(tab as typeof activeTab);
+  }, []);
+
+  const inviteLink = tournament?.visibility === 'PRIVATE'
+    ? `${window.location.origin}/tournaments/${id}/register?invite=${tournament.inviteCode}`
+    : `${window.location.origin}/tournaments/join/${tournament?.inviteCode}`;
+
+  return {
+    tournament, setTournament, participants, setParticipants, bracket, setBracket,
+    venues, setVenues, categories, setCategories, feesConfig, setFeesConfig, courts, setCourts,
+    isLoading, setIsLoading, activeTab, setActiveTab, basicSubTab, setBasicSubTab,
+    referees, setReferees, refereeEmail, setRefereeEmail, isAddingReferee, setIsAddingReferee,
+    divisions, setDivisions, selectedDivisionId, setSelectedDivisionId,
+    isCreateDivisionModalOpen, setIsCreateDivisionModalOpen,
+    newDivisionMatchType, setNewDivisionMatchType, newDivisionBracketType, setNewDivisionBracketType,
+    isCreatingDivision, setIsCreatingDivision, divisionPendingDelete, setDivisionPendingDelete, isDeletingDivision, setIsDeletingDivision,
+    name, setName, categoryId, setCategoryId, description, setDescription,
+    bannerUrl, setBannerUrl, logoUrl, setLogoUrl, prizeDescription, setPrizeDescription,
+    contactInfo, setContactInfo, visibility, setVisibility, genderRestriction, setGenderRestriction,
+    venueId, setVenueId, customVenueName, setCustomVenueName, customVenueAddress, setCustomVenueAddress,
+    provinces, setProvinces, districts, setDistricts, wards, setWards,
+    provinceCode, setProvinceCode, districtCode, setDistrictCode, wardCode, setWardCode,
+    startDate, setStartDate, endDate, setEndDate, registrationStartDate, setRegistrationStartDate, registrationEndDate, setRegistrationEndDate,
+    entryFee, setEntryFee, platformFeePerPlayer, setPlatformFeePerPlayer,
+    maxParticipants, setMaxParticipants, isLimitEnabled, setIsLimitEnabled,
+    matchType, setMatchType, setsToWin, setSetsToWin, pointsPerSet, setPointsPerSet, winByTwo, setWinByTwo,
+    maxDeucePoints, setMaxDeucePoints, superTiebreakEnabled, setSuperTiebreakEnabled,
+    superTiebreakSetIndex, setSuperTiebreakSetIndex, superTiebreakPoints, setSuperTiebreakPoints,
+    isSavingConfig, setIsSavingConfig, tiebreakerMode, setTiebreakerMode, roundsToPlay, setRoundsToPlay,
+    selectedStage, setSelectedStage, selectedRoundNumber, setSelectedRoundNumber,
+    stageVenueId, setStageVenueId, stageScheduledDate, setStageScheduledDate, stageNotificationNote, setStageNotificationNote,
+    isSavingStage, setIsSavingStage, stageMaxSets, setStageMaxSets, stagePointsPerSet, setStagePointsPerSet,
+    stageWinBy2Points, setStageWinBy2Points, stageMaxDeucePoints, setStageMaxDeucePoints,
+    stageSuperTiebreakEnabled, setStageSuperTiebreakEnabled, stageSuperTiebreakSetIndex, setStageSuperTiebreakSetIndex,
+    stageSuperTiebreakPoints, setStageSuperTiebreakPoints,
+    isLockModalOpen, setIsLockModalOpen, isLocking, setIsLocking, lockSummary, setLockSummary,
+    selectedMatch, setSelectedMatch, matchCourtId, setMatchCourtId, matchCourtName, setMatchCourtName,
+    matchCourtAddress, setMatchCourtAddress, matchScheduledAt, setMatchScheduledAt,
+    isCustomMatchConfig, setIsCustomMatchConfig,
+    matchSetsToWin, setMatchSetsToWin, matchPointsPerSet, setMatchPointsPerSet,
+    matchDeuceEnabled, setMatchDeuceEnabled, matchMaxPoints, setMatchMaxPoints,
+    matchSuperTiebreakEnabled, setMatchSuperTiebreakEnabled, matchSuperTiebreakPoints, setMatchSuperTiebreakPoints,
+    isScheduling, setIsScheduling, isDeleting, setIsDeleting, hasConfigBeforeLock, setHasConfigBeforeLock,
+    isPayingPlatformFee, setIsPayingPlatformFee, isPayingPublishFee, setIsPayingPublishFee,
+    newGalleryUrl, setNewGalleryUrl, isAddingImage, setIsAddingImage,
+    mockNamesText, setMockNamesText, isSeedingMock, setIsSeedingMock, isClearingMock, setIsClearingMock,
+    wildcardEmailOrPhone, setWildcardEmailOrPhone, wildcardTeamName, setWildcardTeamName,
+    isGeneratingBracket, setIsGeneratingBracket, isAssigningWildcard, setIsAssigningWildcard,
+    // actions
+    fetchTournamentData, fetchDivisions, fetchReferees, refetchDivisionData, applyDivisionFormValues, fetchVenueCourts,
+    handleSaveBasicInfo, handleSaveScheduleDetails, handleSaveMatchConfig, handleSaveFinanceConfig,
+    handleAddReferee, handleCreateDivision, requestDeleteDivision, handleConfirmDeleteDivision,
+    handleGenerateBracket, handleRequestPayout, handleRegenerateInviteCode,
+    handlePublish, handlePayPublishFee, handleDeleteTournament, handlePayPlatformFee,
+    handleTournamentStepTransition, handleOpenLockModal, handleConfirmLock,
+    handleSeedMockData, handleClearMockData, handleAssignWildcard,
+    handleUpdateStatus, handleOpenRoundModal, handleSaveStageDetails,
+    handleOpenScheduling, handleSaveSchedule,
+    // helpers
+    getFormatLabel, getBracketLabel, getStatusLabel, publishFeeAmount, inviteLink,
+  };
+}

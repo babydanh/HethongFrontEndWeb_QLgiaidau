@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
 import { Tournament, TournamentParticipant } from '@/types/tournament';
 import { getErrorMessage } from '@/utils/error';
+import { getPlatformFeeBreakdown } from '@/utils/platform-fee';
 import toast from 'react-hot-toast';
 
 interface FinanceTabProps {
@@ -14,10 +15,8 @@ interface FinanceTabProps {
   participants: TournamentParticipant[];
   entryFee: number;
   setEntryFee: (fee: number) => void;
-  platformFeePerPlayer: number;
   isSavingConfig: boolean;
   handleSaveFinanceConfig: () => void;
-  currentPlatformFeePerPlayer: number;
   handlePayPlatformFee: () => void;
   isPayingPlatformFee: boolean;
   handleRequestPayout?: (data: { bankName: string; bankAccountNumber: string; bankAccountName: string; amountRequested: number }) => Promise<void>;
@@ -28,18 +27,18 @@ export function FinanceTab({
   participants,
   entryFee,
   setEntryFee,
-  platformFeePerPlayer,
   isSavingConfig,
   handleSaveFinanceConfig,
-  currentPlatformFeePerPlayer,
   handlePayPlatformFee,
   isPayingPlatformFee,
   handleRequestPayout,
 }: FinanceTabProps) {
   const totalPlayers = participants.reduce((sum, p) => sum + (p.members?.length || 0), 0);
   const totalExpectedFee = entryFee * participants.length;
-  const totalPlatformFee = totalPlayers * currentPlatformFeePerPlayer;
+  const platformFee = getPlatformFeeBreakdown(entryFee, tournament.platformFeePercentage);
+  const totalPlatformFee = totalPlayers * platformFee.feePerPlayer;
   const netOrganizerEarnings = Math.max(0, totalExpectedFee - totalPlatformFee);
+  const isRegistrationLockedForFinance = ['REGISTRATION_OPEN', 'REGISTRATION_CLOSED', 'UPCOMING', 'IN_PROGRESS', 'COMPLETED'].includes(tournament.status);
 
   // Payout form state
   const [bankName, setBankName] = useState('');
@@ -100,17 +99,20 @@ export function FinanceTab({
               type="number"
               value={entryFee}
               onChange={(e) => setEntryFee(Number(e.target.value))}
-              disabled={['UPCOMING', 'IN_PROGRESS', 'COMPLETED'].includes(tournament.status)}
+              disabled={isRegistrationLockedForFinance}
             />
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-semibold text-slate-700">Lệ phí sàn / VĐV (mặc định)</label>
+              <label className="text-sm font-semibold text-slate-700">Lệ phí sàn / VĐV</label>
               <Badge className="py-2.5 bg-slate-50 border-slate-200 text-slate-700 justify-center font-bold text-sm">
-                {platformFeePerPlayer.toLocaleString('vi-VN')} VNĐ / Người chơi
+                {platformFee.feePerPlayer.toLocaleString('vi-VN')} VNĐ / Người chơi
               </Badge>
+              <p className="text-xs text-slate-500 font-medium">
+                Logic áp dụng: dưới 100.000đ lấy 5.000đ/người, từ 100.000đ trở lên lấy {platformFee.percentage}% lệ phí/người.
+              </p>
             </div>
           </div>
 
-          {!['UPCOMING', 'IN_PROGRESS', 'COMPLETED'].includes(tournament.status) && (
+          {!isRegistrationLockedForFinance && (
             <div className="flex justify-end pt-4 border-t">
               <Button
                 onClick={handleSaveFinanceConfig}
@@ -143,10 +145,7 @@ export function FinanceTab({
                   {totalPlatformFee.toLocaleString('vi-VN')} VNĐ
                 </p>
                 <p className="text-xs text-slate-500 font-semibold mt-1">
-                  {entryFee >= 100000
-                    ? `Phí sàn ${tournament?.platformFeePercentage || 5}% / người`
-                    : 'Thu cố định 5.000đ/người'}{' '}
-                  ({totalPlayers} VĐV)
+                  {platformFee.ruleLabel} ({totalPlayers} VĐV)
                 </p>
               </div>
 

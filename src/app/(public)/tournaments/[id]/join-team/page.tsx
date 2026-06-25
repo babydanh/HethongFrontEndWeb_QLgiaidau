@@ -100,8 +100,9 @@ export default function JoinTeamPage({ params }: { params: Promise<{ id: string 
       const paymentUrl = res.data?.paymentUrl;
 
       if (entryFee > 0 && paymentUrl) {
-        // Redirect to payment
-        router.push(`/payments/checkout?participantId=${participantId}&tournamentId=${id}`);
+        // Redirect to payment with the appropriate division ID if the tournament is a division
+        const divisionId = tournament?.parentId ? tournament.id : id;
+        router.push(`/payments/checkout?participantId=${participantId}&tournamentId=${divisionId}`);
       } else {
         router.push(`/tournaments/${id}`);
       }

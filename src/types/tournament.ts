@@ -143,7 +143,7 @@ export interface TournamentParticipant {
   isPaid: boolean;
   registeredAt: string;
   teamInviteToken?: string | null;
-  teamStatus?: 'PENDING' | 'COMPLETE' | 'WITHDRAWN';
+  teamStatus?: 'PENDING' | 'COMPLETE' | 'REJECTED' | 'WITHDRAWN' | 'KICKED' | 'NO_SHOW' | 'DISQUALIFIED' | 'REPLACED';
   registeredBy: {
     id: string;
     fullName: string | null;

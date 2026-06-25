@@ -20,7 +20,7 @@ export interface Match {
   id: string;
   groupId: string;
   tournamentId: string;
-  status: 'SCHEDULED' | 'ONGOING' | 'COMPLETED' | 'CANCELLED';
+  status: 'SCHEDULED' | 'ONGOING' | 'COMPLETED' | 'CANCELLED' | 'DISPUTED';
   roundNumber: number;
   matchOrder: number;
   bracketBranch: string;
@@ -34,8 +34,14 @@ export interface Match {
   participant1?: { id: string; teamName: string } | null;
   participant2?: { id: string; teamName: string } | null;
   winnerId?: string | null;
-  scoreDetails?: {
+  scoreDetails?: Record<string, unknown> & {
     sets?: MatchScore[];
+    specialResult?: {
+      action?: string;
+      reason?: string;
+      decidedAt?: string;
+      decidedBy?: string;
+    };
   };
   p1SetsWon: number;
   p2SetsWon: number;

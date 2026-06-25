@@ -1,6 +1,7 @@
 import { api } from '@/lib/axios';
 
 import { Match, MatchComment, MatchScore } from '@/types/match';
+import type { MatchOperationInput } from '@/features/organizer/ops/types';
 export type { Match, MatchComment, MatchScore };
 
 interface PaginationMeta {
@@ -33,6 +34,10 @@ export const matchesApi = {
   ) =>
     api
       .patch<{ data: Match }>(`/matches/${id}/status`, statusData)
+      .then((res) => res.data),
+  applyOperation: (id: string, operationData: MatchOperationInput) =>
+    api
+      .patch<{ data: Match }>(`/matches/${id}/operation`, operationData)
       .then((res) => res.data),
   getComments: (id: string) =>
     api.get<{ data: MatchComment[] }>(`/matches/${id}/comments`).then((res) => res.data),

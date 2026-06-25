@@ -11,19 +11,88 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Division, tournamentsApi, Tournament, TournamentParticipant } from '@/features/tournaments/api';
 import { usersApi } from '@/features/users/api';
+import { rankingsApi } from '@/features/rankings/api';
 import { useAuthStore } from '@/lib/zustand/authStore';
+import { cn } from '@/utils/cn';
 import { getErrorMessage } from '@/utils/error';
 import { trimAndNormalizeSpaces } from '@/utils/string';
 import { formatDate, formatCurrency } from '@/utils/format';
 import { getSportLogo } from '@/constants/sports';
 import toast from 'react-hot-toast';
 import DoublesRegistrationFlow from './components/DoublesRegistrationFlow';
+import { divisionsApi } from '@/features/tournaments/api';
+import { WithdrawModal } from '@/components/shared/WithdrawModal';
 
 const registerSchema = z.object({
   teamName: z.string().min(3, 'Tên đội phải có ít nhất 3 ký tự').max(100, 'Tên đội quá dài'),
 });
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
+
+type NormalizableDivision = {
+  id: string;
+  name: string;
+  matchType?: string | null;
+  genderRestriction?: string | null;
+  status?: string;
+  categoryId?: string;
+  maxParticipants?: number;
+  entryFee?: number;
+  bracketType?: 'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION' | 'ROUND_ROBIN' | null;
+  _count?: {
+    participants: number;
+    matches?: number;
+  };
+};
+
+const normalizeGenderValue = (value?: string | null): 'MALE' | 'FEMALE' | 'MIXED' | 'OTHER' | null => {
+  if (!value) {
+    return null;
+  }
+
+  const normalized = value.trim().toUpperCase();
+  if (normalized === 'MALE' || normalized === 'NAM') {
+    return 'MALE';
+  }
+  if (normalized === 'FEMALE' || normalized === 'NỮ' || normalized === 'NU') {
+    return 'FEMALE';
+  }
+  if (normalized === 'MIXED') {
+    return 'MIXED';
+  }
+  return 'OTHER';
+};
+
+const getDivisionMatchLabel = (matchType?: string | null, genderRestriction?: string | null) => {
+  const genderLabel =
+    genderRestriction === 'MALE' ? 'Nam' :
+    genderRestriction === 'FEMALE' ? 'Nữ' :
+    genderRestriction === 'MIXED' ? 'Nam Nữ' : '';
+
+  if (matchType === 'SINGLES') {
+    return genderLabel ? `Đơn ${genderLabel}` : 'Đơn';
+  }
+  if (matchType === 'DOUBLES') {
+    return genderLabel ? `Đôi ${genderLabel}` : 'Đôi';
+  }
+  if (matchType === 'MIXED_DOUBLES') {
+    return 'Đôi Nam Nữ';
+  }
+  return 'Chưa rõ';
+};
+
+const getDivisionBracketLabel = (bracketType?: string | null) => {
+  if (bracketType === 'SINGLE_ELIMINATION') {
+    return 'Loại trực tiếp';
+  }
+  if (bracketType === 'DOUBLE_ELIMINATION') {
+    return 'Nhánh thắng/thua';
+  }
+  if (bracketType === 'ROUND_ROBIN') {
+    return 'Vòng tròn';
+  }
+  return 'Chưa rõ';
+};
 
 export default function TournamentRegisterPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -32,6 +101,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
   const router = useRouter();
   const searchParams = useSearchParams();
   const urlInvite = searchParams.get('invite') || '';
+  const requestedDivisionId = searchParams.get('divisionId') || '';
 
   const { user, isAuthenticated } = useAuthStore();
   const [tournament, setTournament] = useState<Tournament | null>(null);
@@ -43,9 +113,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
 
   // Division select states
   const [selectedDivisionId, setSelectedDivisionId] = useState<string>('');
-  const [selectedDivision, setSelectedDivision] = useState<Tournament | null>(null);
   const [allDivisions, setAllDivisions] = useState<Division[]>([]);
-  const [isLoadingDivision, setIsLoadingDivision] = useState(false);
   
   // Invite states for Private Tournaments
   const [inviteCode, setInviteCode] = useState(urlInvite);
@@ -57,16 +125,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
     resolver: zodResolver(registerSchema),
   });
 
-  const normalizeDivision = (division: {
-    id: string;
-    name: string;
-    matchType?: string | null;
-    genderRestriction?: string | null;
-    status?: string;
-    categoryId?: string;
-    maxParticipants?: number;
-    entryFee?: number;
-  }): Division => ({
+  const normalizeDivision = (division: NormalizableDivision): Division => ({
     id: division.id,
     name: division.name,
     matchType: (division.matchType || 'DOUBLES') as Division['matchType'],
@@ -75,38 +134,49 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
     categoryId: division.categoryId,
     maxParticipants: division.maxParticipants,
     entryFee: division.entryFee,
+    bracketType: division.bracketType,
+    _count: division._count
+      ? {
+          participants: division._count.participants,
+          matches: division._count.matches ?? 0,
+        }
+      : undefined,
   });
 
-  const fetchSelectedDivisionDetails = async (divId: string) => {
-    try {
-      setIsLoadingDivision(true);
-      const division = allDivisions.find((item) => item.id === divId);
-      if (division && tournament) {
-        setSelectedDivision({
-          ...tournament,
-          name: division.name,
-          matchType: division.matchType,
-          genderRestriction: division.genderRestriction,
-          entryFee: division.entryFee ?? tournament.entryFee,
-          maxParticipants: division.maxParticipants ?? tournament.maxParticipants,
-        });
-      } else if (!division && tournament) {
-        setSelectedDivision(tournament);
-      }
-    } catch (err) {
-      console.error('Failed to load division details:', err);
-    } finally {
-      setIsLoadingDivision(false);
-    }
-  };
+  const buildSelectedDivision = (
+    baseTournament: Tournament,
+    division: Division,
+  ): Tournament => ({
+    ...baseTournament,
+    id: division.id,
+    name: division.name,
+    matchType: division.matchType,
+    genderRestriction: division.genderRestriction,
+    format: division.bracketType ?? baseTournament.format,
+    entryFee: division.entryFee ?? baseTournament.entryFee,
+    maxParticipants: division.maxParticipants ?? baseTournament.maxParticipants,
+    _count: division._count ?? baseTournament._count,
+  });
 
-  useEffect(() => {
-    if (selectedDivisionId && selectedDivisionId !== selectedDivision?.id) {
-      Promise.resolve().then(() => {
-        fetchSelectedDivisionDetails(selectedDivisionId);
-      });
+  const applyDivisionSelection = (
+    divisionList: NormalizableDivision[],
+    baseTournament: Tournament,
+    preferredDivisionId?: string,
+  ) => {
+    const normalizedDivisions = divisionList.map(normalizeDivision);
+    setAllDivisions(normalizedDivisions);
+
+    if (normalizedDivisions.length === 0) {
+      setSelectedDivisionId('');
+      return;
     }
-  }, [selectedDivisionId, allDivisions, tournament]);
+
+    const preferredDivision = preferredDivisionId
+      ? normalizedDivisions.find((division) => division.id === preferredDivisionId)
+      : null;
+    const nextDivisionId = preferredDivision?.id ?? normalizedDivisions[0].id;
+    setSelectedDivisionId(nextDivisionId);
+  };
 
   const fetchTournament = async (code?: string) => {
     try {
@@ -130,34 +200,25 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
           setNeedInviteValidation(false);
         }
 
-        if (t.parentId) {
-          setSelectedDivisionId(t.id);
-          setSelectedDivision(t);
-          try {
-            const pRes = await tournamentsApi.getParentTournamentById(t.parentId);
-            if (pRes.data && pRes.data.divisions) {
-              setAllDivisions(pRes.data.divisions.map(normalizeDivision));
-            }
-          } catch (e) {
-            console.error('Failed to fetch parent/sister divisions', e);
+        try {
+          const divisionRes = await divisionsApi.getDivisions(t.id);
+          const divisionSource =
+            divisionRes.data && divisionRes.data.length > 0
+              ? divisionRes.data
+              : t.divisions || [];
+
+          if (divisionSource.length > 0) {
+            applyDivisionSelection(divisionSource, t, requestedDivisionId);
+          } else {
+            setSelectedDivisionId('');
+            setAllDivisions([]);
           }
+        } catch (e) {
+          console.error('Failed to fetch division context', e);
+          setSelectedDivisionId('');
+          setAllDivisions([]);
         }
 
-        // Check registration
-        if (isAuthenticated) {
-          try {
-            const regRes = await tournamentsApi.getMyRegistration(id);
-            if (regRes.data && regRes.data.registered && regRes.data.participant) {
-              setParticipant(regRes.data.participant);
-              setIsRegistered(true);
-            } else {
-              setParticipant(null);
-              setIsRegistered(false);
-            }
-          } catch (e) {
-            console.error('Failed to fetch user registration status', e);
-          }
-        }
       }
     } catch (err: unknown) {
       const errorResponse = err as { response?: { status?: number } };
@@ -176,7 +237,35 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
     Promise.resolve().then(() => {
       fetchTournament();
     });
-  }, [id, inviteCode, isAuthenticated]);
+  }, [id, inviteCode, isAuthenticated, requestedDivisionId]);
+
+  useEffect(() => {
+    const fetchRegistrationStatus = async () => {
+      if (!isAuthenticated || !tournament) {
+        setParticipant(null);
+        setIsRegistered(false);
+        return;
+      }
+
+      try {
+        const regRes = await tournamentsApi.getMyRegistration(
+          id,
+          selectedDivisionId || undefined,
+        );
+        if (regRes.data?.registered && regRes.data.participant) {
+          setParticipant(regRes.data.participant);
+          setIsRegistered(true);
+        } else {
+          setParticipant(null);
+          setIsRegistered(false);
+        }
+      } catch (e) {
+        console.error('Failed to fetch user registration status', e);
+      }
+    };
+
+    fetchRegistrationStatus();
+  }, [id, isAuthenticated, selectedDivisionId, tournament]);
 
   // Bank refund form modal states
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
@@ -274,6 +363,11 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
       return;
     }
 
+    if (selectedDivisionData && eloCheck && !eloCheck.ok) {
+      toast.error(eloCheck.message || 'ELO của bạn không phù hợp với nội dung này.');
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       const cleanData = {
@@ -284,11 +378,18 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
 
       const res = await tournamentsApi.register(id, cleanData);
       const participantId = res?.data?.participant?.id;
+      const paymentUrl = res?.data?.paymentUrl;
 
       toast.success('Đăng ký tham gia thành công!');
 
-      // Skip payment step for testing convenience
-      router.push(`/tournaments/${id}`);
+      const checkoutTournamentId = selectedDivisionId || id;
+
+      if (paymentUrl && participantId) {
+        // If the registration returned a payment URL, redirect the user to checkout
+        router.push(`/payments/checkout?tournamentId=${checkoutTournamentId}&participantId=${participantId}`);
+      } else {
+        router.push(`/tournaments/${id}`);
+      }
     } catch (err) {
       toast.error(getErrorMessage(err));
     } finally {
@@ -304,6 +405,47 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
       router.push(`/login?redirect=${encodeURIComponent(redirectUrl)}`);
     }
   }, [isLoading, needInviteValidation, isAuthenticated, id, inviteCode, router]);
+
+  const selectedDivisionData = allDivisions.find((division) => division.id === selectedDivisionId) ?? null;
+  const selectedDivision = tournament && selectedDivisionData
+    ? buildSelectedDivision(tournament, selectedDivisionData)
+    : tournament;
+
+  const [eloCheck, setEloCheck] = useState<{ ok: boolean; message?: string } | null>(null);
+  const [eloLoading, setEloLoading] = useState(false);
+
+  useEffect(() => {
+    if (!selectedDivisionData || !user?.id || !selectedDivisionData.categoryId) {
+      setEloCheck(null);
+      return;
+    }
+
+    const categoryId = selectedDivisionData.categoryId;
+
+    const checkElo = async () => {
+      setEloLoading(true);
+      try {
+        const res = await rankingsApi.getUserRank(user.id, categoryId);
+        const elo = res.eloPoints || 1000;
+        const minElo = selectedDivisionData.minElo || 0;
+        const maxElo = selectedDivisionData.maxElo || 9999;
+
+        if (elo < minElo) {
+          setEloCheck({ ok: false, message: `ELO cá»§a báº¡n (${elo}) tháº¥p hÆ¡n yÃªu cáº§u tá»‘i thiá»ƒu (${minElo}) cho ná»™i dung nÃ y.` });
+        } else if (elo > maxElo) {
+          setEloCheck({ ok: false, message: `ELO cá»§a báº¡n (${elo}) cao hÆ¡n yÃªu cáº§u tá»‘i Ä‘a (${maxElo}) cho ná»™i dung nÃ y.` });
+        } else {
+          setEloCheck({ ok: true, message: `ELO cá»§a báº¡n (${elo}) phÃ¹ há»£p vá»›i ná»™i dung nÃ y.` });
+        }
+      } catch {
+        setEloCheck(null);
+      } finally {
+        setEloLoading(false);
+      }
+    };
+
+    checkElo();
+  }, [selectedDivisionData, user?.id]);
 
   if (isLoading) {
     return (
@@ -368,6 +510,8 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
   }
 
   if (!tournament) return null;
+
+
 
   const isLocked = tournament.isRegistrationLocked;
   const isExpired = tournament.registrationEndDate ? new Date() > new Date(tournament.registrationEndDate) : false;
@@ -439,9 +583,13 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
   const entryFeeVal = selectedDivision ? Number(selectedDivision.entryFee || 0) : 0;
   const isDoubles = selectedDivision ? (selectedDivision.matchType === 'DOUBLES' || selectedDivision.matchType === 'MIXED_DOUBLES') : false;
 
-  const userGender = user?.gender?.toUpperCase();
-  const divisionGender = selectedDivision?.genderRestriction?.toUpperCase();
-  const isGenderMismatched = userGender && divisionGender && divisionGender !== 'MIXED' && userGender !== divisionGender;
+  const userGender = normalizeGenderValue(user?.gender);
+  const divisionGender = normalizeGenderValue(selectedDivision?.genderRestriction);
+  const isGenderMismatched =
+    userGender &&
+    divisionGender &&
+    divisionGender !== 'MIXED' &&
+    userGender !== divisionGender;
 
   return (
     <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -500,25 +648,31 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
             {/* Division selector — animated cards */}
             {allDivisions.length > 0 && (
               <div className="flex flex-col gap-3 mb-6">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Chọn hình thức thi đấu</label>
-                <div className="flex flex-wrap gap-2">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Chọn hình thức thi đấu</label>
+                  <p className="text-[11px] text-slate-500 font-medium">
+                    Chọn đúng nội dung bạn muốn tham gia trước khi điền thông tin đăng ký.
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {allDivisions.map((div) => {
                     const isActive = selectedDivisionId === div.id;
-                    const matchLabel = div.matchType === 'SINGLES' ? 'Đơn' :
-                      div.matchType === 'DOUBLES' ? 'Đôi' :
-                      div.matchType === 'MIXED_DOUBLES' || div.matchType === 'MIXED' ? 'Đôi Nam Nữ' : '';
-                    const genderLabel = div.genderRestriction === 'MALE' ? 'Nam' :
-                      div.genderRestriction === 'FEMALE' ? 'Nữ' : '';
+                    const matchLabel = getDivisionMatchLabel(div.matchType, div.genderRestriction);
+                    const bracketLabel = getDivisionBracketLabel(div.bracketType);
+                    const participantCount = div._count?.participants ?? 0;
                     return (
                       <button
                         key={div.id}
+                        type="button"
                         onClick={() => setSelectedDivisionId(div.id)}
-                        disabled={isLoadingDivision || isSubmitting}
-                        className={`relative flex flex-col items-center gap-1 px-5 py-3 rounded-xl border text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                        disabled={isSubmitting}
+                        className={cn(
+                          'relative min-h-[104px] w-full cursor-pointer rounded-xl border px-5 py-3 text-xs font-bold transition-all',
+                          'flex flex-col items-center justify-center gap-1',
                           isActive
-                            ? 'text-white border-transparent shadow-md'
-                            : 'bg-white text-slate-650 border-slate-200 hover:border-blue-300 hover:text-blue-700'
-                        }`}
+                            ? 'border-transparent text-white shadow-md'
+                            : 'bg-white border-slate-200 text-slate-650 hover:border-blue-300 hover:text-blue-700',
+                        )}
                       >
                         {isActive && (
                           <motion.div
@@ -529,25 +683,65 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                         )}
                         <span className="relative z-10 flex flex-col items-center gap-0.5">
                           <span className="text-sm font-black leading-tight">{div.name}</span>
-                          {matchLabel && (
-                            <span className={`text-[9px] font-extrabold uppercase tracking-wider ${isActive ? 'text-blue-200' : 'text-slate-400'}`}>
-                              {matchLabel}{genderLabel ? ` • ${genderLabel}` : ''}
-                            </span>
-                          )}
+                          <span className={`text-[10px] font-extrabold ${isActive ? 'text-blue-100' : 'text-slate-500'}`}>
+                            {matchLabel}
+                          </span>
+                          <span className={`text-[9px] font-bold ${isActive ? 'text-blue-200' : 'text-slate-400'}`}>
+                            {bracketLabel} • {participantCount} đã đăng ký
+                          </span>
                         </span>
                       </button>
                     );
                   })}
                 </div>
+                {selectedDivision && (
+                  <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-4 shadow-sm">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
+                          Nội dung đang chọn
+                        </p>
+                        <h3 className="text-base font-black text-slate-900">{selectedDivision.name}</h3>
+                        <p className="text-xs font-semibold text-slate-500">
+                          {getDivisionMatchLabel(selectedDivision.matchType, selectedDivision.genderRestriction)}
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <span className="px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-100 text-[11px] font-bold">
+                          {getDivisionBracketLabel(selectedDivision.format)}
+                        </span>
+                        <span className="px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200 text-[11px] font-bold">
+                          {selectedDivision._count?.participants ?? 0}
+                          {selectedDivision.maxParticipants ? ` / ${selectedDivision.maxParticipants}` : ''} đăng ký
+                        </span>
+                        <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 text-[11px] font-bold">
+                          {entryFeeVal > 0 ? formatCurrency(entryFeeVal) : 'Miễn phí'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* ELO Check UI */}
+                    {selectedDivisionData?.categoryId && eloLoading && (
+                      <div className="mt-3 text-xs text-slate-400 flex items-center gap-2">
+                        <Loader2 className="w-3 h-3 animate-spin" /> Đang kiểm tra ELO...
+                      </div>
+                    )}
+                    {eloCheck && !eloCheck.ok && (
+                      <div className="mt-3 text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg p-2.5 font-semibold">
+                        ⚠️ {eloCheck.message}
+                      </div>
+                    )}
+                    {eloCheck?.ok && (
+                      <div className="mt-3 text-xs text-emerald-600 font-medium">
+                        ✓ {eloCheck.message}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
-            {isLoadingDivision ? (
-              <div className="py-12 flex flex-col items-center justify-center">
-                <Loader2 className="w-8 h-8 animate-spin text-blue-600 mb-2" />
-                <p className="text-xs text-slate-400 font-medium animate-pulse">Đang tải thông tin hình thức...</p>
-              </div>
-            ) : selectedDivision ? (
+            {selectedDivision ? (
               isGenderMismatched ? (
                 <div className="bg-rose-50 border border-rose-100 rounded-xl p-5 text-center space-y-3 animate-in fade-in duration-200">
                   <AlertTriangle className="w-8 h-8 text-rose-500 mx-auto" />
@@ -555,7 +749,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                   <p className="text-xs text-slate-600 font-semibold leading-relaxed">
                     Hình thức thi đấu này ({selectedDivision?.name || 'Đơn'}) chỉ dành cho giới tính{' '}
                     <strong>{divisionGender === 'MALE' ? 'Nam' : 'Nữ'}</strong>. Giới tính trong hồ sơ của bạn hiện tại là{' '}
-                    <strong>{userGender === 'MALE' ? 'Nam' : 'Nữ'}</strong>.
+                    <strong>{userGender === 'MALE' ? 'Nam' : userGender === 'FEMALE' ? 'Nữ' : 'Khác'}</strong>.
                   </p>
                   <Button
                     onClick={() => router.push('/profile')}
@@ -610,7 +804,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                             <Trash2 className="w-4 h-4" /> Hủy & Rút
                           </Button>
                           <Button
-                            onClick={() => router.push(`/payments/checkout?participantId=${participant.id}&tournamentId=${id}`)}
+                            onClick={() => router.push(`/payments/checkout?participantId=${participant.id}&tournamentId=${selectedDivisionId || id}`)}
                             className="flex-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 text-sm flex items-center justify-center gap-2 shadow-md shadow-blue-500/10 h-12"
                           >
                             <CreditCard className="w-4 h-4" /> Thanh toán
@@ -715,84 +909,21 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
         </div>
       </div>
 
-      {/* Modal Hoàn Tiền Thủ Công */}
-      {showWithdrawModal && (
-        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-md bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-2xl animate-in zoom-in duration-200">
-            <div className="p-6 border-b border-slate-200 flex items-center justify-between bg-slate-50">
-              <h3 className="text-base font-extrabold text-slate-900">Thông tin hoàn trả lệ phí</h3>
-              <button 
-                onClick={() => setShowWithdrawModal(false)}
-                className="text-slate-400 hover:text-slate-650 p-1 rounded-lg hover:bg-slate-100 transition-all"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <form onSubmit={handleConfirmWithdrawWithBank}>
-              <div className="p-6 space-y-4.5">
-                <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-4 text-xs text-slate-650 leading-relaxed font-semibold">
-                  Giải đấu có thu phí. Ban tổ chức sẽ đối soát và thực hiện hoàn trả lại lệ phí giải đấu qua số tài khoản ngân hàng bạn cung cấp dưới đây.
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Tên ngân hàng / Ví (Ví dụ: MB Bank, Vietcombank...)</label>
-                  <Input
-                    required
-                    value={bankName}
-                    onChange={(e) => setBankName(e.target.value)}
-                    placeholder="Nhập tên ngân hàng..."
-                    className="font-bold text-slate-800"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Số tài khoản ngân hàng</label>
-                  <Input
-                    required
-                    value={bankAccountNumber}
-                    onChange={(e) => setBankAccountNumber(e.target.value)}
-                    placeholder="Nhập số tài khoản..."
-                    className="font-bold text-slate-800 tracking-wider"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Họ và tên chủ tài khoản (Viết hoa không dấu)</label>
-                  <Input
-                    required
-                    value={bankAccountName}
-                    onChange={(e) => setBankAccountName(e.target.value)}
-                    placeholder="Ví dụ: NGUYEN VAN A"
-                    className="font-bold text-slate-800 uppercase"
-                  />
-                </div>
-
-                {bankError && (
-                  <p className="text-xs font-bold text-rose-600 animate-pulse">{bankError}</p>
-                )}
-              </div>
-              <div className="p-6 bg-slate-50 border-t border-slate-200 flex justify-end gap-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setShowWithdrawModal(false)}
-                  className="px-4 py-2 border-slate-205 hover:bg-slate-100 text-slate-700 text-xs font-bold rounded-xl"
-                >
-                  Hủy bỏ
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={isWithdrawing}
-                  className="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 shadow-md shadow-rose-500/10"
-                >
-                  {isWithdrawing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
-                  Xác nhận rút & hoàn tiền
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* Withdraw Modal */}
+      <WithdrawModal
+        isOpen={showWithdrawModal}
+        onClose={() => setShowWithdrawModal(false)}
+        tournamentId={id}
+        isPaid={participant?.isPaid || false}
+        defaultBankName={bankName}
+        defaultBankAccountNumber={bankAccountNumber}
+        defaultBankAccountName={bankAccountName}
+        onWithdrawSuccess={() => {
+          setParticipant(null);
+          setIsRegistered(false);
+          fetchTournament();
+        }}
+      />
     </div>
   );
 }

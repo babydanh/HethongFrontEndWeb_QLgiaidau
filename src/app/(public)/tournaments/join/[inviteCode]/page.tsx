@@ -1,14 +1,15 @@
 'use client';
 
 import { useEffect, useState, use } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { motion } from 'framer-motion';
 import { Trophy, Calendar, MapPin, Users, DollarSign, ArrowLeft, Loader2, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { tournamentsApi, Tournament } from '@/features/tournaments/api';
+import { divisionsApi, Division, tournamentsApi, Tournament } from '@/features/tournaments/api';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { getErrorMessage } from '@/utils/error';
 import { trimAndNormalizeSpaces } from '@/utils/string';
@@ -22,14 +23,47 @@ const registerSchema = z.object({
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
+const getDivisionMatchLabel = (matchType?: string | null, genderRestriction?: string | null) => {
+  const genderLabel =
+    genderRestriction === 'MALE' ? 'Nam' :
+    genderRestriction === 'FEMALE' ? 'Nữ' :
+    genderRestriction === 'MIXED' ? 'Nam Nữ' : '';
+
+  if (matchType === 'SINGLES') {
+    return genderLabel ? `Đơn ${genderLabel}` : 'Đơn';
+  }
+  if (matchType === 'DOUBLES') {
+    return genderLabel ? `Đôi ${genderLabel}` : 'Đôi';
+  }
+  if (matchType === 'MIXED_DOUBLES') {
+    return 'Đôi Nam Nữ';
+  }
+  return 'Chưa rõ';
+};
+
+const getDivisionBracketLabel = (bracketType?: string | null) => {
+  if (bracketType === 'SINGLE_ELIMINATION') {
+    return 'Loại trực tiếp';
+  }
+  if (bracketType === 'DOUBLE_ELIMINATION') {
+    return 'Nhánh thắng/thua';
+  }
+  if (bracketType === 'ROUND_ROBIN') {
+    return 'Vòng tròn';
+  }
+  return 'Chưa rõ';
+};
+
 export default function JoinTournamentPage({ params }: { params: Promise<{ inviteCode: string }> }) {
   const resolvedParams = use(params);
   const inviteCode = resolvedParams.inviteCode;
   
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, isAuthenticated } = useAuthStore();
   const [tournament, setTournament] = useState<Tournament | null>(null);
-  const [divisions, setDivisions] = useState<Tournament[]>([]);
+  const [divisions, setDivisions] = useState<Division[]>([]);
+  const [selectedDivisionId, setSelectedDivisionId] = useState(searchParams.get('divisionId') || '');
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -44,12 +78,24 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
         const res = await tournamentsApi.getTournamentByInviteCode(inviteCode);
         if (res.data) {
           setTournament(res.data);
-          
-          if (res.data.parentId) {
-            const parentRes = await tournamentsApi.getParentTournamentById(res.data.parentId);
-            if (parentRes.data && parentRes.data.divisions) {
-              setDivisions(parentRes.data.divisions);
+
+          try {
+            const divisionRes = await divisionsApi.getDivisions(res.data.id);
+            const availableDivisions = divisionRes.data || [];
+            setDivisions(availableDivisions);
+
+            if (availableDivisions.length > 0) {
+              const preferredDivision = selectedDivisionId
+                ? availableDivisions.find((division) => division.id === selectedDivisionId)
+                : null;
+              const nextDivisionId = preferredDivision?.id ?? availableDivisions[0].id;
+              setSelectedDivisionId(nextDivisionId);
+            } else {
+              setSelectedDivisionId('');
             }
+          } catch (divisionErr) {
+            console.error('Failed to fetch divisions for invite flow', divisionErr);
+            setDivisions([]);
           }
         } else {
           toast.error('Không tìm thấy giải đấu hoặc mã mời không hợp lệ');
@@ -81,6 +127,7 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
         teamName: trimAndNormalizeSpaces(data.teamName),
         memberIds: [user.id],
         partnerEmailOrPhone: data.partnerEmailOrPhone ? trimAndNormalizeSpaces(data.partnerEmailOrPhone) : undefined,
+        tournamentDivisionId: selectedDivisionId || undefined,
       };
 
       const res = await tournamentsApi.joinTournamentByInviteCode(inviteCode, cleanData);
@@ -88,9 +135,9 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
 
       toast.success('Đăng ký tham gia thành công!');
       
-      const entryFee = Number(tournament?.entryFee || 0);
+      const entryFee = Number(selectedDivision?.entryFee || tournament?.entryFee || 0);
       if (entryFee > 0 && participantId && tournament) {
-        router.push(`/payments/checkout?participantId=${participantId}&tournamentId=${tournament.id}`);
+        router.push(`/payments/checkout?participantId=${participantId}&tournamentId=${selectedDivisionId || tournament.id}`);
       } else if (tournament) {
         router.push(`/tournaments/${tournament.id}`);
       } else {
@@ -114,14 +161,14 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
 
   if (!tournament) return null;
 
-  const entryFeeVal = Number(tournament.entryFee || 0);
-  const availableDivisions = divisions.length > 0 ? divisions : [tournament];
-  const selectedDivision = availableDivisions.find((div) => div.inviteCode === inviteCode) || tournament;
-  const selectedDivisionLabel = selectedDivision.matchType === 'SINGLES'
-    ? (selectedDivision.genderRestriction === 'FEMALE' ? 'Đơn Nữ' : 'Đơn Nam')
-    : selectedDivision.matchType === 'DOUBLES'
-    ? (selectedDivision.genderRestriction === 'FEMALE' ? 'Đôi Nữ' : 'Đôi Nam')
-    : 'Đôi Nam Nữ';
+  const availableDivisions = divisions;
+  const selectedDivision = availableDivisions.find((div) => div.id === selectedDivisionId) || null;
+  const effectiveDivision = selectedDivision ?? tournament;
+  const entryFeeVal = Number(selectedDivision?.entryFee || tournament.entryFee || 0);
+  const selectedDivisionLabel = getDivisionMatchLabel(
+    effectiveDivision.matchType,
+    effectiveDivision.genderRestriction,
+  );
 
   return (
     <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -179,32 +226,88 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
               </p>
             </div>
 
-            {availableDivisions.length > 0 && (
-              <div className="space-y-1.5 pb-2 border-b border-slate-100">
-                <label className="text-xs font-bold text-slate-700 block">Hình thức thi đấu</label>
-                <div className="rounded-xl border border-blue-100 bg-blue-50 px-3.5 py-3 text-xs text-blue-900">
-                  Bạn đang đăng ký cho hình thức: <span className="font-black">{selectedDivision.name} ({selectedDivisionLabel})</span>
+            {availableDivisions.length > 0 && selectedDivision && (
+              <div className="space-y-3 pb-2 border-b border-slate-100">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-700 block">Hình thức thi đấu</label>
+                  <div className="rounded-xl border border-blue-100 bg-blue-50 px-3.5 py-3 text-xs text-blue-900">
+                    Bạn đang đăng ký cho hình thức: <span className="font-black">{selectedDivision.name} ({selectedDivisionLabel})</span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold text-slate-500">
+                    <span className="px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200">
+                      {getDivisionBracketLabel(selectedDivision.bracketType)}
+                    </span>
+                    <span className="px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200">
+                      {selectedDivision._count?.participants ?? 0} đã đăng ký
+                    </span>
+                  </div>
                 </div>
                 {availableDivisions.length > 1 && (
-                  <select
-                    value={inviteCode}
-                    onChange={(e) => router.push(`/tournaments/join/${e.target.value}`)}
-                    className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
-                  >
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {availableDivisions.map((div) => {
-                      const label = div.matchType === 'SINGLES' 
-                        ? (div.genderRestriction === 'FEMALE' ? 'Đơn Nữ' : 'Đơn Nam')
-                        : div.matchType === 'DOUBLES'
-                        ? (div.genderRestriction === 'FEMALE' ? 'Đôi Nữ' : 'Đôi Nam')
-                        : 'Đôi Nam Nữ';
+                      const isActive = selectedDivisionId === div.id;
+                      const matchLabel = getDivisionMatchLabel(div.matchType, div.genderRestriction);
+                      const bracketLabel = getDivisionBracketLabel(div.bracketType);
+                      const participantCount = div._count?.participants ?? 0;
+
                       return (
-                        <option key={div.id} value={div.inviteCode || ''}>
-                          {div.name} ({label})
-                        </option>
+                        <button
+                          key={div.id}
+                          type="button"
+                          onClick={() => setSelectedDivisionId(div.id)}
+                          disabled={isSubmitting}
+                          className={`relative min-h-[104px] flex flex-col items-center justify-center gap-1 px-5 py-3 rounded-xl border text-xs font-bold transition-all w-full cursor-pointer ${
+                            isActive
+                              ? 'text-white border-transparent shadow-md'
+                              : 'bg-white text-slate-650 border-slate-200 hover:border-blue-300 hover:text-blue-700'
+                          }`}
+                        >
+                          {isActive && (
+                            <motion.div
+                              layoutId="activeInviteDivision"
+                              className="absolute inset-0 bg-blue-600 rounded-xl z-0"
+                              transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                            />
+                          )}
+                          <span className="relative z-10 flex flex-col items-center gap-0.5">
+                            <span className="text-sm font-black leading-tight">{div.name}</span>
+                            <span className={`text-[10px] font-extrabold ${isActive ? 'text-blue-100' : 'text-slate-500'}`}>
+                              {matchLabel}
+                            </span>
+                            <span className={`text-[9px] font-bold ${isActive ? 'text-blue-200' : 'text-slate-400'}`}>
+                              {bracketLabel} • {participantCount} đã đăng ký
+                            </span>
+                          </span>
+                        </button>
                       );
                     })}
-                  </select>
+                  </div>
                 )}
+                <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-4 shadow-sm">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
+                        Nội dung đang chọn
+                      </p>
+                      <h3 className="text-base font-black text-slate-900">{selectedDivision.name}</h3>
+                      <p className="text-xs font-semibold text-slate-500">
+                        {selectedDivisionLabel}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <span className="px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-100 text-[11px] font-bold">
+                        {getDivisionBracketLabel(selectedDivision.bracketType)}
+                      </span>
+                      <span className="px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200 text-[11px] font-bold">
+                        {selectedDivision._count?.participants ?? 0}
+                        {selectedDivision.maxParticipants ? ` / ${selectedDivision.maxParticipants}` : ''} đăng ký
+                      </span>
+                      <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 text-[11px] font-bold">
+                        {entryFeeVal > 0 ? formatCurrency(entryFeeVal) : 'Miễn phí'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -216,7 +319,7 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
                 error={errors.teamName?.message}
               />
 
-              {(selectedDivision.matchType === 'DOUBLES' || selectedDivision.matchType === 'MIXED_DOUBLES') && (
+              {(effectiveDivision.matchType === 'DOUBLES' || effectiveDivision.matchType === 'MIXED_DOUBLES') && (
                 <Input
                   label="Tài khoản Baseline của đồng đội (Email hoặc SĐT)"
                   placeholder="partner@baseline.vn hoặc 08xxxx (Không bắt buộc)"

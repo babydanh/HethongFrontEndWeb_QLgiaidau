@@ -48,7 +48,7 @@ export default function DoublesRegistrationFlow({ tournament, inviteCode, divisi
       if (diff <= 0) {
         setTimeLeft('Đã hết hạn 2 giờ');
         clearInterval(intervalId);
-        tournamentsApi.getMyRegistration(tournament.id).then((res) => {
+        tournamentsApi.getMyRegistration(tournament.id, divisionId).then((res) => {
           if (!res.data?.registered) {
             setParticipant(null);
             setStep(1);
@@ -65,13 +65,13 @@ export default function DoublesRegistrationFlow({ tournament, inviteCode, divisi
     }, 1000);
 
     return () => clearInterval(intervalId);
-  }, [step, participant?.registeredAt, tournament.id]);
+  }, [step, participant?.registeredAt, tournament.id, divisionId]);
 
   // Check if user already has an active registration when component mounts
   useEffect(() => {
     const checkRegistration = async () => {
       try {
-        const res = await tournamentsApi.getMyRegistration(tournament.id);
+        const res = await tournamentsApi.getMyRegistration(tournament.id, divisionId);
         if (res.data && res.data.registered && res.data.participant) {
           const part = res.data.participant;
           setParticipant(part);
@@ -86,7 +86,7 @@ export default function DoublesRegistrationFlow({ tournament, inviteCode, divisi
       }
     };
     checkRegistration();
-  }, [tournament.id]);
+  }, [tournament.id, divisionId]);
 
   // Polling for teammate to join during Step 2
   useEffect(() => {
@@ -98,7 +98,7 @@ export default function DoublesRegistrationFlow({ tournament, inviteCode, divisi
       }
       intervalId = setInterval(async () => {
         try {
-          const res = await tournamentsApi.getMyRegistration(tournament.id);
+          const res = await tournamentsApi.getMyRegistration(tournament.id, divisionId);
           if (res.data && res.data.registered && res.data.participant) {
             const part = res.data.participant;
             if (part.teamStatus === 'COMPLETE') {
@@ -121,7 +121,7 @@ export default function DoublesRegistrationFlow({ tournament, inviteCode, divisi
     return () => {
       if (intervalId) clearInterval(intervalId);
     };
-  }, [step, participant?.id, tournament.id, isPolling]);
+  }, [step, participant?.id, tournament.id, isPolling, divisionId]);
 
   const handleSearchPartner = async () => {
     const q = trimAndNormalizeSpaces(partnerQuery);
@@ -191,7 +191,7 @@ export default function DoublesRegistrationFlow({ tournament, inviteCode, divisi
   const handleManualCheck = async () => {
     try {
       toast.loading('Đang kiểm tra trạng thái...', { id: 'manual-check' });
-      const res = await tournamentsApi.getMyRegistration(tournament.id);
+      const res = await tournamentsApi.getMyRegistration(tournament.id, divisionId);
       if (res.data && res.data.registered && res.data.participant) {
         const part = res.data.participant;
         setParticipant(part);
@@ -239,7 +239,7 @@ export default function DoublesRegistrationFlow({ tournament, inviteCode, divisi
   const executeWithdraw = async (bankData?: { bankName: string; bankAccountNumber: string; bankAccountName: string }) => {
     try {
       setIsWithdrawing(true);
-      await tournamentsApi.withdraw(tournament.id, bankData);
+      await tournamentsApi.withdraw(tournament.id, bankData, divisionId);
       toast.success('Đã rút khỏi giải đấu thành công.');
       setParticipant(null);
       setTeamName('');
@@ -267,7 +267,7 @@ export default function DoublesRegistrationFlow({ tournament, inviteCode, divisi
 
   const handlePayment = () => {
     if (!participant?.id) return;
-    router.push(`/payments/checkout?participantId=${participant.id}&tournamentId=${tournament.id}`);
+    router.push(`/payments/checkout?participantId=${participant.id}&tournamentId=${tournament.id}&divisionId=${divisionId || ''}`);
   };
 
   const partnerLink = participant?.teamInviteToken

@@ -2,6 +2,7 @@ import { api } from '@/lib/axios';
 import { Category } from '@/types/category';
 import { Tournament, ParentTournament, PaginatedTournaments, TournamentParticipant, BracketStage, BracketMatch, MatchTypeUI, MatchTypeDB, GenderRestriction } from '@/types/tournament';
 import { ApiResponse } from '@/types/api';
+import type { OpsAuditLogResponse, OpsDisputeItem } from '@/features/organizer/ops/types';
 
 export interface StaffMember {
   userId: string;
@@ -119,16 +120,16 @@ export const tournamentsApi = {
   joinTournamentByInviteCode: <T>(inviteCode: string, data: T) => api.post<ApiResponse<{ participantId: string }>>(`/tournaments/join/${inviteCode}`, data),
   register: (id: string, data: RegisterTournamentPayload) =>
     api.post<ApiResponse<{ participant: TournamentParticipant; paymentUrl?: string; teamInviteLink?: string }>>(`/tournaments/${id}/register`, data),
-  getMyRegistration: (id: string) =>
+  getMyRegistration: (id: string, divisionId?: string) =>
     api.get<ApiResponse<{
       registered: boolean;
       participant?: (TournamentParticipant & {
         teamMembers?: TournamentParticipant['members'];
         teamInviteLink?: string;
       }) | null;
-    }>>(`/tournaments/${id}/my-registration`, { params: { _t: Date.now() } }),
-  withdraw: (id: string, bankData?: { bankName?: string; bankAccountNumber?: string; bankAccountName?: string }) =>
-    api.post<ApiResponse<{ message: string; refundAmount?: number }>>(`/tournaments/${id}/withdraw`, bankData || {}),
+    }>>(`/tournaments/${id}/my-registration`, { params: { _t: Date.now(), ...(divisionId ? { divisionId } : {}) } }),
+  withdraw: (id: string, bankData?: { bankName?: string; bankAccountNumber?: string; bankAccountName?: string }, divisionId?: string) =>
+    api.post<ApiResponse<{ message: string; refundAmount?: number }>>(`/tournaments/${id}/withdraw`, { ...(bankData || {}), ...(divisionId ? { tournamentDivisionId: divisionId } : {}) }),
   createParentTournament: <T>(data: T) => api.post<ApiResponse<ParentTournament>>('/tournaments/parent', data),
   getMyParentTournaments: () => api.get<ApiResponse<ParentTournament[]>>('/tournaments/parent/my'),
   getParentTournamentById: (id: string) => api.get<ApiResponse<ParentTournament & { divisions: Tournament[] }>>(`/tournaments/parent/${id}`),
@@ -140,7 +141,25 @@ export const tournamentsApi = {
   getTournamentGallery: (id: string) => api.get<ApiResponse<string[]>>(`/tournaments/${id}/gallery`),
   addTournamentGalleryImage: (id: string, url: string) => api.post<ApiResponse<Tournament>>(`/tournaments/${id}/gallery`, { url }),
   removeTournamentGalleryImage: (id: string, index: number) => api.delete<ApiResponse<Tournament>>(`/tournaments/${id}/gallery/${index}`),
-  getTournamentParticipants: (id: string) => api.get<ApiResponse<TournamentParticipant[]>>(`/tournaments/${id}/participants`, { params: { _t: Date.now() } }),
+  getTournamentParticipants: (id: string, divisionId?: string) =>
+    api.get<ApiResponse<TournamentParticipant[]>>(`/tournaments/${id}/participants`, {
+      params: { _t: Date.now(), ...(divisionId ? { divisionId } : {}) },
+    }),
+  getOpsAuditLogs: (id: string, divisionId?: string) =>
+    api.get<ApiResponse<OpsAuditLogResponse[]>>(`/tournaments/${id}/ops-audit-logs`, {
+      params: divisionId ? { divisionId } : undefined,
+    }),
+  getDisputes: (id: string, divisionId?: string) =>
+    api.get<ApiResponse<OpsDisputeItem[]>>(`/tournaments/${id}/disputes`, {
+      params: divisionId ? { divisionId } : undefined,
+    }),
+  createDispute: (id: string, data: { matchId: string; reason: string; evidenceUrls?: string[] }) =>
+    api.post<ApiResponse<OpsDisputeItem>>(`/tournaments/${id}/disputes`, data),
+  resolveDispute: (
+    id: string,
+    disputeId: string,
+    data: { resolutionNote: string; matchStatus?: 'SCHEDULED' | 'ONGOING' | 'COMPLETED' | 'DISPUTED' },
+  ) => api.post<ApiResponse<OpsDisputeItem>>(`/tournaments/${id}/disputes/${disputeId}/resolve`, data),
   getTournamentReferees: (id: string) => api.get<ApiResponse<{ id: string; userId: string; status: string; fullName: string; avatarUrl: string | null }[]>>(`/tournaments/${id}/referees`),
   addTournamentReferee: (id: string, email: string) =>
     api.post<ApiResponse<void>>(`/tournaments/${id}/referees`, { email }),
@@ -205,6 +224,8 @@ export const tournamentsApi = {
     api.post<ApiResponse<unknown>>(`/tournaments/${id}/reserve-slots`, { userEmailOrPhone, teamName, partnerEmailOrPhone, divisionId }),
   updateParticipantStatus: (id: string, participantId: string, status: string) =>
     api.patch<ApiResponse<TournamentParticipant>>(`/tournaments/${id}/participants/${participantId}`, { status }),
+  kickParticipant: (id: string, participantId: string, reason: string) =>
+    api.post<ApiResponse<{ message: string; refundAmount?: string | null }>>(`/tournaments/${id}/participants/${participantId}/kick`, { reason }),
 };
 
 export const divisionsApi = {

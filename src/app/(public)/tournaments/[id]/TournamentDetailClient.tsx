@@ -147,6 +147,9 @@ export default function TournamentDetailClient({ tournament }: Props) {
   const participantCount = selectedDivision ? (selectedDivision._summary?.participantCount ?? selectedDivision._count?.participants ?? 0) : 0;
   const maxParticipants = selectedDivision ? (selectedDivision.maxParticipants ?? 0) : 0;
   const percentageFilled = maxParticipants > 0 ? Math.min(100, Math.round((participantCount / maxParticipants) * 100)) : 0;
+  const registerHref = selectedDivisionId
+    ? `/tournaments/${activeTournament.id}/register?divisionId=${selectedDivisionId}`
+    : `/tournaments/${activeTournament.id}/register`;
 
   const formatDateRange = (start?: string, end?: string) => {
     if (!start && !end) return 'Chưa cập nhật';
@@ -254,7 +257,7 @@ export default function TournamentDetailClient({ tournament }: Props) {
                                                   activeTournament.tournamentConfig?.registrationMode === 'INVITE_ONLY' ||
                                                   divisionsList.length > 0;
                     if (needsRegistrationPage) {
-                      router.push(`/tournaments/${activeTournament.id}/register`);
+                      router.push(registerHref);
                     } else {
                       setIsRegisterModalOpen(true);
                     }
@@ -452,7 +455,7 @@ export default function TournamentDetailClient({ tournament }: Props) {
                       {registrationButtonLabel}
                     </Button>
                   ) : (
-                    <Link href={`/tournaments/${activeTournament.id}/register`} className="block w-full">
+                    <Link href={registerHref} className="block w-full">
                       <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl shadow-md cursor-pointer text-sm">
                         Đăng ký ngay
                       </Button>

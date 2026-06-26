@@ -1,7 +1,15 @@
+import type { SportRuleScoringConfig, SportRulesEnvelope, StageRoundConfig } from './tournament';
+
 export interface MatchScore {
   team1Score: number;
   team2Score: number;
   isFinished: boolean;
+}
+
+export interface PickleballSideOutState {
+  servingTeam: 1 | 2 | null;
+  serverNumber: 1 | 2;
+  openingSequenceDone: boolean;
 }
 
 export interface MatchComment {
@@ -34,8 +42,10 @@ export interface Match {
   participant1?: { id: string; teamName: string } | null;
   participant2?: { id: string; teamName: string } | null;
   winnerId?: string | null;
+  matchConfig?: SportRuleScoringConfig | null;
   scoreDetails?: Record<string, unknown> & {
     sets?: MatchScore[];
+    sideOutState?: PickleballSideOutState;
     specialResult?: {
       action?: string;
       reason?: string;
@@ -46,5 +56,17 @@ export interface Match {
   p1SetsWon: number;
   p2SetsWon: number;
   refereeId?: string | null;
-  tournament?: { id: string; name: string; createdBy?: string } | null;
+  tournament?: {
+    id: string;
+    name: string;
+    createdBy?: string;
+    sportRules?: SportRulesEnvelope | null;
+    categoryName?: string | null;
+    categorySlug?: string | null;
+    categoryConfig?: Record<string, unknown> | null;
+  } | null;
+  stage?: {
+    type?: string;
+    roundConfig?: StageRoundConfig | null;
+  } | null;
 }

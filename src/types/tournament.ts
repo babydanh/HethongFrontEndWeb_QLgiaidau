@@ -20,6 +20,64 @@ export enum GenderRestriction {
   MIXED = 'MIXED',
 }
 
+export type SportRuleKind =
+  | 'BADMINTON'
+  | 'TABLE_TENNIS'
+  | 'PICKLEBALL_RALLY'
+  | 'PICKLEBALL_SIDE_OUT'
+  | 'TENNIS';
+export type SportScoringModel = 'RALLY_POINT_SET' | 'TENNIS_SET' | 'PICKLEBALL_SIDE_OUT';
+
+export interface SportRuleScoringConfig {
+  kind?: SportRuleKind;
+  scoringModel?: SportScoringModel;
+  setsToWin?: number;
+  sets_to_win?: number;
+  pointsPerSet?: number;
+  points_per_set?: number;
+  winByTwo?: boolean;
+  mustWinByTwo?: boolean;
+  deuceEnabled?: boolean;
+  deuce_enabled?: boolean;
+  tiebreakAt?: number;
+  tiebreak_at?: number;
+  tiebreakPoints?: number;
+  tiebreak_points?: number;
+  maxPoints?: number;
+  max_points?: number;
+  maxPointsPerSet?: number;
+  maxDeucePoints?: number | null;
+  superTiebreakEnabled?: boolean;
+  superTiebreakSetIndex?: number | null;
+  superTiebreakPoints?: number | null;
+  [key: string]: unknown;
+}
+
+export interface SportRulesEnvelope extends SportRuleScoringConfig {
+  version?: number;
+  kind?: SportRuleKind;
+  scoringModel?: SportScoringModel;
+  format?: Record<string, unknown>;
+  scoring?: SportRuleScoringConfig;
+}
+
+export interface StageRoundRuleConfig extends SportRuleScoringConfig {
+  venue_id?: string | null;
+  scheduled_date?: string | null;
+  custom_notes?: string | null;
+}
+
+export interface StageRoundConfig extends SportRuleScoringConfig {
+  max_sets?: number;
+  deuce_gap?: number;
+  scoring_type?: string;
+  advance_count?: number;
+  allow_player_choice_court?: boolean;
+  time_limit_minutes?: number;
+  custom_notes?: string;
+  rounds?: Record<string, StageRoundRuleConfig>;
+}
+
 export interface ParentTournament {
   id: string;
   name: string;
@@ -41,11 +99,7 @@ export interface Tournament {
   locationAddress?: string;
   registrationStartDate?: string;
   registrationEndDate?: string;
-  sportRules?: {
-    setsToWin?: number;
-    pointsPerSet?: number;
-    winByTwo?: boolean;
-  };
+  sportRules?: SportRulesEnvelope;
   status: 'DRAFT' | 'PENDING_APPROVAL' | 'UPCOMING' | 'REGISTRATION_OPEN' | 'REGISTRATION_CLOSED' | 'IN_PROGRESS' | 'ONGOING' | 'COMPLETED' | 'CANCELLED';
   format: 'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION' | 'ROUND_ROBIN';
   maxParticipants?: number;
@@ -185,13 +239,7 @@ export interface BracketMatch {
   courtAddress?: string | null;
   refereeId?: string | null;
   groupId: string;
-  matchConfig?: {
-    setsToWin?: number;
-    pointsPerSet?: number;
-    deuceEnabled?: boolean;
-    tiebreakAt?: number;
-    maxPoints?: number;
-  } | null;
+  matchConfig?: SportRuleScoringConfig | null;
   group?: {
     name: string;
     stage?: {
@@ -212,27 +260,7 @@ export interface BracketStage {
   type: string;
   order: number;
   groups: BracketGroup[];
-  roundConfig?: {
-    sets_to_win?: number;
-    max_sets?: number;
-    points_per_set?: number;
-    deuce_enabled?: boolean;
-    deuce_gap?: number;
-    tiebreak_at?: number;
-    scoring_type?: string;
-    advance_count?: number;
-    allow_player_choice_court?: boolean;
-    time_limit_minutes?: number;
-    custom_notes?: string;
-    max_points?: number;
-    rounds?: Record<string, {
-      sets_to_win?: number;
-      points_per_set?: number;
-      deuce_enabled?: boolean;
-      tiebreak_at?: number;
-      max_points?: number;
-    }>;
-  } | null;
+  roundConfig?: StageRoundConfig | null;
   venueId?: string | null;
   scheduledDate?: string | null;
   notificationNote?: string | null;

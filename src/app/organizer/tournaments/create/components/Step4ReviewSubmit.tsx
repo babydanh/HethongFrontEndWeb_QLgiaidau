@@ -12,6 +12,7 @@ import { getErrorMessage } from '@/utils/error';
 import { formatCurrency, formatDateTime } from '@/utils/format';
 import { GenderRestriction } from '@/types/tournament';
 import type { TournamentFeesConfig } from '@/features/tournaments/api';
+import { buildDefaultSportRules } from '@/features/tournaments/sport-rules/defaults';
 
 export default function Step4ReviewSubmit() {
   const { formData, getDivisionsFromFormats, prevStep, reset } = useCreateTournamentStore();
@@ -100,11 +101,7 @@ export default function Step4ReviewSubmit() {
         endDate: formData.endDate,
         registrationStartDate: formData.registrationStartDate,
         registrationEndDate: formData.registrationEndDate,
-        sportRules: {
-          setsToWin: 2,
-          pointsPerSet: 21,
-          winByTwo: true,
-        },
+        sportRules: formData.sportRules ?? buildDefaultSportRules('BADMINTON'),
         tournamentConfig: {
           bracketType: formData.format,
           maxTeams: formData.maxParticipants || 16,

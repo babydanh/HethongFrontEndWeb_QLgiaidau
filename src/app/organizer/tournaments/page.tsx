@@ -259,6 +259,9 @@ export default function MyTournamentsPage() {
               const manageHref = parent.isStandalone
                 ? `/organizer/tournaments/${parent.id}/manage`
                 : `/organizer/tournaments/${firstDivision?.id || parent.id}/manage`;
+              const opsHref = parent.isStandalone
+                ? `/organizer/tournaments/${parent.id}/ops`
+                : `/organizer/tournaments/${firstDivision?.id || parent.id}/ops`;
 
               return (
                 <div 
@@ -372,11 +375,18 @@ export default function MyTournamentsPage() {
                   {/* Action Footer */}
                   <div className="bg-slate-50 border-t border-slate-100 p-4">
                     {firstDivision ? (
-                      <Link href={manageHref} className="block">
-                        <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-2 font-bold shadow-sm shadow-blue-500/10 h-10 text-sm active:scale-95 transition-transform duration-100">
-                          <Settings className="w-4 h-4" /> Quản lý giải đấu
-                        </Button>
-                      </Link>
+                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                        <Link href={manageHref} className="block">
+                          <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-2 font-bold shadow-sm shadow-blue-500/10 h-10 text-sm active:scale-95 transition-transform duration-100">
+                            <Settings className="w-4 h-4" /> Quản lý giải đấu
+                          </Button>
+                        </Link>
+                        <Link href={opsHref} className="block">
+                          <Button variant="outline" className="w-full border-slate-200 bg-white text-slate-700 hover:bg-slate-100 flex items-center justify-center gap-2 font-bold h-10 text-sm active:scale-95 transition-transform duration-100">
+                            <Eye className="w-4 h-4" /> Vận hành giải
+                          </Button>
+                        </Link>
+                      </div>
                     ) : (
                       <Button disabled className="w-full bg-slate-300 text-white font-bold h-10 text-sm">
                         Chưa có vòng đấu

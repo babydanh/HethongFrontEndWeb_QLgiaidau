@@ -13,6 +13,9 @@ import { api } from '@/lib/axios';
 import type { ApiResponse } from '@/types/api';
 import { trimAndNormalizeSpaces } from '@/utils/string';
 import { ChevronRight } from 'lucide-react';
+import { buildDefaultSportRules } from '@/features/tournaments/sport-rules/defaults';
+import { inferSportRuleKindFromCategory } from '@/features/tournaments/sport-rules/normalize';
+import { normalizeMatchFormatForCategory } from '@/features/tournaments/match-format-options';
 
 
 
@@ -125,10 +128,18 @@ export default function Step1Info() {
   }, []);
 
   const onSubmit = (data: Step1Values) => {
+    const selectedCategory = categories.find((category) => category.id === data.categoryId);
+    const inferredKind = inferSportRuleKindFromCategory(selectedCategory);
+
     updateFormData({
       name: trimAndNormalizeSpaces(data.name),
       description: data.description ? trimAndNormalizeSpaces(data.description) : '',
       categoryId: data.categoryId,
+      sportRules: buildDefaultSportRules(inferredKind),
+      matchFormat: normalizeMatchFormatForCategory(formData.matchFormat, selectedCategory),
+      selectedFormats: formData.selectedFormats
+        .map((format) => normalizeMatchFormatForCategory(format, selectedCategory))
+        .filter((format, index, collection) => collection.indexOf(format) === index),
       tournamentType: formData.communityId ? (data.tournamentType || 'CLUB') : 'PUBLIC',
       isRanked: data.isRanked,
       registrationMode: data.registrationMode,

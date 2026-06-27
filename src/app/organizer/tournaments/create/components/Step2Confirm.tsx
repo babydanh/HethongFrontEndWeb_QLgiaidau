@@ -10,6 +10,7 @@ import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { getErrorMessage } from '@/utils/error';
 import { GenderRestriction } from '@/types/tournament';
+import { buildDefaultSportRules } from '@/features/tournaments/sport-rules/defaults';
 
 export default function Step2Confirm() {
   const { formData, prevStep, reset } = useCreateTournamentStore();
@@ -36,11 +37,7 @@ export default function Step2Confirm() {
         isRanked: rest.isRanked,
         maxParticipants: rest.maxParticipants || 16,
         entryFee: 0,
-        sportRules: {
-          setsToWin: 2,
-          pointsPerSet: 21,
-          winByTwo: true,
-        },
+        sportRules: rest.sportRules ?? buildDefaultSportRules('BADMINTON'),
         tournamentConfig: {
           bracketType: 'SINGLE_ELIMINATION',
           maxTeams: rest.maxParticipants || 16,

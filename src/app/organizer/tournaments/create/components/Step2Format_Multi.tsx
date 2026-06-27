@@ -1,18 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useCreateTournamentStore, type MatchFormat } from '@/lib/zustand/createTournamentStore';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/utils/cn';
 import { ChevronLeft, ChevronRight, CheckCircle2, Zap } from 'lucide-react';
-
-const FORMAT_OPTIONS: { value: MatchFormat; label: string; icon: string }[] = [
-  { value: 'MALE_SINGLES', label: 'Đơn Nam', icon: '♂️' },
-  { value: 'FEMALE_SINGLES', label: 'Đơn Nữ', icon: '♀️' },
-  { value: 'MALE_DOUBLES', label: 'Đôi Nam', icon: '👥' },
-  { value: 'FEMALE_DOUBLES', label: 'Đôi Nữ', icon: '👯‍♀️' },
-  { value: 'MIXED_DOUBLES', label: 'Đôi Nam Nữ', icon: '👫' },
-];
+import { resolveSportRuleView } from '@/features/tournaments/sport-rules/normalize';
+import { getSportRulePresentation } from '@/features/tournaments/sport-rules/presentation';
+import { categoriesApi, type Category } from '@/features/categories/api';
+import { getAllowedMatchFormatOptions, normalizeMatchFormatForCategory } from '@/features/tournaments/match-format-options';
 
 const BRACKET_TYPE_OPTIONS: { value: 'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION' | 'ROUND_ROBIN'; label: string; }[] = [
   { value: 'SINGLE_ELIMINATION', label: 'Loại trực tiếp (Single Elimination)' },
@@ -22,11 +18,51 @@ const BRACKET_TYPE_OPTIONS: { value: 'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION'
 
 export default function Step2FormatMulti() {
   const { formData, updateFormData, nextStep, prevStep } = useCreateTournamentStore();
+  const [categories, setCategories] = useState<Category[]>([]);
+  const resolvedRules = resolveSportRuleView(formData.sportRules);
+  const presentation = getSportRulePresentation(resolvedRules.kind);
   const [bracketType, setBracketType] = useState<'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION' | 'ROUND_ROBIN'>(
     (formData.format as 'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION' | 'ROUND_ROBIN') || 'SINGLE_ELIMINATION'
   );
   const selectedFormats = Array.isArray(formData.selectedFormats) ? formData.selectedFormats : [];
+  const selectedCategory = categories.find((category) => category.id === formData.categoryId);
+  const formatOptions = getAllowedMatchFormatOptions(selectedCategory);
   const selected = selectedFormats.length > 0 ? selectedFormats : [formData.matchFormat];
+
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const response = await categoriesApi.getCategories();
+        setCategories(response.data ?? []);
+      } catch {
+        setCategories([]);
+      }
+    };
+
+    void loadCategories();
+  }, []);
+
+  useEffect(() => {
+    if (!selectedCategory) {
+      return;
+    }
+
+    const normalizedMatchFormat = normalizeMatchFormatForCategory(formData.matchFormat, selectedCategory);
+    const normalizedSelectedFormats = (selectedFormats.length > 0 ? selectedFormats : [formData.matchFormat])
+      .map((format) => normalizeMatchFormatForCategory(format, selectedCategory))
+      .filter((format, index, collection) => collection.indexOf(format) === index);
+
+    const shouldUpdateMatchFormat = normalizedMatchFormat !== formData.matchFormat;
+    const shouldUpdateSelectedFormats = normalizedSelectedFormats.join('|') !== selected.join('|');
+    if (!shouldUpdateMatchFormat && !shouldUpdateSelectedFormats) {
+      return;
+    }
+
+    updateFormData({
+      matchFormat: normalizedMatchFormat,
+      selectedFormats: normalizedSelectedFormats,
+    });
+  }, [formData.matchFormat, selected, selectedCategory, selectedFormats, updateFormData]);
 
   const toggleFormat = (format: MatchFormat) => {
     const newSelected = selected.includes(format)
@@ -48,8 +84,17 @@ export default function Step2FormatMulti() {
         <p className="text-sm text-slate-500">Bạn có thể chọn một hoặc nhiều hình thức. Mỗi hình thức sẽ tạo một bảng thi đấu riêng.</p>
       </div>
 
+      <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3">
+        <p className="text-sm font-bold text-blue-900">
+          Bộ luật hiện tại: {presentation.sportLabel}
+        </p>
+        <p className="mt-1 text-xs font-semibold text-blue-700">
+          {presentation.presetSummary}
+        </p>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        {FORMAT_OPTIONS.map((opt) => {
+        {formatOptions.map((opt) => {
           const isSelected = selected.includes(opt.value);
           return (
             <button

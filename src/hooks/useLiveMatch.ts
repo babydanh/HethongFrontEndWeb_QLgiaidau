@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { socketClient } from '@/lib/socket';
 import { matchesApi, Match, MatchScore } from '@/features/matches/api';
+import { extractMatchScores } from '@/features/matches/score-display';
 
 export function useLiveMatch(matchId: string) {
   const [match, setMatch] = useState<Match | null>(null);
@@ -17,7 +18,7 @@ export function useLiveMatch(matchId: string) {
         const data = await matchesApi.getMatchById(matchId);
         if (isMounted) {
           setMatch(data);
-          setScores(data.scoreDetails?.sets || []);
+          setScores(extractMatchScores(data.scoreDetails));
         }
       } catch (err: unknown) {
         console.error('Failed to fetch match details:', err);
@@ -58,7 +59,7 @@ export function useLiveMatch(matchId: string) {
     socket.on('score:update', (updatedMatch: Match) => {
       if (updatedMatch.id === matchId) {
         setMatch(updatedMatch);
-        setScores(updatedMatch.scoreDetails?.sets || []);
+        setScores(extractMatchScores(updatedMatch.scoreDetails));
       }
     });
 

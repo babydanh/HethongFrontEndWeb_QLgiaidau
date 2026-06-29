@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { MatchTypeDB, GenderRestriction } from '@/types/tournament';
+import { MatchTypeDB, GenderRestriction, type SportRulesEnvelope } from '@/types/tournament';
+import { buildDefaultSportRules } from '@/features/tournaments/sport-rules/defaults';
 
 // UI-level combined match format (matchType + gender in one pick)
 export type MatchFormat =
@@ -48,11 +49,7 @@ interface TournamentFormData {
   // Step 3: Format & rules
   format: 'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION' | 'ROUND_ROBIN';
   maxParticipants: number | null;
-  sportRules: {
-    setsToWin: number;
-    pointsPerSet: number;
-    winByTwo: boolean;
-  };
+  sportRules: SportRulesEnvelope;
   // Step 4: Schedule & Venue
   startDate: string;
   endDate: string;
@@ -90,11 +87,7 @@ const defaultFormData: TournamentFormData = {
   maxTeammateGap: null,
   format: 'SINGLE_ELIMINATION',
   maxParticipants: null,
-  sportRules: {
-    setsToWin: 2,
-    pointsPerSet: 21,
-    winByTwo: true,
-  },
+  sportRules: buildDefaultSportRules('BADMINTON'),
   startDate: '',
   endDate: '',
   registrationStartDate: '',

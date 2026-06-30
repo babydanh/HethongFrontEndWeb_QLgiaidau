@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { MoreHorizontal, Search, ShieldAlert, UserCheck, UserX, Users } from 'lucide-react';
+import { MoreHorizontal, Search, ShieldAlert, Users } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import {
@@ -27,13 +27,10 @@ import { getParticipantStatusLabel } from '@/utils/tournament-display';
 interface OpsParticipantsProps {
   participants: TournamentParticipant[];
   activeParticipantActionId: string | null;
-  canModerateRegistration: boolean;
-  onApproveParticipant: (participantId: string) => Promise<void>;
-  onRejectParticipant: (participantId: string) => Promise<void>;
   onKickParticipant: (participantId: string, reason: string) => Promise<void>;
 }
 
-type ParticipantFilter = 'ALL' | 'PENDING' | 'COMPLETE' | 'UNPAID' | 'KICKED';
+type ParticipantFilter = 'ALL' | 'COMPLETE' | 'UNPAID' | 'KICKED' | 'DISCIPLINED';
 
 interface KickDraft {
   id: string;
@@ -51,18 +48,15 @@ const statusClassMap: Record<string, string> = {
 
 const FILTER_OPTIONS: Array<{ value: ParticipantFilter; label: string }> = [
   { value: 'ALL', label: 'Tất cả' },
-  { value: 'PENDING', label: 'Chờ duyệt' },
-  { value: 'COMPLETE', label: 'Đã duyệt' },
+  { value: 'COMPLETE', label: 'Đủ điều kiện đấu' },
   { value: 'UNPAID', label: 'Chưa thanh toán' },
   { value: 'KICKED', label: 'Đã loại' },
+  { value: 'DISCIPLINED', label: 'Kỷ luật khác' },
 ];
 
 export function OpsParticipants({
   participants,
   activeParticipantActionId,
-  canModerateRegistration,
-  onApproveParticipant,
-  onRejectParticipant,
   onKickParticipant,
 }: OpsParticipantsProps) {
   const [search, setSearch] = useState('');
@@ -76,10 +70,10 @@ export function OpsParticipants({
     return participants.filter((participant) => {
       const matchesFilter =
         filter === 'ALL' ? true :
-        filter === 'PENDING' ? participant.teamStatus === 'PENDING' :
         filter === 'COMPLETE' ? participant.teamStatus === 'COMPLETE' :
         filter === 'UNPAID' ? !participant.isPaid :
-        participant.teamStatus === 'KICKED';
+        filter === 'KICKED' ? participant.teamStatus === 'KICKED' :
+        participant.teamStatus === 'DISQUALIFIED' || participant.teamStatus === 'NO_SHOW' || participant.teamStatus === 'WITHDRAWN';
 
       const matchesSearch =
         !normalizedSearch ||
@@ -93,21 +87,12 @@ export function OpsParticipants({
   const summary = useMemo(() => {
     return {
       total: participants.length,
-      pending: participants.filter((participant) => participant.teamStatus === 'PENDING').length,
-      approved: participants.filter((participant) => participant.teamStatus === 'COMPLETE').length,
+      active: participants.filter((participant) => participant.teamStatus === 'COMPLETE').length,
       unpaid: participants.filter((participant) => !participant.isPaid).length,
+      disciplined: participants.filter((participant) => participant.teamStatus === 'DISQUALIFIED' || participant.teamStatus === 'NO_SHOW' || participant.teamStatus === 'WITHDRAWN').length,
+      kicked: participants.filter((participant) => participant.teamStatus === 'KICKED').length,
     };
   }, [participants]);
-
-  const handleRejectParticipant = async (participantId: string, teamName: string) => {
-    const confirmed = window.confirm(`Bạn có chắc muốn từ chối hồ sơ của "${teamName}" không?`);
-
-    if (!confirmed) {
-      return;
-    }
-
-    await onRejectParticipant(participantId);
-  };
 
   const handleSubmitKick = async () => {
     if (!kickDraft) {
@@ -124,17 +109,15 @@ export function OpsParticipants({
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <h2 className="text-lg font-black text-slate-900">Participant Operations</h2>
+            <h2 className="text-lg font-black text-slate-900">Roster thi đấu & kỷ luật</h2>
             <p className="text-sm font-medium text-slate-500">
-              Duyệt đăng ký, theo dõi thanh toán và xử lý loại đội trực tiếp từ panel vận hành.
+              Khối phụ trợ để rà roster đang thi đấu, các đội có rủi ro kỹ thuật và quyết định loại khỏi giải khi cần.
             </p>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-right">
-            <p className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-400">Quy tắc backend hiện tại</p>
+            <p className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-400">Boundary vận hành</p>
             <p className="mt-1 text-xs font-semibold text-slate-600">
-              {canModerateRegistration
-                ? 'Đang mở đăng ký: được duyệt hoặc từ chối hồ sơ.'
-                : 'Đã qua giai đoạn mở đăng ký: backend chỉ còn cho phép loại khỏi giải.'}
+              Panel này không xử lý duyệt đăng ký. Nghiệp vụ còn lại là theo dõi roster thực tế, thanh toán và xử lý loại đội khi giải đang chạy.
             </p>
           </div>
         </div>
@@ -167,20 +150,24 @@ export function OpsParticipants({
 
         <div className="mt-4 grid grid-cols-2 gap-3 xl:grid-cols-4">
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
-            <p className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-400">Tổng hồ sơ</p>
+            <p className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-400">Tổng roster</p>
             <p className="mt-2 text-lg font-black text-slate-900">{summary.total}</p>
           </div>
-          <div className="rounded-2xl border border-amber-100 bg-amber-50 p-3">
-            <p className="text-[11px] font-black uppercase tracking-[0.12em] text-amber-600">Chờ duyệt</p>
-            <p className="mt-2 text-lg font-black text-amber-700">{summary.pending}</p>
-          </div>
           <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-3">
-            <p className="text-[11px] font-black uppercase tracking-[0.12em] text-emerald-600">Đã duyệt</p>
-            <p className="mt-2 text-lg font-black text-emerald-700">{summary.approved}</p>
+            <p className="text-[11px] font-black uppercase tracking-[0.12em] text-emerald-600">Đủ điều kiện đấu</p>
+            <p className="mt-2 text-lg font-black text-emerald-700">{summary.active}</p>
           </div>
           <div className="rounded-2xl border border-rose-100 bg-rose-50 p-3">
             <p className="text-[11px] font-black uppercase tracking-[0.12em] text-rose-600">Chưa thanh toán</p>
             <p className="mt-2 text-lg font-black text-rose-700">{summary.unpaid}</p>
+          </div>
+          <div className="rounded-2xl border border-orange-100 bg-orange-50 p-3">
+            <p className="text-[11px] font-black uppercase tracking-[0.12em] text-orange-600">Kỷ luật khác</p>
+            <p className="mt-2 text-lg font-black text-orange-700">{summary.disciplined}</p>
+          </div>
+          <div className="rounded-2xl border border-amber-100 bg-amber-50 p-3">
+            <p className="text-[11px] font-black uppercase tracking-[0.12em] text-amber-600">Đã loại</p>
+            <p className="mt-2 text-lg font-black text-amber-700">{summary.kicked}</p>
           </div>
         </div>
 
@@ -211,8 +198,6 @@ export function OpsParticipants({
               ) : (
                 filteredParticipants.map((participant) => {
                   const isBusy = activeParticipantActionId === participant.id;
-                  const canApprove = canModerateRegistration && participant.teamStatus === 'PENDING';
-                  const canReject = canModerateRegistration && participant.teamStatus === 'PENDING';
                   const canKick = participant.teamStatus !== 'KICKED' && participant.teamStatus !== 'WITHDRAWN';
 
                   return (
@@ -257,24 +242,6 @@ export function OpsParticipants({
                           <DropdownMenuContent align="end" className="w-56">
                             <DropdownMenuLabel>Tác vụ vận hành</DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              disabled={!canApprove || isBusy}
-                              onClick={() => {
-                                void onApproveParticipant(participant.id);
-                              }}
-                            >
-                              <UserCheck className="mr-2 h-4 w-4 text-emerald-600" />
-                              Duyệt đăng ký
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              disabled={!canReject || isBusy}
-                              onClick={() => {
-                                void handleRejectParticipant(participant.id, participant.teamName);
-                              }}
-                            >
-                              <UserX className="mr-2 h-4 w-4 text-orange-600" />
-                              Từ chối đăng ký
-                            </DropdownMenuItem>
                             <DropdownMenuItem
                               disabled={!canKick || isBusy}
                               onClick={() => {

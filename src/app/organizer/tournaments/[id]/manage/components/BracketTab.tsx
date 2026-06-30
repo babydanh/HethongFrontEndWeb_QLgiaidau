@@ -4,8 +4,14 @@ import React from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Settings } from 'lucide-react';
-import { Tournament, BracketStage, BracketMatch } from '@/types/tournament';
+import { Tournament, BracketStage, BracketMatch, type SportRuleKind } from '@/types/tournament';
 import PublicBracketTab from '@/app/(public)/tournaments/[id]/components/BracketTab';
+import { getSportRulePresentation } from '@/features/tournaments/sport-rules/presentation';
+import { buildDefaultSportRules } from '@/features/tournaments/sport-rules/defaults';
+import { resolveSportRuleView } from '@/features/tournaments/sport-rules/normalize';
+import { normalizeSportRuleKindForCategory } from '@/features/tournaments/sport-rules/options';
+import type { MatchFormatOption } from '@/features/tournaments/match-format-options';
+import type { Category } from '@/features/categories/api';
 
 interface BracketTabProps {
   tournament: Tournament;
@@ -24,6 +30,10 @@ interface BracketTabProps {
   setMaxParticipants: (val: number) => void;
   matchType: string;
   setMatchType: (val: string) => void;
+  availableMatchFormatOptions: MatchFormatOption[];
+  selectedCategory?: Category | null;
+  sportRuleKind: SportRuleKind;
+  setSportRuleKind: (val: SportRuleKind) => void;
   setsToWin: number;
   setSetsToWin: (val: number) => void;
   pointsPerSet: number;
@@ -46,6 +56,8 @@ interface BracketTabProps {
   setTiebreakerMode?: (val: 'split' | 'playoff') => void;
   roundsToPlay?: number;
   setRoundsToPlay?: (val: number) => void;
+  selectedMatchId?: string | null;
+  onSelectMatch?: (match: BracketMatch) => void;
 
   // Lock state — disable config edits after lock
   isLocked?: boolean;
@@ -67,6 +79,10 @@ export function BracketTab({
   setMaxParticipants,
   matchType,
   setMatchType,
+  availableMatchFormatOptions,
+  selectedCategory = null,
+  sportRuleKind,
+  setSportRuleKind,
   setsToWin,
   setSetsToWin,
   pointsPerSet,
@@ -89,7 +105,29 @@ export function BracketTab({
   setTiebreakerMode,
   roundsToPlay = 1,
   setRoundsToPlay,
+  selectedMatchId,
+  onSelectMatch,
 }: BracketTabProps) {
+  const presentation = getSportRulePresentation(sportRuleKind);
+  const setUnitLabel = presentation.setUnitLabel;
+  const winByTwoLabel = presentation.winByTwoLabel;
+  const maxScoreLabel = presentation.maxScoreLabel;
+  const isPickleballVariant = sportRuleKind === 'PICKLEBALL_RALLY' || sportRuleKind === 'PICKLEBALL_SIDE_OUT';
+  const supportsTiebreakInput = sportRuleKind === 'TENNIS' || sportRuleKind === 'PICKLEBALL_SIDE_OUT';
+
+  const handleSportRuleKindChange = (nextKind: SportRuleKind) => {
+    const normalizedKind = normalizeSportRuleKindForCategory(nextKind, selectedCategory);
+    const nextRules = resolveSportRuleView(buildDefaultSportRules(normalizedKind), normalizedKind);
+    setSportRuleKind(normalizedKind);
+    setSetsToWin(nextRules.setsToWin);
+    setPointsPerSet(nextRules.pointsPerSet);
+    setWinByTwo(nextRules.winByTwo);
+    setMaxDeucePoints(nextRules.maxPoints);
+    setSuperTiebreakEnabled(nextRules.hasCustomTiebreakTarget);
+    setSuperTiebreakSetIndex(nextRules.bestOf);
+    setSuperTiebreakPoints(nextRules.tiebreakPoints);
+  };
+
   // Helper to extract bracket rounds from matches inside stage groups
   const getRoundsList = () => {
     if (!bracket || !bracket.stages) return [];
@@ -147,8 +185,41 @@ export function BracketTab({
                 <Settings className="w-5 h-5 text-blue-600" />
                 Cấu hình mặc định hình thức thi đấu
               </h3>
-              <p className="text-xs text-slate-500 mt-0.5 font-semibold">Cài đặt luật chơi mặc định và giới hạn cho tất cả các trận đấu thuộc hình thức này.</p>
+              <p className="text-xs text-slate-500 mt-0.5 font-semibold">
+                {presentation.sportLabel}: {presentation.scoringLabel}. {presentation.presetSummary}
+              </p>
             </div>
+
+            {isPickleballVariant && (
+              <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-4">
+                <p className="text-xs font-black uppercase tracking-[0.12em] text-emerald-700">Mode Pickleball</p>
+                <div className="mt-3 grid gap-3 md:grid-cols-2">
+                  {([
+                    { kind: 'PICKLEBALL_RALLY', title: 'Rally', description: 'Pha bóng nào thắng cũng có điểm.' },
+                    { kind: 'PICKLEBALL_SIDE_OUT', title: 'Side-out', description: 'Chỉ đội giao bóng mới được cộng điểm.' },
+                  ] as const)
+                    .filter((option) => normalizeSportRuleKindForCategory(option.kind, selectedCategory) === option.kind)
+                    .map((option) => {
+                    const isActive = sportRuleKind === option.kind;
+                    return (
+                      <button
+                        key={option.kind}
+                        type="button"
+                        onClick={() => handleSportRuleKindChange(option.kind)}
+                        className={`rounded-xl border px-4 py-3 text-left transition-all ${
+                          isActive
+                            ? 'border-emerald-500 bg-white ring-2 ring-emerald-200'
+                            : 'border-emerald-100 bg-white/80 hover:border-emerald-300'
+                        }`}
+                      >
+                        <p className="text-sm font-bold text-slate-900">{option.title}</p>
+                        <p className="mt-1 text-xs font-semibold text-slate-600">{option.description}</p>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
             
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
@@ -158,11 +229,11 @@ export function BracketTab({
                   onChange={(e) => setMatchType(e.target.value)}
                   className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold"
                 >
-                  <option value="MALE_SINGLES">Đơn Nam</option>
-                  <option value="FEMALE_SINGLES">Đơn Nữ</option>
-                  <option value="MALE_DOUBLES">Đôi Nam</option>
-                  <option value="FEMALE_DOUBLES">Đôi Nữ</option>
-                  <option value="MIXED_DOUBLES">Đôi Nam Nữ</option>
+                  {availableMatchFormatOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.shortLabel}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -173,16 +244,16 @@ export function BracketTab({
                   onChange={(e) => setSetsToWin(Number(e.target.value))}
                   className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold"
                 >
-                  <option value={1}>1 set</option>
-                  <option value={2}>Thắng 2 set</option>
-                  <option value={3}>Thắng 3 set</option>
+                  {presentation.setOptions.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
                 </select>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4 items-end">
               <Input
-                label="Điểm mỗi set"
+                label={setUnitLabel}
                 type="number"
                 value={pointsPerSet}
                 onChange={(e) => setPointsPerSet(Number(e.target.value))}
@@ -198,18 +269,29 @@ export function BracketTab({
                   className="w-4 h-4 text-blue-600 rounded border-slate-300 cursor-pointer"
                 />
                 <label htmlFor="winByTwo_bracket" className="text-xs font-bold text-slate-600 cursor-pointer select-none">
-                  Thắng cách biệt 2 điểm
+                  {winByTwoLabel}
                 </label>
               </div>
             </div>
 
             {winByTwo && (
               <Input
-                label="Điểm tối đa của set khi hòa 2 điểm"
+                label={maxScoreLabel}
                 type="number"
                 value={maxDeucePoints}
                 onChange={(e) => setMaxDeucePoints(Number(e.target.value))}
-                placeholder="Ví dụ: 30 (Chạm 30 thắng luôn không cần cách biệt 2)"
+                placeholder={presentation.maxScorePlaceholder}
+                className="h-10 text-sm font-bold"
+              />
+            )}
+
+            {supportsTiebreakInput && (
+              <Input
+                label={presentation.tiebreakLabel}
+                type="number"
+                value={superTiebreakPoints}
+                onChange={(e) => setSuperTiebreakPoints(Number(e.target.value))}
+                placeholder={sportRuleKind === 'TENNIS' ? 'Ví dụ: 7' : 'Ví dụ: 11'}
                 className="h-10 text-sm font-bold"
               />
             )}
@@ -290,7 +372,7 @@ export function BracketTab({
                     <Settings className="w-5 h-5 text-indigo-600" />
                     Cấu hình theo vòng đấu
                   </h3>
-                  <p className="text-xs text-slate-500 mt-0.5 font-semibold">Cài đặt luật chơi ghi đè cho riêng từng vòng đấu (ví dụ: vòng ngoài đánh chạm 11, bán kết/chung kết đánh chạm 21).</p>
+                  <p className="text-xs text-slate-500 mt-0.5 font-semibold">{presentation.roundConfigHint}</p>
                 </div>
 
                 {rounds.length > 0 ? (
@@ -364,6 +446,8 @@ export function BracketTab({
             divisionId={selectedDivisionId || undefined}
             onScheduleMatch={handleOpenScheduling}
             tiebreakerMode={tiebreakerMode}
+            selectedMatchId={selectedMatchId}
+            onSelectMatch={onSelectMatch}
           />
         </div>
       )}

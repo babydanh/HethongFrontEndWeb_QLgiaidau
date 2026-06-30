@@ -1,27 +1,26 @@
 'use client';
 
-import { Calendar, CheckCircle2, Clock3, ShieldAlert, Users } from 'lucide-react';
+import { AlertTriangle, Calendar, CheckCircle2, Clock3, Users, XCircle } from 'lucide-react';
 
 interface OpsOverviewProps {
   summary: {
     totalParticipants: number;
-    approvedParticipants: number;
-    pendingParticipants: number;
     kickedParticipants: number;
     unpaidParticipants: number;
     scheduledMatches: number;
     ongoingMatches: number;
     completedMatches: number;
+    openDisputes: number;
   };
 }
 
 const cards = [
   { key: 'totalParticipants', label: 'Tổng cặp/đội', icon: Users, tone: 'bg-blue-50 text-blue-700 border-blue-100' },
-  { key: 'pendingParticipants', label: 'Chờ xử lý', icon: ShieldAlert, tone: 'bg-amber-50 text-amber-700 border-amber-100' },
+  { key: 'scheduledMatches', label: 'Trận chờ bắt đầu', icon: Calendar, tone: 'bg-slate-100 text-slate-700 border-slate-200' },
   { key: 'ongoingMatches', label: 'Trận đang diễn ra', icon: Clock3, tone: 'bg-rose-50 text-rose-700 border-rose-100' },
   { key: 'completedMatches', label: 'Trận đã xong', icon: CheckCircle2, tone: 'bg-emerald-50 text-emerald-700 border-emerald-100' },
-  { key: 'scheduledMatches', label: 'Trận chờ bắt đầu', icon: Calendar, tone: 'bg-slate-100 text-slate-700 border-slate-200' },
-  { key: 'unpaidParticipants', label: 'Chưa thanh toán', icon: ShieldAlert, tone: 'bg-orange-50 text-orange-700 border-orange-100' },
+  { key: 'openDisputes', label: 'Tranh chấp mở', icon: AlertTriangle, tone: 'bg-amber-50 text-amber-700 border-amber-100' },
+  { key: 'kickedParticipants', label: 'Đội bị loại', icon: XCircle, tone: 'bg-orange-50 text-orange-700 border-orange-100' },
 ] as const;
 
 export function OpsOverview({ summary }: OpsOverviewProps) {
@@ -29,7 +28,7 @@ export function OpsOverview({ summary }: OpsOverviewProps) {
     <section className="space-y-4">
       <div>
         <h2 className="text-lg font-black text-slate-900">Tổng quan vận hành</h2>
-        <p className="text-sm font-medium text-slate-500">Một màn nhìn nhanh số cặp, số trận và các điểm cần xử lý của BTC.</p>
+        <p className="text-sm font-medium text-slate-500">Một màn nhìn nhanh nhịp chạy trận đấu, mức độ hoàn thành và các tình huống cần quyết định ngay.</p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">

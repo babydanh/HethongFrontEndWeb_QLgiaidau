@@ -11,9 +11,9 @@ export function OpsActivity({ activityLog }: OpsActivityProps) {
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
       <div>
-        <h2 className="text-lg font-black text-slate-900">Activity Log</h2>
+        <h2 className="text-lg font-black text-slate-900">Nhật ký vận hành</h2>
         <p className="text-sm font-medium text-slate-500">
-          Lưu vết thao tác ngay trong panel tổ chức. Nhật ký này lấy từ hệ thống audit và tự động bổ sung thao tác mới vừa diễn ra.
+          Lưu vết thao tác trong ngày thi đấu. Nhật ký này lấy từ audit hệ thống và tự động bổ sung các cập nhật vừa xảy ra trên panel vận hành.
         </p>
       </div>
 

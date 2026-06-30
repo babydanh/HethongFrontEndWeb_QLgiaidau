@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Tournament, BracketMatch, tournamentsApi } from '@/features/tournaments/api';
+import { extractMatchScores, getMatchScorePresentation, resolveMatchSportRules } from '@/features/matches/score-display';
+import { Tournament, BracketMatch } from '@/features/tournaments/api';
 import { matchesApi } from '@/features/matches/api';
 import { Calendar, Play, Trophy, MapPin, Info } from 'lucide-react';
 import Link from 'next/link';
@@ -48,22 +49,6 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
   if (isLoading) {
     return <div className="animate-pulse bg-slate-900/10 h-64 rounded-2xl w-full"></div>;
   }
-
-  // Helper to parse set scores
-  const getSets = (scoreDetails?: Record<string, unknown>) => {
-    if (!scoreDetails) return [];
-    return Object.keys(scoreDetails)
-      .sort()
-      .map((key) => {
-        const value = scoreDetails[key];
-        if (typeof value === 'string' && value.includes('-')) {
-          const [p1, p2] = value.split('-');
-          return { p1, p2 };
-        }
-        return null;
-      })
-      .filter((set) => set !== null) as { p1: string; p2: string }[];
-  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -171,10 +156,16 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
               {/* Matches Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {groupedMatches[stageName].map((match) => {
-                  const sets = getSets(match.scoreDetails);
+                  const sets = extractMatchScores(match.scoreDetails);
                   const isCompleted = match.status === 'COMPLETED';
                   const isP1Winner = isCompleted && match.winnerId === match.participant1?.id;
                   const isP2Winner = isCompleted && match.winnerId === match.participant2?.id;
+                  const resolvedRules = resolveMatchSportRules({
+                    matchConfig: match.matchConfig,
+                    tournament: { sportRules: tournament.sportRules ?? null },
+                  });
+                  const scorePresentation = getMatchScorePresentation(resolvedRules.kind);
+                  const sequenceLabelTitle = scorePresentation.sequenceLabel.charAt(0).toUpperCase() + scorePresentation.sequenceLabel.slice(1);
 
                   return (
                     <div
@@ -183,8 +174,11 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                     >
                       {/* Top section: Round, Court, status */}
                       <div className="flex justify-between items-center text-xs text-slate-400 font-semibold">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-indigo-600">Hiệp {match.roundNumber}</span>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-indigo-600">{sequenceLabelTitle} {match.roundNumber}</span>
+                          <span className="px-2 py-0.5 rounded-full border border-slate-200 bg-slate-50 text-slate-500 text-[10px] font-bold">
+                            {scorePresentation.sportLabel}
+                          </span>
                           {match.courtName && (
                             <span className="flex items-center gap-1 text-slate-400">
                               <MapPin className="w-3.5 h-3.5" /> {match.courtName}
@@ -216,7 +210,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                                   isP1Winner ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-50 text-slate-500'
                                 }`}
                               >
-                                {set.p1}
+                                {set.team1Score}
                               </span>
                             ))}
                             {sets.length === 0 && (
@@ -247,7 +241,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                                   isP2Winner ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-50 text-slate-500'
                                 }`}
                               >
-                                {set.p2}
+                                {set.team2Score}
                               </span>
                             ))}
                             {sets.length === 0 && (
@@ -260,13 +254,18 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                       </div>
 
                       {/* Bottom section: Details/Schedule info */}
-                      <div className="flex justify-between items-center text-xs">
-                        <div className="flex items-center gap-1.5 text-slate-400 font-semibold">
-                          <Calendar className="w-4 h-4 shrink-0" />
-                          <span>
-                            {match.scheduledAt
-                              ? formatDateTime(match.scheduledAt)
-                              : 'Chưa xếp lịch'}
+                      <div className="flex justify-between items-center gap-4 text-xs">
+                        <div className="flex flex-col gap-1 text-slate-400 font-semibold">
+                          <div className="flex items-center gap-1.5">
+                            <Calendar className="w-4 h-4 shrink-0" />
+                            <span>
+                              {match.scheduledAt
+                                ? formatDateTime(match.scheduledAt)
+                                : 'Chưa xếp lịch'}
+                            </span>
+                          </div>
+                          <span className="text-[11px] text-slate-500">
+                            {scorePresentation.wonSummaryLabel}: {match.p1SetsWon} - {match.p2SetsWon}
                           </span>
                         </div>
                         <Link

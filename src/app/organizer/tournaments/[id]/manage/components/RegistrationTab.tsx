@@ -1,28 +1,31 @@
 'use client';
 
 import React from 'react';
-import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+import { DateTimePicker, Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import {
-  Users, 
   RefreshCw, 
   Loader2, 
   Plus, 
   Trash2, 
   UserPlus, 
   CheckCircle,
-  Link as LinkIcon,
-  Lock
+  Lock,
+  ArrowRight,
+  UserCheck,
+  UserX,
+  Users,
+  Search,
 } from 'lucide-react';
 import { Tournament, TournamentParticipant } from '@/types/tournament';
 import { formatDate } from '@/utils/format';
+import { getParticipantStatusLabel } from '@/utils/tournament-display';
+import toast from 'react-hot-toast';
 
 interface RegistrationTabProps {
   tournament: Tournament;
   inviteLink: string;
-  participants: TournamentParticipant[];
   mockNamesText: string;
   setMockNamesText: (val: string) => void;
   isSeedingMock: boolean;
@@ -32,10 +35,22 @@ interface RegistrationTabProps {
   wildcardTeamName: string;
   setWildcardTeamName: (val: string) => void;
   isAssigningWildcard: boolean;
+  participants: TournamentParticipant[];
+  activeParticipantActionId: string | null;
+  visibility: 'PUBLIC' | 'PRIVATE';
+  setVisibility: (val: 'PUBLIC' | 'PRIVATE') => void;
+  registrationStartDate: string;
+  setRegistrationStartDate: (val: string) => void;
+  registrationEndDate: string;
+  setRegistrationEndDate: (val: string) => void;
+  isSavingConfig: boolean;
   publishFeeAmount: number;
   handlePublish: () => void;
   handleOpenLockModal: () => void;
-  handleUpdateStatus: (id: string, status: 'COMPLETE' | 'PENDING' | 'WITHDRAWN') => void;
+  handleSaveRegistrationSettings: () => void;
+  handleRegenerateInviteCode: () => void;
+  handleApproveParticipant: (participantId: string) => Promise<void>;
+  handleRejectParticipant: (participantId: string) => Promise<void>;
   handleSeedMockData: () => void;
   handleClearMockData: () => void;
   handleAssignWildcard: () => void;
@@ -45,7 +60,6 @@ interface RegistrationTabProps {
 export function RegistrationTab({
   tournament,
   inviteLink,
-  participants,
   mockNamesText,
   setMockNamesText,
   isSeedingMock,
@@ -55,19 +69,63 @@ export function RegistrationTab({
   wildcardTeamName,
   setWildcardTeamName,
   isAssigningWildcard,
+  participants,
+  activeParticipantActionId,
+  visibility,
+  setVisibility,
+  registrationStartDate,
+  setRegistrationStartDate,
+  registrationEndDate,
+  setRegistrationEndDate,
+  isSavingConfig,
   publishFeeAmount,
   handlePublish,
   handleOpenLockModal,
-  handleUpdateStatus,
+  handleSaveRegistrationSettings,
+  handleRegenerateInviteCode,
+  handleApproveParticipant,
+  handleRejectParticipant,
   handleSeedMockData,
   handleClearMockData,
   handleAssignWildcard,
   onCopyInviteLink
 }: RegistrationTabProps) {
+  const [search, setSearch] = React.useState('');
+  const [filter, setFilter] = React.useState<'ALL' | 'PENDING' | 'COMPLETE' | 'UNPAID' | 'REJECTED'>('ALL');
+
+  const participantSummary = React.useMemo(() => ({
+    total: participants.length,
+    pending: participants.filter((participant) => participant.teamStatus === 'PENDING').length,
+    approved: participants.filter((participant) => participant.teamStatus === 'COMPLETE').length,
+    unpaid: participants.filter((participant) => !participant.isPaid).length,
+    rejected: participants.filter((participant) => participant.teamStatus === 'REJECTED').length,
+    partnerInvite: participants.filter((participant) => Boolean(participant.teamInviteToken)).length,
+  }), [participants]);
+
+  const filteredParticipants = React.useMemo(() => {
+    const normalizedSearch = search.trim().toLowerCase();
+
+    return participants.filter((participant) => {
+      const matchesFilter =
+        filter === 'ALL' ? true :
+        filter === 'PENDING' ? participant.teamStatus === 'PENDING' :
+        filter === 'COMPLETE' ? participant.teamStatus === 'COMPLETE' :
+        filter === 'UNPAID' ? !participant.isPaid :
+        participant.teamStatus === 'REJECTED';
+
+      const matchesSearch =
+        !normalizedSearch ||
+        participant.teamName.toLowerCase().includes(normalizedSearch) ||
+        participant.members.some((member) => (member.fullName || '').toLowerCase().includes(normalizedSearch));
+
+      return matchesFilter && matchesSearch;
+    });
+  }, [filter, participants, search]);
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start animate-in fade-in duration-200">
       
-      {/* LEFT COLUMN: PUBLISH STATUS & ROSTER LIST (span-2) */}
+      {/* LEFT COLUMN: PUBLISH STATUS & REGISTRATION CONTROL (span-2) */}
       <div className="lg:col-span-2 space-y-6">
         
         {/* Publish Status Card */}
@@ -115,140 +173,318 @@ export function RegistrationTab({
                   </Button>
                 )}
               </div>
-
-              <div className="flex items-center gap-3 border p-3.5 rounded-xl bg-slate-50/50">
-                <LinkIcon className="w-5 h-5 text-slate-400 flex-shrink-0" />
-                <div className="flex-grow min-w-0">
-                  <p className="text-xs text-slate-450 font-bold uppercase tracking-wider">
-                    {tournament.visibility === 'PRIVATE' ? 'Đường dẫn đăng ký riêng tư' : 'Đường dẫn đăng ký công khai'}
-                  </p>
-                  <p className="text-sm font-semibold text-slate-800 truncate select-all">{inviteLink}</p>
-                </div>
-                <Button
-                  variant="outline"
-                  onClick={onCopyInviteLink}
-                  className="border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-bold"
-                >
-                  Sao chép
-                </Button>
-              </div>
             </div>
           )}
         </div>
 
-        {/* Roster / Participant List */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h3 className="font-bold text-slate-900 text-lg">Danh sách VĐV đăng ký ({participants.length})</h3>
-              <p className="text-xs text-slate-455 mt-1 font-semibold">BTC duyệt đăng ký của vận động viên trước khi chốt danh sách thi đấu chính thức.</p>
-            </div>
-            {participants.some(p => p.members?.some(m => m.isMock)) && (
-              <Badge className="bg-amber-100 text-amber-800 border-amber-200 font-bold text-[10px]">
-                CHỨA DỮ LIỆU MOCK
-              </Badge>
-            )}
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-5">
+          <div>
+            <h3 className="font-bold text-slate-900 text-lg">Thông tin đăng ký</h3>
+            <p className="mt-1 text-xs font-semibold text-slate-455">
+              Quản lý cách VĐV đi vào giải, khung thời gian mở đơn và bộ công cụ mời riêng cho đăng ký.
+            </p>
           </div>
-          
-          {participants.length === 0 ? (
-            <div className="text-center py-16 text-slate-400 bg-slate-50/30 rounded-xl border border-dashed flex flex-col items-center">
-              <Users className="w-10 h-10 mb-3 text-slate-300" />
-              <p className="font-bold text-sm text-slate-700">Chưa có đội hoặc vận động viên nào đăng ký</p>
-              <p className="text-xs text-slate-455 mt-1 max-w-xs">Người chơi đăng ký sẽ xuất hiện tại đây. Bạn cũng có thể dùng bảng bên phải để sinh dữ liệu mock phục vụ thử nghiệm.</p>
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <label className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-400">Chế độ nhận đăng ký</label>
+              <select
+                value={visibility}
+                onChange={(e) => setVisibility(e.target.value as 'PUBLIC' | 'PRIVATE')}
+                className="mt-3 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="PUBLIC">Công khai: hiển thị trên danh sách và ai đủ điều kiện đều có thể vào đăng ký</option>
+                <option value="PRIVATE">Riêng tư: chỉ ai có link hoặc mã mời mới vào được trang đăng ký</option>
+              </select>
+              <p className="mt-2 text-xs font-medium text-slate-500">
+                Dùng `Riêng tư` khi bạn muốn kiểm soát đầu vào theo partner, khách mời hoặc danh sách kín.
+              </p>
             </div>
-          ) : (
-            <div className="divide-y divide-slate-100">
-              {participants.map((p) => {
-                const hasMockMembers = p.members?.some(m => m.isMock || m.role === 'MOCK');
-                return (
-                  <div key={p.id} className="py-5 flex flex-col md:flex-row md:items-center justify-between gap-4 first:pt-0 last:pb-0 group hover:bg-slate-50/30 px-2 rounded-xl transition-all duration-200">
-                    
-                    <div className="space-y-1.5 flex-grow">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h4 className="font-extrabold text-slate-900 text-base">{p.teamName}</h4>
-                        {hasMockMembers && (
-                          <span className="bg-amber-100 text-amber-700 text-[9px] font-black px-1.5 py-0.5 rounded border border-amber-200 uppercase tracking-wider">
-                            Dữ liệu ảo
-                          </span>
-                        )}
-                        {p.teamStatus === 'COMPLETE' && (
-                          <span className="bg-emerald-50 text-emerald-700 text-[9px] font-black px-1.5 py-0.5 rounded border border-emerald-200 uppercase tracking-wider">
-                            ĐÃ DUYỆT
-                          </span>
-                        )}
-                        {p.teamStatus === 'PENDING' && (
-                          <span className="bg-amber-50 text-amber-700 text-[9px] font-black px-1.5 py-0.5 rounded border border-amber-200 uppercase tracking-wider animate-pulse">
-                            CHỜ DUYỆT
-                          </span>
-                        )}
-                        {p.teamStatus === 'WITHDRAWN' && (
-                          <span className="bg-slate-100 text-slate-500 text-[9px] font-black px-1.5 py-0.5 rounded border border-slate-200 uppercase tracking-wider">
-                            ĐÃ RÚT
-                          </span>
-                        )}
-                      </div>
-                      
-                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-semibold text-slate-400">
-                        <span>Đăng ký: {formatDate(p.registeredAt)}</span>
-                        <span className="text-slate-300">|</span>
-                        <span className="flex items-center gap-1.5">
-                          Lệ phí: 
-                          {p.isPaid ? (
-                            <span className="text-emerald-600 font-bold bg-emerald-50/50 px-2 py-0.5 rounded-full border border-emerald-100/60">Đã nộp</span>
-                          ) : (
-                            <span className="text-amber-600 font-bold bg-amber-50/50 px-2 py-0.5 rounded-full border border-amber-100/60">Chưa nộp</span>
-                          )}
-                        </span>
-                      </div>
-                    </div>
 
-                    {/* Team Members info */}
-                    <div className="flex flex-wrap gap-2 items-center">
-                      <div className="flex gap-2">
-                        {p.members?.map((m) => (
-                          <div key={m.userId} className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl shadow-sm hover:border-blue-200 transition-colors">
-                            <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 font-bold text-[9px] flex items-center justify-center uppercase">
-                              {m.fullName?.substring(0,2) || 'VD'}
-                            </div>
-                            <div className="text-left">
-                              <p className="text-xs font-extrabold text-slate-800 leading-none">{m.fullName}</p>
-                              <p className="text-[9px] text-blue-650 font-black leading-none mt-1">({m.elo?.eloPoints || 1200} ELO)</p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
+            <DateTimePicker
+              label="Mở đăng ký vào lúc"
+              value={registrationStartDate}
+              onChange={setRegistrationStartDate}
+            />
+          </div>
 
-                      {/* Action Buttons for Approvals */}
-                      {p.teamStatus === 'PENDING' && (
-                        <div className="flex items-center gap-1.5 ml-2">
-                          <Button
-                            size="sm"
-                            onClick={() => handleUpdateStatus(p.id, 'COMPLETE')}
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-3 py-1 h-8 shadow-sm flex items-center gap-1 animate-none"
-                          >
-                            Duyệt
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              if (confirm(`Bạn có chắc chắn từ chối đơn đăng ký của đội ${p.teamName}?`)) {
-                                handleUpdateStatus(p.id, 'WITHDRAWN');
-                              }
-                            }}
-                            className="border-rose-200 hover:bg-rose-50 text-rose-600 font-bold text-xs px-3 py-1 h-8 animate-none"
-                          >
-                            Từ chối
-                          </Button>
-                        </div>
-                      )}
-                    </div>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <DateTimePicker
+              label="Đóng đăng ký vào lúc"
+              value={registrationEndDate}
+              onChange={setRegistrationEndDate}
+            />
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-400">
+                Trạng thái đường dẫn
+              </p>
+              <p className="mt-2 text-sm font-semibold text-slate-700">
+                {visibility === 'PRIVATE'
+                  ? 'Giải đang dùng luồng đăng ký riêng tư, phù hợp cho mời kín và ghép partner có kiểm soát.'
+                  : 'Giải đang dùng luồng đăng ký công khai, VĐV có thể tự vào đăng ký nếu đáp ứng điều kiện.'}
+              </p>
+            </div>
+          </div>
 
-                  </div>
-                );
-              })}
+          {tournament.status !== 'DRAFT' && (
+            <div className="rounded-2xl border border-blue-100 bg-blue-50 p-5">
+              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                <div className="space-y-1">
+                  <p className="text-[11px] font-black uppercase tracking-[0.12em] text-blue-600">Mã mời đăng ký nhanh</p>
+                  <p className="text-xl font-black tracking-[0.18em] text-blue-700">{tournament.inviteCode || 'Chưa có'}</p>
+                  <p className="text-xs font-medium text-slate-600">
+                    Gửi mã hoặc link này cho VĐV khi cần vào thẳng luồng đăng ký.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        navigator.clipboard.writeText(tournament.inviteCode || '');
+                        toast.success('Đã sao chép mã mời!');
+                      }}
+                    className="border-blue-200 bg-white text-blue-700 hover:bg-blue-100 font-bold text-xs"
+                  >
+                    Sao chép mã
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={handleRegenerateInviteCode}
+                    className="border-blue-200 bg-white text-blue-700 hover:bg-blue-100 font-bold text-xs"
+                  >
+                    <RefreshCw className="mr-2 h-3.5 w-3.5" />
+                    Tạo lại mã
+                  </Button>
+                </div>
+              </div>
+
+              <div className="mt-4 rounded-2xl border border-white/80 bg-white/80 p-4">
+                <p className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-400">
+                  {visibility === 'PRIVATE' ? 'Đường dẫn đăng ký riêng tư' : 'Đường dẫn đăng ký hiện tại'}
+                </p>
+                <div className="mt-2 flex flex-col gap-3 md:flex-row md:items-center">
+                  <p className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-800">{inviteLink}</p>
+                  <Button
+                    variant="outline"
+                    onClick={onCopyInviteLink}
+                    className="border-slate-200 bg-white text-slate-700 hover:bg-slate-100 text-xs font-bold"
+                  >
+                    Sao chép link
+                  </Button>
+                </div>
+              </div>
             </div>
           )}
+
+          <div className="flex justify-end border-t border-slate-100 pt-2">
+            <Button
+              onClick={handleSaveRegistrationSettings}
+              disabled={isSavingConfig}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6"
+            >
+              {isSavingConfig ? 'Đang lưu...' : 'Lưu thông tin đăng ký'}
+            </Button>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-5">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h3 className="font-bold text-slate-900 text-lg">Duyệt hồ sơ đăng ký</h3>
+              <p className="mt-1 text-xs font-semibold text-slate-455">
+                Theo dõi toàn bộ trạng thái đăng ký, thanh toán và quyết định duyệt trước khi chốt danh sách.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-right">
+              <p className="text-[11px] font-black uppercase tracking-[0.12em] text-amber-600">Chờ duyệt</p>
+              <p className="mt-1 text-lg font-black text-amber-800">{participantSummary.pending}</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 xl:grid-cols-6">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+              <p className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-400">Tổng hồ sơ</p>
+              <p className="mt-2 text-lg font-black text-slate-900">{participantSummary.total}</p>
+            </div>
+            <div className="rounded-2xl border border-amber-100 bg-amber-50 p-3">
+              <p className="text-[11px] font-black uppercase tracking-[0.12em] text-amber-600">Chờ duyệt</p>
+              <p className="mt-2 text-lg font-black text-amber-700">{participantSummary.pending}</p>
+            </div>
+            <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-3">
+              <p className="text-[11px] font-black uppercase tracking-[0.12em] text-emerald-600">Đã duyệt</p>
+              <p className="mt-2 text-lg font-black text-emerald-700">{participantSummary.approved}</p>
+            </div>
+            <div className="rounded-2xl border border-orange-100 bg-orange-50 p-3">
+              <p className="text-[11px] font-black uppercase tracking-[0.12em] text-orange-600">Bị từ chối</p>
+              <p className="mt-2 text-lg font-black text-orange-700">{participantSummary.rejected}</p>
+            </div>
+            <div className="rounded-2xl border border-rose-100 bg-rose-50 p-3">
+              <p className="text-[11px] font-black uppercase tracking-[0.12em] text-rose-600">Chưa thanh toán</p>
+              <p className="mt-2 text-lg font-black text-rose-700">{participantSummary.unpaid}</p>
+            </div>
+            <div className="rounded-2xl border border-blue-100 bg-blue-50 p-3">
+              <p className="text-[11px] font-black uppercase tracking-[0.12em] text-blue-600">Đang chờ ghép</p>
+              <p className="mt-2 text-lg font-black text-blue-700">{participantSummary.partnerInvite}</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-[1.2fr_1fr]">
+            <Input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Tìm theo tên đội hoặc thành viên"
+              icon={<Search className="h-4 w-4" />}
+            />
+            <div className="flex flex-wrap gap-2">
+              {[
+                { value: 'ALL', label: 'Tất cả' },
+                { value: 'PENDING', label: 'Chờ duyệt' },
+                { value: 'COMPLETE', label: 'Đã duyệt' },
+                { value: 'UNPAID', label: 'Chưa thanh toán' },
+                { value: 'REJECTED', label: 'Bị từ chối' },
+              ].map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setFilter(option.value as typeof filter)}
+                  className={[
+                    'rounded-full border px-3 py-2 text-xs font-black transition-colors',
+                    filter === option.value
+                      ? 'border-blue-600 bg-blue-600 text-white'
+                      : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:text-slate-900',
+                  ].join(' ')}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-slate-100">
+              <thead>
+                <tr className="text-left text-xs font-black uppercase tracking-[0.12em] text-slate-400">
+                  <th className="pb-3 pr-4">Đội/Cặp</th>
+                  <th className="pb-3 pr-4">Thành viên</th>
+                  <th className="pb-3 pr-4">Trạng thái</th>
+                  <th className="pb-3 pr-4">Thanh toán</th>
+                  <th className="pb-3 text-right">Hành động</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filteredParticipants.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="py-12">
+                      <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center">
+                        <Users className="h-8 w-8 text-slate-300" />
+                        <p className="mt-3 text-sm font-bold text-slate-700">Không có hồ sơ phù hợp</p>
+                        <p className="mt-1 text-xs font-medium text-slate-500">
+                          Thử đổi bộ lọc hoặc từ khóa để rà lại toàn bộ danh sách đăng ký.
+                        </p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  filteredParticipants.map((participant) => {
+                    const isBusy = activeParticipantActionId === participant.id;
+                    const canApprove = participant.teamStatus === 'PENDING';
+                    const canReject = participant.teamStatus === 'PENDING';
+
+                    return (
+                      <tr key={participant.id}>
+                        <td className="py-4 pr-4">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="text-sm font-black text-slate-900">{participant.teamName}</p>
+                            {participant.teamInviteToken ? (
+                              <span className="rounded-full border border-blue-100 bg-blue-50 px-2.5 py-1 text-[11px] font-black text-blue-700">
+                                Chờ ghép partner
+                              </span>
+                            ) : null}
+                          </div>
+                          <p className="mt-1 text-xs font-medium text-slate-500">
+                            Đăng ký {formatDate(participant.registeredAt)} • Seed: {participant.seed ?? 'Chưa có'}
+                          </p>
+                        </td>
+                        <td className="py-4 pr-4">
+                          <div className="flex flex-wrap gap-2">
+                            {(participant.members || []).map((member) => (
+                              <span key={member.userId} className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-bold text-slate-700">
+                                {member.fullName || 'Chưa rõ'}
+                              </span>
+                            ))}
+                          </div>
+                        </td>
+                        <td className="py-4 pr-4">
+                          <span className={[
+                            'inline-flex rounded-full border px-2.5 py-1 text-xs font-black',
+                            participant.teamStatus === 'COMPLETE'
+                              ? 'border-emerald-100 bg-emerald-50 text-emerald-700'
+                              : participant.teamStatus === 'PENDING'
+                                ? 'border-amber-100 bg-amber-50 text-amber-700'
+                                : participant.teamStatus === 'REJECTED'
+                                  ? 'border-orange-100 bg-orange-50 text-orange-700'
+                                  : 'border-slate-200 bg-slate-100 text-slate-600',
+                          ].join(' ')}>
+                            {getParticipantStatusLabel(participant.teamStatus)}
+                          </span>
+                        </td>
+                        <td className="py-4 pr-4">
+                          <span className={`text-xs font-black ${participant.isPaid ? 'text-emerald-600' : 'text-rose-600'}`}>
+                            {participant.isPaid ? 'Đã thanh toán' : 'Chưa thanh toán'}
+                          </span>
+                        </td>
+                        <td className="py-4 text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              onClick={() => { void handleApproveParticipant(participant.id); }}
+                              disabled={!canApprove || isBusy}
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+                            >
+                              {isBusy && canApprove ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserCheck className="mr-2 h-4 w-4" />}
+                              Duyệt
+                            </Button>
+                            <Button
+                              variant="outline"
+                              onClick={() => {
+                                const confirmed = window.confirm(`Bạn có chắc muốn từ chối hồ sơ của "${participant.teamName}" không?`);
+                                if (confirmed) {
+                                  void handleRejectParticipant(participant.id);
+                                }
+                              }}
+                              disabled={!canReject || isBusy}
+                              className="border-orange-200 text-orange-700 hover:bg-orange-50 font-bold"
+                            >
+                              <UserX className="mr-2 h-4 w-4" />
+                              Từ chối
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-blue-100 bg-blue-50 p-5 shadow-sm">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-[11px] font-black uppercase tracking-[0.12em] text-blue-600">Sang vận hành khi giải bắt đầu</p>
+              <p className="mt-2 text-sm font-semibold text-slate-800">
+                Màn hình `Ops` dùng cho điều phối chuỗi trận, sân đấu, sự cố và nhật ký vận hành trong ngày thi đấu.
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              className="border-blue-200 bg-white text-blue-700 hover:bg-blue-100 shrink-0"
+              onClick={() => { window.location.href = `/organizer/tournaments/${tournament.id}/ops`; }}
+            >
+              Mở panel vận hành
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
 

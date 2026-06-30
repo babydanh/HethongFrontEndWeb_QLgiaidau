@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react';
 import type { Tournament, BracketStage, BracketMatch } from '@/features/tournaments/api';
 import { tournamentsApi } from '@/features/tournaments/api';
+import { getSportRuleKind } from '@/features/tournaments/sport-rules/normalize';
 import { Trophy, Info, Loader2 } from 'lucide-react';
-import type { OnScheduleMatch, BracketTabProps } from './bracket';
+import type { OnScheduleMatch, OnSelectBracketMatch, BracketTabProps } from './bracket';
 import { UPPER_SET, LOWER_SET } from './bracket';
 import { SingleElimView } from './bracket';
 import { DoubleElimView } from './bracket';
@@ -46,13 +47,19 @@ function GroupView({
   tiebreakerMode,
   tournamentId,
   stageId,
+  selectedMatchId,
+  onSelectMatch,
+  fallbackSportRuleKind,
 }: {
   group: { id: string; name: string; matches: BracketMatch[] };
   stageType: string;
   onScheduleMatch?: OnScheduleMatch;
+  onSelectMatch?: OnSelectBracketMatch;
   tiebreakerMode?: 'split' | 'playoff';
   tournamentId?: string;
   stageId?: string;
+  selectedMatchId?: string | null;
+  fallbackSportRuleKind?: BracketTabProps['fallbackSportRuleKind'];
 }) {
   const { matches } = group;
 
@@ -65,7 +72,7 @@ function GroupView({
   }
 
   if (stageType === 'ROUND_ROBIN') {
-    return <RoundRobinView matches={matches} tiebreakerMode={tiebreakerMode} onScheduleMatch={onScheduleMatch} tournamentId={tournamentId} stageId={stageId} />;
+    return <RoundRobinView matches={matches} tiebreakerMode={tiebreakerMode} onScheduleMatch={onScheduleMatch} selectedMatchId={selectedMatchId} onSelectMatch={onSelectMatch} tournamentId={tournamentId} stageId={stageId} fallbackSportRuleKind={fallbackSportRuleKind} />;
   }
 
   if (stageType === 'DOUBLE_ELIMINATION') {
@@ -86,6 +93,9 @@ function GroupView({
           lowerMatches={lower}
           gfMatches={gf}
           onScheduleMatch={onScheduleMatch}
+          selectedMatchId={selectedMatchId}
+          onSelectMatch={onSelectMatch}
+          fallbackSportRuleKind={fallbackSportRuleKind}
         />
       );
     }
@@ -95,6 +105,9 @@ function GroupView({
     <SingleElimView
       matches={matches}
       onScheduleMatch={onScheduleMatch}
+      selectedMatchId={selectedMatchId}
+      onSelectMatch={onSelectMatch}
+      fallbackSportRuleKind={fallbackSportRuleKind}
     />
   );
 }
@@ -109,8 +122,13 @@ export default function BracketTab({
   divisionId,
   onScheduleMatch,
   tiebreakerMode,
+  selectedMatchId,
+  onSelectMatch,
+  fallbackSportRuleKind,
 }: Props) {
   const effectiveTournamentId = tournamentId ?? tournament.id;
+  const effectiveSportRuleKind =
+    fallbackSportRuleKind ?? getSportRuleKind(tournament.sportRules);
   const [stages, setStages] = useState<BracketStage[]>([]);
   const [activeStageId, setActiveStageId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -251,6 +269,9 @@ export default function BracketTab({
                     lowerMatches={lower}
                     gfMatches={gf}
                     onScheduleMatch={onScheduleMatch}
+                    selectedMatchId={selectedMatchId}
+                    onSelectMatch={onSelectMatch}
+                    fallbackSportRuleKind={effectiveSportRuleKind}
                   />
                 );
               })()}
@@ -270,6 +291,9 @@ export default function BracketTab({
                   tiebreakerMode={tiebreakerMode}
                   tournamentId={effectiveTournamentId}
                   stageId={activeStage?.id}
+                  selectedMatchId={selectedMatchId}
+                  onSelectMatch={onSelectMatch}
+                  fallbackSportRuleKind={effectiveSportRuleKind}
                 />
               </div>
             ))

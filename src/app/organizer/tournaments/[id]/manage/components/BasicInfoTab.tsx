@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Settings, ImageIcon, Gift, Users, RefreshCw, Link as LinkIcon, Trash2, Plus, Phone, Mail, Globe } from 'lucide-react';
+import { Settings, ImageIcon, Gift, Users, Trash2, Plus, Phone, Mail, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import RichTextEditor from '@/components/ui/RichTextEditor';
@@ -22,8 +22,6 @@ interface BasicInfoTabProps {
   setName: (val: string) => void;
   categoryId: string;
   setCategoryId: (val: string) => void;
-  visibility: 'PUBLIC' | 'PRIVATE';
-  setVisibility: (val: 'PUBLIC' | 'PRIVATE') => void;
   description: string;
   setDescription: (val: string) => void;
   logoUrl: string;
@@ -42,7 +40,6 @@ interface BasicInfoTabProps {
   isDeleting: boolean;
   handleDeleteTournament: () => void;
   handleSaveBasicInfo: () => void;
-  handleRegenerateInviteCode: () => void;
   fetchTournamentData: () => void;
   divisions: Division[];
   selectedDivisionId: string;
@@ -70,8 +67,6 @@ export function BasicInfoTab({
   setName,
   categoryId,
   setCategoryId,
-  visibility,
-  setVisibility,
   description,
   setDescription,
   logoUrl,
@@ -90,7 +85,6 @@ export function BasicInfoTab({
   isDeleting,
   handleDeleteTournament,
   handleSaveBasicInfo,
-  handleRegenerateInviteCode,
   fetchTournamentData,
   divisions,
   selectedDivisionId,
@@ -253,20 +247,6 @@ export function BasicInfoTab({
                     {categories.map(cat => (
                       <option key={cat.id} value={cat.id}>{cat.name}</option>
                     ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 gap-5 border-t pt-5">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-slate-700">Chế độ hiển thị (Visibility)</label>
-                  <select
-                    value={visibility}
-                    onChange={(e) => setVisibility(e.target.value as 'PUBLIC' | 'PRIVATE')}
-                    className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-11"
-                  >
-                    <option value="PUBLIC">Công khai (Hiển thị trên danh sách tìm kiếm)</option>
-                    <option value="PRIVATE">Riêng tư (Ẩn, chỉ đăng ký qua link mời)</option>
                   </select>
                 </div>
               </div>
@@ -594,59 +574,6 @@ export function BasicInfoTab({
                   </Button>
                 </div>
               </div>
-
-              {/* Invite Code Section */}
-              {tournament.status !== 'DRAFT' && (
-                <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-4 border-t pt-5 mt-5">
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div className="space-y-1">
-                      <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Mã mời đăng ký nhanh</p>
-                      <p className="text-base font-black text-blue-600 tracking-widest">{tournament.inviteCode}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          navigator.clipboard.writeText(tournament.inviteCode || '');
-                          toast.success('Đã sao chép mã mời!');
-                        }}
-                        className="border-slate-200 hover:bg-slate-100 text-slate-700 font-bold text-xs"
-                      >
-                        Sao chép mã
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={handleRegenerateInviteCode}
-                        className="border-slate-200 hover:bg-slate-100 text-slate-700 font-bold text-xs flex items-center gap-1"
-                      >
-                        <RefreshCw className="w-3.5 h-3.5" /> Tạo lại mã mời
-                      </Button>
-                    </div>
-                  </div>
-
-                  {visibility === 'PRIVATE' && (
-                    <div className="flex items-center gap-3 border p-3.5 rounded-xl bg-white mt-2">
-                      <LinkIcon className="w-5 h-5 text-slate-400 flex-shrink-0" />
-                      <div className="flex-grow min-w-0">
-                        <p className="text-xs text-slate-455 font-bold uppercase tracking-wider">Đường dẫn đăng ký riêng tư</p>
-                        <p className="text-sm font-semibold text-slate-800 truncate select-all">
-                          {`${window.location.origin}/tournaments/${tournament.id}/register?invite=${tournament.inviteCode}`}
-                        </p>
-                      </div>
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          navigator.clipboard.writeText(`${window.location.origin}/tournaments/${tournament.id}/register?invite=${tournament.inviteCode}`);
-                          toast.success('Đã sao chép link đăng ký riêng tư!');
-                        }}
-                        className="border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-bold"
-                      >
-                        Sao chép link
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
           )}
         </div>

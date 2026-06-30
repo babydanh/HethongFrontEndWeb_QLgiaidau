@@ -1,9 +1,16 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { AlertOctagon, CalendarClock, ClipboardPenLine, Play, TimerReset, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { DateTimePicker } from '@/components/ui/Input';
+import {
+  extractMatchScores,
+  getMatchScorePresentation,
+  resolveMatchSportRules,
+} from '@/features/matches/score-display';
+import type { SportRulesEnvelope } from '@/types/tournament';
 import {
   Modal,
   ModalContent,
@@ -13,6 +20,8 @@ import {
   ModalTitle,
 } from '@/components/ui/Modal';
 import type { Match } from '@/types/match';
+import type { MatchScore } from '@/types/match';
+import type { PickleballSideOutState } from '@/types/match';
 import { formatDateTime } from '@/utils/format';
 import type { MatchOperationAction, MatchOperationInput, MatchScheduleInput, OpsReferee } from '@/features/organizer/ops/types';
 
@@ -20,9 +29,18 @@ interface OpsMatchesProps {
   matches: Match[];
   referees: OpsReferee[];
   activeMatchActionId: string | null;
+  focusedMatchId?: string | null;
+  onFocusMatch?: (matchId: string) => void;
+  tournamentSportRules?: SportRulesEnvelope | null;
+  matchInsights?: Record<string, {
+    hasCustomConfig: boolean;
+    customConfigSummary: string[];
+    dependencyBlocked: boolean;
+    dependencySummary: string[];
+  }>;
   onUpdateMatchStatus: (match: Match, status: Match['status']) => Promise<void>;
   onUpdateMatchSchedule: (match: Match, payload: MatchScheduleInput) => Promise<void>;
-  onUpdateMatchScore: (match: Match, payload: { p1SetsWon: number; p2SetsWon: number }) => Promise<void>;
+  onUpdateMatchScore: (match: Match, payload: { p1SetsWon: number; p2SetsWon: number; sets: MatchScore[] }) => Promise<void>;
   onApplyMatchOperation: (match: Match, payload: MatchOperationInput) => Promise<void>;
   onCreateDispute: (match: Match, reason: string) => Promise<void>;
 }
@@ -35,8 +53,7 @@ interface ScheduleDraft {
 }
 
 interface ScoreDraft {
-  p1SetsWon: number;
-  p2SetsWon: number;
+  sets: MatchScore[];
 }
 
 interface OperationDraft {
@@ -44,6 +61,50 @@ interface OperationDraft {
   reason: string;
   winnerId: string;
 }
+
+interface MatchInsight {
+  hasCustomConfig: boolean;
+  customConfigSummary: string[];
+  dependencyBlocked: boolean;
+  dependencySummary: string[];
+}
+
+interface MatchBucket {
+  scheduled: Match[];
+  unscheduledReady: Match[];
+  blocked: Match[];
+  directAdvance: Match[];
+}
+
+const readSideOutState = (match: Match): PickleballSideOutState | null => {
+  const rawState = match.scoreDetails?.sideOutState;
+  if (!rawState) {
+    return null;
+  }
+
+  const { servingTeam, serverNumber, openingSequenceDone } = rawState;
+  if (
+    servingTeam !== null &&
+    servingTeam !== 1 &&
+    servingTeam !== 2
+  ) {
+    return null;
+  }
+
+  if (serverNumber !== 1 && serverNumber !== 2) {
+    return null;
+  }
+
+  if (typeof openingSequenceDone !== 'boolean') {
+    return null;
+  }
+
+  return {
+    servingTeam,
+    serverNumber,
+    openingSequenceDone,
+  };
+};
 
 const STATUS_FILTERS: Array<{ value: Match['status'] | 'ALL'; label: string }> = [
   { value: 'ALL', label: 'Tất cả' },
@@ -64,13 +125,17 @@ const OPERATION_OPTIONS: Array<{ value: MatchOperationAction; label: string; des
   { value: 'WALKOVER', label: 'Thắng trắng', description: 'Đối thủ không ra sân hoặc không đủ điều kiện thi đấu.' },
   { value: 'RETIREMENT', label: 'Chấn thương / bỏ cuộc', description: 'Trận kết thúc sớm do một bên xin dừng.' },
   { value: 'DISQUALIFICATION', label: 'Truất quyền', description: 'BTC xử thua do vi phạm điều lệ hoặc gian lận.' },
-  { value: 'OVERRIDE_RESULT', label: 'Override kết quả', description: 'BTC chốt lại kết quả cuối cùng theo biên bản.' },
+  { value: 'OVERRIDE_RESULT', label: 'Chốt lại kết quả', description: 'BTC chốt lại kết quả cuối cùng theo biên bản.' },
 ];
 
 export function OpsMatches({
   matches,
   referees,
   activeMatchActionId,
+  focusedMatchId,
+  onFocusMatch,
+  tournamentSportRules,
+  matchInsights,
   onUpdateMatchStatus,
   onUpdateMatchSchedule,
   onUpdateMatchScore,
@@ -87,8 +152,7 @@ export function OpsMatches({
     scheduledAt: '',
   });
   const [scoreDraft, setScoreDraft] = useState<ScoreDraft>({
-    p1SetsWon: 0,
-    p2SetsWon: 0,
+    sets: [],
   });
   const [selectedDisputeMatch, setSelectedDisputeMatch] = useState<Match | null>(null);
   const [disputeReason, setDisputeReason] = useState('');
@@ -103,14 +167,81 @@ export function OpsMatches({
     return matches.filter((match) => (statusFilter === 'ALL' ? true : match.status === statusFilter));
   }, [matches, statusFilter]);
 
+  const buckets = useMemo<MatchBucket>(() => {
+    const nextBuckets: MatchBucket = {
+      scheduled: [],
+      unscheduledReady: [],
+      blocked: [],
+      directAdvance: [],
+    };
+
+    for (const match of matches) {
+      const matchInsight = matchInsights?.[match.id];
+      const missingOpponent = !match.participant1Id || !match.participant2Id;
+      const isDirectAdvance = match.isBye || (!!match.winnerId && missingOpponent);
+
+      if (isDirectAdvance) {
+        nextBuckets.directAdvance.push(match);
+        continue;
+      }
+
+      if (match.status === 'SCHEDULED') {
+        if (matchInsight?.dependencyBlocked || missingOpponent) {
+          nextBuckets.blocked.push(match);
+          continue;
+        }
+
+        if (match.scheduledAt) {
+          nextBuckets.scheduled.push(match);
+          continue;
+        }
+
+        nextBuckets.unscheduledReady.push(match);
+      }
+    }
+
+    nextBuckets.scheduled.sort((left, right) => {
+      const leftTime = left.scheduledAt ? new Date(left.scheduledAt).getTime() : Number.MAX_SAFE_INTEGER;
+      const rightTime = right.scheduledAt ? new Date(right.scheduledAt).getTime() : Number.MAX_SAFE_INTEGER;
+      if (leftTime !== rightTime) {
+        return leftTime - rightTime;
+      }
+      return left.roundNumber - right.roundNumber || left.matchOrder - right.matchOrder;
+    });
+
+    nextBuckets.unscheduledReady.sort((left, right) =>
+      left.roundNumber - right.roundNumber || left.matchOrder - right.matchOrder,
+    );
+    nextBuckets.blocked.sort((left, right) =>
+      left.roundNumber - right.roundNumber || left.matchOrder - right.matchOrder,
+    );
+    nextBuckets.directAdvance.sort((left, right) =>
+      left.roundNumber - right.roundNumber || left.matchOrder - right.matchOrder,
+    );
+
+    return nextBuckets;
+  }, [matchInsights, matches]);
+
   const summary = useMemo(() => {
     return {
-      scheduled: matches.filter((match) => match.status === 'SCHEDULED').length,
+      scheduled: buckets.scheduled.length,
+      unscheduledReady: buckets.unscheduledReady.length,
+      blocked: buckets.blocked.length,
+      directAdvance: buckets.directAdvance.length,
       ongoing: matches.filter((match) => match.status === 'ONGOING').length,
       completed: matches.filter((match) => match.status === 'COMPLETED').length,
       disputed: matches.filter((match) => match.status === 'DISPUTED').length,
     };
-  }, [matches]);
+  }, [buckets, matches]);
+
+  useEffect(() => {
+    if (!focusedMatchId) {
+      return;
+    }
+
+    const card = document.getElementById(`ops-match-card-${focusedMatchId}`);
+    card?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [focusedMatchId]);
 
   const openScheduleModal = (match: Match) => {
     setSelectedScheduleMatch(match);
@@ -123,10 +254,18 @@ export function OpsMatches({
   };
 
   const openScoreModal = (match: Match) => {
+    const resolvedRules = resolveMatchSportRules({
+      matchConfig: match.matchConfig,
+      tournament: { sportRules: tournamentSportRules },
+    });
+    const existingSets = extractMatchScores(match.scoreDetails);
+    const seededSets = Array.from({ length: resolvedRules.bestOf }, (_, index) => (
+      existingSets[index] ?? { team1Score: 0, team2Score: 0, isFinished: false }
+    ));
+
     setSelectedScoreMatch(match);
     setScoreDraft({
-      p1SetsWon: match.p1SetsWon,
-      p2SetsWon: match.p2SetsWon,
+      sets: seededSets,
     });
   };
 
@@ -149,7 +288,17 @@ export function OpsMatches({
       return;
     }
 
-    await onUpdateMatchScore(selectedScoreMatch, scoreDraft);
+    const completedSets = scoreDraft.sets
+      .filter((set) => set.team1Score > 0 || set.team2Score > 0)
+      .map((set) => ({ ...set, isFinished: true }));
+    const p1SetsWon = completedSets.filter((set) => set.team1Score > set.team2Score).length;
+    const p2SetsWon = completedSets.filter((set) => set.team2Score > set.team1Score).length;
+
+    await onUpdateMatchScore(selectedScoreMatch, {
+      p1SetsWon,
+      p2SetsWon,
+      sets: completedSets,
+    });
     setSelectedScoreMatch(null);
   };
 
@@ -190,35 +339,233 @@ export function OpsMatches({
     });
   };
 
+  const renderMatchCard = (match: Match) => {
+    const isBusy = activeMatchActionId === match.id;
+    const specialResult =
+      match.scoreDetails &&
+      typeof match.scoreDetails === 'object' &&
+      'specialResult' in match.scoreDetails
+        ? (match.scoreDetails.specialResult as {
+            action?: string;
+            reason?: string;
+          } | undefined)
+        : undefined;
+    const matchInsight = matchInsights?.[match.id];
+    const isDirectAdvance = match.isBye || (!!match.winnerId && (!match.participant1Id || !match.participant2Id));
+    const isBlocked = !!matchInsight?.dependencyBlocked || !match.participant1Id || !match.participant2Id;
+    const resolvedRules = resolveMatchSportRules({
+      matchConfig: match.matchConfig,
+      tournament: { sportRules: tournamentSportRules },
+    });
+    const scorePresentation = getMatchScorePresentation(resolvedRules.kind);
+    const sideOutState = resolvedRules.kind === 'PICKLEBALL_SIDE_OUT' ? readSideOutState(match) : null;
+    const servingTeamLabel =
+      sideOutState?.servingTeam === 1
+        ? match.participant1?.teamName || 'Đội 1'
+        : sideOutState?.servingTeam === 2
+          ? match.participant2?.teamName || 'Đội 2'
+          : null;
+    const completedSets = extractMatchScores(match.scoreDetails);
+    const scoreSummary = completedSets.length > 0
+      ? completedSets.map((set, index) => `${scorePresentation.sequenceLabel} ${index + 1}: ${set.team1Score}-${set.team2Score}`).join(' • ')
+      : `${scorePresentation.wonSummaryLabel}: ${match.p1SetsWon} - ${match.p2SetsWon}`;
+
+    return (
+      <div
+        key={match.id}
+        id={`ops-match-card-${match.id}`}
+        className={[
+          'rounded-2xl border bg-slate-50 p-4 transition-all',
+          focusedMatchId === match.id
+            ? 'border-amber-400 ring-4 ring-amber-100'
+            : 'border-slate-200',
+        ].join(' ')}
+      >
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+          <div className="space-y-2">
+            <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-400">
+              {match.bracketBranch || 'Nhánh chính'} • Vòng {match.roundNumber} • Trận {match.matchOrder}
+            </p>
+            <p className="text-sm font-black text-slate-900">
+              {match.participant1?.teamName || 'Chờ xác định'} gặp {match.participant2?.teamName || 'Chờ xác định'}
+            </p>
+            <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs font-semibold text-slate-500">
+              <span>Trạng thái: {match.status}</span>
+              <span>Sân: {match.courtName || 'Chưa gán'}</span>
+              <span>Lịch: {match.scheduledAt ? formatDateTime(match.scheduledAt) : 'Chưa xếp lịch'}</span>
+              <span>{scoreSummary}</span>
+            </div>
+            {isDirectAdvance ? (
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-900">
+                Đi thẳng / miễn đấu: trận này không cần điều phối sân vì nhánh đã tự xác định đội đi tiếp.
+              </div>
+            ) : null}
+            {specialResult?.action ? (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900">
+                Quyết định BTC: {specialResult.action}
+                {specialResult.reason ? ` • ${specialResult.reason}` : ''}
+              </div>
+            ) : null}
+            {matchInsight?.hasCustomConfig ? (
+              <div className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-900">
+                Cấu hình riêng: {matchInsight.customConfigSummary.join(' • ')}
+              </div>
+            ) : null}
+            {sideOutState ? (
+              <div className="rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-xs font-semibold text-violet-900">
+                {servingTeamLabel
+                  ? `${servingTeamLabel} đang giao • lượt ${sideOutState.serverNumber}`
+                  : 'Chưa chốt đội giao hiện tại'}
+              </div>
+            ) : null}
+            {matchInsight?.dependencyBlocked ? (
+              <div className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-900">
+                Chưa đủ điều kiện nhánh đấu: {matchInsight.dependencySummary.join(' • ')}
+              </div>
+            ) : null}
+            {!match.participant1Id || !match.participant2Id ? (
+              <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700">
+                Chưa đủ hai đối thủ. Chỉ nên điều phối sau khi nhánh trước chốt xong.
+              </div>
+            ) : null}
+          </div>
+
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <select
+              value={match.status}
+              onChange={(event) => {
+                void onUpdateMatchStatus(match, event.target.value as Match['status']);
+              }}
+              disabled={isBusy || isDirectAdvance}
+              className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold text-slate-700"
+            >
+              {STATUS_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+
+            <Button
+              variant="outline"
+              className="border-slate-200 text-slate-700"
+              onClick={() => openScheduleModal(match)}
+              disabled={isBusy || isDirectAdvance || isBlocked}
+            >
+              <CalendarClock className="mr-2 h-4 w-4" />
+              Lịch
+            </Button>
+            <Button
+              variant="outline"
+              className="border-amber-200 text-amber-700 hover:bg-amber-50"
+              onClick={() => onFocusMatch?.(match.id)}
+            >
+              Xem trên bracket
+            </Button>
+            <Button
+              variant="outline"
+              className="border-slate-200 text-slate-700"
+              onClick={() => openScoreModal(match)}
+              disabled={isBusy || isDirectAdvance || isBlocked}
+            >
+              <ClipboardPenLine className="mr-2 h-4 w-4" />
+              Tỷ số
+            </Button>
+            <Button
+              variant="outline"
+              className="border-slate-200 text-slate-700"
+              onClick={() => {
+                const nextStatus = match.status === 'ONGOING' ? 'COMPLETED' : 'ONGOING';
+                void onUpdateMatchStatus(match, nextStatus);
+              }}
+              disabled={isBusy || isDirectAdvance || isBlocked}
+            >
+              {match.status === 'ONGOING' ? <Trophy className="mr-2 h-4 w-4" /> : <Play className="mr-2 h-4 w-4" />}
+              {match.status === 'ONGOING' ? 'Kết thúc' : 'Bắt đầu'}
+            </Button>
+            <Button asChild variant="outline" className="border-slate-200 font-bold text-slate-700">
+              <Link href={`/live/${match.id}`}>
+                <TimerReset className="mr-2 h-4 w-4" />
+                Mở bảng điểm trực tiếp
+              </Link>
+            </Button>
+            <Button
+              variant="outline"
+              className="border-amber-200 text-amber-700 hover:bg-amber-50"
+              onClick={() => openOperationModal(match)}
+              disabled={isBusy || isDirectAdvance || !match.participant1Id || !match.participant2Id}
+            >
+              <AlertOctagon className="mr-2 h-4 w-4" />
+              Quyết định
+            </Button>
+            <Button
+              variant="outline"
+              className="border-rose-200 text-rose-700 hover:bg-rose-50"
+              onClick={() => setSelectedDisputeMatch(match)}
+              disabled={isBusy}
+            >
+              Báo sự cố
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderMatchSection = (
+    title: string,
+    description: string,
+    items: Match[],
+    emptyLabel: string,
+  ) => (
+    <div className="space-y-3">
+      <div>
+        <h3 className="text-sm font-black uppercase tracking-[0.12em] text-slate-700">{title}</h3>
+        <p className="mt-1 text-xs font-medium text-slate-500">{description}</p>
+      </div>
+      {items.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center">
+          <p className="text-sm font-bold text-slate-700">{emptyLabel}</p>
+        </div>
+      ) : (
+        items.map(renderMatchCard)
+      )}
+    </div>
+  );
+
   return (
     <>
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <h2 className="text-lg font-black text-slate-900">Match Operations</h2>
+              <h2 className="text-lg font-black text-slate-900">Điều phối trận đấu</h2>
               <p className="text-sm font-medium text-slate-500">
-                Điều phối trận, cập nhật lịch và xử lý nhanh trạng thái hoặc tỷ số từ cùng một workspace.
+                Đây là khu vực chính của ngày thi đấu: gọi trận, gán sân, cập nhật tỷ số và chốt các tình huống đặc biệt ngay tại bàn điều hành.
               </p>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
-              <p className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-400">Sắp đấu</p>
+              <p className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-400">Đã xếp lịch</p>
               <p className="mt-2 text-lg font-black text-slate-900">{summary.scheduled}</p>
+            </div>
+            <div className="rounded-2xl border border-amber-100 bg-amber-50 p-3">
+              <p className="text-[11px] font-black uppercase tracking-[0.12em] text-amber-600">Chờ xếp lịch</p>
+              <p className="mt-2 text-lg font-black text-amber-700">{summary.unscheduledReady}</p>
             </div>
             <div className="rounded-2xl border border-blue-100 bg-blue-50 p-3">
               <p className="text-[11px] font-black uppercase tracking-[0.12em] text-blue-600">Đang đấu</p>
               <p className="mt-2 text-lg font-black text-blue-700">{summary.ongoing}</p>
             </div>
-            <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-3">
-              <p className="text-[11px] font-black uppercase tracking-[0.12em] text-emerald-600">Hoàn tất</p>
-              <p className="mt-2 text-lg font-black text-emerald-700">{summary.completed}</p>
-            </div>
             <div className="rounded-2xl border border-rose-100 bg-rose-50 p-3">
-              <p className="text-[11px] font-black uppercase tracking-[0.12em] text-rose-600">Sự cố</p>
-              <p className="mt-2 text-lg font-black text-rose-700">{summary.disputed}</p>
+              <p className="text-[11px] font-black uppercase tracking-[0.12em] text-rose-600">Đang nghẽn nhánh</p>
+              <p className="mt-2 text-lg font-black text-rose-700">{summary.blocked}</p>
+            </div>
+            <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-3">
+              <p className="text-[11px] font-black uppercase tracking-[0.12em] text-emerald-600">Đi thẳng / miễn đấu</p>
+              <p className="mt-2 text-lg font-black text-emerald-700">{summary.directAdvance}</p>
             </div>
           </div>
 
@@ -242,122 +589,40 @@ export function OpsMatches({
         </div>
 
         <div className="mt-6 space-y-3">
-          {filteredMatches.length === 0 ? (
+          {statusFilter === 'ALL' ? (
+            <>
+              {renderMatchSection(
+                'Các trận đã xếp lịch',
+                'Đây là danh sách sắp đấu thực sự: đã đủ đối thủ và đã có thời gian thi đấu.',
+                buckets.scheduled.slice(0, 8),
+                'Chưa có trận nào được xếp lịch rõ ràng.',
+              )}
+              {renderMatchSection(
+                'Các trận chờ điều phối',
+                'Đã đủ hai đối thủ nhưng BTC chưa gán giờ/sân cụ thể.',
+                buckets.unscheduledReady.slice(0, 8),
+                'Không còn trận nào chờ xếp lịch.',
+              )}
+              {renderMatchSection(
+                'Các trận chưa đủ điều kiện chạy',
+                'Các trận này chưa nên xếp như trận bình thường vì còn chờ nhánh trước hoặc chưa đủ hai đối thủ.',
+                buckets.blocked.slice(0, 8),
+                'Không có trận nào đang nghẽn nhánh.',
+              )}
+              {renderMatchSection(
+                'Các suất đi thẳng / miễn đấu',
+                'Các cặp này đã được hệ thống cho đi tiếp tự động, không cần đưa vào hàng chờ điều phối sân.',
+                buckets.directAdvance.slice(0, 8),
+                'Hiện không có suất đi thẳng hoặc miễn đấu.',
+              )}
+            </>
+          ) : filteredMatches.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center">
               <p className="text-sm font-bold text-slate-700">Không có trận phù hợp</p>
               <p className="mt-1 text-xs font-medium text-slate-500">Đổi bộ lọc để xem thêm trận trong giải.</p>
             </div>
           ) : (
-            filteredMatches.slice(0, 12).map((match) => {
-              const isBusy = activeMatchActionId === match.id;
-              const specialResult =
-                match.scoreDetails &&
-                typeof match.scoreDetails === 'object' &&
-                'specialResult' in match.scoreDetails
-                  ? (match.scoreDetails.specialResult as {
-                      action?: string;
-                      reason?: string;
-                    } | undefined)
-                  : undefined;
-
-              return (
-                <div key={match.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-                    <div className="space-y-2">
-                      <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-400">
-                        {match.bracketBranch || 'MAIN'} • Round {match.roundNumber} • Trận {match.matchOrder}
-                      </p>
-                      <p className="text-sm font-black text-slate-900">
-                        {match.participant1?.teamName || 'TBD'} vs {match.participant2?.teamName || 'TBD'}
-                      </p>
-                      <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs font-semibold text-slate-500">
-                        <span>Trạng thái: {match.status}</span>
-                        <span>Sân: {match.courtName || 'Chưa gán'}</span>
-                        <span>Lịch: {match.scheduledAt ? formatDateTime(match.scheduledAt) : 'Chưa xếp lịch'}</span>
-                        <span>Tỷ số set: {match.p1SetsWon} - {match.p2SetsWon}</span>
-                      </div>
-                      {specialResult?.action ? (
-                        <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900">
-                          Quyết định BTC: {specialResult.action}
-                          {specialResult.reason ? ` • ${specialResult.reason}` : ''}
-                        </div>
-                      ) : null}
-                    </div>
-
-                    <div className="flex flex-wrap items-center justify-end gap-2">
-                      <select
-                        value={match.status}
-                        onChange={(event) => {
-                          void onUpdateMatchStatus(match, event.target.value as Match['status']);
-                        }}
-                        disabled={isBusy}
-                        className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold text-slate-700"
-                      >
-                        {STATUS_OPTIONS.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
-
-                      <Button
-                        variant="outline"
-                        className="border-slate-200 text-slate-700"
-                        onClick={() => openScheduleModal(match)}
-                        disabled={isBusy}
-                      >
-                        <CalendarClock className="mr-2 h-4 w-4" />
-                        Lịch
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="border-slate-200 text-slate-700"
-                        onClick={() => openScoreModal(match)}
-                        disabled={isBusy}
-                      >
-                        <ClipboardPenLine className="mr-2 h-4 w-4" />
-                        Tỷ số
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="border-slate-200 text-slate-700"
-                        onClick={() => {
-                          const nextStatus = match.status === 'ONGOING' ? 'COMPLETED' : 'ONGOING';
-                          void onUpdateMatchStatus(match, nextStatus);
-                        }}
-                        disabled={isBusy}
-                      >
-                        {match.status === 'ONGOING' ? <Trophy className="mr-2 h-4 w-4" /> : <Play className="mr-2 h-4 w-4" />}
-                        {match.status === 'ONGOING' ? 'Kết thúc' : 'Bắt đầu'}
-                      </Button>
-                      <Button asChild variant="outline" className="border-slate-200 font-bold text-slate-700">
-                        <Link href={`/live/${match.id}`}>
-                          <TimerReset className="mr-2 h-4 w-4" />
-                          Mở live
-                        </Link>
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="border-amber-200 text-amber-700 hover:bg-amber-50"
-                        onClick={() => openOperationModal(match)}
-                        disabled={isBusy || !match.participant1Id || !match.participant2Id}
-                      >
-                        <AlertOctagon className="mr-2 h-4 w-4" />
-                        Quyết định
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="border-rose-200 text-rose-700 hover:bg-rose-50"
-                        onClick={() => setSelectedDisputeMatch(match)}
-                        disabled={isBusy}
-                      >
-                        Báo sự cố
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })
+            filteredMatches.slice(0, 12).map(renderMatchCard)
           )}
         </div>
       </section>
@@ -381,11 +646,9 @@ export function OpsMatches({
             </div>
             <div className="space-y-2">
               <label className="text-sm font-bold text-slate-700">Thời gian thi đấu</label>
-              <input
-                type="datetime-local"
+              <DateTimePicker
                 value={scheduleDraft.scheduledAt}
-                onChange={(event) => setScheduleDraft((current) => ({ ...current, scheduledAt: event.target.value }))}
-                className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm"
+                onChange={(value) => setScheduleDraft((current) => ({ ...current, scheduledAt: value }))}
               />
             </div>
             <div className="space-y-2 md:col-span-2">
@@ -426,47 +689,124 @@ export function OpsMatches({
       </Modal>
 
       <Modal open={Boolean(selectedScoreMatch)} onOpenChange={(open) => !open && setSelectedScoreMatch(null)}>
-        <ModalContent className="sm:max-w-lg">
+        <ModalContent className="sm:max-w-2xl">
           <ModalHeader>
-            <ModalTitle>Cập nhật tỷ số nhanh</ModalTitle>
-            <ModalDescription>Điền số set thắng hiện tại của hai đội để BTC ghi nhận tiến độ trận.</ModalDescription>
+            <ModalTitle>Cập nhật tỷ số trận</ModalTitle>
+            <ModalDescription>
+              Nhập tỉ số từng set/game đã chốt. Nếu cần chấm điểm từng pha đang diễn ra, hãy mở bảng điểm trực tiếp của trận.
+            </ModalDescription>
           </ModalHeader>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">
-                {selectedScoreMatch?.participant1?.teamName || 'Đội 1'}
-              </label>
-              <input
-                type="number"
-                min={0}
-                value={scoreDraft.p1SetsWon}
-                onChange={(event) => setScoreDraft((current) => ({ ...current, p1SetsWon: Number(event.target.value) }))}
-                className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">
-                {selectedScoreMatch?.participant2?.teamName || 'Đội 2'}
-              </label>
-              <input
-                type="number"
-                min={0}
-                value={scoreDraft.p2SetsWon}
-                onChange={(event) => setScoreDraft((current) => ({ ...current, p2SetsWon: Number(event.target.value) }))}
-                className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm"
-              />
-            </div>
-          </div>
+          {selectedScoreMatch ? (() => {
+            const resolvedRules = resolveMatchSportRules({
+              matchConfig: selectedScoreMatch.matchConfig,
+              tournament: { sportRules: tournamentSportRules },
+            });
+            const scorePresentation = getMatchScorePresentation(resolvedRules.kind);
+            const sideOutState = resolvedRules.kind === 'PICKLEBALL_SIDE_OUT' ? readSideOutState(selectedScoreMatch) : null;
+            const servingTeamLabel =
+              sideOutState?.servingTeam === 1
+                ? selectedScoreMatch.participant1?.teamName || 'Đội 1'
+                : sideOutState?.servingTeam === 2
+                  ? selectedScoreMatch.participant2?.teamName || 'Đội 2'
+                  : null;
+            const completedSets = scoreDraft.sets.filter((set) => set.team1Score > 0 || set.team2Score > 0);
+            const hasDrawnSet = completedSets.some((set) => set.team1Score === set.team2Score);
+            const p1Won = completedSets.filter((set) => set.team1Score > set.team2Score).length;
+            const p2Won = completedSets.filter((set) => set.team2Score > set.team1Score).length;
+            const canSubmitScore = completedSets.length > 0 && !hasDrawnSet;
 
-          <ModalFooter className="gap-2">
-            <Button variant="outline" className="border-slate-200 text-slate-700" onClick={() => setSelectedScoreMatch(null)}>
-              Hủy
-            </Button>
-            <Button className="bg-blue-600 text-white hover:bg-blue-700" onClick={() => void handleSubmitScore()}>
-              Lưu tỷ số
-            </Button>
-          </ModalFooter>
+            return (
+              <div className="space-y-4">
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
+                  {scorePresentation.sportLabel} • {scorePresentation.summaryLabel} • Chạm đích: {resolvedRules.pointsPerSet}
+                  {resolvedRules.kind === 'TENNIS' ? ` game, tie-break ${resolvedRules.tiebreakPoints}` : ''}
+                </div>
+                {sideOutState ? (
+                  <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm font-semibold text-violet-900">
+                    {servingTeamLabel
+                      ? `${servingTeamLabel} đang giữ quyền giao • lượt ${sideOutState.serverNumber}. Lưu tỷ số từ panel này sẽ giữ nguyên trạng thái giao bóng hiện tại.`
+                      : 'Mode side-out đang bật nhưng trận chưa chốt đội giao hiện tại ở bảng điểm trực tiếp.'}
+                  </div>
+                ) : null}
+                <div className="grid gap-3">
+                  {scoreDraft.sets.map((set, index) => (
+                    <div key={`score-row-${index}`} className="grid grid-cols-[1fr_120px_120px] items-end gap-3 rounded-2xl border border-slate-200 bg-white p-4">
+                      <div>
+                        <p className="text-sm font-black text-slate-900">
+                          {scorePresentation.sequenceLabel.charAt(0).toUpperCase() + scorePresentation.sequenceLabel.slice(1)} {index + 1}
+                        </p>
+                        <p className="mt-1 text-xs font-medium text-slate-500">
+                          Bỏ trống bằng cách để cả hai bên = 0 nếu chưa chơi đến {scorePresentation.sequenceLabel} này.
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-600">
+                          {selectedScoreMatch.participant1?.teamName || 'Đội 1'}
+                        </label>
+                        <input
+                          type="number"
+                          min={0}
+                          value={set.team1Score}
+                          onChange={(event) => setScoreDraft((current) => ({
+                            ...current,
+                            sets: current.sets.map((item, itemIndex) => itemIndex === index
+                              ? { ...item, team1Score: Number(event.target.value), isFinished: true }
+                              : item),
+                          }))}
+                          className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-600">
+                          {selectedScoreMatch.participant2?.teamName || 'Đội 2'}
+                        </label>
+                        <input
+                          type="number"
+                          min={0}
+                          value={set.team2Score}
+                          onChange={(event) => setScoreDraft((current) => ({
+                            ...current,
+                            sets: current.sets.map((item, itemIndex) => itemIndex === index
+                              ? { ...item, team2Score: Number(event.target.value), isFinished: true }
+                              : item),
+                          }))}
+                          className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="grid grid-cols-2 gap-4 rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm font-semibold text-blue-900">
+                  <div>{scorePresentation.wonSummaryLabel} {selectedScoreMatch.participant1?.teamName || 'Đội 1'}: <span className="font-black">{p1Won}</span></div>
+                  <div>{scorePresentation.wonSummaryLabel} {selectedScoreMatch.participant2?.teamName || 'Đội 2'}: <span className="font-black">{p2Won}</span></div>
+                </div>
+                {!canSubmitScore ? (
+                  <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">
+                    {completedSets.length === 0
+                      ? `Hãy nhập ít nhất một ${scorePresentation.sequenceLabel} đã hoàn tất trước khi lưu.`
+                      : `${scorePresentation.sequenceLabel.charAt(0).toUpperCase() + scorePresentation.sequenceLabel.slice(1)} không được hòa. Hãy kiểm tra lại tỉ số đã nhập.`}
+                  </div>
+                ) : null}
+                <ModalFooter className="gap-2">
+                  <Button variant="outline" className="border-slate-200 text-slate-700" onClick={() => setSelectedScoreMatch(null)}>
+                    Hủy
+                  </Button>
+                  <Button
+                    className="bg-blue-600 text-white hover:bg-blue-700"
+                    onClick={() => void handleSubmitScore()}
+                    disabled={!canSubmitScore}
+                  >
+                    Lưu tỷ số
+                  </Button>
+                </ModalFooter>
+              </div>
+            );
+          })() : (
+            <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm font-semibold text-slate-500">
+              Không có dữ liệu trận để nhập điểm.
+            </div>
+          )}
         </ModalContent>
       </Modal>
 

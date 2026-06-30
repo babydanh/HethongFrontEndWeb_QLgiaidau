@@ -7,6 +7,7 @@
 
 export type {
   OnScheduleMatch,
+  OnSelectBracketMatch,
   BracketTabProps,
   MatchPos,
   StandingRow,

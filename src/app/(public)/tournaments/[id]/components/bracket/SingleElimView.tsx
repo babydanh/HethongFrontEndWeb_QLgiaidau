@@ -10,7 +10,8 @@
 import React, { useState } from 'react';
 import { Maximize2, Minimize2 } from 'lucide-react';
 import type { BracketMatch } from '@/features/tournaments/api';
-import type { OnScheduleMatch } from './types';
+import type { SportRuleKind } from '@/types/tournament';
+import type { OnScheduleMatch, OnSelectBracketMatch } from './types';
 import { CARD_W, CARD_H_PUBLIC, CARD_H_ORGANIZER, COL_GAP } from './types';
 import { buildMatchesByRound, getRoundLabel, isSlotBye } from './helpers';
 import { MatchCard } from './MatchCard';
@@ -18,9 +19,18 @@ import { MatchCard } from './MatchCard';
 interface Props {
   matches: BracketMatch[];
   onScheduleMatch?: OnScheduleMatch;
+  selectedMatchId?: string | null;
+  onSelectMatch?: OnSelectBracketMatch;
+  fallbackSportRuleKind?: SportRuleKind;
 }
 
-export function SingleElimView({ matches, onScheduleMatch }: Props) {
+export function SingleElimView({
+  matches,
+  onScheduleMatch,
+  selectedMatchId,
+  onSelectMatch,
+  fallbackSportRuleKind,
+}: Props) {
   const cardH = onScheduleMatch ? CARD_H_ORGANIZER : CARD_H_PUBLIC;
   const [zoom, setZoom] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -69,7 +79,7 @@ export function SingleElimView({ matches, onScheduleMatch }: Props) {
         <button
           onClick={() => setZoom((z) => Math.max(z - 0.1, 0.5))}
           className="w-7 h-7 flex items-center justify-center hover:bg-slate-50 rounded-lg transition-colors cursor-pointer border border-slate-100"
-          title="Zoom Out"
+          title="Thu nhỏ"
         >
           -
         </button>
@@ -79,21 +89,21 @@ export function SingleElimView({ matches, onScheduleMatch }: Props) {
         <button
           onClick={() => setZoom((z) => Math.min(z + 0.1, 1.5))}
           className="w-7 h-7 flex items-center justify-center hover:bg-slate-50 rounded-lg transition-colors cursor-pointer border border-slate-100"
-          title="Zoom In"
+          title="Phóng to"
         >
           +
         </button>
         <button
           onClick={() => setZoom(1)}
           className="px-2.5 h-7 flex items-center justify-center hover:bg-slate-50 rounded-lg transition-colors cursor-pointer border border-slate-100"
-          title="Reset Zoom"
+          title="Đặt lại tỷ lệ"
         >
-          Reset
+          Mặc định
         </button>
         <button
           onClick={() => setIsFullscreen(!isFullscreen)}
           className="w-7 h-7 flex items-center justify-center hover:bg-slate-50 rounded-lg transition-colors cursor-pointer border border-slate-100 text-slate-500 hover:text-slate-800"
-          title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
+          title={isFullscreen ? 'Thoát toàn màn hình' : 'Toàn màn hình'}
         >
           {isFullscreen ? (
             <Minimize2 className="w-4 h-4" />
@@ -198,8 +208,11 @@ export function SingleElimView({ matches, onScheduleMatch }: Props) {
                   <MatchCard
                     match={match}
                     onScheduleMatch={onScheduleMatch}
+                    onSelectMatch={onSelectMatch}
+                    selected={selectedMatchId === match.id}
                     isP1Bye={isP1Bye}
                     isP2Bye={isP2Bye}
+                    fallbackSportRuleKind={fallbackSportRuleKind}
                   />
                 </div>
               );

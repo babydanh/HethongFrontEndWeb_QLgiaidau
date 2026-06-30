@@ -6,14 +6,16 @@
  */
 
 import type { BracketMatch } from '@/features/tournaments/api';
+import { extractMatchScores } from '@/features/matches/score-display';
+import type { SportRuleKind } from '@/types/tournament';
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // LAYOUT CONSTANTS
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 export const CARD_W = 260;           // match card width (px) — wider for per-set columns
-export const CARD_H_PUBLIC = 132;    // compact card (public view)
-export const CARD_H_ORGANIZER = 172; // taller card (organizer)
-export const BASE_SLOT = 136;        // slot height for the densest round
+export const CARD_H_PUBLIC = 222;    // public view, taller for better readability
+export const CARD_H_ORGANIZER = 216; // organizer view, taller for better readability
+export const BASE_SLOT = 188;        // slot height for the densest round
 export const COL_GAP = 48;           // horizontal gap between round columns
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -26,12 +28,16 @@ export const LOWER_SET = new Set(['LOSER', 'LOSERS', 'LOWER', 'L']);
 // SHARED TYPES
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 export type OnScheduleMatch = (match: BracketMatch) => void;
+export type OnSelectBracketMatch = (match: BracketMatch) => void;
 
 export interface BracketTabProps {
   tournament: { id: string; name: string; genderRestriction?: string | null };
   tournamentId?: string;
   divisionId?: string;
   onScheduleMatch?: OnScheduleMatch;
+  selectedMatchId?: string | null;
+  onSelectMatch?: OnSelectBracketMatch;
+  fallbackSportRuleKind?: SportRuleKind;
 }
 
 export interface MatchPos {
@@ -100,33 +106,9 @@ export function parseScoreDetails(
     p1PointsFor: 0,
     p2PointsFor: 0,
   };
-  if (!scoreDetails || typeof scoreDetails !== 'object') return result;
-
-  // Format A: { sets: [{ team1Score, team2Score }, …] }
-  const sets = (scoreDetails as { sets?: unknown[] }).sets;
-  if (Array.isArray(sets)) {
-    for (const set of sets) {
-      if (!set || typeof set !== 'object') continue;
-      const s = set as Record<string, unknown>;
-      const t1 = Number(s.team1Score ?? 0);
-      const t2 = Number(s.team2Score ?? 0);
-      if (t1 > t2) result.p1SetsWon++;
-      else if (t2 > t1) result.p2SetsWon++;
-      result.p1PointsFor += t1;
-      result.p2PointsFor += t2;
-    }
-    return result;
-  }
-
-  // Format B: { set1: "21-19", set2: "15-21", … }
-  const keys = Object.keys(scoreDetails).sort();
-  for (const key of keys) {
-    const val = scoreDetails[key];
-    if (typeof val !== 'string' || !val.includes('-')) continue;
-    const [s1, s2] = val.split('-');
-    const t1 = Number(s1.trim());
-    const t2 = Number(s2.trim());
-    if (isNaN(t1) || isNaN(t2)) continue;
+  for (const set of extractMatchScores(scoreDetails)) {
+    const t1 = set.team1Score;
+    const t2 = set.team2Score;
     if (t1 > t2) result.p1SetsWon++;
     else if (t2 > t1) result.p2SetsWon++;
     result.p1PointsFor += t1;

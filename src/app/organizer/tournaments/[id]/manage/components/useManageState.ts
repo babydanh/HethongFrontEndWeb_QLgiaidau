@@ -10,11 +10,22 @@ import { venuesApi } from '@/features/venues/api';
 import { paymentsApi } from '@/features/payments/api';
 import { categoriesApi, Category } from '@/features/categories/api';
 import { regionsApi, Region } from '@/features/regions/api';
-import { useOrganizerOps } from '@/features/organizer/ops/hooks/useOrganizerOps';
 import { getPlatformFeeBreakdown } from '@/utils/platform-fee';
-import { Badge } from '@/components/ui/Badge';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '@/utils/error';
+import { inferSportRuleKindFromCategory, resolveSportRuleView } from '@/features/tournaments/sport-rules/normalize';
+import { buildDefaultSportRules } from '@/features/tournaments/sport-rules/defaults';
+import { normalizeSportRuleKindForCategory } from '@/features/tournaments/sport-rules/options';
+import {
+  buildSportRulesPayload,
+  buildStageRoundConfigPayload,
+  buildStageRoundRulePayload,
+} from '@/features/tournaments/sport-rules/payload';
+import {
+  getAllowedMatchFormatOptions,
+  normalizeMatchFormatForCategory,
+  type MatchFormatOptionValue,
+} from '@/features/tournaments/match-format-options';
 
 export type TournamentReferee = {
   id: string; userId: string; status: string; fullName: string; avatarUrl: string | null;
@@ -35,7 +46,7 @@ export function useManageState(id: string) {
   const [feesConfig, setFeesConfig] = useState<TournamentFeesConfig | null>(null);
   const [courts, setCourts] = useState<Court[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'basic'|'schedule'|'registration'|'operations'|'bracket'|'finance'|'permissions'>('basic');
+  const [activeTab, setActiveTab] = useState<'basic'|'schedule'|'registration'|'bracket'|'finance'|'permissions'>('basic');
   const [basicSubTab, setBasicSubTab] = useState<'general'|'branding'|'prizes'|'contact'>('general');
   const [referees, setReferees] = useState<TournamentReferee[]>([]);
   const [refereeEmail, setRefereeEmail] = useState('');
@@ -81,6 +92,7 @@ export function useManageState(id: string) {
   const [maxParticipants, setMaxParticipants] = useState(16);
   const [isLimitEnabled, setIsLimitEnabled] = useState(true);
   const [matchType, setMatchType] = useState('DOUBLES');
+  const [sportRuleKind, setSportRuleKind] = useState<'BADMINTON' | 'TABLE_TENNIS' | 'PICKLEBALL_RALLY' | 'PICKLEBALL_SIDE_OUT' | 'TENNIS'>('BADMINTON');
   const [setsToWin, setSetsToWin] = useState(2);
   const [pointsPerSet, setPointsPerSet] = useState(21);
   const [winByTwo, setWinByTwo] = useState(true);
@@ -137,10 +149,13 @@ export function useManageState(id: string) {
   const [wildcardTeamName, setWildcardTeamName] = useState('');
   const [isGeneratingBracket, setIsGeneratingBracket] = useState(false);
   const [isAssigningWildcard, setIsAssigningWildcard] = useState(false);
+  const [activeParticipantActionId, setActiveParticipantActionId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [hasConfigBeforeLock, setHasConfigBeforeLock] = useState(false);
   const [isPayingPlatformFee, setIsPayingPlatformFee] = useState(false);
   const [isPayingPublishFee, setIsPayingPublishFee] = useState(false);
+  const selectedCategory = categories.find((category) => category.id === categoryId) ?? null;
+  const availableMatchFormatOptions = getAllowedMatchFormatOptions(selectedCategory);
 
   const getFormatLabel = (mt: string, gr?: string|null) => {
     if (mt === 'SINGLES') return gr === 'FEMALE' ? 'Đơn Nữ' : 'Đơn Nam';
@@ -196,14 +211,29 @@ export function useManageState(id: string) {
         });
       } else { setDivisions([]); setSelectedDivisionId(''); }
     } catch { setDivisions([]); setSelectedDivisionId(''); }
-  }, [id]);
+  }, [searchParams]);
 
   const fetchVenueCourts = async (vId: string) => {
     try { const r = await venuesApi.getVenueById(vId); setCourts(r.data?.courts?.map(c => ({id:c.id, courtName:c.name})) || []); }
     catch { setCourts([]); }
   };
 
+  const applyResolvedRuleState = useCallback((resolvedRules: ReturnType<typeof resolveSportRuleView>) => {
+    setSportRuleKind(resolvedRules.kind);
+    setSetsToWin(resolvedRules.setsToWin);
+    setPointsPerSet(resolvedRules.pointsPerSet);
+    setWinByTwo(resolvedRules.winByTwo);
+    setMaxDeucePoints(resolvedRules.maxPoints);
+    setSuperTiebreakEnabled(resolvedRules.hasCustomTiebreakTarget);
+    setSuperTiebreakSetIndex(resolvedRules.bestOf);
+    setSuperTiebreakPoints(resolvedRules.tiebreakPoints);
+    setTiebreakerMode(resolvedRules.tiebreakerMode);
+    setRoundsToPlay(resolvedRules.roundsToPlay);
+  }, []);
+
   const applyDivisionFormValues = useCallback((selected: Division) => {
+    const resolvedRules = resolveSportRuleView(selected.roundConfig);
+
     setMatchType(
       selected.genderRestriction === 'FEMALE'
         ? (selected.matchType === 'SINGLES' ? MatchTypeUI.FEMALE_SINGLES : MatchTypeUI.FEMALE_DOUBLES)
@@ -212,14 +242,8 @@ export function useManageState(id: string) {
     setMaxParticipants(selected.maxParticipants || 16);
     setIsLimitEnabled(!!selected.maxParticipants);
     setEntryFee(selected.entryFee || 0);
-    const rules = selected.roundConfig || {};
-    const rc = rules as Record<string,unknown>;
-    setSetsToWin(rc.setsToWin as number || 2);
-    setPointsPerSet(rc.pointsPerSet as number || 21);
-    setWinByTwo(rc.winByTwo !== undefined ? rc.winByTwo as boolean : true);
-    setTiebreakerMode((rc.tiebreakerMode as 'split'|'playoff') || 'split');
-    setRoundsToPlay(rc.roundsToPlay as number || 1);
-  }, []);
+    applyResolvedRuleState(resolvedRules);
+  }, [applyResolvedRuleState]);
 
   // ── Handlers ──
   const handleSaveBasicInfo = async () => {
@@ -234,11 +258,18 @@ export function useManageState(id: string) {
           FEMALE_DOUBLES: {mt:MatchTypeDB.DOUBLES, gr:GenderRestriction.FEMALE},
           MIXED_DOUBLES: {mt:MatchTypeDB.MIXED_DOUBLES, gr:GenderRestriction.MIXED},
         };
-        const mapped = pm[matchType] || {mt:MatchTypeDB.DOUBLES, gr:null};
+        const normalizedMatchType = normalizeMatchFormatForCategory(matchType as MatchFormatOptionValue, selectedCategory);
+        const mapped = pm[normalizedMatchType] || {mt:MatchTypeDB.DOUBLES, gr:null};
         await divisionsApi.updateDivisionConfig(tournament.id, selectedDivisionId, {
           matchType: mapped.mt, genderRestriction: mapped.gr,
           maxParticipants: isLimitEnabled ? maxParticipants : null, isConfigOverride: true,
-          roundConfig: { setsToWin, pointsPerSet, winByTwo },
+          roundConfig: buildStageRoundConfigPayload({
+            kind: normalizeSportRuleKindForCategory(sportRuleKind, selectedCategory),
+            setsToWin,
+            pointsPerSet,
+            winByTwo,
+            maxPoints: winByTwo ? maxDeucePoints : null,
+          }),
         });
         await fetchDivisions(id);
       }
@@ -275,6 +306,59 @@ export function useManageState(id: string) {
     finally { setIsSavingConfig(false); }
   };
 
+  const handleSaveRegistrationSettings = async () => {
+    setIsSavingConfig(true);
+    try {
+      if (registrationStartDate && registrationEndDate && new Date(registrationEndDate) <= new Date(registrationStartDate)) {
+        toast.error('Hạn chót đăng ký phải sau ngày mở đăng ký');
+        setIsSavingConfig(false);
+        return;
+      }
+      if (startDate && registrationEndDate && new Date(startDate) < new Date(registrationEndDate)) {
+        toast.error('Ngày khai mạc phải sau hạn chốt đăng ký');
+        setIsSavingConfig(false);
+        return;
+      }
+
+      await tournamentsApi.updateTournament(id, {
+        visibility,
+        registrationStartDate: registrationStartDate ? new Date(registrationStartDate).toISOString() : null,
+        registrationEndDate: registrationEndDate ? new Date(registrationEndDate).toISOString() : null,
+      });
+      toast.success('Lưu thông tin đăng ký thành công!');
+      await fetchTournamentData();
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setIsSavingConfig(false);
+    }
+  };
+
+  const handleParticipantModeration = async (
+    participantId: string,
+    status: 'COMPLETE' | 'REJECTED',
+    successMessage: string,
+  ) => {
+    setActiveParticipantActionId(participantId);
+    try {
+      await tournamentsApi.updateParticipantStatus(id, participantId, status);
+      toast.success(successMessage);
+      await refetchDivisionData();
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setActiveParticipantActionId(null);
+    }
+  };
+
+  const handleApproveParticipant = async (participantId: string) => {
+    await handleParticipantModeration(participantId, 'COMPLETE', 'Đã duyệt đăng ký thành công!');
+  };
+
+  const handleRejectParticipant = async (participantId: string) => {
+    await handleParticipantModeration(participantId, 'REJECTED', 'Đã từ chối đăng ký thành công!');
+  };
+
   const handleSaveMatchConfig = async () => {
     if (!tournament || !selectedDivisionId) { toast.error('Vui lòng chọn hình thức'); return; }
     setIsSavingConfig(true);
@@ -284,18 +368,42 @@ export function useManageState(id: string) {
         MALE_DOUBLES:{mt:MatchTypeDB.DOUBLES,gr:GenderRestriction.MALE}, FEMALE_DOUBLES:{mt:MatchTypeDB.DOUBLES,gr:GenderRestriction.FEMALE},
         MIXED_DOUBLES:{mt:MatchTypeDB.MIXED_DOUBLES,gr:GenderRestriction.MIXED},
       };
-      const mapped = pm[matchType] || {mt:MatchTypeDB.DOUBLES, gr:null};
+      const normalizedMatchType = normalizeMatchFormatForCategory(matchType as MatchFormatOptionValue, selectedCategory);
+      const mapped = pm[normalizedMatchType] || {mt:MatchTypeDB.DOUBLES, gr:null};
       const selected = divisions.find(d=>d.id===selectedDivisionId);
+      const normalizedKind = normalizeSportRuleKindForCategory(sportRuleKind, selectedCategory);
+      const nextRoundConfig = buildStageRoundConfigPayload({
+        kind: normalizedKind,
+        setsToWin,
+        pointsPerSet,
+        winByTwo,
+        maxPoints: winByTwo ? maxDeucePoints : null,
+        tiebreakPoints: superTiebreakEnabled ? superTiebreakPoints : null,
+        tiebreakerMode,
+        roundsToPlay,
+        rounds: selected?.roundConfig?.rounds || {},
+      });
+      const nextSportRules = buildSportRulesPayload({
+        kind: normalizedKind,
+        setsToWin,
+        pointsPerSet,
+        winByTwo,
+        maxPoints: winByTwo ? maxDeucePoints : null,
+        tiebreakPoints: superTiebreakEnabled ? superTiebreakPoints : null,
+        tiebreakerMode,
+        roundsToPlay,
+      });
       await divisionsApi.updateDivisionConfig(tournament.id, selectedDivisionId, {
         matchType: mapped.mt, genderRestriction: mapped.gr,
         maxParticipants: isLimitEnabled ? maxParticipants : null, isConfigOverride: true,
-        roundConfig: { setsToWin, pointsPerSet, winByTwo, maxDeucePoints: winByTwo ? maxDeucePoints : null,
-          superTiebreakEnabled, superTiebreakSetIndex: superTiebreakEnabled ? superTiebreakSetIndex : null,
-          superTiebreakPoints: superTiebreakEnabled ? superTiebreakPoints : null,
-          tiebreakerMode, roundsToPlay, rounds: selected?.roundConfig?.rounds || {} },
+        roundConfig: nextRoundConfig,
       });
       toast.success('Lưu cấu hình thi đấu thành công!');
       await fetchDivisions(tournament.id);
+      setTournament((current) => current ? {
+        ...current,
+        sportRules: nextSportRules,
+      } : current);
     } catch (err) { toast.error(getErrorMessage(err)); }
     finally { setIsSavingConfig(false); }
   };
@@ -325,14 +433,20 @@ export function useManageState(id: string) {
         MALE_DOUBLES:{mt:MatchTypeDB.DOUBLES,gr:GenderRestriction.MALE}, FEMALE_DOUBLES:{mt:MatchTypeDB.DOUBLES,gr:GenderRestriction.FEMALE},
         MIXED_DOUBLES:{mt:MatchTypeDB.MIXED_DOUBLES,gr:GenderRestriction.MIXED},
       };
-      const mapped = pm[newDivisionMatchType] || {mt:MatchTypeDB.DOUBLES, gr:null};
+      const normalizedMatchType = normalizeMatchFormatForCategory(
+        newDivisionMatchType as MatchFormatOptionValue,
+        selectedCategory,
+      );
+      const mapped = pm[normalizedMatchType] || {mt:MatchTypeDB.DOUBLES, gr:null};
       if (divisions.some(d=>d.matchType===mapped.mt && d.genderRestriction===mapped.gr)) {
         toast.error('Hình thức này đã tồn tại!'); setIsCreatingDivision(false); return;
       }
       const generatedName = getFormatLabel(mapped.mt, mapped.gr);
       const res = await divisionsApi.createDivision(tournament.id, { name: generatedName, matchType: mapped.mt, genderRestriction: mapped.gr, bracketType: newDivisionBracketType as Division['bracketType'], isConfigOverride: true });
       toast.success(`Đã thêm "${generatedName}" thành công!`);
-      setIsCreateDivisionModalOpen(false); setNewDivisionMatchType('MALE_DOUBLES'); setNewDivisionBracketType('SINGLE_ELIMINATION');
+      setIsCreateDivisionModalOpen(false);
+      setNewDivisionMatchType(normalizeMatchFormatForCategory('MALE_DOUBLES', selectedCategory));
+      setNewDivisionBracketType('SINGLE_ELIMINATION');
       await fetchDivisions(tournament.id);
       if (res.data) setSelectedDivisionId(res.data.id);
     } catch (err) { toast.error(getErrorMessage(err)); }
@@ -465,26 +579,28 @@ export function useManageState(id: string) {
     finally { setIsAssigningWildcard(false); }
   };
 
-  const handleUpdateStatus = async (participantId: string, status: 'COMPLETE'|'PENDING'|'WITHDRAWN') => {
-    try { await tournamentsApi.updateParticipantStatus(id, participantId, status); toast.success('Đã cập nhật trạng thái!'); await refetchDivisionData(); }
-    catch (err) { toast.error(getErrorMessage(err)); }
-  };
-
   const handleOpenRoundModal = (stage: BracketStage, roundNumber: number) => {
     setSelectedStage(stage); setSelectedRoundNumber(roundNumber);
-    const rc = (stage.roundConfig?.rounds as Record<string,Record<string,unknown>>|undefined)?.[roundNumber.toString()];
-    if (rc) {
-      setStageMaxSets(rc.sets_to_win === 1 ? 1 : rc.sets_to_win === 2 ? 3 : 5);
-      setStagePointsPerSet((rc.points_per_set as number) || 21);
-      setStageWinBy2Points(rc.deuce_enabled !== undefined ? rc.deuce_enabled as boolean : true);
-      setStageMaxDeucePoints((rc.max_points as number) || 30);
-      setStageSuperTiebreakEnabled(rc.tiebreak_at !== undefined);
-      setStageSuperTiebreakPoints((rc.tiebreak_at as number) || 10);
-    } else {
-      setStageMaxSets(setsToWin === 1 ? 1 : setsToWin === 2 ? 3 : 5);
-      setStagePointsPerSet(pointsPerSet); setStageWinBy2Points(winByTwo); setStageMaxDeucePoints(30);
-      setStageSuperTiebreakEnabled(false); setStageSuperTiebreakPoints(10);
-    }
+    const rc = stage.roundConfig?.rounds?.[roundNumber.toString()];
+    setStageVenueId(rc?.venue_id || stage.venueId || '');
+    setStageScheduledDate(rc?.scheduled_date ? rc.scheduled_date.substring(0, 16) : (stage.scheduledDate ? stage.scheduledDate.substring(0, 16) : ''));
+    setStageNotificationNote(rc?.custom_notes || '');
+    const resolvedRules = rc
+      ? resolveSportRuleView(rc, sportRuleKind)
+      : resolveSportRuleView({
+          kind: sportRuleKind,
+          setsToWin,
+          pointsPerSet,
+          winByTwo,
+          maxPoints: maxDeucePoints,
+          tiebreakPoints: superTiebreakEnabled ? superTiebreakPoints : undefined,
+        });
+    setStageMaxSets(resolvedRules.bestOf);
+    setStagePointsPerSet(resolvedRules.pointsPerSet);
+    setStageWinBy2Points(resolvedRules.winByTwo);
+    setStageMaxDeucePoints(resolvedRules.maxPoints);
+    setStageSuperTiebreakEnabled(resolvedRules.hasCustomTiebreakTarget);
+    setStageSuperTiebreakPoints(resolvedRules.tiebreakPoints);
   };
 
   const handleSaveStageDetails = async () => {
@@ -492,8 +608,36 @@ export function useManageState(id: string) {
     setIsSavingStage(true);
     try {
       const currentRounds = (selectedStage.roundConfig?.rounds || {}) as Record<string,unknown>;
+      const normalizedKind = normalizeSportRuleKindForCategory(sportRuleKind, selectedCategory);
       await tournamentsApi.updateStage(selectedStage.id, {
-        roundConfig: { ...selectedStage.roundConfig, rounds: { ...currentRounds, [selectedRoundNumber.toString()]: { sets_to_win: stageMaxSets === 1 ? 1 : stageMaxSets === 3 ? 2 : 3, points_per_set: stagePointsPerSet, deuce_enabled: stageWinBy2Points, max_points: stageWinBy2Points ? stageMaxDeucePoints : null, tiebreak_at: stageSuperTiebreakEnabled ? stageSuperTiebreakPoints : undefined } } }
+        roundConfig: {
+          ...buildStageRoundConfigPayload({
+            kind: normalizedKind,
+            setsToWin,
+            pointsPerSet,
+            winByTwo,
+            maxPoints: winByTwo ? maxDeucePoints : null,
+            tiebreakPoints: superTiebreakEnabled ? superTiebreakPoints : null,
+            tiebreakerMode,
+            roundsToPlay,
+          }),
+          ...selectedStage.roundConfig,
+          kind: normalizedKind,
+          rounds: {
+            ...currentRounds,
+            [selectedRoundNumber.toString()]: buildStageRoundRulePayload({
+              kind: normalizedKind,
+              setsToWin: stageMaxSets === 1 ? 1 : stageMaxSets === 3 ? 2 : 3,
+              pointsPerSet: stagePointsPerSet,
+              winByTwo: stageWinBy2Points,
+              maxPoints: stageWinBy2Points ? stageMaxDeucePoints : null,
+              tiebreakPoints: stageSuperTiebreakEnabled ? stageSuperTiebreakPoints : null,
+              venueId: stageVenueId || null,
+              scheduledDate: stageScheduledDate ? new Date(stageScheduledDate).toISOString() : null,
+              customNotes: stageNotificationNote.trim() || null,
+            }),
+          },
+        },
       });
       toast.success('Cập nhật cấu hình vòng đấu thành công!');
       setSelectedStage(null); setSelectedRoundNumber(null); await refetchDivisionData();
@@ -505,17 +649,44 @@ export function useManageState(id: string) {
     setSelectedMatch(match); setMatchCourtName(match.courtName||''); setMatchCourtAddress(match.courtAddress||'');
     setMatchScheduledAt(match.scheduledAt ? match.scheduledAt.substring(0,16) : '');
     if (match.matchConfig && Object.keys(match.matchConfig).length > 0) {
+      const resolvedRules = resolveSportRuleView(match.matchConfig, sportRuleKind);
       setIsCustomMatchConfig(true);
-      setMatchSetsToWin(match.matchConfig.setsToWin||2); setMatchPointsPerSet(match.matchConfig.pointsPerSet||21);
-      setMatchDeuceEnabled(match.matchConfig.deuceEnabled !== false); setMatchMaxPoints(match.matchConfig.maxPoints||30);
-      setMatchSuperTiebreakEnabled(match.matchConfig.tiebreakAt != null && match.matchConfig.pointsPerSet != null && match.matchConfig.tiebreakAt < match.matchConfig.pointsPerSet);
-      setMatchSuperTiebreakPoints(match.matchConfig.tiebreakAt||10);
+      setMatchSetsToWin(resolvedRules.setsToWin);
+      setMatchPointsPerSet(resolvedRules.pointsPerSet);
+      setMatchDeuceEnabled(resolvedRules.winByTwo);
+      setMatchMaxPoints(resolvedRules.maxPoints);
+      setMatchSuperTiebreakEnabled(resolvedRules.hasCustomTiebreakTarget);
+      setMatchSuperTiebreakPoints(resolvedRules.tiebreakPoints);
     } else {
       setIsCustomMatchConfig(false);
       const stage = bracket?.stages.find(s => s.groups.some(g => g.id === match.groupId));
-      const rc = (stage?.roundConfig?.rounds as Record<string,Record<string,unknown>>|undefined)?.[match.roundNumber?.toString()];
-      if (rc) { setMatchSetsToWin(rc.sets_to_win === 1 ? 1 : rc.sets_to_win === 2 ? 2 : 3); setMatchPointsPerSet((rc.points_per_set as number)||21); setMatchDeuceEnabled(rc.deuce_enabled !== false); setMatchMaxPoints((rc.max_points as number)||30); }
-      else { setMatchSetsToWin(setsToWin); setMatchPointsPerSet(pointsPerSet); setMatchDeuceEnabled(winByTwo); setMatchMaxPoints(30); }
+      const rc = stage?.roundConfig?.rounds?.[match.roundNumber?.toString()];
+      if (!match.courtName && rc?.venue_id) {
+        const roundVenue = venues.find((venue) => venue.id === rc.venue_id);
+        if (roundVenue) {
+          setMatchCourtName(roundVenue.name);
+          setMatchCourtAddress(roundVenue.locationAddress || '');
+        }
+      }
+      if (!match.scheduledAt && rc?.scheduled_date) {
+        setMatchScheduledAt(rc.scheduled_date.substring(0, 16));
+      }
+      const resolvedRules = rc
+        ? resolveSportRuleView(rc, sportRuleKind)
+        : resolveSportRuleView({
+            kind: sportRuleKind,
+            setsToWin,
+            pointsPerSet,
+            winByTwo,
+            maxPoints: maxDeucePoints,
+            tiebreakPoints: superTiebreakEnabled ? superTiebreakPoints : undefined,
+          });
+      setMatchSetsToWin(resolvedRules.setsToWin);
+      setMatchPointsPerSet(resolvedRules.pointsPerSet);
+      setMatchDeuceEnabled(resolvedRules.winByTwo);
+      setMatchMaxPoints(resolvedRules.maxPoints);
+      setMatchSuperTiebreakEnabled(resolvedRules.hasCustomTiebreakTarget);
+      setMatchSuperTiebreakPoints(resolvedRules.tiebreakPoints);
     }
   };
 
@@ -526,7 +697,7 @@ export function useManageState(id: string) {
       await tournamentsApi.updateMatchSchedule(selectedMatch.id, {
         courtName: matchCourtName || null, courtAddress: matchCourtAddress || null,
         scheduledAt: matchScheduledAt ? new Date(matchScheduledAt).toISOString() : null,
-        matchConfig: isCustomMatchConfig ? { setsToWin: matchSetsToWin, pointsPerSet: matchPointsPerSet, deuceEnabled: matchDeuceEnabled, tiebreakAt: matchSuperTiebreakEnabled ? matchSuperTiebreakPoints : matchPointsPerSet-1, maxPoints: matchDeuceEnabled ? matchMaxPoints : null } : null,
+        matchConfig: isCustomMatchConfig ? { kind: sportRuleKind, setsToWin: matchSetsToWin, pointsPerSet: matchPointsPerSet, deuceEnabled: matchDeuceEnabled, tiebreakAt: matchSuperTiebreakEnabled ? matchSuperTiebreakPoints : matchPointsPerSet-1, tiebreakPoints: matchSuperTiebreakEnabled ? matchSuperTiebreakPoints : undefined, maxPoints: matchDeuceEnabled ? matchMaxPoints : null } : null,
       });
       toast.success('Cập nhật lịch thi đấu thành công!');
       setSelectedMatch(null); await fetchTournamentData();
@@ -551,14 +722,14 @@ export function useManageState(id: string) {
         else if (t.matchType === MatchTypeDB.DOUBLES) ui = t.genderRestriction === GenderRestriction.FEMALE ? MatchTypeUI.FEMALE_DOUBLES : MatchTypeUI.MALE_DOUBLES;
         else if (t.matchType === MatchTypeDB.MIXED_DOUBLES || t.matchType === 'MIXED') ui = MatchTypeUI.MIXED_DOUBLES;
         setMatchType(ui);
-        const rules = t.sportRules || {} as Record<string,unknown>;
-        setSetsToWin(rules.setsToWin as number||2); setPointsPerSet(rules.pointsPerSet as number||21); setWinByTwo(rules.winByTwo !== undefined ? rules.winByTwo as boolean : true);
+        const resolvedRules = resolveSportRuleView(t.sportRules);
+        applyResolvedRuleState(resolvedRules);
         if (t.parentId) await fetchDivisions(t.parentId); else await fetchDivisions(id);
         if (t.venueId) await fetchVenueCourts(t.venueId);
       }
       return tRes.data;
     } catch { toast.error('Không thể tải thông tin giải đấu'); return null; }
-  }, [id]);
+  }, [applyResolvedRuleState, fetchDivisions, id]);
 
   // ── Init ──
   useEffect(() => {
@@ -577,28 +748,115 @@ export function useManageState(id: string) {
       }
       setIsLoading(false);
     };
-    init();
-  }, []);
-
-  useEffect(() => { if (selectedDivisionId) refetchDivisionData(); }, [selectedDivisionId]);
-  useEffect(() => { fetchDivisions(id); }, [id]);
+    void Promise.resolve().then(() => {
+      void init();
+    });
+  }, [fetchDivisions, fetchTournamentData]);
 
   useEffect(() => {
-    if (provinceCode) regionsApi.getDistricts(provinceCode).then(setDistricts).catch(()=>{});
-    else { setDistricts([]); setWards([]); }
+    if (!tournament || !categoryId || categories.length === 0) {
+      return;
+    }
+
+    const selectedCategory = categories.find((category) => category.id === categoryId);
+    const fallbackKind = inferSportRuleKindFromCategory(selectedCategory);
+    const resolvedRules = resolveSportRuleView(tournament.sportRules, fallbackKind);
+
+    void Promise.resolve().then(() => {
+      const normalizedKind = normalizeSportRuleKindForCategory(resolvedRules.kind, selectedCategory);
+      const effectiveRules = normalizedKind === resolvedRules.kind
+        ? resolvedRules
+        : resolveSportRuleView(buildDefaultSportRules(normalizedKind), normalizedKind);
+
+      applyResolvedRuleState(effectiveRules);
+      if (normalizedKind !== resolvedRules.kind) {
+        setTournament((current) => current ? {
+          ...current,
+          sportRules: buildSportRulesPayload({
+            kind: normalizedKind,
+            setsToWin: effectiveRules.setsToWin,
+            pointsPerSet: effectiveRules.pointsPerSet,
+            winByTwo: effectiveRules.winByTwo,
+            maxPoints: effectiveRules.maxPoints,
+            tiebreakPoints: effectiveRules.hasCustomTiebreakTarget ? effectiveRules.tiebreakPoints : null,
+            tiebreakerMode: effectiveRules.tiebreakerMode,
+            roundsToPlay: effectiveRules.roundsToPlay,
+          }),
+        } : current);
+      }
+      const normalizedMatchType = normalizeMatchFormatForCategory(
+        matchType as 'MALE_SINGLES' | 'FEMALE_SINGLES' | 'MALE_DOUBLES' | 'FEMALE_DOUBLES' | 'MIXED_DOUBLES',
+        selectedCategory,
+      );
+      if (normalizedMatchType !== matchType) {
+        setMatchType(normalizedMatchType);
+      }
+
+      const normalizedNewDivisionMatchType = normalizeMatchFormatForCategory(
+        newDivisionMatchType as 'MALE_SINGLES' | 'FEMALE_SINGLES' | 'MALE_DOUBLES' | 'FEMALE_DOUBLES' | 'MIXED_DOUBLES',
+        selectedCategory,
+      );
+      if (normalizedNewDivisionMatchType !== newDivisionMatchType) {
+        setNewDivisionMatchType(normalizedNewDivisionMatchType);
+      }
+    });
+  }, [applyResolvedRuleState, categories, categoryId, matchType, newDivisionMatchType, tournament]);
+
+  useEffect(() => {
+    if (!selectedDivisionId) {
+      return;
+    }
+
+    void Promise.resolve().then(() => {
+      void refetchDivisionData();
+    });
+  }, [refetchDivisionData, selectedDivisionId]);
+
+  useEffect(() => {
+    void Promise.resolve().then(() => {
+      void fetchDivisions(id);
+    });
+  }, [fetchDivisions, id]);
+
+  useEffect(() => {
+    if (provinceCode) {
+      void regionsApi.getDistricts(provinceCode).then(setDistricts).catch(() => {});
+      return;
+    }
+
+    void Promise.resolve().then(() => {
+      setDistricts([]);
+      setWards([]);
+    });
   }, [provinceCode]);
+
   useEffect(() => {
-    if (districtCode) regionsApi.getWards(districtCode).then(setWards).catch(()=>{});
-    else setWards([]);
+    if (districtCode) {
+      void regionsApi.getWards(districtCode).then(setWards).catch(() => {});
+      return;
+    }
+
+    void Promise.resolve().then(() => {
+      setWards([]);
+    });
   }, [districtCode]);
 
   useEffect(() => {
     const tab = searchParams.get('tab');
-    if (['basic','schedule','registration','operations','bracket','finance','permissions'].includes(tab||'')) setActiveTab(tab as typeof activeTab);
-  }, []);
+    if (tab === 'operations') {
+      router.replace(`/organizer/tournaments/${id}/ops`);
+      return;
+    }
 
-  const inviteLink = tournament?.visibility === 'PRIVATE'
-    ? `${window.location.origin}/tournaments/${id}/register?invite=${tournament.inviteCode}`
+    if (['basic','schedule','registration','bracket','finance','permissions'].includes(tab || '')) {
+      void Promise.resolve().then(() => {
+        setActiveTab(tab as typeof activeTab);
+      });
+    }
+  }, [id, router, searchParams]);
+
+  const inviteLink = visibility === 'PRIVATE'
+    ? `${window.location.origin}/tournaments/${id}/register?invite=${tournament?.inviteCode ?? ''}`
     : `${window.location.origin}/tournaments/join/${tournament?.inviteCode}`;
 
   return {
@@ -618,11 +876,12 @@ export function useManageState(id: string) {
     provinceCode, setProvinceCode, districtCode, setDistrictCode, wardCode, setWardCode,
     startDate, setStartDate, endDate, setEndDate, registrationStartDate, setRegistrationStartDate, registrationEndDate, setRegistrationEndDate,
     entryFee, setEntryFee, platformFeePerPlayer, setPlatformFeePerPlayer,
-    maxParticipants, setMaxParticipants, isLimitEnabled, setIsLimitEnabled,
+    maxParticipants, setMaxParticipants, isLimitEnabled, setIsLimitEnabled, sportRuleKind, setSportRuleKind,
     matchType, setMatchType, setsToWin, setSetsToWin, pointsPerSet, setPointsPerSet, winByTwo, setWinByTwo,
     maxDeucePoints, setMaxDeucePoints, superTiebreakEnabled, setSuperTiebreakEnabled,
     superTiebreakSetIndex, setSuperTiebreakSetIndex, superTiebreakPoints, setSuperTiebreakPoints,
     isSavingConfig, setIsSavingConfig, tiebreakerMode, setTiebreakerMode, roundsToPlay, setRoundsToPlay,
+    availableMatchFormatOptions,
     selectedStage, setSelectedStage, selectedRoundNumber, setSelectedRoundNumber,
     stageVenueId, setStageVenueId, stageScheduledDate, setStageScheduledDate, stageNotificationNote, setStageNotificationNote,
     isSavingStage, setIsSavingStage, stageMaxSets, setStageMaxSets, stagePointsPerSet, setStagePointsPerSet,
@@ -630,6 +889,7 @@ export function useManageState(id: string) {
     stageSuperTiebreakEnabled, setStageSuperTiebreakEnabled, stageSuperTiebreakSetIndex, setStageSuperTiebreakSetIndex,
     stageSuperTiebreakPoints, setStageSuperTiebreakPoints,
     isLockModalOpen, setIsLockModalOpen, isLocking, setIsLocking, lockSummary, setLockSummary,
+    selectedCategory,
     selectedMatch, setSelectedMatch, matchCourtId, setMatchCourtId, matchCourtName, setMatchCourtName,
     matchCourtAddress, setMatchCourtAddress, matchScheduledAt, setMatchScheduledAt,
     isCustomMatchConfig, setIsCustomMatchConfig,
@@ -641,16 +901,17 @@ export function useManageState(id: string) {
     newGalleryUrl, setNewGalleryUrl, isAddingImage, setIsAddingImage,
     mockNamesText, setMockNamesText, isSeedingMock, setIsSeedingMock, isClearingMock, setIsClearingMock,
     wildcardEmailOrPhone, setWildcardEmailOrPhone, wildcardTeamName, setWildcardTeamName,
+    activeParticipantActionId, setActiveParticipantActionId,
     isGeneratingBracket, setIsGeneratingBracket, isAssigningWildcard, setIsAssigningWildcard,
     // actions
     fetchTournamentData, fetchDivisions, fetchReferees, refetchDivisionData, applyDivisionFormValues, fetchVenueCourts,
-    handleSaveBasicInfo, handleSaveScheduleDetails, handleSaveMatchConfig, handleSaveFinanceConfig,
+    handleSaveBasicInfo, handleSaveScheduleDetails, handleSaveRegistrationSettings, handleSaveMatchConfig, handleSaveFinanceConfig,
     handleAddReferee, handleCreateDivision, requestDeleteDivision, handleConfirmDeleteDivision,
     handleGenerateBracket, handleRequestPayout, handleRegenerateInviteCode,
     handlePublish, handlePayPublishFee, handleDeleteTournament, handlePayPlatformFee,
     handleTournamentStepTransition, handleOpenLockModal, handleConfirmLock,
-    handleSeedMockData, handleClearMockData, handleAssignWildcard,
-    handleUpdateStatus, handleOpenRoundModal, handleSaveStageDetails,
+    handleSeedMockData, handleClearMockData, handleAssignWildcard, handleApproveParticipant, handleRejectParticipant,
+    handleOpenRoundModal, handleSaveStageDetails,
     handleOpenScheduling, handleSaveSchedule,
     // helpers
     getFormatLabel, getBracketLabel, getStatusLabel, publishFeeAmount, inviteLink,

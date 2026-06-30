@@ -5,6 +5,8 @@ import { Settings } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Tournament, BracketStage } from '@/types/tournament';
+import { getSportRuleKind } from '@/features/tournaments/sport-rules/normalize';
+import { getSportRulePresentation } from '@/features/tournaments/sport-rules/presentation';
 
 interface ConfigTabProps {
   tournament: Tournament;
@@ -46,6 +48,10 @@ export function ConfigTab({
   handleUpdateStageRoundConfig
 }: ConfigTabProps) {
   const isRegistrationOpen = tournament.status === 'REGISTRATION_OPEN' || tournament.status === 'REGISTRATION_CLOSED';
+  const sportRuleKind = getSportRuleKind(tournament.sportRules);
+  const presentation = getSportRulePresentation(sportRuleKind);
+  const setUnitLabel = presentation.setUnitLabel;
+  const winByTwoLabel = presentation.winByTwoLabel;
   return (
     <div className="bg-white rounded-2xl border border-slate-200 p-6 md:p-8 shadow-sm space-y-6 animate-in fade-in duration-200">
       <h2 className="text-xl font-bold text-slate-900 border-b pb-2 mb-4">Cấu hình luật chơi</h2>
@@ -100,6 +106,9 @@ export function ConfigTab({
       {/* Sport Rules Card */}
       <div className="bg-slate-50 rounded-xl border p-5 space-y-4">
         <h4 className="font-bold text-slate-800 border-b pb-2">Luật tính điểm mặc định</h4>
+        <p className="text-xs font-semibold text-slate-500">
+          {presentation.sportLabel}: {presentation.scoringLabel}. {presentation.presetSummary}
+        </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-semibold text-slate-700">Số Set chạm thắng</label>
@@ -108,16 +117,17 @@ export function ConfigTab({
               onChange={(e) => setSetsToWin(Number(e.target.value))}
               className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
             >
-              <option value={1}>1 Set</option>
-              <option value={2}>2 Set (Best of 3)</option>
-              <option value={3}>3 Set (Best of 5)</option>
+              {presentation.setOptions.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
             </select>
           </div>
           <Input
-            label="Điểm mỗi Set"
+            label={setUnitLabel}
             type="number"
             value={pointsPerSet}
             onChange={(e) => setPointsPerSet(Number(e.target.value))}
+            placeholder={presentation.maxScorePlaceholder}
           />
         </div>
         <div className="flex items-center gap-2">
@@ -129,7 +139,7 @@ export function ConfigTab({
             className="w-4 h-4 text-blue-600 rounded"
           />
           <label htmlFor="winByTwo_tab" className="text-sm font-semibold text-slate-700 cursor-pointer">
-            Yêu cầu cách biệt 2 điểm (Deuce)
+            {winByTwoLabel}
           </label>
         </div>
       </div>

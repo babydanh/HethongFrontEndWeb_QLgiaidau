@@ -2,9 +2,16 @@
 
 import { useState, use, useEffect } from 'react';
 import { matchesApi, Match, MatchComment } from '@/features/matches/api';
+import {
+  buildAutoWinnerScore,
+  extractMatchScores,
+  getMatchScorePresentation,
+  resolveMatchSportRules,
+} from '@/features/matches/score-display';
 import { useLiveMatch } from '@/hooks/useLiveMatch';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { socketClient } from '@/lib/socket';
+import type { PickleballSideOutState } from '@/types/match';
 import { getErrorMessage } from '@/utils/error';
 import { trimAndNormalizeSpaces } from '@/utils/string';
 import { Trophy, Clock, MapPin, Activity, Plus, Minus, Check, Play, AlertCircle, Camera, MessageSquare, Send, Eye } from 'lucide-react';
@@ -13,6 +20,28 @@ import toast from 'react-hot-toast';
 
 interface Props {
   params: Promise<{ matchId: string }>;
+}
+
+function readSideOutState(match: Match): PickleballSideOutState {
+  const rawState = match.scoreDetails?.sideOutState;
+  if (!rawState) {
+    return {
+      servingTeam: null,
+      serverNumber: 1,
+      openingSequenceDone: false,
+    };
+  }
+
+  const servingTeam = rawState.servingTeam === 1 || rawState.servingTeam === 2
+    ? rawState.servingTeam
+    : null;
+  const serverNumber = rawState.serverNumber === 2 ? 2 : 1;
+
+  return {
+    servingTeam,
+    serverNumber,
+    openingSequenceDone: rawState.openingSequenceDone === true,
+  };
 }
 
 export default function LiveMatchPage({ params }: Props) {
@@ -112,6 +141,16 @@ export default function LiveMatchPage({ params }: Props) {
   const activeSetIdx = currentSetIdx !== -1 ? currentSetIdx : scores.length - 1;
   const currentSet = scores[activeSetIdx] || { team1Score: 0, team2Score: 0, isFinished: false };
   const normalizedCommentText = trimAndNormalizeSpaces(commentText);
+  const resolvedRules = resolveMatchSportRules(match);
+  const scorePresentation = getMatchScorePresentation(resolvedRules.kind);
+  const sequenceLabelTitle = scorePresentation.sequenceLabel.charAt(0).toUpperCase() + scorePresentation.sequenceLabel.slice(1);
+  const sideOutState = readSideOutState(match);
+  const isPickleballSideOut = resolvedRules.kind === 'PICKLEBALL_SIDE_OUT';
+  const servingTeamName = sideOutState.servingTeam === 1
+    ? team1Name
+    : sideOutState.servingTeam === 2
+      ? team2Name
+      : 'Chưa xác định đội giao';
 
   const ensureCanControlLiveMatch = () => {
     if (canControlLiveMatch) {
@@ -122,9 +161,28 @@ export default function LiveMatchPage({ params }: Props) {
     return false;
   };
 
+  const buildScoreDetailsPayload = (
+    nextScores: typeof scores,
+    nextSideOutState: PickleballSideOutState = sideOutState,
+  ) => {
+    const payload: Record<string, unknown> = {
+      sets: nextScores,
+    };
+
+    if (isPickleballSideOut) {
+      payload.sideOutState = nextSideOutState;
+    }
+
+    return payload;
+  };
+
   // Handle Score Updates
   const handleUpdatePoints = async (team: 1 | 2, action: 'inc' | 'dec') => {
     if (!ensureCanControlLiveMatch()) {
+      return;
+    }
+    if (isPickleballSideOut && action === 'inc' && sideOutState.servingTeam !== team) {
+      toast.error('Trong mode side-out, chỉ đội đang giao bóng mới được cộng điểm.');
       return;
     }
     if (isSubmitting) return;
@@ -156,14 +214,14 @@ export default function LiveMatchPage({ params }: Props) {
       const res = await matchesApi.updateScore(matchId, {
         p1SetsWon: match.p1SetsWon,
         p2SetsWon: match.p2SetsWon,
-        scoreDetails: { sets: newScores },
+        scoreDetails: buildScoreDetailsPayload(newScores),
         winnerId: match.winnerId,
       });
 
       setMatch(res);
-      setScores(res.scoreDetails?.sets || []);
+      setScores(extractMatchScores(res.scoreDetails));
       toast.success(
-        `${team === 1 ? team1Name : team2Name} ${action === 'inc' ? 'được cộng' : 'bị trừ'} 1 điểm ở Set ${activeIdx + 1}.`,
+        `${team === 1 ? team1Name : team2Name} ${action === 'inc' ? 'được cộng' : 'bị trừ'} 1 ${scorePresentation.scoreUnit} ở ${scorePresentation.sequenceLabel} ${activeIdx + 1}.`,
         { id: `score-${matchId}` },
       );
     } catch (err: unknown) {
@@ -190,7 +248,7 @@ export default function LiveMatchPage({ params }: Props) {
         scoreUpdatePayload = {
           p1SetsWon: 0,
           p2SetsWon: 0,
-          scoreDetails: { sets: initialScores },
+          scoreDetails: buildScoreDetailsPayload(initialScores),
         };
         setScores(initialScores);
       }
@@ -244,21 +302,19 @@ export default function LiveMatchPage({ params }: Props) {
         p2Sets += 1;
       }
 
-      // Add a new set if not at max sets yet (e.g. Best of 3 means max 3 sets)
-      const maxSetsNeeded = 2; // e.g. first to 2 sets
-      if (p1Sets < maxSetsNeeded && p2Sets < maxSetsNeeded) {
+      if (p1Sets < resolvedRules.setsToWin && p2Sets < resolvedRules.setsToWin) {
         newScores.push({ team1Score: 0, team2Score: 0, isFinished: false });
       }
 
       const res = await matchesApi.updateScore(matchId, {
         p1SetsWon: p1Sets,
         p2SetsWon: p2Sets,
-        scoreDetails: { sets: newScores },
+        scoreDetails: buildScoreDetailsPayload(newScores),
         winnerId: match.winnerId,
       });
 
       setMatch(res);
-      setScores(res.scoreDetails?.sets || []);
+      setScores(extractMatchScores(res.scoreDetails));
       const setWinnerName =
         setObj.team1Score > setObj.team2Score
           ? team1Name
@@ -266,7 +322,7 @@ export default function LiveMatchPage({ params }: Props) {
             ? team2Name
             : 'Không có đội';
       toast.success(
-        `Đã chốt Set ${activeIdx + 1}: ${team1Name} ${setObj.team1Score} - ${setObj.team2Score} ${team2Name}. ${setWinnerName !== 'Không có đội' ? `Đội dẫn set: ${setWinnerName}.` : ''}`,
+        `Đã chốt ${scorePresentation.sequenceLabel} ${activeIdx + 1}: ${team1Name} ${setObj.team1Score} - ${setObj.team2Score} ${team2Name}. ${setWinnerName !== 'Không có đội' ? `${setWinnerName} thắng ${scorePresentation.sequenceLabel} này.` : ''}`,
       );
     } catch (err: unknown) {
       console.error(err);
@@ -301,14 +357,11 @@ export default function LiveMatchPage({ params }: Props) {
 
       const activeIdx = scores.findIndex((s) => !s.isFinished);
       if (activeIdx !== -1) {
-        const lastSet = scores[activeIdx];
+        const lastSet = buildAutoWinnerScore(scores[activeIdx], winnerTeam, match);
+        newScores[activeIdx] = lastSet;
         if (winnerTeam === 1) {
-          const t1Score = Math.max(lastSet.team1Score, lastSet.team2Score + 2);
-          newScores[activeIdx] = { ...lastSet, team1Score: t1Score, isFinished: true };
           p1Sets += 1;
         } else {
-          const t2Score = Math.max(lastSet.team2Score, lastSet.team1Score + 2);
-          newScores[activeIdx] = { ...lastSet, team2Score: t2Score, isFinished: true };
           p2Sets += 1;
         }
       }
@@ -317,7 +370,7 @@ export default function LiveMatchPage({ params }: Props) {
       await matchesApi.updateScore(matchId, {
         p1SetsWon: p1Sets,
         p2SetsWon: p2Sets,
-        scoreDetails: { sets: newScores },
+        scoreDetails: buildScoreDetailsPayload(newScores),
         winnerId,
       });
 
@@ -325,13 +378,88 @@ export default function LiveMatchPage({ params }: Props) {
       const resStatus = await matchesApi.updateStatus(matchId, { status: 'COMPLETED' });
 
       setMatch(resStatus);
-      setScores(resStatus.scoreDetails?.sets || []);
+      setScores(extractMatchScores(resStatus.scoreDetails));
       toast.success(
         `Đã hoàn tất trận đấu. Đội thắng: ${winnerTeam === 1 ? team1Name : team2Name}.`,
       );
     } catch (err: unknown) {
       console.error(err);
       toast.error(getErrorMessage(err, 'Không thể hoàn tất trận đấu.'));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSetServingTeam = async (team: 1 | 2) => {
+    if (!ensureCanControlLiveMatch() || !isPickleballSideOut || isSubmitting) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const nextState: PickleballSideOutState = {
+        servingTeam: team,
+        serverNumber: 1,
+        openingSequenceDone: true,
+      };
+      const res = await matchesApi.updateScore(matchId, {
+        p1SetsWon: match.p1SetsWon,
+        p2SetsWon: match.p2SetsWon,
+        scoreDetails: buildScoreDetailsPayload(scores, nextState),
+        winnerId: match.winnerId,
+      });
+      setMatch(res);
+      toast.success(`Đã chuyển quyền giao bóng cho ${team === 1 ? team1Name : team2Name}.`);
+    } catch (err: unknown) {
+      console.error(err);
+      toast.error(getErrorMessage(err, 'Không thể cập nhật đội giao bóng.'));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSideOut = async () => {
+    if (!ensureCanControlLiveMatch() || !isPickleballSideOut || isSubmitting) {
+      return;
+    }
+
+    if (sideOutState.servingTeam == null) {
+      toast.error('Hãy chọn đội giao bóng trước khi thao tác side-out.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      let nextState: PickleballSideOutState;
+      if (sideOutState.serverNumber === 1) {
+        nextState = {
+          servingTeam: sideOutState.servingTeam,
+          serverNumber: 2,
+          openingSequenceDone: sideOutState.openingSequenceDone,
+        };
+      } else {
+        nextState = {
+          servingTeam: sideOutState.servingTeam === 1 ? 2 : 1,
+          serverNumber: 1,
+          openingSequenceDone: true,
+        };
+      }
+
+      const res = await matchesApi.updateScore(matchId, {
+        p1SetsWon: match.p1SetsWon,
+        p2SetsWon: match.p2SetsWon,
+        scoreDetails: buildScoreDetailsPayload(scores, nextState),
+        winnerId: match.winnerId,
+      });
+      setMatch(res);
+      toast.success(
+        nextState.serverNumber === 2 && nextState.servingTeam === sideOutState.servingTeam
+          ? `Đội ${sideOutState.servingTeam === 1 ? team1Name : team2Name} chuyển sang lượt giao thứ 2.`
+          : `Side-out: quyền giao bóng chuyển sang ${nextState.servingTeam === 1 ? team1Name : team2Name}.`,
+      );
+    } catch (err: unknown) {
+      console.error(err);
+      toast.error(getErrorMessage(err, 'Không thể cập nhật trạng thái giao bóng side-out.'));
     } finally {
       setIsSubmitting(false);
     }
@@ -477,7 +605,7 @@ export default function LiveMatchPage({ params }: Props) {
                       )}
                     </div>
                     <h3 className="text-2xl font-black text-slate-900 text-center">{team1Name}</h3>
-                    <div className="text-slate-500 font-medium mt-1">Set thắng: {match.p1SetsWon}</div>
+                    <div className="text-slate-500 font-medium mt-1">{scorePresentation.wonSummaryLabel}: {match.p1SetsWon}</div>
                   </div>
 
                   {/* Main Score Display */}
@@ -488,7 +616,7 @@ export default function LiveMatchPage({ params }: Props) {
                       <div className="text-6xl md:text-8xl font-black tabular-nums tracking-tighter text-slate-900">{currentSet.team2Score}</div>
                     </div>
                     <div className="mt-4 text-xs font-bold text-slate-400 tracking-widest uppercase flex items-center gap-2">
-                      <Activity className="w-3.5 h-3.5 animate-pulse text-rose-500" /> Điểm Set hiện tại
+                      <Activity className="w-3.5 h-3.5 animate-pulse text-rose-500" /> {scorePresentation.currentScoreLabel}
                     </div>
                   </div>
 
@@ -506,14 +634,14 @@ export default function LiveMatchPage({ params }: Props) {
                       )}
                     </div>
                     <h3 className="text-2xl font-black text-slate-900 text-center">{team2Name}</h3>
-                    <div className="text-slate-500 font-medium mt-1">Set thắng: {match.p2SetsWon}</div>
+                    <div className="text-slate-500 font-medium mt-1">{scorePresentation.wonSummaryLabel}: {match.p2SetsWon}</div>
                   </div>
                 </div>
 
                 {/* Set History */}
                 {scores.length > 0 && (
                   <div className="mt-12 pt-8 border-t border-slate-100 flex flex-col items-center">
-                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Chi tiết các Set</h4>
+                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">{scorePresentation.summaryLabel}</h4>
                     <div className="flex flex-wrap justify-center gap-4">
                       {scores.map((set, idx) => (
                         <div key={idx} className={`px-5 py-2.5 rounded-2xl border flex flex-col items-center shadow-sm ${
@@ -521,7 +649,7 @@ export default function LiveMatchPage({ params }: Props) {
                             ? 'bg-rose-50 border-rose-100 ring-2 ring-rose-100' 
                             : 'bg-slate-50 border-slate-200'
                         }`}>
-                          <span className="text-[10px] font-bold text-slate-500 mb-1 uppercase">Set {idx + 1}</span>
+                          <span className="text-[10px] font-bold text-slate-500 mb-1 uppercase">{sequenceLabelTitle} {idx + 1}</span>
                           <span className={`text-xl font-black ${!set.isFinished ? 'text-rose-600' : 'text-slate-800'}`}>
                             {set.team1Score} - {set.team2Score}
                           </span>
@@ -542,6 +670,63 @@ export default function LiveMatchPage({ params }: Props) {
                 </div>
               </div>
             </div>
+
+            {resolvedRules.kind === 'PICKLEBALL_SIDE_OUT' && (
+              <div className="space-y-3">
+                <div className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 text-sm text-amber-900 font-medium">
+                  Chế độ pickleball side-out đang bám theo đội giao bóng hiện tại. Chỉ đội giao bóng mới được cộng điểm.
+                </div>
+                <div className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 md:grid-cols-[1.2fr_1fr]">
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Trạng thái giao bóng</p>
+                    <p className="mt-2 text-sm font-black text-slate-900">
+                      {sideOutState.servingTeam == null
+                        ? 'Chưa chọn đội giao'
+                        : `${servingTeamName} đang giao • lượt ${sideOutState.serverNumber}`}
+                    </p>
+                    <p className="mt-1 text-xs font-medium text-slate-500">
+                      Dùng `Mất giao / Side-out` để chuyển từ người giao 1 sang người giao 2, rồi mới sang đội còn lại.
+                    </p>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => void handleSetServingTeam(1)}
+                        disabled={isSubmitting}
+                        className={`rounded-xl border px-3 py-2 text-xs font-black transition-colors ${
+                          sideOutState.servingTeam === 1
+                            ? 'border-blue-600 bg-blue-600 text-white'
+                            : 'border-slate-200 bg-white text-slate-700 hover:border-blue-300'
+                        }`}
+                      >
+                        {team1Name} giao
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void handleSetServingTeam(2)}
+                        disabled={isSubmitting}
+                        className={`rounded-xl border px-3 py-2 text-xs font-black transition-colors ${
+                          sideOutState.servingTeam === 2
+                            ? 'border-indigo-600 bg-indigo-600 text-white'
+                            : 'border-slate-200 bg-white text-slate-700 hover:border-indigo-300'
+                        }`}
+                      >
+                        {team2Name} giao
+                      </button>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => void handleSideOut()}
+                      disabled={isSubmitting || sideOutState.servingTeam == null}
+                      className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-black text-amber-800 hover:bg-amber-100 disabled:opacity-50"
+                    >
+                      Mất giao / Side-out
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Live Match Control Panel */}
             {canControlLiveMatch && (
@@ -574,7 +759,7 @@ export default function LiveMatchPage({ params }: Props) {
                       </>
                     ) : (
                       <>
-                        <p className="text-xs text-slate-500 mb-6 max-w-sm">Hãy kích hoạt trận đấu để bắt đầu ghi điểm set đấu.</p>
+                    <p className="text-xs text-slate-500 mb-6 max-w-sm">Hãy kích hoạt trận đấu để bắt đầu ghi điểm {scorePresentation.sequenceLabel} đấu.</p>
                         <button
                           onClick={() => handleUpdateStatus('ONGOING')}
                           disabled={isSubmitting}
@@ -605,7 +790,7 @@ export default function LiveMatchPage({ params }: Props) {
                           <span className="text-4xl font-black text-slate-900 tabular-nums w-12 text-center">{currentSet.team1Score}</span>
                           <button
                             onClick={() => handleUpdatePoints(1, 'inc')}
-                            disabled={isSubmitting || !match.participant1Id || !match.participant2Id}
+                            disabled={isSubmitting || !match.participant1Id || !match.participant2Id || (isPickleballSideOut && sideOutState.servingTeam !== 1)}
                             className="w-12 h-12 rounded-full bg-blue-600 hover:bg-blue-700 flex items-center justify-center text-white transition-colors shadow-md disabled:opacity-50"
                           >
                             <Plus className="w-5 h-5" />
@@ -627,7 +812,7 @@ export default function LiveMatchPage({ params }: Props) {
                           <span className="text-4xl font-black text-slate-900 tabular-nums w-12 text-center">{currentSet.team2Score}</span>
                           <button
                             onClick={() => handleUpdatePoints(2, 'inc')}
-                            disabled={isSubmitting || !match.participant1Id || !match.participant2Id}
+                            disabled={isSubmitting || !match.participant1Id || !match.participant2Id || (isPickleballSideOut && sideOutState.servingTeam !== 2)}
                             className="w-12 h-12 rounded-full bg-indigo-600 hover:bg-indigo-700 flex items-center justify-center text-white transition-colors shadow-md disabled:opacity-50"
                           >
                             <Plus className="w-5 h-5" />
@@ -643,7 +828,7 @@ export default function LiveMatchPage({ params }: Props) {
                         disabled={isSubmitting || !match.participant1Id || !match.participant2Id}
                         className="flex-1 flex items-center justify-center gap-2 py-3 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold rounded-xl transition-all shadow-sm disabled:opacity-50"
                       >
-                        <Check className="w-4 h-4 text-emerald-500" /> Hoàn thành Set hiện tại
+                        <Check className="w-4 h-4 text-emerald-500" /> {scorePresentation.completeActionLabel}
                       </button>
 
                       <div className="flex flex-1 gap-3">

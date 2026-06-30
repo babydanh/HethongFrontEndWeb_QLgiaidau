@@ -5,6 +5,7 @@ import { api } from '@/lib/axios';
 import { ApiResponse } from '@/types/api';
 import { Trophy, Award, Calendar, ArrowLeft, Loader2, Sparkles, Star, Zap, User, Camera, ShieldCheck, MapPin, Activity, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
+import { buildMatchScoreSummary } from '@/features/matches/score-display';
 import { formatDate } from '@/utils/format';
 import { Button } from '@/components/ui/Button';
 import { rankingsApi, PlayerRanking, EloHistoryLog } from '@/features/rankings/api';
@@ -41,6 +42,7 @@ interface Match {
   participant2: { id: string; teamName: string } | null;
   p1SetsWon: number;
   p2SetsWon: number;
+  scoreDetails?: Record<string, unknown> | null;
   winnerId: string | null;
   completedAt: string | null;
   group?: {
@@ -294,7 +296,12 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
 
                       <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
                         <div className="bg-slate-50 px-4 py-2 rounded-xl border border-slate-100 text-sm font-black text-slate-700 tabular-nums">
-                          {match.p1SetsWon} - {match.p2SetsWon}
+                          {buildMatchScoreSummary({
+                            p1SetsWon: match.p1SetsWon,
+                            p2SetsWon: match.p2SetsWon,
+                            scoreDetails: match.scoreDetails as Record<string, unknown> | null | undefined,
+                            tournament: { sportRules: null },
+                          })}
                         </div>
 
                         {isCompleted ? (

@@ -1,12 +1,11 @@
 'use client';
 
-import { use } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { use, useRef } from 'react';
 import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Modal, ModalContent, ModalHeader, ModalTitle } from '@/components/ui/Modal';
 import { DateTimePicker } from '@/components/ui/Input';
-import { Calendar, AlertTriangle, ExternalLink, Plus, X, Loader2, Trash2, Lock, Trophy, Settings, SlidersHorizontal, DollarSign, FileText, Users } from 'lucide-react';
+import { Calendar, AlertTriangle, ExternalLink, Plus, X, Loader2, Trash2, Lock, Trophy, Settings, DollarSign, FileText, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { formatDate } from '@/utils/format';
 import { getSportLogo } from '@/constants/sports';
@@ -18,21 +17,16 @@ import { RegistrationTab } from './components/RegistrationTab';
 import { BracketTab } from './components/BracketTab';
 import { FinanceTab } from './components/FinanceTab';
 import { PermissionsTab } from './components/PermissionsTab';
-import { OperationsWorkspace } from './components/OperationsWorkspace';
-import { useOrganizerOps } from '@/features/organizer/ops/hooks/useOrganizerOps';
+import { getSportRulePresentation } from '@/features/tournaments/sport-rules/presentation';
 
 export default function TournamentManagePage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const id = resolvedParams.id;
   const s = useManageState(id);
-
-  const {
-    participants: opsParticipants, matches: opsMatches, disputes: opsDisputes,
-    referees: opsReferees, activeParticipantActionId, activeMatchActionId,
-    canModerateRegistration, activityLog, error: opsError, summary: opsSummary,
-    approveParticipant, rejectParticipant, kickParticipant, updateMatchStatus,
-    updateMatchSchedule, updateMatchScore, applyMatchOperation, createDispute, resolveDispute,
-  } = useOrganizerOps(id, { selectedDivisionId: s.selectedDivisionId, onSelectedDivisionIdChange: s.setSelectedDivisionId });
+  const bracketSectionRef = useRef<HTMLDivElement | null>(null);
+  const sportPresentation = getSportRulePresentation(s.sportRuleKind);
+  const supportsTiebreakInput = s.sportRuleKind === 'TENNIS' || s.sportRuleKind === 'PICKLEBALL_SIDE_OUT';
+  const isPickleballSideOut = s.sportRuleKind === 'PICKLEBALL_SIDE_OUT';
 
   if (s.isLoading) return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -53,15 +47,46 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
     </div>
   );
 
+  const tournament = s.tournament;
+
   const TABS = [
     { key: 'basic', label: 'Thông tin', icon: Settings },
     { key: 'schedule', label: 'Lịch & Địa điểm', icon: Calendar },
     { key: 'registration', label: 'Đăng ký', icon: Users },
-    { key: 'operations', label: 'Vận hành', icon: SlidersHorizontal },
     { key: 'bracket', label: 'Sơ đồ', icon: Trophy },
     { key: 'finance', label: 'Tài chính', icon: DollarSign },
     { key: 'permissions', label: 'Phân quyền', icon: FileText },
   ] as const;
+
+  const buildPublicTournamentUrl = (tab?: 'bracket') => {
+    const params = new URLSearchParams();
+
+    if (tab) {
+      params.set('tab', tab);
+    }
+
+    if (s.selectedDivisionId) {
+      params.set('divisionId', s.selectedDivisionId);
+    }
+
+    const query = params.toString();
+    return `/tournaments/${tournament.id}${query ? `?${query}` : ''}`;
+  };
+
+  const handleOpenManageBracket = () => {
+    if (s.activeTab !== 'bracket') {
+      s.setActiveTab('bracket');
+    }
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        bracketSectionRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        });
+      });
+    });
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 py-8 px-4 md:px-8">
@@ -82,9 +107,24 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
               Khai mạc: {s.tournament.startDate ? formatDate(s.tournament.startDate) : 'Chưa thiết lập'}
             </p>
           </div>
-          <Button variant="outline" onClick={() => window.open(`/tournaments/${s.tournament!.id}`, '_blank')} className="border-slate-200 hover:bg-slate-50 text-slate-700 flex items-center gap-1.5 font-bold">
-            <ExternalLink className="w-4 h-4" /> Xem trang giải
-          </Button>
+          <div className="flex flex-wrap items-center justify-end gap-3">
+            <Button
+              onClick={() => { window.location.href = `/organizer/tournaments/${tournament.id}/ops`; }}
+              className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1.5 font-bold"
+            >
+              Vận hành giải
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleOpenManageBracket}
+              className="border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 flex items-center gap-1.5 font-bold"
+            >
+              <Trophy className="w-4 h-4" /> Xem bracket hiện tại
+            </Button>
+            <Button variant="outline" onClick={() => window.open(buildPublicTournamentUrl(), '_blank')} className="border-slate-200 hover:bg-slate-50 text-slate-700 flex items-center gap-1.5 font-bold">
+              <ExternalLink className="w-4 h-4" /> Xem trang giải
+            </Button>
+          </div>
         </div>
 
         <TournamentStepper tournament={s.tournament} onPublish={s.publishFeeAmount > 0 ? s.handlePayPublishFee : s.handlePublish}
@@ -143,7 +183,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
         {s.activeTab === 'basic' && <BasicInfoTab id={id} tournament={s.tournament} categories={s.categories}
           basicSubTab={s.basicSubTab} setBasicSubTab={s.setBasicSubTab}
           name={s.name} setName={s.setName} categoryId={s.categoryId} setCategoryId={s.setCategoryId}
-          visibility={s.visibility} setVisibility={s.setVisibility} description={s.description} setDescription={s.setDescription}
+          description={s.description} setDescription={s.setDescription}
           logoUrl={s.logoUrl} setLogoUrl={s.setLogoUrl} bannerUrl={s.bannerUrl} setBannerUrl={s.setBannerUrl}
           newGalleryUrl={s.newGalleryUrl} setNewGalleryUrl={s.setNewGalleryUrl}
           isAddingImage={s.isAddingImage} setIsAddingImage={s.setIsAddingImage}
@@ -151,7 +191,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
           contactInfo={s.contactInfo} setContactInfo={s.setContactInfo}
           isSavingConfig={s.isSavingConfig} isDeleting={s.isDeleting}
           handleDeleteTournament={s.handleDeleteTournament} handleSaveBasicInfo={s.handleSaveBasicInfo}
-          handleRegenerateInviteCode={s.handleRegenerateInviteCode} fetchTournamentData={s.fetchTournamentData}
+          fetchTournamentData={s.fetchTournamentData}
           divisions={s.divisions} selectedDivisionId={s.selectedDivisionId}
           isLimitEnabled={s.isLimitEnabled} setIsLimitEnabled={s.setIsLimitEnabled}
           maxParticipants={s.maxParticipants} setMaxParticipants={s.setMaxParticipants}
@@ -169,53 +209,57 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
           provinces={s.provinces} districts={s.districts} wards={s.wards}
           startDate={s.startDate} setStartDate={s.setStartDate}
           endDate={s.endDate} setEndDate={s.setEndDate}
-          registrationStartDate={s.registrationStartDate} setRegistrationStartDate={s.setRegistrationStartDate}
-          registrationEndDate={s.registrationEndDate} setRegistrationEndDate={s.setRegistrationEndDate}
           isSavingConfig={s.isSavingConfig} handleSaveScheduleDetails={s.handleSaveScheduleDetails} />}
 
         {s.activeTab === 'registration' && <RegistrationTab tournament={s.tournament}
-          inviteLink={s.inviteLink} participants={s.participants}
+          inviteLink={s.inviteLink}
           mockNamesText={s.mockNamesText} setMockNamesText={s.setMockNamesText}
           isSeedingMock={s.isSeedingMock} isClearingMock={s.isClearingMock}
           wildcardEmailOrPhone={s.wildcardEmailOrPhone} setWildcardEmailOrPhone={s.setWildcardEmailOrPhone}
           wildcardTeamName={s.wildcardTeamName} setWildcardTeamName={s.setWildcardTeamName}
           isAssigningWildcard={s.isAssigningWildcard}
+          participants={s.participants}
+          activeParticipantActionId={s.activeParticipantActionId}
+          visibility={s.visibility}
+          setVisibility={s.setVisibility}
+          registrationStartDate={s.registrationStartDate} setRegistrationStartDate={s.setRegistrationStartDate}
+          registrationEndDate={s.registrationEndDate} setRegistrationEndDate={s.setRegistrationEndDate}
+          isSavingConfig={s.isSavingConfig}
           publishFeeAmount={s.publishFeeAmount}
           handlePublish={s.publishFeeAmount > 0 ? s.handlePayPublishFee : s.handlePublish}
           handleOpenLockModal={s.handleOpenLockModal}
-          handleUpdateStatus={s.handleUpdateStatus}
+          handleSaveRegistrationSettings={s.handleSaveRegistrationSettings}
+          handleRegenerateInviteCode={s.handleRegenerateInviteCode}
+          handleApproveParticipant={s.handleApproveParticipant}
+          handleRejectParticipant={s.handleRejectParticipant}
           handleSeedMockData={s.handleSeedMockData} handleClearMockData={s.handleClearMockData}
           handleAssignWildcard={s.handleAssignWildcard}
           onCopyInviteLink={() => { navigator.clipboard.writeText(s.inviteLink); toast.success('Đã sao chép link!'); }} />}
 
-        {s.activeTab === 'operations' && <OperationsWorkspace participants={opsParticipants} matches={opsMatches}
-          disputes={opsDisputes} referees={opsReferees}
-          activeParticipantActionId={activeParticipantActionId} activeMatchActionId={activeMatchActionId}
-          canModerateRegistration={canModerateRegistration} activityLog={activityLog}
-          error={opsError} summary={opsSummary}
-          onApproveParticipant={approveParticipant} onRejectParticipant={rejectParticipant}
-          onKickParticipant={kickParticipant} onUpdateMatchStatus={updateMatchStatus}
-          onUpdateMatchSchedule={updateMatchSchedule} onUpdateMatchScore={updateMatchScore}
-          onApplyMatchOperation={applyMatchOperation} onCreateDispute={createDispute}
-          onResolveDispute={resolveDispute} />}
-
-        {s.activeTab === 'bracket' && <BracketTab tournament={s.tournament} bracket={s.bracket}
-          selectedDivisionId={s.selectedDivisionId} participants={s.participants}
-          isGeneratingBracket={s.isGeneratingBracket} handleGenerateBracket={s.handleGenerateBracket}
-          handleOpenScheduling={s.handleOpenScheduling} handleOpenRoundModal={s.handleOpenRoundModal}
-          isLimitEnabled={s.isLimitEnabled} setIsLimitEnabled={s.setIsLimitEnabled}
-          maxParticipants={s.maxParticipants} setMaxParticipants={s.setMaxParticipants}
-          matchType={s.matchType} setMatchType={s.setMatchType}
-          setsToWin={s.setsToWin} setSetsToWin={s.setSetsToWin}
-          pointsPerSet={s.pointsPerSet} setPointsPerSet={s.setPointsPerSet}
-          winByTwo={s.winByTwo} setWinByTwo={s.setWinByTwo}
-          maxDeucePoints={s.maxDeucePoints} setMaxDeucePoints={s.setMaxDeucePoints}
-          superTiebreakEnabled={s.superTiebreakEnabled} setSuperTiebreakEnabled={s.setSuperTiebreakEnabled}
-          superTiebreakSetIndex={s.superTiebreakSetIndex} setSuperTiebreakSetIndex={s.setSuperTiebreakSetIndex}
-          superTiebreakPoints={s.superTiebreakPoints} setSuperTiebreakPoints={s.setSuperTiebreakPoints}
-          isSavingConfig={s.isSavingConfig} handleSaveMatchConfig={s.handleSaveMatchConfig}
-          tiebreakerMode={s.tiebreakerMode} setTiebreakerMode={s.setTiebreakerMode}
-          roundsToPlay={s.roundsToPlay} setRoundsToPlay={s.setRoundsToPlay} />}
+        {s.activeTab === 'bracket' && (
+          <div ref={bracketSectionRef}>
+            <BracketTab tournament={s.tournament} bracket={s.bracket}
+              selectedDivisionId={s.selectedDivisionId} participants={s.participants}
+              isGeneratingBracket={s.isGeneratingBracket} handleGenerateBracket={s.handleGenerateBracket}
+              handleOpenScheduling={s.handleOpenScheduling} handleOpenRoundModal={s.handleOpenRoundModal}
+              isLimitEnabled={s.isLimitEnabled} setIsLimitEnabled={s.setIsLimitEnabled}
+              maxParticipants={s.maxParticipants} setMaxParticipants={s.setMaxParticipants}
+              matchType={s.matchType} setMatchType={s.setMatchType}
+              availableMatchFormatOptions={s.availableMatchFormatOptions}
+              selectedCategory={s.selectedCategory}
+              sportRuleKind={s.sportRuleKind} setSportRuleKind={s.setSportRuleKind}
+              setsToWin={s.setsToWin} setSetsToWin={s.setSetsToWin}
+              pointsPerSet={s.pointsPerSet} setPointsPerSet={s.setPointsPerSet}
+              winByTwo={s.winByTwo} setWinByTwo={s.setWinByTwo}
+              maxDeucePoints={s.maxDeucePoints} setMaxDeucePoints={s.setMaxDeucePoints}
+              superTiebreakEnabled={s.superTiebreakEnabled} setSuperTiebreakEnabled={s.setSuperTiebreakEnabled}
+              superTiebreakSetIndex={s.superTiebreakSetIndex} setSuperTiebreakSetIndex={s.setSuperTiebreakSetIndex}
+              superTiebreakPoints={s.superTiebreakPoints} setSuperTiebreakPoints={s.setSuperTiebreakPoints}
+              isSavingConfig={s.isSavingConfig} handleSaveMatchConfig={s.handleSaveMatchConfig}
+              tiebreakerMode={s.tiebreakerMode} setTiebreakerMode={s.setTiebreakerMode}
+              roundsToPlay={s.roundsToPlay} setRoundsToPlay={s.setRoundsToPlay} />
+          </div>
+        )}
 
         {s.activeTab === 'finance' && <FinanceTab tournament={s.tournament} participants={s.participants}
           entryFee={s.entryFee} setEntryFee={s.setEntryFee}
@@ -231,17 +275,43 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
             <ModalContent className="bg-white rounded-2xl p-6">
               <ModalHeader><ModalTitle className="text-xl font-bold text-slate-900">Cấu hình vòng đấu</ModalTitle></ModalHeader>
               <div className="space-y-4 mt-4">
+                <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                  <p className="text-sm font-bold text-slate-900">{sportPresentation.sportLabel}: {sportPresentation.scoringLabel}</p>
+                  <p className="mt-1 text-xs font-semibold text-slate-500">{sportPresentation.roundConfigHint}</p>
+                </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <div><label className="text-xs font-bold text-slate-500">Số set tối đa</label>
+                  <div><label className="text-xs font-bold text-slate-500">Sân mặc định cho vòng này</label>
+                    <select value={s.stageVenueId} onChange={e => s.setStageVenueId(e.target.value)} className="w-full border rounded-lg p-2 text-sm">
+                      <option value="">Chưa chọn sân mặc định</option>
+                      {s.venues.map((venue) => (
+                        <option key={venue.id} value={venue.id}>{venue.name}</option>
+                      ))}
+                    </select></div>
+                  <div><label className="text-xs font-bold text-slate-500">Giờ mặc định cho vòng này</label>
+                    <DateTimePicker value={s.stageScheduledDate} onChange={s.setStageScheduledDate} /></div>
+                  <div><label className="text-xs font-bold text-slate-500">Số set / game tối đa</label>
                     <select value={s.stageMaxSets} onChange={e => s.setStageMaxSets(Number(e.target.value))} className="w-full border rounded-lg p-2 text-sm">
                       <option value={1}>1 set</option><option value={3}>3 set</option><option value={5}>5 set</option>
                     </select></div>
-                  <div><label className="text-xs font-bold text-slate-500">Điểm mỗi set</label>
+                  <div><label className="text-xs font-bold text-slate-500">{sportPresentation.setUnitLabel}</label>
                     <input type="number" value={s.stagePointsPerSet} onChange={e => s.setStagePointsPerSet(Number(e.target.value))} className="w-full border rounded-lg p-2 text-sm" /></div>
                   <div className="flex items-center gap-2"><input type="checkbox" checked={s.stageWinBy2Points} onChange={e => s.setStageWinBy2Points(e.target.checked)} />
-                    <label className="text-xs font-bold text-slate-500">Deuce (win by 2)</label></div>
-                  {s.stageWinBy2Points && <div><label className="text-xs font-bold text-slate-500">Điểm tối đa deuce</label>
+                    <label className="text-xs font-bold text-slate-500">{sportPresentation.winByTwoLabel}</label></div>
+                  {s.stageWinBy2Points && <div><label className="text-xs font-bold text-slate-500">{sportPresentation.maxScoreLabel}</label>
                     <input type="number" value={s.stageMaxDeucePoints} onChange={e => s.setStageMaxDeucePoints(Number(e.target.value))} className="w-full border rounded-lg p-2 text-sm" /></div>}
+                  {supportsTiebreakInput && (
+                    <div>
+                      <label className="text-xs font-bold text-slate-500">{sportPresentation.tiebreakLabel}</label>
+                      <input type="number" value={s.stageSuperTiebreakPoints} onChange={e => s.setStageSuperTiebreakPoints(Number(e.target.value))} className="w-full border rounded-lg p-2 text-sm" />
+                    </div>
+                  )}
+                  {isPickleballSideOut && (
+                    <div className="col-span-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800">
+                      Mode side-out: chỉ đội giao bóng mới ghi điểm. Vòng này hiện mới cấu hình score mục tiêu, chưa có state giao bóng live chi tiết.
+                    </div>
+                  )}
+                  <div className="col-span-2"><label className="text-xs font-bold text-slate-500">Ghi chú điều phối vòng này</label>
+                    <textarea value={s.stageNotificationNote} onChange={e => s.setStageNotificationNote(e.target.value)} className="min-h-20 w-full border rounded-lg p-2 text-sm" placeholder="Ví dụ: ưu tiên gọi đồng loạt ở sân trung tâm lúc 08:00" /></div>
                 </div>
                 <Button onClick={s.handleSaveStageDetails} disabled={s.isSavingStage} className="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg">
                   {s.isSavingStage ? 'Đang lưu...' : 'Lưu cấu hình'}
@@ -302,9 +372,11 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
               <div className="space-y-4 mt-4">
                 <div><label className="text-xs font-bold text-slate-500">Loại</label>
                   <select value={s.newDivisionMatchType} onChange={e => s.setNewDivisionMatchType(e.target.value)} className="w-full border rounded-lg p-2 text-sm">
-                    <option value="MALE_SINGLES">Đơn Nam</option><option value="FEMALE_SINGLES">Đơn Nữ</option>
-                    <option value="MALE_DOUBLES">Đôi Nam</option><option value="FEMALE_DOUBLES">Đôi Nữ</option>
-                    <option value="MIXED_DOUBLES">Đôi Nam Nữ</option>
+                    {s.availableMatchFormatOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.shortLabel}
+                      </option>
+                    ))}
                   </select></div>
                 <div><label className="text-xs font-bold text-slate-500">Thể thức</label>
                   <select value={s.newDivisionBracketType} onChange={e => s.setNewDivisionBracketType(e.target.value)} className="w-full border rounded-lg p-2 text-sm">
@@ -328,6 +400,10 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
             <ModalContent className="bg-white rounded-2xl p-6 max-w-lg">
               <ModalHeader><ModalTitle className="text-lg font-bold">Xếp lịch thi đấu</ModalTitle></ModalHeader>
               <div className="space-y-4 mt-4">
+                <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                  <p className="text-sm font-bold text-slate-900">{sportPresentation.sportLabel}: {sportPresentation.scoringLabel}</p>
+                  <p className="mt-1 text-xs font-semibold text-slate-500">{sportPresentation.presetSummary}</p>
+                </div>
                 <div><label className="text-xs font-bold text-slate-500">Sân</label>
                   <input value={s.matchCourtName} onChange={e => s.setMatchCourtName(e.target.value)} placeholder="Tên sân" className="w-full border rounded-lg p-2 text-sm" /></div>
                 <div><label className="text-xs font-bold text-slate-500">Giờ thi đấu</label>
@@ -337,8 +413,14 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                   Cấu hình riêng cho trận này
                 </label>
                 {s.isCustomMatchConfig && <div className="grid grid-cols-2 gap-4">
-                  <div><label className="text-xs text-slate-500">Số set</label><input type="number" value={s.matchSetsToWin} onChange={e => s.setMatchSetsToWin(Number(e.target.value))} className="w-full border rounded-lg p-2 text-sm" /></div>
-                  <div><label className="text-xs text-slate-500">Điểm/set</label><input type="number" value={s.matchPointsPerSet} onChange={e => s.setMatchPointsPerSet(Number(e.target.value))} className="w-full border rounded-lg p-2 text-sm" /></div>
+                  <div><label className="text-xs text-slate-500">Số set / game</label><input type="number" value={s.matchSetsToWin} onChange={e => s.setMatchSetsToWin(Number(e.target.value))} className="w-full border rounded-lg p-2 text-sm" /></div>
+                  <div><label className="text-xs text-slate-500">{sportPresentation.setUnitLabel}</label><input type="number" value={s.matchPointsPerSet} onChange={e => s.setMatchPointsPerSet(Number(e.target.value))} className="w-full border rounded-lg p-2 text-sm" /></div>
+                  <div className="col-span-2 flex items-center gap-2">
+                    <input type="checkbox" checked={s.matchDeuceEnabled} onChange={e => s.setMatchDeuceEnabled(e.target.checked)} />
+                    <label className="text-xs font-bold text-slate-500">{sportPresentation.winByTwoLabel}</label>
+                  </div>
+                  {s.matchDeuceEnabled && <div><label className="text-xs text-slate-500">{sportPresentation.maxScoreLabel}</label><input type="number" value={s.matchMaxPoints} onChange={e => s.setMatchMaxPoints(Number(e.target.value))} className="w-full border rounded-lg p-2 text-sm" /></div>}
+                  {supportsTiebreakInput && <div><label className="text-xs text-slate-500">{sportPresentation.tiebreakLabel}</label><input type="number" value={s.matchSuperTiebreakPoints} onChange={e => s.setMatchSuperTiebreakPoints(Number(e.target.value))} className="w-full border rounded-lg p-2 text-sm" /></div>}
                 </div>}
                 <div className="flex justify-end gap-3">
                   <Button variant="outline" onClick={() => s.setSelectedMatch(null)}>Hủy</Button>

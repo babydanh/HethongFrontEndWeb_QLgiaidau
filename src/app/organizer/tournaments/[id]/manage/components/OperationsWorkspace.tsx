@@ -3,7 +3,15 @@
 import { AlertTriangle } from 'lucide-react';
 import type { Match } from '@/types/match';
 import type { TournamentParticipant } from '@/types/tournament';
-import type { MatchOperationInput, MatchScheduleInput, OpsActivityItem, OpsDisputeItem, OpsReferee } from '@/features/organizer/ops/types';
+import type { SportRulesEnvelope } from '@/types/tournament';
+import type {
+  MatchOperationInput,
+  MatchScheduleInput,
+  MatchScoreInput,
+  OpsActivityItem,
+  OpsDisputeItem,
+  OpsReferee,
+} from '@/features/organizer/ops/types';
 import { OpsActivity } from '../../ops/components/OpsActivity';
 import { OpsDisputes } from '../../ops/components/OpsDisputes';
 import { OpsMatches } from '../../ops/components/OpsMatches';
@@ -17,13 +25,19 @@ interface OperationsWorkspaceProps {
   referees: OpsReferee[];
   activeParticipantActionId: string | null;
   activeMatchActionId: string | null;
-  canModerateRegistration: boolean;
+  focusedMatchId?: string | null;
+  onFocusMatch?: (matchId: string) => void;
+  tournamentSportRules?: SportRulesEnvelope | null;
+  matchInsights?: Record<string, {
+    hasCustomConfig: boolean;
+    customConfigSummary: string[];
+    dependencyBlocked: boolean;
+    dependencySummary: string[];
+  }>;
   activityLog: OpsActivityItem[];
   error: string | null;
   summary: {
     totalParticipants: number;
-    approvedParticipants: number;
-    pendingParticipants: number;
     kickedParticipants: number;
     unpaidParticipants: number;
     scheduledMatches: number;
@@ -31,15 +45,13 @@ interface OperationsWorkspaceProps {
     completedMatches: number;
     openDisputes: number;
   };
-  onApproveParticipant: (participantId: string) => Promise<void>;
-  onRejectParticipant: (participantId: string) => Promise<void>;
   onKickParticipant: (participantId: string, reason: string) => Promise<void>;
   onUpdateMatchStatus: (match: Match, status: Match['status']) => Promise<void>;
   onUpdateMatchSchedule: (
     match: Match,
     payload: MatchScheduleInput,
   ) => Promise<void>;
-  onUpdateMatchScore: (match: Match, payload: { p1SetsWon: number; p2SetsWon: number }) => Promise<void>;
+  onUpdateMatchScore: (match: Match, payload: MatchScoreInput) => Promise<void>;
   onApplyMatchOperation: (match: Match, payload: MatchOperationInput) => Promise<void>;
   onCreateDispute: (match: Match, reason: string) => Promise<void>;
   onResolveDispute: (
@@ -56,12 +68,13 @@ export function OperationsWorkspace({
   referees,
   activeParticipantActionId,
   activeMatchActionId,
-  canModerateRegistration,
+  focusedMatchId,
+  onFocusMatch,
+  tournamentSportRules,
+  matchInsights,
   activityLog,
   error,
   summary,
-  onApproveParticipant,
-  onRejectParticipant,
   onKickParticipant,
   onUpdateMatchStatus,
   onUpdateMatchSchedule,
@@ -70,7 +83,27 @@ export function OperationsWorkspace({
   onCreateDispute,
   onResolveDispute,
 }: OperationsWorkspaceProps) {
-  const pendingAssignments = matches.filter((match) => match.status === 'SCHEDULED' && (!match.courtName || !match.refereeId)).length;
+  const pendingAssignments = matches.filter((match) => {
+    const matchInsight = matchInsights?.[match.id];
+    const isDirectAdvance = match.isBye || (!!match.winnerId && (!match.participant1Id || !match.participant2Id));
+
+    if (match.status !== 'SCHEDULED' || isDirectAdvance || matchInsight?.dependencyBlocked) {
+      return false;
+    }
+
+    return !!match.participant1Id && !!match.participant2Id && (!match.courtName || !match.refereeId);
+  }).length;
+
+  const readyToCall = matches.filter((match) => {
+    const matchInsight = matchInsights?.[match.id];
+    const isDirectAdvance = match.isBye || (!!match.winnerId && (!match.participant1Id || !match.participant2Id));
+
+    if (match.status !== 'SCHEDULED' || isDirectAdvance || matchInsight?.dependencyBlocked) {
+      return false;
+    }
+
+    return !!match.participant1Id && !!match.participant2Id && !!match.courtName && !!match.refereeId;
+  }).length;
   const overdueStarts = matches.filter((match) => {
     if (!match.scheduledAt || match.status !== 'SCHEDULED') {
       return false;
@@ -84,7 +117,7 @@ export function OperationsWorkspace({
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="text-xl font-black text-slate-900">Panel vận hành giải đấu</h2>
         <p className="mt-2 max-w-3xl text-sm font-medium text-slate-500">
-          Quản lý participant, điều phối trận, cập nhật tỉ số và theo dõi lưu vết vận hành ngay trong cùng màn hình quản trị của giải.
+          Màn hình này dùng để theo dõi nhịp chạy thực tế của giải: trận nào sắp gọi vào sân, trận nào đang nghẽn, tranh chấp nào chưa chốt và roster nào cần xử lý kỹ thuật.
         </p>
       </div>
 
@@ -99,9 +132,9 @@ export function OperationsWorkspace({
 
       <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
-          <p className="text-[11px] font-black uppercase tracking-[0.12em] text-amber-600">Cần duyệt ngay</p>
-          <p className="mt-2 text-2xl font-black text-amber-900">{summary.pendingParticipants}</p>
-          <p className="mt-1 text-xs font-medium text-amber-800">Hồ sơ đăng ký đang chờ quyết định của BTC.</p>
+          <p className="text-[11px] font-black uppercase tracking-[0.12em] text-amber-600">Sẵn sàng gọi vào sân</p>
+          <p className="mt-2 text-2xl font-black text-amber-900">{readyToCall}</p>
+          <p className="mt-1 text-xs font-medium text-amber-800">Trận đã có sân và trọng tài, có thể chuyển sang trạng thái thi đấu ngay.</p>
         </div>
         <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4">
           <p className="text-[11px] font-black uppercase tracking-[0.12em] text-rose-600">Tranh chấp mở</p>
@@ -120,19 +153,15 @@ export function OperationsWorkspace({
         </div>
       </section>
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.15fr_1fr]">
-        <OpsParticipants
-          participants={participants}
-          activeParticipantActionId={activeParticipantActionId}
-          canModerateRegistration={canModerateRegistration}
-          onApproveParticipant={onApproveParticipant}
-          onRejectParticipant={onRejectParticipant}
-          onKickParticipant={onKickParticipant}
-        />
+      <div className="grid grid-cols-1 gap-6">
         <OpsMatches
           matches={matches}
           referees={referees}
           activeMatchActionId={activeMatchActionId}
+          focusedMatchId={focusedMatchId}
+          onFocusMatch={onFocusMatch}
+          tournamentSportRules={tournamentSportRules}
+          matchInsights={matchInsights}
           onUpdateMatchStatus={onUpdateMatchStatus}
           onUpdateMatchSchedule={onUpdateMatchSchedule}
           onUpdateMatchScore={onUpdateMatchScore}
@@ -141,11 +170,18 @@ export function OperationsWorkspace({
         />
       </div>
 
-      <OpsDisputes
-        disputes={disputes}
-        activeActionId={activeMatchActionId}
-        onResolveDispute={onResolveDispute}
-      />
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.15fr_1fr]">
+        <OpsParticipants
+          participants={participants}
+          activeParticipantActionId={activeParticipantActionId}
+          onKickParticipant={onKickParticipant}
+        />
+        <OpsDisputes
+          disputes={disputes}
+          activeActionId={activeMatchActionId}
+          onResolveDispute={onResolveDispute}
+        />
+      </div>
 
       <OpsActivity activityLog={activityLog} />
     </section>

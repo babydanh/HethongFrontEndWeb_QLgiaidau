@@ -34,10 +34,6 @@ interface ScheduleTabProps {
   setStartDate: (val: string) => void;
   endDate: string;
   setEndDate: (val: string) => void;
-  registrationStartDate: string;
-  setRegistrationStartDate: (val: string) => void;
-  registrationEndDate: string;
-  setRegistrationEndDate: (val: string) => void;
   isSavingConfig: boolean;
   handleSaveScheduleDetails: () => void;
 }
@@ -63,10 +59,6 @@ export function ScheduleTab({
   setStartDate,
   endDate,
   setEndDate,
-  registrationStartDate,
-  setRegistrationStartDate,
-  registrationEndDate,
-  setRegistrationEndDate,
   isSavingConfig,
   handleSaveScheduleDetails,
 }: ScheduleTabProps) {
@@ -160,20 +152,6 @@ export function ScheduleTab({
             onChange={setEndDate}
           />
         </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-4">
-        <DateTimePicker
-          label="Mở đăng ký vào lúc"
-          value={registrationStartDate}
-          onChange={setRegistrationStartDate}
-        />
-
-        <DateTimePicker
-          label="Đóng đăng ký vào lúc"
-          value={registrationEndDate}
-          onChange={setRegistrationEndDate}
-        />
       </div>
 
       <div className="flex justify-end pt-4 border-t">

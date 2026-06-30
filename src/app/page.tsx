@@ -3,6 +3,7 @@
 // Reading this as: Sports platform homepage with live matches feed, featured tournaments, and community bento grid.
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { buildMatchScoreSummary } from '@/features/matches/score-display';
 import Image from 'next/image';
 import {
   Trophy, Calendar, Users, MapPin, ArrowRight, Shield, Heart, Share2, Play,
@@ -313,7 +314,13 @@ export default function HomePage() {
                         <div className="flex flex-col items-center justify-center w-full sm:w-2/12 shrink-0">
                           <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Tỉ số</span>
                           <div className="mt-1 flex items-center gap-2.5 bg-slate-900 text-emerald-400 border border-slate-800 px-4 py-2 rounded-xl font-mono text-base font-black shadow-[0_0_15px_rgba(16,185,129,0.15)] leading-none tracking-widest glow-text-emerald">
-                            {match.p1SetsWon !== undefined ? match.p1SetsWon : 0} - {match.p2SetsWon !== undefined ? match.p2SetsWon : 0}
+                            {buildMatchScoreSummary({
+                              p1SetsWon: match.p1SetsWon ?? 0,
+                              p2SetsWon: match.p2SetsWon ?? 0,
+                              matchConfig: match.matchConfig ?? null,
+                              tournament: { sportRules: null },
+                              scoreDetails: match.scoreDetails as Record<string, unknown> | null | undefined,
+                            })}
                           </div>
                         </div>
 

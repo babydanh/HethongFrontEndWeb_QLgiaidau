@@ -19,7 +19,7 @@ export const matchesApi = {
     scoreData: {
       p1SetsWon: number;
       p2SetsWon: number;
-      scoreDetails: { sets: MatchScore[] };
+      scoreDetails: Record<string, unknown>;
       winnerId?: string | null;
     },
   ) =>

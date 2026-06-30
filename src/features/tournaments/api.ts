@@ -1,6 +1,17 @@
 import { api } from '@/lib/axios';
 import { Category } from '@/types/category';
-import { Tournament, ParentTournament, PaginatedTournaments, TournamentParticipant, BracketStage, BracketMatch, MatchTypeUI, MatchTypeDB, GenderRestriction } from '@/types/tournament';
+import {
+  Tournament,
+  ParentTournament,
+  PaginatedTournaments,
+  TournamentParticipant,
+  BracketStage,
+  BracketMatch,
+  MatchTypeUI,
+  MatchTypeDB,
+  GenderRestriction,
+  type StageRoundConfig,
+} from '@/types/tournament';
 import { ApiResponse } from '@/types/api';
 import type { OpsAuditLogResponse, OpsDisputeItem } from '@/features/organizer/ops/types';
 
@@ -24,12 +35,7 @@ export interface Division {
   isConfigOverride?: boolean;
   venueId?: string | null;
   bracketType?: 'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION' | 'ROUND_ROBIN' | null;
-  roundConfig?: {
-    setsToWin?: number;
-    pointsPerSet?: number;
-    winByTwo?: boolean;
-    [key: string]: unknown;
-  } | null;
+  roundConfig?: StageRoundConfig | null;
   startDate?: string | null;
   registrationEndDate?: string | null;
   minElo?: number | null;

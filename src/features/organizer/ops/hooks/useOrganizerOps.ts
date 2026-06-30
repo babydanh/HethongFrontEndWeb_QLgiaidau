@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { divisionsApi, Division, tournamentsApi } from '@/features/tournaments/api';
 import { matchesApi } from '@/features/matches/api';
@@ -38,8 +38,6 @@ interface UseOrganizerOpsResult {
   refresh: () => Promise<void>;
   activeParticipantActionId: string | null;
   activeMatchActionId: string | null;
-  approveParticipant: (participantId: string) => Promise<void>;
-  rejectParticipant: (participantId: string) => Promise<void>;
   kickParticipant: (participantId: string, reason: string) => Promise<void>;
   updateMatchStatus: (match: Match, status: Match['status']) => Promise<void>;
   updateMatchSchedule: (match: Match, payload: MatchScheduleInput) => Promise<void>;
@@ -51,12 +49,9 @@ interface UseOrganizerOpsResult {
     resolutionNote: string,
     matchStatus?: 'SCHEDULED' | 'ONGOING' | 'COMPLETED' | 'DISPUTED',
   ) => Promise<void>;
-  canModerateRegistration: boolean;
   activityLog: OpsActivityItem[];
   summary: {
     totalParticipants: number;
-    approvedParticipants: number;
-    pendingParticipants: number;
     kickedParticipants: number;
     unpaidParticipants: number;
     scheduledMatches: number;
@@ -169,7 +164,7 @@ export function useOrganizerOps(
     });
   };
 
-  const loadOperationalData = async (divisionId: string) => {
+  const loadOperationalData = useCallback(async (divisionId: string) => {
     const [participantsRes, matchesRes, auditRes, disputesRes] = await Promise.all([
       divisionId
         ? divisionsApi.getDivisionParticipants(tournamentId, divisionId)
@@ -191,7 +186,7 @@ export function useOrganizerOps(
       const localOnly = current.filter((item) => item.id.includes('_'));
       return [...backendLog, ...localOnly].slice(0, 60);
     });
-  };
+  }, [tournamentId]);
 
   useEffect(() => {
     let active = true;
@@ -256,10 +251,14 @@ export function useOrganizerOps(
 
       const parsed = JSON.parse(raw) as OpsActivityItem[];
       if (Array.isArray(parsed)) {
-        setActivityLog(parsed);
+        void Promise.resolve().then(() => {
+          setActivityLog(parsed);
+        });
       }
     } catch {
-      setActivityLog([]);
+      void Promise.resolve().then(() => {
+        setActivityLog([]);
+      });
     }
   }, [tournamentId]);
 
@@ -287,7 +286,7 @@ export function useOrganizerOps(
     return () => {
       active = false;
     };
-  }, [selectedDivisionId, tournamentId]);
+  }, [loadOperationalData, selectedDivisionId, tournamentId]);
 
   const refresh = async () => {
     const [tournamentRes, divisionsRes, refereesRes] = await Promise.all([
@@ -317,30 +316,6 @@ export function useOrganizerOps(
     } finally {
       setActiveParticipantActionId(null);
     }
-  };
-
-  const approveParticipant = async (participantId: string) => {
-    await handleParticipantAction(
-      participantId,
-      async () => {
-        await tournamentsApi.updateParticipantStatus(tournamentId, participantId, 'COMPLETE');
-      },
-      'Đã duyệt đăng ký thành công.',
-    );
-
-    appendActivityLog('PARTICIPANT', participantId, 'APPROVE_REGISTRATION', 'Duyệt hồ sơ', 'BTC đã duyệt hồ sơ đăng ký.');
-  };
-
-  const rejectParticipant = async (participantId: string) => {
-    await handleParticipantAction(
-      participantId,
-      async () => {
-        await tournamentsApi.updateParticipantStatus(tournamentId, participantId, 'REJECTED');
-      },
-      'Đã từ chối đăng ký thành công.',
-    );
-
-    appendActivityLog('PARTICIPANT', participantId, 'REJECT_REGISTRATION', 'Từ chối hồ sơ', 'BTC đã từ chối hồ sơ đăng ký.');
   };
 
   const kickParticipant = async (participantId: string, reason: string) => {
@@ -409,13 +384,20 @@ export function useOrganizerOps(
           : payload.p1SetsWon > payload.p2SetsWon
             ? match.participant1Id || null
             : match.participant2Id || null;
+      const latestMatch = matches.find((item) => item.id === match.id) ?? match;
+      const currentScoreDetails =
+        latestMatch.scoreDetails && typeof latestMatch.scoreDetails === 'object'
+          ? latestMatch.scoreDetails
+          : null;
 
       await matchesApi.updateScore(match.id, {
         p1SetsWon: payload.p1SetsWon,
         p2SetsWon: payload.p2SetsWon,
         winnerId,
         scoreDetails: {
-          sets: [],
+          ...(currentScoreDetails ?? {}),
+          sets: payload.sets,
+          ...(payload.sideOutState ? { sideOutState: payload.sideOutState } : {}),
         },
       });
       toast.success('Đã cập nhật tỷ số trận.');
@@ -508,11 +490,7 @@ export function useOrganizerOps(
     }
   };
 
-  const canModerateRegistration = tournament?.status === 'REGISTRATION_OPEN';
-
   const summary = useMemo(() => {
-    const approvedParticipants = participants.filter((participant) => participant.teamStatus === 'COMPLETE').length;
-    const pendingParticipants = participants.filter((participant) => participant.teamStatus === 'PENDING').length;
     const kickedParticipants = participants.filter((participant) => participant.teamStatus === 'KICKED').length;
     const unpaidParticipants = participants.filter((participant) => !participant.isPaid).length;
     const scheduledMatches = matches.filter((match) => match.status === 'SCHEDULED').length;
@@ -522,8 +500,6 @@ export function useOrganizerOps(
 
     return {
       totalParticipants: participants.length,
-      approvedParticipants,
-      pendingParticipants,
       kickedParticipants,
       unpaidParticipants,
       scheduledMatches,
@@ -547,8 +523,6 @@ export function useOrganizerOps(
     refresh,
     activeParticipantActionId,
     activeMatchActionId,
-    approveParticipant,
-    rejectParticipant,
     kickParticipant,
     updateMatchStatus,
     updateMatchSchedule,
@@ -556,7 +530,6 @@ export function useOrganizerOps(
     applyMatchOperation,
     createDispute,
     resolveDispute,
-    canModerateRegistration,
     activityLog,
     summary,
   };

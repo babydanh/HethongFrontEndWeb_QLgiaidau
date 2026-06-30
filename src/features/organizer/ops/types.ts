@@ -1,4 +1,4 @@
-import type { Match } from '@/types/match';
+import type { Match, MatchScore, PickleballSideOutState } from '@/types/match';
 
 export interface OpsReferee {
   id: string;
@@ -70,6 +70,8 @@ export interface MatchScheduleInput {
 export interface MatchScoreInput {
   p1SetsWon: number;
   p2SetsWon: number;
+  sets: MatchScore[];
+  sideOutState?: PickleballSideOutState;
 }
 
 export type MatchOperationAction =

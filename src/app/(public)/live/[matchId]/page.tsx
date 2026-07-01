@@ -8,40 +8,37 @@ import {
   getMatchScorePresentation,
   resolveMatchSportRules,
 } from '@/features/matches/score-display';
+import { getScoreRuleWarnings } from '@/features/matches/score-rule-warnings';
+import { getScoreEntryGuidance } from '@/features/tournaments/sport-rules/ui-guidance';
+import {
+  computeNextSideOutState,
+  readSideOutState,
+  setServingTeamSideOutState,
+} from '@/features/matches/side-out';
+import {
+  awardTennisPoint,
+  createTennisLivePointState,
+  formatTennisPointDisplay,
+  isTennisPointStateEmpty,
+  readPenaltyLog,
+  readTennisLivePointState,
+  stepBackTennisPoint,
+} from '@/features/matches/live-score-state';
 import { useLiveMatch } from '@/hooks/useLiveMatch';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { socketClient } from '@/lib/socket';
-import type { PickleballSideOutState } from '@/types/match';
+import type { MatchPenaltyRecord, PickleballSideOutState, TennisLivePointState } from '@/types/match';
 import { getErrorMessage } from '@/utils/error';
 import { trimAndNormalizeSpaces } from '@/utils/string';
-import { Trophy, Clock, MapPin, Activity, Plus, Minus, Check, Play, AlertCircle, Camera, MessageSquare, Send, Eye } from 'lucide-react';
+import { Trophy, Clock, MapPin, Activity, Play, AlertCircle, Camera, MessageSquare, Send, Eye, Shield, Users } from 'lucide-react';
+import { tournamentsApi } from '@/features/tournaments/api';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
+import { Button } from '@/components/ui/Button';
+import { OfficialScoreModal } from './components/OfficialScoreModal';
 
 interface Props {
   params: Promise<{ matchId: string }>;
-}
-
-function readSideOutState(match: Match): PickleballSideOutState {
-  const rawState = match.scoreDetails?.sideOutState;
-  if (!rawState) {
-    return {
-      servingTeam: null,
-      serverNumber: 1,
-      openingSequenceDone: false,
-    };
-  }
-
-  const servingTeam = rawState.servingTeam === 1 || rawState.servingTeam === 2
-    ? rawState.servingTeam
-    : null;
-  const serverNumber = rawState.serverNumber === 2 ? 2 : 1;
-
-  return {
-    servingTeam,
-    serverNumber,
-    openingSequenceDone: rawState.openingSequenceDone === true,
-  };
 }
 
 export default function LiveMatchPage({ params }: Props) {
@@ -51,9 +48,32 @@ export default function LiveMatchPage({ params }: Props) {
   const { user } = useAuthStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCommentSubmitting, setIsCommentSubmitting] = useState(false);
+  const [overrideEnabled, setOverrideEnabled] = useState(false);
+  const [overrideReason, setOverrideReason] = useState('');
+  const [isOfficialScoreModalOpen, setIsOfficialScoreModalOpen] = useState(false);
 
   const [comments, setComments] = useState<MatchComment[]>([]);
   const [commentText, setCommentText] = useState('');
+  const [participants, setParticipants] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!match?.tournamentId) return;
+    let isMounted = true;
+    const fetchParticipants = async () => {
+      try {
+        const res = await tournamentsApi.getTournamentParticipants(match.tournamentId);
+        if (isMounted && res.data) {
+          setParticipants(res.data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch participants:', err);
+      }
+    };
+    void fetchParticipants();
+    return () => {
+      isMounted = false;
+    };
+  }, [match?.tournamentId]);
 
   useEffect(() => {
     let isMounted = true;
@@ -143,14 +163,23 @@ export default function LiveMatchPage({ params }: Props) {
   const normalizedCommentText = trimAndNormalizeSpaces(commentText);
   const resolvedRules = resolveMatchSportRules(match);
   const scorePresentation = getMatchScorePresentation(resolvedRules.kind);
+  const scoreGuidance = getScoreEntryGuidance(resolvedRules.kind);
   const sequenceLabelTitle = scorePresentation.sequenceLabel.charAt(0).toUpperCase() + scorePresentation.sequenceLabel.slice(1);
   const sideOutState = readSideOutState(match);
   const isPickleballSideOut = resolvedRules.kind === 'PICKLEBALL_SIDE_OUT';
-  const servingTeamName = sideOutState.servingTeam === 1
-    ? team1Name
-    : sideOutState.servingTeam === 2
-      ? team2Name
-      : 'Chưa xác định đội giao';
+  const isTennis = resolvedRules.kind === 'TENNIS';
+  const tennisPointState = isTennis ? readTennisLivePointState(match, currentSet) : null;
+  const penalties = readPenaltyLog(match);
+  const scoreWarnings = getScoreRuleWarnings(scores, resolvedRules);
+  const scoreOverride =
+    match.scoreDetails &&
+    typeof match.scoreDetails === 'object' &&
+    'scoreOverride' in match.scoreDetails
+      ? (match.scoreDetails.scoreOverride as {
+          reason?: string;
+          decidedAt?: string;
+        } | undefined)
+      : undefined;
 
   const ensureCanControlLiveMatch = () => {
     if (canControlLiveMatch) {
@@ -161,16 +190,51 @@ export default function LiveMatchPage({ params }: Props) {
     return false;
   };
 
+  const resolveOverrideReason = () => {
+    if (!overrideEnabled) {
+      return null;
+    }
+
+    const trimmedReason = trimAndNormalizeSpaces(overrideReason);
+    if (!trimmedReason) {
+      toast.error('Bật override thì bắt buộc phải nhập lý do để lưu audit.');
+      return null;
+    }
+
+    return trimmedReason;
+  };
+
   const buildScoreDetailsPayload = (
     nextScores: typeof scores,
     nextSideOutState: PickleballSideOutState = sideOutState,
+    nextTennisPointState: TennisLivePointState | null = tennisPointState,
+    nextPenalties: MatchPenaltyRecord[] = penalties,
   ) => {
+    const basePayload =
+      match.scoreDetails && typeof match.scoreDetails === 'object'
+        ? match.scoreDetails
+        : {};
+
     const payload: Record<string, unknown> = {
+      ...basePayload,
       sets: nextScores,
+      penalties: nextPenalties,
     };
 
     if (isPickleballSideOut) {
       payload.sideOutState = nextSideOutState;
+    }
+
+    const liveState =
+      basePayload.liveState && typeof basePayload.liveState === 'object'
+        ? { ...(basePayload.liveState as Record<string, unknown>) }
+        : {};
+
+    if (isTennis && nextTennisPointState) {
+      liveState.tennisPointState = nextTennisPointState;
+      payload.liveState = liveState;
+    } else if (Object.keys(liveState).length > 0) {
+      payload.liveState = liveState;
     }
 
     return payload;
@@ -183,6 +247,10 @@ export default function LiveMatchPage({ params }: Props) {
     }
     if (isPickleballSideOut && action === 'inc' && sideOutState.servingTeam !== team) {
       toast.error('Trong mode side-out, chỉ đội đang giao bóng mới được cộng điểm.');
+      return;
+    }
+    const appliedOverrideReason = resolveOverrideReason();
+    if (overrideEnabled && !appliedOverrideReason) {
       return;
     }
     if (isSubmitting) return;
@@ -199,14 +267,37 @@ export default function LiveMatchPage({ params }: Props) {
         : newScores.length - 1;
 
       const setObj = { ...newScores[activeIdx] };
+      let nextTennisPointState = tennisPointState;
 
-      if (team === 1) {
-        setObj.team1Score = Math.max(0, action === 'inc' ? setObj.team1Score + 1 : setObj.team1Score - 1);
+      if (isTennis && tennisPointState) {
+        if (action === 'inc') {
+          const tennisResult = awardTennisPoint(setObj, tennisPointState, team, resolvedRules);
+          newScores[activeIdx] = tennisResult.nextSet;
+          nextTennisPointState = tennisResult.nextLiveState;
+        } else if (isTennisPointStateEmpty(tennisPointState)) {
+          newScores[activeIdx] =
+            team === 1
+              ? {
+                  ...setObj,
+                  team1Score: Math.max(0, setObj.team1Score - 1),
+                }
+              : {
+                  ...setObj,
+                  team2Score: Math.max(0, setObj.team2Score - 1),
+                };
+          nextTennisPointState = createTennisLivePointState(newScores[activeIdx]);
+        } else {
+          nextTennisPointState = stepBackTennisPoint(tennisPointState, team);
+          newScores[activeIdx] = setObj;
+        }
       } else {
-        setObj.team2Score = Math.max(0, action === 'inc' ? setObj.team2Score + 1 : setObj.team2Score - 1);
+        if (team === 1) {
+          setObj.team1Score = Math.max(0, action === 'inc' ? setObj.team1Score + 1 : setObj.team1Score - 1);
+        } else {
+          setObj.team2Score = Math.max(0, action === 'inc' ? setObj.team2Score + 1 : setObj.team2Score - 1);
+        }
+        newScores[activeIdx] = setObj;
       }
-
-      newScores[activeIdx] = setObj;
 
       // Optimistic Update
       setScores(newScores);
@@ -214,14 +305,17 @@ export default function LiveMatchPage({ params }: Props) {
       const res = await matchesApi.updateScore(matchId, {
         p1SetsWon: match.p1SetsWon,
         p2SetsWon: match.p2SetsWon,
-        scoreDetails: buildScoreDetailsPayload(newScores),
+        scoreDetails: buildScoreDetailsPayload(newScores, sideOutState, nextTennisPointState),
         winnerId: match.winnerId,
+        ...(appliedOverrideReason ? { overrideReason: appliedOverrideReason } : {}),
       });
 
       setMatch(res);
       setScores(extractMatchScores(res.scoreDetails));
       toast.success(
-        `${team === 1 ? team1Name : team2Name} ${action === 'inc' ? 'được cộng' : 'bị trừ'} 1 ${scorePresentation.scoreUnit} ở ${scorePresentation.sequenceLabel} ${activeIdx + 1}.`,
+        isTennis
+          ? `${team === 1 ? team1Name : team2Name} ${action === 'inc' ? 'thắng thêm 1 pha bóng' : 'được lùi lại 1 mức điểm'} trong game hiện tại.`
+          : `${team === 1 ? team1Name : team2Name} ${action === 'inc' ? 'được cộng' : 'bị trừ'} 1 ${scorePresentation.scoreUnit} ở ${scorePresentation.sequenceLabel} ${activeIdx + 1}.`,
         { id: `score-${matchId}` },
       );
     } catch (err: unknown) {
@@ -248,7 +342,11 @@ export default function LiveMatchPage({ params }: Props) {
         scoreUpdatePayload = {
           p1SetsWon: 0,
           p2SetsWon: 0,
-          scoreDetails: buildScoreDetailsPayload(initialScores),
+          scoreDetails: buildScoreDetailsPayload(
+            initialScores,
+            sideOutState,
+            isTennis ? createTennisLivePointState(initialScores[0]) : null,
+          ),
         };
         setScores(initialScores);
       }
@@ -275,6 +373,10 @@ export default function LiveMatchPage({ params }: Props) {
   // Handle Finish Current Set
   const handleFinishSet = async () => {
     if (!ensureCanControlLiveMatch()) {
+      return;
+    }
+    const appliedOverrideReason = resolveOverrideReason();
+    if (overrideEnabled && !appliedOverrideReason) {
       return;
     }
     if (isSubmitting) return;
@@ -306,11 +408,17 @@ export default function LiveMatchPage({ params }: Props) {
         newScores.push({ team1Score: 0, team2Score: 0, isFinished: false });
       }
 
+      const nextTennisPointState =
+        isTennis && p1Sets < resolvedRules.setsToWin && p2Sets < resolvedRules.setsToWin
+          ? createTennisLivePointState(newScores[newScores.length - 1])
+          : null;
+
       const res = await matchesApi.updateScore(matchId, {
         p1SetsWon: p1Sets,
         p2SetsWon: p2Sets,
-        scoreDetails: buildScoreDetailsPayload(newScores),
+        scoreDetails: buildScoreDetailsPayload(newScores, sideOutState, nextTennisPointState),
         winnerId: match.winnerId,
+        ...(appliedOverrideReason ? { overrideReason: appliedOverrideReason } : {}),
       });
 
       setMatch(res);
@@ -335,6 +443,10 @@ export default function LiveMatchPage({ params }: Props) {
   // Handle End Match with Winner Selection
   const handleCompleteMatch = async (winnerTeam: 1 | 2) => {
     if (!ensureCanControlLiveMatch()) {
+      return;
+    }
+    const appliedOverrideReason = resolveOverrideReason();
+    if (overrideEnabled && !appliedOverrideReason) {
       return;
     }
     if (isSubmitting) return;
@@ -370,8 +482,9 @@ export default function LiveMatchPage({ params }: Props) {
       await matchesApi.updateScore(matchId, {
         p1SetsWon: p1Sets,
         p2SetsWon: p2Sets,
-        scoreDetails: buildScoreDetailsPayload(newScores),
+        scoreDetails: buildScoreDetailsPayload(newScores, sideOutState, null),
         winnerId,
+        ...(appliedOverrideReason ? { overrideReason: appliedOverrideReason } : {}),
       });
 
       // Update status to COMPLETED
@@ -394,19 +507,20 @@ export default function LiveMatchPage({ params }: Props) {
     if (!ensureCanControlLiveMatch() || !isPickleballSideOut || isSubmitting) {
       return;
     }
+    const appliedOverrideReason = resolveOverrideReason();
+    if (overrideEnabled && !appliedOverrideReason) {
+      return;
+    }
 
     setIsSubmitting(true);
     try {
-      const nextState: PickleballSideOutState = {
-        servingTeam: team,
-        serverNumber: 1,
-        openingSequenceDone: true,
-      };
+      const nextState: PickleballSideOutState = setServingTeamSideOutState(team);
       const res = await matchesApi.updateScore(matchId, {
         p1SetsWon: match.p1SetsWon,
         p2SetsWon: match.p2SetsWon,
         scoreDetails: buildScoreDetailsPayload(scores, nextState),
         winnerId: match.winnerId,
+        ...(appliedOverrideReason ? { overrideReason: appliedOverrideReason } : {}),
       });
       setMatch(res);
       toast.success(`Đã chuyển quyền giao bóng cho ${team === 1 ? team1Name : team2Name}.`);
@@ -427,29 +541,21 @@ export default function LiveMatchPage({ params }: Props) {
       toast.error('Hãy chọn đội giao bóng trước khi thao tác side-out.');
       return;
     }
+    const appliedOverrideReason = resolveOverrideReason();
+    if (overrideEnabled && !appliedOverrideReason) {
+      return;
+    }
 
     setIsSubmitting(true);
     try {
-      let nextState: PickleballSideOutState;
-      if (sideOutState.serverNumber === 1) {
-        nextState = {
-          servingTeam: sideOutState.servingTeam,
-          serverNumber: 2,
-          openingSequenceDone: sideOutState.openingSequenceDone,
-        };
-      } else {
-        nextState = {
-          servingTeam: sideOutState.servingTeam === 1 ? 2 : 1,
-          serverNumber: 1,
-          openingSequenceDone: true,
-        };
-      }
+      const nextState: PickleballSideOutState = computeNextSideOutState(sideOutState);
 
       const res = await matchesApi.updateScore(matchId, {
         p1SetsWon: match.p1SetsWon,
         p2SetsWon: match.p2SetsWon,
         scoreDetails: buildScoreDetailsPayload(scores, nextState),
         winnerId: match.winnerId,
+        ...(appliedOverrideReason ? { overrideReason: appliedOverrideReason } : {}),
       });
       setMatch(res);
       toast.success(
@@ -464,6 +570,63 @@ export default function LiveMatchPage({ params }: Props) {
       setIsSubmitting(false);
     }
   };
+
+  const handleAddPenalty = async (
+    team: 1 | 2 | null,
+    kind: string,
+    label: string,
+    note?: string,
+  ) => {
+    if (!ensureCanControlLiveMatch() || isSubmitting) {
+      return;
+    }
+
+    const appliedOverrideReason = resolveOverrideReason();
+    if (overrideEnabled && !appliedOverrideReason) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const nextPenalties: MatchPenaltyRecord[] = [
+        {
+          id: crypto.randomUUID(),
+          team,
+          kind,
+          label,
+          note,
+          createdAt: new Date().toISOString(),
+        },
+        ...penalties,
+      ];
+
+      const res = await matchesApi.updateScore(matchId, {
+        p1SetsWon: match.p1SetsWon,
+        p2SetsWon: match.p2SetsWon,
+        scoreDetails: buildScoreDetailsPayload(scores, sideOutState, tennisPointState, nextPenalties),
+        winnerId: match.winnerId,
+        ...(appliedOverrideReason ? { overrideReason: appliedOverrideReason } : {}),
+      });
+
+      setMatch(res);
+      toast.success(`Đã ghi nhận hình phạt: ${label}.`);
+    } catch (err: unknown) {
+      console.error(err);
+      toast.error(getErrorMessage(err, 'Không thể lưu hình phạt cho trận này.'));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const currentDisplayTeam1 = isTennis && tennisPointState
+    ? formatTennisPointDisplay(tennisPointState.team1Point)
+    : String(currentSet.team1Score);
+  const currentDisplayTeam2 = isTennis && tennisPointState
+    ? formatTennisPointDisplay(tennisPointState.team2Point)
+    : String(currentSet.team2Score);
+  const currentDetailScoreLabel = isTennis
+    ? `Game của ${scorePresentation.sequenceLabel} ${activeSetIdx + 1}: ${currentSet.team1Score} - ${currentSet.team2Score}`
+    : null;
 
   const handlePostComment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -491,6 +654,9 @@ export default function LiveMatchPage({ params }: Props) {
     }
   };
 
+  const part1 = participants.find((p) => p.id === match.participant1Id);
+  const part2 = participants.find((p) => p.id === match.participant2Id);
+
   return (
     <div className="min-h-screen bg-slate-50 pt-10 pb-20 px-4">
       <div className="max-w-6xl mx-auto">
@@ -516,6 +682,9 @@ export default function LiveMatchPage({ params }: Props) {
             <span className="text-sm font-semibold text-slate-500 bg-slate-200 px-3 py-1 rounded-full">Vòng {match.roundNumber}</span>
             <span className="flex items-center gap-1.5 text-sm font-semibold text-slate-600 bg-white border border-slate-200 px-3 py-1 rounded-full">
               <Eye className="w-4 h-4 text-blue-600" /> {viewerCount} đang xem
+            </span>
+            <span className="text-sm font-semibold text-slate-600 bg-blue-50 border border-blue-100 px-3 py-1 rounded-full">
+              Môn: {scorePresentation.sportLabel}
             </span>
             {!canControlLiveMatch && (
               <span className="text-sm font-semibold text-slate-500 bg-slate-100 border border-slate-200 px-3 py-1 rounded-full">
@@ -593,48 +762,113 @@ export default function LiveMatchPage({ params }: Props) {
                   
                   {/* Team 1 */}
                   <div className="flex flex-col items-center flex-1 w-full">
-                    <div className={`w-24 h-24 rounded-2xl flex items-center justify-center mb-4 shadow-inner border transition-all ${
+                    <div className={`w-20 h-20 rounded-2xl flex items-center justify-center mb-4 shadow-md border transition-all ${
                       match.winnerId === match.participant1Id && match.status === 'COMPLETED'
                         ? 'bg-emerald-50 border-emerald-200 text-emerald-600 ring-4 ring-emerald-100'
-                        : 'bg-blue-50 border-blue-100 text-blue-600'
+                        : 'bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-100 text-blue-600'
                     }`}>
                       {match.winnerId === match.participant1Id && match.status === 'COMPLETED' ? (
-                        <Trophy className="w-12 h-12" />
+                        <Trophy className="w-10 h-10" />
                       ) : (
-                        <span className="text-3xl font-black">{team1Name.substring(0, 2).toUpperCase()}</span>
+                        <Users className="w-9 h-9" />
                       )}
                     </div>
-                    <h3 className="text-2xl font-black text-slate-900 text-center">{team1Name}</h3>
-                    <div className="text-slate-500 font-medium mt-1">{scorePresentation.wonSummaryLabel}: {match.p1SetsWon}</div>
+                    <h3 className="text-lg font-black text-slate-900 text-center leading-snug">{team1Name}</h3>
+                    <div className="text-slate-500 text-xs font-bold mt-1.5 uppercase tracking-wider">{scorePresentation.wonSummaryLabel}: {match.p1SetsWon}</div>
+                    
+                    {part1 && part1.members && part1.members.length > 0 && (
+                      <div className="mt-4 flex flex-col items-center gap-1.5 w-full">
+                        <div className="flex flex-wrap justify-center gap-2">
+                          {part1.members.map((member: any) => (
+                            <Link
+                              key={member.userId}
+                              href={`/users/${member.userId}`}
+                              className="flex items-center gap-2 bg-slate-50/80 hover:bg-blue-50 border border-slate-200/60 hover:border-blue-200 rounded-xl px-2.5 py-1 transition-all group shadow-[0_1px_3px_rgba(0,0,0,0.02)]"
+                            >
+                              <div className="w-5 h-5 rounded-full overflow-hidden bg-slate-200 relative shrink-0">
+                                {member.avatarUrl ? (
+                                  <img src={member.avatarUrl} alt={member.fullName} className="w-full h-full object-cover" />
+                                ) : (
+                                  <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-slate-500 uppercase">{member.fullName?.charAt(0) || 'U'}</span>
+                                )}
+                              </div>
+                              <div className="text-left leading-none">
+                                <p className="text-[11px] font-bold text-slate-700 group-hover:text-blue-700 transition-colors">{member.fullName || 'Người chơi'}</p>
+                                {member.elo && (
+                                  <p className="text-[8px] font-medium text-slate-400 mt-0.5">
+                                    {member.elo.tierName} • <span className="font-bold text-blue-600">{member.elo.eloPoints} ELO</span>
+                                  </p>
+                                )}
+                              </div>
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Main Score Display */}
                   <div className="flex flex-col items-center justify-center mx-4 flex-shrink-0">
                     <div className="flex items-center justify-center gap-6">
-                      <div className="text-6xl md:text-8xl font-black tabular-nums tracking-tighter text-slate-900">{currentSet.team1Score}</div>
+                      <div className="text-6xl md:text-8xl font-black tabular-nums tracking-tighter text-slate-900">{currentDisplayTeam1}</div>
                       <div className="text-4xl font-black text-slate-300">-</div>
-                      <div className="text-6xl md:text-8xl font-black tabular-nums tracking-tighter text-slate-900">{currentSet.team2Score}</div>
+                      <div className="text-6xl md:text-8xl font-black tabular-nums tracking-tighter text-slate-900">{currentDisplayTeam2}</div>
                     </div>
                     <div className="mt-4 text-xs font-bold text-slate-400 tracking-widest uppercase flex items-center gap-2">
                       <Activity className="w-3.5 h-3.5 animate-pulse text-rose-500" /> {scorePresentation.currentScoreLabel}
                     </div>
+                    {currentDetailScoreLabel ? (
+                      <div className="mt-2 rounded-full bg-slate-100 px-4 py-1 text-xs font-bold text-slate-600">
+                        {currentDetailScoreLabel}
+                      </div>
+                    ) : null}
                   </div>
 
                   {/* Team 2 */}
                   <div className="flex flex-col items-center flex-1 w-full">
-                    <div className={`w-24 h-24 rounded-2xl flex items-center justify-center mb-4 shadow-inner border transition-all ${
+                    <div className={`w-20 h-20 rounded-2xl flex items-center justify-center mb-4 shadow-md border transition-all ${
                       match.winnerId === match.participant2Id && match.status === 'COMPLETED'
                         ? 'bg-emerald-50 border-emerald-200 text-emerald-600 ring-4 ring-emerald-100'
-                        : 'bg-indigo-50 border-indigo-100 text-indigo-600'
+                        : 'bg-gradient-to-br from-indigo-50 to-blue-50 border-indigo-100 text-indigo-600'
                     }`}>
                       {match.winnerId === match.participant2Id && match.status === 'COMPLETED' ? (
-                        <Trophy className="w-12 h-12" />
+                        <Trophy className="w-10 h-10" />
                       ) : (
-                        <span className="text-3xl font-black">{team2Name.substring(0, 2).toUpperCase()}</span>
+                        <Users className="w-9 h-9" />
                       )}
                     </div>
-                    <h3 className="text-2xl font-black text-slate-900 text-center">{team2Name}</h3>
-                    <div className="text-slate-500 font-medium mt-1">{scorePresentation.wonSummaryLabel}: {match.p2SetsWon}</div>
+                    <h3 className="text-lg font-black text-slate-900 text-center leading-snug">{team2Name}</h3>
+                    <div className="text-slate-500 text-xs font-bold mt-1.5 uppercase tracking-wider">{scorePresentation.wonSummaryLabel}: {match.p2SetsWon}</div>
+                    
+                    {part2 && part2.members && part2.members.length > 0 && (
+                      <div className="mt-4 flex flex-col items-center gap-1.5 w-full">
+                        <div className="flex flex-wrap justify-center gap-2">
+                          {part2.members.map((member: any) => (
+                            <Link
+                              key={member.userId}
+                              href={`/users/${member.userId}`}
+                              className="flex items-center gap-2 bg-slate-50/80 hover:bg-blue-50 border border-slate-200/60 hover:border-blue-200 rounded-xl px-2.5 py-1 transition-all group shadow-[0_1px_3px_rgba(0,0,0,0.02)]"
+                            >
+                              <div className="w-5 h-5 rounded-full overflow-hidden bg-slate-200 relative shrink-0">
+                                {member.avatarUrl ? (
+                                  <img src={member.avatarUrl} alt={member.fullName} className="w-full h-full object-cover" />
+                                ) : (
+                                  <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-slate-500 uppercase">{member.fullName?.charAt(0) || 'U'}</span>
+                                )}
+                              </div>
+                              <div className="text-left leading-none">
+                                <p className="text-[11px] font-bold text-slate-700 group-hover:text-blue-700 transition-colors">{member.fullName || 'Người chơi'}</p>
+                                {member.elo && (
+                                  <p className="text-[8px] font-medium text-slate-400 mt-0.5">
+                                    {member.elo.tierName} • <span className="font-bold text-blue-600">{member.elo.eloPoints} ELO</span>
+                                  </p>
+                                )}
+                              </div>
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -671,195 +905,42 @@ export default function LiveMatchPage({ params }: Props) {
               </div>
             </div>
 
-            {resolvedRules.kind === 'PICKLEBALL_SIDE_OUT' && (
-              <div className="space-y-3">
-                <div className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 text-sm text-amber-900 font-medium">
-                  Chế độ pickleball side-out đang bám theo đội giao bóng hiện tại. Chỉ đội giao bóng mới được cộng điểm.
-                </div>
-                <div className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 md:grid-cols-[1.2fr_1fr]">
+            {canControlLiveMatch ? (
+              <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                   <div>
-                    <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Trạng thái giao bóng</p>
-                    <p className="mt-2 text-sm font-black text-slate-900">
-                      {sideOutState.servingTeam == null
-                        ? 'Chưa chọn đội giao'
-                        : `${servingTeamName} đang giao • lượt ${sideOutState.serverNumber}`}
+                    <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">
+                      Khu điều khiển trọng tài
                     </p>
-                    <p className="mt-1 text-xs font-medium text-slate-500">
-                      Dùng `Mất giao / Side-out` để chuyển từ người giao 1 sang người giao 2, rồi mới sang đội còn lại.
+                    <h3 className="mt-2 text-xl font-black text-slate-900">
+                      Mở bảng chấm điểm chuyên dụng
+                    </h3>
+                    <p className="mt-1 text-sm font-medium text-slate-500">
+                      Trang live giữ giao diện xem trận gọn hơn. Toàn bộ thao tác chấm điểm, lỗi và ngoại lệ được đưa vào modal riêng.
                     </p>
                   </div>
-                  <div className="flex flex-col gap-2">
-                    <div className="grid grid-cols-2 gap-2">
-                      <button
-                        type="button"
-                        onClick={() => void handleSetServingTeam(1)}
-                        disabled={isSubmitting}
-                        className={`rounded-xl border px-3 py-2 text-xs font-black transition-colors ${
-                          sideOutState.servingTeam === 1
-                            ? 'border-blue-600 bg-blue-600 text-white'
-                            : 'border-slate-200 bg-white text-slate-700 hover:border-blue-300'
-                        }`}
-                      >
-                        {team1Name} giao
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => void handleSetServingTeam(2)}
-                        disabled={isSubmitting}
-                        className={`rounded-xl border px-3 py-2 text-xs font-black transition-colors ${
-                          sideOutState.servingTeam === 2
-                            ? 'border-indigo-600 bg-indigo-600 text-white'
-                            : 'border-slate-200 bg-white text-slate-700 hover:border-indigo-300'
-                        }`}
-                      >
-                        {team2Name} giao
-                      </button>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => void handleSideOut()}
-                      disabled={isSubmitting || sideOutState.servingTeam == null}
-                      className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-black text-amber-800 hover:bg-amber-100 disabled:opacity-50"
-                    >
-                      Mất giao / Side-out
-                    </button>
-                  </div>
+                  <Button
+                    size="lg"
+                    onClick={() => setIsOfficialScoreModalOpen(true)}
+                    className="h-auto rounded-2xl px-5 py-3 text-left text-sm font-black shadow-md"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Shield className="h-4 w-4" />
+                      Tính điểm
+                    </span>
+                  </Button>
                 </div>
               </div>
-            )}
+            ) : null}
 
-            {/* Live Match Control Panel */}
-            {canControlLiveMatch && (
-              <div className="bg-white rounded-3xl shadow-lg border border-slate-100 p-6 md:p-8">
-                <div className="flex items-center gap-3 border-b border-slate-100 pb-4 mb-6">
-                  <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
-                    <Activity className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-black text-slate-900">Bảng điều khiển trận đấu</h3>
-                    <p className="text-xs text-slate-500">Cập nhật điểm số và trạng thái trận đấu theo thời gian thực</p>
-                  </div>
-                </div>
-
-                {match.status === 'SCHEDULED' && (
-                  <div className="flex flex-col items-center justify-center p-8 bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-center">
-                    <AlertCircle className="w-12 h-12 text-blue-500 mb-2" />
-                    <h4 className="font-bold text-slate-800 mb-1">Trận đấu chưa bắt đầu</h4>
-                    {(!match.participant1Id || !match.participant2Id) ? (
-                      <>
-                        <p className="text-xs text-amber-600 font-bold bg-amber-50 border border-amber-100 p-2.5 rounded-lg mb-6 max-w-sm">
-                          ⚠️ Chưa xác định đầy đủ hai đối thủ tham gia thi đấu. Vui lòng chờ các trận đấu ở vòng trước hoàn thành.
-                        </p>
-                        <button
-                          disabled={true}
-                          className="flex items-center gap-2 px-6 py-3 bg-slate-200 text-slate-400 font-bold rounded-xl transition-all cursor-not-allowed"
-                        >
-                          <Play className="w-4 h-4 fill-current" /> Bắt đầu trận đấu
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                    <p className="text-xs text-slate-500 mb-6 max-w-sm">Hãy kích hoạt trận đấu để bắt đầu ghi điểm {scorePresentation.sequenceLabel} đấu.</p>
-                        <button
-                          onClick={() => handleUpdateStatus('ONGOING')}
-                          disabled={isSubmitting}
-                          className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all shadow-md hover:shadow-lg disabled:opacity-50"
-                        >
-                          <Play className="w-4 h-4 fill-current" /> Bắt đầu trận đấu
-                        </button>
-                      </>
-                    )}
-                  </div>
-                )}
-
-                {match.status === 'ONGOING' && (
-                  <div className="space-y-8">
-                    {/* Points Modifier */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {/* Team 1 Score controls */}
-                      <div className="bg-slate-50 rounded-2xl p-5 border border-slate-150 flex flex-col items-center">
-                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Đội 1: {team1Name}</span>
-                        <div className="flex items-center gap-6 mt-1">
-                          <button
-                            onClick={() => handleUpdatePoints(1, 'dec')}
-                            disabled={isSubmitting || currentSet.team1Score <= 0 || !match.participant1Id || !match.participant2Id}
-                            className="w-12 h-12 rounded-full bg-white border border-slate-200 hover:bg-slate-100 flex items-center justify-center text-slate-600 transition-colors shadow-sm disabled:opacity-50"
-                          >
-                            <Minus className="w-5 h-5" />
-                          </button>
-                          <span className="text-4xl font-black text-slate-900 tabular-nums w-12 text-center">{currentSet.team1Score}</span>
-                          <button
-                            onClick={() => handleUpdatePoints(1, 'inc')}
-                            disabled={isSubmitting || !match.participant1Id || !match.participant2Id || (isPickleballSideOut && sideOutState.servingTeam !== 1)}
-                            className="w-12 h-12 rounded-full bg-blue-600 hover:bg-blue-700 flex items-center justify-center text-white transition-colors shadow-md disabled:opacity-50"
-                          >
-                            <Plus className="w-5 h-5" />
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Team 2 Score controls */}
-                      <div className="bg-slate-50 rounded-2xl p-5 border border-slate-150 flex flex-col items-center">
-                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Đội 2: {team2Name}</span>
-                        <div className="flex items-center gap-6 mt-1">
-                          <button
-                            onClick={() => handleUpdatePoints(2, 'dec')}
-                            disabled={isSubmitting || currentSet.team2Score <= 0 || !match.participant1Id || !match.participant2Id}
-                            className="w-12 h-12 rounded-full bg-white border border-slate-200 hover:bg-slate-100 flex items-center justify-center text-slate-600 transition-colors shadow-sm disabled:opacity-50"
-                          >
-                            <Minus className="w-5 h-5" />
-                          </button>
-                          <span className="text-4xl font-black text-slate-900 tabular-nums w-12 text-center">{currentSet.team2Score}</span>
-                          <button
-                            onClick={() => handleUpdatePoints(2, 'inc')}
-                            disabled={isSubmitting || !match.participant1Id || !match.participant2Id || (isPickleballSideOut && sideOutState.servingTeam !== 2)}
-                            className="w-12 h-12 rounded-full bg-indigo-600 hover:bg-indigo-700 flex items-center justify-center text-white transition-colors shadow-md disabled:opacity-50"
-                          >
-                            <Plus className="w-5 h-5" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Operations */}
-                    <div className="flex flex-col sm:flex-row gap-4 justify-between border-t border-slate-100 pt-6">
-                      <button
-                        onClick={handleFinishSet}
-                        disabled={isSubmitting || !match.participant1Id || !match.participant2Id}
-                        className="flex-1 flex items-center justify-center gap-2 py-3 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold rounded-xl transition-all shadow-sm disabled:opacity-50"
-                      >
-                        <Check className="w-4 h-4 text-emerald-500" /> {scorePresentation.completeActionLabel}
-                      </button>
-
-                      <div className="flex flex-1 gap-3">
-                        <button
-                          onClick={() => handleCompleteMatch(1)}
-                          disabled={isSubmitting || !match.participant1Id || !match.participant2Id}
-                          className="flex-1 flex items-center justify-center gap-2 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition-all shadow-md disabled:opacity-50 text-xs"
-                        >
-                          <Trophy className="w-4 h-4" /> Đội 1 Thắng
-                        </button>
-                        <button
-                          onClick={() => handleCompleteMatch(2)}
-                          disabled={isSubmitting || !match.participant1Id || !match.participant2Id}
-                          className="flex-1 flex items-center justify-center gap-2 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition-all shadow-md disabled:opacity-50 text-xs"
-                        >
-                          <Trophy className="w-4 h-4" /> Đội 2 Thắng
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {match.status === 'COMPLETED' && (
-                  <div className="flex flex-col items-center justify-center p-6 bg-slate-50 rounded-2xl border border-slate-200 text-center">
-                    <Trophy className="w-12 h-12 text-emerald-500 mb-2" />
-                    <h4 className="font-bold text-slate-800 mb-1">Trận đấu đã hoàn thành</h4>
-                    <p className="text-xs text-slate-500">Người chiến thắng: <span className="font-bold text-emerald-600">{match.winnerId === match.participant1Id ? team1Name : team2Name}</span></p>
-                  </div>
-                )}
+            {scoreOverride?.reason ? (
+              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm font-semibold text-violet-900">
+                Trận này đang dùng chế độ ngoại lệ của trọng tài/BTC: {scoreOverride.reason}
+                {scoreOverride.decidedAt
+                  ? ` • ${new Date(scoreOverride.decidedAt).toLocaleString('vi-VN')}`
+                  : ''}
               </div>
-            )}
+            ) : null}
           </div>
 
           {/* Right Column: Comments & Chat */}
@@ -925,6 +1006,37 @@ export default function LiveMatchPage({ params }: Props) {
             </div>
           </div>
         </div>
+
+        <OfficialScoreModal
+          open={isOfficialScoreModalOpen}
+          onOpenChange={setIsOfficialScoreModalOpen}
+          canControlLiveMatch={canControlLiveMatch}
+          isSubmitting={isSubmitting}
+          match={match}
+          team1Name={team1Name}
+          team2Name={team2Name}
+          currentSet={currentSet}
+          scorePresentation={scorePresentation}
+          scoreGuidance={scoreGuidance}
+          sportKind={resolvedRules.kind}
+          isPickleballSideOut={isPickleballSideOut}
+          sideOutState={sideOutState}
+          isTennis={isTennis}
+          tennisPointState={tennisPointState}
+          penalties={penalties}
+          scoreWarnings={scoreWarnings}
+          overrideEnabled={overrideEnabled}
+          overrideReason={overrideReason}
+          onOverrideEnabledChange={setOverrideEnabled}
+          onOverrideReasonChange={setOverrideReason}
+          onStartMatch={() => void handleUpdateStatus('ONGOING')}
+          onUpdatePoints={(team, action) => void handleUpdatePoints(team, action)}
+          onFinishSet={() => void handleFinishSet()}
+          onCompleteMatch={(winnerTeam) => void handleCompleteMatch(winnerTeam)}
+          onSetServingTeam={(team) => void handleSetServingTeam(team)}
+          onSideOut={() => void handleSideOut()}
+          onAddPenalty={(team, kind, label, note) => void handleAddPenalty(team, kind, label, note)}
+        />
 
       </div>
     </div>

@@ -53,7 +53,7 @@ const DEFAULT_SPORT_RULES: Record<SportRuleKind, SportRulesEnvelope> = {
     setsToWin: 1,
     pointsPerSet: 11,
     winByTwo: true,
-    maxPoints: 11,
+    maxPoints: 15,
     tiebreakPoints: 11,
     format: {
       gamePoint: 11,
@@ -64,7 +64,7 @@ const DEFAULT_SPORT_RULES: Record<SportRuleKind, SportRulesEnvelope> = {
       setsToWin: 1,
       pointsPerSet: 11,
       winByTwo: true,
-      maxPoints: 11,
+      maxPoints: 15,
       tiebreakPoints: 11,
     },
   },

@@ -12,6 +12,23 @@ export interface PickleballSideOutState {
   openingSequenceDone: boolean;
 }
 
+export type TennisPointLabel = '0' | '15' | '30' | '40' | 'A';
+
+export interface TennisLivePointState {
+  mode: 'standard' | 'tiebreak';
+  team1Point: TennisPointLabel | number;
+  team2Point: TennisPointLabel | number;
+}
+
+export interface MatchPenaltyRecord {
+  id: string;
+  team: 1 | 2 | null;
+  kind: string;
+  label: string;
+  note?: string;
+  createdAt: string;
+}
+
 export interface MatchComment {
   id: string;
   matchId: string;
@@ -46,6 +63,15 @@ export interface Match {
   scoreDetails?: Record<string, unknown> & {
     sets?: MatchScore[];
     sideOutState?: PickleballSideOutState;
+    liveState?: {
+      tennisPointState?: TennisLivePointState;
+    };
+    penalties?: MatchPenaltyRecord[];
+    scoreOverride?: {
+      reason?: string;
+      decidedAt?: string;
+      decidedBy?: string;
+    };
     specialResult?: {
       action?: string;
       reason?: string;

@@ -338,6 +338,12 @@ export default function ProfilePage() {
                   </span>
                 );
               })}
+              {userRankings?.publicRanks?.map((rank) => (
+                <div key={rank.id} className="flex items-center gap-1.5 shrink-0">
+                  <span className="text-[10px] font-black text-slate-500 uppercase">{rank.categoryName}:</span>
+                  <EloTierBadge elo={rank.eloPoints} size="sm" />
+                </div>
+              ))}
               {profileData?.createdAt && (
                 <span className="bg-slate-50 border border-slate-200 text-slate-650 px-3.5 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5">
                   <Calendar className="w-3.5 h-3.5 text-slate-400" /> Tham gia từ {formatDate(profileData.createdAt, 'MM/yyyy')}
@@ -742,9 +748,10 @@ export default function ProfilePage() {
                             <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase bg-slate-100 text-slate-550 border border-slate-200">
                               {rank.categoryName} • {rank.matchType === 'SINGLES' ? 'Đánh đơn' : 'Đánh đôi'}
                             </span>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
                               <Award className="w-5 h-5 text-blue-500 group-hover:scale-110 transition-transform" />
                               <h4 className="font-extrabold text-slate-900 text-base">{rank.eloPoints} ELO</h4>
+                              <EloTierBadge elo={rank.eloPoints} size="sm" />
                             </div>
                             <div className="grid grid-cols-3 gap-2 pt-2 text-center text-xs">
                               <div className="bg-slate-50/80 p-2 rounded-xl border border-slate-100">

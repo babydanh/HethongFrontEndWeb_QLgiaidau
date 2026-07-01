@@ -394,6 +394,7 @@ export function useOrganizerOps(
         p1SetsWon: payload.p1SetsWon,
         p2SetsWon: payload.p2SetsWon,
         winnerId,
+        ...(payload.overrideReason ? { overrideReason: payload.overrideReason } : {}),
         scoreDetails: {
           ...(currentScoreDetails ?? {}),
           sets: payload.sets,

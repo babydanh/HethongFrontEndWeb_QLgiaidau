@@ -5,11 +5,8 @@ import Link from 'next/link';
 import { AlertOctagon, CalendarClock, ClipboardPenLine, Play, TimerReset, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { DateTimePicker } from '@/components/ui/Input';
-import {
-  extractMatchScores,
-  getMatchScorePresentation,
-  resolveMatchSportRules,
-} from '@/features/matches/score-display';
+import { extractMatchScores, getMatchScorePresentation, resolveMatchSportRules } from '@/features/matches/score-display';
+import { readSideOutState } from '@/features/matches/side-out';
 import type { SportRulesEnvelope } from '@/types/tournament';
 import {
   Modal,
@@ -20,10 +17,9 @@ import {
   ModalTitle,
 } from '@/components/ui/Modal';
 import type { Match } from '@/types/match';
-import type { MatchScore } from '@/types/match';
-import type { PickleballSideOutState } from '@/types/match';
 import { formatDateTime } from '@/utils/format';
-import type { MatchOperationAction, MatchOperationInput, MatchScheduleInput, OpsReferee } from '@/features/organizer/ops/types';
+import type { MatchOperationAction, MatchOperationInput, MatchScheduleInput, MatchScoreInput, OpsReferee } from '@/features/organizer/ops/types';
+import { buildScoreDraft, ScoringPanel, type ScoreDraft } from './scoring/ScoringPanel';
 
 interface OpsMatchesProps {
   matches: Match[];
@@ -40,7 +36,7 @@ interface OpsMatchesProps {
   }>;
   onUpdateMatchStatus: (match: Match, status: Match['status']) => Promise<void>;
   onUpdateMatchSchedule: (match: Match, payload: MatchScheduleInput) => Promise<void>;
-  onUpdateMatchScore: (match: Match, payload: { p1SetsWon: number; p2SetsWon: number; sets: MatchScore[] }) => Promise<void>;
+  onUpdateMatchScore: (match: Match, payload: MatchScoreInput) => Promise<void>;
   onApplyMatchOperation: (match: Match, payload: MatchOperationInput) => Promise<void>;
   onCreateDispute: (match: Match, reason: string) => Promise<void>;
 }
@@ -50,10 +46,6 @@ interface ScheduleDraft {
   courtAddress: string;
   refereeId: string;
   scheduledAt: string;
-}
-
-interface ScoreDraft {
-  sets: MatchScore[];
 }
 
 interface OperationDraft {
@@ -75,36 +67,6 @@ interface MatchBucket {
   blocked: Match[];
   directAdvance: Match[];
 }
-
-const readSideOutState = (match: Match): PickleballSideOutState | null => {
-  const rawState = match.scoreDetails?.sideOutState;
-  if (!rawState) {
-    return null;
-  }
-
-  const { servingTeam, serverNumber, openingSequenceDone } = rawState;
-  if (
-    servingTeam !== null &&
-    servingTeam !== 1 &&
-    servingTeam !== 2
-  ) {
-    return null;
-  }
-
-  if (serverNumber !== 1 && serverNumber !== 2) {
-    return null;
-  }
-
-  if (typeof openingSequenceDone !== 'boolean') {
-    return null;
-  }
-
-  return {
-    servingTeam,
-    serverNumber,
-    openingSequenceDone,
-  };
-};
 
 const STATUS_FILTERS: Array<{ value: Match['status'] | 'ALL'; label: string }> = [
   { value: 'ALL', label: 'Tất cả' },
@@ -254,19 +216,8 @@ export function OpsMatches({
   };
 
   const openScoreModal = (match: Match) => {
-    const resolvedRules = resolveMatchSportRules({
-      matchConfig: match.matchConfig,
-      tournament: { sportRules: tournamentSportRules },
-    });
-    const existingSets = extractMatchScores(match.scoreDetails);
-    const seededSets = Array.from({ length: resolvedRules.bestOf }, (_, index) => (
-      existingSets[index] ?? { team1Score: 0, team2Score: 0, isFinished: false }
-    ));
-
     setSelectedScoreMatch(match);
-    setScoreDraft({
-      sets: seededSets,
-    });
+    setScoreDraft(buildScoreDraft(match, tournamentSportRules));
   };
 
   const handleSubmitSchedule = async () => {
@@ -298,6 +249,8 @@ export function OpsMatches({
       p1SetsWon,
       p2SetsWon,
       sets: completedSets,
+      sideOutState: scoreDraft.sideOutState,
+      overrideReason: scoreDraft.overrideEnabled ? scoreDraft.overrideReason?.trim() || undefined : undefined,
     });
     setSelectedScoreMatch(null);
   };
@@ -348,6 +301,15 @@ export function OpsMatches({
         ? (match.scoreDetails.specialResult as {
             action?: string;
             reason?: string;
+          } | undefined)
+        : undefined;
+    const scoreOverride =
+      match.scoreDetails &&
+      typeof match.scoreDetails === 'object' &&
+      'scoreOverride' in match.scoreDetails
+        ? (match.scoreDetails.scoreOverride as {
+            reason?: string;
+            decidedAt?: string;
           } | undefined)
         : undefined;
     const matchInsight = matchInsights?.[match.id];
@@ -404,6 +366,12 @@ export function OpsMatches({
               <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900">
                 Quyết định BTC: {specialResult.action}
                 {specialResult.reason ? ` • ${specialResult.reason}` : ''}
+              </div>
+            ) : null}
+            {scoreOverride?.reason ? (
+              <div className="rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-xs font-semibold text-violet-900">
+                Ngoại lệ điểm số: {scoreOverride.reason}
+                {scoreOverride.decidedAt ? ` • ${formatDateTime(scoreOverride.decidedAt)}` : ''}
               </div>
             ) : null}
             {matchInsight?.hasCustomConfig ? (
@@ -696,117 +664,15 @@ export function OpsMatches({
               Nhập tỉ số từng set/game đã chốt. Nếu cần chấm điểm từng pha đang diễn ra, hãy mở bảng điểm trực tiếp của trận.
             </ModalDescription>
           </ModalHeader>
-
-          {selectedScoreMatch ? (() => {
-            const resolvedRules = resolveMatchSportRules({
-              matchConfig: selectedScoreMatch.matchConfig,
-              tournament: { sportRules: tournamentSportRules },
-            });
-            const scorePresentation = getMatchScorePresentation(resolvedRules.kind);
-            const sideOutState = resolvedRules.kind === 'PICKLEBALL_SIDE_OUT' ? readSideOutState(selectedScoreMatch) : null;
-            const servingTeamLabel =
-              sideOutState?.servingTeam === 1
-                ? selectedScoreMatch.participant1?.teamName || 'Đội 1'
-                : sideOutState?.servingTeam === 2
-                  ? selectedScoreMatch.participant2?.teamName || 'Đội 2'
-                  : null;
-            const completedSets = scoreDraft.sets.filter((set) => set.team1Score > 0 || set.team2Score > 0);
-            const hasDrawnSet = completedSets.some((set) => set.team1Score === set.team2Score);
-            const p1Won = completedSets.filter((set) => set.team1Score > set.team2Score).length;
-            const p2Won = completedSets.filter((set) => set.team2Score > set.team1Score).length;
-            const canSubmitScore = completedSets.length > 0 && !hasDrawnSet;
-
-            return (
-              <div className="space-y-4">
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
-                  {scorePresentation.sportLabel} • {scorePresentation.summaryLabel} • Chạm đích: {resolvedRules.pointsPerSet}
-                  {resolvedRules.kind === 'TENNIS' ? ` game, tie-break ${resolvedRules.tiebreakPoints}` : ''}
-                </div>
-                {sideOutState ? (
-                  <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm font-semibold text-violet-900">
-                    {servingTeamLabel
-                      ? `${servingTeamLabel} đang giữ quyền giao • lượt ${sideOutState.serverNumber}. Lưu tỷ số từ panel này sẽ giữ nguyên trạng thái giao bóng hiện tại.`
-                      : 'Mode side-out đang bật nhưng trận chưa chốt đội giao hiện tại ở bảng điểm trực tiếp.'}
-                  </div>
-                ) : null}
-                <div className="grid gap-3">
-                  {scoreDraft.sets.map((set, index) => (
-                    <div key={`score-row-${index}`} className="grid grid-cols-[1fr_120px_120px] items-end gap-3 rounded-2xl border border-slate-200 bg-white p-4">
-                      <div>
-                        <p className="text-sm font-black text-slate-900">
-                          {scorePresentation.sequenceLabel.charAt(0).toUpperCase() + scorePresentation.sequenceLabel.slice(1)} {index + 1}
-                        </p>
-                        <p className="mt-1 text-xs font-medium text-slate-500">
-                          Bỏ trống bằng cách để cả hai bên = 0 nếu chưa chơi đến {scorePresentation.sequenceLabel} này.
-                        </p>
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-600">
-                          {selectedScoreMatch.participant1?.teamName || 'Đội 1'}
-                        </label>
-                        <input
-                          type="number"
-                          min={0}
-                          value={set.team1Score}
-                          onChange={(event) => setScoreDraft((current) => ({
-                            ...current,
-                            sets: current.sets.map((item, itemIndex) => itemIndex === index
-                              ? { ...item, team1Score: Number(event.target.value), isFinished: true }
-                              : item),
-                          }))}
-                          className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-600">
-                          {selectedScoreMatch.participant2?.teamName || 'Đội 2'}
-                        </label>
-                        <input
-                          type="number"
-                          min={0}
-                          value={set.team2Score}
-                          onChange={(event) => setScoreDraft((current) => ({
-                            ...current,
-                            sets: current.sets.map((item, itemIndex) => itemIndex === index
-                              ? { ...item, team2Score: Number(event.target.value), isFinished: true }
-                              : item),
-                          }))}
-                          className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm"
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="grid grid-cols-2 gap-4 rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm font-semibold text-blue-900">
-                  <div>{scorePresentation.wonSummaryLabel} {selectedScoreMatch.participant1?.teamName || 'Đội 1'}: <span className="font-black">{p1Won}</span></div>
-                  <div>{scorePresentation.wonSummaryLabel} {selectedScoreMatch.participant2?.teamName || 'Đội 2'}: <span className="font-black">{p2Won}</span></div>
-                </div>
-                {!canSubmitScore ? (
-                  <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">
-                    {completedSets.length === 0
-                      ? `Hãy nhập ít nhất một ${scorePresentation.sequenceLabel} đã hoàn tất trước khi lưu.`
-                      : `${scorePresentation.sequenceLabel.charAt(0).toUpperCase() + scorePresentation.sequenceLabel.slice(1)} không được hòa. Hãy kiểm tra lại tỉ số đã nhập.`}
-                  </div>
-                ) : null}
-                <ModalFooter className="gap-2">
-                  <Button variant="outline" className="border-slate-200 text-slate-700" onClick={() => setSelectedScoreMatch(null)}>
-                    Hủy
-                  </Button>
-                  <Button
-                    className="bg-blue-600 text-white hover:bg-blue-700"
-                    onClick={() => void handleSubmitScore()}
-                    disabled={!canSubmitScore}
-                  >
-                    Lưu tỷ số
-                  </Button>
-                </ModalFooter>
-              </div>
-            );
-          })() : (
-            <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm font-semibold text-slate-500">
-              Không có dữ liệu trận để nhập điểm.
-            </div>
-          )}
+          <ScoringPanel
+            match={selectedScoreMatch}
+            scoreDraft={scoreDraft}
+            setScoreDraft={setScoreDraft}
+            tournamentSportRules={tournamentSportRules}
+            isSubmitting={activeMatchActionId === selectedScoreMatch?.id}
+            onCancel={() => setSelectedScoreMatch(null)}
+            onSubmit={() => void handleSubmitScore()}
+          />
         </ModalContent>
       </Modal>
 

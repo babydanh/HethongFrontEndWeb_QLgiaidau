@@ -30,23 +30,7 @@ const stripHtml = (html?: string | null) => {
 };
 
 const getDefaultBanner = (categoryName?: string | null) => {
-  const name = (categoryName || '').toLowerCase();
-  if (name.includes('cầu lông') || name.includes('badminton')) {
-    return 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=800&auto=format&fit=crop&q=80';
-  }
-  if (name.includes('tennis') || name.includes('quần vợt')) {
-    return 'https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?w=800&auto=format&fit=crop&q=80';
-  }
-  if (name.includes('bóng bàn') || name.includes('ping pong') || name.includes('table tennis')) {
-    return 'https://images.unsplash.com/photo-1534158914592-062992fbe900?w=800&auto=format&fit=crop&q=80';
-  }
-  if (name.includes('bóng đá') || name.includes('soccer') || name.includes('football')) {
-    return 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=800&auto=format&fit=crop&q=80';
-  }
-  if (name.includes('bóng rổ') || name.includes('basketball')) {
-    return 'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=800&auto=format&fit=crop&q=80';
-  }
-  return 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=800&auto=format&fit=crop&q=80';
+  return '/images/vndc_sport.png';
 };
 
 const getFormatLabel = (matchType: string, genderRestriction?: string | null) => {

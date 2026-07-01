@@ -148,7 +148,7 @@ export default function Step4ReviewSubmit() {
       toast.success(`Tạo giải đấu với ${divisions.length} bảng thi đấu thành công!`);
       reset();
 
-      router.push(`/organizer/tournaments/${tournamentId}/manage`);
+      window.location.href = `/organizer/tournaments/${tournamentId}/manage`;
     } catch (error) {
       toast.error(getErrorMessage(error));
     } finally {

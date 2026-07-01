@@ -694,10 +694,18 @@ export function useManageState(id: string) {
     if (!selectedMatch) return;
     setIsScheduling(true);
     try {
+      const normalizedKind = normalizeSportRuleKindForCategory(sportRuleKind, selectedCategory);
       await tournamentsApi.updateMatchSchedule(selectedMatch.id, {
         courtName: matchCourtName || null, courtAddress: matchCourtAddress || null,
         scheduledAt: matchScheduledAt ? new Date(matchScheduledAt).toISOString() : null,
-        matchConfig: isCustomMatchConfig ? { kind: sportRuleKind, setsToWin: matchSetsToWin, pointsPerSet: matchPointsPerSet, deuceEnabled: matchDeuceEnabled, tiebreakAt: matchSuperTiebreakEnabled ? matchSuperTiebreakPoints : matchPointsPerSet-1, tiebreakPoints: matchSuperTiebreakEnabled ? matchSuperTiebreakPoints : undefined, maxPoints: matchDeuceEnabled ? matchMaxPoints : null } : null,
+        matchConfig: isCustomMatchConfig ? buildSportRulesPayload({
+          kind: normalizedKind,
+          setsToWin: matchSetsToWin,
+          pointsPerSet: matchPointsPerSet,
+          winByTwo: matchDeuceEnabled,
+          maxPoints: matchDeuceEnabled ? matchMaxPoints : null,
+          tiebreakPoints: matchSuperTiebreakEnabled ? matchSuperTiebreakPoints : null,
+        }) : null,
       });
       toast.success('Cập nhật lịch thi đấu thành công!');
       setSelectedMatch(null); await fetchTournamentData();

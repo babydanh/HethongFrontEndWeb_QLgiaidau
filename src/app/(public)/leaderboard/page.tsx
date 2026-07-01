@@ -5,8 +5,10 @@ import { useEffect, useState } from "react";
 import { categoriesApi, Category } from "@/features/categories/api";
 import { rankingsApi, PlayerRanking } from "@/features/rankings/api";
 import { regionsApi, Region } from "@/features/regions/api";
+import { usersApi } from "@/features/users/api";
 import { EloTierBadge } from "@/components/ui/EloTierBadge";
-import { Trophy, ChevronDown, ChevronUp, Award, Users, Info, Loader2 } from "lucide-react";
+import { Trophy, ChevronDown, ChevronUp, Award, Users, Info, Loader2, Search } from "lucide-react";
+import Link from "next/link";
 
 export default function LeaderboardPage() {
     const [categories, setCategories] = useState<Category[]>([]);
@@ -18,6 +20,60 @@ export default function LeaderboardPage() {
     const [selectedProvinceCode, setSelectedProvinceCode] = useState<string>('');
     const [selectedMatchType, setSelectedMatchType] = useState<string>('');
     const [selectedGenderFilter, setSelectedGenderFilter] = useState<string>('');
+
+    // ELO User Search States
+    const [searchQuery, setSearchQuery] = useState("");
+    const [searchResult, setSearchResult] = useState<any[]>([]);
+    const [searchLoading, setSearchLoading] = useState(false);
+    const [searchError, setSearchError] = useState("");
+
+    const handleSearchUser = async (e: React.FormEvent) => {
+        e.preventDefault();
+        const trimmed = searchQuery.trim();
+        if (trimmed.length < 2) {
+            setSearchError("Nhập ít nhất 2 ký tự");
+            return;
+        }
+        setSearchLoading(true);
+        setSearchError("");
+        setSearchResult([]);
+        try {
+            const res = await usersApi.searchUsersByQuery(trimmed);
+            const foundUsers = res || [];
+            if (foundUsers.length === 0) {
+                setSearchError("Không tìm thấy người dùng");
+                return;
+            }
+            
+            const enriched = await Promise.all(
+                foundUsers.map(async (u: any) => {
+                    try {
+                        const rankRes = await rankingsApi.getUserRankings(u.id);
+                        const data = rankRes.data || rankRes;
+                        const publicRanks = data.publicRanks || [];
+                        const matchRank = publicRanks.find((r: any) => r.categoryId === activeCategoryId);
+                        return {
+                            ...u,
+                            eloPoints: matchRank?.eloPoints ?? 1000,
+                            tierName: matchRank?.tier?.name || matchRank?.tierName || "Chưa xếp hạng",
+                        };
+                    } catch {
+                        return {
+                            ...u,
+                            eloPoints: 1000,
+                            tierName: "Chưa xếp hạng",
+                        };
+                    }
+                })
+            );
+            setSearchResult(enriched);
+        } catch (err) {
+            console.error(err);
+            setSearchError("Không tìm thấy hoặc có lỗi xảy ra");
+        } finally {
+            setSearchLoading(false);
+        }
+    };
 
     useEffect(() => {
         const init = async () => {
@@ -327,53 +383,128 @@ export default function LeaderboardPage() {
                     )}
                 </div>
 
-                {/* Right Column: Sidebar Tier Breakdown */}
+                {/* Right Column: Sidebar Tier Breakdown & Search */}
                 <div className="lg:col-span-4 xl:col-span-3">
-                    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sticky top-24 space-y-6">
-                        <div className="space-y-1">
-                            <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
-                                <Info className="w-4 h-4 text-blue-600" />
-                                Hệ thống phân hạng ELO
-                            </h3>
-                            <p className="text-slate-500 text-[11px] leading-relaxed">Điểm ELO tích lũy sau mỗi trận đấu sẽ xếp người chơi vào các Tier trình độ tương ứng.</p>
+                    <div className="flex flex-col gap-6 sticky top-28 lg:top-32">
+                        {/* Tier Breakdown Card */}
+                        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-6">
+                            <div className="space-y-1">
+                                <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
+                                    <Info className="w-4 h-4 text-blue-600" />
+                                    Hệ thống phân hạng ELO
+                                </h3>
+                                <p className="text-slate-500 text-[11px] leading-relaxed">Điểm ELO tích lũy sau mỗi trận đấu sẽ xếp người chơi vào các Tier trình độ tương ứng.</p>
+                            </div>
+                            <div className="flex flex-col gap-2">
+                                <div className="flex justify-between items-center p-2.5 rounded-xl border bg-slate-50 border-slate-205">
+                                    <span className="bg-amber-500/10 text-amber-600 px-2 py-0.5 rounded text-[10px] font-black uppercase">Tier S</span>
+                                    <span className="font-black text-xs text-slate-800">1800+ ELO</span>
+                                </div>
+                                <div className="flex justify-between items-center p-2.5 rounded-xl border bg-slate-50 border-slate-205">
+                                    <span className="bg-rose-500/15 text-rose-600 px-2 py-0.5 rounded text-[10px] font-black uppercase">High Tier A</span>
+                                    <span className="font-black text-xs text-slate-800">1700 - 1799 ELO</span>
+                                </div>
+                                <div className="flex justify-between items-center p-2.5 rounded-xl border bg-slate-55 border-slate-205">
+                                    <span className="bg-rose-500/10 text-rose-500 px-2 py-0.5 rounded text-[10px] font-black uppercase">Low Tier A</span>
+                                    <span className="font-black text-xs text-slate-800">1600 - 1699 ELO</span>
+                                </div>
+                                <div className="flex justify-between items-center p-2.5 rounded-xl border bg-slate-50 border-slate-205">
+                                    <span className="bg-violet-500/15 text-violet-650 px-2 py-0.5 rounded text-[10px] font-black uppercase">High Tier B</span>
+                                    <span className="font-black text-xs text-slate-800">1500 - 1599 ELO</span>
+                                </div>
+                                <div className="flex justify-between items-center p-2.5 rounded-xl border bg-slate-50 border-slate-205">
+                                    <span className="bg-violet-500/10 text-violet-550 px-2 py-0.5 rounded text-[10px] font-black uppercase">Low Tier B</span>
+                                    <span className="font-black text-xs text-slate-800">1400 - 1499 ELO</span>
+                                </div>
+                                <div className="flex justify-between items-center p-2.5 rounded-xl border bg-slate-50 border-slate-205">
+                                    <span className="bg-teal-500/10 text-teal-650 px-2 py-0.5 rounded text-[10px] font-black uppercase">High Tier C</span>
+                                    <span className="font-black text-xs text-slate-800">1300 - 1399 ELO</span>
+                                </div>
+                                <div className="flex justify-between items-center p-2.5 rounded-xl border bg-slate-55 border-slate-205">
+                                    <span className="bg-cyan-500/10 text-cyan-600 px-2 py-0.5 rounded text-[10px] font-black uppercase">Low Tier C</span>
+                                    <span className="font-black text-xs text-slate-800">1200 - 1299 ELO</span>
+                                </div>
+                                <div className="flex justify-between items-center p-2.5 rounded-xl border bg-slate-50 border-slate-205">
+                                    <span className="bg-slate-500/10 text-slate-700 px-2 py-0.5 rounded text-[10px] font-black uppercase">High Tier D</span>
+                                    <span className="font-black text-xs text-slate-800">1100 - 1199 ELO</span>
+                                </div>
+                                <div className="flex justify-between items-center p-2.5 rounded-xl border bg-slate-50 border-slate-205">
+                                    <span className="bg-orange-700/10 text-orange-600 px-2 py-0.5 rounded text-[10px] font-black uppercase">Low Tier D</span>
+                                    <span className="font-black text-xs text-slate-800">0 - 1099 ELO</span>
+                                </div>
+                            </div>
                         </div>
-                        <div className="flex flex-col gap-2">
-                            <div className="flex justify-between items-center p-2.5 rounded-xl border bg-slate-50 border-slate-205">
-                                <span className="bg-amber-500/10 text-amber-600 px-2 py-0.5 rounded text-[10px] font-black uppercase">Tier S</span>
-                                <span className="font-black text-xs text-slate-800">1800+ ELO</span>
+
+                        {/* Search User Elo Card */}
+                        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
+                            <div className="space-y-1">
+                                <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
+                                    <Search className="w-4 h-4 text-blue-600" />
+                                    Tra cứu ELO kỳ thủ
+                                </h3>
+                                <p className="text-slate-500 text-[11px] leading-relaxed">Nhập Gmail hoặc Số điện thoại để tìm thứ hạng và Tier trình độ.</p>
                             </div>
-                            <div className="flex justify-between items-center p-2.5 rounded-xl border bg-slate-50 border-slate-205">
-                                <span className="bg-rose-500/15 text-rose-600 px-2 py-0.5 rounded text-[10px] font-black uppercase">High Tier A</span>
-                                <span className="font-black text-xs text-slate-800">1700 - 1799 ELO</span>
-                            </div>
-                            <div className="flex justify-between items-center p-2.5 rounded-xl border bg-slate-55 border-slate-205">
-                                <span className="bg-rose-500/10 text-rose-500 px-2 py-0.5 rounded text-[10px] font-black uppercase">Low Tier A</span>
-                                <span className="font-black text-xs text-slate-800">1600 - 1699 ELO</span>
-                            </div>
-                            <div className="flex justify-between items-center p-2.5 rounded-xl border bg-slate-50 border-slate-205">
-                                <span className="bg-violet-500/15 text-violet-650 px-2 py-0.5 rounded text-[10px] font-black uppercase">High Tier B</span>
-                                <span className="font-black text-xs text-slate-800">1500 - 1599 ELO</span>
-                            </div>
-                            <div className="flex justify-between items-center p-2.5 rounded-xl border bg-slate-50 border-slate-205">
-                                <span className="bg-violet-500/10 text-violet-550 px-2 py-0.5 rounded text-[10px] font-black uppercase">Low Tier B</span>
-                                <span className="font-black text-xs text-slate-800">1400 - 1499 ELO</span>
-                            </div>
-                            <div className="flex justify-between items-center p-2.5 rounded-xl border bg-slate-50 border-slate-205">
-                                <span className="bg-teal-500/10 text-teal-650 px-2 py-0.5 rounded text-[10px] font-black uppercase">High Tier C</span>
-                                <span className="font-black text-xs text-slate-800">1300 - 1399 ELO</span>
-                            </div>
-                            <div className="flex justify-between items-center p-2.5 rounded-xl border bg-slate-55 border-slate-205">
-                                <span className="bg-cyan-500/10 text-cyan-600 px-2 py-0.5 rounded text-[10px] font-black uppercase">Low Tier C</span>
-                                <span className="font-black text-xs text-slate-800">1200 - 1299 ELO</span>
-                            </div>
-                            <div className="flex justify-between items-center p-2.5 rounded-xl border bg-slate-50 border-slate-205">
-                                <span className="bg-slate-500/10 text-slate-700 px-2 py-0.5 rounded text-[10px] font-black uppercase">High Tier D</span>
-                                <span className="font-black text-xs text-slate-800">1100 - 1199 ELO</span>
-                            </div>
-                            <div className="flex justify-between items-center p-2.5 rounded-xl border bg-slate-50 border-slate-205">
-                                <span className="bg-orange-700/10 text-orange-600 px-2 py-0.5 rounded text-[10px] font-black uppercase">Low Tier D</span>
-                                <span className="font-black text-xs text-slate-800">0 - 1099 ELO</span>
-                            </div>
+
+                            <form onSubmit={handleSearchUser} className="flex gap-2">
+                                <input
+                                    type="text"
+                                    placeholder="gmail hoặc sđt..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-600 bg-slate-50 text-slate-800 placeholder-slate-400"
+                                />
+                                <button
+                                    type="submit"
+                                    disabled={searchLoading}
+                                    className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-black transition-all flex items-center justify-center shrink-0 disabled:opacity-50 cursor-pointer animate-none"
+                                >
+                                    {searchLoading ? (
+                                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                    ) : (
+                                        "Tìm"
+                                    )}
+                                </button>
+                            </form>
+
+                            {searchError && (
+                                <p className="text-[10px] text-rose-500 font-extrabold">{searchError}</p>
+                            )}
+
+                            {searchResult.length > 0 && (
+                                <div className="space-y-2.5 pt-2 border-t border-slate-100">
+                                    {searchResult.map((u) => (
+                                        <Link
+                                            key={u.id}
+                                            href={`/users/${u.id}/public`}
+                                            className="flex items-center gap-3 p-2.5 rounded-xl border border-slate-150 bg-slate-50/50 hover:bg-blue-50/20 hover:border-blue-200 transition-all cursor-pointer group"
+                                        >
+                                            <div className="w-9 h-9 rounded-full object-cover relative overflow-hidden bg-slate-100 shrink-0">
+                                                {u.avatarUrl ? (
+                                                    <Image src={u.avatarUrl} alt="Avatar" fill className="object-cover" />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center bg-blue-50 text-blue-600 font-black text-xs uppercase">
+                                                        {u.fullName?.substring(0, 2) || "VĐ"}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                                <h4 className="font-extrabold text-xs text-slate-800 truncate group-hover:text-blue-600 transition-colors">
+                                                    {u.fullName || "Kỳ thủ"}
+                                                </h4>
+                                                <p className="text-[10px] text-slate-400 font-medium truncate">{u.email}</p>
+                                            </div>
+                                            <div className="text-right shrink-0 flex flex-col items-end gap-1">
+                                                <span className="text-[10px] font-black text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded-md border border-blue-100">
+                                                    {u.eloPoints} ELO
+                                                </span>
+                                                <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider">
+                                                    {u.tierName}
+                                                </span>
+                                            </div>
+                                        </Link>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

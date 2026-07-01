@@ -138,8 +138,7 @@ export default function TournamentsListPage() {
       {/* Featured Hero Banner Carousel */}
       <TournamentHeroBanner tournaments={featuredTournaments} />
 
-      {/* Live Matches Widget */}
-      <LiveMatchesWidget limit={3} showAllLink={false} />
+
 
       {/* Filter Bar */}
       <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
@@ -257,7 +256,13 @@ export default function TournamentsListPage() {
                       className={`absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-103 ${tournament.status === 'COMPLETED' ? 'grayscale opacity-60' : ''}`}
                     />
                   ) : (
-                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-650 to-blue-800 opacity-90 group-hover:scale-103 transition-transform duration-500"></div>
+                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-650 to-blue-800 opacity-90 group-hover:scale-103 transition-transform duration-500 flex items-center justify-center">
+                      <img 
+                        src="/images/vndc_sport.png" 
+                        alt="VNDC Sport Logo" 
+                        className="w-24 h-auto object-contain opacity-75"
+                      />
+                    </div>
                   )}
                   
                   {/* Status Overlay (Top-Left) */}

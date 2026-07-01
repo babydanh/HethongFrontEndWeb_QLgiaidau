@@ -24,7 +24,7 @@ import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
 
 function CommunityLogoAvatar({ src, alt }: { src?: string | null; alt: string }) {
-  const fallbackSrc = '/images/vndc_sport_logo.png';
+  const fallbackSrc = '/images/vndc_sport.png';
   // Track only whether the image failed to load — src is derived directly from props
   const [imgError, setImgError] = useState(false);
   // Reset error when src changes (React recommended "derived state" pattern)
@@ -60,7 +60,18 @@ export default function HomePage() {
 
   // Live Matches Feed
   const [liveMatches, setLiveMatches] = useState<BracketMatch[]>([]);
-  const [highFives, setHighFives] = useState<Record<string, number>>({});
+  const [highFives, setHighFives] = useState<Record<string, number>>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('match_high_fives');
+      return saved ? JSON.parse(saved) : {};
+    }
+    return {};
+  });
+
+  // Ranked Tournament State
+  const [rankedTournament, setRankedTournament] = useState<Tournament | null>(null);
+  const [rankedTournamentMatches, setRankedTournamentMatches] = useState<BracketMatch[]>([]);
+  const [isLoadingRanked, setIsLoadingRanked] = useState(false);
 
   // Widget States
   const [userRankings, setUserRankings] = useState<{ publicRanks: PlayerRanking[]; communityRanks: PlayerRanking[] } | null>(null);
@@ -88,7 +99,8 @@ export default function HomePage() {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const tParams: Record<string, unknown> = { limit: 5 };
+        setIsLoadingRanked(true);
+        const tParams: Record<string, unknown> = { limit: 10 };
         if (selectedCategoryId) {
           tParams.categoryId = selectedCategoryId;
         }
@@ -119,7 +131,8 @@ export default function HomePage() {
           userRankingsPromise,
         ] as const);
 
-        setTournaments(tRes.status === 'fulfilled' ? tRes.value.data || [] : []);
+        const fetchedTournaments = tRes.status === 'fulfilled' ? tRes.value.data || [] : [];
+        setTournaments(fetchedTournaments);
         setCommunities(cRes.status === 'fulfilled' ? cRes.value.data || [] : []);
         setLiveMatches(lRes.status === 'fulfilled' ? (lRes.value.data as unknown as BracketMatch[]) || [] : []);
         setLeaderboard(rRes.status === 'fulfilled' ? rRes.value.data || [] : []);
@@ -129,8 +142,38 @@ export default function HomePage() {
         } else {
           setUserRankings(null);
         }
+
+        // Find active or recently completed ranked tournament
+        const foundRanked = fetchedTournaments.find(t => {
+          if (!t.isRanked) return false;
+          if (t.status === 'DRAFT' || t.status === 'CANCELLED') return false;
+          if (t.status === 'COMPLETED') {
+            if (!t.endDate) return false;
+            const sevenDays = 7 * 24 * 60 * 60 * 1000;
+            return (Date.now() - new Date(t.endDate).getTime()) < sevenDays;
+          }
+          return true;
+        });
+
+        if (foundRanked) {
+          setRankedTournament(foundRanked);
+          try {
+            const matchesRes = await matchesApi.getMatches({ tournamentId: foundRanked.id, limit: 50 });
+            // Extract from Axios response properly
+            const responseData = (matchesRes as any).data;
+            const mData = responseData?.data || responseData || [];
+            setRankedTournamentMatches(mData as unknown as BracketMatch[]);
+          } catch (err) {
+            console.error('Failed to load ranked tournament matches', err);
+            setRankedTournamentMatches([]);
+          }
+        } else {
+          setRankedTournament(null);
+          setRankedTournamentMatches([]);
+        }
       } finally {
         setIsLoading(false);
+        setIsLoadingRanked(false);
       }
     };
     fetchData();
@@ -138,16 +181,250 @@ export default function HomePage() {
 
   // High five simulation handler
   const handleHighFive = (matchId: string) => {
-    setHighFives(prev => ({
-      ...prev,
-      [matchId]: (prev[matchId] || 0) + 1
-    }));
+    setHighFives(prev => {
+      const updated = {
+        ...prev,
+        [matchId]: (prev[matchId] || 0) + 1
+      };
+      localStorage.setItem('match_high_fives', JSON.stringify(updated));
+      return updated;
+    });
     toast.success('High five! 👏', { icon: '👏', id: `hf-${matchId}` });
   };
 
   const shareMatch = (matchId: string) => {
     navigator.clipboard.writeText(`${window.location.origin}/live/${matchId}`);
     toast.success('Đã sao chép liên kết xem trận đấu!');
+  };
+
+  // Helper to determine active round
+  const getActiveRound = (matches: BracketMatch[]) => {
+    const ongoing = matches.filter(m => m.status === 'ONGOING');
+    if (ongoing.length > 0) return ongoing[0].roundNumber;
+
+    const scheduled = matches.filter(m => m.status === 'SCHEDULED' && m.participant1 && m.participant2);
+    if (scheduled.length > 0) return Math.min(...scheduled.map(m => m.roundNumber));
+
+    const completed = matches.filter(m => m.status === 'COMPLETED');
+    if (completed.length > 0) return Math.max(...completed.map(m => m.roundNumber));
+
+    return 1;
+  };
+
+  const activeRound = rankedTournamentMatches.length > 0 ? getActiveRound(rankedTournamentMatches) : 1;
+  const roundMatches = rankedTournamentMatches.filter(m => m.roundNumber === activeRound);
+
+  // If there are ongoing matches, show ongoing only
+  const ongoingInRound = roundMatches.filter(m => m.status === 'ONGOING');
+  const showOngoingOnly = ongoingInRound.length > 0;
+
+  // If no ongoing, show completed and scheduled
+  const displayRankedMatches = showOngoingOnly 
+    ? ongoingInRound 
+    : roundMatches.filter(m => m.status === 'COMPLETED' || m.status === 'SCHEDULED');
+
+  // Group live matches by tournament name
+  const liveMatchesByTournament = liveMatches.reduce((acc, match) => {
+    const tournamentName = match.tournament?.name || 'Giải đấu khác';
+    if (!acc[tournamentName]) {
+      acc[tournamentName] = {
+        name: tournamentName,
+        matches: [],
+      };
+    }
+    acc[tournamentName].matches.push(match);
+    return acc;
+  }, {} as Record<string, { name: string; matches: BracketMatch[] }>);
+
+  const renderMatchCard = (match: BracketMatch, isRankedMatchSection = false) => {
+    const currentHighFives = highFives[match.id] || 0;
+    const isLive = match.status === 'ONGOING';
+    const isCompleted = match.status === 'COMPLETED';
+    const isScheduled = match.status === 'SCHEDULED';
+
+    return (
+      <motion.div 
+        key={match.id}
+        whileHover={{ y: -3, scale: 1.005 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+        className={`bg-white rounded-2xl border ${
+          isLive 
+            ? 'border-rose-100 shadow-[0_4px_20px_rgba(244,63,94,0.03)]' 
+            : 'border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.015)]'
+        } overflow-hidden flex flex-col justify-between`}
+      >
+        {/* Match Header */}
+        <div className={`px-4 py-2.5 ${isLive ? 'bg-rose-50/30' : 'bg-slate-50/50'} border-b border-slate-100 flex items-center justify-between text-[10px] font-bold text-slate-500`}>
+          <div className="flex items-center gap-1.5 truncate max-w-[70%]">
+            {isLive ? (
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-455 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-600"></span>
+              </span>
+            ) : null}
+            <span className={`uppercase tracking-wider shrink-0 ${
+              isLive ? 'text-rose-655 font-extrabold' : isCompleted ? 'text-slate-500' : 'text-blue-605'
+            }`}>
+              {isLive ? 'Trực tiếp' : isCompleted ? 'Kết thúc' : 'Sắp đấu'}
+            </span>
+            <span className="text-slate-300">•</span>
+            <span className="shrink-0">Vòng {match.roundNumber}</span>
+            {match.courtName && (
+              <>
+                <span className="text-slate-300">•</span>
+                <span className="flex items-center gap-0.5 truncate max-w-[120px]">
+                  <MapPin className="w-3 h-3 text-slate-400" />
+                  {match.courtName}
+                </span>
+              </>
+            )}
+          </div>
+          <span className="uppercase text-slate-650 bg-slate-100 px-2 py-0.5 rounded text-[8px] font-extrabold truncate max-w-[28%]">
+            {match.group?.stage?.name || 'Vòng đấu'}
+          </span>
+        </div>
+
+        {/* Tournament Name Header */}
+        {!isRankedMatchSection && match.tournament?.name && (
+          <div className="px-4 pt-2.5 pb-1 flex items-center gap-1 text-[9px] font-black text-blue-600 uppercase tracking-wider border-b border-slate-50 bg-blue-50/10 truncate">
+            <Trophy className="w-3 h-3 text-blue-500 shrink-0" />
+            <span className="truncate">{match.tournament.name}</span>
+          </div>
+        )}
+
+        {/* Opponents Match Grid */}
+        <div className="p-4 flex items-center justify-between gap-3 relative">
+          {/* Player 1 */}
+          <div className="flex items-center gap-2.5 w-5/12 min-w-0">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-650 text-white flex items-center justify-center font-black text-xs shadow-sm uppercase shrink-0">
+              {match.participant1?.teamName.charAt(0) || '?'}
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1 min-w-0">
+                <span className="text-xs font-black text-slate-800 block leading-tight truncate">
+                  {match.participant1?.teamName || 'Chờ xác định'}
+                </span>
+                {isCompleted && match.winnerId && match.winnerId === match.participant1?.id && (
+                  <span className="text-[8px] text-emerald-600 bg-emerald-50 border border-emerald-200 px-1 py-0.2 rounded font-black shrink-0">
+                    THẮNG
+                  </span>
+                )}
+              </div>
+              {match.participant1?.seed && (
+                <span className="text-[8px] text-blue-600 font-extrabold bg-blue-50 px-1 py-0.2 rounded mt-0.5 inline-block">
+                  Hạt giống #{match.participant1.seed}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Score Display Panel */}
+          <div className="flex flex-col items-center justify-center shrink-0 min-w-[75px]">
+            {isScheduled ? (
+              <span className="text-[10px] font-black text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-100/50">
+                {match.scheduledAt ? new Date(match.scheduledAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : 'VS'}
+              </span>
+            ) : (
+              <div className={`flex items-center justify-center px-2.5 py-1 rounded-full font-mono text-[10px] font-black leading-none tracking-wider shadow-sm border ${
+                isLive 
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                  : 'bg-slate-100 text-slate-700 border-slate-200'
+              }`}>
+                {(() => {
+                  const rawScore = buildMatchScoreSummary({
+                    p1SetsWon: match.p1SetsWon ?? 0,
+                    p2SetsWon: match.p2SetsWon ?? 0,
+                    matchConfig: match.matchConfig ?? null,
+                    tournament: { sportRules: null },
+                    scoreDetails: match.scoreDetails as Record<string, unknown> | null | undefined,
+                  });
+                  return rawScore.includes(':') ? rawScore.split(':')[1].trim() : rawScore;
+                })()}
+              </div>
+            )}
+          </div>
+
+          {/* Player 2 */}
+          <div className="flex items-center gap-2.5 w-5/12 min-w-0 justify-end text-right">
+            <div className="min-w-0">
+              <div className="flex items-center justify-end gap-1 min-w-0">
+                {isCompleted && match.winnerId && match.winnerId === match.participant2?.id && (
+                  <span className="text-[8px] text-emerald-600 bg-emerald-50 border border-emerald-200 px-1 py-0.2 rounded font-black shrink-0">
+                    THẮNG
+                  </span>
+                )}
+                <span className="text-xs font-black text-slate-800 block leading-tight truncate">
+                  {match.participant2?.teamName || 'Chờ xác định'}
+                </span>
+              </div>
+              {match.participant2?.seed && (
+                <span className="text-[8px] text-blue-600 font-extrabold bg-blue-50 px-1 py-0.2 rounded mt-0.5 inline-block">
+                  Hạt giống #{match.participant2.seed}
+                </span>
+              )}
+            </div>
+            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-650 text-white flex items-center justify-center font-black text-xs shadow-sm uppercase shrink-0">
+              {match.participant2?.teamName.charAt(0) || '?'}
+            </div>
+          </div>
+        </div>
+
+        {/* Location & Sport Row */}
+        <div className="px-4 pb-2.5 pt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] text-slate-500 font-semibold border-t border-slate-100 bg-slate-50/10">
+          <div className="shrink-0 text-slate-600">
+            <span className="text-slate-400 font-bold">Môn:</span>{' '}
+            <span className="font-black text-slate-800">
+              {match.tournament?.category?.name || categories.find(c => c.id === match.tournament?.categoryId)?.name || 'Môn đấu'}
+            </span>
+          </div>
+          {match.courtName ? (
+            <div className="truncate max-w-[220px]" title={match.courtAddress ? `${match.courtName} - ${match.courtAddress}` : match.courtName}>
+              <span className="text-slate-400 font-bold">Sân:</span>{' '}
+              <span className="font-bold text-slate-700">
+                {match.courtName}{match.courtAddress ? ` (${match.courtAddress})` : ''}
+              </span>
+            </div>
+          ) : (
+            <div className="text-slate-400 italic">Chưa xếp sân</div>
+          )}
+        </div>
+
+        {/* Interactive Footer (High five, Replay, Share) */}
+        <div className="px-2 py-1.5 bg-slate-50/50 border-t border-slate-100 grid grid-cols-3 gap-1">
+          <button 
+            onClick={() => handleHighFive(match.id)}
+            className="flex items-center justify-center gap-1 py-1.5 hover:bg-white rounded-xl text-[10px] font-black text-slate-600 transition-all border border-transparent hover:border-slate-150 active:scale-95 duration-100 cursor-pointer"
+          >
+            <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500/10" />
+            <span>Cổ vũ ({currentHighFives})</span>
+          </button>
+
+          <Link href={`/live/${match.id}`} className="w-full">
+            <div className="flex items-center justify-center gap-1 py-1.5 hover:bg-white rounded-xl text-[10px] font-black text-slate-650 transition-all border border-transparent hover:border-slate-150 active:scale-95 duration-100 cursor-pointer w-full">
+              {isLive ? (
+                <>
+                  <Play className="w-3.5 h-3.5 text-emerald-650 fill-emerald-600/10 animate-pulse" />
+                  <span className="text-emerald-700 font-extrabold">Xem Live</span>
+                </>
+              ) : (
+                <>
+                  <Play className="w-3.5 h-3.5 text-blue-600 fill-blue-600/10" />
+                  <span>Chi tiết</span>
+                </>
+              )}
+            </div>
+          </Link>
+
+          <button 
+            onClick={() => shareMatch(match.id)}
+            className="flex items-center justify-center gap-1 py-1.5 hover:bg-white rounded-xl text-[10px] font-black text-slate-600 transition-all border border-transparent hover:border-slate-150 active:scale-95 duration-100 cursor-pointer"
+          >
+            <Share2 className="w-3.5 h-3.5 text-blue-500" />
+            <span>Chia sẻ</span>
+          </button>
+        </div>
+      </motion.div>
+    );
   };
 
   const filteredCommunities = selectedCategoryId 
@@ -246,6 +523,62 @@ export default function HomePage() {
               <TournamentHeroBanner tournaments={tournaments} heightClass="h-[320px] md:h-[420px]" />
             )}
           </section>
+          {rankedTournament && (isLoadingRanked || displayRankedMatches.length > 0) && (
+            <section className="flex flex-col gap-4 bg-gradient-to-br from-blue-50/40 via-white to-slate-50/30 p-6 rounded-3xl border border-blue-100/60 shadow-[0_8px_30px_rgb(0,0,0,0.015)]">
+              <div className="flex justify-between items-center pb-2 border-b border-slate-100">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 bg-blue-600 rounded-xl text-white">
+                    <Trophy className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[9px] uppercase tracking-wider font-extrabold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">Giải đấu hạng</span>
+                      {rankedTournament.status === 'ONGOING' && (
+                        <span className="flex h-2 w-2 relative">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-450 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-605"></span>
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="text-sm font-black text-slate-900 leading-tight mt-0.5">{rankedTournament.name}</h3>
+                  </div>
+                </div>
+                <Link href={`/tournaments/${rankedTournament.id}`} className="text-xs font-bold text-blue-650 hover:underline flex items-center gap-0.5">
+                  Chi tiết giải <ChevronRight className="w-4 h-4" />
+                </Link>
+              </div>
+
+              {/* Active Round Header info */}
+              <div className="flex items-center justify-between text-xs font-bold text-slate-650 bg-slate-100/60 px-4 py-2.5 rounded-2xl">
+                <span>Vòng đang diễn ra: <span className="text-blue-600 font-extrabold">Vòng {activeRound}</span></span>
+                {showOngoingOnly ? (
+                  <span className="text-[9px] text-rose-600 uppercase font-black tracking-wider flex items-center gap-1.5 animate-pulse">
+                    <span className="h-1.5 w-1.5 rounded-full bg-rose-500" /> Có trận trực tiếp
+                  </span>
+                ) : (
+                  <span className="text-[9px] text-slate-500 uppercase font-extrabold tracking-wider">
+                    Chờ đấu / Đã kết thúc
+                  </span>
+                )}
+              </div>
+
+              {/* Matches List Grid */}
+              {isLoadingRanked ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="h-36 bg-slate-200/60 animate-pulse rounded-2xl" />
+                  <div className="h-36 bg-slate-200/60 animate-pulse rounded-2xl" />
+                </div>
+              ) : displayRankedMatches.length === 0 ? (
+                <div className="bg-white/80 border border-slate-200 border-dashed rounded-2xl p-8 text-center text-slate-400 text-xs font-bold">
+                  Không có trận đấu nào trong vòng này.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {displayRankedMatches.slice(0, 6).map((match) => renderMatchCard(match, true))}
+                </div>
+              )}
+            </section>
+          )}
 
           {/* Section 2: Trận live (Match Feed style) */}
           <section className="flex flex-col gap-4">
@@ -263,118 +596,26 @@ export default function HomePage() {
                 <div className="bg-slate-200 animate-pulse h-40 rounded-2xl" />
               </div>
             ) : liveMatches.length === 0 ? (
-              <div className="bg-white border rounded-2xl p-12 text-center text-slate-450 font-bold text-xs">
+              <div className="bg-white border rounded-2xl p-12 text-center text-slate-455 font-bold text-xs">
                 Hiện chưa có trận đấu nào đang trực tiếp.
               </div>
             ) : (
-              <div className="space-y-4">
-                {liveMatches.map((match) => {
-                  const currentHighFives = highFives[match.id] || 0;
-                  return (
-                    <motion.div 
-                      key={match.id}
-                      whileHover={{ y: -3, scale: 1.005 }}
-                      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-                      className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.02)] overflow-hidden flex flex-col justify-between"
-                    >
-                      {/* Match Header */}
-                      <div className="px-5 py-3.5 bg-slate-50/70 border-b border-slate-100 flex items-center justify-between text-[11px] font-bold text-slate-500">
-                        <div className="flex items-center gap-2">
-                          <span className="relative flex h-2.5 w-2.5">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-450 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-600"></span>
-                          </span>
-                          <span className="text-rose-600 uppercase tracking-wider glow-text-rose">Trực tiếp</span>
-                          <span className="text-slate-300">•</span>
-                          <span className="text-slate-600">Vòng {match.roundNumber}</span>
-                          {match.courtName && (
-                            <>
-                              <span className="text-slate-300">•</span>
-                              <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5 text-slate-400" />{match.courtName}</span>
-                            </>
-                          )}
-                        </div>
-                        <span className="uppercase text-blue-600 bg-blue-50 px-2.5 py-0.5 rounded-full text-[9px] tracking-wider font-extrabold">{match.group?.stage?.name || 'Vòng đấu'}</span>
-                      </div>
-
-                      {/* Opponents Match Grid */}
-                      <div className="p-6 flex flex-col sm:flex-row items-center justify-between gap-6 relative">
-                        {/* Player 1 */}
-                        <div className="flex items-center gap-3.5 w-full sm:w-5/12 justify-center sm:justify-start">
-                          <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-blue-550 to-indigo-600 text-white flex items-center justify-center font-extrabold text-sm shadow-md uppercase shrink-0">
-                            {match.participant1?.teamName.charAt(0) || '1'}
-                          </div>
-                          <div>
-                            <span className="text-sm font-black text-slate-900 block leading-tight">{match.participant1?.teamName || 'Chưa rõ'}</span>
-                            {match.participant1?.seed && <span className="text-[10px] text-blue-600 font-bold bg-blue-50/50 px-1.5 py-0.2 rounded mt-0.5 inline-block">Hạt giống #{match.participant1.seed}</span>}
-                          </div>
-                        </div>
-
-                        {/* Versus & Scores */}
-                        <div className="flex flex-col items-center justify-center w-full sm:w-2/12 shrink-0">
-                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Tỉ số</span>
-                          <div className="mt-1 flex items-center gap-2.5 bg-slate-900 text-emerald-400 border border-slate-800 px-4 py-2 rounded-xl font-mono text-base font-black shadow-[0_0_15px_rgba(16,185,129,0.15)] leading-none tracking-widest glow-text-emerald">
-                            {buildMatchScoreSummary({
-                              p1SetsWon: match.p1SetsWon ?? 0,
-                              p2SetsWon: match.p2SetsWon ?? 0,
-                              matchConfig: match.matchConfig ?? null,
-                              tournament: { sportRules: null },
-                              scoreDetails: match.scoreDetails as Record<string, unknown> | null | undefined,
-                            })}
-                          </div>
-                        </div>
-
-                        {/* Player 2 */}
-                        <div className="flex items-center gap-3.5 w-full sm:w-5/12 justify-center sm:justify-end text-center sm:text-right">
-                          <div>
-                            <span className="text-sm font-black text-slate-900 block leading-tight">{match.participant2?.teamName || 'Chưa rõ'}</span>
-                            {match.participant2?.seed && <span className="text-[10px] text-blue-600 font-bold bg-blue-50/50 px-1.5 py-0.2 rounded mt-0.5 inline-block">Hạt giống #{match.participant2.seed}</span>}
-                          </div>
-                          <div className="order-first sm:order-last w-11 h-11 rounded-full bg-gradient-to-tr from-blue-550 to-indigo-600 text-white flex items-center justify-center font-extrabold text-sm shadow-md uppercase shrink-0">
-                            {match.participant2?.teamName.charAt(0) || '2'}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Interactive Footer (High five, Replay, Share) */}
-                      <div className="px-3 py-2 bg-slate-50/50 border-t border-slate-100 grid grid-cols-3 gap-2">
-                        <motion.button 
-                          whileHover={{ scale: 1.03 }}
-                          whileTap={{ scale: 0.97 }}
-                          onClick={() => handleHighFive(match.id)}
-                          className="flex items-center justify-center gap-1.5 py-2 hover:bg-white rounded-xl text-[11px] font-bold text-slate-650 transition-colors shadow-sm border border-transparent hover:border-slate-150 duration-150 cursor-pointer"
-                        >
-                          <Heart className="w-4 h-4 text-rose-500 fill-rose-500/10" />
-                          <span>Cổ vũ ({currentHighFives})</span>
-                        </motion.button>
-
-                        <Link 
-                          href={`/live/${match.id}`}
-                          className="w-full"
-                        >
-                          <motion.div 
-                            whileHover={{ scale: 1.03 }}
-                            whileTap={{ scale: 0.97 }}
-                            className="flex items-center justify-center gap-1.5 py-2 hover:bg-white rounded-xl text-[11px] font-bold text-slate-650 transition-colors shadow-sm border border-transparent hover:border-slate-150 cursor-pointer w-full"
-                          >
-                            <Play className="w-4 h-4 text-emerald-600 fill-emerald-600/10" />
-                            <span>Xem trực tiếp</span>
-                          </motion.div>
-                        </Link>
-
-                        <motion.button 
-                          whileHover={{ scale: 1.03 }}
-                          whileTap={{ scale: 0.97 }}
-                          onClick={() => shareMatch(match.id)}
-                          className="flex items-center justify-center gap-1.5 py-2 hover:bg-white rounded-xl text-[11px] font-bold text-slate-650 transition-colors shadow-sm border border-transparent hover:border-slate-150 cursor-pointer"
-                        >
-                          <Share2 className="w-4 h-4 text-blue-500" />
-                          <span>Chia sẻ</span>
-                        </motion.button>
-                      </div>
-                    </motion.div>
-                  );
-                })}
+              <div className="space-y-6">
+                {Object.entries(liveMatchesByTournament).map(([tournamentId, group]) => (
+                  <div key={tournamentId} className="bg-white rounded-3xl border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.015)] overflow-hidden flex flex-col">
+                    {/* Group Tournament Header */}
+                    <div className="px-5 py-3 bg-gradient-to-r from-blue-50/20 to-indigo-50/10 border-b border-slate-100 flex items-center gap-2">
+                      <Trophy className="w-4 h-4 text-blue-600 shrink-0" />
+                      <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider truncate">
+                        {group.name}
+                      </h3>
+                    </div>
+                    {/* Matches List Grid */}
+                    <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {group.matches.map((match) => renderMatchCard(match, true))}
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </section>

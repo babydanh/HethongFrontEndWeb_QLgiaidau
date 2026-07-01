@@ -10,6 +10,7 @@ import { getSportRulePresentation } from '@/features/tournaments/sport-rules/pre
 import { buildDefaultSportRules } from '@/features/tournaments/sport-rules/defaults';
 import { resolveSportRuleView } from '@/features/tournaments/sport-rules/normalize';
 import { normalizeSportRuleKindForCategory } from '@/features/tournaments/sport-rules/options';
+import { getSportRulePresets } from '@/features/tournaments/sport-rules/ui-guidance';
 import type { MatchFormatOption } from '@/features/tournaments/match-format-options';
 import type { Category } from '@/features/categories/api';
 
@@ -114,6 +115,7 @@ export function BracketTab({
   const maxScoreLabel = presentation.maxScoreLabel;
   const isPickleballVariant = sportRuleKind === 'PICKLEBALL_RALLY' || sportRuleKind === 'PICKLEBALL_SIDE_OUT';
   const supportsTiebreakInput = sportRuleKind === 'TENNIS' || sportRuleKind === 'PICKLEBALL_SIDE_OUT';
+  const presets = getSportRulePresets(sportRuleKind);
 
   const handleSportRuleKindChange = (nextKind: SportRuleKind) => {
     const normalizedKind = normalizeSportRuleKindForCategory(nextKind, selectedCategory);
@@ -126,6 +128,16 @@ export function BracketTab({
     setSuperTiebreakEnabled(nextRules.hasCustomTiebreakTarget);
     setSuperTiebreakSetIndex(nextRules.bestOf);
     setSuperTiebreakPoints(nextRules.tiebreakPoints);
+  };
+
+  const applyPreset = (preset: (typeof presets)[number]) => {
+    setSetsToWin(preset.setsToWin);
+    setPointsPerSet(preset.pointsPerSet);
+    setWinByTwo(preset.winByTwo);
+    setMaxDeucePoints(preset.maxPoints);
+    setSuperTiebreakEnabled(preset.tiebreakPoints !== null);
+    setSuperTiebreakSetIndex(preset.setsToWin * 2 - 1);
+    setSuperTiebreakPoints(preset.tiebreakPoints ?? preset.pointsPerSet);
   };
 
   // Helper to extract bracket rounds from matches inside stage groups
@@ -220,6 +232,30 @@ export function BracketTab({
                 </div>
               </div>
             )}
+
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-600">Preset theo môn</p>
+              <div className="mt-3 grid gap-3">
+                {presets.map((preset) => (
+                  <button
+                    key={preset.id}
+                    type="button"
+                    onClick={() => applyPreset(preset)}
+                    className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-left transition-all hover:border-blue-300 hover:bg-blue-50"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-bold text-slate-900">{preset.label}</p>
+                        <p className="mt-1 text-xs font-semibold text-slate-500">{preset.description}</p>
+                      </div>
+                      <div className="rounded-lg bg-slate-100 px-2 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-slate-600">
+                        {preset.setsToWin} chạm • {preset.pointsPerSet}
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
             
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
@@ -295,6 +331,14 @@ export function BracketTab({
                 className="h-10 text-sm font-bold"
               />
             )}
+
+            <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-xs font-semibold text-blue-900">
+              Thiết lập hiện tại: thắng {setsToWin} {sportRuleKind === 'PICKLEBALL_SIDE_OUT' ? 'game' : 'set'}
+              {' • '}
+              {pointsPerSet} {sportRuleKind === 'TENNIS' ? 'game/set' : 'điểm'}
+              {winByTwo ? ' • hơn 2' : ' • chạm đích là chốt'}
+              {supportsTiebreakInput ? ` • ${presentation.tiebreakLabel.toLowerCase()}: ${superTiebreakPoints}` : ''}
+            </div>
 
             <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-3">
               <div className="flex items-center justify-between">

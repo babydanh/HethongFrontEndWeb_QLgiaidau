@@ -214,7 +214,6 @@ export function MatchCard({
         {!match.isBye && (
           <div className="flex flex-col gap-2 px-3 py-3 bg-slate-50/30 flex-1 justify-center min-h-[96px]">
             <div className="flex items-center gap-1 text-[9px] text-slate-600 font-extrabold">
-              <Trophy className="w-2.5 h-2.5 flex-shrink-0 text-amber-500" />
               <span className="truncate" title={ruleSummary}>{ruleSummary}</span>
             </div>
             <div className="flex items-center gap-1 text-[9px] text-slate-500 font-bold">
@@ -285,7 +284,6 @@ function RowSide({
         >
           {p?.teamName ?? (isByeSlot ? 'Miễn vòng' : 'Chờ xác định')}
         </span>
-        {won && <Trophy className="w-3 h-3 text-amber-500 fill-amber-300 flex-shrink-0" />}
       </div>
 
       {/* Per-set columns */}

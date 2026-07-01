@@ -64,7 +64,7 @@ export default function TournamentDetailClient({ tournament }: Props) {
   })();
   const activeTournament = selectedDivision;
 
-  const isOwner = user?.id === activeTournament.organizerId;
+  const isOwner = !!user?.id && user.id === activeTournament.organizerId;
   const [activeTab, setActiveTab] = useState<TournamentDetailTab>('overview');
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
 

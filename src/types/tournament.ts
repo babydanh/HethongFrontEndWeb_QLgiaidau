@@ -228,6 +228,7 @@ export interface BracketMatch {
   participant1Id?: string | null;
   participant2Id?: string | null;
   winnerId: string | null;
+  tournamentId?: string;
   scoreDetails?: Record<string, unknown>;
   p1SetsWon: number;
   p2SetsWon: number;
@@ -245,6 +246,9 @@ export interface BracketMatch {
     stage?: {
       name: string;
     };
+  } | null;
+  tournament?: {
+    name: string;
   } | null;
 }
 

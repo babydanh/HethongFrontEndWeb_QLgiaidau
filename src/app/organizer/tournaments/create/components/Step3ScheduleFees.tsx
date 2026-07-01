@@ -1,10 +1,10 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+import { Input, DateTimePicker } from '@/components/ui/Input';
 import { useCreateTournamentStore } from '@/lib/zustand/createTournamentStore';
 import { ChevronRight, ChevronLeft, Calendar, DollarSign } from 'lucide-react';
 
@@ -53,7 +53,7 @@ type Step3Values = z.infer<typeof step3Schema>;
 export default function Step3ScheduleFees() {
   const { formData, updateFormData, nextStep, prevStep } = useCreateTournamentStore();
 
-  const { register, handleSubmit, formState: { errors } } = useForm<Step3Values>({
+  const { register, handleSubmit, control, formState: { errors } } = useForm<Step3Values>({
     resolver: zodResolver(step3Schema),
     defaultValues: {
       startDate: formData.startDate,
@@ -91,17 +91,29 @@ export default function Step3ScheduleFees() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input
-              label="Ngày bắt đầu đăng ký"
-              type="datetime-local"
-              {...register('registrationStartDate')}
-              error={errors.registrationStartDate?.message}
+            <Controller
+              name="registrationStartDate"
+              control={control}
+              render={({ field }) => (
+                <DateTimePicker
+                  label="Ngày bắt đầu đăng ký"
+                  value={field.value}
+                  onChange={field.onChange}
+                  error={errors.registrationStartDate?.message}
+                />
+              )}
             />
-            <Input
-              label="Ngày kết thúc đăng ký"
-              type="datetime-local"
-              {...register('registrationEndDate')}
-              error={errors.registrationEndDate?.message}
+            <Controller
+              name="registrationEndDate"
+              control={control}
+              render={({ field }) => (
+                <DateTimePicker
+                  label="Ngày kết thúc đăng ký"
+                  value={field.value}
+                  onChange={field.onChange}
+                  error={errors.registrationEndDate?.message}
+                />
+              )}
             />
           </div>
         </div>
@@ -113,17 +125,29 @@ export default function Step3ScheduleFees() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input
-              label="Ngày bắt đầu thi đấu"
-              type="datetime-local"
-              {...register('startDate')}
-              error={errors.startDate?.message}
+            <Controller
+              name="startDate"
+              control={control}
+              render={({ field }) => (
+                <DateTimePicker
+                  label="Ngày bắt đầu thi đấu"
+                  value={field.value}
+                  onChange={field.onChange}
+                  error={errors.startDate?.message}
+                />
+              )}
             />
-            <Input
-              label="Ngày kết thúc thi đấu"
-              type="datetime-local"
-              {...register('endDate')}
-              error={errors.endDate?.message}
+            <Controller
+              name="endDate"
+              control={control}
+              render={({ field }) => (
+                <DateTimePicker
+                  label="Ngày kết thúc thi đấu"
+                  value={field.value}
+                  onChange={field.onChange}
+                  error={errors.endDate?.message}
+                />
+              )}
             />
           </div>
         </div>

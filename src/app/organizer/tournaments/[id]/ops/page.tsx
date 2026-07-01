@@ -15,6 +15,7 @@ import { BracketTab } from '../manage/components/BracketTab';
 import { formatDate } from '@/utils/format';
 import { getSportLogo } from '@/constants/sports';
 import type { BracketMatch } from '@/types/tournament';
+import type { MatchScoreInput } from '@/features/organizer/ops/types';
 
 export default function OrganizerTournamentOpsPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -47,6 +48,9 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
   const [bracketViewVersion, setBracketViewVersion] = useState(0);
   const [focusedMatchId, setFocusedMatchId] = useState<string | null>(null);
   const bracketSelectedDivisionId = bracketManager.selectedDivisionId;
+  const bracketDivisions = bracketManager.divisions;
+  const applyDivisionFormValues = bracketManager.applyDivisionFormValues;
+  const setBracketSelectedDivisionId = bracketManager.setSelectedDivisionId;
   const sportPresentation = getSportRulePresentation(bracketManager.sportRuleKind);
   const supportsTiebreakInput =
     bracketManager.sportRuleKind === 'TENNIS' ||
@@ -71,18 +75,24 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
     }
 
     const selectedBracketDivision =
-      bracketManager.divisions.find((division) => division.id === selectedDivisionId) ?? null;
+      bracketDivisions.find((division) => division.id === selectedDivisionId) ?? null;
 
     void Promise.resolve().then(() => {
-      if (bracketManager.selectedDivisionId !== selectedDivisionId) {
-        bracketManager.setSelectedDivisionId(selectedDivisionId);
+      if (bracketSelectedDivisionId !== selectedDivisionId) {
+        setBracketSelectedDivisionId(selectedDivisionId);
       }
 
       if (selectedBracketDivision) {
-        bracketManager.applyDivisionFormValues(selectedBracketDivision);
+        applyDivisionFormValues(selectedBracketDivision);
       }
     });
-  }, [bracketManager.divisions, bracketSelectedDivisionId, selectedDivisionId]);
+  }, [
+    applyDivisionFormValues,
+    bracketDivisions,
+    bracketSelectedDivisionId,
+    selectedDivisionId,
+    setBracketSelectedDivisionId,
+  ]);
 
   const handleBracketGenerate = async () => {
     await bracketManager.handleGenerateBracket();
@@ -143,7 +153,7 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
 
   const handleOpsUpdateMatchScore = async (
     match: typeof matches[number],
-    payload: { p1SetsWon: number; p2SetsWon: number; sets: import('@/types/match').MatchScore[] },
+    payload: MatchScoreInput,
   ) => {
     await updateMatchScore(match, payload);
     await syncBracketAndOps();

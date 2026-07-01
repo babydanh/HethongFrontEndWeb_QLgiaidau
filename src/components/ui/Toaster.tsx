@@ -1,6 +1,6 @@
 "use client";
 
-import { Toaster as HotToaster } from "react-hot-toast";
+import { Toaster as HotToaster, resolveValue, toast } from "react-hot-toast";
 
 const Toaster = () => {
     return (
@@ -8,37 +8,31 @@ const Toaster = () => {
             position="top-right"
             gutter={14}
             containerStyle={{
-                top: 20,
+                top: 90, // Positioned below navbar
                 right: 20,
             }}
-            toastOptions={{
-                className: "",
-                style: {
-                    borderRadius: "var(--radius)",
-                    background: "var(--color-card)",
-                    color: "var(--color-card-foreground)",
-                    border: "1px solid var(--color-border)",
-                    padding: "14px 16px",
-                    minWidth: "320px",
-                    boxShadow: "0 10px 30px rgba(15, 23, 42, 0.12)",
-                },
-                duration: 3600,
-                success: {
-                    duration: 3200,
-                    iconTheme: {
-                        primary: "var(--color-success)",
-                        secondary: "var(--color-primary-foreground)",
-                    },
-                },
-                error: {
-                    duration: 4200,
-                    iconTheme: {
-                        primary: "var(--color-danger)",
-                        secondary: "var(--color-primary-foreground)",
-                    },
-                },
-            }}
-        />
+        >
+            {(t) => (
+                <div
+                    style={{
+                        animation: t.visible ? 'toast-enter 0.2s ease-out' : 'toast-leave 0.15s ease-in forwards',
+                    }}
+                    className="flex items-center justify-between bg-white border border-slate-200/80 p-3.5 rounded-2xl shadow-[0_10px_30px_rgba(15,23,42,0.1)] min-w-[320px] max-w-sm pointer-events-auto"
+                >
+                    <div className="flex items-center gap-2 text-xs font-bold text-slate-800">
+                        {t.icon && <span className="shrink-0">{t.icon}</span>}
+                        <span className="leading-normal">{resolveValue(t.message, t)}</span>
+                    </div>
+                    <button
+                        onClick={() => toast.dismiss(t.id)}
+                        className="ml-3 shrink-0 text-slate-400 hover:text-slate-600 hover:bg-slate-50 p-1.5 rounded-lg transition-all duration-150 cursor-pointer text-[10px] font-black leading-none border border-transparent hover:border-slate-200"
+                        aria-label="Đóng"
+                    >
+                        ✕
+                    </button>
+                </div>
+            )}
+        </HotToaster>
     )
 }
 

@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/Button';
 import { rankingsApi, PlayerRanking, EloHistoryLog } from '@/features/rankings/api';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import { getErrorMessage } from '@/utils/error';
+import { EloTierBadge } from '@/components/ui/EloTierBadge';
 
 interface UserRank {
   categoryId: string;
@@ -188,6 +189,12 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                   Đã xác minh
                 </span>
               )}
+              {profile.ranks?.map((rank) => (
+                <div key={`${rank.categoryId}-${rank.matchType}`} className="flex items-center gap-1 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-xl text-xs font-bold shrink-0">
+                  <span className="text-[10px] font-black text-slate-550 uppercase mr-1">{rank.categoryName}:</span>
+                  <EloTierBadge elo={rank.eloPoints} tierName={rank.categoryName} size="sm" className="scale-90 origin-left" />
+                </div>
+              ))}
               {profile.createdAt && (
                 <span className="bg-slate-50 border border-slate-200 text-slate-650 px-3.5 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5">
                   <Calendar className="w-3.5 h-3.5 text-slate-400" /> Tham gia từ {formatDate(profile.createdAt, 'MM/yyyy')}
@@ -363,6 +370,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                           <div className="flex items-center gap-2">
                             <Award className="w-5 h-5 text-blue-500 group-hover:scale-110 transition-transform" />
                             <h4 className="font-extrabold text-slate-900 text-base">{rank.eloPoints} ELO</h4>
+                            <EloTierBadge elo={rank.eloPoints} tierName={rank.categoryName} size="sm" />
                           </div>
                           <div className="grid grid-cols-3 gap-2 pt-2 text-center text-xs">
                             <div className="bg-slate-50 p-2 rounded-xl border border-slate-100">

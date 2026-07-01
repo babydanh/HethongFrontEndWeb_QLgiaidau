@@ -181,4 +181,27 @@ body {
   scrollbar-width: none;
 }
 
+/* Toast Animations */
+@keyframes toast-enter {
+  from {
+    transform: scale(0.9) translateY(-10px);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes toast-leave {
+  from {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: scale(0.9) translateY(-10px);
+    opacity: 0;
+  }
+}
+
 

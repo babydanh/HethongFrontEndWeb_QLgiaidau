@@ -20,7 +20,12 @@ function CheckoutContent() {
   const [teamName, setTeamName] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [gateway, setGateway] = useState<'VNPAY' | 'MOMO' | 'TRANSFER'>('VNPAY');
+  const [gateway, setGateway] = useState<'VNPAY' | 'MOMO' | 'TRANSFER' | 'PAYOS'>('PAYOS');
+
+  // PayOS inline states
+  const [showQrModal, setShowQrModal] = useState(false);
+  const [qrCodeData, setQrCodeData] = useState<string>('');
+  const [paymentId, setPaymentId] = useState<string>('');
 
   useEffect(() => {
     if (!tournamentId || !participantId) {
@@ -56,6 +61,27 @@ function CheckoutContent() {
     loadDetails();
   }, [tournamentId, participantId, router]);
 
+  // Polling for PayOS transaction completion
+  useEffect(() => {
+    if (!showQrModal || !paymentId) return;
+
+    const intervalId = setInterval(async () => {
+      try {
+        const res = await paymentsApi.getPaymentById(paymentId);
+        if (res.data && res.data.status === 'COMPLETED') {
+          clearInterval(intervalId);
+          toast.success('Thanh toán thành công! Hệ thống đang cập nhật...');
+          setShowQrModal(false);
+          router.push(`/tournaments/${tournamentId}?payment_status=success&payment_id=${paymentId}`);
+        }
+      } catch (error) {
+        console.error('Failed to poll payment status:', error);
+      }
+    }, 3000);
+
+    return () => clearInterval(intervalId);
+  }, [showQrModal, paymentId, tournamentId, router]);
+
   const handlePayment = async () => {
     if (!tournament || !tournamentId || !participantId) return;
 
@@ -69,6 +95,16 @@ function CheckoutContent() {
         amount,
         paymentGateway: gateway,
       });
+
+      // Bắt trường hợp PAYOS để hiển thị mã QR tại chỗ
+      if (gateway === 'PAYOS' && (res.data as any).qrCode) {
+        setQrCodeData((res.data as any).qrCode);
+        setPaymentId(res.data.paymentId);
+        setShowQrModal(true);
+        setSubmitting(false);
+        toast.success('Đã sinh mã QR thanh toán PayOS VietQR!');
+        return;
+      }
 
       const paymentUrl = res.data?.paymentUrl;
       
@@ -150,52 +186,68 @@ function CheckoutContent() {
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 mb-6">
           <h2 className="text-slate-900 font-bold mb-4">Chọn phương thức thanh toán</h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 gap-4">
+            {/* PayOS Quick QR */}
+            <div
+              onClick={() => setGateway('PAYOS')}
+              className={`cursor-pointer rounded-xl border-2 p-4 flex flex-col items-center justify-center transition-all ${
+                gateway === 'PAYOS'
+                  ? 'border-blue-600 bg-blue-50/50 shadow-sm'
+                  : 'border-slate-200 bg-white hover:border-slate-300'
+              }`}
+            >
+              <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mb-2">
+                <span className="text-base font-extrabold text-blue-700">QR</span>
+              </div>
+              <span className="text-sm font-bold text-slate-900">PayOS VietQR</span>
+              <span className="text-[10px] text-slate-400 font-medium mt-1 text-center">Quét QR chuyển khoản nhanh</span>
+            </div>
+
             {/* VNPAY */}
             <div
               onClick={() => setGateway('VNPAY')}
-              className={`cursor-pointer rounded-xl border-2 p-5 flex flex-col items-center justify-center transition-all ${
+              className={`cursor-pointer rounded-xl border-2 p-4 flex flex-col items-center justify-center transition-all ${
                 gateway === 'VNPAY'
                   ? 'border-blue-500 bg-blue-50 shadow-sm'
-                  : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm'
+                  : 'border-slate-200 bg-white hover:border-slate-300'
               }`}
             >
-              <div className="w-14 h-14 rounded-full bg-blue-100 flex items-center justify-center mb-3">
-                <span className="text-xl font-black text-blue-700">VN</span>
+              <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mb-2">
+                <span className="text-base font-extrabold text-blue-700">VN</span>
               </div>
-              <span className="text-sm font-extrabold text-slate-900">VNPAY</span>
-              <span className="text-[10px] text-slate-400 font-medium mt-1 text-center">Cổng thanh toán điện tử</span>
+              <span className="text-sm font-bold text-slate-900">VNPAY</span>
+              <span className="text-[10px] text-slate-400 font-medium mt-1 text-center">Thẻ ATM / Mobile Banking</span>
             </div>
 
             {/* MoMo */}
             <div
               onClick={() => setGateway('MOMO')}
-              className={`cursor-pointer rounded-xl border-2 p-5 flex flex-col items-center justify-center transition-all ${
+              className={`cursor-pointer rounded-xl border-2 p-4 flex flex-col items-center justify-center transition-all ${
                 gateway === 'MOMO'
                   ? 'border-pink-500 bg-pink-50 shadow-sm'
-                  : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm'
+                  : 'border-slate-200 bg-white hover:border-slate-300'
               }`}
             >
-              <div className="w-14 h-14 rounded-full bg-pink-100 flex items-center justify-center mb-3">
-                <span className="text-xl font-black text-pink-600">Mo</span>
+              <div className="w-12 h-12 rounded-full bg-pink-100 flex items-center justify-center mb-2">
+                <span className="text-base font-extrabold text-pink-600">Mo</span>
               </div>
-              <span className="text-sm font-extrabold text-slate-900">MoMo</span>
+              <span className="text-sm font-bold text-slate-900">MoMo</span>
               <span className="text-[10px] text-slate-400 font-medium mt-1 text-center">Ví điện tử MoMo</span>
             </div>
 
             {/* Bank Transfer */}
             <div
               onClick={() => setGateway('TRANSFER')}
-              className={`cursor-pointer rounded-xl border-2 p-5 flex flex-col items-center justify-center transition-all ${
+              className={`cursor-pointer rounded-xl border-2 p-4 flex flex-col items-center justify-center transition-all ${
                 gateway === 'TRANSFER'
                   ? 'border-emerald-500 bg-emerald-50 shadow-sm'
-                  : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm'
+                  : 'border-slate-200 bg-white hover:border-slate-300'
               }`}
             >
-              <div className="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center mb-3">
-                <span className="text-xl font-black text-emerald-600">$</span>
+              <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center mb-2">
+                <span className="text-base font-extrabold text-emerald-600">$</span>
               </div>
-              <span className="text-sm font-extrabold text-slate-900">Chuyển khoản</span>
+              <span className="text-sm font-bold text-slate-900">Chuyển khoản</span>
               <span className="text-[10px] text-slate-400 font-medium mt-1 text-center">Chuyển khoản ngân hàng</span>
             </div>
           </div>
@@ -225,6 +277,56 @@ function CheckoutContent() {
             </>
           )}
         </Button>
+
+        {/* PayOS QR Modal */}
+        {showQrModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-3xl max-w-md w-full p-6 md:p-8 shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95 duration-200">
+              <div className="text-center">
+                <div className="inline-block px-3 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded-full mb-3">
+                  Cổng Thanh Toán VietQR
+                </div>
+                <h3 className="text-xl font-bold text-slate-900">Quét mã QR để thanh toán</h3>
+                <p className="text-xs text-slate-500 mt-1">Mã QR động tự điền số tiền và thông tin chuyển khoản</p>
+                
+                <div className="bg-slate-50 rounded-2xl p-4 my-6 inline-block border border-slate-100">
+                  <img
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(qrCodeData)}`}
+                    alt="VietQR PayOS"
+                    className="w-[200px] h-[200px] mx-auto rounded-lg shadow-sm bg-white p-2"
+                  />
+                </div>
+
+                <div className="bg-slate-50 rounded-2xl p-4 text-left border border-slate-100 space-y-2 mb-6">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-slate-500 font-medium">Số tiền:</span>
+                    <span className="text-slate-900 font-extrabold text-sm text-blue-600">{formatCurrency(entryFeeVal)}</span>
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-slate-500 font-medium">Nội dung thanh toán:</span>
+                    <span className="text-slate-900 font-bold max-w-[200px] truncate">{tournament.name}</span>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center justify-center gap-2 text-blue-600 font-semibold text-sm py-2">
+                    <Loader2 className="w-4 h-4 animate-spin" /> Đang đợi giao dịch qua Banking...
+                  </div>
+                  <Button
+                    onClick={() => {
+                      setShowQrModal(false);
+                      setSubmitting(false);
+                    }}
+                    variant="outline"
+                    className="w-full border-slate-200 hover:bg-slate-50 text-slate-700 font-bold rounded-xl"
+                  >
+                    Hủy giao dịch
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

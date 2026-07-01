@@ -21,6 +21,7 @@ export const matchesApi = {
       p2SetsWon: number;
       scoreDetails: Record<string, unknown>;
       winnerId?: string | null;
+      overrideReason?: string;
     },
   ) =>
     api

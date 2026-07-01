@@ -72,6 +72,7 @@ export interface MatchScoreInput {
   p2SetsWon: number;
   sets: MatchScore[];
   sideOutState?: PickleballSideOutState;
+  overrideReason?: string;
 }
 
 export type MatchOperationAction =

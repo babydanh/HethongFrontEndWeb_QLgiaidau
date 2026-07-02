@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, use, useEffect } from 'react';
+import { startTransition, useEffect, useRef, useState, use } from 'react';
 import { matchesApi, Match, MatchComment } from '@/features/matches/api';
 import {
   buildAutoWinnerScore,
@@ -36,6 +36,7 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/Button';
 import { OfficialScoreModal } from './components/OfficialScoreModal';
+import type { TournamentParticipant } from '@/types/tournament';
 
 interface Props {
   params: Promise<{ matchId: string }>;
@@ -51,10 +52,12 @@ export default function LiveMatchPage({ params }: Props) {
   const [overrideEnabled, setOverrideEnabled] = useState(false);
   const [overrideReason, setOverrideReason] = useState('');
   const [isOfficialScoreModalOpen, setIsOfficialScoreModalOpen] = useState(false);
+  const [optimisticTennisPointState, setOptimisticTennisPointState] = useState<TennisLivePointState | null>(null);
+  const lastSyncedTennisServerKeyRef = useRef<string>('init');
 
   const [comments, setComments] = useState<MatchComment[]>([]);
   const [commentText, setCommentText] = useState('');
-  const [participants, setParticipants] = useState<any[]>([]);
+  const [participants, setParticipants] = useState<TournamentParticipant[]>([]);
 
   useEffect(() => {
     if (!match?.tournamentId) return;
@@ -119,6 +122,52 @@ export default function LiveMatchPage({ params }: Props) {
     };
   }, [matchId]);
 
+  const optimisticCurrentSetIdx = scores.findIndex((s) => !s.isFinished);
+  const optimisticActiveSetIdx = optimisticCurrentSetIdx !== -1 ? optimisticCurrentSetIdx : scores.length - 1;
+  const optimisticCurrentSet = scores[optimisticActiveSetIdx] || { team1Score: 0, team2Score: 0, isFinished: false };
+  const optimisticResolvedRules = resolveMatchSportRules(match ?? {});
+  const optimisticIsTennis = optimisticResolvedRules.kind === 'TENNIS';
+  const resolvedTennisPointState = optimisticIsTennis && match
+    ? readTennisLivePointState(match, optimisticCurrentSet)
+    : null;
+  const resolvedTennisPointStateKey = resolvedTennisPointState
+    ? `${resolvedTennisPointState.mode}:${String(resolvedTennisPointState.team1Point)}:${String(resolvedTennisPointState.team2Point)}`
+    : 'none';
+  const optimisticTennisPointStateKey = optimisticTennisPointState
+    ? `${optimisticTennisPointState.mode}:${String(optimisticTennisPointState.team1Point)}:${String(optimisticTennisPointState.team2Point)}`
+    : 'none';
+  const serverScoreDetailsKey =
+    optimisticIsTennis && match?.scoreDetails
+      ? JSON.stringify(match.scoreDetails)
+      : 'none';
+
+  useEffect(() => {
+    if (!optimisticIsTennis) {
+      lastSyncedTennisServerKeyRef.current = serverScoreDetailsKey;
+      if (optimisticTennisPointState !== null) {
+        setOptimisticTennisPointState(null);
+      }
+      return;
+    }
+
+    if (lastSyncedTennisServerKeyRef.current === serverScoreDetailsKey) {
+      return;
+    }
+
+    lastSyncedTennisServerKeyRef.current = serverScoreDetailsKey;
+
+    if (optimisticTennisPointStateKey !== resolvedTennisPointStateKey) {
+      setOptimisticTennisPointState(resolvedTennisPointState);
+    }
+  }, [
+    optimisticIsTennis,
+    optimisticTennisPointState,
+    optimisticTennisPointStateKey,
+    resolvedTennisPointState,
+    resolvedTennisPointStateKey,
+    serverScoreDetailsKey,
+  ]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -168,7 +217,7 @@ export default function LiveMatchPage({ params }: Props) {
   const sideOutState = readSideOutState(match);
   const isPickleballSideOut = resolvedRules.kind === 'PICKLEBALL_SIDE_OUT';
   const isTennis = resolvedRules.kind === 'TENNIS';
-  const tennisPointState = isTennis ? readTennisLivePointState(match, currentSet) : null;
+  const tennisPointState = isTennis ? optimisticTennisPointState ?? resolvedTennisPointState : null;
   const penalties = readPenaltyLog(match);
   const scoreWarnings = getScoreRuleWarnings(scores, resolvedRules);
   const scoreOverride =
@@ -240,6 +289,40 @@ export default function LiveMatchPage({ params }: Props) {
     return payload;
   };
 
+  const deriveSetsWon = (nextScores: typeof scores) =>
+    nextScores.reduce(
+      (summary, setItem) => {
+        if (!setItem.isFinished) {
+          return summary;
+        }
+
+        if (setItem.team1Score > setItem.team2Score) {
+          summary.p1SetsWon += 1;
+        } else if (setItem.team2Score > setItem.team1Score) {
+          summary.p2SetsWon += 1;
+        }
+
+        return summary;
+      },
+      { p1SetsWon: 0, p2SetsWon: 0 },
+    );
+
+  const mergeMatchUpdate = (nextMatch: Match): Match => ({
+    ...match,
+    ...nextMatch,
+    participant1: nextMatch.participant1 ?? match.participant1,
+    participant2: nextMatch.participant2 ?? match.participant2,
+    tournament: nextMatch.tournament ?? match.tournament,
+    stage: nextMatch.stage ?? match.stage,
+  });
+
+  const applyServerSnapshot = (nextMatch: Match) => {
+    startTransition(() => {
+      setMatch(mergeMatchUpdate(nextMatch));
+      setScores(extractMatchScores(nextMatch.scoreDetails));
+    });
+  };
+
   // Handle Score Updates
   const handleUpdatePoints = async (team: 1 | 2, action: 'inc' | 'dec') => {
     if (!ensureCanControlLiveMatch()) {
@@ -301,17 +384,20 @@ export default function LiveMatchPage({ params }: Props) {
 
       // Optimistic Update
       setScores(newScores);
+      if (isTennis) {
+        setOptimisticTennisPointState(nextTennisPointState);
+      }
+      const nextSetsWon = deriveSetsWon(newScores);
 
       const res = await matchesApi.updateScore(matchId, {
-        p1SetsWon: match.p1SetsWon,
-        p2SetsWon: match.p2SetsWon,
+        p1SetsWon: nextSetsWon.p1SetsWon,
+        p2SetsWon: nextSetsWon.p2SetsWon,
         scoreDetails: buildScoreDetailsPayload(newScores, sideOutState, nextTennisPointState),
         winnerId: match.winnerId,
         ...(appliedOverrideReason ? { overrideReason: appliedOverrideReason } : {}),
       });
 
-      setMatch(res);
-      setScores(extractMatchScores(res.scoreDetails));
+      applyServerSnapshot(res);
       toast.success(
         isTennis
           ? `${team === 1 ? team1Name : team2Name} ${action === 'inc' ? 'thắng thêm 1 pha bóng' : 'được lùi lại 1 mức điểm'} trong game hiện tại.`
@@ -339,16 +425,21 @@ export default function LiveMatchPage({ params }: Props) {
       let scoreUpdatePayload = undefined;
       if (newStatus === 'ONGOING' && scores.length === 0) {
         const initialScores = [{ team1Score: 0, team2Score: 0, isFinished: false }];
+        const nextSetsWon = deriveSetsWon(initialScores);
+        const nextTennisState = isTennis ? createTennisLivePointState(initialScores[0]) : null;
         scoreUpdatePayload = {
-          p1SetsWon: 0,
-          p2SetsWon: 0,
+          p1SetsWon: nextSetsWon.p1SetsWon,
+          p2SetsWon: nextSetsWon.p2SetsWon,
           scoreDetails: buildScoreDetailsPayload(
             initialScores,
             sideOutState,
-            isTennis ? createTennisLivePointState(initialScores[0]) : null,
+            nextTennisState,
           ),
         };
         setScores(initialScores);
+        if (isTennis) {
+          setOptimisticTennisPointState(nextTennisState);
+        }
       }
 
       if (scoreUpdatePayload) {
@@ -356,7 +447,9 @@ export default function LiveMatchPage({ params }: Props) {
       }
 
       const res = await matchesApi.updateStatus(matchId, { status: newStatus });
-      setMatch(res);
+      startTransition(() => {
+        setMatch(mergeMatchUpdate(res));
+      });
       toast.success(
         newStatus === 'ONGOING'
           ? `Đã bắt đầu trận ${team1Name} vs ${team2Name}. Bảng điểm live đang hoạt động.`
@@ -394,35 +487,33 @@ export default function LiveMatchPage({ params }: Props) {
       const setObj = { ...newScores[activeIdx], isFinished: true };
       newScores[activeIdx] = setObj;
 
-      // Calculate sets won
-      let p1Sets = match.p1SetsWon;
-      let p2Sets = match.p2SetsWon;
+      const nextSetsWon = deriveSetsWon(newScores);
 
-      if (setObj.team1Score > setObj.team2Score) {
-        p1Sets += 1;
-      } else if (setObj.team2Score > setObj.team1Score) {
-        p2Sets += 1;
-      }
-
-      if (p1Sets < resolvedRules.setsToWin && p2Sets < resolvedRules.setsToWin) {
+      if (nextSetsWon.p1SetsWon < resolvedRules.setsToWin && nextSetsWon.p2SetsWon < resolvedRules.setsToWin) {
         newScores.push({ team1Score: 0, team2Score: 0, isFinished: false });
       }
 
       const nextTennisPointState =
-        isTennis && p1Sets < resolvedRules.setsToWin && p2Sets < resolvedRules.setsToWin
+        isTennis &&
+        nextSetsWon.p1SetsWon < resolvedRules.setsToWin &&
+        nextSetsWon.p2SetsWon < resolvedRules.setsToWin
           ? createTennisLivePointState(newScores[newScores.length - 1])
           : null;
 
+      setScores(newScores);
+      if (isTennis) {
+        setOptimisticTennisPointState(nextTennisPointState);
+      }
+
       const res = await matchesApi.updateScore(matchId, {
-        p1SetsWon: p1Sets,
-        p2SetsWon: p2Sets,
+        p1SetsWon: nextSetsWon.p1SetsWon,
+        p2SetsWon: nextSetsWon.p2SetsWon,
         scoreDetails: buildScoreDetailsPayload(newScores, sideOutState, nextTennisPointState),
         winnerId: match.winnerId,
         ...(appliedOverrideReason ? { overrideReason: appliedOverrideReason } : {}),
       });
 
-      setMatch(res);
-      setScores(extractMatchScores(res.scoreDetails));
+      applyServerSnapshot(res);
       const setWinnerName =
         setObj.team1Score > setObj.team2Score
           ? team1Name
@@ -463,25 +554,22 @@ export default function LiveMatchPage({ params }: Props) {
         return;
       }
 
-      // Calculate final sets won
-      let p1Sets = match.p1SetsWon;
-      let p2Sets = match.p2SetsWon;
-
       const activeIdx = scores.findIndex((s) => !s.isFinished);
       if (activeIdx !== -1) {
         const lastSet = buildAutoWinnerScore(scores[activeIdx], winnerTeam, match);
         newScores[activeIdx] = lastSet;
-        if (winnerTeam === 1) {
-          p1Sets += 1;
-        } else {
-          p2Sets += 1;
-        }
+      }
+
+      const nextSetsWon = deriveSetsWon(newScores);
+      setScores(newScores);
+      if (isTennis) {
+        setOptimisticTennisPointState(null);
       }
 
       // Update score and winner
       await matchesApi.updateScore(matchId, {
-        p1SetsWon: p1Sets,
-        p2SetsWon: p2Sets,
+        p1SetsWon: nextSetsWon.p1SetsWon,
+        p2SetsWon: nextSetsWon.p2SetsWon,
         scoreDetails: buildScoreDetailsPayload(newScores, sideOutState, null),
         winnerId,
         ...(appliedOverrideReason ? { overrideReason: appliedOverrideReason } : {}),
@@ -490,8 +578,7 @@ export default function LiveMatchPage({ params }: Props) {
       // Update status to COMPLETED
       const resStatus = await matchesApi.updateStatus(matchId, { status: 'COMPLETED' });
 
-      setMatch(resStatus);
-      setScores(extractMatchScores(resStatus.scoreDetails));
+      applyServerSnapshot(resStatus);
       toast.success(
         `Đã hoàn tất trận đấu. Đội thắng: ${winnerTeam === 1 ? team1Name : team2Name}.`,
       );
@@ -515,14 +602,15 @@ export default function LiveMatchPage({ params }: Props) {
     setIsSubmitting(true);
     try {
       const nextState: PickleballSideOutState = setServingTeamSideOutState(team);
+      const nextSetsWon = deriveSetsWon(scores);
       const res = await matchesApi.updateScore(matchId, {
-        p1SetsWon: match.p1SetsWon,
-        p2SetsWon: match.p2SetsWon,
+        p1SetsWon: nextSetsWon.p1SetsWon,
+        p2SetsWon: nextSetsWon.p2SetsWon,
         scoreDetails: buildScoreDetailsPayload(scores, nextState),
         winnerId: match.winnerId,
         ...(appliedOverrideReason ? { overrideReason: appliedOverrideReason } : {}),
       });
-      setMatch(res);
+      setMatch(mergeMatchUpdate(res));
       toast.success(`Đã chuyển quyền giao bóng cho ${team === 1 ? team1Name : team2Name}.`);
     } catch (err: unknown) {
       console.error(err);
@@ -549,15 +637,16 @@ export default function LiveMatchPage({ params }: Props) {
     setIsSubmitting(true);
     try {
       const nextState: PickleballSideOutState = computeNextSideOutState(sideOutState);
+      const nextSetsWon = deriveSetsWon(scores);
 
       const res = await matchesApi.updateScore(matchId, {
-        p1SetsWon: match.p1SetsWon,
-        p2SetsWon: match.p2SetsWon,
+        p1SetsWon: nextSetsWon.p1SetsWon,
+        p2SetsWon: nextSetsWon.p2SetsWon,
         scoreDetails: buildScoreDetailsPayload(scores, nextState),
         winnerId: match.winnerId,
         ...(appliedOverrideReason ? { overrideReason: appliedOverrideReason } : {}),
       });
-      setMatch(res);
+      setMatch(mergeMatchUpdate(res));
       toast.success(
         nextState.serverNumber === 2 && nextState.servingTeam === sideOutState.servingTeam
           ? `Đội ${sideOutState.servingTeam === 1 ? team1Name : team2Name} chuyển sang lượt giao thứ 2.`
@@ -599,16 +688,17 @@ export default function LiveMatchPage({ params }: Props) {
         },
         ...penalties,
       ];
+      const nextSetsWon = deriveSetsWon(scores);
 
       const res = await matchesApi.updateScore(matchId, {
-        p1SetsWon: match.p1SetsWon,
-        p2SetsWon: match.p2SetsWon,
+        p1SetsWon: nextSetsWon.p1SetsWon,
+        p2SetsWon: nextSetsWon.p2SetsWon,
         scoreDetails: buildScoreDetailsPayload(scores, sideOutState, tennisPointState, nextPenalties),
         winnerId: match.winnerId,
         ...(appliedOverrideReason ? { overrideReason: appliedOverrideReason } : {}),
       });
 
-      setMatch(res);
+      setMatch(mergeMatchUpdate(res));
       toast.success(`Đã ghi nhận hình phạt: ${label}.`);
     } catch (err: unknown) {
       console.error(err);

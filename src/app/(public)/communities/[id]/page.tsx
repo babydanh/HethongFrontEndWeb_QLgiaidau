@@ -24,6 +24,7 @@ import MembersTab from './components/MembersTab';
 import GalleryTab from './components/GalleryTab';
 import RankingsTab from './components/RankingsTab';
 import SettingsTab from './components/SettingsTab';
+import ModerationTab from './components/ModerationTab';
 
 export default function CommunityDetailPage() {
   const params = useParams();
@@ -33,7 +34,7 @@ export default function CommunityDetailPage() {
 
   const [community, setCommunity] = useState<Community | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'about' | 'tournaments' | 'members' | 'gallery' | 'rankings' | 'settings'>('about');
+  const [activeTab, setActiveTab] = useState<'about' | 'tournaments' | 'members' | 'gallery' | 'rankings' | 'moderation' | 'settings'>('about');
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
 
   // Real membership state
@@ -125,7 +126,7 @@ export default function CommunityDetailPage() {
     }
 
     if (isOwner) {
-      setActiveTab('settings');
+      setActiveTab('moderation');
       return;
     }
 
@@ -139,7 +140,7 @@ export default function CommunityDetailPage() {
         fetchCommunity();
       } catch (error) {
         console.error('Failed to leave community', error);
-        toast.error('Lỗi khi thực hiện rời câu lạc bộ.');
+        toast.error(getErrorMessage(error, 'Lỗi khi thực hiện rời câu lạc bộ.'));
       } finally {
         setIsJoinLoading(false);
       }
@@ -160,7 +161,7 @@ export default function CommunityDetailPage() {
         fetchCommunity();
       } catch (error) {
         console.error('Failed to accept invitation', error);
-        toast.error('Lỗi khi chấp nhận lời mời.');
+        toast.error(getErrorMessage(error, 'Lỗi khi chấp nhận lời mời.'));
       } finally {
         setIsJoinLoading(false);
       }
@@ -395,6 +396,7 @@ export default function CommunityDetailPage() {
             { id: 'members', label: 'Thành viên' },
             { id: 'gallery', label: 'Ảnh' },
             { id: 'rankings', label: 'Bảng xếp hạng' },
+            ...(isOwnerOrMod ? [{ id: 'moderation', label: 'Điều phối' }] : []),
           ].map(tab => (
             <button 
               key={tab.id}
@@ -441,6 +443,9 @@ export default function CommunityDetailPage() {
             )}
             {activeTab === 'gallery' && <GalleryTab communityId={id} isOwnerOrMod={isOwnerOrMod} />}
             {activeTab === 'rankings' && <RankingsTab communityId={id} categories={community?.categories || []} />}
+            {activeTab === 'moderation' && isOwnerOrMod && (
+              <ModerationTab communityId={id} isOwner={isOwner} />
+            )}
             {activeTab === 'settings' && isOwner && <SettingsTab community={community} />}
           </div>
         </div>

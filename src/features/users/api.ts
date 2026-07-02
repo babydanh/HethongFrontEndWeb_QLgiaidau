@@ -1,7 +1,7 @@
 import { api } from '@/lib/axios';
 import { ApiResponse } from '@/types/api';
-import { UserProfile } from '@/types/user';
-export type { UserProfile };
+import type { UserChangeRequest, UserProfile } from '@/types/user';
+export type { UserChangeRequest, UserProfile };
 
 interface RawUserProfileResponse {
   id?: string;
@@ -76,9 +76,13 @@ export const usersApi = {
   },
   changePassword: <T>(data: T) => api.patch<ApiResponse<{ message: string }>>('/users/change-password', data).then(res => res.data),
   deleteUser: (id: string) => api.delete<ApiResponse<{ message: string }>>(`/users/${id}`).then(res => res.data),
-  createChangeRequest: (data: { requestType: 'GENDER' | 'EMAIL'; newValue: string }) => api.post<ApiResponse<any>>('/users/change-requests', data).then(res => res.data),
+  createChangeRequest: (data: { requestType: 'GENDER' | 'EMAIL'; newValue: string }) =>
+    api.post<ApiResponse<UserChangeRequest>>('/users/change-requests', data).then(res => res.data),
   deleteAccount: (data: { password?: string }) => api.post<ApiResponse<{ message: string }>>('/users/delete-account', data).then(res => res.data),
-  getAdminChangeRequests: (params?: { status?: string }) => api.get<ApiResponse<any[]>>('/users/admin/change-requests', { params }).then(res => res.data),
-  approveChangeRequest: (id: string, data?: { adminNote?: string }) => api.patch<ApiResponse<any>>(`/users/admin/change-requests/${id}/approve`, data).then(res => res.data),
-  rejectChangeRequest: (id: string, data?: { adminNote?: string }) => api.patch<ApiResponse<any>>(`/users/admin/change-requests/${id}/reject`, data).then(res => res.data),
+  getAdminChangeRequests: (params?: { status?: string }) =>
+    api.get<ApiResponse<UserChangeRequest[]>>('/users/admin/change-requests', { params }).then(res => res.data),
+  approveChangeRequest: (id: string, data?: { adminNote?: string }) =>
+    api.patch<ApiResponse<UserChangeRequest>>(`/users/admin/change-requests/${id}/approve`, data).then(res => res.data),
+  rejectChangeRequest: (id: string, data?: { adminNote?: string }) =>
+    api.patch<ApiResponse<UserChangeRequest>>(`/users/admin/change-requests/${id}/reject`, data).then(res => res.data),
 };

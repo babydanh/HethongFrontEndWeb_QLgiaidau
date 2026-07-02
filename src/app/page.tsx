@@ -3,7 +3,7 @@
 // Reading this as: Sports platform homepage with live matches feed, featured tournaments, and community bento grid.
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { buildMatchScoreSummary } from '@/features/matches/score-display';
+import { buildMatchScoreSummary, getMatchScorePresentation, resolveMatchSportRules } from '@/features/matches/score-display';
 import Image from 'next/image';
 import {
   Trophy, Calendar, Users, MapPin, ArrowRight, Shield, Heart, Share2, Play,
@@ -46,6 +46,13 @@ function CommunityLogoAvatar({ src, alt }: { src?: string | null; alt: string })
       unoptimized={imageSrc === fallbackSrc}
     />
   );
+}
+
+function LiveMatchSportLabel({ match }: { match: BracketMatch }) {
+  const resolvedRules = resolveMatchSportRules({ matchConfig: match.matchConfig });
+  const presentation = getMatchScorePresentation(resolvedRules.kind);
+
+  return <>{presentation.sportLabel}</>;
 }
 
 
@@ -374,7 +381,7 @@ export default function HomePage() {
           <div className="shrink-0 text-slate-600">
             <span className="text-slate-400 font-bold">Môn:</span>{' '}
             <span className="font-black text-slate-800">
-              {match.tournament?.category?.name || categories.find(c => c.id === match.tournament?.categoryId)?.name || 'Môn đấu'}
+              <LiveMatchSportLabel match={match} />
             </span>
           </div>
           {match.courtName ? (

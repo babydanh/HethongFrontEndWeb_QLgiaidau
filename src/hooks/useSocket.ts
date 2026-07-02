@@ -63,9 +63,12 @@ const updateNotificationState = (
 };
 
 const replaceNotifications = (items: NotificationItem[]) => {
+  const nextItems = sortNotificationsByDate(items);
+
   updateNotificationState((current) => ({
     ...current,
-    items: sortNotificationsByDate(items),
+    items: nextItems,
+    unreadCount: getUnreadNotificationsCount(nextItems),
     isLoading: false,
     isInitialized: true,
     errorMessage: null,
@@ -73,30 +76,31 @@ const replaceNotifications = (items: NotificationItem[]) => {
 };
 
 const upsertNotification = (item: NotificationItem) => {
-  updateNotificationState((current) => ({
-    ...current,
-    items: mergeNotifications(current.items, [item]),
-    unreadCount:
-      item.isRead || current.items.some((currentItem) => currentItem.id === item.id)
-        ? current.unreadCount
-        : current.unreadCount + 1,
-    isInitialized: true,
-    errorMessage: null,
-  }));
+  updateNotificationState((current) => {
+    const nextItems = mergeNotifications(current.items, [item]);
+
+    return {
+      ...current,
+      items: nextItems,
+      unreadCount: getUnreadNotificationsCount(nextItems),
+      isInitialized: true,
+      errorMessage: null,
+    };
+  });
 };
 
 const markNotificationReadInState = (notificationId: string) => {
-  updateNotificationState((current) => ({
-    ...current,
-    items: current.items.map((item) =>
+  updateNotificationState((current) => {
+    const nextItems = current.items.map((item) =>
       item.id === notificationId ? { ...item, isRead: true } : item,
-    ),
-    unreadCount: Math.max(
-      0,
-      current.unreadCount -
-        (current.items.some((item) => item.id === notificationId && !item.isRead) ? 1 : 0),
-    ),
-  }));
+    );
+
+    return {
+      ...current,
+      items: nextItems,
+      unreadCount: getUnreadNotificationsCount(nextItems),
+    };
+  });
 };
 
 const markAllNotificationsReadInState = () => {

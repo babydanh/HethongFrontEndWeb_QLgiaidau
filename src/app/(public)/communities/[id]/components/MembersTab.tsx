@@ -1,12 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Users, Search, UserPlus, MoreVertical, ShieldAlert, ShieldCheck, Trash2, Crown, Loader2, X } from 'lucide-react';
+import { Users, Search, UserPlus, MoreVertical, ShieldAlert, ShieldCheck, Trash2, Crown, Loader2, X, Ban } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { communitiesApi } from '@/features/communities/api';
 import { usersApi } from '@/features/users/api';
 import toast from 'react-hot-toast';
 import Image from 'next/image';
+import { getErrorMessage } from '@/utils/error';
 
 interface UserSearchResult {
   id: string;
@@ -126,7 +127,7 @@ export default function MembersTab({
       setActiveMenuUserId(null);
     } catch (error) {
       console.error(error);
-      toast.error('Lỗi khi cập nhật vai trò.');
+      toast.error(getErrorMessage(error, 'Lỗi khi cập nhật vai trò.'));
     }
   };
 
@@ -142,7 +143,20 @@ export default function MembersTab({
       }
     } catch (error) {
       console.error(error);
-      toast.error('Lỗi khi kích thành viên.');
+      toast.error(getErrorMessage(error, 'Lỗi khi mời thành viên ra khỏi cộng đồng.'));
+    }
+  };
+
+  const handleBanMember = async (targetUserId: string, targetName: string) => {
+    if (!confirm(`Bạn có chắc chắn muốn cấm "${targetName}" khỏi cộng đồng?`)) return;
+    try {
+      await communitiesApi.banMember(communityId, targetUserId);
+      toast.success(`Đã cấm "${targetName}" khỏi cộng đồng.`);
+      fetchMembers();
+      setActiveMenuUserId(null);
+    } catch (error) {
+      console.error(error);
+      toast.error(getErrorMessage(error, 'Lỗi khi cấm thành viên.'));
     }
   };
 
@@ -159,7 +173,7 @@ export default function MembersTab({
       }
     } catch (error) {
       console.error(error);
-      toast.error('Lỗi khi chuyển quyền sở hữu.');
+      toast.error(getErrorMessage(error, 'Lỗi khi chuyển quyền sở hữu.'));
     }
   };
 
@@ -171,7 +185,7 @@ export default function MembersTab({
       setInviteResults(prev => prev.filter(r => r.id !== targetUser.id));
     } catch (error) {
       console.error(error);
-      toast.error('Lỗi khi gửi lời mời.');
+      toast.error(getErrorMessage(error, 'Lỗi khi gửi lời mời.'));
     } finally {
       setIsInvitingId(null);
     }
@@ -317,6 +331,12 @@ export default function MembersTab({
                                 >
                                   <Trash2 className="w-4 h-4 text-red-500" /> Kích khỏi nhóm
                                 </button>
+                                <button
+                                  onClick={() => handleBanMember(item.user.id, item.user.fullName)}
+                                  className="w-full text-left px-4 py-2 text-xs text-rose-700 hover:bg-rose-50 flex items-center gap-2 transition-colors"
+                                >
+                                  <Ban className="w-4 h-4 text-rose-600" /> Cấm khỏi cộng đồng
+                                </button>
                               </div>
                             )}
                           </div>
@@ -407,6 +427,12 @@ export default function MembersTab({
                                 >
                                   <Trash2 className="w-4 h-4 text-red-500" /> Kích khỏi nhóm
                                 </button>
+                              <button
+                                onClick={() => handleBanMember(item.user.id, item.user.fullName)}
+                                className="w-full text-left px-4 py-2 text-xs text-rose-700 hover:bg-rose-50 flex items-center gap-2 transition-colors"
+                              >
+                                <Ban className="w-4 h-4 text-rose-600" /> Cấm khỏi cộng đồng
+                              </button>
                             </div>
                           )}
                         </div>

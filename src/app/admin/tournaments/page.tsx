@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { api } from '@/lib/axios';
+import { useAuthStore } from '@/lib/zustand/authStore';
 import { toast } from 'react-hot-toast';
 import type { ApiResponse } from '@/types/api';
 import { getSportLogo } from '@/constants/sports';
@@ -60,6 +61,9 @@ interface TournamentDetail extends TournamentItem {
 }
 
 export default function AdminTournamentsPage() {
+  const { user } = useAuthStore();
+  const isModeratorOnly =
+    Boolean(user?.roles?.includes('MODERATOR')) && !user?.roles?.includes('ADMIN');
   const [tournaments, setTournaments] = useState<TournamentItem[]>([]);
   const [search, setSearch] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<string>('');
@@ -70,6 +74,12 @@ export default function AdminTournamentsPage() {
   const [selectedTournamentId, setSelectedTournamentId] = useState<string | null>(null);
   const [detailTournament, setDetailTournament] = useState<TournamentDetail | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
+  const [actionModal, setActionModal] = useState<{
+    tournamentId: string;
+    action: 'suspend' | 'unsuspend' | 'ban' | 'approve' | 'reject' | 'approve-delete' | 'reject-delete';
+    tournamentName: string;
+  } | null>(null);
+  const [actionNote, setActionNote] = useState('');
 
   const handleOpenDetail = async (id: string) => {
     setSelectedTournamentId(id);
@@ -117,7 +127,11 @@ export default function AdminTournamentsPage() {
     fetchTournaments(search);
   };
 
-  const handleTournamentAction = async (id: string, action: 'suspend' | 'unsuspend' | 'ban' | 'approve' | 'reject' | 'approve-delete' | 'reject-delete') => {
+  const handleTournamentAction = async (
+    id: string,
+    action: 'suspend' | 'unsuspend' | 'ban' | 'approve' | 'reject' | 'approve-delete' | 'reject-delete',
+    note?: string,
+  ) => {
     if (processing) return;
     
     const confirmMsg = 
@@ -135,7 +149,7 @@ export default function AdminTournamentsPage() {
 
     setProcessing(true);
     try {
-      await api.post(`/admin/tournaments/${id}/${action}`);
+      await api.post(`/admin/tournaments/${id}/${action}`, note ? { note } : undefined);
       toast.success(
         action === 'suspend' ? 'Đã đình chỉ giải đấu thành công!' :
         action === 'unsuspend' ? 'Đã khôi phục hoạt động giải đấu!' : 
@@ -153,6 +167,52 @@ export default function AdminTournamentsPage() {
       setProcessing(false);
     }
   };
+
+  const handleOpenActionModal = (
+    tournamentId: string,
+    tournamentName: string,
+    action: 'suspend' | 'unsuspend' | 'ban' | 'approve' | 'reject' | 'approve-delete' | 'reject-delete',
+  ) => {
+    setActionModal({ tournamentId, action, tournamentName });
+    setActionNote('');
+  };
+
+  const handleSubmitActionModal = async () => {
+    if (!actionModal) {
+      return;
+    }
+
+    const requiresNote =
+      actionModal.action === 'reject' ||
+      actionModal.action === 'reject-delete' ||
+      actionModal.action === 'suspend' ||
+      actionModal.action === 'ban';
+
+    if (requiresNote && !actionNote.trim()) {
+      toast.error('Vui lòng nhập ghi chú xử lý');
+      return;
+    }
+
+    await handleTournamentAction(actionModal.tournamentId, actionModal.action, actionNote.trim() || undefined);
+    setActionModal(null);
+    setActionNote('');
+  };
+
+  const actionModalTitle = actionModal
+    ? actionModal.action === 'reject'
+      ? 'Từ chối duyệt giải đấu'
+      : actionModal.action === 'reject-delete'
+      ? 'Từ chối yêu cầu xóa giải'
+      : actionModal.action === 'suspend'
+      ? 'Tạm đình chỉ giải đấu'
+      : actionModal.action === 'ban'
+      ? 'Hủy vĩnh viễn giải đấu'
+      : actionModal.action === 'approve-delete'
+      ? 'Duyệt yêu cầu xóa giải'
+      : actionModal.action === 'approve'
+      ? 'Phê duyệt giải đấu'
+      : 'Khôi phục giải đấu'
+    : '';
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -197,8 +257,14 @@ export default function AdminTournamentsPage() {
     <div className="space-y-6">
       {/* Header Section */}
       <div>
-        <h2 className="text-2xl font-bold text-slate-900">Quản Lý Giải Đấu Hệ Thống</h2>
-        <p className="text-slate-500 text-sm">Giám sát toàn bộ giải đấu, áp dụng chế tài tạm đình chỉ hoặc cấm vĩnh viễn các giải đấu vi phạm chính sách.</p>
+        <h2 className="text-2xl font-bold text-slate-900">
+          {isModeratorOnly ? 'Điều phối duyệt giải đấu' : 'Quản lý giải đấu hệ thống'}
+        </h2>
+        <p className="text-slate-500 text-sm">
+          {isModeratorOnly
+            ? 'Người điều phối duyệt hoặc từ chối các giải đang chờ xét duyệt trước khi lên hệ thống.'
+            : 'Giám sát toàn bộ giải đấu, áp dụng chế tài tạm đình chỉ hoặc cấm vĩnh viễn các giải đấu vi phạm chính sách.'}
+        </p>
       </div>
 
       {/* Search and Filter Bar */}
@@ -277,7 +343,7 @@ export default function AdminTournamentsPage() {
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50 text-slate-600 text-xs font-semibold uppercase tracking-wider">
                   <th className="p-4 pl-6">Thông tin giải đấu</th>
-                  <th className="p-4">Người tổ chức (Creator)</th>
+                  <th className="p-4">Người tổ chức</th>
                   <th className="p-4">Lệ phí & Thể thức</th>
                   <th className="p-4">Trạng thái</th>
                   <th className="p-4 pr-6 text-right">Hành động điều hành</th>
@@ -328,7 +394,7 @@ export default function AdminTournamentsPage() {
                           <Eye className="w-3.5 h-3.5" />
                           Chi tiết
                         </button>
-                        {item.status === 'PENDING_DELETE' && (
+                        {!isModeratorOnly && item.status === 'PENDING_DELETE' && (
                           <>
                             <button
                               onClick={() => handleTournamentAction(item.id, 'approve-delete')}
@@ -339,7 +405,7 @@ export default function AdminTournamentsPage() {
                               Duyệt xóa
                             </button>
                             <button
-                              onClick={() => handleTournamentAction(item.id, 'reject-delete')}
+                              onClick={() => handleOpenActionModal(item.id, item.name, 'reject-delete')}
                               disabled={processing}
                               className="bg-slate-50 hover:bg-slate-600 text-slate-600 hover:text-white border border-slate-200 hover:border-transparent px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 transition-all active:scale-95 disabled:opacity-50"
                             >
@@ -359,7 +425,7 @@ export default function AdminTournamentsPage() {
                               Duyệt
                             </button>
                             <button
-                              onClick={() => handleTournamentAction(item.id, 'reject')}
+                              onClick={() => handleOpenActionModal(item.id, item.name, 'reject')}
                               disabled={processing}
                               className="bg-amber-50 hover:bg-amber-600 text-amber-600 hover:text-white border border-amber-200 hover:border-transparent px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 transition-all active:scale-95 disabled:opacity-50"
                             >
@@ -368,9 +434,9 @@ export default function AdminTournamentsPage() {
                             </button>
                           </>
                         )}
-                        {item.status !== 'SUSPENDED' && item.status !== 'CANCELLED' && item.status !== 'PENDING_APPROVAL' && item.status !== 'PENDING_DELETE' && (
+                        {!isModeratorOnly && item.status !== 'SUSPENDED' && item.status !== 'CANCELLED' && item.status !== 'PENDING_APPROVAL' && item.status !== 'PENDING_DELETE' && (
                           <button
-                            onClick={() => handleTournamentAction(item.id, 'suspend')}
+                            onClick={() => handleOpenActionModal(item.id, item.name, 'suspend')}
                             disabled={processing}
                             className="bg-red-50 hover:bg-red-600 text-red-600 hover:text-white border border-red-200 hover:border-transparent px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 transition-all active:scale-95 disabled:opacity-50"
                           >
@@ -378,7 +444,7 @@ export default function AdminTournamentsPage() {
                             Đình chỉ
                           </button>
                         )}
-                        {item.status === 'SUSPENDED' && (
+                        {!isModeratorOnly && item.status === 'SUSPENDED' && (
                           <button
                             onClick={() => handleTournamentAction(item.id, 'unsuspend')}
                             disabled={processing}
@@ -388,9 +454,9 @@ export default function AdminTournamentsPage() {
                             Khôi phục
                           </button>
                         )}
-                        {item.status !== 'CANCELLED' && item.status !== 'PENDING_DELETE' && (
+                        {!isModeratorOnly && item.status !== 'CANCELLED' && item.status !== 'PENDING_DELETE' && (
                           <button
-                            onClick={() => handleTournamentAction(item.id, 'ban')}
+                            onClick={() => handleOpenActionModal(item.id, item.name, 'ban')}
                             disabled={processing}
                             className="bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white border border-rose-200 hover:border-transparent px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 transition-all active:scale-95 disabled:opacity-50"
                           >
@@ -539,7 +605,7 @@ export default function AdminTournamentsPage() {
                     {/* Right Column */}
                     <div className="space-y-3.5">
                       <div>
-                        <span className="text-xs text-slate-400 block font-medium">Người tạo (Creator)</span>
+                        <span className="text-xs text-slate-400 block font-medium">Người tạo giải</span>
                         <p className="font-semibold text-slate-800 mt-1">{detailTournament.creator?.fullName || 'N/A'}</p>
                         <p className="text-xs text-slate-500">{detailTournament.creator?.email || 'N/A'}</p>
                       </div>
@@ -560,7 +626,9 @@ export default function AdminTournamentsPage() {
                       <div>
                         <span className="text-xs text-slate-400 block font-medium">Giới hạn người tham gia</span>
                         <p className="font-semibold text-slate-800 mt-1">
-                          Tối đa {detailTournament.maxParticipants || 'Không giới hạn'} người/đội
+                          {detailTournament.maxParticipants
+                            ? `Tối đa ${detailTournament.maxParticipants} người/đội`
+                            : 'Không giới hạn'}
                         </p>
                       </div>
 
@@ -593,7 +661,7 @@ export default function AdminTournamentsPage() {
             <div className="p-6 border-t border-slate-100 bg-slate-50/50 flex flex-wrap gap-2 justify-end">
               {detailTournament && (
                 <>
-                  {detailTournament.status === 'PENDING_DELETE' && (
+                  {!isModeratorOnly && detailTournament.status === 'PENDING_DELETE' && (
                     <>
                       <button
                         onClick={() => {
@@ -645,7 +713,7 @@ export default function AdminTournamentsPage() {
                       </button>
                     </>
                   )}
-                  {detailTournament.status !== 'SUSPENDED' && detailTournament.status !== 'CANCELLED' && detailTournament.status !== 'PENDING_APPROVAL' && detailTournament.status !== 'PENDING_DELETE' && (
+                  {!isModeratorOnly && detailTournament.status !== 'SUSPENDED' && detailTournament.status !== 'CANCELLED' && detailTournament.status !== 'PENDING_APPROVAL' && detailTournament.status !== 'PENDING_DELETE' && (
                     <button
                       onClick={() => {
                         handleTournamentAction(detailTournament.id, 'suspend');
@@ -658,7 +726,7 @@ export default function AdminTournamentsPage() {
                       Tạm đình chỉ giải đấu
                     </button>
                   )}
-                  {detailTournament.status === 'SUSPENDED' && (
+                  {!isModeratorOnly && detailTournament.status === 'SUSPENDED' && (
                     <button
                       onClick={() => {
                         handleTournamentAction(detailTournament.id, 'unsuspend');
@@ -671,7 +739,7 @@ export default function AdminTournamentsPage() {
                       Khôi phục giải đấu
                     </button>
                   )}
-                  {detailTournament.status !== 'CANCELLED' && detailTournament.status !== 'PENDING_DELETE' && (
+                  {!isModeratorOnly && detailTournament.status !== 'CANCELLED' && detailTournament.status !== 'PENDING_DELETE' && (
                     <button
                       onClick={() => {
                         handleTournamentAction(detailTournament.id, 'ban');
@@ -694,6 +762,54 @@ export default function AdminTournamentsPage() {
                 className="bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 px-4 py-2 rounded-xl text-xs font-semibold transition-all active:scale-95"
               >
                 Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {actionModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-lg overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+            <div className="border-b border-slate-200 p-6">
+              <h3 className="text-lg font-bold text-slate-900">{actionModalTitle}</h3>
+              <p className="mt-1 text-sm text-slate-500">
+                Giải đấu: <span className="font-semibold text-slate-700">{actionModal.tournamentName}</span>
+              </p>
+            </div>
+
+            <div className="space-y-3 p-6">
+              <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Ghi chú xử lý của admin
+              </label>
+              <textarea
+                rows={4}
+                value={actionNote}
+                onChange={(event) => setActionNote(event.target.value)}
+                placeholder="Ví dụ: Hồ sơ chưa đủ điều kiện tính điểm ELO, thiếu minh chứng hoặc đang vi phạm chính sách hệ thống."
+                className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-800 outline-none transition-colors focus:border-blue-500"
+              />
+              <p className="text-xs text-slate-500">
+                Ghi chú này sẽ được dùng làm lý do xử lý cho các nhánh từ chối hoặc chế tài.
+              </p>
+            </div>
+
+            <div className="flex justify-end gap-3 border-t border-slate-200 bg-slate-50 p-6">
+              <button
+                onClick={() => {
+                  setActionModal(null);
+                  setActionNote('');
+                }}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-100"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={() => void handleSubmitActionModal()}
+                disabled={processing}
+                className="rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-blue-500 disabled:opacity-50"
+              >
+                {processing ? 'Đang xử lý...' : 'Xác nhận'}
               </button>
             </div>
           </div>

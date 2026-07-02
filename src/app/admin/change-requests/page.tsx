@@ -2,33 +2,20 @@
 
 import { useEffect, useState } from 'react';
 import { usersApi } from '@/features/users/api';
+import { useAuthStore } from '@/lib/zustand/authStore';
 import { toast } from 'react-hot-toast';
-import { Check, X, ShieldAlert, Calendar, Mail, User, ClipboardList, Loader2, CheckCircle2, XCircle } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
-
-interface ChangeRequest {
-  id: string;
-  userId: string;
-  requestType: 'GENDER' | 'EMAIL';
-  oldValue: string;
-  newValue: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
-  adminNote?: string;
-  createdAt: string;
-  user?: {
-    email: string;
-    profile?: {
-      fullName: string;
-      avatarUrl?: string;
-    };
-  };
-}
+import { Check, X, Calendar, Mail, User, ClipboardList, Loader2 } from 'lucide-react';
+import type { UserChangeRequest } from '@/types/user';
+import { getErrorMessage } from '@/utils/error';
 
 export default function AdminChangeRequestsPage() {
-  const [requests, setRequests] = useState<ChangeRequest[]>([]);
+  const { user } = useAuthStore();
+  const isModeratorOnly =
+    Boolean(user?.roles?.includes('MODERATOR')) && !user?.roles?.includes('ADMIN');
+  const [requests, setRequests] = useState<UserChangeRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string>('PENDING');
-  const [selectedRequest, setSelectedRequest] = useState<ChangeRequest | null>(null);
+  const [selectedRequest, setSelectedRequest] = useState<UserChangeRequest | null>(null);
   const [adminNote, setAdminNote] = useState('');
   const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
   const [actionType, setActionType] = useState<'APPROVE' | 'REJECT'>('APPROVE');
@@ -55,7 +42,7 @@ export default function AdminChangeRequestsPage() {
     setFilterStatus(status);
   };
 
-  const handleOpenActionModal = (req: ChangeRequest, type: 'APPROVE' | 'REJECT') => {
+  const handleOpenActionModal = (req: UserChangeRequest, type: 'APPROVE' | 'REJECT') => {
     setSelectedRequest(req);
     setActionType(type);
     setAdminNote('');
@@ -78,14 +65,10 @@ export default function AdminChangeRequestsPage() {
       setLoading(true);
       fetchRequests();
     } catch (error) {
-      toast.error(getErrorMessage(error));
+      toast.error(getErrorMessage(error, 'Có lỗi xảy ra khi xử lý yêu cầu'));
     } finally {
       setProcessing(false);
     }
-  };
-
-  const getErrorMessage = (error: any) => {
-    return error?.response?.data?.message || error?.message || 'Có lỗi xảy ra';
   };
 
   return (
@@ -94,7 +77,11 @@ export default function AdminChangeRequestsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-slate-900">Duyệt thay đổi thông tin</h2>
-          <p className="text-slate-500 text-sm">Xem xét và phê duyệt các yêu cầu thay đổi Giới tính / Email nhạy cảm của người chơi.</p>
+          <p className="text-slate-500 text-sm">
+            {isModeratorOnly
+              ? 'Người điều phối xác minh các yêu cầu thay đổi giới tính hoặc email nhạy cảm của người chơi.'
+              : 'Xem xét và phê duyệt các yêu cầu thay đổi giới tính hoặc email nhạy cảm của người chơi.'}
+          </p>
         </div>
         <div className="flex gap-2 bg-white p-1 rounded-xl border border-slate-200 self-start">
           <button
@@ -151,7 +138,9 @@ export default function AdminChangeRequestsPage() {
                   <th className="p-4">Giá trị cũ</th>
                   <th className="p-4">Giá trị mới</th>
                   <th className="p-4">Ngày gửi</th>
-                  {filterStatus !== 'PENDING' && <th className="p-4">Ghi chú Admin</th>}
+                  {filterStatus !== 'PENDING' && (
+                    <th className="p-4">{isModeratorOnly ? 'Ghi chú xử lý' : 'Ghi chú admin'}</th>
+                  )}
                   {filterStatus === 'PENDING' && <th className="p-4 pr-6 text-right">Thao tác</th>}
                 </tr>
               </thead>
@@ -254,12 +243,16 @@ export default function AdminChangeRequestsPage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700">Ghi chú của Admin (Tùy chọn)</label>
+                <label className="text-xs font-semibold text-slate-700">
+                  {isModeratorOnly ? 'Ghi chú xử lý (Tùy chọn)' : 'Ghi chú của admin (Tùy chọn)'}
+                </label>
                 <textarea
                   rows={3}
                   value={adminNote}
                   onChange={(e) => setAdminNote(e.target.value)}
-                  placeholder="Nhập phản hồi của Admin..."
+                  placeholder={
+                    isModeratorOnly ? 'Nhập phản hồi xử lý...' : 'Nhập phản hồi của admin...'
+                  }
                   className="w-full bg-slate-50 border border-slate-200 focus:border-blue-500 rounded-xl px-4 py-3 text-sm text-slate-800 placeholder-slate-400 outline-none transition-colors resize-none"
                 />
               </div>

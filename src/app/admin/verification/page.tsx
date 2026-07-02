@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/axios';
+import { useAuthStore } from '@/lib/zustand/authStore';
 import { toast } from 'react-hot-toast';
 import type { ApiResponse } from '@/types/api';
 import { Check, X, ShieldAlert, Eye, Calendar, Phone, Mail, User } from 'lucide-react';
@@ -26,6 +27,9 @@ interface TicketData {
 }
 
 export default function VerificationPage() {
+  const { user } = useAuthStore();
+  const isModeratorOnly =
+    Boolean(user?.roles?.includes('MODERATOR')) && !user?.roles?.includes('ADMIN');
   const [tickets, setTickets] = useState<TicketData[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTicket, setSelectedTicket] = useState<TicketData | null>(null);
@@ -98,7 +102,11 @@ export default function VerificationPage() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-slate-900">Duyệt Đơn &quot;Sao Uy Tín&quot;</h2>
-          <p className="text-slate-500 text-sm">Xem xét hồ sơ minh chứng hoạt động và cấp chứng nhận tài khoản uy tín.</p>
+          <p className="text-slate-500 text-sm">
+            {isModeratorOnly
+              ? 'Người điều phối kiểm tra hồ sơ minh chứng hoạt động và xử lý đơn xác minh đang chờ.'
+              : 'Xem xét hồ sơ minh chứng hoạt động và cấp chứng nhận tài khoản uy tín.'}
+          </p>
         </div>
         <div className="bg-blue-50 border border-blue-100 text-blue-600 text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5 font-medium">
           <ShieldAlert className="w-3.5 h-3.5" />

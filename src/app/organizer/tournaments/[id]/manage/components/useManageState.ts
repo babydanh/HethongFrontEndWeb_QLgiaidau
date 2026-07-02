@@ -419,7 +419,7 @@ export function useManageState(id: string) {
   const handleAddReferee = async (e: React.FormEvent) => {
     e.preventDefault(); if (!refereeEmail.trim()) return;
     setIsAddingReferee(true);
-    try { await tournamentsApi.addTournamentReferee(id, refereeEmail.trim()); toast.success('Thêm trọng tài thành công!'); setRefereeEmail(''); await fetchReferees(); }
+    try { await tournamentsApi.addTournamentReferee(id, refereeEmail.trim()); toast.success('Đã gửi lời mời trọng tài!'); setRefereeEmail(''); await fetchReferees(); }
     catch (err) { toast.error(getErrorMessage(err)); }
     finally { setIsAddingReferee(false); }
   };

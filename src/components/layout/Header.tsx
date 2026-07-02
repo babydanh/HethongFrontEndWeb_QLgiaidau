@@ -5,11 +5,25 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
-import { Bell, LayoutDashboard, LogOut, Menu, Trophy, User, X } from 'lucide-react';
+import {
+  Bell,
+  Check,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  Trophy,
+  User,
+  X,
+} from 'lucide-react';
 import { getButtonClasses } from '@/components/ui/Button';
+import { communitiesApi } from '@/features/communities/api';
+import { tournamentsApi } from '@/features/tournaments/api';
 import {
   formatNotificationTimestamp,
+  getNotificationActionConfig,
+  getNotificationSummary,
   getNotificationTypeMeta,
+  getNotificationTypeLabel,
   resolveNotificationTarget,
 } from '@/features/notifications/utils';
 import { useSocket } from '@/hooks/useSocket';
@@ -26,12 +40,17 @@ export function Header() {
   const { isAuthenticated, user, logout, setUser } = useAuthStore();
   const pathname = usePathname();
   const router = useRouter();
+  const canAccessAdmin = Boolean(user?.roles?.includes('ADMIN'));
+  const canAccessModeration = Boolean(
+    user?.roles?.includes('ADMIN') || user?.roles?.includes('MODERATOR'),
+  );
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const [pendingNotificationAction, setPendingNotificationAction] = useState<string | null>(null);
 
   const {
     notifications,
@@ -96,6 +115,63 @@ export function Header() {
       toast.success('Đã đánh dấu tất cả là đã đọc.');
     } catch (error) {
       toast.error(getErrorMessage(error, 'Không thể cập nhật thông báo.'));
+    }
+  };
+
+  const handleCommunityInviteAction = async (
+    notificationId: string,
+    communityId: string,
+    action: 'accept' | 'decline',
+  ) => {
+    const actionKey = `${notificationId}:${action}`;
+
+    try {
+      setPendingNotificationAction(actionKey);
+      await communitiesApi.respondToInvite(communityId, action);
+      await markNotificationAsRead(notificationId);
+      toast.success(
+        action === 'accept'
+          ? 'Đã chấp nhận lời mời tham gia cộng đồng.'
+          : 'Đã từ chối lời mời tham gia cộng đồng.',
+      );
+    } catch (error) {
+      toast.error(
+        getErrorMessage(
+          error,
+          action === 'accept'
+            ? 'Không thể chấp nhận lời mời lúc này.'
+            : 'Không thể từ chối lời mời lúc này.',
+        ),
+      );
+    } finally {
+      setPendingNotificationAction(null);
+    }
+  };
+
+  const handleRefereeInviteAction = async (
+    notificationId: string,
+    tournamentId: string,
+    refereeId: string,
+    action: 'ACCEPT' | 'DECLINE',
+  ) => {
+    const actionKey = `${notificationId}:${action}`;
+
+    try {
+      setPendingNotificationAction(actionKey);
+      await tournamentsApi.respondToRefereeInvite(tournamentId, refereeId, action);
+      await markNotificationAsRead(notificationId);
+      toast.success(action === 'ACCEPT' ? 'Đã nhận vai trò trọng tài.' : 'Đã từ chối lời mời trọng tài.');
+    } catch (error) {
+      toast.error(
+        getErrorMessage(
+          error,
+          action === 'ACCEPT'
+            ? 'Không thể chấp nhận lời mời trọng tài lúc này.'
+            : 'Không thể từ chối lời mời trọng tài lúc này.',
+        ),
+      );
+    } finally {
+      setPendingNotificationAction(null);
     }
   };
 
@@ -295,50 +371,143 @@ export function Header() {
                         </div>
                       ) : notificationPreviewItems.length > 0 ? (
                         <div className="p-2">
-                          {notificationPreviewItems.map((notification) => (
-                            <button
-                              key={notification.id}
-                              type="button"
-                              onClick={() =>
-                                void handleNotificationNavigation(
-                                  notification.id,
-                                  notification.redirectUrl,
-                                  notification.isRead,
-                                  )
-                              }
-                              className={cn(
-                                'flex w-full flex-col gap-1 rounded-2xl px-3 py-3 text-left transition-colors',
-                                notification.isRead
-                                  ? getNotificationTypeMeta(notification.type).cardClassName
-                                  : getNotificationTypeMeta(notification.type).unreadCardClassName,
-                              )}
-                            >
-                              <div className="flex items-start justify-between gap-3">
-                                <span
-                                  className={cn(
-                                    'text-sm font-semibold',
-                                    notification.isRead ? 'text-slate-800' : 'text-slate-950',
-                                  )}
-                                >
-                                  {notification.title}
-                                </span>
-                                {!notification.isRead ? (
-                                  <span
-                                    className={cn(
-                                      'mt-1 h-2.5 w-2.5 rounded-full',
-                                      getNotificationTypeMeta(notification.type).dotClassName,
-                                    )}
-                                  />
-                                ) : null}
-                              </div>
-                              <p className="line-clamp-2 text-xs text-slate-500">
-                                {notification.content}
-                              </p>
-                              <p className="text-[11px] font-medium text-slate-400">
-                                {formatNotificationTimestamp(notification.createdAt)}
-                              </p>
-                            </button>
-                          ))}
+                          {notificationPreviewItems.map((notification) => {
+                            const notificationAction = getNotificationActionConfig(notification);
+
+                            return (
+                              <article
+                                key={notification.id}
+                                className={cn(
+                                  'rounded-xl border px-3.5 py-3.5 transition-colors',
+                                  notification.isRead
+                                    ? 'border-transparent bg-white hover:border-slate-200 hover:bg-slate-50/80'
+                                    : 'border-slate-200 bg-slate-50/85 shadow-sm',
+                                )}
+                              >
+                                <div className="flex items-start gap-3">
+                                  <div className="min-w-0 flex-1">
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        void handleNotificationNavigation(
+                                          notification.id,
+                                          notification.redirectUrl,
+                                          notification.isRead,
+                                        )
+                                      }
+                                      className="w-full text-left"
+                                    >
+                                      <div className="flex items-start justify-between gap-3">
+                                        <div className="min-w-0">
+                                          <div className="mb-1.5 flex flex-wrap items-center gap-2">
+                                            <span
+                                              className={cn(
+                                                'rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em]',
+                                                getNotificationTypeMeta(notification.type).badgeClassName,
+                                              )}
+                                            >
+                                              {getNotificationTypeLabel(notification.type)}
+                                            </span>
+                                            {!notification.isRead ? (
+                                              <span className="text-[10px] font-semibold text-slate-500">
+                                                {getNotificationSummary(notification.type)}
+                                              </span>
+                                            ) : null}
+                                          </div>
+                                          <p
+                                            className={cn(
+                                              'text-sm font-semibold',
+                                              notification.isRead ? 'text-slate-700' : 'text-slate-950',
+                                            )}
+                                          >
+                                            {notification.title}
+                                          </p>
+                                        </div>
+                                        {!notification.isRead ? (
+                                          <span className="inline-flex shrink-0 whitespace-nowrap rounded-full bg-blue-600 px-2 py-1 text-[10px] font-semibold text-white">
+                                            Chưa đọc
+                                          </span>
+                                        ) : (
+                                          <span className="inline-flex shrink-0 whitespace-nowrap text-[10px] font-medium text-slate-400">
+                                            Đã đọc
+                                          </span>
+                                        )}
+                                      </div>
+                                      <p
+                                        className={cn(
+                                          'mt-1.5 line-clamp-2 text-xs leading-5',
+                                          notification.isRead ? 'text-slate-500' : 'text-slate-600',
+                                        )}
+                                      >
+                                        {notification.content}
+                                      </p>
+                                      <p className="mt-2.5 text-[11px] font-medium text-slate-400">
+                                        {formatNotificationTimestamp(notification.createdAt)}
+                                      </p>
+                                    </button>
+
+                                    {(notificationAction?.kind === 'community-invite' || notificationAction?.kind === 'referee-invite') && !notification.isRead ? (
+                                      <div className="mt-3.5 flex gap-2">
+                                        <button
+                                          type="button"
+                                          disabled={pendingNotificationAction !== null}
+                                          onClick={() => {
+                                            if (notificationAction.kind === 'community-invite' && notificationAction.communityId) {
+                                              void handleCommunityInviteAction(notification.id, notificationAction.communityId, 'accept');
+                                              return;
+                                            }
+
+                                            if (
+                                              notificationAction.kind === 'referee-invite' &&
+                                              notificationAction.tournamentId &&
+                                              notificationAction.refereeId
+                                            ) {
+                                              void handleRefereeInviteAction(
+                                                notification.id,
+                                                notificationAction.tournamentId,
+                                                notificationAction.refereeId,
+                                                'ACCEPT',
+                                              );
+                                            }
+                                          }}
+                                          className="inline-flex items-center gap-1 rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                        >
+                                          <Check className="h-3.5 w-3.5" />
+                                          {notificationAction.kind === 'referee-invite' ? 'Nhận vai trò' : 'Đồng ý'}
+                                        </button>
+                                        <button
+                                          type="button"
+                                          disabled={pendingNotificationAction !== null}
+                                          onClick={() => {
+                                            if (notificationAction.kind === 'community-invite' && notificationAction.communityId) {
+                                              void handleCommunityInviteAction(notification.id, notificationAction.communityId, 'decline');
+                                              return;
+                                            }
+
+                                            if (
+                                              notificationAction.kind === 'referee-invite' &&
+                                              notificationAction.tournamentId &&
+                                              notificationAction.refereeId
+                                            ) {
+                                              void handleRefereeInviteAction(
+                                                notification.id,
+                                                notificationAction.tournamentId,
+                                                notificationAction.refereeId,
+                                                'DECLINE',
+                                              );
+                                            }
+                                          }}
+                                          className="rounded-xl border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-700 transition-colors hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                        >
+                                          Từ chối
+                                        </button>
+                                      </div>
+                                    ) : null}
+                                  </div>
+                                </div>
+                              </article>
+                            );
+                          })}
                         </div>
                       ) : (
                         <div className="px-6 py-10 text-center">
@@ -405,11 +574,20 @@ export function Header() {
                       <p className="truncate text-xs text-slate-500">{user?.email}</p>
                     </div>
 
-                    {user?.roles?.includes('ADMIN') ? (
+                    {canAccessAdmin ? (
                       <Link href="/admin">
                         <div className="flex cursor-pointer items-center gap-2 px-4 py-2 text-sm font-bold text-blue-600 transition-colors hover:bg-blue-50/50">
                           <LayoutDashboard className="h-4 w-4" />
                           Quản trị hệ thống
+                        </div>
+                      </Link>
+                    ) : null}
+
+                    {canAccessModeration ? (
+                      <Link href="/moderation">
+                        <div className="flex cursor-pointer items-center gap-2 px-4 py-2 text-sm font-semibold text-amber-700 transition-colors hover:bg-amber-50/70">
+                          <Check className="h-4 w-4" />
+                          Điều phối kiểm duyệt
                         </div>
                       </Link>
                     ) : null}

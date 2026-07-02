@@ -1,8 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { toast } from 'react-hot-toast';
 import { paymentsApi } from '@/features/payments/api';
 import { PayoutRequest } from '@/types/payment';
+import { getErrorMessage } from '@/utils/error';
 import { CreditCard, Landmark, Check, X, AlertCircle, ExternalLink, Calendar } from 'lucide-react';
 
 interface PayoutRequestWithOrganizer extends PayoutRequest {
@@ -76,12 +78,12 @@ export default function AdminPayoutsReview() {
         transactionProofUrl: reviewAction === 'APPROVED' ? proofUrl : undefined,
         note: note.trim() || undefined,
       });
-      alert(`Đã ${reviewAction === 'APPROVED' ? 'duyệt giải ngân' : 'từ chối yêu cầu'} thành công!`);
+      toast.success(`Đã ${reviewAction === 'APPROVED' ? 'duyệt giải ngân' : 'từ chối yêu cầu'} thành công`);
       setReviewingPayout(null);
       fetchPayouts();
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Review payout error:', err);
-      setModalError('Lỗi cập nhật. Vui lòng thử lại.');
+      setModalError(getErrorMessage(err, 'Lỗi cập nhật. Vui lòng thử lại.'));
     } finally {
       setSubmitting(false);
     }

@@ -57,7 +57,7 @@ export function RefereesTab({
           disabled={isAddingReferee}
           className="bg-blue-600 hover:bg-blue-700 text-white font-bold h-10 px-5 rounded-xl shrink-0"
         >
-          {isAddingReferee ? 'Đang thêm...' : 'Thêm trọng tài'}
+          {isAddingReferee ? 'Đang gửi mời...' : 'Gửi lời mời'}
         </Button>
       </form>
 

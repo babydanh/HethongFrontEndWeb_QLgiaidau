@@ -104,6 +104,12 @@ export const communitiesApi = {
   removeMember: (id: string, userId: string) => 
     api.delete<ApiResponse<CommunityMemberRecord>>(`/communities/${id}/members/${userId}`),
 
+  banMember: (id: string, userId: string) =>
+    api.post<ApiResponse<CommunityMemberRecord>>(`/communities/${id}/members/${userId}/ban`, {}),
+
+  unbanMember: (id: string, userId: string) =>
+    api.delete<ApiResponse<CommunityMemberRecord>>(`/communities/${id}/members/${userId}/ban`),
+
   // Join & Follow
   joinCommunity: (id: string, joinAnswers?: Record<string, string>) => 
     api.post<ApiResponse<CommunityMemberRecord>>(`/communities/${id}/join`, { joinAnswers }),

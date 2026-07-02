@@ -10,6 +10,15 @@ import { EloTierBadge } from "@/components/ui/EloTierBadge";
 import { Trophy, ChevronDown, ChevronUp, Award, Users, Info, Loader2, Search } from "lucide-react";
 import Link from "next/link";
 
+interface LeaderboardSearchResult {
+    id: string;
+    fullName?: string;
+    avatarUrl?: string | null;
+    email?: string;
+    eloPoints: number;
+    tierName: string;
+}
+
 export default function LeaderboardPage() {
     const [categories, setCategories] = useState<Category[]>([]);
     const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
@@ -23,7 +32,7 @@ export default function LeaderboardPage() {
 
     // ELO User Search States
     const [searchQuery, setSearchQuery] = useState("");
-    const [searchResult, setSearchResult] = useState<any[]>([]);
+    const [searchResult, setSearchResult] = useState<LeaderboardSearchResult[]>([]);
     const [searchLoading, setSearchLoading] = useState(false);
     const [searchError, setSearchError] = useState("");
 
@@ -46,12 +55,12 @@ export default function LeaderboardPage() {
             }
             
             const enriched = await Promise.all(
-                foundUsers.map(async (u: any) => {
+                foundUsers.map(async (u) => {
                     try {
                         const rankRes = await rankingsApi.getUserRankings(u.id);
-                        const data = rankRes.data || rankRes;
+                        const data = rankRes;
                         const publicRanks = data.publicRanks || [];
-                        const matchRank = publicRanks.find((r: any) => r.categoryId === activeCategoryId);
+                        const matchRank = publicRanks.find((r) => r.categoryId === activeCategoryId);
                         return {
                             ...u,
                             eloPoints: matchRank?.eloPoints ?? 1000,

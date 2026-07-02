@@ -3,6 +3,33 @@ import { socketClient } from '@/lib/socket';
 import { matchesApi, Match, MatchScore } from '@/features/matches/api';
 import { extractMatchScores } from '@/features/matches/score-display';
 
+function areScoresEqual(left: MatchScore[], right: MatchScore[]) {
+  if (left.length !== right.length) {
+    return false;
+  }
+
+  return left.every((score, index) => {
+    const other = right[index];
+    return (
+      other &&
+      score.team1Score === other.team1Score &&
+      score.team2Score === other.team2Score &&
+      score.isFinished === other.isFinished
+    );
+  });
+}
+
+function hasSameLiveSnapshot(left: Match, right: Match) {
+  return (
+    left.id === right.id &&
+    left.status === right.status &&
+    left.winnerId === right.winnerId &&
+    left.p1SetsWon === right.p1SetsWon &&
+    left.p2SetsWon === right.p2SetsWon &&
+    JSON.stringify(left.scoreDetails ?? null) === JSON.stringify(right.scoreDetails ?? null)
+  );
+}
+
 export function useLiveMatch(matchId: string) {
   const [match, setMatch] = useState<Match | null>(null);
   const [scores, setScores] = useState<MatchScore[]>([]);
@@ -50,37 +77,55 @@ export function useLiveMatch(matchId: string) {
       socket.emit('joinMatch', matchId);
     };
 
+    const handleScoreUpdate = (updatedMatch: Match) => {
+      if (updatedMatch.id === matchId) {
+        applyIncomingMatch(updatedMatch, true);
+      }
+    };
+
+    const handleMatchStatus = (updatedMatch: Match) => {
+      if (updatedMatch.id === matchId) {
+        applyIncomingMatch(updatedMatch, false);
+      }
+    };
+
+    const handleViewerCount = (payload: { matchId: string; viewerCount: number }) => {
+      if (payload.matchId === matchId) {
+        setViewerCount(payload.viewerCount);
+      }
+    };
+
     if (socket.connected) {
       joinRoom();
     } else {
       socket.on('connect', joinRoom);
     }
 
-    socket.on('score:update', (updatedMatch: Match) => {
-      if (updatedMatch.id === matchId) {
-        setMatch(updatedMatch);
-        setScores(extractMatchScores(updatedMatch.scoreDetails));
-      }
-    });
+    const applyIncomingMatch = (updatedMatch: Match, includeScores: boolean) => {
+      setMatch((previous) => {
+        if (previous && hasSameLiveSnapshot(previous, updatedMatch)) {
+          return previous;
+        }
 
-    socket.on('match:status', (updatedMatch: Match) => {
-      if (updatedMatch.id === matchId) {
-        setMatch(updatedMatch);
-      }
-    });
+        return updatedMatch;
+      });
 
-    socket.on('viewer:count', (payload: { matchId: string; viewerCount: number }) => {
-      if (payload.matchId === matchId) {
-        setViewerCount(payload.viewerCount);
+      if (includeScores) {
+        const nextScores = extractMatchScores(updatedMatch.scoreDetails);
+        setScores((previous) => (areScoresEqual(previous, nextScores) ? previous : nextScores));
       }
-    });
+    };
+
+    socket.on('score:update', handleScoreUpdate);
+    socket.on('match:status', handleMatchStatus);
+    socket.on('viewer:count', handleViewerCount);
 
     return () => {
       socket.emit('leaveMatch', matchId);
       socket.off('connect', joinRoom);
-      socket.off('score:update');
-      socket.off('match:status');
-      socket.off('viewer:count');
+      socket.off('score:update', handleScoreUpdate);
+      socket.off('match:status', handleMatchStatus);
+      socket.off('viewer:count', handleViewerCount);
     };
   }, [matchId]);
 

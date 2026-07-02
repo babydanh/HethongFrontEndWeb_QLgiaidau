@@ -2,10 +2,22 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Bell, BellOff, CheckCheck, ChevronRight } from 'lucide-react';
+import {
+  Bell,
+  BellOff,
+  Check,
+  CheckCheck,
+  ChevronRight,
+  X,
+} from 'lucide-react';
 import toast from 'react-hot-toast';
+import { communitiesApi } from '@/features/communities/api';
+import { tournamentsApi } from '@/features/tournaments/api';
+import type { NotificationItem } from '@/features/notifications/types';
 import { useSocket } from '@/hooks/useSocket';
 import {
+  getNotificationActionConfig,
+  getNotificationSummary,
   formatNotificationTimestamp,
   getNotificationTypeLabel,
   getNotificationTypeMeta,
@@ -16,9 +28,38 @@ import { getErrorMessage } from '@/utils/error';
 
 type NotificationFilter = 'all' | 'unread';
 
+type NotificationSection = {
+  key: 'today' | 'week' | 'older';
+  title: string;
+  items: NotificationItem[];
+};
+
+const getNotificationSectionKey = (createdAt: string): NotificationSection['key'] => {
+  const createdTime = new Date(createdAt).getTime();
+
+  if (Number.isNaN(createdTime)) {
+    return 'older';
+  }
+
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const diff = startOfToday - createdTime;
+
+  if (createdTime >= startOfToday) {
+    return 'today';
+  }
+
+  if (diff < 6 * 24 * 60 * 60 * 1000) {
+    return 'week';
+  }
+
+  return 'older';
+};
+
 export default function NotificationsPage() {
   const router = useRouter();
   const [filter, setFilter] = useState<NotificationFilter>('all');
+  const [pendingActionKey, setPendingActionKey] = useState<string | null>(null);
   const {
     notifications,
     unreadCount,
@@ -37,6 +78,22 @@ export default function NotificationsPage() {
 
     return notifications;
   }, [filter, notifications]);
+
+  const groupedNotifications = useMemo(() => {
+    const sections: NotificationSection[] = [
+      { key: 'today', title: 'Hôm nay', items: [] },
+      { key: 'week', title: '7 ngày gần đây', items: [] },
+      { key: 'older', title: 'Cũ hơn', items: [] },
+    ];
+
+    const sectionMap = new Map(sections.map((section) => [section.key, section]));
+
+    for (const notification of filteredNotifications) {
+      sectionMap.get(getNotificationSectionKey(notification.createdAt))?.items.push(notification);
+    }
+
+    return sections.filter((section) => section.items.length > 0);
+  }, [filteredNotifications]);
 
   const handleNotificationOpen = async (
     notificationId: string,
@@ -64,6 +121,65 @@ export default function NotificationsPage() {
     }
 
     router.push(target.href);
+  };
+
+  const handleCommunityInviteAction = async (
+    notificationId: string,
+    communityId: string,
+    action: 'accept' | 'decline',
+  ) => {
+    const actionKey = `${notificationId}:${action}`;
+
+    try {
+      setPendingActionKey(actionKey);
+      await communitiesApi.respondToInvite(communityId, action);
+      await markNotificationAsRead(notificationId);
+      toast.success(
+        action === 'accept'
+          ? 'Đã chấp nhận lời mời tham gia cộng đồng.'
+          : 'Đã từ chối lời mời tham gia cộng đồng.',
+      );
+      await refreshNotifications();
+    } catch (error) {
+      toast.error(
+        getErrorMessage(
+          error,
+          action === 'accept'
+            ? 'Không thể chấp nhận lời mời lúc này.'
+            : 'Không thể từ chối lời mời lúc này.',
+        ),
+      );
+    } finally {
+      setPendingActionKey(null);
+    }
+  };
+
+  const handleRefereeInviteAction = async (
+    notificationId: string,
+    tournamentId: string,
+    refereeId: string,
+    action: 'ACCEPT' | 'DECLINE',
+  ) => {
+    const actionKey = `${notificationId}:${action}`;
+
+    try {
+      setPendingActionKey(actionKey);
+      await tournamentsApi.respondToRefereeInvite(tournamentId, refereeId, action);
+      await markNotificationAsRead(notificationId);
+      toast.success(action === 'ACCEPT' ? 'Đã nhận vai trò trọng tài.' : 'Đã từ chối lời mời trọng tài.');
+      await refreshNotifications();
+    } catch (error) {
+      toast.error(
+        getErrorMessage(
+          error,
+          action === 'ACCEPT'
+            ? 'Không thể chấp nhận lời mời trọng tài lúc này.'
+            : 'Không thể từ chối lời mời trọng tài lúc này.',
+        ),
+      );
+    } finally {
+      setPendingActionKey(null);
+    }
   };
 
   const handleMarkAllAsRead = async () => {
@@ -188,89 +304,187 @@ export default function NotificationsPage() {
                   </div>
                 ))}
               </div>
-            ) : filteredNotifications.length > 0 ? (
-              <div className="space-y-3">
-                {filteredNotifications.map((notification) => (
-                  <article
-                    key={notification.id}
-                    className={cn(
-                      'rounded-3xl border p-5 transition-all',
-                      notification.isRead
-                        ? `border-slate-200 bg-white ${getNotificationTypeMeta(notification.type).cardClassName}`
-                        : getNotificationTypeMeta(notification.type).unreadCardClassName,
-                    )}
-                  >
-                    <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          void handleNotificationOpen(
-                            notification.id,
-                            notification.redirectUrl,
-                            notification.isRead,
-                          )
-                        }
-                        className="flex-1 text-left"
-                      >
-                        <div className="mb-3 flex flex-wrap items-center gap-2">
-                          <span
-                            className={cn(
-                              'rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em]',
-                              getNotificationTypeMeta(notification.type).badgeClassName,
-                            )}
-                          >
-                            {getNotificationTypeLabel(notification.type)}
-                          </span>
-                          <span className="text-xs font-medium text-slate-400">
-                            {formatNotificationTimestamp(notification.createdAt)}
-                          </span>
-                          {!notification.isRead ? (
-                            <span className="rounded-full bg-blue-600 px-2.5 py-1 text-[11px] font-semibold text-white">
-                              Mới
-                            </span>
-                          ) : null}
-                        </div>
-                        <h2 className="text-lg font-semibold text-slate-950">
-                          {notification.title}
-                        </h2>
-                        <p className="mt-2 text-sm leading-6 text-slate-600">
-                          {notification.content}
-                        </p>
-                      </button>
-
-                      <div className="flex items-center gap-2 md:ml-4">
-                        {!notification.isRead ? (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              void markNotificationAsRead(notification.id).catch((error: unknown) => {
-                                toast.error(
-                                  getErrorMessage(error, 'Không thể cập nhật thông báo.'),
-                                );
-                              });
-                            }}
-                            className="inline-flex items-center rounded-2xl border border-blue-200 bg-white px-3 py-2 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-50"
-                          >
-                            Đánh dấu đã đọc
-                          </button>
-                        ) : null}
-                        <button
-                          type="button"
-                          onClick={() =>
-                            void handleNotificationOpen(
-                              notification.id,
-                              notification.redirectUrl,
-                              notification.isRead,
-                            )
-                          }
-                          className="inline-flex items-center gap-1 rounded-2xl px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100"
-                        >
-                          Mở
-                          <ChevronRight className="h-4 w-4" />
-                        </button>
-                      </div>
+            ) : groupedNotifications.length > 0 ? (
+              <div className="space-y-6">
+                {groupedNotifications.map((section) => (
+                  <section key={section.key} className="space-y-3">
+                    <div className="flex items-center gap-3 px-1">
+                      <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
+                        {section.title}
+                      </h2>
+                      <div className="h-px flex-1 bg-slate-200" />
                     </div>
-                  </article>
+
+                    <div className="space-y-3">
+                      {section.items.map((notification) => (
+                        <article
+                          key={notification.id}
+                          className={cn(
+                            'rounded-3xl border p-5 transition-all',
+                            notification.isRead
+                              ? 'border-slate-200 bg-white hover:border-slate-300'
+                              : 'border-slate-200 bg-slate-50/85 shadow-sm',
+                          )}
+                        >
+                          {(() => {
+                            const notificationAction = getNotificationActionConfig(notification);
+
+                            return (
+                              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    void handleNotificationOpen(
+                                      notification.id,
+                                      notification.redirectUrl,
+                                      notification.isRead,
+                                    )
+                                  }
+                                  className="flex-1 text-left"
+                                >
+                                  <div className="mb-3 flex flex-wrap items-center gap-2">
+                                    <span
+                                      className={cn(
+                                        'rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em]',
+                                        getNotificationTypeMeta(notification.type).badgeClassName,
+                                      )}
+                                    >
+                                      {getNotificationTypeLabel(notification.type)}
+                                    </span>
+                                    {!notification.isRead ? (
+                                      <span className="rounded-full bg-slate-200 px-3 py-1 text-[11px] font-semibold text-slate-700">
+                                        {getNotificationSummary(notification.type)}
+                                      </span>
+                                    ) : null}
+                                    <span className="text-xs font-medium text-slate-400">
+                                      {formatNotificationTimestamp(notification.createdAt)}
+                                    </span>
+                                    <span
+                                      className={cn(
+                                        'inline-flex shrink-0 whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold',
+                                        notification.isRead
+                                          ? 'bg-slate-100 text-slate-500'
+                                          : 'bg-blue-600 text-white',
+                                      )}
+                                    >
+                                      {notification.isRead ? 'Đã đọc' : 'Chưa đọc'}
+                                    </span>
+                                  </div>
+                                  <h2
+                                    className={cn(
+                                      'text-lg font-semibold',
+                                      notification.isRead ? 'text-slate-800' : 'text-slate-950',
+                                    )}
+                                  >
+                                    {notification.title}
+                                  </h2>
+                                  <p
+                                    className={cn(
+                                      'mt-2.5 text-sm leading-6',
+                                      notification.isRead ? 'text-slate-500' : 'text-slate-600',
+                                    )}
+                                  >
+                                    {notification.content}
+                                  </p>
+                                </button>
+
+                                <div className="flex flex-wrap items-center gap-2 pt-1 md:ml-4 md:justify-end">
+                                  {(notificationAction?.kind === 'community-invite' || notificationAction?.kind === 'referee-invite') && !notification.isRead ? (
+                                    <>
+                                      <button
+                                        type="button"
+                                        disabled={pendingActionKey !== null}
+                                        onClick={() => {
+                                          if (notificationAction.kind === 'community-invite' && notificationAction.communityId) {
+                                            void handleCommunityInviteAction(notification.id, notificationAction.communityId, 'accept');
+                                            return;
+                                          }
+
+                                          if (
+                                            notificationAction.kind === 'referee-invite' &&
+                                            notificationAction.tournamentId &&
+                                            notificationAction.refereeId
+                                          ) {
+                                            void handleRefereeInviteAction(
+                                              notification.id,
+                                              notificationAction.tournamentId,
+                                              notificationAction.refereeId,
+                                              'ACCEPT',
+                                            );
+                                          }
+                                        }}
+                                        className="inline-flex items-center gap-1 rounded-2xl bg-emerald-600 px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                      >
+                                        <Check className="h-4 w-4" />
+                                        {notificationAction.kind === 'referee-invite' ? 'Nhận vai trò' : 'Đồng ý'}
+                                      </button>
+                                      <button
+                                        type="button"
+                                        disabled={pendingActionKey !== null}
+                                        onClick={() => {
+                                          if (notificationAction.kind === 'community-invite' && notificationAction.communityId) {
+                                            void handleCommunityInviteAction(notification.id, notificationAction.communityId, 'decline');
+                                            return;
+                                          }
+
+                                          if (
+                                            notificationAction.kind === 'referee-invite' &&
+                                            notificationAction.tournamentId &&
+                                            notificationAction.refereeId
+                                          ) {
+                                            void handleRefereeInviteAction(
+                                              notification.id,
+                                              notificationAction.tournamentId,
+                                              notificationAction.refereeId,
+                                              'DECLINE',
+                                            );
+                                          }
+                                        }}
+                                        className="inline-flex items-center gap-1 rounded-2xl border border-rose-200 bg-white px-3.5 py-2 text-sm font-semibold text-rose-700 transition-colors hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                      >
+                                        <X className="h-4 w-4" />
+                                        Từ chối
+                                      </button>
+                                    </>
+                                  ) : null}
+
+                                  {!notification.isRead ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        void markNotificationAsRead(notification.id).catch((error: unknown) => {
+                                          toast.error(
+                                            getErrorMessage(error, 'Không thể cập nhật thông báo.'),
+                                          );
+                                        });
+                                      }}
+                                      className="inline-flex items-center rounded-2xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+                                    >
+                                      Đánh dấu đã đọc
+                                    </button>
+                                  ) : null}
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      void handleNotificationOpen(
+                                        notification.id,
+                                        notification.redirectUrl,
+                                        notification.isRead,
+                                      )
+                                    }
+                                    className="inline-flex items-center gap-1 rounded-2xl px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100"
+                                  >
+                                    Mở
+                                    <ChevronRight className="h-4 w-4" />
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })()}
+                        </article>
+                      ))}
+                    </div>
+                  </section>
                 ))}
               </div>
             ) : (

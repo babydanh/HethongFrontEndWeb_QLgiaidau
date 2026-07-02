@@ -23,6 +23,50 @@ export interface StaffMember {
   avatarUrl: string | null;
 }
 
+export interface WorkspaceRefereeInvite {
+  refereeId: string;
+  tournamentId: string;
+  tournamentName: string;
+  tournamentStatus: string;
+  categoryName: string | null;
+  assignedAt: string;
+  status: 'INVITED' | 'ACCEPTED' | 'DECLINED';
+}
+
+export interface TournamentReferee {
+  id: string;
+  userId: string;
+  status: string;
+  fullName: string;
+  email: string;
+  avatarUrl: string | null;
+}
+
+export interface WorkspaceRefereeMatch {
+  id: string;
+  tournamentId: string;
+  tournamentName: string;
+  categoryName: string | null;
+  stageName: string;
+  groupName: string;
+  roundNumber: number;
+  matchOrder: number;
+  status: string;
+  scheduledAt: string | null;
+  courtName: string | null;
+  participant1Name: string | null;
+  participant2Name: string | null;
+}
+
+export interface TournamentWorkspace {
+  organizedTournaments: Tournament[];
+  participatingTournaments: Tournament[];
+  coOrganizerTournaments: Tournament[];
+  refereeInvites: WorkspaceRefereeInvite[];
+  refereeTournaments: WorkspaceRefereeInvite[];
+  refereeMatches: WorkspaceRefereeMatch[];
+}
+
 export interface Division {
   id: string;
   name: string;
@@ -121,6 +165,7 @@ export const tournamentsApi = {
   getTournaments: (params?: Record<string, unknown>) => api.get<PaginatedTournaments>('/tournaments', { params }),
   getPublicTournaments: (params?: Record<string, unknown>) => api.get<PaginatedTournaments>('/tournaments/public', { params }),
   getMyTournaments: () => api.get<ApiResponse<Tournament[]>>('/tournaments/my'),
+  getMyWorkspace: () => api.get<ApiResponse<TournamentWorkspace>>('/tournaments/workspace/me'),
   getTournamentById: (id: string, params?: Record<string, unknown>) => api.get<ApiResponse<Tournament>>(`/tournaments/${id}`, { params }),
   getTournamentByInviteCode: (inviteCode: string) => api.get<ApiResponse<Tournament>>(`/tournaments/join/${inviteCode}`),
   joinTournamentByInviteCode: <T>(inviteCode: string, data: T) => api.post<ApiResponse<{ participantId: string }>>(`/tournaments/join/${inviteCode}`, data),
@@ -166,9 +211,13 @@ export const tournamentsApi = {
     disputeId: string,
     data: { resolutionNote: string; matchStatus?: 'SCHEDULED' | 'ONGOING' | 'COMPLETED' | 'DISPUTED' },
   ) => api.post<ApiResponse<OpsDisputeItem>>(`/tournaments/${id}/disputes/${disputeId}/resolve`, data),
-  getTournamentReferees: (id: string) => api.get<ApiResponse<{ id: string; userId: string; status: string; fullName: string; avatarUrl: string | null }[]>>(`/tournaments/${id}/referees`),
+  getTournamentReferees: (id: string) => api.get<ApiResponse<TournamentReferee[]>>(`/tournaments/${id}/referees`),
   addTournamentReferee: (id: string, email: string) =>
     api.post<ApiResponse<void>>(`/tournaments/${id}/referees`, { email }),
+  respondToRefereeInvite: (tournamentId: string, refereeId: string, action: 'ACCEPT' | 'DECLINE') =>
+    api.patch<ApiResponse<void>>(`/tournaments/${tournamentId}/referees/${refereeId}/respond`, { action }),
+  removeTournamentRefereeInvite: (tournamentId: string, refereeId: string) =>
+    api.delete<ApiResponse<void>>(`/tournaments/${tournamentId}/referees/${refereeId}`),
   getTournamentStaff: (id: string) =>
     api.get<ApiResponse<StaffMember[]>>(`/tournaments/${id}/staff`),
   addTournamentStaff: (id: string, data: { email: string; role: string }) =>

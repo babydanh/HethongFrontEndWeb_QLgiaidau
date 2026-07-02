@@ -24,6 +24,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
   const resolvedParams = use(params);
   const id = resolvedParams.id;
   const s = useManageState(id);
+  const pendingRefereeCount = s.referees.filter((ref) => ref.status === 'INVITED').length;
   const bracketSectionRef = useRef<HTMLDivElement | null>(null);
   const sportPresentation = getSportRulePresentation(s.sportRuleKind);
   const supportsTiebreakInput = s.sportRuleKind === 'TENNIS' || s.sportRuleKind === 'PICKLEBALL_SIDE_OUT';
@@ -177,7 +178,15 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
               className={`flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-bold transition-all w-full cursor-pointer ${
                 s.activeTab === key ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
               }`}>
-              <Icon className="w-4 h-4 shrink-0" /> <span className="truncate">{label}</span>
+              <Icon className="w-4 h-4 shrink-0" />
+              <span className="truncate">{label}</span>
+              {key === 'permissions' && pendingRefereeCount > 0 ? (
+                <span className={`inline-flex min-w-[18px] justify-center rounded-full px-1.5 py-0.5 text-[10px] font-black ${
+                  s.activeTab === key ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-700'
+                }`}>
+                  {pendingRefereeCount}
+                </span>
+              ) : null}
             </button>
           ))}
         </div>

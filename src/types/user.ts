@@ -10,7 +10,7 @@ export interface UserProfile {
   gender?: string | null;
   address?: string | null;
   provinceCode?: string | null;
-  role: 'PLAYER' | 'ORGANIZER' | 'ADMIN';
+  role: 'PLAYER' | 'ORGANIZER' | 'MODERATOR' | 'ADMIN';
   roles?: string[];
   status: string;
   isActive?: boolean;
@@ -36,4 +36,22 @@ export interface UpdateProfileDto {
   bankName?: string;
   bankAccountNumber?: string;
   bankAccountName?: string;
+}
+
+export interface UserChangeRequest {
+  id: string;
+  userId: string;
+  requestType: 'GENDER' | 'EMAIL';
+  oldValue: string;
+  newValue: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  adminNote?: string | null;
+  createdAt: string;
+  user?: {
+    email: string;
+    profile?: {
+      fullName: string;
+      avatarUrl?: string;
+    };
+  };
 }

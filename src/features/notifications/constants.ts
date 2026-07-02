@@ -1,4 +1,12 @@
 export const NOTIFICATION_TYPE_LABELS: Record<string, string> = {
+  COMMUNITY_INVITED: 'Lời mời cộng đồng',
+  COMMUNITY_ROLE_PROMOTED: 'Được thăng quyền',
+  COMMUNITY_ROLE_DEMOTED: 'Bị hạ quyền',
+  COMMUNITY_KICKED: 'Bị mời khỏi cộng đồng',
+  COMMUNITY_INVITE_REVOKED: 'Lời mời bị thu hồi',
+  COMMUNITY_OWNERSHIP_TRANSFERRED: 'Nhận quyền sở hữu',
+  COMMUNITY_BANNED: 'Bị cấm khỏi cộng đồng',
+  COMMUNITY_UNBANNED: 'Được gỡ cấm',
   TOURNAMENT_REGISTER_PENDING: 'Chờ duyệt',
   TOURNAMENT_REGISTER_SUCCESS: 'Đăng ký thành công',
   TOURNAMENT_REGISTER_REJECTED: 'Đăng ký bị từ chối',
@@ -25,6 +33,10 @@ export const NOTIFICATION_TYPE_LABELS: Record<string, string> = {
   USER_UNBANNED: 'Tài khoản được khôi phục',
   MATCH_SCHEDULED: 'Lịch thi đấu',
   MATCH_COMPLETED: 'Kết quả trận',
+  REFEREE_INVITED: 'Lời mời trọng tài',
+  REFEREE_INVITE_REVOKED: 'Lời mời bị thu hồi',
+  REFEREE_INVITE_ACCEPTED: 'Trọng tài đã nhận lời',
+  REFEREE_INVITE_DECLINED: 'Trọng tài từ chối',
   REFEREE_ASSIGNED: 'Phân công trọng tài',
   PAYOUT_APPROVED: 'Rút tiền được duyệt',
   PAYOUT_REJECTED: 'Rút tiền bị từ chối',
@@ -38,6 +50,54 @@ export interface NotificationTypeMeta {
 }
 
 export const NOTIFICATION_TYPE_META: Record<string, NotificationTypeMeta> = {
+  COMMUNITY_INVITED: {
+    badgeClassName: 'bg-fuchsia-100 text-fuchsia-800',
+    cardClassName: 'hover:border-fuchsia-200 hover:bg-fuchsia-50/50',
+    unreadCardClassName: 'border-fuchsia-200 bg-fuchsia-50/80 shadow-sm',
+    dotClassName: 'bg-fuchsia-500',
+  },
+  COMMUNITY_ROLE_PROMOTED: {
+    badgeClassName: 'bg-emerald-100 text-emerald-800',
+    cardClassName: 'hover:border-emerald-200 hover:bg-emerald-50/50',
+    unreadCardClassName: 'border-emerald-200 bg-emerald-50/75 shadow-sm',
+    dotClassName: 'bg-emerald-500',
+  },
+  COMMUNITY_ROLE_DEMOTED: {
+    badgeClassName: 'bg-amber-100 text-amber-800',
+    cardClassName: 'hover:border-amber-200 hover:bg-amber-50/50',
+    unreadCardClassName: 'border-amber-200 bg-amber-50/75 shadow-sm',
+    dotClassName: 'bg-amber-500',
+  },
+  COMMUNITY_KICKED: {
+    badgeClassName: 'bg-rose-100 text-rose-800',
+    cardClassName: 'hover:border-rose-200 hover:bg-rose-50/50',
+    unreadCardClassName: 'border-rose-200 bg-rose-50/75 shadow-sm',
+    dotClassName: 'bg-rose-500',
+  },
+  COMMUNITY_INVITE_REVOKED: {
+    badgeClassName: 'bg-slate-200 text-slate-700',
+    cardClassName: 'hover:border-slate-300 hover:bg-slate-50',
+    unreadCardClassName: 'border-slate-300 bg-slate-100 shadow-sm',
+    dotClassName: 'bg-slate-500',
+  },
+  COMMUNITY_OWNERSHIP_TRANSFERRED: {
+    badgeClassName: 'bg-amber-100 text-amber-800',
+    cardClassName: 'hover:border-amber-200 hover:bg-amber-50/50',
+    unreadCardClassName: 'border-amber-200 bg-amber-50/75 shadow-sm',
+    dotClassName: 'bg-amber-500',
+  },
+  COMMUNITY_BANNED: {
+    badgeClassName: 'bg-rose-100 text-rose-800',
+    cardClassName: 'hover:border-rose-200 hover:bg-rose-50/50',
+    unreadCardClassName: 'border-rose-200 bg-rose-50/75 shadow-sm',
+    dotClassName: 'bg-rose-500',
+  },
+  COMMUNITY_UNBANNED: {
+    badgeClassName: 'bg-emerald-100 text-emerald-800',
+    cardClassName: 'hover:border-emerald-200 hover:bg-emerald-50/50',
+    unreadCardClassName: 'border-emerald-200 bg-emerald-50/75 shadow-sm',
+    dotClassName: 'bg-emerald-500',
+  },
   TOURNAMENT_REGISTER_PENDING: {
     badgeClassName: 'bg-amber-100 text-amber-800',
     cardClassName: 'hover:border-amber-200 hover:bg-amber-50/50',
@@ -157,6 +217,30 @@ export const NOTIFICATION_TYPE_META: Record<string, NotificationTypeMeta> = {
     cardClassName: 'hover:border-violet-200 hover:bg-violet-50/50',
     unreadCardClassName: 'border-violet-200 bg-violet-50/70 shadow-sm',
     dotClassName: 'bg-violet-500',
+  },
+  REFEREE_INVITED: {
+    badgeClassName: 'bg-amber-100 text-amber-800',
+    cardClassName: 'hover:border-amber-200 hover:bg-amber-50/50',
+    unreadCardClassName: 'border-amber-200 bg-amber-50/70 shadow-sm',
+    dotClassName: 'bg-amber-500',
+  },
+  REFEREE_INVITE_REVOKED: {
+    badgeClassName: 'bg-slate-200 text-slate-700',
+    cardClassName: 'hover:border-slate-300 hover:bg-slate-50',
+    unreadCardClassName: 'border-slate-300 bg-slate-100 shadow-sm',
+    dotClassName: 'bg-slate-500',
+  },
+  REFEREE_INVITE_ACCEPTED: {
+    badgeClassName: 'bg-emerald-100 text-emerald-800',
+    cardClassName: 'hover:border-emerald-200 hover:bg-emerald-50/50',
+    unreadCardClassName: 'border-emerald-200 bg-emerald-50/70 shadow-sm',
+    dotClassName: 'bg-emerald-500',
+  },
+  REFEREE_INVITE_DECLINED: {
+    badgeClassName: 'bg-rose-100 text-rose-800',
+    cardClassName: 'hover:border-rose-200 hover:bg-rose-50/50',
+    unreadCardClassName: 'border-rose-200 bg-rose-50/70 shadow-sm',
+    dotClassName: 'bg-rose-500',
   },
   REFEREE_ASSIGNED: {
     badgeClassName: 'bg-indigo-100 text-indigo-800',

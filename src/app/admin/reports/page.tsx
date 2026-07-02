@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { api } from '@/lib/axios';
+import { useAuthStore } from '@/lib/zustand/authStore';
 import { toast } from 'react-hot-toast';
 import type { ApiResponse } from '@/types/api';
 import { 
@@ -56,6 +57,9 @@ interface ReportItem {
 }
 
 export default function ReportsPage() {
+  const { user } = useAuthStore();
+  const isModeratorOnly =
+    Boolean(user?.roles?.includes('MODERATOR')) && !user?.roles?.includes('ADMIN');
   const [reports, setReports] = useState<ReportItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalPages, setTotalPages] = useState(1);
@@ -130,7 +134,9 @@ export default function ReportsPage() {
 
     setProcessing(true);
     try {
-      await api.post(`/admin/tournaments/${selectedReport.targetId}/${action}`);
+      const response = await api.post<ApiResponse<{ status: string }>>(
+        `/admin/tournaments/${selectedReport.targetId}/${action}`,
+      );
       toast.success(
         action === 'suspend' ? 'Đã tạm đình chỉ giải đấu!' :
         action === 'unsuspend' ? 'Đã khôi phục hoạt động giải đấu!' : 
@@ -139,10 +145,9 @@ export default function ReportsPage() {
       
       // Update local state for the tournament status if listed
       if (selectedReport.targetTournament) {
-        const newStatus = 
-          action === 'suspend' ? 'SUSPENDED' : 
-          action === 'unsuspend' ? 'ONGOING' : 
-          'CANCELLED';
+        const newStatus =
+          response.data?.status ||
+          (action === 'suspend' ? 'SUSPENDED' : action === 'unsuspend' ? 'ONGOING' : 'CANCELLED');
 
         setSelectedReport(prev => prev ? {
           ...prev,
@@ -205,8 +210,14 @@ export default function ReportsPage() {
     <div className="space-y-6">
       {/* Header Section */}
       <div>
-        <h2 className="text-2xl font-bold text-slate-900">Quản Lý Báo Cáo Vi Phạm</h2>
-        <p className="text-slate-500 text-sm">Xem và xử lý báo cáo tố cáo từ người dùng đối với các tài khoản vi phạm hoặc giải đấu không hợp lệ.</p>
+        <h2 className="text-2xl font-bold text-slate-900">
+          {isModeratorOnly ? 'Điều phối báo cáo vi phạm' : 'Quản lý báo cáo vi phạm'}
+        </h2>
+        <p className="text-slate-500 text-sm">
+          {isModeratorOnly
+            ? 'Người điều phối đọc hồ sơ tố cáo, chốt kết luận ban đầu và chuyển admin khi cần chế tài nặng.'
+            : 'Xem và xử lý báo cáo tố cáo từ người dùng đối với các tài khoản vi phạm hoặc giải đấu không hợp lệ.'}
+        </p>
       </div>
 
       {/* Main Table */}
@@ -424,7 +435,7 @@ export default function ReportsPage() {
               )}
 
               {/* Tournament Special Moderation Actions */}
-              {selectedReport.targetType === 'TOURNAMENT' && selectedReport.status === 'PENDING' && (
+              {!isModeratorOnly && selectedReport.targetType === 'TOURNAMENT' && selectedReport.status === 'PENDING' && (
                 <div className="space-y-2 border-t border-slate-100 pt-4">
                   <p className="text-xs font-bold text-rose-500 uppercase tracking-wider flex items-center gap-1">
                     <AlertTriangle className="w-4 h-4" />
@@ -471,7 +482,11 @@ export default function ReportsPage() {
                     rows={3}
                     value={resolutionNote}
                     onChange={(e) => setResolutionNote(e.target.value)}
-                    placeholder="Ghi rõ hành động xử lý (Cảnh cáo, Đóng giải đấu, khóa tài khoản người tố cáo hay bỏ qua báo cáo)..."
+                    placeholder={
+                      isModeratorOnly
+                        ? 'Ghi rõ kết luận xác minh, mức độ vi phạm và đề xuất chuyển admin nếu cần chế tài nặng...'
+                        : 'Ghi rõ hành động xử lý (Cảnh cáo, Đóng giải đấu, khóa tài khoản người tố cáo hay bỏ qua báo cáo)...'
+                    }
                     className="w-full bg-white border border-slate-200 focus:border-blue-500 rounded-xl px-4 py-3 text-sm text-slate-800 placeholder-slate-400 outline-none transition-colors resize-none"
                   />
                 </div>

@@ -9,6 +9,13 @@ import {
   type NotificationTypeMeta,
 } from '@/features/notifications/constants';
 
+export interface NotificationActionConfig {
+  kind: 'community-invite' | 'referee-invite';
+  communityId?: string;
+  tournamentId?: string;
+  refereeId?: string;
+}
+
 const VIETNAMESE_DATE_FORMATTER = new Intl.DateTimeFormat('vi-VN', {
   day: '2-digit',
   month: '2-digit',
@@ -147,3 +154,115 @@ export const getNotificationTypeLabel = (type: string): string => {
 
 export const getNotificationTypeMeta = (type: string): NotificationTypeMeta =>
   NOTIFICATION_TYPE_META[type.trim()] ?? DEFAULT_NOTIFICATION_META;
+
+export const getNotificationTone = (
+  type: string,
+): 'danger' | 'success' | 'warning' | 'info' | 'accent' | 'neutral' => {
+  const normalizedType = type.trim().toUpperCase();
+
+  if (
+    normalizedType.includes('REJECTED') ||
+    normalizedType.includes('CANCELLED') ||
+    normalizedType.includes('KICKED') ||
+    normalizedType.includes('BANNED') ||
+    normalizedType.includes('REVOKED')
+  ) {
+    return 'danger';
+  }
+
+  if (
+    normalizedType.includes('PROMOTED') ||
+    normalizedType.includes('TRANSFERRED') ||
+    normalizedType.includes('UNBANNED') ||
+    normalizedType.includes('APPROVED') ||
+    normalizedType.includes('SUCCESS') ||
+    normalizedType.includes('COMPLETED') ||
+    normalizedType.includes('UNBANNED') ||
+    normalizedType.includes('UNSUSPENDED')
+  ) {
+    return 'success';
+  }
+
+  if (normalizedType.includes('PENDING') || normalizedType.includes('TIMEOUT')) {
+    return 'warning';
+  }
+
+  if (normalizedType.includes('DEMOTED')) {
+    return 'warning';
+  }
+
+  if (normalizedType.includes('COMMUNITY_INVITED') || normalizedType.includes('REFEREE_INVITED')) {
+    return 'accent';
+  }
+
+  if (
+    normalizedType.includes('MATCH') ||
+    normalizedType.includes('REFEREE') ||
+    normalizedType.includes('RESERVED')
+  ) {
+    return 'info';
+  }
+
+  return 'neutral';
+};
+
+export const getNotificationSummary = (type: string): string => {
+  switch (getNotificationTone(type)) {
+    case 'danger':
+      return 'Cần chú ý';
+    case 'success':
+      return 'Đã cập nhật';
+    case 'warning':
+      return 'Đang chờ xử lý';
+    case 'accent':
+      return 'Có thể thao tác ngay';
+    case 'info':
+      return 'Thông tin mới';
+    default:
+      return 'Thông báo hệ thống';
+  }
+};
+
+export const getNotificationActionConfig = (
+  notification: NotificationItem,
+): NotificationActionConfig | null => {
+  const notificationType = notification.type.trim().toUpperCase();
+
+  if (notificationType === 'COMMUNITY_INVITED') {
+    const target = resolveNotificationTarget(notification.redirectUrl);
+    const match = target.href?.match(/^\/communities\/([0-9a-fA-F-]+)/);
+
+    if (!match) {
+      return null;
+    }
+
+    return {
+      kind: 'community-invite',
+      communityId: match[1],
+    };
+  }
+
+  if (notificationType === 'REFEREE_INVITED') {
+    const target = resolveNotificationTarget(notification.redirectUrl);
+
+    if (!target.href) {
+      return null;
+    }
+
+    const url = new URL(target.href, 'http://local');
+    const tournamentId = url.searchParams.get('tournamentId');
+    const refereeId = url.searchParams.get('refereeId');
+
+    if (!tournamentId || !refereeId) {
+      return null;
+    }
+
+    return {
+      kind: 'referee-invite',
+      tournamentId,
+      refereeId,
+    };
+  }
+
+  return null;
+};

@@ -38,7 +38,6 @@ interface OpsMatchesProps {
   onUpdateMatchSchedule: (match: Match, payload: MatchScheduleInput) => Promise<void>;
   onUpdateMatchScore: (match: Match, payload: MatchScoreInput) => Promise<void>;
   onApplyMatchOperation: (match: Match, payload: MatchOperationInput) => Promise<void>;
-  onCreateDispute: (match: Match, reason: string) => Promise<void>;
 }
 
 interface ScheduleDraft {
@@ -73,14 +72,14 @@ const STATUS_FILTERS: Array<{ value: Match['status'] | 'ALL'; label: string }> =
   { value: 'SCHEDULED', label: 'Sắp đấu' },
   { value: 'ONGOING', label: 'Đang đấu' },
   { value: 'COMPLETED', label: 'Hoàn tất' },
-  { value: 'DISPUTED', label: 'Sự cố' },
+  { value: 'DISPUTED', label: 'Cần xử lý' },
 ];
 
 const STATUS_OPTIONS: Array<{ value: Match['status']; label: string }> = [
   { value: 'SCHEDULED', label: 'Sắp đấu' },
   { value: 'ONGOING', label: 'Đang đấu' },
   { value: 'COMPLETED', label: 'Hoàn tất' },
-  { value: 'DISPUTED', label: 'Đang tranh chấp' },
+  { value: 'DISPUTED', label: 'Cần xử lý' },
 ];
 
 const OPERATION_OPTIONS: Array<{ value: MatchOperationAction; label: string; description: string }> = [
@@ -102,7 +101,6 @@ export function OpsMatches({
   onUpdateMatchSchedule,
   onUpdateMatchScore,
   onApplyMatchOperation,
-  onCreateDispute,
 }: OpsMatchesProps) {
   const [statusFilter, setStatusFilter] = useState<Match['status'] | 'ALL'>('ALL');
   const [selectedScheduleMatch, setSelectedScheduleMatch] = useState<Match | null>(null);
@@ -116,8 +114,6 @@ export function OpsMatches({
   const [scoreDraft, setScoreDraft] = useState<ScoreDraft>({
     sets: [],
   });
-  const [selectedDisputeMatch, setSelectedDisputeMatch] = useState<Match | null>(null);
-  const [disputeReason, setDisputeReason] = useState('');
   const [selectedOperationMatch, setSelectedOperationMatch] = useState<Match | null>(null);
   const [operationDraft, setOperationDraft] = useState<OperationDraft>({
     action: 'WALKOVER',
@@ -253,16 +249,6 @@ export function OpsMatches({
       overrideReason: scoreDraft.overrideEnabled ? scoreDraft.overrideReason?.trim() || undefined : undefined,
     });
     setSelectedScoreMatch(null);
-  };
-
-  const handleSubmitDispute = async () => {
-    if (!selectedDisputeMatch) {
-      return;
-    }
-
-    await onCreateDispute(selectedDisputeMatch, disputeReason);
-    setSelectedDisputeMatch(null);
-    setDisputeReason('');
   };
 
   const openOperationModal = (match: Match) => {
@@ -466,14 +452,6 @@ export function OpsMatches({
               <AlertOctagon className="mr-2 h-4 w-4" />
               Quyết định
             </Button>
-            <Button
-              variant="outline"
-              className="border-rose-200 text-rose-700 hover:bg-rose-50"
-              onClick={() => setSelectedDisputeMatch(match)}
-              disabled={isBusy}
-            >
-              Báo sự cố
-            </Button>
           </div>
         </div>
       </div>
@@ -673,38 +651,6 @@ export function OpsMatches({
             onCancel={() => setSelectedScoreMatch(null)}
             onSubmit={() => void handleSubmitScore()}
           />
-        </ModalContent>
-      </Modal>
-
-      <Modal open={Boolean(selectedDisputeMatch)} onOpenChange={(open) => !open && setSelectedDisputeMatch(null)}>
-        <ModalContent className="sm:max-w-xl">
-          <ModalHeader>
-            <ModalTitle>Mở sự cố/tranh chấp cho trận</ModalTitle>
-            <ModalDescription>Nêu rõ nguyên nhân để BTC có thể theo dõi và xử lý trong panel vận hành.</ModalDescription>
-          </ModalHeader>
-
-          <div className="space-y-2">
-            <label className="text-sm font-bold text-slate-700">Lý do</label>
-            <textarea
-              value={disputeReason}
-              onChange={(event) => setDisputeReason(event.target.value)}
-              className="min-h-28 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
-              placeholder="Ví dụ: vận động viên chấn thương, phản ánh sai điểm, khiếu nại luật..."
-            />
-          </div>
-
-          <ModalFooter>
-            <Button variant="outline" className="border-slate-200" onClick={() => setSelectedDisputeMatch(null)}>
-              Hủy
-            </Button>
-            <Button
-              className="bg-rose-600 text-white hover:bg-rose-700"
-              onClick={() => void handleSubmitDispute()}
-              disabled={!disputeReason.trim() || activeMatchActionId === selectedDisputeMatch?.id}
-            >
-              Ghi nhận sự cố
-            </Button>
-          </ModalFooter>
         </ModalContent>
       </Modal>
 

@@ -69,7 +69,7 @@ export function MatchCard({
   fallbackSportRuleKind?: SportRuleKind;
 }) {
   const done = match.status === 'COMPLETED';
-  const live = match.status === 'ONGOING';
+  const live = match.status === 'ONGOING' || match.status === 'IN_PROGRESS';
   const p1Won = done && match.winnerId != null && match.winnerId === match.participant1?.id;
   const p2Won = done && match.winnerId != null && match.winnerId === match.participant2?.id;
   const isOrganizer = !!onScheduleMatch;
@@ -160,14 +160,14 @@ export function MatchCard({
               <span className="text-emerald-600 font-extrabold uppercase tracking-wider text-[9px]">Vô thẳng</span>
             ) : (
               <span className="flex items-center gap-1 text-emerald-600 font-extrabold">
-                <CheckCircle className="w-3 h-3" /> Kết thúc
+                <CheckCircle className="w-3 h-3" /> Đã kết thúc
               </span>
             )
           ) : match.isBye ? (
             <span className="text-slate-500 font-extrabold uppercase tracking-wider text-[9px]">Miễn vòng</span>
           ) : (
             <span className="flex items-center gap-1 text-slate-500 font-extrabold">
-              <Clock className="w-2.5 h-2.5" /> Chờ đấu
+              <Clock className="w-2.5 h-2.5" /> Sắp diễn ra
             </span>
           )}
         </div>

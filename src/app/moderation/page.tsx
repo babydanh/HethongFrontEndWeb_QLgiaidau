@@ -1,6 +1,9 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { api } from '@/lib/axios';
+import type { ApiResponse } from '@/types/api';
 import {
   ArrowRight,
   Building,
@@ -9,6 +12,7 @@ import {
   ShieldCheck,
   Trophy,
   UserCog,
+  Clock,
 } from 'lucide-react';
 
 const moderationCards = [
@@ -35,17 +39,10 @@ const moderationCards = [
   },
   {
     title: 'Báo cáo vi phạm',
-    description: 'Đọc hồ sơ tố cáo và chốt hướng xử lý ban đầu.',
+    description: 'Đọc hồ sơ tố cáo, xử lý và chuyển cấp khi vượt thẩm quyền.',
     href: '/moderation/reports',
     icon: ShieldAlert,
     tone: 'border-rose-200 bg-rose-50 text-rose-700',
-  },
-  {
-    title: 'Tranh chấp trận đấu',
-    description: 'So sánh chênh lệch điểm số trước khi chuyển cho admin xử lý.',
-    href: '/moderation/disputes',
-    icon: FileWarning,
-    tone: 'border-amber-200 bg-amber-50 text-amber-700',
   },
   {
     title: 'Duyệt giải đấu',
@@ -57,8 +54,80 @@ const moderationCards = [
 ];
 
 export default function ModerationDashboardPage() {
+  const [pendingCounts, setPendingCounts] = useState({
+    verifications: 0,
+    communities: 0,
+    changeRequests: 0,
+    tournaments: 0,
+  });
+
+  useEffect(() => {
+    const fetchPending = async () => {
+      try {
+        const [verifRes, commRes, changeRes, tourRes] = await Promise.allSettled([
+          api.get<ApiResponse<any[]>>('/admin/verification-tickets?status=PENDING'),
+          api.get<ApiResponse<any[]>>('/communities/pending'),
+          api.get<ApiResponse<any[]>>('/admin/change-requests?status=PENDING'),
+          api.get<ApiResponse<any[]>>('/admin/tournaments?status=PENDING_APPROVAL'),
+        ]);
+        setPendingCounts({
+          verifications: verifRes.status === 'fulfilled' ? (verifRes.value.data?.data?.length || 0) : 0,
+          communities: commRes.status === 'fulfilled' ? (commRes.value.data?.data?.length || 0) : 0,
+          changeRequests: changeRes.status === 'fulfilled' ? (changeRes.value.data?.data?.length || 0) : 0,
+          tournaments: tourRes.status === 'fulfilled' ? (tourRes.value.data?.data?.length || 0) : 0,
+        });
+      } catch (_) {}
+    };
+    fetchPending();
+  }, []);
+
   return (
     <div className="space-y-6">
+      {/* Banner thông báo */}
+      {(pendingCounts.verifications + pendingCounts.communities + pendingCounts.changeRequests + pendingCounts.tournaments) > 0 ? (
+        <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-5 shadow-sm">
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+              <span className="text-amber-600 text-lg font-black">
+                {pendingCounts.verifications + pendingCounts.communities + pendingCounts.changeRequests + pendingCounts.tournaments}
+              </span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                <h3 className="text-sm font-black text-amber-900 uppercase tracking-wide">Có việc cần xử lý ngay</h3>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {pendingCounts.verifications > 0 && (
+                  <a href="/moderation/verification" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-lg border border-amber-200 text-xs font-bold text-amber-700 hover:bg-amber-50 transition-all">
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    Sao uy tín ({pendingCounts.verifications})
+                  </a>
+                )}
+                {pendingCounts.communities > 0 && (
+                  <a href="/moderation/communities" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-lg border border-amber-200 text-xs font-bold text-amber-700 hover:bg-amber-50 transition-all">
+                    <Building className="w-3.5 h-3.5" />
+                    CLB ({pendingCounts.communities})
+                  </a>
+                )}
+                {pendingCounts.changeRequests > 0 && (
+                  <a href="/moderation/change-requests" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-lg border border-amber-200 text-xs font-bold text-amber-700 hover:bg-amber-50 transition-all">
+                    <UserCog className="w-3.5 h-3.5" />
+                    Đổi TT ({pendingCounts.changeRequests})
+                  </a>
+                )}
+                {pendingCounts.tournaments > 0 && (
+                  <a href="/moderation/tournaments" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-lg border border-amber-200 text-xs font-bold text-amber-700 hover:bg-amber-50 transition-all">
+                    <Trophy className="w-3.5 h-3.5" />
+                    Giải đấu ({pendingCounts.tournaments})
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       <section className="rounded-3xl border border-amber-200 bg-gradient-to-br from-amber-50 via-white to-orange-50 p-6 shadow-sm md:p-8">
         <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-amber-600">
           Khu điều phối
@@ -67,7 +136,7 @@ export default function ModerationDashboardPage() {
           Điều phối kiểm duyệt an toàn
         </h2>
         <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
-          Khu này dành cho người điều phối và admin xử lý các case duyệt, xác minh, báo cáo và tranh chấp.
+          Khu này dành cho người điều phối và admin xử lý các case duyệt, xác minh, báo cáo và chế tài.
           Các hành động nặng như hoàn nguyên kết quả, khóa vĩnh viễn hoặc cấu hình hệ thống vẫn nằm ở khu admin.
         </p>
       </section>

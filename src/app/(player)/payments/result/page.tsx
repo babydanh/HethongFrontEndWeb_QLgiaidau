@@ -6,7 +6,7 @@ import { paymentsApi } from '@/features/payments/api';
 import { Button } from '@/components/ui/Button';
 import { getErrorMessage } from '@/utils/error';
 import { formatCurrency } from '@/utils/format';
-import type { Payment } from '@/types/payment';
+import type { Payment, PaymentPurpose, PaymentStatus } from '@/types/payment';
 import toast from 'react-hot-toast';
 import { Loader2, CheckCircle2, XCircle, AlertCircle, Calendar, TrophyIcon, RefreshCw } from 'lucide-react';
 
@@ -15,7 +15,8 @@ interface PaymentDetails {
   tournamentId: string;
   participantId?: string | null;
   amount: string;
-  status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED';
+  purpose?: PaymentPurpose;
+  status: PaymentStatus;
   paymentGateway?: string;
   paidAt?: string;
   createdAt: string;
@@ -28,7 +29,6 @@ function ResultContent() {
   
   // Extract either direct paymentId OR VNPAY return params
   const rawTxnRef = searchParams.get('vnp_TxnRef');
-  const vnpResponseCode = searchParams.get('vnp_ResponseCode');
   const queryPaymentId = searchParams.get('paymentId');
   
   const paymentId = queryPaymentId || rawTxnRef;
@@ -52,6 +52,7 @@ function ResultContent() {
         id: paymentData.id,
         tournamentId: paymentData.tournamentId,
         participantId: paymentData.participantId,
+        purpose: paymentData.purpose,
         amount: paymentData.amount,
         status: paymentData.status,
         paymentGateway: paymentData.paymentGateway,
@@ -64,7 +65,7 @@ function ResultContent() {
         setStatus('SUCCESS');
         toast.success('Thanh toán lệ phí thành công!');
         return true; // done
-      } else if (paymentData.status === 'FAILED') {
+      } else if (['FAILED', 'CANCELLED', 'EXPIRED'].includes(paymentData.status)) {
         setStatus('FAILED');
         toast.error('Thanh toán thất bại');
         return true; // done
@@ -217,12 +218,18 @@ function ResultContent() {
                   <span className="font-semibold text-slate-800 text-xs truncate max-w-[150px]">{details.id}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>{details.participantId ? 'Lệ phí tham gia:' : 'Phí công bố:'}</span>
+                  <span>
+                    {details.purpose === 'PLATFORM_FEE'
+                      ? 'Phí nền tảng:'
+                      : details.purpose === 'TOURNAMENT_PUBLISH_FEE'
+                        ? 'Phí công bố:'
+                        : 'Lệ phí tham gia:'}
+                  </span>
                   <span className="font-bold text-slate-900">{formatCurrency(Number(details.amount))}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Cổng thanh toán:</span>
-                  <span className="font-semibold text-slate-800">{details.paymentGateway}</span>
+                  <span className="font-semibold text-slate-800">{details.paymentGateway || 'PAYOS'}</span>
                 </div>
                 {details.paidAt && (
                   <div className="flex justify-between">

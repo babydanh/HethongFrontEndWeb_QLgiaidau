@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { paymentsApi } from '@/features/payments/api';
 import { tournamentsApi, Tournament } from '@/features/tournaments/api';
-import { PayoutRequest } from '@/types/payment';
+import { PayoutRequest, PayoutStatus } from '@/types/payment';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { formatCurrency } from '@/utils/format';
@@ -38,6 +38,18 @@ const payoutSchema = z.object({
 
 type PayoutFormValues = z.infer<typeof payoutSchema>;
 
+const PAYOUT_STATUS_CONFIG: Record<PayoutStatus, { bg: string; text: string; icon: typeof AlertCircle }> = {
+  PENDING: { bg: 'bg-amber-50 text-amber-600 border-amber-100', text: 'Chờ duyệt', icon: AlertCircle },
+  REQUESTED: { bg: 'bg-amber-50 text-amber-600 border-amber-100', text: 'Đã gửi', icon: AlertCircle },
+  UNDER_REVIEW: { bg: 'bg-blue-50 text-blue-600 border-blue-100', text: 'Đang đối soát', icon: AlertCircle },
+  APPROVED: { bg: 'bg-blue-50 text-blue-600 border-blue-100', text: 'Đã duyệt hồ sơ', icon: CheckCircle2 },
+  PROCESSING: { bg: 'bg-blue-50 text-blue-600 border-blue-100', text: 'Đang chuyển tiền', icon: AlertCircle },
+  PAID: { bg: 'bg-green-50 text-green-600 border-green-100', text: 'Đã chuyển tiền', icon: CheckCircle2 },
+  REJECTED: { bg: 'bg-red-50 text-red-600 border-red-100', text: 'Bị từ chối', icon: XCircle },
+  FAILED: { bg: 'bg-red-50 text-red-600 border-red-100', text: 'Chuyển tiền lỗi', icon: XCircle },
+  CANCELLED: { bg: 'bg-slate-50 text-slate-600 border-slate-100', text: 'Đã hủy', icon: XCircle },
+};
+
 export default function OrganizerPayoutsPage() {
   const { user, isAuthenticated } = useAuthStore();
   const router = useRouter();
@@ -48,7 +60,7 @@ export default function OrganizerPayoutsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [isOpenForm, setIsOpenForm] = useState(false);
 
-  const { register, handleSubmit, formState: { errors }, reset, watch, setValue } = useForm<PayoutFormValues>({
+  const { register, handleSubmit, formState: { errors }, reset, watch } = useForm<PayoutFormValues>({
     resolver: zodResolver(payoutSchema),
     defaultValues: {
       tournamentId: '',
@@ -131,20 +143,6 @@ export default function OrganizerPayoutsPage() {
     }
   };
 
-  // Mock revenue metrics based on selected tournament
-  const activeTournament = tournaments.find(t => t.id === selectedTournamentId);
-  const totalCollectedMock = 20000000; // Mocked collected funds
-  const platformFeePercentage = 5; // 5% fee
-  const platformFeeMock = totalCollectedMock * (platformFeePercentage / 100);
-  const withdrawableMock = totalCollectedMock - platformFeeMock;
-
-  useEffect(() => {
-    if (activeTournament) {
-      // Auto pre-fill default withdrawable mock amount in form
-      setValue('amountRequested', withdrawableMock);
-    }
-  }, [selectedTournamentId, activeTournament, setValue, withdrawableMock]);
-
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center gap-3">
@@ -200,19 +198,8 @@ export default function OrganizerPayoutsPage() {
               </div>
 
               {selectedTournamentId && (
-                <div className="md:col-span-2 bg-slate-50 border border-slate-200 rounded-xl p-5 grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-                  <div>
-                    <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Tổng thu hộ giải</span>
-                    <h4 className="text-lg font-extrabold text-slate-700 mt-1">{formatCurrency(totalCollectedMock)}</h4>
-                  </div>
-                  <div>
-                    <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Phí nền tảng (5%)</span>
-                    <h4 className="text-lg font-extrabold text-slate-700 mt-1">{formatCurrency(platformFeeMock)}</h4>
-                  </div>
-                  <div>
-                    <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Số dư rút tối đa</span>
-                    <h4 className="text-lg font-black text-blue-600 mt-1">{formatCurrency(withdrawableMock)}</h4>
-                  </div>
+                <div className="md:col-span-2 bg-blue-50 border border-blue-100 rounded-xl p-4 text-sm text-blue-800">
+                  Số tiền được rút sẽ được hệ thống kiểm tra lại theo số dư khả dụng, các khoản hoàn đang giữ và yêu cầu giải ngân chưa hoàn tất.
                 </div>
               )}
 
@@ -298,11 +285,7 @@ export default function OrganizerPayoutsPage() {
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-sm text-slate-600">
                   {payouts.map((p) => {
-                    const statusConfig = {
-                      PENDING: { bg: 'bg-amber-50 text-amber-600 border-amber-100', text: 'Chờ duyệt', icon: AlertCircle },
-                      APPROVED: { bg: 'bg-green-50 text-green-600 border-green-100', text: 'Đã chuyển khoản', icon: CheckCircle2 },
-                      REJECTED: { bg: 'bg-red-50 text-red-600 border-red-100', text: 'Từ chối', icon: XCircle }
-                    }[p.status] || { bg: 'bg-slate-50 text-slate-500 border-slate-100', text: p.status, icon: AlertCircle };
+                    const statusConfig = PAYOUT_STATUS_CONFIG[p.status];
 
                     const StatusIcon = statusConfig.icon;
 

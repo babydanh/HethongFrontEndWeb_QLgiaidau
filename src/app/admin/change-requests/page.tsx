@@ -15,6 +15,8 @@ export default function AdminChangeRequestsPage() {
   const [requests, setRequests] = useState<UserChangeRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string>('PENDING');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [selectedRequest, setSelectedRequest] = useState<UserChangeRequest | null>(null);
   const [adminNote, setAdminNote] = useState('');
   const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
@@ -36,6 +38,23 @@ export default function AdminChangeRequestsPage() {
   useEffect(() => {
     fetchRequests(filterStatus);
   }, [filterStatus]);
+
+  const parseDate = (str: string): Date | null => {
+    const p = str.split('/');
+    if (p.length !== 3) return null;
+    const d = parseInt(p[0], 10), m = parseInt(p[1], 10) - 1, y = parseInt(p[2], 10);
+    return isNaN(d) || isNaN(m) || isNaN(y) ? null : new Date(y, m, d);
+  };
+
+  const filteredRequests = requests.filter(r => {
+    const fromDate = dateFrom ? parseDate(dateFrom) : null;
+    const toDate = dateTo ? parseDate(dateTo) : null;
+    if (!fromDate && !toDate) return true;
+    const itemDate = new Date(r.createdAt);
+    if (fromDate && itemDate < fromDate) return false;
+    if (toDate) { const end = new Date(toDate); end.setHours(23, 59, 59, 999); if (itemDate > end) return false; }
+    return true;
+  });
 
   const handleFilterChange = (status: string) => {
     setLoading(true);
@@ -117,11 +136,27 @@ export default function AdminChangeRequestsPage() {
         </div>
       </div>
 
+      {/* Date Filter */}
+      <div className="flex gap-4 bg-white p-4 rounded-2xl border border-gray-200 shadow-sm">
+        <div className="flex items-center gap-2 min-w-[140px]">
+          <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
+          <input type="text" placeholder="Từ ngày (dd/mm/yyyy)" value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-600 focus:outline-none focus:border-blue-500 placeholder-gray-400" />
+        </div>
+        <div className="flex items-center gap-2 min-w-[140px]">
+          <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
+          <input type="text" placeholder="Đến ngày (dd/mm/yyyy)" value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-600 focus:outline-none focus:border-blue-500 placeholder-gray-400" />
+        </div>
+      </div>
+
       {loading ? (
         <div className="flex items-center justify-center py-20">
           <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
         </div>
-      ) : requests.length === 0 ? (
+      ) : filteredRequests.length === 0 ? (
         <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center text-slate-500 space-y-2">
           <ClipboardList className="w-12 h-12 mx-auto text-slate-400" />
           <p className="text-base font-medium text-slate-800">Không có yêu cầu nào được tìm thấy</p>
@@ -145,7 +180,7 @@ export default function AdminChangeRequestsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-600 text-sm">
-                {requests.map((req) => (
+                {filteredRequests.map((req) => (
                   <tr key={req.id} className="hover:bg-slate-50 transition-all duration-150">
                     <td className="p-4 pl-6">
                       <div className="flex items-center gap-3">

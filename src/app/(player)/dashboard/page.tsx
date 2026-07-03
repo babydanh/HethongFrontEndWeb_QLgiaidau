@@ -17,6 +17,7 @@ import {
   UserCheck,
   XCircle,
   Zap,
+  Bookmark,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/Button';
@@ -109,7 +110,7 @@ function TournamentListSection({
   roleLabel: string;
 }) {
   return (
-    <section className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+    <section className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
       <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
         <h2 className="text-base font-black text-slate-900 flex items-center gap-2">
           <span className={accentClass}>{icon}</span>
@@ -125,7 +126,7 @@ function TournamentListSection({
             {tournaments.slice(0, 4).map((tournament) => (
               <div
                 key={`${roleLabel}-${tournament.id}`}
-                className="rounded-2xl border border-slate-200 p-4 bg-gradient-to-br from-white to-slate-50"
+                className="rounded-xl border border-slate-200 p-4 bg-gradient-to-br from-white to-slate-50"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
@@ -175,6 +176,7 @@ export default function DashboardPage() {
   const [upcomingMatch, setUpcomingMatch] = useState<Match | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [respondingInviteId, setRespondingInviteId] = useState<string | null>(null);
+  const [followedTournaments, setFollowedTournaments] = useState<Tournament[]>([]);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -182,14 +184,16 @@ export default function DashboardPage() {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const [ranksRes, workspaceRes, matchesRes] = await Promise.all([
+        const [ranksRes, workspaceRes, matchesRes, followedRes] = await Promise.all([
           rankingsApi.getUserRankings(user.id),
           tournamentsApi.getMyWorkspace(),
           matchesApi.getMatches({ userId: user.id, limit: 10 }),
+          tournamentsApi.getFollowedTournaments().catch(() => ({ data: [] })),
         ]);
 
         setUserRankings(ranksRes);
         setWorkspace(workspaceRes.data || null);
+        setFollowedTournaments(Array.isArray(followedRes.data) ? followedRes.data : []);
 
         if (matchesRes?.data) {
           const nextMatch = matchesRes.data.find((match: Match) => match.status === 'SCHEDULED' || match.status === 'ONGOING');
@@ -448,6 +452,45 @@ export default function DashboardPage() {
               ) : (
                 <div className="text-center py-8 border border-dashed border-slate-200 rounded-xl text-sm text-slate-500">
                   Bạn không có trận đấu nào sắp tới.
+                </div>
+              )}
+            </div>
+          </section>
+
+          {/* Giải đang theo dõi */}
+          <section className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
+              <h2 className="text-base font-black text-slate-900 flex items-center gap-2">
+                <Bookmark className="w-5 h-5 text-amber-500" /> Giải đang theo dõi
+              </h2>
+              <span className="text-sm font-semibold text-slate-500">{followedTournaments.length}</span>
+            </div>
+            <div className="p-6">
+              {isLoading ? (
+                <div className="flex justify-center items-center py-8">
+                  <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+                </div>
+              ) : followedTournaments.length > 0 ? (
+                <div className="flex flex-col gap-3">
+                  {followedTournaments.slice(0, 5).map((t) => (
+                    <Link key={t.id} href={`/tournaments/${t.id}`}
+                      className="block rounded-xl border border-slate-200 p-3 hover:border-amber-200 hover:shadow-sm transition-all"
+                    >
+                      <p className="text-sm font-bold text-slate-800 line-clamp-1">{t.name}</p>
+                      <p className="text-[10px] text-slate-400 mt-1">
+                        {t.status === 'REGISTRATION_OPEN' ? 'Mở đăng ký' :
+                         t.status === 'UPCOMING' ? 'Sắp diễn ra' :
+                         t.status === 'ONGOING' || t.status === 'IN_PROGRESS' ? 'Đang diễn ra' :
+                         t.status === 'COMPLETED' ? 'Đã kết thúc' : t.status}
+                      </p>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-6 text-slate-400 text-xs">
+                  <Bookmark className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                  <p>Bạn chưa theo dõi giải đấu nào</p>
+                  <p className="text-[10px] mt-1">Theo dõi giải để nhận thông báo khi mở đăng ký</p>
                 </div>
               )}
             </div>

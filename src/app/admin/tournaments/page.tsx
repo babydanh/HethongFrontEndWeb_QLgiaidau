@@ -60,12 +60,40 @@ interface TournamentDetail extends TournamentItem {
   } | null;
 }
 
+/** Countdown đầy đủ giờ:phút:giây cho admin */
+function FullCountdownAdmin({ targetDate }: { targetDate: string }) {
+  const [text, setText] = useState('');
+  useEffect(() => {
+    const update = () => {
+      const diff = new Date(targetDate).getTime() - Date.now();
+      if (diff <= 0) { setText('Đang mở đăng ký'); return; }
+      const d = Math.floor(diff / 86400000);
+      const h = Math.floor((diff % 86400000) / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      if (d > 0) setText(`Còn ${d} ngày ${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`);
+      else setText(`Còn ${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`);
+    };
+    update();
+    const timer = setInterval(update, 1000);
+    return () => clearInterval(timer);
+  }, [targetDate]);
+  if (!text) return null;
+  return (
+    <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded-lg">
+      <span className="text-xs font-bold text-amber-700">⏳ {text}</span>
+    </div>
+  );
+}
+
 export default function AdminTournamentsPage() {
   const { user } = useAuthStore();
   const isModeratorOnly =
     Boolean(user?.roles?.includes('MODERATOR')) && !user?.roles?.includes('ADMIN');
   const [tournaments, setTournaments] = useState<TournamentItem[]>([]);
   const [search, setSearch] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -126,6 +154,23 @@ export default function AdminTournamentsPage() {
     setPage(1);
     fetchTournaments(search);
   };
+
+  const parseDate = (str: string): Date | null => {
+    const p = str.split('/');
+    if (p.length !== 3) return null;
+    const d = parseInt(p[0], 10), m = parseInt(p[1], 10) - 1, y = parseInt(p[2], 10);
+    return isNaN(d) || isNaN(m) || isNaN(y) ? null : new Date(y, m, d);
+  };
+
+  const filteredTournaments = tournaments.filter(t => {
+    const fromDate = dateFrom ? parseDate(dateFrom) : null;
+    const toDate = dateTo ? parseDate(dateTo) : null;
+    if (!fromDate && !toDate) return true;
+    const d = new Date(t.createdAt);
+    if (fromDate && d < fromDate) return false;
+    if (toDate) { const end = new Date(toDate); end.setHours(23, 59, 59, 999); if (d > end) return false; }
+    return true;
+  });
 
   const handleTournamentAction = async (
     id: string,
@@ -288,6 +333,20 @@ export default function AdminTournamentsPage() {
           </button>
         </form>
 
+        {/* Date Filter */}
+        <div className="flex items-center gap-2 min-w-[130px]">
+          <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
+          <input type="text" placeholder="Từ ngày (dd/mm/yyyy)" value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-600 focus:outline-none focus:border-blue-500 placeholder-gray-400" />
+        </div>
+        <div className="flex items-center gap-2 min-w-[130px]">
+          <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
+          <input type="text" placeholder="Đến ngày (dd/mm/yyyy)" value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-600 focus:outline-none focus:border-blue-500 placeholder-gray-400" />
+        </div>
+
         {/* Status Filter Tabs */}
         <div className="flex flex-wrap gap-1.5 max-w-2xl">
           {[
@@ -328,7 +387,7 @@ export default function AdminTournamentsPage() {
           <Loader2 className="w-10 h-10 text-blue-600 animate-spin mb-3" />
           <p className="text-xs text-slate-500 font-medium">Đang tải danh sách giải đấu...</p>
         </div>
-      ) : tournaments.length === 0 ? (
+      ) : filteredTournaments.length === 0 ? (
         <div className="bg-white border border-slate-200 rounded-2xl p-16 text-center text-slate-500 space-y-2 shadow-sm">
           <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto text-slate-400">
             <Trophy className="w-6 h-6" />
@@ -350,7 +409,7 @@ export default function AdminTournamentsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-600 text-sm">
-                {tournaments.map((item) => (
+                {filteredTournaments.map((item) => (
                   <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
                     <td className="p-4 pl-6">
                       <div>
@@ -638,6 +697,9 @@ export default function AdminTournamentsPage() {
                           {detailTournament.registrationStartDate ? new Date(detailTournament.registrationStartDate).toLocaleDateString('vi-VN') : 'N/A'}
                           {detailTournament.registrationEndDate && ` - ${new Date(detailTournament.registrationEndDate).toLocaleDateString('vi-VN')}`}
                         </p>
+                        {detailTournament.status === 'UPCOMING' && detailTournament.registrationStartDate && (
+                          <FullCountdownAdmin targetDate={detailTournament.registrationStartDate} />
+                        )}
                       </div>
                     </div>
                   </div>

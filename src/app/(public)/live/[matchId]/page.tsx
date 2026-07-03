@@ -30,13 +30,14 @@ import { socketClient } from '@/lib/socket';
 import type { MatchPenaltyRecord, PickleballSideOutState, TennisLivePointState } from '@/types/match';
 import { getErrorMessage } from '@/utils/error';
 import { trimAndNormalizeSpaces } from '@/utils/string';
-import { Trophy, Clock, MapPin, Activity, Play, AlertCircle, Camera, MessageSquare, Send, Eye, Shield, Users } from 'lucide-react';
+import { Trophy, Clock, MapPin, Activity, Play, AlertCircle, Camera, MessageSquare, Send, Eye, Shield, Users, Heart } from 'lucide-react';
 import { tournamentsApi } from '@/features/tournaments/api';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/Button';
 import { OfficialScoreModal } from './components/OfficialScoreModal';
 import type { TournamentParticipant } from '@/types/tournament';
+import { ReportViolationButton } from '@/features/reports/components/ReportViolationButton';
 
 interface Props {
   params: Promise<{ matchId: string }>;
@@ -58,6 +59,21 @@ export default function LiveMatchPage({ params }: Props) {
   const [comments, setComments] = useState<MatchComment[]>([]);
   const [commentText, setCommentText] = useState('');
   const [participants, setParticipants] = useState<TournamentParticipant[]>([]);
+  const [hearts, setHearts] = useState<{ id: string; x: number; size: number; delay: number }[]>([]);
+
+  const handleSpawnHeart = () => {
+    const id = Math.random().toString(36).substring(2, 9);
+    const newHeart = {
+      id,
+      x: Math.random() * 80 + 10,
+      size: Math.random() * 12 + 16,
+      delay: Math.random() * 0.2,
+    };
+    setHearts((prev) => [...prev, newHeart]);
+    setTimeout(() => {
+      setHearts((prev) => prev.filter((h) => h.id !== id));
+    }, 2000);
+  };
 
   useEffect(() => {
     if (!match?.tournamentId) return;
@@ -744,8 +760,8 @@ export default function LiveMatchPage({ params }: Props) {
     }
   };
 
-  const part1 = participants.find((p) => p.id === match.participant1Id);
-  const part2 = participants.find((p) => p.id === match.participant2Id);
+  const part1 = participants.find((p) => p.id === match.participant1Id || p.id === match.participant1?.id);
+  const part2 = participants.find((p) => p.id === match.participant2Id || p.id === match.participant2?.id);
 
   return (
     <div className="min-h-screen bg-slate-50 pt-10 pb-20 px-4">
@@ -782,9 +798,17 @@ export default function LiveMatchPage({ params }: Props) {
               </span>
             )}
           </div>
-          <Link href={`/tournaments/${match.tournamentId}`} className="text-sm font-bold text-slate-600 hover:text-slate-900 transition-colors">
-            {match.tournament?.name || 'Quay lại giải đấu'}
-          </Link>
+          <div className="flex items-center gap-2">
+            <ReportViolationButton
+              targetType="MATCH"
+              targetId={match.id}
+              targetLabel={`Trận vòng ${match.roundNumber}`}
+              compact
+            />
+            <Link href={`/tournaments/${match.tournamentId}`} className="text-sm font-bold text-slate-600 hover:text-slate-900 transition-colors">
+              {match.tournament?.name || 'Quay lại giải đấu'}
+            </Link>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -963,25 +987,36 @@ export default function LiveMatchPage({ params }: Props) {
                 </div>
 
                 {/* Set History */}
-                {scores.length > 0 && (
-                  <div className="mt-12 pt-8 border-t border-slate-100 flex flex-col items-center">
-                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">{scorePresentation.summaryLabel}</h4>
-                    <div className="flex flex-wrap justify-center gap-4">
-                      {scores.map((set, idx) => (
-                        <div key={idx} className={`px-5 py-2.5 rounded-2xl border flex flex-col items-center shadow-sm ${
-                          !set.isFinished 
-                            ? 'bg-rose-50 border-rose-100 ring-2 ring-rose-100' 
-                            : 'bg-slate-50 border-slate-200'
-                        }`}>
-                          <span className="text-[10px] font-bold text-slate-500 mb-1 uppercase">{sequenceLabelTitle} {idx + 1}</span>
-                          <span className={`text-xl font-black ${!set.isFinished ? 'text-rose-600' : 'text-slate-800'}`}>
-                            {set.team1Score} - {set.team2Score}
-                          </span>
-                        </div>
-                      ))}
+                {(() => {
+                  const setsToWin = resolvedRules.setsToWin || 2;
+                  const maxSets = setsToWin === 1 ? 1 : (setsToWin === 2 ? 3 : 5);
+                  return (
+                    <div className="mt-12 pt-8 border-t border-slate-100 flex flex-col items-center">
+                      <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">{scorePresentation.summaryLabel}</h4>
+                      <div className="flex flex-wrap justify-center gap-4">
+                        {Array.from({ length: maxSets }).map((_, idx) => {
+                          const set = scores[idx];
+                          const isPlayed = idx < scores.length;
+                          const isOngoing = isPlayed && !set.isFinished;
+                          return (
+                            <div key={idx} className={`px-5 py-2.5 rounded-2xl border flex flex-col items-center shadow-sm min-w-[80px] ${
+                              isOngoing 
+                                ? 'bg-rose-50 border-rose-100 ring-2 ring-rose-100' 
+                                : isPlayed
+                                ? 'bg-slate-50 border-slate-200'
+                                : 'bg-slate-50/50 border-slate-100 opacity-60'
+                            }`}>
+                              <span className="text-[10px] font-bold text-slate-500 mb-1 uppercase">{sequenceLabelTitle} {idx + 1}</span>
+                              <span className={`text-xl font-black ${isOngoing ? 'text-rose-600' : isPlayed ? 'text-slate-800' : 'text-slate-400'}`}>
+                                {isPlayed ? `${set.team1Score} - ${set.team2Score}` : '-'}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
               </div>
 
               {/* Footer Info */}
@@ -1035,10 +1070,49 @@ export default function LiveMatchPage({ params }: Props) {
 
           {/* Right Column: Comments & Chat */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-[550px] sticky top-6">
+            <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-[550px] sticky top-6 relative">
+              <style>{`
+                @keyframes floatUp {
+                  0% {
+                    transform: translateY(0) scale(0.6) rotate(0deg);
+                    opacity: 0;
+                  }
+                  10% {
+                    opacity: 0.9;
+                  }
+                  90% {
+                    opacity: 0.9;
+                  }
+                  100% {
+                    transform: translateY(-400px) scale(1.2) rotate(15deg);
+                    opacity: 0;
+                  }
+                }
+                .animate-float-up {
+                  animation: floatUp 2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+                }
+              `}</style>
+              
+              {/* Floating hearts container */}
+              <div className="absolute inset-0 pointer-events-none z-50 overflow-hidden">
+                {hearts.map((h) => (
+                  <div
+                    key={h.id}
+                    style={{
+                      left: `${h.x}%`,
+                      fontSize: `${h.size}px`,
+                      animationDelay: `${h.delay}s`,
+                    }}
+                    className="absolute bottom-16 text-rose-500 animate-float-up opacity-0"
+                  >
+                    ❤️
+                  </div>
+                ))}
+              </div>
+
               <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
-                  <MessageSquare className="w-5 h-5 text-blue-650" />
+                  <MessageSquare className="w-5 h-5 text-blue-600" />
                   <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Thảo luận trận đấu</h3>
                 </div>
                 <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500">
@@ -1076,7 +1150,7 @@ export default function LiveMatchPage({ params }: Props) {
               </div>
 
               {/* Comment Form */}
-              <form onSubmit={handlePostComment} className="p-4 border-t border-slate-100 bg-white flex gap-2">
+              <form onSubmit={handlePostComment} className="p-4 border-t border-slate-100 bg-white flex gap-2 items-center">
                 <input
                   type="text"
                   placeholder={user ? 'Nhập bình luận của bạn...' : 'Đăng nhập để bình luận'}
@@ -1086,9 +1160,17 @@ export default function LiveMatchPage({ params }: Props) {
                   className="flex-grow px-4 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
                 />
                 <button
+                  type="button"
+                  onClick={handleSpawnHeart}
+                  className="bg-rose-50 hover:bg-rose-100 text-rose-500 rounded-xl p-2.5 flex items-center justify-center transition-colors cursor-pointer shrink-0"
+                  title="Thả tim"
+                >
+                  <Heart className="w-3.5 h-3.5 fill-rose-500 text-rose-500" />
+                </button>
+                <button
                   type="submit"
                   disabled={!user || isCommentSubmitting || !normalizedCommentText}
-                  className="bg-blue-650 hover:bg-blue-700 text-white rounded-xl p-2.5 flex items-center justify-center transition-colors disabled:opacity-50"
+                  className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl p-2.5 flex items-center justify-center transition-colors disabled:opacity-50"
                 >
                   <Send className="w-3.5 h-3.5" />
                 </button>

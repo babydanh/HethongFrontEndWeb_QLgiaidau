@@ -4,18 +4,22 @@ import { useEffect, useState, useMemo } from 'react';
 import { paymentsApi } from '@/features/payments/api';
 import { api } from '@/lib/axios';
 import { ApiResponse } from '@/types/api';
-import { 
-  Users, 
-  Building, 
-  Trophy, 
-  DollarSign, 
+import {
+  Users,
+  Building,
+  Trophy,
+  DollarSign,
   Percent,
   TrendingUp,
   Calendar,
   Layers,
-  ArrowUpRight,
-  Filter
+  Filter,
+  Clock,
+  ShieldAlert,
+  CreditCard,
+  FileWarning
 } from 'lucide-react';
+import { DatePicker } from '@/components/ui/Input';
 import { 
   AreaChart, 
   Area, 
@@ -56,6 +60,37 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [chartLoading, setChartLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Pending items
+  const [pendingCounts, setPendingCounts] = useState({
+    communities: 0,
+    verifications: 0,
+    payouts: 0,
+    reports: 0,
+    changeRequests: 0,
+  });
+
+  useEffect(() => {
+    const fetchPending = async () => {
+      try {
+        const [commRes, verifRes, payoutsRes, changeRes] = await Promise.allSettled([
+          api.get<ApiResponse<any[]>>('/communities/pending'),
+          api.get<ApiResponse<any[]>>('/admin/verification-tickets?status=PENDING'),
+          api.get<ApiResponse<any[]>>('/payments/admin/payouts'),
+          api.get<ApiResponse<any[]>>('/admin/change-requests?status=PENDING'),
+        ]);
+
+        const communities = commRes.status === 'fulfilled' ? (commRes.value.data?.data?.length || 0) : 0;
+        const verifications = verifRes.status === 'fulfilled' ? (verifRes.value.data?.data?.length || 0) : 0;
+        const payoutsRaw = payoutsRes.status === 'fulfilled' ? (payoutsRes.value.data?.data || []) : [];
+        const payouts = (payoutsRaw as any[]).filter((p: any) => ['PENDING', 'REQUESTED', 'UNDER_REVIEW'].includes(p.status)).length;
+        const changeRequests = changeRes.status === 'fulfilled' ? (changeRes.value.data?.data?.length || 0) : 0;
+
+        setPendingCounts({ communities, verifications, payouts, reports: 0, changeRequests });
+      } catch (_) {}
+    };
+    fetchPending();
+  }, []);
 
   // Filters
   const [groupBy, setGroupBy] = useState<'day' | 'week' | 'month' | 'year'>('month');
@@ -259,27 +294,78 @@ export default function AdminDashboard() {
         </div>
       </div>
 
+      {/* Banner thông báo — hiển thị đầu trang */}
+      {(pendingCounts.communities + pendingCounts.verifications + pendingCounts.payouts + pendingCounts.reports + pendingCounts.changeRequests) > 0 ? (
+        <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-5 shadow-sm">
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+              <span className="text-amber-600 text-lg font-black">
+                {pendingCounts.communities + pendingCounts.verifications + pendingCounts.payouts + pendingCounts.reports + pendingCounts.changeRequests}
+              </span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                <h3 className="text-sm font-black text-amber-900 uppercase tracking-wide">Có việc cần xử lý ngay</h3>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {pendingCounts.communities > 0 && (
+                  <a href="/admin/communities" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-lg border border-amber-200 text-xs font-bold text-amber-700 hover:bg-amber-50 transition-all">
+                    <Building className="w-3.5 h-3.5" />
+                    CLB ({pendingCounts.communities})
+                  </a>
+                )}
+                {pendingCounts.verifications > 0 && (
+                  <a href="/admin/verification" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-lg border border-amber-200 text-xs font-bold text-amber-700 hover:bg-amber-50 transition-all">
+                    <ShieldAlert className="w-3.5 h-3.5" />
+                    Sao uy tín ({pendingCounts.verifications})
+                  </a>
+                )}
+                {pendingCounts.payouts > 0 && (
+                  <a href="/admin/payouts" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-lg border border-amber-200 text-xs font-bold text-amber-700 hover:bg-amber-50 transition-all">
+                    <CreditCard className="w-3.5 h-3.5" />
+                    Rút tiền ({pendingCounts.payouts})
+                  </a>
+                )}
+                {pendingCounts.reports > 0 && (
+                  <a href="/admin/reports" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-lg border border-amber-200 text-xs font-bold text-amber-700 hover:bg-amber-50 transition-all">
+                    <FileWarning className="w-3.5 h-3.5" />
+                    Báo cáo ({pendingCounts.reports})
+                  </a>
+                )}
+                {pendingCounts.changeRequests > 0 && (
+                  <a href="/admin/change-requests" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-lg border border-amber-200 text-xs font-bold text-amber-700 hover:bg-amber-50 transition-all">
+                    <Users className="w-3.5 h-3.5" />
+                    Đổi TT ({pendingCounts.changeRequests})
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       {/* Grid Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {cards.map((card, idx) => {
           const Icon = card.icon;
           return (
-            <div 
-              key={idx} 
+            <div
+              key={idx}
               className="bg-white border border-slate-200 rounded-2xl p-6 flex flex-col justify-between shadow-sm relative overflow-hidden group hover:border-slate-300 transition-all duration-300"
             >
               <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-blue-50 to-transparent rounded-full blur-xl group-hover:scale-150 transition-transform duration-500"></div>
-              
+
               <div className="flex justify-between items-center mb-4">
                 <div className="p-3 bg-slate-50 rounded-xl group-hover:bg-slate-100 transition-colors">
                   <Icon className="w-5 h-5 text-blue-600" />
                 </div>
                 {card.change !== undefined && (
                   <span className={`text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1 ${
-                    card.change > 0 
-                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' 
-                      : card.change < 0 
-                        ? 'bg-rose-50 text-rose-700 border border-rose-100' 
+                    card.change > 0
+                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
+                      : card.change < 0
+                        ? 'bg-rose-50 text-rose-700 border border-rose-100'
                         : 'bg-slate-100 text-slate-600'
                   }`}>
                     {card.change > 0 ? `+${card.change}%` : `${card.change}%`}
@@ -339,22 +425,17 @@ export default function AdminDashboard() {
             </div>
 
             {/* Date pickers */}
-            <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5">
-              <Calendar className="w-4 h-4 text-slate-400" />
-              <input 
-                type="date" 
+            <div className="flex items-center gap-2">
+              <DatePicker 
                 value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="bg-transparent border-none text-xs text-slate-700 focus:outline-none focus:ring-0 w-28"
-                placeholder="Từ ngày"
+                onChange={(val) => setStartDate(val)}
+                className="h-9 text-xs w-36"
               />
               <span className="text-slate-400 text-xs">—</span>
-              <input 
-                type="date" 
+              <DatePicker 
                 value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="bg-transparent border-none text-xs text-slate-700 focus:outline-none focus:ring-0 w-28"
-                placeholder="Đến ngày"
+                onChange={(val) => setEndDate(val)}
+                className="h-9 text-xs w-36"
               />
               {(startDate || endDate) && (
                 <button 
@@ -369,7 +450,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Chart render */}
-        <div className="h-96 relative">
+        <div className="relative h-96 min-h-96 min-w-0 w-full">
           {chartLoading && (
             <div className="absolute inset-0 bg-white/40 backdrop-blur-[2px] rounded-xl flex items-center justify-center z-10">
               <div className="flex flex-col items-center gap-2 text-slate-600 text-xs">
@@ -384,7 +465,13 @@ export default function AdminDashboard() {
               Không có dữ liệu giao dịch trong khoảng thời gian đã chọn.
             </div>
           ) : (
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer
+              width="100%"
+              height="100%"
+              minWidth={0}
+              minHeight={384}
+              initialDimension={{ width: 800, height: 384 }}
+            >
               <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorGmv" x1="0" y1="0" x2="0" y2="1">
@@ -461,32 +548,6 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Quick Navigation Panel */}
-      <div className="bg-blue-50/50 border border-blue-100 rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
-        <div className="space-y-2 text-center md:text-left">
-          <h3 className="text-lg font-bold text-blue-700">
-            Duyệt & Quản lý
-          </h3>
-          <p className="text-sm text-slate-600 max-w-xl">
-            Các yêu cầu thanh toán rút tiền, cấp sao uy tín, và khiếu nại tranh chấp kết quả trận đấu đang chờ sự phê duyệt của bạn. Hãy xử lý ngay.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-4 justify-center">
-          <a 
-            href="/admin/disputes" 
-            className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold rounded-xl transition-all shadow-lg shadow-blue-500/20 active:scale-95 flex items-center gap-2"
-          >
-            Giải quyết tranh chấp
-            <ArrowUpRight className="w-4 h-4" />
-          </a>
-          <a 
-            href="/admin/payouts" 
-            className="px-5 py-2.5 bg-white hover:bg-slate-50 text-slate-700 text-sm font-bold border border-slate-200 rounded-xl transition-all active:scale-95"
-          >
-            Duyệt Rút tiền
-          </a>
-        </div>
-      </div>
     </div>
   );
 }

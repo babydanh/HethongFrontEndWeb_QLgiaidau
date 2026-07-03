@@ -141,7 +141,7 @@ export default function TournamentsListPage() {
 
 
       {/* Filter Bar */}
-      <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
         <div className="flex flex-wrap gap-4 items-end">
           <div className="flex-grow min-w-[200px]">
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Tìm kiếm</label>
@@ -245,7 +245,7 @@ export default function TournamentsListPage() {
               <Link 
                 key={tournament.id} 
                 href={`/tournaments/${tournament.id}`}
-                className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:border-slate-300 hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col group cursor-pointer"
+                className="bg-white rounded-xl border border-slate-200 shadow-sm hover:border-slate-300 hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col group cursor-pointer"
               >
                 {/* Top: Large Image Banner */}
                 <div className="relative aspect-[2.1/1] w-full bg-slate-100 overflow-hidden">

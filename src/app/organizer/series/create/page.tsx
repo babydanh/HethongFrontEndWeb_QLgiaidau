@@ -308,7 +308,7 @@ export default function CreateSeriesPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {pointsByRank.map((item, index) => (
-                  <div key={index} className="flex items-center gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200 justify-between">
+                  <div key={`${item.rank}-${index}`} className="flex items-center gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200 justify-between">
                     <div className="flex items-center gap-2 text-xs">
                       <span className="font-bold text-slate-400">Hạng:</span>
                       <input

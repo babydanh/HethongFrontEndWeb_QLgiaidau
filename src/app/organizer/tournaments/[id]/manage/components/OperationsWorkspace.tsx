@@ -9,11 +9,9 @@ import type {
   MatchScheduleInput,
   MatchScoreInput,
   OpsActivityItem,
-  OpsDisputeItem,
   OpsReferee,
 } from '@/features/organizer/ops/types';
 import { OpsActivity } from '../../ops/components/OpsActivity';
-import { OpsDisputes } from '../../ops/components/OpsDisputes';
 import { OpsMatches } from '../../ops/components/OpsMatches';
 import { OpsOverview } from '../../ops/components/OpsOverview';
 import { OpsParticipants } from '../../ops/components/OpsParticipants';
@@ -21,7 +19,6 @@ import { OpsParticipants } from '../../ops/components/OpsParticipants';
 interface OperationsWorkspaceProps {
   participants: TournamentParticipant[];
   matches: Match[];
-  disputes: OpsDisputeItem[];
   referees: OpsReferee[];
   activeParticipantActionId: string | null;
   activeMatchActionId: string | null;
@@ -43,7 +40,6 @@ interface OperationsWorkspaceProps {
     scheduledMatches: number;
     ongoingMatches: number;
     completedMatches: number;
-    openDisputes: number;
   };
   onKickParticipant: (participantId: string, reason: string) => Promise<void>;
   onUpdateMatchStatus: (match: Match, status: Match['status']) => Promise<void>;
@@ -53,18 +49,11 @@ interface OperationsWorkspaceProps {
   ) => Promise<void>;
   onUpdateMatchScore: (match: Match, payload: MatchScoreInput) => Promise<void>;
   onApplyMatchOperation: (match: Match, payload: MatchOperationInput) => Promise<void>;
-  onCreateDispute: (match: Match, reason: string) => Promise<void>;
-  onResolveDispute: (
-    disputeId: string,
-    resolutionNote: string,
-    matchStatus?: 'SCHEDULED' | 'ONGOING' | 'COMPLETED' | 'DISPUTED',
-  ) => Promise<void>;
 }
 
 export function OperationsWorkspace({
   participants,
   matches,
-  disputes,
   referees,
   activeParticipantActionId,
   activeMatchActionId,
@@ -80,8 +69,6 @@ export function OperationsWorkspace({
   onUpdateMatchSchedule,
   onUpdateMatchScore,
   onApplyMatchOperation,
-  onCreateDispute,
-  onResolveDispute,
 }: OperationsWorkspaceProps) {
   const pendingAssignments = matches.filter((match) => {
     const matchInsight = matchInsights?.[match.id];
@@ -117,7 +104,7 @@ export function OperationsWorkspace({
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="text-xl font-black text-slate-900">Panel vận hành giải đấu</h2>
         <p className="mt-2 max-w-3xl text-sm font-medium text-slate-500">
-          Màn hình này dùng để theo dõi nhịp chạy thực tế của giải: trận nào sắp gọi vào sân, trận nào đang nghẽn, tranh chấp nào chưa chốt và roster nào cần xử lý kỹ thuật.
+          Màn hình này dùng để theo dõi nhịp chạy thực tế của giải: trận nào sắp gọi vào sân, trận nào đang nghẽn, vấn đề nào chưa chốt và roster nào cần xử lý kỹ thuật.
         </p>
       </div>
 
@@ -135,11 +122,6 @@ export function OperationsWorkspace({
           <p className="text-[11px] font-black uppercase tracking-[0.12em] text-amber-600">Sẵn sàng gọi vào sân</p>
           <p className="mt-2 text-2xl font-black text-amber-900">{readyToCall}</p>
           <p className="mt-1 text-xs font-medium text-amber-800">Trận đã có sân và trọng tài, có thể chuyển sang trạng thái thi đấu ngay.</p>
-        </div>
-        <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4">
-          <p className="text-[11px] font-black uppercase tracking-[0.12em] text-rose-600">Tranh chấp mở</p>
-          <p className="mt-2 text-2xl font-black text-rose-900">{summary.openDisputes}</p>
-          <p className="mt-1 text-xs font-medium text-rose-800">Những trận cần kết luận trước khi luồng giải đi tiếp.</p>
         </div>
         <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
           <p className="text-[11px] font-black uppercase tracking-[0.12em] text-blue-600">Thiếu điều phối</p>
@@ -166,20 +148,14 @@ export function OperationsWorkspace({
           onUpdateMatchSchedule={onUpdateMatchSchedule}
           onUpdateMatchScore={onUpdateMatchScore}
           onApplyMatchOperation={onApplyMatchOperation}
-          onCreateDispute={onCreateDispute}
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.15fr_1fr]">
+      <div className="grid grid-cols-1 gap-6">
         <OpsParticipants
           participants={participants}
           activeParticipantActionId={activeParticipantActionId}
           onKickParticipant={onKickParticipant}
-        />
-        <OpsDisputes
-          disputes={disputes}
-          activeActionId={activeMatchActionId}
-          onResolveDispute={onResolveDispute}
         />
       </div>
 

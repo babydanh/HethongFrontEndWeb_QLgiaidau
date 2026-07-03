@@ -102,7 +102,7 @@ api.interceptors.response.use(
 
     // Catch-all server errors (500)
     if (error.response?.status >= 500) {
-      toast.error('Hệ thống đang gặp sự cố. Vui lòng thử lại sau.');
+      toast.error('Hệ thống đang gặp lỗi. Vui lòng thử lại sau.');
     }
 
     return Promise.reject(error);

@@ -1,10 +1,56 @@
 import { api } from '@/lib/axios';
-import { Payment, PayoutRequest, CreatePaymentDto, PayoutRequestDto } from '@/types/payment';
+import {
+  AdminPayment,
+  AdminPayoutRequest,
+  Payment,
+  PayoutRequest,
+  CreatePaymentDto,
+  CreatePaymentLinkResponse,
+  LegacyCreatePaymentDto,
+  PayoutRequestDto,
+} from '@/types/payment';
 import { ApiResponse } from '@/types/api';
 
+interface NestedPayoutListRow {
+  payout: PayoutRequest;
+  tournament: PayoutRequest['tournament'];
+}
+
+interface NestedAdminPayoutListRow extends NestedPayoutListRow {
+  organizer: AdminPayoutRequest['organizer'];
+}
+
+interface NestedAdminPaymentListRow {
+  payment: Payment;
+  tournament: Payment['tournament'];
+  user: AdminPayment['user'];
+}
+
+type PayoutListRow = PayoutRequest | NestedPayoutListRow;
+type AdminPayoutListRow = AdminPayoutRequest | NestedAdminPayoutListRow;
+type AdminPaymentListRow = AdminPayment | NestedAdminPaymentListRow;
+
+const isNestedPayout = (row: PayoutListRow): row is NestedPayoutListRow => 'payout' in row;
+const isNestedAdminPayment = (row: AdminPaymentListRow): row is NestedAdminPaymentListRow => 'payment' in row;
+
+const flattenPayout = (row: PayoutListRow): PayoutRequest =>
+  isNestedPayout(row) ? { ...row.payout, tournament: row.tournament } : row;
+
+const flattenAdminPayout = (row: AdminPayoutListRow): AdminPayoutRequest => {
+  if ('payout' in row) {
+    return { ...row.payout, tournament: row.tournament, organizer: row.organizer };
+  }
+  return row;
+};
+
+const flattenAdminPayment = (row: AdminPaymentListRow): AdminPayment =>
+  isNestedAdminPayment(row)
+    ? { ...row.payment, tournament: row.tournament, user: row.user }
+    : row;
+
 export const paymentsApi = {
-  createPaymentLink: (data: CreatePaymentDto) => 
-    api.post<ApiResponse<{ paymentId: string; paymentUrl: string; status: string }>>('/payments/create-link', data),
+  createPaymentLink: (data: CreatePaymentDto | LegacyCreatePaymentDto) =>
+    api.post<ApiResponse<CreatePaymentLinkResponse>>('/payments/create-link', data),
   
   getMyPayments: () => 
     api.get<ApiResponse<Payment[]>>('/payments/me'),
@@ -15,8 +61,10 @@ export const paymentsApi = {
   requestPayout: (data: PayoutRequestDto) => 
     api.post<ApiResponse<PayoutRequest>>('/payments/payout', data),
   
-  getMyPayouts: () => 
-    api.get<ApiResponse<PayoutRequest[]>>('/payments/payouts'),
+  getMyPayouts: async () => {
+    const response = await api.get<ApiResponse<PayoutListRow[]>>('/payments/payouts');
+    return { ...response, data: response.data.map(flattenPayout) };
+  },
 
   getAdminStats: () =>
     api.get<ApiResponse<{
@@ -28,16 +76,29 @@ export const paymentsApi = {
       totalPayoutProcessed: string;
     }>>('/payments/admin/stats'),
 
-  getAdminPayouts: () =>
-    api.get<ApiResponse<PayoutRequest[]>>('/payments/admin/payouts'),
+  getAdminPayouts: async () => {
+    const response = await api.get<ApiResponse<AdminPayoutListRow[]>>('/payments/admin/payouts');
+    return { ...response, data: response.data.map(flattenAdminPayout) };
+  },
 
-  reviewPayout: (id: string, data: { status: 'APPROVED' | 'REJECTED'; transactionProofUrl?: string; note?: string }) =>
+  reviewPayout: (id: string, data: { status: 'APPROVED' | 'REJECTED'; note?: string }) =>
     api.patch<ApiResponse<PayoutRequest>>(`/payments/admin/payouts/${id}/review`, data),
 
-  getAdminTransactions: () =>
-    api.get<ApiResponse<Payment[]>>('/payments/admin/transactions'),
+  confirmPayoutPaid: (id: string, data: { transactionProofUrl: string; note?: string }) =>
+    api.patch<ApiResponse<PayoutRequest>>(`/payments/admin/payouts/${id}/review`, {
+      status: 'PAID',
+      transactionProofUrl: data.transactionProofUrl,
+      note: data.note,
+    }),
+
+  getAdminTransactions: async () => {
+    const response = await api.get<ApiResponse<AdminPaymentListRow[]>>('/payments/admin/transactions');
+    return { ...response, data: response.data.map(flattenAdminPayment) };
+  },
+
+  confirmRefund: (id: string, data: { transactionProofUrl: string }) =>
+    api.post<ApiResponse<Payment>>(`/payments/admin/payments/${id}/confirm-refund`, data),
 
   mockVerify: (paymentId: string) =>
     api.post<ApiResponse<{ message: string }>>('/payments/mock-verify', { paymentId }),
 };
-

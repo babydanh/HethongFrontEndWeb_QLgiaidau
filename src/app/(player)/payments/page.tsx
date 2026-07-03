@@ -2,14 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { paymentsApi } from '@/features/payments/api';
-import { Payment } from '@/types/payment';
+import { Payment, PaymentStatus } from '@/types/payment';
 import { formatCurrency } from '@/utils/format';
 import { getErrorMessage } from '@/utils/error';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { 
-  CreditCard, 
   Loader2, 
   CheckCircle2, 
   XCircle, 
@@ -19,6 +18,15 @@ import {
   ShoppingBag,
   History
 } from 'lucide-react';
+
+const PAYMENT_STATUS_CONFIG: Record<PaymentStatus, { bg: string; text: string; icon: typeof AlertCircle }> = {
+  PENDING: { bg: 'bg-amber-50 text-amber-600 border-amber-100', text: 'Chờ thanh toán', icon: AlertCircle },
+  COMPLETED: { bg: 'bg-green-50 text-green-600 border-green-100', text: 'Thành công', icon: CheckCircle2 },
+  FAILED: { bg: 'bg-red-50 text-red-600 border-red-100', text: 'Thất bại', icon: XCircle },
+  CANCELLED: { bg: 'bg-slate-100 text-slate-600 border-slate-200', text: 'Đã hủy', icon: XCircle },
+  EXPIRED: { bg: 'bg-slate-100 text-slate-600 border-slate-200', text: 'Hết hạn', icon: XCircle },
+  REFUNDED: { bg: 'bg-slate-100 text-slate-600 border-slate-200', text: 'Đã hoàn tiền', icon: XCircle },
+};
 
 export default function PaymentsPage() {
   const { isAuthenticated } = useAuthStore();
@@ -150,12 +158,7 @@ export default function PaymentsPage() {
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-sm text-slate-600">
                   {payments.map((p) => {
-                    const statusConfig = {
-                      PENDING: { bg: 'bg-amber-50 text-amber-600 border-amber-100', text: 'Chờ thanh toán', icon: AlertCircle },
-                      COMPLETED: { bg: 'bg-green-50 text-green-600 border-green-100', text: 'Thành công', icon: CheckCircle2 },
-                      FAILED: { bg: 'bg-red-50 text-red-600 border-red-100', text: 'Thất bại', icon: XCircle },
-                      REFUNDED: { bg: 'bg-slate-100 text-slate-600 border-slate-200', text: 'Đã hoàn tiền', icon: XCircle }
-                    }[p.status] || { bg: 'bg-slate-50 text-slate-500 border-slate-100', text: p.status, icon: AlertCircle };
+                    const statusConfig = PAYMENT_STATUS_CONFIG[p.status];
 
                     const StatusIcon = statusConfig.icon;
 
@@ -171,7 +174,7 @@ export default function PaymentsPage() {
                           {formatCurrency(Number(p.amount))}
                         </td>
                         <td className="py-4 px-6 font-semibold text-slate-500 text-xs">
-                          {p.paymentGateway || 'VNPAY'}
+                          {p.paymentGateway || 'PAYOS'}
                         </td>
                         <td className="py-4 px-6">
                           <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold border ${statusConfig.bg}`}>

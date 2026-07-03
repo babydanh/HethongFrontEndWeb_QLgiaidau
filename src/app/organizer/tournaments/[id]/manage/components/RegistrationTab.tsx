@@ -473,7 +473,7 @@ export function RegistrationTab({
             <div>
               <p className="text-[11px] font-black uppercase tracking-[0.12em] text-blue-600">Sang vận hành khi giải bắt đầu</p>
               <p className="mt-2 text-sm font-semibold text-slate-800">
-                Màn hình `Ops` dùng cho điều phối chuỗi trận, sân đấu, sự cố và nhật ký vận hành trong ngày thi đấu.
+                Màn hình `Ops` dùng cho điều phối chuỗi trận, sân đấu, các vấn đề phát sinh và nhật ký vận hành trong ngày thi đấu.
               </p>
             </div>
             <Button

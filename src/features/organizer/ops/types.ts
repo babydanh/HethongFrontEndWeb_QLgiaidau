@@ -35,31 +35,6 @@ export interface OpsAuditLogResponse {
   } | null;
 }
 
-export interface OpsDisputeItem {
-  id: string;
-  matchId: string;
-  reason: string;
-  evidenceUrls: string[];
-  status: string;
-  resolutionNote: string | null;
-  createdAt: string;
-  resolvedAt: string | null;
-  filedBy: {
-    id: string;
-    email: string | null;
-    fullName: string | null;
-  };
-  match: {
-    id: string;
-    status: string;
-    participant1Id: string | null;
-    participant2Id: string | null;
-    roundNumber: number;
-    matchOrder: number;
-    scheduledAt: string | null;
-  };
-}
-
 export interface MatchScheduleInput {
   courtName?: string | null;
   courtAddress?: string | null;

@@ -424,7 +424,7 @@ export function BasicInfoTab({
                   {tournament.galleryImages && tournament.galleryImages.length > 0 ? (
                     <div className="grid grid-cols-3 gap-2 overflow-y-auto max-h-[260px] p-2 bg-white border rounded-xl">
                       {tournament.galleryImages.map((imgUrl, index) => (
-                        <div key={index} className="relative group border rounded-lg overflow-hidden aspect-video bg-slate-50">
+                        <div key={`${imgUrl}-${index}`} className="relative group border rounded-lg overflow-hidden aspect-video bg-slate-50">
                           <img src={imgUrl} alt={`Gallery ${index}`} className="w-full h-full object-cover" />
                           <button
                             type="button"

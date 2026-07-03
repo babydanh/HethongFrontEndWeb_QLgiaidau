@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Division, Tournament, divisionsApi } from '@/features/tournaments/api';
+import { Division, Tournament, divisionsApi, tournamentsApi } from '@/features/tournaments/api';
 import { Button } from '@/components/ui/Button';
-import { Calendar, MapPin, Users, Trophy, Share2, AlertCircle, User, Phone, Mail, Globe } from 'lucide-react';
+import { Calendar, MapPin, Users, Trophy, Share2, AlertCircle, User, Phone, Mail, Globe, Bookmark } from 'lucide-react';
 import Link from 'next/link';
 import OverviewTab from './components/OverviewTab';
 import TeamsTab from './components/TeamsTab';
@@ -14,6 +14,36 @@ import { useAuthStore } from '@/lib/zustand/authStore';
 import GalleryCarousel from '@/components/ui/GalleryCarousel';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { formatDate } from '@/utils/format';
+import { ReportViolationButton } from '@/features/reports/components/ReportViolationButton';
+
+/** Countdown đầy đủ giờ:phút:giây — dùng ở trang chi tiết */
+function FullCountdown({ targetDate }: { targetDate: string }) {
+  const [text, setText] = useState('');
+  useEffect(() => {
+    const update = () => {
+      const diff = new Date(targetDate).getTime() - Date.now();
+      if (diff <= 0) { setText('Đang mở đăng ký'); return; }
+      const d = Math.floor(diff / 86400000);
+      const h = Math.floor((diff % 86400000) / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      if (d > 0) setText(`Còn ${d} ngày ${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`);
+      else setText(`Còn ${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`);
+    };
+    update();
+    const timer = setInterval(update, 1000);
+    return () => clearInterval(timer);
+  }, [targetDate]);
+  if (!text) return null;
+  return (
+    <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-xl">
+      <div className="flex items-center gap-2">
+        <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+        <span className="text-xs font-bold text-amber-700">{text}</span>
+      </div>
+    </div>
+  );
+}
 
 interface Props {
   tournament: Tournament;
@@ -67,6 +97,32 @@ export default function TournamentDetailClient({ tournament }: Props) {
   const isOwner = !!user?.id && user.id === activeTournament.organizerId;
   const [activeTab, setActiveTab] = useState<TournamentDetailTab>('overview');
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    tournamentsApi.getFollowedTournaments().then(res => {
+      const followed = Array.isArray(res.data) ? res.data : [];
+      setIsFollowing(followed.some((t: Tournament) => t.id === tournament.id));
+    }).catch(() => {});
+  }, [tournament.id, user?.id]);
+
+  const toggleFollow = async () => {
+    if (!user?.id) return;
+    setFollowLoading(true);
+    try {
+      if (isFollowing) {
+        await tournamentsApi.unfollowTournament(tournament.id);
+        setIsFollowing(false);
+      } else {
+        await tournamentsApi.followTournament(tournament.id);
+        setIsFollowing(true);
+      }
+    } catch { /* ignore */ } finally {
+      setFollowLoading(false);
+    }
+  };
 
   const isRegistrationLocked = activeTournament.isRegistrationLocked;
   const isRegistrationExpired = activeTournament.registrationEndDate ? new Date() > new Date(activeTournament.registrationEndDate) : false;
@@ -240,9 +296,31 @@ export default function TournamentDetailClient({ tournament }: Props) {
           </div>
 
           <div className="flex flex-row gap-3 w-full md:w-auto items-center justify-start md:justify-end">
+            {user?.id && (
+              <Button
+                onClick={toggleFollow}
+                disabled={followLoading}
+                variant={isFollowing ? 'default' : 'outline'}
+                className={`flex-1 md:flex-none font-bold shadow-sm ${
+                  isFollowing
+                    ? 'bg-rose-500 hover:bg-rose-600 text-white border-rose-500'
+                    : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200/80'
+                }`}
+              >
+                <Bookmark className={`w-4 h-4 mr-2 ${isFollowing ? 'fill-current' : ''}`} />
+                {isFollowing ? 'Đang theo dõi' : 'Theo dõi'}
+              </Button>
+            )}
             <Button variant="outline" className="bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200/80 flex-1 md:flex-none font-bold shadow-sm">
               <Share2 className="w-4 h-4 mr-2" /> Chia sẻ
             </Button>
+            <ReportViolationButton
+              targetType="TOURNAMENT"
+              targetId={tournament.id}
+              targetLabel={tournament.name}
+              hidden={isOwner}
+              compact
+            />
             {!isOwner && activeTournament.status !== 'DRAFT' && (
               <Button 
                 disabled={isRegistrationButtonDisabled}
@@ -427,6 +505,9 @@ export default function TournamentDetailClient({ tournament }: Props) {
                     {formatDateRange(activeTournament.registrationStartDate, activeTournament.registrationEndDate)}
                   </div>
                 </div>
+                {activeTournament.status === 'UPCOMING' && activeTournament.registrationStartDate && (
+                  <FullCountdown targetDate={activeTournament.registrationStartDate} />
+                )}
               </div>
 
               {/* Warnings and Info Banners */}

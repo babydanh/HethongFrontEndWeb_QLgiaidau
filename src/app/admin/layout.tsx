@@ -20,7 +20,6 @@ import {
   Settings,
   Trophy,
   HandCoins,
-  FileWarning,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 
@@ -35,15 +34,14 @@ export default function AdminLayout({
 
   const menuItems = [
     { name: 'Tổng quan', path: '/admin', icon: LayoutDashboard },
-    { name: 'Duyệt sao uy tín', path: '/admin/verification', icon: ShieldCheck },
+    { name: 'Quản lý sao uy tín', path: '/admin/verification', icon: ShieldCheck },
     { name: 'Khóa / xử phạt user', path: '/admin/moderation', icon: Users },
-    { name: 'Tranh chấp trận đấu', path: '/admin/disputes', icon: FileWarning },
-    { name: 'Quản lý giải đấu', path: '/admin/tournaments', icon: Trophy },
-    { name: 'Duyệt cộng đồng', path: '/admin/communities', icon: Building },
-    { name: 'Duyệt rút tiền', path: '/admin/payouts', icon: CreditCard },
-    { name: 'Giao dịch hệ thống', path: '/admin/transactions', icon: HandCoins },
     { name: 'Báo cáo vi phạm', path: '/admin/reports', icon: ShieldAlert },
-    { name: 'Duyệt đổi thông tin', path: '/admin/change-requests', icon: ShieldAlert },
+    { name: 'Quản lý giải đấu', path: '/admin/tournaments', icon: Trophy },
+    { name: 'Quản lý cộng đồng', path: '/admin/communities', icon: Building },
+    { name: 'Quản lý rút tiền', path: '/admin/payouts', icon: CreditCard },
+    { name: 'Giao dịch hệ thống', path: '/admin/transactions', icon: HandCoins },
+    { name: 'Quản lý đổi thông tin', path: '/admin/change-requests', icon: ShieldAlert },
     { name: 'Cấu hình hệ thống', path: '/admin/configs', icon: Settings },
   ];
 

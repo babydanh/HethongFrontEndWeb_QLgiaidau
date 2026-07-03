@@ -13,7 +13,7 @@ import {
   type StageRoundConfig,
 } from '@/types/tournament';
 import { ApiResponse } from '@/types/api';
-import type { OpsAuditLogResponse, OpsDisputeItem } from '@/features/organizer/ops/types';
+import type { OpsAuditLogResponse } from '@/features/organizer/ops/types';
 
 export interface StaffMember {
   userId: string;
@@ -200,17 +200,6 @@ export const tournamentsApi = {
     api.get<ApiResponse<OpsAuditLogResponse[]>>(`/tournaments/${id}/ops-audit-logs`, {
       params: divisionId ? { divisionId } : undefined,
     }),
-  getDisputes: (id: string, divisionId?: string) =>
-    api.get<ApiResponse<OpsDisputeItem[]>>(`/tournaments/${id}/disputes`, {
-      params: divisionId ? { divisionId } : undefined,
-    }),
-  createDispute: (id: string, data: { matchId: string; reason: string; evidenceUrls?: string[] }) =>
-    api.post<ApiResponse<OpsDisputeItem>>(`/tournaments/${id}/disputes`, data),
-  resolveDispute: (
-    id: string,
-    disputeId: string,
-    data: { resolutionNote: string; matchStatus?: 'SCHEDULED' | 'ONGOING' | 'COMPLETED' | 'DISPUTED' },
-  ) => api.post<ApiResponse<OpsDisputeItem>>(`/tournaments/${id}/disputes/${disputeId}/resolve`, data),
   getTournamentReferees: (id: string) => api.get<ApiResponse<TournamentReferee[]>>(`/tournaments/${id}/referees`),
   addTournamentReferee: (id: string, email: string) =>
     api.post<ApiResponse<void>>(`/tournaments/${id}/referees`, { email }),
@@ -296,4 +285,12 @@ export const divisionsApi = {
     api.get<ApiResponse<TournamentParticipant[]>>(`/tournaments/${tournamentId}/divisions/${divisionId}/participants`),
   deleteDivision: (divisionId: string) =>
     api.delete<ApiResponse<void>>(`/tournaments/divisions/${divisionId}`),
+
+  // Follow / Unfollow
+  followTournament: (id: string) =>
+    api.post<ApiResponse<void>>(`/tournaments/${id}/follow`),
+  unfollowTournament: (id: string) =>
+    api.delete<ApiResponse<void>>(`/tournaments/${id}/follow`),
+  getFollowedTournaments: () =>
+    api.get<ApiResponse<Tournament[]>>('/tournaments/my/followed'),
 };

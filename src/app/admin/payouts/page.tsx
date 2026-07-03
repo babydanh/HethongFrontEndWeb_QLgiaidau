@@ -3,25 +3,35 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { paymentsApi } from '@/features/payments/api';
-import { PayoutRequest } from '@/types/payment';
+import { AdminPayoutRequest, PayoutStatus } from '@/types/payment';
 import { getErrorMessage } from '@/utils/error';
-import { CreditCard, Landmark, Check, X, AlertCircle, ExternalLink, Calendar } from 'lucide-react';
+import { CreditCard, Landmark, Check, X, AlertCircle, ExternalLink, Calendar, Search } from 'lucide-react';
 
-interface PayoutRequestWithOrganizer extends PayoutRequest {
-  organizer?: {
-    fullName?: string;
-    email?: string;
-  };
-}
+type ReviewAction = 'APPROVED' | 'REJECTED' | 'PAID';
+
+const PAYOUT_STATUS_LABELS: Record<PayoutStatus, string> = {
+  PENDING: 'Chờ duyệt',
+  REQUESTED: 'Mới gửi',
+  UNDER_REVIEW: 'Đang đối soát',
+  APPROVED: 'Đã duyệt hồ sơ',
+  PROCESSING: 'Đang chuyển tiền',
+  PAID: 'Đã chuyển tiền',
+  REJECTED: 'Đã từ chối',
+  FAILED: 'Chuyển tiền lỗi',
+  CANCELLED: 'Đã hủy',
+};
 
 export default function AdminPayoutsReview() {
-  const [payouts, setPayouts] = useState<PayoutRequestWithOrganizer[]>([]);
+  const [payouts, setPayouts] = useState<AdminPayoutRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('ALL');
 
   // Review modal state
-  const [reviewingPayout, setReviewingPayout] = useState<PayoutRequestWithOrganizer | null>(null);
-  const [reviewAction, setReviewAction] = useState<'APPROVED' | 'REJECTED' | null>(null);
+  const [reviewingPayout, setReviewingPayout] = useState<AdminPayoutRequest | null>(null);
+  const [reviewAction, setReviewAction] = useState<ReviewAction | null>(null);
   const [proofUrl, setProofUrl] = useState('');
   const [note, setNote] = useState('');
   const [modalError, setModalError] = useState<string | null>(null);
@@ -48,7 +58,7 @@ export default function AdminPayoutsReview() {
     });
   }, []);
 
-  const handleOpenReview = (payout: PayoutRequestWithOrganizer, action: 'APPROVED' | 'REJECTED') => {
+  const handleOpenReview = (payout: AdminPayoutRequest, action: ReviewAction) => {
     setReviewingPayout(payout);
     setReviewAction(action);
     setProofUrl('');
@@ -60,7 +70,7 @@ export default function AdminPayoutsReview() {
     e.preventDefault();
     if (!reviewingPayout || !reviewAction) return;
 
-    if (reviewAction === 'APPROVED' && !proofUrl.trim()) {
+    if (reviewAction === 'PAID' && !proofUrl.trim()) {
       setModalError('Vui lòng cung cấp link hình ảnh hóa đơn/bằng chứng chuyển khoản');
       return;
     }
@@ -73,12 +83,19 @@ export default function AdminPayoutsReview() {
     try {
       setSubmitting(true);
       setModalError(null);
-      await paymentsApi.reviewPayout(reviewingPayout.id, {
-        status: reviewAction,
-        transactionProofUrl: reviewAction === 'APPROVED' ? proofUrl : undefined,
-        note: note.trim() || undefined,
-      });
-      toast.success(`Đã ${reviewAction === 'APPROVED' ? 'duyệt giải ngân' : 'từ chối yêu cầu'} thành công`);
+      if (reviewAction === 'PAID') {
+        await paymentsApi.confirmPayoutPaid(reviewingPayout.id, {
+          transactionProofUrl: proofUrl.trim(),
+          note: note.trim() || undefined,
+        });
+        toast.success('Đã xác nhận chuyển tiền thành công');
+      } else {
+        await paymentsApi.reviewPayout(reviewingPayout.id, {
+          status: reviewAction,
+          note: note.trim() || undefined,
+        });
+        toast.success(reviewAction === 'APPROVED' ? 'Đã duyệt hồ sơ giải ngân' : 'Đã từ chối yêu cầu');
+      }
       setReviewingPayout(null);
       fetchPayouts();
     } catch (err: unknown) {
@@ -93,6 +110,37 @@ export default function AdminPayoutsReview() {
     const num = typeof val === 'string' ? parseFloat(val) : val;
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(num);
   };
+
+  const parseDate = (str: string): Date | null => {
+    const parts = str.split('/');
+    if (parts.length !== 3) return null;
+    const d = parseInt(parts[0], 10);
+    const m = parseInt(parts[1], 10) - 1;
+    const y = parseInt(parts[2], 10);
+    if (isNaN(d) || isNaN(m) || isNaN(y)) return null;
+    return new Date(y, m, d);
+  };
+
+  const formatDate = (dateStr: string) => {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  };
+
+  const filteredPayouts = payouts.filter(p => {
+    const fromDate = dateFrom ? parseDate(dateFrom) : null;
+    const toDate = dateTo ? parseDate(dateTo) : null;
+    if (fromDate || toDate) {
+      const itemDate = new Date(p.createdAt);
+      if (fromDate && itemDate < fromDate) return false;
+      if (toDate) {
+        const endOfDay = new Date(toDate);
+        endOfDay.setHours(23, 59, 59, 999);
+        if (itemDate > endOfDay) return false;
+      }
+    }
+    if (statusFilter !== 'ALL' && p.status !== statusFilter) return false;
+    return true;
+  });
 
   if (loading) {
     return (
@@ -132,8 +180,45 @@ export default function AdminPayoutsReview() {
         </div>
       )}
 
+      {/* Filter Bar */}
+      <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-2xl border border-gray-200 shadow-sm">
+        <div className="flex items-center gap-2 min-w-[140px]">
+          <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
+          <input
+            type="text"
+            placeholder="Từ ngày (dd/mm/yyyy)"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-xs text-gray-600 focus:outline-none focus:border-blue-500 placeholder-gray-400"
+          />
+        </div>
+        <div className="flex items-center gap-2 min-w-[140px]">
+          <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
+          <input
+            type="text"
+            placeholder="Đến ngày (dd/mm/yyyy)"
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-xs text-gray-600 focus:outline-none focus:border-blue-500 placeholder-gray-400"
+          />
+        </div>
+        <div className="flex items-center gap-2 min-w-[180px]">
+          <span className="text-xs text-gray-400 font-semibold">Trạng thái:</span>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-xs text-gray-600 focus:outline-none focus:border-blue-500"
+          >
+            <option value="ALL">Tất cả</option>
+            {Object.entries(PAYOUT_STATUS_LABELS).map(([key, label]) => (
+              <option key={key} value={key}>{label}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
       {/* Payouts list */}
-      {payouts.length === 0 ? (
+      {filteredPayouts.length === 0 ? (
         <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center text-slate-500 space-y-3 shadow-sm">
           <CreditCard className="w-12 h-12 text-slate-400 mx-auto" />
           <p className="font-bold text-slate-800">Không có yêu cầu rút tiền nào</p>
@@ -141,7 +226,7 @@ export default function AdminPayoutsReview() {
         </div>
       ) : (
         <div className="space-y-6">
-          {payouts.map((request) => (
+          {filteredPayouts.map((request) => (
             <div 
               key={request.id}
               className="bg-white border border-slate-200 rounded-2xl p-6 hover:border-slate-300 transition-all duration-300 shadow-sm flex flex-col gap-6"
@@ -158,13 +243,15 @@ export default function AdminPayoutsReview() {
                 </div>
                 <div className="flex items-center gap-2">
                   <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase border ${
-                    request.status === 'PENDING' 
+                    ['PENDING', 'REQUESTED', 'UNDER_REVIEW'].includes(request.status)
                       ? 'bg-amber-50 text-amber-600 border-amber-200' 
-                      : request.status === 'APPROVED'
+                      : ['APPROVED', 'PROCESSING'].includes(request.status)
+                      ? 'bg-blue-50 text-blue-600 border-blue-200'
+                      : request.status === 'PAID'
                       ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
                       : 'bg-rose-50 text-rose-600 border-rose-200'
                   }`}>
-                    {request.status === 'PENDING' ? 'Chờ Duyệt' : request.status === 'APPROVED' ? 'Đã Thanh Toán' : 'Đã Từ Chối'}
+                    {PAYOUT_STATUS_LABELS[request.status]}
                   </span>
                 </div>
               </div>
@@ -203,14 +290,14 @@ export default function AdminPayoutsReview() {
 
                 {/* Processing Info or Admin Action */}
                 <div className="flex flex-col justify-center">
-                  {request.status === 'PENDING' ? (
+                  {['PENDING', 'REQUESTED', 'UNDER_REVIEW'].includes(request.status) ? (
                     <div className="flex gap-3">
                       <button
                         onClick={() => handleOpenReview(request, 'APPROVED')}
                         className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-emerald-500/10 active:scale-95"
                       >
                         <Check className="w-4 h-4" />
-                        Duyệt Chi
+                        Duyệt hồ sơ
                       </button>
                       <button
                         onClick={() => handleOpenReview(request, 'REJECTED')}
@@ -218,6 +305,19 @@ export default function AdminPayoutsReview() {
                       >
                         <X className="w-4 h-4" />
                         Từ Chối
+                      </button>
+                    </div>
+                  ) : ['APPROVED', 'PROCESSING'].includes(request.status) ? (
+                    <div className="space-y-3">
+                      <p className="text-xs text-slate-500">
+                        Hồ sơ đã duyệt. Chỉ xác nhận sau khi tiền đã được chuyển thực tế.
+                      </p>
+                      <button
+                        onClick={() => handleOpenReview(request, 'PAID')}
+                        className="w-full flex items-center justify-center gap-1.5 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-emerald-500/10 active:scale-95"
+                      >
+                        <Check className="w-4 h-4" />
+                        Xác nhận đã chuyển tiền
                       </button>
                     </div>
                   ) : (
@@ -253,7 +353,11 @@ export default function AdminPayoutsReview() {
             {/* Header */}
             <div className="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
               <h3 className="text-base font-bold text-slate-900">
-                {reviewAction === 'APPROVED' ? 'Duyệt giải ngân' : 'Từ chối giải ngân'}
+                {reviewAction === 'APPROVED'
+                  ? 'Duyệt hồ sơ giải ngân'
+                  : reviewAction === 'PAID'
+                    ? 'Xác nhận đã chuyển tiền'
+                    : 'Từ chối giải ngân'}
               </h3>
               <button 
                 onClick={() => setReviewingPayout(null)}
@@ -274,7 +378,7 @@ export default function AdminPayoutsReview() {
                   </p>
                 </div>
 
-                {reviewAction === 'APPROVED' ? (
+                {reviewAction === 'PAID' ? (
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-slate-700">Link ảnh bill chuyển khoản (Bắt buộc)</label>
                     <input
@@ -291,13 +395,13 @@ export default function AdminPayoutsReview() {
 
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-slate-700">
-                    {reviewAction === 'APPROVED' ? 'Ghi chú phê duyệt (Tùy chọn)' : 'Lý do từ chối (Bắt buộc)'}
+                    {reviewAction === 'REJECTED' ? 'Lý do từ chối (Bắt buộc)' : 'Ghi chú xử lý (Tùy chọn)'}
                   </label>
                   <textarea
                     required={reviewAction === 'REJECTED'}
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
-                    placeholder={reviewAction === 'APPROVED' ? 'Ví dụ: Đã chuyển khoản qua Internet Banking thành công.' : 'Nhập lý do cụ thể từ chối lệnh rút tiền...'}
+                    placeholder={reviewAction === 'REJECTED' ? 'Nhập lý do cụ thể từ chối yêu cầu...' : 'Nhập ghi chú đối soát nếu cần.'}
                     className="w-full h-24 bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 resize-none"
                   />
                 </div>
@@ -320,12 +424,12 @@ export default function AdminPayoutsReview() {
                   type="submit"
                   disabled={submitting}
                   className={`px-4 py-2 disabled:opacity-50 text-white text-sm font-bold rounded-xl transition-all shadow-lg active:scale-95 ${
-                    reviewAction === 'APPROVED' 
+                    reviewAction !== 'REJECTED'
                       ? 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-500/10' 
                       : 'bg-rose-600 hover:bg-rose-500 shadow-rose-500/10'
                   }`}
                 >
-                  {reviewAction === 'APPROVED' ? 'Duyệt Chi' : 'Từ Chối'}
+                  {reviewAction === 'APPROVED' ? 'Duyệt hồ sơ' : reviewAction === 'PAID' ? 'Xác nhận đã chuyển' : 'Từ chối'}
                 </button>
               </div>
             </form>

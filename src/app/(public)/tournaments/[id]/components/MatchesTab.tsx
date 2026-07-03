@@ -114,7 +114,28 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
   // Group matches by Stage / Group name
   const groupedMatches: Record<string, BracketMatch[]> = {};
   for (const m of sortedMatches) {
-    const stageName = m.group?.stage?.name || m.group?.name || 'Vòng Đấu';
+    const stageName = (() => {
+      const raw = m.group?.stage?.name || m.group?.name || '';
+      const map = {
+        'Elimination Stage': 'Vòng loại trực tiếp',
+        'Knockout Stage': 'Vòng loại trực tiếp',
+        'Group Stage': 'Vòng bảng',
+        'Round Robin': 'Vòng tròn tính điểm',
+        'Final Stage': 'Vòng chung kết',
+        'Qualification Stage': 'Vòng loại',
+        'Preliminary Stage': 'Vòng sơ loại',
+        'Main Stage': 'Vòng chính',
+        'Quarter Finals': 'Tứ kết',
+        'Quarterfinals': 'Tứ kết',
+        'Semi Finals': 'Bán kết',
+        'Semifinals': 'Bán kết',
+        'Final': 'Chung kết',
+        'Grand Final': 'Chung kết tổng',
+        'Winners Bracket': 'Nhánh thắng',
+        'Losers Bracket': 'Nhánh thua',
+      };
+      return (map as Record<string, string>)[raw] || raw || 'Vòng đấu';
+    })();
     if (!groupedMatches[stageName]) {
       groupedMatches[stageName] = [];
     }

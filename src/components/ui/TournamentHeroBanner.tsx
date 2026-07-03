@@ -12,6 +12,27 @@ interface Props {
   heightClass?: string;
 }
 
+/** Countdown — chỉ hiện ngày (dùng cho banner trang chủ) */
+function CountdownTimer({ targetDate }: { targetDate: string }) {
+  const [text, setText] = useState('');
+  useEffect(() => {
+    const update = () => {
+      const days = Math.floor((new Date(targetDate).getTime() - Date.now()) / 86400000);
+      if (days <= 0) { setText('Đang mở đăng ký'); return; }
+      setText(`Còn ${days} ngày`);
+    };
+    update();
+    const timer = setInterval(update, 60000);
+    return () => clearInterval(timer);
+  }, [targetDate]);
+  if (!text) return null;
+  return (
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-400/30 text-amber-300 text-[10px] font-bold whitespace-nowrap">
+      ⏳ {text}
+    </span>
+  );
+}
+
 export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[250px] md:h-[350px]' }: Props) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [slideWidth, setSlideWidth] = useState(95);
@@ -88,7 +109,7 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[25
 
   if (!tournaments || tournaments.length === 0) {
     return (
-      <div className={`w-full ${heightClass} rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 flex flex-col justify-center items-center text-center p-6 border border-slate-800 shadow-xl relative overflow-hidden`}>
+      <div className={`w-full ${heightClass} rounded-xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 flex flex-col justify-center items-center text-center p-6 border border-slate-800 shadow-xl relative overflow-hidden`}>
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.08)_0%,transparent_70%)]" />
         <h3 className="text-xl md:text-2xl font-bold text-white mb-2 relative z-10 font-sans tracking-wide">
           Chưa Có Giải Đấu Nào Sắp Diễn Ra
@@ -147,7 +168,7 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[25
   };
 
   return (
-    <div className="relative w-full select-none group overflow-hidden rounded-2xl">
+    <div className="relative w-full select-none group overflow-hidden rounded-xl">
       {/* Slider Wrapper */}
       <div 
         onMouseDown={handleMouseDown}
@@ -171,7 +192,7 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[25
                 width: `${slideWidth}%`,
               }}
             >
-              <div className={`w-full ${heightClass} rounded-2xl relative overflow-hidden border border-slate-205 dark:border-slate-800 shadow-md bg-slate-950 transition-all duration-500 ${isActive ? 'scale-[1] opacity-100' : 'scale-[0.985] opacity-90'}`}>
+              <div className={`w-full ${heightClass} rounded-xl relative overflow-hidden border border-slate-205 dark:border-slate-800 shadow-md bg-slate-950 transition-all duration-500 ${isActive ? 'scale-[1] opacity-100' : 'scale-[0.985] opacity-90'}`}>
                 {/* Background Image / Gradient */}
                 <div className="absolute inset-0 transition-transform duration-1000 ease-out transform scale-100 group-hover:scale-105">
                   {tournament.bannerUrl ? (
@@ -192,6 +213,8 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[25
                       />
                     </div>
                   )}
+                  {/* Dark gradient overlay to guarantee text contrast */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent" />
                 </div>
 
                 {/* Clickable Overlay for the whole card */}
@@ -228,6 +251,9 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[25
                         📅 {formatDate(tournament.startDate)}
                         {tournament.endDate && ` - ${formatDate(tournament.endDate)}`}
                       </span>
+                    )}
+                    {tournament.status === 'UPCOMING' && tournament.registrationStartDate && (
+                      <CountdownTimer targetDate={tournament.registrationStartDate} />
                     )}
                     {tournament.locationAddress && (
                       <span className="flex items-center gap-1 line-clamp-1">

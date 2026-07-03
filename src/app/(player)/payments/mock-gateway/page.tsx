@@ -47,14 +47,13 @@ function MockGatewayContent() {
   const [otp, setOtp] = useState<string[]>(Array(6).fill(''));
   const inputRefs = useRef<(HTMLInputElement | null)[]>(Array(6).fill(null));
   const [timeLeft, setTimeLeft] = useState(180); // 3 minutes in seconds
-  const [isExpired, setIsExpired] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
+  const isExpired = timeLeft <= 0;
 
   // Countdown timer
   useEffect(() => {
     if (timeLeft <= 0) {
-      setIsExpired(true);
       return;
     }
 
@@ -143,7 +142,6 @@ function MockGatewayContent() {
 
   const handleResendOtp = () => {
     setTimeLeft(180);
-    setIsExpired(false);
     toast.success('Mã OTP mới đã được gửi đến số điện thoại của bạn');
   };
 
@@ -216,7 +214,7 @@ function MockGatewayContent() {
               <div className="flex justify-center gap-3 py-2">
                 {otp.map((digit, index) => (
                   <input
-                    key={index}
+                    key={`${index}-${digit}`}
                     ref={(el) => { inputRefs.current[index] = el; }}
                     type="text"
                     inputMode="numeric"

@@ -1,7 +1,24 @@
 import { inferSportRuleKindFromCategory, resolveSportRuleView } from '@/features/tournaments/sport-rules/normalize';
 import { getSportRulePresentation } from '@/features/tournaments/sport-rules/presentation';
 import type { Match, MatchScore } from '@/types/match';
-import type { SportRuleKind } from '@/types/tournament';
+import type { SportRuleKind, SportRulesEnvelope } from '@/types/tournament';
+
+type MatchSportContext = {
+  matchConfig?: Match['matchConfig'];
+  scoreDetails?: Record<string, unknown> | null;
+  tournament?: {
+    name?: string;
+    sportRules?: SportRulesEnvelope | null;
+    categoryName?: string | null;
+    categorySlug?: string | null;
+    categoryConfig?: Record<string, unknown> | null;
+    category?: {
+      slug?: string | null;
+      name?: string | null;
+      categoryConfig?: Record<string, unknown> | null;
+    } | null;
+  } | null;
+};
 
 function isScoreKey(key: string): boolean {
   return /^(set|game)\d+$/i.test(key);
@@ -59,20 +76,15 @@ export function extractMatchScores(scoreDetails?: Record<string, unknown> | null
 }
 
 export function resolveMatchSportRules(
-  match: {
-    matchConfig?: Match['matchConfig'];
-    tournament?: Pick<
-      NonNullable<Match['tournament']>,
-      'sportRules' | 'categoryName' | 'categorySlug' | 'categoryConfig'
-    > | null;
-  },
+  match: MatchSportContext,
   fallbackKind: SportRuleKind = 'BADMINTON',
 ) {
   const inferredFromTournament = match.tournament
     ? inferSportRuleKindFromCategory({
-        slug: match.tournament.categorySlug ?? '',
-        name: match.tournament.categoryName ?? '',
-        categoryConfig: match.tournament.categoryConfig ?? null,
+        slug: match.tournament.categorySlug ?? match.tournament.category?.slug ?? '',
+        name: match.tournament.categoryName ?? match.tournament.category?.name ?? '',
+        categoryConfig:
+          match.tournament.categoryConfig ?? match.tournament.category?.categoryConfig ?? null,
       })
     : null;
 
@@ -124,16 +136,7 @@ export function getMatchScorePresentation(kind: SportRuleKind) {
 }
 
 export function buildMatchScoreSummary(
-  match: {
-    p1SetsWon: number;
-    p2SetsWon: number;
-    matchConfig?: Match['matchConfig'];
-    tournament?: Pick<
-      NonNullable<Match['tournament']>,
-      'sportRules' | 'categoryName' | 'categorySlug' | 'categoryConfig'
-    > | null;
-    scoreDetails?: Record<string, unknown> | null;
-  },
+  match: MatchSportContext & { p1SetsWon: number; p2SetsWon: number },
   fallbackKind: SportRuleKind = 'BADMINTON',
 ): string {
   const resolved = resolveMatchSportRules(match, fallbackKind);
@@ -150,7 +153,7 @@ export function buildMatchScoreSummary(
 export function buildAutoWinnerScore(
   existingSet: MatchScore,
   winnerTeam: 1 | 2,
-  match: Pick<Match, 'matchConfig' | 'tournament'>,
+  match: MatchSportContext,
 ): MatchScore {
   const resolved = resolveMatchSportRules(match);
   const winnerKey = winnerTeam === 1 ? 'team1Score' : 'team2Score';

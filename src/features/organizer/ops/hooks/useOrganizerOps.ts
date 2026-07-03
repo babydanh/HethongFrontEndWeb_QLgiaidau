@@ -13,7 +13,6 @@ import type {
   MatchScoreInput,
   OpsActivityItem,
   OpsAuditLogResponse,
-  OpsDisputeItem,
   OpsReferee,
 } from '../types';
 
@@ -32,7 +31,6 @@ interface UseOrganizerOpsResult {
   setSelectedDivisionId: (divisionId: string) => void;
   participants: TournamentParticipant[];
   matches: Match[];
-  disputes: OpsDisputeItem[];
   isLoading: boolean;
   error: string | null;
   refresh: () => Promise<void>;
@@ -43,12 +41,6 @@ interface UseOrganizerOpsResult {
   updateMatchSchedule: (match: Match, payload: MatchScheduleInput) => Promise<void>;
   updateMatchScore: (match: Match, payload: MatchScoreInput) => Promise<void>;
   applyMatchOperation: (match: Match, payload: MatchOperationInput) => Promise<void>;
-  createDispute: (match: Match, reason: string) => Promise<void>;
-  resolveDispute: (
-    disputeId: string,
-    resolutionNote: string,
-    matchStatus?: 'SCHEDULED' | 'ONGOING' | 'COMPLETED' | 'DISPUTED',
-  ) => Promise<void>;
   activityLog: OpsActivityItem[];
   summary: {
     totalParticipants: number;
@@ -57,7 +49,6 @@ interface UseOrganizerOpsResult {
     scheduledMatches: number;
     ongoingMatches: number;
     completedMatches: number;
-    openDisputes: number;
   };
 }
 
@@ -119,7 +110,6 @@ export function useOrganizerOps(
   const [selectedDivisionIdState, setSelectedDivisionIdState] = useState('');
   const [participants, setParticipants] = useState<TournamentParticipant[]>([]);
   const [matches, setMatches] = useState<Match[]>([]);
-  const [disputes, setDisputes] = useState<OpsDisputeItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeParticipantActionId, setActiveParticipantActionId] = useState<string | null>(null);
@@ -165,7 +155,7 @@ export function useOrganizerOps(
   };
 
   const loadOperationalData = useCallback(async (divisionId: string) => {
-    const [participantsRes, matchesRes, auditRes, disputesRes] = await Promise.all([
+    const [participantsRes, matchesRes, auditRes] = await Promise.all([
       divisionId
         ? divisionsApi.getDivisionParticipants(tournamentId, divisionId)
         : tournamentsApi.getTournamentParticipants(tournamentId),
@@ -175,12 +165,10 @@ export function useOrganizerOps(
         limit: 100,
       }),
       tournamentsApi.getOpsAuditLogs(tournamentId, divisionId || undefined),
-      tournamentsApi.getDisputes(tournamentId, divisionId || undefined),
     ]);
 
     setParticipants(participantsRes.data ?? []);
     setMatches(matchesRes.data ?? []);
-    setDisputes(disputesRes.data ?? []);
     setActivityLog((current) => {
       const backendLog = (auditRes.data ?? []).map((row) => mapAuditLogToActivity(tournamentId, row));
       const localOnly = current.filter((item) => item.id.includes('_'));
@@ -417,29 +405,6 @@ export function useOrganizerOps(
     }
   };
 
-  const createDispute = async (match: Match, reason: string) => {
-    try {
-      setActiveMatchActionId(match.id);
-      await tournamentsApi.createDispute(tournamentId, {
-        matchId: match.id,
-        reason: reason.trim(),
-      });
-      toast.success('Đã ghi nhận sự cố/tranh chấp cho trận.');
-      appendActivityLog(
-        'MATCH',
-        match.id,
-        'CREATE_DISPUTE',
-        'Mở sự cố/tranh chấp',
-        reason.trim(),
-      );
-      await refresh();
-    } catch (err) {
-      toast.error(getErrorMessage(err));
-    } finally {
-      setActiveMatchActionId(null);
-    }
-  };
-
   const applyMatchOperation = async (match: Match, payload: MatchOperationInput) => {
     try {
       setActiveMatchActionId(match.id);
@@ -464,40 +429,12 @@ export function useOrganizerOps(
     }
   };
 
-  const resolveDispute = async (
-    disputeId: string,
-    resolutionNote: string,
-    matchStatus?: 'SCHEDULED' | 'ONGOING' | 'COMPLETED' | 'DISPUTED',
-  ) => {
-    try {
-      setActiveMatchActionId(disputeId);
-      await tournamentsApi.resolveDispute(tournamentId, disputeId, {
-        resolutionNote: resolutionNote.trim(),
-        matchStatus,
-      });
-      toast.success('Đã xử lý sự cố/tranh chấp.');
-      appendActivityLog(
-        'MATCH',
-        disputeId,
-        'RESOLVE_DISPUTE',
-        'Đóng sự cố/tranh chấp',
-        resolutionNote.trim(),
-      );
-      await refresh();
-    } catch (err) {
-      toast.error(getErrorMessage(err));
-    } finally {
-      setActiveMatchActionId(null);
-    }
-  };
-
   const summary = useMemo(() => {
     const kickedParticipants = participants.filter((participant) => participant.teamStatus === 'KICKED').length;
     const unpaidParticipants = participants.filter((participant) => !participant.isPaid).length;
     const scheduledMatches = matches.filter((match) => match.status === 'SCHEDULED').length;
     const ongoingMatches = matches.filter((match) => match.status === 'ONGOING').length;
     const completedMatches = matches.filter((match) => match.status === 'COMPLETED').length;
-    const openDisputes = disputes.filter((dispute) => dispute.status === 'OPEN').length;
 
     return {
       totalParticipants: participants.length,
@@ -506,9 +443,8 @@ export function useOrganizerOps(
       scheduledMatches,
       ongoingMatches,
       completedMatches,
-      openDisputes,
     };
-  }, [disputes, matches, participants]);
+  }, [matches, participants]);
 
   return {
     tournament,
@@ -518,7 +454,6 @@ export function useOrganizerOps(
     setSelectedDivisionId,
     participants,
     matches,
-    disputes,
     isLoading,
     error,
     refresh,
@@ -529,8 +464,6 @@ export function useOrganizerOps(
     updateMatchSchedule,
     updateMatchScore,
     applyMatchOperation,
-    createDispute,
-    resolveDispute,
     activityLog,
     summary,
   };

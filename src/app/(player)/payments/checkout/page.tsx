@@ -20,12 +20,11 @@ function CheckoutContent() {
   const [teamName, setTeamName] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [gateway, setGateway] = useState<'VNPAY' | 'MOMO' | 'TRANSFER' | 'PAYOS'>('PAYOS');
-
   // PayOS inline states
   const [showQrModal, setShowQrModal] = useState(false);
   const [qrCodeData, setQrCodeData] = useState<string>('');
   const [paymentId, setPaymentId] = useState<string>('');
+  const [confirmedAmount, setConfirmedAmount] = useState<number | null>(null);
 
   useEffect(() => {
     if (!tournamentId || !participantId) {
@@ -87,26 +86,35 @@ function CheckoutContent() {
 
     try {
       setSubmitting(true);
-      const amount = Number(tournament.entryFee) || 0;
-      
       const res = await paymentsApi.createPaymentLink({
+        purpose: 'REGISTRATION_FEE',
         tournamentId,
         participantId,
-        amount,
-        paymentGateway: gateway,
+        paymentGateway: 'PAYOS',
       });
 
-      // Bắt trường hợp PAYOS để hiển thị mã QR tại chỗ
-      if (gateway === 'PAYOS' && (res.data as any).qrCode) {
-        setQrCodeData((res.data as any).qrCode);
-        setPaymentId(res.data.paymentId);
+      const payment = res.data;
+      let backendAmount = payment.amount == null ? null : Number(payment.amount);
+      if (backendAmount == null || !Number.isFinite(backendAmount)) {
+        const detail = await paymentsApi.getPaymentById(payment.paymentId);
+        backendAmount = Number(detail.data.amount);
+      }
+
+      if (!Number.isFinite(backendAmount)) {
+        throw new Error('Không nhận được số tiền đã xác nhận từ hệ thống');
+      }
+      setConfirmedAmount(backendAmount);
+
+      if (payment.qrCode) {
+        setQrCodeData(payment.qrCode);
+        setPaymentId(payment.paymentId);
         setShowQrModal(true);
         setSubmitting(false);
-        toast.success('Đã sinh mã QR thanh toán PayOS VietQR!');
+        toast.success('Đã tạo mã QR thanh toán PayOS');
         return;
       }
 
-      const paymentUrl = res.data?.paymentUrl;
+      const paymentUrl = payment.paymentUrl ?? payment.checkoutUrl;
       
       if (paymentUrl) {
         toast.success('Đang chuyển hướng đến cổng thanh toán...');
@@ -182,74 +190,18 @@ function CheckoutContent() {
           </div>
         </div>
 
-        {/* Payment Gateway Selection */}
+        {/* Payment Gateway */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 mb-6">
-          <h2 className="text-slate-900 font-bold mb-4">Chọn phương thức thanh toán</h2>
+          <h2 className="text-slate-900 font-bold mb-4">Phương thức thanh toán</h2>
 
-          <div className="grid grid-cols-2 gap-4">
-            {/* PayOS Quick QR */}
-            <div
-              onClick={() => setGateway('PAYOS')}
-              className={`cursor-pointer rounded-xl border-2 p-4 flex flex-col items-center justify-center transition-all ${
-                gateway === 'PAYOS'
-                  ? 'border-blue-600 bg-blue-50/50 shadow-sm'
-                  : 'border-slate-200 bg-white hover:border-slate-300'
-              }`}
-            >
+          <div className="rounded-xl border-2 border-blue-600 bg-blue-50/50 p-4 flex items-center gap-4 shadow-sm">
               <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mb-2">
                 <span className="text-base font-extrabold text-blue-700">QR</span>
               </div>
-              <span className="text-sm font-bold text-slate-900">PayOS VietQR</span>
-              <span className="text-[10px] text-slate-400 font-medium mt-1 text-center">Quét QR chuyển khoản nhanh</span>
-            </div>
-
-            {/* VNPAY */}
-            <div
-              onClick={() => setGateway('VNPAY')}
-              className={`cursor-pointer rounded-xl border-2 p-4 flex flex-col items-center justify-center transition-all ${
-                gateway === 'VNPAY'
-                  ? 'border-blue-500 bg-blue-50 shadow-sm'
-                  : 'border-slate-200 bg-white hover:border-slate-300'
-              }`}
-            >
-              <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mb-2">
-                <span className="text-base font-extrabold text-blue-700">VN</span>
+              <div>
+                <p className="text-sm font-bold text-slate-900">PayOS VietQR</p>
+                <p className="text-xs text-slate-500 mt-1">Quét mã bằng ứng dụng ngân hàng; hệ thống tự đối soát qua webhook.</p>
               </div>
-              <span className="text-sm font-bold text-slate-900">VNPAY</span>
-              <span className="text-[10px] text-slate-400 font-medium mt-1 text-center">Thẻ ATM / Mobile Banking</span>
-            </div>
-
-            {/* MoMo */}
-            <div
-              onClick={() => setGateway('MOMO')}
-              className={`cursor-pointer rounded-xl border-2 p-4 flex flex-col items-center justify-center transition-all ${
-                gateway === 'MOMO'
-                  ? 'border-pink-500 bg-pink-50 shadow-sm'
-                  : 'border-slate-200 bg-white hover:border-slate-300'
-              }`}
-            >
-              <div className="w-12 h-12 rounded-full bg-pink-100 flex items-center justify-center mb-2">
-                <span className="text-base font-extrabold text-pink-600">Mo</span>
-              </div>
-              <span className="text-sm font-bold text-slate-900">MoMo</span>
-              <span className="text-[10px] text-slate-400 font-medium mt-1 text-center">Ví điện tử MoMo</span>
-            </div>
-
-            {/* Bank Transfer */}
-            <div
-              onClick={() => setGateway('TRANSFER')}
-              className={`cursor-pointer rounded-xl border-2 p-4 flex flex-col items-center justify-center transition-all ${
-                gateway === 'TRANSFER'
-                  ? 'border-emerald-500 bg-emerald-50 shadow-sm'
-                  : 'border-slate-200 bg-white hover:border-slate-300'
-              }`}
-            >
-              <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center mb-2">
-                <span className="text-base font-extrabold text-emerald-600">$</span>
-              </div>
-              <span className="text-sm font-bold text-slate-900">Chuyển khoản</span>
-              <span className="text-[10px] text-slate-400 font-medium mt-1 text-center">Chuyển khoản ngân hàng</span>
-            </div>
           </div>
         </div>
 
@@ -300,7 +252,9 @@ function CheckoutContent() {
                 <div className="bg-slate-50 rounded-2xl p-4 text-left border border-slate-100 space-y-2 mb-6">
                   <div className="flex justify-between text-xs">
                     <span className="text-slate-500 font-medium">Số tiền:</span>
-                    <span className="text-slate-900 font-extrabold text-sm text-blue-600">{formatCurrency(entryFeeVal)}</span>
+                    <span className="text-slate-900 font-extrabold text-sm text-blue-600">
+                      {formatCurrency(confirmedAmount ?? 0)}
+                    </span>
                   </div>
                   <div className="flex justify-between text-xs">
                     <span className="text-slate-500 font-medium">Nội dung thanh toán:</span>

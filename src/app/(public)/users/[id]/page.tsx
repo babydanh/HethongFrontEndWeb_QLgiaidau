@@ -12,6 +12,8 @@ import { rankingsApi, PlayerRanking, EloHistoryLog } from '@/features/rankings/a
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import { getErrorMessage } from '@/utils/error';
 import { EloTierBadge } from '@/components/ui/EloTierBadge';
+import { ReportViolationButton } from '@/features/reports/components/ReportViolationButton';
+import { useAuthStore } from '@/lib/zustand/authStore';
 
 interface UserRank {
   categoryId: string;
@@ -57,6 +59,7 @@ interface Match {
 export default function PublicUserProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const id = resolvedParams.id;
+  const { user } = useAuthStore();
   
   const [profile, setProfile] = useState<PublicProfile | null>(null);
   const [matches, setMatches] = useState<Match[]>([]);
@@ -137,6 +140,12 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
         >
           <ArrowLeft className="w-4 h-4" /> Quay lại
         </button>
+        <ReportViolationButton
+          targetType="USER"
+          targetId={profile.id}
+          targetLabel={profile.fullName}
+          hidden={user?.id === profile.id}
+        />
       </div>
 
       {/* Profile Header */}

@@ -27,7 +27,6 @@ const menuItems = [
   { name: 'Duyệt cộng đồng', path: '/moderation/communities', icon: Building },
   { name: 'Duyệt đổi thông tin', path: '/moderation/change-requests', icon: UserCog },
   { name: 'Báo cáo vi phạm', path: '/moderation/reports', icon: ShieldAlert },
-  { name: 'Tranh chấp trận đấu', path: '/moderation/disputes', icon: FileWarning },
   { name: 'Duyệt giải đấu', path: '/moderation/tournaments', icon: Trophy },
 ];
 

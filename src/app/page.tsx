@@ -49,10 +49,66 @@ function CommunityLogoAvatar({ src, alt }: { src?: string | null; alt: string })
 }
 
 function LiveMatchSportLabel({ match }: { match: BracketMatch }) {
-  const resolvedRules = resolveMatchSportRules({ matchConfig: match.matchConfig });
+  const resolvedRules = resolveMatchSportRules(match);
   const presentation = getMatchScorePresentation(resolvedRules.kind);
 
   return <>{presentation.sportLabel}</>;
+}
+
+/** Dịch tên stage từ backend (tiếng Anh) sang tiếng Việt */
+function translateStageName(name: string | null | undefined): string {
+  if (!name) return '';
+  const map: Record<string, string> = {
+    'Elimination Stage': 'Vòng loại trực tiếp',
+    'Knockout Stage': 'Vòng loại trực tiếp',
+    'Group Stage': 'Vòng bảng',
+    'Round Robin': 'Vòng tròn tính điểm',
+    'Final Stage': 'Vòng chung kết',
+    'Qualification Stage': 'Vòng loại',
+    'Preliminary Stage': 'Vòng sơ loại',
+    'Main Stage': 'Vòng chính',
+    'Quarter Finals': 'Tứ kết',
+    'Quarterfinals': 'Tứ kết',
+    'Semi Finals': 'Bán kết',
+    'Semifinals': 'Bán kết',
+    'Final': 'Chung kết',
+    'Grand Final': 'Chung kết tổng',
+    'Grand Final Reset': 'Chung kết nhánh thua',
+    'Winners Bracket': 'Nhánh thắng',
+    'Losers Bracket': 'Nhánh thua',
+    'First Round': 'Vòng 1',
+    'Second Round': 'Vòng 2',
+    'Third Round': 'Vòng 3',
+    'Round of 16': 'Vòng 16',
+    'Round of 8': 'Tứ kết',
+    'Round of 4': 'Bán kết',
+    'Round of 2': 'Chung kết',
+  };
+  return map[name] || name;
+}
+
+/** Đếm ngược — chỉ hiện ngày (dùng cho trang chủ / danh sách) */
+function RegistrationCountdown({ targetDate }: { targetDate: string }) {
+  const [text, setText] = useState('');
+  const target = useMemo(() => new Date(targetDate), [targetDate]);
+
+  useEffect(() => {
+    const update = () => {
+      const days = Math.floor((target.getTime() - Date.now()) / 86400000);
+      if (days <= 0) { setText('Đang mở đăng ký'); return; }
+      setText(`Còn ${days} ngày`);
+    };
+    update();
+    const timer = setInterval(update, 60000);
+    return () => clearInterval(timer);
+  }, [target]);
+
+  if (!text) return null;
+  return (
+    <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200 whitespace-nowrap">
+      ⏳ {text}
+    </span>
+  );
 }
 
 
@@ -67,6 +123,7 @@ export default function HomePage() {
 
   // Live Matches Feed
   const [liveMatches, setLiveMatches] = useState<BracketMatch[]>([]);
+  const [upcomingMatches, setUpcomingMatches] = useState<BracketMatch[]>([]);
   const [highFives, setHighFives] = useState<Record<string, number>>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('match_high_fives');
@@ -119,7 +176,8 @@ export default function HomePage() {
           cParams.categoryId = selectedCategoryId;
         }
         const communitiesPromise = communitiesApi.getCommunities(cParams);
-        const liveMatchesPromise = matchesApi.getMatches({ status: 'ONGOING', limit: 4 });
+        const liveMatchesPromise = matchesApi.getMatches({ status: 'ONGOING', limit: 100 });
+        const upcomingMatchesPromise = matchesApi.getMatches({ status: 'SCHEDULED', limit: 100 });
         
         const lbCategoryId = selectedCategoryId || categories[0]?.id;
         const rankingsPromise = lbCategoryId
@@ -130,18 +188,43 @@ export default function HomePage() {
           ? rankingsApi.getUserRankings(user.id)
           : Promise.resolve(null);
 
-        const [tRes, cRes, lRes, rRes, userRankRes] = await Promise.allSettled([
+        const [tRes, cRes, lRes, uRes, rRes, userRankRes] = await Promise.allSettled([
           tournamentsPromise,
           communitiesPromise,
           liveMatchesPromise,
+          upcomingMatchesPromise,
           rankingsPromise,
           userRankingsPromise,
         ] as const);
 
         const fetchedTournaments = tRes.status === 'fulfilled' ? tRes.value.data || [] : [];
-        setTournaments(fetchedTournaments);
+        // Lọc bỏ DRAFT/CANCELLED cho tất cả (giải nổi bật + valid IDs)
+        const activeTournaments = fetchedTournaments.filter(
+          (t: Tournament) => t.status !== 'DRAFT' && t.status !== 'CANCELLED'
+        );
+        setTournaments(activeTournaments);
+
+        // Build set of valid tournament IDs
+        const validTournamentIds = new Set(activeTournaments.map((t: Tournament) => t.id));
+
         setCommunities(cRes.status === 'fulfilled' ? cRes.value.data || [] : []);
-        setLiveMatches(lRes.status === 'fulfilled' ? (lRes.value.data as unknown as BracketMatch[]) || [] : []);
+
+        // Lọc live/upcoming matches: chỉ lấy những trận thuộc tournament hợp lệ
+        const allLiveMatches = lRes.status === 'fulfilled' ? (lRes.value.data as unknown as BracketMatch[]) || [] : [];
+        setLiveMatches(allLiveMatches.filter(m => validTournamentIds.has(m.tournamentId)));
+
+        const fetchedUpcoming = uRes.status === 'fulfilled' ? (uRes.value.data as unknown as BracketMatch[]) || [] : [];
+        // Filter by valid tournaments + both participants set
+        const validUpcoming = fetchedUpcoming.filter(m =>
+          validTournamentIds.has(m.tournamentId) &&
+          m.participant1 != null && 
+          m.participant2 != null &&
+          m.participant1.teamName.trim().toLowerCase() !== 'tbd' &&
+          m.participant2.teamName.trim().toLowerCase() !== 'tbd' &&
+          m.participant1.teamName.trim().toLowerCase() !== 'chờ xác định' &&
+          m.participant2.teamName.trim().toLowerCase() !== 'chờ xác định'
+        );
+        setUpcomingMatches(validUpcoming);
         setLeaderboard(rRes.status === 'fulfilled' ? rRes.value.data || [] : []);
 
         if (userRankRes.status === 'fulfilled' && userRankRes.value) {
@@ -230,6 +313,16 @@ export default function HomePage() {
     ? ongoingInRound 
     : roundMatches.filter(m => m.status === 'COMPLETED' || m.status === 'SCHEDULED');
 
+  const sortedDisplayRankedMatches = [...displayRankedMatches].sort((a, b) => {
+    const getWeight = (status: string, winnerId: any) => {
+      if (winnerId != null || status === 'COMPLETED') return 3; // Completed goes to the bottom
+      if (status === 'ONGOING' || status === 'IN_PROGRESS') return 1; // Ongoing goes to the top
+      if (status === 'SCHEDULED') return 2; // Scheduled is in the middle
+      return 4;
+    };
+    return getWeight(a.status, a.winnerId) - getWeight(b.status, b.winnerId);
+  });
+
   // Group live matches by tournament name
   const liveMatchesByTournament = liveMatches.reduce((acc, match) => {
     const tournamentName = match.tournament?.name || 'Giải đấu khác';
@@ -243,10 +336,23 @@ export default function HomePage() {
     return acc;
   }, {} as Record<string, { name: string; matches: BracketMatch[] }>);
 
+  // Group upcoming matches by tournament name
+  const upcomingMatchesByTournament = upcomingMatches.reduce((acc, match) => {
+    const tournamentName = match.tournament?.name || 'Giải đấu khác';
+    if (!acc[tournamentName]) {
+      acc[tournamentName] = {
+        name: tournamentName,
+        matches: [],
+      };
+    }
+    acc[tournamentName].matches.push(match);
+    return acc;
+  }, {} as Record<string, { name: string; matches: BracketMatch[] }>);
+
   const renderMatchCard = (match: BracketMatch, isRankedMatchSection = false) => {
     const currentHighFives = highFives[match.id] || 0;
-    const isLive = match.status === 'ONGOING';
-    const isCompleted = match.status === 'COMPLETED';
+    const isCompleted = match.status === 'COMPLETED' || match.winnerId != null;
+    const isLive = (match.status === 'ONGOING' || match.status === 'IN_PROGRESS') && !isCompleted;
     const isScheduled = match.status === 'SCHEDULED';
 
     return (
@@ -272,7 +378,7 @@ export default function HomePage() {
             <span className={`uppercase tracking-wider shrink-0 ${
               isLive ? 'text-rose-655 font-extrabold' : isCompleted ? 'text-slate-500' : 'text-blue-605'
             }`}>
-              {isLive ? 'Trực tiếp' : isCompleted ? 'Kết thúc' : 'Sắp đấu'}
+              {isLive ? 'Trực tiếp' : isCompleted ? 'Đã kết thúc' : 'Sắp diễn ra'}
             </span>
             <span className="text-slate-300">•</span>
             <span className="shrink-0">Vòng {match.roundNumber}</span>
@@ -287,14 +393,13 @@ export default function HomePage() {
             )}
           </div>
           <span className="uppercase text-slate-650 bg-slate-100 px-2 py-0.5 rounded text-[8px] font-extrabold truncate max-w-[28%]">
-            {match.group?.stage?.name || 'Vòng đấu'}
+            {translateStageName(match.group?.stage?.name) || 'Vòng đấu'}
           </span>
         </div>
 
         {/* Tournament Name Header */}
         {!isRankedMatchSection && match.tournament?.name && (
           <div className="px-4 pt-2.5 pb-1 flex items-center gap-1 text-[9px] font-black text-blue-600 uppercase tracking-wider border-b border-slate-50 bg-blue-50/10 truncate">
-            <Trophy className="w-3 h-3 text-blue-500 shrink-0" />
             <span className="truncate">{match.tournament.name}</span>
           </div>
         )}
@@ -303,9 +408,6 @@ export default function HomePage() {
         <div className="p-4 flex items-center justify-between gap-3 relative">
           {/* Player 1 */}
           <div className="flex items-center gap-2.5 w-5/12 min-w-0">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-650 text-white flex items-center justify-center font-black text-xs shadow-sm uppercase shrink-0">
-              {match.participant1?.teamName.charAt(0) || '?'}
-            </div>
             <div className="min-w-0">
               <div className="flex items-center gap-1 min-w-0">
                 <span className="text-xs font-black text-slate-800 block leading-tight truncate">
@@ -338,13 +440,7 @@ export default function HomePage() {
                   : 'bg-slate-100 text-slate-700 border-slate-200'
               }`}>
                 {(() => {
-                  const rawScore = buildMatchScoreSummary({
-                    p1SetsWon: match.p1SetsWon ?? 0,
-                    p2SetsWon: match.p2SetsWon ?? 0,
-                    matchConfig: match.matchConfig ?? null,
-                    tournament: { sportRules: null },
-                    scoreDetails: match.scoreDetails as Record<string, unknown> | null | undefined,
-                  });
+                  const rawScore = buildMatchScoreSummary(match);
                   return rawScore.includes(':') ? rawScore.split(':')[1].trim() : rawScore;
                 })()}
               </div>
@@ -369,9 +465,6 @@ export default function HomePage() {
                   Hạt giống #{match.participant2.seed}
                 </span>
               )}
-            </div>
-            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-650 text-white flex items-center justify-center font-black text-xs shadow-sm uppercase shrink-0">
-              {match.participant2?.teamName.charAt(0) || '?'}
             </div>
           </div>
         </div>
@@ -575,13 +668,13 @@ export default function HomePage() {
                   <div className="h-36 bg-slate-200/60 animate-pulse rounded-2xl" />
                   <div className="h-36 bg-slate-200/60 animate-pulse rounded-2xl" />
                 </div>
-              ) : displayRankedMatches.length === 0 ? (
+              ) : sortedDisplayRankedMatches.length === 0 ? (
                 <div className="bg-white/80 border border-slate-200 border-dashed rounded-2xl p-8 text-center text-slate-400 text-xs font-bold">
                   Không có trận đấu nào trong vòng này.
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {displayRankedMatches.slice(0, 6).map((match) => renderMatchCard(match, true))}
+                  {sortedDisplayRankedMatches.map((match) => renderMatchCard(match, true))}
                 </div>
               )}
             </section>
@@ -612,7 +705,41 @@ export default function HomePage() {
                   <div key={tournamentId} className="bg-white rounded-3xl border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.015)] overflow-hidden flex flex-col">
                     {/* Group Tournament Header */}
                     <div className="px-5 py-3 bg-gradient-to-r from-blue-50/20 to-indigo-50/10 border-b border-slate-100 flex items-center gap-2">
-                      <Trophy className="w-4 h-4 text-blue-600 shrink-0" />
+                      <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider truncate">
+                        {group.name}
+                      </h3>
+                    </div>
+                    {/* Matches List Grid */}
+                    <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {group.matches.map((match) => renderMatchCard(match, true))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* Section 2.5: Trận đấu sắp diễn ra */}
+          <section className="flex flex-col gap-4">
+            <div className="flex justify-between items-end">
+              <h2 className="text-lg font-black text-slate-900 tracking-tight">Lịch thi đấu sắp diễn ra</h2>
+              <span className="text-[10px] font-extrabold text-blue-600 bg-blue-50 px-2 py-0.5 rounded uppercase tracking-wider">Lịch thi đấu</span>
+            </div>
+
+            {isLoading ? (
+              <div className="space-y-4">
+                <div className="bg-slate-200 animate-pulse h-40 rounded-2xl" />
+              </div>
+            ) : upcomingMatches.length === 0 ? (
+              <div className="bg-white border rounded-2xl p-12 text-center text-slate-455 font-bold text-xs">
+                Hiện chưa có lịch thi đấu sắp diễn ra.
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {Object.entries(upcomingMatchesByTournament).map(([tournamentId, group]) => (
+                  <div key={tournamentId} className="bg-white rounded-3xl border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.015)] overflow-hidden flex flex-col">
+                    {/* Group Tournament Header */}
+                    <div className="px-5 py-3 bg-gradient-to-r from-blue-50/20 to-indigo-50/10 border-b border-slate-100 flex items-center gap-2">
                       <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider truncate">
                         {group.name}
                       </h3>

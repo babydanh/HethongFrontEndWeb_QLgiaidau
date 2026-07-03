@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '@/lib/axios';
 import { toast } from 'react-hot-toast';
-import { Search, Ban, ShieldAlert, CheckCircle2, UserCheck, AlertTriangle, ShieldCheck, X } from 'lucide-react';
+import { Search, Ban, ShieldAlert, CheckCircle2, UserCheck, AlertTriangle, ShieldCheck, X, Calendar } from 'lucide-react';
 import type { ApiResponse } from '@/types/api';
 
 interface UserItem {
@@ -27,6 +27,8 @@ export default function ModerationPage() {
   type BanType = 'WARN' | 'SOFT_BAN' | 'HARD_BAN';
   const [users, setUsers] = useState<UserItem[]>([]);
   const [search, setSearch] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState<UserItem | null>(null);
   const [showBanModal, setShowBanModal] = useState(false);
@@ -58,6 +60,23 @@ export default function ModerationPage() {
       fetchUsers('', false);
     });
   }, []);
+
+  const parseDate = (str: string): Date | null => {
+    const p = str.split('/');
+    if (p.length !== 3) return null;
+    const d = parseInt(p[0], 10), m = parseInt(p[1], 10) - 1, y = parseInt(p[2], 10);
+    return isNaN(d) || isNaN(m) || isNaN(y) ? null : new Date(y, m, d);
+  };
+
+  const filteredUsers = users.filter(u => {
+    const fromDate = dateFrom ? parseDate(dateFrom) : null;
+    const toDate = dateTo ? parseDate(dateTo) : null;
+    if (!fromDate && !toDate) return true;
+    const itemDate = new Date(u.createdAt);
+    if (fromDate && itemDate < fromDate) return false;
+    if (toDate) { const end = new Date(toDate); end.setHours(23, 59, 59, 999); if (itemDate > end) return false; }
+    return true;
+  });
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -135,32 +154,41 @@ export default function ModerationPage() {
         <p className="text-slate-500 text-sm">Quản lý vi phạm, cảnh cáo, khóa tài khoản người dùng hoặc tước Sao Uy Tín.</p>
       </div>
 
-      {/* Search Bar */}
-      <form onSubmit={handleSearchSubmit} className="flex gap-3 max-w-md">
-        <div className="relative flex-1">
-          <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            placeholder="Tìm theo tên hoặc email..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-white border border-slate-200 focus:border-blue-500 rounded-xl pl-11 pr-4 py-2.5 text-sm text-slate-800 placeholder-slate-400 outline-none transition-colors"
-          />
+      {/* Search Bar + Date Filter */}
+      <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-2xl border border-gray-200 shadow-sm">
+        <form onSubmit={handleSearchSubmit} className="flex gap-3 flex-1">
+          <div className="relative flex-1">
+            <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Tìm theo tên hoặc email..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full bg-gray-50 border border-slate-200 focus:border-blue-500 rounded-xl pl-11 pr-4 py-2.5 text-sm text-slate-800 placeholder-slate-400 outline-none transition-colors"
+            />
+          </div>
+          <button type="submit" className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-5 py-2.5 rounded-xl transition-colors">Tìm kiếm</button>
+        </form>
+        <div className="flex items-center gap-2 min-w-[130px]">
+          <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
+          <input type="text" placeholder="Từ ngày (dd/mm/yyyy)" value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-600 focus:outline-none focus:border-blue-500 placeholder-gray-400" />
         </div>
-        <button
-          type="submit"
-          className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-5 py-2.5 rounded-xl transition-colors"
-        >
-          Tìm kiếm
-        </button>
-      </form>
+        <div className="flex items-center gap-2 min-w-[130px]">
+          <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
+          <input type="text" placeholder="Đến ngày (dd/mm/yyyy)" value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-600 focus:outline-none focus:border-blue-500 placeholder-gray-400" />
+        </div>
+      </div>
 
       {/* Users Table */}
       {loading ? (
         <div className="flex items-center justify-center py-20">
           <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
         </div>
-      ) : users.length === 0 ? (
+      ) : filteredUsers.length === 0 ? (
         <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center text-slate-500 space-y-1 shadow-sm">
           <p className="text-base font-medium text-slate-800">Không tìm thấy người dùng nào</p>
           <p className="text-xs text-slate-500">Hãy thử tìm với từ khóa khác.</p>
@@ -179,7 +207,7 @@ export default function ModerationPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-600 text-sm">
-                {users.map((item) => (
+                {filteredUsers.map((item) => (
                   <tr key={item.id} className="hover:bg-slate-50 transition-all duration-150">
                     <td className="p-4 pl-6">
                       <div className="flex items-center gap-3">

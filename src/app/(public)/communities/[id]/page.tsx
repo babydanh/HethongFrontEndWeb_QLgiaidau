@@ -11,6 +11,7 @@ import { useAuthStore } from '@/lib/zustand/authStore';
 import { JoinCommunityModal } from '@/components/shared/JoinCommunityModal';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '@/utils/error';
+import { ReportViolationButton } from '@/features/reports/components/ReportViolationButton';
 
 interface CommunityMemberRecord {
   member?: { id?: string; userId?: string; role?: string; status?: string };
@@ -380,9 +381,14 @@ export default function CommunityDetailPage() {
               </Button>
             )}
             
-            <Button variant="outline" className="h-10 px-3 bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700 rounded-xl shadow-sm">
-              <MoreHorizontal className="w-4 h-4" />
-            </Button>
+            <ReportViolationButton
+              targetType="COMMUNITY"
+              targetId={community.id}
+              targetLabel={community.name}
+              hidden={isOwner}
+              compact
+              className="h-10 rounded-xl shadow-sm"
+            />
           </div>
         </div>
       </div>

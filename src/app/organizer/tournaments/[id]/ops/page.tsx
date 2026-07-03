@@ -29,7 +29,6 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
     setSelectedDivisionId,
     participants,
     matches,
-    disputes,
     isLoading,
     error,
     refresh,
@@ -40,8 +39,6 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
     updateMatchSchedule,
     updateMatchScore,
     applyMatchOperation,
-    createDispute,
-    resolveDispute,
     activityLog,
     summary,
   } = useOrganizerOps(resolvedParams.id);
@@ -164,24 +161,6 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
     payload: Parameters<typeof applyMatchOperation>[1],
   ) => {
     await applyMatchOperation(match, payload);
-    await syncBracketAndOps();
-  };
-
-  const handleOpsCreateDispute = async (
-    match: typeof matches[number],
-    reason: string,
-  ) => {
-    setFocusedMatchId(match.id);
-    await createDispute(match, reason);
-    await syncBracketAndOps();
-  };
-
-  const handleOpsResolveDispute = async (
-    disputeId: string,
-    resolutionNote: string,
-    matchStatus?: 'SCHEDULED' | 'ONGOING' | 'COMPLETED' | 'DISPUTED',
-  ) => {
-    await resolveDispute(disputeId, resolutionNote, matchStatus);
     await syncBracketAndOps();
   };
 
@@ -378,9 +357,8 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
       customConfigCount: bracketMatches.filter((match) => !!match.matchConfig).length,
       conflictCount:
         conflictSummary.court + conflictSummary.referee + conflictSummary.participant + conflictSummary.dependency,
-      disputeCount: disputes.filter((dispute) => dispute.status === 'OPEN').length,
     };
-  }, [bracketManager.bracket?.stages.length, bracketMatches, conflictSummary, disputes, matches]);
+  }, [bracketManager.bracket?.stages.length, bracketMatches, conflictSummary, matches]);
 
   if (isLoading && !tournament) {
     return (
@@ -484,7 +462,7 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
       <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
         <div className="mb-4">
           <p className="text-xs font-black uppercase tracking-wider text-slate-500">Hình thức thi đấu</p>
-          <p className="text-xs text-slate-400">Chọn division để xem hàng chờ vận hành, participant, trận và sự cố đúng ngữ cảnh.</p>
+          <p className="text-xs text-slate-400">Chọn division để xem hàng chờ vận hành, participant, trận và các vấn đề phát sinh đúng ngữ cảnh.</p>
         </div>
         {divisions.length > 0 ? (
           <div className="flex flex-wrap gap-2">
@@ -597,10 +575,6 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
               <p className="text-[11px] font-black uppercase tracking-[0.12em] text-rose-600">Xung đột</p>
               <p className="mt-2 text-2xl font-black text-rose-900">{divisionHealth.conflictCount}</p>
             </div>
-            <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4">
-              <p className="text-[11px] font-black uppercase tracking-[0.12em] text-rose-600">Tranh chấp</p>
-              <p className="mt-2 text-2xl font-black text-rose-900">{divisionHealth.disputeCount}</p>
-            </div>
           </div>
           <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm font-semibold text-slate-700">
@@ -650,7 +624,6 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
       <OperationsWorkspace
         participants={participants}
         matches={matches}
-        disputes={disputes}
         referees={referees}
         activeParticipantActionId={activeParticipantActionId}
         activeMatchActionId={activeMatchActionId}
@@ -666,8 +639,6 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
         onUpdateMatchScore={handleOpsUpdateMatchScore}
         tournamentSportRules={tournament.sportRules ?? null}
         onApplyMatchOperation={handleOpsApplyMatchOperation}
-        onCreateDispute={handleOpsCreateDispute}
-        onResolveDispute={handleOpsResolveDispute}
       />
 
       {bracketManager.selectedStage && bracketManager.selectedRoundNumber !== null && (

@@ -45,6 +45,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 Input.displayName = "Input";
 
 export interface DateTimePickerProps {
+  name?: string;
   label?: string;
   value: string;
   onChange: (val: string) => void;
@@ -54,7 +55,7 @@ export interface DateTimePickerProps {
 }
 
 export const DateTimePicker = React.forwardRef<HTMLInputElement, DateTimePickerProps>(
-  ({ label, value, onChange, error, className, disabled }, ref) => {
+  ({ name, label, value, onChange, error, className, disabled }, ref) => {
     const defaultRef = React.useRef<HTMLInputElement>(null);
     const activeRef = (ref as React.RefObject<HTMLInputElement>) || defaultRef;
 
@@ -129,6 +130,7 @@ export const DateTimePicker = React.forwardRef<HTMLInputElement, DateTimePickerP
           
           <input
             type="datetime-local"
+            name={name}
             ref={activeRef}
             value={value}
             disabled={disabled}
@@ -143,7 +145,10 @@ export const DateTimePicker = React.forwardRef<HTMLInputElement, DateTimePickerP
     );
   }
 );
+DateTimePicker.displayName = "DateTimePicker";
+
 export interface DatePickerProps {
+  name?: string;
   label?: string;
   value: string;
   onChange: (val: string) => void;
@@ -152,8 +157,8 @@ export interface DatePickerProps {
   disabled?: boolean;
 }
 
-export const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
-  ({ label, value, onChange, error, className, disabled }, ref) => {
+const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
+  ({ name, label, value, onChange, error, className, disabled }, ref) => {
     const defaultRef = React.useRef<HTMLInputElement>(null);
     const activeRef = (ref as React.RefObject<HTMLInputElement>) || defaultRef;
 
@@ -215,6 +220,7 @@ export const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
           
           <input
             type="date"
+            name={name}
             ref={activeRef}
             value={value}
             disabled={disabled}

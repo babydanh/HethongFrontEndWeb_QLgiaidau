@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/zustand/authStore';
 
@@ -9,20 +9,35 @@ interface RouteGuardProps {
   children: React.ReactNode;
 }
 
+// React 18 standard client-side mount detector
+const emptySubscribe = () => () => {};
+function useMounted() {
+  return useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
+}
+
 export function RouteGuard({ allowedRoles, children }: RouteGuardProps) {
   const { user, isAuthenticated } = useAuthStore();
   const router = useRouter();
+  const mounted = useMounted();
 
   useEffect(() => {
+    if (!mounted) return;
+
     if (!isAuthenticated) {
       router.push('/login');
     } else if (user && !allowedRoles.some(r => user.roles?.includes(r))) {
       router.push('/');
     }
-  }, [isAuthenticated, user, allowedRoles, router]);
+  }, [mounted, isAuthenticated, user, allowedRoles, router]);
 
-  if (!isAuthenticated || !user) return null;
+  if (!mounted || !isAuthenticated || !user) return null;
   if (!allowedRoles.some(r => user.roles?.includes(r))) return null;
 
   return <>{children}</>;
 }
+
+

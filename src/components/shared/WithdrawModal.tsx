@@ -12,6 +12,7 @@ interface WithdrawModalProps {
   isOpen: boolean;
   onClose: () => void;
   tournamentId: string;
+  divisionId?: string;
   isPaid: boolean;
   defaultBankName?: string;
   defaultBankAccountNumber?: string;
@@ -23,6 +24,7 @@ export function WithdrawModal({
   isOpen,
   onClose,
   tournamentId,
+  divisionId,
   isPaid,
   defaultBankName = '',
   defaultBankAccountNumber = '',
@@ -38,7 +40,7 @@ export function WithdrawModal({
   const executeWithdraw = async (bankData?: { bankName: string; bankAccountNumber: string; bankAccountName: string }) => {
     try {
       setIsWithdrawing(true);
-      await tournamentsApi.withdraw(tournamentId, bankData);
+      await tournamentsApi.withdraw(tournamentId, bankData, divisionId);
       toast.success('Đã rút khỏi giải đấu thành công.');
       onClose();
       onWithdrawSuccess?.();

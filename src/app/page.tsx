@@ -1,7 +1,7 @@
 'use client';
 
 // Reading this as: Sports platform homepage with live matches feed, featured tournaments, and community bento grid.
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { buildMatchScoreSummary, getMatchScorePresentation, resolveMatchSportRules } from '@/features/matches/score-display';
 import Image from 'next/image';
@@ -20,6 +20,7 @@ import { matchesApi } from '@/features/matches/api';
 import { BracketMatch } from '@/features/tournaments/api';
 import TournamentHeroBanner from '@/components/ui/TournamentHeroBanner';
 import { isNetworkError } from '@/utils/error';
+import { isTournamentCancelled, isTournamentCompleted, isTournamentInProgress } from '@/utils/tournament-status';
 import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
 
@@ -211,12 +212,12 @@ export default function HomePage() {
 
         // Lọc live/upcoming matches: chỉ lấy những trận thuộc tournament hợp lệ
         const allLiveMatches = lRes.status === 'fulfilled' ? (lRes.value.data as unknown as BracketMatch[]) || [] : [];
-        setLiveMatches(allLiveMatches.filter(m => validTournamentIds.has(m.tournamentId)));
+        setLiveMatches(allLiveMatches.filter(m => validTournamentIds.has(m.tournamentId ?? '')));
 
         const fetchedUpcoming = uRes.status === 'fulfilled' ? (uRes.value.data as unknown as BracketMatch[]) || [] : [];
         // Filter by valid tournaments + both participants set
         const validUpcoming = fetchedUpcoming.filter(m =>
-          validTournamentIds.has(m.tournamentId) &&
+          validTournamentIds.has(m.tournamentId ?? '') &&
           m.participant1 != null && 
           m.participant2 != null &&
           m.participant1.teamName.trim().toLowerCase() !== 'tbd' &&
@@ -236,8 +237,8 @@ export default function HomePage() {
         // Find active or recently completed ranked tournament
         const foundRanked = fetchedTournaments.find(t => {
           if (!t.isRanked) return false;
-          if (t.status === 'DRAFT' || t.status === 'CANCELLED') return false;
-          if (t.status === 'COMPLETED') {
+          if (t.status === 'DRAFT' || isTournamentCancelled(t.status)) return false;
+          if (isTournamentCompleted(t.status)) {
             if (!t.endDate) return false;
             const sevenDays = 7 * 24 * 60 * 60 * 1000;
             return (Date.now() - new Date(t.endDate).getTime()) < sevenDays;
@@ -633,7 +634,7 @@ export default function HomePage() {
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="text-[9px] uppercase tracking-wider font-extrabold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">Giải đấu hạng</span>
-                      {rankedTournament.status === 'ONGOING' && (
+                      {isTournamentInProgress(rankedTournament.status) && (
                         <span className="flex h-2 w-2 relative">
                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-450 opacity-75"></span>
                           <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-605"></span>

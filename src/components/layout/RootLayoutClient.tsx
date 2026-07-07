@@ -21,7 +21,7 @@ export default function RootLayoutClient({
 
   // Sync user profile only ONCE on mount, not on every route change
   useEffect(() => {
-    const isGuestRoute = ['/login', '/register'].some((route) => pathname.startsWith(route));
+    const isGuestRoute = ['/login', '/register', '/auth'].some((route) => pathname.startsWith(route));
     if (isGuestRoute) return;
 
     // Skip if user already has data (re-hydrated from persist)

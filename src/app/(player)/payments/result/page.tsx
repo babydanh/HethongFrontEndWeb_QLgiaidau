@@ -30,6 +30,10 @@ function ResultContent() {
   // Extract either direct paymentId OR VNPAY return params
   const rawTxnRef = searchParams.get('vnp_TxnRef');
   const queryPaymentId = searchParams.get('paymentId');
+  const divisionId = searchParams.get('divisionId');
+  const inviteCode = searchParams.get('invite');
+  const inviteParticipantId = searchParams.get('pid');
+  const teamInviteToken = searchParams.get('token');
   
   const paymentId = queryPaymentId || rawTxnRef;
 
@@ -37,6 +41,21 @@ function ResultContent() {
   const [status, setStatus] = useState<'PENDING' | 'SUCCESS' | 'FAILED' | 'ERROR'>('PENDING');
   const [details, setDetails] = useState<PaymentDetails | null>(null);
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
+
+  const buildTournamentDetailHref = (tournamentId: string) => {
+    const params = new URLSearchParams();
+    if (inviteCode) {
+      params.set('invite', inviteCode);
+    }
+    if (divisionId) {
+      params.set('divisionId', divisionId);
+    }
+    if (inviteParticipantId && teamInviteToken) {
+      params.set('pid', inviteParticipantId);
+      params.set('token', teamInviteToken);
+    }
+    return `/tournaments/${tournamentId}${params.toString() ? `?${params.toString()}` : ''}`;
+  };
 
   const fetchAndSetStatus = useCallback(async (id: string) => {
     const res = await paymentsApi.getPaymentById(id);
@@ -65,11 +84,17 @@ function ResultContent() {
         setStatus('SUCCESS');
         toast.success('Thanh toán lệ phí thành công!');
         return true; // done
-      } else if (['FAILED', 'CANCELLED', 'EXPIRED'].includes(paymentData.status)) {
+      } else if (['FAILED', 'CANCELLED', 'EXPIRED', 'REFUNDED'].includes(paymentData.status)) {
         setStatus('FAILED');
         toast.error('Thanh toán thất bại');
         return true; // done
       } else {
+        const createdAtMs = new Date(paymentData.createdAt).getTime();
+        if (Number.isFinite(createdAtMs) && Date.now() - createdAtMs > 15 * 60 * 1000) {
+          setStatus('FAILED');
+          toast.error('Giao dịch đã quá thời gian chờ thanh toán.');
+          return true;
+        }
         setStatus('PENDING');
         return false; // still pending
       }
@@ -247,7 +272,7 @@ function ResultContent() {
           <div className="flex flex-col gap-3">
             {details?.tournamentId && (
               <Button
-                onClick={() => router.push(details.participantId ? `/tournaments/${details.tournamentId}` : `/organizer/tournaments/${details.tournamentId}/manage`)}
+                onClick={() => router.push(details.participantId ? buildTournamentDetailHref(details.tournamentId) : `/organizer/tournaments/${details.tournamentId}/manage`)}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl py-2.5 font-bold"
               >
                 {details.participantId ? 'Về Trang Giải Đấu' : 'Về Trang Quản Lý Giải'}

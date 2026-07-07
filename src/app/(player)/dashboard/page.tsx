@@ -31,6 +31,14 @@ import {
   WorkspaceRefereeMatch,
 } from '@/features/tournaments/api';
 import { matchesApi, Match } from '@/features/matches/api';
+import {
+  getTournamentStatusClassName,
+  getTournamentStatusLabel,
+  isTournamentCompleted,
+  isTournamentInProgress,
+  isTournamentOpenForRegistration,
+  isTournamentUpcoming,
+} from '@/utils/tournament-status';
 
 const dateFormatter = new Intl.DateTimeFormat('vi-VN', {
   day: '2-digit',
@@ -46,18 +54,6 @@ const dateTimeFormatter = new Intl.DateTimeFormat('vi-VN', {
   minute: '2-digit',
 });
 
-const statusLabelMap: Record<string, string> = {
-  REGISTRATION_OPEN: 'Mở đăng ký',
-  REGISTRATION_CLOSED: 'Đã khóa đăng ký',
-  IN_PROGRESS: 'Đang thi đấu',
-  ONGOING: 'Đang thi đấu',
-  COMPLETED: 'Hoàn thành',
-  UPCOMING: 'Sắp diễn ra',
-  DRAFT: 'Nháp',
-  CANCELLED: 'Đã hủy',
-  PENDING_APPROVAL: 'Chờ duyệt',
-};
-
 function formatDate(value?: string | null, withTime = false) {
   if (!value) return 'Chưa cập nhật';
 
@@ -65,22 +61,6 @@ function formatDate(value?: string | null, withTime = false) {
   if (Number.isNaN(date.getTime())) return 'Chưa cập nhật';
 
   return withTime ? dateTimeFormatter.format(date) : dateFormatter.format(date);
-}
-
-function getTournamentStatusClass(status?: string) {
-  switch (status) {
-    case 'REGISTRATION_OPEN':
-      return 'bg-emerald-50 text-emerald-700';
-    case 'IN_PROGRESS':
-    case 'ONGOING':
-      return 'bg-amber-50 text-amber-700';
-    case 'COMPLETED':
-      return 'bg-blue-50 text-blue-700';
-    case 'CANCELLED':
-      return 'bg-rose-50 text-rose-700';
-    default:
-      return 'bg-slate-100 text-slate-700';
-  }
 }
 
 function getMatchStatusLabel(status: string) {
@@ -145,8 +125,8 @@ function TournamentListSection({
                       <span>Khai mạc: {formatDate(tournament.startDate)}</span>
                     </div>
                   </div>
-                  <span className={`shrink-0 px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wide ${getTournamentStatusClass(tournament.status)}`}>
-                    {statusLabelMap[tournament.status] || tournament.status}
+                  <span className={`shrink-0 px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wide border ${getTournamentStatusClassName(tournament.status)}`}>
+                    {getTournamentStatusLabel(tournament.status)}
                   </span>
                 </div>
                 <div className="mt-4 flex justify-end">
@@ -188,7 +168,7 @@ export default function DashboardPage() {
           rankingsApi.getUserRankings(user.id),
           tournamentsApi.getMyWorkspace(),
           matchesApi.getMatches({ userId: user.id, limit: 10 }),
-          tournamentsApi.getFollowedTournaments().catch(() => ({ data: [] })),
+          (tournamentsApi as any).getFollowedTournaments().catch(() => ({ data: [] })),
         ]);
 
         setUserRankings(ranksRes);
@@ -385,7 +365,7 @@ export default function DashboardPage() {
                             <span>Lịch: {formatDate(match.scheduledAt, true)}</span>
                           </div>
                         </div>
-                        <span className={`shrink-0 px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wide ${getTournamentStatusClass(match.status)}`}>
+                        <span className={`shrink-0 px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wide border ${getTournamentStatusClassName(match.status)}`}>
                           {getMatchStatusLabel(match.status)}
                         </span>
                       </div>
@@ -478,10 +458,10 @@ export default function DashboardPage() {
                     >
                       <p className="text-sm font-bold text-slate-800 line-clamp-1">{t.name}</p>
                       <p className="text-[10px] text-slate-400 mt-1">
-                        {t.status === 'REGISTRATION_OPEN' ? 'Mở đăng ký' :
-                         t.status === 'UPCOMING' ? 'Sắp diễn ra' :
-                         t.status === 'ONGOING' || t.status === 'IN_PROGRESS' ? 'Đang diễn ra' :
-                         t.status === 'COMPLETED' ? 'Đã kết thúc' : t.status}
+                        {isTournamentOpenForRegistration(t.status) ? 'Mở đăng ký' :
+                         isTournamentUpcoming(t.status) ? 'Sắp diễn ra' :
+                         isTournamentInProgress(t.status) ? 'Đang diễn ra' :
+                         isTournamentCompleted(t.status) ? 'Đã kết thúc' : t.status}
                       </p>
                     </Link>
                   ))}

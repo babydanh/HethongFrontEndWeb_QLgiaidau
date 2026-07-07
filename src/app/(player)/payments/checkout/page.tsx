@@ -2,7 +2,7 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { tournamentsApi, Tournament, TournamentParticipant } from '@/features/tournaments/api';
+import { divisionsApi, tournamentsApi, Tournament, TournamentParticipant, type Division } from '@/features/tournaments/api';
 import { paymentsApi } from '@/features/payments/api';
 import { Button } from '@/components/ui/Button';
 import { getErrorMessage } from '@/utils/error';
@@ -15,8 +15,13 @@ function CheckoutContent() {
   const searchParams = useSearchParams();
   const tournamentId = searchParams.get('tournamentId');
   const participantId = searchParams.get('participantId');
+  const divisionId = searchParams.get('divisionId');
+  const inviteCode = searchParams.get('invite');
+  const inviteParticipantId = searchParams.get('pid');
+  const teamInviteToken = searchParams.get('token');
 
   const [tournament, setTournament] = useState<Tournament | null>(null);
+  const [division, setDivision] = useState<Division | null>(null);
   const [teamName, setTeamName] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -25,6 +30,7 @@ function CheckoutContent() {
   const [qrCodeData, setQrCodeData] = useState<string>('');
   const [paymentId, setPaymentId] = useState<string>('');
   const [confirmedAmount, setConfirmedAmount] = useState<number | null>(null);
+  const [qrOpenedAt, setQrOpenedAt] = useState<number | null>(null);
 
   useEffect(() => {
     if (!tournamentId || !participantId) {
@@ -37,9 +43,22 @@ function CheckoutContent() {
       try {
         setLoading(true);
         // Load tournament
-        const tRes = await tournamentsApi.getTournamentById(tournamentId);
+        const tRes = await tournamentsApi.getTournamentById(tournamentId, {
+          ...(inviteCode ? { invite: inviteCode } : {}),
+          ...(inviteParticipantId ? { pid: inviteParticipantId } : {}),
+          ...(teamInviteToken ? { token: teamInviteToken } : {}),
+        });
         if (tRes.data) {
           setTournament(tRes.data);
+        }
+
+        if (divisionId) {
+          const divisionRes = await divisionsApi.getDivisions(tournamentId);
+          if (divisionRes.data) {
+            setDivision(divisionRes.data.find((item) => item.id === divisionId) ?? null);
+          }
+        } else {
+          setDivision(null);
         }
 
         // Load participant team name
@@ -58,7 +77,7 @@ function CheckoutContent() {
     };
 
     loadDetails();
-  }, [tournamentId, participantId, router]);
+  }, [tournamentId, participantId, divisionId, router, inviteCode, inviteParticipantId, teamInviteToken]);
 
   // Polling for PayOS transaction completion
   useEffect(() => {
@@ -66,12 +85,39 @@ function CheckoutContent() {
 
     const intervalId = setInterval(async () => {
       try {
+        if (qrOpenedAt && Date.now() - qrOpenedAt > 15 * 60 * 1000) {
+          clearInterval(intervalId);
+          setShowQrModal(false);
+          setSubmitting(false);
+          toast.error('Phiên chờ thanh toán đã hết hạn.');
+          return;
+        }
         const res = await paymentsApi.getPaymentById(paymentId);
         if (res.data && res.data.status === 'COMPLETED') {
           clearInterval(intervalId);
           toast.success('Thanh toán thành công! Hệ thống đang cập nhật...');
           setShowQrModal(false);
-          router.push(`/tournaments/${tournamentId}?payment_status=success&payment_id=${paymentId}`);
+          setQrOpenedAt(null);
+          const params = new URLSearchParams({
+            payment_status: 'success',
+            payment_id: paymentId,
+          });
+          if (inviteCode) {
+            params.set('invite', inviteCode);
+          }
+          if (divisionId) {
+            params.set('divisionId', divisionId);
+          }
+          if (inviteParticipantId && teamInviteToken) {
+            params.set('pid', inviteParticipantId);
+            params.set('token', teamInviteToken);
+          }
+          router.push(`/tournaments/${tournamentId}?${params.toString()}`);
+        } else if (res.data && ['FAILED', 'CANCELLED', 'EXPIRED', 'REFUNDED'].includes(res.data.status)) {
+          clearInterval(intervalId);
+          setShowQrModal(false);
+          setQrOpenedAt(null);
+          toast.error('Thanh toán không thành công hoặc đã hết hạn.');
         }
       } catch (error) {
         console.error('Failed to poll payment status:', error);
@@ -79,7 +125,7 @@ function CheckoutContent() {
     }, 3000);
 
     return () => clearInterval(intervalId);
-  }, [showQrModal, paymentId, tournamentId, router]);
+  }, [showQrModal, paymentId, tournamentId, router, inviteCode, inviteParticipantId, teamInviteToken, divisionId, qrOpenedAt]);
 
   const handlePayment = async () => {
     if (!tournament || !tournamentId || !participantId) return;
@@ -90,7 +136,7 @@ function CheckoutContent() {
         purpose: 'REGISTRATION_FEE',
         tournamentId,
         participantId,
-        paymentGateway: 'PAYOS',
+        ...(divisionId ? { divisionId } : {}),
       });
 
       const payment = res.data;
@@ -108,6 +154,7 @@ function CheckoutContent() {
       if (payment.qrCode) {
         setQrCodeData(payment.qrCode);
         setPaymentId(payment.paymentId);
+        setQrOpenedAt(Date.now());
         setShowQrModal(true);
         setSubmitting(false);
         toast.success('Đã tạo mã QR thanh toán PayOS');
@@ -146,7 +193,7 @@ function CheckoutContent() {
     );
   }
 
-  const entryFeeVal = Number(tournament.entryFee) || 0;
+  const entryFeeVal = Number(division?.entryFee ?? tournament.entryFee) || 0;
 
   return (
     <div className="bg-slate-50 min-h-screen py-12 px-4 md:px-8">
@@ -269,6 +316,7 @@ function CheckoutContent() {
                   <Button
                     onClick={() => {
                       setShowQrModal(false);
+                      setQrOpenedAt(null);
                       setSubmitting(false);
                     }}
                     variant="outline"

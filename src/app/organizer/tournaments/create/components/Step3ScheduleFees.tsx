@@ -97,6 +97,7 @@ export default function Step3ScheduleFees() {
               render={({ field }) => (
                 <DateTimePicker
                   label="Ngày bắt đầu đăng ký"
+                  name={field.name}
                   value={field.value}
                   onChange={field.onChange}
                   error={errors.registrationStartDate?.message}
@@ -109,6 +110,7 @@ export default function Step3ScheduleFees() {
               render={({ field }) => (
                 <DateTimePicker
                   label="Ngày kết thúc đăng ký"
+                  name={field.name}
                   value={field.value}
                   onChange={field.onChange}
                   error={errors.registrationEndDate?.message}
@@ -131,6 +133,7 @@ export default function Step3ScheduleFees() {
               render={({ field }) => (
                 <DateTimePicker
                   label="Ngày bắt đầu thi đấu"
+                  name={field.name}
                   value={field.value}
                   onChange={field.onChange}
                   error={errors.startDate?.message}
@@ -143,6 +146,7 @@ export default function Step3ScheduleFees() {
               render={({ field }) => (
                 <DateTimePicker
                   label="Ngày kết thúc thi đấu"
+                  name={field.name}
                   value={field.value}
                   onChange={field.onChange}
                   error={errors.endDate?.message}

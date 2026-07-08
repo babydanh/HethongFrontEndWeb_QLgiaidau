@@ -26,6 +26,7 @@ import {
   normalizeMatchFormatForCategory,
   type MatchFormatOptionValue,
 } from '@/features/tournaments/match-format-options';
+import { getTournamentStatusLabel } from '@/utils/tournament-status';
 
 export type TournamentReferee = {
   id: string; userId: string; status: string; fullName: string; avatarUrl: string | null;
@@ -171,14 +172,7 @@ export function useManageState(id: string) {
     return tournament.isRanked ? feesConfig.feePublicRanked : feesConfig.feePublicUnranked;
   })();
 
-  const getStatusLabel = (status: Tournament['status']) => {
-    const map: Record<string, string> = {
-      DRAFT: 'Nháp (Ẩn)', REGISTRATION_OPEN: 'Mở Đăng Ký', PENDING_APPROVAL: 'Chờ duyệt công bố',
-      REGISTRATION_CLOSED: 'Đóng Đăng Ký', UPCOMING: 'Sắp Khởi Tranh',
-      IN_PROGRESS: 'Đang Thi Đấu', ONGOING: 'Đang Thi Đấu', COMPLETED: 'Đã Kết Thúc', CANCELLED: 'Đã Hủy',
-    };
-    return map[status] || status;
-  };
+  const getStatusLabel = (status: Tournament['status']) => getTournamentStatusLabel(status);
 
   // ── Fetch helpers ──
   const fetchReferees = useCallback(async () => {
@@ -190,7 +184,7 @@ export function useManageState(id: string) {
     if (!selectedDivisionId) return;
     try {
       const [pRes, bRes] = await Promise.all([
-        divisionsApi.getDivisionParticipants(id, selectedDivisionId),
+        tournamentsApi.getOrganizerTournamentParticipants(id, selectedDivisionId),
         tournamentsApi.getTournamentBracket(id, selectedDivisionId),
       ]);
       if (pRes.data) setParticipants(pRes.data);

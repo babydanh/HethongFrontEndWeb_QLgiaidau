@@ -8,6 +8,12 @@ import { Badge } from '@/components/ui/Badge';
 import { Tournament, TournamentParticipant } from '@/types/tournament';
 import { getErrorMessage } from '@/utils/error';
 import { getPlatformFeeBreakdown } from '@/utils/platform-fee';
+import {
+  isTournamentCompleted,
+  isTournamentInProgress,
+  isTournamentOpenForRegistration,
+  isTournamentRegistrationClosed,
+} from '@/utils/tournament-status';
 import toast from 'react-hot-toast';
 
 interface FinanceTabProps {
@@ -38,7 +44,11 @@ export function FinanceTab({
   const platformFee = getPlatformFeeBreakdown(entryFee, tournament.platformFeePercentage);
   const totalPlatformFee = totalPlayers * platformFee.feePerPlayer;
   const netOrganizerEarnings = Math.max(0, totalExpectedFee - totalPlatformFee);
-  const isRegistrationLockedForFinance = ['REGISTRATION_OPEN', 'REGISTRATION_CLOSED', 'UPCOMING', 'IN_PROGRESS', 'COMPLETED'].includes(tournament.status);
+  const isRegistrationLockedForFinance =
+    isTournamentOpenForRegistration(tournament.status) ||
+    isTournamentRegistrationClosed(tournament.status) ||
+    isTournamentInProgress(tournament.status) ||
+    isTournamentCompleted(tournament.status);
 
   // Payout form state
   const [bankName, setBankName] = useState('');
@@ -47,7 +57,7 @@ export function FinanceTab({
   const [amountRequested, setAmountRequested] = useState(netOrganizerEarnings);
   const [isPayoutLoading, setIsPayoutLoading] = useState(false);
 
-  const canPayout = (tournament.status === 'COMPLETED' || tournament.status === 'IN_PROGRESS') && !!handleRequestPayout;
+  const canPayout = (isTournamentCompleted(tournament.status) || isTournamentInProgress(tournament.status)) && !!handleRequestPayout;
 
   const handleSubmitPayout = async () => {
     if (!bankName.trim()) { toast.error('Vui lòng nhập tên ngân hàng'); return; }

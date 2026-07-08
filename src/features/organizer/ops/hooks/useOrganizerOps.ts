@@ -156,9 +156,7 @@ export function useOrganizerOps(
 
   const loadOperationalData = useCallback(async (divisionId: string) => {
     const [participantsRes, matchesRes, auditRes] = await Promise.all([
-      divisionId
-        ? divisionsApi.getDivisionParticipants(tournamentId, divisionId)
-        : tournamentsApi.getTournamentParticipants(tournamentId),
+      tournamentsApi.getOrganizerTournamentParticipants(tournamentId, divisionId),
       matchesApi.getMatches({
         tournamentId,
         ...(divisionId ? { divisionId } : {}),

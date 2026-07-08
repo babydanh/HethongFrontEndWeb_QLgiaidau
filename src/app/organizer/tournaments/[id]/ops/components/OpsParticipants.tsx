@@ -22,7 +22,11 @@ import {
 } from '@/components/ui/Modal';
 import type { TournamentParticipant } from '@/types/tournament';
 import { formatDate } from '@/utils/format';
-import { getParticipantStatusLabel } from '@/utils/tournament-display';
+import {
+  getParticipantStatusClassName,
+  getParticipantStatusLabel,
+  isParticipantApproved,
+} from '@/utils/tournament-display';
 
 interface OpsParticipantsProps {
   participants: TournamentParticipant[];
@@ -36,15 +40,6 @@ interface KickDraft {
   id: string;
   teamName: string;
 }
-
-const statusClassMap: Record<string, string> = {
-  COMPLETE: 'bg-emerald-50 text-emerald-700 border-emerald-100',
-  PENDING: 'bg-amber-50 text-amber-700 border-amber-100',
-  WITHDRAWN: 'bg-slate-100 text-slate-600 border-slate-200',
-  KICKED: 'bg-rose-50 text-rose-700 border-rose-100',
-  REJECTED: 'bg-orange-50 text-orange-700 border-orange-100',
-  DISQUALIFIED: 'bg-red-50 text-red-700 border-red-100',
-};
 
 const FILTER_OPTIONS: Array<{ value: ParticipantFilter; label: string }> = [
   { value: 'ALL', label: 'Tất cả' },
@@ -70,7 +65,7 @@ export function OpsParticipants({
     return participants.filter((participant) => {
       const matchesFilter =
         filter === 'ALL' ? true :
-        filter === 'COMPLETE' ? participant.teamStatus === 'COMPLETE' :
+        filter === 'COMPLETE' ? isParticipantApproved(participant.teamStatus) :
         filter === 'UNPAID' ? !participant.isPaid :
         filter === 'KICKED' ? participant.teamStatus === 'KICKED' :
         participant.teamStatus === 'DISQUALIFIED' || participant.teamStatus === 'NO_SHOW' || participant.teamStatus === 'WITHDRAWN';
@@ -87,7 +82,7 @@ export function OpsParticipants({
   const summary = useMemo(() => {
     return {
       total: participants.length,
-      active: participants.filter((participant) => participant.teamStatus === 'COMPLETE').length,
+      active: participants.filter((participant) => isParticipantApproved(participant.teamStatus)).length,
       unpaid: participants.filter((participant) => !participant.isPaid).length,
       disciplined: participants.filter((participant) => participant.teamStatus === 'DISQUALIFIED' || participant.teamStatus === 'NO_SHOW' || participant.teamStatus === 'WITHDRAWN').length,
       kicked: participants.filter((participant) => participant.teamStatus === 'KICKED').length,
@@ -218,7 +213,7 @@ export function OpsParticipants({
                         </div>
                       </td>
                       <td className="py-4 pr-4">
-                        <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-black ${statusClassMap[participant.teamStatus || ''] || 'border-slate-200 bg-slate-100 text-slate-600'}`}>
+                        <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-black ${getParticipantStatusClassName(participant.teamStatus)}`}>
                           {getParticipantStatusLabel(participant.teamStatus)}
                         </span>
                       </td>

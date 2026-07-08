@@ -13,6 +13,7 @@ import { getErrorMessage } from '@/utils/error';
 import { Tournament } from '@/types/tournament';
 import { formatDate } from '@/utils/format';
 import { getSportLogo } from '@/constants/sports';
+import { getTournamentStatusClassName, getTournamentStatusLabel } from '@/utils/tournament-status';
 
 interface ParentWithDivisions {
   id: string;
@@ -163,33 +164,11 @@ export default function MyTournamentsPage() {
   };
 
   const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'DRAFT':
-        return <Badge className="bg-slate-100 text-slate-700 border-slate-200">Nháp</Badge>;
-      case 'PENDING_DELETE':
-        return <Badge className="bg-rose-50 text-rose-700 border-rose-200">Chờ Xóa</Badge>;
-      case 'PENDING_APPROVAL':
-        return <Badge className="bg-cyan-50 text-cyan-700 border-cyan-200">Chờ duyệt công bố</Badge>;
-      case 'REGISTRATION_OPEN':
-        return <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200">Mở Đăng Ký</Badge>;
-      case 'REGISTRATION_CLOSED':
-        return <Badge className="bg-amber-50 text-amber-700 border-amber-200">Đóng Đăng Ký</Badge>;
-      case 'UPCOMING':
-        return <Badge className="bg-blue-50 text-blue-700 border-blue-200">Sắp Khởi Tranh</Badge>;
-      case 'IN_PROGRESS':
-        return (
-          <Badge className="bg-rose-50 text-rose-700 border-rose-200 flex items-center gap-1.5 animate-pulse">
-            <span className="w-1.5 h-1.5 bg-rose-600 rounded-full"></span>
-            Đang Thi Đấu
-          </Badge>
-        );
-      case 'COMPLETED':
-        return <Badge className="bg-purple-50 text-purple-700 border-purple-200">Đã Kết Thúc</Badge>;
-      case 'CANCELLED':
-        return <Badge className="bg-red-50 text-red-700 border-red-200">Đã Hủy</Badge>;
-      default:
-        return <Badge>{status}</Badge>;
+    if (status === 'PENDING_DELETE') {
+      return <Badge className="bg-rose-50 text-rose-700 border-rose-200">Chờ Xóa</Badge>;
     }
+
+    return <Badge className={getTournamentStatusClassName(status)}>{getTournamentStatusLabel(status)}</Badge>;
   };
 
   if (isLoading) {

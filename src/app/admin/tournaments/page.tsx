@@ -23,6 +23,7 @@ import {
   Eye,
   MapPin
 } from 'lucide-react';
+import { isTournamentUpcoming } from '@/utils/tournament-status';
 
 interface CreatorInfo {
   id: string;
@@ -697,7 +698,7 @@ export default function AdminTournamentsPage() {
                           {detailTournament.registrationStartDate ? new Date(detailTournament.registrationStartDate).toLocaleDateString('vi-VN') : 'N/A'}
                           {detailTournament.registrationEndDate && ` - ${new Date(detailTournament.registrationEndDate).toLocaleDateString('vi-VN')}`}
                         </p>
-                        {detailTournament.status === 'UPCOMING' && detailTournament.registrationStartDate && (
+                        {isTournamentUpcoming(detailTournament.status) && detailTournament.registrationStartDate && (
                           <FullCountdownAdmin targetDate={detailTournament.registrationStartDate} />
                         )}
                       </div>

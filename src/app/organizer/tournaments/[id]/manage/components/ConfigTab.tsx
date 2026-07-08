@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/Input';
 import { Tournament, BracketStage } from '@/types/tournament';
 import { getSportRuleKind } from '@/features/tournaments/sport-rules/normalize';
 import { getSportRulePresentation } from '@/features/tournaments/sport-rules/presentation';
+import { isTournamentRegistrationClosed, isTournamentRegistrationOpen } from '@/utils/tournament-status';
 
 interface ConfigTabProps {
   tournament: Tournament;
@@ -47,7 +48,7 @@ export function ConfigTab({
   handleSaveMatchConfig,
   handleUpdateStageRoundConfig
 }: ConfigTabProps) {
-  const isRegistrationOpen = tournament.status === 'REGISTRATION_OPEN' || tournament.status === 'REGISTRATION_CLOSED';
+  const isRegistrationOpen = isTournamentRegistrationOpen(tournament.status) || isTournamentRegistrationClosed(tournament.status);
   const sportRuleKind = getSportRuleKind(tournament.sportRules);
   const presentation = getSportRulePresentation(sportRuleKind);
   const setUnitLabel = presentation.setUnitLabel;

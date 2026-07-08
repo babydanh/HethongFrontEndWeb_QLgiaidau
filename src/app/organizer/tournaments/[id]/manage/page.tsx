@@ -19,6 +19,7 @@ import { FinanceTab } from './components/FinanceTab';
 import { PermissionsTab } from './components/PermissionsTab';
 import { getSportRulePresentation } from '@/features/tournaments/sport-rules/presentation';
 import { getScoreEntryGuidance, getSportRulePresets } from '@/features/tournaments/sport-rules/ui-guidance';
+import { isTournamentRegistrationClosed, isTournamentRegistrationOpen } from '@/utils/tournament-status';
 
 export default function TournamentManagePage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -142,7 +143,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
               <p className="text-xs text-slate-400">Chọn hình thức để xem cấu hình riêng</p>
             </div>
             <Button size="sm" onClick={() => s.setIsCreateDivisionModalOpen(true)}
-              disabled={s.tournament.status === 'REGISTRATION_OPEN' || s.tournament.status === 'REGISTRATION_CLOSED'}
+              disabled={isTournamentRegistrationOpen(s.tournament.status) || isTournamentRegistrationClosed(s.tournament.status)}
               className="font-bold text-xs flex items-center gap-1.5 h-9 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white whitespace-nowrap">
               <Plus className="w-3.5 h-3.5" /> Thêm hình thức
             </Button>

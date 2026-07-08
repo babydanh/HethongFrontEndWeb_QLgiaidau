@@ -2,6 +2,14 @@ import React from 'react';
 import { Check, ChevronRight, Users, GitMerge, Play, Trophy, FileText } from 'lucide-react';
 import { Tournament } from '@/features/tournaments/api';
 import { Button } from '@/components/ui/Button';
+import {
+  isTournamentCompleted,
+  isTournamentDraft,
+  isTournamentInProgress,
+  isTournamentOpenForRegistration,
+  isTournamentRegistrationClosed,
+  isTournamentUpcoming,
+} from '@/utils/tournament-status';
 
 interface TournamentStepperProps {
   tournament: Tournament;
@@ -14,26 +22,16 @@ interface TournamentStepperProps {
 
 export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlatformFee, publishFeeAmount = 0, isLoading }: TournamentStepperProps) {
   const getStepIndex = () => {
-    switch (tournament.status) {
-      case 'DRAFT':
-        return -1; // Not yet in the stepper flow
-      case 'REGISTRATION_OPEN':
-        return 0;
-      case 'REGISTRATION_CLOSED':
-      case 'UPCOMING':
-        return 1;
-      case 'IN_PROGRESS':
-      case 'ONGOING':
-        return 2;
-      case 'COMPLETED':
-        return 3;
-      default:
-        return -1;
-    }
+    if (isTournamentDraft(tournament.status)) return -1;
+    if (isTournamentUpcoming(tournament.status) || isTournamentRegistrationClosed(tournament.status)) return 1;
+    if (isTournamentOpenForRegistration(tournament.status)) return 0;
+    if (isTournamentInProgress(tournament.status)) return 2;
+    if (isTournamentCompleted(tournament.status)) return 3;
+    return -1;
   };
 
   const currentStep = getStepIndex();
-  const isRegistrationClosed = tournament.status === 'REGISTRATION_CLOSED';
+  const isRegistrationClosed = isTournamentRegistrationClosed(tournament.status);
 
   const steps = [
     {
@@ -82,7 +80,7 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
         <FileText className="w-5 h-5 text-blue-600" /> Tiến trình giải đấu
       </h3>
       
-      {tournament.status === 'DRAFT' && (
+      {isTournamentDraft(tournament.status) && (
         <div className="flex flex-col items-center justify-center py-6 bg-slate-50/50 rounded-xl border border-dashed border-slate-300 mb-6">
           <h4 className="font-bold text-slate-700 mb-2">Giải đấu chưa được công bố</h4>
           <p className="text-sm text-slate-500 mb-3 max-w-md text-center">
@@ -117,7 +115,7 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
         </div>
       )}
 
-      <div className={`relative flex flex-col md:flex-row justify-between ${tournament.status === 'DRAFT' ? 'opacity-50 pointer-events-none' : ''}`}>
+      <div className={`relative flex flex-col md:flex-row justify-between ${isTournamentDraft(tournament.status) ? 'opacity-50 pointer-events-none' : ''}`}>
         {/* Progress bar background line for desktop */}
         <div className="hidden md:block absolute top-6 left-8 right-8 h-1 bg-slate-100 rounded -z-10" />
         {/* Active progress line */}

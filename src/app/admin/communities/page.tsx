@@ -19,9 +19,13 @@ import {
 } from 'lucide-react';
 
 type StatusFilter = 'ALL' | 'ACTIVE' | 'PENDING' | 'REJECTED';
+type ReviewCommunityStatus = Exclude<StatusFilter, 'ALL'>;
+type ReviewCommunity = Omit<Community, 'status'> & {
+  status: ReviewCommunityStatus;
+};
 
 export default function AdminCommunitiesReview() {
-  const [communities, setCommunities] = useState<Community[]>([]);
+  const [communities, setCommunities] = useState<ReviewCommunity[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -44,7 +48,15 @@ export default function AdminCommunitiesReview() {
       const active = Array.isArray(activeRes.data) ? activeRes.data : [];
       const pending = Array.isArray(pendingRes.data) ? pendingRes.data : [];
 
-      const merged = [...active.map(c => ({ ...c, status: 'ACTIVE' })), ...pending];
+      const merged: ReviewCommunity[] = [
+        ...active.map((community) => ({ ...community, status: 'ACTIVE' as const })),
+        ...pending
+          .filter(
+            (community): community is Community & { status: 'PENDING' | 'REJECTED' } =>
+              community.status === 'PENDING' || community.status === 'REJECTED'
+          )
+          .map((community) => ({ ...community, status: community.status })),
+      ];
       setCommunities(merged);
       setError(null);
     } catch (err: unknown) {

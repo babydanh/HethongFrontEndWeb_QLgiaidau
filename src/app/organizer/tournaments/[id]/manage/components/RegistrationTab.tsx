@@ -20,7 +20,18 @@ import {
 } from 'lucide-react';
 import { Tournament, TournamentParticipant } from '@/types/tournament';
 import { formatDate } from '@/utils/format';
-import { getParticipantStatusLabel } from '@/utils/tournament-display';
+import {
+  getParticipantStatusClassName,
+  getParticipantStatusLabel,
+  isParticipantApproved,
+  isParticipantPendingApproval,
+  isParticipantPendingPartner,
+} from '@/utils/tournament-display';
+import {
+  isTournamentDraft,
+  isTournamentRegistrationClosed,
+  isTournamentRegistrationOpen,
+} from '@/utils/tournament-status';
 import toast from 'react-hot-toast';
 
 interface RegistrationTabProps {
@@ -95,8 +106,8 @@ export function RegistrationTab({
 
   const participantSummary = React.useMemo(() => ({
     total: participants.length,
-    pending: participants.filter((participant) => participant.teamStatus === 'PENDING').length,
-    approved: participants.filter((participant) => participant.teamStatus === 'COMPLETE').length,
+    pending: participants.filter((participant) => isParticipantPendingApproval(participant.teamStatus)).length,
+    approved: participants.filter((participant) => isParticipantApproved(participant.teamStatus)).length,
     unpaid: participants.filter((participant) => !participant.isPaid).length,
     rejected: participants.filter((participant) => participant.teamStatus === 'REJECTED').length,
     partnerInvite: participants.filter((participant) => Boolean(participant.teamInviteToken)).length,
@@ -108,8 +119,10 @@ export function RegistrationTab({
     return participants.filter((participant) => {
       const matchesFilter =
         filter === 'ALL' ? true :
-        filter === 'PENDING' ? participant.teamStatus === 'PENDING' :
-        filter === 'COMPLETE' ? participant.teamStatus === 'COMPLETE' :
+        filter === 'PENDING'
+          ? isParticipantPendingApproval(participant.teamStatus) || isParticipantPendingPartner(participant.teamStatus)
+          :
+        filter === 'COMPLETE' ? isParticipantApproved(participant.teamStatus) :
         filter === 'UNPAID' ? !participant.isPaid :
         participant.teamStatus === 'REJECTED';
 
@@ -132,7 +145,7 @@ export function RegistrationTab({
         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
           <h3 className="font-bold text-slate-900 mb-4 text-lg">Trạng thái phát hành giải đấu</h3>
           
-          {tournament.status === 'DRAFT' ? (
+          {isTournamentDraft(tournament.status) ? (
             <div className="space-y-4">
               <div className="flex items-start gap-3 text-slate-700 bg-slate-50 p-4 rounded-xl border border-slate-200">
                 <span className="w-5 h-5 flex-shrink-0 mt-0.5 text-slate-400">ℹ</span>
@@ -164,7 +177,7 @@ export function RegistrationTab({
                 </div>
                 
                 {/* Lock list button */}
-                {(tournament.status === 'REGISTRATION_OPEN' || tournament.status === 'REGISTRATION_CLOSED') && (
+                {(isTournamentRegistrationOpen(tournament.status) || isTournamentRegistrationClosed(tournament.status)) && (
                   <Button
                     onClick={handleOpenLockModal}
                     className="bg-rose-600 hover:bg-rose-700 text-white font-bold flex items-center justify-center gap-1.5 shrink-0 shadow-sm"
@@ -226,7 +239,7 @@ export function RegistrationTab({
             </div>
           </div>
 
-          {tournament.status !== 'DRAFT' && (
+          {!isTournamentDraft(tournament.status) && (
             <div className="rounded-2xl border border-blue-100 bg-blue-50 p-5">
               <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                 <div className="space-y-1">
@@ -387,8 +400,8 @@ export function RegistrationTab({
                 ) : (
                   filteredParticipants.map((participant) => {
                     const isBusy = activeParticipantActionId === participant.id;
-                    const canApprove = participant.teamStatus === 'PENDING';
-                    const canReject = participant.teamStatus === 'PENDING';
+                    const canApprove = isParticipantPendingApproval(participant.teamStatus);
+                    const canReject = isParticipantPendingApproval(participant.teamStatus);
 
                     return (
                       <tr key={participant.id}>
@@ -417,13 +430,7 @@ export function RegistrationTab({
                         <td className="py-4 pr-4">
                           <span className={[
                             'inline-flex rounded-full border px-2.5 py-1 text-xs font-black',
-                            participant.teamStatus === 'COMPLETE'
-                              ? 'border-emerald-100 bg-emerald-50 text-emerald-700'
-                              : participant.teamStatus === 'PENDING'
-                                ? 'border-amber-100 bg-amber-50 text-amber-700'
-                                : participant.teamStatus === 'REJECTED'
-                                  ? 'border-orange-100 bg-orange-50 text-orange-700'
-                                  : 'border-slate-200 bg-slate-100 text-slate-600',
+                            getParticipantStatusClassName(participant.teamStatus),
                           ].join(' ')}>
                             {getParticipantStatusLabel(participant.teamStatus)}
                           </span>

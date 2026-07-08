@@ -53,6 +53,9 @@ const moderationCards = [
   },
 ];
 
+const getResponseItems = <T,>(response: ApiResponse<T[]> | undefined): T[] =>
+  Array.isArray(response?.data) ? response.data : [];
+
 export default function ModerationDashboardPage() {
   const [pendingCounts, setPendingCounts] = useState({
     verifications: 0,
@@ -71,10 +74,10 @@ export default function ModerationDashboardPage() {
           api.get<ApiResponse<any[]>>('/admin/tournaments?status=PENDING_APPROVAL'),
         ]);
         setPendingCounts({
-          verifications: verifRes.status === 'fulfilled' ? (verifRes.value.data?.data?.length || 0) : 0,
-          communities: commRes.status === 'fulfilled' ? (commRes.value.data?.data?.length || 0) : 0,
-          changeRequests: changeRes.status === 'fulfilled' ? (changeRes.value.data?.data?.length || 0) : 0,
-          tournaments: tourRes.status === 'fulfilled' ? (tourRes.value.data?.data?.length || 0) : 0,
+          verifications: verifRes.status === 'fulfilled' ? getResponseItems(verifRes.value).length : 0,
+          communities: commRes.status === 'fulfilled' ? getResponseItems(commRes.value).length : 0,
+          changeRequests: changeRes.status === 'fulfilled' ? getResponseItems(changeRes.value).length : 0,
+          tournaments: tourRes.status === 'fulfilled' ? getResponseItems(tourRes.value).length : 0,
         });
       } catch (_) {}
     };

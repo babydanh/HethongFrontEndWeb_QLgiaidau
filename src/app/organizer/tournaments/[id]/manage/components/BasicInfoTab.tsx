@@ -11,6 +11,7 @@ import toast from 'react-hot-toast';
 import { uploadApi } from '@/features/upload/api';
 import { tournamentsApi, Division } from '@/features/tournaments/api';
 import { getErrorMessage } from '@/utils/error';
+import { isTournamentDraft } from '@/utils/tournament-status';
 
 interface BasicInfoTabProps {
   id: string;
@@ -582,7 +583,7 @@ export function BasicInfoTab({
       {/* Global Actions in Tab */}
       <div className="flex justify-between items-center pt-4 border-t">
         <div>
-          {tournament.status === 'DRAFT' && (
+          {isTournamentDraft(tournament.status) && (
             <Button
               onClick={handleDeleteTournament}
               disabled={isDeleting}

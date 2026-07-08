@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
-import { paymentsApi } from '@/features/payments/api';
 import { api } from '@/lib/axios';
 import { ApiResponse } from '@/types/api';
 import {
@@ -53,6 +52,13 @@ interface ChartRow {
   count: number;
 }
 
+interface PendingPayoutSummary {
+  status?: string;
+}
+
+const getResponseItems = <T,>(response: ApiResponse<T[]> | undefined): T[] =>
+  Array.isArray(response?.data) ? response.data : [];
+
 export default function AdminDashboard() {
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [chartData, setChartData] = useState<ChartRow[]>([]);
@@ -76,15 +82,15 @@ export default function AdminDashboard() {
         const [commRes, verifRes, payoutsRes, changeRes] = await Promise.allSettled([
           api.get<ApiResponse<any[]>>('/communities/pending'),
           api.get<ApiResponse<any[]>>('/admin/verification-tickets?status=PENDING'),
-          api.get<ApiResponse<any[]>>('/payments/admin/payouts'),
+          api.get<ApiResponse<PendingPayoutSummary[]>>('/payments/admin/payouts'),
           api.get<ApiResponse<any[]>>('/admin/change-requests?status=PENDING'),
         ]);
 
-        const communities = commRes.status === 'fulfilled' ? (commRes.value.data?.data?.length || 0) : 0;
-        const verifications = verifRes.status === 'fulfilled' ? (verifRes.value.data?.data?.length || 0) : 0;
-        const payoutsRaw = payoutsRes.status === 'fulfilled' ? (payoutsRes.value.data?.data || []) : [];
-        const payouts = (payoutsRaw as any[]).filter((p: any) => ['PENDING', 'REQUESTED', 'UNDER_REVIEW'].includes(p.status)).length;
-        const changeRequests = changeRes.status === 'fulfilled' ? (changeRes.value.data?.data?.length || 0) : 0;
+        const communities = commRes.status === 'fulfilled' ? getResponseItems(commRes.value).length : 0;
+        const verifications = verifRes.status === 'fulfilled' ? getResponseItems(verifRes.value).length : 0;
+        const payoutsRaw = payoutsRes.status === 'fulfilled' ? getResponseItems(payoutsRes.value) : [];
+        const payouts = payoutsRaw.filter((payout) => ['PENDING', 'REQUESTED', 'UNDER_REVIEW'].includes(payout.status ?? '')).length;
+        const changeRequests = changeRes.status === 'fulfilled' ? getResponseItems(changeRes.value).length : 0;
 
         setPendingCounts({ communities, verifications, payouts, reports: 0, changeRequests });
       } catch (_) {}
@@ -105,7 +111,7 @@ export default function AdminDashboard() {
       }
       try {
         const res = await api.get<ApiResponse<Metrics>>('/admin/dashboard/metrics', { params: { groupBy } });
-        if (res && res.data) {
+        if (res.data) {
           setMetrics(res.data);
         } else {
           setError('Không lấy được dữ liệu thống kê tổng hợp');
@@ -136,7 +142,7 @@ export default function AdminDashboard() {
 
       try {
         const res = await api.get<ApiResponse<ChartRow[]>>('/admin/dashboard/revenue-chart', { params });
-        if (res && res.data) {
+        if (Array.isArray(res.data)) {
           setChartData(res.data);
         }
       } catch (err) {

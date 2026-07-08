@@ -10,6 +10,15 @@ import { formatDate, formatCurrency } from '@/utils/format';
 import { getSportLogo } from '@/constants/sports';
 import TournamentHeroBanner from '@/components/ui/TournamentHeroBanner';
 import LiveMatchesWidget from '@/components/ui/LiveMatchesWidget';
+import {
+  getTournamentStatusClassName,
+  getTournamentStatusLabel,
+  isTournamentCompleted,
+  isTournamentInProgress,
+  isTournamentOpenForRegistration,
+  isTournamentRegistrationClosed,
+  isTournamentUpcoming,
+} from '@/utils/tournament-status';
 
 export default function TournamentsListPage() {
   const getFormatLabel = (matchType?: string, genderRestriction?: string | null) => {
@@ -253,7 +262,7 @@ export default function TournamentsListPage() {
                     <img 
                       src={tournament.bannerUrl} 
                       alt={tournament.name} 
-                      className={`absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-103 ${tournament.status === 'COMPLETED' ? 'grayscale opacity-60' : ''}`}
+                      className={`absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-103 ${isTournamentCompleted(tournament.status) ? 'grayscale opacity-60' : ''}`}
                     />
                   ) : (
                     <div className="absolute inset-0 bg-gradient-to-br from-indigo-650 to-blue-800 opacity-90 group-hover:scale-103 transition-transform duration-500 flex items-center justify-center">
@@ -267,29 +276,14 @@ export default function TournamentsListPage() {
                   
                   {/* Status Overlay (Top-Left) */}
                   <div className="absolute top-3 left-3 z-10">
-                    {tournament.status === 'REGISTRATION_OPEN' && (
-                      <span className="bg-black/75 backdrop-blur-sm text-white px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm flex items-center gap-1.5">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                        Mở đăng ký
-                      </span>
-                    )}
-                    {tournament.status === 'REGISTRATION_CLOSED' && (
-                      <span className="bg-black/75 backdrop-blur-sm text-white px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm flex items-center gap-1.5">
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
-                        Đóng đăng ký
-                      </span>
-                    )}
-                    {tournament.status === 'COMPLETED' && (
-                      <span className="bg-black/75 backdrop-blur-sm text-white px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm">
-                        Đã kết thúc
-                      </span>
-                    )}
-                    {(tournament.status === 'ONGOING' || tournament.status === 'IN_PROGRESS') && (
-                      <span className="bg-black/75 backdrop-blur-sm text-white px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm flex items-center gap-1.5">
-                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
-                        Đang thi đấu
-                      </span>
-                    )}
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm border text-white ${getTournamentStatusClassName(tournament.status)} bg-black/75 backdrop-blur-sm`}>
+                      {(isTournamentOpenForRegistration(tournament.status) || isTournamentRegistrationClosed(tournament.status) || isTournamentUpcoming(tournament.status)) && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-blue-300 animate-pulse" />
+                      )}
+                      {isTournamentInProgress(tournament.status) && <span className="w-1.5 h-1.5 rounded-full bg-rose-300 animate-pulse" />}
+                      {isTournamentCompleted(tournament.status) && <span className="w-1.5 h-1.5 rounded-full bg-slate-300" />}
+                      {getTournamentStatusLabel(tournament.status)}
+                    </span>
                   </div>
 
                   {/* Bookmark Button (Top-Right) */}

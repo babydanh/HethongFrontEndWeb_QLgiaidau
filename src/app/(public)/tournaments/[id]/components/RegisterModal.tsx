@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { api } from '@/lib/axios';
+import { tournamentsApi } from '@/features/tournaments/api';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '@/utils/error';
 import { trimAndNormalizeSpaces } from '@/utils/string';
@@ -50,12 +50,10 @@ export default function RegisterModal({ tournamentId, tournamentName, entryFee, 
       setIsSubmitting(true);
       const cleanData = {
         teamName: trimAndNormalizeSpaces(data.teamName),
-        memberIds: [user.id],
       };
 
-      const res = await api.post<{ data?: { id: string }, id?: string }>(`/tournaments/${tournamentId}/register`, cleanData);
-      
-      const participantId = res?.data?.id || res?.id;
+      const res = await tournamentsApi.register(tournamentId, cleanData);
+      const participantId = res?.data?.participant?.id;
       
       toast.success('Đăng ký thành công!');
       reset();

@@ -9,7 +9,13 @@ import { motion } from 'framer-motion';
 import { Trophy, Calendar, MapPin, Users, ArrowLeft, Loader2, CheckCircle, AlertTriangle, ShieldAlert, CreditCard, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Division, tournamentsApi, Tournament, TournamentParticipant } from '@/features/tournaments/api';
+import {
+  Division,
+  MyRegistrationParticipant,
+  tournamentsApi,
+  Tournament,
+  TournamentParticipant,
+} from '@/features/tournaments/api';
 import { usersApi } from '@/features/users/api';
 import { rankingsApi } from '@/features/rankings/api';
 import { useAuthStore } from '@/lib/zustand/authStore';
@@ -22,6 +28,7 @@ import toast from 'react-hot-toast';
 import DoublesRegistrationFlow from './components/DoublesRegistrationFlow';
 import { divisionsApi } from '@/features/tournaments/api';
 import { WithdrawModal } from '@/components/shared/WithdrawModal';
+import { isTournamentDraft, isTournamentOpenForRegistration, isTournamentUpcoming } from '@/utils/tournament-status';
 
 const registerSchema = z.object({
   teamName: z.string().min(3, 'Tên đội phải có ít nhất 3 ký tự').max(100, 'Tên đội quá dài'),
@@ -38,6 +45,8 @@ type NormalizableDivision = {
   categoryId?: string;
   maxParticipants?: number;
   entryFee?: number;
+  minElo?: number | null;
+  maxElo?: number | null;
   bracketType?: 'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION' | 'ROUND_ROBIN' | null;
   _count?: {
     participants: number;
@@ -94,6 +103,19 @@ const getDivisionBracketLabel = (bracketType?: string | null) => {
   return 'Chưa rõ';
 };
 
+const normalizeRegisteredParticipant = (
+  participant?: MyRegistrationParticipant | TournamentParticipant | null,
+): TournamentParticipant | null => {
+  if (!participant) {
+    return null;
+  }
+
+  return {
+    ...participant,
+    members: participant.members ?? ('teamMembers' in participant ? participant.teamMembers : undefined) ?? [],
+  };
+};
+
 export default function TournamentRegisterPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const id = resolvedParams.id;
@@ -134,6 +156,8 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
     categoryId: division.categoryId,
     maxParticipants: division.maxParticipants,
     entryFee: division.entryFee,
+    minElo: division.minElo,
+    maxElo: division.maxElo,
     bracketType: division.bracketType,
     _count: division._count
       ? {
@@ -148,7 +172,6 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
     division: Division,
   ): Tournament => ({
     ...baseTournament,
-    id: division.id,
     name: division.name,
     matchType: division.matchType,
     genderRestriction: division.genderRestriction,
@@ -252,8 +275,9 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
           id,
           selectedDivisionId || undefined,
         );
-        if (regRes.data?.registered && regRes.data.participant) {
-          setParticipant(regRes.data.participant);
+        const normalizedParticipant = normalizeRegisteredParticipant(regRes.data?.participant);
+        if (regRes.data?.registered && normalizedParticipant) {
+          setParticipant(normalizedParticipant);
           setIsRegistered(true);
         } else {
           setParticipant(null);
@@ -273,6 +297,31 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
   const [bankAccountNumber, setBankAccountNumber] = useState('');
   const [bankAccountName, setBankAccountName] = useState('');
   const [bankError, setBankError] = useState('');
+
+  const buildTournamentDetailHref = (tournamentId: string) => {
+    const params = new URLSearchParams();
+    if (inviteCode) {
+      params.set('invite', inviteCode);
+    }
+    if (selectedDivisionId) {
+      params.set('divisionId', selectedDivisionId);
+    }
+    return `/tournaments/${tournamentId}${params.toString() ? `?${params.toString()}` : ''}`;
+  };
+
+  const buildCheckoutHref = (participantId: string) => {
+    const params = new URLSearchParams({
+      participantId,
+      tournamentId: id,
+    });
+    if (selectedDivisionId) {
+      params.set('divisionId', selectedDivisionId);
+    }
+    if (inviteCode) {
+      params.set('invite', inviteCode);
+    }
+    return `/payments/checkout?${params.toString()}`;
+  };
 
   const handleWithdrawClick = async () => {
     if (participant?.isPaid && Number(selectedDivision?.entryFee) > 0) {
@@ -299,7 +348,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
   const executeWithdraw = async (bankData?: { bankName: string; bankAccountNumber: string; bankAccountName: string }) => {
     try {
       setIsWithdrawing(true);
-      await tournamentsApi.withdraw(id, bankData);
+      await tournamentsApi.withdraw(id, bankData, selectedDivisionId || undefined);
       toast.success('Đã rút khỏi giải đấu thành công.');
       setParticipant(null);
       setIsRegistered(false);
@@ -353,7 +402,14 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
   const onSubmitSingles = async (data: RegisterFormValues) => {
     if (!isAuthenticated || !user) {
       toast.error('Vui lòng đăng nhập để đăng ký tham gia giải đấu');
-      const redirectUrl = `/tournaments/${id}/register${inviteCode ? `?invite=${inviteCode}` : ''}`;
+      const params = new URLSearchParams();
+      if (inviteCode) {
+        params.set('invite', inviteCode);
+      }
+      if (selectedDivisionId) {
+        params.set('divisionId', selectedDivisionId);
+      }
+      const redirectUrl = `/tournaments/${id}/register${params.toString() ? `?${params.toString()}` : ''}`;
       router.push(`/login?redirect=${encodeURIComponent(redirectUrl)}`);
       return;
     }
@@ -378,17 +434,30 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
 
       const res = await tournamentsApi.register(id, cleanData);
       const participantId = res?.data?.participant?.id;
-      const paymentUrl = res?.data?.paymentUrl;
 
       toast.success('Đăng ký tham gia thành công!');
 
-      const checkoutTournamentId = selectedDivisionId || id;
-
-      if (paymentUrl && participantId) {
-        // If the registration returned a payment URL, redirect the user to checkout
-        router.push(`/payments/checkout?tournamentId=${checkoutTournamentId}&participantId=${participantId}`);
+      if (entryFeeVal > 0 && participantId) {
+        const params = new URLSearchParams({
+          tournamentId: id,
+          participantId,
+        });
+        if (selectedDivisionId) {
+          params.set('divisionId', selectedDivisionId);
+        }
+        if (inviteCode) {
+          params.set('invite', inviteCode);
+        }
+        router.push(`/payments/checkout?${params.toString()}`);
       } else {
-        router.push(`/tournaments/${id}`);
+        const params = new URLSearchParams();
+        if (inviteCode) {
+          params.set('invite', inviteCode);
+        }
+        if (selectedDivisionId) {
+          params.set('divisionId', selectedDivisionId);
+        }
+        router.push(`/tournaments/${id}${params.toString() ? `?${params.toString()}` : ''}`);
       }
     } catch (err) {
       toast.error(getErrorMessage(err));
@@ -401,10 +470,17 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
   useEffect(() => {
     if (!isLoading && !needInviteValidation && !isAuthenticated) {
       toast.error('Vui lòng đăng nhập trước khi tiến hành đăng ký.');
-      const redirectUrl = `/tournaments/${id}/register${inviteCode ? `?invite=${inviteCode}` : ''}`;
+      const params = new URLSearchParams();
+      if (inviteCode) {
+        params.set('invite', inviteCode);
+      }
+      if (selectedDivisionId) {
+        params.set('divisionId', selectedDivisionId);
+      }
+      const redirectUrl = `/tournaments/${id}/register${params.toString() ? `?${params.toString()}` : ''}`;
       router.push(`/login?redirect=${encodeURIComponent(redirectUrl)}`);
     }
-  }, [isLoading, needInviteValidation, isAuthenticated, id, inviteCode, router]);
+  }, [isLoading, needInviteValidation, isAuthenticated, id, inviteCode, router, selectedDivisionId]);
 
   const selectedDivisionData = allDivisions.find((division) => division.id === selectedDivisionId) ?? null;
   const selectedDivision = tournament && selectedDivisionData
@@ -516,8 +592,11 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
   const isLocked = tournament.isRegistrationLocked;
   const isExpired = tournament.registrationEndDate ? new Date() > new Date(tournament.registrationEndDate) : false;
   // Cho phép đăng ký sớm nếu đang là DRAFT nhưng có inviteCode trùng khớp
-  const isDraftInviteOnly = tournament.status === 'DRAFT' && inviteCode && tournament.inviteCode === inviteCode;
-  const isNotOpen = tournament.status !== 'REGISTRATION_OPEN' && !isDraftInviteOnly;
+  const isDraftInviteOnly = isTournamentDraft(tournament.status) && inviteCode && tournament.inviteCode === inviteCode;
+  const isNotOpen =
+    !isTournamentOpenForRegistration(tournament.status) &&
+    !isTournamentUpcoming(tournament.status) &&
+    !isDraftInviteOnly;
 
   const isProfileIncomplete = isAuthenticated && user && (!user.fullName || !user.phoneNumber || !user.gender);
 
@@ -570,7 +649,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
           <Button
             type="button"
             variant="outline"
-            onClick={() => router.push(`/tournaments/${tournament.id}`)}
+            onClick={() => router.push(buildTournamentDetailHref(tournament.id))}
             className="w-full border-slate-200 hover:bg-slate-50 text-slate-600 text-xs font-bold"
           >
             Quay lại trang giải đấu
@@ -595,7 +674,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
     <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-xl mx-auto">
         <button
-          onClick={() => router.push(`/tournaments/${tournament.id}`)}
+          onClick={() => router.push(buildTournamentDetailHref(tournament.id))}
           className="flex items-center gap-2 text-slate-500 hover:text-slate-800 font-bold text-sm mb-6 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" /> Quay lại giải đấu
@@ -687,7 +766,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                             {matchLabel}
                           </span>
                           <span className={`text-[9px] font-bold ${isActive ? 'text-blue-200' : 'text-slate-400'}`}>
-                            {bracketLabel} • {participantCount} đã đăng ký
+                            {bracketLabel} • {participantCount} hồ sơ tham gia
                           </span>
                         </span>
                       </button>
@@ -760,7 +839,12 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                   </Button>
                 </div>
               ) : isDoubles ? (
-                <DoublesRegistrationFlow tournament={selectedDivision} inviteCode={inviteCode} divisionId={selectedDivisionId || undefined} />
+                <DoublesRegistrationFlow
+                  tournament={selectedDivision}
+                  tournamentId={id}
+                  inviteCode={inviteCode}
+                  divisionId={selectedDivisionId || undefined}
+                />
               ) : isRegistered && participant ? (
                 <div className="space-y-6 animate-in fade-in duration-300">
                   <div className="text-center space-y-2">
@@ -804,7 +888,9 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                             <Trash2 className="w-4 h-4" /> Hủy & Rút
                           </Button>
                           <Button
-                            onClick={() => router.push(`/payments/checkout?participantId=${participant.id}&tournamentId=${selectedDivisionId || id}`)}
+                            onClick={() => {
+                              router.push(buildCheckoutHref(participant.id));
+                            }}
                             className="flex-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 text-sm flex items-center justify-center gap-2 shadow-md shadow-blue-500/10 h-12"
                           >
                             <CreditCard className="w-4 h-4" /> Thanh toán
@@ -823,7 +909,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                             <Trash2 className="w-4 h-4" /> Hủy & Rút lui
                           </Button>
                           <Button
-                            onClick={() => router.push(`/tournaments/${id}`)}
+                            onClick={() => router.push(buildTournamentDetailHref(id))}
                             className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 text-sm h-11"
                           >
                             Quay lại trang giải đấu
@@ -847,7 +933,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                           <Trash2 className="w-4 h-4" /> Hủy & Rút lui
                         </Button>
                         <Button
-                          onClick={() => router.push(`/tournaments/${id}`)}
+                          onClick={() => router.push(buildTournamentDetailHref(id))}
                           className="flex-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 text-sm h-12"
                         >
                           Truy cập trang giải đấu
@@ -914,6 +1000,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
         isOpen={showWithdrawModal}
         onClose={() => setShowWithdrawModal(false)}
         tournamentId={id}
+        divisionId={selectedDivisionId || undefined}
         isPaid={participant?.isPaid || false}
         defaultBankName={bankName}
         defaultBankAccountNumber={bankAccountNumber}

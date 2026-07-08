@@ -108,8 +108,12 @@ export default function CommunitiesPage() {
   }, [page, search, provinceCode, categoryId, sortBy]);
 
   useEffect(() => {
-    import('@/features/categories/api').then(m => m.categoriesApi.getCategories().then(res => setCategories(res.data)));
-    import('@/features/regions/api').then(m => m.regionsApi.getProvinces().then(setProvinces));
+    import('@/features/categories/api').then(m =>
+      m.categoriesApi.getCategories().then(res => setCategories(res.data)).catch(() => {/* categories fetch failed */})
+    ).catch(() => {/* categories module load failed */});
+    import('@/features/regions/api').then(m =>
+      m.regionsApi.getProvinces().then(setProvinces).catch(() => {/* provinces fetch failed */})
+    ).catch(() => {/* regions module load failed */});
   }, []);
 
   return (

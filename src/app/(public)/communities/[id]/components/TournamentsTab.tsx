@@ -11,6 +11,15 @@ import { formatDate } from '@/utils/format';
 import { Tournament } from '@/types/tournament';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '@/utils/error';
+import {
+  getTournamentStatusClassName,
+  getTournamentStatusLabel,
+  isTournamentInProgress,
+  isTournamentOpenForRegistration,
+  isTournamentUpcoming,
+  isTournamentCompleted,
+  isTournamentDraft,
+} from '@/utils/tournament-status';
 
 export default function TournamentsTab({ 
   communityId, 
@@ -64,37 +73,17 @@ export default function TournamentsTab({
   };
 
   const getStatusBadge = (status: Tournament['status']) => {
-    switch (status) {
-      case 'ONGOING':
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 animate-pulse">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-            Đang diễn ra
-          </span>
-        );
-      case 'REGISTRATION_OPEN':
-      case 'UPCOMING':
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-            <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-            Sắp diễn ra
-          </span>
-        );
-      case 'COMPLETED':
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
-            Đã kết thúc
-          </span>
-        );
-      case 'CANCELLED':
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-red-50 text-red-600 border border-red-200">
-            Đã hủy
-          </span>
-        );
-      default:
-        return null;
-    }
+    if (isTournamentDraft(status)) return null;
+
+    return (
+      <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold border ${getTournamentStatusClassName(status)}`}>
+        {(isTournamentInProgress(status) || isTournamentOpenForRegistration(status) || isTournamentUpcoming(status)) && (
+          <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse"></span>
+        )}
+        {isTournamentCompleted(status) && <span className="w-1.5 h-1.5 rounded-full bg-current"></span>}
+        {getTournamentStatusLabel(status)}
+      </span>
+    );
   };
 
   const getTypeBadge = (type: Tournament['tournamentType']) => {
@@ -123,7 +112,7 @@ export default function TournamentsTab({
     }
     // 2. Filter by Status
     if (activeFilter === 'ALL') return true;
-    if (activeFilter === 'UPCOMING') return t.status === 'UPCOMING' || t.status === 'REGISTRATION_OPEN';
+    if (activeFilter === 'UPCOMING') return isTournamentUpcoming(t.status) || isTournamentOpenForRegistration(t.status);
     return t.status === activeFilter;
   });
 
@@ -164,11 +153,11 @@ export default function TournamentsTab({
       
       // Determine overall status
       let overallStatus: Tournament['status'] = representative.status;
-      if (divs.some(d => d.status === 'ONGOING' || d.status === 'IN_PROGRESS')) {
+      if (divs.some(d => isTournamentInProgress(d.status))) {
         overallStatus = 'ONGOING';
-      } else if (divs.some(d => d.status === 'REGISTRATION_OPEN')) {
+      } else if (divs.some(d => isTournamentOpenForRegistration(d.status))) {
         overallStatus = 'REGISTRATION_OPEN';
-      } else if (divs.every(d => d.status === 'COMPLETED')) {
+      } else if (divs.every(d => isTournamentCompleted(d.status))) {
         overallStatus = 'COMPLETED';
       }
 

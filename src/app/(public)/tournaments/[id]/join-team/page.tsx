@@ -4,7 +4,7 @@ import { useEffect, useState, use } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Trophy, Calendar, MapPin, Users, ArrowLeft, Loader2, CheckCircle, AlertTriangle, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { tournamentsApi, Tournament, TournamentParticipant } from '@/features/tournaments/api';
+import { divisionsApi, tournamentsApi, Tournament, TournamentParticipant, type Division } from '@/features/tournaments/api';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { getErrorMessage } from '@/utils/error';
 import { formatDate, formatCurrency } from '@/utils/format';
@@ -19,12 +19,28 @@ export default function JoinTeamPage({ params }: { params: Promise<{ id: string 
   const searchParams = useSearchParams();
   const participantId = searchParams.get('pid') || '';
   const teamInviteToken = searchParams.get('token') || '';
+  const divisionId = searchParams.get('divisionId') || '';
 
   const { user, isAuthenticated } = useAuthStore();
   const [tournament, setTournament] = useState<Tournament | null>(null);
   const [participant, setParticipant] = useState<TournamentParticipant | null>(null);
+  const [division, setDivision] = useState<Division | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const buildTournamentDetailHref = (tournamentId: string, effectiveDivisionId?: string | null) => {
+    const params = new URLSearchParams();
+    if (participantId) {
+      params.set('pid', participantId);
+    }
+    if (teamInviteToken) {
+      params.set('token', teamInviteToken);
+    }
+    if (effectiveDivisionId) {
+      params.set('divisionId', effectiveDivisionId);
+    }
+    return `/tournaments/${tournamentId}${params.toString() ? `?${params.toString()}` : ''}`;
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -37,7 +53,10 @@ export default function JoinTeamPage({ params }: { params: Promise<{ id: string 
       try {
         setIsLoading(true);
         // Fetch tournament
-        const tRes = await tournamentsApi.getTournamentById(id);
+        const tRes = await tournamentsApi.getTournamentById(id, {
+          ...(participantId ? { pid: participantId } : {}),
+          ...(teamInviteToken ? { token: teamInviteToken } : {}),
+        });
         if (tRes.data) {
           setTournament(tRes.data);
         }
@@ -48,14 +67,23 @@ export default function JoinTeamPage({ params }: { params: Promise<{ id: string 
           const targetTeam = pRes.data.find(p => p.id === participantId);
           if (targetTeam) {
             setParticipant(targetTeam);
+            const effectiveDivisionId = divisionId || targetTeam.tournamentDivisionId || '';
+            if (effectiveDivisionId) {
+              const divisionRes = await divisionsApi.getDivisions(id);
+              if (divisionRes.data) {
+                setDivision(divisionRes.data.find((item) => item.id === effectiveDivisionId) ?? null);
+              }
+            } else {
+              setDivision(null);
+            }
           } else {
             toast.error('Đội thi đấu không tồn tại hoặc đã bị hủy.');
-            router.push(`/tournaments/${id}`);
+            router.push(buildTournamentDetailHref(id, divisionId));
           }
         }
       } catch (err) {
         toast.error('Không thể tải thông tin lời mời.');
-        router.push(`/tournaments/${id}`);
+        router.push(buildTournamentDetailHref(id, divisionId));
       } finally {
         setIsLoading(false);
       }
@@ -67,7 +95,14 @@ export default function JoinTeamPage({ params }: { params: Promise<{ id: string 
   const handleJoin = async () => {
     if (!isAuthenticated || !user) {
       toast.error('Vui lòng đăng nhập để chấp nhận lời mời tham gia đội.');
-      const redirectUrl = `/tournaments/${id}/join-team?pid=${participantId}&token=${teamInviteToken}`;
+      const params = new URLSearchParams({
+        pid: participantId,
+        token: teamInviteToken,
+      });
+      if (divisionId) {
+        params.set('divisionId', divisionId);
+      }
+      const redirectUrl = `/tournaments/${id}/join-team?${params.toString()}`;
       router.push(`/login?redirect=${encodeURIComponent(redirectUrl)}`);
       return;
     }
@@ -96,15 +131,29 @@ export default function JoinTeamPage({ params }: { params: Promise<{ id: string 
 
       toast.success('Gia nhập đội thi đấu thành công!');
 
-      const entryFee = Number(tournament?.entryFee || 0);
-      const paymentUrl = res.data?.paymentUrl;
+      const entryFee = Number((division?.entryFee ?? tournament?.entryFee) || 0);
+      const effectiveDivisionId = divisionId || participant?.tournamentDivisionId || '';
 
-      if (entryFee > 0 && paymentUrl) {
-        // Redirect to payment with the appropriate division ID if the tournament is a division
-        const divisionId = tournament?.parentId ? tournament.id : id;
-        router.push(`/payments/checkout?participantId=${participantId}&tournamentId=${divisionId}`);
+      if (entryFee > 0) {
+        const params = new URLSearchParams({
+          participantId,
+          tournamentId: id,
+          pid: participantId,
+          token: teamInviteToken,
+        });
+        if (effectiveDivisionId) {
+          params.set('divisionId', effectiveDivisionId);
+        }
+        router.push(`/payments/checkout?${params.toString()}`);
       } else {
-        router.push(`/tournaments/${id}`);
+        const params = new URLSearchParams({
+          pid: participantId,
+          token: teamInviteToken,
+        });
+        if (effectiveDivisionId) {
+          params.set('divisionId', effectiveDivisionId);
+        }
+        router.push(`/tournaments/${id}?${params.toString()}`);
       }
     } catch (err) {
       toast.error(getErrorMessage(err));
@@ -126,7 +175,10 @@ export default function JoinTeamPage({ params }: { params: Promise<{ id: string 
 
   const isLocked = tournament.isRegistrationLocked;
   const isExpired = tournament.registrationEndDate ? new Date() > new Date(tournament.registrationEndDate) : false;
-  const isNotOpen = tournament.status !== 'REGISTRATION_OPEN';
+  const isNotOpen =
+    tournament.status !== 'REGISTRATION_OPEN' &&
+    tournament.status !== 'UPCOMING' &&
+    tournament.status !== 'DRAFT';
 
   if (isLocked || isExpired || isNotOpen) {
     let title = 'Đăng ký đã đóng';
@@ -152,7 +204,7 @@ export default function JoinTeamPage({ params }: { params: Promise<{ id: string 
           <Button
             type="button"
             variant="outline"
-            onClick={() => router.push(`/tournaments/${tournament.id}`)}
+            onClick={() => router.push(buildTournamentDetailHref(tournament.id, divisionId || participant.tournamentDivisionId || ''))}
             className="w-full border-slate-200 hover:bg-slate-50 text-slate-650 text-xs font-bold"
           >
             Quay lại trang giải đấu
@@ -169,7 +221,7 @@ export default function JoinTeamPage({ params }: { params: Promise<{ id: string 
     <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-xl mx-auto">
         <button
-          onClick={() => router.push(`/tournaments/${tournament.id}`)}
+          onClick={() => router.push(buildTournamentDetailHref(tournament.id, divisionId || participant.tournamentDivisionId || ''))}
           className="flex items-center gap-2 text-slate-500 hover:text-slate-800 font-bold text-sm mb-6 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" /> Quay lại giải đấu

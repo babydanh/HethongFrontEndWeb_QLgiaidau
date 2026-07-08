@@ -4,26 +4,55 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { tournamentsApi, Tournament, TournamentParticipant } from '@/features/tournaments/api';
+import {
+  MyRegistrationParticipant,
+  tournamentsApi,
+  Tournament,
+  TournamentParticipant,
+} from '@/features/tournaments/api';
 import { usersApi, UserProfile } from '@/features/users/api';
 import { getErrorMessage } from '@/utils/error';
 import { trimAndNormalizeSpaces } from '@/utils/string';
 import { formatCurrency } from '@/utils/format';
+import {
+  isParticipantPendingPartner,
+  isParticipantReadyForNextStep,
+} from '@/utils/tournament-display';
 import { Copy, Check, Loader2, QrCode, Users, CreditCard, CheckCircle, AlertTriangle, ArrowRight, Trash2, Search, UserMinus, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface Props {
   tournament: Tournament;
+  tournamentId: string;
   inviteCode?: string;
   divisionId?: string;
 }
 
-export default function DoublesRegistrationFlow({ tournament, inviteCode, divisionId }: Props) {
+type RegistrationParticipant = TournamentParticipant & {
+  teamInviteLink?: string | null;
+};
+
+const normalizeRegistrationParticipant = (
+  participant?: MyRegistrationParticipant | TournamentParticipant | null,
+  fallbackTeamInviteLink?: string | null,
+): RegistrationParticipant | null => {
+  if (!participant) {
+    return null;
+  }
+
+  return {
+    ...participant,
+    members: participant.members ?? ('teamMembers' in participant ? participant.teamMembers : undefined) ?? [],
+    teamInviteLink: ('teamInviteLink' in participant ? participant.teamInviteLink : undefined) ?? fallbackTeamInviteLink ?? null,
+  };
+};
+
+export default function DoublesRegistrationFlow({ tournament, tournamentId, inviteCode, divisionId }: Props) {
   const router = useRouter();
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [teamName, setTeamName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [participant, setParticipant] = useState<TournamentParticipant | null>(null);
+  const [participant, setParticipant] = useState<RegistrationParticipant | null>(null);
   const [copied, setCopied] = useState(false);
   const [isPolling, setIsPolling] = useState(false);
   const [isWithdrawing, setIsWithdrawing] = useState(false);
@@ -48,7 +77,7 @@ export default function DoublesRegistrationFlow({ tournament, inviteCode, divisi
       if (diff <= 0) {
         setTimeLeft('Đã hết hạn 2 giờ');
         clearInterval(intervalId);
-        tournamentsApi.getMyRegistration(tournament.id, divisionId).then((res) => {
+        tournamentsApi.getMyRegistration(tournamentId, divisionId).then((res) => {
           if (!res.data?.registered) {
             setParticipant(null);
             setStep(1);
@@ -65,19 +94,22 @@ export default function DoublesRegistrationFlow({ tournament, inviteCode, divisi
     }, 1000);
 
     return () => clearInterval(intervalId);
-  }, [step, participant?.registeredAt, tournament.id, divisionId]);
+  }, [step, participant?.registeredAt, tournamentId, divisionId]);
 
   // Check if user already has an active registration when component mounts
   useEffect(() => {
     const checkRegistration = async () => {
       try {
-        const res = await tournamentsApi.getMyRegistration(tournament.id, divisionId);
+        const res = await tournamentsApi.getMyRegistration(tournamentId, divisionId);
         if (res.data && res.data.registered && res.data.participant) {
-          const part = res.data.participant;
+          const part = normalizeRegistrationParticipant(res.data.participant);
+          if (!part) {
+            return;
+          }
           setParticipant(part);
-          if (part.teamStatus === 'PENDING') {
+          if (isParticipantPendingPartner(part.teamStatus)) {
             setStep(2);
-          } else if (part.teamStatus === 'COMPLETE') {
+          } else if (isParticipantReadyForNextStep(part.teamStatus)) {
             setStep(3);
           }
         }
@@ -86,7 +118,7 @@ export default function DoublesRegistrationFlow({ tournament, inviteCode, divisi
       }
     };
     checkRegistration();
-  }, [tournament.id, divisionId]);
+  }, [tournamentId, divisionId]);
 
   // Polling for teammate to join during Step 2
   useEffect(() => {
@@ -98,10 +130,13 @@ export default function DoublesRegistrationFlow({ tournament, inviteCode, divisi
       }
       intervalId = setInterval(async () => {
         try {
-          const res = await tournamentsApi.getMyRegistration(tournament.id, divisionId);
+          const res = await tournamentsApi.getMyRegistration(tournamentId, divisionId);
           if (res.data && res.data.registered && res.data.participant) {
-            const part = res.data.participant;
-            if (part.teamStatus === 'COMPLETE') {
+            const part = normalizeRegistrationParticipant(res.data.participant);
+            if (!part) {
+              return;
+            }
+            if (isParticipantReadyForNextStep(part.teamStatus)) {
               setParticipant(part);
               setStep(3);
               toast.success('Đồng đội của bạn đã tham gia đội thành công!', { id: 'partner-joined' });
@@ -121,7 +156,7 @@ export default function DoublesRegistrationFlow({ tournament, inviteCode, divisi
     return () => {
       if (intervalId) clearInterval(intervalId);
     };
-  }, [step, participant?.id, tournament.id, isPolling, divisionId]);
+  }, [step, participant?.id, tournamentId, isPolling, divisionId]);
 
   const handleSearchPartner = async () => {
     const q = trimAndNormalizeSpaces(partnerQuery);
@@ -164,7 +199,7 @@ export default function DoublesRegistrationFlow({ tournament, inviteCode, divisi
     try {
       setIsSubmitting(true);
       const partnerEmailOrPhone = inviteLater ? undefined : (searchedPartner?.email || searchedPartner?.phoneNumber || partnerQuery);
-      const res = await tournamentsApi.register(tournament.id, {
+      const res = await tournamentsApi.register(tournamentId, {
         teamName: cleanName,
         inviteCode,
         partnerEmailOrPhone,
@@ -172,10 +207,14 @@ export default function DoublesRegistrationFlow({ tournament, inviteCode, divisi
       });
 
       if (res.data) {
-        const part = res.data.participant;
+        const part = normalizeRegistrationParticipant(res.data.participant, res.data.teamInviteLink);
+        if (!part) {
+          toast.error('Không nhận được dữ liệu đăng ký hợp lệ.');
+          return;
+        }
         setParticipant(part);
         toast.success(partnerEmailOrPhone ? 'Đăng ký ghép cặp thành công!' : 'Tạo đội thành công! Bây giờ hãy gửi link mời đồng đội.');
-        if (part.teamStatus === 'COMPLETE') {
+        if (isParticipantReadyForNextStep(part.teamStatus)) {
           setStep(3);
         } else {
           setStep(2);
@@ -191,11 +230,15 @@ export default function DoublesRegistrationFlow({ tournament, inviteCode, divisi
   const handleManualCheck = async () => {
     try {
       toast.loading('Đang kiểm tra trạng thái...', { id: 'manual-check' });
-      const res = await tournamentsApi.getMyRegistration(tournament.id, divisionId);
+      const res = await tournamentsApi.getMyRegistration(tournamentId, divisionId);
       if (res.data && res.data.registered && res.data.participant) {
-        const part = res.data.participant;
+        const part = normalizeRegistrationParticipant(res.data.participant);
+        if (!part) {
+          toast.error('Có lỗi xảy ra khi kiểm tra đăng ký.', { id: 'manual-check' });
+          return;
+        }
         setParticipant(part);
-        if (part.teamStatus === 'COMPLETE') {
+        if (isParticipantReadyForNextStep(part.teamStatus)) {
           setStep(3);
           toast.success('Đồng đội của bạn đã tham gia!', { id: 'manual-check' });
         } else {
@@ -239,7 +282,7 @@ export default function DoublesRegistrationFlow({ tournament, inviteCode, divisi
   const executeWithdraw = async (bankData?: { bankName: string; bankAccountNumber: string; bankAccountName: string }) => {
     try {
       setIsWithdrawing(true);
-      await tournamentsApi.withdraw(tournament.id, bankData, divisionId);
+      await tournamentsApi.withdraw(tournamentId, bankData, divisionId);
       toast.success('Đã rút khỏi giải đấu thành công.');
       setParticipant(null);
       setTeamName('');
@@ -267,12 +310,21 @@ export default function DoublesRegistrationFlow({ tournament, inviteCode, divisi
 
   const handlePayment = () => {
     if (!participant?.id) return;
-    router.push(`/payments/checkout?participantId=${participant.id}&tournamentId=${tournament.id}&divisionId=${divisionId || ''}`);
+    const params = new URLSearchParams({
+      participantId: participant.id,
+      tournamentId,
+    });
+    if (divisionId) {
+      params.set('divisionId', divisionId);
+    }
+    router.push(`/payments/checkout?${params.toString()}`);
   };
 
-  const partnerLink = participant?.teamInviteToken
-    ? `${window.location.origin}/tournaments/${tournament.id}/join-team?pid=${participant.id}&token=${participant.teamInviteToken}`
-    : '';
+  const partnerLink = participant?.teamInviteLink
+    ? participant.teamInviteLink
+    : participant?.teamInviteToken
+      ? `${window.location.origin}/tournaments/${tournamentId}/join-team?pid=${participant.id}&token=${participant.teamInviteToken}${divisionId ? `&divisionId=${encodeURIComponent(divisionId)}` : ''}`
+      : '';
 
   const qrImageUrl = partnerLink
     ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(partnerLink)}`

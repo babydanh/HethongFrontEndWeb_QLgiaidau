@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Tournament, tournamentsApi, TournamentParticipant, divisionsApi } from '@/features/tournaments/api';
+import { Tournament, tournamentsApi, TournamentParticipant } from '@/features/tournaments/api';
 import { ChevronDown, ChevronUp, User, Award } from 'lucide-react';
 import Link from 'next/link';
 
@@ -20,9 +20,10 @@ export default function TeamsTab({ tournament, tournamentId, divisionId }: Props
     const fetchParticipants = async () => {
       setIsLoading(true);
       try {
-        const res = divisionId
-          ? await divisionsApi.getDivisionParticipants(tournamentId ?? tournament.id, divisionId)
-          : await tournamentsApi.getTournamentParticipants(tournamentId ?? tournament.id);
+        const res = await tournamentsApi.getTournamentParticipants(
+          tournamentId ?? tournament.id,
+          divisionId,
+        );
         setParticipants(res.data);
       } catch (error) {
         console.warn('Could not fetch participants:', error);
@@ -49,9 +50,14 @@ export default function TeamsTab({ tournament, tournamentId, divisionId }: Props
   return (
     <div className="flex flex-col gap-6">
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-bold text-slate-900">
-          Danh sách đội tham gia ({participants.length}/{tournament.maxParticipants || '∞'})
-        </h3>
+        <div>
+          <h3 className="text-lg font-bold text-slate-900">
+            Danh sách đội/cặp tham gia ({participants.length}/{tournament.maxParticipants || '∞'})
+          </h3>
+          <p className="text-xs font-medium text-slate-500">
+            Chỉ hiển thị hồ sơ tham gia hợp lệ công khai.
+          </p>
+        </div>
       </div>
       
       {participants.length > 0 ? (

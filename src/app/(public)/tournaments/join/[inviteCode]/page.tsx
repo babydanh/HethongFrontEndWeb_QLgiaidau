@@ -117,7 +117,12 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
   const onSubmit = async (data: RegisterFormValues) => {
     if (!isAuthenticated || !user) {
       toast.error('Vui lòng đăng nhập để đăng ký tham gia giải đấu');
-      router.push(`/login?redirect=/tournaments/join/${inviteCode}`);
+      const redirectParams = new URLSearchParams();
+      if (selectedDivisionId) {
+        redirectParams.set('divisionId', selectedDivisionId);
+      }
+      const redirectUrl = `/tournaments/join/${inviteCode}${redirectParams.toString() ? `?${redirectParams.toString()}` : ''}`;
+      router.push(`/login?redirect=${encodeURIComponent(redirectUrl)}`);
       return;
     }
 
@@ -137,9 +142,20 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
       
       const entryFee = Number(selectedDivision?.entryFee || tournament?.entryFee || 0);
       if (entryFee > 0 && participantId && tournament) {
-        router.push(`/payments/checkout?participantId=${participantId}&tournamentId=${selectedDivisionId || tournament.id}`);
+        const params = new URLSearchParams({
+          participantId,
+          tournamentId: tournament.id,
+        });
+        if (selectedDivisionId) {
+          params.set('divisionId', selectedDivisionId);
+        }
+        router.push(`/payments/checkout?${params.toString()}`);
       } else if (tournament) {
-        router.push(`/tournaments/${tournament.id}`);
+        const params = new URLSearchParams();
+        if (selectedDivisionId) {
+          params.set('divisionId', selectedDivisionId);
+        }
+        router.push(`/tournaments/${tournament.id}${params.toString() ? `?${params.toString()}` : ''}`);
       } else {
         router.push('/tournaments');
       }
@@ -238,7 +254,7 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
                       {getDivisionBracketLabel(selectedDivision.bracketType)}
                     </span>
                     <span className="px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200">
-                      {selectedDivision._count?.participants ?? 0} đã đăng ký
+                      {selectedDivision._count?.participants ?? 0} hồ sơ tham gia
                     </span>
                   </div>
                 </div>
@@ -275,7 +291,7 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
                               {matchLabel}
                             </span>
                             <span className={`text-[9px] font-bold ${isActive ? 'text-blue-200' : 'text-slate-400'}`}>
-                              {bracketLabel} • {participantCount} đã đăng ký
+                              {bracketLabel} • {participantCount} hồ sơ tham gia
                             </span>
                           </span>
                         </button>

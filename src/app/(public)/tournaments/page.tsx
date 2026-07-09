@@ -276,12 +276,22 @@ export default function TournamentsListPage() {
                   
                   {/* Status Overlay (Top-Left) */}
                   <div className="absolute top-3 left-3 z-10">
-                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm border text-white ${getTournamentStatusClassName(tournament.status)} bg-black/75 backdrop-blur-sm`}>
-                      {(isTournamentOpenForRegistration(tournament.status) || isTournamentRegistrationClosed(tournament.status) || isTournamentUpcoming(tournament.status)) && (
-                        <span className="w-1.5 h-1.5 rounded-full bg-blue-300 animate-pulse" />
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm border ${getTournamentStatusClassName(tournament.status)}`}>
+                      {isTournamentOpenForRegistration(tournament.status) && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                       )}
-                      {isTournamentInProgress(tournament.status) && <span className="w-1.5 h-1.5 rounded-full bg-rose-300 animate-pulse" />}
-                      {isTournamentCompleted(tournament.status) && <span className="w-1.5 h-1.5 rounded-full bg-slate-300" />}
+                      {isTournamentUpcoming(tournament.status) && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                      )}
+                      {isTournamentRegistrationClosed(tournament.status) && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                      )}
+                      {isTournamentInProgress(tournament.status) && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+                      )}
+                      {isTournamentCompleted(tournament.status) && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                      )}
                       {getTournamentStatusLabel(tournament.status)}
                     </span>
                   </div>

@@ -41,8 +41,20 @@ export const getParticipantStatusLabel = (status?: string | null) => {
     return 'Đã duyệt';
   }
 
+  if (status === 'PENDING_PARTNER') {
+    return 'Chờ đồng đội';
+  }
+
+  if (status === 'PENDING_APPROVAL') {
+    return 'Chờ duyệt';
+  }
+
   if (status === 'PENDING') {
     return 'Chờ duyệt';
+  }
+
+  if (status === 'WAITLISTED') {
+    return 'Hàng chờ';
   }
 
   if (status === 'REJECTED') {
@@ -70,4 +82,55 @@ export const getParticipantStatusLabel = (status?: string | null) => {
   }
 
   return 'Chưa rõ';
+};
+
+export const isParticipantApproved = (status?: string | null) =>
+  status === 'COMPLETE';
+
+export const isParticipantPendingApproval = (status?: string | null) =>
+  status === 'PENDING_APPROVAL' || status === 'PENDING';
+
+export const isParticipantPendingPartner = (status?: string | null) =>
+  status === 'PENDING_PARTNER';
+
+export const isParticipantWaitlisted = (status?: string | null) =>
+  status === 'WAITLISTED';
+
+export const isParticipantReadyForNextStep = (status?: string | null) =>
+  isParticipantApproved(status) || isParticipantPendingApproval(status);
+
+export const getParticipantStatusClassName = (status?: string | null) => {
+  if (isParticipantApproved(status)) {
+    return 'border-emerald-100 bg-emerald-50 text-emerald-700';
+  }
+
+  if (isParticipantPendingApproval(status)) {
+    return 'border-amber-100 bg-amber-50 text-amber-700';
+  }
+
+  if (isParticipantPendingPartner(status)) {
+    return 'border-sky-100 bg-sky-50 text-sky-700';
+  }
+
+  if (isParticipantWaitlisted(status)) {
+    return 'border-violet-100 bg-violet-50 text-violet-700';
+  }
+
+  if (status === 'REJECTED') {
+    return 'border-orange-100 bg-orange-50 text-orange-700';
+  }
+
+  if (status === 'KICKED') {
+    return 'border-rose-100 bg-rose-50 text-rose-700';
+  }
+
+  if (status === 'DISQUALIFIED') {
+    return 'border-red-100 bg-red-50 text-red-700';
+  }
+
+  if (status === 'WITHDRAWN') {
+    return 'border-slate-200 bg-slate-100 text-slate-600';
+  }
+
+  return 'border-slate-200 bg-slate-100 text-slate-600';
 };

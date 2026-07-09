@@ -130,16 +130,6 @@ export interface RoundConfigPayload {
   config?: Record<string, unknown>;
 }
 
-export interface GuestRegistrationPayload {
-  teamName: string;
-  fullName: string;
-  phoneNumber?: string;
-  email?: string;
-  matchType?: 'SINGLES' | 'DOUBLES' | 'MIXED_DOUBLES';
-  divisionId?: string;
-  partnerFullName?: string;
-}
-
 export interface MockPaymentPayload {
   organizationId: string;
   amount: number;
@@ -155,9 +145,23 @@ export interface RegisterTournamentPayload {
   divisionId?: string;
   tournamentDivisionId?: string;
   matchType?: 'SINGLES' | 'DOUBLES' | 'MIXED_DOUBLES';
-  guestName?: string;
-  guestEmail?: string;
-  guestPhone?: string;
+}
+
+export interface RegisterTournamentResponse {
+  participant: TournamentParticipant;
+  paymentUrl?: string;
+  teamInviteLink?: string;
+}
+
+export interface MyRegistrationParticipant extends Omit<TournamentParticipant, 'members'> {
+  members?: TournamentParticipant['members'];
+  teamMembers?: TournamentParticipant['members'];
+  teamInviteLink?: string | null;
+}
+
+export interface MyRegistrationResponse {
+  registered: boolean;
+  participant?: MyRegistrationParticipant | null;
 }
 
 export const tournamentsApi = {
@@ -169,16 +173,16 @@ export const tournamentsApi = {
   getTournamentById: (id: string, params?: Record<string, unknown>) => api.get<ApiResponse<Tournament>>(`/tournaments/${id}`, { params }),
   getTournamentByInviteCode: (inviteCode: string) => api.get<ApiResponse<Tournament>>(`/tournaments/join/${inviteCode}`),
   joinTournamentByInviteCode: <T>(inviteCode: string, data: T) => api.post<ApiResponse<{ participantId: string }>>(`/tournaments/join/${inviteCode}`, data),
-  register: (id: string, data: RegisterTournamentPayload) =>
-    api.post<ApiResponse<{ participant: TournamentParticipant; paymentUrl?: string; teamInviteLink?: string }>>(`/tournaments/${id}/register`, data),
+  register: (id: string, data: RegisterTournamentPayload) => {
+    const { inviteCode, ...body } = data;
+    return api.post<ApiResponse<RegisterTournamentResponse>>(`/tournaments/${id}/register`, body, {
+      params: inviteCode ? { invite: inviteCode } : undefined,
+    });
+  },
   getMyRegistration: (id: string, divisionId?: string) =>
-    api.get<ApiResponse<{
-      registered: boolean;
-      participant?: (TournamentParticipant & {
-        teamMembers?: TournamentParticipant['members'];
-        teamInviteLink?: string;
-      }) | null;
-    }>>(`/tournaments/${id}/my-registration`, { params: { _t: Date.now(), ...(divisionId ? { divisionId } : {}) } }),
+    api.get<ApiResponse<MyRegistrationResponse>>(`/tournaments/${id}/my-registration`, {
+      params: { _t: Date.now(), ...(divisionId ? { divisionId } : {}) },
+    }),
   withdraw: (id: string, bankData?: { bankName?: string; bankAccountNumber?: string; bankAccountName?: string }, divisionId?: string) =>
     api.post<ApiResponse<{ message: string; refundAmount?: number }>>(`/tournaments/${id}/withdraw`, { ...(bankData || {}), ...(divisionId ? { tournamentDivisionId: divisionId } : {}) }),
   createParentTournament: <T>(data: T) => api.post<ApiResponse<ParentTournament>>('/tournaments/parent', data),
@@ -194,6 +198,10 @@ export const tournamentsApi = {
   removeTournamentGalleryImage: (id: string, index: number) => api.delete<ApiResponse<Tournament>>(`/tournaments/${id}/gallery/${index}`),
   getTournamentParticipants: (id: string, divisionId?: string) =>
     api.get<ApiResponse<TournamentParticipant[]>>(`/tournaments/${id}/participants`, {
+      params: { _t: Date.now(), ...(divisionId ? { divisionId } : {}) },
+    }),
+  getOrganizerTournamentParticipants: (id: string, divisionId?: string) =>
+    api.get<ApiResponse<TournamentParticipant[]>>(`/tournaments/${id}/manage/participants`, {
       params: { _t: Date.now(), ...(divisionId ? { divisionId } : {}) },
     }),
   getOpsAuditLogs: (id: string, divisionId?: string) =>
@@ -247,8 +255,6 @@ export const tournamentsApi = {
     }>>(`/tournaments/${id}/finalize-registration`),
   updateRoundConfig: (id: string, roundNumber: number, data: RoundConfigPayload) =>
     api.put<ApiResponse<{ success: boolean }>>(`/tournaments/${id}/rounds/${roundNumber}/config`, data),
-  registerGuest: (id: string, data: GuestRegistrationPayload) =>
-    api.post<ApiResponse<{ guestId: string; confirmationCode: string }>>(`/tournaments/${id}/register-guest`, data),
   mockPayment: (data: MockPaymentPayload) =>
     api.post<ApiResponse<{ paymentId: string; status: 'PENDING' | 'SUCCESS'; organizationId: string }>>('/tournaments/mock-payment', data),
   updateMatchSchedule: (matchId: string, data: { courtId?: string | null; courtName?: string | null; courtAddress?: string | null; refereeId?: string | null; scheduledAt?: string | null; matchConfig?: Record<string, unknown> | null }) =>

@@ -195,9 +195,21 @@ export interface TournamentParticipant {
   teamName: string;
   seed: number | null;
   isPaid: boolean;
+  tournamentDivisionId?: string | null;
   registeredAt: string;
   teamInviteToken?: string | null;
-  teamStatus?: 'PENDING' | 'COMPLETE' | 'REJECTED' | 'WITHDRAWN' | 'KICKED' | 'NO_SHOW' | 'DISQUALIFIED' | 'REPLACED';
+  teamStatus?:
+    | 'PENDING'
+    | 'PENDING_APPROVAL'
+    | 'PENDING_PARTNER'
+    | 'WAITLISTED'
+    | 'COMPLETE'
+    | 'REJECTED'
+    | 'WITHDRAWN'
+    | 'KICKED'
+    | 'NO_SHOW'
+    | 'DISQUALIFIED'
+    | 'REPLACED';
   registeredBy: {
     id: string;
     fullName: string | null;

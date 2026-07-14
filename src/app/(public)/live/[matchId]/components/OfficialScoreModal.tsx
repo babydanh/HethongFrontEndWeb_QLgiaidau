@@ -26,6 +26,7 @@ export function OfficialScoreModal({
   team2Name,
   isSubmitting,
   scorePresentation,
+  activeSetIndex,
   ...controlProps
 }: OfficialScoreModalProps) {
   return (
@@ -63,6 +64,10 @@ export function OfficialScoreModal({
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Vòng hiện tại</p>
                   <p className="mt-1 text-sm font-semibold text-slate-200">Vòng {match.roundNumber}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Set hiện tại</p>
+                  <p className="mt-1 text-sm font-semibold text-slate-200">Set {activeSetIndex !== undefined ? activeSetIndex + 1 : 1}</p>
                 </div>
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Trạng thái trận</p>
@@ -120,6 +125,7 @@ export function OfficialScoreModal({
                 team2Name={team2Name}
                 isSubmitting={isSubmitting}
                 scorePresentation={scorePresentation}
+                activeSetIndex={activeSetIndex}
                 {...controlProps}
               />
             </div>

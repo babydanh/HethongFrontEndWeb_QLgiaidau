@@ -17,7 +17,7 @@ import { categoriesApi, type Category } from '@/features/categories/api';
 import type { SportRuleKind } from '@/types/tournament';
 
 const step2Schema = z.object({
-  format: z.enum(['SINGLE_ELIMINATION', 'DOUBLE_ELIMINATION', 'ROUND_ROBIN']),
+  format: z.enum(['SINGLE_ELIMINATION', 'DOUBLE_ELIMINATION', 'ROUND_ROBIN', 'GROUP_STAGE_KNOCKOUT']),
   maxParticipants: z.string(),
   setsToWin: z.number().min(1).max(5),
   pointsPerSet: z.number().min(1).max(50),
@@ -129,6 +129,7 @@ export default function Step2Format() {
     { id: 'SINGLE_ELIMINATION', label: 'Loại Trực Tiếp', icon: Trophy, desc: 'Đội thua sẽ bị loại khỏi giải đấu ngay lập tức.' },
     { id: 'DOUBLE_ELIMINATION', label: 'Nhánh Thắng / Nhánh Thua', icon: LayoutGrid, desc: 'Đội thua một trận sẽ rớt xuống nhánh thua.' },
     { id: 'ROUND_ROBIN', label: 'Vòng Tròn Tính Điểm', icon: RotateCw, desc: 'Tất cả các đội đều gặp nhau một lần.' },
+    { id: 'GROUP_STAGE_KNOCKOUT', label: 'Vòng Bảng + Loại Trực Tiếp', icon: LayoutGrid, desc: 'Chia bảng đấu vòng tròn, sau đó các đội nhất bảng vào vòng loại trực tiếp.' },
   ];
 
   return (
@@ -150,7 +151,7 @@ export default function Step2Format() {
               return (
                 <div 
                   key={opt.id}
-                  onClick={() => setValue('format', opt.id as 'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION' | 'ROUND_ROBIN')}
+                  onClick={() => setValue('format', opt.id as 'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION' | 'ROUND_ROBIN' | 'GROUP_STAGE_KNOCKOUT')}
                   className={`cursor-pointer rounded-xl border p-4 transition-all ${
                     isSelected ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500' : 'border-slate-200 bg-white hover:border-slate-300'
                   }`}

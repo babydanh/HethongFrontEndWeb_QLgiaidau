@@ -129,10 +129,18 @@ export default function TeamsTab({ tournament, tournamentId, divisionId }: Props
                                     </div>
                                     <div>
                                       <p className="font-bold text-slate-900 text-sm">{member.fullName || 'Thành viên'}</p>
-                                      <p className="text-xs text-slate-500 font-medium flex items-center gap-1 mt-0.5">
-                                        <Award className="w-3.5 h-3.5 text-amber-500" />
-                                        <span>{member.elo.tierName} • <strong>{member.elo.eloPoints}</strong> ELO</span>
-                                      </p>
+                                      {member.isMock ? (
+                                        <p className="text-xs text-slate-400 font-medium mt-0.5">
+                                          VĐV ảo
+                                        </p>
+                                      ) : member.elo ? (
+                                        <p className="text-xs text-slate-500 font-medium flex items-center gap-1 mt-0.5">
+                                          <Award className="w-3.5 h-3.5 text-amber-500" />
+                                          <span>
+                                            {member.elo.tierName} • <strong>{member.elo.eloPoints}</strong> ELO
+                                          </span>
+                                        </p>
+                                      ) : null}
                                     </div>
                                   </Link>
                                   <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold uppercase border ${

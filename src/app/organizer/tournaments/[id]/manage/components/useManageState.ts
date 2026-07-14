@@ -70,6 +70,7 @@ export function useManageState(id: string) {
   const [prizeDescription, setPrizeDescription] = useState('');
   const [contactInfo, setContactInfo] = useState<Record<string,string|undefined>>({});
   const [visibility, setVisibility] = useState<'PUBLIC'|'PRIVATE'>('PUBLIC');
+  const [registrationMode, setRegistrationMode] = useState<'OPEN'|'APPROVAL'|'INVITE_ONLY'>('OPEN');
   const [genderRestriction, setGenderRestriction] = useState<'MALE'|'FEMALE'|'MIXED'|''>('');
 
   // ── Schedule ──
@@ -104,6 +105,23 @@ export function useManageState(id: string) {
   const [isSavingConfig, setIsSavingConfig] = useState(false);
   const [tiebreakerMode, setTiebreakerMode] = useState<'split'|'playoff'>('split');
   const [roundsToPlay, setRoundsToPlay] = useState(1);
+
+  // Round Robin scoring config
+  const [rrWinPoints, setRrWinPoints] = useState(3);
+  const [rrLossPoints, setRrLossPoints] = useState(0);
+  const [rrTiebreakerRule, setRrTiebreakerRule] = useState<'H2H_POINTS' | 'SET_DIFF' | 'POINT_DIFF'>('H2H_POINTS');
+  const [isSavingRoundRobinConfig, setIsSavingRoundRobinConfig] = useState(false);
+
+  // Group Stage Knockout config
+  const [numGroups, setNumGroups] = useState(2);
+  const [teamsPerGroup, setTeamsPerGroup] = useState(4);
+  const [teamsAdvancing, setTeamsAdvancing] = useState(2);
+  const [allowBestThird, setAllowBestThird] = useState(false);
+  const [gskPlayoffType, setGskPlayoffType] = useState<'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION'>('SINGLE_ELIMINATION');
+  const [gskSeedingType, setGskSeedingType] = useState<'SEEDED' | 'RANDOM'>('SEEDED');
+  const [gskRoundsToPlay, setGskRoundsToPlay] = useState(1);
+  const [isSavingGskConfig, setIsSavingGskConfig] = useState(false);
+  const [isAdvancingStandings, setIsAdvancingStandings] = useState(false);
 
   // ── Stage modal ──
   const [selectedStage, setSelectedStage] = useState<BracketStage|null>(null);
@@ -147,6 +165,7 @@ export function useManageState(id: string) {
   const [isSeedingMock, setIsSeedingMock] = useState(false);
   const [isClearingMock, setIsClearingMock] = useState(false);
   const [wildcardEmailOrPhone, setWildcardEmailOrPhone] = useState('');
+  const [wildcardPartnerEmailOrPhone, setWildcardPartnerEmailOrPhone] = useState('');
   const [wildcardTeamName, setWildcardTeamName] = useState('');
   const [isGeneratingBracket, setIsGeneratingBracket] = useState(false);
   const [isAssigningWildcard, setIsAssigningWildcard] = useState(false);
@@ -155,8 +174,12 @@ export function useManageState(id: string) {
   const [hasConfigBeforeLock, setHasConfigBeforeLock] = useState(false);
   const [isPayingPlatformFee, setIsPayingPlatformFee] = useState(false);
   const [isPayingPublishFee, setIsPayingPublishFee] = useState(false);
+  const [seedingMethod, setSeedingMethod] = useState<'ELO' | 'RANDOM' | 'MANUAL'>('MANUAL');
+  const [isAutoSeeding, setIsAutoSeeding] = useState(false);
   const selectedCategory = categories.find((category) => category.id === categoryId) ?? null;
   const availableMatchFormatOptions = getAllowedMatchFormatOptions(selectedCategory);
+  const selectedDivision = divisions.find((d) => d.id === selectedDivisionId);
+  const bracketType = selectedDivision?.bracketType || null;
 
   const getFormatLabel = (mt: string, gr?: string|null) => {
     if (mt === 'SINGLES') return gr === 'FEMALE' ? 'Đơn Nữ' : 'Đơn Nam';
@@ -318,6 +341,10 @@ export function useManageState(id: string) {
         visibility,
         registrationStartDate: registrationStartDate ? new Date(registrationStartDate).toISOString() : null,
         registrationEndDate: registrationEndDate ? new Date(registrationEndDate).toISOString() : null,
+        tournamentConfig: {
+          ...tournament?.tournamentConfig,
+          registrationMode,
+        }
       });
       toast.success('Lưu thông tin đăng ký thành công!');
       await fetchTournamentData();
@@ -349,7 +376,27 @@ export function useManageState(id: string) {
     await handleParticipantModeration(participantId, 'COMPLETE', 'Đã duyệt đăng ký thành công!');
   };
 
+  const handleDeleteMockParticipant = async (participantId: string) => {
+    setActiveParticipantActionId(participantId);
+    try {
+      await tournamentsApi.deleteMockParticipant(id, participantId);
+      toast.success('Đã xoá dữ liệu mock thành công!');
+      await refetchDivisionData();
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setActiveParticipantActionId(null);
+    }
+  };
+
   const handleRejectParticipant = async (participantId: string) => {
+    const participant = participants.find((item) => item.id === participantId);
+    const isMockParticipant = Boolean(participant?.members?.some((member) => member.isMock));
+    if (isMockParticipant) {
+      await handleDeleteMockParticipant(participantId);
+      return;
+    }
+
     await handleParticipantModeration(participantId, 'REJECTED', 'Đã từ chối đăng ký thành công!');
   };
 
@@ -400,6 +447,64 @@ export function useManageState(id: string) {
       } : current);
     } catch (err) { toast.error(getErrorMessage(err)); }
     finally { setIsSavingConfig(false); }
+  };
+
+  const handleSaveRoundRobinConfig = async () => {
+    if (!tournament || !selectedDivisionId) { toast.error('Vui lòng chọn hình thức'); return; }
+    setIsSavingRoundRobinConfig(true);
+    try {
+      await tournamentsApi.updateDivisionConfig(tournament.id, selectedDivisionId, {
+        roundConfig: {
+          winPoints: rrWinPoints,
+          lossPoints: rrLossPoints,
+          tiebreakerRule: rrTiebreakerRule,
+          roundsToPlay,
+          tiebreakerMode,
+        },
+      });
+      toast.success('Lưu cấu hình vòng bảng thành công!');
+      await refetchDivisionData();
+    } catch (err) { toast.error(getErrorMessage(err)); }
+    finally { setIsSavingRoundRobinConfig(false); }
+  };
+
+  const handleAdvanceStandings = async () => {
+    if (!tournament || !selectedDivisionId) { toast.error('Vui lòng chọn hình thức'); return; }
+    setIsAdvancingStandings(true);
+    try {
+      const rrStage = bracket?.stages?.find((s) => s.type === 'ROUND_ROBIN');
+      if (!rrStage) {
+        toast.error('Không tìm thấy vòng bảng để chuyển tiếp');
+        setIsAdvancingStandings(false);
+        return;
+      }
+      await tournamentsApi.advanceStandings(tournament.id, {
+        divisionId: selectedDivisionId,
+        stageId: rrStage.id,
+      });
+      toast.success('Chốt vòng bảng & chuyển tiếp thành công!');
+      await refetchDivisionData();
+    } catch (err) { toast.error(getErrorMessage(err)); }
+    finally { setIsAdvancingStandings(false); }
+  };
+
+  const handleSaveGskConfig = async () => {
+    if (!tournament || !selectedDivisionId) { toast.error('Vui lòng chọn hình thức'); return; }
+    setIsSavingGskConfig(true);
+    try {
+      await tournamentsApi.updateDivisionConfig(tournament.id, selectedDivisionId, {
+        groupStageKnockout: {
+          groupsConfig: { numGroups, teamsPerGroup, roundsToPlay: gskRoundsToPlay },
+          advancementConfig: { teamsAdvancing, allowWildcardThird: allowBestThird, wildcardTeamsAdvancing: allowBestThird ? 1 : 0 },
+          playoffConfig: { type: gskPlayoffType, seedingType: gskSeedingType },
+          scoring: { winPoints: rrWinPoints, lossPoints: rrLossPoints },
+          tiebreakerRules: { primary: rrTiebreakerRule, secondary: [] },
+        },
+      });
+      toast.success('Lưu cấu hình vòng bảng + knockout thành công!');
+      await refetchDivisionData();
+    } catch (err) { toast.error(getErrorMessage(err)); }
+    finally { setIsSavingGskConfig(false); }
   };
 
   const handleSaveFinanceConfig = async () => {
@@ -568,9 +673,38 @@ export function useManageState(id: string) {
     if (!wildcardEmailOrPhone.trim() || !wildcardTeamName.trim()) { toast.error('Nhập đầy đủ thông tin'); return; }
     if (divisions.length > 0 && !selectedDivisionId) { toast.error('Chọn hình thức trước'); return; }
     setIsAssigningWildcard(true);
-    try { await tournamentsApi.assignReservedSlot(id, wildcardEmailOrPhone.trim(), wildcardTeamName.trim(), undefined, selectedDivisionId||undefined); toast.success('Gán suất đặc cách thành công!'); setWildcardEmailOrPhone(''); setWildcardTeamName(''); await refetchDivisionData(); }
+    try { await tournamentsApi.assignReservedSlot(id, wildcardEmailOrPhone.trim(), wildcardTeamName.trim(), wildcardPartnerEmailOrPhone.trim() || undefined, selectedDivisionId||undefined); toast.success('Gán suất đặc cách thành công!'); setWildcardEmailOrPhone(''); setWildcardPartnerEmailOrPhone(''); setWildcardTeamName(''); await refetchDivisionData(); }
     catch (err) { toast.error(getErrorMessage(err)); }
     finally { setIsAssigningWildcard(false); }
+  };
+
+  const handleAutoSeed = async () => {
+    setIsAutoSeeding(true);
+    try {
+      await tournamentsApi.autoSeedParticipants(id, selectedDivisionId || undefined);
+      toast.success('Xếp hạt giống tự động thành công!');
+      await refetchDivisionData();
+    } catch (err) { toast.error(getErrorMessage(err)); }
+    finally { setIsAutoSeeding(false); }
+  };
+
+  const handleSwapSeeds = async (participantId1: string, participantId2: string) => {
+    try {
+      const p1 = participants.find(p => p.id === participantId1);
+      const p2 = participants.find(p => p.id === participantId2);
+      if (!p1 || !p2) {
+        toast.error('Không tìm thấy đội');
+        return;
+      }
+      await tournamentsApi.updateTournamentSeeds(id, [
+        { participantId: participantId1, seed: p2.seed ?? 0 },
+        { participantId: participantId2, seed: p1.seed ?? 0 },
+      ]);
+      toast.success('Đã hoán đổi hạt giống!');
+      await refetchDivisionData();
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    }
   };
 
   const handleOpenRoundModal = (stage: BracketStage, roundNumber: number) => {
@@ -714,6 +848,7 @@ export function useManageState(id: string) {
         const t = tRes.data; setTournament(t);
         setName(t.name); setCategoryId(t.categoryId); setDescription(t.description||''); setBannerUrl(t.bannerUrl||''); setLogoUrl(t.logoUrl||'');
         setPrizeDescription(t.prizeDescription||''); setContactInfo(t.contactInfo||{}); setVisibility(t.visibility||'PUBLIC'); setGenderRestriction(t.genderRestriction||'');
+        setRegistrationMode(t.tournamentConfig?.registrationMode || 'OPEN');
         setVenueId(t.venueId||'');
         if (t.venue) { setCustomVenueName(t.venue.name||''); setCustomVenueAddress(t.venue.locationAddress||''); }
         setStartDate(t.startDate?.substring(0,16)||''); setEndDate(t.endDate?.substring(0,16)||'');
@@ -872,7 +1007,7 @@ export function useManageState(id: string) {
     isCreatingDivision, setIsCreatingDivision, divisionPendingDelete, setDivisionPendingDelete, isDeletingDivision, setIsDeletingDivision,
     name, setName, categoryId, setCategoryId, description, setDescription,
     bannerUrl, setBannerUrl, logoUrl, setLogoUrl, prizeDescription, setPrizeDescription,
-    contactInfo, setContactInfo, visibility, setVisibility, genderRestriction, setGenderRestriction,
+    contactInfo, setContactInfo, visibility, setVisibility, registrationMode, setRegistrationMode, genderRestriction, setGenderRestriction,
     venueId, setVenueId, customVenueName, setCustomVenueName, customVenueAddress, setCustomVenueAddress,
     provinces, setProvinces, districts, setDistricts, wards, setWards,
     provinceCode, setProvinceCode, districtCode, setDistrictCode, wardCode, setWardCode,
@@ -883,6 +1018,14 @@ export function useManageState(id: string) {
     maxDeucePoints, setMaxDeucePoints, superTiebreakEnabled, setSuperTiebreakEnabled,
     superTiebreakSetIndex, setSuperTiebreakSetIndex, superTiebreakPoints, setSuperTiebreakPoints,
     isSavingConfig, setIsSavingConfig, tiebreakerMode, setTiebreakerMode, roundsToPlay, setRoundsToPlay,
+    bracketType,
+    rrWinPoints, setRrWinPoints, rrLossPoints, setRrLossPoints,
+    rrTiebreakerRule, setRrTiebreakerRule,
+    numGroups, setNumGroups, teamsPerGroup, setTeamsPerGroup, teamsAdvancing, setTeamsAdvancing,
+    allowBestThird, setAllowBestThird, gskPlayoffType, setGskPlayoffType, gskSeedingType, setGskSeedingType,
+    gskRoundsToPlay, setGskRoundsToPlay,
+    isSavingRoundRobinConfig, setIsSavingRoundRobinConfig,
+    isSavingGskConfig, setIsSavingGskConfig, isAdvancingStandings, setIsAdvancingStandings,
     availableMatchFormatOptions,
     selectedStage, setSelectedStage, selectedRoundNumber, setSelectedRoundNumber,
     stageVenueId, setStageVenueId, stageScheduledDate, setStageScheduledDate, stageNotificationNote, setStageNotificationNote,
@@ -902,7 +1045,8 @@ export function useManageState(id: string) {
     isPayingPlatformFee, setIsPayingPlatformFee, isPayingPublishFee, setIsPayingPublishFee,
     newGalleryUrl, setNewGalleryUrl, isAddingImage, setIsAddingImage,
     mockNamesText, setMockNamesText, isSeedingMock, setIsSeedingMock, isClearingMock, setIsClearingMock,
-    wildcardEmailOrPhone, setWildcardEmailOrPhone, wildcardTeamName, setWildcardTeamName,
+    wildcardEmailOrPhone, setWildcardEmailOrPhone, wildcardPartnerEmailOrPhone, setWildcardPartnerEmailOrPhone, wildcardTeamName, setWildcardTeamName,
+    seedingMethod, setSeedingMethod, isAutoSeeding, setIsAutoSeeding,
     activeParticipantActionId, setActiveParticipantActionId,
     isGeneratingBracket, setIsGeneratingBracket, isAssigningWildcard, setIsAssigningWildcard,
     // actions
@@ -912,9 +1056,10 @@ export function useManageState(id: string) {
     handleGenerateBracket, handleRequestPayout, handleRegenerateInviteCode,
     handlePublish, handlePayPublishFee, handleDeleteTournament, handlePayPlatformFee,
     handleTournamentStepTransition, handleOpenLockModal, handleConfirmLock,
-    handleSeedMockData, handleClearMockData, handleAssignWildcard, handleApproveParticipant, handleRejectParticipant,
+    handleSeedMockData, handleClearMockData, handleAssignWildcard, handleAutoSeed, handleSwapSeeds, handleApproveParticipant, handleRejectParticipant,
     handleOpenRoundModal, handleSaveStageDetails,
     handleOpenScheduling, handleSaveSchedule,
+    handleSaveRoundRobinConfig, handleAdvanceStandings, handleSaveGskConfig,
     // helpers
     getFormatLabel, getBracketLabel, getStatusLabel, publishFeeAmount, inviteLink,
   };

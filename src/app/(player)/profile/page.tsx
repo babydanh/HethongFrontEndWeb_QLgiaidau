@@ -1,14 +1,24 @@
-'use client';
+﻿'use client';
 
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { Button } from '@/components/ui/Button';
 import Link from 'next/link';
 import { buildMatchScoreSummary } from '@/features/matches/score-display';
-import { Trophy, Calendar, Users, Activity, Settings, MapPin, Edit3, ShieldCheck, Loader2, Phone, UploadCloud, X, Mail, Camera, AlertTriangle, ChevronRight, Zap, Award } from 'lucide-react';
+import { Trophy, Calendar, Users, Activity, Settings, MapPin, Edit3, ShieldCheck, Loader2, Phone, UploadCloud, X, Mail, Camera, AlertTriangle, ChevronRight, Zap, Award, Bookmark } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { usersApi, UserProfile } from '@/features/users/api';
 import { communitiesApi, Community } from '@/features/communities/api';
-import { formatDate } from '@/utils/format';
+import { formatDate, formatCurrency } from '@/utils/format';
+import {
+  getTournamentStatusClassName,
+  getTournamentStatusLabel,
+  isTournamentCancelled,
+  isTournamentCompleted,
+  isTournamentInProgress,
+  isTournamentOpenForRegistration,
+  isTournamentUpcoming,
+} from '@/utils/tournament-status';
+import { sortFollowedTournaments } from '@/utils/tournament-follow';
 import Image from 'next/image';
 import { api } from '@/lib/axios';
 import { uploadApi } from '@/features/upload/api';
@@ -17,7 +27,7 @@ import { Modal, ModalContent, ModalHeader, ModalTitle } from '@/components/ui/Mo
 import toast from 'react-hot-toast';
 import { ApiResponse } from '@/types/api';
 import { rankingsApi, PlayerRanking, EloHistoryLog } from '@/features/rankings/api';
-import { tournamentsApi, Tournament } from '@/features/tournaments/api';
+import { tournamentsApi, Tournament, BracketMatch, BracketStage } from '@/features/tournaments/api';
 import { matchesApi, Match } from '@/features/matches/api';
 import { EloTierBadge } from '@/components/ui/EloTierBadge';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
@@ -33,12 +43,183 @@ interface VerificationTicket {
   createdAt: string;
 }
 
+type ProfileTab = 'overview' | 'tournaments' | 'achievements' | 'matches' | 'elo';
+
+const PROFILE_TABS = ['overview', 'tournaments', 'achievements', 'matches', 'elo'] as const;
+
+const isProfileTab = (value: string): value is ProfileTab =>
+  (PROFILE_TABS as readonly string[]).includes(value);
+
+type AchievementRank = 1 | 2 | 3;
+
+interface AchievementCard {
+  tournamentId: string;
+  tournamentName: string;
+  rank: AchievementRank;
+  label: string;
+  colorClass: string;
+  textClass: string;
+  borderClass: string;
+  completedAt?: string | null;
+  tournamentDate?: string | null;
+}
+
+const getAchievementMeta = (rank: AchievementRank) => {
+  switch (rank) {
+    case 1:
+      return {
+        label: 'Quán quân',
+        colorClass: 'bg-amber-50',
+        textClass: 'text-amber-700',
+        borderClass: 'border-amber-200',
+      };
+    case 2:
+      return {
+        label: 'Á quân',
+        colorClass: 'bg-slate-50',
+        textClass: 'text-slate-700',
+        borderClass: 'border-slate-200',
+      };
+    case 3:
+    default:
+      return {
+        label: 'Hạng ba',
+        colorClass: 'bg-orange-50',
+        textClass: 'text-orange-700',
+        borderClass: 'border-orange-200',
+      };
+  }
+};
+
+const hasUserInParticipant = (
+  participant: BracketMatch['participant1'] | BracketMatch['participant2'],
+  userId: string,
+) => Boolean(participant?.members?.some((member) => member.userId === userId));
+
+const deriveTournamentPlacement = (
+  tournament: Tournament,
+  stages: BracketStage[],
+  userId: string,
+): AchievementCard | null => {
+  const allMatches = stages.flatMap((stage) =>
+    stage.groups.flatMap((group) =>
+      group.matches.map((match) => ({
+        ...match,
+        stageOrder: stage.order,
+      })),
+    ),
+  );
+
+  const userMatches = allMatches.filter(
+    (match) =>
+      hasUserInParticipant(match.participant1, userId) ||
+      hasUserInParticipant(match.participant2, userId),
+  );
+  if (userMatches.length === 0) return null;
+
+  const completedUserMatches = userMatches
+    .filter((match) => match.status === 'COMPLETED')
+    .sort((a, b) => (a.stageOrder - b.stageOrder) || ((a.completedAt || '').localeCompare(b.completedAt || '')));
+
+  if (completedUserMatches.length === 0) return null;
+
+  const maxStageOrder = Math.max(...allMatches.map((match) => match.stageOrder));
+  const lastStageMatches = allMatches.filter((match) => match.stageOrder === maxStageOrder && match.status === 'COMPLETED');
+  const prevStageWinners = new Set(
+    allMatches
+      .filter((match) => match.stageOrder === maxStageOrder - 1 && match.status === 'COMPLETED' && match.winnerId)
+      .map((match) => match.winnerId as string),
+  );
+
+  let finalMatches = lastStageMatches.filter((match) => {
+    const p1 = match.participant1?.id ? prevStageWinners.has(match.participant1.id) : false;
+    const p2 = match.participant2?.id ? prevStageWinners.has(match.participant2.id) : false;
+    return p1 && p2;
+  });
+  const bronzeMatches = lastStageMatches.filter((match) => !finalMatches.includes(match));
+
+  if (finalMatches.length === 0 && lastStageMatches.length === 1) {
+    finalMatches = lastStageMatches;
+  }
+
+  const userInMatch = (match: BracketMatch) => {
+    const inP1 = hasUserInParticipant(match.participant1, userId);
+    const inP2 = hasUserInParticipant(match.participant2, userId);
+    return {
+      inP1,
+      inP2,
+      teamId: inP1 ? match.participant1?.id || null : inP2 ? match.participant2?.id || null : null,
+      isWinner:
+        (inP1 && match.winnerId === match.participant1?.id) ||
+        (inP2 && match.winnerId === match.participant2?.id),
+    };
+  };
+
+  const finalUserMatch = finalMatches.find((match) => hasUserInParticipant(match.participant1, userId) || hasUserInParticipant(match.participant2, userId));
+  if (finalUserMatch) {
+    const result = userInMatch(finalUserMatch);
+    const meta = getAchievementMeta(result.isWinner ? 1 : 2);
+    return {
+      tournamentId: tournament.id,
+      tournamentName: tournament.name,
+      rank: result.isWinner ? 1 : 2,
+      ...meta,
+      completedAt: finalUserMatch.completedAt || null,
+      tournamentDate: tournament.endDate || tournament.startDate || null,
+    };
+  }
+
+  const bronzeUserMatch = bronzeMatches.find((match) => hasUserInParticipant(match.participant1, userId) || hasUserInParticipant(match.participant2, userId));
+  if (bronzeUserMatch) {
+    const result = userInMatch(bronzeUserMatch);
+    if (result.isWinner) {
+      const meta = getAchievementMeta(3);
+      return {
+        tournamentId: tournament.id,
+        tournamentName: tournament.name,
+        rank: 3,
+        ...meta,
+        completedAt: bronzeUserMatch.completedAt || null,
+        tournamentDate: tournament.endDate || tournament.startDate || null,
+      };
+    }
+  }
+
+  const latestUserMatch = completedUserMatches[completedUserMatches.length - 1];
+  const latestResult = userInMatch(latestUserMatch);
+  const isSemiFinalLoser = latestUserMatch.stageOrder < maxStageOrder && !latestResult.isWinner;
+  if (isSemiFinalLoser) {
+    const meta = getAchievementMeta(3);
+    return {
+      tournamentId: tournament.id,
+      tournamentName: tournament.name,
+      rank: 3,
+      ...meta,
+      completedAt: latestUserMatch.completedAt || null,
+      tournamentDate: tournament.endDate || tournament.startDate || null,
+    };
+  }
+
+  return null;
+};
+
 export default function ProfilePage() {
   const { user } = useAuthStore();
   const [profileData, setProfileData] = useState<UserProfile | null>(null);
   const [myCommunities, setMyCommunities] = useState<Community[]>([]);
+  const [participatingTournaments, setParticipatingTournaments] = useState<Tournament[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'tournaments' | 'matches' | 'elo'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'tournaments' | 'achievements' | 'matches' | 'elo'>('overview');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get('tab');
+      if (tab && isProfileTab(tab)) {
+        setActiveTab(tab);
+      }
+    }
+  }, []);
 
   // Verification tickets states
   const [tickets, setTickets] = useState<VerificationTicket[]>([]);
@@ -50,6 +231,21 @@ export default function ProfilePage() {
 
   const coverInputRef = useRef<HTMLInputElement>(null);
   const [isUploadingCover, setIsUploadingCover] = useState(false);
+
+  const getFormatLabel = (matchType?: string, genderRestriction?: string | null) => {
+    const mt = matchType || '';
+    const gr = genderRestriction || '';
+    if (mt === 'SINGLES') {
+      return gr === 'FEMALE' ? 'Đơn Nữ' : 'Đơn Nam';
+    }
+    if (mt === 'DOUBLES') {
+      return gr === 'FEMALE' ? 'Đôi Nữ' : 'Đôi Nam';
+    }
+    if (mt === 'MIXED_DOUBLES' || mt === 'MIXED' || gr === 'MIXED') {
+      return 'Đôi Nam Nữ';
+    }
+    return mt === 'DOUBLES' ? 'Đôi' : mt === 'SINGLES' ? 'Đơn' : 'Đôi Nam Nữ';
+  };
 
   const handleCoverClick = () => {
     coverInputRef.current?.click();
@@ -95,13 +291,15 @@ export default function ProfilePage() {
     const fetchProfile = async () => {
       try {
         setIsLoading(true);
-        const [data, communitiesRes] = await Promise.all([
+        const [data, communitiesRes, workspaceRes] = await Promise.all([
           usersApi.getProfile(),
-          communitiesApi.getMyCommunities()
+          communitiesApi.getMyCommunities(),
+          tournamentsApi.getMyWorkspace()
         ]);
         if (isMounted) {
           setProfileData(data);
           setMyCommunities(communitiesRes.data || []);
+          setParticipatingTournaments(workspaceRes.data?.participatingTournaments || []);
 
           // Sync roles/details with useAuthStore so header displays updated roles immediately
           if (data) {
@@ -192,7 +390,8 @@ export default function ProfilePage() {
 
   const [userRankings, setUserRankings] = useState<{ publicRanks: PlayerRanking[]; communityRanks: PlayerRanking[] } | null>(null);
   const [eloHistory, setEloHistory] = useState<EloHistoryLog[]>([]);
-  const [tournaments, setTournaments] = useState<Tournament[]>([]);
+  const [followedTournaments, setFollowedTournaments] = useState<Tournament[]>([]);
+  const [achievements, setAchievements] = useState<AchievementCard[]>([]);
   const [matches, setMatches] = useState<Match[]>([]);
   const [isLoadingTab, setIsLoadingTab] = useState(false);
   const [matchesPage, setMatchesPage] = useState(1);
@@ -205,17 +404,17 @@ export default function ProfilePage() {
     const fetchTabData = async () => {
       try {
         setIsLoadingTab(true);
-        const [ranksRes, historyRes, tournamentsRes, matchesRes] = await Promise.all([
+        const [ranksRes, historyRes, followedRes, matchesRes] = await Promise.all([
           rankingsApi.getUserRankings(displayUser.id),
           rankingsApi.getUserEloHistory(displayUser.id),
-          tournamentsApi.getMyTournaments(),
+          tournamentsApi.getFollowedTournaments(),
           matchesApi.getMatches({ userId: displayUser.id, page: matchesPage, limit: 10 })
         ]);
 
         if (isMounted) {
           setUserRankings(ranksRes);
           setEloHistory(historyRes?.data || []);
-          setTournaments(tournamentsRes?.data || []);
+          setFollowedTournaments(sortFollowedTournaments(followedRes?.data || []));
           setMatches(matchesRes?.data || []);
           setMatchesTotalPages(matchesRes?.meta?.totalPages || 1);
         }
@@ -234,6 +433,54 @@ export default function ProfilePage() {
       isMounted = false;
     };
   }, [displayUser?.id, matchesPage]);
+
+  useEffect(() => {
+    if (!displayUser?.id || participatingTournaments.length === 0) {
+      setAchievements([]);
+      return;
+    }
+
+    let isMounted = true;
+    const fetchAchievements = async () => {
+      try {
+        const completedRankedTournaments = participatingTournaments.filter(
+          (tournament) => tournament.isRanked && isTournamentCompleted(tournament.status),
+        );
+
+        const bracketResults = await Promise.all(
+          completedRankedTournaments.map(async (tournament) => {
+            try {
+              const response = await tournamentsApi.getTournamentBracket(tournament.id);
+              return deriveTournamentPlacement(tournament, response.data.stages || [], displayUser.id);
+            } catch (error) {
+              console.error('Failed to load bracket for achievement', tournament.id, error);
+              return null;
+            }
+          }),
+        );
+
+        if (isMounted) {
+          setAchievements(
+            bracketResults
+              .filter((item): item is AchievementCard => Boolean(item))
+              .sort((a, b) => {
+                if (a.rank !== b.rank) return a.rank - b.rank;
+                return (b.completedAt || '').localeCompare(a.completedAt || '');
+              }),
+          );
+        }
+      } catch (error) {
+        console.error('Failed to fetch achievements', error);
+        if (isMounted) setAchievements([]);
+      }
+    };
+
+    fetchAchievements();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [displayUser?.id, participatingTournaments]);
 
   return (
     <div className="max-w-5xl mx-auto px-4 md:px-8 py-8 flex flex-col gap-6">
@@ -274,7 +521,7 @@ export default function ProfilePage() {
             Chỉnh sửa ảnh bìa
           </button>
         </div>
-        
+
         <div className="px-6 md:px-10 pb-8 relative">
           {/* Avatar & Actions */}
           <div className="flex flex-col md:flex-row justify-between items-end md:items-center gap-4 -mt-16 mb-5 relative z-10">
@@ -291,6 +538,15 @@ export default function ProfilePage() {
                   <Edit3 className="w-4 h-4 mr-2" /> Chỉnh sửa hồ sơ
                 </Button>
               </Link>
+              <Button
+                type="button"
+                variant="secondary"
+                className="w-full md:w-auto rounded-xl font-bold shadow-sm"
+                onClick={() => setActiveTab('tournaments')}
+              >
+                <Bookmark className="w-4 h-4 mr-2" />
+                Theo dõi
+              </Button>
             </div>
           </div>
           
@@ -351,9 +607,31 @@ export default function ProfilePage() {
               )}
             </div>
           </div>
+
+          <div className="mt-8 flex overflow-x-auto gap-2 border-b border-slate-100 no-scrollbar relative z-10">
+            {([
+              { id: 'overview', label: 'Tổng quan' },
+              { id: 'tournaments', label: 'Theo dõi' },
+              { id: 'achievements', label: 'Danh hiệu' },
+              { id: 'matches', label: 'Trận đấu' },
+              { id: 'elo', label: 'Thống kê ELO' }
+            ] as const).map(tab => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-4 py-2 font-bold text-sm whitespace-nowrap transition-colors border-b-2 -mb-[1.5px] ${
+                  activeTab === tab.id
+                    ? 'text-blue-650 border-blue-650 bg-blue-50/5'
+                    : 'text-slate-500 border-transparent hover:text-slate-900'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
-
       {/* Warning banner for missing gender */}
       {!isLoading && displayUser && !displayUser.gender && (
         <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center justify-between shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
@@ -371,27 +649,6 @@ export default function ProfilePage() {
           </Link>
         </div>
       )}
-
-      {/* Tabs */}
-      <div className="flex overflow-x-auto gap-2 border-b border-slate-200 pb-1 no-scrollbar">
-        {([
-          { id: 'overview', label: 'Tổng quan' },
-          { id: 'matches', label: 'Trận đấu' },
-          { id: 'elo', label: 'Thống kê ELO' }
-        ] as const).map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`px-5 py-2.5 rounded-t-lg font-bold text-sm whitespace-nowrap transition-colors border-b-2 ${
-              activeTab === tab.id 
-                ? 'text-blue-600 border-blue-600 bg-blue-50/50' 
-                : 'text-slate-550 border-transparent hover:text-slate-900 hover:bg-slate-50'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
 
       <div className="min-h-[400px]">
         {activeTab === 'overview' && (
@@ -611,6 +868,236 @@ export default function ProfilePage() {
                 <p className="text-slate-500 font-medium text-lg">Chưa có dữ liệu hoạt động</p>
                 <p className="text-slate-400 text-sm mt-1">Hãy tham gia giải đấu để bắt đầu ghi nhận thành tích!</p>
               </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'tournaments' && (
+          <div className="space-y-6">
+            {isLoadingTab ? (
+              <div className="flex justify-center items-center py-12 bg-white rounded-2xl border border-slate-200">
+                <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+              </div>
+            ) : followedTournaments.length > 0 ? (
+              <>
+                <div className="flex flex-wrap items-center gap-2 mb-3 text-[10px] font-black uppercase tracking-wider text-slate-500">
+                  <span className="rounded-full bg-slate-100 px-2.5 py-1 border border-slate-200">Vừa kết thúc</span>
+                  <span className="rounded-full bg-rose-50 px-2.5 py-1 border border-rose-100 text-rose-700">Đang diễn ra</span>
+                  <span className="rounded-full bg-emerald-50 px-2.5 py-1 border border-emerald-100 text-emerald-700">Mở đăng ký</span>
+                  <span className="rounded-full bg-blue-50 px-2.5 py-1 border border-blue-100 text-blue-700">Sắp diễn ra</span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                  {followedTournaments.map((tournament) => (
+                  (() => {
+                      const statusLabel = getTournamentStatusLabel(tournament.status);
+                      const statusClassName = getTournamentStatusClassName(tournament.status);
+                      const isEnded = isTournamentCompleted(tournament.status);
+                    const isLive = isTournamentInProgress(tournament.status);
+                    const isUpcoming = isTournamentUpcoming(tournament.status);
+                    const isOpen = isTournamentOpenForRegistration(tournament.status);
+                    const isCancelled = isTournamentCancelled(tournament.status);
+                    const coverImage = tournament.logoUrl || tournament.bannerUrl || null;
+                    const formattedStartDate = tournament.startDate ? formatDate(tournament.startDate, 'dd/MM/yyyy') : null;
+                    const formattedEndDate = tournament.endDate ? formatDate(tournament.endDate, 'dd/MM/yyyy') : null;
+                    const statusHint = isEnded
+                      ? (formattedEndDate ? `Kết thúc ${formattedEndDate}` : 'Giải đấu đã kết thúc')
+                      : isLive
+                        ? 'Đang diễn ra'
+                        : isOpen
+                          ? 'Mở đăng ký'
+                          : isUpcoming
+                            ? 'Sắp diễn ra'
+                            : isCancelled
+                              ? 'Đã hủy'
+                              : 'Đang theo dõi';
+
+                    return (
+                      <Link 
+                        key={tournament.id} 
+                        href={`/tournaments/${tournament.id}`}
+                        className="bg-white rounded-xl border border-slate-200 shadow-sm hover:border-slate-350 hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col group cursor-pointer"
+                      >
+                        {/* Top: Large Image Banner */}
+                        <div className="relative aspect-[2.1/1] w-full bg-slate-100 overflow-hidden">
+                          {coverImage ? (
+                            <img 
+                              src={coverImage} 
+                              alt={tournament.name} 
+                              className={`absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-103 ${isEnded ? 'grayscale opacity-60' : ''}`}
+                            />
+                          ) : (
+                            <div className="absolute inset-0 bg-gradient-to-br from-indigo-650 to-blue-800 opacity-90 group-hover:scale-103 transition-transform duration-500 flex items-center justify-center">
+                              <img 
+                                src="/images/vndc_sport.png" 
+                                alt="VNDC Sport Logo" 
+                                className="w-20 h-auto object-contain opacity-75"
+                              />
+                            </div>
+                          )}
+                          
+                          {/* Status Overlay (Top-Left) */}
+                          <div className="absolute top-3 left-3 z-10">
+                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm border ${statusClassName}`}>
+                              {isOpen && (
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                              )}
+                              {isUpcoming && (
+                                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                              )}
+                              {isLive && (
+                                <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+                              )}
+                              {isEnded && (
+                                <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                              )}
+                              {statusLabel}
+                            </span>
+                          </div>
+
+                          {/* Bookmark Button (Top-Right) */}
+                          <button className="absolute top-3 right-3 p-1.5 bg-white/90 rounded-full text-amber-500 hover:text-amber-600 transition-colors shadow-sm z-10 cursor-pointer">
+                            <Bookmark className="w-4 h-4 fill-amber-500" />
+                          </button>
+
+                          {/* Location Overlay (Bottom-Left) */}
+                          <div className="absolute bottom-3 left-3 z-10">
+                            <span className="bg-white/95 text-slate-800 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm border border-slate-200 flex items-center gap-1">
+                              📍 {tournament.locationAddress ? tournament.locationAddress.split(',').slice(-1)[0]?.trim() || 'Việt Nam' : 'Chưa cập nhật'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Bottom: Details Section */}
+                        <div className="p-4 flex gap-4 flex-grow">
+                          {/* Left Column: Date Block */}
+                          <div className="flex flex-col items-center shrink-0 border-r border-slate-100 pr-4">
+                            <div className="flex items-baseline gap-0.5 text-xl font-black text-slate-900 leading-none">
+                              <span>{tournament.startDate ? new Date(tournament.startDate).getDate().toString().padStart(2, '0') : '--'}</span>
+                              <span className="text-slate-300 font-normal text-sm">-</span>
+                              <span>{tournament.endDate ? new Date(tournament.endDate).getDate().toString().padStart(2, '0') : '--'}</span>
+                            </div>
+                            <div className="flex gap-3 mt-1 text-[9px] font-black text-slate-400">
+                              <span>{tournament.startDate ? (new Date(tournament.startDate).getMonth() + 1).toString().padStart(2, '0') : '--'}</span>
+                              <span>{tournament.endDate ? (new Date(tournament.endDate).getMonth() + 1).toString().padStart(2, '0') : '--'}</span>
+                            </div>
+                          </div>
+
+                          {/* Right Column: Name & Category Block */}
+                          <div className="flex flex-col justify-between flex-grow min-w-0">
+                            <div>
+                              <div className="flex items-center gap-1.5 flex-wrap text-[10px] font-extrabold uppercase tracking-wider mb-1">
+                                <span className="text-slate-500">{tournament.category?.name?.toUpperCase() || 'MULTISPORT'}</span>
+                                <span className="text-slate-300">•</span>
+                                <span className={`px-1.5 py-0.5 rounded text-[8px] font-extrabold ${
+                                  tournament.isRanked
+                                    ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                                    : 'bg-slate-50 text-slate-600 border border-slate-200'
+                                }`}>
+                                  {tournament.isRanked ? 'Xếp hạng ELO' : 'Phong trào'}
+                                </span>
+                              </div>
+
+                              <p className="text-[10px] text-slate-500 font-medium leading-relaxed line-clamp-2 mt-2">
+                                {statusHint}
+                                {formattedStartDate && formattedEndDate && !isEnded ? ` • ${formattedStartDate} → ${formattedEndDate}` : ''}
+                              </p>
+                              
+                              <h3 className="text-sm font-black text-slate-900 uppercase leading-snug line-clamp-2">
+                                {tournament.name}
+                              </h3>
+                            </div>
+
+                            {/* Metadata summary */}
+                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[9px] text-slate-500 font-bold mt-2 uppercase tracking-wider">
+                              <span className="text-emerald-600 font-extrabold">
+                                {tournament.entryFee ? formatCurrency(tournament.entryFee) : 'Miễn phí'}
+                              </span>
+                              {tournament.divisions && tournament.divisions.length > 0 ? (
+                                <>
+                                  <span className="text-slate-300">•</span>
+                                  <div className="flex flex-wrap gap-1">
+                                    {tournament.divisions.map((div) => {
+                                      const label = getFormatLabel(div.matchType, div.genderRestriction);
+                                      return (
+                                        <span key={div.id} className="bg-slate-100 px-1 py-0.5 rounded text-slate-650 text-[8px] border border-slate-200 font-bold">
+                                          {label} ({div._count?.participants || 0}/{div.maxParticipants || '-'})
+                                        </span>
+                                      );
+                                    })}
+                                  </div>
+                                </>
+                              ) : (
+                                <>
+                                  <span className="text-slate-300">•</span>
+                                  <span className="bg-slate-100 px-1 py-0.5 rounded text-slate-650 text-[8px] border border-slate-200 font-bold">
+                                    {getFormatLabel(tournament.matchType, tournament.genderRestriction)}
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </Link>
+                    );
+                  })()
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-16 bg-white rounded-2xl border border-slate-200 border-dashed">
+                <Bookmark className="w-16 h-16 text-slate-200 mx-auto mb-4" />
+                <h3 className="text-lg font-bold text-slate-700 mb-2">Chưa theo dõi giải đấu nào</h3>
+                <p className="text-slate-500 max-w-sm mx-auto text-sm">
+                  Theo dõi giải đấu để xem nhanh các giải bạn quan tâm ngay trong profile.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'achievements' && (
+          <div className="space-y-6">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Award className="w-5 h-5 text-amber-600" />
+                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Danh hiệu thành tích</h3>
+              </div>
+              {achievements.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {achievements.map((item) => (
+                    <div
+                      key={`${item.tournamentId}-${item.rank}`}
+                      className={`rounded-2xl border p-4 shadow-sm ${item.colorClass} ${item.borderClass}`}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className={`text-[10px] font-black uppercase px-2 py-1 rounded-full border ${item.textClass} ${item.borderClass} bg-white`}>
+                              {item.label}
+                            </span>
+                            <span className="text-[10px] font-bold text-slate-500 uppercase">
+                              Giải public ELO
+                            </span>
+                          </div>
+                          <h4 className="mt-2 text-base font-black text-slate-900 line-clamp-1">{item.tournamentName}</h4>
+                          <p className="text-xs text-slate-500 mt-1">
+                            {item.tournamentDate ? formatDate(item.tournamentDate, 'dd/MM/yyyy') : 'Chưa có ngày kết thúc'}
+                          </p>
+                        </div>
+                        <div className={`shrink-0 w-12 h-12 rounded-2xl border flex items-center justify-center font-black ${item.textClass} ${item.borderClass} bg-white`}>
+                          {item.rank}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-10 border-2 border-dashed border-slate-100 rounded-2xl">
+                  <Trophy className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                  <p className="text-slate-600 font-semibold">Chưa có danh hiệu thành tích</p>
+                  <p className="text-slate-400 text-sm mt-1">Khi tham gia giải public ELO và vào top 3, badge sẽ tự hiện ở đây.</p>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -964,3 +1451,4 @@ export default function ProfilePage() {
     </div>
   );
 }
+

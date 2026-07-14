@@ -8,6 +8,7 @@ import Step1Info from './components/Step1Info';
 import Step2FormatMulti from './components/Step2Format_Multi';
 import Step3ScheduleFees from './components/Step3ScheduleFees';
 import Step4ReviewSubmit from './components/Step4ReviewSubmit';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
 const STEPS = [
   { id: 1, label: 'Thông Tin', icon: Info },
@@ -37,8 +38,8 @@ function CreateTournamentForm() {
         
         {/* Header */}
         <div className="mb-8 text-center">
-          <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm">
-            <Trophy className="w-8 h-8" />
+          <div className="w-24 h-24 flex items-center justify-center mx-auto mb-4">
+            <img src="/images/vndc_sport.png" alt="VNDC Sport Logo" className="w-full h-full object-contain" />
           </div>
           <h1 className="text-3xl font-black text-slate-900">Tạo Giải Đấu Mới</h1>
           <p className="text-slate-500 mt-2 font-medium">Lập giải đấu nháp nhanh chóng trong 2 bước</p>
@@ -90,7 +91,7 @@ export default function CreateTournamentPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+        <LoadingSpinner className="w-12 h-12 text-blue-600" />
       </div>
     }>
       <CreateTournamentForm />

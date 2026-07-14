@@ -1,6 +1,7 @@
 'use client';
 
-import { AlertTriangle } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Activity, AlertTriangle, FlaskConical, ListChecks, ShieldAlert, Users } from 'lucide-react';
 import type { Match } from '@/types/match';
 import type { TournamentParticipant } from '@/types/tournament';
 import type { SportRulesEnvelope } from '@/types/tournament';
@@ -15,6 +16,7 @@ import { OpsActivity } from '../../ops/components/OpsActivity';
 import { OpsMatches } from '../../ops/components/OpsMatches';
 import { OpsOverview } from '../../ops/components/OpsOverview';
 import { OpsParticipants } from '../../ops/components/OpsParticipants';
+import { cn } from '@/utils/cn';
 
 interface OperationsWorkspaceProps {
   participants: TournamentParticipant[];
@@ -25,6 +27,7 @@ interface OperationsWorkspaceProps {
   focusedMatchId?: string | null;
   onFocusMatch?: (matchId: string) => void;
   tournamentSportRules?: SportRulesEnvelope | null;
+  tournamentStatus?: string;
   matchInsights?: Record<string, {
     hasCustomConfig: boolean;
     customConfigSummary: string[];
@@ -60,6 +63,7 @@ export function OperationsWorkspace({
   focusedMatchId,
   onFocusMatch,
   tournamentSportRules,
+  tournamentStatus,
   matchInsights,
   activityLog,
   error,
@@ -70,6 +74,20 @@ export function OperationsWorkspace({
   onUpdateMatchScore,
   onApplyMatchOperation,
 }: OperationsWorkspaceProps) {
+  const [activeTab, setActiveTab] = useState<'MATCHES' | 'PARTICIPANTS' | 'ACTIVITY'>('MATCHES');
+  const [currentTimestamp, setCurrentTimestamp] = useState<number | null>(null);
+
+  useEffect(() => {
+    const updateTimestamp = () => setCurrentTimestamp(Date.now());
+    const initialFrame = window.requestAnimationFrame(updateTimestamp);
+    const intervalId = window.setInterval(updateTimestamp, 60_000);
+
+    return () => {
+      window.cancelAnimationFrame(initialFrame);
+      window.clearInterval(intervalId);
+    };
+  }, []);
+
   const pendingAssignments = matches.filter((match) => {
     const matchInsight = matchInsights?.[match.id];
     const isDirectAdvance = match.isBye || (!!match.winnerId && (!match.participant1Id || !match.participant2Id));
@@ -96,8 +114,24 @@ export function OperationsWorkspace({
       return false;
     }
 
-    return new Date(match.scheduledAt).getTime() < Date.now();
+    return currentTimestamp !== null && new Date(match.scheduledAt).getTime() < currentTimestamp;
   }).length;
+  const mockParticipantCount = participants.filter((participant) =>
+    participant.members.some((member) => member.isMock),
+  ).length;
+  const exceptionalMatchCount = matches.filter((match) => {
+    const sets = match.scoreDetails?.sets ?? [];
+    return Boolean(
+      match.scoreDetails?.scoreOverride?.reason ||
+      match.scoreDetails?.specialResult?.action ||
+      sets.some((set) => set.scoreOverride?.reason),
+    );
+  }).length;
+  const penaltyCount = matches.reduce(
+    (total, match) => total + (match.scoreDetails?.penalties?.length ?? 0),
+    0,
+  );
+  const isDraft = tournamentStatus === 'DRAFT';
 
   return (
     <section className="space-y-6">
@@ -107,6 +141,23 @@ export function OperationsWorkspace({
           Màn hình này dùng để theo dõi nhịp chạy thực tế của giải: trận nào sắp gọi vào sân, trận nào đang nghẽn, vấn đề nào chưa chốt và roster nào cần xử lý kỹ thuật.
         </p>
       </div>
+
+      {isDraft ? (
+        <div className="flex items-start gap-3 rounded-2xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-950">
+          <FlaskConical className="mt-0.5 h-5 w-5 flex-shrink-0 text-sky-700" />
+          <div>
+            <p className="font-black">Chế độ thử nghiệm Draft</p>
+            <p className="mt-1 font-medium text-sky-800">
+              Bạn có thể thử bracket, lịch, tỷ số và nghiệp vụ với {mockParticipantCount} VĐV/đội ảo. Khi công bố giải, hệ thống xóa toàn bộ participant mock và bracket thử trước khi nhận dữ liệu thi đấu thật.
+            </p>
+          </div>
+        </div>
+      ) : mockParticipantCount > 0 ? (
+        <div className="flex items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm font-semibold text-rose-900">
+          <ShieldAlert className="mt-0.5 h-5 w-5 flex-shrink-0" />
+          Phát hiện {mockParticipantCount} participant mock ngoài trạng thái Draft. Cần dọn dữ liệu thử trước khi tiếp tục vận hành thật.
+        </div>
+      ) : null}
 
       {error ? (
         <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-800">
@@ -133,9 +184,46 @@ export function OperationsWorkspace({
           <p className="mt-2 text-2xl font-black text-slate-900">{overdueStarts}</p>
           <p className="mt-1 text-xs font-medium text-slate-600">Trận đã qua giờ dự kiến nhưng vẫn chưa bắt đầu.</p>
         </div>
+        <div className="rounded-2xl border border-violet-200 bg-violet-50 p-4">
+          <p className="text-[11px] font-black uppercase tracking-[0.12em] text-violet-700">Ngoại lệ & kỷ luật</p>
+          <p className="mt-2 text-2xl font-black text-violet-950">{exceptionalMatchCount + penaltyCount}</p>
+          <p className="mt-1 text-xs font-medium text-violet-800">
+            {exceptionalMatchCount} trận có quyết định/ngoại lệ · {penaltyCount} thẻ hoặc hình phạt.
+          </p>
+        </div>
       </section>
 
-      <div className="grid grid-cols-1 gap-6">
+      <div className="sticky top-20 z-20 rounded-2xl border border-slate-200 bg-white/95 p-2 shadow-sm backdrop-blur">
+        <div className="grid grid-cols-3 gap-2">
+          {([
+            { id: 'MATCHES', label: 'Trận đấu', count: matches.length, icon: ListChecks },
+            { id: 'PARTICIPANTS', label: 'Thành viên', count: participants.length, icon: Users },
+            { id: 'ACTIVITY', label: 'Nhật ký', count: activityLog.length, icon: Activity },
+          ] as const).map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  'flex min-w-0 items-center justify-center gap-2 rounded-xl px-3 py-3 text-xs font-black transition-colors sm:text-sm',
+                  isActive
+                    ? 'bg-slate-950 text-white shadow-sm'
+                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950',
+                )}
+              >
+                <Icon className="h-4 w-4 flex-shrink-0" />
+                <span className="truncate">{tab.label}</span>
+                <span className={isActive ? 'text-slate-300' : 'text-slate-400'}>{tab.count}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {activeTab === 'MATCHES' ? (
         <OpsMatches
           matches={matches}
           referees={referees}
@@ -149,17 +237,17 @@ export function OperationsWorkspace({
           onUpdateMatchScore={onUpdateMatchScore}
           onApplyMatchOperation={onApplyMatchOperation}
         />
-      </div>
+      ) : null}
 
-      <div className="grid grid-cols-1 gap-6">
+      {activeTab === 'PARTICIPANTS' ? (
         <OpsParticipants
           participants={participants}
           activeParticipantActionId={activeParticipantActionId}
           onKickParticipant={onKickParticipant}
         />
-      </div>
+      ) : null}
 
-      <OpsActivity activityLog={activityLog} />
+      {activeTab === 'ACTIVITY' ? <OpsActivity activityLog={activityLog} /> : null}
     </section>
   );
 }

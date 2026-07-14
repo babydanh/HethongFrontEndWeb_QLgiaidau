@@ -73,14 +73,14 @@ export function MatchCard({
   const p1Won = done && match.winnerId != null && match.winnerId === match.participant1?.id;
   const p2Won = done && match.winnerId != null && match.winnerId === match.participant2?.id;
   const isOrganizer = !!onScheduleMatch;
-  const cardH = isOrganizer ? CARD_H_ORGANIZER : CARD_H_PUBLIC;
+  const showByeLabel = (isP1Bye && match.participant2) || (isP2Bye && match.participant1);
+  const cardH = (isOrganizer && !showByeLabel) ? CARD_H_ORGANIZER : CARD_H_PUBLIC;
 
   const setList = extractMatchScores(match.scoreDetails as Record<string, unknown> | undefined | null);
   const maxCols = getMaxColumns(match);
   const ruleSummary = buildMatchRuleSummary(match, fallbackSportRuleKind);
 
   const actualCardH = match.isBye ? 148 : cardH;
-  const showByeLabel = (isP1Bye && match.participant2) || (isP2Bye && match.participant1);
 
   return (
     <div
@@ -108,15 +108,9 @@ export function MatchCard({
         </div>
       )}
 
-      {isOrganizer && !match.isBye && (
+      {isOrganizer && !match.isBye && !showByeLabel && (
           <div className="px-2.5 pb-2.5 pt-2 bg-slate-50/60 flex-shrink-0 border-t border-slate-200">
-            {showByeLabel ? (
-            <div className="flex items-center justify-center py-0.5">
-              <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                Vô thẳng (BYE)
-              </span>
-            </div>
-          ) : !done ? (
+            {!done ? (
             match.participant1 && match.participant2 ? (
               <div className="flex justify-center">
                 <button
@@ -157,7 +151,7 @@ export function MatchCard({
             </span>
           ) : done ? (
             match.isBye ? (
-              <span className="text-emerald-600 font-extrabold uppercase tracking-wider text-[9px]">Vô thẳng</span>
+              <span className="text-blue-600 font-extrabold uppercase tracking-wider text-[9px]">Vô thẳng</span>
             ) : (
               <span className="flex items-center gap-1 text-emerald-600 font-extrabold">
                 <CheckCircle className="w-3 h-3" /> Đã kết thúc
@@ -174,10 +168,10 @@ export function MatchCard({
 
         {/* Set columns header */}
         {!match.isBye && (
-          <div className="flex border-b border-slate-100 bg-slate-50/50">
+          <div className="flex border-b border-slate-100 bg-slate-50/40">
             <div className="flex-1" />
             {Array.from({ length: maxCols }).map((_, ci) => (
-              <div key={ci} className="w-7 text-center text-[7px] font-extrabold text-slate-400 py-0.5 border-l border-slate-100">
+              <div key={ci} className="w-8 text-center text-[8px] font-black tracking-wider text-slate-400 py-1 border-l border-slate-100/80">
                 S{ci + 1}
               </div>
             ))}
@@ -293,12 +287,18 @@ function RowSide({
         return (
           <div
             key={ci}
-            className={
-              'w-7 text-center text-[9px] font-black leading-4 py-1 border-l border-slate-100 ' +
-              (won ? 'text-emerald-700' : val ? 'text-slate-700' : 'text-slate-300')
-            }
+            className="w-8 flex items-center justify-center border-l border-slate-100/80"
           >
-            {val || '-'}
+            <span className={
+              'text-[10px] font-black w-6 h-6 flex items-center justify-center rounded-md ' +
+              (val
+                ? won
+                  ? 'bg-emerald-50 text-emerald-700 font-black'
+                  : 'bg-slate-50 text-slate-700 font-bold'
+                : 'text-slate-300 font-medium')
+            }>
+              {val || '-'}
+            </span>
           </div>
         );
       })}

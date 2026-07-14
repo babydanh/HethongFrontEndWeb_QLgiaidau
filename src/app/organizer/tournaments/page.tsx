@@ -135,7 +135,9 @@ export default function MyTournamentsPage() {
   };
 
   useEffect(() => {
-    fetchTournaments();
+    void Promise.resolve().then(() => {
+      void fetchTournaments();
+    });
   }, []);
 
   const handleDeleteParent = async (id: string, isStandalone: boolean, e: React.MouseEvent) => {
@@ -201,8 +203,8 @@ export default function MyTournamentsPage() {
 
         {parents.length === 0 ? (
           <div className="bg-white rounded-2xl p-12 text-center border border-slate-200 shadow-sm flex flex-col items-center max-w-xl mx-auto">
-            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 mb-4">
-              <Trophy className="w-8 h-8" />
+            <div className="w-24 h-24 flex items-center justify-center mb-4">
+              <img src="/images/vndc_sport.png" alt="VNDC Sport" className="w-full h-full object-contain" />
             </div>
             <h3 className="text-xl font-bold text-slate-900">Chưa có giải đấu nào</h3>
             <p className="text-slate-500 mt-2 font-medium max-w-sm">

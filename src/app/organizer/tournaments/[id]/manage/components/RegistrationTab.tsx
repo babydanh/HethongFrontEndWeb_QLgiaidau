@@ -5,20 +5,24 @@ import { Button } from '@/components/ui/Button';
 import { DateTimePicker, Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import {
-  RefreshCw, 
-  Loader2, 
-  Plus, 
-  Trash2, 
-  UserPlus, 
+  RefreshCw,
+  Loader2,
+  Plus,
+  Trash2,
+  UserPlus,
   CheckCircle,
   Lock,
   ArrowRight,
+  ArrowUp,
+  ArrowDown,
   UserCheck,
   UserX,
   Users,
   Search,
+  Shuffle,
 } from 'lucide-react';
 import { Tournament, TournamentParticipant } from '@/types/tournament';
+import { Division } from '@/features/tournaments/api';
 import { formatDate } from '@/utils/format';
 import {
   getParticipantStatusClassName,
@@ -43,13 +47,20 @@ interface RegistrationTabProps {
   isClearingMock: boolean;
   wildcardEmailOrPhone: string;
   setWildcardEmailOrPhone: (val: string) => void;
+  wildcardPartnerEmailOrPhone: string;
+  setWildcardPartnerEmailOrPhone: (val: string) => void;
   wildcardTeamName: string;
   setWildcardTeamName: (val: string) => void;
   isAssigningWildcard: boolean;
   participants: TournamentParticipant[];
   activeParticipantActionId: string | null;
+  divisions: Division[];
+  selectedDivisionId: string;
+  setSelectedDivisionId: (val: string) => void;
   visibility: 'PUBLIC' | 'PRIVATE';
   setVisibility: (val: 'PUBLIC' | 'PRIVATE') => void;
+  registrationMode: 'OPEN' | 'APPROVAL' | 'INVITE_ONLY';
+  setRegistrationMode: (val: 'OPEN' | 'APPROVAL' | 'INVITE_ONLY') => void;
   registrationStartDate: string;
   setRegistrationStartDate: (val: string) => void;
   registrationEndDate: string;
@@ -65,7 +76,14 @@ interface RegistrationTabProps {
   handleSeedMockData: () => void;
   handleClearMockData: () => void;
   handleAssignWildcard: () => void;
+  handleRemoveWildcard?: (participantId: string) => Promise<void>;
   onCopyInviteLink: () => void;
+  // Seeding
+  seedingMethod: 'ELO' | 'RANDOM' | 'MANUAL';
+  setSeedingMethod: (val: 'ELO' | 'RANDOM' | 'MANUAL') => void;
+  isAutoSeeding: boolean;
+  handleAutoSeed: () => Promise<void>;
+  handleSwapSeeds: (participantId1: string, participantId2: string) => Promise<void>;
 }
 
 export function RegistrationTab({
@@ -77,13 +95,20 @@ export function RegistrationTab({
   isClearingMock,
   wildcardEmailOrPhone,
   setWildcardEmailOrPhone,
+  wildcardPartnerEmailOrPhone,
+  setWildcardPartnerEmailOrPhone,
   wildcardTeamName,
   setWildcardTeamName,
   isAssigningWildcard,
   participants,
   activeParticipantActionId,
+  divisions,
+  selectedDivisionId,
+  setSelectedDivisionId,
   visibility,
   setVisibility,
+  registrationMode,
+  setRegistrationMode,
   registrationStartDate,
   setRegistrationStartDate,
   registrationEndDate,
@@ -99,10 +124,17 @@ export function RegistrationTab({
   handleSeedMockData,
   handleClearMockData,
   handleAssignWildcard,
-  onCopyInviteLink
+  onCopyInviteLink,
+  seedingMethod,
+  setSeedingMethod,
+  isAutoSeeding,
+  handleAutoSeed,
+  handleSwapSeeds,
 }: RegistrationTabProps) {
   const [search, setSearch] = React.useState('');
   const [filter, setFilter] = React.useState<'ALL' | 'PENDING' | 'COMPLETE' | 'UNPAID' | 'REJECTED'>('ALL');
+  const [editingSeed, setEditingSeed] = React.useState<string | null>(null);
+  const [seedInputValue, setSeedInputValue] = React.useState('');
 
   const participantSummary = React.useMemo(() => ({
     total: participants.length,
@@ -134,6 +166,31 @@ export function RegistrationTab({
       return matchesFilter && matchesSearch;
     });
   }, [filter, participants, search]);
+
+  const handleSeedEditStart = (participantId: string, currentSeed: number | null) => {
+    setEditingSeed(participantId);
+    setSeedInputValue(currentSeed != null ? String(currentSeed) : '');
+  };
+
+  const handleSeedEditSave = async (participantId: string) => {
+    if (!seedInputValue.trim()) {
+      setEditingSeed(null);
+      return;
+    }
+    const seed = Number(seedInputValue);
+    if (isNaN(seed) || seed < 1) return;
+    try {
+      const { tournamentsApi } = await import('@/features/tournaments/api');
+      await tournamentsApi.updateParticipantSeed(tournament.id, participantId, seed);
+      toast.success('Đã cập nhật seed!');
+      setEditingSeed(null);
+    } catch (err) {
+      const { getErrorMessage } = await import('@/utils/error');
+      toast.error(getErrorMessage(err));
+    }
+  };
+
+  const canSeedMock = isTournamentDraft(tournament.status);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start animate-in fade-in duration-200">
@@ -190,52 +247,86 @@ export function RegistrationTab({
           )}
         </div>
 
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-5">
-          <div>
-            <h3 className="font-bold text-slate-900 text-lg">Thông tin đăng ký</h3>
-            <p className="mt-1 text-xs font-semibold text-slate-455">
-              Quản lý cách VĐV đi vào giải, khung thời gian mở đơn và bộ công cụ mời riêng cho đăng ký.
-            </p>
+        <div className="bg-white rounded-3xl border border-slate-200 p-6 md:p-8 shadow-sm space-y-6">
+          <div className="flex items-start gap-4 justify-between border-b border-slate-100 pb-5">
+            <div>
+              <h3 className="font-black text-slate-900 text-lg">Thông tin đăng ký</h3>
+              <p className="mt-1.5 text-xs font-semibold text-slate-455">
+                Quản lý cách VĐV đi vào giải, khung thời gian mở đơn và bộ công cụ mời riêng cho đăng ký.
+              </p>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <label className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-400">Chế độ nhận đăng ký</label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Chế độ nhận đăng ký */}
+            <div className="flex flex-col gap-2 bg-slate-50/50 border border-slate-150 p-5 rounded-2xl">
+              <label className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-450">Chế độ nhận đăng ký</label>
               <select
-                value={visibility}
-                onChange={(e) => setVisibility(e.target.value as 'PUBLIC' | 'PRIVATE')}
-                className="mt-3 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                value={registrationMode}
+                onChange={(e) => {
+                  const mode = e.target.value as 'OPEN' | 'APPROVAL' | 'INVITE_ONLY';
+                  setRegistrationMode(mode);
+                  if (mode === 'INVITE_ONLY') {
+                    setVisibility('PRIVATE');
+                  } else {
+                    setVisibility('PUBLIC');
+                  }
+                }}
+                className="mt-1 h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-semibold text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               >
-                <option value="PUBLIC">Công khai: hiển thị trên danh sách và ai đủ điều kiện đều có thể vào đăng ký</option>
-                <option value="PRIVATE">Riêng tư: chỉ ai có link hoặc mã mời mới vào được trang đăng ký</option>
+                <option value="OPEN">Tự do (Open)</option>
+                <option value="APPROVAL">Xét duyệt (Approval)</option>
+                <option value="INVITE_ONLY">Chỉ nhận mã mời (Invite Only)</option>
               </select>
-              <p className="mt-2 text-xs font-medium text-slate-500">
-                Dùng `Riêng tư` khi bạn muốn kiểm soát đầu vào theo partner, khách mời hoặc danh sách kín.
+              <p className="text-xs font-semibold text-slate-400 leading-relaxed mt-2">
+                {registrationMode === 'OPEN' && 'Mọi VĐV đăng ký tham gia được chốt danh sách và tham gia giải ngay lập tức.'}
+                {registrationMode === 'APPROVAL' && 'Đăng ký của VĐV sẽ ở trạng thái chờ duyệt. BTC xét duyệt hồ sơ thủ công.'}
+                {registrationMode === 'INVITE_ONLY' && 'Chỉ những ai có link hoặc mã mời mới có thể truy cập và đăng ký tham gia.'}
               </p>
             </div>
 
-            <DateTimePicker
-              label="Mở đăng ký vào lúc"
-              value={registrationStartDate}
-              onChange={setRegistrationStartDate}
-            />
+            {/* Mở đăng ký */}
+            <div className="flex flex-col justify-between">
+              <DateTimePicker
+                label="Mở đăng ký vào lúc"
+                value={registrationStartDate}
+                onChange={setRegistrationStartDate}
+              />
+              <div className="hidden md:block h-6" />
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <DateTimePicker
-              label="Đóng đăng ký vào lúc"
-              value={registrationEndDate}
-              onChange={setRegistrationEndDate}
-            />
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-400">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Trạng thái đường dẫn */}
+            <div className="flex flex-col gap-2 bg-slate-50/50 border border-slate-150 p-5 rounded-2xl justify-center">
+              <span className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-455">
                 Trạng thái đường dẫn
+              </span>
+              <div className="flex items-center gap-2 mt-1">
+                <span className={`w-2.5 h-2.5 rounded-full ${
+                  registrationMode === 'INVITE_ONLY' ? 'bg-amber-500 animate-pulse' :
+                  registrationMode === 'APPROVAL' ? 'bg-blue-500' : 'bg-emerald-500'
+                }`} />
+                <span className="text-xs font-black text-slate-800 uppercase tracking-wider">
+                  {registrationMode === 'INVITE_ONLY' && 'Đường đăng ký kín'}
+                  {registrationMode === 'APPROVAL' && 'Xét duyệt thủ công'}
+                  {registrationMode === 'OPEN' && 'Đăng ký tự do'}
+                </span>
+              </div>
+              <p className="text-xs font-semibold text-slate-400 leading-relaxed mt-1">
+                {registrationMode === 'INVITE_ONLY' && 'Phù hợp cho giải đấu mời kín, ghép cặp có chọn lọc và kiểm soát.'}
+                {registrationMode === 'APPROVAL' && 'VĐV đăng ký công khai nhưng BTC cần phê duyệt hồ sơ trước khi thi đấu.'}
+                {registrationMode === 'OPEN' && 'Giải đấu mở đăng ký tự do công khai, VĐV tự động hoàn tất đăng ký.'}
               </p>
-              <p className="mt-2 text-sm font-semibold text-slate-700">
-                {visibility === 'PRIVATE'
-                  ? 'Giải đang dùng luồng đăng ký riêng tư, phù hợp cho mời kín và ghép partner có kiểm soát.'
-                  : 'Giải đang dùng luồng đăng ký công khai, VĐV có thể tự vào đăng ký nếu đáp ứng điều kiện.'}
-              </p>
+            </div>
+
+            {/* Đóng đăng ký */}
+            <div>
+              <DateTimePicker
+                label="Đóng đăng ký vào lúc"
+                value={registrationEndDate}
+                onChange={setRegistrationEndDate}
+              />
             </div>
           </div>
 
@@ -245,7 +336,7 @@ export function RegistrationTab({
                 <div className="space-y-1">
                   <p className="text-[11px] font-black uppercase tracking-[0.12em] text-blue-600">Mã mời đăng ký nhanh</p>
                   <p className="text-xl font-black tracking-[0.18em] text-blue-700">{tournament.inviteCode || 'Chưa có'}</p>
-                  <p className="text-xs font-medium text-slate-600">
+                  <p className="text-xs font-medium text-slate-650">
                     Gửi mã hoặc link này cho VĐV khi cần vào thẳng luồng đăng ký.
                   </p>
                 </div>
@@ -289,11 +380,11 @@ export function RegistrationTab({
             </div>
           )}
 
-          <div className="flex justify-end border-t border-slate-100 pt-2">
+          <div className="flex justify-end border-t border-slate-100 pt-5 mt-2">
             <Button
               onClick={handleSaveRegistrationSettings}
               disabled={isSavingConfig}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6"
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2.5 rounded-xl shadow-md shadow-blue-500/10 active:scale-[0.98] transition-all"
             >
               {isSavingConfig ? 'Đang lưu...' : 'Lưu thông tin đăng ký'}
             </Button>
@@ -364,7 +455,7 @@ export function RegistrationTab({
                     'rounded-full border px-3 py-2 text-xs font-black transition-colors',
                     filter === option.value
                       ? 'border-blue-600 bg-blue-600 text-white'
-                      : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:text-slate-900',
+                      : 'border-slate-200 bg-white text-slate-650 hover:border-slate-300 hover:text-slate-900',
                   ].join(' ')}
                 >
                   {option.label}
@@ -400,29 +491,67 @@ export function RegistrationTab({
                 ) : (
                   filteredParticipants.map((participant) => {
                     const isBusy = activeParticipantActionId === participant.id;
+                    const isMockParticipant = participant.members.some((member) => member.isMock);
                     const canApprove = isParticipantPendingApproval(participant.teamStatus);
-                    const canReject = isParticipantPendingApproval(participant.teamStatus);
+                    const canReject = isParticipantPendingApproval(participant.teamStatus) || isMockParticipant;
 
                     return (
                       <tr key={participant.id}>
                         <td className="py-4 pr-4">
                           <div className="flex flex-wrap items-center gap-2">
-                            <p className="text-sm font-black text-slate-900">{participant.teamName}</p>
-                            {participant.teamInviteToken ? (
+                            <p className="text-sm font-black text-slate-900 flex items-center gap-1.5">
+                              {participant.seed != null && (
+                                <span
+                                  className="inline-flex items-center justify-center min-w-[28px] h-[22px] rounded-full border border-blue-300 bg-blue-50 text-blue-700 text-[11px] font-black cursor-pointer hover:bg-blue-100 transition-colors px-2"
+                                  title="Nhấp để sửa seed"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSeedEditStart(participant.id, participant.seed);
+                                  }}
+                                >
+                                  #{participant.seed}
+                                </span>
+                              )}
+                              {participant.teamName}
+                            </p>
+                            {editingSeed === participant.id && (
+                              <div className="flex items-center gap-1 ml-1">
+                                <input
+                                  type="number"
+                                  min={1}
+                                  value={seedInputValue}
+                                  onChange={(e) => setSeedInputValue(e.target.value)}
+                                  className="w-16 h-7 border border-blue-400 rounded px-1.5 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                  autoFocus
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') { void handleSeedEditSave(participant.id); }
+                                    if (e.key === 'Escape') { setEditingSeed(null); }
+                                  }}
+                                  onBlur={() => { void handleSeedEditSave(participant.id); }}
+                                />
+                                <span className="text-[10px] text-slate-400 font-medium">#</span>
+                              </div>
+                            )}
+                            {participant.isWildcard ? (
+                              <span className="rounded-full border border-emerald-100 bg-emerald-50 px-2.5 py-1 text-[11px] font-black text-emerald-700">
+                                Đặc cách
+                              </span>
+                            ) : participant.teamInviteToken ? (
                               <span className="rounded-full border border-blue-100 bg-blue-50 px-2.5 py-1 text-[11px] font-black text-blue-700">
                                 Chờ ghép partner
                               </span>
                             ) : null}
                           </div>
                           <p className="mt-1 text-xs font-medium text-slate-500">
-                            Đăng ký {formatDate(participant.registeredAt)} • Seed: {participant.seed ?? 'Chưa có'}
+                            Đăng ký {formatDate(participant.registeredAt)}
+                            {participant.seed != null ? '' : ` • Seed: Chưa có`}
                           </p>
                         </td>
                         <td className="py-4 pr-4">
                           <div className="flex flex-wrap gap-2">
                             {(participant.members || []).map((member) => (
                               <span key={member.userId} className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-bold text-slate-700">
-                                {member.fullName || 'Chưa rõ'}
+                                {member.isMock ? 'VĐV ảo' : (member.fullName || 'Chưa rõ')}
                               </span>
                             ))}
                           </div>
@@ -443,7 +572,7 @@ export function RegistrationTab({
                         <td className="py-4 text-right">
                           <div className="flex justify-end gap-2">
                             <Button
-                              onClick={() => { void handleApproveParticipant(participant.id); }}
+                               onClick={() => { void handleApproveParticipant(participant.id); }}
                               disabled={!canApprove || isBusy}
                               className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
                             >
@@ -453,16 +582,22 @@ export function RegistrationTab({
                             <Button
                               variant="outline"
                               onClick={() => {
-                                const confirmed = window.confirm(`Bạn có chắc muốn từ chối hồ sơ của "${participant.teamName}" không?`);
+                                const confirmed = window.confirm(
+                                  isMockParticipant
+                                    ? `Bạn có chắc muốn xoá dữ liệu mock của "${participant.teamName}" không?`
+                                    : `Bạn có chắc muốn từ chối hồ sơ của "${participant.teamName}" không?`,
+                                );
                                 if (confirmed) {
                                   void handleRejectParticipant(participant.id);
                                 }
                               }}
                               disabled={!canReject || isBusy}
-                              className="border-orange-200 text-orange-700 hover:bg-orange-50 font-bold"
+                              className={isMockParticipant
+                                ? 'border-rose-200 text-rose-700 hover:bg-rose-50 font-bold'
+                                : 'border-orange-200 text-orange-700 hover:bg-orange-50 font-bold'}
                             >
-                              <UserX className="mr-2 h-4 w-4" />
-                              Từ chối
+                              {isMockParticipant ? <Trash2 className="mr-2 h-4 w-4" /> : <UserX className="mr-2 h-4 w-4" />}
+                              {isMockParticipant ? 'Xóa mock' : 'Từ chối'}
                             </Button>
                           </div>
                         </td>
@@ -504,7 +639,11 @@ export function RegistrationTab({
             <h3 className="font-extrabold text-slate-900 text-base flex items-center gap-2">
               <RefreshCw className="w-4 h-4 text-blue-600 animate-none" /> Bảng thử nghiệm dữ liệu ảo
             </h3>
-            <p className="text-xs text-slate-455 mt-1 font-semibold">Tạo danh sách vận động viên ảo để kiểm thử sơ đồ thi đấu trước khi mở đăng ký thật.</p>
+            <p className="text-xs text-slate-455 mt-1 font-semibold">
+              {canSeedMock
+                ? 'Tạo danh sách vận động viên ảo để kiểm thử sơ đồ thi đấu trước khi mở đăng ký thật.'
+                : 'Giải đã rời Draft nên không thể tạo thêm dữ liệu ảo. Nút dọn dẹp vẫn khả dụng để xử lý dữ liệu thử còn sót.'}
+            </p>
           </div>
 
           <div className="flex flex-col gap-1.5">
@@ -514,14 +653,14 @@ export function RegistrationTab({
               onChange={(e) => setMockNamesText(e.target.value)}
               placeholder="Mỗi dòng là 1 tên VĐV.&#10;Đánh đôi: Cứ 2 dòng liên tiếp xếp 1 đội.&#10;Ví dụ:&#10;VĐV A&#10;VĐV B"
               className="h-32 text-xs resize-none font-semibold text-slate-700"
-              disabled={isSeedingMock || isClearingMock}
+              disabled={!canSeedMock || isSeedingMock || isClearingMock}
             />
           </div>
 
           <div className="flex gap-2">
             <Button
               onClick={handleSeedMockData}
-              disabled={isSeedingMock || isClearingMock || !mockNamesText.trim()}
+              disabled={!canSeedMock || isSeedingMock || isClearingMock || !mockNamesText.trim()}
               className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-2.5 flex items-center justify-center gap-1.5 shadow-sm animate-none"
             >
               {isSeedingMock ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
@@ -539,48 +678,248 @@ export function RegistrationTab({
           </div>
         </div>
 
+        {/* Xếp hạt giống */}
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+          <div>
+            <h3 className="font-extrabold text-slate-900 text-base flex items-center gap-2">
+              <Shuffle className="w-4 h-4 text-purple-600" /> Xếp hạt giống
+            </h3>
+            <p className="text-xs text-slate-455 mt-1 font-semibold">Phân loại đội mạnh yếu để tránh chạm nhau sớm.</p>
+          </div>
+
+          {/* Phương pháp xếp hạt giống */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Phương pháp xếp hạt giống</label>
+            <select
+              value={seedingMethod}
+              onChange={(e) => setSeedingMethod(e.target.value as 'ELO' | 'RANDOM' | 'MANUAL')}
+              className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-semibold text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            >
+              <option value="MANUAL">Xếp thủ công</option>
+              <option value="ELO">Tự động theo ELO</option>
+              <option value="RANDOM">Ngẫu nhiên</option>
+            </select>
+          </div>
+
+          {/* Auto seeding button for ELO or RANDOM */}
+          {(seedingMethod === 'ELO' || seedingMethod === 'RANDOM') && (
+            <Button
+              onClick={handleAutoSeed}
+              disabled={isAutoSeeding || participants.length < 2}
+              className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs py-2.5 flex items-center justify-center gap-1.5 shadow-sm animate-none"
+            >
+              {isAutoSeeding ? (
+                <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Đang xếp hạt giống...</>
+              ) : (
+                <><Shuffle className="w-3.5 h-3.5" /> Tự động xếp hạt giống</>
+              )}
+            </Button>
+          )}
+
+          {/* Manual seed list (draggable up/down) */}
+          {seedingMethod === 'MANUAL' && (
+            <div className="space-y-1">
+              {(() => {
+                const seeded = [...participants]
+                  .filter((p) => p.seed != null)
+                  .sort((a, b) => (a.seed ?? 999) - (b.seed ?? 999));
+
+                if (seeded.length === 0) {
+                  return (
+                    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center">
+                      <Shuffle className="w-6 h-6 text-slate-300" />
+                      <p className="mt-2 text-sm font-bold text-slate-500">Chưa có đội nào được đăng ký</p>
+                    </div>
+                  );
+                }
+
+                return seeded.map((p, index) => {
+                  const prevP = index > 0 ? seeded[index - 1] : null;
+                  const nextP = index < seeded.length - 1 ? seeded[index + 1] : null;
+
+                  return (
+                    <div key={p.id} className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/50 px-3 py-2.5">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-blue-100 text-blue-700 text-xs font-black shrink-0">
+                          #{p.seed}
+                        </span>
+                        <span className="text-sm font-bold text-slate-900 truncate">{p.teamName}</span>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0 ml-2">
+                        <button
+                          type="button"
+                          onClick={() => { if (prevP) void handleSwapSeeds(p.id, prevP.id); }}
+                          disabled={!prevP}
+                          className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                          title="Lên trên"
+                        >
+                          <ArrowUp className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => { if (nextP) void handleSwapSeeds(p.id, nextP.id); }}
+                          disabled={!nextP}
+                          className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                          title="Xuống dưới"
+                        >
+                          <ArrowDown className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+          )}
+        </div>
+
         {/* Reserved Slots / Wildcards Direct Assignment */}
         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
           <div>
             <h3 className="font-extrabold text-slate-900 text-base flex items-center gap-2">
               <UserPlus className="w-4 h-4 text-emerald-600" /> Suất đặc cách
             </h3>
-            <p className="text-xs text-slate-455 mt-1 font-semibold">Gán trực tiếp khách mời, nhà tài trợ vào danh sách thi đấu của hình thức đang chọn. Suất này bỏ qua mọi quy tắc giới hạn trình độ ELO.</p>
+            <p className="text-xs text-slate-455 mt-1 font-semibold">Gán trực tiếp khách mời, nhà tài trợ vào danh sách thi đấu. Bỏ qua mọi quy tắc giới hạn ELO.</p>
           </div>
 
-          <Input
-            label="Tài khoản Baseline (Email hoặc SĐT)"
-            placeholder="partner@baseline.vn hoặc 09xxxx"
-            value={wildcardEmailOrPhone}
-            onChange={(e) => setWildcardEmailOrPhone(e.target.value)}
-            className="bg-white text-xs h-10"
-            disabled={isAssigningWildcard}
-          />
+          {/* Division Selector */}
+          {divisions.length > 1 && (
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Chọn hình thức</label>
+              <div className="grid grid-cols-1 gap-2">
+                {divisions.map((div) => {
+                  const isActive = div.id === selectedDivisionId;
+                  const matchLabel = div.matchType === 'SINGLES'
+                    ? (div.genderRestriction === 'FEMALE' ? 'Đơn Nữ' : 'Đơn Nam')
+                    : div.matchType === 'DOUBLES'
+                      ? (div.genderRestriction === 'FEMALE' ? 'Đôi Nữ' : div.genderRestriction === 'MIXED' ? 'Đôi Nam Nữ' : 'Đôi Nam')
+                      : 'Đôi Nam Nữ';
+                  const bracketLabel = div.bracketType === 'DOUBLE_ELIMINATION' ? 'Loại kép'
+                    : div.bracketType === 'ROUND_ROBIN' ? 'Vòng tròn' : 'Loại trực tiếp';
+                  const count = div._count?.participants ?? 0;
+                  return (
+                    <button
+                      key={div.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedDivisionId(div.id);
+                        setWildcardPartnerEmailOrPhone('');
+                      }}
+                      className={`relative w-full cursor-pointer rounded-xl border px-4 py-3 text-xs font-bold transition-all text-left ${
+                        isActive
+                          ? 'border-emerald-300 bg-emerald-50 text-emerald-800 shadow-sm'
+                          : 'border-slate-200 bg-white text-slate-650 hover:border-emerald-200 hover:text-emerald-700'
+                      }`}
+                    >
+                      <span className="block text-sm font-black">{div.name}</span>
+                      <span className="block text-[10px] font-semibold text-slate-500 mt-0.5">
+                        {matchLabel} • {bracketLabel} • {count} hồ sơ
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
-          <Input
-            label="Tên đội thi đấu đặc cách"
-            placeholder="Ví dụ: Đội Khách Mời VIP"
-            value={wildcardTeamName}
-            onChange={(e) => setWildcardTeamName(e.target.value)}
-            className="bg-white text-xs h-10"
-            disabled={isAssigningWildcard}
-          />
+          {/* Selected division info */}
+          {(() => {
+            const selDiv = divisions.find(d => d.id === selectedDivisionId);
+            const isDoubles = selDiv?.matchType === 'DOUBLES' || selDiv?.matchType === 'MIXED_DOUBLES';
+            return (
+              <>
+                {/* Player 1 Email */}
+                <Input
+                  label="Email hoặc SĐT người chơi"
+                  placeholder="partner@baseline.vn hoặc 09xxxx"
+                  value={wildcardEmailOrPhone}
+                  onChange={(e) => setWildcardEmailOrPhone(e.target.value)}
+                  className="bg-white text-xs h-10"
+                  disabled={isAssigningWildcard}
+                />
 
-          <Button
-            onClick={handleAssignWildcard}
-            disabled={isAssigningWildcard || !wildcardEmailOrPhone.trim() || !wildcardTeamName.trim()}
-            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-2.5 flex items-center justify-center gap-1.5 shadow-sm animate-none"
-          >
-            {isAssigningWildcard ? (
-              <>
-                <Loader2 className="w-3.5 h-3.5 animate-spin" /> Đang gán...
+                {/* Partner Email (chỉ hiện khi đánh đôi) */}
+                {isDoubles && (
+                  <Input
+                    label="Đồng đội (Email hoặc SĐT)"
+                    placeholder="Nhập email/số điện thoại đồng đội"
+                    value={wildcardPartnerEmailOrPhone}
+                    onChange={(e) => setWildcardPartnerEmailOrPhone(e.target.value)}
+                    className="bg-white text-xs h-10"
+                    disabled={isAssigningWildcard}
+                  />
+                )}
+
+                {/* Team Name */}
+                <Input
+                  label="Tên đội thi đấu đặc cách"
+                  placeholder="Ví dụ: Đội Khách Mời VIP"
+                  value={wildcardTeamName}
+                  onChange={(e) => setWildcardTeamName(e.target.value)}
+                  className="bg-white text-xs h-10"
+                  disabled={isAssigningWildcard}
+                />
+
+                <Button
+                  onClick={handleAssignWildcard}
+                  disabled={isAssigningWildcard || !wildcardEmailOrPhone.trim() || !wildcardTeamName.trim()}
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-2.5 flex items-center justify-center gap-1.5 shadow-sm animate-none"
+                >
+                  {isAssigningWildcard ? (
+                    <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Đang gán...</>
+                  ) : (
+                    <><CheckCircle className="w-3.5 h-3.5" /> Gán suất đặc cách</>
+                  )}
+                </Button>
               </>
-            ) : (
-              <>
-                <CheckCircle className="w-3.5 h-3.5" /> Gán suất đặc cách
-              </>
-            )}
-          </Button>
+            );
+          })()}
+
+          {/* Wildcard Participants List */}
+          {(() => {
+            const wildcards = participants.filter(p => p.isWildcard);
+            if (wildcards.length === 0) return null;
+            return (
+              <div className="border-t border-slate-100 pt-4">
+                <p className="text-xs font-black text-slate-500 mb-3 uppercase tracking-wider">
+                  Đã gán đặc cách ({wildcards.length})
+                </p>
+                <div className="space-y-2">
+                  {wildcards.map((p) => {
+                    const divName = divisions.find(d => d.id === p.tournamentDivisionId)?.name || '';
+                    return (
+                      <div key={p.id} className="flex items-center justify-between rounded-xl border border-emerald-100 bg-emerald-50/40 px-3 py-2.5">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-bold text-slate-900 truncate">{p.teamName}</span>
+                            <span className="rounded-full border border-emerald-200 bg-emerald-100 px-2 py-0.5 text-[10px] font-black text-emerald-700 shrink-0">
+                              Đặc cách
+                            </span>
+                          </div>
+                          <p className="text-xs text-slate-500 mt-0.5">
+                            {p.members?.map(m => m.fullName).filter(Boolean).join(', ') || 'Chưa có tên'}
+                            {divName ? ` • ${divName}` : ''}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (confirm(`Xoá suất đặc cách của "${p.teamName}"?`)) {
+                              // handleRemoveWildcard(p.id)
+                            }
+                          }}
+                          className="ml-2 rounded-lg p-1.5 text-rose-500 hover:bg-rose-100 transition-colors"
+                          title="Xoá đặc cách"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
         </div>
 
       </div>

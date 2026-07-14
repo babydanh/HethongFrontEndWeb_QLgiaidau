@@ -29,6 +29,7 @@ import { useAuthStore } from '@/lib/zustand/authStore';
 import { socketClient } from '@/lib/socket';
 import type { MatchPenaltyRecord, PickleballSideOutState, TennisLivePointState } from '@/types/match';
 import { getErrorMessage } from '@/utils/error';
+import { cn } from '@/utils/cn';
 import { trimAndNormalizeSpaces } from '@/utils/string';
 import { Trophy, Clock, MapPin, Activity, Play, AlertCircle, Camera, MessageSquare, Send, Eye, Shield, Users, Heart } from 'lucide-react';
 import { tournamentsApi } from '@/features/tournaments/api';
@@ -158,23 +159,35 @@ export default function LiveMatchPage({ params }: Props) {
       : 'none';
 
   useEffect(() => {
-    if (!optimisticIsTennis) {
-      lastSyncedTennisServerKeyRef.current = serverScoreDetailsKey;
-      if (optimisticTennisPointState !== null) {
-        setOptimisticTennisPointState(null);
+    let isCancelled = false;
+
+    void Promise.resolve().then(() => {
+      if (isCancelled) {
+        return;
       }
-      return;
-    }
 
-    if (lastSyncedTennisServerKeyRef.current === serverScoreDetailsKey) {
-      return;
-    }
+      if (!optimisticIsTennis) {
+        lastSyncedTennisServerKeyRef.current = serverScoreDetailsKey;
+        if (optimisticTennisPointState !== null) {
+          setOptimisticTennisPointState(null);
+        }
+        return;
+      }
 
-    lastSyncedTennisServerKeyRef.current = serverScoreDetailsKey;
+      if (lastSyncedTennisServerKeyRef.current === serverScoreDetailsKey) {
+        return;
+      }
 
-    if (optimisticTennisPointStateKey !== resolvedTennisPointStateKey) {
-      setOptimisticTennisPointState(resolvedTennisPointState);
-    }
+      lastSyncedTennisServerKeyRef.current = serverScoreDetailsKey;
+
+      if (optimisticTennisPointStateKey !== resolvedTennisPointStateKey) {
+        setOptimisticTennisPointState(resolvedTennisPointState);
+      }
+    });
+
+    return () => {
+      isCancelled = true;
+    };
   }, [
     optimisticIsTennis,
     optimisticTennisPointState,
@@ -199,7 +212,7 @@ export default function LiveMatchPage({ params }: Props) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center bg-white p-8 rounded-3xl shadow-sm border border-slate-100 max-w-md">
-          <Trophy className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+          <img src="/images/vndc_sport.png" alt="VNDC Sport Logo" className="w-20 h-20 object-contain mx-auto mb-4" />
           <h2 className="text-xl font-bold text-slate-900 mb-2">{error || 'Không tìm thấy trận đấu'}</h2>
           <p className="text-slate-500 text-sm mb-6">Trận đấu này có thể không tồn tại hoặc đã bị hủy.</p>
           <Link href="/tournaments" className="inline-flex items-center justify-center px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all shadow-sm">
@@ -218,7 +231,6 @@ export default function LiveMatchPage({ params }: Props) {
   const isAssignedReferee = !!match.refereeId && match.refereeId === user?.id;
   const canControlLiveMatch =
     hasAdminRole ||
-    hasOrganizerRole ||
     match.tournament?.createdBy === user?.id ||
     isAssignedReferee;
 
@@ -267,6 +279,64 @@ export default function LiveMatchPage({ params }: Props) {
     }
 
     return trimmedReason;
+  };
+
+  const validateSetCanFinish = (setItem: { team1Score: number; team2Score: number }, setIndex: number) => {
+    const team1Score = Number(setItem.team1Score);
+    const team2Score = Number(setItem.team2Score);
+    const maxScore = Math.max(team1Score, team2Score);
+    const minScore = Math.min(team1Score, team2Score);
+    const diff = maxScore - minScore;
+    const label = `${scorePresentation.sequenceLabel.charAt(0).toUpperCase() + scorePresentation.sequenceLabel.slice(1)} ${setIndex + 1}`;
+
+    if (team1Score === 0 && team2Score === 0) {
+      return { ok: false, message: `${label} đang là 0-0. Hãy nhập điểm thực tế trước khi chốt.` };
+    }
+
+    if (team1Score === team2Score) {
+      return { ok: false, message: `${label} đang hòa ${team1Score}-${team2Score}. Hãy chỉnh lại tỉ số hoặc bật ngoại lệ.` };
+    }
+
+    if (resolvedRules.kind === 'TENNIS') {
+      if (maxScore < resolvedRules.pointsPerSet) {
+        return { ok: false, message: `${label} chưa đạt tối thiểu ${resolvedRules.pointsPerSet} game.` };
+      }
+      if (maxScore > resolvedRules.maxPoints) {
+        return { ok: false, message: `${label} vượt quá ngưỡng tối đa ${resolvedRules.maxPoints} game.` };
+      }
+      if (maxScore === resolvedRules.pointsPerSet) {
+        if (diff < 2 || minScore > resolvedRules.pointsPerSet - 2) {
+          return { ok: false, message: `${label} chưa đủ cách biệt để chốt.` };
+        }
+      } else if (maxScore === resolvedRules.maxPoints) {
+        if (minScore < resolvedRules.maxPoints - 1) {
+          return { ok: false, message: `${label} chưa đủ điều kiện để chốt ở ngưỡng tối đa.` };
+        }
+      }
+
+      return { ok: true };
+    }
+
+    if (!resolvedRules.winByTwo) {
+      if (maxScore < resolvedRules.pointsPerSet) {
+        return { ok: false, message: `${label} chưa đạt mốc ${resolvedRules.pointsPerSet} điểm.` };
+      }
+      return { ok: true };
+    }
+
+    if (maxScore < resolvedRules.pointsPerSet) {
+      return { ok: false, message: `${label} chưa đạt tối thiểu ${resolvedRules.pointsPerSet} điểm.` };
+    }
+
+    if (maxScore < resolvedRules.maxPoints && diff < 2) {
+      return { ok: false, message: `${label} chưa đủ cách biệt 2 điểm để chốt.` };
+    }
+
+    if (maxScore > resolvedRules.maxPoints) {
+      return { ok: false, message: `${label} vượt quá ngưỡng tối đa ${resolvedRules.maxPoints} điểm.` };
+    }
+
+    return { ok: true };
   };
 
   const buildScoreDetailsPayload = (
@@ -501,6 +571,16 @@ export default function LiveMatchPage({ params }: Props) {
       }
 
       const setObj = { ...newScores[activeIdx], isFinished: true };
+      if (!appliedOverrideReason) {
+        const finishValidation = validateSetCanFinish(setObj, activeIdx);
+        if (!finishValidation.ok) {
+          toast.error(finishValidation.message ?? 'Không thể chốt set hiện tại.');
+          setIsSubmitting(false);
+          return;
+        }
+      } else {
+        setObj.scoreOverride = { reason: appliedOverrideReason };
+      }
       newScores[activeIdx] = setObj;
 
       const nextSetsWon = deriveSetsWon(newScores);
@@ -530,6 +610,10 @@ export default function LiveMatchPage({ params }: Props) {
       });
 
       applyServerSnapshot(res);
+      if (appliedOverrideReason) {
+        setOverrideEnabled(false);
+        setOverrideReason('');
+      }
       const setWinnerName =
         setObj.team1Score > setObj.team2Score
           ? team1Name
@@ -552,8 +636,12 @@ export default function LiveMatchPage({ params }: Props) {
     if (!ensureCanControlLiveMatch()) {
       return;
     }
+    if (!overrideEnabled) {
+      toast.error('Chốt một đội thắng thẳng là nghiệp vụ ngoại lệ. Hãy bật ngoại lệ và nhập lý do trước.');
+      return;
+    }
     const appliedOverrideReason = resolveOverrideReason();
-    if (overrideEnabled && !appliedOverrideReason) {
+    if (!appliedOverrideReason) {
       return;
     }
     if (isSubmitting) return;
@@ -583,7 +671,7 @@ export default function LiveMatchPage({ params }: Props) {
       }
 
       // Update score and winner
-      await matchesApi.updateScore(matchId, {
+      const completedMatch = await matchesApi.updateScore(matchId, {
         p1SetsWon: nextSetsWon.p1SetsWon,
         p2SetsWon: nextSetsWon.p2SetsWon,
         scoreDetails: buildScoreDetailsPayload(newScores, sideOutState, null),
@@ -591,10 +679,7 @@ export default function LiveMatchPage({ params }: Props) {
         ...(appliedOverrideReason ? { overrideReason: appliedOverrideReason } : {}),
       });
 
-      // Update status to COMPLETED
-      const resStatus = await matchesApi.updateStatus(matchId, { status: 'COMPLETED' });
-
-      applyServerSnapshot(resStatus);
+      applyServerSnapshot(completedMatch);
       toast.success(
         `Đã hoàn tất trận đấu. Đội thắng: ${winnerTeam === 1 ? team1Name : team2Name}.`,
       );
@@ -876,11 +961,12 @@ export default function LiveMatchPage({ params }: Props) {
                   
                   {/* Team 1 */}
                   <div className="flex flex-col items-center flex-1 w-full">
-                    <div className={`w-20 h-20 rounded-2xl flex items-center justify-center mb-4 shadow-md border transition-all ${
+                    <div className={cn(
+                      'mb-4 flex h-20 w-20 items-center justify-center rounded-2xl border shadow-md transition-all',
                       match.winnerId === match.participant1Id && match.status === 'COMPLETED'
                         ? 'bg-emerald-50 border-emerald-200 text-emerald-600 ring-4 ring-emerald-100'
-                        : 'bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-100 text-blue-600'
-                    }`}>
+                        : 'bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-100 text-blue-600',
+                    )}>
                       {match.winnerId === match.participant1Id && match.status === 'COMPLETED' ? (
                         <Trophy className="w-10 h-10" />
                       ) : (
@@ -893,7 +979,7 @@ export default function LiveMatchPage({ params }: Props) {
                     {part1 && part1.members && part1.members.length > 0 && (
                       <div className="mt-4 flex flex-col items-center gap-1.5 w-full">
                         <div className="flex flex-wrap justify-center gap-2">
-                          {part1.members.map((member: any) => (
+                          {part1.members.map((member) => (
                             <Link
                               key={member.userId}
                               href={`/users/${member.userId}`}
@@ -901,18 +987,22 @@ export default function LiveMatchPage({ params }: Props) {
                             >
                               <div className="w-5 h-5 rounded-full overflow-hidden bg-slate-200 relative shrink-0">
                                 {member.avatarUrl ? (
-                                  <img src={member.avatarUrl} alt={member.fullName} className="w-full h-full object-cover" />
+                                  <img src={member.avatarUrl} alt={member.fullName ?? 'Người chơi'} className="w-full h-full object-cover" />
                                 ) : (
                                   <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-slate-500 uppercase">{member.fullName?.charAt(0) || 'U'}</span>
                                 )}
                               </div>
                               <div className="text-left leading-none">
                                 <p className="text-[11px] font-bold text-slate-700 group-hover:text-blue-700 transition-colors">{member.fullName || 'Người chơi'}</p>
-                                {member.elo && (
+                                {member.isMock ? (
+                                  <p className="text-[8px] font-medium text-slate-400 mt-0.5">
+                                    VĐV ảo
+                                  </p>
+                                ) : member.elo ? (
                                   <p className="text-[8px] font-medium text-slate-400 mt-0.5">
                                     {member.elo.tierName} • <span className="font-bold text-blue-600">{member.elo.eloPoints} ELO</span>
                                   </p>
-                                )}
+                                ) : null}
                               </div>
                             </Link>
                           ))}
@@ -940,11 +1030,12 @@ export default function LiveMatchPage({ params }: Props) {
 
                   {/* Team 2 */}
                   <div className="flex flex-col items-center flex-1 w-full">
-                    <div className={`w-20 h-20 rounded-2xl flex items-center justify-center mb-4 shadow-md border transition-all ${
+                    <div className={cn(
+                      'mb-4 flex h-20 w-20 items-center justify-center rounded-2xl border shadow-md transition-all',
                       match.winnerId === match.participant2Id && match.status === 'COMPLETED'
                         ? 'bg-emerald-50 border-emerald-200 text-emerald-600 ring-4 ring-emerald-100'
-                        : 'bg-gradient-to-br from-indigo-50 to-blue-50 border-indigo-100 text-indigo-600'
-                    }`}>
+                        : 'bg-gradient-to-br from-indigo-50 to-blue-50 border-indigo-100 text-indigo-600',
+                    )}>
                       {match.winnerId === match.participant2Id && match.status === 'COMPLETED' ? (
                         <Trophy className="w-10 h-10" />
                       ) : (
@@ -957,7 +1048,7 @@ export default function LiveMatchPage({ params }: Props) {
                     {part2 && part2.members && part2.members.length > 0 && (
                       <div className="mt-4 flex flex-col items-center gap-1.5 w-full">
                         <div className="flex flex-wrap justify-center gap-2">
-                          {part2.members.map((member: any) => (
+                          {part2.members.map((member) => (
                             <Link
                               key={member.userId}
                               href={`/users/${member.userId}`}
@@ -965,18 +1056,22 @@ export default function LiveMatchPage({ params }: Props) {
                             >
                               <div className="w-5 h-5 rounded-full overflow-hidden bg-slate-200 relative shrink-0">
                                 {member.avatarUrl ? (
-                                  <img src={member.avatarUrl} alt={member.fullName} className="w-full h-full object-cover" />
+                                  <img src={member.avatarUrl} alt={member.fullName ?? 'Người chơi'} className="w-full h-full object-cover" />
                                 ) : (
                                   <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-slate-500 uppercase">{member.fullName?.charAt(0) || 'U'}</span>
                                 )}
                               </div>
                               <div className="text-left leading-none">
                                 <p className="text-[11px] font-bold text-slate-700 group-hover:text-blue-700 transition-colors">{member.fullName || 'Người chơi'}</p>
-                                {member.elo && (
+                                {member.isMock ? (
+                                  <p className="text-[8px] font-medium text-slate-400 mt-0.5">
+                                    VĐV ảo
+                                  </p>
+                                ) : member.elo ? (
                                   <p className="text-[8px] font-medium text-slate-400 mt-0.5">
                                     {member.elo.tierName} • <span className="font-bold text-blue-600">{member.elo.eloPoints} ELO</span>
                                   </p>
-                                )}
+                                ) : null}
                               </div>
                             </Link>
                           ))}
@@ -1188,6 +1283,8 @@ export default function LiveMatchPage({ params }: Props) {
           team1Name={team1Name}
           team2Name={team2Name}
           currentSet={currentSet}
+          scores={scores}
+          activeSetIndex={activeSetIdx}
           scorePresentation={scorePresentation}
           scoreGuidance={scoreGuidance}
           sportKind={resolvedRules.kind}

@@ -28,12 +28,28 @@ function stageTypeLabel(type: string): string {
     case 'SINGLE_ELIMINATION':
       return 'Loại trực tiếp';
     case 'DOUBLE_ELIMINATION':
-      return 'Loại kép (Double Elimination)';
+      return 'Nhánh thắng nhánh thua';
     case 'ROUND_ROBIN':
       return 'Vòng tròn tính điểm';
     default:
       return type;
   }
+}
+
+function stageNameLabel(name: string): string {
+  const upperName = (name ?? '').toUpperCase();
+  if (upperName.includes('DOUBLE ELIMINATION STAGE') || upperName.includes('DOUBLE_ELIMINATION')) {
+    return 'Vòng đấu Nhánh thắng nhánh thua';
+  }
+  if (upperName.includes('ELIMINATION STAGE')) {
+    return 'Vòng đấu Loại trực tiếp';
+  }
+  if (upperName.includes('ROUND ROBIN STAGE') || upperName.includes('ROUND_ROBIN')) {
+    return 'Vòng đấu Vòng tròn tính điểm';
+  }
+  if (name === 'Winners Bracket') return 'Nhánh thắng';
+  if (name === 'Losers Bracket') return 'Nhánh thua';
+  return name;
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -50,6 +66,7 @@ function GroupView({
   selectedMatchId,
   onSelectMatch,
   fallbackSportRuleKind,
+  roundConfig,
 }: {
   group: { id: string; name: string; matches: BracketMatch[] };
   stageType: string;
@@ -60,6 +77,7 @@ function GroupView({
   stageId?: string;
   selectedMatchId?: string | null;
   fallbackSportRuleKind?: BracketTabProps['fallbackSportRuleKind'];
+  roundConfig?: BracketStage['roundConfig'];
 }) {
   const { matches } = group;
 
@@ -72,7 +90,7 @@ function GroupView({
   }
 
   if (stageType === 'ROUND_ROBIN') {
-    return <RoundRobinView matches={matches} tiebreakerMode={tiebreakerMode} onScheduleMatch={onScheduleMatch} selectedMatchId={selectedMatchId} onSelectMatch={onSelectMatch} tournamentId={tournamentId} stageId={stageId} fallbackSportRuleKind={fallbackSportRuleKind} />;
+    return <RoundRobinView matches={matches} tiebreakerMode={tiebreakerMode} onScheduleMatch={onScheduleMatch} selectedMatchId={selectedMatchId} onSelectMatch={onSelectMatch} tournamentId={tournamentId} stageId={stageId} fallbackSportRuleKind={fallbackSportRuleKind} roundConfig={roundConfig} />;
   }
 
   if (stageType === 'DOUBLE_ELIMINATION') {
@@ -230,7 +248,7 @@ export default function BracketTab({
                   : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
               }`}
             >
-              {s.name}
+              {stageNameLabel(s.name)}
             </button>
           ))}
         </div>
@@ -242,7 +260,7 @@ export default function BracketTab({
           {/* Stage header */}
           <div>
             <h3 className="text-lg font-extrabold text-slate-900">
-              {activeStage.name}
+              {stageNameLabel(activeStage.name)}
             </h3>
             <p className="text-xs text-slate-400 font-semibold mt-0.5">
               Thể thức: {stageTypeLabel(activeStage.type)}
@@ -294,6 +312,7 @@ export default function BracketTab({
                   selectedMatchId={selectedMatchId}
                   onSelectMatch={onSelectMatch}
                   fallbackSportRuleKind={effectiveSportRuleKind}
+                  roundConfig={activeStage?.roundConfig}
                 />
               </div>
             ))

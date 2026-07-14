@@ -44,14 +44,14 @@ export function buildMatchRuleSummary(
   const resolved = resolveBracketMatchRules(match, fallbackKind);
   const presentation = getSportRulePresentation(resolved.kind);
   const statLabels = getBracketStatLabels(resolved.kind);
-  const bestOfLabel = resolved.bestOf === 1 ? '1 set' : `BO${resolved.bestOf}`;
+  const bestOfLabel = resolved.bestOf === 1 ? '1 set' : `Đấu ${resolved.bestOf} set chạm ${resolved.setsToWin}`;
 
   const targetLabel = `${resolved.pointsPerSet} ${statLabels.targetSummary}`;
   const tieLabel =
     resolved.kind === 'TENNIS'
-      ? `tie-break ${resolved.tiebreakPoints}`
+      ? `loạt phụ (tie-break) ${resolved.tiebreakPoints}`
       : resolved.hasCustomTiebreakTarget && resolved.maxPoints > resolved.pointsPerSet
-        ? `chạm ${resolved.maxPoints}`
+        ? `chạm ${resolved.maxPoints} tối đa`
         : null;
 
   return [presentation.sportLabel, bestOfLabel, targetLabel, tieLabel]

@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/Modal';
 import type { TournamentParticipant } from '@/types/tournament';
 import { formatDate } from '@/utils/format';
+import { cn } from '@/utils/cn';
 import {
   getParticipantStatusClassName,
   getParticipantStatusLabel,
@@ -130,12 +131,12 @@ export function OpsParticipants({
                 key={option.value}
                 type="button"
                 onClick={() => setFilter(option.value)}
-                className={[
+                className={cn(
                   'rounded-full border px-3 py-2 text-xs font-black transition-colors',
                   filter === option.value
                     ? 'border-blue-600 bg-blue-600 text-white'
                     : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:text-slate-900',
-                ].join(' ')}
+                )}
               >
                 {option.label}
               </button>
@@ -203,15 +204,15 @@ export function OpsParticipants({
                           Đăng ký {formatDate(participant.registeredAt)} • Seed: {participant.seed ?? 'Chưa có'}
                         </p>
                       </td>
-                      <td className="py-4 pr-4">
-                        <div className="flex flex-wrap gap-2">
-                          {(participant.members || []).map((member) => (
-                            <span key={member.userId} className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-bold text-slate-700">
-                              {member.fullName || 'Chưa rõ'}
-                            </span>
-                          ))}
-                        </div>
-                      </td>
+                        <td className="py-4 pr-4">
+                          <div className="flex flex-wrap gap-2">
+                            {(participant.members || []).map((member) => (
+                              <span key={member.userId} className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-bold text-slate-700">
+                                {member.isMock ? 'VĐV ảo' : (member.fullName || 'Chưa rõ')}
+                              </span>
+                            ))}
+                          </div>
+                        </td>
                       <td className="py-4 pr-4">
                         <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-black ${getParticipantStatusClassName(participant.teamStatus)}`}>
                           {getParticipantStatusLabel(participant.teamStatus)}

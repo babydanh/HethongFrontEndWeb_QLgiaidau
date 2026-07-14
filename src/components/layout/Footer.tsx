@@ -9,17 +9,15 @@ export function Footer() {
       <div className="container mx-auto px-4 py-8 md:px-6 md:py-12">
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
           <div>
-            <Link href="/" className="flex items-center gap-0.5 mb-3">
-              <img 
-                src="/images/vndc_sport_logo.png" 
-                alt="VNDC Sport Logo Main" 
-                className="h-[130px] w-auto object-contain transition-transform duration-200 hover:scale-105"
-              />
+            <Link href="/" className="flex items-center gap-2 mb-3">
               <img 
                 src="/images/vndc_sport.png" 
-                alt="VNDC Sport Logo Sub" 
-                className="h-[104px] w-auto object-contain transition-transform duration-200 hover:scale-105"
+                alt="VNSPORT Logo" 
+                className="h-10 w-auto object-contain"
               />
+              <span className="font-black text-2xl tracking-wider text-blue-600 uppercase select-none">
+                VN<span className="text-slate-800">SPORT</span>
+              </span>
             </Link>
             <p className="text-sm text-slate-500">
               Nền tảng quản lý giải đấu chuyên nghiệp và dễ sử dụng nhất.
@@ -37,8 +35,7 @@ export function Footer() {
             <h3 className="mb-4 text-sm font-semibold text-slate-900">Ban tổ chức</h3>
             <ul className="space-y-2 text-sm text-slate-500">
               <li><Link href="/organizer" className="hover:text-blue-600">Bảng điều khiển</Link></li>
-              <li><Link href="/organizer/tournaments/new" className="hover:text-blue-600">Tạo giải đấu mới</Link></li>
-              <li><Link href="/pricing" className="hover:text-blue-600">Bảng giá</Link></li>
+              <li><Link href="/organizer/tournaments/create" className="hover:text-blue-600">Tạo giải đấu mới</Link></li>
             </ul>
           </div>
           <div>

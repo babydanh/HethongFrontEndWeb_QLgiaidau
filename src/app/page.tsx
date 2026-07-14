@@ -3,7 +3,7 @@
 // Reading this as: Sports platform homepage with live matches feed, featured tournaments, and community bento grid.
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { buildMatchScoreSummary, getMatchScorePresentation, resolveMatchSportRules } from '@/features/matches/score-display';
+import { buildMatchScoreSummary, getMatchScorePresentation, resolveMatchSportRules, extractMatchScores } from '@/features/matches/score-display';
 import Image from 'next/image';
 import {
   Trophy, Calendar, Users, MapPin, ArrowRight, Shield, Heart, Share2, Play,
@@ -52,8 +52,14 @@ function CommunityLogoAvatar({ src, alt }: { src?: string | null; alt: string })
 function LiveMatchSportLabel({ match }: { match: BracketMatch }) {
   const resolvedRules = resolveMatchSportRules(match);
   const presentation = getMatchScorePresentation(resolvedRules.kind);
+  const logo = getSportLogo(presentation.sportLabel);
 
-  return <>{presentation.sportLabel}</>;
+  return (
+    <span className="inline-flex items-center gap-1 align-middle">
+      {logo && <img src={logo} alt={presentation.sportLabel} className="w-3.5 h-3.5 object-contain" />}
+      <span>{presentation.sportLabel}</span>
+    </span>
+  );
 }
 
 /** Dịch tên stage từ backend (tiếng Anh) sang tiếng Việt */
@@ -112,6 +118,91 @@ function RegistrationCountdown({ targetDate }: { targetDate: string }) {
   );
 }
 
+function TournamentLogoAvatar({ src, alt }: { src?: string | null; alt: string }) {
+  const fallbackSrc = '/images/vndc_sport.png';
+  const [imgError, setImgError] = useState(false);
+  const [prevSrc, setPrevSrc] = useState(src);
+  if (prevSrc !== src) {
+    setPrevSrc(src);
+    setImgError(false);
+  }
+
+  const imageSrc = (!imgError && src?.trim()) ? src : fallbackSrc;
+
+  return (
+    <Image
+      src={imageSrc}
+      alt={alt}
+      fill
+      className="object-cover group-hover:scale-105 transition-transform duration-500"
+      onError={() => setImgError(true)}
+      unoptimized={imageSrc === fallbackSrc}
+    />
+  );
+}
+
+function HomepageTournamentCard({ tournament }: { tournament: Tournament }) {
+  const [imgError, setImgError] = useState(false);
+  const fallbackSrc = '/images/vndc_sport.png';
+  const imageSrc = (!imgError && tournament.bannerUrl?.trim()) ? tournament.bannerUrl.split(',')[0] : fallbackSrc;
+
+  const dateRange = useMemo(() => {
+    if (!tournament.startDate || !tournament.endDate) return '';
+    const start = new Date(tournament.startDate).toLocaleDateString('vi-VN');
+    const end = new Date(tournament.endDate).toLocaleDateString('vi-VN');
+    return `${start} - ${end}`;
+  }, [tournament.startDate, tournament.endDate]);
+
+  return (
+    <div className="bg-white rounded-3xl border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.015)] overflow-hidden flex flex-col group relative">
+      <div className="h-44 bg-slate-900 relative overflow-hidden shrink-0">
+        <Image
+          src={imageSrc}
+          alt={tournament.name}
+          fill
+          className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+          onError={() => setImgError(true)}
+          unoptimized={imageSrc === fallbackSrc}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
+        
+        {/* Badges */}
+        <div className="absolute top-4 left-4 z-10 flex gap-2">
+          <span className="px-3 py-1 bg-white/95 backdrop-blur-md rounded-full shadow-sm text-slate-800 text-[9px] font-black tracking-wider uppercase border border-white/20">
+            {getSportLogo(tournament.category?.name) ? '🏸 Cầu lông' : '🏆 Giải đấu'}
+          </span>
+          <span className="px-3 py-1 bg-emerald-600/90 backdrop-blur-md rounded-full shadow-sm text-white text-[9px] font-black tracking-wider uppercase">
+            Vừa kết thúc
+          </span>
+        </div>
+      </div>
+
+      <div className="p-5 flex-grow flex flex-col justify-between">
+        <div>
+          <h3 className="text-sm font-black text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1 leading-snug">
+            {tournament.name}
+          </h3>
+          <div className="flex items-center gap-1.5 mt-2 text-[10px] text-slate-500 font-bold">
+            <Calendar className="w-3.5 h-3.5 text-slate-400" />
+            <span>{dateRange}</span>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-100 text-[10px] font-bold text-slate-500">
+          <span className="flex items-center gap-1">
+            <Users className="w-3.5 h-3.5 text-slate-400" />
+            {tournament.maxParticipants} VĐV
+          </span>
+          <span className="text-slate-800 bg-slate-100 px-2.5 py-1 rounded-lg">
+            {Number(tournament.entryFee) === 0 ? 'Miễn phí' : `${Number(tournament.entryFee).toLocaleString('vi-VN')} VND`}
+          </span>
+        </div>
+      </div>
+
+      <Link href={`/tournaments/${tournament.id}`} className="absolute inset-0 z-20" />
+    </div>
+  );
+}
 
 export default function HomePage() {
   const { isAuthenticated, user } = useAuthStore();
@@ -125,6 +216,7 @@ export default function HomePage() {
   // Live Matches Feed
   const [liveMatches, setLiveMatches] = useState<BracketMatch[]>([]);
   const [upcomingMatches, setUpcomingMatches] = useState<BracketMatch[]>([]);
+  const [completedMatches, setCompletedMatches] = useState<BracketMatch[]>([]);
   const [highFives, setHighFives] = useState<Record<string, number>>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('match_high_fives');
@@ -179,6 +271,7 @@ export default function HomePage() {
         const communitiesPromise = communitiesApi.getCommunities(cParams);
         const liveMatchesPromise = matchesApi.getMatches({ status: 'ONGOING', limit: 100 });
         const upcomingMatchesPromise = matchesApi.getMatches({ status: 'SCHEDULED', limit: 100 });
+        const completedMatchesPromise = matchesApi.getMatches({ status: 'COMPLETED', limit: 100 });
         
         const lbCategoryId = selectedCategoryId || categories[0]?.id;
         const rankingsPromise = lbCategoryId
@@ -189,13 +282,14 @@ export default function HomePage() {
           ? rankingsApi.getUserRankings(user.id)
           : Promise.resolve(null);
 
-        const [tRes, cRes, lRes, uRes, rRes, userRankRes] = await Promise.allSettled([
+        const [tRes, cRes, lRes, uRes, rRes, userRankRes, compRes] = await Promise.allSettled([
           tournamentsPromise,
           communitiesPromise,
           liveMatchesPromise,
           upcomingMatchesPromise,
           rankingsPromise,
           userRankingsPromise,
+          completedMatchesPromise,
         ] as const);
 
         const fetchedTournaments = tRes.status === 'fulfilled' ? tRes.value.data || [] : [];
@@ -210,7 +304,7 @@ export default function HomePage() {
 
         setCommunities(cRes.status === 'fulfilled' ? cRes.value.data || [] : []);
 
-        // Lọc live/upcoming matches: chỉ lấy những trận thuộc tournament hợp lệ
+        // Lọc live/upcoming/completed matches: chỉ lấy những trận thuộc tournament hợp lệ
         const allLiveMatches = lRes.status === 'fulfilled' ? (lRes.value.data as unknown as BracketMatch[]) || [] : [];
         setLiveMatches(allLiveMatches.filter(m => validTournamentIds.has(m.tournamentId ?? '')));
 
@@ -226,6 +320,10 @@ export default function HomePage() {
           m.participant2.teamName.trim().toLowerCase() !== 'chờ xác định'
         );
         setUpcomingMatches(validUpcoming);
+
+        const fetchedCompleted = compRes.status === 'fulfilled' ? (compRes.value.data as unknown as BracketMatch[]) || [] : [];
+        setCompletedMatches(fetchedCompleted.filter(m => validTournamentIds.has(m.tournamentId ?? '')));
+
         setLeaderboard(rRes.status === 'fulfilled' ? rRes.value.data || [] : []);
 
         if (userRankRes.status === 'fulfilled' && userRankRes.value) {
@@ -251,8 +349,8 @@ export default function HomePage() {
           try {
             const matchesRes = await matchesApi.getMatches({ tournamentId: foundRanked.id, limit: 50 });
             // Extract from Axios response properly
-            const responseData = (matchesRes as any).data;
-            const mData = responseData?.data || responseData || [];
+            const responseData = (matchesRes as Record<string, unknown>).data;
+            const mData = (responseData as Record<string, unknown>)?.data || responseData || [];
             setRankedTournamentMatches(mData as unknown as BracketMatch[]);
           } catch (err) {
             console.error('Failed to load ranked tournament matches', err);
@@ -315,7 +413,7 @@ export default function HomePage() {
     : roundMatches.filter(m => m.status === 'COMPLETED' || m.status === 'SCHEDULED');
 
   const sortedDisplayRankedMatches = [...displayRankedMatches].sort((a, b) => {
-    const getWeight = (status: string, winnerId: any) => {
+    const getWeight = (status: string, winnerId: string | null | undefined) => {
       if (winnerId != null || status === 'COMPLETED') return 3; // Completed goes to the bottom
       if (status === 'ONGOING' || status === 'IN_PROGRESS') return 1; // Ongoing goes to the top
       if (status === 'SCHEDULED') return 2; // Scheduled is in the middle
@@ -325,30 +423,52 @@ export default function HomePage() {
   });
 
   // Group live matches by tournament name
-  const liveMatchesByTournament = liveMatches.reduce((acc, match) => {
+  const liveMatchesByTournament = liveMatches.reduce<Record<string, { id?: string | null; name: string; logoUrl?: string | null; matches: BracketMatch[] }>>((acc, match) => {
     const tournamentName = match.tournament?.name || 'Giải đấu khác';
+    const tournament = match.tournament as { id?: string; logoUrl?: string | null; name?: string };
     if (!acc[tournamentName]) {
       acc[tournamentName] = {
+        id: match.tournamentId || tournament?.id,
         name: tournamentName,
+        logoUrl: tournament?.logoUrl,
         matches: [],
       };
     }
     acc[tournamentName].matches.push(match);
     return acc;
-  }, {} as Record<string, { name: string; matches: BracketMatch[] }>);
+  }, {});
 
   // Group upcoming matches by tournament name
-  const upcomingMatchesByTournament = upcomingMatches.reduce((acc, match) => {
+  const upcomingMatchesByTournament = upcomingMatches.reduce<Record<string, { id?: string | null; name: string; logoUrl?: string | null; matches: BracketMatch[] }>>((acc, match) => {
     const tournamentName = match.tournament?.name || 'Giải đấu khác';
+    const tournament = match.tournament as { id?: string; logoUrl?: string | null; name?: string };
     if (!acc[tournamentName]) {
       acc[tournamentName] = {
+        id: match.tournamentId || tournament?.id,
         name: tournamentName,
+        logoUrl: tournament?.logoUrl,
         matches: [],
       };
     }
     acc[tournamentName].matches.push(match);
     return acc;
-  }, {} as Record<string, { name: string; matches: BracketMatch[] }>);
+  }, {});
+
+  // Group completed matches by tournament name
+  const completedMatchesByTournament = completedMatches.reduce<Record<string, { id?: string | null; name: string; logoUrl?: string | null; matches: BracketMatch[] }>>((acc, match) => {
+    const tournamentName = match.tournament?.name || 'Giải đấu khác';
+    const tournament = match.tournament as { id?: string; logoUrl?: string | null; name?: string };
+    if (!acc[tournamentName]) {
+      acc[tournamentName] = {
+        id: match.tournamentId || tournament?.id,
+        name: tournamentName,
+        logoUrl: tournament?.logoUrl,
+        matches: [],
+      };
+    }
+    acc[tournamentName].matches.push(match);
+    return acc;
+  }, {});
 
   const renderMatchCard = (match: BracketMatch, isRankedMatchSection = false) => {
     const currentHighFives = highFives[match.id] || 0;
@@ -372,38 +492,31 @@ export default function HomePage() {
           <div className="flex items-center gap-1.5 truncate max-w-[70%]">
             {isLive ? (
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-455 opacity-75"></span>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-600"></span>
               </span>
             ) : null}
             <span className={`uppercase tracking-wider shrink-0 ${
-              isLive ? 'text-rose-655 font-extrabold' : isCompleted ? 'text-slate-500' : 'text-blue-605'
+              isLive ? 'text-rose-600 font-extrabold animate-pulse' : isCompleted ? 'text-slate-500' : 'text-blue-600'
             }`}>
               {isLive ? 'Trực tiếp' : isCompleted ? 'Đã kết thúc' : 'Sắp diễn ra'}
             </span>
             <span className="text-slate-300">•</span>
-            <span className="shrink-0">Vòng {match.roundNumber}</span>
+            <span className="shrink-0 text-slate-600 font-semibold">Vòng {match.roundNumber}</span>
             {match.courtName && (
               <>
                 <span className="text-slate-300">•</span>
                 <span className="flex items-center gap-0.5 truncate max-w-[120px]">
-                  <MapPin className="w-3 h-3 text-slate-400" />
+                  <MapPin className="w-2.5 h-2.5 text-slate-400" />
                   {match.courtName}
                 </span>
               </>
             )}
           </div>
-          <span className="uppercase text-slate-650 bg-slate-100 px-2 py-0.5 rounded text-[8px] font-extrabold truncate max-w-[28%]">
+          <span className="uppercase text-slate-650 bg-slate-100/80 px-2 py-0.5 rounded text-[8px] font-black truncate max-w-[28%]">
             {translateStageName(match.group?.stage?.name) || 'Vòng đấu'}
           </span>
         </div>
-
-        {/* Tournament Name Header */}
-        {!isRankedMatchSection && match.tournament?.name && (
-          <div className="px-4 pt-2.5 pb-1 flex items-center gap-1 text-[9px] font-black text-blue-600 uppercase tracking-wider border-b border-slate-50 bg-blue-50/10 truncate">
-            <span className="truncate">{match.tournament.name}</span>
-          </div>
-        )}
 
         {/* Opponents Match Grid */}
         <div className="p-4 flex items-center justify-between gap-3 relative">
@@ -441,8 +554,9 @@ export default function HomePage() {
                   : 'bg-slate-100 text-slate-700 border-slate-200'
               }`}>
                 {(() => {
-                  const rawScore = buildMatchScoreSummary(match);
-                  return rawScore.includes(':') ? rawScore.split(':')[1].trim() : rawScore;
+                  const scores = extractMatchScores(match.scoreDetails);
+                  const targetSet = scores.find((s: { isFinished: boolean }) => !s.isFinished) || scores[scores.length - 1] || { team1Score: 0, team2Score: 0 };
+                  return `${targetSet.team1Score} - ${targetSet.team2Score}`;
                 })()}
               </div>
             )}
@@ -472,7 +586,7 @@ export default function HomePage() {
 
         {/* Location & Sport Row */}
         <div className="px-4 pb-2.5 pt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] text-slate-500 font-semibold border-t border-slate-100 bg-slate-50/10">
-          <div className="shrink-0 text-slate-600">
+          <div className="shrink-0 text-slate-650">
             <span className="text-slate-400 font-bold">Môn:</span>{' '}
             <span className="font-black text-slate-800">
               <LiveMatchSportLabel match={match} />
@@ -481,7 +595,7 @@ export default function HomePage() {
           {match.courtName ? (
             <div className="truncate max-w-[220px]" title={match.courtAddress ? `${match.courtName} - ${match.courtAddress}` : match.courtName}>
               <span className="text-slate-400 font-bold">Sân:</span>{' '}
-              <span className="font-bold text-slate-700">
+              <span className="font-bold text-slate-750">
                 {match.courtName}{match.courtAddress ? ` (${match.courtAddress})` : ''}
               </span>
             </div>
@@ -504,7 +618,7 @@ export default function HomePage() {
             <div className="flex items-center justify-center gap-1 py-1.5 hover:bg-white rounded-xl text-[10px] font-black text-slate-650 transition-all border border-transparent hover:border-slate-150 active:scale-95 duration-100 cursor-pointer w-full">
               {isLive ? (
                 <>
-                  <Play className="w-3.5 h-3.5 text-emerald-650 fill-emerald-600/10 animate-pulse" />
+                  <Play className="w-3.5 h-3.5 text-emerald-600 fill-emerald-600/10 animate-pulse" />
                   <span className="text-emerald-700 font-extrabold">Xem Live</span>
                 </>
               ) : (
@@ -542,6 +656,24 @@ export default function HomePage() {
   const matchesWon = activeRankInfo ? activeRankInfo.matchesWon : 0;
   const winRate = matchesPlayed > 0 ? Math.round((matchesWon / matchesPlayed) * 100) : 0;
   const sportName = categories.find(c => c.id === activeRankInfo?.categoryId)?.name || (selectedCategoryId ? categories.find(c => c.id === selectedCategoryId)?.name : 'Chung');
+
+  const [now] = useState(() => Date.now());
+
+  const recentCompletedTournaments = useMemo(() => {
+    return tournaments.filter(t => {
+      if (t.status !== 'COMPLETED') return false;
+      if (!t.endDate) return false;
+      const fourteenDays = 14 * 24 * 60 * 60 * 1000;
+      return (now - new Date(t.endDate).getTime()) < fourteenDays;
+    }).sort((a, b) => {
+      if (!a.endDate || !b.endDate) return 0;
+      return new Date(b.endDate).getTime() - new Date(a.endDate).getTime();
+    });
+  }, [tournaments, now]);
+
+  const activeTournaments = useMemo(() => {
+    return tournaments.filter(t => t.status !== 'COMPLETED');
+  }, [tournaments]);
 
   return (
     <div className="bg-slate-50 min-h-screen text-slate-900 font-sans selection:bg-blue-100 selection:text-blue-900 animate-in fade-in duration-200">
@@ -621,15 +753,16 @@ export default function HomePage() {
             {isLoading ? (
               <div className="w-full h-[220px] md:h-[300px] bg-slate-200 animate-pulse rounded-2xl"></div>
             ) : (
-              <TournamentHeroBanner tournaments={tournaments} heightClass="h-[320px] md:h-[420px]" />
+              <TournamentHeroBanner tournaments={activeTournaments} heightClass="h-[320px] md:h-[420px]" />
             )}
           </section>
+
           {rankedTournament && (isLoadingRanked || displayRankedMatches.length > 0) && (
             <section className="flex flex-col gap-4 bg-gradient-to-br from-blue-50/40 via-white to-slate-50/30 p-6 rounded-3xl border border-blue-100/60 shadow-[0_8px_30px_rgb(0,0,0,0.015)]">
               <div className="flex justify-between items-center pb-2 border-b border-slate-100">
-                <div className="flex items-center gap-2.5">
-                  <div className="p-2 bg-blue-600 rounded-xl text-white">
-                    <Trophy className="w-5 h-5" />
+                <Link href={`/tournaments/${rankedTournament.id}`} className="flex items-center gap-2.5 group cursor-pointer">
+                  <div className="w-10 h-10 rounded-full overflow-hidden border border-slate-200 bg-white flex items-center justify-center shrink-0 shadow-sm group-hover:scale-105 transition-transform duration-200 relative">
+                    <TournamentLogoAvatar src={rankedTournament.logoUrl} alt={rankedTournament.name} />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
@@ -641,9 +774,9 @@ export default function HomePage() {
                         </span>
                       )}
                     </div>
-                    <h3 className="text-sm font-black text-slate-900 leading-tight mt-0.5">{rankedTournament.name}</h3>
+                    <h3 className="text-sm font-black text-slate-900 leading-tight mt-0.5 group-hover:text-blue-600 transition-colors">{rankedTournament.name}</h3>
                   </div>
-                </div>
+                </Link>
                 <Link href={`/tournaments/${rankedTournament.id}`} className="text-xs font-bold text-blue-650 hover:underline flex items-center gap-0.5">
                   Chi tiết giải <ChevronRight className="w-4 h-4" />
                 </Link>
@@ -702,13 +835,21 @@ export default function HomePage() {
               </div>
             ) : (
               <div className="space-y-6">
-                {Object.entries(liveMatchesByTournament).map(([tournamentId, group]) => (
-                  <div key={tournamentId} className="bg-white rounded-3xl border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.015)] overflow-hidden flex flex-col">
+                {Object.entries(liveMatchesByTournament).map(([tournamentName, group]) => (
+                  <div key={tournamentName} className="bg-white rounded-3xl border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.015)] overflow-hidden flex flex-col">
                     {/* Group Tournament Header */}
-                    <div className="px-5 py-3 bg-gradient-to-r from-blue-50/20 to-indigo-50/10 border-b border-slate-100 flex items-center gap-2">
-                      <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider truncate">
-                        {group.name}
-                      </h3>
+                    <div className="px-5 py-3 bg-gradient-to-r from-blue-50/20 to-indigo-50/10 border-b border-slate-100 flex items-center">
+                      <Link 
+                        href={group.id ? `/tournaments/${group.id}` : '#'}
+                        className="flex items-center gap-2.5 group/header hover:opacity-90 transition-opacity"
+                      >
+                        <div className="w-5 h-5 rounded-full overflow-hidden border border-slate-200 bg-white relative flex-shrink-0">
+                          <TournamentLogoAvatar src={group.logoUrl} alt={group.name} />
+                        </div>
+                        <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider truncate group-hover/header:text-blue-600 transition-colors">
+                          {group.name}
+                        </h3>
+                      </Link>
                     </div>
                     {/* Matches List Grid */}
                     <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -720,13 +861,56 @@ export default function HomePage() {
             )}
           </section>
 
+          {/* Section 2.2: Trận đấu vừa kết thúc */}
+          <section className="flex flex-col gap-4">
+            <div className="flex justify-between items-end">
+              <h2 className="text-lg font-black text-slate-900 tracking-tight">Kết quả trận đấu vừa qua</h2>
+              <span className="text-[10px] font-extrabold text-emerald-650 bg-emerald-50 px-2 py-0.5 rounded uppercase tracking-wider">Kết quả</span>
+            </div>
+
+            {isLoading ? (
+              <div className="space-y-4">
+                <div className="bg-slate-200 animate-pulse h-40 rounded-2xl" />
+              </div>
+            ) : completedMatches.length === 0 ? (
+              <div className="bg-white border rounded-2xl p-12 text-center text-slate-455 font-bold text-xs">
+                Hiện chưa có trận đấu nào kết thúc gần đây.
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {Object.entries(completedMatchesByTournament).slice(0, 5).map(([tournamentName, group]) => (
+                  <div key={tournamentName} className="bg-white rounded-3xl border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.015)] overflow-hidden flex flex-col">
+                    {/* Group Tournament Header */}
+                    <div className="px-5 py-3 bg-gradient-to-r from-blue-50/20 to-indigo-50/10 border-b border-slate-100 flex items-center">
+                      <Link 
+                        href={group.id ? `/tournaments/${group.id}` : '#'}
+                        className="flex items-center gap-2.5 group/header hover:opacity-90 transition-opacity"
+                      >
+                        <div className="w-5 h-5 rounded-full overflow-hidden border border-slate-200 bg-white relative flex-shrink-0">
+                          <TournamentLogoAvatar src={group.logoUrl} alt={group.name} />
+                        </div>
+                        <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider truncate group-hover/header:text-blue-600 transition-colors">
+                          {group.name}
+                        </h3>
+                      </Link>
+                    </div>
+                    {/* Matches List Grid */}
+                    <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {group.matches.slice(0, 4).map((match) => renderMatchCard(match, true))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+ 
           {/* Section 2.5: Trận đấu sắp diễn ra */}
           <section className="flex flex-col gap-4">
             <div className="flex justify-between items-end">
               <h2 className="text-lg font-black text-slate-900 tracking-tight">Lịch thi đấu sắp diễn ra</h2>
               <span className="text-[10px] font-extrabold text-blue-600 bg-blue-50 px-2 py-0.5 rounded uppercase tracking-wider">Lịch thi đấu</span>
             </div>
-
+ 
             {isLoading ? (
               <div className="space-y-4">
                 <div className="bg-slate-200 animate-pulse h-40 rounded-2xl" />
@@ -737,13 +921,21 @@ export default function HomePage() {
               </div>
             ) : (
               <div className="space-y-6">
-                {Object.entries(upcomingMatchesByTournament).map(([tournamentId, group]) => (
-                  <div key={tournamentId} className="bg-white rounded-3xl border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.015)] overflow-hidden flex flex-col">
+                {Object.entries(upcomingMatchesByTournament).map(([tournamentName, group]) => (
+                  <div key={tournamentName} className="bg-white rounded-3xl border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.015)] overflow-hidden flex flex-col">
                     {/* Group Tournament Header */}
-                    <div className="px-5 py-3 bg-gradient-to-r from-blue-50/20 to-indigo-50/10 border-b border-slate-100 flex items-center gap-2">
-                      <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider truncate">
-                        {group.name}
-                      </h3>
+                    <div className="px-5 py-3 bg-gradient-to-r from-blue-50/20 to-indigo-50/10 border-b border-slate-100 flex items-center">
+                      <Link 
+                        href={group.id ? `/tournaments/${group.id}` : '#'}
+                        className="flex items-center gap-2.5 group/header hover:opacity-90 transition-opacity"
+                      >
+                        <div className="w-5 h-5 rounded-full overflow-hidden border border-slate-200 bg-white relative flex-shrink-0">
+                          <TournamentLogoAvatar src={group.logoUrl} alt={group.name} />
+                        </div>
+                        <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider truncate group-hover/header:text-blue-600 transition-colors">
+                          {group.name}
+                        </h3>
+                      </Link>
                     </div>
                     {/* Matches List Grid */}
                     <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -884,6 +1076,38 @@ export default function HomePage() {
             </div>
           </section>
 
+          {/* Section 4: Giải vừa kết thúc */}
+          <section className="flex flex-col gap-4">
+            <div className="flex justify-between items-end">
+              <div>
+                <h2 className="text-lg font-black text-slate-900 tracking-tight">Giải vừa kết thúc</h2>
+                <p className="text-[11px] font-semibold text-slate-500 mt-1">
+                  Chỉ hiển thị giải đã kết thúc trong 14 ngày gần đây, mới nhất ở đầu.
+                </p>
+              </div>
+              <Link href="/tournaments" className="text-xs font-black text-blue-600 hover:underline flex items-center gap-1">
+                Khám phá <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+
+            {isLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-slate-200 animate-pulse h-72 rounded-3xl" />
+                <div className="bg-slate-200 animate-pulse h-72 rounded-3xl" />
+              </div>
+            ) : recentCompletedTournaments.length === 0 ? (
+              <div className="bg-white border border-dashed rounded-3xl p-8 text-center text-slate-455 font-bold text-xs">
+                Hiện chưa có giải nào vừa kết thúc trong 14 ngày gần đây.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {recentCompletedTournaments.map((tournament) => (
+                  <HomepageTournamentCard key={tournament.id} tournament={tournament} />
+                ))}
+              </div>
+            )}
+          </section>
+
         </div>
 
         {/* Right Column (3/12) */}
@@ -964,70 +1188,41 @@ export default function HomePage() {
 
           {/* Widget 2: Bảng xếp hạng nhanh */}
           {leaderboard.length > 0 ? (
-            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.02)] p-5">
-              <div className="flex justify-between items-center mb-3">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                  BXH {selectedCategoryId ? categories.find(c => c.id === selectedCategoryId)?.name : categories[0]?.name || 'Giải đấu'}
-                </h3>
-                <Link href="/rankings" className="text-blue-600 hover:underline text-[10px] font-bold">
-                  Xem tất cả
-                </Link>
-              </div>
-              <div className="flex flex-col gap-2">
-                {leaderboard.slice(0, 5).map((item, index) => {
-                  const isCurrentUser = user && item.userId === user.id;
-                  const getRankBadgeClass = (idx: number) => {
-                    if (idx === 0) return 'gold-medal-glow text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-extrabold shadow-sm';
-                    if (idx === 1) return 'silver-medal-glow text-slate-800 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-extrabold shadow-sm';
-                    if (idx === 2) return 'bronze-medal-glow text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-extrabold shadow-sm';
-                    return 'text-slate-400 w-5 text-center text-xs font-bold';
-                  };
-                  return (
-                    <div
-                      key={item.id}
-                      className={`flex items-center gap-2.5 py-1.5 px-2 rounded-xl border transition-all ${
-                        isCurrentUser
-                          ? 'bg-blue-50/70 border-blue-200 shadow-sm'
-                          : 'border-transparent hover:bg-slate-50'
-                      }`}
-                    >
-                      <div className="flex items-center justify-center shrink-0 w-6">
-                        <span className={getRankBadgeClass(index)}>
-                          {index + 1}
-                        </span>
-                      </div>
-                      <Link href={`/users/${item.userId}`} className="flex items-center gap-2.5 flex-1 min-w-0">
-                        <div className="w-7 h-7 rounded-full border border-slate-200 bg-blue-50 flex items-center justify-center overflow-hidden shrink-0">
-                          {item.user?.avatarUrl ? (
-                            <img src={item.user.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 flex flex-col gap-4">
+              <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider pb-2 border-b border-slate-100 flex items-center gap-1.5">
+                <Trophy className="w-4 h-4 text-amber-500" /> Bảng xếp hạng nhanh
+              </h3>
+              <div className="flex flex-col gap-3">
+                {leaderboard.slice(0, 5).map((rank, idx) => (
+                  <div key={rank.id || idx} className="flex items-center justify-between text-xs font-semibold text-slate-700">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className={`w-5 h-5 rounded-full flex items-center justify-center font-black shrink-0 ${
+                        idx === 0 ? 'bg-amber-100 text-amber-700' : idx === 1 ? 'bg-slate-100 text-slate-700' : idx === 2 ? 'bg-orange-100 text-orange-700' : 'text-slate-400'
+                      }`}>
+                        {idx + 1}
+                      </span>
+                      <Link 
+                        href={rank.user?.id ? `/users/${rank.user.id}` : '#'}
+                        className="flex items-center gap-2 min-w-0 hover:text-blue-600 transition-colors"
+                      >
+                        <div className="w-5 h-5 rounded-full overflow-hidden border border-slate-200 bg-white relative flex-shrink-0">
+                          {rank.user?.avatarUrl ? (
+                            <img src={rank.user.avatarUrl} alt={rank.user.fullName} className="w-full h-full object-cover" />
                           ) : (
-                            <span className="text-[10px] font-bold text-blue-600 uppercase">
-                              {item.user?.fullName?.charAt(0) || 'U'}
-                            </span>
+                            <div className="w-full h-full bg-slate-100 flex items-center justify-center text-[8px] font-black text-slate-500 uppercase">
+                              {rank.user?.fullName ? rank.user.fullName.charAt(0) : '?'}
+                            </div>
                           )}
                         </div>
-                        <div className="flex flex-col flex-grow min-w-0">
-                          <span className={`text-xs truncate ${isCurrentUser ? 'font-black text-blue-700' : 'font-semibold text-slate-800 hover:text-blue-600'}`}>
-                            {item.user?.fullName || 'Người dùng'}
-                          </span>
-                        </div>
+                        <span className="truncate">{rank.user?.fullName || 'Người chơi'}</span>
                       </Link>
-                      <div className="flex flex-col items-end shrink-0">
-                        <span className="text-xs font-bold text-slate-700">{item.eloPoints}</span>
-                        <span className="text-[8px] font-extrabold text-slate-400 uppercase tracking-wider">{item.tier?.name || 'Hạng E'}</span>
-                      </div>
                     </div>
-                  );
-                })}
+                    <span className="font-mono font-bold text-slate-950 shrink-0">{rank.eloPoints} ELO</span>
+                  </div>
+                ))}
               </div>
             </div>
-          ) : (
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex flex-col items-center text-center">
-              <Trophy className="w-8 h-8 text-slate-300 mb-2" />
-              <h4 className="text-xs font-bold text-slate-800">Bảng xếp hạng</h4>
-              <p className="text-[10px] text-slate-500 mt-1">Chưa có dữ liệu xếp hạng cho môn thi đấu này.</p>
-            </div>
-          )}
+          ) : null}
 
           {/* Widget 3: Banner Ads 4:3 */}
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col cursor-pointer group">

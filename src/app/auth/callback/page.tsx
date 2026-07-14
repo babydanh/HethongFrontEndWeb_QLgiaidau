@@ -50,20 +50,16 @@ const CallbackContent = () => {
         transition={{ duration: 0.5 }}
         className="flex flex-col items-center text-center space-y-6"
       >
-        <div className="relative">
-          <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-blue-600 shadow-xl shadow-blue-600/20 z-10 relative">
-            <Trophy className="h-10 w-10 text-white" />
-          </div>
-          <div className="absolute inset-0 bg-blue-600 rounded-2xl animate-ping opacity-20"></div>
+        <div className="relative w-32 h-32 flex items-center justify-center mb-2">
+          <img 
+            src="/images/vndc_sport.png" 
+            alt="VNSPORT Logo" 
+            className="w-full h-full object-contain animate-pulse"
+          />
         </div>
         
         <div className="space-y-2 flex flex-col items-center">
-          <img 
-            src="/images/vndc_sport.png" 
-            alt="VNDC Sport Logo" 
-            className="h-12 w-auto object-contain mb-2"
-          />
-          <p className="text-slate-500 font-medium">Đang đồng bộ tài khoản Google của bạn...</p>
+          <p className="text-slate-650 font-bold text-base">Đang đồng bộ tài khoản Google của bạn...</p>
         </div>
 
         <div className="flex items-center gap-2 mt-4">

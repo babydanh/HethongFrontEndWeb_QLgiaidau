@@ -28,6 +28,7 @@ interface UserRank {
 interface PublicProfile {
   id: string;
   createdAt: string;
+  isMock?: boolean;
   fullName: string;
   avatarUrl: string | null;
   coverUrl: string | null;
@@ -35,6 +36,13 @@ interface PublicProfile {
   bio: string | null;
   isVerified: boolean;
   ranks: UserRank[];
+  achievements?: {
+    tournamentId: string;
+    tournamentName: string;
+    rank: 1 | 2 | 3;
+    completedAt: string | null;
+    tournamentDate: string | null;
+  }[];
 }
 
 interface Match {
@@ -64,10 +72,29 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
   const [profile, setProfile] = useState<PublicProfile | null>(null);
   const [matches, setMatches] = useState<Match[]>([]);
   const [eloHistory, setEloHistory] = useState<EloHistoryLog[]>([]);
-  const [activeTab, setActiveTab] = useState<'overview' | 'matches' | 'elo'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'matches' | 'achievements' | 'elo'>('overview');
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingTab, setIsLoadingTab] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const hideEloSection = profile?.isMock === true;
+  const tabs = hideEloSection
+    ? [
+        { id: 'overview', label: 'Tổng quan' },
+        { id: 'matches', label: 'Trận đấu' },
+        { id: 'achievements', label: 'Danh hiệu' },
+      ] as const
+    : [
+        { id: 'overview', label: 'Tổng quan' },
+        { id: 'matches', label: 'Trận đấu' },
+        { id: 'achievements', label: 'Danh hiệu' },
+        { id: 'elo', label: 'Thống kê ELO' },
+      ] as const;
+
+  useEffect(() => {
+    if (hideEloSection && activeTab === 'elo') {
+      setActiveTab('overview');
+    }
+  }, [activeTab, hideEloSection]);
 
   useEffect(() => {
     const fetchPublicData = async () => {
@@ -107,7 +134,9 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
     return (
       <div className="min-h-screen bg-slate-50 text-slate-800 flex items-center justify-center p-6">
         <div className="text-center bg-white border border-slate-200 p-8 rounded-3xl max-w-md shadow-lg">
-          <Trophy className="w-16 h-16 text-slate-350 mx-auto mb-4" />
+          <div className="w-24 h-24 flex items-center justify-center mx-auto mb-4">
+            <img src="/images/vndc_sport.png" alt="VNDC Sport" className="w-full h-full object-contain" />
+          </div>
           <h2 className="text-xl font-black text-slate-900 mb-2">{error || 'Không tìm thấy người dùng'}</h2>
           <p className="text-slate-500 text-sm mb-6 font-medium">Tài khoản này có thể không tồn tại hoặc đã bị khóa khỏi hệ thống.</p>
           <Link
@@ -189,7 +218,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
               </h1>
             </div>
             
-            <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
               <span className="px-3 py-1 text-xs font-black rounded-xl border bg-blue-50 text-blue-700 border-blue-200 uppercase tracking-wider">
                 Vận động viên
               </span>
@@ -198,12 +227,17 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                   Đã xác minh
                 </span>
               )}
-              {profile.ranks?.map((rank) => (
+              {!hideEloSection && profile.ranks?.map((rank) => (
                 <div key={`${rank.categoryId}-${rank.matchType}`} className="flex items-center gap-1 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-xl text-xs font-bold shrink-0">
                   <span className="text-[10px] font-black text-slate-550 uppercase mr-1">{rank.categoryName}:</span>
                   <EloTierBadge elo={rank.eloPoints} tierName={rank.categoryName} size="sm" className="scale-90 origin-left" />
                 </div>
               ))}
+              {profile.achievements?.length ? (
+                <span className="bg-amber-50 border border-amber-200 text-amber-700 px-3.5 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5">
+                  <Trophy className="w-3.5 h-3.5 text-amber-500" /> {profile.achievements.length} danh hiệu
+                </span>
+              ) : null}
               {profile.createdAt && (
                 <span className="bg-slate-50 border border-slate-200 text-slate-650 px-3.5 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5">
                   <Calendar className="w-3.5 h-3.5 text-slate-400" /> Tham gia từ {formatDate(profile.createdAt, 'MM/yyyy')}
@@ -216,11 +250,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
 
       {/* Tabs */}
       <div className="flex overflow-x-auto gap-2 border-b border-slate-200 pb-1 no-scrollbar">
-        {([
-          { id: 'overview', label: 'Tổng quan' },
-          { id: 'matches', label: 'Trận đấu' },
-          { id: 'elo', label: 'Thống kê ELO' }
-        ] as const).map(tab => (
+        {tabs.map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
@@ -359,7 +389,58 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
           </div>
         )}
 
-        {activeTab === 'elo' && (
+        {activeTab === 'achievements' && (
+          <div className="space-y-6">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Trophy className="w-5 h-5 text-amber-600" />
+                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Danh hiệu thành tích</h3>
+              </div>
+              {profile.achievements && profile.achievements.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {[...profile.achievements]
+                    .sort((a, b) => a.rank - b.rank || (b.completedAt || '').localeCompare(a.completedAt || ''))
+                    .map((item) => {
+                      const badgeClass =
+                        item.rank === 1
+                          ? 'bg-amber-50 text-amber-700 border-amber-200'
+                          : item.rank === 2
+                            ? 'bg-slate-50 text-slate-700 border-slate-200'
+                            : 'bg-orange-50 text-orange-700 border-orange-200';
+                      const title = item.rank === 1 ? 'Quán quân' : item.rank === 2 ? 'Á quân' : 'Hạng ba';
+
+                      return (
+                        <div key={`${item.tournamentId}-${item.rank}`} className={`rounded-2xl border p-4 shadow-sm ${badgeClass}`}>
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="min-w-0">
+                              <span className={`text-[10px] font-black uppercase px-2 py-1 rounded-full border bg-white ${badgeClass}`}>
+                                {title}
+                              </span>
+                              <h4 className="mt-2 text-base font-black text-slate-900 line-clamp-1">{item.tournamentName}</h4>
+                              <p className="text-xs text-slate-500 mt-1">
+                                {item.tournamentDate ? formatDate(item.tournamentDate, 'dd/MM/yyyy') : 'Chưa có ngày kết thúc'}
+                              </p>
+                            </div>
+                            <div className={`shrink-0 w-12 h-12 rounded-2xl border flex items-center justify-center font-black bg-white ${badgeClass}`}>
+                              {item.rank}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              ) : (
+                <div className="text-center py-10 border-2 border-dashed border-slate-100 rounded-2xl">
+                  <Trophy className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                  <p className="text-slate-600 font-semibold">Chưa có danh hiệu thành tích</p>
+                  <p className="text-slate-400 text-sm mt-1">Danh hiệu sẽ hiện khi người chơi có top 3 ở giải public ELO.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {!hideEloSection && activeTab === 'elo' && (
           <div className="space-y-6">
             <div className="flex flex-col gap-6">
               <div>

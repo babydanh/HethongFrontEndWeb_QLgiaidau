@@ -230,11 +230,15 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
           isSeedingMock={s.isSeedingMock} isClearingMock={s.isClearingMock}
           wildcardEmailOrPhone={s.wildcardEmailOrPhone} setWildcardEmailOrPhone={s.setWildcardEmailOrPhone}
           wildcardTeamName={s.wildcardTeamName} setWildcardTeamName={s.setWildcardTeamName}
+          wildcardPartnerEmailOrPhone={s.wildcardPartnerEmailOrPhone} setWildcardPartnerEmailOrPhone={s.setWildcardPartnerEmailOrPhone}
           isAssigningWildcard={s.isAssigningWildcard}
+          divisions={s.divisions} selectedDivisionId={s.selectedDivisionId} setSelectedDivisionId={s.setSelectedDivisionId}
           participants={s.participants}
           activeParticipantActionId={s.activeParticipantActionId}
           visibility={s.visibility}
           setVisibility={s.setVisibility}
+          registrationMode={s.registrationMode}
+          setRegistrationMode={s.setRegistrationMode}
           registrationStartDate={s.registrationStartDate} setRegistrationStartDate={s.setRegistrationStartDate}
           registrationEndDate={s.registrationEndDate} setRegistrationEndDate={s.setRegistrationEndDate}
           isSavingConfig={s.isSavingConfig}
@@ -247,6 +251,10 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
           handleRejectParticipant={s.handleRejectParticipant}
           handleSeedMockData={s.handleSeedMockData} handleClearMockData={s.handleClearMockData}
           handleAssignWildcard={s.handleAssignWildcard}
+          seedingMethod={s.seedingMethod} setSeedingMethod={s.setSeedingMethod}
+          isAutoSeeding={s.isAutoSeeding}
+          handleAutoSeed={s.handleAutoSeed}
+          handleSwapSeeds={s.handleSwapSeeds}
           onCopyInviteLink={() => { navigator.clipboard.writeText(s.inviteLink); toast.success('Đã sao chép link!'); }} />}
 
         {s.activeTab === 'bracket' && (
@@ -270,7 +278,25 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
               superTiebreakPoints={s.superTiebreakPoints} setSuperTiebreakPoints={s.setSuperTiebreakPoints}
               isSavingConfig={s.isSavingConfig} handleSaveMatchConfig={s.handleSaveMatchConfig}
               tiebreakerMode={s.tiebreakerMode} setTiebreakerMode={s.setTiebreakerMode}
-              roundsToPlay={s.roundsToPlay} setRoundsToPlay={s.setRoundsToPlay} />
+              roundsToPlay={s.roundsToPlay} setRoundsToPlay={s.setRoundsToPlay}
+              bracketType={s.bracketType}
+              rrWinPoints={s.rrWinPoints} setRrWinPoints={s.setRrWinPoints}
+              rrLossPoints={s.rrLossPoints} setRrLossPoints={s.setRrLossPoints}
+              rrTiebreakerRule={s.rrTiebreakerRule} setRrTiebreakerRule={s.setRrTiebreakerRule}
+              numGroups={s.numGroups} setNumGroups={s.setNumGroups}
+              teamsPerGroup={s.teamsPerGroup} setTeamsPerGroup={s.setTeamsPerGroup}
+              teamsAdvancing={s.teamsAdvancing} setTeamsAdvancing={s.setTeamsAdvancing}
+              allowBestThird={s.allowBestThird} setAllowBestThird={s.setAllowBestThird}
+              gskPlayoffType={s.gskPlayoffType} setGskPlayoffType={s.setGskPlayoffType}
+              gskSeedingType={s.gskSeedingType} setGskSeedingType={s.setGskSeedingType}
+              gskRoundsToPlay={s.gskRoundsToPlay} setGskRoundsToPlay={s.setGskRoundsToPlay}
+              handleSaveRoundRobinConfig={s.handleSaveRoundRobinConfig}
+              isSavingRoundRobinConfig={s.isSavingRoundRobinConfig}
+              handleAdvanceStandings={s.handleAdvanceStandings}
+              isAdvancingStandings={s.isAdvancingStandings}
+              handleSaveGskConfig={s.handleSaveGskConfig}
+              isSavingGskConfig={s.isSavingGskConfig}
+            />
           </div>
         )}
 

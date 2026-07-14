@@ -47,7 +47,7 @@ type NormalizableDivision = {
   entryFee?: number;
   minElo?: number | null;
   maxElo?: number | null;
-  bracketType?: 'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION' | 'ROUND_ROBIN' | null;
+  bracketType?: 'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION' | 'ROUND_ROBIN' | 'GROUP_STAGE_KNOCKOUT' | null;
   _count?: {
     participants: number;
     matches?: number;
@@ -99,6 +99,9 @@ const getDivisionBracketLabel = (bracketType?: string | null) => {
   }
   if (bracketType === 'ROUND_ROBIN') {
     return 'Vòng tròn';
+  }
+  if (bracketType === 'GROUP_STAGE_KNOCKOUT') {
+    return 'Vòng bảng + Loại trực tiếp';
   }
   return 'Chưa rõ';
 };

@@ -224,7 +224,7 @@ export default function ClubChallengesPage({ params }: { params: Promise<{ id: s
                     <div className="flex gap-4">
                       {/* Logo of challenger */}
                       <div className="w-12 h-12 rounded-full border overflow-hidden bg-slate-50 relative shrink-0">
-                        <img src={c.challengerLogoUrl || "https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=150&auto=format&fit=crop"} alt="Challenger" className="w-full h-full object-cover" />
+                        <img src={c.challengerLogoUrl || "/images/vndc_sport.png"} alt="Challenger" className="w-full h-full object-cover" />
                       </div>
                       <div className="space-y-1">
                         <h4 className="font-bold text-slate-900 text-base">Lời mời từ: {c.challengerName}</h4>
@@ -299,7 +299,7 @@ export default function ClubChallengesPage({ params }: { params: Promise<{ id: s
                     <div className="flex gap-4">
                       {/* Logo of challenged */}
                       <div className="w-12 h-12 rounded-full border overflow-hidden bg-slate-50 relative shrink-0">
-                        <img src={c.challengedLogoUrl || "https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=150&auto=format&fit=crop"} alt="Challenged" className="w-full h-full object-cover" />
+                        <img src={c.challengedLogoUrl || "/images/vndc_sport.png"} alt="Challenged" className="w-full h-full object-cover" />
                       </div>
                       <div className="space-y-1">
                         <h4 className="font-bold text-slate-900 text-base">Gửi tới CLB: {c.challengedName}</h4>
@@ -362,7 +362,7 @@ export default function ClubChallengesPage({ params }: { params: Promise<{ id: s
                   >
                     <div className="flex gap-3 min-w-0">
                       <div className="w-12 h-12 rounded-full border overflow-hidden bg-slate-50 relative shrink-0">
-                        <img src={club.logoUrl || "https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=150&auto=format&fit=crop"} alt={club.name} className="w-full h-full object-cover" />
+                        <img src={club.logoUrl || "/images/vndc_sport.png"} alt={club.name} className="w-full h-full object-cover" />
                       </div>
                       <div className="min-w-0">
                         <h4 className="font-bold text-slate-900 text-sm truncate">{club.name}</h4>

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Modal, ModalContent, ModalHeader, ModalTitle } from '@/components/ui/Modal';
 import { DateTimePicker } from '@/components/ui/Input';
-import { AlertTriangle, Calendar, ExternalLink, Settings, Trophy } from 'lucide-react';
+import { Activity, AlertTriangle, BarChart3, Calendar, ExternalLink, Network, Settings, Trophy } from 'lucide-react';
 import { useOrganizerOps } from '@/features/organizer/ops/hooks/useOrganizerOps';
 import { getMatchScorePresentation, resolveMatchSportRules } from '@/features/matches/score-display';
 import { getSportRulePresentation } from '@/features/tournaments/sport-rules/presentation';
@@ -13,6 +13,7 @@ import { OperationsWorkspace } from '../manage/components/OperationsWorkspace';
 import { useManageState } from '../manage/components/useManageState';
 import { BracketTab } from '../manage/components/BracketTab';
 import { formatDate } from '@/utils/format';
+import { cn } from '@/utils/cn';
 import { getSportLogo } from '@/constants/sports';
 import type { BracketMatch } from '@/types/tournament';
 import type { MatchScoreInput } from '@/features/organizer/ops/types';
@@ -44,6 +45,7 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
   } = useOrganizerOps(resolvedParams.id);
   const [bracketViewVersion, setBracketViewVersion] = useState(0);
   const [focusedMatchId, setFocusedMatchId] = useState<string | null>(null);
+  const [activePageTab, setActivePageTab] = useState<'OVERVIEW' | 'BRACKET' | 'OPERATIONS'>('OVERVIEW');
   const bracketSelectedDivisionId = bracketManager.selectedDivisionId;
   const bracketDivisions = bracketManager.divisions;
   const applyDivisionFormValues = bracketManager.applyDivisionFormValues;
@@ -118,9 +120,10 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
 
   const handleFocusMatchOnBracket = (matchId: string) => {
     setFocusedMatchId(matchId);
-    bracketSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setActivePageTab('BRACKET');
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
+        bracketSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         const matchNode = document.querySelector<HTMLElement>(`[data-bracket-match-id="${matchId}"]`);
         matchNode?.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
       });
@@ -404,68 +407,74 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
 
   return (
     <div className="space-y-6">
-      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-          <div className="space-y-2">
-            <div className="flex items-center gap-3">
-              <span className="flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider text-blue-800">
+      {/* Top Banner Card */}
+      <div className="rounded-3xl border border-slate-200 bg-gradient-to-br from-slate-50 via-white to-slate-50/50 p-6 md:p-8 shadow-sm">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+          <div className="space-y-3.5">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="flex items-center gap-1.5 rounded-full bg-blue-50 border border-blue-200 px-3 py-1 text-xs font-black uppercase tracking-wider text-blue-700">
                 {getSportLogo(tournament.category?.name) ? (
                   <img src={getSportLogo(tournament.category?.name)!} alt="" className="h-3 w-3 object-contain" />
                 ) : null}
                 {tournament.category?.name || 'Bộ môn'}
               </span>
-              <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-bold text-slate-600">
+              <span className={`rounded-full border px-3 py-1 text-xs font-black uppercase tracking-wider ${
+                tournament.status === 'IN_PROGRESS' || tournament.status === 'ONGOING'
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200 animate-pulse'
+                  : 'bg-slate-100 text-slate-655 border-slate-200'
+              }`}>
                 {tournament.status}
               </span>
             </div>
             <div>
-              <h1 className="text-2xl font-black text-slate-900 md:text-3xl">{tournament.name}</h1>
-              <p className="mt-2 flex items-center gap-1 text-sm font-medium text-slate-500">
+              <h1 className="text-3xl font-black tracking-tight text-slate-900">{tournament.name}</h1>
+              <p className="mt-2.5 flex items-center gap-1.5 text-xs font-bold text-slate-455">
                 <Calendar className="h-4 w-4 text-slate-400" />
                 Khai mạc: {tournament.startDate ? formatDate(tournament.startDate) : 'Chưa thiết lập'}
               </p>
             </div>
-            <p className="max-w-3xl text-sm font-medium text-slate-500">
-              Đây là màn hình điều hành ngày thi đấu. `Manage` lo cấu hình đăng ký và đầu vào, còn `Ops` tập trung vào chuỗi trận, nhịp vận hành thực tế và các tình huống phát sinh tại sân.
+            <p className="max-w-3xl text-xs font-semibold leading-relaxed text-slate-455">
+              Đây là màn hình điều phối vận hành ngày thi đấu. Sử dụng tab <code className="text-blue-600 bg-blue-50/50 px-1.5 py-0.5 rounded font-mono">Manage</code> để thiết lập cấu hình đăng ký, và tab <code className="text-blue-650 bg-blue-50/50 px-1.5 py-0.5 rounded font-mono">Ops</code> này để kiểm soát lịch đấu, nhập tỉ số, điều hành trọng tài và giải quyết xung đột trực tiếp trên sân.
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2.5">
             <Button
               variant="outline"
-              className="border-slate-200 text-slate-700"
+              className="border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs px-4 py-2.5 rounded-xl transition-all"
               onClick={() => { window.location.href = `/organizer/tournaments/${tournament.id}/manage`; }}
             >
-              <Settings className="mr-2 h-4 w-4" />
+              <Settings className="mr-2 h-4 w-4 text-slate-400" />
               Về cấu hình
             </Button>
             <Button
               variant="outline"
-              className="border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100"
+              className="border-amber-200 bg-amber-50/60 hover:bg-amber-100 text-amber-700 font-bold text-xs px-4 py-2.5 rounded-xl transition-all"
               onClick={() => window.open(buildPublicTournamentUrl('bracket'), '_blank')}
             >
-              <Trophy className="mr-2 h-4 w-4" />
+              <Trophy className="mr-2 h-4 w-4 text-amber-500" />
               Mở bracket public
             </Button>
             <Button
               variant="outline"
-              className="border-slate-200 text-slate-700"
+              className="border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs px-4 py-2.5 rounded-xl transition-all"
               onClick={() => window.open(buildPublicTournamentUrl(), '_blank')}
             >
-              <ExternalLink className="mr-2 h-4 w-4" />
+              <ExternalLink className="mr-2 h-4 w-4 text-slate-400" />
               Xem trang giải
             </Button>
           </div>
         </div>
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="mb-4">
-          <p className="text-xs font-black uppercase tracking-wider text-slate-500">Hình thức thi đấu</p>
-          <p className="text-xs text-slate-400">Chọn division để xem hàng chờ vận hành, participant, trận và các vấn đề phát sinh đúng ngữ cảnh.</p>
+      {/* Division Selector Section */}
+      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+        <div>
+          <p className="text-xs font-black uppercase tracking-wider text-slate-450">Hình thức thi đấu (Division)</p>
+          <p className="text-xs text-slate-400 mt-1 font-semibold">Chọn division để xem chi tiết hàng chờ vận hành, danh sách đấu thủ, lịch thi đấu và giải quyết xung đột theo ngữ cảnh.</p>
         </div>
         {divisions.length > 0 ? (
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2.5">
             {divisions.map((division) => {
               const isActive = division.id === selectedDivisionId;
               return (
@@ -473,15 +482,15 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
                   key={division.id}
                   type="button"
                   onClick={() => setSelectedDivisionId(division.id)}
-                  className={[
-                    'rounded-xl border px-3 py-2 text-left transition-all',
+                  className={cn(
+                    'rounded-2xl border px-4 py-3 text-left transition-all active:scale-[0.98]',
                     isActive
-                      ? 'border-blue-600 bg-blue-600 text-white shadow-md'
-                      : 'border-slate-200 bg-white text-slate-700 hover:border-blue-300',
-                  ].join(' ')}
+                      ? 'border-blue-600 bg-blue-600 text-white shadow-md shadow-blue-500/10'
+                      : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50/50',
+                  )}
                 >
                   <span className="block text-xs font-black">{division.name}</span>
-                  <span className={['block text-[10px] font-semibold', isActive ? 'text-blue-100' : 'text-slate-400'].join(' ')}>
+                  <span className={cn('mt-1 block text-[9px] font-black uppercase tracking-wider', isActive ? 'text-blue-150' : 'text-slate-450')}>
                     {division.matchType}
                   </span>
                 </button>
@@ -492,12 +501,42 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
           <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center">
             <p className="text-sm font-bold text-slate-700">Giải chưa có division để vận hành</p>
             <p className="mt-1 text-xs font-medium text-slate-500">
-              Hãy quay về `manage` để tạo hoặc cấu hình hình thức thi đấu trước.
+              Hãy quay về cấu hình để tạo hoặc kích hoạt các hình thức thi đấu trước.
             </p>
           </div>
         )}
       </div>
 
+      <div className="sticky top-20 z-30 rounded-2xl border border-slate-200 bg-white/95 p-2 shadow-sm backdrop-blur">
+        <div className="grid grid-cols-3 gap-2">
+          {([
+            { id: 'OVERVIEW', label: 'Tổng quan', icon: BarChart3 },
+            { id: 'BRACKET', label: 'Sơ đồ & cấu hình', icon: Network },
+            { id: 'OPERATIONS', label: 'Điều hành', icon: Activity },
+          ] as const).map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activePageTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActivePageTab(tab.id)}
+                className={cn(
+                  'flex min-w-0 items-center justify-center gap-2 rounded-xl px-3 py-3 text-xs font-black transition-colors sm:text-sm',
+                  isActive
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950',
+                )}
+              >
+                <Icon className="h-4 w-4 flex-shrink-0" />
+                <span className="truncate">{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {activePageTab === 'BRACKET' ? (
       <div ref={bracketSectionRef} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="mb-5 space-y-1">
           <h2 className="text-xl font-black text-slate-900">Sơ đồ thi đấu điều phối trực tiếp</h2>
@@ -550,77 +589,100 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
           onSelectMatch={(match) => setFocusedMatchId(match.id)}
         />
       </div>
+      ) : null}
 
-      <section className="grid grid-cols-1 gap-6 xl:grid-cols-[1.1fr_1fr]">
-        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+      {activePageTab === 'OVERVIEW' ? (
+      <section className="grid grid-cols-1 gap-6 xl:grid-cols-[1.2fr_1fr]">
+        {/* Division Health Card */}
+        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-6">
           <h3 className="text-lg font-black text-slate-900">Tình trạng nội dung thi đấu hiện tại</h3>
-          <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-3">
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-500">Chặng đấu</p>
+
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+            <div className="rounded-2xl border border-slate-150 bg-slate-50/50 p-4 transition-all hover:bg-slate-50">
+              <p className="text-[10px] font-black uppercase tracking-wider text-slate-450">Chặng đấu</p>
               <p className="mt-2 text-2xl font-black text-slate-900">{divisionHealth.stageCount}</p>
             </div>
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-500">Số vòng</p>
+            <div className="rounded-2xl border border-slate-150 bg-slate-50/50 p-4 transition-all hover:bg-slate-50">
+              <p className="text-[10px] font-black uppercase tracking-wider text-slate-455">Số vòng đấu</p>
               <p className="mt-2 text-2xl font-black text-slate-900">{divisionHealth.roundCount}</p>
             </div>
-            <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
-              <p className="text-[11px] font-black uppercase tracking-[0.12em] text-blue-600">Chưa xếp lịch</p>
-              <p className="mt-2 text-2xl font-black text-blue-900">{divisionHealth.unscheduledCount}</p>
+            <div className="rounded-2xl border border-blue-150 bg-blue-50/40 p-4 transition-all hover:bg-blue-50/70">
+              <p className="text-[10px] font-black uppercase tracking-wider text-blue-650">Chưa xếp lịch</p>
+              <p className="mt-2 text-2xl font-black text-blue-700">{divisionHealth.unscheduledCount}</p>
             </div>
-            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
-              <p className="text-[11px] font-black uppercase tracking-[0.12em] text-amber-600">Cấu hình riêng</p>
-              <p className="mt-2 text-2xl font-black text-amber-900">{divisionHealth.customConfigCount}</p>
+            <div className="rounded-2xl border border-amber-150 bg-amber-50/40 p-4 transition-all hover:bg-amber-50/70">
+              <p className="text-[10px] font-black uppercase tracking-wider text-amber-650">Cấu hình riêng</p>
+              <p className="mt-2 text-2xl font-black text-amber-700">{divisionHealth.customConfigCount}</p>
             </div>
-            <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4">
-              <p className="text-[11px] font-black uppercase tracking-[0.12em] text-rose-600">Xung đột</p>
-              <p className="mt-2 text-2xl font-black text-rose-900">{divisionHealth.conflictCount}</p>
+            <div className="rounded-2xl border border-rose-150 bg-rose-50/40 p-4 transition-all hover:bg-rose-50/70">
+              <p className="text-[10px] font-black uppercase tracking-wider text-rose-650">Xung đột lịch</p>
+              <p className="mt-2 text-2xl font-black text-rose-700">{divisionHealth.conflictCount}</p>
             </div>
           </div>
-          <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm font-semibold text-slate-700">
-              Trùng sân: <span className="font-black">{conflictSummary.court}</span>
-            </div>
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm font-semibold text-slate-700">
-              Trùng trọng tài: <span className="font-black">{conflictSummary.referee}</span>
-            </div>
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm font-semibold text-slate-700">
-              Trùng VĐV/đội: <span className="font-black">{conflictSummary.participant}</span>
-            </div>
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm font-semibold text-slate-700">
-              Sai thứ tự nhánh: <span className="font-black">{conflictSummary.dependency}</span>
+
+          <div className="border-t border-slate-100 pt-5">
+            <h4 className="text-[11px] font-black uppercase tracking-wider text-slate-450 mb-3">Chi tiết xung đột ngày thi đấu</h4>
+            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+              <div className="flex items-center justify-between rounded-xl border border-slate-150 bg-slate-50/30 px-4 py-3 text-xs font-semibold text-slate-700">
+                <span>Trùng sân thi đấu:</span>
+                <span className={`font-black px-2 py-0.5 rounded ${conflictSummary.court > 0 ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-500'}`}>
+                  {conflictSummary.court}
+                </span>
+              </div>
+              <div className="flex items-center justify-between rounded-xl border border-slate-150 bg-slate-50/30 px-4 py-3 text-xs font-semibold text-slate-700">
+                <span>Trùng trọng tài điều phối:</span>
+                <span className={`font-black px-2 py-0.5 rounded ${conflictSummary.referee > 0 ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-500'}`}>
+                  {conflictSummary.referee}
+                </span>
+              </div>
+              <div className="flex items-center justify-between rounded-xl border border-slate-150 bg-slate-50/30 px-4 py-3 text-xs font-semibold text-slate-700">
+                <span>Trùng vận động viên/đội:</span>
+                <span className={`font-black px-2 py-0.5 rounded ${conflictSummary.participant > 0 ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-500'}`}>
+                  {conflictSummary.participant}
+                </span>
+              </div>
+              <div className="flex items-center justify-between rounded-xl border border-slate-150 bg-slate-50/30 px-4 py-3 text-xs font-semibold text-slate-700">
+                <span>Sai thứ tự nhánh đấu:</span>
+                <span className={`font-black px-2 py-0.5 rounded ${conflictSummary.dependency > 0 ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-500'}`}>
+                  {conflictSummary.dependency}
+                </span>
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+        {/* Round Summary Card */}
+        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
           <h3 className="text-lg font-black text-slate-900">Nhịp vận hành theo vòng</h3>
-          <div className="mt-4 space-y-3">
+          <div className="space-y-2.5 max-h-[360px] overflow-y-auto pr-1 no-scrollbar">
             {roundSummary.map((round) => (
-              <div key={round.roundNumber} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <div className="flex items-center justify-between gap-3">
+              <div key={round.roundNumber} className="rounded-2xl border border-slate-150 bg-slate-50/50 p-4 transition-all hover:bg-slate-50">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <p className="text-sm font-black text-slate-900">Vòng {round.roundNumber}</p>
-                    <p className="text-xs font-medium text-slate-500">
-                      {round.total} trận • {round.missingAssignments} trận còn thiếu sân hoặc trọng tài
+                    <p className="text-[11px] font-semibold text-slate-450 mt-0.5">
+                      {round.total} trận đấu • {round.missingAssignments} trận thiếu phân sân/trọng tài
                     </p>
                   </div>
-                  <div className="flex flex-wrap items-center gap-2 text-[11px] font-black">
-                    <span className="rounded-full bg-slate-200 px-2.5 py-1 text-slate-700">Chờ đấu {round.scheduled}</span>
-                    <span className="rounded-full bg-blue-100 px-2.5 py-1 text-blue-700">Đang đấu {round.ongoing}</span>
-                    <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-emerald-700">Xong {round.completed}</span>
+                  <div className="flex flex-wrap items-center gap-1.5 text-[9px] font-black uppercase tracking-wider">
+                    <span className="rounded-lg bg-slate-150 px-2 py-1 text-slate-700">Lịch {round.scheduled}</span>
+                    <span className="rounded-lg bg-blue-50 border border-blue-200 px-2 py-1 text-blue-700">Đang đấu {round.ongoing}</span>
+                    <span className="rounded-lg bg-emerald-50 border border-emerald-200 px-2 py-1 text-emerald-700">Xong {round.completed}</span>
                   </div>
                 </div>
               </div>
             ))}
             {roundSummary.length === 0 && (
               <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center">
-                <p className="text-sm font-bold text-slate-700">Chưa có dữ liệu vòng đấu</p>
+                <p className="text-xs font-bold text-slate-500">Chưa có dữ liệu vòng thi đấu được khởi tạo.</p>
               </div>
             )}
           </div>
         </div>
       </section>
+      ) : null}
 
+      {activePageTab === 'OPERATIONS' ? (
       <OperationsWorkspace
         participants={participants}
         matches={matches}
@@ -638,8 +700,10 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
         onUpdateMatchSchedule={handleOpsUpdateMatchSchedule}
         onUpdateMatchScore={handleOpsUpdateMatchScore}
         tournamentSportRules={tournament.sportRules ?? null}
+        tournamentStatus={tournament.status}
         onApplyMatchOperation={handleOpsApplyMatchOperation}
       />
+      ) : null}
 
       {bracketManager.selectedStage && bracketManager.selectedRoundNumber !== null && (
         <Modal

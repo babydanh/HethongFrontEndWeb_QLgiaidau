@@ -66,9 +66,14 @@ export const buildScoreDraft = (
     tournament: { sportRules: tournamentSportRules },
   });
   const existingSets = extractMatchScores(match.scoreDetails);
-  const seededSets = Array.from({ length: resolvedRules.bestOf }, (_, index) => (
-    existingSets[index] ?? { team1Score: 0, team2Score: 0, isFinished: false }
-  ));
+  const seededSets = [...existingSets];
+  const hasOpenSet = seededSets.some((set) => !set.isFinished);
+  if (!hasOpenSet && match.status !== 'COMPLETED' && seededSets.length < resolvedRules.bestOf) {
+    seededSets.push({ team1Score: 0, team2Score: 0, isFinished: false });
+  }
+  if (seededSets.length === 0) {
+    seededSets.push({ team1Score: 0, team2Score: 0, isFinished: false });
+  }
 
   return {
     sets: seededSets,
@@ -76,11 +81,9 @@ export const buildScoreDraft = (
       resolvedRules.kind === 'PICKLEBALL_SIDE_OUT'
         ? readSideOutState(match)
         : undefined,
-    overrideEnabled: !!match.scoreDetails?.scoreOverride?.reason,
-    overrideReason:
-      match.scoreDetails && typeof match.scoreDetails === 'object' && 'scoreOverride' in match.scoreDetails
-        ? String(match.scoreDetails.scoreOverride?.reason ?? '')
-        : '',
+    // Mỗi lần mở modal bắt đầu ở chế độ chuẩn; ngoại lệ cũ chỉ là lịch sử của set đã chốt.
+    overrideEnabled: false,
+    overrideReason: '',
   };
 };
 
@@ -122,21 +125,35 @@ export function ScoringPanel({
       : sideOutState?.servingTeam === 2
         ? match.participant2?.teamName || 'Đội 2'
         : null;
-  const completedSets = scoreDraft.sets.filter((set) => set.team1Score > 0 || set.team2Score > 0);
-  const hasDrawnSet = completedSets.some((set) => set.team1Score === set.team2Score);
-  const p1Won = completedSets.filter((set) => set.team1Score > set.team2Score).length;
-  const p2Won = completedSets.filter((set) => set.team2Score > set.team1Score).length;
-  const canSubmitScore = completedSets.length > 0 && !hasDrawnSet;
+  const activeSetIndex = scoreDraft.sets.findIndex((set) => !set.isFinished);
+  const activeSet = activeSetIndex !== -1
+    ? scoreDraft.sets[activeSetIndex]
+    : scoreDraft.sets[scoreDraft.sets.length - 1] ?? { team1Score: 0, team2Score: 0, isFinished: false };
+  const finishedSets = scoreDraft.sets.filter((set) => set.isFinished);
+  const hasDrawnFinishedSet = finishedSets.some((set) => set.team1Score === set.team2Score);
+  const p1Won = finishedSets.filter((set) => set.team1Score > set.team2Score).length;
+  const p2Won = finishedSets.filter((set) => set.team2Score > set.team1Score).length;
+  const hasEnteredScore = scoreDraft.sets.some((set) => set.team1Score !== 0 || set.team2Score !== 0);
+  const canSubmitScore = hasEnteredScore && !hasDrawnFinishedSet;
   const overrideEnabled = scoreDraft.overrideEnabled === true;
   const overrideReason = scoreDraft.overrideReason ?? '';
   const canSubmitWithOverride = !overrideEnabled || overrideReason.trim().length > 0;
   const scoreWarnings = getScoreRuleWarnings(scoreDraft.sets, resolvedRules);
+  const activeSetSummary = activeSet
+    ? `${scorePresentation.sequenceLabel.charAt(0).toUpperCase() + scorePresentation.sequenceLabel.slice(1)} hiện tại ${activeSet.team1Score} - ${activeSet.team2Score}${activeSet.isFinished ? ' (đã chốt)' : ' (đang mở)'}`
+    : 'Chưa có ${scorePresentation.sequenceLabel} đang mở';
 
   return (
     <div className="space-y-4">
       <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
         {scorePresentation.sportLabel} • {scorePresentation.summaryLabel} • Chạm đích: {resolvedRules.pointsPerSet}
         {resolvedRules.kind === 'TENNIS' ? ` game, loạt phụ ${resolvedRules.tiebreakPoints}` : ''}
+      </div>
+      <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-900">
+        {activeSetSummary}
+        <div className="mt-1 text-xs font-medium text-emerald-700">
+          Modal này chỉ nên có 1 {scorePresentation.sequenceLabel} đang mở. Nếu có nhiều dòng 0-0 chưa chốt, backend tennis sẽ từ chối.
+        </div>
       </div>
       <div className="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-900">
         {scoreGuidance.targetSummary}
@@ -333,7 +350,7 @@ export function ScoringPanel({
         </div>
       ) : null}
 
-      <div className="grid gap-3">
+          <div className="grid gap-3">
         {scoreDraft.sets.map((set, index) => (
           <div
             key={`score-row-${index}`}
@@ -342,10 +359,37 @@ export function ScoringPanel({
             <div>
               <p className="text-sm font-black text-slate-900">
                 {scorePresentation.sequenceLabel.charAt(0).toUpperCase() + scorePresentation.sequenceLabel.slice(1)} {index + 1}
+                {!set.isFinished && index === activeSetIndex ? (
+                  <span className="ml-2 rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.12em] text-blue-700">
+                    Đang diễn ra
+                  </span>
+                ) : null}
+                {set.scoreOverride?.reason ? (
+                  <span className="ml-2 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.12em] text-amber-800">
+                    Ngoại lệ
+                  </span>
+                ) : set.isFinished ? (
+                  <span className="ml-2 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.12em] text-emerald-700">
+                    Đã chốt
+                  </span>
+                ) : index === activeSetIndex ? (
+                  <span className="ml-2 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.12em] text-amber-700">
+                    Set hiện tại
+                  </span>
+                ) : (
+                  <span className="ml-2 rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">
+                    Chưa mở
+                  </span>
+                )}
               </p>
               <p className="mt-1 text-xs font-medium text-slate-500">
-                Bỏ trống bằng cách để cả hai bên = 0 nếu chưa chơi đến {scorePresentation.sequenceLabel} này.
+                Set đã chốt sẽ giữ lại. Set hiện tại mới được nhập điểm và chốt ở nút lưu.
               </p>
+              {set.scoreOverride?.reason ? (
+                <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900">
+                  Lý do ngoại lệ: {set.scoreOverride.reason}
+                </p>
+              ) : null}
 
               <div className="mt-3 grid gap-2">
                 {quickScoreTemplates.map((template) => (
@@ -396,7 +440,7 @@ export function ScoringPanel({
 
             <div className="space-y-2">
               <label className="text-xs font-bold text-slate-600">{match.participant1?.teamName || 'Đội 1'}</label>
-              <input
+                <input
                 type="number"
                 min={0}
                 value={set.team1Score}
@@ -405,7 +449,10 @@ export function ScoringPanel({
                     ...current,
                     sets: current.sets.map((item, itemIndex) =>
                       itemIndex === index
-                        ? { ...item, team1Score: Number(event.target.value), isFinished: true }
+                        ? {
+                            ...item,
+                            team1Score: Number(event.target.value),
+                          }
                         : item,
                     ),
                   }))
@@ -416,7 +463,7 @@ export function ScoringPanel({
 
             <div className="space-y-2">
               <label className="text-xs font-bold text-slate-600">{match.participant2?.teamName || 'Đội 2'}</label>
-              <input
+                <input
                 type="number"
                 min={0}
                 value={set.team2Score}
@@ -425,7 +472,10 @@ export function ScoringPanel({
                     ...current,
                     sets: current.sets.map((item, itemIndex) =>
                       itemIndex === index
-                        ? { ...item, team2Score: Number(event.target.value), isFinished: true }
+                        ? {
+                            ...item,
+                            team2Score: Number(event.target.value),
+                          }
                         : item,
                     ),
                   }))
@@ -448,9 +498,11 @@ export function ScoringPanel({
 
       {!canSubmitScore ? (
         <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">
-          {completedSets.length === 0
-            ? `Hãy nhập ít nhất một ${scorePresentation.sequenceLabel} đã hoàn tất trước khi lưu.`
-            : `${scorePresentation.sequenceLabel.charAt(0).toUpperCase() + scorePresentation.sequenceLabel.slice(1)} không được hòa. Hãy kiểm tra lại tỉ số đã nhập.`}
+            {finishedSets.length === 0
+              ? hasEnteredScore
+                ? `Set hiện tại đang ở mức ${activeSet.team1Score} - ${activeSet.team2Score}. Hãy chốt bằng một tỉ số không hòa trước khi lưu.`
+                : `Chưa có ${scorePresentation.sequenceLabel} nào được chốt. Hãy nhập điểm cho set hiện tại trước khi lưu.`
+              : `${scorePresentation.sequenceLabel.charAt(0).toUpperCase() + scorePresentation.sequenceLabel.slice(1)} không được hòa. Hãy kiểm tra lại tỉ số đã nhập.`}
         </div>
       ) : null}
       {overrideEnabled && !canSubmitWithOverride ? (

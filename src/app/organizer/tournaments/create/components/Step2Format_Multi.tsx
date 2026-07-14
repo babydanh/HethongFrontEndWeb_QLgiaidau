@@ -10,10 +10,11 @@ import { getSportRulePresentation } from '@/features/tournaments/sport-rules/pre
 import { categoriesApi, type Category } from '@/features/categories/api';
 import { getAllowedMatchFormatOptions, normalizeMatchFormatForCategory } from '@/features/tournaments/match-format-options';
 
-const BRACKET_TYPE_OPTIONS: { value: 'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION' | 'ROUND_ROBIN'; label: string; }[] = [
+const BRACKET_TYPE_OPTIONS: { value: 'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION' | 'ROUND_ROBIN' | 'GROUP_STAGE_KNOCKOUT'; label: string; }[] = [
   { value: 'SINGLE_ELIMINATION', label: 'Loại trực tiếp (Single Elimination)' },
   { value: 'DOUBLE_ELIMINATION', label: 'Nhánh thắng/thua (Double Elimination)' },
   { value: 'ROUND_ROBIN', label: 'Vòng tròn tính điểm (Round Robin)' },
+  { value: 'GROUP_STAGE_KNOCKOUT', label: 'Vòng bảng + Loại trực tiếp (Group Stage)' },
 ];
 
 export default function Step2FormatMulti() {
@@ -21,8 +22,8 @@ export default function Step2FormatMulti() {
   const [categories, setCategories] = useState<Category[]>([]);
   const resolvedRules = resolveSportRuleView(formData.sportRules);
   const presentation = getSportRulePresentation(resolvedRules.kind);
-  const [bracketType, setBracketType] = useState<'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION' | 'ROUND_ROBIN'>(
-    (formData.format as 'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION' | 'ROUND_ROBIN') || 'SINGLE_ELIMINATION'
+  const [bracketType, setBracketType] = useState<'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION' | 'ROUND_ROBIN' | 'GROUP_STAGE_KNOCKOUT'>(
+    (formData.format as 'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION' | 'ROUND_ROBIN' | 'GROUP_STAGE_KNOCKOUT') || 'SINGLE_ELIMINATION'
   );
   const selectedFormats = Array.isArray(formData.selectedFormats) ? formData.selectedFormats : [];
   const selectedCategory = categories.find((category) => category.id === formData.categoryId);

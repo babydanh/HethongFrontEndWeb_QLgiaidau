@@ -46,8 +46,8 @@ interface TournamentFormData {
   maxElo: number | null;
   maxCombinedElo: number | null;
   maxTeammateGap: number | null;
-  // Step 3: Format & rules
-  format: 'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION' | 'ROUND_ROBIN';
+  // Step 2: Format & rules
+  format: 'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION' | 'ROUND_ROBIN' | 'GROUP_STAGE_KNOCKOUT';
   maxParticipants: number | null;
   sportRules: SportRulesEnvelope;
   // Step 4: Schedule & Venue
@@ -146,7 +146,7 @@ export const useCreateTournamentStore = create<CreateTournamentState>()(
     }),
     {
       name: 'create-tournament-storage-v2',
-      version: 1,
+      version: 2,
       migrate: (persistedState) => {
         const persisted = persistedState as PersistedCreateTournamentState | undefined;
 

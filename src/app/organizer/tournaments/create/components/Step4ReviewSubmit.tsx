@@ -103,7 +103,7 @@ export default function Step4ReviewSubmit() {
         registrationEndDate: formData.registrationEndDate,
         sportRules: formData.sportRules ?? buildDefaultSportRules('BADMINTON'),
         tournamentConfig: {
-          bracketType: formData.format,
+          bracketType: formData.format as string,
           maxTeams: formData.maxParticipants || 16,
           minElo: formData.minElo,
           maxElo: formData.maxElo,
@@ -138,7 +138,7 @@ export default function Step4ReviewSubmit() {
           genderRestriction: div.genderRestriction as GenderRestriction,
           maxParticipants: formData.maxParticipants,
           entryFee: formData.entryFee || 0,
-          bracketType: formData.format,
+          bracketType: formData.format as 'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION' | 'ROUND_ROBIN',
         };
         return divisionsApi.createDivision(tournamentId, divisionInput);
       });
@@ -148,7 +148,7 @@ export default function Step4ReviewSubmit() {
       toast.success(`Tạo giải đấu với ${divisions.length} bảng thi đấu thành công!`);
       reset();
 
-      window.location.href = `/organizer/tournaments/${tournamentId}/manage`;
+      router.push(`/organizer/tournaments/${tournamentId}/manage`);
     } catch (error) {
       toast.error(getErrorMessage(error));
     } finally {

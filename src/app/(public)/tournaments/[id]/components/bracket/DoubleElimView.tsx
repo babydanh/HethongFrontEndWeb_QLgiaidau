@@ -53,21 +53,46 @@ export function DoubleElimView({
     .sort((a, b) => a - b);
 
   const maxUbRound = ubRounds.length > 0 ? Math.max(...ubRounds) : 1;
-  const maxLbRound = lbRounds.length > 0 ? Math.max(...lbRounds) : 1;
-
-  // Estimate theoretical first round count of Winners Bracket
-  let firstRoundCount = 1;
-  ubRounds.forEach((r) => {
-    const count = ubByRound[r]?.length || 0;
-    const estimate = count * Math.pow(2, r - 1);
-    if (estimate > firstRoundCount) firstRoundCount = estimate;
-  });
+  const lbRound1 = lbByRound[1] ?? [];
+  const hideLbRound1 =
+    lbRound1.length > 0 &&
+    lbRound1.every(
+      (match) =>
+        match.isBye &&
+        match.status === 'COMPLETED' &&
+        !match.participant1 &&
+        !match.participant2,
+    );
+  const visibleLbRounds = lbRounds.filter((round) => !(hideLbRound1 && round === 1));
+  const maxLbRound =
+    visibleLbRounds.length > 0 ? Math.max(...visibleLbRounds) : 1;
+  const lbRoundLabelOffset = hideLbRound1 ? 1 : 0;
 
   const SLOT_H_1 = cardH + 16;
-  const UB_TOP = 48; // padding for round headers
-  const UB_HEIGHT = firstRoundCount * SLOT_H_1;
-  const LB_TOP = UB_TOP + UB_HEIGHT + 48;
-  const LB_HEIGHT = UB_HEIGHT; // keep same height space
+  const UB_TOP = 72; // padding for round headers
+  const bracketGap = 64;
+
+  // Find max matches count in any Winners Bracket round
+  let maxUbMatchesInRound = 1;
+  // Use the actual round-1 count as the baseline for losers-band spacing.
+  // Estimating from later rounds can inflate the slot grid and make the losers
+  // bracket look duplicated or stretched.
+  const firstRoundCount = ubByRound[1]?.length || 1;
+  ubRounds.forEach((r) => {
+    const count = ubByRound[r]?.length || 0;
+    if (count > maxUbMatchesInRound) maxUbMatchesInRound = count;
+  });
+
+  // Find max matches count in any Losers Bracket round
+  let maxLbMatchesInRound = 1;
+  visibleLbRounds.forEach((r) => {
+    const count = lbByRound[r]?.length || 0;
+    if (count > maxLbMatchesInRound) maxLbMatchesInRound = count;
+  });
+
+  const UB_HEIGHT = maxUbMatchesInRound * SLOT_H_1;
+  const LB_TOP = UB_TOP + UB_HEIGHT + bracketGap; // Compact gap between brackets
+  const LB_HEIGHT = maxLbMatchesInRound * SLOT_H_1;
 
   const posMap = new Map<string, { x: number; y: number }>();
 
@@ -75,27 +100,66 @@ export function DoubleElimView({
   ubRounds.forEach((r) => {
     const colX = (r - 1) * 2 * (CARD_W + COL_GAP);
     const slotH = Math.pow(2, r - 1) * SLOT_H_1;
-    ubByRound[r]?.forEach((match) => {
+    const roundMatches = ubByRound[r] ?? [];
+    const roundH = roundMatches.length * slotH;
+    const roundTop = UB_TOP + (UB_HEIGHT - roundH) / 2;
+
+    roundMatches.forEach((match, index) => {
       posMap.set(match.id, {
         x: colX,
-        y: UB_TOP + (match.matchOrder - 1) * slotH + slotH / 2,
+        y: roundTop + index * slotH + slotH / 2,
+      });
+    });
+  });
+
+  ubRounds.slice(1).forEach((r) => {
+    (ubByRound[r] ?? []).forEach((match) => {
+      const sources = upperMatches
+        .filter((source) => source.nextMatchId === match.id)
+        .map((source) => posMap.get(source.id))
+        .filter((position): position is { x: number; y: number } => Boolean(position));
+      if (sources.length === 0) return;
+      const current = posMap.get(match.id);
+      if (!current) return;
+      posMap.set(match.id, {
+        x: current.x,
+        y: sources.reduce((sum, source) => sum + source.y, 0) / sources.length,
       });
     });
   });
 
   // ── Losers Bracket Positioning ──
-  lbRounds.forEach((r) => {
-    let colIndex = r - 1;
+  // Column index: sequential r-1, except LB final which aligns with UB final column
+  visibleLbRounds.forEach((r) => {
+    let colIndex = hideLbRound1 ? r - 2 : r - 1;
     if (r === maxLbRound) {
       colIndex = (maxUbRound - 1) * 2;
     }
     const colX = colIndex * (CARD_W + COL_GAP);
-    const totalLbMatches = Math.pow(2, Math.floor((maxLbRound - r) / 2));
-    const lbSlotH = LB_HEIGHT / totalLbMatches;
-    lbByRound[r]?.forEach((match) => {
+    const roundMatches = lbByRound[r] ?? [];
+    const roundH = roundMatches.length * SLOT_H_1;
+    const roundTop = LB_TOP + (LB_HEIGHT - roundH) / 2;
+
+    roundMatches.forEach((match, index) => {
       posMap.set(match.id, {
         x: colX,
-        y: LB_TOP + (match.matchOrder - 1) * lbSlotH + lbSlotH / 2,
+        y: roundTop + index * SLOT_H_1 + SLOT_H_1 / 2,
+      });
+    });
+  });
+
+  visibleLbRounds.slice(1).forEach((r) => {
+    (lbByRound[r] ?? []).forEach((match) => {
+      const sources = lowerMatches
+        .filter((source) => source.nextMatchId === match.id)
+        .map((source) => posMap.get(source.id))
+        .filter((position): position is { x: number; y: number } => Boolean(position));
+      if (sources.length === 0) return;
+      const current = posMap.get(match.id);
+      if (!current) return;
+      posMap.set(match.id, {
+        x: current.x,
+        y: sources.reduce((sum, source) => sum + source.y, 0) / sources.length,
       });
     });
   });
@@ -105,7 +169,7 @@ export function DoubleElimView({
   const GF_X = columnsCount * (CARD_W + COL_GAP);
 
   const ubFinal = ubRounds.length > 0 ? ubByRound[maxUbRound]?.[0] : null;
-  const lbFinal = lbRounds.length > 0 ? lbByRound[maxLbRound]?.[0] : null;
+  const lbFinal = visibleLbRounds.length > 0 ? lbByRound[maxLbRound]?.[0] : null;
   const ubFinalPos = ubFinal ? posMap.get(ubFinal.id) : null;
   const lbFinalPos = lbFinal ? posMap.get(lbFinal.id) : null;
 
@@ -126,7 +190,9 @@ export function DoubleElimView({
     GF_X + (gfSorted.length || 1) * (CARD_W + COL_GAP) + 48;
   const totalHeight = LB_TOP + LB_HEIGHT + 48;
 
-  const allMatches = [...upperMatches, ...lowerMatches, ...gfSorted];
+  const allMatchesForLogic = [...upperMatches, ...lowerMatches, ...gfSorted];
+  const visibleLowerMatches = visibleLbRounds.flatMap((round) => lbByRound[round] || []);
+  const allMatches = [...upperMatches, ...visibleLowerMatches, ...gfSorted];
 
   return (
     <div
@@ -203,17 +269,29 @@ export function DoubleElimView({
               height={totalHeight}
               style={{ overflow: 'visible' }}
             >
-              {allMatches.map((m) => {
+              {allMatchesForLogic.map((m) => {
                 const startPos = posMap.get(m.id);
                 if (!startPos) return null;
 
                 const elements: React.ReactNode[] = [];
+                const makePath = (endPos: { x: number; y: number }, stroke: string, dashed = false) => {
+                  const midX = (startPos.x + CARD_W + endPos.x) / 2;
+                  return (
+                  <path
+                    d={`M ${startPos.x + CARD_W} ${startPos.y} L ${midX} ${startPos.y} L ${midX} ${endPos.y} L ${endPos.x} ${endPos.y}`}
+                    stroke={stroke}
+                    strokeWidth={1.5}
+                    fill="none"
+                    opacity={0.72}
+                    strokeDasharray={dashed ? '5 4' : undefined}
+                  />
+                  );
+                };
 
                 // Winner next path
                 if (m.nextMatchId) {
                   const endPos = posMap.get(m.nextMatchId);
                   if (endPos) {
-                    const midX = (startPos.x + CARD_W + endPos.x) / 2;
                     const stroke =
                       m.status === 'COMPLETED' ? '#10b981' : '#cbd5e1';
                     elements.push(
@@ -224,9 +302,7 @@ export function DoubleElimView({
                         fill="none"
                         opacity={0.65}
                       >
-                        <path
-                          d={`M ${startPos.x + CARD_W} ${startPos.y} L ${midX} ${startPos.y} L ${midX} ${endPos.y} L ${endPos.x} ${endPos.y}`}
-                        />
+                        {makePath(endPos, stroke)}
                       </g>,
                     );
                   }
@@ -239,7 +315,7 @@ export function DoubleElimView({
             {/* WB Section Label */}
             <div
               className="absolute flex items-center gap-2"
-              style={{ top: UB_TOP - 32, left: 0 }}
+              style={{ top: UB_TOP - 56, left: 0 }}
             >
               <div className="w-1 h-3.5 bg-indigo-500 rounded-full" />
                 <span className="text-[11px] font-extrabold text-slate-600 uppercase tracking-widest">
@@ -248,15 +324,68 @@ export function DoubleElimView({
             </div>
 
             {/* LB Section Label */}
-            <div
-              className="absolute flex items-center gap-2"
-              style={{ top: LB_TOP - 32, left: 0 }}
-            >
-              <div className="w-1 h-3.5 bg-rose-500 rounded-full" />
-                <span className="text-[11px] font-extrabold text-slate-600 uppercase tracking-widest">
-                  Nhánh thua
-              </span>
-            </div>
+            {visibleLbRounds.length > 0 && (
+              <div
+                className="absolute flex items-center gap-2"
+                style={{ top: LB_TOP - 56, left: 0 }}
+              >
+                <div className="w-1 h-3.5 bg-rose-500 rounded-full" />
+                  <span className="text-[11px] font-extrabold text-slate-600 uppercase tracking-widest">
+                    Nhánh thua
+                </span>
+              </div>
+            )}
+
+            {/* WB Round Headers */}
+            {ubRounds.map((r) => {
+              const fromEnd = ubRounds.length - (ubRounds.indexOf(r) + 1);
+              const label =
+                fromEnd === 0
+                  ? 'CK NHÁNH THẮNG'
+                  : fromEnd === 1
+                    ? 'BK NHÁNH THẮNG'
+                    : `VÒNG ${r}`;
+              const colX = (r - 1) * 2 * (CARD_W + COL_GAP);
+              return (
+                <div
+                  key={`ub-${r}`}
+                  className="absolute flex justify-center"
+                  style={{ left: colX, width: CARD_W, top: UB_TOP - 36 }}
+                >
+                  <div className="text-[10px] font-extrabold text-indigo-650 uppercase tracking-widest bg-indigo-50/80 border border-indigo-100 rounded-full px-3 py-1 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+                    {label}
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* LB Round Headers */}
+            {visibleLbRounds.map((r) => {
+              const fromEnd = visibleLbRounds.length - (visibleLbRounds.indexOf(r) + 1);
+              const displayRound = r - lbRoundLabelOffset;
+              const label =
+                fromEnd === 0
+                  ? 'CK NHÁNH THUA'
+                  : fromEnd === 1
+                    ? 'BK NHÁNH THUA'
+                    : `VÒNG ${displayRound}`;
+              let colIndex = hideLbRound1 ? r - 2 : r - 1;
+              if (r === maxLbRound) {
+                colIndex = (maxUbRound - 1) * 2;
+              }
+              const colX = colIndex * (CARD_W + COL_GAP);
+              return (
+                <div
+                  key={`lb-${r}`}
+                  className="absolute flex justify-center"
+                  style={{ left: colX, width: CARD_W, top: LB_TOP - 36 }}
+                >
+                  <div className="text-[10px] font-extrabold text-rose-650 uppercase tracking-widest bg-rose-50/80 border border-rose-100 rounded-full px-3 py-1 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+                    {label}
+                  </div>
+                </div>
+              );
+            })}
 
             {/* Grand Final Section Label */}
             {gfSorted.length > 0 && (
@@ -273,14 +402,33 @@ export function DoubleElimView({
                 </span>
               </div>
             )}
+            {gfSorted.length === 1 && (
+              <div
+                className="absolute flex flex-col items-start gap-2"
+                style={{
+                  top: gfCenterY + cardH / 2 + 18,
+                  left: GF_X,
+                }}
+              >
+                <div className="flex items-center gap-2">
+                  <div className="w-1 h-3.5 bg-slate-400 rounded-full" />
+                  <span className="text-[11px] font-extrabold text-slate-500 uppercase tracking-widest">
+                    Chung kết phụ
+                  </span>
+                </div>
+                <div className="text-[9px] font-bold text-slate-400 bg-white/90 border border-slate-200 rounded-lg px-2 py-1 shadow-sm">
+                  Nếu đội nhánh thắng thua ở trận đầu
+                </div>
+              </div>
+            )}
 
             {/* Render Match Cards */}
             {allMatches.map((match) => {
               const pos = posMap.get(match.id);
               if (!pos) return null;
-              const isP1Bye = isSlotBye(match, 1, allMatches);
-              const isP2Bye = isSlotBye(match, 2, allMatches);
-              const actualCardH = match.isBye ? 100 : cardH;
+              const isP1Bye = isSlotBye(match, 1, allMatchesForLogic);
+              const isP2Bye = isSlotBye(match, 2, allMatchesForLogic);
+              const actualCardH = (!match.participant1 || !match.participant2 || match.isBye) ? 100 : cardH;
               return (
                 <div
                   key={match.id}

@@ -101,7 +101,7 @@ export interface Tournament {
   registrationEndDate?: string;
   sportRules?: SportRulesEnvelope;
   status: 'DRAFT' | 'PENDING_APPROVAL' | 'UPCOMING' | 'REGISTRATION_OPEN' | 'REGISTRATION_CLOSED' | 'IN_PROGRESS' | 'ONGOING' | 'COMPLETED' | 'CANCELLED';
-  format: 'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION' | 'ROUND_ROBIN';
+  format: 'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION' | 'ROUND_ROBIN' | 'GROUP_STAGE_KNOCKOUT';
   maxParticipants?: number;
   entryFee?: number;
   platformFeePercentage?: string;
@@ -168,7 +168,7 @@ export interface Tournament {
   tournamentConfig?: {
     bracketType?: string;
     maxTeams?: number;
-    seedingMethod?: string;
+    seedingMethod?: 'ELO' | 'RANDOM' | 'MANUAL';
     thirdPlaceMatch?: boolean;
     minElo?: number | null;
     maxElo?: number | null;
@@ -178,6 +178,32 @@ export interface Tournament {
   } | null;
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface GroupStageKnockoutConfig {
+  groupsConfig: {
+    numGroups: number;
+    teamsPerGroup: number;
+    roundsToPlay: number;
+  };
+  advancementConfig: {
+    teamsAdvancing: number;
+    allowWildcardThird: boolean;
+    wildcardTeamsAdvancing: number;
+  };
+  playoffConfig: {
+    type: 'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION';
+    seedingType: 'SEEDED' | 'RANDOM';
+  };
+  scoring: {
+    winPoints: number;
+    drawPoints: number;
+    lossPoints: number;
+  };
+  tiebreakerRules: {
+    primary: 'H2H_POINTS' | 'SET_DIFF' | 'POINT_DIFF';
+    secondary: string[];
+  };
 }
 
 export interface PaginatedTournaments {
@@ -195,6 +221,7 @@ export interface TournamentParticipant {
   teamName: string;
   seed: number | null;
   isPaid: boolean;
+  isWildcard?: boolean;
   tournamentDivisionId?: string | null;
   registeredAt: string;
   teamInviteToken?: string | null;

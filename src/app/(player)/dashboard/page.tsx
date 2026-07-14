@@ -39,6 +39,8 @@ import {
   isTournamentOpenForRegistration,
   isTournamentUpcoming,
 } from '@/utils/tournament-status';
+import { isRecentlyCompletedTournament } from '@/utils/tournament-home';
+import { sortFollowedTournaments } from '@/utils/tournament-follow';
 
 const dateFormatter = new Intl.DateTimeFormat('vi-VN', {
   day: '2-digit',
@@ -164,16 +166,17 @@ export default function DashboardPage() {
     const fetchData = async () => {
       try {
         setIsLoading(true);
+        const followedResPromise = tournamentsApi.getFollowedTournaments().catch(() => null);
         const [ranksRes, workspaceRes, matchesRes, followedRes] = await Promise.all([
           rankingsApi.getUserRankings(user.id),
           tournamentsApi.getMyWorkspace(),
           matchesApi.getMatches({ userId: user.id, limit: 10 }),
-          (tournamentsApi as any).getFollowedTournaments().catch(() => ({ data: [] })),
+          followedResPromise,
         ]);
 
         setUserRankings(ranksRes);
         setWorkspace(workspaceRes.data || null);
-        setFollowedTournaments(Array.isArray(followedRes.data) ? followedRes.data : []);
+        setFollowedTournaments(sortFollowedTournaments(Array.isArray(followedRes?.data) ? followedRes.data : []));
 
         if (matchesRes?.data) {
           const nextMatch = matchesRes.data.find((match: Match) => match.status === 'SCHEDULED' || match.status === 'ONGOING');
@@ -440,9 +443,14 @@ export default function DashboardPage() {
           {/* Giải đang theo dõi */}
           <section className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
             <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
-              <h2 className="text-base font-black text-slate-900 flex items-center gap-2">
-                <Bookmark className="w-5 h-5 text-amber-500" /> Giải đang theo dõi
-              </h2>
+              <div>
+                <h2 className="text-base font-black text-slate-900 flex items-center gap-2">
+                  <Bookmark className="w-5 h-5 text-amber-500" /> Giải đang theo dõi
+                </h2>
+                <p className="text-[11px] font-semibold text-slate-500 mt-1">
+                  Card sẽ cho biết rõ giải còn mở, đang diễn ra, vừa kết thúc gần đây hay đã kết thúc.
+                </p>
+              </div>
               <span className="text-sm font-semibold text-slate-500">{followedTournaments.length}</span>
             </div>
             <div className="p-6">
@@ -453,16 +461,30 @@ export default function DashboardPage() {
               ) : followedTournaments.length > 0 ? (
                 <div className="flex flex-col gap-3">
                   {followedTournaments.slice(0, 5).map((t) => (
-                    <Link key={t.id} href={`/tournaments/${t.id}`}
+                    <Link
+                      key={t.id}
+                      href={`/tournaments/${t.id}`}
                       className="block rounded-xl border border-slate-200 p-3 hover:border-amber-200 hover:shadow-sm transition-all"
                     >
-                      <p className="text-sm font-bold text-slate-800 line-clamp-1">{t.name}</p>
-                      <p className="text-[10px] text-slate-400 mt-1">
-                        {isTournamentOpenForRegistration(t.status) ? 'Mở đăng ký' :
-                         isTournamentUpcoming(t.status) ? 'Sắp diễn ra' :
-                         isTournamentInProgress(t.status) ? 'Đang diễn ra' :
-                         isTournamentCompleted(t.status) ? 'Đã kết thúc' : t.status}
-                      </p>
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold text-slate-800 line-clamp-1">{t.name}</p>
+                          <p className="text-[10px] text-slate-400 mt-1">
+                            {isTournamentOpenForRegistration(t.status) ? 'Mở đăng ký' :
+                             isTournamentUpcoming(t.status) ? 'Sắp diễn ra' :
+                             isTournamentInProgress(t.status) ? 'Đang diễn ra' :
+                             isTournamentCompleted(t.status) ? 'Đã kết thúc' : t.status}
+                          </p>
+                          <p className="text-[10px] text-slate-500 mt-1 line-clamp-2">
+                            {isRecentlyCompletedTournament(t)
+                              ? `Vừa kết thúc trong 14 ngày gần đây${t.endDate ? ` • ${formatDate(t.endDate)}` : ''}`
+                              : `${t.startDate ? `Bắt đầu ${formatDate(t.startDate)}` : 'Đang theo dõi'}${t.endDate ? ` • Kết thúc ${formatDate(t.endDate)}` : ''}`}
+                          </p>
+                        </div>
+                        <span className={`shrink-0 px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-wide border ${getTournamentStatusClassName(t.status)}`}>
+                          {getTournamentStatusLabel(t.status)}
+                        </span>
+                      </div>
                     </Link>
                   ))}
                 </div>

@@ -12,7 +12,7 @@ import { categoriesApi, Category } from '@/features/categories/api';
 import { api } from '@/lib/axios';
 import type { ApiResponse } from '@/types/api';
 import { trimAndNormalizeSpaces } from '@/utils/string';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Trophy, LayoutGrid, RotateCw, Shield } from 'lucide-react';
 import { buildDefaultSportRules } from '@/features/tournaments/sport-rules/defaults';
 import { inferSportRuleKindFromCategory } from '@/features/tournaments/sport-rules/normalize';
 import { normalizeMatchFormatForCategory } from '@/features/tournaments/match-format-options';
@@ -90,6 +90,9 @@ export default function Step1Info() {
   const watchIsRanked = watch('isRanked');
   const watchTournamentType = watch('tournamentType') || (formData.communityId ? 'CLUB' : 'PUBLIC');
   const watchRegistrationMode = watch('registrationMode') || 'OPEN';
+  const [selectedFormat, setSelectedFormat] = useState<'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION' | 'ROUND_ROBIN' | 'GROUP_STAGE_KNOCKOUT'>(
+    formData.format || 'SINGLE_ELIMINATION'
+  );
   const [fees, setFees] = useState({
     feePublicRanked: 100000,
     feePublicUnranked: 50000,
@@ -135,6 +138,7 @@ export default function Step1Info() {
       name: trimAndNormalizeSpaces(data.name),
       description: data.description ? trimAndNormalizeSpaces(data.description) : '',
       categoryId: data.categoryId,
+      format: selectedFormat,
       sportRules: buildDefaultSportRules(inferredKind),
       matchFormat: normalizeMatchFormatForCategory(formData.matchFormat, selectedCategory),
       selectedFormats: formData.selectedFormats
@@ -340,7 +344,7 @@ export default function Step1Info() {
               <h4 className="text-sm font-bold text-slate-800">Giới hạn trình độ ELO (Tùy chọn)</h4>
               <p className="text-xs text-slate-500 mt-1">Thiết lập khoảng ELO cho phép của các vận động viên đăng ký giải đấu này.</p>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Input
                 label="ELO tối thiểu (Min ELO)"
@@ -376,6 +380,39 @@ export default function Step1Info() {
             </div>
           </div>
         )}
+
+        {/* Bracket Type Selection */}
+        <div className="flex flex-col gap-3">
+          <label className="text-sm font-semibold text-slate-700">Thể thức thi đấu</label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[
+              { id: 'SINGLE_ELIMINATION' as const, label: 'Loại Trực Tiếp', icon: Trophy, desc: 'Đội thua sẽ bị loại ngay lập tức.' },
+              { id: 'DOUBLE_ELIMINATION' as const, label: 'Nhánh Thắng / Nhánh Thua', icon: LayoutGrid, desc: 'Đội thua một trận rớt xuống nhánh thua.' },
+              { id: 'ROUND_ROBIN' as const, label: 'Vòng Tròn Tính Điểm', icon: RotateCw, desc: 'Các đội trong bảng gặp nhau ít nhất một lượt.' },
+              { id: 'GROUP_STAGE_KNOCKOUT' as const, label: 'Vòng Bảng + Loại Trực Tiếp', icon: Shield, desc: 'Chia bảng đấu vòng tròn, sau đó chọn đội vào vòng loại trực tiếp.' },
+            ].map((opt) => {
+              const isSelected = selectedFormat === opt.id;
+              const Icon = opt.icon;
+              return (
+                <div
+                  key={opt.id}
+                  onClick={() => setSelectedFormat(opt.id)}
+                  className={`cursor-pointer rounded-xl border p-4 transition-all ${
+                    isSelected ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500' : 'border-slate-200 bg-white hover:border-slate-300'
+                  }`}
+                >
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-3 ${isSelected ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-500'}`}>
+                    <Icon className="w-5 h-5" />
+                  </div>
+                  <h3 className={`font-bold mb-1 ${isSelected ? 'text-blue-900' : 'text-slate-900'}`}>{opt.label}</h3>
+                  <p className="text-xs text-slate-500 leading-relaxed">{opt.desc}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+
 
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-semibold text-slate-700">Mô tả Giải đấu</label>

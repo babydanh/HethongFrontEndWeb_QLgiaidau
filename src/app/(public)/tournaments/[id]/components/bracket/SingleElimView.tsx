@@ -50,21 +50,26 @@ export function SingleElimView({
   });
 
   const SLOT_H_1 = cardH + 16;
+  const roundGap = COL_GAP + 24;
   const totalHeight = firstRoundCount * SLOT_H_1 + 48;
   const posMap = new Map<string, { x: number; y: number }>();
 
   rounds.forEach((r) => {
-    const colX = (r - 1) * (CARD_W + COL_GAP);
+    const colX = (r - 1) * (CARD_W + roundGap);
     const slotH = Math.pow(2, r - 1) * SLOT_H_1;
-    byRound[r]?.forEach((match) => {
+    const roundMatches = byRound[r] ?? [];
+    const roundH = roundMatches.length * slotH;
+    const roundTop = 24 + (totalHeight - 48 - roundH) / 2;
+
+    roundMatches.forEach((match, index) => {
       posMap.set(match.id, {
         x: colX,
-        y: 24 + (match.matchOrder - 1) * slotH + slotH / 2,
+        y: roundTop + index * slotH + slotH / 2,
       });
     });
   });
 
-  const svgW = maxRound * CARD_W + (maxRound - 1) * COL_GAP + COL_GAP;
+  const svgW = maxRound * CARD_W + (maxRound - 1) * roundGap + roundGap;
 
   return (
     <div
@@ -134,7 +139,7 @@ export function SingleElimView({
             }}
             className="flex mb-6 flex-shrink-0"
           >
-            <div className="flex" style={{ gap: COL_GAP }}>
+            <div className="flex" style={{ gap: roundGap }}>
               {Array.from({ length: maxRound }).map((_, ri) => (
                 <div
                   key={ri}
@@ -195,7 +200,7 @@ export function SingleElimView({
               if (!pos) return null;
               const isP1Bye = isSlotBye(match, 1, matches);
               const isP2Bye = isSlotBye(match, 2, matches);
-              const actualCardH = match.isBye ? 100 : cardH;
+              const actualCardH = (!match.participant1 || !match.participant2 || match.isBye) ? 100 : cardH;
               return (
                 <div
                   key={match.id}

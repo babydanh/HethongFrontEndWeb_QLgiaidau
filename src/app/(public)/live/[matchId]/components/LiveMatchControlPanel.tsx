@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { Activity, AlertCircle, Check, Play, Trophy } from 'lucide-react';
 import { formatTennisPointDisplay } from '@/features/matches/live-score-state';
 import type {
@@ -18,6 +19,15 @@ import { PickleballOfficialPanel } from './PickleballOfficialPanel';
 import { BadmintonOfficialPanel } from './BadmintonOfficialPanel';
 import { TableTennisOfficialPanel } from './TableTennisOfficialPanel';
 import { PenaltyPanel } from './PenaltyPanel';
+import {
+  Modal,
+  ModalContent,
+  ModalDescription,
+  ModalFooter,
+  ModalHeader,
+  ModalTitle,
+} from '@/components/ui/Modal';
+import { Button } from '@/components/ui/Button';
 
 export interface LiveMatchControlPanelProps {
   canControlLiveMatch: boolean;
@@ -26,6 +36,8 @@ export interface LiveMatchControlPanelProps {
   team1Name: string;
   team2Name: string;
   currentSet: MatchScore;
+  scores: MatchScore[];
+  activeSetIndex: number;
   scorePresentation: ReturnType<typeof getMatchScorePresentation>;
   scoreGuidance: ScoreEntryGuidance;
   sportKind: 'BADMINTON' | 'TABLE_TENNIS' | 'PICKLEBALL_RALLY' | 'PICKLEBALL_SIDE_OUT' | 'TENNIS';
@@ -55,6 +67,8 @@ export function LiveMatchControlPanel({
   team1Name,
   team2Name,
   currentSet,
+  scores,
+  activeSetIndex,
   scorePresentation,
   scoreGuidance,
   sportKind,
@@ -76,6 +90,12 @@ export function LiveMatchControlPanel({
   onSideOut,
   onAddPenalty,
 }: LiveMatchControlPanelProps) {
+  const [confirmWinner, setConfirmWinner] = useState<1 | 2 | null>(null);
+
+  const handleCompleteMatch = (team: 1 | 2) => {
+    setConfirmWinner(team);
+  };
+
   if (!canControlLiveMatch) {
     return null;
   }
@@ -115,6 +135,57 @@ export function LiveMatchControlPanel({
             Tennis live sẽ lên theo pha bóng `0 - 15 - 30 - 40 - A`; đủ điều kiện thì hệ thống tự chốt game và nhảy sang loạt phụ khi set đang là `6 - 6`.
           </div>
         ) : null}
+      </div>
+
+      <div className="rounded-2xl border border-slate-200 bg-white p-4">
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Tiến trình set</p>
+            <p className="mt-1 text-sm font-black text-slate-900">
+              Set hiện tại: {activeSetIndex + 1} · {currentSet.team1Score} - {currentSet.team2Score}
+            </p>
+          </div>
+          <p className="text-xs font-semibold text-slate-500">
+            {scores.filter((set) => set.isFinished).length} set đã chốt
+          </p>
+        </div>
+        <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+          {scores.map((set, index) => (
+            <div
+              key={`set-log-${index}`}
+              className={cn(
+                'rounded-xl border px-3 py-2.5',
+                index === activeSetIndex && !set.isFinished
+                  ? 'border-blue-300 bg-blue-50'
+                  : 'border-slate-200 bg-slate-50',
+              )}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-black text-slate-700">Set {index + 1}</span>
+                <span
+                  className={cn(
+                    'rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide',
+                    set.scoreOverride?.reason
+                      ? 'bg-amber-100 text-amber-800'
+                      : set.isFinished
+                        ? 'bg-emerald-100 text-emerald-700'
+                        : 'bg-blue-100 text-blue-700',
+                  )}
+                >
+                  {set.scoreOverride?.reason ? 'Ngoại lệ' : set.isFinished ? 'Đã chốt' : 'Đang đấu'}
+                </span>
+              </div>
+              <p className="mt-1 text-lg font-black text-slate-950">
+                {set.team1Score} - {set.team2Score}
+              </p>
+              {set.scoreOverride?.reason ? (
+                <p className="mt-1 line-clamp-2 text-[11px] font-semibold text-amber-800" title={set.scoreOverride.reason}>
+                  {set.scoreOverride.reason}
+                </p>
+              ) : null}
+            </div>
+          ))}
+        </div>
       </div>
 
       <PenaltyPanel
@@ -169,21 +240,28 @@ export function LiveMatchControlPanel({
         ) : null}
       </div>
 
-      {scoreWarnings.length > 0 ? (
-        <div className="rounded-2xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm font-semibold text-orange-900">
-          <p className="font-black">Cảnh báo bám luật mặc định</p>
-          <div className="mt-2 space-y-1 text-xs font-semibold text-orange-800">
-            {scoreWarnings.map((warning) => (
-              <p key={warning.id}>- {warning.message}</p>
-            ))}
-          </div>
-          {!overrideEnabled ? (
-            <p className="mt-2 text-xs font-semibold text-orange-800">
-              Nếu trọng tài xác nhận đây là kết quả đặc biệt nhưng hợp lệ, hãy bật chế độ ngoại lệ rồi ghi rõ lý do.
-            </p>
-          ) : null}
+      <div className={cn(
+        "rounded-2xl border px-4 py-3 text-sm font-semibold transition-all duration-200",
+        scoreWarnings.length > 0
+          ? "border-orange-200 bg-orange-50 text-orange-900"
+          : "border-emerald-100 bg-emerald-50/50 text-emerald-900"
+      )}>
+        <p className="font-black">Cảnh báo bám luật mặc định</p>
+        <div className="mt-2 space-y-1 text-xs font-semibold">
+          {scoreWarnings.length > 0 ? (
+            scoreWarnings.map((warning) => (
+              <p className="text-orange-850" key={warning.id}>- {warning.message}</p>
+            ))
+          ) : (
+            <p className="text-emerald-700 font-medium">✓ Điểm số hiện tại hợp lệ, bám sát luật thi đấu chuẩn.</p>
+          )}
         </div>
-      ) : null}
+        {!overrideEnabled && scoreWarnings.length > 0 ? (
+          <p className="mt-2 text-xs font-semibold text-orange-800">
+            Nếu trọng tài xác nhận đây là kết quả đặc biệt nhưng hợp lệ, hãy bật chế độ ngoại lệ rồi ghi rõ lý do.
+          </p>
+        ) : null}
+      </div>
 
       <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-lg md:p-8">
         <div className="mb-6 flex items-center gap-3 border-b border-slate-100 pb-4">
@@ -281,29 +359,34 @@ export function LiveMatchControlPanel({
                 <Check className="h-4 w-4 text-emerald-500" /> {scorePresentation.completeActionLabel}
               </button>
 
-              <div className="flex flex-1 gap-3">
+              <div className="flex flex-grow flex-col items-end gap-2">
+                <p className="text-right text-[11px] font-semibold text-slate-500">
+                  Chốt thắng thẳng chỉ dùng khi đã bật ngoại lệ và nhập lý do.
+                </p>
+                <div className="flex flex-wrap justify-end gap-2">
                 <button
-                  onClick={() => onCompleteMatch(1)}
-                  disabled={isSubmitting || !match.participant1Id || !match.participant2Id}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-600 py-3 text-xs font-bold text-white shadow-md transition-all hover:bg-emerald-700 disabled:opacity-50"
+                  onClick={() => handleCompleteMatch(1)}
+                  disabled={isSubmitting || !match.participant1Id || !match.participant2Id || !overrideEnabled || !overrideReason.trim()}
+                  className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-amber-600 px-3 py-2 text-[11px] font-bold text-white shadow-sm transition-colors hover:bg-amber-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
                 >
-                  <Trophy className="h-4 w-4" /> Đội 1 Thắng
+                  <Trophy className="h-3.5 w-3.5" /> Đội 1 thắng ngoại lệ
                 </button>
                 <button
-                  onClick={() => onCompleteMatch(2)}
-                  disabled={isSubmitting || !match.participant1Id || !match.participant2Id}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-600 py-3 text-xs font-bold text-white shadow-md transition-all hover:bg-emerald-700 disabled:opacity-50"
+                  onClick={() => handleCompleteMatch(2)}
+                  disabled={isSubmitting || !match.participant1Id || !match.participant2Id || !overrideEnabled || !overrideReason.trim()}
+                  className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-amber-600 px-3 py-2 text-[11px] font-bold text-white shadow-sm transition-colors hover:bg-amber-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
                 >
-                  <Trophy className="h-4 w-4" /> Đội 2 Thắng
+                  <Trophy className="h-3.5 w-3.5" /> Đội 2 thắng ngoại lệ
                 </button>
                 </div>
-                {isTennis ? (
-                  <p className="mt-3 text-center text-xs font-semibold text-slate-500">
-                    Game hiện tại của set: {currentSet.team1Score} - {currentSet.team2Score}
-                  </p>
-                ) : null}
               </div>
+              {isTennis ? (
+                <p className="mt-3 text-center text-xs font-semibold text-slate-500">
+                  Game hiện tại của set: {currentSet.team1Score} - {currentSet.team2Score}
+                </p>
+              ) : null}
             </div>
+          </div>
         ) : null}
 
         {match.status === 'COMPLETED' ? (
@@ -319,6 +402,50 @@ export function LiveMatchControlPanel({
           </div>
         ) : null}
       </div>
+
+      <Modal open={confirmWinner !== null} onOpenChange={(open) => !open && setConfirmWinner(null)}>
+        <ModalContent className="max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-xl">
+          <ModalHeader className="text-center sm:text-left">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-orange-100 text-orange-600 sm:mx-0">
+              <AlertCircle className="h-6 w-6" />
+            </div>
+            <ModalTitle className="mt-3 text-lg font-black text-slate-900 sm:mt-4">
+              Xác nhận chốt thắng ngoại lệ
+            </ModalTitle>
+            <ModalDescription className="mt-2 text-sm font-semibold text-slate-500 leading-relaxed">
+              Bạn có chắc chắn muốn chốt kết quả chiến thắng toàn trận cho đội:
+              <span className="mt-1.5 block text-base font-black text-slate-900 underline decoration-blue-500 decoration-2 underline-offset-4">
+                {confirmWinner === 1 ? team1Name : team2Name}
+              </span>
+              Hành động này sẽ kết thúc trận đấu và khóa bảng điểm. Lý do ngoại lệ:
+              <span className="mt-2 block rounded-lg bg-amber-50 px-3 py-2 text-xs font-bold text-amber-900">
+                {overrideReason.trim()}
+              </span>
+            </ModalDescription>
+          </ModalHeader>
+          <ModalFooter className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-end">
+            <Button
+              variant="outline"
+              className="w-full border-slate-200 text-slate-700 sm:w-auto"
+              onClick={() => setConfirmWinner(null)}
+            >
+              Hủy thao tác
+            </Button>
+            <Button
+              disabled={!overrideEnabled || !overrideReason.trim()}
+              className="w-full bg-amber-600 font-bold text-white hover:bg-amber-700 disabled:bg-slate-200 disabled:text-slate-400 sm:w-auto"
+              onClick={() => {
+                if (confirmWinner) {
+                  onCompleteMatch(confirmWinner);
+                }
+                setConfirmWinner(null);
+              }}
+            >
+              Chốt thắng ngoại lệ
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </>
   );
 }

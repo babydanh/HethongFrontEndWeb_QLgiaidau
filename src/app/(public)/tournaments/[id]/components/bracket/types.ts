@@ -16,7 +16,7 @@ export const CARD_W = 260;           // match card width (px) — wider for per-
 export const CARD_H_PUBLIC = 248;    // public view, taller for better readability
 export const CARD_H_ORGANIZER = 288; // organizer view, taller for better readability
 export const BASE_SLOT = 188;        // slot height for the densest round
-export const COL_GAP = 48;           // horizontal gap between round columns
+export const COL_GAP = 96;           // horizontal gap between round columns
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // BRANCH SETS (for Double Elimination filtering)

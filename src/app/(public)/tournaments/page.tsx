@@ -10,6 +10,8 @@ import { formatDate, formatCurrency } from '@/utils/format';
 import { getSportLogo } from '@/constants/sports';
 import TournamentHeroBanner from '@/components/ui/TournamentHeroBanner';
 import LiveMatchesWidget from '@/components/ui/LiveMatchesWidget';
+import { useAuthStore } from '@/lib/zustand/authStore';
+import { sortDiscoveryTournaments, isRecentlyCompletedTournament } from '@/utils/tournament-home';
 import {
   getTournamentStatusClassName,
   getTournamentStatusLabel,
@@ -21,6 +23,7 @@ import {
 } from '@/utils/tournament-status';
 
 export default function TournamentsListPage() {
+  const { user } = useAuthStore();
   const getFormatLabel = (matchType?: string, genderRestriction?: string | null) => {
     const mt = matchType || '';
     const gr = genderRestriction || '';
@@ -60,6 +63,8 @@ export default function TournamentsListPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [followedTournamentIds, setFollowedTournamentIds] = useState<Set<string>>(new Set());
+  const [followLoadingIds, setFollowLoadingIds] = useState<Set<string>>(new Set());
   
   useEffect(() => {
     const fetchCategories = async () => {
@@ -106,6 +111,35 @@ export default function TournamentsListPage() {
   }, []);
 
   useEffect(() => {
+    if (!user?.id) {
+      const timer = setTimeout(() => {
+        if (followedTournamentIds.size > 0) {
+          setFollowedTournamentIds(new Set());
+        }
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+
+    let isMounted = true;
+    const fetchFollowed = async () => {
+      try {
+        const res = await tournamentsApi.getFollowedTournaments();
+        if (isMounted) {
+          setFollowedTournamentIds(new Set((res.data || []).map((tournament) => tournament.id)));
+        }
+      } catch (error) {
+        console.error('Failed to fetch followed tournaments', error);
+      }
+    };
+
+    fetchFollowed();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user?.id]);
+
+  useEffect(() => {
     const fetchTournaments = async () => {
       setIsLoading(true);
       try {
@@ -118,7 +152,7 @@ export default function TournamentsListPage() {
           region: selectedRegion || undefined,
           tournamentType: 'PUBLIC'
         });
-        setTournaments(res.data);
+        setTournaments(sortDiscoveryTournaments(res.data || []));
         setTotalPages(res.meta.totalPages);
       } catch (error) {
         console.error("Failed to fetch tournaments", error);
@@ -131,6 +165,39 @@ export default function TournamentsListPage() {
 
   const handleSearch = () => {
     setPage(1); // Reset to page 1 on new search
+  };
+
+  const handleToggleFollow = async (tournament: Tournament) => {
+    if (!user?.id) return;
+
+    setFollowLoadingIds((prev) => {
+      const next = new Set(prev);
+      next.add(tournament.id);
+      return next;
+    });
+
+    try {
+      const isFollowing = followedTournamentIds.has(tournament.id);
+      if (isFollowing) {
+        await tournamentsApi.unfollowTournament(tournament.id);
+        setFollowedTournamentIds((prev) => {
+          const next = new Set(prev);
+          next.delete(tournament.id);
+          return next;
+        });
+      } else {
+        await tournamentsApi.followTournament(tournament.id);
+        setFollowedTournamentIds((prev) => new Set(prev).add(tournament.id));
+      }
+    } catch (error) {
+      console.error('Failed to toggle follow tournament', error);
+    } finally {
+      setFollowLoadingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(tournament.id);
+        return next;
+      });
+    }
   };
 
   return (
@@ -240,6 +307,13 @@ export default function TournamentsListPage() {
       </div>
 
       {/* Grid Cards */}
+      <div className="flex flex-wrap items-center gap-2 text-[10px] font-black uppercase tracking-wider text-slate-500">
+        <span className="rounded-full bg-slate-100 px-2.5 py-1 border border-slate-200">Vừa kết thúc</span>
+        <span className="rounded-full bg-rose-50 px-2.5 py-1 border border-rose-100 text-rose-700">Đang diễn ra</span>
+        <span className="rounded-full bg-emerald-50 px-2.5 py-1 border border-emerald-100 text-emerald-700">Mở đăng ký</span>
+        <span className="rounded-full bg-blue-50 px-2.5 py-1 border border-blue-100 text-blue-700">Sắp diễn ra</span>
+      </div>
+
       {isLoading ? (
         <div className="flex justify-center items-center h-64 text-slate-500 font-medium">Đang tải danh sách giải đấu...</div>
       ) : tournaments.length === 0 ? (
@@ -293,13 +367,34 @@ export default function TournamentsListPage() {
                         <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
                       )}
                       {getTournamentStatusLabel(tournament.status)}
+                      {isRecentlyCompletedTournament(tournament) && (
+                        <span className="ml-1 inline-flex items-center rounded-full bg-slate-900/75 px-2 py-0.5 text-[9px] font-black text-white">
+                          Vừa kết thúc
+                        </span>
+                      )}
                     </span>
                   </div>
 
                   {/* Bookmark Button (Top-Right) */}
-                  <button className="absolute top-3 right-3 p-1.5 bg-white/90 rounded-full text-slate-650 hover:text-indigo-650 transition-colors shadow-sm z-10 cursor-pointer">
-                    <Bookmark className="w-4 h-4" />
-                  </button>
+                  {user?.id && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        void handleToggleFollow(tournament);
+                      }}
+                      disabled={followLoadingIds.has(tournament.id)}
+                      className={`absolute top-3 right-3 p-1.5 rounded-full transition-colors shadow-sm z-10 cursor-pointer border ${
+                        followedTournamentIds.has(tournament.id)
+                          ? 'bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100'
+                          : 'bg-white/90 text-slate-650 border-slate-200 hover:text-indigo-650 hover:bg-white'
+                      }`}
+                      aria-label={followedTournamentIds.has(tournament.id) ? 'Bỏ theo dõi' : 'Theo dõi'}
+                    >
+                      <Bookmark className={`w-4 h-4 ${followedTournamentIds.has(tournament.id) ? 'fill-current' : ''}`} />
+                    </button>
+                  )}
 
                   {/* Location Overlay (Bottom-Left) */}
                   <div className="absolute bottom-3 left-3 z-10">

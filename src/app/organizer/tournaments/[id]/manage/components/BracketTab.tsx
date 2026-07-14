@@ -1,9 +1,13 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Settings } from 'lucide-react';
+import { Settings, ChevronDown, ChevronRight, Save, Trophy, LayoutGrid, Users, ArrowRight, Loader2 } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { getErrorMessage } from '@/utils/error';
+import { tournamentsApi } from '@/features/tournaments/api';
+import { RoundRobinView } from '@/app/(public)/tournaments/[id]/components/bracket/RoundRobinView';
 import { Tournament, BracketStage, BracketMatch, type SportRuleKind } from '@/types/tournament';
 import PublicBracketTab from '@/app/(public)/tournaments/[id]/components/BracketTab';
 import { getSportRulePresentation } from '@/features/tournaments/sport-rules/presentation';
@@ -62,6 +66,47 @@ interface BracketTabProps {
 
   // Lock state — disable config edits after lock
   isLocked?: boolean;
+
+  // Common
+  bracketType?: string | null;
+
+  // Round Robin scoring config
+  rrWinPoints?: number;
+  setRrWinPoints?: (val: number) => void;
+  rrLossPoints?: number;
+  setRrLossPoints?: (val: number) => void;
+  rrTiebreaker?: string;
+  setRrTiebreaker?: (val: string) => void;
+  rrTiebreakerRule?: string;
+  setRrTiebreakerRule?: React.Dispatch<React.SetStateAction<'H2H_POINTS' | 'SET_DIFF' | 'POINT_DIFF'>>;
+  handleSaveRoundRobinConfig?: () => Promise<void>;
+  isSavingRoundRobinConfig?: boolean;
+
+  // Group Stage Knockout props
+  tournamentFormat?: string;
+  gsNumGroups?: number;
+  gsTeamsPerGroup?: number;
+  gsTeamsAdvancingPerGroup?: number;
+  gsAllowWildcardThird?: boolean;
+  handleAdvanceStandings?: () => Promise<void>;
+  isAdvancingStandings?: boolean;
+  // Additional GSK state from page
+  numGroups?: number;
+  setNumGroups?: React.Dispatch<React.SetStateAction<number>>;
+  teamsPerGroup?: number;
+  setTeamsPerGroup?: React.Dispatch<React.SetStateAction<number>>;
+  teamsAdvancing?: number;
+  setTeamsAdvancing?: React.Dispatch<React.SetStateAction<number>>;
+  allowBestThird?: boolean;
+  setAllowBestThird?: React.Dispatch<React.SetStateAction<boolean>>;
+  gskPlayoffType?: string;
+  setGskPlayoffType?: React.Dispatch<React.SetStateAction<'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION'>>;
+  gskSeedingType?: string;
+  setGskSeedingType?: React.Dispatch<React.SetStateAction<'SEEDED' | 'RANDOM'>>;
+  gskRoundsToPlay?: number;
+  setGskRoundsToPlay?: React.Dispatch<React.SetStateAction<number>>;
+  handleSaveGskConfig?: () => Promise<void>;
+  isSavingGskConfig?: boolean;
 }
 
 export function BracketTab({
@@ -108,6 +153,34 @@ export function BracketTab({
   setRoundsToPlay,
   selectedMatchId,
   onSelectMatch,
+  // Round Robin scoring
+  rrWinPoints = 3,
+  setRrWinPoints,
+  rrLossPoints = 0,
+  setRrLossPoints,
+  rrTiebreaker = 'H2H_POINTS',
+  setRrTiebreaker,
+  handleSaveRoundRobinConfig,
+  isSavingRoundRobinConfig = false,
+  tournamentFormat,
+  numGroups = 4,
+  setNumGroups,
+  teamsPerGroup = 4,
+  setTeamsPerGroup,
+  teamsAdvancing = 2,
+  setTeamsAdvancing,
+  allowBestThird = false,
+  setAllowBestThird,
+  gskPlayoffType,
+  setGskPlayoffType,
+  gskSeedingType,
+  setGskSeedingType,
+  gskRoundsToPlay = 1,
+  setGskRoundsToPlay,
+  handleAdvanceStandings,
+  isAdvancingStandings = false,
+  handleSaveGskConfig,
+  isSavingGskConfig = false,
 }: BracketTabProps) {
   const presentation = getSportRulePresentation(sportRuleKind);
   const setUnitLabel = presentation.setUnitLabel;
@@ -183,6 +256,90 @@ export function BracketTab({
   const isRoundRobin = bracket?.stages?.some(
     (s) => s.type === 'ROUND_ROBIN',
   );
+  const isGroupStageKnockout = tournamentFormat === 'GROUP_STAGE_KNOCKOUT';
+  const gsStages = bracket?.stages ?? [];
+  const gsHasGroupStage = gsStages.some(s => s.type === 'ROUND_ROBIN');
+  const gsHasPlayoffStage = gsStages.some(s => s.type === 'SINGLE_ELIMINATION' || s.type === 'DOUBLE_ELIMINATION');
+  const [gsActiveTab, setGsActiveTab] = useState<'group' | 'playoff'>('group');
+  const canResetDraftBracket = Boolean(bracket?.stages?.length) && tournament.status === 'DRAFT';
+
+  // ─── Participant count for smart suggestions ───
+  const participantCount = useMemo(() => {
+    return (participants as Array<Record<string, unknown>>).filter(
+      (p) => p?.teamStatus === 'COMPLETE' && p?.isPaid === true,
+    ).length;
+  }, [participants]);
+
+  interface SuggestionData {
+    text: string;
+    variant?: 'info' | 'warning';
+    apply: () => void;
+  }
+
+  const getRRSuggestion = (count: number): SuggestionData | null => {
+    if (count < 2) return null;
+    if (count <= 8) return {
+      text: '1 bảng duy nhất, thi đấu vòng tròn 1 lượt tính điểm. Xếp hạng trực tiếp bằng điểm số.',
+      apply: () => { setRoundsToPlay?.(1); setTiebreakerMode?.('split'); },
+    };
+    if (count <= 16) return {
+      text: '1 bảng duy nhất, đấu 2 lượt (đi + về). Số đội vừa phải, nếu bằng điểm thì đánh play-off phân hạng.',
+      apply: () => { setRoundsToPlay?.(2); setTiebreakerMode?.('playoff'); },
+    };
+    if (count <= 32) return {
+      text: '1 bảng duy nhất, đấu 2 lượt. Số đội khá đông, bắt buộc xử lý hòa bằng play-off.',
+      apply: () => { setRoundsToPlay?.(2); setTiebreakerMode?.('playoff'); },
+    };
+    return {
+      text: '1 bảng duy nhất, đấu 2 lượt. CẢNH BÁO: Số trận sẽ rất lớn. Khuyến nghị chọn thể thức "Vòng Bảng + Knockout" (Group Stage Knockout) thay vì Round Robin thuần túy để giảm số trận.',
+      variant: 'warning',
+      apply: () => { setRoundsToPlay?.(2); setTiebreakerMode?.('playoff'); },
+    };
+  };
+
+  const getGSKSuggestion = (count: number): SuggestionData | null => {
+    if (count < 4) return null;
+    if (count <= 8) return {
+      text: '2 bảng, top 1 mỗi bảng vào chung kết',
+      apply: () => { setNumGroups?.(2); setTeamsPerGroup?.(Math.ceil(count / 2)); setTeamsAdvancing?.(1); },
+    };
+    if (count <= 16) return {
+      text: '2 bảng, top 2 mỗi bảng → bán kết',
+      apply: () => { setNumGroups?.(2); setTeamsPerGroup?.(Math.ceil(count / 2)); setTeamsAdvancing?.(2); },
+    };
+    if (count <= 32) return {
+      text: '4 bảng, top 1 hoặc 2 mỗi bảng → tứ kết',
+      apply: () => { setNumGroups?.(4); setTeamsPerGroup?.(Math.ceil(count / 4)); setTeamsAdvancing?.(2); },
+    };
+    return {
+      text: '4-8 bảng, top 1 mỗi bảng → tứ kết',
+      apply: () => { setNumGroups?.(8); setTeamsPerGroup?.(Math.ceil(count / 8)); setTeamsAdvancing?.(1); },
+    };
+  };
+
+  const renderSuggestionBox = (suggestion: SuggestionData | null) => {
+    if (!suggestion) return null;
+    const isWarning = suggestion.variant === 'warning';
+    return (
+      <div className={`rounded-xl border p-4 space-y-2 ${isWarning ? 'border-amber-200 bg-amber-50' : 'border-blue-200 bg-blue-50'}`}>
+        <p className={`text-xs font-bold flex items-center gap-1.5 ${isWarning ? 'text-amber-800' : 'text-blue-700'}`}>
+          <span className="text-base">{isWarning ? '⚠️' : '💡'}</span>
+          {isWarning
+            ? `Cảnh báo: ${participantCount} đội trong 1 bảng duy nhất sẽ tạo rất nhiều trận`
+            : `Gợi ý dựa trên ${participantCount} người đã đăng ký:`
+          }
+        </p>
+        <p className={`text-sm font-semibold ${isWarning ? 'text-amber-900' : 'text-blue-800'}`}>{suggestion.text}</p>
+        <button
+          type="button"
+          onClick={suggestion.apply}
+          className={`text-xs font-bold text-white px-3 py-1.5 rounded-lg transition-colors ${isWarning ? 'bg-amber-600 hover:bg-amber-700' : 'bg-blue-600 hover:bg-blue-700'}`}
+        >
+          {isWarning ? 'Áp dụng cấu hình đề xuất' : 'Áp dụng gợi ý này'}
+        </button>
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
@@ -374,22 +531,23 @@ export function BracketTab({
             </div>
           </div>
 
-          {/* Cấp độ 2: Cài đặt chi tiết theo vòng đấu (hoặc Round Robin config) */}
+          {/* Cấp độ 2: Cài đặt chi tiết theo vòng đấu */}
           <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col justify-between">
-            {isRoundRobin && setTiebreakerMode ? (
+            {isRoundRobin && setTiebreakerMode && !isGroupStageKnockout ? (
               <div className="space-y-4">
+                {renderSuggestionBox(getRRSuggestion(participantCount))}
                 <div>
                   <h3 className="font-extrabold text-slate-900 text-base flex items-center gap-2">
                     <Settings className="w-5 h-5 text-indigo-600" />
                     Cấu hình Vòng Tròn (Round Robin)
                   </h3>
                   <p className="text-xs text-slate-500 mt-0.5 font-semibold">
-                    Thiết lập số lượt đấu và cách xử lý khi các đội bằng điểm.
+                    Thiết lập số lượt đấu, điểm số và cách xử lý khi các đội bằng điểm.
                   </p>
                 </div>
                 <div className="flex flex-col gap-4">
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Số lượt đấu</label>
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Số vòng (roundsToPlay)</label>
                     <input
                       type="number"
                       min={1}
@@ -398,16 +556,186 @@ export function BracketTab({
                       onChange={(e) => setRoundsToPlay?.(Math.max(1, Number(e.target.value)))}
                       className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold w-full"
                     />
-                    <p className="text-[9px] text-slate-400 font-semibold mt-0.5">Mỗi cặp sẽ gặp nhau N lượt (mặc định: 1)</p>
+                    <p className="text-[9px] text-slate-400 font-semibold mt-0.5">2 = lượt đi + lượt về, 3+ = thêm vòng</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Thắng</label>
+                      <input
+                        type="number"
+                        min={0}
+                        value={rrWinPoints}
+                        onChange={(e) => setRrWinPoints?.(Math.max(0, Number(e.target.value)))}
+                        className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold w-full"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Thua</label>
+                      <input
+                        type="number"
+                        min={0}
+                        value={rrLossPoints}
+                        onChange={(e) => setRrLossPoints?.(Math.max(0, Number(e.target.value)))}
+                        className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold w-full"
+                      />
+                    </div>
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tiebreaker khi hoà điểm</label>
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tiebreaker</label>
+                    <select
+                      value={rrTiebreaker}
+                      onChange={(e) => setRrTiebreaker?.(e.target.value)}
+                      className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold"
+                    >
+                      <option value="H2H_POINTS">Đối đầu (Head-to-Head)</option>
+                      <option value="SET_DIFF">Hiệu số set (Set Diff)</option>
+                      <option value="POINT_DIFF">Hiệu số điểm (Point Diff)</option>
+                    </select>
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Xử lý hoà điểm</label>
                     <select value={tiebreakerMode} onChange={(e) => setTiebreakerMode?.(e.target.value as 'split' | 'playoff')} className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold">
                       <option value="split">Chia đôi (đồng hạng)</option>
                       <option value="playoff">Đánh play-off (trận phụ)</option>
                     </select>
                   </div>
+                  {handleSaveRoundRobinConfig && (
+                    <Button
+                      onClick={handleSaveRoundRobinConfig}
+                      disabled={isSavingRoundRobinConfig}
+                      className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-5 h-9 rounded-lg shadow-sm mt-2"
+                    >
+                      {isSavingRoundRobinConfig ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Save className="w-4 h-4 mr-1.5" />}
+                      Lưu cấu hình
+                    </Button>
+                  )}
                 </div>
+              </div>
+            ) : isGroupStageKnockout ? (
+              <div className="space-y-4">
+                {renderSuggestionBox(getGSKSuggestion(participantCount))}
+                <div>
+                  <h3 className="font-extrabold text-slate-900 text-base flex items-center gap-2">
+                    <LayoutGrid className="w-5 h-5 text-indigo-600" />
+                    Cấu hình Vòng Bảng + Knockout
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5 font-semibold">
+                    {gsStages.length > 0
+                      ? `${numGroups} bảng, ${teamsPerGroup} đội/bảng, ${teamsAdvancing} đội đi tiếp/bảng${allowBestThird ? ', có vé vớt cho 3rd' : ''}`
+                      : 'Thiết lập bảng đấu, số đội đi tiếp và thể thức loại trực tiếp.'}
+                  </p>
+                </div>
+                {gsStages.length === 0 && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Số bảng</label>
+                      <input
+                        type="number"
+                        min={1}
+                        max={32}
+                        value={numGroups}
+                        onChange={(e) => setNumGroups?.(Math.max(1, Number(e.target.value)))}
+                        className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold w-full"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Đội/bảng</label>
+                      <input
+                        type="number"
+                        min={2}
+                        max={32}
+                        value={teamsPerGroup}
+                        onChange={(e) => setTeamsPerGroup?.(Math.max(2, Number(e.target.value)))}
+                        className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold w-full"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Đội đi tiếp/bảng</label>
+                      <input
+                        type="number"
+                        min={1}
+                        max={16}
+                        value={teamsAdvancing}
+                        onChange={(e) => setTeamsAdvancing?.(Math.max(1, Number(e.target.value)))}
+                        className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold w-full"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Số vòng bảng</label>
+                      <input
+                        type="number"
+                        min={1}
+                        max={20}
+                        value={gskRoundsToPlay}
+                        onChange={(e) => setGskRoundsToPlay?.(Math.max(1, Number(e.target.value)))}
+                        className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold w-full"
+                      />
+                    </div>
+                  </div>
+                )}
+                {gsStages.length === 0 && (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="allowBestThird"
+                      checked={allowBestThird}
+                      onChange={(e) => setAllowBestThird?.(e.target.checked)}
+                      className="w-4 h-4 text-blue-600 rounded border-slate-300 cursor-pointer"
+                    />
+                    <label htmlFor="allowBestThird" className="text-xs font-bold text-slate-600 cursor-pointer select-none">
+                      Cho phép vé vớt (đội xếp thứ 3 có thành tích tốt nhất)
+                    </label>
+                  </div>
+                )}
+                {gsStages.length === 0 && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Thể thức playoff</label>
+                      <select
+                        value={gskPlayoffType ?? 'SINGLE_ELIMINATION'}
+                        onChange={(e) => setGskPlayoffType?.(e.target.value as 'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION')}
+                        className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold w-full"
+                      >
+                        <option value="SINGLE_ELIMINATION">Loại trực tiếp (Single Elim)</option>
+                        <option value="DOUBLE_ELIMINATION">Nhánh thắng/thua (Double Elim)</option>
+                      </select>
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Xếp hạt giống</label>
+                      <select
+                        value={gskSeedingType ?? 'SEEDED'}
+                        onChange={(e) => setGskSeedingType?.(e.target.value as 'SEEDED' | 'RANDOM')}
+                        className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold w-full"
+                      >
+                        <option value="SEEDED">Xếp hạt giống</option>
+                        <option value="RANDOM">Ngẫu nhiên</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
+                {gsStages.length === 0 && handleSaveGskConfig && (
+                  <Button
+                    onClick={handleSaveGskConfig}
+                    disabled={isSavingGskConfig}
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-5 h-9 rounded-lg shadow-sm mt-2"
+                  >
+                    {isSavingGskConfig ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Save className="w-4 h-4 mr-1.5" />}
+                    Lưu cấu hình
+                  </Button>
+                )}
+                {gsHasGroupStage && handleAdvanceStandings && (
+                  <Button
+                    onClick={handleAdvanceStandings}
+                    disabled={isAdvancingStandings}
+                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-5 h-9 rounded-lg shadow-sm flex items-center justify-center gap-1.5"
+                  >
+                    {isAdvancingStandings ? (
+                      <><Loader2 className="w-4 h-4 animate-spin" /> Đang chuyển tiếp...</>
+                    ) : (
+                      <><ArrowRight className="w-4 h-4" /> Chốt vòng bảng & Chuyển tiếp</>
+                    )}
+                  </Button>
+                )}
               </div>
             ) : (
               <div className="space-y-4">
@@ -470,7 +798,13 @@ export function BracketTab({
             disabled={isGeneratingBracket || !selectedDivisionId || participants.length < 2}
             className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-2.5 rounded-xl shadow-lg shadow-blue-500/20"
           >
-            {isGeneratingBracket ? 'Đang khởi tạo...' : 'Khởi tạo sơ đồ thi đấu'}
+            {isGeneratingBracket
+              ? 'Đang khởi tạo...'
+              : isGroupStageKnockout
+                ? 'Tạo lịch thi đấu'
+                : isRoundRobin
+                  ? 'Tạo lịch vòng bảng'
+                  : 'Khởi tạo sơ đồ thi đấu'}
           </Button>
           {!selectedDivisionId && (
             <p className="text-xs text-amber-600 font-semibold">⚠ Vui lòng chọn hình thức thi đấu trước</p>
@@ -481,18 +815,93 @@ export function BracketTab({
         </div>
       )}
       
-      {/* Visual bracket tree — dùng lại BracketTab đã có, truyền onScheduleMatch cho organizer */}
+      {/* Visual bracket tree */}
       {bracket && bracket.stages && bracket.stages.length > 0 && (
         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-          <h3 className="font-extrabold text-slate-900 text-base mb-4">Sơ đồ thi đấu</h3>
-          <PublicBracketTab
-            tournament={tournament}
-            divisionId={selectedDivisionId || undefined}
-            onScheduleMatch={handleOpenScheduling}
-            tiebreakerMode={tiebreakerMode}
-            selectedMatchId={selectedMatchId}
-            onSelectMatch={onSelectMatch}
-          />
+          <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <h3 className="font-extrabold text-slate-900 text-base">Sơ đồ thi đấu</h3>
+            {canResetDraftBracket && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  const confirmed = window.confirm('Sơ đồ nháp hiện tại sẽ được khởi tạo lại. Bạn muốn tiếp tục không?');
+                  if (confirmed) {
+                    handleGenerateBracket();
+                  }
+                }}
+                className="border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 text-xs font-bold"
+              >
+                Tạo lại sơ đồ nháp
+              </Button>
+            )}
+          </div>
+
+          {/* Group Stage Knockout: show tabs */}
+          {isGroupStageKnockout && (
+            <div className="mb-4">
+              <div className="flex gap-1 border-b border-slate-200 pb-1">
+                <button
+                  onClick={() => setGsActiveTab('group')}
+                  className={`px-4 py-2 text-sm font-bold rounded-t-lg transition-all ${
+                    gsActiveTab === 'group'
+                      ? 'bg-white text-blue-700 border border-b-white border-slate-200 -mb-px'
+                      : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  <Users className="w-4 h-4 inline mr-1.5" />Vòng bảng
+                </button>
+                <button
+                  onClick={() => setGsActiveTab('playoff')}
+                  className={`px-4 py-2 text-sm font-bold rounded-t-lg transition-all ${
+                    gsActiveTab === 'playoff'
+                      ? 'bg-white text-blue-700 border border-b-white border-slate-200 -mb-px'
+                      : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  <Trophy className="w-4 h-4 inline mr-1.5" />Vòng loại trực tiếp
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Round Robin: show RoundRobinView */}
+          {(isRoundRobin && !isGroupStageKnockout) || (isGroupStageKnockout && gsActiveTab === 'group') ? (
+            <div className="space-y-4">
+              {bracket.stages
+                .filter(s => s.type === 'ROUND_ROBIN')
+                .map(stage => (
+                  <div key={stage.id}>
+                    {stage.name && (
+                      <h4 className="text-sm font-bold text-slate-700 mb-2">{stage.name}</h4>
+                    )}
+                    <RoundRobinView
+                      matches={stage.groups?.flatMap(g => g.matches) ?? []}
+                      tiebreakerMode={tiebreakerMode}
+                      onScheduleMatch={handleOpenScheduling}
+                      selectedMatchId={selectedMatchId}
+                      onSelectMatch={onSelectMatch}
+                      tournamentId={tournament.id}
+                      stageId={stage.id}
+                    />
+                  </div>
+                ))}
+              {bracket.stages.filter(s => s.type === 'ROUND_ROBIN').length === 0 && (
+                <div className="text-center py-8 text-slate-400 italic text-sm">
+                  Chưa có dữ liệu vòng bảng.
+                </div>
+              )}
+            </div>
+          ) : (
+            <PublicBracketTab
+              tournament={tournament}
+              divisionId={selectedDivisionId || undefined}
+              onScheduleMatch={handleOpenScheduling}
+              tiebreakerMode={tiebreakerMode}
+              selectedMatchId={selectedMatchId}
+              onSelectMatch={onSelectMatch}
+            />
+          )}
         </div>
       )}
     </div>

@@ -226,7 +226,7 @@ export default function CommunitiesPage() {
                     {/* Circular Logo - Half overlap */}
                     <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-white bg-white shadow-md -mt-8 z-10 shrink-0 relative">
                       <Image 
-                        src={community.logoUrl || "https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=150&auto=format&fit=crop"} 
+                        src={community.logoUrl || "/images/vndc_sport.png"} 
                         alt={community.name} 
                         fill 
                         className="object-cover" 

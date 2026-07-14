@@ -78,7 +78,7 @@ export interface Division {
   entryFee?: number;
   isConfigOverride?: boolean;
   venueId?: string | null;
-  bracketType?: 'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION' | 'ROUND_ROBIN' | null;
+  bracketType?: 'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION' | 'ROUND_ROBIN' | 'GROUP_STAGE_KNOCKOUT' | null;
   roundConfig?: StageRoundConfig | null;
   startDate?: string | null;
   registrationEndDate?: string | null;
@@ -200,6 +200,15 @@ export const tournamentsApi = {
     api.get<ApiResponse<TournamentParticipant[]>>(`/tournaments/${id}/participants`, {
       params: { _t: Date.now(), ...(divisionId ? { divisionId } : {}) },
     }),
+  deleteMockParticipant: (id: string, participantId: string) =>
+    api.delete<ApiResponse<void>>(`/tournaments/${id}/participants/${participantId}/mock`),
+  // Follow / Unfollow
+  followTournament: (id: string) =>
+    api.post<ApiResponse<void>>(`/tournaments/${id}/follow`),
+  unfollowTournament: (id: string) =>
+    api.delete<ApiResponse<void>>(`/tournaments/${id}/follow`),
+  getFollowedTournaments: () =>
+    api.get<ApiResponse<Tournament[]>>('/tournaments/my/followed'),
   getOrganizerTournamentParticipants: (id: string, divisionId?: string) =>
     api.get<ApiResponse<TournamentParticipant[]>>(`/tournaments/${id}/manage/participants`, {
       params: { _t: Date.now(), ...(divisionId ? { divisionId } : {}) },
@@ -276,7 +285,16 @@ export const tournamentsApi = {
     api.patch<ApiResponse<TournamentParticipant>>(`/tournaments/${id}/participants/${participantId}`, { status }),
   kickParticipant: (id: string, participantId: string, reason: string) =>
     api.post<ApiResponse<{ message: string; refundAmount?: string | null }>>(`/tournaments/${id}/participants/${participantId}/kick`, { reason }),
+  advanceStandings: (id: string, data: { divisionId: string; stageId: string }) =>
+    api.post<ApiResponse<{ stageIds: string[]; totalMatches: number }>>(`/tournaments/${id}/advance-standings`, data),
+  autoSeedParticipants: (id: string, divisionId?: string) =>
+    api.post<ApiResponse<{ participantId: string; seed: number; elo: number }[]>>(`/tournaments/${id}/auto-seed`, { divisionId }),
+  updateParticipantSeed: (id: string, participantId: string, seed: number) =>
+    api.patch<ApiResponse<TournamentParticipant>>(`/tournaments/${id}/participants/${participantId}`, { seed }),
+  updateDivisionConfig: (id: string, divisionId: string, data: Record<string, unknown>) =>
+    api.patch<ApiResponse<unknown>>(`/tournaments/${id}/divisions/${divisionId}`, data),
 };
+
 
 export const divisionsApi = {
   getDivisions: (tournamentId: string) =>
@@ -291,12 +309,4 @@ export const divisionsApi = {
     api.get<ApiResponse<TournamentParticipant[]>>(`/tournaments/${tournamentId}/divisions/${divisionId}/participants`),
   deleteDivision: (divisionId: string) =>
     api.delete<ApiResponse<void>>(`/tournaments/divisions/${divisionId}`),
-
-  // Follow / Unfollow
-  followTournament: (id: string) =>
-    api.post<ApiResponse<void>>(`/tournaments/${id}/follow`),
-  unfollowTournament: (id: string) =>
-    api.delete<ApiResponse<void>>(`/tournaments/${id}/follow`),
-  getFollowedTournaments: () =>
-    api.get<ApiResponse<Tournament[]>>('/tournaments/my/followed'),
 };

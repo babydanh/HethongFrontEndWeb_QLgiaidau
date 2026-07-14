@@ -48,6 +48,10 @@ export function getScoreRuleWarnings(
       return;
     }
 
+    if (set.scoreOverride?.reason) {
+      return;
+    }
+
     if (rules.kind === 'TENNIS') {
       const isValidStandardTennisSet =
         (winnerScore === 6 && loserScore <= 4) ||

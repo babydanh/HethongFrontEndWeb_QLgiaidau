@@ -2,26 +2,28 @@ import { cn } from "@/utils/cn";
 import * as React from "react";
 
 const LoadingSpinner = React.forwardRef<
-  SVGSVGElement,
-  React.SVGAttributes<SVGSVGElement>
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => {
+  // Strip 'animate-spin' from the parent wrapper to prevent the logo from spinning
+  const cleanClassName = className ? className.replace(/\banimate-spin\b/g, '') : '';
+
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={cn("animate-spin", className)}
+    <div
       ref={ref}
+      className={cn("relative flex items-center justify-center shrink-0", cleanClassName)}
       {...props}
     >
-      <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-    </svg>
+      {/* Outer spinning border */}
+      <div className="absolute inset-0 rounded-full border-2 border-slate-200 border-t-blue-600 animate-spin" />
+      
+      {/* Inner logo */}
+      <img
+        src="/images/vndc_sport.png"
+        alt="Loading..."
+        className="w-[60%] h-[60%] object-contain animate-pulse"
+      />
+    </div>
   );
 });
 LoadingSpinner.displayName = "LoadingSpinner";

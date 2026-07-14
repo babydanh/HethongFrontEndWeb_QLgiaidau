@@ -17,9 +17,10 @@ import {
   AlertTriangle,
   HelpCircle,
   X,
+  CheckCircle2,
 } from 'lucide-react';
 import type { BracketMatch } from '@/features/tournaments/api';
-import type { SportRuleKind } from '@/types/tournament';
+import type { SportRuleKind, StageRoundConfig } from '@/types/tournament';
 import { tournamentsApi } from '@/features/tournaments/api';
 import { formatDateTime } from '@/utils/format';
 import { getErrorMessage } from '@/utils/error';
@@ -37,6 +38,7 @@ interface Props {
   tournamentId?: string;
   stageId?: string;
   fallbackSportRuleKind?: SportRuleKind;
+  roundConfig?: StageRoundConfig | null;
 }
 
 export function RoundRobinView({
@@ -48,6 +50,7 @@ export function RoundRobinView({
   tournamentId,
   stageId,
   fallbackSportRuleKind,
+  roundConfig,
 }: Props) {
   const sampleMatch = matches.find((match) => !match.isBye) ?? matches[0];
   const effectiveRuleKind = sampleMatch
@@ -60,8 +63,16 @@ export function RoundRobinView({
   const tieSet = new Set(ties.flatMap((g) => g.map((r) => r.participantId)));
   const allDone = matches.length > 0 && matches.filter((m) => !m.isBye).every((m) => m.status === 'COMPLETED');
   const hasTies = ties.length > 0;
-  const hasDraws = standings.some((row) => row.draws > 0);
   const [showInfo, setShowInfo] = useState(false);
+
+  const teamsAdvancing = (() => {
+    if (!roundConfig) return 0;
+    if (roundConfig.advance_count && Number(roundConfig.advance_count) > 0) {
+      return Number(roundConfig.advance_count);
+    }
+    const advanceConfig = (roundConfig as Record<string, unknown>)?.advanceConfig as { teamsAdvancing?: number } | undefined;
+    return advanceConfig?.teamsAdvancing ?? 0;
+  })();
 
   const byRound: Record<number, BracketMatch[]> = {};
   matches.forEach((m) => {
@@ -97,7 +108,7 @@ export function RoundRobinView({
             </button>
             <p className="font-bold mb-1.5">Cách tính xếp hạng:</p>
             <ol className="list-decimal list-inside space-y-1 text-blue-800 font-medium">
-              <li><b>Điểm xếp hạng (Đ)</b> - Mặc định hệ thống tính Thắng <b>+3</b>, Hòa <b>+1</b>, Thua <b>0</b>{hasDraws ? '' : '; giải hiện tại không phát sinh trận hòa.'}</li>
+              <li><b>Điểm xếp hạng (Đ)</b> - Mặc định hệ thống tính Thắng <b>+3</b>, Thua <b>0</b>; giải hiện tại không phát sinh trận hòa.</li>
               <li><b>Đối đầu (H2H)</b> - Xét điểm trong các trận giữa các đội đang bằng điểm</li>
               <li><b>H2H Hiệu số set</b> - (Set thắng - Set thua) chỉ tính các trận đối đầu</li>
               <li><b>H2H {statLabels.aggregateDiffLabel}</b> - ({statLabels.aggregateLabel} ghi - {statLabels.aggregateLabel.toLowerCase()} mất) chỉ tính các trận đối đầu. <span className="text-blue-600">{statLabels.aggregateExample}</span></li>
@@ -118,7 +129,7 @@ export function RoundRobinView({
             </p>
           </div>
         )}
-
+ 
         <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
           <table className="w-full text-sm">
             <thead className="bg-slate-50 border-b border-slate-200 text-[10px] uppercase text-slate-500 font-bold">
@@ -127,7 +138,6 @@ export function RoundRobinView({
                 <th className="px-4 py-3 text-left min-w-[130px]" rowSpan={2}>Đội</th>
                 <th className="px-4 py-3 text-center w-12" rowSpan={2}>Trận</th>
                 <th className="px-4 py-3 text-center text-emerald-600 w-9" rowSpan={2}>T</th>
-                <th className="px-4 py-3 text-center text-amber-500 w-9" rowSpan={2}>H</th>
                 <th className="px-4 py-3 text-center text-rose-500 w-9" rowSpan={2}>B</th>
                 <th className="px-4 py-3 text-center border-l border-slate-100" colSpan={2}>Set</th>
                 <th className="px-4 py-3 text-center border-l border-slate-100" colSpan={2}>{statLabels.aggregateLabel}</th>
@@ -161,7 +171,7 @@ export function RoundRobinView({
                         <span className="text-amber-500 font-black text-xs">?</span>
                       ) : idx === 0 && allDone && !hasTies ? (
                         <span className="inline-flex items-center justify-center w-7 h-7 bg-amber-400 rounded-full ring-2 ring-amber-300 shadow-lg shadow-amber-200">
-                          <Trophy className="w-4 h-4 text-white fill-white" />
+                           <Trophy className="w-4 h-4 text-white fill-white" />
                         </span>
                       ) : idx === 0 ? (
                         <span className="inline-flex items-center justify-center w-6 h-6 bg-amber-100 rounded-full">
@@ -181,6 +191,12 @@ export function RoundRobinView({
                           </span>
                         )}
                         {row.teamName}
+                        {teamsAdvancing > 0 && idx < teamsAdvancing && (
+                          <span className="inline-flex items-center gap-0.5 text-[9px] font-extrabold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded-full whitespace-nowrap">
+                            <CheckCircle2 className="w-2.5 h-2.5" />
+                            Đi tiếp
+                          </span>
+                        )}
                       </span>
                     </td>
                     <td className="px-3 py-3 text-center text-slate-500 font-medium">
@@ -188,9 +204,6 @@ export function RoundRobinView({
                     </td>
                     <td className="px-3 py-3 text-center font-bold text-emerald-600">
                       {row.won}
-                    </td>
-                    <td className="px-3 py-3 text-center font-bold text-amber-500">
-                      {row.draws}
                     </td>
                     <td className="px-3 py-3 text-center font-bold text-rose-400">
                       {row.lost}
@@ -231,10 +244,10 @@ export function RoundRobinView({
             </tbody>
           </table>
         </div>
-
+ 
         {ties.length > 0 && tiebreakerMode === 'playoff' && tournamentId && stageId && (
           <div className="mt-2 text-xs text-slate-500 flex flex-wrap items-center gap-x-2 gap-y-1">
-            <span className="font-semibold">Hòa:</span>
+            <span className="font-semibold">Bằng điểm:</span>
             {ties.map((group, gi) => (
               <div key={gi} className="inline-flex items-center gap-1.5">
                 {group.map((row) => (
@@ -331,7 +344,7 @@ export function RoundRobinView({
                           <span className="text-[8px] text-slate-400">#{m.matchOrder}</span>
                           <span className="text-[8px] font-extrabold text-slate-500 bg-slate-200 px-1.5 py-0.5 rounded">Vòng {m.roundNumber}</span>
                         </span>
-                        {live && <span className="flex items-center gap-0.5 text-[8px] font-extrabold text-blue-600 animate-pulse"><Play className="w-2 h-2 fill-blue-600" /> LIVE</span>}
+                        {live && <span className="flex items-center gap-0.5 text-[8px] font-extrabold text-blue-600 animate-pulse"><Play className="w-2 h-2 fill-blue-600" /> TRỰC TIẾP</span>}
                       </div>
                       <div className="space-y-2.5">
                         <div className="flex min-h-[28px] items-center justify-between">

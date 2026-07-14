@@ -4,6 +4,11 @@ export interface MatchScore {
   team1Score: number;
   team2Score: number;
   isFinished: boolean;
+  scoreOverride?: {
+    reason: string;
+    decidedAt?: string;
+    decidedBy?: string;
+  };
 }
 
 export interface PickleballSideOutState {

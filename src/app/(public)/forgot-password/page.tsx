@@ -51,7 +51,9 @@ export default function ForgotPasswordPage() {
             </div>
             <p className="text-slate-700 font-semibold">Đã gửi yêu cầu thành công!</p>
             <p className="text-sm text-slate-500">Nếu email tồn tại, bạn sẽ nhận được hướng dẫn đặt lại mật khẩu. Vui lòng kiểm tra hộp thư (cả mục Spam).</p>
-            <p className="text-xs text-slate-400 mt-2">(Môi trường demo: token được in ra console backend)</p>
+            {process.env.NODE_ENV !== 'production' && (
+              <p className="text-xs text-slate-400 mt-2">(Môi trường demo: token được in ra console backend)</p>
+            )}
             <Link href="/login" className="inline-block mt-4 text-sm font-bold text-blue-600 hover:underline">
               Quay lại đăng nhập
             </Link>

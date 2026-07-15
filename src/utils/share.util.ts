@@ -16,12 +16,18 @@ export function getZaloShareUrl(url: string): string {
  * Tạo link gửi tin nhắn qua Messenger
  */
 export function getMessengerShareUrl(url: string, appId?: string): string {
-  const currentDomain = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
-  if (appId) {
-    return `https://www.facebook.com/dialog/send?app_id=${appId}&link=${encodeURIComponent(url)}&redirect_uri=${encodeURIComponent(currentDomain)}`;
+  const isMobile = typeof window !== 'undefined' && 
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+  if (isMobile) {
+    // URL Scheme mở trực tiếp App Messenger trên điện thoại để hiện bảng chọn bạn bè nằm ngang
+    return `fb-messenger://share?link=${encodeURIComponent(url)}`;
   }
-  // Fallback nếu không có Facebook App ID: chia sẻ qua giao diện Feed thông thường
-  return `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+
+  // Trên Máy tính: Sử dụng Web Send Dialog qua trình duyệt
+  const currentDomain = typeof window !== 'undefined' ? window.location.origin : 'https://giaidau.vnvar.com';
+  const targetAppId = appId || '1217981644879628';
+  return `https://www.facebook.com/dialog/send?app_id=${targetAppId}&link=${encodeURIComponent(url)}&redirect_uri=${encodeURIComponent(currentDomain)}`;
 }
 
 interface ShareOptions {

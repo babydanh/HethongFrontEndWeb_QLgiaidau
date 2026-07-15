@@ -259,7 +259,11 @@ export default function EditProfilePage() {
     try {
       setIsRequestingEmailCode(true);
       await authApi.requestEmailVerification();
-      toast.success('Mã kích hoạt đã được gửi tới email của bạn (Vui lòng kiểm tra Console logs của Backend)');
+      toast.success(
+        process.env.NODE_ENV === 'production'
+          ? 'Mã kích hoạt đã được gửi tới email của bạn. Vui lòng kiểm tra hộp thư.'
+          : 'Mã kích hoạt đã được gửi tới email của bạn (Vui lòng kiểm tra Console logs của Backend)'
+      );
       setIsEmailModalOpen(true);
     } catch (error) {
       toast.error(getErrorMessage(error));
@@ -299,7 +303,11 @@ export default function EditProfilePage() {
     try {
       setIsRequestingPhoneCode(true);
       await authApi.requestPhoneVerification(phoneToVerify);
-      toast.success('Mã OTP đã được gửi tới số điện thoại (Vui lòng kiểm tra Console logs của Backend)');
+      toast.success(
+        process.env.NODE_ENV === 'production'
+          ? 'Mã OTP đã được gửi tới số điện thoại của bạn.'
+          : 'Mã OTP đã được gửi tới số điện thoại (Vui lòng kiểm tra Console logs của Backend)'
+      );
       setIsPhoneModalOpen(true);
     } catch (error) {
       toast.error(getErrorMessage(error));
@@ -878,7 +886,9 @@ export default function EditProfilePage() {
               </button>
             </div>
             <div className="text-sm text-slate-600 leading-relaxed">
-              Mã kích hoạt xác thực đã được tạo và hiển thị trong Console log của hệ thống backend. Vui lòng sao chép mã đó và nhập vào ô dưới đây.
+              {process.env.NODE_ENV === 'production'
+                ? 'Mã kích hoạt xác thực đã được gửi tới địa chỉ email của bạn. Vui lòng kiểm tra và nhập vào ô dưới đây.'
+                : 'Mã kích hoạt xác thực đã được tạo và hiển thị trong Console log của hệ thống backend. Vui lòng sao chép mã đó và nhập vào ô dưới đây.'}
             </div>
             
             <div className="flex flex-col gap-1.5">
@@ -925,7 +935,9 @@ export default function EditProfilePage() {
               </button>
             </div>
             <div className="text-sm text-slate-600 leading-relaxed">
-              Mã OTP 6 chữ số đã được gửi thử nghiệm và hiển thị trong Console log của hệ thống backend. Vui lòng nhập mã để xác minh số điện thoại.
+              {process.env.NODE_ENV === 'production'
+                ? 'Mã OTP 6 chữ số đã được gửi tới số điện thoại của bạn. Vui lòng nhập mã để xác minh.'
+                : 'Mã OTP 6 chữ số đã được gửi thử nghiệm và hiển thị trong Console log của hệ thống backend. Vui lòng nhập mã để xác minh số điện thoại.'}
             </div>
             
             <div className="flex flex-col gap-1.5">

@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       if (tournament) {
         const title = `${tournament.name} | VNSPORT`;
         const description = tournament.description || `Thông tin chi tiết về giải đấu ${tournament.name} trên hệ thống VNSPORT. Đăng ký tham gia ngay!`;
-        const imageUrl = tournament.bannerUrl || 'https://giaidau.vnvar.com/VNDCsport.svg';
+        const imageUrl = tournament.bannerUrl || 'https://giaidau.vnvar.com/vndcsport.svg';
 
         return {
           title,

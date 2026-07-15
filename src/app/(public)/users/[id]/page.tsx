@@ -135,7 +135,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
       <div className="min-h-screen bg-slate-50 text-slate-800 flex items-center justify-center p-6">
         <div className="text-center bg-white border border-slate-200 p-8 rounded-3xl max-w-md shadow-lg">
           <div className="w-24 h-24 flex items-center justify-center mx-auto mb-4">
-            <img src="/VNDCsport.svg" alt="VNDC Sport" className="w-full h-full object-contain" />
+            <img src="/vndcsport.svg" alt="VNDC Sport" className="w-full h-full object-contain" />
           </div>
           <h2 className="text-xl font-black text-slate-900 mb-2">{error || 'Không tìm thấy người dùng'}</h2>
           <p className="text-slate-500 text-sm mb-6 font-medium">Tài khoản này có thể không tồn tại hoặc đã bị khóa khỏi hệ thống.</p>

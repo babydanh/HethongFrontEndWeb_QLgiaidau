@@ -31,7 +31,7 @@ const stripHtml = (html?: string | null) => {
 };
 
 const getDefaultBanner = (categoryName?: string | null) => {
-  return '/VNDCsport.svg';
+  return '/vndcsport.svg';
 };
 
 const getFormatLabel = (matchType: string, genderRestriction?: string | null) => {
@@ -204,7 +204,7 @@ export default function MyTournamentsPage() {
         {parents.length === 0 ? (
           <div className="bg-white rounded-2xl p-12 text-center border border-slate-200 shadow-sm flex flex-col items-center max-w-xl mx-auto">
             <div className="w-24 h-24 flex items-center justify-center mb-4">
-              <img src="/VNDCsport.svg" alt="VNDC Sport" className="w-full h-full object-contain" />
+              <img src="/vndcsport.svg" alt="VNDC Sport" className="w-full h-full object-contain" />
             </div>
             <h3 className="text-xl font-bold text-slate-900">Chưa có giải đấu nào</h3>
             <p className="text-slate-500 mt-2 font-medium max-w-sm">

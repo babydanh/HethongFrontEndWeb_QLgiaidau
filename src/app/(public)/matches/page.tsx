@@ -637,7 +637,7 @@ export default function MatchesListPage() {
                       href={`/tournaments/${group.tournamentId}`}
                       className="w-10 h-10 rounded-full bg-slate-100 overflow-hidden flex items-center justify-center border border-slate-200 shrink-0 hover:opacity-85 transition-opacity"
                     >
-                      <img src="/VNDCsport.svg" alt="VNSPORT Logo" className="w-8 h-8 object-contain" />
+                      <img src="/vndcsport.svg" alt="VNSPORT Logo" className="w-8 h-8 object-contain" />
                     </Link>
                     <div>
                       <span className="inline-block bg-indigo-50 text-indigo-700 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider mb-1">

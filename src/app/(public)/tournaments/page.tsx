@@ -546,7 +546,7 @@ export default function TournamentsListPage() {
                   ) : (
                     <div className="absolute inset-0 bg-gradient-to-br from-indigo-650 to-blue-800 opacity-90 group-hover:scale-103 transition-transform duration-500 flex items-center justify-center">
                       <img 
-                        src="/VNDCsport.svg" 
+                        src="/vndcsport.svg" 
                         alt="VNDC Sport Logo" 
                         className="w-24 h-auto object-contain opacity-75"
                       />

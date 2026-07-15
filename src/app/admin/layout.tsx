@@ -68,7 +68,7 @@ export default function AdminLayout({
           <div className="h-16 flex items-center justify-between px-6 border-b border-slate-200">
             <Link href="/" className="flex items-center gap-2 py-2">
               <img 
-                src="/VNDCsport.svg" 
+                src="/vndcsport.svg" 
                 alt="VNDC Sport Logo" 
                 className="h-8 w-auto object-contain"
               />

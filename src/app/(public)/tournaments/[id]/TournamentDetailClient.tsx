@@ -560,16 +560,20 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                 <p className="text-[11px] text-slate-500 mt-0.5">Lệ phí đóng khi đăng ký</p>
 
                 {/* Selected Division ELO Range Indicator */}
-                {selectedDivision && (selectedDivision.minElo !== null || selectedDivision.maxElo !== null) && (
-                  <div className="mt-3 bg-blue-50/60 border border-blue-100 rounded-xl p-2.5">
-                    <span className="text-[10px] font-black text-slate-450 uppercase tracking-wider block mb-0.5">Yêu cầu ELO</span>
-                    <span className="text-xs font-extrabold text-blue-700">
-                      {selectedDivision.minElo !== null ? selectedDivision.minElo : '0'}
-                      {' - '}
-                      {selectedDivision.maxElo !== null ? selectedDivision.maxElo : 'Không giới hạn'}
-                    </span>
-                  </div>
-                )}
+                {(() => {
+                  const activeDiv = divisionsList.find(d => d.id === selectedDivisionId);
+                  if (!activeDiv || (activeDiv.minElo === null && activeDiv.maxElo === null)) return null;
+                  return (
+                    <div className="mt-3 bg-blue-50/60 border border-blue-100 rounded-xl p-2.5">
+                      <span className="text-[10px] font-black text-slate-450 uppercase tracking-wider block mb-0.5">Yêu cầu ELO</span>
+                      <span className="text-xs font-extrabold text-blue-700">
+                        {activeDiv.minElo !== null ? activeDiv.minElo : '0'}
+                        {' - '}
+                        {activeDiv.maxElo !== null ? activeDiv.maxElo : 'Không giới hạn'}
+                      </span>
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Organizer Info */}

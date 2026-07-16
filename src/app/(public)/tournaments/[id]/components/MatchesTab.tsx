@@ -80,7 +80,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
   }, [divisionId, effectiveTournamentId, tournament.format]);
 
   // Find bracket size for the current division or tournament
-  const bracketSize = useMemo(() => {
+  const getBracketSize = () => {
     if (divisionId && tournament.divisions) {
       const division = tournament.divisions.find(d => d.id === divisionId);
       if (division && division.maxParticipants) {
@@ -88,7 +88,8 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
       }
     }
     return tournament.maxParticipants ?? null;
-  }, [divisionId, tournament.divisions, tournament.maxParticipants]);
+  };
+  const bracketSize = getBracketSize();
 
   // Extract unique rounds from current matches
   const roundOptions = useMemo(() => buildRoundFilterOptions(matches, tournament.format, bracketSize), [matches, tournament.format, bracketSize]);

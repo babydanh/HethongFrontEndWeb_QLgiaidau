@@ -21,6 +21,7 @@ import { BracketMatch } from '@/features/tournaments/api';
 import TournamentHeroBanner from '@/components/ui/TournamentHeroBanner';
 import { isNetworkError } from '@/utils/error';
 import { isTournamentCancelled, isTournamentCompleted, isTournamentInProgress } from '@/utils/tournament-status';
+import { getMatchRoundLabel } from '@/utils/match-round-label';
 import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
 import ShareModal from '@/components/common/ShareModal';
@@ -39,6 +40,8 @@ interface EnrichedTournament {
   matchType?: string;
   genderRestriction?: string;
   isRanked?: boolean;
+  format?: Tournament['format'];
+  maxParticipants?: number;
 }
 
 interface EnrichedMatch extends Omit<BracketMatch, 'tournament'> {
@@ -430,7 +433,9 @@ export default function HomePage() {
     toast.success('High five! 👏', { icon: '👏', id: `hf-${matchId}` });
   };
 
-  const [shareMatchId, setShareMatchId] = useState<string | null>(null);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [activeShareUrl, setActiveShareUrl] = useState('');
+  const [activeShareTitle, setActiveShareTitle] = useState('');
 
   // Helper to determine active round
   const getActiveRound = (matches: BracketMatch[]) => {
@@ -523,11 +528,22 @@ export default function HomePage() {
     return acc;
   }, {} as Record<string, { id?: string | null; name: string; logoUrl?: string | null; isRanked?: boolean; matches: BracketMatch[] }>);
 
-  const renderMatchCard = (match: BracketMatch, isRankedMatchSection = false) => {
+  const renderMatchCard = (
+    match: BracketMatch,
+    isRankedMatchSection = false,
+    contextMatches: BracketMatch[] = [match],
+    contextTournament?: Pick<Tournament, 'format' | 'maxParticipants'> | null,
+  ) => {
     const currentHighFives = highFives[match.id] || 0;
     const isCompleted = match.status === 'COMPLETED' || match.winnerId != null;
     const isLive = (match.status === 'ONGOING' || match.status === 'IN_PROGRESS') && !isCompleted;
     const isScheduled = match.status === 'SCHEDULED';
+    const roundLabel = getMatchRoundLabel({
+      match,
+      matches: contextMatches,
+      tournamentFormat: contextTournament?.format ?? rankedTournament?.format,
+      bracketSize: contextTournament?.maxParticipants ?? rankedTournament?.maxParticipants ?? null,
+    });
 
     return (
       <motion.div 
@@ -555,7 +571,7 @@ export default function HomePage() {
               {isLive ? 'Trực tiếp' : isCompleted ? 'Đã kết thúc' : 'Sắp diễn ra'}
             </span>
             <span className="text-slate-300">•</span>
-            <span className="shrink-0 text-slate-600 font-semibold">Vòng {match.roundNumber}</span>
+            <span className="shrink-0 text-slate-600 font-semibold">{roundLabel}</span>
             {match.courtName && (
               <>
                 <span className="text-slate-300">•</span>
@@ -697,7 +713,13 @@ export default function HomePage() {
           </Link>
 
           <button
-            onClick={() => setShareMatchId(match.id)}
+            onClick={() => {
+              const p1Name = match.participant1?.teamName || 'VĐV 1';
+              const p2Name = match.participant2?.teamName || 'VĐV 2';
+              setActiveShareUrl(`${window.location.origin}/live/${match.id}`);
+              setActiveShareTitle(`Trận đấu: ${p1Name} vs ${p2Name}`);
+              setIsShareModalOpen(true);
+            }}
             className="flex items-center justify-center gap-1 py-1.5 hover:bg-white rounded-xl text-[10px] font-black text-slate-600 transition-all border border-transparent hover:border-slate-150 active:scale-95 duration-100 cursor-pointer"
           >
             <Share2 className="w-3.5 h-3.5 text-blue-500" />
@@ -885,7 +907,7 @@ export default function HomePage() {
                         </div>
                         {/* Matches List Grid */}
                         <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {group.matches.map((match) => renderMatchCard(match, true))}
+                          {group.matches.map((match) => renderMatchCard(match, true, group.matches, matchedTournament ?? null))}
                         </div>
                       </div>
                     );
@@ -1013,7 +1035,7 @@ export default function HomePage() {
                       </div>
                       {/* Matches List Grid */}
                       <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {displayMatches.map((match) => renderMatchCard(match, true))}
+                        {displayMatches.map((match) => renderMatchCard(match, true, group.matches, matchedTournament ?? null))}
                       </div>
                     </div>
                   );
@@ -1103,7 +1125,7 @@ export default function HomePage() {
                       </div>
                       {/* Matches List Grid */}
                       <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {displayMatches.map((match) => renderMatchCard(match, true))}
+                        {displayMatches.map((match) => renderMatchCard(match, true, group.matches, matchedTournament ?? null))}
                       </div>
                     </div>
                   );
@@ -1407,6 +1429,12 @@ export default function HomePage() {
         </div>
       </main>
 
+      <ShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        shareUrl={activeShareUrl}
+        title={activeShareTitle}
+      />
     </div>
   );
 }

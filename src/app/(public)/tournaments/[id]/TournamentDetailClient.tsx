@@ -563,9 +563,12 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                 {(() => {
                   const activeDiv = divisionsList.find(d => d.id === selectedDivisionId);
                   if (!activeDiv || (activeDiv.minElo === null && activeDiv.maxElo === null)) return null;
+                  const isDoublesDiv = activeDiv.matchType === 'DOUBLES' || activeDiv.matchType === 'MIXED_DOUBLES';
                   return (
                     <div className="mt-3 bg-blue-50/60 border border-blue-100 rounded-xl p-2.5">
-                      <span className="text-[10px] font-black text-slate-450 uppercase tracking-wider block mb-0.5">Yêu cầu ELO</span>
+                      <span className="text-[10px] font-black text-slate-455 uppercase tracking-wider block mb-0.5">
+                        Yêu cầu {isDoublesDiv ? 'ELO Đôi' : 'ELO Đơn'}
+                      </span>
                       <span className="text-xs font-extrabold text-blue-700">
                         {activeDiv.minElo !== null ? activeDiv.minElo : '0'}
                         {' - '}
@@ -617,18 +620,20 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                     const divParticipants = div._count?.participants ?? 0;
                     const divMax = div.maxParticipants ?? activeTournament.maxParticipants ?? 16;
                     const divPercent = divMax > 0 ? Math.min(100, Math.round((divParticipants / divMax) * 100)) : 0;
+                    const isDivDoubles = div.matchType === 'DOUBLES' || div.matchType === 'MIXED_DOUBLES';
+                    const hasElo = div.minElo !== null || div.maxElo !== null;
                     return (
                       <div key={div.id} className="space-y-1">
                         <div className="flex justify-between items-center text-[11px] font-bold">
                           <div className="flex flex-col min-w-0">
                             <span className="text-slate-700 truncate max-w-[150px]">{div.name}</span>
-                            {(div.minElo !== null || div.maxElo !== null) && (
+                            {hasElo && (
                               <span className="text-[9px] text-blue-600 font-extrabold">
-                                ELO: {div.minElo !== null ? div.minElo : '0'} - {div.maxElo !== null ? div.maxElo : '∞'}
+                                ELO {isDivDoubles ? 'Đôi' : 'Đơn'}: {div.minElo !== null ? div.minElo : '0'} - {div.maxElo !== null ? div.maxElo : '∞'}
                               </span>
                             )}
                           </div>
-                          <span className="text-slate-500">{divParticipants} / {divMax} ({divPercent})</span>
+                          <span className="text-slate-500">{divParticipants} / {divMax} ({divPercent}%)</span>
                         </div>
                         <div className="w-full h-1 bg-slate-100 rounded-full overflow-hidden">
                           <div 

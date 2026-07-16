@@ -112,22 +112,6 @@ export function DoubleElimView({
     });
   });
 
-  ubRounds.slice(1).forEach((r) => {
-    (ubByRound[r] ?? []).forEach((match) => {
-      const sources = upperMatches
-        .filter((source) => source.nextMatchId === match.id)
-        .map((source) => posMap.get(source.id))
-        .filter((position): position is { x: number; y: number } => Boolean(position));
-      if (sources.length === 0) return;
-      const current = posMap.get(match.id);
-      if (!current) return;
-      posMap.set(match.id, {
-        x: current.x,
-        y: sources.reduce((sum, source) => sum + source.y, 0) / sources.length,
-      });
-    });
-  });
-
   // ── Losers Bracket Positioning ──
   // Column index: sequential r-1, except LB final which aligns with UB final column
   visibleLbRounds.forEach((r) => {
@@ -136,30 +120,15 @@ export function DoubleElimView({
       colIndex = (maxUbRound - 1) * 2;
     }
     const colX = colIndex * (CARD_W + COL_GAP);
+    const slotH = Math.pow(2, Math.floor((r - 1) / 2)) * SLOT_H_1;
     const roundMatches = lbByRound[r] ?? [];
-    const roundH = roundMatches.length * SLOT_H_1;
+    const roundH = roundMatches.length * slotH;
     const roundTop = LB_TOP + (LB_HEIGHT - roundH) / 2;
 
     roundMatches.forEach((match, index) => {
       posMap.set(match.id, {
         x: colX,
-        y: roundTop + index * SLOT_H_1 + SLOT_H_1 / 2,
-      });
-    });
-  });
-
-  visibleLbRounds.slice(1).forEach((r) => {
-    (lbByRound[r] ?? []).forEach((match) => {
-      const sources = lowerMatches
-        .filter((source) => source.nextMatchId === match.id)
-        .map((source) => posMap.get(source.id))
-        .filter((position): position is { x: number; y: number } => Boolean(position));
-      if (sources.length === 0) return;
-      const current = posMap.get(match.id);
-      if (!current) return;
-      posMap.set(match.id, {
-        x: current.x,
-        y: sources.reduce((sum, source) => sum + source.y, 0) / sources.length,
+        y: roundTop + index * slotH + slotH / 2,
       });
     });
   });
@@ -193,6 +162,18 @@ export function DoubleElimView({
   const allMatchesForLogic = [...upperMatches, ...lowerMatches, ...gfSorted];
   const visibleLowerMatches = visibleLbRounds.flatMap((round) => lbByRound[round] || []);
   const allMatches = [...upperMatches, ...visibleLowerMatches, ...gfSorted];
+  const getUpperRoundHeader = (fromEnd: number) => {
+    if (fromEnd === 0) return 'CK NHÁNH THẮNG';
+    if (fromEnd === 1) return 'BK NHÁNH THẮNG';
+    if (fromEnd === 2) return 'TỨ KẾT NHÁNH THẮNG';
+    if (fromEnd >= 3 && fromEnd <= 5) return `VÒNG ${2 ** (fromEnd + 1)} NHÁNH THẮNG`;
+    return 'VÒNG LOẠI NHÁNH THẮNG';
+  };
+  const getLowerRoundHeader = (fromEnd: number, displayRound: number) => {
+    if (fromEnd === 0) return 'CK NHÁNH THUA';
+    if (fromEnd === 1) return 'BK NHÁNH THUA';
+    return `LƯỢT NHÁNH THUA ${displayRound}`;
+  };
 
   return (
     <div
@@ -339,12 +320,7 @@ export function DoubleElimView({
             {/* WB Round Headers */}
             {ubRounds.map((r) => {
               const fromEnd = ubRounds.length - (ubRounds.indexOf(r) + 1);
-              const label =
-                fromEnd === 0
-                  ? 'CK NHÁNH THẮNG'
-                  : fromEnd === 1
-                    ? 'BK NHÁNH THẮNG'
-                    : `VÒNG ${r}`;
+              const label = getUpperRoundHeader(fromEnd);
               const colX = (r - 1) * 2 * (CARD_W + COL_GAP);
               return (
                 <div
@@ -363,12 +339,7 @@ export function DoubleElimView({
             {visibleLbRounds.map((r) => {
               const fromEnd = visibleLbRounds.length - (visibleLbRounds.indexOf(r) + 1);
               const displayRound = r - lbRoundLabelOffset;
-              const label =
-                fromEnd === 0
-                  ? 'CK NHÁNH THUA'
-                  : fromEnd === 1
-                    ? 'BK NHÁNH THUA'
-                    : `VÒNG ${displayRound}`;
+              const label = getLowerRoundHeader(fromEnd, displayRound);
               let colIndex = hideLbRound1 ? r - 2 : r - 1;
               if (r === maxLbRound) {
                 colIndex = (maxUbRound - 1) * 2;

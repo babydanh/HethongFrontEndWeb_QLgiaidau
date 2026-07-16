@@ -558,6 +558,18 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                     : 'Miễn phí'}
                 </div>
                 <p className="text-[11px] text-slate-500 mt-0.5">Lệ phí đóng khi đăng ký</p>
+
+                {/* Selected Division ELO Range Indicator */}
+                {selectedDivision && (selectedDivision.minElo !== null || selectedDivision.maxElo !== null) && (
+                  <div className="mt-3 bg-blue-50/60 border border-blue-100 rounded-xl p-2.5">
+                    <span className="text-[10px] font-black text-slate-450 uppercase tracking-wider block mb-0.5">Yêu cầu ELO</span>
+                    <span className="text-xs font-extrabold text-blue-700">
+                      {selectedDivision.minElo !== null ? selectedDivision.minElo : '0'}
+                      {' - '}
+                      {selectedDivision.maxElo !== null ? selectedDivision.maxElo : 'Không giới hạn'}
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Organizer Info */}
@@ -604,8 +616,15 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                     return (
                       <div key={div.id} className="space-y-1">
                         <div className="flex justify-between items-center text-[11px] font-bold">
-                          <span className="text-slate-700 truncate max-w-[150px]">{div.name}</span>
-                          <span className="text-slate-500">{divParticipants} / {divMax} ({divPercent}%)</span>
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-slate-700 truncate max-w-[150px]">{div.name}</span>
+                            {(div.minElo !== null || div.maxElo !== null) && (
+                              <span className="text-[9px] text-blue-600 font-extrabold">
+                                ELO: {div.minElo !== null ? div.minElo : '0'} - {div.maxElo !== null ? div.maxElo : '∞'}
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-slate-500">{divParticipants} / {divMax} ({divPercent})</span>
                         </div>
                         <div className="w-full h-1 bg-slate-100 rounded-full overflow-hidden">
                           <div 

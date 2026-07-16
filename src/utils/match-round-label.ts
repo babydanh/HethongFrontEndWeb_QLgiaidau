@@ -38,6 +38,7 @@ export interface RoundFilterOption {
   roundNumber: number;
   label: string;
   count: number;
+  branch?: 'WINNERS' | 'LOSERS' | 'OTHER';
 }
 
 const KNOCKOUT_ROUND_LABELS: Record<number, string> = {
@@ -155,20 +156,40 @@ export const getKnockoutRoundLabel = <TMatch extends RoundLabelMatch>(
   }
 
   const slotCount = getRoundSlotCount(match, matches);
+  let baseLabel = '';
+
   if (slotCount && KNOCKOUT_ROUND_LABELS[slotCount]) {
-    return KNOCKOUT_ROUND_LABELS[slotCount];
+    baseLabel = KNOCKOUT_ROUND_LABELS[slotCount];
+  } else {
+    const stageMatches = (matches ?? []).filter((candidate) => getComparableStageKey(candidate) === getComparableStageKey(match));
+    const maxRound = Math.max(...stageMatches.map((candidate) => candidate.roundNumber), match.roundNumber);
+    const fromEnd = maxRound - match.roundNumber;
+
+    if (fromEnd === 0) baseLabel = 'Chung kết';
+    else if (fromEnd === 1) baseLabel = 'Bán kết';
+    else if (fromEnd === 2) baseLabel = 'Tứ kết';
+    else if (fromEnd >= 3 && fromEnd <= 6) baseLabel = `Vòng ${2 ** (fromEnd + 1)}`;
+    else baseLabel = `Vòng ${match.roundNumber}`;
   }
 
-  const stageMatches = (matches ?? []).filter((candidate) => getComparableStageKey(candidate) === getComparableStageKey(match));
-  const maxRound = Math.max(...stageMatches.map((candidate) => candidate.roundNumber), match.roundNumber);
-  const fromEnd = maxRound - match.roundNumber;
+  // For Losers bracket, since there are two rounds for each slot size (e.g. Losers Round 2 & Losers Round 3 both have 4 matches),
+  // we add "Lượt 1" or "Lượt 2" suffix to make them unique.
+  if (branch === 'LOSERS' && matches) {
+    const stageMatches = matches.filter(
+      (candidate) =>
+        getComparableStageKey(candidate) === getComparableStageKey(match) &&
+        getRoundSlotCount(candidate, matches) === slotCount
+    );
+    const roundNumbers = Array.from(new Set(stageMatches.map((m) => m.roundNumber))).sort((a, b) => a - b);
+    if (roundNumbers.length > 1) {
+      const index = roundNumbers.indexOf(match.roundNumber);
+      if (index !== -1) {
+        return `${baseLabel} - Lượt ${index + 1}`;
+      }
+    }
+  }
 
-  if (fromEnd === 0) return 'Chung kết';
-  if (fromEnd === 1) return 'Bán kết';
-  if (fromEnd === 2) return 'Tứ kết';
-  if (fromEnd >= 3 && fromEnd <= 6) return `Vòng ${2 ** (fromEnd + 1)}`;
-
-  return `Vòng ${match.roundNumber}`;
+  return baseLabel;
 };
 
 export const getMatchRoundLabel = <TMatch extends RoundLabelMatch>({
@@ -203,9 +224,13 @@ export const buildRoundFilterOptions = <TMatch extends RoundLabelMatch>(
   matches.forEach((match) => {
     // Generate label without phase prefix for grouping, but keep layout clean
     const label = getMatchRoundLabel({ match, matches, tournamentFormat, bracketSize, includePhasePrefix: false });
-    // Group keys ignoring Winners/Losers bracket branch
+    // Determine bracket branch
+    const branch = normalizeBranch(match.bracketBranch);
+    const branchType: RoundFilterOption['branch'] = branch === 'LOSERS' ? 'LOSERS' : (branch === 'GRAND_FINALS' || branch === 'GRAND_FINAL' ? 'OTHER' : 'WINNERS');
+
+    // Group keys including bracket branch type to allow multi-row splitting
     const stage = getStage(match);
-    const key = `${normalizeText(stage?.type)}|${normalizeText(stage?.name)}|${match.roundNumber}|${label}`;
+    const key = `${normalizeText(stage?.type)}|${normalizeText(stage?.name)}|${branchType}|${match.roundNumber}|${label}`;
     const current = optionMap.get(key);
 
     if (current) {
@@ -218,6 +243,7 @@ export const buildRoundFilterOptions = <TMatch extends RoundLabelMatch>(
       roundNumber: match.roundNumber,
       label,
       count: 1,
+      branch: branchType,
     });
   });
 

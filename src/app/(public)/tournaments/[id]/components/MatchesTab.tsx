@@ -236,18 +236,8 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
 
       {/* Filter Options Panel */}
       <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm flex flex-col gap-4">
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-2 text-sm font-black text-slate-900">
-            <LayoutGrid className="w-4 h-4 text-blue-600" />
-            <span>Lọc lịch sử đấu</span>
-          </div>
-          <p className="text-xs font-semibold text-slate-450">
-            Vòng bảng/round robin giữ số vòng; playoff và loại trực tiếp hiển thị theo mốc knockout.
-          </p>
-        </div>
-
         {/* Row 1: Status Filters */}
-        <div className="flex flex-wrap gap-2 items-center border-t border-slate-100 pt-3">
+        <div className="flex flex-wrap gap-2 items-center">
           <span className="text-xs font-black text-slate-400 uppercase tracking-wider mr-2">Trạng thái:</span>
           {(['ALL', 'ONGOING', 'SCHEDULED', 'COMPLETED'] as const).map((filter) => {
             const label = filter === 'ALL' ? 'Tất cả' : filter === 'ONGOING' ? 'Trực tiếp' : filter === 'SCHEDULED' ? 'Chưa đấu' : 'Đã xong';
@@ -272,7 +262,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
         {/* Row 2: Round Slider */}
         {roundOptions.length > 0 && (
           <div className="flex flex-col gap-3 border-t border-slate-105 pt-3">
-            {tournament.format === 'DOUBLE_ELIMINATION' ? (
+            {tournament.format === 'DOUBLE_ELIMINATION' || roundOptions.some((ro) => ro.branch === 'LOSERS') ? (
               <>
                 {/* Winners Row */}
                 <div className="flex flex-wrap items-center gap-2">

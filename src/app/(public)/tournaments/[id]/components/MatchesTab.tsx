@@ -79,8 +79,19 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
     fetchMatches();
   }, [divisionId, effectiveTournamentId, tournament.format]);
 
+  // Find bracket size for the current division or tournament
+  const bracketSize = useMemo(() => {
+    if (divisionId && tournament.divisions) {
+      const division = tournament.divisions.find(d => d.id === divisionId);
+      if (division && division.maxParticipants) {
+        return division.maxParticipants;
+      }
+    }
+    return tournament.maxParticipants ?? null;
+  }, [divisionId, tournament.divisions, tournament.maxParticipants]);
+
   // Extract unique rounds from current matches
-  const roundOptions = useMemo(() => buildRoundFilterOptions(matches, tournament.format), [matches, tournament.format]);
+  const roundOptions = useMemo(() => buildRoundFilterOptions(matches, tournament.format, bracketSize), [matches, tournament.format, bracketSize]);
 
   // Translate Stage Name helper
   const getStageVietnameseName = (rawName?: string | null) => {
@@ -114,7 +125,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
         const selectedOption = roundOptions.find(option => option.key === selectedRoundKey);
         if (!selectedOption) return false;
 
-        const matchRoundLabel = getMatchRoundLabel({ match: m, matches, tournamentFormat: tournament.format });
+        const matchRoundLabel = getMatchRoundLabel({ match: m, matches, tournamentFormat: tournament.format, bracketSize });
         if (m.roundNumber !== selectedOption.roundNumber || matchRoundLabel !== selectedOption.label) {
           return false;
         }
@@ -126,7 +137,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
       
       return true;
     }).sort((a, b) => a.matchOrder - b.matchOrder);
-  }, [matches, roundOptions, selectedRoundKey, statusFilter, tournament.format]);
+  }, [matches, roundOptions, selectedRoundKey, statusFilter, tournament.format, bracketSize]);
 
   // Count items for badges
   const counts = useMemo(() => {
@@ -171,7 +182,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
   ) => {
     if (!participant) {
       return (
-        <span className="text-slate-400 font-bold italic">
+        <span className={isOpponentBye ? 'text-blue-600 font-extrabold text-sm' : 'text-slate-400 font-bold italic'}>
           {isOpponentBye ? 'Vào thẳng / Đi tiếp' : 'Chờ đối thủ'}
         </span>
       );
@@ -295,7 +306,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
             const isLive = match.status === 'ONGOING' || match.status === 'IN_PROGRESS';
             const isP1Winner = isCompleted && match.winnerId === match.participant1?.id;
             const isP2Winner = isCompleted && match.winnerId === match.participant2?.id;
-            const roundLabel = getMatchRoundLabel({ match, matches, tournamentFormat: tournament.format });
+            const roundLabel = getMatchRoundLabel({ match, matches, tournamentFormat: tournament.format, bracketSize });
             
             const resolvedRules = resolveMatchSportRules({
               matchConfig: match.matchConfig,

@@ -271,39 +271,108 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
 
         {/* Row 2: Round Slider */}
         {roundOptions.length > 0 && (
-          <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
-            <span className="text-xs font-black text-slate-400 uppercase tracking-wider mr-2 shrink-0">Vòng đấu:</span>
-            
-            <button
-              onClick={() => setSelectedRoundKey('ALL')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all border shrink-0 cursor-pointer ${
-                selectedRoundKey === 'ALL'
-                  ? 'bg-slate-900 text-white border-transparent'
-                  : 'bg-white text-slate-650 border-slate-205 hover:border-slate-350 hover:text-slate-900'
-              }`}
-            >
-              Tất cả vòng
-            </button>
+          <div className="flex flex-col gap-3 border-t border-slate-105 pt-3">
+            {tournament.format === 'DOUBLE_ELIMINATION' ? (
+              <>
+                {/* Winners Row */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-black text-slate-400 uppercase tracking-wider mr-2 shrink-0">Nhánh thắng:</span>
+                  <button
+                    onClick={() => setSelectedRoundKey('ALL')}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all border shrink-0 cursor-pointer ${
+                      selectedRoundKey === 'ALL'
+                        ? 'bg-slate-900 text-white border-transparent'
+                        : 'bg-white text-slate-650 border-slate-205 hover:border-slate-350 hover:text-slate-900'
+                    }`}
+                  >
+                    Tất cả
+                  </button>
+                  {roundOptions
+                    .filter((ro) => ro.branch !== 'LOSERS')
+                    .map((roundOption) => {
+                      const isActive = selectedRoundKey === roundOption.key;
+                      return (
+                        <button
+                          key={roundOption.key}
+                          onClick={() => setSelectedRoundKey(roundOption.key)}
+                          className={`px-4 py-1.5 rounded-xl text-xs font-black transition-all border shrink-0 cursor-pointer ${
+                            isActive
+                              ? 'bg-blue-600 text-white border-transparent shadow-sm'
+                              : 'bg-white text-slate-650 border-slate-205 hover:border-slate-350 hover:text-slate-900'
+                          }`}
+                        >
+                          {roundOption.label}
+                          <span className={isActive ? 'ml-1 text-blue-100' : 'ml-1 text-slate-400'}>
+                            ({roundOption.count})
+                          </span>
+                        </button>
+                      );
+                    })}
+                </div>
 
-            {roundOptions.map((roundOption) => {
-              const isActive = selectedRoundKey === roundOption.key;
-              return (
+                {/* Losers Row */}
+                {roundOptions.some((ro) => ro.branch === 'LOSERS') && (
+                  <div className="flex flex-wrap items-center gap-2 border-t border-slate-50 pt-2">
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-wider mr-2 shrink-0">Nhánh thua:</span>
+                    {roundOptions
+                      .filter((ro) => ro.branch === 'LOSERS')
+                      .map((roundOption) => {
+                        const isActive = selectedRoundKey === roundOption.key;
+                        return (
+                          <button
+                            key={roundOption.key}
+                            onClick={() => setSelectedRoundKey(roundOption.key)}
+                            className={`px-4 py-1.5 rounded-xl text-xs font-black transition-all border shrink-0 cursor-pointer ${
+                              isActive
+                                ? 'bg-blue-600 text-white border-transparent shadow-sm'
+                                : 'bg-white text-slate-650 border-slate-205 hover:border-slate-350 hover:text-slate-900'
+                            }`}
+                          >
+                            {roundOption.label}
+                            <span className={isActive ? 'ml-1 text-blue-100' : 'ml-1 text-slate-400'}>
+                              ({roundOption.count})
+                            </span>
+                          </button>
+                        );
+                      })}
+                  </div>
+                )}
+              </>
+            ) : (
+              /* Single Row for non Double Elimination */
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs font-black text-slate-400 uppercase tracking-wider mr-2 shrink-0">Vòng đấu:</span>
                 <button
-                  key={roundOption.key}
-                  onClick={() => setSelectedRoundKey(roundOption.key)}
-                  className={`px-4 py-1.5 rounded-xl text-xs font-black transition-all border shrink-0 cursor-pointer ${
-                    isActive
-                      ? 'bg-blue-600 text-white border-transparent shadow-sm'
+                  onClick={() => setSelectedRoundKey('ALL')}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all border shrink-0 cursor-pointer ${
+                    selectedRoundKey === 'ALL'
+                      ? 'bg-slate-900 text-white border-transparent'
                       : 'bg-white text-slate-650 border-slate-205 hover:border-slate-350 hover:text-slate-900'
                   }`}
                 >
-                  {roundOption.label}
-                  <span className={isActive ? 'ml-1 text-blue-100' : 'ml-1 text-slate-400'}>
-                    ({roundOption.count})
-                  </span>
+                  Tất cả vòng
                 </button>
-              );
-            })}
+                {roundOptions.map((roundOption) => {
+                  const isActive = selectedRoundKey === roundOption.key;
+                  return (
+                    <button
+                      key={roundOption.key}
+                      onClick={() => setSelectedRoundKey(roundOption.key)}
+                      className={`px-4 py-1.5 rounded-xl text-xs font-black transition-all border shrink-0 cursor-pointer ${
+                        isActive
+                          ? 'bg-blue-600 text-white border-transparent shadow-sm'
+                          : 'bg-white text-slate-650 border-slate-205 hover:border-slate-350 hover:text-slate-900'
+                      }`}
+                    >
+                      {roundOption.label}
+                      <span className={isActive ? 'ml-1 text-blue-100' : 'ml-1 text-slate-400'}>
+                        ({roundOption.count})
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
       </div>

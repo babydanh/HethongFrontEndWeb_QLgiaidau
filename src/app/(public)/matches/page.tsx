@@ -85,6 +85,7 @@ export default function MatchesListPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [groupPages, setGroupPages] = useState<Record<string, number>>({});
   const [cheerCounts, setCheerCounts] = useState<Record<string, number>>({});
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [activeShareUrl, setActiveShareUrl] = useState('');

@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { extractMatchScores, getMatchScorePresentation, resolveMatchSportRules } from '@/features/matches/score-display';
 import { Tournament, BracketMatch } from '@/features/tournaments/api';
 import { matchesApi } from '@/features/matches/api';
-import { Calendar, Play, Trophy, MapPin, Info } from 'lucide-react';
+import { Calendar, Play, Trophy, MapPin, Info, LayoutGrid, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import { formatDateTime } from '@/utils/format';
 
@@ -14,10 +14,16 @@ interface Props {
   divisionId?: string;
 }
 
+type StatusFilter = 'ALL' | 'ONGOING' | 'SCHEDULED' | 'COMPLETED';
+
 export default function MatchesTab({ tournament, tournamentId, divisionId }: Props) {
   const effectiveTournamentId = tournamentId ?? tournament.id;
   const [matches, setMatches] = useState<BracketMatch[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // States for filtering
+  const [selectedRound, setSelectedRound] = useState<number | 'ALL'>('ALL');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL');
 
   useEffect(() => {
     const fetchMatches = async () => {
@@ -34,7 +40,29 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
 
         const res = await matchesApi.getMatches(matchParams);
         if (res && res.data) {
-          setMatches(res.data as unknown as BracketMatch[]);
+          const fetchedMatches = res.data as unknown as BracketMatch[];
+          setMatches(fetchedMatches);
+
+          // Auto-detect best round to display
+          if (fetchedMatches.length > 0) {
+            // Find rounds that contain ONGOING matches
+            const ongoingMatch = fetchedMatches.find(m => m.status === 'ONGOING');
+            if (ongoingMatch && ongoingMatch.roundNumber) {
+              setSelectedRound(ongoingMatch.roundNumber);
+              return;
+            }
+
+            // Otherwise, find the earliest round that has SCHEDULED matches
+            const scheduledMatches = fetchedMatches.filter(m => m.status === 'SCHEDULED');
+            if (scheduledMatches.length > 0) {
+              const minRound = Math.min(...scheduledMatches.map(m => m.roundNumber).filter(Boolean) as number[]);
+              setSelectedRound(minRound);
+              return;
+            }
+
+            // Default to 'ALL' if no specific active round is detected
+            setSelectedRound('ALL');
+          }
         }
       } catch (error) {
         console.error('Failed to fetch matches for division:', { tournamentId: effectiveTournamentId, divisionId }, error);
@@ -46,6 +74,60 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
     fetchMatches();
   }, [divisionId, effectiveTournamentId]);
 
+  // Extract unique rounds from current matches
+  const rounds = useMemo(() => {
+    const roundNums = Array.from(new Set(matches.map(m => m.roundNumber).filter(Boolean) as number[]));
+    return roundNums.sort((a, b) => a - b);
+  }, [matches]);
+
+  // Translate Stage Name helper
+  const getStageVietnameseName = (rawName?: string | null) => {
+    if (!rawName) return 'Vòng đấu';
+    const map: Record<string, string> = {
+      'Elimination Stage': 'Vòng loại trực tiếp',
+      'Knockout Stage': 'Vòng loại trực tiếp',
+      'Group Stage': 'Vòng bảng',
+      'Round Robin': 'Vòng tròn tính điểm',
+      'Final Stage': 'Vòng chung kết',
+      'Qualification Stage': 'Vòng loại',
+      'Preliminary Stage': 'Vòng sơ loại',
+      'Main Stage': 'Vòng chính',
+      'Quarter Finals': 'Tứ kết',
+      'Quarterfinals': 'Tứ kết',
+      'Semi Finals': 'Bán kết',
+      'Semifinals': 'Bán kết',
+      'Final': 'Chung kết',
+      'Grand Final': 'Chung kết tổng',
+      'Winners Bracket': 'Nhánh thắng',
+      'Losers Bracket': 'Nhánh thua',
+    };
+    return map[rawName] || rawName;
+  };
+
+  // Filter matches based on selected states
+  const filteredMatches = useMemo(() => {
+    return matches.filter(m => {
+      // 1. Filter by round
+      if (selectedRound !== 'ALL' && m.roundNumber !== selectedRound) {
+        return false;
+      }
+      // 2. Filter by status
+      if (statusFilter === 'ONGOING' && m.status !== 'ONGOING') return false;
+      if (statusFilter === 'SCHEDULED' && m.status !== 'SCHEDULED') return false;
+      if (statusFilter === 'COMPLETED' && m.status !== 'COMPLETED') return false;
+      
+      return true;
+    }).sort((a, b) => a.matchOrder - b.matchOrder);
+  }, [matches, selectedRound, statusFilter]);
+
+  // Count items for badges
+  const counts = useMemo(() => {
+    const ongoing = matches.filter(m => m.status === 'ONGOING').length;
+    const scheduled = matches.filter(m => m.status === 'SCHEDULED').length;
+    const completed = matches.filter(m => m.status === 'COMPLETED').length;
+    return { all: matches.length, ongoing, scheduled, completed };
+  }, [matches]);
+
   if (isLoading) {
     return <div className="animate-pulse bg-slate-900/10 h-64 rounded-2xl w-full"></div>;
   }
@@ -54,20 +136,20 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
     switch (status) {
       case 'COMPLETED':
         return (
-          <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-slate-100 text-slate-600 border border-slate-200">
+          <span className="px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase bg-slate-100 text-slate-500 border border-slate-200">
             Kết Thúc
           </span>
         );
       case 'ONGOING':
         return (
-          <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-500/10 text-rose-500 border border-rose-500/20 animate-pulse">
+          <span className="px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase bg-rose-500 text-white animate-pulse">
             🔴 Trực Tiếp
           </span>
         );
       default:
         return (
-          <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-50/80 text-blue-600 border border-blue-200">
-            Chờ Thi Đấu
+          <span className="px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase bg-blue-50 text-blue-600 border border-blue-200">
+            Chờ Đấu
           </span>
         );
     }
@@ -78,236 +160,268 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
     isWinner: boolean,
     isCompleted: boolean
   ) => {
-    if (!participant) return <span className="text-slate-400 font-medium">TBD</span>;
+    if (!participant) return <span className="text-slate-400 font-bold italic">Chờ xác định</span>;
     if (participant.members && participant.members.length > 0) {
       return (
-        <span className={`text-sm font-bold flex items-center gap-1.5 flex-wrap ${
-          isCompleted ? (isWinner ? 'text-slate-900' : 'text-slate-400') : 'text-slate-800'
+        <span className={`text-sm font-black flex items-center gap-1.5 flex-wrap ${
+          isCompleted ? (isWinner ? 'text-slate-900' : 'text-slate-400 font-medium') : 'text-slate-800'
         }`}>
           {participant.members.map((m, idx) => (
             <span key={m.userId} className="inline-flex items-center">
-              <Link href={`/users/${m.userId}`} className="hover:text-indigo-600 hover:underline transition-colors">
+              <Link href={`/users/${m.userId}`} className="hover:text-blue-600 hover:underline transition-colors">
                 {m.fullName || 'Thành viên'}
               </Link>
-              {idx < participant.members!.length - 1 && <span className="text-slate-450 mx-1">/</span>}
+              {idx < participant.members!.length - 1 && <span className="text-slate-350 mx-1">/</span>}
             </span>
           ))}
         </span>
       );
     }
     return (
-      <span className={`text-sm font-bold truncate ${
-        isCompleted ? (isWinner ? 'text-slate-900' : 'text-slate-400') : 'text-slate-800'
+      <span className={`text-sm font-black truncate ${
+        isCompleted ? (isWinner ? 'text-slate-900' : 'text-slate-400 font-medium') : 'text-slate-800'
       }`}>
         {participant.teamName}
       </span>
     );
   };
 
-  const sortedMatches = [...matches].sort((a, b) => {
-    if (a.roundNumber !== b.roundNumber) {
-      return a.roundNumber - b.roundNumber;
-    }
-    return a.matchOrder - b.matchOrder;
-  });
-
-  // Group matches by Stage / Group name
-  const groupedMatches: Record<string, BracketMatch[]> = {};
-  for (const m of sortedMatches) {
-    const stageName = (() => {
-      const raw = m.group?.stage?.name || m.group?.name || '';
-      const map = {
-        'Elimination Stage': 'Vòng loại trực tiếp',
-        'Knockout Stage': 'Vòng loại trực tiếp',
-        'Group Stage': 'Vòng bảng',
-        'Round Robin': 'Vòng tròn tính điểm',
-        'Final Stage': 'Vòng chung kết',
-        'Qualification Stage': 'Vòng loại',
-        'Preliminary Stage': 'Vòng sơ loại',
-        'Main Stage': 'Vòng chính',
-        'Quarter Finals': 'Tứ kết',
-        'Quarterfinals': 'Tứ kết',
-        'Semi Finals': 'Bán kết',
-        'Semifinals': 'Bán kết',
-        'Final': 'Chung kết',
-        'Grand Final': 'Chung kết tổng',
-        'Winners Bracket': 'Nhánh thắng',
-        'Losers Bracket': 'Nhánh thua',
-      };
-      return (map as Record<string, string>)[raw] || raw || 'Vòng đấu';
-    })();
-    if (!groupedMatches[stageName]) {
-      groupedMatches[stageName] = [];
-    }
-    groupedMatches[stageName].push(m);
-  }
-
-  const stages = Object.keys(groupedMatches);
-
   return (
     <div className="flex flex-col gap-6">
       {/* Division Info Header */}
-      <div className="flex items-center gap-2 text-xs text-slate-500 font-semibold pb-3 border-b border-slate-150">
-        <Info className="w-3.5 h-3.5 text-slate-400" />
+      <div className="flex items-center gap-2 text-xs text-slate-500 font-bold pb-3 border-b border-slate-200/60">
+        <Info className="w-4 h-4 text-slate-400" />
         <span>Phân hạng: <strong className="text-slate-700">{tournament.name}</strong></span>
         {tournament.genderRestriction && (
           <span className="text-slate-400">• {tournament.genderRestriction}</span>
         )}
       </div>
 
-      <div className="flex justify-between items-center pb-2 border-b border-slate-100">
-        <h3 className="text-lg font-bold text-slate-900">Lịch Thi Đấu & Kết Quả</h3>
-        <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full">
-          {matches.length} Trận Đấu
-        </span>
+      {/* Filter Options Panel */}
+      <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm flex flex-col gap-4">
+        {/* Row 1: Status Filters */}
+        <div className="flex flex-wrap gap-2 items-center">
+          <span className="text-xs font-black text-slate-400 uppercase tracking-wider mr-2">Trạng thái:</span>
+          {(['ALL', 'ONGOING', 'SCHEDULED', 'COMPLETED'] as const).map((filter) => {
+            const label = filter === 'ALL' ? 'Tất cả' : filter === 'ONGOING' ? 'Trực tiếp' : filter === 'SCHEDULED' ? 'Chưa đấu' : 'Đã xong';
+            const count = filter === 'ALL' ? counts.all : filter === 'ONGOING' ? counts.ongoing : filter === 'SCHEDULED' ? counts.scheduled : counts.completed;
+            const isActive = statusFilter === filter;
+            return (
+              <button
+                key={filter}
+                onClick={() => setStatusFilter(filter)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all border cursor-pointer ${
+                  isActive
+                    ? 'bg-blue-600 text-white border-transparent shadow-sm'
+                    : 'bg-slate-50 text-slate-650 border-slate-200 hover:bg-slate-100 hover:text-slate-900'
+                }`}
+              >
+                {label} ({count})
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Row 2: Round Slider */}
+        {rounds.length > 0 && (
+          <div className="flex items-center gap-2 border-t border-slate-100 pt-3 overflow-x-auto no-scrollbar">
+            <span className="text-xs font-black text-slate-400 uppercase tracking-wider mr-2 shrink-0">Vòng đấu:</span>
+            
+            <button
+              onClick={() => setSelectedRound('ALL')}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all border shrink-0 cursor-pointer ${
+                selectedRound === 'ALL'
+                  ? 'bg-slate-900 text-white border-transparent'
+                  : 'bg-white text-slate-650 border-slate-205 hover:border-slate-350 hover:text-slate-900'
+              }`}
+            >
+              Tất cả vòng
+            </button>
+
+            {rounds.map((r) => {
+              const isActive = selectedRound === r;
+              return (
+                <button
+                  key={r}
+                  onClick={() => setSelectedRound(r)}
+                  className={`px-4 py-1.5 rounded-xl text-xs font-black transition-all border shrink-0 cursor-pointer ${
+                    isActive
+                      ? 'bg-blue-600 text-white border-transparent shadow-sm'
+                      : 'bg-white text-slate-650 border-slate-205 hover:border-slate-350 hover:text-slate-900'
+                  }`}
+                >
+                  Vòng {r}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
-      {stages.length > 0 ? (
-        <div className="flex flex-col gap-8">
-          {stages.map((stageName) => (
-            <div key={stageName} className="flex flex-col gap-4">
-              {/* Stage Header */}
-              <div className="flex items-center gap-2">
-                <span className="h-4 w-1 bg-indigo-600 rounded-full" />
-                <h4 className="font-extrabold text-slate-800 text-sm tracking-wide uppercase">
-                  {stageName}
-                </h4>
-              </div>
+      {/* Render Matches List */}
+      {filteredMatches.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {filteredMatches.map((match) => {
+            const sets = extractMatchScores(match.scoreDetails);
+            const isCompleted = match.status === 'COMPLETED' || match.winnerId != null;
+            const isLive = match.status === 'ONGOING' || match.status === 'IN_PROGRESS';
+            const isP1Winner = isCompleted && match.winnerId === match.participant1?.id;
+            const isP2Winner = isCompleted && match.winnerId === match.participant2?.id;
+            
+            const resolvedRules = resolveMatchSportRules({
+              matchConfig: match.matchConfig,
+              tournament: { sportRules: tournament.sportRules ?? null },
+            });
+            const scorePresentation = getMatchScorePresentation(resolvedRules.kind);
 
-              {/* Matches Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {groupedMatches[stageName].map((match) => {
-                  const sets = extractMatchScores(match.scoreDetails);
-                  const isCompleted = match.status === 'COMPLETED';
-                  const isP1Winner = isCompleted && match.winnerId === match.participant1?.id;
-                  const isP2Winner = isCompleted && match.winnerId === match.participant2?.id;
-                  const resolvedRules = resolveMatchSportRules({
-                    matchConfig: match.matchConfig,
-                    tournament: { sportRules: tournament.sportRules ?? null },
-                  });
-                  const scorePresentation = getMatchScorePresentation(resolvedRules.kind);
-                  const sequenceLabelTitle = scorePresentation.sequenceLabel.charAt(0).toUpperCase() + scorePresentation.sequenceLabel.slice(1);
+            return (
+              <div
+                key={match.id}
+                className={`bg-white border rounded-3xl overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between ${
+                  isLive 
+                    ? 'border-rose-200 bg-rose-50/5' 
+                    : 'border-slate-200/80'
+                }`}
+              >
+                {/* Header info */}
+                <div className={`px-4 py-2.5 border-b border-slate-100 flex justify-between items-center text-[10px] font-black ${
+                  isLive ? 'bg-rose-50/20' : 'bg-slate-50/60'
+                }`}>
+                  <div className="flex items-center gap-1.5 text-slate-500 flex-wrap">
+                    {isLive && (
+                      <span className="relative flex h-2.5 w-2.5 shrink-0">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-600"></span>
+                      </span>
+                    )}
+                    <span className={isLive ? 'text-rose-600 font-black animate-pulse' : 'text-slate-650'}>
+                      Vòng {match.roundNumber}
+                    </span>
+                    <span className="text-slate-300">•</span>
+                    <span className="uppercase text-slate-500">
+                      {getStageVietnameseName(match.group?.stage?.name)}
+                    </span>
+                  </div>
+                  {getStatusBadge(match.status)}
+                </div>
 
-                  return (
-                    <div
-                      key={match.id}
-                      className="bg-white hover:bg-slate-50/50 border border-slate-100 hover:border-slate-200/80 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between gap-4"
-                    >
-                      {/* Top section: Round, Court, status */}
-                      <div className="flex justify-between items-center text-xs text-slate-400 font-semibold">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-indigo-600">{sequenceLabelTitle} {match.roundNumber}</span>
-                          <span className="px-2 py-0.5 rounded-full border border-slate-200 bg-slate-50 text-slate-500 text-[10px] font-bold">
-                            {scorePresentation.sportLabel}
-                          </span>
-                          {match.courtName && (
-                            <span className="flex items-center gap-1 text-slate-400">
-                              <MapPin className="w-3.5 h-3.5" /> {match.courtName}
-                            </span>
-                          )}
-                        </div>
-                        {getStatusBadge(match.status)}
-                      </div>
-
-                      {/* Middle section: Teams & score */}
-                      <div className="flex flex-col gap-3.5 border-y border-slate-100/60 py-3.5">
-                        {/* Participant 1 */}
-                        <div className="flex justify-between items-center">
-                          <div className="flex items-center gap-2 max-w-[70%]">
-                            {isP1Winner && <Trophy className="w-4 h-4 text-amber-500 shrink-0" />}
-                            {renderParticipantName(match.participant1, isP1Winner, isCompleted)}
-                            {match.participant1?.seed && (
-                              <span className="text-[10px] bg-slate-100 text-slate-400 border border-slate-200 px-1 py-0.2 rounded font-semibold shrink-0">
-                                #{match.participant1.seed}
-                              </span>
-                            )}
-                          </div>
-                          {/* Sets won display */}
-                          <div className="flex items-center gap-1">
-                            {sets.map((set, idx) => (
-                              <span
-                                key={idx}
-                                className={`w-7 h-7 flex items-center justify-center text-xs font-bold rounded ${
-                                  isP1Winner ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-50 text-slate-500'
-                                }`}
-                              >
-                                {set.team1Score}
-                              </span>
-                            ))}
-                            {sets.length === 0 && (
-                              <span className="text-sm font-extrabold text-slate-400 px-2">
-                                {match.p1SetsWon}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Participant 2 */}
-                        <div className="flex justify-between items-center">
-                          <div className="flex items-center gap-2 max-w-[70%]">
-                            {isP2Winner && <Trophy className="w-4 h-4 text-amber-500 shrink-0" />}
-                            {renderParticipantName(match.participant2, isP2Winner, isCompleted)}
-                            {match.participant2?.seed && (
-                              <span className="text-[10px] bg-slate-100 text-slate-400 border border-slate-200 px-1 py-0.2 rounded font-semibold shrink-0">
-                                #{match.participant2.seed}
-                              </span>
-                            )}
-                          </div>
-                          {/* Sets won display */}
-                          <div className="flex items-center gap-1">
-                            {sets.map((set, idx) => (
-                              <span
-                                key={idx}
-                                className={`w-7 h-7 flex items-center justify-center text-xs font-bold rounded ${
-                                  isP2Winner ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-50 text-slate-500'
-                                }`}
-                              >
-                                {set.team2Score}
-                              </span>
-                            ))}
-                            {sets.length === 0 && (
-                              <span className="text-sm font-extrabold text-slate-400 px-2">
-                                {match.p2SetsWon}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Bottom section: Details/Schedule info */}
-                      <div className="flex justify-between items-center gap-4 text-xs">
-                        <div className="flex flex-col gap-1 text-slate-400 font-semibold">
-                          <div className="flex items-center gap-1.5">
-                            <Calendar className="w-4 h-4 shrink-0" />
-                            <span>
-                              {match.scheduledAt
-                                ? formatDateTime(match.scheduledAt)
-                                : 'Chưa xếp lịch'}
-                            </span>
-                          </div>
-                          <span className="text-[11px] text-slate-500">
-                            {scorePresentation.wonSummaryLabel}: {match.p1SetsWon} - {match.p2SetsWon}
-                          </span>
-                        </div>
-                        <Link
-                          href={`/live/${match.id}`}
-                          className="text-xs font-bold text-indigo-600 hover:text-indigo-500 flex items-center gap-1"
-                        >
-                          <Play className="w-3.5 h-3.5" /> Xem Chi Tiết
-                        </Link>
-                      </div>
+                {/* Score / Participants Panel */}
+                <div className="p-4 flex flex-col gap-3.5">
+                  {/* Participant 1 */}
+                  <div className="flex justify-between items-center gap-2">
+                    <div className="flex items-center gap-2 min-w-0 max-w-[70%]">
+                      {isP1Winner ? (
+                        <Trophy className="w-4 h-4 text-amber-500 shrink-0" />
+                      ) : (
+                        isCompleted && <div className="w-4 h-4 shrink-0" /> // Giữ khoảng trống đều đặn
+                      )}
+                      {renderParticipantName(match.participant1, isP1Winner, isCompleted)}
+                      {match.participant1?.seed && (
+                        <span className="text-[9px] bg-slate-100 text-slate-400 border border-slate-200 px-1 py-0.2 rounded font-black shrink-0">
+                          #{match.participant1.seed}
+                        </span>
+                      )}
                     </div>
-                  );
-                })}
+
+                    {/* Scores set Display */}
+                    <div className="flex items-center gap-1 shrink-0 font-mono">
+                      {sets.map((set, idx) => (
+                        <span
+                          key={idx}
+                          className={`w-7 h-7 flex items-center justify-center text-xs font-black rounded ${
+                            isCompleted 
+                              ? (isP1Winner ? 'bg-blue-600 text-white shadow-sm' : 'bg-slate-100 text-slate-400')
+                              : 'bg-slate-50 text-slate-600 border border-slate-150'
+                          }`}
+                        >
+                          {set.team1Score}
+                        </span>
+                      ))}
+                      {sets.length === 0 && (
+                        <span className="text-sm font-extrabold text-slate-700 px-2">
+                          {match.p1SetsWon}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Participant 2 */}
+                  <div className="flex justify-between items-center gap-2">
+                    <div className="flex items-center gap-2 min-w-0 max-w-[70%]">
+                      {isP2Winner ? (
+                        <Trophy className="w-4 h-4 text-amber-500 shrink-0" />
+                      ) : (
+                        isCompleted && <div className="w-4 h-4 shrink-0" />
+                      )}
+                      {renderParticipantName(match.participant2, isP2Winner, isCompleted)}
+                      {match.participant2?.seed && (
+                        <span className="text-[9px] bg-slate-100 text-slate-400 border border-slate-200 px-1 py-0.2 rounded font-black shrink-0">
+                          #{match.participant2.seed}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Scores set Display */}
+                    <div className="flex items-center gap-1 shrink-0 font-mono">
+                      {sets.map((set, idx) => (
+                        <span
+                          key={idx}
+                          className={`w-7 h-7 flex items-center justify-center text-xs font-black rounded ${
+                            isCompleted 
+                              ? (isP2Winner ? 'bg-blue-600 text-white shadow-sm' : 'bg-slate-100 text-slate-400')
+                              : 'bg-slate-50 text-slate-600 border border-slate-150'
+                          }`}
+                        >
+                          {set.team2Score}
+                        </span>
+                      ))}
+                      {sets.length === 0 && (
+                        <span className="text-sm font-extrabold text-slate-700 px-2">
+                          {match.p2SetsWon}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer details */}
+                <div className="px-4 py-3 bg-slate-50/50 border-t border-slate-100 flex justify-between items-center gap-4 text-xs">
+                  <div className="flex flex-col gap-1 text-[11px] text-slate-400 font-bold">
+                    <div className="flex items-center gap-1">
+                      <Calendar className="w-3.5 h-3.5 shrink-0 text-slate-400" />
+                      <span>
+                        {match.scheduledAt
+                          ? formatDateTime(match.scheduledAt)
+                          : 'Chưa xếp lịch'}
+                      </span>
+                    </div>
+                    {match.courtName && (
+                      <div className="flex items-center gap-1">
+                        <MapPin className="w-3.5 h-3.5 shrink-0 text-slate-400" />
+                        <span className="truncate max-w-[200px]" title={match.courtName}>
+                          Sân: {match.courtName}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  <Link
+                    href={`/live/${match.id}`}
+                    className="px-3 py-1.5 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700 flex items-center gap-1 shadow-sm active:scale-95 transition-all"
+                  >
+                    <Play className="w-3 h-3 text-blue-600 fill-blue-600/10" />
+                    <span>Chi tiết</span>
+                  </Link>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
-        <div className="text-center py-16 border-2 border-dashed border-slate-100 rounded-2xl text-slate-450 bg-white">
+        <div className="text-center py-16 border border-dashed border-slate-200 rounded-3xl text-slate-450 bg-white">
           <Calendar className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-          <p className="font-semibold text-sm text-slate-500">Chưa có lịch thi đấu cho phân hạng này.</p>
-          <p className="text-xs text-slate-400 mt-1">Lịch đấu sẽ được tạo sau khi ban tổ chức bốc thăm sơ đồ.</p>
+          <p className="font-extrabold text-sm text-slate-500">Không tìm thấy trận đấu nào.</p>
+          <p className="text-xs text-slate-400 mt-1">Vui lòng chọn Vòng đấu hoặc Bộ lọc trạng thái khác.</p>
         </div>
       )}
     </div>

@@ -331,7 +331,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
       // Open modal to get bank info
       try {
         const freshProfile = await usersApi.getProfile();
-        const profile = (freshProfile as any).data || freshProfile;
+        const profile = freshProfile;
         setBankName(profile?.bankName || '');
         setBankAccountNumber(profile?.bankAccountNumber || '');
         setBankAccountName(profile?.bankAccountName || '');
@@ -495,7 +495,6 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
 
   useEffect(() => {
     if (!selectedDivisionData || !user?.id || !selectedDivisionData.categoryId) {
-      setEloCheck(null);
       return;
     }
 
@@ -510,11 +509,11 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
         const maxElo = selectedDivisionData.maxElo || 9999;
 
         if (elo < minElo) {
-          setEloCheck({ ok: false, message: `ELO cá»§a báº¡n (${elo}) tháº¥p hÆ¡n yÃªu cáº§u tá»‘i thiá»ƒu (${minElo}) cho ná»™i dung nÃ y.` });
+          setEloCheck({ ok: false, message: `ELO của bạn (${elo}) thấp hơn yêu cầu tối thiểu (${minElo}) cho nội dung này.` });
         } else if (elo > maxElo) {
-          setEloCheck({ ok: false, message: `ELO cá»§a báº¡n (${elo}) cao hÆ¡n yÃªu cáº§u tá»‘i Ä‘a (${maxElo}) cho ná»™i dung nÃ y.` });
+          setEloCheck({ ok: false, message: `ELO của bạn (${elo}) cao hơn yêu cầu tối đa (${maxElo}) cho nội dung này.` });
         } else {
-          setEloCheck({ ok: true, message: `ELO cá»§a báº¡n (${elo}) phÃ¹ há»£p vá»›i ná»™i dung nÃ y.` });
+          setEloCheck({ ok: true, message: `ELO của bạn (${elo}) phù hợp với nội dung này.` });
         }
       } catch {
         setEloCheck(null);
@@ -524,7 +523,10 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
     };
 
     checkElo();
-  }, [selectedDivisionData, user?.id]);
+  }, [selectedDivisionData?.id, user?.id]);
+
+  // Derived state to avoid cascading state updates in useEffect
+  const currentEloCheck = (!selectedDivisionData || !user?.id || !selectedDivisionData.categoryId) ? null : eloCheck;
 
   if (isLoading) {
     return (
@@ -718,7 +720,8 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                   Định dạng giải đấu: {
                     tournament.format === 'SINGLE_ELIMINATION' ? 'Loại trực tiếp (Single)' :
                     tournament.format === 'DOUBLE_ELIMINATION' ? 'Nhánh thắng thua (Double)' :
-                    tournament.format === 'ROUND_ROBIN' ? 'Vòng tròn tính điểm' : tournament.format
+                    tournament.format === 'ROUND_ROBIN' ? 'Vòng tròn tính điểm' :
+                    tournament.format === 'GROUP_STAGE_KNOCKOUT' ? 'Vòng bảng + Loại trực tiếp' : tournament.format
                   }
                 </span>
               </div>

@@ -27,6 +27,8 @@ interface ConfigTabProps {
   isSavingConfig: boolean;
   handleSaveMatchConfig: () => void;
   handleUpdateStageRoundConfig: (stageId: string, config: Record<string, unknown>) => void;
+  bracketTypeState: 'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION' | 'ROUND_ROBIN' | 'GROUP_STAGE_KNOCKOUT';
+  setBracketTypeState: (val: 'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION' | 'ROUND_ROBIN' | 'GROUP_STAGE_KNOCKOUT') => void;
 }
 
 export function ConfigTab({
@@ -46,7 +48,9 @@ export function ConfigTab({
   setWinByTwo,
   isSavingConfig,
   handleSaveMatchConfig,
-  handleUpdateStageRoundConfig
+  handleUpdateStageRoundConfig,
+  bracketTypeState,
+  setBracketTypeState,
 }: ConfigTabProps) {
   const isRegistrationOpen = isTournamentRegistrationOpen(tournament.status) || isTournamentRegistrationClosed(tournament.status);
   const sportRuleKind = getSportRuleKind(tournament.sportRules);
@@ -99,6 +103,26 @@ export function ConfigTab({
           {isRegistrationOpen && (
             <p className="text-xs text-amber-600 font-semibold mt-1 flex items-center gap-1">
               <span>⚠</span> Không thể thay đổi hình thức thi đấu khi đang mở đăng ký.
+            </p>
+          )}
+        </div>
+
+        <div className="flex flex-col gap-1.5 bg-slate-50 border p-4 rounded-xl">
+          <label className="text-sm font-semibold text-slate-700">Thể thức thi đấu (Sơ đồ giải)</label>
+          <select
+            value={bracketTypeState}
+            onChange={(e) => setBracketTypeState(e.target.value as 'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION' | 'ROUND_ROBIN' | 'GROUP_STAGE_KNOCKOUT')}
+            disabled={isRegistrationOpen}
+            className={`border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-11 ${isRegistrationOpen ? 'opacity-60 cursor-not-allowed' : ''}`}
+          >
+            <option value="SINGLE_ELIMINATION">Loại Trực Tiếp (Single Elimination)</option>
+            <option value="DOUBLE_ELIMINATION">Nhánh Thắng / Nhánh Thua (Double Elimination)</option>
+            <option value="ROUND_ROBIN">Vòng Tròn Tính Điểm (Round Robin)</option>
+            <option value="GROUP_STAGE_KNOCKOUT">Vòng Bảng + Loại Trực Tiếp (Group Stage + Playoff)</option>
+          </select>
+          {isRegistrationOpen && (
+            <p className="text-xs text-amber-600 font-semibold mt-1 flex items-center gap-1">
+              <span>⚠</span> Không thể thay đổi thể thức thi đấu khi đang mở đăng ký.
             </p>
           )}
         </div>

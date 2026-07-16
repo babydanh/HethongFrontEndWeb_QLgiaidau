@@ -1,15 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, ChevronDown, SlidersHorizontal, Bookmark, MapPin, Calendar, CircleDollarSign, ChevronLeft, ChevronRight, Trophy, Activity, Target } from 'lucide-react';
+import { Search, ChevronDown, SlidersHorizontal, Bookmark, ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { tournamentsApi, Tournament } from '@/features/tournaments/api';
 import { categoriesApi, Category } from '@/features/categories/api';
 import { regionsApi, Region } from '@/features/regions/api';
-import { formatDate, formatCurrency } from '@/utils/format';
+import { formatCurrency } from '@/utils/format';
 import { getSportLogo } from '@/constants/sports';
 import TournamentHeroBanner from '@/components/ui/TournamentHeroBanner';
-import LiveMatchesWidget from '@/components/ui/LiveMatchesWidget';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { sortDiscoveryTournaments, isRecentlyCompletedTournament } from '@/utils/tournament-home';
 import {
@@ -21,9 +20,11 @@ import {
   isTournamentRegistrationClosed,
   isTournamentUpcoming,
 } from '@/utils/tournament-status';
+import { getRegistrationModeUi } from './registrationMode';
 
 export default function TournamentsListPage() {
   const { user } = useAuthStore();
+
   const getFormatLabel = (matchType?: string, genderRestriction?: string | null) => {
     const mt = matchType || '';
     const gr = genderRestriction || '';
@@ -57,9 +58,16 @@ export default function TournamentsListPage() {
   const [featuredTournaments, setFeaturedTournaments] = useState<Tournament[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [regions, setRegions] = useState<Region[]>([]);
+  const [districts, setDistricts] = useState<Region[]>([]); // Danh sách quận huyện
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
   const [selectedStatus, setSelectedStatus] = useState<string>('');
   const [selectedRegion, setSelectedRegion] = useState<string>('');
+  const [selectedDistrict, setSelectedDistrict] = useState<string>(''); // Quận huyện đang chọn
+  const [selectedContent, setSelectedContent] = useState<string>(''); // Nội dung thi đấu (Đơn Nam, Đôi Nữ...)
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false); // Toggle bộ lọc nâng cao
+  const [startDate, setStartDate] = useState<string>(''); // Lọc từ ngày
+  const [endDate, setEndDate] = useState<string>(''); // Lọc đến ngày
+
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -91,11 +99,10 @@ export default function TournamentsListPage() {
 
     const fetchFeatured = async () => {
       try {
-        const res = await tournamentsApi.getTournaments({
+        const res = await tournamentsApi.getPublicTournaments({
           page: 1,
           limit: 5,
           status: 'REGISTRATION_OPEN',
-          tournamentType: 'PUBLIC'
         });
         if (res && res.data) {
           setFeaturedTournaments(res.data);
@@ -109,6 +116,33 @@ export default function TournamentsListPage() {
     fetchRegions();
     fetchFeatured();
   }, []);
+
+  // Tự động tải Quận / Huyện khi chọn Tỉnh / Thành phố
+  useEffect(() => {
+    if (!selectedRegion) {
+      return;
+    }
+
+    const loadDistricts = async () => {
+      try {
+        const cleanRegionName = selectedRegion.trim().toLowerCase();
+        const foundRegion = regions.find(r => 
+          r.name.replace(/^(Thành phố|Tỉnh)\s+/i, '').trim().toLowerCase() === cleanRegionName
+        );
+
+        if (foundRegion) {
+          const res = await regionsApi.getDistricts(foundRegion.code);
+          if (res) {
+            setDistricts(res);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch districts", error);
+      }
+    };
+
+    loadDistricts();
+  }, [selectedRegion, regions]);
 
   useEffect(() => {
     if (!user?.id) {
@@ -143,14 +177,42 @@ export default function TournamentsListPage() {
     const fetchTournaments = async () => {
       setIsLoading(true);
       try {
-        const res = await tournamentsApi.getTournaments({ 
+        let locationQuery = selectedRegion || undefined;
+        if (selectedRegion && selectedDistrict) {
+          locationQuery = `${selectedDistrict}, ${selectedRegion}`;
+        }
+
+        // Map lựa chọn nội dung đấu sang matchType và genderRestriction
+        let matchType: string | undefined;
+        let genderRestriction: string | undefined;
+
+        if (selectedContent === 'SINGLE_MALE') {
+          matchType = 'SINGLES';
+          genderRestriction = 'MALE';
+        } else if (selectedContent === 'SINGLE_FEMALE') {
+          matchType = 'SINGLES';
+          genderRestriction = 'FEMALE';
+        } else if (selectedContent === 'DOUBLE_MALE') {
+          matchType = 'DOUBLES';
+          genderRestriction = 'MALE';
+        } else if (selectedContent === 'DOUBLE_FEMALE') {
+          matchType = 'DOUBLES';
+          genderRestriction = 'FEMALE';
+        } else if (selectedContent === 'DOUBLE_MIXED') {
+          matchType = 'MIXED_DOUBLES';
+        }
+
+        const res = await tournamentsApi.getPublicTournaments({ 
           page, 
           limit: 9, 
           search: searchTerm || undefined,
           categoryId: selectedCategoryId || undefined,
           status: selectedStatus || undefined,
-          region: selectedRegion || undefined,
-          tournamentType: 'PUBLIC'
+          region: locationQuery,
+          matchType,
+          genderRestriction,
+          startDate: startDate || undefined,
+          endDate: endDate || undefined,
         });
         setTournaments(sortDiscoveryTournaments(res.data || []));
         setTotalPages(res.meta.totalPages);
@@ -161,11 +223,7 @@ export default function TournamentsListPage() {
       }
     };
     fetchTournaments();
-  }, [page, searchTerm, selectedCategoryId, selectedStatus, selectedRegion]);
-
-  const handleSearch = () => {
-    setPage(1); // Reset to page 1 on new search
-  };
+  }, [page, searchTerm, selectedCategoryId, selectedStatus, selectedRegion, selectedDistrict, selectedContent, startDate, endDate]);
 
   const handleToggleFollow = async (tournament: Tournament) => {
     if (!user?.id) return;
@@ -211,13 +269,11 @@ export default function TournamentsListPage() {
         </p>
       </div>
 
-      {/* Featured Hero Banner Carousel */}
       <TournamentHeroBanner tournaments={featuredTournaments} />
 
-
-
       {/* Filter Bar */}
-      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
+      <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-4">
+        {/* Hàng bộ lọc chính */}
         <div className="flex flex-wrap gap-4 items-end">
           <div className="flex-grow min-w-[200px]">
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Tìm kiếm</label>
@@ -276,34 +332,132 @@ export default function TournamentsListPage() {
             </div>
           </div>
 
+          {/* Ô Lọc Nội dung thi đấu (Đổi từ ô Khu vực ban đầu) */}
           <div className="w-full md:w-auto min-w-[150px]">
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Khu vực</label>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Nội dung</label>
             <div className="relative">
               <select 
-                value={selectedRegion}
+                value={selectedContent}
                 onChange={(e) => {
-                  setSelectedRegion(e.target.value);
+                  setSelectedContent(e.target.value);
                   setPage(1);
                 }}
                 className="w-full pl-3 pr-10 py-2 border border-slate-200 rounded-xl text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50/50 text-slate-900 font-bold"
               >
                 <option value="">Tất cả</option>
-                {regions.map(reg => (
-                  <option key={reg.code} value={reg.name.replace(/^(Thành phố|Tỉnh)\s+/i, '')}>{reg.name}</option>
-                ))}
+                <option value="SINGLE_MALE">Đơn Nam</option>
+                <option value="SINGLE_FEMALE">Đơn Nữ</option>
+                <option value="DOUBLE_MALE">Đôi Nam</option>
+                <option value="DOUBLE_FEMALE">Đôi Nữ</option>
+                <option value="DOUBLE_MIXED">Đôi Nam Nữ</option>
               </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-450 w-4.5 h-4.5 pointer-events-none" />
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-455 w-4.5 h-4.5 pointer-events-none" />
             </div>
           </div>
 
           <button 
-            onClick={handleSearch}
-            className="w-full md:w-auto bg-slate-100 hover:bg-slate-200 text-slate-900 px-4 py-2.5 rounded-xl text-xs font-extrabold border border-slate-200 transition-colors flex items-center justify-center gap-2 h-[42px] cursor-pointer"
+            onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+            className={`w-full md:w-auto px-4 py-2.5 rounded-xl text-xs font-extrabold border transition-all flex items-center justify-center gap-2 h-[42px] cursor-pointer ${
+              showAdvancedFilters 
+                ? 'bg-indigo-50 border-indigo-250 text-indigo-700 shadow-sm' 
+                : 'bg-slate-100 hover:bg-slate-200 text-slate-900 border-slate-200'
+            }`}
           >
             <SlidersHorizontal className="w-4 h-4" />
             Lọc thêm
           </button>
         </div>
+
+        {/* Panel Lọc Nâng Cao trượt mở bên dưới */}
+        {showAdvancedFilters && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-slate-50 rounded-xl border border-slate-150 animate-in fade-in slide-in-from-top-2 duration-200">
+            {/* Tỉnh / Thành phố */}
+            <div>
+              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Tỉnh / Thành phố</label>
+              <div className="relative">
+                <select 
+                  value={selectedRegion}
+                  onChange={(e) => {
+                    const newRegion = e.target.value;
+                    setSelectedRegion(newRegion);
+                    setSelectedDistrict('');
+                    if (!newRegion) {
+                      setDistricts([]);
+                    }
+                    setPage(1);
+                  }}
+                  className="w-full pl-3 pr-10 py-1.5 border border-slate-200 rounded-lg text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-950 font-bold"
+                >
+                  <option value="">Tất cả</option>
+                  {regions.map(reg => (
+                    <option key={reg.code} value={reg.name.replace(/^(Thành phố|Tỉnh)\s+/i, '')}>{reg.name}</option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-450 w-4 h-4 pointer-events-none" />
+              </div>
+            </div>
+
+            {/* Quận / Huyện */}
+            <div>
+              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Quận / Huyện</label>
+              <div className="relative">
+                <select 
+                  disabled={!selectedRegion || districts.length === 0}
+                  value={selectedDistrict}
+                  onChange={(e) => {
+                    setSelectedDistrict(e.target.value);
+                    setPage(1);
+                  }}
+                  className="w-full pl-3 pr-10 py-1.5 border border-slate-200 rounded-lg text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-950 font-bold disabled:opacity-50 disabled:bg-slate-100"
+                >
+                  <option value="">Tất cả</option>
+                  {districts.map(dist => (
+                    <option key={dist.code} value={dist.name}>{dist.name}</option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-450 w-4 h-4 pointer-events-none" />
+              </div>
+            </div>
+
+            {/* Lọc từ ngày */}
+            <div>
+              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Diễn ra từ ngày</label>
+              <input 
+                type={startDate ? "date" : "text"}
+                placeholder="dd/mm/yyyy"
+                onFocus={(e) => (e.target.type = "date")}
+                onBlur={(e) => {
+                  if (!e.target.value) e.target.type = "text";
+                }}
+                value={startDate}
+                onChange={(e) => {
+                  setStartDate(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-950 font-bold h-[33.5px]"
+              />
+            </div>
+
+            {/* Lọc đến ngày */}
+            <div>
+              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Diễn ra đến ngày</label>
+              <input 
+                type={endDate ? "date" : "text"}
+                placeholder="dd/mm/yyyy"
+                onFocus={(e) => (e.target.type = "date")}
+                onBlur={(e) => {
+                  if (!e.target.value) e.target.type = "text";
+                }}
+                value={endDate}
+                onChange={(e) => {
+                  setEndDate(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-950 font-bold h-[33.5px]"
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Grid Cards */}
@@ -323,12 +477,13 @@ export default function TournamentsListPage() {
           {tournaments.map(tournament => {
             const { startDay, endDay, startMonth, endMonth } = getParsedDates(tournament.startDate, tournament.endDate);
             const city = tournament.locationAddress ? tournament.locationAddress.split(',').slice(-1)[0]?.trim() || 'Việt Nam' : 'Chưa cập nhật';
+            const registrationModeUi = getRegistrationModeUi(tournament.tournamentConfig?.registrationMode);
             
             return (
               <Link 
                 key={tournament.id} 
                 href={`/tournaments/${tournament.id}`}
-                className="bg-white rounded-xl border border-slate-200 shadow-sm hover:border-slate-300 hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col group cursor-pointer"
+                className="bg-white rounded-xl border border-slate-200 shadow-sm hover:border-slate-350 hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col group cursor-pointer"
               >
                 {/* Top: Large Image Banner */}
                 <div className="relative aspect-[2.1/1] w-full bg-slate-100 overflow-hidden">
@@ -434,7 +589,7 @@ export default function TournamentsListPage() {
                         })()}
                         <span className="text-slate-500">{tournament.category?.name || 'MULTISPORT'}</span>
                         
-                        <span className="text-slate-350 text-slate-300">•</span>
+                        <span className="text-slate-300">•</span>
                         
                         {/* Ranked or Unranked Badge */}
                         <span className={`px-1.5 py-0.5 rounded text-[8px] font-extrabold ${
@@ -451,6 +606,15 @@ export default function TournamentsListPage() {
                             <span className="text-slate-300">•</span>
                             <span className="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded text-[8px] font-extrabold border border-blue-200">
                               Chuỗi giải đấu
+                            </span>
+                          </>
+                        )}
+
+                        {registrationModeUi.mode !== 'OPEN' && (
+                          <>
+                            <span className="text-slate-300">•</span>
+                            <span className={`rounded border px-1.5 py-0.5 text-[8px] font-extrabold ${registrationModeUi.badgeClassName}`}>
+                              {registrationModeUi.badgeLabel}
                             </span>
                           </>
                         )}

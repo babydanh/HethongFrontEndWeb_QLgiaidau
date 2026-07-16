@@ -97,13 +97,133 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
               Lưu ý quan trọng trước khi công bố:
             </span>
             <p className="mb-2 font-medium">Thông tin cơ bản phải được điền đầy đủ và chính xác. Vui lòng kiểm tra kỹ các trường sau trước khi công bố:</p>
-            <ul className="list-disc pl-6 space-y-0.5 mt-1 font-bold text-amber-900">
-              <li>Lệ phí thi đấu</li>
-              <li>Địa điểm / Sân thi đấu</li>
-              <li>Thời gian Mở & Đóng đăng ký</li>
-              <li>Hình thức thi đấu (Loại trực tiếp / Nhánh thắng thua / Vòng tròn)</li>
-            </ul>
-            <p className="mt-2 text-xs italic text-amber-700 font-medium">* Ngày khai mạc & bế mạc có thể linh động cập nhật sau.</p>
+            {(() => {
+              // Tự động kiểm tra tiến trình đã điền thông tin của giải đấu theo luật backend mới
+              const hasDescription = tournament.description != null && tournament.description.trim() !== '';
+              const hasDivisions = tournament.divisions && tournament.divisions.length > 0;
+              const hasVenue = (tournament.venueId != null) || (tournament.locationAddress && tournament.locationAddress.trim() !== '');
+              
+              // Validate ngày hợp lệ
+              const hasValidDates = tournament.registrationStartDate && 
+                                    tournament.registrationEndDate && 
+                                    tournament.startDate && 
+                                    (new Date(tournament.registrationStartDate) < new Date(tournament.registrationEndDate)) &&
+                                    (new Date(tournament.registrationEndDate) < new Date(tournament.startDate));
+
+              const hasContact = tournament.contactInfo && 
+                                 (typeof tournament.contactInfo === 'object') && 
+                                 ((tournament.contactInfo as Record<string, string>).email || (tournament.contactInfo as Record<string, string>).phone);
+
+              return (
+                <div className="space-y-3 mt-3">
+                  {/* Mô tả giải đấu */}
+                  <div className="flex items-center justify-between text-xs font-bold bg-white/40 p-2 rounded-lg border border-slate-100">
+                    <div className="flex items-center gap-2">
+                      <span className={`w-5 h-5 rounded-md flex items-center justify-center border transition-all ${
+                        hasDescription ? 'bg-emerald-500 border-emerald-500 text-white shadow-sm shadow-emerald-500/10' : 'border-rose-300 bg-rose-50 text-rose-600'
+                      }`}>
+                        {hasDescription ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : <span className="font-extrabold text-[10px]">✕</span>}
+                      </span>
+                      <span className={hasDescription ? 'text-slate-400 line-through' : 'text-slate-700'}>
+                        Thông tin cơ bản giải đấu
+                      </span>
+                    </div>
+                    {!hasDescription && (
+                      <span className="text-[9px] font-black text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-150 shrink-0">
+                        Chưa điền
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Bảng thi đấu */}
+                  <div className="flex items-center justify-between text-xs font-bold bg-white/40 p-2 rounded-lg border border-slate-100">
+                    <div className="flex items-center gap-2">
+                      <span className={`w-5 h-5 rounded-md flex items-center justify-center border transition-all ${
+                        hasDivisions ? 'bg-emerald-500 border-emerald-500 text-white shadow-sm shadow-emerald-500/10' : 'border-rose-300 bg-rose-50 text-rose-600'
+                      }`}>
+                        {hasDivisions ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : <span className="font-extrabold text-[10px]">✕</span>}
+                      </span>
+                      <span className={hasDivisions ? 'text-slate-400 line-through' : 'text-slate-700'}>
+                        Có ít nhất 1 bảng thi đấu (Đơn/Đôi Nam Nữ)
+                      </span>
+                    </div>
+                    {!hasDivisions && (
+                      <span className="text-[9px] font-black text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-150 shrink-0">
+                        Thiếu bảng
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Địa điểm */}
+                  <div className="flex items-center justify-between text-xs font-bold bg-white/40 p-2 rounded-lg border border-slate-100">
+                    <div className="flex items-center gap-2">
+                      <span className={`w-5 h-5 rounded-md flex items-center justify-center border transition-all ${
+                        hasVenue ? 'bg-emerald-500 border-emerald-500 text-white shadow-sm shadow-emerald-500/10' : 'border-rose-300 bg-rose-50 text-rose-600'
+                      }`}>
+                        {hasVenue ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : <span className="font-extrabold text-[10px]">✕</span>}
+                      </span>
+                      <span className={hasVenue ? 'text-slate-400 line-through' : 'text-slate-700'}>
+                        Địa điểm / Sân thi đấu
+                      </span>
+                    </div>
+                    {!hasVenue && (
+                      <span className="text-[9px] font-black text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-150 shrink-0">
+                        Chưa điền
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Khung thời gian */}
+                  <div className="flex items-center justify-between text-xs font-bold bg-white/40 p-2 rounded-lg border border-slate-100">
+                    <div className="flex items-center gap-2">
+                      <span className={`w-5 h-5 rounded-md flex items-center justify-center border transition-all ${
+                        hasValidDates ? 'bg-emerald-500 border-emerald-500 text-white shadow-sm shadow-emerald-500/10' : 'border-rose-300 bg-rose-50 text-rose-600'
+                      }`}>
+                        {hasValidDates ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : <span className="font-extrabold text-[10px]">✕</span>}
+                      </span>
+                      <span className={hasValidDates ? 'text-slate-400 line-through' : 'text-slate-700'}>
+                        Thời gian đăng ký & khai mạc hợp lệ
+                      </span>
+                    </div>
+                    {!hasValidDates && (
+                      <span className="text-[9px] font-black text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-150 shrink-0">
+                        Sai logic ngày
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Thông tin liên hệ */}
+                  <div className="flex items-center justify-between text-xs font-bold bg-white/40 p-2 rounded-lg border border-slate-100">
+                    <div className="flex items-center gap-2">
+                      <span className={`w-5 h-5 rounded-md flex items-center justify-center border transition-all ${
+                        hasContact ? 'bg-emerald-500 border-emerald-500 text-white shadow-sm shadow-emerald-500/10' : 'border-rose-300 bg-rose-50 text-rose-600'
+                      }`}>
+                        {hasContact ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : <span className="font-extrabold text-[10px]">✕</span>}
+                      </span>
+                      <span className={hasContact ? 'text-slate-400 line-through' : 'text-slate-700'}>
+                        Thông tin liên hệ BTC (Email / Số điện thoại)
+                      </span>
+                    </div>
+                    {!hasContact && (
+                      <span className="text-[9px] font-black text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-150 shrink-0">
+                        Chưa điền
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
+            
+            {/* Ràng buộc & Khóa thông tin sau khi công bố */}
+            <div className="mt-4 pt-3 border-t border-amber-200/60 space-y-1.5 text-[11px] text-amber-900 font-semibold">
+              <span className="block text-xs font-extrabold text-amber-950 uppercase tracking-wider">🔒 RÀNG BUỘC KHI ĐÃ CÔNG BỐ:</span>
+              <ul className="list-disc pl-4 space-y-1 text-slate-650 font-medium">
+                <li><strong className="text-amber-900">Không thể sửa đổi:</strong> Thể loại môn thể thao, Phân hạng giải đấu, Lệ phí công bố, Lệ phí thi đấu, và Cấu hình phân chia hình thức (nếu đã mở).</li>
+                <li><strong className="text-amber-900">Bị khóa thêm/xóa:</strong> Không thể thêm mới hay xóa bớt các Bảng thi đấu hiện tại.</li>
+                <li><strong className="text-emerald-800">Vẫn có thể điều chỉnh linh hoạt:</strong> Lịch thi đấu cụ thể, Vận động viên đặc cách, địa điểm sân bãi và luật ghi điểm từng vòng.</li>
+              </ul>
+            </div>
+            <p className="mt-3 text-[10px] italic text-amber-700 font-semibold">* Ngày khai mạc & bế mạc có thể linh động cập nhật sau.</p>
           </div>
           <Button
             onClick={onPublish}

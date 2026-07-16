@@ -24,6 +24,7 @@ import {
 import { Tournament, TournamentParticipant } from '@/types/tournament';
 import { Division } from '@/features/tournaments/api';
 import { formatDate } from '@/utils/format';
+import CountdownTimer from '@/components/shared/CountdownTimer';
 import {
   getParticipantStatusClassName,
   getParticipantStatusLabel,
@@ -78,6 +79,17 @@ interface RegistrationTabProps {
   handleAssignWildcard: () => void;
   handleRemoveWildcard?: (participantId: string) => Promise<void>;
   onCopyInviteLink: () => void;
+  // ELO Constraints
+  eloEnabled: boolean;
+  setEloEnabled: (val: boolean) => void;
+  eloMin: number;
+  setEloMin: (val: number) => void;
+  eloMax: number;
+  setEloMax: (val: number) => void;
+  eloMaxCombined: number;
+  setEloMaxCombined: (val: number) => void;
+  eloMaxGap: number;
+  setEloMaxGap: (val: number) => void;
   // Seeding
   seedingMethod: 'ELO' | 'RANDOM' | 'MANUAL';
   setSeedingMethod: (val: 'ELO' | 'RANDOM' | 'MANUAL') => void;
@@ -125,6 +137,16 @@ export function RegistrationTab({
   handleClearMockData,
   handleAssignWildcard,
   onCopyInviteLink,
+  eloEnabled,
+  setEloEnabled,
+  eloMin,
+  setEloMin,
+  eloMax,
+  setEloMax,
+  eloMaxCombined,
+  setEloMaxCombined,
+  eloMaxGap,
+  setEloMaxGap,
   seedingMethod,
   setSeedingMethod,
   isAutoSeeding,
@@ -258,76 +280,159 @@ export function RegistrationTab({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Chế độ nhận đăng ký */}
-            <div className="flex flex-col gap-2 bg-slate-50/50 border border-slate-150 p-5 rounded-2xl">
-              <label className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-450">Chế độ nhận đăng ký</label>
-              <select
-                value={registrationMode}
-                onChange={(e) => {
-                  const mode = e.target.value as 'OPEN' | 'APPROVAL' | 'INVITE_ONLY';
-                  setRegistrationMode(mode);
-                  if (mode === 'INVITE_ONLY') {
-                    setVisibility('PRIVATE');
-                  } else {
-                    setVisibility('PUBLIC');
-                  }
-                }}
-                className="mt-1 h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-semibold text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-              >
-                <option value="OPEN">Tự do (Open)</option>
-                <option value="APPROVAL">Xét duyệt (Approval)</option>
-                <option value="INVITE_ONLY">Chỉ nhận mã mời (Invite Only)</option>
-              </select>
-              <p className="text-xs font-semibold text-slate-400 leading-relaxed mt-2">
-                {registrationMode === 'OPEN' && 'Mọi VĐV đăng ký tham gia được chốt danh sách và tham gia giải ngay lập tức.'}
-                {registrationMode === 'APPROVAL' && 'Đăng ký của VĐV sẽ ở trạng thái chờ duyệt. BTC xét duyệt hồ sơ thủ công.'}
-                {registrationMode === 'INVITE_ONLY' && 'Chỉ những ai có link hoặc mã mời mới có thể truy cập và đăng ký tham gia.'}
-              </p>
+            {/* Cột 1: Chế độ & Quyền truy cập */}
+            <div className="space-y-4 bg-slate-50/60 border border-slate-100 p-5 rounded-2xl">
+              <div>
+                <h4 className="text-xs font-black uppercase tracking-wider text-slate-500 mb-3">Quyền truy cập & Xét duyệt</h4>
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-500">Hiển thị giải đấu</label>
+                  <select
+                    value={visibility}
+                    onChange={(e) => setVisibility(e.target.value as 'PUBLIC' | 'PRIVATE')}
+                    className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-xs font-bold text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  >
+                    <option value="PUBLIC">Công khai (Tìm kiếm được)</option>
+                    <option value="PRIVATE">Không niêm yết (Chỉ truy cập qua link)</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-500">Chế độ nhận đăng ký</label>
+                  <select
+                    value={registrationMode}
+                    onChange={(e) => setRegistrationMode(e.target.value as 'OPEN' | 'APPROVAL' | 'INVITE_ONLY')}
+                    className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-xs font-bold text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  >
+                    <option value="OPEN">Tự do (Vào thẳng danh sách)</option>
+                    <option value="APPROVAL">Xét duyệt (Chờ BTC phê duyệt)</option>
+                    <option value="INVITE_ONLY">Chỉ nhận mã mời (Cần mã Code)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-slate-200/60 space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className={`w-2.5 h-2.5 rounded-full ${
+                    registrationMode === 'INVITE_ONLY' ? 'bg-amber-500 animate-pulse' :
+                    registrationMode === 'APPROVAL' ? 'bg-blue-500' : 'bg-emerald-500'
+                  }`} />
+                  <span className="text-xs font-black text-slate-800 uppercase tracking-wider">
+                    {registrationMode === 'INVITE_ONLY' && 'Đăng ký đóng kín'}
+                    {registrationMode === 'APPROVAL' && 'Xét duyệt thủ công'}
+                    {registrationMode === 'OPEN' && 'Mở tự do'}
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-400 font-semibold leading-relaxed">
+                  {registrationMode === 'OPEN' && 'Mọi VĐV đăng ký tham gia được chốt danh sách và tham gia giải ngay lập tức.'}
+                  {registrationMode === 'APPROVAL' && 'Đăng ký của VĐV sẽ ở trạng thái chờ duyệt. BTC xét duyệt hồ sơ thủ công.'}
+                  {registrationMode === 'INVITE_ONLY' && 'Chỉ những ai có link hoặc mã mời mới có thể truy cập và đăng ký tham gia.'}
+                </p>
+              </div>
             </div>
 
-            {/* Mở đăng ký */}
-            <div className="flex flex-col justify-between">
-              <DateTimePicker
-                label="Mở đăng ký vào lúc"
-                value={registrationStartDate}
-                onChange={setRegistrationStartDate}
-              />
-              <div className="hidden md:block h-6" />
+            {/* Cột 2: Khung thời gian nhận đăng ký */}
+            <div className="space-y-4 bg-slate-50/60 border border-slate-100 p-5 rounded-2xl flex flex-col justify-between">
+              <div>
+                <h4 className="text-xs font-black uppercase tracking-wider text-slate-500 mb-3">Khung thời gian đăng ký</h4>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <DateTimePicker
+                    label="Thời gian mở đăng ký"
+                    value={registrationStartDate}
+                    onChange={setRegistrationStartDate}
+                  />
+                  {registrationStartDate && (
+                    <div className="mt-1">
+                      <CountdownTimer
+                        targetDate={registrationStartDate}
+                        labels={{ active: 'Mở đăng ký sau', expired: 'Đã mở đăng ký' }}
+                        variant="info"
+                        size="sm"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <DateTimePicker
+                    label="Thời gian đóng đăng ký"
+                    value={registrationEndDate}
+                    onChange={setRegistrationEndDate}
+                  />
+                  {registrationEndDate && (
+                    <div className="mt-1">
+                      <CountdownTimer
+                        targetDate={registrationEndDate}
+                        labels={{ active: 'Đóng đăng ký sau', expired: 'Đã đóng đăng ký' }}
+                        variant="warning"
+                        size="sm"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <p className="text-[11px] text-slate-400 font-semibold leading-relaxed pt-2 border-t border-slate-200/60 mt-3">
+                💡 Lưu ý: Trạng thái đóng/mở đăng ký sẽ tự động cập nhật theo dòng thời gian thiết lập ở trên.
+              </p>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Trạng thái đường dẫn */}
-            <div className="flex flex-col gap-2 bg-slate-50/50 border border-slate-150 p-5 rounded-2xl justify-center">
-              <span className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-455">
-                Trạng thái đường dẫn
-              </span>
-              <div className="flex items-center gap-2 mt-1">
-                <span className={`w-2.5 h-2.5 rounded-full ${
-                  registrationMode === 'INVITE_ONLY' ? 'bg-amber-500 animate-pulse' :
-                  registrationMode === 'APPROVAL' ? 'bg-blue-500' : 'bg-emerald-500'
-                }`} />
-                <span className="text-xs font-black text-slate-800 uppercase tracking-wider">
-                  {registrationMode === 'INVITE_ONLY' && 'Đường đăng ký kín'}
-                  {registrationMode === 'APPROVAL' && 'Xét duyệt thủ công'}
-                  {registrationMode === 'OPEN' && 'Đăng ký tự do'}
-                </span>
-              </div>
-              <p className="text-xs font-semibold text-slate-400 leading-relaxed mt-1">
-                {registrationMode === 'INVITE_ONLY' && 'Phù hợp cho giải đấu mời kín, ghép cặp có chọn lọc và kiểm soát.'}
-                {registrationMode === 'APPROVAL' && 'VĐV đăng ký công khai nhưng BTC cần phê duyệt hồ sơ trước khi thi đấu.'}
-                {registrationMode === 'OPEN' && 'Giải đấu mở đăng ký tự do công khai, VĐV tự động hoàn tất đăng ký.'}
-              </p>
-            </div>
-
-            {/* Đóng đăng ký */}
-            <div>
-              <DateTimePicker
-                label="Đóng đăng ký vào lúc"
-                value={registrationEndDate}
-                onChange={setRegistrationEndDate}
+          {/* ELO Constraints */}
+          <div className="bg-slate-50/60 border border-slate-100 rounded-2xl p-5 space-y-3">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={eloEnabled}
+                onChange={(e) => setEloEnabled(e.target.checked)}
+                className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
               />
-            </div>
+              <div>
+                <span className="text-sm font-bold text-slate-800">Ràng buộc ELO</span>
+                <p className="text-xs text-slate-500">Giới hạn trình độ VĐV khi đăng ký</p>
+              </div>
+            </label>
+
+            {eloEnabled && (() => {
+              const selDiv = divisions.find(d => d.id === selectedDivisionId);
+              const isDoubles = selDiv?.matchType === 'DOUBLES' || selDiv?.matchType === 'MIXED_DOUBLES';
+              return (
+              <div className="grid grid-cols-2 gap-3 pt-2">
+                <div className="flex flex-col gap-1">
+                  <label className="text-[11px] font-bold text-slate-500">ELO tối thiểu</label>
+                  <input type="number" min={0} max={3000} value={eloMin}
+                    onChange={(e) => setEloMin(Math.max(0, Number(e.target.value)))}
+                    className="h-9 rounded-lg border border-slate-200 px-3 text-sm font-bold bg-white" />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[11px] font-bold text-slate-500">ELO tối đa</label>
+                  <input type="number" min={0} max={3000} value={eloMax}
+                    onChange={(e) => setEloMax(Math.max(0, Number(e.target.value)))}
+                    className="h-9 rounded-lg border border-slate-200 px-3 text-sm font-bold bg-white" />
+                </div>
+                {isDoubles && (
+                  <>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[11px] font-bold text-slate-500">Tổng ELO tối đa (đôi)</label>
+                    <input type="number" min={0} max={6000} value={eloMaxCombined}
+                      onChange={(e) => setEloMaxCombined(Math.max(0, Number(e.target.value)))}
+                      className="h-9 rounded-lg border border-slate-200 px-3 text-sm font-bold bg-white" />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[11px] font-bold text-slate-500">Chênh lệch tối đa (đôi)</label>
+                    <input type="number" min={0} max={1000} value={eloMaxGap}
+                      onChange={(e) => setEloMaxGap(Math.max(0, Number(e.target.value)))}
+                      className="h-9 rounded-lg border border-slate-200 px-3 text-sm font-bold bg-white" />
+                  </div>
+                  </>
+                )}
+              </div>
+            )})()}
           </div>
 
           {!isTournamentDraft(tournament.status) && (
@@ -831,7 +936,7 @@ export function RegistrationTab({
                 {/* Player 1 Email */}
                 <Input
                   label="Email hoặc SĐT người chơi"
-                  placeholder="partner@baseline.vn hoặc 09xxxx"
+                  placeholder="partner@vndcsport.vn hoặc 09xxxx"
                   value={wildcardEmailOrPhone}
                   onChange={(e) => setWildcardEmailOrPhone(e.target.value)}
                   className="bg-white text-xs h-10"

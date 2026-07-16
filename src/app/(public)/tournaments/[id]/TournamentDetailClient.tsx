@@ -12,6 +12,9 @@ import MatchesTab from './components/MatchesTab';
 import RegisterModal from './components/RegisterModal';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import GalleryCarousel from '@/components/ui/GalleryCarousel';
+import { triggerShare } from '@/utils/share.util';
+import ShareModal from '@/components/common/ShareModal';
+import CountdownTimer from '@/components/shared/CountdownTimer';
 
 const InstagramIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
@@ -41,35 +44,8 @@ import {
   isTournamentRegistrationClosed,
   isTournamentUpcoming,
 } from '@/utils/tournament-status';
+import { getRegistrationModeUi } from '../registrationMode';
 
-/** Countdown đầy đủ giờ:phút:giây — dùng ở trang chi tiết */
-function FullCountdown({ targetDate }: { targetDate: string }) {
-  const [text, setText] = useState('');
-  useEffect(() => {
-    const update = () => {
-      const diff = new Date(targetDate).getTime() - Date.now();
-      if (diff <= 0) { setText('Đang mở đăng ký'); return; }
-      const d = Math.floor(diff / 86400000);
-      const h = Math.floor((diff % 86400000) / 3600000);
-      const m = Math.floor((diff % 3600000) / 60000);
-      const s = Math.floor((diff % 60000) / 1000);
-      if (d > 0) setText(`Còn ${d} ngày ${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`);
-      else setText(`Còn ${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`);
-    };
-    update();
-    const timer = setInterval(update, 1000);
-    return () => clearInterval(timer);
-  }, [targetDate]);
-  if (!text) return null;
-  return (
-    <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-xl">
-      <div className="flex items-center gap-2">
-        <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-        <span className="text-xs font-bold text-amber-700">{text}</span>
-      </div>
-    </div>
-  );
-}
 
 interface Props {
   tournamentId: string;
@@ -129,6 +105,22 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+
+  const handleShareClick = async () => {
+    if (!activeTournament) return;
+    const shareData = {
+      title: activeTournament.name,
+      text: `Hãy cùng tôi theo dõi và đăng ký giải đấu "${activeTournament.name}" trên VNDC Sport!`,
+      url: typeof window !== 'undefined' ? window.location.href : '',
+    };
+    
+    // Gọi Web Share API nếu có (trên mobile), nếu không (trên desktop) nó trả về false để mở Modal
+    const sharedNative = await triggerShare(shareData);
+    if (!sharedNative) {
+      setIsShareModalOpen(true);
+    }
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -280,8 +272,9 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
   const isRegistrationLocked = activeTournament.isRegistrationLocked;
   const isRegistrationExpired = activeTournament.registrationEndDate ? new Date() > new Date(activeTournament.registrationEndDate) : false;
   const isRegistrationOpen = isTournamentOpenForRegistration(activeTournament.status);
+  const registrationModeUi = getRegistrationModeUi(activeTournament.tournamentConfig?.registrationMode);
 
-  let registrationButtonLabel = 'Đăng ký ngay';
+  let registrationButtonLabel = registrationModeUi.ctaLabel;
   let isRegistrationButtonDisabled = false;
 
   if (isRegistrationOpen) {
@@ -393,8 +386,12 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                     if (fmt === 'SINGLE_ELIMINATION') return 'LOẠI TRỰC TIẾP';
                     if (fmt === 'DOUBLE_ELIMINATION') return 'NHÁNH THẮNG/THUA';
                     if (fmt === 'ROUND_ROBIN') return 'VÒNG TRÒN';
+                    if (fmt === 'GROUP_STAGE_KNOCKOUT') return 'VÒNG BẢNG + LOẠI TRỰC TIẾP';
                     return fmt;
                   })()}
+                </span>
+                <span className={`rounded-md border px-2.5 py-0.5 text-[10px] font-bold uppercase shadow-sm ${registrationModeUi.badgeClassName}`}>
+                  {registrationModeUi.badgeLabel}
                 </span>
               </div>
               
@@ -430,7 +427,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                 {isFollowing ? 'Đang theo dõi' : 'Theo dõi'}
               </Button>
             )}
-            <Button variant="outline" className="bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200/80 flex-1 md:flex-none font-bold shadow-sm">
+            <Button onClick={handleShareClick} variant="outline" className="bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200/80 flex-1 md:flex-none font-bold shadow-sm">
               <Share2 className="w-4 h-4 mr-2" /> Chia sẻ
             </Button>
             <ReportViolationButton
@@ -451,7 +448,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                 onClick={() => {
                   if (!isRegistrationButtonDisabled) {
                     const needsRegistrationPage = activeTournament.visibility === 'PRIVATE' || 
-                                                  activeTournament.tournamentConfig?.registrationMode === 'INVITE_ONLY' ||
+                                                  registrationModeUi.mode !== 'OPEN' ||
                                                   divisionsList.length > 0;
                     if (needsRegistrationPage) {
                       router.push(registerHref);
@@ -651,9 +648,48 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                     {formatDateRange(activeTournament.registrationStartDate, activeTournament.registrationEndDate)}
                   </div>
                 </div>
+
+                {/* Countdown based on tournament status */}
                 {isTournamentUpcoming(activeTournament.status) && activeTournament.registrationStartDate && (
-                  <FullCountdown targetDate={activeTournament.registrationStartDate} />
+                  <CountdownTimer
+                    targetDate={activeTournament.registrationStartDate}
+                    labels={{ active: 'Mở đăng ký sau', expired: 'Đã mở đăng ký' }}
+                    variant="info"
+                  />
                 )}
+                {isTournamentOpenForRegistration(activeTournament.status) && activeTournament.registrationEndDate && (
+                  <CountdownTimer
+                    targetDate={activeTournament.registrationEndDate}
+                    labels={{ active: 'Đóng đăng ký sau', expired: 'Đã đóng đăng ký' }}
+                    variant="warning"
+                  />
+                )}
+                {isTournamentRegistrationClosed(activeTournament.status) && activeTournament.startDate && (
+                  <CountdownTimer
+                    targetDate={activeTournament.startDate}
+                    labels={{ active: 'Khởi tranh sau', expired: 'Đã khởi tranh' }}
+                    variant="danger"
+                  />
+                )}
+                {isTournamentInProgress(activeTournament.status) && activeTournament.endDate && (
+                  <div>
+                    <CountdownTimer
+                      targetDate={activeTournament.endDate}
+                      labels={{ active: 'Kết thúc sau', expired: 'Đã kết thúc' }}
+                      variant="danger"
+                    />
+                    <p className="text-[10px] text-slate-400 mt-1 italic">Lịch có thể thay đổi</p>
+                  </div>
+                )}
+                {isTournamentCompleted(activeTournament.status) && (
+                  <div className="mt-2 p-2.5 border rounded-xl bg-slate-50 border-slate-200 text-slate-400">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-slate-400" />
+                      <span className="text-xs font-bold text-slate-400">Đã kết thúc</span>
+                    </div>
+                  </div>
+                )}
+
               </div>
 
               {/* Warnings and Info Banners */}
@@ -684,7 +720,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                   ) : (
                     <Link href={registerHref} className="block w-full">
                       <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl shadow-md cursor-pointer text-sm">
-                        Đăng ký ngay
+                        {registrationButtonLabel}
                       </Button>
                     </Link>
                   )}
@@ -764,6 +800,13 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
         entryFee={selectedDivision ? (Number(selectedDivision.entryFee) || 0) : 0}
         isOpen={isRegisterModalOpen} 
         onClose={() => setIsRegisterModalOpen(false)} 
+      />
+
+      <ShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        shareUrl={typeof window !== 'undefined' ? window.location.href : ''}
+        title={activeTournament.name}
       />
     </div>
   );

@@ -20,6 +20,7 @@ import {
 } from '@/utils/tournament-display';
 import { Copy, Check, Loader2, QrCode, Users, CreditCard, CheckCircle, AlertTriangle, ArrowRight, Trash2, Search, UserMinus, X } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { getRegistrationModeUi } from '../../../registrationMode';
 
 interface Props {
   tournament: Tournament;
@@ -49,6 +50,8 @@ const normalizeRegistrationParticipant = (
 
 export default function DoublesRegistrationFlow({ tournament, tournamentId, inviteCode, divisionId }: Props) {
   const router = useRouter();
+  const registrationModeUi = getRegistrationModeUi(tournament.tournamentConfig?.registrationMode);
+  const isApprovalMode = registrationModeUi.mode === 'APPROVAL';
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [teamName, setTeamName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -213,7 +216,13 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
           return;
         }
         setParticipant(part);
-        toast.success(partnerEmailOrPhone ? 'Đăng ký ghép cặp thành công!' : 'Tạo đội thành công! Bây giờ hãy gửi link mời đồng đội.');
+        toast.success(
+          isApprovalMode && isParticipantReadyForNextStep(part.teamStatus)
+            ? 'Đã gửi yêu cầu tham gia. Vui lòng chờ BTC duyệt.'
+            : partnerEmailOrPhone
+              ? 'Đăng ký ghép cặp thành công!'
+              : 'Tạo đội thành công! Bây giờ hãy gửi link mời đồng đội.',
+        );
         if (isParticipantReadyForNextStep(part.teamStatus)) {
           setStep(3);
         } else {
@@ -263,7 +272,7 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
     if (participant?.isPaid && Number(tournament.entryFee) > 0) {
       try {
         const freshProfile = await usersApi.getProfile();
-        const profile = (freshProfile as any).data || freshProfile;
+        const profile = freshProfile;
         setBankName(profile?.bankName || '');
         setBankAccountNumber(profile?.bankAccountNumber || '');
         setBankAccountName(profile?.bankAccountName || '');
@@ -354,7 +363,9 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
         <ArrowRight className="w-4 h-4 text-slate-300" />
         <div className="flex items-center gap-1.5">
           <span className={`flex items-center justify-center w-5 h-5 rounded-full text-[10px] ${step >= 3 ? 'bg-blue-600 text-white' : 'bg-slate-100'}`}>3</span>
-          <span className={step === 3 ? 'text-blue-600 font-extrabold' : ''}>Thanh Toán / Hoàn Tất</span>
+          <span className={step === 3 ? 'text-blue-600 font-extrabold' : ''}>
+            {isApprovalMode ? 'Chờ BTC duyệt' : 'Thanh Toán / Hoàn Tất'}
+          </span>
         </div>
       </div>
 
@@ -608,9 +619,13 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
             <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 mb-2">
               <CheckCircle className="w-6 h-6" />
             </div>
-            <h3 className="text-lg font-black text-slate-900">Đăng ký đội thành công!</h3>
+            <h3 className="text-lg font-black text-slate-900">
+              {isApprovalMode ? 'Đã gửi yêu cầu tham gia!' : 'Đăng ký đội thành công!'}
+            </h3>
             <p className="text-slate-500 text-xs max-w-sm mx-auto">
-              Đội của bạn đã tập hợp đủ 2 thành viên thi đấu chính thức.
+              {isApprovalMode
+                ? 'Đội của bạn đã đủ thành viên và đang chờ BTC duyệt.'
+                : 'Đội của bạn đã tập hợp đủ 2 thành viên thi đấu chính thức.'}
             </p>
           </div>
 
@@ -638,7 +653,19 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
           </div>
 
           {/* Action Details */}
-          {Number(tournament.entryFee || 0) > 0 ? (
+          {isApprovalMode ? (
+            <div className="space-y-3">
+              <div className="rounded-xl border border-blue-100 bg-blue-50 p-4 text-center text-xs font-semibold text-blue-800">
+                BTC sẽ thông báo sau khi duyệt yêu cầu. Đội của bạn chưa cần thanh toán ở bước này.
+              </div>
+              <Button
+                onClick={() => router.push(`/tournaments/${tournament.id}`)}
+                className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 text-sm"
+              >
+                Xem trang giải đấu
+              </Button>
+            </div>
+          ) : Number(tournament.entryFee || 0) > 0 ? (
             <div className="space-y-4">
               <div className="bg-slate-50 border p-4 rounded-xl space-y-2">
                 <div className="flex justify-between items-center text-sm font-semibold">

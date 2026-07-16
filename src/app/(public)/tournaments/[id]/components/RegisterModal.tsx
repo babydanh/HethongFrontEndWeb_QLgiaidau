@@ -91,7 +91,7 @@ export default function RegisterModal({ tournamentId, tournamentName, entryFee, 
           <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
             <Input
               label="Tên đội / Tên thi đấu"
-              placeholder="Ví dụ: Baseline Team"
+              placeholder="Ví dụ: VNDC Sport"
               {...register('teamName')}
               error={errors.teamName?.message}
             />

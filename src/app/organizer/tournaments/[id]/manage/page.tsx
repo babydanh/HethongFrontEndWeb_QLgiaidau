@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Modal, ModalContent, ModalHeader, ModalTitle } from '@/components/ui/Modal';
 import { DateTimePicker } from '@/components/ui/Input';
-import { Calendar, AlertTriangle, ExternalLink, Plus, X, Loader2, Trash2, Lock, Trophy, Settings, DollarSign, FileText, Users } from 'lucide-react';
+import { Calendar, AlertTriangle, ExternalLink, Plus, X, Loader2, Trash2, Lock, Trophy, Settings, DollarSign, FileText, Users, Video } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { formatDate } from '@/utils/format';
 import { getSportLogo } from '@/constants/sports';
@@ -17,6 +17,7 @@ import { RegistrationTab } from './components/RegistrationTab';
 import { BracketTab } from './components/BracketTab';
 import { FinanceTab } from './components/FinanceTab';
 import { PermissionsTab } from './components/PermissionsTab';
+import { LivestreamTab } from './components/LivestreamTab';
 import { getSportRulePresentation } from '@/features/tournaments/sport-rules/presentation';
 import { getScoreEntryGuidance, getSportRulePresets } from '@/features/tournaments/sport-rules/ui-guidance';
 import { isTournamentRegistrationClosed, isTournamentRegistrationOpen } from '@/utils/tournament-status';
@@ -59,6 +60,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
     { key: 'schedule', label: 'Lịch & Địa điểm', icon: Calendar },
     { key: 'registration', label: 'Đăng ký', icon: Users },
     { key: 'bracket', label: 'Sơ đồ', icon: Trophy },
+    { key: 'livestream', label: 'Camera', icon: Video },
     { key: 'finance', label: 'Tài chính', icon: DollarSign },
     { key: 'permissions', label: 'Phân quyền', icon: FileText },
   ] as const;
@@ -149,20 +151,29 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
             </Button>
           </div>
           {s.divisions.length > 0 && (
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-3">
               {s.divisions.map(div => {
                 const isActive = div.id === s.selectedDivisionId;
+                const bracketFormatLabel = s.getBracketLabel(div.bracketType);
                 return (
                   <div key={div.id} className={`group inline-flex items-center rounded-xl border transition-all ${isActive ? 'border-blue-600 bg-blue-600 text-white shadow-md' : 'border-slate-200 bg-white text-slate-650 hover:border-blue-300'}`}>
-                    <button type="button" onClick={() => { s.setSelectedDivisionId(div.id); s.applyDivisionFormValues(div); }}
-                      className="flex items-center gap-2 px-3 py-2 text-left">
+                    <button 
+                      type="button" 
+                      onClick={() => { s.setSelectedDivisionId(div.id); s.applyDivisionFormValues(div); }}
+                      className="flex items-center gap-2.5 px-4 py-2.5 text-left cursor-pointer"
+                      title="Nhấn để xem chi tiết & thiết lập cấu hình riêng"
+                    >
                       <span className="min-w-0">
                         <span className="block max-w-[150px] truncate text-xs font-black">{div.name}</span>
-                        <span className={`block text-[10px] font-semibold ${isActive ? 'text-blue-100' : 'text-slate-400'}`}>{s.getFormatLabel(div.matchType, div.genderRestriction)}</span>
+                        <span className={`block text-[10px] font-semibold mt-0.5 ${isActive ? 'text-blue-100' : 'text-slate-400'}`}>
+                          {s.getFormatLabel(div.matchType, div.genderRestriction)} • <span className="underline">{bracketFormatLabel}</span>
+                        </span>
                       </span>
                     </button>
                     <button type="button" onClick={() => { s.requestDeleteDivision(div); }}
-                      className={`p-2 opacity-0 group-hover:opacity-100 transition-opacity ${isActive ? 'text-white hover:bg-blue-700' : 'text-slate-400 hover:text-rose-600'}`}>
+                      className={`p-2.5 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer ${isActive ? 'text-white hover:bg-blue-700' : 'text-slate-400 hover:text-rose-600'}`}
+                      title="Xóa hình thức này"
+                    >
                       <X className="w-3.5 h-3.5" />
                     </button>
                   </div>
@@ -173,7 +184,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
         </div>
 
         {/* Tabs nav */}
-        <div className="grid grid-cols-3 md:grid-cols-6 gap-1.5 mb-6 bg-white rounded-2xl border border-slate-200 p-1.5 shadow-sm">
+        <div className="grid grid-cols-3 md:grid-cols-7 gap-1.5 mb-6 bg-white rounded-2xl border border-slate-200 p-1.5 shadow-sm">
           {TABS.map(({ key, label, icon: Icon }) => (
             <button key={key} onClick={() => s.setActiveTab(key)}
               className={`flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-bold transition-all w-full cursor-pointer ${
@@ -251,6 +262,11 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
           handleRejectParticipant={s.handleRejectParticipant}
           handleSeedMockData={s.handleSeedMockData} handleClearMockData={s.handleClearMockData}
           handleAssignWildcard={s.handleAssignWildcard}
+          eloEnabled={s.eloEnabled} setEloEnabled={s.setEloEnabled}
+          eloMin={s.eloMin} setEloMin={s.setEloMin}
+          eloMax={s.eloMax} setEloMax={s.setEloMax}
+          eloMaxCombined={s.eloMaxCombined} setEloMaxCombined={s.setEloMaxCombined}
+          eloMaxGap={s.eloMaxGap} setEloMaxGap={s.setEloMaxGap}
           seedingMethod={s.seedingMethod} setSeedingMethod={s.setSeedingMethod}
           isAutoSeeding={s.isAutoSeeding}
           handleAutoSeed={s.handleAutoSeed}
@@ -279,14 +295,16 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
               isSavingConfig={s.isSavingConfig} handleSaveMatchConfig={s.handleSaveMatchConfig}
               tiebreakerMode={s.tiebreakerMode} setTiebreakerMode={s.setTiebreakerMode}
               roundsToPlay={s.roundsToPlay} setRoundsToPlay={s.setRoundsToPlay}
-              bracketType={s.bracketType}
+              bracketType={s.bracketTypeState}
+              setBracketTypeState={s.setBracketTypeState}
+              tournamentFormat={s.bracketType ?? undefined}
               rrWinPoints={s.rrWinPoints} setRrWinPoints={s.setRrWinPoints}
               rrLossPoints={s.rrLossPoints} setRrLossPoints={s.setRrLossPoints}
               rrTiebreakerRule={s.rrTiebreakerRule} setRrTiebreakerRule={s.setRrTiebreakerRule}
               numGroups={s.numGroups} setNumGroups={s.setNumGroups}
               teamsPerGroup={s.teamsPerGroup} setTeamsPerGroup={s.setTeamsPerGroup}
               teamsAdvancing={s.teamsAdvancing} setTeamsAdvancing={s.setTeamsAdvancing}
-              allowBestThird={s.allowBestThird} setAllowBestThird={s.setAllowBestThird}
+              divisionRoundConfig={s.divisions.find((division) => division.id === s.selectedDivisionId)?.roundConfig ?? null}
               gskPlayoffType={s.gskPlayoffType} setGskPlayoffType={s.setGskPlayoffType}
               gskSeedingType={s.gskSeedingType} setGskSeedingType={s.setGskSeedingType}
               gskRoundsToPlay={s.gskRoundsToPlay} setGskRoundsToPlay={s.setGskRoundsToPlay}
@@ -305,6 +323,8 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
           isSavingConfig={s.isSavingConfig} handleSaveFinanceConfig={s.handleSaveFinanceConfig}
           handlePayPlatformFee={s.handlePayPlatformFee} isPayingPlatformFee={s.isPayingPlatformFee}
           handleRequestPayout={s.handleRequestPayout} />}
+
+        {s.activeTab === 'livestream' && <LivestreamTab tournament={s.tournament} bracket={s.bracket} />}
 
         {s.activeTab === 'permissions' && <PermissionsTab id={id} tournament={s.tournament} />}
 
@@ -452,8 +472,10 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                   </select></div>
                 <div><label className="text-xs font-bold text-slate-500">Thể thức</label>
                   <select value={s.newDivisionBracketType} onChange={e => s.setNewDivisionBracketType(e.target.value)} className="w-full border rounded-lg p-2 text-sm">
-                    <option value="SINGLE_ELIMINATION">Loại trực tiếp</option><option value="DOUBLE_ELIMINATION">Nhánh thắng/thua</option>
+                    <option value="SINGLE_ELIMINATION">Loại trực tiếp</option>
+                    <option value="DOUBLE_ELIMINATION">Nhánh thắng/thua</option>
                     <option value="ROUND_ROBIN">Vòng tròn</option>
+                    <option value="GROUP_STAGE_KNOCKOUT">Vòng bảng + Loại trực tiếp</option>
                   </select></div>
                 <div className="flex justify-end gap-3">
                   <Button variant="outline" onClick={() => s.setIsCreateDivisionModalOpen(false)}>Hủy</Button>

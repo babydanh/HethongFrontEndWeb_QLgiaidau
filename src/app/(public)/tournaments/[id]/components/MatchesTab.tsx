@@ -4,9 +4,10 @@ import { useEffect, useState, useMemo } from 'react';
 import { extractMatchScores, getMatchScorePresentation, resolveMatchSportRules } from '@/features/matches/score-display';
 import { Tournament, BracketMatch } from '@/features/tournaments/api';
 import { matchesApi } from '@/features/matches/api';
-import { Calendar, Play, Trophy, MapPin, Info, LayoutGrid, CheckCircle } from 'lucide-react';
+import { Calendar, Play, Trophy, MapPin, Info, LayoutGrid } from 'lucide-react';
 import Link from 'next/link';
 import { formatDateTime } from '@/utils/format';
+import { buildRoundFilterOptions, getMatchRoundLabel } from '@/utils/match-round-label';
 
 interface Props {
   tournament: Tournament;
@@ -22,7 +23,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
   const [isLoading, setIsLoading] = useState(true);
   
   // States for filtering
-  const [selectedRound, setSelectedRound] = useState<number | 'ALL'>('ALL');
+  const [selectedRoundKey, setSelectedRoundKey] = useState<string | 'ALL'>('ALL');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL');
 
   useEffect(() => {
@@ -48,7 +49,9 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
             // Find rounds that contain ONGOING matches
             const ongoingMatch = fetchedMatches.find(m => m.status === 'ONGOING');
             if (ongoingMatch && ongoingMatch.roundNumber) {
-              setSelectedRound(ongoingMatch.roundNumber);
+              const options = buildRoundFilterOptions(fetchedMatches, tournament.format);
+              const activeOption = options.find(option => option.roundNumber === ongoingMatch.roundNumber);
+              setSelectedRoundKey(activeOption?.key ?? 'ALL');
               return;
             }
 
@@ -56,12 +59,14 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
             const scheduledMatches = fetchedMatches.filter(m => m.status === 'SCHEDULED');
             if (scheduledMatches.length > 0) {
               const minRound = Math.min(...scheduledMatches.map(m => m.roundNumber).filter(Boolean) as number[]);
-              setSelectedRound(minRound);
+              const options = buildRoundFilterOptions(fetchedMatches, tournament.format);
+              const activeOption = options.find(option => option.roundNumber === minRound);
+              setSelectedRoundKey(activeOption?.key ?? 'ALL');
               return;
             }
 
             // Default to 'ALL' if no specific active round is detected
-            setSelectedRound('ALL');
+            setSelectedRoundKey('ALL');
           }
         }
       } catch (error) {
@@ -72,13 +77,10 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
     };
 
     fetchMatches();
-  }, [divisionId, effectiveTournamentId]);
+  }, [divisionId, effectiveTournamentId, tournament.format]);
 
   // Extract unique rounds from current matches
-  const rounds = useMemo(() => {
-    const roundNums = Array.from(new Set(matches.map(m => m.roundNumber).filter(Boolean) as number[]));
-    return roundNums.sort((a, b) => a - b);
-  }, [matches]);
+  const roundOptions = useMemo(() => buildRoundFilterOptions(matches, tournament.format), [matches, tournament.format]);
 
   // Translate Stage Name helper
   const getStageVietnameseName = (rawName?: string | null) => {
@@ -108,8 +110,14 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
   const filteredMatches = useMemo(() => {
     return matches.filter(m => {
       // 1. Filter by round
-      if (selectedRound !== 'ALL' && m.roundNumber !== selectedRound) {
-        return false;
+      if (selectedRoundKey !== 'ALL') {
+        const selectedOption = roundOptions.find(option => option.key === selectedRoundKey);
+        if (!selectedOption) return false;
+
+        const matchRoundLabel = getMatchRoundLabel({ match: m, matches, tournamentFormat: tournament.format });
+        if (m.roundNumber !== selectedOption.roundNumber || matchRoundLabel !== selectedOption.label) {
+          return false;
+        }
       }
       // 2. Filter by status
       if (statusFilter === 'ONGOING' && m.status !== 'ONGOING') return false;
@@ -118,7 +126,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
       
       return true;
     }).sort((a, b) => a.matchOrder - b.matchOrder);
-  }, [matches, selectedRound, statusFilter]);
+  }, [matches, roundOptions, selectedRoundKey, statusFilter, tournament.format]);
 
   // Count items for badges
   const counts = useMemo(() => {
@@ -158,9 +166,16 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
   const renderParticipantName = (
     participant: { id: string; teamName: string; members?: { userId: string; fullName: string | null }[] } | null,
     isWinner: boolean,
-    isCompleted: boolean
+    isCompleted: boolean,
+    isOpponentBye: boolean = false
   ) => {
-    if (!participant) return <span className="text-slate-400 font-bold italic">Chờ xác định</span>;
+    if (!participant) {
+      return (
+        <span className="text-slate-400 font-bold italic">
+          {isOpponentBye ? 'Vào thẳng / Đi tiếp' : 'Chờ đối thủ'}
+        </span>
+      );
+    }
     if (participant.members && participant.members.length > 0) {
       return (
         <span className={`text-sm font-black flex items-center gap-1.5 flex-wrap ${
@@ -199,8 +214,18 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
 
       {/* Filter Options Panel */}
       <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm flex flex-col gap-4">
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2 text-sm font-black text-slate-900">
+            <LayoutGrid className="w-4 h-4 text-blue-600" />
+            <span>Lọc lịch sử đấu</span>
+          </div>
+          <p className="text-xs font-semibold text-slate-450">
+            Vòng bảng/round robin giữ số vòng; playoff và loại trực tiếp hiển thị theo mốc knockout.
+          </p>
+        </div>
+
         {/* Row 1: Status Filters */}
-        <div className="flex flex-wrap gap-2 items-center">
+        <div className="flex flex-wrap gap-2 items-center border-t border-slate-100 pt-3">
           <span className="text-xs font-black text-slate-400 uppercase tracking-wider mr-2">Trạng thái:</span>
           {(['ALL', 'ONGOING', 'SCHEDULED', 'COMPLETED'] as const).map((filter) => {
             const label = filter === 'ALL' ? 'Tất cả' : filter === 'ONGOING' ? 'Trực tiếp' : filter === 'SCHEDULED' ? 'Chưa đấu' : 'Đã xong';
@@ -223,14 +248,14 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
         </div>
 
         {/* Row 2: Round Slider */}
-        {rounds.length > 0 && (
+        {roundOptions.length > 0 && (
           <div className="flex items-center gap-2 border-t border-slate-100 pt-3 overflow-x-auto no-scrollbar">
             <span className="text-xs font-black text-slate-400 uppercase tracking-wider mr-2 shrink-0">Vòng đấu:</span>
             
             <button
-              onClick={() => setSelectedRound('ALL')}
+              onClick={() => setSelectedRoundKey('ALL')}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all border shrink-0 cursor-pointer ${
-                selectedRound === 'ALL'
+                selectedRoundKey === 'ALL'
                   ? 'bg-slate-900 text-white border-transparent'
                   : 'bg-white text-slate-650 border-slate-205 hover:border-slate-350 hover:text-slate-900'
               }`}
@@ -238,19 +263,22 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
               Tất cả vòng
             </button>
 
-            {rounds.map((r) => {
-              const isActive = selectedRound === r;
+            {roundOptions.map((roundOption) => {
+              const isActive = selectedRoundKey === roundOption.key;
               return (
                 <button
-                  key={r}
-                  onClick={() => setSelectedRound(r)}
+                  key={roundOption.key}
+                  onClick={() => setSelectedRoundKey(roundOption.key)}
                   className={`px-4 py-1.5 rounded-xl text-xs font-black transition-all border shrink-0 cursor-pointer ${
                     isActive
                       ? 'bg-blue-600 text-white border-transparent shadow-sm'
                       : 'bg-white text-slate-650 border-slate-205 hover:border-slate-350 hover:text-slate-900'
                   }`}
                 >
-                  Vòng {r}
+                  {roundOption.label}
+                  <span className={isActive ? 'ml-1 text-blue-100' : 'ml-1 text-slate-400'}>
+                    ({roundOption.count})
+                  </span>
                 </button>
               );
             })}
@@ -267,6 +295,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
             const isLive = match.status === 'ONGOING' || match.status === 'IN_PROGRESS';
             const isP1Winner = isCompleted && match.winnerId === match.participant1?.id;
             const isP2Winner = isCompleted && match.winnerId === match.participant2?.id;
+            const roundLabel = getMatchRoundLabel({ match, matches, tournamentFormat: tournament.format });
             
             const resolvedRules = resolveMatchSportRules({
               matchConfig: match.matchConfig,
@@ -295,7 +324,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                       </span>
                     )}
                     <span className={isLive ? 'text-rose-600 font-black animate-pulse' : 'text-slate-650'}>
-                      Vòng {match.roundNumber}
+                      {roundLabel}
                     </span>
                     <span className="text-slate-300">•</span>
                     <span className="uppercase text-slate-500">
@@ -315,14 +344,19 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                       ) : (
                         isCompleted && <div className="w-4 h-4 shrink-0" /> // Giữ khoảng trống đều đặn
                       )}
-                      {renderParticipantName(match.participant1, isP1Winner, isCompleted)}
+                      {renderParticipantName(
+                        match.participant1,
+                        isP1Winner,
+                        isCompleted,
+                        match.isBye || (match.participant2 == null && isCompleted)
+                      )}
                       {match.participant1?.seed && (
                         <span className="text-[9px] bg-slate-100 text-slate-400 border border-slate-200 px-1 py-0.2 rounded font-black shrink-0">
                           #{match.participant1.seed}
                         </span>
                       )}
                     </div>
-
+ 
                     {/* Scores set Display */}
                     <div className="flex items-center gap-1 shrink-0 font-mono">
                       {sets.map((set, idx) => (
@@ -344,7 +378,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                       )}
                     </div>
                   </div>
-
+ 
                   {/* Participant 2 */}
                   <div className="flex justify-between items-center gap-2">
                     <div className="flex items-center gap-2 min-w-0 max-w-[70%]">
@@ -353,7 +387,12 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                       ) : (
                         isCompleted && <div className="w-4 h-4 shrink-0" />
                       )}
-                      {renderParticipantName(match.participant2, isP2Winner, isCompleted)}
+                      {renderParticipantName(
+                        match.participant2,
+                        isP2Winner,
+                        isCompleted,
+                        match.isBye || (match.participant1 == null && isCompleted)
+                      )}
                       {match.participant2?.seed && (
                         <span className="text-[9px] bg-slate-100 text-slate-400 border border-slate-200 px-1 py-0.2 rounded font-black shrink-0">
                           #{match.participant2.seed}

@@ -126,8 +126,8 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
         const selectedOption = roundOptions.find(option => option.key === selectedRoundKey);
         if (!selectedOption) return false;
 
-        const matchRoundLabel = getMatchRoundLabel({ match: m, matches, tournamentFormat: tournament.format, bracketSize });
-        if (m.roundNumber !== selectedOption.roundNumber || matchRoundLabel !== selectedOption.label) {
+        const matchRoundLabelNoPrefix = getMatchRoundLabel({ match: m, matches, tournamentFormat: tournament.format, bracketSize, includePhasePrefix: false });
+        if (m.roundNumber !== selectedOption.roundNumber || matchRoundLabelNoPrefix !== selectedOption.label) {
           return false;
         }
       }
@@ -137,7 +137,17 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
       if (statusFilter === 'COMPLETED' && m.status !== 'COMPLETED') return false;
       
       return true;
-    }).sort((a, b) => a.matchOrder - b.matchOrder);
+    }).sort((a, b) => {
+      // Sort Nhánh thắng (MAIN/Winners) first, Nhánh thua (LOSERS) second
+      const branchA = (a.bracketBranch || '').toUpperCase();
+      const branchB = (b.bracketBranch || '').toUpperCase();
+      
+      if (branchA !== branchB) {
+        if (branchA === 'LOSERS') return 1;
+        if (branchB === 'LOSERS') return -1;
+      }
+      return a.matchOrder - b.matchOrder;
+    });
   }, [matches, roundOptions, selectedRoundKey, statusFilter, tournament.format, bracketSize]);
 
   // Count items for badges

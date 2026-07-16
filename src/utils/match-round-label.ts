@@ -194,8 +194,11 @@ export const buildRoundFilterOptions = <TMatch extends RoundLabelMatch>(
   const optionMap = new Map<string, RoundFilterOption>();
 
   matches.forEach((match) => {
-    const label = getMatchRoundLabel({ match, matches, tournamentFormat, bracketSize });
-    const key = `${getComparableStageKey(match)}|${match.roundNumber}|${label}`;
+    // Generate label without phase prefix for grouping, but keep layout clean
+    const label = getMatchRoundLabel({ match, matches, tournamentFormat, bracketSize, includePhasePrefix: false });
+    // Group keys ignoring Winners/Losers bracket branch
+    const stage = getStage(match);
+    const key = `${normalizeText(stage?.type)}|${normalizeText(stage?.name)}|${match.roundNumber}|${label}`;
     const current = optionMap.get(key);
 
     if (current) {

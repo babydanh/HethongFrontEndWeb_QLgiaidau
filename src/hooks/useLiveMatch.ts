@@ -77,19 +77,24 @@ export function useLiveMatch(matchId: string) {
       socket.emit('joinMatch', matchId);
     };
 
-    const handleScoreUpdate = (updatedMatch: Match) => {
+    const handleScoreUpdate = (rawMatch: Match | string) => {
+      const updatedMatch = typeof rawMatch === 'string' ? JSON.parse(rawMatch) as Match : rawMatch;
       if (updatedMatch.id === matchId) {
         applyIncomingMatch(updatedMatch, true);
       }
     };
 
-    const handleMatchStatus = (updatedMatch: Match) => {
+    const handleMatchStatus = (rawMatch: Match | string) => {
+      const updatedMatch = typeof rawMatch === 'string' ? JSON.parse(rawMatch) as Match : rawMatch;
       if (updatedMatch.id === matchId) {
         applyIncomingMatch(updatedMatch, false);
       }
     };
 
-    const handleViewerCount = (payload: { matchId: string; viewerCount: number }) => {
+    const handleViewerCount = (rawPayload: { matchId: string; viewerCount: number } | string) => {
+      const payload = typeof rawPayload === 'string'
+        ? JSON.parse(rawPayload) as { matchId: string; viewerCount: number }
+        : rawPayload;
       if (payload.matchId === matchId) {
         setViewerCount(payload.viewerCount);
       }

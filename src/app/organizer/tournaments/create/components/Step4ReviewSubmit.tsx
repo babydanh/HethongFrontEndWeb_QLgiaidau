@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Button } from '@/components/ui/Button';
 import { useCreateTournamentStore } from '@/lib/zustand/createTournamentStore';
 import { ChevronLeft, CheckCircle, Info, Loader2 } from 'lucide-react';
@@ -25,6 +25,7 @@ export default function Step4ReviewSubmit() {
     pctPublicUnranked: 5,
     pctClub: 0,
   });
+  const submittingRef = useRef(false);
   const router = useRouter();
 
   const divisions = getDivisionsFromFormats();
@@ -51,24 +52,29 @@ export default function Step4ReviewSubmit() {
     if (!formData.name.trim()) throw new Error('Thiếu tên giải đấu ở Bước 1.');
     if (!formData.categoryId) throw new Error('Thiếu bộ môn thi đấu ở Bước 1.');
     if (!primaryDivision || divisions.length === 0) throw new Error('Bạn chưa chọn hình thức thi đấu ở Bước 2.');
-    if (!formData.registrationStartDate || !formData.registrationEndDate || !formData.startDate || !formData.endDate) {
-      throw new Error('Thiếu mốc thời gian ở Bước 3.');
+
+    if (formData.registrationStartDate && formData.registrationEndDate) {
+      const registrationStart = new Date(formData.registrationStartDate);
+      const registrationEnd = new Date(formData.registrationEndDate);
+      if (registrationStart >= registrationEnd) {
+        throw new Error('Ngày bắt đầu đăng ký phải trước ngày kết thúc đăng ký.');
+      }
+      if (formData.startDate) {
+        const tournamentStart = new Date(formData.startDate);
+        if (registrationEnd > tournamentStart) {
+          throw new Error('Hạn chót đăng ký phải trước hoặc bằng ngày bắt đầu thi đấu.');
+        }
+      }
     }
 
-    const registrationStart = new Date(formData.registrationStartDate);
-    const registrationEnd = new Date(formData.registrationEndDate);
-    const tournamentStart = new Date(formData.startDate);
-    const tournamentEnd = new Date(formData.endDate);
+    if (formData.startDate && formData.endDate) {
+      const tournamentStart = new Date(formData.startDate);
+      const tournamentEnd = new Date(formData.endDate);
+      if (tournamentStart >= tournamentEnd) {
+        throw new Error('Ngày bắt đầu thi đấu phải trước ngày kết thúc.');
+      }
+    }
 
-    if (registrationStart >= registrationEnd) {
-      throw new Error('Ngày bắt đầu đăng ký phải trước ngày kết thúc đăng ký.');
-    }
-    if (registrationEnd > tournamentStart) {
-      throw new Error('Hạn chót đăng ký phải trước hoặc bằng ngày bắt đầu thi đấu.');
-    }
-    if (tournamentStart >= tournamentEnd) {
-      throw new Error('Ngày bắt đầu thi đấu phải trước ngày kết thúc.');
-    }
     if ((formData.maxParticipants ?? 0) < 2) {
       throw new Error('Số đội tham gia tối đa phải lớn hơn hoặc bằng 2.');
     }
@@ -78,7 +84,9 @@ export default function Step4ReviewSubmit() {
   };
 
   const handleCreateTournament = async () => {
+    if (submittingRef.current) return;
     try {
+      submittingRef.current = true;
       setIsSubmitting(true);
       validateTournamentDraft();
 
@@ -87,16 +95,18 @@ export default function Step4ReviewSubmit() {
       }
 
       // 1. Create one tournament. Match formats are stored as tournament_divisions.
+      const isClubTournament = formData.tournamentType === 'CLUB' || Boolean(formData.communityId);
       const finalTournamentData: Record<string, unknown> = {
         name: formData.name,
         categoryId: formData.categoryId,
         description: formData.description || '',
         tournamentType: formData.tournamentType || 'PUBLIC',
+        visibility: formData.visibility || 'PUBLIC',
         matchType: primaryDivision.matchType,
         genderRestriction: primaryDivision.genderRestriction,
         isRanked: formData.isRanked,
         maxParticipants: formData.maxParticipants || 16,
-        entryFee: formData.entryFee || 0,
+        entryFee: isClubTournament ? 0 : formData.entryFee || 0,
         startDate: formData.startDate,
         endDate: formData.endDate,
         registrationStartDate: formData.registrationStartDate,
@@ -110,6 +120,7 @@ export default function Step4ReviewSubmit() {
           maxCombinedElo: formData.maxCombinedElo,
           maxTeammateGap: formData.maxTeammateGap,
           registrationMode: formData.registrationMode || 'OPEN',
+          registrationScope: isClubTournament ? 'CLUB_MEMBERS_ONLY' : 'PUBLIC_OPEN',
         },
       };
 
@@ -150,6 +161,7 @@ export default function Step4ReviewSubmit() {
 
       router.push(`/organizer/tournaments/${tournamentId}/manage`);
     } catch (error) {
+      submittingRef.current = false;
       toast.error(getErrorMessage(error));
     } finally {
       setIsSubmitting(false);
@@ -176,14 +188,14 @@ export default function Step4ReviewSubmit() {
           </div>
 
           <div className="flex flex-col gap-1">
-            <span className="text-slate-400 font-medium">Phạm Vi Tổ Chức</span>
+            <span className="text-slate-400 font-medium">Đối Tượng Tham Gia</span>
             <span className="font-semibold text-slate-900">
-              {formData.tournamentType === 'CLUB' ? 'Nội Bộ CLB' : 'Công Khai'}
+              {formData.tournamentType === 'CLUB' ? 'Nội Bộ CLB' : 'Mở Rộng'}
             </span>
           </div>
 
           <div className="flex flex-col gap-1">
-            <span className="text-slate-400 font-medium">Tính Chất</span>
+            <span className="text-slate-400 font-medium">Cách Tính Thành Tích</span>
             <span className="font-semibold text-slate-900">
               {formData.isRanked ? 'Xếp Hạng' : 'Phong Trào'}
             </span>
@@ -197,6 +209,13 @@ export default function Step4ReviewSubmit() {
                 : formData.registrationMode === 'APPROVAL'
                   ? 'Cần xét duyệt'
                   : 'Chỉ nhận mã mời'}
+            </span>
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <span className="text-slate-400 font-medium">Hiển thị giải đấu</span>
+            <span className="font-semibold text-slate-900">
+              {formData.visibility === 'PRIVATE' ? 'Không niêm yết' : 'Công khai'}
             </span>
           </div>
 

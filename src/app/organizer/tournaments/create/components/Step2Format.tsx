@@ -176,6 +176,10 @@ export default function Step2Format() {
           error={errors.maxParticipants?.message}
         />
 
+        <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-4 text-xs text-blue-700 leading-relaxed font-medium">
+          <strong>💡 Mẹo:</strong> Số lượng đội tham gia tối đa này có thể được linh hoạt tùy chỉnh hoặc sửa đổi thêm trong mục <strong>Cài đặt nâng cao</strong> sau khi tạo giải đấu thành công.
+        </div>
+
         {isPickleballVariant && (
           <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-4">
             <p className="text-sm font-bold text-emerald-900">Chọn mode tính điểm Pickleball</p>

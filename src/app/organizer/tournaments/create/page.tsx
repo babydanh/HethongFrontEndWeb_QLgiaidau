@@ -1,7 +1,8 @@
 'use client';
 
 import { useCreateTournamentStore } from '@/lib/zustand/createTournamentStore';
-import { Trophy, Info, Zap, Calendar, CheckCircle, Check, Loader2 } from 'lucide-react';
+import { Info, Zap, Calendar, CheckCircle, Check } from 'lucide-react';
+import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, Suspense } from 'react';
 import Step1Info from './components/Step1Info';
@@ -20,15 +21,22 @@ const STEPS = [
 function CreateTournamentForm() {
   const searchParams = useSearchParams();
   const communityId = searchParams.get('communityId');
+  const isClubAdvanced = Boolean(communityId);
   const { currentStep, updateFormData, setStep } = useCreateTournamentStore();
 
   useEffect(() => {
     // Reset wizard to Step 1 on page load
     setStep(1);
     if (communityId) {
-      updateFormData({ communityId });
+      updateFormData({
+        communityId,
+        tournamentType: 'CLUB',
+        visibility: 'PUBLIC',
+        registrationMode: 'OPEN',
+        entryFee: 0,
+      });
     } else {
-      updateFormData({ communityId: '' });
+      updateFormData({ communityId: '', tournamentType: 'PUBLIC' });
     }
   }, [communityId, updateFormData, setStep]);
 
@@ -39,11 +47,21 @@ function CreateTournamentForm() {
         {/* Header */}
         <div className="mb-8 text-center">
           <div className="w-24 h-24 flex items-center justify-center mx-auto mb-4">
-            <img src="/images/vndc_sport.png" alt="VNDC Sport Logo" className="w-full h-full object-contain" />
+            <Image src="/images/vndc_sport.png" alt="VNDC Sport Logo" width={96} height={96} className="w-full h-full object-contain" priority />
           </div>
           <h1 className="text-3xl font-black text-slate-900">Tạo Giải Đấu Mới</h1>
-          <p className="text-slate-500 mt-2 font-medium">Lập giải đấu nháp nhanh chóng trong 2 bước</p>
+          <p className="text-slate-500 mt-2 font-medium">Lập giải đấu nháp rõ ràng trong 4 bước</p>
         </div>
+
+        {isClubAdvanced && (
+          <div className="mb-8 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-left">
+            <p className="text-sm font-extrabold text-emerald-900">Tạo giải nâng cao trong câu lạc bộ</p>
+            <p className="mt-1 text-xs font-semibold leading-relaxed text-emerald-700">
+              Giải vẫn thuộc CLB và miễn phí đăng ký. Bạn có thể chọn công khai để người ngoài xem được trang giải,
+              hoặc không niêm yết để chỉ chia sẻ trong phạm vi nội bộ/mã mời.
+            </p>
+          </div>
+        )}
 
         {/* Stepper */}
         <div className="mb-10 max-w-2xl mx-auto">

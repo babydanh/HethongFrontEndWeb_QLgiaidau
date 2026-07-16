@@ -9,42 +9,49 @@ import { useCreateTournamentStore } from '@/lib/zustand/createTournamentStore';
 import { ChevronRight, ChevronLeft, Calendar, DollarSign } from 'lucide-react';
 
 const step3Schema = z.object({
-  startDate: z.string().min(1, 'Ngày bắt đầu không được để trống'),
-  endDate: z.string().min(1, 'Ngày kết thúc không được để trống'),
-  registrationStartDate: z.string().min(1, 'Ngày bắt đầu đăng ký không được để trống'),
-  registrationEndDate: z.string().min(1, 'Ngày kết thúc đăng ký không được để trống'),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  registrationStartDate: z.string().optional(),
+  registrationEndDate: z.string().optional(),
   entryFee: z.string().refine((val) => {
     const num = Number(val);
     return !isNaN(num) && num >= 0;
   }, 'Lệ phí phải là số không âm'),
 }).superRefine((data, ctx) => {
-  const regStart = new Date(data.registrationStartDate);
-  const regEnd = new Date(data.registrationEndDate);
-  const start = new Date(data.startDate);
-  const end = new Date(data.endDate);
-
-  if (regStart >= regEnd) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: 'Ngày bắt đầu đăng ký phải trước ngày kết thúc',
-      path: ['registrationEndDate'],
-    });
+  if (data.registrationStartDate && data.registrationEndDate) {
+    const regStart = new Date(data.registrationStartDate);
+    const regEnd = new Date(data.registrationEndDate);
+    if (regStart >= regEnd) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Ngày bắt đầu đăng ký phải trước ngày kết thúc',
+        path: ['registrationEndDate'],
+      });
+    }
   }
 
-  if (start >= end) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: 'Ngày bắt đầu phải trước ngày kết thúc',
-      path: ['endDate'],
-    });
+  if (data.startDate && data.endDate) {
+    const start = new Date(data.startDate);
+    const end = new Date(data.endDate);
+    if (start >= end) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Ngày bắt đầu phải trước ngày kết thúc',
+        path: ['endDate'],
+      });
+    }
   }
 
-  if (regEnd > start) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: 'Ngày kết thúc đăng ký phải trước ngày bắt đầu thi đấu',
-      path: ['registrationEndDate'],
-    });
+  if (data.registrationEndDate && data.startDate) {
+    const regEnd = new Date(data.registrationEndDate);
+    const start = new Date(data.startDate);
+    if (regEnd > start) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Ngày kết thúc đăng ký phải trước ngày bắt đầu thi đấu',
+        path: ['registrationEndDate'],
+      });
+    }
   }
 });
 
@@ -52,15 +59,16 @@ type Step3Values = z.infer<typeof step3Schema>;
 
 export default function Step3ScheduleFees() {
   const { formData, updateFormData, nextStep, prevStep } = useCreateTournamentStore();
+  const isClubTournament = formData.tournamentType === 'CLUB' || Boolean(formData.communityId);
 
   const { register, handleSubmit, control, formState: { errors } } = useForm<Step3Values>({
     resolver: zodResolver(step3Schema),
     defaultValues: {
-      startDate: formData.startDate,
-      endDate: formData.endDate,
-      registrationStartDate: formData.registrationStartDate,
-      registrationEndDate: formData.registrationEndDate,
-      entryFee: String(formData.entryFee),
+      startDate: formData.startDate || undefined,
+      endDate: formData.endDate || undefined,
+      registrationStartDate: formData.registrationStartDate || undefined,
+      registrationEndDate: formData.registrationEndDate || undefined,
+      entryFee: isClubTournament ? '0' : String(formData.entryFee || 0),
     },
   });
 
@@ -70,7 +78,7 @@ export default function Step3ScheduleFees() {
       endDate: data.endDate,
       registrationStartDate: data.registrationStartDate,
       registrationEndDate: data.registrationEndDate,
-      entryFee: Number(data.entryFee),
+      entryFee: isClubTournament ? 0 : Number(data.entryFee),
     });
     nextStep();
   };
@@ -98,7 +106,7 @@ export default function Step3ScheduleFees() {
                 <DateTimePicker
                   label="Ngày bắt đầu đăng ký"
                   name={field.name}
-                  value={field.value}
+                  value={field.value || ''}
                   onChange={field.onChange}
                   error={errors.registrationStartDate?.message}
                 />
@@ -111,7 +119,7 @@ export default function Step3ScheduleFees() {
                 <DateTimePicker
                   label="Ngày kết thúc đăng ký"
                   name={field.name}
-                  value={field.value}
+                  value={field.value || ''}
                   onChange={field.onChange}
                   error={errors.registrationEndDate?.message}
                 />
@@ -134,7 +142,7 @@ export default function Step3ScheduleFees() {
                 <DateTimePicker
                   label="Ngày bắt đầu thi đấu"
                   name={field.name}
-                  value={field.value}
+                  value={field.value || ''}
                   onChange={field.onChange}
                   error={errors.startDate?.message}
                 />
@@ -147,7 +155,7 @@ export default function Step3ScheduleFees() {
                 <DateTimePicker
                   label="Ngày kết thúc thi đấu"
                   name={field.name}
-                  value={field.value}
+                  value={field.value || ''}
                   onChange={field.onChange}
                   error={errors.endDate?.message}
                 />
@@ -162,6 +170,16 @@ export default function Step3ScheduleFees() {
             <h4 className="font-bold text-slate-900">Lệ Phí</h4>
           </div>
 
+          {isClubTournament && (
+            <div className="rounded-xl border border-emerald-200 bg-white px-4 py-3">
+              <p className="text-sm font-bold text-emerald-900">Miễn phí cho giải trong câu lạc bộ</p>
+              <p className="mt-1 text-xs font-semibold leading-relaxed text-emerald-700">
+                Giải thuộc CLB không thu lệ phí qua nền tảng. Nếu CLB có khoản nội bộ riêng, hãy ghi trong mô tả hoặc thông báo CLB.
+              </p>
+            </div>
+          )}
+
+          <div className={isClubTournament ? 'hidden' : ''}>
           <Input
             label="Lệ phí tham gia mỗi đội (VNĐ)"
             type="number"
@@ -170,6 +188,11 @@ export default function Step3ScheduleFees() {
             {...register('entryFee')}
             error={errors.entryFee?.message}
           />
+          </div>
+        </div>
+
+        <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-4 text-xs text-blue-700 leading-relaxed font-semibold">
+          <strong>💡 Lưu ý:</strong> Các thông tin về Lịch thi đấu và Lệ phí là <strong>KHÔNG BẮT BUỘC</strong> nhập ngay tại bước này. Bạn có thể bỏ trống và linh hoạt thiết lập/chỉnh sửa chi tiết trong trang quản lý giải đấu sau.
         </div>
 
         <div className="flex justify-between mt-4 pt-6 border-t border-slate-100">

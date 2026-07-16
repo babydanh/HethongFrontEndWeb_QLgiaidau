@@ -164,6 +164,74 @@ export interface MyRegistrationResponse {
   participant?: MyRegistrationParticipant | null;
 }
 
+export interface LivestreamCamera {
+  id: string;
+  tournamentId: string;
+  name: string;
+  mode: 'PUSH' | 'PULL';
+  protocol: 'RTMP' | 'SRT';
+  streamName: string;
+  status: 'IDLE' | 'WAITING' | 'LIVE' | 'OFFLINE' | 'ERROR';
+  playbackUrl: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface LivestreamPublishInfo {
+  protocol: 'RTMP' | 'SRT';
+  streamName: string;
+  url: string;
+  rtmpUrl: string;
+  srtUrl: string;
+}
+
+export interface CreatedLivestreamCamera extends LivestreamCamera {
+  publish: LivestreamPublishInfo;
+}
+
+export interface MatchLivestream {
+  id: string;
+  matchId: string;
+  cameraId: string | null;
+  streamStatus: 'IDLE' | 'LIVE' | 'OFFLINE' | 'ENDED' | 'ERROR';
+  playbackUrl: string | null;
+  recordingUrl: string | null;
+  isFeatured: boolean;
+  startedAt: string | null;
+  endedAt: string | null;
+}
+
+export interface StartMatchStreamResponse {
+  livestream: MatchLivestream | null;
+  publish: LivestreamPublishInfo;
+  playbackUrl: string;
+}
+
+export interface MatchPlaybackResponse {
+  matchId: string;
+  streamStatus: MatchLivestream['streamStatus'];
+  playbackUrl: string | null;
+  cameraName: string | null;
+  isFeatured: boolean;
+}
+
+export const livestreamApi = {
+  getCameras: (tournamentId: string) =>
+    api.get<ApiResponse<LivestreamCamera[]>>(`/livestream/tournaments/${tournamentId}/cameras`),
+  createCamera: (tournamentId: string, data: { name: string; protocol: 'RTMP' | 'SRT'; deviceLabel?: string }) =>
+    api.post<ApiResponse<CreatedLivestreamCamera>>(`/livestream/tournaments/${tournamentId}/cameras`, data),
+  deleteCamera: (cameraId: string) =>
+    api.delete<ApiResponse<LivestreamCamera>>(`/livestream/cameras/${cameraId}`),
+  assignCamera: (matchId: string, cameraId: string) =>
+    api.post<ApiResponse<MatchLivestream>>(`/livestream/matches/${matchId}/assign-camera`, { cameraId }),
+  startMatchStream: (matchId: string) =>
+    api.post<ApiResponse<StartMatchStreamResponse>>(`/livestream/matches/${matchId}/start`),
+  stopMatchStream: (matchId: string) =>
+    api.post<ApiResponse<MatchLivestream>>(`/livestream/matches/${matchId}/stop`),
+  getMatchPlayback: (matchId: string) =>
+    api.get<ApiResponse<MatchPlaybackResponse>>(`/livestream/matches/${matchId}/playback`),
+};
+
 export const tournamentsApi = {
   getFeesConfig: () => api.get<ApiResponse<TournamentFeesConfig>>('/tournaments/fees'),
   getTournaments: (params?: Record<string, unknown>) => api.get<PaginatedTournaments>('/tournaments', { params }),
@@ -292,7 +360,16 @@ export const tournamentsApi = {
   updateParticipantSeed: (id: string, participantId: string, seed: number) =>
     api.patch<ApiResponse<TournamentParticipant>>(`/tournaments/${id}/participants/${participantId}`, { seed }),
   updateDivisionConfig: (id: string, divisionId: string, data: Record<string, unknown>) =>
-    api.patch<ApiResponse<unknown>>(`/tournaments/${id}/divisions/${divisionId}`, data),
+    api.patch<ApiResponse<unknown>>(`/tournaments/${id}/divisions/${divisionId}/config`, data),
+  createLiteTournament: (data: {
+    name: string;
+    sport: 'badminton' | 'tennis' | 'pickleball' | 'table_tennis';
+    communityId: string;
+    format?: 'singles' | 'doubles';
+    bracketType?: 'single_elimination' | 'double_elimination' | 'round_robin';
+    maxTeams?: number;
+    description?: string;
+  }) => api.post<ApiResponse<{ id: string; name: string; status: string }>>('/tournaments/lite', data).then(res => res.data),
 };
 
 

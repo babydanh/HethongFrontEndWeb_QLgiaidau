@@ -32,7 +32,7 @@ import { getErrorMessage } from '@/utils/error';
 import { cn } from '@/utils/cn';
 import { trimAndNormalizeSpaces } from '@/utils/string';
 import { Trophy, Clock, MapPin, Activity, Play, AlertCircle, Camera, MessageSquare, Send, Eye, Shield, Users, Heart } from 'lucide-react';
-import { tournamentsApi } from '@/features/tournaments/api';
+import { livestreamApi, tournamentsApi, type MatchPlaybackResponse } from '@/features/tournaments/api';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/Button';
@@ -61,6 +61,7 @@ export default function LiveMatchPage({ params }: Props) {
   const [commentText, setCommentText] = useState('');
   const [participants, setParticipants] = useState<TournamentParticipant[]>([]);
   const [hearts, setHearts] = useState<{ id: string; x: number; size: number; delay: number }[]>([]);
+  const [playback, setPlayback] = useState<MatchPlaybackResponse | null>(null);
 
   const handleSpawnHeart = () => {
     const id = Math.random().toString(36).substring(2, 9);
@@ -94,6 +95,29 @@ export default function LiveMatchPage({ params }: Props) {
       isMounted = false;
     };
   }, [match?.tournamentId]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchPlayback = async () => {
+      try {
+        const response = await livestreamApi.getMatchPlayback(matchId);
+        if (isMounted) {
+          setPlayback(response.data ?? null);
+        }
+      } catch {
+        if (isMounted) {
+          setPlayback(null);
+        }
+      }
+    };
+
+    void fetchPlayback();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [matchId]);
 
   useEffect(() => {
     let isMounted = true;
@@ -826,7 +850,7 @@ export default function LiveMatchPage({ params }: Props) {
       return;
     }
     if (!user) {
-      toast.error('Bạn cần đăng nhập tài khoản Baseline để gửi bình luận trong trận live.');
+      toast.error('Bạn cần đăng nhập tài khoản VNDC Sport để gửi bình luận trong trận live.');
       return;
     }
     if (isCommentSubmitting) return;
@@ -900,13 +924,29 @@ export default function LiveMatchPage({ params }: Props) {
           {/* Left 2 Columns: Match Details, Score Card, Referee Control Panel */}
           <div className="lg:col-span-2 flex flex-col gap-6">
             
-            {/* Baseline Camera Live Stream / Replay Container */}
+            {/* VNDC Sport Camera Live Stream / Replay Container */}
             <div className="bg-slate-950 rounded-3xl overflow-hidden shadow-2xl relative aspect-video flex flex-col items-center justify-center border border-slate-800 group">
               {/* Static scanner effect for premium vibe */}
               <div className="absolute inset-0 bg-gradient-to-b from-indigo-950/20 via-slate-950/40 to-slate-950 pointer-events-none z-0"></div>
               
-              <div className="relative z-10 flex flex-col items-center gap-3.5 p-6 text-center max-w-md">
-                {match.status === 'ONGOING' ? (
+              <div className="relative z-10 flex h-full w-full flex-col items-center justify-center gap-3.5 p-6 text-center">
+                {playback?.playbackUrl ? (
+                  <>
+                    <video
+                      className="absolute inset-0 h-full w-full object-cover"
+                      controls
+                      playsInline
+                      src={playback.playbackUrl}
+                    />
+                    <div className="absolute left-4 top-4 rounded-full border border-rose-400/40 bg-rose-600/90 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-white">
+                      {playback.streamStatus === 'LIVE' ? 'LIVE' : playback.streamStatus}
+                    </div>
+                    <div className="absolute bottom-4 left-4 right-4 rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-left backdrop-blur">
+                      <p className="text-sm font-black text-white">{playback.cameraName || 'Camera trận đấu'}</p>
+                      <p className="mt-1 text-xs font-semibold text-slate-300">Người xem chỉ có quyền xem luồng phát và bảng điểm realtime.</p>
+                    </div>
+                  </>
+                ) : match.status === 'ONGOING' ? (
                   <>
                     <div className="relative flex h-14 w-14 items-center justify-center rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-500 group-hover:scale-105 transition-transform duration-300">
                       <Camera className="w-7 h-7" />
@@ -916,7 +956,7 @@ export default function LiveMatchPage({ params }: Props) {
                       </span>
                     </div>
                     <h4 className="text-white font-extrabold text-base tracking-tight">Camera Trực Tiếp Sân Đấu</h4>
-                    <p className="text-xs text-slate-400 font-semibold leading-relaxed">Luồng truyền hình trực tiếp (Live Stream) từ camera thông minh của Baseline đang hoạt động.</p>
+                    <p className="text-xs text-slate-400 font-semibold leading-relaxed">Luồng truyền hình trực tiếp (Live Stream) từ camera thông minh của VNDC Sport đang hoạt động.</p>
                   </>
                 ) : match.status === 'COMPLETED' ? (
                   <>

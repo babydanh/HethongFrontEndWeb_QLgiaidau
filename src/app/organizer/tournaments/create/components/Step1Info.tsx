@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/Button';
@@ -21,9 +21,10 @@ import { normalizeMatchFormatForCategory } from '@/features/tournaments/match-fo
 
 const step1Schema = z.object({
   name: z.string().min(5, 'Tên Giải đấu phải có ít nhất 5 ký tự').max(150, 'Tên Giải đấu quá dài'),
-  description: z.string().max(1000, 'Mô tả tối đa 1000 ký tự').optional(),
+  description: z.string().min(10, 'Mô tả phải có ít nhất 10 ký tự').max(1000, 'Mô tả tối đa 1000 ký tự'),
   categoryId: z.string().min(1, 'Vui lòng chọn bộ môn thi đấu'),
   tournamentType: z.enum(['CLUB', 'PUBLIC']).optional(),
+  visibility: z.enum(['PUBLIC', 'PRIVATE']),
   isRanked: z.boolean(),
   registrationMode: z.enum(['OPEN', 'APPROVAL', 'INVITE_ONLY']),
   maxParticipants: z.string().refine((val) => {
@@ -70,13 +71,14 @@ export default function Step1Info() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<Step1Values>({
+  const { register, handleSubmit, setValue, control, formState: { errors } } = useForm<Step1Values>({
     resolver: zodResolver(step1Schema),
     defaultValues: {
       name: formData.name,
       description: formData.description,
       categoryId: formData.categoryId,
       tournamentType: formData.communityId ? (formData.tournamentType || 'CLUB') : 'PUBLIC',
+      visibility: formData.visibility || 'PUBLIC',
       isRanked: formData.isRanked ?? true,
       registrationMode: formData.registrationMode || 'OPEN',
       maxParticipants: formData.maxParticipants ? String(formData.maxParticipants) : '16',
@@ -87,9 +89,10 @@ export default function Step1Info() {
     },
   });
 
-  const watchIsRanked = watch('isRanked');
-  const watchTournamentType = watch('tournamentType') || (formData.communityId ? 'CLUB' : 'PUBLIC');
-  const watchRegistrationMode = watch('registrationMode') || 'OPEN';
+  const watchIsRanked = useWatch({ control, name: 'isRanked' });
+  const watchTournamentType = useWatch({ control, name: 'tournamentType' }) || (formData.communityId ? 'CLUB' : 'PUBLIC');
+  const watchVisibility = useWatch({ control, name: 'visibility' }) || 'PUBLIC';
+  const watchRegistrationMode = useWatch({ control, name: 'registrationMode' }) || 'OPEN';
   const [selectedFormat, setSelectedFormat] = useState<'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION' | 'ROUND_ROBIN' | 'GROUP_STAGE_KNOCKOUT'>(
     formData.format || 'SINGLE_ELIMINATION'
   );
@@ -145,6 +148,7 @@ export default function Step1Info() {
         .map((format) => normalizeMatchFormatForCategory(format, selectedCategory))
         .filter((format, index, collection) => collection.indexOf(format) === index),
       tournamentType: formData.communityId ? (data.tournamentType || 'CLUB') : 'PUBLIC',
+      visibility: data.visibility,
       isRanked: data.isRanked,
       registrationMode: data.registrationMode,
       maxParticipants: data.maxParticipants === '' ? null : Number(data.maxParticipants),
@@ -187,18 +191,23 @@ export default function Step1Info() {
             {errors.categoryId && <p className="text-xs font-semibold text-red-500">{errors.categoryId.message}</p>}
           </div>
 
-          <Input
-            label="Số đội tham gia tối đa"
-            placeholder="Ví dụ: 16"
-            type="number"
-            {...register('maxParticipants')}
-            error={errors.maxParticipants?.message}
-          />
+          <div className="flex flex-col">
+            <Input
+              label="Số đội tham gia tối đa"
+              placeholder="Ví dụ: 16"
+              type="number"
+              {...register('maxParticipants')}
+              error={errors.maxParticipants?.message}
+            />
+            <p className="text-[11px] text-slate-400 mt-1 font-semibold pl-1">
+              💡 Lưu ý: Số đội tham gia có thể chỉnh sửa cấu hình chi tiết ở các bước thiết lập vòng đấu sau.
+            </p>
+          </div>
         </div>
 
         {formData.communityId && (
           <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 flex flex-col gap-3">
-            <label className="text-sm font-semibold text-slate-900">Phạm vi giải đấu <span className="text-red-500">*</span></label>
+            <label className="text-sm font-semibold text-slate-900">Đối tượng tham gia <span className="text-red-500">*</span></label>
             <div className="flex flex-col sm:flex-row gap-4 mt-1">
               <label className="flex-1 flex flex-col p-4 border rounded-xl bg-white hover:bg-slate-50 cursor-pointer transition-all relative border-slate-200">
                 <div className="flex items-center gap-2">
@@ -213,7 +222,7 @@ export default function Step1Info() {
                   <span className="text-sm font-bold text-slate-800">Giải nội bộ CLB</span>
                 </div>
                 <span className="text-[11px] text-slate-500 mt-2 pl-6 leading-relaxed">
-                  Chỉ các thành viên của câu lạc bộ này mới có quyền đăng ký tham gia. Hoàn toàn miễn phí xuất bản giải đấu.
+                  Chỉ thành viên của câu lạc bộ này đủ điều kiện gửi đăng ký. Hoàn toàn miễn phí xuất bản giải đấu.
                 </span>
               </label>
 
@@ -230,7 +239,7 @@ export default function Step1Info() {
                   <span className="text-sm font-bold text-slate-800">Giải đấu mở rộng</span>
                 </div>
                 <span className="text-[11px] text-slate-500 mt-2 pl-6 leading-relaxed">
-                  Cho phép tất cả người dùng trên hệ thống đăng ký tham gia. Phí xuất bản áp dụng bình thường theo tính chất giải.
+                  Người dùng ngoài câu lạc bộ có thể gửi đăng ký theo cách tiếp nhận bạn chọn bên dưới. Phí xuất bản áp dụng theo loại giải.
                 </span>
               </label>
             </div>
@@ -239,7 +248,7 @@ export default function Step1Info() {
 
         {/* Ranked or Unranked Option */}
         <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 flex flex-col gap-3">
-          <label className="text-sm font-semibold text-slate-900">Tính chất giải đấu <span className="text-red-500">*</span></label>
+          <label className="text-sm font-semibold text-slate-900">Cách tính thành tích <span className="text-red-500">*</span></label>
           <div className="flex gap-6 mt-1">
             <label className="flex items-center gap-2 cursor-pointer">
               <input 
@@ -277,6 +286,28 @@ export default function Step1Info() {
                 💡 <strong>Giải phong trào:</strong> Phí xuất bản Giải đấu là <strong>{(fees.feePublicUnranked / 1000).toString()}k VND</strong> (thanh toán khi xuất bản). Phí sàn <strong>{fees.pctPublicUnranked}%</strong> trên lệ phí tham gia của mỗi người nếu có thu phí. Không tính điểm ELO, Giải đấu tự động hoạt động ngay lập tức mà không cần Admin kiểm duyệt.
               </p>
             )}
+          </div>
+        </div>
+
+        <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 flex flex-col gap-3">
+          <label className="text-sm font-semibold text-slate-900">Hiển thị giải đấu <span className="text-red-500">*</span></label>
+          <p className="text-xs text-slate-500">Chỉ quyết định cộng đồng có tìm thấy giải hay không, độc lập với cách duyệt đăng ký.</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-1">
+            <label className={`flex flex-col p-4 border rounded-xl bg-white cursor-pointer transition-all ${watchVisibility === 'PUBLIC' ? 'border-blue-500 ring-2 ring-blue-100' : 'border-slate-200 hover:bg-slate-50'}`}>
+              <div className="flex items-center gap-2">
+                <input type="radio" value="PUBLIC" {...register('visibility')} checked={watchVisibility === 'PUBLIC'} onChange={() => setValue('visibility', 'PUBLIC')} className="w-4 h-4 text-blue-600 focus:ring-blue-500" />
+                <span className="text-sm font-bold text-slate-800">Công khai</span>
+              </div>
+              <span className="text-[11px] text-slate-500 mt-2 pl-6 leading-relaxed">Xuất hiện trên trang chủ, khám phá và có thể được cộng đồng theo dõi.</span>
+            </label>
+
+            <label className={`flex flex-col p-4 border rounded-xl bg-white cursor-pointer transition-all ${watchVisibility === 'PRIVATE' ? 'border-blue-500 ring-2 ring-blue-100' : 'border-slate-200 hover:bg-slate-50'}`}>
+              <div className="flex items-center gap-2">
+                <input type="radio" value="PRIVATE" {...register('visibility')} checked={watchVisibility === 'PRIVATE'} onChange={() => setValue('visibility', 'PRIVATE')} className="w-4 h-4 text-blue-600 focus:ring-blue-500" />
+                <span className="text-sm font-bold text-slate-800">Không niêm yết</span>
+              </div>
+              <span className="text-[11px] text-slate-500 mt-2 pl-6 leading-relaxed">Không xuất hiện công khai; người có link hoặc mã mời vẫn có thể truy cập.</span>
+            </label>
           </div>
         </div>
 

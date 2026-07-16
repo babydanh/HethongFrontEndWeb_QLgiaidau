@@ -38,6 +38,7 @@ interface TournamentFormData {
   categoryId: string;
   communityId: string;
   tournamentType: 'CLUB' | 'PUBLIC';
+  visibility: 'PUBLIC' | 'PRIVATE';
   // UI-only: unified match format (for single format backward compatibility)
   matchFormat: MatchFormat;
   // Step 2: Multiple formats
@@ -79,6 +80,7 @@ const defaultFormData: TournamentFormData = {
   categoryId: '',
   communityId: '',
   tournamentType: 'PUBLIC',
+  visibility: 'PUBLIC',
   matchFormat: 'MALE_DOUBLES',
   selectedFormats: [],
   minElo: null,
@@ -112,6 +114,7 @@ const normalizeFormData = (formData?: Partial<TournamentFormData>): TournamentFo
   matchFormat: formData?.matchFormat ?? defaultFormData.matchFormat,
   selectedFormats: Array.isArray(formData?.selectedFormats) ? formData.selectedFormats : [],
   registrationMode: formData?.registrationMode ?? defaultFormData.registrationMode,
+  visibility: formData?.visibility ?? defaultFormData.visibility,
 });
 
 export const useCreateTournamentStore = create<CreateTournamentState>()(
@@ -146,7 +149,7 @@ export const useCreateTournamentStore = create<CreateTournamentState>()(
     }),
     {
       name: 'create-tournament-storage-v2',
-      version: 2,
+      version: 3,
       migrate: (persistedState) => {
         const persisted = persistedState as PersistedCreateTournamentState | undefined;
 

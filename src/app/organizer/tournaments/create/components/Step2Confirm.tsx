@@ -21,7 +21,7 @@ export default function Step2Confirm() {
     try {
       setIsSubmitting(true);
       
-      const { format, ...rest } = formData;
+      const rest = formData;
 
       // 1. Resolve backend matchType + genderRestriction + divisionName from the UI matchFormat
       const { matchType, genderRestriction, divisionName } = resolveMatchFormat(rest.matchFormat || 'MALE_DOUBLES');
@@ -32,6 +32,7 @@ export default function Step2Confirm() {
         categoryId: rest.categoryId,
         description: rest.description || '',
         tournamentType: rest.tournamentType || 'PUBLIC',
+        visibility: rest.visibility || 'PUBLIC',
         matchType,
         genderRestriction,
         isRanked: rest.isRanked,
@@ -45,6 +46,7 @@ export default function Step2Confirm() {
           maxElo: rest.maxElo,
           maxCombinedElo: rest.maxCombinedElo,
           maxTeammateGap: rest.maxTeammateGap,
+          registrationMode: rest.registrationMode || 'OPEN',
         },
       };
 
@@ -104,14 +106,14 @@ export default function Step2Confirm() {
           </div>
 
           <div className="flex flex-col gap-1">
-            <span className="text-slate-400 font-medium">Phạm vi tổ chức</span>
+            <span className="text-slate-400 font-medium">Đối tượng tham gia</span>
             <span className="font-semibold text-slate-900">
-              {formData.tournamentType === 'CLUB' ? 'Nội bộ CLB' : 'Công khai'}
+              {formData.tournamentType === 'CLUB' ? 'Nội bộ CLB' : 'Mở rộng'}
             </span>
           </div>
 
           <div className="flex flex-col gap-1">
-            <span className="text-slate-400 font-medium">Tính chất giải đấu</span>
+            <span className="text-slate-400 font-medium">Cách tính thành tích</span>
             <span className="font-semibold text-slate-950">
               {formData.isRanked ? 'Xếp hạng hệ thống' : 'Giải phong trào'}
             </span>

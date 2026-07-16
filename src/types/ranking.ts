@@ -4,6 +4,7 @@ export interface PlayerRanking {
   categoryId: string;
   categoryName?: string;
   matchType?: 'SINGLES' | 'DOUBLES' | 'MIXED_DOUBLES';
+  genderRestriction?: 'MALE' | 'FEMALE' | 'MIXED' | null;
   eloPoints: number;
   matchesPlayed: number;
   matchesWon: number;

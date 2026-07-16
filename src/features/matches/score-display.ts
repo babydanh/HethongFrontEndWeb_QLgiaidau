@@ -92,11 +92,11 @@ export function resolveMatchSportRules(
 }
 
 export function getMatchScorePresentation(kind: SportRuleKind) {
-  const sportPresentation = getSportRulePresentation(kind);
+  const sportPresentation = getSportRulePresentation(kind) || { sportLabel: 'Thể thao' };
 
   if (kind === 'TENNIS') {
     return {
-      sportLabel: sportPresentation.sportLabel,
+      sportLabel: sportPresentation.sportLabel || 'Tennis',
       scoreUnit: 'game',
       scoreUnitPlural: 'game',
       currentScoreLabel: 'Game hiện tại',
@@ -110,7 +110,7 @@ export function getMatchScorePresentation(kind: SportRuleKind) {
 
   if (kind === 'PICKLEBALL_SIDE_OUT') {
     return {
-      sportLabel: sportPresentation.sportLabel,
+      sportLabel: sportPresentation.sportLabel || 'Pickleball',
       scoreUnit: 'điểm',
       scoreUnitPlural: 'điểm',
       currentScoreLabel: 'Điểm game hiện tại',
@@ -123,7 +123,7 @@ export function getMatchScorePresentation(kind: SportRuleKind) {
   }
 
   return {
-    sportLabel: sportPresentation.sportLabel,
+    sportLabel: sportPresentation.sportLabel || 'Cầu lông/Khác',
     scoreUnit: 'điểm',
     scoreUnitPlural: 'điểm',
     currentScoreLabel: 'Điểm set hiện tại',

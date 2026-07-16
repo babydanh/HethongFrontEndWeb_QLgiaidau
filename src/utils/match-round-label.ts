@@ -188,12 +188,13 @@ export const getMatchRoundLabel = <TMatch extends RoundLabelMatch>({
 
 export const buildRoundFilterOptions = <TMatch extends RoundLabelMatch>(
   matches: TMatch[],
-  tournamentFormat?: TournamentFormatForRoundLabel
+  tournamentFormat?: TournamentFormatForRoundLabel,
+  bracketSize?: number | null
 ): RoundFilterOption[] => {
   const optionMap = new Map<string, RoundFilterOption>();
 
   matches.forEach((match) => {
-    const label = getMatchRoundLabel({ match, matches, tournamentFormat });
+    const label = getMatchRoundLabel({ match, matches, tournamentFormat, bracketSize });
     const key = `${getComparableStageKey(match)}|${match.roundNumber}|${label}`;
     const current = optionMap.get(key);
 

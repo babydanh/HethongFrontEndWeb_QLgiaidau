@@ -49,7 +49,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
             // Find rounds that contain ONGOING matches
             const ongoingMatch = fetchedMatches.find(m => m.status === 'ONGOING');
             if (ongoingMatch && ongoingMatch.roundNumber) {
-              const options = buildRoundFilterOptions(fetchedMatches, tournament.format);
+              const options = buildRoundFilterOptions(fetchedMatches, tournament.format, bracketSize);
               const activeOption = options.find(option => option.roundNumber === ongoingMatch.roundNumber);
               setSelectedRoundKey(activeOption?.key ?? 'ALL');
               return;
@@ -59,7 +59,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
             const scheduledMatches = fetchedMatches.filter(m => m.status === 'SCHEDULED');
             if (scheduledMatches.length > 0) {
               const minRound = Math.min(...scheduledMatches.map(m => m.roundNumber).filter(Boolean) as number[]);
-              const options = buildRoundFilterOptions(fetchedMatches, tournament.format);
+              const options = buildRoundFilterOptions(fetchedMatches, tournament.format, bracketSize);
               const activeOption = options.find(option => option.roundNumber === minRound);
               setSelectedRoundKey(activeOption?.key ?? 'ALL');
               return;

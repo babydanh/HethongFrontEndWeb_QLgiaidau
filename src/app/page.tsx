@@ -23,6 +23,50 @@ import { isNetworkError } from '@/utils/error';
 import { isTournamentCancelled, isTournamentCompleted, isTournamentInProgress } from '@/utils/tournament-status';
 import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
+import ShareModal from '@/components/common/ShareModal';
+
+interface EnrichedTournament {
+  id: string;
+  name: string;
+  createdBy?: string;
+  sportRules?: unknown | null;
+  categoryName?: string | null;
+  categorySlug?: string | null;
+  categoryConfig?: Record<string, unknown> | null;
+  category?: {
+    name: string;
+  } | null;
+  matchType?: string;
+  genderRestriction?: string;
+  isRanked?: boolean;
+}
+
+interface EnrichedMatch extends Omit<BracketMatch, 'tournament'> {
+  tournament?: EnrichedTournament | null;
+}
+
+interface GroupMatchesData {
+  id?: string | null;
+  name: string;
+  logoUrl?: string | null;
+  isRanked?: boolean;
+  matches: BracketMatch[];
+}
+
+const getFormatLabel = (matchType?: string, genderRestriction?: string | null) => {
+  const mt = matchType || '';
+  const gr = genderRestriction || '';
+  if (mt === 'SINGLES') {
+    return gr === 'FEMALE' ? 'Đơn Nữ' : 'Đơn Nam';
+  }
+  if (mt === 'DOUBLES') {
+    return gr === 'FEMALE' ? 'Đôi Nữ' : 'Đôi Nam';
+  }
+  if (mt === 'MIXED_DOUBLES' || mt === 'MIXED' || gr === 'MIXED') {
+    return 'Đôi Nam Nữ';
+  }
+  return mt === 'DOUBLES' ? 'Đôi' : mt === 'SINGLES' ? 'Đơn' : 'Đôi Nam Nữ';
+};
 
 function CommunityLogoAvatar({ src, alt }: { src?: string | null; alt: string }) {
   const fallbackSrc = '/images/vndc_sport.png';
@@ -215,6 +259,7 @@ export default function HomePage() {
 
   // Live Matches Feed
   const [liveMatches, setLiveMatches] = useState<BracketMatch[]>([]);
+  const [liveMatchPage, setLiveMatchPage] = useState(1);
   const [upcomingMatches, setUpcomingMatches] = useState<BracketMatch[]>([]);
   const [completedMatches, setCompletedMatches] = useState<BracketMatch[]>([]);
   const [highFives, setHighFives] = useState<Record<string, number>>(() => {
@@ -224,6 +269,8 @@ export default function HomePage() {
     }
     return {};
   });
+
+  const [tournamentPages, setTournamentPages] = useState<Record<string, number>>({});
 
   // Ranked Tournament State
   const [rankedTournament, setRankedTournament] = useState<Tournament | null>(null);
@@ -262,16 +309,16 @@ export default function HomePage() {
           tParams.categoryId = selectedCategoryId;
         }
 
-        const tournamentsPromise = tournamentsApi.getTournaments(tParams);
+        const tournamentsPromise = tournamentsApi.getPublicTournaments(tParams);
         
         const cParams: Record<string, unknown> = { limit: 6 };
         if (selectedCategoryId) {
           cParams.categoryId = selectedCategoryId;
         }
         const communitiesPromise = communitiesApi.getCommunities(cParams);
-        const liveMatchesPromise = matchesApi.getMatches({ status: 'ONGOING', limit: 100 });
-        const upcomingMatchesPromise = matchesApi.getMatches({ status: 'SCHEDULED', limit: 100 });
-        const completedMatchesPromise = matchesApi.getMatches({ status: 'COMPLETED', limit: 100 });
+        const liveMatchesPromise = matchesApi.getMatches({ status: 'ONGOING', limit: 100, publicOnly: true });
+        const upcomingMatchesPromise = matchesApi.getMatches({ status: 'SCHEDULED', limit: 100, publicOnly: true });
+        const completedMatchesPromise = matchesApi.getMatches({ status: 'COMPLETED', limit: 100, publicOnly: true });
         
         const lbCategoryId = selectedCategoryId || categories[0]?.id;
         const rankingsPromise = lbCategoryId
@@ -304,14 +351,15 @@ export default function HomePage() {
 
         setCommunities(cRes.status === 'fulfilled' ? cRes.value.data || [] : []);
 
-        // Lọc live/upcoming/completed matches: chỉ lấy những trận thuộc tournament hợp lệ
+        // Lọc live/upcoming/completed matches: chỉ lấy những trận thuộc tournament hợp lệ và không phải trận Bye (miễn đấu)
         const allLiveMatches = lRes.status === 'fulfilled' ? (lRes.value.data as unknown as BracketMatch[]) || [] : [];
-        setLiveMatches(allLiveMatches.filter(m => validTournamentIds.has(m.tournamentId ?? '')));
+        setLiveMatches(allLiveMatches.filter(m => validTournamentIds.has(m.tournamentId ?? '') && !m.isBye));
 
         const fetchedUpcoming = uRes.status === 'fulfilled' ? (uRes.value.data as unknown as BracketMatch[]) || [] : [];
-        // Filter by valid tournaments + both participants set
+        // Filter by valid tournaments + both participants set + not isBye
         const validUpcoming = fetchedUpcoming.filter(m =>
           validTournamentIds.has(m.tournamentId ?? '') &&
+          !m.isBye &&
           m.participant1 != null && 
           m.participant2 != null &&
           m.participant1.teamName.trim().toLowerCase() !== 'tbd' &&
@@ -322,7 +370,7 @@ export default function HomePage() {
         setUpcomingMatches(validUpcoming);
 
         const fetchedCompleted = compRes.status === 'fulfilled' ? (compRes.value.data as unknown as BracketMatch[]) || [] : [];
-        setCompletedMatches(fetchedCompleted.filter(m => validTournamentIds.has(m.tournamentId ?? '')));
+        setCompletedMatches(fetchedCompleted.filter(m => validTournamentIds.has(m.tournamentId ?? '') && !m.isBye));
 
         setLeaderboard(rRes.status === 'fulfilled' ? rRes.value.data || [] : []);
 
@@ -363,6 +411,7 @@ export default function HomePage() {
       } finally {
         setIsLoading(false);
         setIsLoadingRanked(false);
+        setLiveMatchPage(1);
       }
     };
     fetchData();
@@ -381,10 +430,7 @@ export default function HomePage() {
     toast.success('High five! 👏', { icon: '👏', id: `hf-${matchId}` });
   };
 
-  const shareMatch = (matchId: string) => {
-    navigator.clipboard.writeText(`${window.location.origin}/live/${matchId}`);
-    toast.success('Đã sao chép liên kết xem trận đấu!');
-  };
+  const [shareMatchId, setShareMatchId] = useState<string | null>(null);
 
   // Helper to determine active round
   const getActiveRound = (matches: BracketMatch[]) => {
@@ -422,53 +468,60 @@ export default function HomePage() {
     return getWeight(a.status, a.winnerId) - getWeight(b.status, b.winnerId);
   });
 
+  // Pagination for live matches (Max 4 matches per page)
+  const totalLivePages = Math.ceil(liveMatches.length / 4);
+  const paginatedLiveMatches = liveMatches.slice((liveMatchPage - 1) * 4, liveMatchPage * 4);
+
   // Group live matches by tournament name
-  const liveMatchesByTournament = liveMatches.reduce<Record<string, { id?: string | null; name: string; logoUrl?: string | null; matches: BracketMatch[] }>>((acc, match) => {
+  const liveMatchesByTournament = paginatedLiveMatches.reduce<Record<string, { id?: string | null; name: string; logoUrl?: string | null; isRanked?: boolean; matches: BracketMatch[] }>>((acc, match) => {
     const tournamentName = match.tournament?.name || 'Giải đấu khác';
-    const tournament = match.tournament as { id?: string; logoUrl?: string | null; name?: string };
+    const tournament = match.tournament as { id?: string; logoUrl?: string | null; name?: string; isRanked?: boolean };
     if (!acc[tournamentName]) {
       acc[tournamentName] = {
         id: match.tournamentId || tournament?.id,
         name: tournamentName,
         logoUrl: tournament?.logoUrl,
+        isRanked: tournament?.isRanked,
         matches: [],
       };
     }
     acc[tournamentName].matches.push(match);
     return acc;
-  }, {});
+  }, {} as Record<string, { id?: string | null; name: string; logoUrl?: string | null; isRanked?: boolean; matches: BracketMatch[] }>);
 
   // Group upcoming matches by tournament name
-  const upcomingMatchesByTournament = upcomingMatches.reduce<Record<string, { id?: string | null; name: string; logoUrl?: string | null; matches: BracketMatch[] }>>((acc, match) => {
+  const upcomingMatchesByTournament = upcomingMatches.reduce<Record<string, { id?: string | null; name: string; logoUrl?: string | null; isRanked?: boolean; matches: BracketMatch[] }>>((acc, match) => {
     const tournamentName = match.tournament?.name || 'Giải đấu khác';
-    const tournament = match.tournament as { id?: string; logoUrl?: string | null; name?: string };
+    const tournament = match.tournament as { id?: string; logoUrl?: string | null; name?: string; isRanked?: boolean };
     if (!acc[tournamentName]) {
       acc[tournamentName] = {
         id: match.tournamentId || tournament?.id,
         name: tournamentName,
         logoUrl: tournament?.logoUrl,
+        isRanked: tournament?.isRanked,
         matches: [],
       };
     }
     acc[tournamentName].matches.push(match);
     return acc;
-  }, {});
+  }, {} as Record<string, { id?: string | null; name: string; logoUrl?: string | null; isRanked?: boolean; matches: BracketMatch[] }>);
 
   // Group completed matches by tournament name
-  const completedMatchesByTournament = completedMatches.reduce<Record<string, { id?: string | null; name: string; logoUrl?: string | null; matches: BracketMatch[] }>>((acc, match) => {
+  const completedMatchesByTournament = completedMatches.reduce<Record<string, { id?: string | null; name: string; logoUrl?: string | null; isRanked?: boolean; matches: BracketMatch[] }>>((acc, match) => {
     const tournamentName = match.tournament?.name || 'Giải đấu khác';
-    const tournament = match.tournament as { id?: string; logoUrl?: string | null; name?: string };
+    const tournament = match.tournament as { id?: string; logoUrl?: string | null; name?: string; isRanked?: boolean };
     if (!acc[tournamentName]) {
       acc[tournamentName] = {
         id: match.tournamentId || tournament?.id,
         name: tournamentName,
         logoUrl: tournament?.logoUrl,
+        isRanked: tournament?.isRanked,
         matches: [],
       };
     }
     acc[tournamentName].matches.push(match);
     return acc;
-  }, {});
+  }, {} as Record<string, { id?: string | null; name: string; logoUrl?: string | null; isRanked?: boolean; matches: BracketMatch[] }>);
 
   const renderMatchCard = (match: BracketMatch, isRankedMatchSection = false) => {
     const currentHighFives = highFives[match.id] || 0;
@@ -586,11 +639,24 @@ export default function HomePage() {
 
         {/* Location & Sport Row */}
         <div className="px-4 pb-2.5 pt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] text-slate-500 font-semibold border-t border-slate-100 bg-slate-50/10">
-          <div className="shrink-0 text-slate-650">
-            <span className="text-slate-400 font-bold">Môn:</span>{' '}
-            <span className="font-black text-slate-800">
-              <LiveMatchSportLabel match={match} />
-            </span>
+          <div className="shrink-0 text-slate-650 flex items-center gap-1">
+            {(() => {
+              const resolvedRules = resolveMatchSportRules(match);
+              const presentation = getMatchScorePresentation(resolvedRules.kind);
+              const logo = getSportLogo(presentation.sportLabel);
+              return (
+                <>
+                  {logo ? (
+                    <img src={logo} alt="" className="w-3.5 h-3.5 object-contain opacity-70" />
+                  ) : (
+                    <span>🏆</span>
+                  )}
+                  <span className="font-bold text-slate-800 text-[10px]">
+                    {getFormatLabel((match as EnrichedMatch).tournament?.matchType || ((match as unknown) as Record<string, unknown>).matchType as string | undefined, (match as EnrichedMatch).tournament?.genderRestriction || ((match as unknown) as Record<string, unknown>).genderRestriction as string | undefined)}
+                  </span>
+                </>
+              );
+            })()}
           </div>
           {match.courtName ? (
             <div className="truncate max-w-[220px]" title={match.courtAddress ? `${match.courtName} - ${match.courtAddress}` : match.courtName}>
@@ -630,8 +696,8 @@ export default function HomePage() {
             </div>
           </Link>
 
-          <button 
-            onClick={() => shareMatch(match.id)}
+          <button
+            onClick={() => setShareMatchId(match.id)}
             className="flex items-center justify-center gap-1 py-1.5 hover:bg-white rounded-xl text-[10px] font-black text-slate-600 transition-all border border-transparent hover:border-slate-150 active:scale-95 duration-100 cursor-pointer"
           >
             <Share2 className="w-3.5 h-3.5 text-blue-500" />
@@ -757,70 +823,13 @@ export default function HomePage() {
             )}
           </section>
 
-          {rankedTournament && (isLoadingRanked || displayRankedMatches.length > 0) && (
-            <section className="flex flex-col gap-4 bg-gradient-to-br from-blue-50/40 via-white to-slate-50/30 p-6 rounded-3xl border border-blue-100/60 shadow-[0_8px_30px_rgb(0,0,0,0.015)]">
-              <div className="flex justify-between items-center pb-2 border-b border-slate-100">
-                <Link href={`/tournaments/${rankedTournament.id}`} className="flex items-center gap-2.5 group cursor-pointer">
-                  <div className="w-10 h-10 rounded-full overflow-hidden border border-slate-200 bg-white flex items-center justify-center shrink-0 shadow-sm group-hover:scale-105 transition-transform duration-200 relative">
-                    <TournamentLogoAvatar src={rankedTournament.logoUrl} alt={rankedTournament.name} />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[9px] uppercase tracking-wider font-extrabold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">Giải đấu hạng</span>
-                      {isTournamentInProgress(rankedTournament.status) && (
-                        <span className="flex h-2 w-2 relative">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-450 opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-605"></span>
-                        </span>
-                      )}
-                    </div>
-                    <h3 className="text-sm font-black text-slate-900 leading-tight mt-0.5 group-hover:text-blue-600 transition-colors">{rankedTournament.name}</h3>
-                  </div>
-                </Link>
-                <Link href={`/tournaments/${rankedTournament.id}`} className="text-xs font-bold text-blue-650 hover:underline flex items-center gap-0.5">
-                  Chi tiết giải <ChevronRight className="w-4 h-4" />
-                </Link>
-              </div>
-
-              {/* Active Round Header info */}
-              <div className="flex items-center justify-between text-xs font-bold text-slate-650 bg-slate-100/60 px-4 py-2.5 rounded-2xl">
-                <span>Vòng đang diễn ra: <span className="text-blue-600 font-extrabold">Vòng {activeRound}</span></span>
-                {showOngoingOnly ? (
-                  <span className="text-[9px] text-rose-600 uppercase font-black tracking-wider flex items-center gap-1.5 animate-pulse">
-                    <span className="h-1.5 w-1.5 rounded-full bg-rose-500" /> Có trận trực tiếp
-                  </span>
-                ) : (
-                  <span className="text-[9px] text-slate-500 uppercase font-extrabold tracking-wider">
-                    Chờ đấu / Đã kết thúc
-                  </span>
-                )}
-              </div>
-
-              {/* Matches List Grid */}
-              {isLoadingRanked ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="h-36 bg-slate-200/60 animate-pulse rounded-2xl" />
-                  <div className="h-36 bg-slate-200/60 animate-pulse rounded-2xl" />
-                </div>
-              ) : sortedDisplayRankedMatches.length === 0 ? (
-                <div className="bg-white/80 border border-slate-200 border-dashed rounded-2xl p-8 text-center text-slate-400 text-xs font-bold">
-                  Không có trận đấu nào trong vòng này.
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {sortedDisplayRankedMatches.map((match) => renderMatchCard(match, true))}
-                </div>
-              )}
-            </section>
-          )}
-
           {/* Section 2: Trận live (Match Feed style) */}
           <section className="flex flex-col gap-4">
             <div className="flex justify-between items-end">
               <h2 className="text-lg font-black text-slate-900 tracking-tight">Trận đấu trực tiếp</h2>
               <span className="flex h-2 w-2 relative">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-450 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-600"></span>
               </span>
             </div>
 
@@ -835,28 +844,90 @@ export default function HomePage() {
               </div>
             ) : (
               <div className="space-y-6">
-                {Object.entries(liveMatchesByTournament).map(([tournamentName, group]) => (
-                  <div key={tournamentName} className="bg-white rounded-3xl border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.015)] overflow-hidden flex flex-col">
-                    {/* Group Tournament Header */}
-                    <div className="px-5 py-3 bg-gradient-to-r from-blue-50/20 to-indigo-50/10 border-b border-slate-100 flex items-center">
-                      <Link 
-                        href={group.id ? `/tournaments/${group.id}` : '#'}
-                        className="flex items-center gap-2.5 group/header hover:opacity-90 transition-opacity"
-                      >
-                        <div className="w-5 h-5 rounded-full overflow-hidden border border-slate-200 bg-white relative flex-shrink-0">
-                          <TournamentLogoAvatar src={group.logoUrl} alt={group.name} />
+                <motion.div
+                  key={liveMatchPage}
+                  initial={{ opacity: 0, x: 12 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.3, ease: 'easeOut' }}
+                  className="space-y-6"
+                >
+                  {Object.entries(liveMatchesByTournament).map(([tournamentName, rawGroup]) => {
+                    const group = rawGroup as GroupMatchesData;
+                    const matchedTournament = tournaments.find(t => t.id === group.id);
+                    const isRanked = matchedTournament ? matchedTournament.isRanked : (group.isRanked || group.matches.some(m => (m as EnrichedMatch).tournament?.isRanked));
+                    return (
+                      <div key={tournamentName} className="bg-white rounded-3xl border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.015)] overflow-hidden flex flex-col">
+                        {/* Group Tournament Header */}
+                        <div className="px-5 py-3.5 bg-gradient-to-r from-blue-50/20 to-indigo-50/10 border-b border-slate-100 flex items-center justify-between">
+                          <Link 
+                            href={group.id ? `/tournaments/${group.id}` : '#'}
+                            className="flex items-center gap-3 group/header hover:opacity-90 transition-opacity max-w-[70%]"
+                          >
+                            <div className="w-8 h-8 rounded-full overflow-hidden border border-slate-200 bg-white relative flex-shrink-0 shadow-sm">
+                              <TournamentLogoAvatar src={group.logoUrl} alt={group.name} />
+                            </div>
+                            <div>
+                              {isRanked && (
+                                <span className="text-[9px] uppercase tracking-wider font-extrabold text-blue-600 bg-blue-50 px-2 py-0.5 rounded inline-block mb-0.5">
+                                  GIẢI ĐẤU HẠNG • {(((group.matches[0] as EnrichedMatch | undefined)?.tournament)?.category?.name || (group.matches[0] as EnrichedMatch | undefined)?.tournament?.categoryName || '').toUpperCase()}
+                                </span>
+                              )}
+                              <h3 className="text-sm font-black text-slate-900 group-hover/header:text-blue-600 transition-colors block leading-tight">
+                                {group.name}
+                              </h3>
+                            </div>
+                          </Link>
+                          {group.id && (
+                            <Link href={`/tournaments/${group.id}`} className="text-xs font-bold text-slate-650 hover:underline flex items-center gap-0.5 shrink-0">
+                              Chi tiết giải <ChevronRight className="w-4 h-4" />
+                            </Link>
+                          )}
                         </div>
-                        <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider truncate group-hover/header:text-blue-600 transition-colors">
-                          {group.name}
-                        </h3>
-                      </Link>
-                    </div>
-                    {/* Matches List Grid */}
-                    <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {group.matches.map((match) => renderMatchCard(match, true))}
-                    </div>
+                        {/* Matches List Grid */}
+                        <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {group.matches.map((match) => renderMatchCard(match, true))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </motion.div>
+
+                {/* Pagination Controls */}
+                {totalLivePages > 1 && (
+                  <div className="flex items-center justify-center gap-1.5 pt-2">
+                    <button
+                      onClick={() => setLiveMatchPage(p => Math.max(1, p - 1))}
+                      disabled={liveMatchPage === 1}
+                      className="px-3 py-1.5 text-xs font-black text-slate-600 bg-white border border-slate-200 hover:border-slate-350 rounded-xl disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                    >
+                      Trước
+                    </button>
+                    {Array.from({ length: totalLivePages }).map((_, idx) => {
+                      const pageNum = idx + 1;
+                      const isCurrent = pageNum === liveMatchPage;
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => setLiveMatchPage(pageNum)}
+                          className={`relative w-8 h-8 flex items-center justify-center text-xs font-black rounded-xl transition-all cursor-pointer border ${
+                            isCurrent
+                              ? 'bg-blue-600 text-white border-transparent shadow-sm'
+                              : 'bg-white text-slate-650 border-slate-200 hover:border-slate-350 hover:text-slate-900'
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    })}
+                    <button
+                      onClick={() => setLiveMatchPage(p => Math.min(totalLivePages, p + 1))}
+                      disabled={liveMatchPage === totalLivePages}
+                      className="px-3 py-1.5 text-xs font-black text-slate-600 bg-white border border-slate-200 hover:border-slate-350 rounded-xl disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                    >
+                      Sau
+                    </button>
                   </div>
-                ))}
+                )}
               </div>
             )}
           </section>
@@ -878,28 +949,75 @@ export default function HomePage() {
               </div>
             ) : (
               <div className="space-y-6">
-                {Object.entries(completedMatchesByTournament).slice(0, 5).map(([tournamentName, group]) => (
-                  <div key={tournamentName} className="bg-white rounded-3xl border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.015)] overflow-hidden flex flex-col">
-                    {/* Group Tournament Header */}
-                    <div className="px-5 py-3 bg-gradient-to-r from-blue-50/20 to-indigo-50/10 border-b border-slate-100 flex items-center">
-                      <Link 
-                        href={group.id ? `/tournaments/${group.id}` : '#'}
-                        className="flex items-center gap-2.5 group/header hover:opacity-90 transition-opacity"
-                      >
-                        <div className="w-5 h-5 rounded-full overflow-hidden border border-slate-200 bg-white relative flex-shrink-0">
-                          <TournamentLogoAvatar src={group.logoUrl} alt={group.name} />
+                {Object.entries(completedMatchesByTournament).slice(0, 5).map(([tournamentName, rawGroup]) => {
+                  const group = rawGroup as GroupMatchesData;
+                  const tournamentId = group.id || tournamentName;
+                  const currentPage = tournamentPages[tournamentId] || 1;
+                  const totalPages = Math.ceil(group.matches.length / 4);
+                  const displayMatches = group.matches.slice((currentPage - 1) * 4, currentPage * 4);
+                  const matchedTournament = tournaments.find(t => t.id === group.id);
+                  const isRanked = matchedTournament ? matchedTournament.isRanked : (group.isRanked || group.matches.some(m => (m as EnrichedMatch).tournament?.isRanked));
+
+                  return (
+                    <div key={tournamentName} className="bg-white rounded-3xl border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.015)] overflow-hidden flex flex-col">
+                      {/* Group Tournament Header */}
+                      <div className="px-5 py-3.5 bg-gradient-to-r from-blue-50/20 to-indigo-50/10 border-b border-slate-100 flex items-center justify-between">
+                        <Link 
+                          href={group.id ? `/tournaments/${group.id}` : '#'}
+                          className="flex items-center gap-3 group/header hover:opacity-90 transition-opacity max-w-[65%]"
+                        >
+                          <div className="w-8 h-8 rounded-full overflow-hidden border border-slate-200 bg-white relative flex-shrink-0 shadow-sm">
+                            <TournamentLogoAvatar src={group.logoUrl} alt={group.name} />
+                          </div>
+                           <div>
+                             {isRanked && (
+                               <span className="text-[9px] uppercase tracking-wider font-extrabold text-blue-600 bg-blue-50 px-2 py-0.5 rounded inline-block mb-0.5">
+                                  GIẢI ĐẤU HẠNG • {(((group.matches[0] as EnrichedMatch | undefined)?.tournament)?.category?.name || (group.matches[0] as EnrichedMatch | undefined)?.tournament?.categoryName || '').toUpperCase()}
+                               </span>
+                             )}
+                             <h3 className="text-sm font-black text-slate-900 group-hover/header:text-blue-600 transition-colors block leading-tight">
+                               {group.name}
+                             </h3>
+                           </div>
+                        </Link>
+
+                        <div className="flex items-center gap-3 shrink-0">
+                          {group.id && (
+                            <Link href={`/tournaments/${group.id}`} className="text-xs font-bold text-slate-655 hover:underline flex items-center gap-0.5">
+                              Chi tiết giải <ChevronRight className="w-4 h-4" />
+                            </Link>
+                          )}
+                          {/* Mini Pagination controls */}
+                          {totalPages > 1 && (
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={() => setTournamentPages(prev => ({ ...prev, [tournamentId]: Math.max(1, currentPage - 1) }))}
+                                disabled={currentPage === 1}
+                                className="px-2 py-0.5 text-[9px] font-black text-slate-500 bg-white border border-slate-200 rounded-lg hover:border-slate-350 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer h-6 flex items-center"
+                              >
+                                Trước
+                              </button>
+                              <span className="text-[9px] font-bold text-slate-450 px-0.5">
+                                {currentPage}/{totalPages}
+                              </span>
+                              <button
+                                onClick={() => setTournamentPages(prev => ({ ...prev, [tournamentId]: Math.min(totalPages, currentPage + 1) }))}
+                                disabled={currentPage === totalPages}
+                                className="px-2 py-0.5 text-[9px] font-black text-slate-500 bg-white border border-slate-200 rounded-lg hover:border-slate-350 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer h-6 flex items-center"
+                              >
+                                Sau
+                              </button>
+                            </div>
+                          )}
                         </div>
-                        <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider truncate group-hover/header:text-blue-600 transition-colors">
-                          {group.name}
-                        </h3>
-                      </Link>
+                      </div>
+                      {/* Matches List Grid */}
+                      <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {displayMatches.map((match) => renderMatchCard(match, true))}
+                      </div>
                     </div>
-                    {/* Matches List Grid */}
-                    <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {group.matches.slice(0, 4).map((match) => renderMatchCard(match, true))}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </section>
@@ -921,28 +1039,75 @@ export default function HomePage() {
               </div>
             ) : (
               <div className="space-y-6">
-                {Object.entries(upcomingMatchesByTournament).map(([tournamentName, group]) => (
-                  <div key={tournamentName} className="bg-white rounded-3xl border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.015)] overflow-hidden flex flex-col">
-                    {/* Group Tournament Header */}
-                    <div className="px-5 py-3 bg-gradient-to-r from-blue-50/20 to-indigo-50/10 border-b border-slate-100 flex items-center">
-                      <Link 
-                        href={group.id ? `/tournaments/${group.id}` : '#'}
-                        className="flex items-center gap-2.5 group/header hover:opacity-90 transition-opacity"
-                      >
-                        <div className="w-5 h-5 rounded-full overflow-hidden border border-slate-200 bg-white relative flex-shrink-0">
-                          <TournamentLogoAvatar src={group.logoUrl} alt={group.name} />
+                {Object.entries(upcomingMatchesByTournament).map(([tournamentName, rawGroup]) => {
+                  const group = rawGroup as GroupMatchesData;
+                  const tournamentId = group.id || tournamentName;
+                  const currentPage = tournamentPages[tournamentId] || 1;
+                  const totalPages = Math.ceil(group.matches.length / 4);
+                  const displayMatches = group.matches.slice((currentPage - 1) * 4, currentPage * 4);
+                  const matchedTournament = tournaments.find(t => t.id === group.id);
+                  const isRanked = matchedTournament ? matchedTournament.isRanked : (group.isRanked || group.matches.some(m => (m as EnrichedMatch).tournament?.isRanked));
+
+                  return (
+                    <div key={tournamentName} className="bg-white rounded-3xl border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.015)] overflow-hidden flex flex-col">
+                      {/* Group Tournament Header */}
+                      <div className="px-5 py-3.5 bg-gradient-to-r from-blue-50/20 to-indigo-50/10 border-b border-slate-100 flex items-center justify-between">
+                        <Link 
+                          href={group.id ? `/tournaments/${group.id}` : '#'}
+                          className="flex items-center gap-3 group/header hover:opacity-90 transition-opacity max-w-[65%]"
+                        >
+                          <div className="w-8 h-8 rounded-full overflow-hidden border border-slate-200 bg-white relative flex-shrink-0 shadow-sm">
+                            <TournamentLogoAvatar src={group.logoUrl} alt={group.name} />
+                          </div>
+                           <div>
+                             {isRanked && (
+                               <span className="text-[9px] uppercase tracking-wider font-extrabold text-blue-600 bg-blue-50 px-2 py-0.5 rounded inline-block mb-0.5">
+                                  GIẢI ĐẤU HẠNG • {(((group.matches[0] as EnrichedMatch | undefined)?.tournament)?.category?.name || (group.matches[0] as EnrichedMatch | undefined)?.tournament?.categoryName || '').toUpperCase()}
+                               </span>
+                             )}
+                             <h3 className="text-sm font-black text-slate-900 group-hover/header:text-blue-600 transition-colors block leading-tight">
+                               {group.name}
+                             </h3>
+                           </div>
+                        </Link>
+
+                        <div className="flex items-center gap-3 shrink-0">
+                          {group.id && (
+                            <Link href={`/tournaments/${group.id}`} className="text-xs font-bold text-slate-655 hover:underline flex items-center gap-0.5">
+                              Chi tiết giải <ChevronRight className="w-4 h-4" />
+                            </Link>
+                          )}
+                          {/* Mini Pagination controls */}
+                          {totalPages > 1 && (
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={() => setTournamentPages(prev => ({ ...prev, [tournamentId]: Math.max(1, currentPage - 1) }))}
+                                disabled={currentPage === 1}
+                                className="px-2 py-0.5 text-[9px] font-black text-slate-500 bg-white border border-slate-200 rounded-lg hover:border-slate-350 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer h-6 flex items-center"
+                              >
+                                Trước
+                              </button>
+                              <span className="text-[9px] font-bold text-slate-450 px-0.5">
+                                {currentPage}/{totalPages}
+                              </span>
+                              <button
+                                onClick={() => setTournamentPages(prev => ({ ...prev, [tournamentId]: Math.min(totalPages, currentPage + 1) }))}
+                                disabled={currentPage === totalPages}
+                                className="px-2 py-0.5 text-[9px] font-black text-slate-500 bg-white border border-slate-200 rounded-lg hover:border-slate-350 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer h-6 flex items-center"
+                              >
+                                Sau
+                              </button>
+                            </div>
+                          )}
                         </div>
-                        <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider truncate group-hover/header:text-blue-600 transition-colors">
-                          {group.name}
-                        </h3>
-                      </Link>
+                      </div>
+                      {/* Matches List Grid */}
+                      <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {displayMatches.map((match) => renderMatchCard(match, true))}
+                      </div>
                     </div>
-                    {/* Matches List Grid */}
-                    <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {group.matches.map((match) => renderMatchCard(match, true))}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </section>

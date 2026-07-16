@@ -27,8 +27,8 @@ export default function LeaderboardPage() {
 
     const [provinces, setProvinces] = useState<Region[]>([]);
     const [selectedProvinceCode, setSelectedProvinceCode] = useState<string>('');
-    const [selectedMatchType, setSelectedMatchType] = useState<string>('');
-    const [selectedGenderFilter, setSelectedGenderFilter] = useState<string>('');
+    const [selectedMatchType, setSelectedMatchType] = useState<string>('SINGLES');
+    const [selectedGenderFilter, setSelectedGenderFilter] = useState<string>('MALE');
 
     // ELO User Search States
     const [searchQuery, setSearchQuery] = useState("");
@@ -60,7 +60,11 @@ export default function LeaderboardPage() {
                         const rankRes = await rankingsApi.getUserRankings(u.id);
                         const data = rankRes;
                         const publicRanks = data.publicRanks || [];
-                        const matchRank = publicRanks.find((r) => r.categoryId === activeCategoryId);
+                        const matchRank = publicRanks.find((r) =>
+                            r.categoryId === activeCategoryId &&
+                            r.matchType === selectedMatchType &&
+                            r.genderRestriction === selectedGenderFilter
+                        );
                         return {
                             ...u,
                             eloPoints: matchRank?.eloPoints ?? 1000,
@@ -116,7 +120,7 @@ export default function LeaderboardPage() {
                 if (selectedMatchType) {
                     params.matchType = selectedMatchType;
                 }
-                if (selectedGenderFilter && selectedMatchType !== 'MIXED_DOUBLES') {
+                if (selectedGenderFilter) {
                     params.genderRestriction = selectedGenderFilter;
                 }
                 if (selectedProvinceCode) {
@@ -171,12 +175,12 @@ export default function LeaderboardPage() {
                         <select
                             value={selectedMatchType}
                             onChange={(e) => {
-                                setSelectedMatchType(e.target.value);
-                                setSelectedGenderFilter('');
+                                const matchType = e.target.value;
+                                setSelectedMatchType(matchType);
+                                setSelectedGenderFilter(matchType === 'MIXED_DOUBLES' ? 'MIXED' : 'MALE');
                             }}
                             className="w-full pl-3 pr-10 py-2 border border-slate-200 rounded-lg text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-blue-600 bg-slate-50 text-slate-800 font-bold"
                         >
-                            <option value="">Tất cả</option>
                             <option value="SINGLES">Đơn</option>
                             <option value="DOUBLES">Đôi</option>
                             <option value="MIXED_DOUBLES">Đôi Nam Nữ</option>
@@ -195,7 +199,6 @@ export default function LeaderboardPage() {
                                 onChange={(e) => setSelectedGenderFilter(e.target.value)}
                                 className="w-full pl-3 pr-10 py-2 border border-slate-200 rounded-lg text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-blue-600 bg-slate-50 text-slate-800 font-bold"
                             >
-                                <option value="">Tất cả</option>
                                 <option value="MALE">Nam</option>
                                 <option value="FEMALE">Nữ</option>
                             </select>

@@ -337,8 +337,8 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
 
               {(effectiveDivision.matchType === 'DOUBLES' || effectiveDivision.matchType === 'MIXED_DOUBLES') && (
                 <Input
-                  label="Tài khoản Baseline của đồng đội (Email hoặc SĐT)"
-                  placeholder="partner@baseline.vn hoặc 08xxxx (Không bắt buộc)"
+                  label="Tài khoản VNDC Sport của đồng đội (Email hoặc SĐT)"
+                  placeholder="partner@vndcsport.vn hoặc 08xxxx (Không bắt buộc)"
                   {...register('partnerEmailOrPhone')}
                   error={errors.partnerEmailOrPhone?.message}
                 />

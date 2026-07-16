@@ -3,10 +3,10 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+import { Input, DateTimePicker } from '@/components/ui/Input';
 import { seriesApi } from '@/features/series/api';
 import { PsrPointConfig, ExclusionScope } from '@/types/series';
-import { ArrowLeft, Trophy, Save, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, Save, Plus, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 
@@ -84,8 +84,8 @@ export default function CreateSeriesPage() {
         bannerUrl: bannerUrl || undefined,
         logoUrl: logoUrl || undefined,
         visibility,
-        startDate: startDate || undefined,
-        endDate: endDate || undefined,
+        startDate: startDate ? new Date(startDate).toISOString() : undefined,
+        endDate: endDate ? new Date(endDate).toISOString() : undefined,
         totalPrize: totalPrize ? Number(totalPrize) : undefined,
         rules: rulesConfig,
       };
@@ -113,10 +113,13 @@ export default function CreateSeriesPage() {
         </Link>
 
         {/* Header Title */}
-        <div className="flex items-center gap-3 mb-8">
-          <div className="w-12 h-12 bg-blue-50 border border-blue-100 text-blue-600 rounded-2xl flex items-center justify-center">
-            <Trophy className="w-6 h-6" />
-          </div>
+        <div className="flex items-center gap-4 mb-8">
+          <Link 
+            href="/"
+            className="w-12 h-12 bg-white border border-slate-200 rounded-2xl flex items-center justify-center overflow-hidden shadow-sm shrink-0 hover:scale-105 transition-transform"
+          >
+            <img src="/images/vndc_sport.png" alt="VNDC Sport Logo" className="w-9 h-9 object-contain" />
+          </Link>
           <div>
             <h1 className="text-2xl md:text-3xl font-black text-slate-900">Thiết Lập Chuỗi Giải Đấu Mới</h1>
             <p className="text-xs text-slate-500 mt-0.5">Khởi tạo hệ thống giải đấu vòng loại tích lũy và điều lệ suất vé đặc cách</p>
@@ -151,20 +154,18 @@ export default function CreateSeriesPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-slate-700">Ngày bắt đầu</label>
-                <Input
-                  type="date"
+                <DateTimePicker
+                  label="Ngày bắt đầu"
                   value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
+                  onChange={setStartDate}
                 />
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-slate-700">Ngày kết thúc</label>
-                <Input
-                  type="date"
+                <DateTimePicker
+                  label="Ngày kết thúc"
                   value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
+                  onChange={setEndDate}
                 />
               </div>
 

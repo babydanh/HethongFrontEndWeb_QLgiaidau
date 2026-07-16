@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/Toaster";
 import RootLayoutClient from "@/components/layout/RootLayoutClient";
+import LiveMetricsWidget from "@/components/common/LiveMetricsWidget";
 
 const inter = Inter({
   variable: "--font-sans",
@@ -24,6 +25,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <RootLayoutClient>{children}</RootLayoutClient>
         <Toaster />
+        <LiveMetricsWidget />
       </body>
     </html>
   );

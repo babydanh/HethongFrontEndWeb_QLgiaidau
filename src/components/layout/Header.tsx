@@ -15,6 +15,7 @@ import {
   User,
   X,
   Bookmark,
+  Settings,
 } from 'lucide-react';
 import { getButtonClasses } from '@/components/ui/Button';
 import { communitiesApi } from '@/features/communities/api';
@@ -266,6 +267,7 @@ export function Header() {
   const navLinks = [
     { name: 'Trang chủ', path: '/' },
     { name: 'Giải đấu', path: '/tournaments' },
+    { name: 'Trận đấu', path: '/matches' },
     { name: 'Chuỗi giải đấu', path: '/series' },
     { name: 'Cộng đồng', path: '/communities' },
     { name: 'Xếp hạng', path: '/leaderboard' },
@@ -568,83 +570,96 @@ export function Header() {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
                     transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
-                    className="absolute right-0 mt-2 w-56 rounded-xl border border-slate-100 bg-white/95 backdrop-blur-md py-2 shadow-lg z-50"
+                    className="absolute right-0 mt-2 w-64 rounded-xl border border-slate-200 bg-white py-2 shadow-lg z-50"
                   >
-                    <div className="mb-1 border-b border-slate-100 px-4 py-2">
+                    <div className="mb-2 border-b border-slate-100 px-4 py-2.5">
                       <p className="truncate text-sm font-bold text-slate-900">{user?.fullName}</p>
                       <p className="truncate text-xs text-slate-500">{user?.email}</p>
                     </div>
 
-                    {canAccessAdmin ? (
-                      <Link href="/admin">
-                        <div className="flex cursor-pointer items-center gap-2 px-4 py-2 text-sm font-bold text-blue-600 transition-colors hover:bg-blue-50/50">
-                          <LayoutDashboard className="h-4 w-4" />
-                          Quản trị hệ thống
-                        </div>
-                      </Link>
-                    ) : null}
+                    {/* Nhóm 1: Admin & Moderation */}
+                    {(canAccessAdmin || canAccessModeration) && (
+                      <div className="border-b border-slate-100/60 pb-2 mb-2">
+                        {canAccessAdmin && (
+                          <Link href="/admin">
+                            <div className="flex cursor-pointer items-center gap-3 px-4 py-2.5 text-sm font-bold text-slate-500 hover:text-blue-600 transition-colors hover:bg-blue-50/30">
+                              <LayoutDashboard className="h-4 w-4 text-slate-400" />
+                              Quản trị hệ thống
+                            </div>
+                          </Link>
+                        )}
+                        {canAccessModeration && (
+                          <Link href="/moderation">
+                            <div className="flex cursor-pointer items-center gap-3 px-4 py-2.5 text-sm font-bold text-slate-500 hover:text-amber-600 transition-colors hover:bg-amber-50/30">
+                              <Check className="h-4 w-4 text-slate-400" />
+                              Điều phối kiểm duyệt
+                            </div>
+                          </Link>
+                        )}
+                      </div>
+                    )}
 
-                    {canAccessModeration ? (
-                      <Link href="/moderation">
-                        <div className="flex cursor-pointer items-center gap-2 px-4 py-2 text-sm font-semibold text-amber-700 transition-colors hover:bg-amber-50/70">
-                          <Check className="h-4 w-4" />
-                          Điều phối kiểm duyệt
-                        </div>
-                      </Link>
-                    ) : null}
-
-                    {user?.roles?.includes('ORGANIZER') || user?.roles?.includes('ADMIN') ? (
-                      <>
+                    {/* Nhóm 2: Quản lý (đối với BTC) */}
+                    {(user?.roles?.includes('ORGANIZER') || user?.roles?.includes('ADMIN')) ? (
+                      <div className="border-b border-slate-100/60 pb-2 mb-2">
+                        <div className="px-4 py-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Tổ chức giải</div>
                         <Link href="/organizer/tournaments">
-                          <div className="flex cursor-pointer items-center gap-2 px-4 py-2 text-sm text-slate-700 transition-colors hover:bg-slate-50">
+                          <div className="flex cursor-pointer items-center gap-3 px-4 py-2 text-sm text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900">
                             <LayoutDashboard className="h-4 w-4 text-slate-400" />
                             Quản lý giải đấu
                           </div>
                         </Link>
                         <Link href="/organizer/series">
-                          <div className="flex cursor-pointer items-center gap-2 px-4 py-2 text-sm text-slate-700 transition-colors hover:bg-slate-50">
+                          <div className="flex cursor-pointer items-center gap-3 px-4 py-2 text-sm text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900">
                             <Trophy className="h-4 w-4 text-slate-400" />
                             Quản lý chuỗi giải
                           </div>
                         </Link>
-                      </>
+                      </div>
                     ) : (
-                      <Link href="/dashboard">
-                        <div className="flex cursor-pointer items-center gap-2 px-4 py-2 text-sm text-slate-700 transition-colors hover:bg-slate-50">
-                          <Trophy className="h-4 w-4 text-slate-400" />
-                          Giải đấu của tôi
-                        </div>
-                      </Link>
+                      <div className="border-b border-slate-100/60 pb-2 mb-2">
+                        <Link href="/dashboard">
+                          <div className="flex cursor-pointer items-center gap-3 px-4 py-2 text-sm text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900">
+                            <Trophy className="h-4 w-4 text-slate-400" />
+                            Giải đấu của tôi
+                          </div>
+                        </Link>
+                      </div>
                     )}
 
-                    <Link href="/notifications">
-                      <div className="flex cursor-pointer items-center gap-2 px-4 py-2 text-sm text-slate-700 transition-colors hover:bg-slate-50">
-                        <Bell className="h-4 w-4 text-slate-400" />
-                        Thông báo của tôi
-                      </div>
-                    </Link>
+                    {/* Nhóm 3: Cá nhân & Tương tác */}
+                    <div className="border-b border-slate-100/60 pb-2 mb-2">
+                      <div className="px-4 py-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Cá nhân</div>
+                      <Link href="/notifications">
+                        <div className="flex cursor-pointer items-center gap-3 px-4 py-2 text-sm text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900">
+                          <Bell className="h-4 w-4 text-slate-400" />
+                          Thông báo của tôi
+                        </div>
+                      </Link>
 
-                    <Link href="/profile?tab=tournaments">
-                      <div className="flex cursor-pointer items-center gap-2 px-4 py-2 text-sm text-slate-700 transition-colors hover:bg-slate-50">
-                        <Bookmark className="h-4 w-4 text-slate-400" />
-                        Giải đấu đang theo dõi
-                      </div>
-                    </Link>
+                      <Link href="/profile?tab=tournaments">
+                        <div className="flex cursor-pointer items-center gap-3 px-4 py-2 text-sm text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900">
+                          <Bookmark className="h-4 w-4 text-slate-400" />
+                          Giải đang theo dõi
+                        </div>
+                      </Link>
 
-                    <Link href="/profile">
-                      <div className="flex cursor-pointer items-center gap-2 px-4 py-2 text-sm text-slate-700 transition-colors hover:bg-slate-50">
-                        <User className="h-4 w-4 text-slate-400" />
-                        Hồ sơ cá nhân
-                      </div>
-                    </Link>
+                      <Link href="/profile">
+                        <div className="flex cursor-pointer items-center gap-3 px-4 py-2 text-sm text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900">
+                          <User className="h-4 w-4 text-slate-400" />
+                          Hồ sơ cá nhân
+                        </div>
+                      </Link>
 
-                    <Link href="/profile/edit">
-                      <div className="flex cursor-pointer items-center gap-2 px-4 py-2 text-sm text-slate-700 transition-colors hover:bg-slate-50">
-                        <User className="h-4 w-4 text-slate-400" />
-                        Cài đặt tài khoản
-                      </div>
-                    </Link>
+                      <Link href="/profile/edit">
+                        <div className="flex cursor-pointer items-center gap-3 px-4 py-2 text-sm text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900">
+                          <Settings className="h-4 w-4 text-slate-400" />
+                          Cài đặt tài khoản
+                        </div>
+                      </Link>
+                    </div>
 
+                    {/* Đăng xuất */}
                     <button
                       type="button"
                       onClick={async () => {
@@ -656,9 +671,9 @@ export function Header() {
                         logout();
                         router.push('/login');
                       }}
-                      className="mt-1 flex w-full items-center gap-2 border-t border-slate-100 px-4 pt-2 text-sm text-red-600 transition-colors hover:bg-red-50"
+                      className="flex w-full items-center gap-3 px-4 py-2.5 text-sm font-bold text-red-500 transition-all hover:bg-red-50/50 hover:text-red-600"
                     >
-                      <LogOut className="h-4 w-4" />
+                      <LogOut className="h-4 w-4 text-red-400" />
                       Đăng xuất
                     </button>
                   </motion.div>

@@ -581,10 +581,37 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
           setSuperTiebreakPoints={bracketManager.setSuperTiebreakPoints}
           isSavingConfig={bracketManager.isSavingConfig}
           handleSaveMatchConfig={handleBracketSaveMatchConfig}
+          bracketTypeState={bracketManager.bracketTypeState}
+          setBracketTypeState={bracketManager.setBracketTypeState}
           tiebreakerMode={bracketManager.tiebreakerMode}
           setTiebreakerMode={bracketManager.setTiebreakerMode}
           roundsToPlay={bracketManager.roundsToPlay}
           setRoundsToPlay={bracketManager.setRoundsToPlay}
+          tournamentFormat={bracketManager.bracketType ?? undefined}
+          rrWinPoints={bracketManager.rrWinPoints}
+          setRrWinPoints={bracketManager.setRrWinPoints}
+          rrLossPoints={bracketManager.rrLossPoints}
+          setRrLossPoints={bracketManager.setRrLossPoints}
+          rrTiebreakerRule={bracketManager.rrTiebreakerRule}
+          setRrTiebreakerRule={bracketManager.setRrTiebreakerRule}
+          numGroups={bracketManager.numGroups}
+          setNumGroups={bracketManager.setNumGroups}
+          teamsPerGroup={bracketManager.teamsPerGroup}
+          setTeamsPerGroup={bracketManager.setTeamsPerGroup}
+          teamsAdvancing={bracketManager.teamsAdvancing}
+          setTeamsAdvancing={bracketManager.setTeamsAdvancing}
+          gskPlayoffType={bracketManager.gskPlayoffType}
+          setGskPlayoffType={bracketManager.setGskPlayoffType}
+          gskSeedingType={bracketManager.gskSeedingType}
+          setGskSeedingType={bracketManager.setGskSeedingType}
+          gskRoundsToPlay={bracketManager.gskRoundsToPlay}
+          setGskRoundsToPlay={bracketManager.setGskRoundsToPlay}
+          handleSaveRoundRobinConfig={bracketManager.handleSaveRoundRobinConfig}
+          isSavingRoundRobinConfig={bracketManager.isSavingRoundRobinConfig}
+          handleSaveGskConfig={bracketManager.handleSaveGskConfig}
+          isSavingGskConfig={bracketManager.isSavingGskConfig}
+          handleAdvanceStandings={bracketManager.handleAdvanceStandings}
+          isAdvancingStandings={bracketManager.isAdvancingStandings}
           selectedMatchId={focusedMatchId}
           onSelectMatch={(match) => setFocusedMatchId(match.id)}
         />

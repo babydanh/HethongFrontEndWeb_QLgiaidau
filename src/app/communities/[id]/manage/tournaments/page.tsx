@@ -28,13 +28,24 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
   
   const [isLoading, setIsLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isLiteModalOpen, setIsLiteModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Form states
+  // Form states for normal creation
   const [newTourneyName, setNewTourneyName] = useState('');
   const [newTourneyCategory, setNewTourneyCategory] = useState('');
   const [newTourneyMatchType, setNewTourneyMatchType] = useState<CommunityTournamentMatchType>('DOUBLES');
   const [newTourneyMaxParticipants, setNewTourneyMaxParticipants] = useState(16);
+  const [newTourneyStartDate, setNewTourneyStartDate] = useState('');
+  const [newTourneyEndDate, setNewTourneyEndDate] = useState('');
+  const [newTourneyEntryFee, setNewTourneyEntryFee] = useState(0);
+
+  // Form states for Lite creation
+  const [liteName, setLiteName] = useState('');
+  const [liteSport, setLiteSport] = useState<'badminton' | 'tennis' | 'pickleball' | 'table_tennis'>('badminton');
+  const [liteFormat, setLiteFormat] = useState<'singles' | 'doubles'>('doubles');
+  const [liteBracketType, setLiteBracketType] = useState<'single_elimination' | 'double_elimination' | 'round_robin'>('single_elimination');
+  const [liteMaxTeams, setLiteMaxTeams] = useState(16);
 
   const fetchData = async () => {
     try {
@@ -64,6 +75,50 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
     };
     init();
   }, [id]);
+
+  const handleOpenAdvancedTournamentCreate = () => {
+    router.push(`/organizer/tournaments/create?communityId=${id}&source=club&mode=advanced`);
+  };
+
+  const handleCreateLiteTournament = async () => {
+    if (!liteName.trim()) {
+      toast.error('Vui lòng nhập tên giải đấu nhanh');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      const res = await tournamentsApi.createLiteTournament({
+        name: liteName.trim(),
+        sport: liteSport,
+        communityId: id,
+        format: liteFormat,
+        bracketType: liteBracketType,
+        maxTeams: liteMaxTeams,
+        description: `Giải đấu giao hữu nhanh CLB ${community?.name || ''}`,
+      });
+
+      toast.success('Tạo giải đấu nhanh thành công!');
+      setIsLiteModalOpen(false);
+      
+      // Reset form
+      setLiteName('');
+      setLiteSport('badminton');
+      setLiteFormat('doubles');
+      setLiteBracketType('single_elimination');
+      setLiteMaxTeams(16);
+
+      // Redirect directly to the manage page of the newly created tournament
+      const newId = res?.id;
+      if (newId) {
+        router.push(`/organizer/tournaments/${newId}/manage`);
+      }
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const handleCreateClubTournament = async () => {
     if (!newTourneyName.trim()) {
@@ -190,12 +245,20 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
               Câu lạc bộ: <span className="text-slate-800 font-bold">{community.name}</span>
             </p>
           </div>
-          <Button
-            onClick={() => setIsCreateModalOpen(true)}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center gap-2 shadow-sm"
-          >
-            <Plus className="w-5 h-5" /> Tạo giải đấu nội bộ
-          </Button>
+          <div className="flex items-center gap-3 flex-wrap">
+            <Button
+              onClick={() => setIsLiteModalOpen(true)}
+              className="bg-indigo-600 hover:bg-indigo-755 hover:bg-indigo-700 text-white font-bold flex items-center gap-2 shadow-sm"
+            >
+              <Plus className="w-4 h-4" /> Tạo giải nhanh (Lite)
+            </Button>
+            <Button
+              onClick={handleOpenAdvancedTournamentCreate}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center gap-2 shadow-sm"
+            >
+              <Plus className="w-4 h-4" /> Tạo giải đấu chuyên nghiệp
+            </Button>
+          </div>
         </div>
 
         {/* Description Banner */}
@@ -220,7 +283,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
               Hãy tạo giải đấu nội bộ đầu tiên để tăng tính gắn kết giữa các thành viên trong câu lạc bộ!
             </p>
             <Button
-              onClick={() => setIsCreateModalOpen(true)}
+              onClick={handleOpenAdvancedTournamentCreate}
               className="bg-emerald-600 hover:bg-emerald-700 text-white mt-6"
             >
               Tạo giải đấu nội bộ
@@ -340,6 +403,94 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
                     className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5"
                   >
                     {isSubmitting ? 'Đang tạo...' : 'Tạo giải đấu'}
+                  </Button>
+                </div>
+              </div>
+            </ModalContent>
+          </Modal>
+        )}
+
+        {isLiteModalOpen && (
+          <Modal open={isLiteModalOpen} onOpenChange={(open) => { if (!open) setIsLiteModalOpen(false); }}>
+            <ModalContent className="bg-white rounded-2xl p-6">
+              <ModalHeader>
+                <ModalTitle className="text-xl font-bold text-slate-900">
+                  Tạo Nhanh Giải Đấu (Lite Mode)
+                </ModalTitle>
+              </ModalHeader>
+              <div className="space-y-4 mt-4">
+                <Input
+                  label="Tên giải đấu nhanh"
+                  placeholder="Ví dụ: Giải Giao Hữu Cầu Lông Cuối Tuần"
+                  value={liteName}
+                  onChange={(e) => setLiteName(e.target.value)}
+                />
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-semibold text-slate-700">Môn thể thao</label>
+                    <select
+                      value={liteSport}
+                      onChange={(e) => setLiteSport(e.target.value as 'badminton' | 'tennis' | 'pickleball' | 'table_tennis')}
+                      className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="badminton">Cầu lông (Badminton)</option>
+                      <option value="tennis">Quần vợt (Tennis)</option>
+                      <option value="pickleball">Pickleball</option>
+                      <option value="table_tennis">Bóng bàn (Table Tennis)</option>
+                    </select>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-semibold text-slate-750 text-slate-700">Hình thức</label>
+                    <select
+                      value={liteFormat}
+                      onChange={(e) => setLiteFormat(e.target.value as 'singles' | 'doubles')}
+                      className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="singles">Đơn (Singles)</option>
+                      <option value="doubles">Đôi (Doubles)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-semibold text-slate-700">Thể thức đấu</label>
+                    <select
+                      value={liteBracketType}
+                      onChange={(e) => setLiteBracketType(e.target.value as 'single_elimination' | 'double_elimination' | 'round_robin')}
+                      className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="single_elimination">Loại trực tiếp (Single Elim)</option>
+                      <option value="double_elimination">Nhánh thắng/thua (Double Elim)</option>
+                      <option value="round_robin">Vòng tròn tính điểm (Round Robin)</option>
+                    </select>
+                  </div>
+
+                  <Input
+                    label="Số đội tối đa"
+                    type="number"
+                    value={liteMaxTeams}
+                    onChange={(e) => setLiteMaxTeams(Number(e.target.value))}
+                  />
+                </div>
+
+                <div className="flex justify-end gap-3 pt-4 border-t mt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsLiteModalOpen(false)}
+                    disabled={isSubmitting}
+                    className="border-slate-200 text-slate-650 font-medium hover:bg-slate-50"
+                  >
+                    Hủy bỏ
+                  </Button>
+                  <Button
+                    onClick={handleCreateLiteTournament}
+                    disabled={isSubmitting}
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-5"
+                  >
+                    {isSubmitting ? 'Đang tạo...' : 'Tạo giải nhanh'}
                   </Button>
                 </div>
               </div>

@@ -247,7 +247,9 @@ export function BracketTab({
           if (fromEnd === 1) return 'Bán kết';
           if (fromEnd === 2) return 'Tứ kết';
           if (fromEnd === 3) return 'Vòng 16';
-          return `Vòng ${ri + 1}`;
+          if (fromEnd === 4) return 'Vòng 32';
+          if (fromEnd === 5) return 'Vòng 64';
+          return `Vòng ${2 ** (fromEnd + 1)}`;
         };
         
         const name = getKnockoutRoundLabel(idx, maxRound);

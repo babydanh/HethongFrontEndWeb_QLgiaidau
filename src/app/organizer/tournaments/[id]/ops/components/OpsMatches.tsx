@@ -19,6 +19,7 @@ import {
 import type { Match, MatchPenaltyRecord } from '@/types/match';
 import { formatDateTime } from '@/utils/format';
 import { cn } from '@/utils/cn';
+import { getMatchRoundLabel } from '@/utils/match-round-label';
 import type { MatchOperationAction, MatchOperationInput, MatchScheduleInput, MatchScoreInput, OpsReferee } from '@/features/organizer/ops/types';
 import { buildScoreDraft, ScoringPanel, type ScoreDraft } from './scoring/ScoringPanel';
 
@@ -326,6 +327,11 @@ export function OpsMatches({
     const scoreSummary = matchSets.length > 0
       ? `${scorePresentation.wonSummaryLabel}: ${match.p1SetsWon} - ${match.p2SetsWon} • ${matchSets.length} ${scorePresentation.sequenceLabel}`
       : `${scorePresentation.wonSummaryLabel}: ${match.p1SetsWon} - ${match.p2SetsWon}`;
+    const roundLabel = getMatchRoundLabel({
+      match,
+      matches,
+      tournamentFormat: match.stage?.type,
+    });
 
     return (
       <div
@@ -341,7 +347,7 @@ export function OpsMatches({
         <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div className="space-y-2">
             <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-400">
-              {match.bracketBranch || 'Nhánh chính'} • Vòng {match.roundNumber} • Trận {match.matchOrder}
+              {match.bracketBranch || 'Nhánh chính'} • {roundLabel} • Trận {match.matchOrder}
             </p>
             <p className="text-sm font-black text-slate-900">
               {match.participant1?.teamName || 'Chờ xác định'} gặp {match.participant2?.teamName || 'Chờ xác định'}

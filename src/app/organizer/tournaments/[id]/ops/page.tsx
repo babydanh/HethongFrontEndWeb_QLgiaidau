@@ -5,16 +5,18 @@ import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Modal, ModalContent, ModalHeader, ModalTitle } from '@/components/ui/Modal';
 import { DateTimePicker } from '@/components/ui/Input';
-import { Activity, AlertTriangle, BarChart3, Calendar, ExternalLink, Network, Settings, Trophy } from 'lucide-react';
+import { Activity, AlertTriangle, BarChart3, Calendar, ExternalLink, Network, Settings, Trophy, Video } from 'lucide-react';
 import { useOrganizerOps } from '@/features/organizer/ops/hooks/useOrganizerOps';
 import { getMatchScorePresentation, resolveMatchSportRules } from '@/features/matches/score-display';
 import { getSportRulePresentation } from '@/features/tournaments/sport-rules/presentation';
 import { OperationsWorkspace } from '../manage/components/OperationsWorkspace';
 import { useManageState } from '../manage/components/useManageState';
 import { BracketTab } from '../manage/components/BracketTab';
+import { LivestreamTab } from '../manage/components/LivestreamTab';
 import { formatDate } from '@/utils/format';
 import { cn } from '@/utils/cn';
 import { getSportLogo } from '@/constants/sports';
+import { getMatchRoundLabel } from '@/utils/match-round-label';
 import type { BracketMatch } from '@/types/tournament';
 import type { MatchScoreInput } from '@/features/organizer/ops/types';
 
@@ -45,7 +47,7 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
   } = useOrganizerOps(resolvedParams.id);
   const [bracketViewVersion, setBracketViewVersion] = useState(0);
   const [focusedMatchId, setFocusedMatchId] = useState<string | null>(null);
-  const [activePageTab, setActivePageTab] = useState<'OVERVIEW' | 'BRACKET' | 'OPERATIONS'>('OVERVIEW');
+  const [activePageTab, setActivePageTab] = useState<'OVERVIEW' | 'BRACKET' | 'OPERATIONS' | 'CAMERA'>('OVERVIEW');
   const bracketSelectedDivisionId = bracketManager.selectedDivisionId;
   const bracketDivisions = bracketManager.divisions;
   const applyDivisionFormValues = bracketManager.applyDivisionFormValues;
@@ -176,7 +178,9 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
   );
 
   const roundSummary = useMemo(() => {
-    const grouped = new Map<number, {
+    const grouped = new Map<string, {
+      label: string;
+      order: number;
       total: number;
       scheduled: number;
       ongoing: number;
@@ -185,7 +189,15 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
     }>();
 
     for (const match of matches) {
-      const current = grouped.get(match.roundNumber) ?? {
+      const label = getMatchRoundLabel({
+        match,
+        matches,
+        tournamentFormat: match.stage?.type,
+      });
+      const key = `${match.roundNumber}-${label}`;
+      const current = grouped.get(key) ?? {
+        label,
+        order: match.roundNumber,
         total: 0,
         scheduled: 0,
         ongoing: 0,
@@ -198,12 +210,10 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
       if (match.status === 'ONGOING') current.ongoing += 1;
       if (match.status === 'COMPLETED') current.completed += 1;
       if (!match.courtName || !match.refereeId) current.missingAssignments += 1;
-      grouped.set(match.roundNumber, current);
+      grouped.set(key, current);
     }
 
-    return Array.from(grouped.entries())
-      .sort((a, b) => a[0] - b[0])
-      .map(([roundNumber, summary]) => ({ roundNumber, ...summary }));
+    return Array.from(grouped.values()).sort((a, b) => a.order - b.order || a.label.localeCompare(b.label, 'vi'));
   }, [matches]);
 
   const conflictSummary = useMemo(() => {
@@ -508,11 +518,12 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
       </div>
 
       <div className="sticky top-20 z-30 rounded-2xl border border-slate-200 bg-white/95 p-2 shadow-sm backdrop-blur">
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
           {([
             { id: 'OVERVIEW', label: 'Tổng quan', icon: BarChart3 },
             { id: 'BRACKET', label: 'Sơ đồ & cấu hình', icon: Network },
             { id: 'OPERATIONS', label: 'Điều hành', icon: Activity },
+            { id: 'CAMERA', label: 'Camera & live', icon: Video },
           ] as const).map((tab) => {
             const Icon = tab.icon;
             const isActive = activePageTab === tab.id;
@@ -683,10 +694,10 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
           <h3 className="text-lg font-black text-slate-900">Nhịp vận hành theo vòng</h3>
           <div className="space-y-2.5 max-h-[360px] overflow-y-auto pr-1 no-scrollbar">
             {roundSummary.map((round) => (
-              <div key={round.roundNumber} className="rounded-2xl border border-slate-150 bg-slate-50/50 p-4 transition-all hover:bg-slate-50">
+              <div key={`${round.order}-${round.label}`} className="rounded-2xl border border-slate-150 bg-slate-50/50 p-4 transition-all hover:bg-slate-50">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <p className="text-sm font-black text-slate-900">Vòng {round.roundNumber}</p>
+                    <p className="text-sm font-black text-slate-900">{round.label}</p>
                     <p className="text-[11px] font-semibold text-slate-450 mt-0.5">
                       {round.total} trận đấu • {round.missingAssignments} trận thiếu phân sân/trọng tài
                     </p>
@@ -730,6 +741,18 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
         tournamentStatus={tournament.status}
         onApplyMatchOperation={handleOpsApplyMatchOperation}
       />
+      ) : null}
+
+      {activePageTab === 'CAMERA' ? (
+        <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="mb-5 flex flex-col gap-1.5">
+            <h2 className="text-xl font-black text-slate-900">Gán camera theo trận đấu</h2>
+            <p className="text-sm font-semibold text-slate-500">
+              Dùng tại OP để BTC chọn camera cho từng trận theo đúng vòng/nhánh. Sau khi gán, trọng tài được phân công trận đó mới start/dừng livestream.
+            </p>
+          </div>
+          <LivestreamTab tournament={bracketManager.tournament ?? tournament} bracket={bracketManager.bracket} />
+        </section>
       ) : null}
 
       {bracketManager.selectedStage && bracketManager.selectedRoundNumber !== null && (

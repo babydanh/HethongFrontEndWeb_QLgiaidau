@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { livestreamApi, type CreatedLivestreamCamera, type LivestreamCamera } from '@/features/tournaments/api';
 import type { BracketMatch, BracketStage, Tournament } from '@/types/tournament';
 import { getErrorMessage } from '@/utils/error';
+import { getMatchRoundLabel } from '@/utils/match-round-label';
 
 interface LivestreamTabProps {
   tournament: Tournament;
@@ -50,6 +51,11 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
 
   const matches = useMemo(() => flattenMatches(bracket), [bracket]);
   const readyMatches = matches.filter((match) => !match.isBye && match.participant1Id && match.participant2Id);
+  const getCameraMatchLabel = (match: BracketMatch) => getMatchRoundLabel({
+    match,
+    matches,
+    tournamentFormat: tournament.format,
+  });
 
   const loadCameras = async () => {
     setIsLoading(true);
@@ -256,7 +262,7 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
             <option value="">Chọn trận</option>
             {readyMatches.map((match) => (
               <option key={match.id} value={match.id}>
-                Vòng {match.roundNumber} • Trận {match.matchOrder} • {match.participant1?.teamName || 'Đội 1'} vs {match.participant2?.teamName || 'Đội 2'}
+                {getCameraMatchLabel(match)} • Trận {match.matchOrder} • {match.participant1?.teamName || 'Đội 1'} vs {match.participant2?.teamName || 'Đội 2'}
               </option>
             ))}
           </select>
@@ -282,7 +288,7 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
             <div key={match.id} className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 lg:flex-row lg:items-center lg:justify-between">
               <div>
                 <p className="text-sm font-black text-slate-900">
-                  Vòng {match.roundNumber} • Trận {match.matchOrder}
+                  {getCameraMatchLabel(match)} • Trận {match.matchOrder}
                 </p>
                 <p className="mt-1 text-xs font-semibold text-slate-500">
                   {match.participant1?.teamName || 'Đội 1'} vs {match.participant2?.teamName || 'Đội 2'} • Trọng tài: {match.refereeId ? 'đã phân công' : 'chưa phân công'}

@@ -44,6 +44,8 @@ export function getRoundLabel(
   if (fromEnd === 1) return prefix ? `${prefix} Bán kết` : 'Bán kết';
   if (fromEnd === 2) return prefix ? `${prefix} Tứ kết` : 'Tứ kết';
   if (fromEnd === 3) return prefix ? `${prefix} Vòng 16` : 'Vòng 16';
+  if (fromEnd === 4) return prefix ? `${prefix} Vòng 32` : 'Vòng 32';
+  if (fromEnd === 5) return prefix ? `${prefix} Vòng 64` : 'Vòng 64';
   return `${prefix ? prefix + ' ' : ''}Vòng ${ri + 1}`;
 }
 

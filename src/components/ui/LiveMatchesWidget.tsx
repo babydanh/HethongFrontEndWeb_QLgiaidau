@@ -6,6 +6,7 @@ import { BracketMatch } from '@/features/tournaments/api';
 import { matchesApi } from '@/features/matches/api';
 import Link from 'next/link';
 import { isNetworkError } from '@/utils/error';
+import { getMatchRoundLabel, type TournamentFormatForRoundLabel } from '@/utils/match-round-label';
 
 interface Props {
   limit?: number;
@@ -87,6 +88,16 @@ export default function LiveMatchesWidget({ limit = 5, showAllLink = true }: Pro
       <div className="flex flex-col gap-3 relative z-10">
         {matches.map((match) => {
           const sets = extractMatchScores(match.scoreDetails);
+          const tournamentInfo = match.tournament as {
+            format?: TournamentFormatForRoundLabel;
+            maxParticipants?: number | null;
+          } | null | undefined;
+          const roundLabel = getMatchRoundLabel({
+            match,
+            matches,
+            tournamentFormat: tournamentInfo?.format,
+            bracketSize: tournamentInfo?.maxParticipants ?? null,
+          });
           return (
             <div
               key={match.id}
@@ -95,7 +106,7 @@ export default function LiveMatchesWidget({ limit = 5, showAllLink = true }: Pro
               {/* Match context */}
               <div className="flex flex-col items-center md:items-start text-center md:text-left md:w-1/3">
                 <span className="text-xs font-semibold text-indigo-400 font-sans line-clamp-1">
-                  Vòng {match.roundNumber} {match.courtName ? `— Sân: ${match.courtName}` : ''}
+                  {roundLabel} {match.courtName ? `— Sân: ${match.courtName}` : ''}
                 </span>
                 <span className="text-xs text-slate-400 font-medium line-clamp-1">
                   {match.group?.stage?.name || match.group?.name || 'Trận Đấu'}

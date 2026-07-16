@@ -271,7 +271,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
 
         {/* Row 2: Round Slider */}
         {roundOptions.length > 0 && (
-          <div className="flex items-center gap-2 border-t border-slate-100 pt-3 overflow-x-auto no-scrollbar">
+          <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
             <span className="text-xs font-black text-slate-400 uppercase tracking-wider mr-2 shrink-0">Vòng đấu:</span>
             
             <button

@@ -10,6 +10,7 @@ import { regionsApi, type Region } from '@/features/regions/api';
 import { getSportLogo } from '@/constants/sports';
 import type { SportRulesEnvelope } from '@/types/tournament';
 import { getMatchRoundLabel } from '@/utils/match-round-label';
+import ShareModal from '@/components/common/ShareModal';
 
 interface EnrichedTournament {
   id: string;
@@ -84,8 +85,10 @@ export default function MatchesListPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [groupPages, setGroupPages] = useState<Record<string, number>>({});
   const [cheerCounts, setCheerCounts] = useState<Record<string, number>>({});
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [activeShareUrl, setActiveShareUrl] = useState('');
+  const [activeShareTitle, setActiveShareTitle] = useState('');
 
   // Load danh mục môn thể thao và tỉnh thành
   useEffect(() => {
@@ -872,12 +875,13 @@ export default function MatchesListPage() {
                             <Play className="w-3 h-3 text-indigo-600 fill-current" />
                             <span>Chi tiết</span>
                           </Link>
-                          <button 
+                           <button 
                             onClick={() => {
-                              void navigator.clipboard
-                                .writeText(`${window.location.origin}/live/${match.id}`)
-                                .then(() => toast.success('Đã sao chép liên kết trận đấu!'))
-                                .catch(() => toast.error('Không thể sao chép liên kết.'));
+                              const p1Name = match.participant1?.teamName || 'VĐV 1';
+                              const p2Name = match.participant2?.teamName || 'VĐV 2';
+                              setActiveShareUrl(`${window.location.origin}/live/${match.id}`);
+                              setActiveShareTitle(`Trận đấu: ${p1Name} vs ${p2Name}`);
+                              setIsShareModalOpen(true);
                             }}
                             className="flex items-center justify-center gap-1 hover:text-slate-700 transition-colors py-1 cursor-pointer"
                           >
@@ -953,6 +957,13 @@ export default function MatchesListPage() {
           </button>
         </div>
       )}
+
+      <ShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        shareUrl={activeShareUrl}
+        title={activeShareTitle}
+      />
     </div>
   );
 }

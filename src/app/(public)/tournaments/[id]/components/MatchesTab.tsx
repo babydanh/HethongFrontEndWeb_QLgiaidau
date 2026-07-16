@@ -26,6 +26,18 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
   const [selectedRoundKey, setSelectedRoundKey] = useState<string | 'ALL'>('ALL');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL');
 
+  // Find bracket size for the current division or tournament
+  const getBracketSize = () => {
+    if (divisionId && tournament.divisions) {
+      const division = tournament.divisions.find(d => d.id === divisionId);
+      if (division && division.maxParticipants) {
+        return division.maxParticipants;
+      }
+    }
+    return tournament.maxParticipants ?? null;
+  };
+  const bracketSize = getBracketSize();
+
   useEffect(() => {
     const fetchMatches = async () => {
       setIsLoading(true);
@@ -77,19 +89,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
     };
 
     fetchMatches();
-  }, [divisionId, effectiveTournamentId, tournament.format]);
-
-  // Find bracket size for the current division or tournament
-  const getBracketSize = () => {
-    if (divisionId && tournament.divisions) {
-      const division = tournament.divisions.find(d => d.id === divisionId);
-      if (division && division.maxParticipants) {
-        return division.maxParticipants;
-      }
-    }
-    return tournament.maxParticipants ?? null;
-  };
-  const bracketSize = getBracketSize();
+  }, [divisionId, effectiveTournamentId, tournament.format, bracketSize]);
 
   // Extract unique rounds from current matches
   const roundOptions = useMemo(() => buildRoundFilterOptions(matches, tournament.format, bracketSize), [matches, tournament.format, bracketSize]);

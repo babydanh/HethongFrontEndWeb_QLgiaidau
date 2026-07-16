@@ -9,6 +9,7 @@ import { categoriesApi, type Category } from '@/features/categories/api';
 import { regionsApi, type Region } from '@/features/regions/api';
 import { getSportLogo } from '@/constants/sports';
 import type { SportRulesEnvelope } from '@/types/tournament';
+import { getMatchRoundLabel } from '@/utils/match-round-label';
 
 interface EnrichedTournament {
   id: string;
@@ -84,6 +85,7 @@ export default function MatchesListPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [groupPages, setGroupPages] = useState<Record<string, number>>({});
+  const [cheerCounts, setCheerCounts] = useState<Record<string, number>>({});
 
   // Load danh mục môn thể thao và tỉnh thành
   useEffect(() => {
@@ -654,19 +656,11 @@ export default function MatchesListPage() {
                     const p1Won = isFinished && match.winnerId === match.participant1Id;
                     const p2Won = isFinished && match.winnerId === match.participant2Id;
 
-                    // Tự động tính toán tổng số vòng của giải để hiển thị "Chung kết", "Bán kết", v.v.
-                    const totalRoundsInGroup = Math.max(...group.matches.map(m => m.roundNumber), 1);
-                    const friendlyRoundName = (isSingleElim || isDoubleElim)
-                      ? (() => {
-                          const fromEnd = totalRoundsInGroup - match.roundNumber;
-                          if (fromEnd === 0) return 'Chung kết';
-                          if (fromEnd === 1) return 'Bán kết';
-                          if (fromEnd === 2) return 'Tứ kết';
-                          if (fromEnd === 3) return 'Vòng 16';
-                          if (fromEnd === 4) return 'Vòng 32';
-                          return `Vòng ${match.roundNumber}`;
-                        })()
-                      : `Vòng ${match.roundNumber}`;
+                    const friendlyRoundName = getMatchRoundLabel({
+                      match,
+                      matches: group.matches,
+                      tournamentFormat: match.stage?.type,
+                    });
 
                     // Lấy thông tin chi tiết các set đấu
                     const scoreSets = (match.scoreDetails?.sets as Array<{ team1Score?: number; team2Score?: number; isFinished?: boolean }> | undefined) || [];
@@ -859,11 +853,17 @@ export default function MatchesListPage() {
                         {/* Actions */}
                         <div className="px-3 py-1.5 bg-slate-50/50 border-t border-slate-100 grid grid-cols-3 gap-0.5 text-center text-[11px] font-bold text-slate-500">
                           <button 
-                            onClick={() => toast.success('Cảm ơn bạn đã cổ vũ!')}
+                            onClick={() => {
+                              setCheerCounts(prev => ({
+                                ...prev,
+                                [match.id]: (prev[match.id] || 0) + 1
+                              }));
+                              toast.success('Cảm ơn bạn đã cổ vũ!');
+                            }}
                             className="flex items-center justify-center gap-1 hover:text-rose-600 transition-colors py-1 cursor-pointer"
                           >
-                            <Heart className="w-3 h-3 text-rose-500" />
-                            <span>Cổ vũ (0)</span>
+                            <Heart className="w-3 h-3 text-rose-500 fill-current" />
+                            <span>Cổ vũ ({cheerCounts[match.id] || 0})</span>
                           </button>
                           <Link 
                             href={`/live/${match.id}`}

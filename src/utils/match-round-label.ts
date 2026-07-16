@@ -140,7 +140,14 @@ export const getKnockoutRoundLabel = <TMatch extends RoundLabelMatch>(
   const branch = normalizeBranch(match.bracketBranch);
   if (branch === 'GRAND_FINALS' || branch === 'GRAND_FINAL') return 'Chung kết tổng';
 
-  if (branch !== 'LOSERS') {
+  const stage = getStage(match);
+  const isGsk = stage && (
+    normalizeText(stage.type) === 'GROUP_STAGE' || 
+    normalizeText(stage.name).includes('PLAYOFF') || 
+    normalizeText(stage.name).includes('KNOCKOUT')
+  );
+
+  if (branch !== 'LOSERS' && !isGsk) {
     const slotCountFromBracketSize = getSlotCountFromBracketSize(match.roundNumber, bracketSize);
     if (slotCountFromBracketSize && KNOCKOUT_ROUND_LABELS[slotCountFromBracketSize]) {
       return KNOCKOUT_ROUND_LABELS[slotCountFromBracketSize];

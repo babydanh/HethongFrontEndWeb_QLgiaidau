@@ -52,6 +52,22 @@ export default function RegisterPage() {
     }
   }, [user, router]);
 
+  // Reset loading state when navigating back (BFCache handling)
+  React.useEffect(() => {
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        setIsLoading(false);
+      }
+    };
+    window.addEventListener('pageshow', handlePageShow);
+    // Also reset immediately on mount
+    setIsLoading(false);
+    
+    return () => {
+      window.removeEventListener('pageshow', handlePageShow);
+    };
+  }, []);
+
   const {
     register,
     handleSubmit,

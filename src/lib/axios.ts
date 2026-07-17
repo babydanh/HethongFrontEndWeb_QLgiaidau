@@ -125,9 +125,6 @@ api.interceptors.response.use(
           );
           if (isProtectedRoute && window.location.pathname !== '/login') {
             window.location.assign('/login');
-          } else {
-            // If on a public page (like home page '/'), reload page to sync UI state to "Unauthenticated"
-            window.location.reload();
           }
         }
         return Promise.reject(refreshError);

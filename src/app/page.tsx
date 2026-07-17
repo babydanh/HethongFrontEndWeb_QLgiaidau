@@ -1343,7 +1343,9 @@ export default function HomePage() {
                {/* ELO & Rank display */}
                <div className="flex items-center gap-2 bg-slate-50 px-3 py-1 rounded-full border border-slate-150 shadow-sm z-10">
                  <Trophy className="w-3.5 h-3.5 text-amber-500" />
-                 <span className="text-[10px] font-bold text-slate-700 max-w-[100px] truncate">{sportName}: {tierName}</span>
+                 <span className="text-[10px] font-bold text-slate-700 max-w-[120px] truncate">
+                   {sportName === 'Chung' ? tierName : `${sportName}: ${tierName}`}
+                 </span>
                  <span className="text-[10px] bg-blue-600 text-white px-2 py-0.5 rounded-full font-bold">
                    ELO {eloPoints}
                  </span>

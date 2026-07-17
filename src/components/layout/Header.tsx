@@ -269,7 +269,6 @@ export function Header() {
     { name: 'Trang chủ', path: '/' },
     { name: 'Giải đấu', path: '/tournaments' },
     { name: 'Trận đấu', path: '/matches' },
-    { name: 'Chuỗi giải đấu', path: '/series' },
     { name: 'Cộng đồng', path: '/communities' },
     { name: 'Xếp hạng', path: '/leaderboard' },
   ];
@@ -651,6 +650,13 @@ export function Header() {
                         <div className="flex cursor-pointer items-center gap-3 px-4 py-2 text-sm text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900">
                           <Bookmark className="h-4 w-4 text-slate-400" />
                           Giải đang theo dõi
+                        </div>
+                      </Link>
+
+                      <Link href="/series">
+                        <div className="flex cursor-pointer items-center gap-3 px-4 py-2 text-sm text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900">
+                          <Trophy className="h-4 w-4 text-slate-400" />
+                          Chuỗi giải đấu
                         </div>
                       </Link>
 

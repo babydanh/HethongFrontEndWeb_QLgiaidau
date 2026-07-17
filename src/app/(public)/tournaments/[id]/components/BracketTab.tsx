@@ -31,6 +31,8 @@ function stageTypeLabel(type: string): string {
       return 'Nhánh thắng nhánh thua';
     case 'ROUND_ROBIN':
       return 'Vòng tròn tính điểm';
+    case 'GROUP_STAGE':
+      return 'Vòng bảng (Vòng tròn)';
     default:
       return type;
   }
@@ -89,7 +91,7 @@ function GroupView({
     );
   }
 
-  if (stageType === 'ROUND_ROBIN') {
+  if (stageType === 'ROUND_ROBIN' || stageType === 'GROUP_STAGE') {
     return <RoundRobinView matches={matches} tiebreakerMode={tiebreakerMode} onScheduleMatch={onScheduleMatch} selectedMatchId={selectedMatchId} onSelectMatch={onSelectMatch} tournamentId={tournamentId} stageId={stageId} fallbackSportRuleKind={fallbackSportRuleKind} roundConfig={roundConfig} />;
   }
 

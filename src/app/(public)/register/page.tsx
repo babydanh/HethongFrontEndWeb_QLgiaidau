@@ -11,6 +11,8 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { CheckCircle2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import * as React from 'react';
+import { useAuthStore } from '@/lib/zustand/authStore';
 
 const registerSchema = z
   .object({
@@ -40,7 +42,15 @@ const STATS = [
 
 export default function RegisterPage() {
   const router = useRouter();
+  const user = useAuthStore((state) => state.user);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Auto redirect to homepage if user is already logged in
+  React.useEffect(() => {
+    if (user) {
+      router.push('/');
+    }
+  }, [user, router]);
 
   const {
     register,

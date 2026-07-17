@@ -2,6 +2,15 @@ import axios, { AxiosRequestConfig } from 'axios';
 import { useAuthStore } from './zustand/authStore';
 import toast from 'react-hot-toast';
 
+/**
+ * Đọc giá trị cookie theo tên
+ */
+function getCookie(name: string): string | null {
+  if (typeof document === 'undefined') return null;
+  const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}=([^;]*)`));
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 declare module 'axios' {
   export interface AxiosInstance {
@@ -19,7 +28,12 @@ declare module 'axios' {
 const getBaseUrl = () => {
   if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
   if (typeof window !== 'undefined') {
-    return `${window.location.protocol}//${window.location.hostname}:3000/api/v1`;
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    if (isLocalhost) {
+      return `${window.location.protocol}//${window.location.hostname}:3000/api/v1`;
+    }
+    // Production: API is proxied through OLS on the same domain
+    return `${window.location.origin}/api/v1`;
   }
   return 'http://localhost:3000/api/v1';
 };
@@ -32,6 +46,21 @@ export const api = axios.create({
   withCredentials: true,
   timeout: 5000,
 });
+
+// Request interceptor — gắn CSRF token cho state-changing requests
+api.interceptors.request.use(
+  (config) => {
+    const method = config.method?.toUpperCase();
+    if (method && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
+      const csrfToken = getCookie('csrf-token');
+      if (csrfToken) {
+        config.headers['X-CSRF-Token'] = csrfToken;
+      }
+    }
+    return config;
+  },
+  (error) => Promise.reject(error),
+);
 
 api.interceptors.response.use(
   (response) => response.data,

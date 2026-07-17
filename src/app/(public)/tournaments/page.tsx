@@ -64,6 +64,7 @@ export default function TournamentsListPage() {
   const [selectedRegion, setSelectedRegion] = useState<string>('');
   const [selectedDistrict, setSelectedDistrict] = useState<string>(''); // Quận huyện đang chọn
   const [selectedContent, setSelectedContent] = useState<string>(''); // Nội dung thi đấu (Đơn Nam, Đôi Nữ...)
+  const [selectedBracketType, setSelectedBracketType] = useState<string>(''); // Thể thức thi đấu
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false); // Toggle bộ lọc nâng cao
   const [startDate, setStartDate] = useState<string>(''); // Lọc từ ngày
   const [endDate, setEndDate] = useState<string>(''); // Lọc đến ngày
@@ -211,6 +212,7 @@ export default function TournamentsListPage() {
           region: locationQuery,
           matchType,
           genderRestriction,
+          bracketType: selectedBracketType || undefined,
           startDate: startDate || undefined,
           endDate: endDate || undefined,
         });
@@ -223,7 +225,7 @@ export default function TournamentsListPage() {
       }
     };
     fetchTournaments();
-  }, [page, searchTerm, selectedCategoryId, selectedStatus, selectedRegion, selectedDistrict, selectedContent, startDate, endDate]);
+  }, [page, searchTerm, selectedCategoryId, selectedStatus, selectedRegion, selectedDistrict, selectedContent, selectedBracketType, startDate, endDate]);
 
   const handleToggleFollow = async (tournament: Tournament) => {
     if (!user?.id) return;
@@ -350,6 +352,28 @@ export default function TournamentsListPage() {
                 <option value="DOUBLE_MALE">Đôi Nam</option>
                 <option value="DOUBLE_FEMALE">Đôi Nữ</option>
                 <option value="DOUBLE_MIXED">Đôi Nam Nữ</option>
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-455 w-4.5 h-4.5 pointer-events-none" />
+            </div>
+          </div>
+
+          {/* Ô Lọc Thể thức thi đấu */}
+          <div className="w-full md:w-auto min-w-[150px]">
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Thể thức</label>
+            <div className="relative">
+              <select 
+                value={selectedBracketType}
+                onChange={(e) => {
+                  setSelectedBracketType(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full pl-3 pr-10 py-2 border border-slate-200 rounded-xl text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50/50 text-slate-900 font-bold"
+              >
+                <option value="">Tất cả</option>
+                <option value="SINGLE_ELIMINATION">Loại trực tiếp</option>
+                <option value="DOUBLE_ELIMINATION">Nhánh thắng/thua</option>
+                <option value="ROUND_ROBIN">Vòng tròn</option>
+                <option value="GROUP_STAGE_KNOCKOUT">Vòng bảng + Playoffs</option>
               </select>
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-455 w-4.5 h-4.5 pointer-events-none" />
             </div>

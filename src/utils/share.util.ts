@@ -38,7 +38,11 @@ interface ShareOptions {
 export async function triggerShare(options: ShareOptions): Promise<boolean> {
   const { title, text = '', url } = options;
 
-  if (typeof navigator !== 'undefined' && navigator.share) {
+  // Chỉ dùng Web Share API trên thiết bị di động (Mobile/Tablet) để tránh hiện khay share thô của Windows/macOS trên Desktop
+  const isMobile = typeof window !== 'undefined' && 
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+  if (isMobile && typeof navigator !== 'undefined' && navigator.share) {
     try {
       await navigator.share({
         title,
@@ -53,5 +57,5 @@ export async function triggerShare(options: ShareOptions): Promise<boolean> {
     }
   }
 
-  return false; // Thiết bị không hỗ trợ, cần mở Modal thủ công
+  return false; // Thiết bị Desktop hoặc không hỗ trợ, cần mở Modal thủ công
 }

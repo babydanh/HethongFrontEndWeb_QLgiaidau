@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { api } from '@/lib/axios';
+import { api, getBaseUrl } from '@/lib/axios';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import type { User } from '@/lib/zustand/authStore';
 import { Input } from '@/components/ui/Input';
@@ -72,11 +72,11 @@ export default function LoginPage() {
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1'}/auth/google`;
+    window.location.href = `${getBaseUrl()}/auth/google`;
   };
 
   const handleFacebookLogin = () => {
-    window.location.href = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1'}/auth/facebook`;
+    window.location.href = `${getBaseUrl()}/auth/facebook`;
   };
 
   return (

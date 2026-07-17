@@ -10,6 +10,7 @@ import { Mail, Lock, User as UserIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { authApi } from "@/features/auth/api";
+import { getBaseUrl } from "@/lib/axios";
 
 const registerSchema = z.object({
   name: z.string().min(3, { message: "Tên phải có ít nhất 3 ký tự." }),
@@ -57,7 +58,7 @@ export const RegisterForm = () => {
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1'}/auth/google`;
+    window.location.href = `${getBaseUrl()}/auth/google`;
   };
 
   return (

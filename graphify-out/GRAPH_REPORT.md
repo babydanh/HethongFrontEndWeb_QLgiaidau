@@ -1,16 +1,16 @@
 # Graph Report - frontend-web_qlgiaidau  (2026-07-16)
 
 ## Corpus Check
-- 257 files · ~403,729 words
+- 258 files · ~404,779 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1375 nodes · 3965 edges · 92 communities (86 shown, 6 thin omitted)
-- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 37 edges (avg confidence: 0.8)
+- 1396 nodes · 4027 edges · 86 communities (80 shown, 6 thin omitted)
+- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 38 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `49af262f`
+- Built from commit: `2a11fb4a`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -86,20 +86,14 @@
 - [[_COMMUNITY_Community 74|Community 74]]
 - [[_COMMUNITY_Community 75|Community 75]]
 - [[_COMMUNITY_Community 76|Community 76]]
-- [[_COMMUNITY_Community 77|Community 77]]
-- [[_COMMUNITY_Community 78|Community 78]]
-- [[_COMMUNITY_Community 79|Community 79]]
-- [[_COMMUNITY_Community 80|Community 80]]
 - [[_COMMUNITY_Community 81|Community 81]]
-- [[_COMMUNITY_Community 82|Community 82]]
-- [[_COMMUNITY_Community 83|Community 83]]
 - [[_COMMUNITY_Community 85|Community 85]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `useAuthStore` - 77 edges
 2. `Button` - 70 edges
 3. `cn()` - 67 edges
-4. `Tournament` - 59 edges
+4. `Tournament` - 60 edges
 5. `getErrorMessage()` - 50 edges
 6. `api` - 43 edges
 7. `Input` - 36 edges
@@ -108,16 +102,16 @@
 10. `Match` - 29 edges
 
 ## Surprising Connections (you probably didn't know these)
+- `CommunityDetailPage()` --calls--> `useAuthStore`  [INFERRED]
+  src/app/(public)/communities/[id]/page.tsx → src/lib/zustand/authStore.ts
+- `CreateCommunityPage()` --calls--> `useAuthStore`  [INFERRED]
+  src/app/(public)/communities/create/page.tsx → src/lib/zustand/authStore.ts
 - `TournamentsListPage()` --calls--> `useAuthStore`  [INFERRED]
   src/app/(public)/tournaments/page.tsx → src/lib/zustand/authStore.ts
 - `AdminChangeRequestsPage()` --calls--> `useAuthStore`  [INFERRED]
   src/app/admin/change-requests/page.tsx → src/lib/zustand/authStore.ts
-- `ReportsPage()` --calls--> `useAuthStore`  [INFERRED]
-  src/app/admin/reports/page.tsx → src/lib/zustand/authStore.ts
-- `VerificationPage()` --calls--> `useAuthStore`  [INFERRED]
-  src/app/admin/verification/page.tsx → src/lib/zustand/authStore.ts
-- `OrganizerSeriesPage()` --calls--> `useAuthStore`  [INFERRED]
-  src/app/organizer/series/page.tsx → src/lib/zustand/authStore.ts
+- `AdminPayoutsReview()` --calls--> `formatCurrency()`  [INFERRED]
+  src/app/admin/payouts/page.tsx → src/utils/format.ts
 
 ## Import Cycles
 - 1-file cycle: `src/app/organizer/tournaments/[id]/manage/components/BracketTab.tsx -> src/app/organizer/tournaments/[id]/manage/components/BracketTab.tsx`
@@ -128,19 +122,19 @@
 - 1-file cycle: `src/app/moderation/tournaments/page.tsx -> src/app/moderation/tournaments/page.tsx`
 - 1-file cycle: `src/app/moderation/verification/page.tsx -> src/app/moderation/verification/page.tsx`
 
-## Communities (92 total, 6 thin omitted)
+## Communities (86 total, 6 thin omitted)
 
 ### Community 0 - "Community 0"
-Cohesion: 0.08
-Nodes (38): SeriesCard(), SeriesCardProps, SeriesOverviewTab(), SeriesOverviewTabProps, SeriesRulesTab(), SeriesRulesTabProps, SeriesScheduleTab(), SeriesScheduleTabProps (+30 more)
+Cohesion: 0.07
+Nodes (41): SeriesCard(), SeriesCardProps, SeriesOverviewTab(), SeriesOverviewTabProps, SeriesRulesTab(), SeriesRulesTabProps, SeriesScheduleTab(), SeriesScheduleTabProps (+33 more)
 
 ### Community 1 - "Community 1"
-Cohesion: 0.13
-Nodes (13): ScheduleTabProps, JoinRequest, UserSearchResult, CreateCommunityFormValues, createCommunitySchema, Region, EditorJSAPI, EditorJSBlock (+5 more)
+Cohesion: 0.20
+Nodes (12): OfficialScoreModalProps, PermissionsTab(), PermissionsTabProps, refereeStatusMeta, roleMap, StaffMember, TournamentReferee, ModalContent (+4 more)
 
 ### Community 2 - "Community 2"
-Cohesion: 0.27
-Nodes (8): getDivisionBracketLabel(), getDivisionMatchLabel(), NormalizableDivision, normalizeGenderValue(), RegisterFormValues, TournamentRegisterPage(), WithdrawModal(), registerSchema
+Cohesion: 0.23
+Nodes (9): getDivisionBracketLabel(), getDivisionMatchLabel(), NormalizableDivision, normalizeGenderValue(), RegisterFormValues, TournamentRegisterPage(), WithdrawModal(), WithdrawModalProps (+1 more)
 
 ### Community 3 - "Community 3"
 Cohesion: 0.10
@@ -155,8 +149,8 @@ Cohesion: 0.07
 Nodes (29): 1. Overview, 2. Participants, 3. Matches, 4. Incidents, 5. Finance, Backend Placement, Case A: Replace one player before registration lock, Case B: Replace one player after bracket generation but before first match (+21 more)
 
 ### Community 6 - "Community 6"
-Cohesion: 0.18
-Nodes (6): AdminChangeRequestsPage(), UpdateProfileDto, UserChangeRequest, UserProfile, RawUserProfileResponse, usersApi
+Cohesion: 0.23
+Nodes (5): AdminChangeRequestsPage(), UpdateProfileDto, UserChangeRequest, UserProfile, RawUserProfileResponse
 
 ### Community 7 - "Community 7"
 Cohesion: 0.06
@@ -167,52 +161,52 @@ Cohesion: 0.07
 Nodes (45): bindNotificationSocket(), DEFAULT_NOTIFICATION_STATE, emitNotificationStore(), fetchNotifications(), getSocketAccessToken(), markAllNotificationsAsRead(), markAllNotificationsReadInState(), markNotificationAsRead() (+37 more)
 
 ### Community 9 - "Community 9"
-Cohesion: 0.21
-Nodes (10): inter, metadata, useSocket(), Footer(), GUEST_ROUTES, Header(), PageTransition(), PageTransitionProps (+2 more)
+Cohesion: 0.17
+Nodes (13): inter, metadata, HomePage(), EditProfilePage(), useSocket(), Footer(), GUEST_ROUTES, Header() (+5 more)
 
 ### Community 10 - "Community 10"
-Cohesion: 0.15
-Nodes (14): Match, PublicProfile, PublicUserProfilePage(), UserRank, LeaderboardSearchResult, rankingsApi, UserRankResponse, regionsApi (+6 more)
+Cohesion: 0.24
+Nodes (15): LiveMatchControlPanel(), useLiveMatch(), awardTennisPoint(), buildPenaltyPresets(), createTennisLivePointState(), formatTennisPointDisplay(), isTennisPointStateEmpty(), readPenaltyLog() (+7 more)
 
 ### Community 17 - "Community 17"
 Cohesion: 0.15
 Nodes (15): PenaltyPanel(), PenaltyPanelProps, PenaltyTeamSelection, BADMINTON_SCHEMA, DEFAULT_SCHEMA, getPenaltySchema(), PenaltyActionSchema, PenaltyCardStyle (+7 more)
 
 ### Community 18 - "Community 18"
-Cohesion: 0.14
-Nodes (22): MatchBucket, OPERATION_OPTIONS, OperationDraft, OpsMatches(), ScheduleDraft, STATUS_FILTERS, STATUS_OPTIONS, getScoreRuleWarnings() (+14 more)
+Cohesion: 0.12
+Nodes (27): CommunityLogoAvatar(), LiveMatchSportLabel(), MatchBucket, OPERATION_OPTIONS, OperationDraft, OpsMatches(), ScheduleDraft, STATUS_FILTERS (+19 more)
 
 ### Community 19 - "Community 19"
-Cohesion: 0.12
-Nodes (9): NotFound(), RegisterModal(), TournamentDetailPage(), Props, TOURNAMENT_DETAIL_TABS, TournamentDetailTab, CountdownTimerProps, GalleryCarousel() (+1 more)
+Cohesion: 0.20
+Nodes (5): Props, Props, TournamentStepperProps, ParentWithDivisions, Tournament
 
 ### Community 20 - "Community 20"
 Cohesion: 0.09
 Nodes (22): 1. API Communication, 2. Authentication Flow, 3. Cấu trúc File trong mỗi Feature, 4. Component Convention, 5. Styling Convention, 6. Environment Variables, 7. Error Handling, 8. HTTP Status Handling (+14 more)
 
 ### Community 21 - "Community 21"
-Cohesion: 0.14
-Nodes (14): OfficialScoreModal(), PickleballOfficialPanel(), PickleballOfficialPanelProps, TennisOfficialPanel(), Avatar, AvatarFallback, AvatarImage, SelectContent (+6 more)
+Cohesion: 0.09
+Nodes (25): BadmintonOfficialPanel(), BadmintonOfficialPanelProps, LiveMatchControlPanelProps, OfficialScoreModal(), PickleballOfficialPanel(), PickleballOfficialPanelProps, RallyScoreControls(), RallyScoreControlsProps (+17 more)
 
 ### Community 22 - "Community 22"
 Cohesion: 0.11
 Nodes (17): 1. Quy tắc cho AI Agent 🤖, 2. Quy tắc Viết Code (Code Convention), 3. Quy tắc Component, 4. Quy trình Git (Git Workflow), 5. Quy tắc Performance, 6. Quy tắc Accessibility (a11y), Branches, Bắt buộc: (+9 more)
 
 ### Community 23 - "Community 23"
-Cohesion: 0.22
-Nodes (15): OperationsWorkspaceProps, OpsActivity(), OpsActivityProps, OpsMatchesProps, cards, OpsOverview(), OpsOverviewProps, UseOrganizerOpsOptions (+7 more)
+Cohesion: 0.27
+Nodes (13): OperationsWorkspaceProps, OpsActivity(), OpsActivityProps, OpsMatchesProps, UseOrganizerOpsOptions, UseOrganizerOpsResult, MatchOperationInput, MatchScheduleInput (+5 more)
 
 ### Community 24 - "Community 24"
 Cohesion: 0.13
 Nodes (14): 10. Chat Types (`types/chat.ts`), 11. Social Types (`types/social.ts`), 1. API Types (`types/api.ts`), 2. User Types (`types/user.ts`), 3. Tournament Types (`types/tournament.ts`), 4. Match Types (`types/match.ts`), 5. ELO Types (`types/elo.ts`), 6. Community Types (`types/community.ts`) (+6 more)
 
 ### Community 25 - "Community 25"
-Cohesion: 0.14
-Nodes (16): AdminLayout(), LiveMetricsWidget(), Metrics, CommunitiesPage(), OverviewTab(), CreateCommunityPage(), AdminDisputesPage(), CommunityDetailPage() (+8 more)
+Cohesion: 0.18
+Nodes (13): AdminLayout(), LiveMetricsWidget(), Metrics, AdminDisputesPage(), LoginPage(), menuItems, ModerationLayout(), OrganizerLayout() (+5 more)
 
 ### Community 26 - "Community 26"
-Cohesion: 0.18
-Nodes (13): BasicInfoTab(), FinanceTab(), FinanceTabProps, OperationsWorkspace(), OpsParticipantsProps, ScheduleTab(), MyRegistrationParticipant, RegisterTournamentResponse (+5 more)
+Cohesion: 0.20
+Nodes (9): DoublesRegistrationFlow(), Props, RegistrationParticipant, MyRegistrationParticipant, getRegistrationModeUi(), REGISTRATION_MODE_UI, RegistrationMode, RegistrationModeUi (+1 more)
 
 ### Community 27 - "Community 27"
 Cohesion: 0.17
@@ -259,8 +253,8 @@ Cohesion: 0.16
 Nodes (14): Step1Info(), Step3ScheduleFees(), step3Schema, Step3Values, step3Schema, Step3Values, Step3Venue(), CreateTournamentPayload (+6 more)
 
 ### Community 38 - "Community 38"
-Cohesion: 0.15
-Nodes (23): Court, TournamentReferee, Venue, buildDefaultSportRules(), DEFAULT_SPORT_RULES, asRecord(), inferSportRuleKindFromCategory(), isRecord() (+15 more)
+Cohesion: 0.17
+Nodes (20): Court, TournamentReferee, Venue, buildDefaultSportRules(), DEFAULT_SPORT_RULES, asRecord(), inferSportRuleKindFromCategory(), isRecord() (+12 more)
 
 ### Community 39 - "Community 39"
 Cohesion: 0.50
@@ -275,76 +269,76 @@ Cohesion: 0.50
 Nodes (3): Deploy on Vercel, Getting Started, Learn More
 
 ### Community 42 - "Community 42"
-Cohesion: 0.18
-Nodes (15): DoublesRegistrationFlow(), Props, RegistrationParticipant, getRegistrationModeUi(), REGISTRATION_MODE_UI, RegistrationMode, RegistrationModeUi, TournamentConfig (+7 more)
+Cohesion: 0.33
+Nodes (8): CountdownTimerProps, getParticipantStatusClassName(), getParticipantStatusLabel(), isParticipantApproved(), isParticipantPendingApproval(), isParticipantPendingPartner(), isParticipantReadyForNextStep(), isParticipantWaitlisted()
 
 ### Community 44 - "Community 44"
-Cohesion: 0.13
-Nodes (25): ReportFiltersBar(), ReportFiltersBarProps, ReportReviewModal(), ReportReviewModalProps, ReportStatusBadge(), statusClasses, reportsApi, REPORT_CATEGORY_LABELS (+17 more)
+Cohesion: 0.11
+Nodes (34): ReportFiltersBar(), ReportFiltersBarProps, ReportReviewModal(), ReportReviewModalProps, ReviewAction, ReportStatusBadge(), statusClasses, parseEvidenceUrls() (+26 more)
 
 ### Community 46 - "Community 46"
-Cohesion: 0.17
-Nodes (13): FILTER_OPTIONS, KickDraft, OpsParticipants(), ParticipantFilter, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel (+5 more)
+Cohesion: 0.13
+Nodes (17): FinanceTabProps, FILTER_OPTIONS, KickDraft, OpsParticipantsProps, ParticipantFilter, RegistrationTabProps, RegisterTournamentResponse, TournamentParticipant (+9 more)
 
 ### Community 47 - "Community 47"
 Cohesion: 0.08
-Nodes (43): CheckoutContent(), Step4ReviewSubmit(), JoinTeamPage(), GATEWAY_INFO, MockGatewayContent(), AdminPaymentListRow, AdminPayoutListRow, flattenAdminPayment() (+35 more)
+Nodes (38): ChartRow, MetricItem, Metrics, PendingPayoutSummary, GATEWAY_INFO, MockGatewayContent(), AdminPaymentListRow, AdminPayoutListRow (+30 more)
 
 ### Community 48 - "Community 48"
-Cohesion: 0.22
-Nodes (10): parseEvidenceUrls(), ReportFormValues, reportSchema, ReportViolationButton(), ReportViolationButtonProps, ReportTargetType, Textarea, TextareaProps (+2 more)
+Cohesion: 0.08
+Nodes (31): EnrichedMatch, EnrichedTournament, GroupMatchesData, HomepageTournamentCard(), ShareModalProps, Props, buildRoundFilterOptions(), getComparableStageKey() (+23 more)
 
 ### Community 49 - "Community 49"
-Cohesion: 0.17
-Nodes (11): Props, RegisterFormValues, registerSchema, Step2Confirm(), WithdrawModalProps, CreateDivisionInput, GenderRestriction, ApiError (+3 more)
+Cohesion: 0.12
+Nodes (13): NotFound(), MatchesTab(), Props, RegisterFormValues, RegisterModal(), registerSchema, TournamentDetailPage(), Props (+5 more)
 
 ### Community 50 - "Community 50"
-Cohesion: 0.11
-Nodes (18): HomePage(), authApi, LoginFormValues, loginSchema, EditProfilePage(), PasswordFormValues, passwordSchema, ProfileFormValues (+10 more)
+Cohesion: 0.12
+Nodes (15): authApi, LoginFormValues, loginSchema, PasswordFormValues, passwordSchema, ProfileFormValues, profileSchema, HIGHLIGHTS (+7 more)
 
 ### Community 51 - "Community 51"
-Cohesion: 0.16
-Nodes (9): seriesApi, OrganizerSeriesPage(), tournamentsApi, getFormatLabel(), ParentWithDivisions, Badge(), BadgeProps, getVariantClasses() (+1 more)
+Cohesion: 0.21
+Nodes (8): challengesApi, CommunityChallenge, Badge(), BadgeProps, getVariantClasses(), DateTimePicker, Textarea, TextareaProps
 
 ### Community 52 - "Community 52"
 Cohesion: 0.40
 Nodes (4): AdminTournamentsPage(), CreatorInfo, TournamentDetail, TournamentItem
 
 ### Community 53 - "Community 53"
-Cohesion: 0.19
-Nodes (31): RegistrationTab(), TournamentStepper(), TournamentDetailClient(), TournamentsListPage(), getFollowedTournamentSortTimestamp(), toTimestamp(), buildHomepageTournamentFeed(), getActiveHomepageTournaments() (+23 more)
+Cohesion: 0.12
+Nodes (39): FinanceTab(), TournamentStepper(), DashboardPage(), dateFormatter, dateTimeFormatter, TournamentDetailClient(), TournamentWorkspace, WorkspaceRefereeInvite (+31 more)
 
 ### Community 54 - "Community 54"
-Cohesion: 0.23
-Nodes (14): LiveMatchControlPanel(), PermissionsTab(), PermissionsTabProps, refereeStatusMeta, roleMap, ReviewAction, StaffMember, TournamentReferee (+6 more)
+Cohesion: 0.36
+Nodes (8): Step2Format(), Step2FormInput, step2Schema, getAllowedSportRuleKinds(), isRecord(), isSportRuleKind(), normalizeSportRuleKindForCategory(), readAllowedRuleKinds()
 
 ### Community 55 - "Community 55"
-Cohesion: 0.14
-Nodes (35): DoubleElimView(), Props, buildMatchesByRound(), getMatchByIndex(), getRoundLabel(), isSlotBye(), isSlotByeGrandFinals(), isSlotByeLosers() (+27 more)
+Cohesion: 0.27
+Nodes (12): calculateStandings(), getMatchByIndex(), getRoundLabel(), isSlotBye(), isSlotByeGrandFinals(), isSlotByeLosers(), isSlotByeMain(), isSrcWinnerless() (+4 more)
 
 ### Community 56 - "Community 56"
-Cohesion: 0.24
-Nodes (7): GalleryImage, GalleryTab(), MemberData, UserSearchResult, RankingsTab(), CommunityMemberRecord, Button
+Cohesion: 0.14
+Nodes (19): CheckoutContent(), Step4ReviewSubmit(), getDivisionBracketLabel(), getDivisionMatchLabel(), JoinTournamentPage(), RegisterFormValues, registerSchema, JoinTeamPage() (+11 more)
 
 ### Community 57 - "Community 57"
-Cohesion: 0.10
-Nodes (15): Referee, RefereesTabProps, RegisterFormValues, registerSchema, Venue, ForgotForm, forgotSchema, ResetForm (+7 more)
+Cohesion: 0.08
+Nodes (23): OverviewTab(), Props, Referee, RefereesTabProps, RegisterFormValues, registerSchema, ScheduleTab(), ScheduleTabProps (+15 more)
 
 ### Community 58 - "Community 58"
-Cohesion: 0.12
-Nodes (15): communitiesApi, CommunityMemberRecord, CommunityRankingRecord, GalleryImage, JoinRequest, ReviewCommunity, ReviewCommunityStatus, StatusFilter (+7 more)
+Cohesion: 0.09
+Nodes (21): communitiesApi, CommunityMemberRecord, CommunityRankingRecord, GalleryImage, JoinRequest, CommunitiesPage(), ReviewCommunity, ReviewCommunityStatus (+13 more)
 
 ### Community 60 - "Community 60"
-Cohesion: 0.11
-Nodes (15): challengesApi, CommunityChallenge, SystemConfig, api, AxiosInstance, moderationCards, UserItem, Message (+7 more)
+Cohesion: 0.12
+Nodes (13): SystemConfig, api, AxiosInstance, moderationCards, UserItem, Message, QUICK_PROMPTS, ApiResponse (+5 more)
 
 ### Community 61 - "Community 61"
-Cohesion: 0.27
-Nodes (14): useLiveMatch(), awardTennisPoint(), buildPenaltyPresets(), createTennisLivePointState(), formatTennisPointDisplay(), isTennisPointStateEmpty(), readPenaltyLog(), readTennisLivePointState() (+6 more)
+Cohesion: 0.29
+Nodes (6): LivestreamTab(), LivestreamTabProps, statusLabel, CreatedLivestreamCamera, livestreamApi, LivestreamCamera
 
 ### Community 62 - "Community 62"
-Cohesion: 0.11
-Nodes (19): CommunityLogoAvatar(), EnrichedMatch, EnrichedTournament, GroupMatchesData, HomepageTournamentCard(), LiveMatchSportLabel(), Props, StatusFilter (+11 more)
+Cohesion: 0.10
+Nodes (22): ReportViolationButton(), Match, PublicProfile, PublicUserProfilePage(), UserRank, LeaderboardSearchResult, AchievementCard, AchievementRank (+14 more)
 
 ### Community 63 - "Community 63"
 Cohesion: 0.20
@@ -356,91 +350,67 @@ Nodes (9): devDependencies, eslint, eslint-config-next, tailwindcss, @tailwindcs
 
 ### Community 65 - "Community 65"
 Cohesion: 0.14
-Nodes (19): categoriesApi, RankingsTabProps, step1Schema, Step1Values, BRACKET_TYPE_OPTIONS, Step2FormatMulti(), ALL_MATCH_FORMAT_OPTIONS, getAllowedMatchFormatOptions() (+11 more)
+Nodes (18): step1Schema, Step1Values, BRACKET_TYPE_OPTIONS, Step2FormatMulti(), ALL_MATCH_FORMAT_OPTIONS, getAllowedMatchFormatOptions(), isRecord(), MatchFormatOptionValue (+10 more)
 
 ### Community 66 - "Community 66"
-Cohesion: 0.17
-Nodes (13): BasicInfoTabProps, Props, RegistrationTabProps, Props, TournamentStepperProps, getDivisionBracketLabel(), getDivisionMatchLabel(), JoinTournamentPage() (+5 more)
+Cohesion: 0.38
+Nodes (5): AboutTab(), GalleryImage, MapView(), MapViewProps, formatDate()
 
 ### Community 67 - "Community 67"
-Cohesion: 0.24
-Nodes (8): EnrichedMatch, EnrichedParticipant, EnrichedTournament, MatchStatusOption, ScoringPanelProps, Match, SportRulesEnvelope, TournamentFormData
+Cohesion: 0.11
+Nodes (15): categoriesApi, JoinRequest, UserSearchResult, CreateCommunityFormValues, CreateCommunityPage(), createCommunitySchema, regionsApi, Region (+7 more)
 
 ### Community 68 - "Community 68"
 Cohesion: 0.38
 Nodes (6): CommonTreeProps, DoubleEliminationBracketProps, MatchComponentProps, MatchType, ParticipantType, SingleEliminationBracketProps
 
 ### Community 72 - "Community 72"
-Cohesion: 0.16
-Nodes (12): AboutTab(), useManageState(), getSportLogo(), SPORT_LOGOS, useOrganizerOps(), TournamentManagePage(), OrganizerTournamentOpsPage(), ProfilePage() (+4 more)
+Cohesion: 0.13
+Nodes (18): BasicInfoTab(), OperationsWorkspace(), cards, OpsOverview(), OpsOverviewProps, OpsParticipants(), RegistrationTab(), useManageState() (+10 more)
 
 ### Community 73 - "Community 73"
-Cohesion: 0.26
-Nodes (9): LiveMatchControlPanelProps, OfficialScoreModalProps, TennisOfficialPanelProps, TennisPointUpdateResult, ScoreRuleWarning, ScoreEntryGuidance, MatchScore, TennisLivePointState (+1 more)
+Cohesion: 0.14
+Nodes (18): StatusFilter, TennisOfficialPanelProps, matchesApi, PaginationMeta, TennisPointUpdateResult, EnrichedMatch, EnrichedParticipant, EnrichedTournament (+10 more)
 
 ### Community 74 - "Community 74"
 Cohesion: 0.40
 Nodes (3): config, GUEST_ROUTES, PROTECTED_ROUTES
 
 ### Community 75 - "Community 75"
-Cohesion: 0.08
-Nodes (24): LivestreamTab(), LivestreamTabProps, statusLabel, DashboardPage(), dateFormatter, dateTimeFormatter, CreatedLivestreamCamera, livestreamApi (+16 more)
+Cohesion: 0.15
+Nodes (16): BasicInfoTabProps, Step2Confirm(), CreateDivisionInput, Division, LivestreamPublishInfo, MatchLivestream, MatchPlaybackResponse, MockPaymentPayload (+8 more)
 
 ### Community 76 - "Community 76"
-Cohesion: 0.36
-Nodes (8): Step2Format(), Step2FormInput, step2Schema, getAllowedSportRuleKinds(), isRecord(), isSportRuleKind(), normalizeSportRuleKindForCategory(), readAllowedRuleKinds()
-
-### Community 77 - "Community 77"
-Cohesion: 0.25
-Nodes (12): BracketTabProps, ConfigTab(), ConfigTabProps, getSportRuleKind(), getSportRulePresentation(), SPORT_RULE_PRESENTATIONS, SportRulePresentation, getSportRulePresets() (+4 more)
-
-### Community 78 - "Community 78"
-Cohesion: 0.22
-Nodes (7): AchievementCard, AchievementRank, deriveTournamentPlacement(), getAchievementMeta(), PROFILE_TABS, ProfileTab, VerificationTicket
-
-### Community 79 - "Community 79"
-Cohesion: 0.33
-Nodes (4): HIGHLIGHTS, RegisterForm, STATS, registerSchema
-
-### Community 80 - "Community 80"
-Cohesion: 0.31
-Nodes (6): ShareModalProps, getFacebookShareUrl(), getMessengerShareUrl(), getZaloShareUrl(), ShareOptions, triggerShare()
+Cohesion: 0.16
+Nodes (21): RoundRobinView(), buildMatchRuleSummary(), getBracketStatLabels(), resolveBracketMatchRules(), BracketTabProps, ConfigTab(), ConfigTabProps, getSportRuleKind() (+13 more)
 
 ### Community 81 - "Community 81"
 Cohesion: 0.67
 Nodes (3): 5. VENUES (`/venues`), `GET /venues`, `GET /venues/:id`
 
-### Community 82 - "Community 82"
-Cohesion: 0.28
-Nodes (6): BadmintonOfficialPanel(), BadmintonOfficialPanelProps, RallyScoreControls(), RallyScoreControlsProps, TableTennisOfficialPanel(), TableTennisOfficialPanelProps
-
-### Community 83 - "Community 83"
-Cohesion: 0.25
-Nodes (5): ChartRow, MetricItem, Metrics, PendingPayoutSummary, DatePicker
-
 ### Community 85 - "Community 85"
-Cohesion: 0.62
-Nodes (5): calculateStandings(), RoundRobinView(), buildMatchRuleSummary(), getBracketStatLabels(), resolveBracketMatchRules()
+Cohesion: 0.19
+Nodes (24): DoubleElimView(), Props, buildMatchesByRound(), getMaxColumns(), MatchCard(), Props, Props, SingleElimView() (+16 more)
 
 ## Knowledge Gaps
-- **452 isolated node(s):** `eslintConfig`, `nextConfig`, `name`, `version`, `private` (+447 more)
+- **457 isolated node(s):** `eslintConfig`, `nextConfig`, `name`, `version`, `private` (+452 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **6 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `cn()` connect `Community 21` to `Community 0`, `Community 2`, `Community 8`, `Community 9`, `Community 10`, `Community 17`, `Community 18`, `Community 23`, `Community 25`, `Community 44`, `Community 46`, `Community 48`, `Community 50`, `Community 51`, `Community 54`, `Community 57`, `Community 61`, `Community 65`, `Community 72`, `Community 73`, `Community 82`?**
-  _High betweenness centrality (0.044) - this node is a cross-community bridge._
-- **Why does `Button` connect `Community 56` to `Community 1`, `Community 2`, `Community 9`, `Community 10`, `Community 18`, `Community 19`, `Community 25`, `Community 26`, `Community 37`, `Community 42`, `Community 44`, `Community 46`, `Community 47`, `Community 48`, `Community 49`, `Community 50`, `Community 51`, `Community 53`, `Community 54`, `Community 57`, `Community 58`, `Community 61`, `Community 62`, `Community 65`, `Community 66`, `Community 72`, `Community 75`, `Community 76`, `Community 77`, `Community 78`, `Community 79`?**
+- **Why does `Button` connect `Community 57` to `Community 0`, `Community 1`, `Community 2`, `Community 9`, `Community 10`, `Community 18`, `Community 19`, `Community 21`, `Community 26`, `Community 37`, `Community 42`, `Community 44`, `Community 46`, `Community 47`, `Community 48`, `Community 49`, `Community 50`, `Community 51`, `Community 53`, `Community 54`, `Community 56`, `Community 58`, `Community 61`, `Community 62`, `Community 65`, `Community 67`, `Community 72`, `Community 75`, `Community 76`?**
+  _High betweenness centrality (0.042) - this node is a cross-community bridge._
+- **Why does `cn()` connect `Community 21` to `Community 0`, `Community 1`, `Community 65`, `Community 2`, `Community 8`, `Community 73`, `Community 10`, `Community 9`, `Community 44`, `Community 72`, `Community 46`, `Community 17`, `Community 18`, `Community 51`, `Community 23`, `Community 25`, `Community 62`, `Community 57`?**
   _High betweenness centrality (0.041) - this node is a cross-community bridge._
-- **Why does `useAuthStore` connect `Community 25` to `Community 1`, `Community 2`, `Community 6`, `Community 8`, `Community 9`, `Community 10`, `Community 19`, `Community 29`, `Community 44`, `Community 47`, `Community 48`, `Community 49`, `Community 50`, `Community 51`, `Community 52`, `Community 53`, `Community 56`, `Community 58`, `Community 60`, `Community 61`, `Community 62`, `Community 66`, `Community 72`, `Community 75`, `Community 78`?**
+- **Why does `useAuthStore` connect `Community 25` to `Community 0`, `Community 2`, `Community 6`, `Community 8`, `Community 9`, `Community 10`, `Community 29`, `Community 44`, `Community 47`, `Community 48`, `Community 49`, `Community 50`, `Community 52`, `Community 53`, `Community 56`, `Community 57`, `Community 58`, `Community 60`, `Community 62`, `Community 67`?**
   _High betweenness centrality (0.039) - this node is a cross-community bridge._
 - **Are the 11 inferred relationships involving `useAuthStore` (e.g. with `AdminChangeRequestsPage()` and `CreateCommunityPage()`) actually correct?**
   _`useAuthStore` has 11 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `eslintConfig`, `nextConfig`, `name` to the rest of the system?**
-  _452 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _457 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
-  _Cohesion score 0.07755102040816327 - nodes in this community are weakly interconnected._
-- **Should `Community 1` be split into smaller, more focused modules?**
-  _Cohesion score 0.12987012987012986 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.07401129943502825 - nodes in this community are weakly interconnected._
+- **Should `Community 3` be split into smaller, more focused modules?**
+  _Cohesion score 0.1 - nodes in this community are weakly interconnected._

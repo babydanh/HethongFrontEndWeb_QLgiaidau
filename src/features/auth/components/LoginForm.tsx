@@ -12,6 +12,8 @@ import toast from "react-hot-toast";
 import { authApi } from "@/features/auth/api";
 import { useAuthStore } from "@/lib/zustand/authStore";
 
+import { getBaseUrl } from "@/lib/axios";
+
 // NOTE: A proper Form component with Label, FormControl, FormField, etc. would be ideal.
 // For now, we'll use basic HTML structure.
 
@@ -57,7 +59,7 @@ export const LoginForm = () => {
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1'}/auth/google`;
+    window.location.href = `${getBaseUrl()}/auth/google`;
   };
 
   return (

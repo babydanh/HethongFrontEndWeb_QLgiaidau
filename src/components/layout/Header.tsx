@@ -11,6 +11,7 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  Smartphone,
   Trophy,
   User,
   X,
@@ -313,6 +314,15 @@ export function Header() {
         </div>
 
         <div className="flex items-center gap-3">
+          {/* Nút Tải App */}
+          <Link
+            href="/download"
+            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition-all active:scale-95"
+          >
+            <Smartphone className="w-4 h-4" />
+            Tải App
+          </Link>
+
           {isAuthenticated ? (
             <div className="relative" ref={notificationMenuRef}>
               <button
@@ -733,6 +743,14 @@ export function Header() {
                 {link.name}
               </Link>
             ))}
+            <Link
+              href="/download"
+              className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-blue-600"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              <Smartphone className="w-4 h-4" />
+              Tải App
+            </Link>
           </nav>
         </div>
       ) : null}

@@ -1313,12 +1313,12 @@ export default function HomePage() {
                <h3 className="text-sm font-bold text-slate-900 mb-1">Chưa đăng nhập</h3>
                <p className="text-xs text-slate-500 mb-4">Đăng nhập để xem giải đấu và CLB của bạn.</p>
                <div className="flex flex-col w-full gap-2">
-                 <Link href="/login" className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-xl text-center text-xs shadow-sm transition-colors cursor-pointer">
+                 <a href="/login" className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-xl text-center text-xs shadow-sm transition-colors cursor-pointer">
                    Đăng nhập ngay
-                 </Link>
-                 <Link href="/register" className="border border-slate-205 text-slate-650 hover:bg-slate-50 font-bold py-2.5 px-4 rounded-xl text-center text-xs transition-colors">
+                 </a>
+                 <a href="/register" className="border border-slate-205 text-slate-650 hover:bg-slate-50 font-bold py-2.5 px-4 rounded-xl text-center text-xs transition-colors">
                    Đăng ký tài khoản
-                 </Link>
+                 </a>
                </div>
              </motion.div>
            ) : (

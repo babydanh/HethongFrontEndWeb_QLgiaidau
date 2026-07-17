@@ -42,7 +42,7 @@ export default function RegisterModal({ tournamentId, tournamentName, entryFee, 
   const onSubmit = async (data: RegisterFormValues) => {
     if (!isAuthenticated || !user) {
       toast.error('Vui lòng đăng nhập để đăng ký tham gia giải đấu');
-      router.push(`/login?redirect=/tournaments/${tournamentId}`);
+      window.location.assign(`/login?redirect=/tournaments/${tournamentId}`);
       return;
     }
 

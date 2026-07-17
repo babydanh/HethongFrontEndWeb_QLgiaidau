@@ -13,6 +13,12 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "VNDC Sport - Nền tảng Quản lý giải đấu",
   description: "Nền tảng tổ chức và tham gia giải đấu thể thao câu lạc bộ.",
+  openGraph: {
+    title: "VNDC Sport - Nền tảng Quản lý giải đấu",
+    description: "Nền tảng tổ chức và tham gia giải đấu thể thao câu lạc bộ.",
+    siteName: "VNDC Sport",
+    type: "website",
+  },
 };
 
 export default function RootLayout({

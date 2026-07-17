@@ -99,7 +99,7 @@ api.interceptors.response.use(
             (route) => window.location.pathname.startsWith(route)
           );
           if (isProtectedRoute && window.location.pathname !== '/login') {
-            window.location.href = '/login';
+            window.location.assign('/login');
           }
         }
         return Promise.reject(error);
@@ -108,10 +108,11 @@ api.interceptors.response.use(
       try {
         // Because of withCredentials: true, the browser will automatically send the refreshToken cookie
         await axios.post(`${api.defaults.baseURL}/auth/refresh`, {}, { withCredentials: true });
-
+ 
         // Retry the original request. Browser will now send the newly set accessToken cookie
         return api(originalRequest);
       } catch (refreshError) {
+        // Refresh token failed -> Session is completely dead. Clear auth store state immediately.
         useAuthStore.getState().logout();
         try {
           await axios.post(`${api.defaults.baseURL}/auth/logout`, {}, { withCredentials: true });
@@ -123,7 +124,10 @@ api.interceptors.response.use(
             (route) => window.location.pathname.startsWith(route)
           );
           if (isProtectedRoute && window.location.pathname !== '/login') {
-            window.location.href = '/login';
+            window.location.assign('/login');
+          } else {
+            // If on a public page (like home page '/'), reload page to sync UI state to "Unauthenticated"
+            window.location.reload();
           }
         }
         return Promise.reject(refreshError);

@@ -115,15 +115,15 @@ const config: Config = {
       },
       fontFamily: {
         sans: ["var(--font-sans)", "sans-serif"],
-        display: ["Inter"],
-        "label-sm": ["Inter"],
-        "headline-md": ["Inter"],
-        "headline-lg-mobile": ["Inter"],
-        "body-md": ["Inter"],
-        "headline-lg": ["Inter"],
-        "body-sm": ["Inter"],
-        "label-md": ["Inter"],
-        "body-lg": ["Inter"]
+        display: ["var(--font-sans)"],
+        "label-sm": ["var(--font-sans)"],
+        "headline-md": ["var(--font-sans)"],
+        "headline-lg-mobile": ["var(--font-sans)"],
+        "body-md": ["var(--font-sans)"],
+        "headline-lg": ["var(--font-sans)"],
+        "body-sm": ["var(--font-sans)"],
+        "label-md": ["var(--font-sans)"],
+        "body-lg": ["var(--font-sans)"]
       },
       fontSize: {
         "display": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700"}],

@@ -698,7 +698,7 @@ export function Header() {
             </div>
           ) : (
             <div className="ml-2 flex items-center gap-2">
-              <Link
+              <a
                 href="/login"
                 className={getButtonClasses(
                   'ghost',
@@ -707,8 +707,8 @@ export function Header() {
                 )}
               >
                 Đăng nhập
-              </Link>
-              <Link
+              </a>
+              <a
                 href="/register"
                 className={getButtonClasses(
                   'default',
@@ -717,7 +717,7 @@ export function Header() {
                 )}
               >
                 Đăng ký
-              </Link>
+              </a>
             </div>
           )}
 

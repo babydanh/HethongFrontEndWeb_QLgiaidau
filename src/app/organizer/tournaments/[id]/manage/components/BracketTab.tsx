@@ -267,10 +267,13 @@ export function BracketTab({
   };
 
   // Check if the current bracket is Round Robin
-  const isRoundRobin = bracket?.stages?.some(
+  const isRoundRobin = !isGroupStageKnockout && bracket?.stages?.some(
     (s) => s.type === 'ROUND_ROBIN',
   );
-  const isGroupStageKnockout = tournamentFormat === 'GROUP_STAGE_KNOCKOUT';
+  const isGroupStageKnockout = 
+    tournamentFormat?.toUpperCase() === 'GROUP_STAGE_KNOCKOUT' || 
+    bracketType?.toUpperCase() === 'GROUP_STAGE_KNOCKOUT' ||
+    bracketTypeState?.toUpperCase() === 'GROUP_STAGE_KNOCKOUT';
   const allRounds = getRoundsList();
   const knockoutRounds = allRounds.filter(
     ({ stage }) => stage.type === 'SINGLE_ELIMINATION' || stage.type === 'DOUBLE_ELIMINATION',

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, ChevronDown, SlidersHorizontal, Bookmark, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, ChevronDown, SlidersHorizontal, Bookmark, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import Link from 'next/link';
 import { tournamentsApi, Tournament } from '@/features/tournaments/api';
 import { categoriesApi, Category } from '@/features/categories/api';

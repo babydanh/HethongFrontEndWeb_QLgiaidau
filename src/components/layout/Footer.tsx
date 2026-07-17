@@ -11,7 +11,7 @@ export function Footer() {
           <div>
             <Link href="/" className="flex items-center gap-2 mb-3">
               <img 
-                src="/images/vndc_sport.png" 
+                src="/VNDCsport.svg" 
                 alt="VNSPORT Logo" 
                 className="h-10 w-auto object-contain"
               />

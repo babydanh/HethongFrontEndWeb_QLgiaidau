@@ -236,7 +236,7 @@ export default function LiveMatchPage({ params }: Props) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center bg-white p-8 rounded-3xl shadow-sm border border-slate-100 max-w-md">
-          <img src="/images/vndc_sport.png" alt="VNDC Sport Logo" className="w-20 h-20 object-contain mx-auto mb-4" />
+          <img src="/VNDCsport.svg" alt="VNDC Sport Logo" className="w-20 h-20 object-contain mx-auto mb-4" />
           <h2 className="text-xl font-bold text-slate-900 mb-2">{error || 'Không tìm thấy trận đấu'}</h2>
           <p className="text-slate-500 text-sm mb-6">Trận đấu này có thể không tồn tại hoặc đã bị hủy.</p>
           <Link href="/tournaments" className="inline-flex items-center justify-center px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all shadow-sm">

@@ -52,7 +52,7 @@ const CallbackContent = () => {
       >
         <div className="relative w-32 h-32 flex items-center justify-center mb-2">
           <img 
-            src="/images/vndc_sport.png" 
+            src="/VNDCsport.svg" 
             alt="VNSPORT Logo" 
             className="w-full h-full object-contain animate-pulse"
           />

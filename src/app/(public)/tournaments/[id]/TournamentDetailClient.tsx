@@ -366,11 +366,11 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
               title="Xem chi tiết giải đấu"
             >
               <img 
-                src={activeTournament.logoUrl || '/images/vndc_sport.png'} 
+                src={activeTournament.logoUrl || '/VNDCsport.svg'} 
                 alt="Logo giải đấu" 
                 className="w-full h-full object-cover rounded-full"
                 onError={(e) => {
-                  (e.currentTarget as HTMLImageElement).src = '/images/vndc_sport.png';
+                  (e.currentTarget as HTMLImageElement).src = '/VNDCsport.svg';
                 }}
               />
             </Link>

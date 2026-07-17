@@ -72,7 +72,7 @@ const getFormatLabel = (matchType?: string, genderRestriction?: string | null) =
 };
 
 function CommunityLogoAvatar({ src, alt }: { src?: string | null; alt: string }) {
-  const fallbackSrc = '/images/vndc_sport.png';
+  const fallbackSrc = '/VNDCsport.svg';
   // Track only whether the image failed to load — src is derived directly from props
   const [imgError, setImgError] = useState(false);
   // Reset error when src changes (React recommended "derived state" pattern)
@@ -166,7 +166,7 @@ function RegistrationCountdown({ targetDate }: { targetDate: string }) {
 }
 
 function TournamentLogoAvatar({ src, alt }: { src?: string | null; alt: string }) {
-  const fallbackSrc = '/images/vndc_sport.png';
+  const fallbackSrc = '/VNDCsport.svg';
   const [imgError, setImgError] = useState(false);
   const [prevSrc, setPrevSrc] = useState(src);
   if (prevSrc !== src) {
@@ -190,7 +190,7 @@ function TournamentLogoAvatar({ src, alt }: { src?: string | null; alt: string }
 
 function HomepageTournamentCard({ tournament }: { tournament: Tournament }) {
   const [imgError, setImgError] = useState(false);
-  const fallbackSrc = '/images/vndc_sport.png';
+  const fallbackSrc = '/VNDCsport.svg';
   const imageSrc = (!imgError && tournament.bannerUrl?.trim()) ? tournament.bannerUrl.split(',')[0] : fallbackSrc;
 
   const dateRange = useMemo(() => {

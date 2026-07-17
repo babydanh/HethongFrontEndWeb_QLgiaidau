@@ -19,7 +19,7 @@ const LoadingSpinner = React.forwardRef<
       
       {/* Inner logo */}
       <img
-        src="/images/vndc_sport.png"
+        src="/VNDCsport.svg"
         alt="Loading..."
         className="w-[60%] h-[60%] object-contain animate-pulse"
       />

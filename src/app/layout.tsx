@@ -11,7 +11,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "TournaHub - Nền tảng Quản lý giải đấu",
+  title: "VNDC Sport - Nền tảng Quản lý giải đấu",
   description: "Nền tảng tổ chức và tham gia giải đấu thể thao câu lạc bộ.",
 };
 

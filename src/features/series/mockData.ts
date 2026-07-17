@@ -39,7 +39,7 @@ export const mockSeriesList: TournamentSeries[] = [
     slug: 'superstars-cup-2026',
     name: 'Đường đến Superstars Cup 2026',
     description: `
-      <p>Hệ thống giải đấu "Đường đến Superstars Cup 2026" trên TournaHub được vận hành theo mô hình <strong>Chuỗi giải đấu vòng loại tích điểm (League/Tour)</strong> giống như các giải tennis chuyên nghiệp ATP hoặc giải Pickleball hàng đầu MLP, nhưng được áp dụng cho cộng đồng Pickleball phong trào tại Việt Nam.</p>
+      <p>Hệ thống giải đấu "Đường đến Superstars Cup 2026" trên VNDC Sport được vận hành theo mô hình <strong>Chuỗi giải đấu vòng loại tích điểm (League/Tour)</strong> giống như các giải tennis chuyên nghiệp ATP hoặc giải Pickleball hàng đầu MLP, nhưng được áp dụng cho cộng đồng Pickleball phong trào tại Việt Nam.</p>
       <p>Thay vì chỉ tổ chức 1 giải đấu đơn lẻ, Ban tổ chức CLB <strong>Pickleball Superstar</strong> phối hợp cùng các nhà tài trợ tạo ra một hệ thống giải chạy qua nhiều tỉnh thành khác nhau từ Nam ra Bắc (Lâm Đồng, Đà Nẵng, Thanh Hóa, Bình Dương, TP.HCM...).</p>
       <h3>Cơ chế Vận hành cốt lõi:</h3>
       <ul>

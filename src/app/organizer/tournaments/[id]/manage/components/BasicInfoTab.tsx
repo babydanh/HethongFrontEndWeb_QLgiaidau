@@ -485,7 +485,7 @@ export function BasicInfoTab({
                   label="Email liên hệ"
                   value={contactInfo.email || ''}
                   onChange={(e) => setContactInfo({ ...contactInfo, email: e.target.value })}
-                  placeholder="btc@tournahub.vn"
+                  placeholder="btc@vndcsport.vn"
                 />
               </div>
 

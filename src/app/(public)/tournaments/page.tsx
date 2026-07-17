@@ -394,7 +394,7 @@ export default function TournamentsListPage() {
 
         {/* Panel Lọc Nâng Cao trượt mở bên dưới */}
         {showAdvancedFilters && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-slate-50 rounded-xl border border-slate-150 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-4 p-4 bg-slate-50 rounded-xl border border-slate-150 animate-in fade-in slide-in-from-top-2 duration-200">
             {/* Tỉnh / Thành phố */}
             <div>
               <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Tỉnh / Thành phố</label>
@@ -417,7 +417,7 @@ export default function TournamentsListPage() {
                     <option key={reg.code} value={reg.name.replace(/^(Thành phố|Tỉnh)\s+/i, '')}>{reg.name}</option>
                   ))}
                 </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-450 w-4 h-4 pointer-events-none" />
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-455 w-4 h-4 pointer-events-none" />
               </div>
             </div>
 
@@ -439,7 +439,7 @@ export default function TournamentsListPage() {
                     <option key={dist.code} value={dist.name}>{dist.name}</option>
                   ))}
                 </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-450 w-4 h-4 pointer-events-none" />
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-455 w-4 h-4 pointer-events-none" />
               </div>
             </div>
 
@@ -479,6 +479,32 @@ export default function TournamentsListPage() {
                 }}
                 className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-950 font-bold h-[33.5px]"
               />
+            </div>
+
+            {/* Empty column */}
+            <div></div>
+
+            {/* Xóa bộ lọc */}
+            <div className="flex items-end">
+              <button
+                onClick={() => {
+                  setSelectedCategoryId('');
+                  setSelectedStatus('');
+                  setSelectedContent('');
+                  setSelectedBracketType('');
+                  setStartDate('');
+                  setEndDate('');
+                  setSelectedRegion('');
+                  setSelectedDistrict('');
+                  setSearchTerm('');
+                  setPage(1);
+                }}
+                className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-black text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer bg-white h-[33.5px] flex items-center justify-center gap-1.5"
+                title="Xóa bộ lọc"
+              >
+                <X className="w-3.5 h-3.5 text-rose-600" />
+                <span className="font-extrabold text-rose-600">X</span>
+              </button>
             </div>
           </div>
         )}

@@ -74,6 +74,7 @@ export default function MatchesListPage() {
   const [selectedStatus, setSelectedStatus] = useState<string>('');
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [selectedContent, setSelectedContent] = useState<string>('');
+  const [selectedBracketType, setSelectedBracketType] = useState<string>('');
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
 
@@ -178,6 +179,7 @@ export default function MatchesListPage() {
           status: selectedStatus || undefined,
           matchType,
           genderRestriction,
+          bracketType: selectedBracketType || undefined,
           startDate: startDate || undefined,
           endDate: endDate || undefined,
         });
@@ -193,7 +195,7 @@ export default function MatchesListPage() {
       }
     };
     fetchMatches();
-  }, [searchTerm, selectedCategoryId, selectedStatus, selectedContent, startDate, endDate]);
+  }, [searchTerm, selectedCategoryId, selectedStatus, selectedContent, selectedBracketType, startDate, endDate]);
 
   // Lọc bỏ trận đấu đã kết thúc quá 30 ngày
   const thirtyDaysAgo = new Date();
@@ -371,25 +373,25 @@ export default function MatchesListPage() {
             </div>
           </div>
 
-          {/* Trạng thái */}
-          <div className="w-full md:w-40 shrink-0 flex flex-col gap-1.5">
-            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider">Trạng thái</label>
+          {/* Thể thức */}
+          <div className="w-full md:w-44 shrink-0 flex flex-col gap-1.5">
+            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider">Thể thức</label>
             <div className="relative w-full">
               <select
-                value={selectedStatus}
+                value={selectedBracketType}
                 onChange={(e) => {
-                  setSelectedStatus(e.target.value);
+                  setSelectedBracketType(e.target.value);
                   setPage(1);
                 }}
                 className="w-full pl-3 pr-9 py-2 border border-slate-200 rounded-xl text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50/50 text-slate-900 font-bold h-[38px]"
               >
                 <option value="">Tất cả</option>
-                <option value="ONGOING">Đang đấu</option>
-                <option value="SCHEDULED">Sắp đấu</option>
-                <option value="COMPLETED">Đã kết thúc</option>
-                <option value="RECENT">Tỉ số nóng</option>
+                <option value="SINGLE_ELIMINATION">Loại trực tiếp</option>
+                <option value="DOUBLE_ELIMINATION">Nhánh thắng/thua</option>
+                <option value="ROUND_ROBIN">Vòng tròn</option>
+                <option value="GROUP_STAGE_KNOCKOUT">Vòng bảng + Playoffs</option>
               </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-450 w-4.5 h-4.5 pointer-events-none" />
             </div>
           </div>
 
@@ -420,7 +422,7 @@ export default function MatchesListPage() {
           <button
             onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
             className={`h-[38px] flex items-center justify-center gap-2 px-4 py-2 border rounded-xl text-xs font-bold transition-all w-full md:w-auto shrink-0 cursor-pointer ${
-              showAdvancedFilters || startDate || endDate || selectedProvince || selectedDistrict
+              showAdvancedFilters || startDate || endDate || selectedProvince || selectedDistrict || selectedStatus
                 ? 'bg-indigo-50 border-indigo-200 text-indigo-700 shadow-sm'
                 : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
             }`}
@@ -432,7 +434,71 @@ export default function MatchesListPage() {
 
         {/* Row 2: Advanced filters panel */}
         {showAdvancedFilters && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-200 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-200 animate-in fade-in slide-in-from-top-2 duration-200">
+            {/* Trạng thái */}
+            <div>
+              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Trạng thái</label>
+              <select
+                value={selectedStatus}
+                onChange={(e) => {
+                  setSelectedStatus(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-950 font-bold h-[33.5px]"
+              >
+                <option value="">Tất cả</option>
+                <option value="ONGOING">Đang đấu</option>
+                <option value="SCHEDULED">Sắp đấu</option>
+                <option value="COMPLETED">Đã kết thúc</option>
+              </select>
+            </div>
+
+            {/* Tỉnh / Thành phố */}
+            <div>
+              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Tỉnh / Thành phố</label>
+              <div className="relative">
+                <select
+                  value={selectedProvince}
+                  onChange={(event) => {
+                    setSelectedProvince(event.target.value);
+                    setSelectedDistrict('');
+                    setPage(1);
+                  }}
+                  className="w-full h-[33.5px] appearance-none rounded-xl border border-slate-200 bg-white px-3 pr-8 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  <option value="">Tất cả khu vực</option>
+                  {provinces.map((province) => (
+                    <option key={province.code} value={province.name.replace(/^(Thành phố|Tỉnh)\s+/i, '')}>
+                      {province.name}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              </div>
+            </div>
+
+            {/* Quận / Huyện */}
+            <div>
+              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Quận / Huyện</label>
+              <div className="relative">
+                <select
+                  value={selectedDistrict}
+                  onChange={(event) => {
+                    setSelectedDistrict(event.target.value);
+                    setPage(1);
+                  }}
+                  disabled={!selectedProvince}
+                  className="w-full h-[33.5px] appearance-none rounded-xl border border-slate-200 bg-white px-3 pr-8 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                >
+                  <option value="">Tất cả quận / huyện</option>
+                  {districts.map((district) => (
+                    <option key={district.code} value={district.name}>{district.name}</option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              </div>
+            </div>
+
             {/* Từ ngày */}
             <div>
               <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Từ ngày</label>
@@ -471,50 +537,6 @@ export default function MatchesListPage() {
               />
             </div>
 
-            <div>
-              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Tỉnh / Thành phố</label>
-              <div className="relative">
-                <select
-                  value={selectedProvince}
-                  onChange={(event) => {
-                    setSelectedProvince(event.target.value);
-                    setSelectedDistrict('');
-                    setPage(1);
-                  }}
-                  className="w-full h-[33.5px] appearance-none rounded-xl border border-slate-200 bg-white px-3 pr-8 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                >
-                  <option value="">Tất cả khu vực</option>
-                  {provinces.map((province) => (
-                    <option key={province.code} value={province.name.replace(/^(Thành phố|Tỉnh)\s+/i, '')}>
-                      {province.name}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 pointer-events-none" />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Quận / Huyện</label>
-              <div className="relative">
-                <select
-                  value={selectedDistrict}
-                  onChange={(event) => {
-                    setSelectedDistrict(event.target.value);
-                    setPage(1);
-                  }}
-                  disabled={!selectedProvince}
-                  className="w-full h-[33.5px] appearance-none rounded-xl border border-slate-200 bg-white px-3 pr-8 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
-                >
-                  <option value="">Tất cả quận / huyện</option>
-                  {districts.map((district) => (
-                    <option key={district.code} value={district.name}>{district.name}</option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 pointer-events-none" />
-              </div>
-            </div>
-
             {/* Xóa bộ lọc */}
             <div className="flex items-end">
               <button
@@ -522,6 +544,7 @@ export default function MatchesListPage() {
                   setSelectedCategoryId('');
                   setSelectedStatus('');
                   setSelectedContent('');
+                  setSelectedBracketType('');
                   setStartDate('');
                   setEndDate('');
                   setSelectedProvince('');
@@ -529,10 +552,11 @@ export default function MatchesListPage() {
                   setSearchTerm('');
                   setPage(1);
                 }}
-                className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer bg-white h-[33.5px] flex items-center justify-center gap-1.5"
+                className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-black text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer bg-white h-[33.5px] flex items-center justify-center gap-1.5"
+                title="Xóa bộ lọc"
               >
-                <X className="w-3.5 h-3.5" />
-                Xóa bộ lọc
+                <X className="w-3.5 h-3.5 text-rose-600" />
+                <span className="font-extrabold text-rose-600">X</span>
               </button>
             </div>
           </div>

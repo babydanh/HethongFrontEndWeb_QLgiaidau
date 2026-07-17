@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { Button } from '@/components/ui/Button';
@@ -575,7 +575,7 @@ export default function ProfilePage() {
             </div>
             
             <div className="flex flex-wrap items-center gap-2">
-              {((user as unknown as Record<string, unknown>)?.roles as string[] | undefined)?.map((role: string) => {
+              {Array.from(new Set((user as unknown as Record<string, unknown>)?.roles as string[] | undefined || [])).map((role: string) => {
                 let roleLabel = role;
                 let roleColor = 'bg-emerald-50 text-emerald-700 border-emerald-250';
                 if (role === 'PLAYER') {
@@ -643,7 +643,7 @@ export default function ProfilePage() {
             </div>
           </div>
           <Link href="/profile/edit">
-            <Button size="sm" className="bg-amber-650 hover:bg-amber-700 text-white font-bold text-xs">
+            <Button size="sm" className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-sm">
               Cập nhật ngay
             </Button>
           </Link>

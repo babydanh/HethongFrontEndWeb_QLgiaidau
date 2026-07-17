@@ -179,6 +179,7 @@ export function BracketTab({
   isAdvancingStandings = false,
   handleSaveGskConfig,
   isSavingGskConfig = false,
+  bracketType,
 }: BracketTabProps) {
   const presentation = getSportRulePresentation(sportRuleKind);
   const setUnitLabel = presentation.setUnitLabel;
@@ -266,14 +267,14 @@ export function BracketTab({
     });
   };
 
+  const isGroupStageKnockout = 
+    tournamentFormat?.toUpperCase() === 'GROUP_STAGE_KNOCKOUT' || 
+    bracketType?.toUpperCase() === 'GROUP_STAGE_KNOCKOUT';
+
   // Check if the current bracket is Round Robin
   const isRoundRobin = !isGroupStageKnockout && bracket?.stages?.some(
     (s) => s.type === 'ROUND_ROBIN',
   );
-  const isGroupStageKnockout = 
-    tournamentFormat?.toUpperCase() === 'GROUP_STAGE_KNOCKOUT' || 
-    bracketType?.toUpperCase() === 'GROUP_STAGE_KNOCKOUT' ||
-    bracketTypeState?.toUpperCase() === 'GROUP_STAGE_KNOCKOUT';
   const allRounds = getRoundsList();
   const knockoutRounds = allRounds.filter(
     ({ stage }) => stage.type === 'SINGLE_ELIMINATION' || stage.type === 'DOUBLE_ELIMINATION',

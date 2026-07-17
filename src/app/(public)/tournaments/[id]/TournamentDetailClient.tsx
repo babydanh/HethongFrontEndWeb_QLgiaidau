@@ -349,7 +349,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
           
           {/* Only name inside banner, at bottom-left */}
           <div className="absolute bottom-4 left-6 md:bottom-6 md:left-8 z-10 space-y-1">
-            <h1 className="text-xl md:text-2xl font-black text-slate-900 drop-shadow-sm tracking-wide uppercase truncate">
+            <h1 className="text-xl md:text-2xl font-black text-white drop-shadow-md tracking-wide uppercase truncate">
               {tournament.name}
             </h1>
           </div>

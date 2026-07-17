@@ -38,9 +38,18 @@ export default function GalleryCarousel({ images = [], defaultBanner, className 
 
   if (allImages.length === 0) {
     return (
-      <div className={`w-full bg-slate-900 flex flex-col items-center justify-center text-slate-500 gap-2 ${className}`}>
-        <ImageIcon className="w-12 h-12 text-slate-700" />
-        <span className="text-xs font-semibold">Không có hình ảnh nào</span>
+      <div className={`w-full bg-gradient-to-br from-blue-650 via-indigo-700 to-slate-900 flex flex-col items-center justify-center text-white gap-3 relative overflow-hidden ${className}`}>
+        {/* Decorative background branding circles */}
+        <div className="absolute -right-16 -top-16 w-64 h-64 bg-white/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -left-16 -bottom-16 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+        
+        <div className="relative z-10 flex flex-col items-center gap-1">
+          <div className="bg-white/10 p-4 rounded-full border border-white/10 backdrop-blur-md shadow-lg mb-1 animate-pulse">
+            <ImageIcon className="w-8 h-8 text-blue-200" />
+          </div>
+          <span className="text-lg font-black tracking-widest text-white/90 uppercase">VNDC SPORT</span>
+          <span className="text-[10px] tracking-wide text-blue-200/70 font-semibold">HỆ THỐNG QUẢN LÝ GIẢI ĐẤU CHUYÊN NGHIỆP</span>
+        </div>
       </div>
     );
   }

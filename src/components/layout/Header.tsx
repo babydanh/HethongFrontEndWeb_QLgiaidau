@@ -679,13 +679,13 @@ export function Header() {
                     <button
                       type="button"
                       onClick={async () => {
+                        logout(); // Reset Zustand state first
                         try {
                           await api.post('/auth/logout');
                         } catch (error: unknown) {
                           console.error('Logout error:', error);
                         }
-                        logout();
-                        router.push('/login');
+                        window.location.href = '/login'; // Hard redirect to clear everything
                       }}
                       className="flex w-full items-center gap-3 px-4 py-2.5 text-sm font-bold text-red-500 transition-all hover:bg-red-50/50 hover:text-red-600"
                     >

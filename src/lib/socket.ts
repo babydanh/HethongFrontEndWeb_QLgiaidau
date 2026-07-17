@@ -7,7 +7,12 @@ interface SocketAuthPayload {
 const getSocketUrl = () => {
   if (process.env.NEXT_PUBLIC_SOCKET_URL) return process.env.NEXT_PUBLIC_SOCKET_URL;
   if (typeof window !== 'undefined') {
-    return `${window.location.protocol}//${window.location.hostname}:3000`;
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    if (isLocalhost) {
+      return `${window.location.protocol}//${window.location.hostname}:3000`;
+    }
+    // Production: OLS proxies to backend on standard port
+    return `${window.location.protocol}//${window.location.hostname}`;
   }
   return 'http://localhost:3000';
 };

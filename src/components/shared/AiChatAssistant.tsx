@@ -2,7 +2,8 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
-import { api } from '@/lib/axios';
+import { getBaseUrl } from '@/lib/axios';
+// ... (tự động drop-in vào các dòng tiếp theo)
 import { ApiResponse } from '@/types/api';
 import { MessageSquare, Send, X, Bot, Sparkles, ArrowRight } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
@@ -83,7 +84,7 @@ export default function AiChatAssistant() {
     setIsLoading(true);
 
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.hostname}:3000/api/v1` : 'http://localhost:3000/api/v1');
+      const baseUrl = getBaseUrl();
       const response = await fetch(`${baseUrl}/ai/chat`, {
         method: 'POST',
         headers: {

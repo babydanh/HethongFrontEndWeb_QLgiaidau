@@ -307,7 +307,7 @@ export default function HomePage() {
       try {
         setIsLoading(true);
         setIsLoadingRanked(true);
-        const tParams: Record<string, unknown> = { limit: 10 };
+        const tParams: Record<string, unknown> = { limit: 20 };
         if (selectedCategoryId) {
           tParams.categoryId = selectedCategoryId;
         }
@@ -739,7 +739,7 @@ export default function HomePage() {
   ) || userRankings?.publicRanks?.[0];
 
   const eloPoints = activeRankInfo ? activeRankInfo.eloPoints : 1000;
-  const tierName = activeRankInfo?.tier?.name || 'Chưa xếp hạng';
+  const tierName = activeRankInfo?.tier?.name || activeRankInfo?.tierName || 'Chưa xếp hạng';
   const matchesPlayed = activeRankInfo ? activeRankInfo.matchesPlayed : 0;
   const matchesWon = activeRankInfo ? activeRankInfo.matchesWon : 0;
   const winRate = matchesPlayed > 0 ? Math.round((matchesWon / matchesPlayed) * 100) : 0;

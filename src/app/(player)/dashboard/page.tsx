@@ -243,11 +243,19 @@ export default function DashboardPage() {
               <Calendar className="w-4 h-4 mr-2" /> Tìm giải đấu
             </Button>
           </Link>
-          <Link href="/organizer/tournaments/create">
-            <Button className="bg-blue-600 hover:bg-blue-700 shadow-sm text-white font-bold">
-              <Plus className="w-4 h-4 mr-2" /> Tạo giải đấu
-            </Button>
-          </Link>
+          {(user?.roles?.includes('ORGANIZER') || user?.roles?.includes('ADMIN')) ? (
+            <Link href="/organizer/tournaments/create">
+              <Button className="bg-blue-600 hover:bg-blue-700 shadow-sm text-white font-bold">
+                <Plus className="w-4 h-4 mr-2" /> Tạo giải đấu
+              </Button>
+            </Link>
+          ) : (
+            <Link href="/profile">
+              <Button variant="outline" className="text-emerald-700 border-emerald-200 hover:bg-emerald-50 font-bold">
+                <Plus className="w-4 h-4 mr-2" /> Yêu cầu quyền BTC
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
 

@@ -59,8 +59,6 @@ export default function LoginPage() {
       }
     };
     window.addEventListener('pageshow', handlePageShow);
-    // Also reset immediately on mount
-    setIsLoading(false);
     
     return () => {
       window.removeEventListener('pageshow', handlePageShow);

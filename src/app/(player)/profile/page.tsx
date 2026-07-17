@@ -209,17 +209,16 @@ export default function ProfilePage() {
   const [myCommunities, setMyCommunities] = useState<Community[]>([]);
   const [participatingTournaments, setParticipatingTournaments] = useState<Tournament[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'tournaments' | 'achievements' | 'matches' | 'elo'>('overview');
-
-  useEffect(() => {
+  const [activeTab, setActiveTab] = useState<'overview' | 'tournaments' | 'achievements' | 'matches' | 'elo'>(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const tab = params.get('tab');
       if (tab && isProfileTab(tab)) {
-        setActiveTab(tab);
+        return tab;
       }
     }
-  }, []);
+    return 'overview';
+  });
 
   // Verification tickets states
   const [tickets, setTickets] = useState<VerificationTicket[]>([]);
@@ -435,13 +434,13 @@ export default function ProfilePage() {
   }, [displayUser?.id, matchesPage]);
 
   useEffect(() => {
-    if (!displayUser?.id || participatingTournaments.length === 0) {
-      setAchievements([]);
-      return;
-    }
-
     let isMounted = true;
     const fetchAchievements = async () => {
+      if (!displayUser?.id || participatingTournaments.length === 0) {
+        if (isMounted) setAchievements([]);
+        return;
+      }
+
       try {
         const completedRankedTournaments = participatingTournaments.filter(
           (tournament) => tournament.isRanked && isTournamentCompleted(tournament.status),

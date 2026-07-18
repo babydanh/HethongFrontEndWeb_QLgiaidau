@@ -245,7 +245,9 @@ export default function LeaderboardPage() {
                                     <span className="text-[10px] uppercase font-black tracking-[0.25em] text-blue-600 bg-blue-50/80 px-3 py-1.5 rounded-full border border-blue-100">
                                         ✨ SÂN KHẤU VINH DANH ✨
                                     </span>
-                                    <h2 className="text-xl md:text-2xl font-black mt-3 text-slate-905 tracking-tight">TOP 10 VẬN ĐỘNG VIÊN XUẤT SẮC</h2>
+                                    <h2 className="text-xl md:text-2xl font-black mt-3 text-slate-900 tracking-tight">
+                                        TOP 10 VẬN ĐỘNG VIÊN XUẤT SẮC
+                                    </h2>
                                 </div>
 
                                 {/* Podium Top 3 */}
@@ -261,19 +263,45 @@ export default function LeaderboardPage() {
                                                 <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20 bg-slate-100 text-slate-700 font-black text-[10px] px-3 py-1 rounded-full border border-slate-205 shadow-xs">
                                                     #2 SECOND
                                                 </div>
-                                                <div className="w-20 h-20 rounded-full border-4 border-slate-350 p-0.5 relative overflow-hidden bg-slate-55 shadow-sm flex items-center justify-center">
-                                                    {rankings[1]?.user?.avatarUrl ? (
-                                                        <Image src={rankings[1].user.avatarUrl} alt="Rank 2" fill className="object-cover rounded-full" />
-                                                    ) : (
-                                                        <div className="w-full h-full flex items-center justify-center bg-slate-100 text-slate-400 font-black uppercase text-2xl rounded-full">
-                                                            {rankings[1] ? (rankings[1].user?.fullName?.substring(0, 2) || 'VĐ') : '?'}
+                                                
+                                                {/* Stacked Avatar for Doubles */}
+                                                {selectedMatchType.includes('DOUBLES') ? (
+                                                    <div className="relative w-24 h-20 flex items-center justify-center">
+                                                        {/* Partner shadow avatar */}
+                                                        <div className="w-16 h-16 rounded-full border-2 border-slate-300 absolute -right-2 bottom-0 bg-slate-100 flex items-center justify-center shadow-xs">
+                                                            <Users className="w-6 h-6 text-slate-400" />
                                                         </div>
-                                                    )}
-                                                </div>
+                                                        {/* Primary avatar */}
+                                                        <div className="w-16 h-16 rounded-full border-4 border-slate-350 p-0.5 absolute -left-2 top-0 overflow-hidden bg-slate-55 shadow-sm flex items-center justify-center">
+                                                            {rankings[1]?.user?.avatarUrl ? (
+                                                                <Image src={rankings[1].user.avatarUrl} alt="Rank 2" fill className="object-cover rounded-full" />
+                                                            ) : (
+                                                                <div className="w-full h-full flex items-center justify-center bg-slate-100 text-slate-400 font-black uppercase text-lg rounded-full">
+                                                                    {rankings[1] ? (rankings[1].user?.fullName?.substring(0, 2) || 'VĐ') : '?'}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <div className="w-20 h-20 rounded-full border-4 border-slate-350 p-0.5 relative overflow-hidden bg-slate-55 shadow-sm flex items-center justify-center">
+                                                        {rankings[1]?.user?.avatarUrl ? (
+                                                            <Image src={rankings[1].user.avatarUrl} alt="Rank 2" fill className="object-cover rounded-full" />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center bg-slate-100 text-slate-400 font-black uppercase text-2xl rounded-full">
+                                                                {rankings[1] ? (rankings[1].user?.fullName?.substring(0, 2) || 'VĐ') : '?'}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
                                             </div>
                                             <h3 className="font-extrabold text-slate-800 text-center text-sm mb-1 truncate max-w-[200px] group-hover/podium:text-blue-600 transition-colors">
                                                 {rankings[1]?.user?.fullName || "Đang chờ..."}
                                             </h3>
+                                            {selectedMatchType.includes('DOUBLES') && rankings[1] && (
+                                                <span className="text-[10px] text-slate-450 font-bold bg-slate-100 px-2 py-0.5 rounded-md mb-1.5 border border-slate-200">
+                                                    Đồng đội
+                                                </span>
+                                            )}
                                             {rankings[1] ? (
                                                 <EloTierBadge elo={rankings[1].eloPoints} tierName={rankings[1].tier?.name} size="sm" className="mb-3 border-slate-200/80 bg-white" />
                                             ) : (
@@ -289,7 +317,7 @@ export default function LeaderboardPage() {
                                             </span>
                                         </div>
                                     </div>
-
+ 
                                     {/* Rank 1 (Center) */}
                                     <div className="w-full md:w-1/3 order-1 md:order-2 flex flex-col items-center group/podium relative -translate-y-2 md:-translate-y-4">
                                         <Link 
@@ -300,19 +328,45 @@ export default function LeaderboardPage() {
                                                 <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-20 bg-amber-400 text-amber-955 font-black text-[10px] px-4 py-1.5 rounded-full shadow-sm flex items-center gap-1 border border-amber-300 animate-bounce">
                                                     👑 CHAMPION
                                                 </div>
-                                                <div className="w-24 h-24 rounded-full border-4 border-amber-400/80 p-1 relative overflow-hidden bg-slate-55 shadow-md flex items-center justify-center">
-                                                    {rankings[0]?.user?.avatarUrl ? (
-                                                        <Image src={rankings[0].user.avatarUrl} alt="Rank 1" fill className="object-cover rounded-full" />
-                                                    ) : (
-                                                        <div className="w-full h-full flex items-center justify-center bg-amber-50 text-amber-600 font-black uppercase text-2xl rounded-full">
-                                                            {rankings[0] ? (rankings[0].user?.fullName?.substring(0, 2) || 'VĐ') : '?'}
+                                                
+                                                {/* Stacked Avatar for Doubles */}
+                                                {selectedMatchType.includes('DOUBLES') ? (
+                                                    <div className="relative w-28 h-24 flex items-center justify-center">
+                                                        {/* Partner shadow avatar */}
+                                                        <div className="w-20 h-20 rounded-full border-2 border-amber-300 absolute -right-2 bottom-0 bg-amber-50/50 flex items-center justify-center shadow-xs">
+                                                            <Users className="w-8 h-8 text-amber-500/80" />
                                                         </div>
-                                                    )}
-                                                </div>
+                                                        {/* Primary avatar */}
+                                                        <div className="w-20 h-20 rounded-full border-4 border-amber-400/85 p-0.5 absolute -left-2 top-0 overflow-hidden bg-slate-55 shadow-md flex items-center justify-center">
+                                                            {rankings[0]?.user?.avatarUrl ? (
+                                                                <Image src={rankings[0].user.avatarUrl} alt="Rank 1" fill className="object-cover rounded-full" />
+                                                            ) : (
+                                                                <div className="w-full h-full flex items-center justify-center bg-amber-50 text-amber-600 font-black uppercase text-xl rounded-full">
+                                                                    {rankings[0] ? (rankings[0].user?.fullName?.substring(0, 2) || 'VĐ') : '?'}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <div className="w-24 h-24 rounded-full border-4 border-amber-400/80 p-1 relative overflow-hidden bg-slate-55 shadow-md flex items-center justify-center">
+                                                        {rankings[0]?.user?.avatarUrl ? (
+                                                            <Image src={rankings[0].user.avatarUrl} alt="Rank 1" fill className="object-cover rounded-full" />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center bg-amber-50 text-amber-600 font-black uppercase text-2xl rounded-full">
+                                                                {rankings[0] ? (rankings[0].user?.fullName?.substring(0, 2) || 'VĐ') : '?'}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
                                             </div>
                                             <h3 className="font-black text-amber-600 text-center text-base mb-1 truncate max-w-[220px] group-hover/podium:text-blue-600 transition-colors">
                                                 {rankings[0]?.user?.fullName || "Đang chờ..."}
                                             </h3>
+                                            {selectedMatchType.includes('DOUBLES') && rankings[0] && (
+                                                <span className="text-[10px] text-amber-655 font-black bg-amber-50 px-2 py-0.5 rounded-md mb-1.5 border border-amber-200">
+                                                    Đồng đội
+                                                </span>
+                                            )}
                                             {rankings[0] ? (
                                                 <EloTierBadge elo={rankings[0].eloPoints} tierName={rankings[0].tier?.name} size="md" className="mb-3 border-amber-400/50 bg-white" />
                                             ) : (
@@ -328,7 +382,7 @@ export default function LeaderboardPage() {
                                             </span>
                                         </div>
                                     </div>
-
+ 
                                     {/* Rank 3 (Right) */}
                                     <div className="w-full md:w-1/3 order-3 md:order-3 flex flex-col items-center group/podium">
                                         <Link 
@@ -339,19 +393,45 @@ export default function LeaderboardPage() {
                                                 <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20 bg-orange-100 text-orange-700 font-black text-[10px] px-3 py-1 rounded-full border border-orange-205 shadow-xs">
                                                     #3 THIRD
                                                 </div>
-                                                <div className="w-20 h-20 rounded-full border-4 border-orange-300 p-0.5 relative overflow-hidden bg-slate-50 shadow-sm flex items-center justify-center">
-                                                    {rankings[2]?.user?.avatarUrl ? (
-                                                        <Image src={rankings[2].user.avatarUrl} alt="Rank 3" fill className="object-cover rounded-full" />
-                                                    ) : (
-                                                        <div className="w-full h-full flex items-center justify-center bg-slate-100 text-orange-500 font-black uppercase text-xl rounded-full">
-                                                            {rankings[2] ? (rankings[2].user?.fullName?.substring(0, 2) || 'VĐ') : '?'}
+                                                
+                                                {/* Stacked Avatar for Doubles */}
+                                                {selectedMatchType.includes('DOUBLES') ? (
+                                                    <div className="relative w-24 h-20 flex items-center justify-center">
+                                                        {/* Partner shadow avatar */}
+                                                        <div className="w-16 h-16 rounded-full border-2 border-orange-200 absolute -right-2 bottom-0 bg-orange-50/50 flex items-center justify-center shadow-xs">
+                                                            <Users className="w-6 h-6 text-orange-450" />
                                                         </div>
-                                                    )}
-                                                </div>
+                                                        {/* Primary avatar */}
+                                                        <div className="w-16 h-16 rounded-full border-4 border-orange-350 p-0.5 absolute -left-2 top-0 overflow-hidden bg-slate-55 shadow-sm flex items-center justify-center">
+                                                            {rankings[2]?.user?.avatarUrl ? (
+                                                                <Image src={rankings[2].user.avatarUrl} alt="Rank 3" fill className="object-cover rounded-full" />
+                                                            ) : (
+                                                                <div className="w-full h-full flex items-center justify-center bg-slate-100 text-orange-500 font-black uppercase text-lg rounded-full">
+                                                                    {rankings[2] ? (rankings[2].user?.fullName?.substring(0, 2) || 'VĐ') : '?'}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <div className="w-20 h-20 rounded-full border-4 border-orange-350 p-0.5 relative overflow-hidden bg-slate-55 shadow-sm flex items-center justify-center">
+                                                        {rankings[2]?.user?.avatarUrl ? (
+                                                            <Image src={rankings[2].user.avatarUrl} alt="Rank 3" fill className="object-cover rounded-full" />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center bg-slate-100 text-orange-500 font-black uppercase text-xl rounded-full">
+                                                                {rankings[2] ? (rankings[2].user?.fullName?.substring(0, 2) || 'VĐ') : '?'}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
                                             </div>
                                             <h3 className="font-extrabold text-slate-800 text-center text-sm mb-1 truncate max-w-[200px] group-hover/podium:text-blue-600 transition-colors">
                                                 {rankings[2]?.user?.fullName || "Đang chờ..."}
                                             </h3>
+                                            {selectedMatchType.includes('DOUBLES') && rankings[2] && (
+                                                <span className="text-[10px] text-orange-655 font-bold bg-orange-50 px-2 py-0.5 rounded-md mb-1.5 border border-orange-200">
+                                                    Đồng đội
+                                                </span>
+                                            )}
                                             {rankings[2] ? (
                                                 <EloTierBadge elo={rankings[2].eloPoints} tierName={rankings[2].tier?.name} size="sm" className="mb-3 border-slate-200/80 bg-white" />
                                             ) : (
@@ -384,15 +464,35 @@ export default function LeaderboardPage() {
                                                     <span className="text-[10px] font-black text-blue-600 bg-blue-50/50 px-2 py-0.5 rounded-full mb-2">
                                                         #{rankNum}
                                                     </span>
-                                                    <div className="w-12 h-12 rounded-full border-2 border-slate-200 relative overflow-hidden bg-slate-50 flex items-center justify-center mb-2">
-                                                        {player?.user?.avatarUrl ? (
-                                                            <Image src={player.user.avatarUrl} alt={`Rank ${rankNum}`} fill className="object-cover" />
-                                                        ) : (
-                                                            <span className="text-slate-400 font-bold text-sm">
-                                                                {player ? (player.user?.fullName?.substring(0, 2) || 'VĐ') : '?'}
-                                                            </span>
-                                                        )}
-                                                    </div>
+                                                    
+                                                    {/* Stacked Avatar for Doubles Ranks 4-10 */}
+                                                    {selectedMatchType.includes('DOUBLES') ? (
+                                                        <div className="relative w-14 h-11 mb-2">
+                                                            <div className="w-8 h-8 rounded-full border border-slate-200 absolute right-0 bottom-0 bg-slate-100 flex items-center justify-center shadow-xs">
+                                                                <Users className="w-3.5 h-3.5 text-slate-400" />
+                                                            </div>
+                                                            <div className="w-8 h-8 rounded-full border-2 border-slate-200 absolute left-0 top-0 overflow-hidden bg-slate-50 flex items-center justify-center">
+                                                                {player?.user?.avatarUrl ? (
+                                                                    <Image src={player.user.avatarUrl} alt={`Rank ${rankNum}`} fill className="object-cover" />
+                                                                ) : (
+                                                                    <span className="text-slate-400 font-bold text-[10px]">
+                                                                        {player ? (player.user?.fullName?.substring(0, 2) || 'VĐ') : '?'}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="w-12 h-12 rounded-full border-2 border-slate-200 relative overflow-hidden bg-slate-50 flex items-center justify-center mb-2">
+                                                            {player?.user?.avatarUrl ? (
+                                                                <Image src={player.user.avatarUrl} alt={`Rank ${rankNum}`} fill className="object-cover" />
+                                                            ) : (
+                                                                <span className="text-slate-400 font-bold text-sm">
+                                                                    {player ? (player.user?.fullName?.substring(0, 2) || 'VĐ') : '?'}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                    
                                                     <span className="font-extrabold text-slate-700 text-xs text-center truncate w-full mb-1">
                                                         {player?.user?.fullName || "Đang chờ..."}
                                                     </span>
@@ -409,7 +509,7 @@ export default function LeaderboardPage() {
                             </div>
 
                             {/* Rest of rankings: Top 11 - 100 */}
-                            <RestRankingsTable rankings={rankings} />
+                            <RestRankingsTable rankings={rankings} selectedMatchType={selectedMatchType} />
                         </>
                     )}
                 </div>
@@ -544,7 +644,7 @@ export default function LeaderboardPage() {
     );
 }
 
-function RestRankingsTable({ rankings }: { rankings: PlayerRanking[] }) {
+function RestRankingsTable({ rankings, selectedMatchType }: { rankings: PlayerRanking[], selectedMatchType: string }) {
     // Rankings starting from index 10 (Hạng 11 trở đi)
     const realData = rankings.slice(10, 100);
     
@@ -582,7 +682,7 @@ function RestRankingsTable({ rankings }: { rankings: PlayerRanking[] }) {
         return (
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse text-xs">
+                     <table className="w-full text-left border-collapse text-xs">
                         <thead>
                             <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider">
                                 <th className="py-3 px-3 w-12 text-center">Hạng</th>
@@ -598,7 +698,7 @@ function RestRankingsTable({ rankings }: { rankings: PlayerRanking[] }) {
                                 const isPlaceholder = rank.id.startsWith("placeholder-");
                                 const winRate = rank.matchesPlayed > 0 ? ((rank.matchesWon / rank.matchesPlayed) * 100).toFixed(0) : '0';
                                 return (
-                                    <tr key={rank.id} className="transition-colors hover:bg-slate-50/40 border-b">
+                                    <tr key={rank.id} className="transition-colors hover:bg-slate-55/40 border-b">
                                         <td className="py-2.5 px-3 text-center font-black text-slate-400">
                                             #{rankNum}
                                         </td>
@@ -607,15 +707,33 @@ function RestRankingsTable({ rankings }: { rankings: PlayerRanking[] }) {
                                                 href={isPlaceholder ? '#' : `/users/${rank.user?.id}`}
                                                 className={`flex items-center gap-2 hover:text-blue-600 transition-colors ${isPlaceholder ? "pointer-events-none" : ""}`}
                                             >
-                                                <div className="w-7 h-7 rounded-full object-cover relative overflow-hidden bg-slate-100 flex-shrink-0 border border-slate-200">
-                                                    {rank.user?.avatarUrl ? (
-                                                        <Image src={rank.user.avatarUrl} alt="Player" fill className="object-cover" />
-                                                    ) : (
-                                                        <div className="w-full h-full flex items-center justify-center bg-slate-200 text-slate-500 font-black text-[9px] uppercase">
-                                                            {isPlaceholder ? "?" : (rank.user?.fullName?.substring(0, 2) || 'VĐ')}
+                                                {/* Stacked Avatar for Doubles in table list */}
+                                                {selectedMatchType.includes('DOUBLES') ? (
+                                                    <div className="relative w-10 h-7 flex-shrink-0">
+                                                        <div className="w-5.5 h-5.5 rounded-full border border-slate-200 absolute right-0 bottom-0 bg-slate-100 flex items-center justify-center">
+                                                            <Users className="w-2.5 h-2.5 text-slate-400" />
                                                         </div>
-                                                    )}
-                                                </div>
+                                                        <div className="w-5.5 h-5.5 rounded-full border border-slate-200 absolute left-0 top-0 overflow-hidden bg-slate-50 flex items-center justify-center">
+                                                            {rank.user?.avatarUrl ? (
+                                                                <Image src={rank.user.avatarUrl} alt="Player" fill className="object-cover" />
+                                                            ) : (
+                                                                <div className="w-full h-full flex items-center justify-center bg-slate-200 text-slate-500 font-black text-[8px] uppercase">
+                                                                    {isPlaceholder ? "?" : (rank.user?.fullName?.substring(0, 2) || 'VĐ')}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <div className="w-7 h-7 rounded-full object-cover relative overflow-hidden bg-slate-100 flex-shrink-0 border border-slate-200">
+                                                        {rank.user?.avatarUrl ? (
+                                                            <Image src={rank.user.avatarUrl} alt="Player" fill className="object-cover" />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center bg-slate-200 text-slate-500 font-black text-[9px] uppercase">
+                                                                {isPlaceholder ? "?" : (rank.user?.fullName?.substring(0, 2) || 'VĐ')}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
                                                 <span className={`font-bold truncate max-w-[100px] sm:max-w-[150px] ${isPlaceholder ? "text-slate-400 font-medium" : "text-slate-900"}`}>
                                                     {rank.user?.fullName || "Đang chờ..."}
                                                 </span>

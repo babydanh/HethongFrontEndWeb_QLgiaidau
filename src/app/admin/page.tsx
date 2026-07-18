@@ -219,6 +219,7 @@ export default function AdminDashboard() {
         subText: 'Tổng lệ phí thanh toán qua cổng',
         icon: DollarSign,
         color: 'from-emerald-500 to-teal-500 shadow-emerald-500/10',
+        isPercent: true,
       },
       {
         name: 'Hoa hồng nền tảng (Net Revenue)',
@@ -227,6 +228,7 @@ export default function AdminDashboard() {
         subText: `Phần doanh thu thu về (Escrow phí)`,
         icon: Percent,
         color: 'from-rose-500 to-pink-500 shadow-rose-500/10',
+        isPercent: true,
       },
       {
         name: 'Escrow đang giữ',
@@ -235,6 +237,7 @@ export default function AdminDashboard() {
         subText: 'Lệ phí đang khóa chờ giải ngân',
         icon: TrendingUp,
         color: 'from-sky-500 to-blue-500 shadow-sky-500/10',
+        isPercent: true,
       },
     ];
   }, [metrics]);
@@ -374,7 +377,7 @@ export default function AdminDashboard() {
                         ? 'bg-rose-50 text-rose-700 border border-rose-100'
                         : 'bg-slate-100 text-slate-600'
                   }`}>
-                    {card.change > 0 ? `+${card.change}%` : `${card.change}%`}
+                    {card.change > 0 ? `+${card.change}` : `${card.change}`}{card.isPercent ? '%' : ''}
                   </span>
                 )}
               </div>

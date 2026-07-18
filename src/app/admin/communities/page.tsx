@@ -306,7 +306,7 @@ export default function AdminCommunitiesReview() {
                       >
                         <X className="w-3.5 h-3.5" />
                         Từ chối
-                      </button>
+                      </Button>
                     ) : isActive && (
                       <button
                         disabled={submitting}

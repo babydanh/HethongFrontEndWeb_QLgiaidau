@@ -780,7 +780,7 @@ export default function HomePage() {
               className={`relative flex items-center gap-1.5 px-4.5 py-2.5 rounded-full text-xs font-black transition-all shrink-0 cursor-pointer ${
                 selectedCategoryId === ''
                   ? 'text-white'
-                  : 'bg-slate-100/80 text-slate-650 hover:bg-slate-200/90 hover:text-slate-900'
+                  : 'bg-white text-slate-650 border border-slate-200/60 shadow-sm hover:border-slate-300 hover:text-slate-900'
               }`}
             >
               {selectedCategoryId === '' && (
@@ -804,7 +804,7 @@ export default function HomePage() {
                   className={`relative flex items-center gap-1.5 px-4.5 py-2.5 rounded-full text-xs font-black transition-all shrink-0 cursor-pointer ${
                     isActive
                       ? 'text-white'
-                      : 'bg-slate-100/80 text-slate-650 hover:bg-slate-200/90 hover:text-slate-900'
+                      : 'bg-white text-slate-650 border border-slate-200/60 shadow-sm hover:border-slate-300 hover:text-slate-900'
                   }`}
                 >
                   {isActive && (

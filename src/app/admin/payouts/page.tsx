@@ -322,7 +322,7 @@ export default function AdminPayoutsReview() {
                       >
                         <Check className="w-4 h-4" />
                         Xác nhận đã chuyển tiền
-                      </button>
+                      </Button>
                     </div>
                   ) : (
                     <div className="space-y-2 text-xs text-slate-500">

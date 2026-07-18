@@ -351,12 +351,13 @@ export default function AdminCommunitiesReview() {
             </div>
 
             <div className="flex justify-end gap-3 border-t border-gray-100 bg-gray-50 px-5 py-4">
-              <button
+              <Button
+                variant="outline"
                 onClick={() => setRejectingId(null)}
-                className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-xs font-bold text-gray-600 transition-all hover:bg-gray-50"
+                className="text-xs"
               >
                 Hủy
-              </button>
+              </Button>
               <Button
                 disabled={submitting}
                 onClick={() => handleReject(rejectingId, rejectReason)}
@@ -365,7 +366,7 @@ export default function AdminCommunitiesReview() {
               >
                 {submitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
                 Xác nhận từ chối
-              </button>
+              </Button>
             </div>
           </div>
         </div>

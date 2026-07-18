@@ -230,12 +230,21 @@ export default function TournamentsTab({
           ))}
         </div>
         {isOwnerOrMod && (
-          <Button 
-            onClick={() => router.push(`/organizer/tournaments/create?communityId=${communityId}`)}
-            className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-sm transition-all"
-          >
-            + Tạo giải đấu cấp CLB
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <Button 
+              onClick={() => router.push(`/communities/${communityId}/manage/tournaments`)}
+              variant="outline"
+              className="w-full sm:w-auto border-emerald-600 text-emerald-700 hover:bg-emerald-50 font-bold shadow-sm transition-all"
+            >
+              ⚙️ Quản lý giải đấu CLB
+            </Button>
+            <Button 
+              onClick={() => router.push(`/organizer/tournaments/create?communityId=${communityId}`)}
+              className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-sm transition-all"
+            >
+              + Tạo giải đấu cấp CLB
+            </Button>
+          </div>
         )}
       </div>
 

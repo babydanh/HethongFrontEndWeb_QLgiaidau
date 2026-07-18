@@ -1250,7 +1250,7 @@ export default function ProfilePage() {
                               <h4 className="font-extrabold text-slate-900 text-base">{rank.eloPoints} ELO</h4>
                               <EloTierBadge elo={rank.eloPoints} size="sm" />
                             </div>
-                            <div className="grid grid-cols-3 gap-2 pt-2 text-center text-xs">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2 text-center text-xs">
                               <div className="bg-slate-50/80 p-2 rounded-xl border border-slate-100">
                                 <div className="text-[10px] text-slate-400 font-bold uppercase">Số Trận</div>
                                 <div className="font-extrabold text-slate-700 mt-0.5">{rank.matchesPlayed}</div>

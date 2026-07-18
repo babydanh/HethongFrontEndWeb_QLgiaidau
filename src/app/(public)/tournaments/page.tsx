@@ -446,38 +446,28 @@ export default function TournamentsListPage() {
             {/* Lọc từ ngày */}
             <div>
               <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Diễn ra từ ngày</label>
-              <input 
-                type={startDate ? "date" : "text"}
-                placeholder="dd/mm/yyyy"
-                onFocus={(e) => (e.target.type = "date")}
-                onBlur={(e) => {
-                  if (!e.target.value) e.target.type = "text";
-                }}
+              <input
+                type="date"
                 value={startDate}
                 onChange={(e) => {
                   setStartDate(e.target.value);
                   setPage(1);
                 }}
-                className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-950 font-bold h-[33.5px]"
+                className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-950 font-bold h-10"
               />
             </div>
 
             {/* Lọc đến ngày */}
             <div>
               <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Diễn ra đến ngày</label>
-              <input 
-                type={endDate ? "date" : "text"}
-                placeholder="dd/mm/yyyy"
-                onFocus={(e) => (e.target.type = "date")}
-                onBlur={(e) => {
-                  if (!e.target.value) e.target.type = "text";
-                }}
+              <input
+                type="date"
                 value={endDate}
                 onChange={(e) => {
                   setEndDate(e.target.value);
                   setPage(1);
                 }}
-                className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-950 font-bold h-[33.5px]"
+                className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-950 font-bold h-10"
               />
             </div>
 
@@ -499,7 +489,7 @@ export default function TournamentsListPage() {
                   setSearchTerm('');
                   setPage(1);
                 }}
-                className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-black text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer bg-white h-[33.5px] flex items-center justify-center"
+                className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-black text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer bg-white h-10 flex items-center justify-center"
                 title="Xóa bộ lọc"
               >
                 <span className="font-extrabold text-rose-600">X</span>
@@ -731,9 +721,9 @@ export default function TournamentsListPage() {
             <button 
               key={i + 1}
               onClick={() => setPage(i + 1)}
-              className={`w-10 h-10 border rounded-xl font-bold text-xs transition-colors cursor-pointer ${
-                page === i + 1 
-                  ? 'border-indigo-600 bg-indigo-600 text-white shadow-md shadow-indigo-600/15' 
+              className={`min-w-[44px] min-h-[44px] border rounded-xl font-bold text-xs transition-colors cursor-pointer ${
+                page === i + 1
+                  ? 'border-indigo-600 bg-indigo-600 text-white shadow-md shadow-indigo-600/15'
                   : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-100'
               }`}
             >

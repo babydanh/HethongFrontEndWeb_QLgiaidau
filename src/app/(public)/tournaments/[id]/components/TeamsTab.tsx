@@ -101,7 +101,7 @@ export default function TeamsTab({ tournament, tournamentId, divisionId }: Props
                         )}
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <button className="text-slate-400 hover:text-slate-700 p-1">
+                        <button className="text-slate-400 hover:text-slate-700 p-2 min-w-[44px] min-h-[44px]">
                           {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
                         </button>
                       </td>

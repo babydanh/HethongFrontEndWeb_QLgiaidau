@@ -529,7 +529,7 @@ export default function DashboardPage() {
                   ) : null}
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
                     <span className="text-[10px] text-slate-500 font-semibold block mb-1">Trận thắng</span>
                     <span className="text-lg font-bold text-slate-800">{matchesWon} / {matchesPlayed}</span>
@@ -554,7 +554,7 @@ export default function DashboardPage() {
 
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
             <h3 className="text-sm font-bold text-slate-900 mb-4">Vai trò của tôi</h3>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                 <div className="text-[11px] font-semibold text-slate-500">Giải đã đăng ký</div>
                 <div className="mt-1 text-2xl font-black text-slate-900">{workspace?.participatingTournaments.length || 0}</div>

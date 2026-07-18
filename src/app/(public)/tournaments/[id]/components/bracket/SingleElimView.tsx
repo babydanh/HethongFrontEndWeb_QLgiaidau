@@ -83,7 +83,7 @@ export function SingleElimView({
       <div className="absolute top-4 right-4 z-20 flex items-center gap-1.5 bg-white border border-slate-200 shadow-sm rounded-xl p-1 text-xs font-bold text-slate-600">
         <button
           onClick={() => setZoom((z) => Math.max(z - 0.1, 0.5))}
-          className="w-7 h-7 flex items-center justify-center hover:bg-slate-50 rounded-lg transition-colors cursor-pointer border border-slate-100"
+          className="w-9 h-9 flex items-center justify-center hover:bg-slate-50 rounded-lg transition-colors cursor-pointer border border-slate-100"
           title="Thu nhỏ"
         >
           -
@@ -93,21 +93,21 @@ export function SingleElimView({
         </span>
         <button
           onClick={() => setZoom((z) => Math.min(z + 0.1, 1.5))}
-          className="w-7 h-7 flex items-center justify-center hover:bg-slate-50 rounded-lg transition-colors cursor-pointer border border-slate-100"
+          className="w-9 h-9 flex items-center justify-center hover:bg-slate-50 rounded-lg transition-colors cursor-pointer border border-slate-100"
           title="Phóng to"
         >
           +
         </button>
         <button
           onClick={() => setZoom(1)}
-          className="px-2.5 h-7 flex items-center justify-center hover:bg-slate-50 rounded-lg transition-colors cursor-pointer border border-slate-100"
+          className="px-2.5 h-9 flex items-center justify-center hover:bg-slate-50 rounded-lg transition-colors cursor-pointer border border-slate-100"
           title="Đặt lại tỷ lệ"
         >
           Mặc định
         </button>
         <button
           onClick={() => setIsFullscreen(!isFullscreen)}
-          className="w-7 h-7 flex items-center justify-center hover:bg-slate-50 rounded-lg transition-colors cursor-pointer border border-slate-100 text-slate-500 hover:text-slate-800"
+          className="w-9 h-9 flex items-center justify-center hover:bg-slate-50 rounded-lg transition-colors cursor-pointer border border-slate-100 text-slate-500 hover:text-slate-800"
           title={isFullscreen ? 'Thoát toàn màn hình' : 'Toàn màn hình'}
         >
           {isFullscreen ? (

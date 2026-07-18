@@ -265,7 +265,7 @@ export default function CommunitiesPage() {
                       community.categories.slice(0, 2).map(cat => {
                         const styles = getCategoryStyles(cat.name);
                         return (
-                          <span key={cat.id} className={`inline-flex items-center gap-0.5 px-2 py-0.2 rounded-full border text-[8px] font-extrabold uppercase tracking-wider ${styles.bg}`}>
+                          <span key={cat.id} className={`inline-flex items-center gap-0.5 px-2 py-0.2 rounded-full border text-[10px] sm:text-[8px] font-extrabold uppercase tracking-wider ${styles.bg}`}>
                             {(() => {
                               const logo = getSportLogo(cat.name);
                               return logo ? (
@@ -343,19 +343,19 @@ export default function CommunitiesPage() {
           <button 
             disabled={page === 1}
             onClick={() => setPage(p => Math.max(1, p - 1))}
-            className="w-10 h-10 flex items-center justify-center rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50 transition-colors disabled:opacity-50"
+            className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50 transition-colors disabled:opacity-50"
           >
             <span className="material-symbols-outlined">chevron_left</span>
           </button>
           
-          <button className="w-10 h-10 flex items-center justify-center rounded-xl bg-emerald-600 text-white text-xs font-black">
+          <button className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl bg-emerald-600 text-white text-xs font-black">
             {page}
           </button>
 
           <button 
             disabled={page >= totalPages}
             onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-            className="w-10 h-10 flex items-center justify-center rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50 transition-colors disabled:opacity-50"
+            className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50 transition-colors disabled:opacity-50"
           >
             <span className="material-symbols-outlined">chevron_right</span>
           </button>

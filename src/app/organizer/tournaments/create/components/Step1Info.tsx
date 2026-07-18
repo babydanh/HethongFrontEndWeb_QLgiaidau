@@ -298,7 +298,11 @@ export default function Step1Info() {
                 <input type="radio" value="PUBLIC" {...register('visibility')} checked={watchVisibility === 'PUBLIC'} onChange={() => setValue('visibility', 'PUBLIC')} className="w-4 h-4 text-blue-600 focus:ring-blue-500" />
                 <span className="text-sm font-bold text-slate-800">Công khai</span>
               </div>
-              <span className="text-[11px] text-slate-500 mt-2 pl-6 leading-relaxed">Xuất hiện trên trang chủ, khám phá và có thể được cộng đồng theo dõi.</span>
+              <span className="text-[11px] text-slate-500 mt-2 pl-6 leading-relaxed">
+                {watchTournamentType === 'CLUB'
+                  ? 'Xuất hiện trên trang câu lạc bộ của bạn, thành viên và khách ghé thăm đều có thể theo dõi sơ đồ đấu.'
+                  : 'Xuất hiện trên trang chủ, khám phá và có thể được cộng đồng theo dõi.'}
+              </span>
             </label>
 
             <label className={`flex flex-col p-4 border rounded-xl bg-white cursor-pointer transition-all ${watchVisibility === 'PRIVATE' ? 'border-blue-500 ring-2 ring-blue-100' : 'border-slate-200 hover:bg-slate-50'}`}>
@@ -306,7 +310,11 @@ export default function Step1Info() {
                 <input type="radio" value="PRIVATE" {...register('visibility')} checked={watchVisibility === 'PRIVATE'} onChange={() => setValue('visibility', 'PRIVATE')} className="w-4 h-4 text-blue-600 focus:ring-blue-500" />
                 <span className="text-sm font-bold text-slate-800">Không niêm yết</span>
               </div>
-              <span className="text-[11px] text-slate-500 mt-2 pl-6 leading-relaxed">Không xuất hiện công khai; người có link hoặc mã mời vẫn có thể truy cập.</span>
+              <span className="text-[11px] text-slate-500 mt-2 pl-6 leading-relaxed">
+                {watchTournamentType === 'CLUB'
+                  ? 'Không xuất hiện trên trang CLB; chỉ người có link hoặc mã mời mới có thể truy cập.'
+                  : 'Không xuất hiện công khai; người có link hoặc mã mời vẫn có thể truy cập.'}
+              </span>
             </label>
           </div>
         </div>

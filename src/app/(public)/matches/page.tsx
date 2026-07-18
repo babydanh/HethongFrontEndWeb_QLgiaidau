@@ -333,7 +333,7 @@ export default function MatchesListPage() {
 
         <div className="p-5 flex flex-col gap-4">
         {/* Row 1: Main Filters */}
-        <div className="flex flex-col md:flex-row items-end gap-4 w-full">
+        <div className="flex flex-col md:flex-row items-end gap-2 sm:gap-4 w-full">
           {/* Tìm kiếm */}
           <div className="flex-grow w-full flex flex-col gap-1.5">
             <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider">Tìm kiếm</label>
@@ -346,7 +346,7 @@ export default function MatchesListPage() {
                   setSearchTerm(e.target.value);
                   setPage(1);
                 }}
-                className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50/50 text-slate-900 font-bold h-[38px]"
+                className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50/50 text-slate-900 font-bold h-11"
                 placeholder="Tên vận động viên, CLB..."
               />
             </div>
@@ -362,7 +362,7 @@ export default function MatchesListPage() {
                   setSelectedCategoryId(e.target.value);
                   setPage(1);
                 }}
-                className="w-full pl-3 pr-9 py-2 border border-slate-200 rounded-xl text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50/50 text-slate-900 font-bold h-[38px]"
+                className="w-full pl-3 pr-9 py-2 border border-slate-200 rounded-xl text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50/50 text-slate-900 font-bold h-11"
               >
                 <option value="">Tất cả</option>
                 {categories.map(cat => (
@@ -383,7 +383,7 @@ export default function MatchesListPage() {
                   setSelectedBracketType(e.target.value);
                   setPage(1);
                 }}
-                className="w-full pl-3 pr-9 py-2 border border-slate-200 rounded-xl text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50/50 text-slate-900 font-bold h-[38px]"
+                className="w-full pl-3 pr-9 py-2 border border-slate-200 rounded-xl text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50/50 text-slate-900 font-bold h-11"
               >
                 <option value="">Tất cả</option>
                 <option value="SINGLE_ELIMINATION">Loại trực tiếp</option>
@@ -405,7 +405,7 @@ export default function MatchesListPage() {
                   setSelectedContent(e.target.value);
                   setPage(1);
                 }}
-                className="w-full pl-3 pr-9 py-2 border border-slate-200 rounded-xl text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50/50 text-slate-900 font-bold h-[38px]"
+                className="w-full pl-3 pr-9 py-2 border border-slate-200 rounded-xl text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50/50 text-slate-900 font-bold h-11"
               >
                 <option value="">Tất cả</option>
                 <option value="SINGLE_MALE">Đơn Nam</option>
@@ -421,7 +421,7 @@ export default function MatchesListPage() {
           {/* Lọc thêm button */}
           <button
             onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-            className={`h-[38px] flex items-center justify-center gap-2 px-4 py-2 border rounded-xl text-xs font-bold transition-all w-full md:w-auto shrink-0 cursor-pointer ${
+            className={`h-11 flex items-center justify-center gap-2 px-4 py-2 border rounded-xl text-xs font-bold transition-all w-full md:w-auto shrink-0 cursor-pointer ${
               showAdvancedFilters || startDate || endDate || selectedProvince || selectedDistrict || selectedStatus
                 ? 'bg-indigo-50 border-indigo-200 text-indigo-700 shadow-sm'
                 : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
@@ -444,7 +444,7 @@ export default function MatchesListPage() {
                   setSelectedStatus(e.target.value);
                   setPage(1);
                 }}
-                className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-950 font-bold h-[33.5px]"
+                className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-950 font-bold h-10"
               >
                 <option value="">Tất cả</option>
                 <option value="ONGOING">Đang đấu</option>
@@ -464,7 +464,7 @@ export default function MatchesListPage() {
                     setSelectedDistrict('');
                     setPage(1);
                   }}
-                  className="w-full h-[33.5px] appearance-none rounded-xl border border-slate-200 bg-white px-3 pr-8 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full h-10 appearance-none rounded-xl border border-slate-200 bg-white px-3 pr-8 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
                   <option value="">Tất cả khu vực</option>
                   {provinces.map((province) => (
@@ -488,7 +488,7 @@ export default function MatchesListPage() {
                     setPage(1);
                   }}
                   disabled={!selectedProvince}
-                  className="w-full h-[33.5px] appearance-none rounded-xl border border-slate-200 bg-white px-3 pr-8 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                  className="w-full h-10 appearance-none rounded-xl border border-slate-200 bg-white px-3 pr-8 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
                 >
                   <option value="">Tất cả quận / huyện</option>
                   {districts.map((district) => (
@@ -503,18 +503,13 @@ export default function MatchesListPage() {
             <div>
               <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Từ ngày</label>
               <input
-                type={startDate ? "date" : "text"}
-                placeholder="dd/mm/yyyy"
-                onFocus={(e) => (e.target.type = "date")}
-                onBlur={(e) => {
-                  if (!e.target.value) e.target.type = "text";
-                }}
+                type="date"
                 value={startDate}
                 onChange={(e) => {
                   setStartDate(e.target.value);
                   setPage(1);
                 }}
-                className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-950 font-bold h-[33.5px]"
+                className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-950 font-bold h-10"
               />
             </div>
 
@@ -522,18 +517,13 @@ export default function MatchesListPage() {
             <div>
               <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Đến ngày</label>
               <input
-                type={endDate ? "date" : "text"}
-                placeholder="dd/mm/yyyy"
-                onFocus={(e) => (e.target.type = "date")}
-                onBlur={(e) => {
-                  if (!e.target.value) e.target.type = "text";
-                }}
+                type="date"
                 value={endDate}
                 onChange={(e) => {
                   setEndDate(e.target.value);
                   setPage(1);
                 }}
-                className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-950 font-bold h-[33.5px]"
+                className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-950 font-bold h-10"
               />
             </div>
 
@@ -552,7 +542,7 @@ export default function MatchesListPage() {
                   setSearchTerm('');
                   setPage(1);
                 }}
-                className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-black text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer bg-white h-[33.5px] flex items-center justify-center"
+                className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-black text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer bg-white h-10 flex items-center justify-center"
                 title="Xóa bộ lọc"
               >
                 <span className="font-extrabold text-rose-600">X</span>
@@ -864,7 +854,7 @@ export default function MatchesListPage() {
                         </div>
 
                         {/* Actions */}
-                        <div className="px-3 py-1.5 bg-slate-50/50 border-t border-slate-100 grid grid-cols-3 gap-0.5 text-center text-[11px] font-bold text-slate-500">
+                        <div className="px-3 py-1.5 bg-slate-50/50 border-t border-slate-100 grid grid-cols-3 gap-1 text-center text-[11px] font-bold text-slate-500">
                           <button 
                             onClick={() => {
                               setCheerCounts(prev => ({
@@ -873,14 +863,14 @@ export default function MatchesListPage() {
                               }));
                               toast.success('Cảm ơn bạn đã cổ vũ!');
                             }}
-                            className="flex items-center justify-center gap-1 hover:text-rose-600 transition-colors py-1 cursor-pointer"
+                            className="flex items-center justify-center gap-1 hover:text-rose-600 transition-colors py-2 min-h-[44px] cursor-pointer"
                           >
                             <Heart className="w-3 h-3 text-rose-500 fill-current" />
                             <span>Cổ vũ ({cheerCounts[match.id] || 0})</span>
                           </button>
                           <Link 
                             href={`/live/${match.id}`}
-                            className="flex items-center justify-center gap-1 hover:text-indigo-600 transition-colors py-1 cursor-pointer"
+                            className="flex items-center justify-center gap-1 hover:text-indigo-600 transition-colors py-2 min-h-[44px] cursor-pointer"
                           >
                             <Play className="w-3 h-3 text-indigo-600 fill-current" />
                             <span>Chi tiết</span>
@@ -893,7 +883,7 @@ export default function MatchesListPage() {
                               setActiveShareTitle(`Trận đấu: ${p1Name} vs ${p2Name}`);
                               setIsShareModalOpen(true);
                             }}
-                            className="flex items-center justify-center gap-1 hover:text-slate-700 transition-colors py-1 cursor-pointer"
+                            className="flex items-center justify-center gap-1 hover:text-slate-700 transition-colors py-2 min-h-[44px] cursor-pointer"
                           >
                             <Share2 className="w-3 h-3 text-slate-400" />
                             <span>Chia sẻ</span>

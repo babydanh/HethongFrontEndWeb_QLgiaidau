@@ -476,7 +476,6 @@ export default function AdminDashboard() {
               height="100%"
               minWidth={0}
               minHeight={384}
-              initialDimension={{ width: 800, height: 384 }}
             >
               <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
                 <defs>

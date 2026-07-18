@@ -209,7 +209,7 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
             <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50 p-4">
               <p className="text-xs font-black uppercase tracking-[0.12em] text-blue-700">Link publish vừa tạo</p>
               <p className="mt-2 break-all text-xs font-semibold text-blue-900">{lastPublish.url}</p>
-              <Button variant="outline" className="mt-3 border-blue-200 text-blue-700" onClick={() => void copyText(lastPublish.url, 'link publish')}>
+              <Button variant="outline" className="mt-3" onClick={() => void copyText(lastPublish.url, 'link publish')}>
                 <Copy className="mr-2 h-4 w-4" />
                 Sao chép
               </Button>
@@ -240,7 +240,7 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
                         <p className="mt-2 break-all text-xs font-medium text-slate-500">{camera.playbackUrl}</p>
                       ) : null}
                     </div>
-                    <Button variant="outline" className="border-rose-200 text-rose-600" onClick={() => void handleDeleteCamera(camera.id)}>
+                    <Button variant="destructive" size="sm" onClick={() => void handleDeleteCamera(camera.id)}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -302,7 +302,7 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
                 <Button variant="outline" className="border-slate-200 text-slate-700" onClick={() => void handleStop(match.id)} disabled={activeMatchId === match.id}>
                   Dừng
                 </Button>
-                <Button variant="outline" className="border-blue-200 text-blue-700" onClick={() => window.open(`/live/${match.id}`, '_blank')}>
+                <Button variant="outline" onClick={() => window.open(`/live/${match.id}`, '_blank')}>
                   <Video className="mr-2 h-4 w-4" />
                   Xem live
                 </Button>

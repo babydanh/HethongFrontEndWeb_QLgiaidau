@@ -256,13 +256,14 @@ export default function ChatPage() {
                   placeholder="Nhập tin nhắn..."
                   className="flex-1 bg-slate-100 border-none rounded-full py-2.5 px-4 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
                 />
-                <button 
+                <Button
                   type="submit"
                   disabled={!inputText.trim()}
-                  className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  size="icon"
+                  className="rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Send className="w-4 h-4 ml-0.5" />
-                </button>
+                </Button>
               </form>
             </div>
           </>

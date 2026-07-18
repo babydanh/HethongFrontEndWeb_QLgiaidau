@@ -329,17 +329,19 @@ export default function SeriesManagePage() {
                           >
                             <Edit2 className="w-3.5 h-3.5" />
                           </button>
-                          <button
+                          <Button
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleDeleteLeg(leg.id);
                             }}
-                            className="p-1.5 hover:bg-red-50 text-slate-400 hover:text-red-600 rounded-lg transition-colors"
+                            variant="ghost"
+                            size="icon"
+                            className="text-slate-400 hover:text-red-600"
                             title="Xóa chặng"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                          </Button>
                         </div>
                       </div>
                     );
@@ -407,13 +409,15 @@ export default function SeriesManagePage() {
                               </span>
                             </div>
 
-                            <button
+                            <Button
                               type="button"
                               onClick={() => handleUnlinkTournament(event.id)}
-                              className="w-full sm:w-auto inline-flex items-center justify-center gap-1 py-1.5 px-3 border border-red-200 hover:border-transparent text-xs text-red-600 hover:bg-red-600 hover:text-white rounded-lg transition-all font-bold"
+                              variant="destructive"
+                              size="sm"
+                              className="font-bold"
                             >
                               <X className="w-3.5 h-3.5" /> Hủy liên kết
-                            </button>
+                            </Button>
                           </div>
                         );
                       })}

@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { Home, AlertTriangle } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
 
 export default function NotFound() {
   return (
@@ -10,7 +11,7 @@ export default function NotFound() {
         <div className="w-16 h-16 rounded-full bg-rose-50 flex items-center justify-center mx-auto text-rose-500 animate-bounce">
           <AlertTriangle className="w-8 h-8" />
         </div>
-        
+
         <div className="space-y-2">
           <h1 className="text-3xl font-black text-slate-900">404</h1>
           <h2 className="text-lg font-bold text-slate-800">Không tìm thấy trang</h2>
@@ -20,10 +21,12 @@ export default function NotFound() {
         </div>
 
         <div className="pt-2">
-          <Link href="/" className="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm px-6 py-3 rounded-2xl shadow-lg shadow-blue-500/20 active:scale-95 transition-all w-full">
-            <Home className="w-4 h-4" />
-            Quay lại trang chủ
-          </Link>
+          <Button asChild className="w-full">
+            <Link href="/">
+              <Home className="w-4 h-4" />
+              Quay lại trang chủ
+            </Link>
+          </Button>
         </div>
       </div>
     </div>

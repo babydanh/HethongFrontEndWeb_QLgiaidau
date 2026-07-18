@@ -245,13 +245,13 @@ export default function DashboardPage() {
           </Link>
           {(user?.roles?.includes('ORGANIZER') || user?.roles?.includes('ADMIN')) ? (
             <Link href="/organizer/tournaments/create">
-              <Button className="bg-blue-600 hover:bg-blue-700 shadow-sm text-white font-bold">
+              <Button className="font-bold">
                 <Plus className="w-4 h-4 mr-2" /> Tạo giải đấu
               </Button>
             </Link>
           ) : (
             <Link href="/profile">
-              <Button variant="outline" className="text-emerald-700 border-emerald-200 hover:bg-emerald-50 font-bold">
+              <Button variant="outline" className="font-bold">
                 <Plus className="w-4 h-4 mr-2" /> Yêu cầu quyền BTC
               </Button>
             </Link>
@@ -293,19 +293,20 @@ export default function DashboardPage() {
                           <div className="flex gap-2 shrink-0">
                             <Button
                               size="sm"
-                              variant="outline"
+                              variant="destructive"
                               onClick={() => handleRefereeInvite(invite, 'DECLINE')}
                               disabled={isBusy}
-                              className="h-9 border-rose-200 text-rose-700 hover:bg-rose-50 font-bold"
+                              className="h-9 font-bold"
                             >
                               {isBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4 mr-1.5" />}
                               Từ chối
                             </Button>
                             <Button
                               size="sm"
+                              variant="success"
                               onClick={() => handleRefereeInvite(invite, 'ACCEPT')}
                               disabled={isBusy}
-                              className="h-9 bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+                              className="h-9 font-bold"
                             >
                               {isBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-1.5" />}
                               Đồng ý

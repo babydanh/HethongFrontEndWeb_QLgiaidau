@@ -662,7 +662,7 @@ export function BracketTab({
                     <Button
                       onClick={handleSaveRoundRobinConfig}
                       disabled={isSavingRoundRobinConfig}
-                      className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-5 h-9 rounded-lg shadow-sm mt-2"
+                      className="font-bold text-xs px-5 h-9 rounded-lg shadow-sm mt-2"
                     >
                       {isSavingRoundRobinConfig ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Save className="w-4 h-4 mr-1.5" />}
                       Lưu cấu hình
@@ -762,7 +762,7 @@ export function BracketTab({
                 </div>
 
                 {handleSaveGskConfig && (
-                  <Button onClick={handleSaveGskConfig} disabled={isSavingGskConfig} className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-5 h-9 rounded-lg shadow-sm mt-2">
+                  <Button onClick={handleSaveGskConfig} disabled={isSavingGskConfig} className="font-bold text-xs px-5 h-9 rounded-lg shadow-sm mt-2">
                     {isSavingGskConfig ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Save className="w-4 h-4 mr-1.5" />}
                     Lưu cấu hình
                   </Button>
@@ -860,7 +860,7 @@ export function BracketTab({
                   <Button
                     onClick={handleSaveGskConfig}
                     disabled={isSavingGskConfig}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-5 h-9 rounded-lg shadow-sm mt-2"
+                    className="font-bold text-xs px-5 h-9 rounded-lg shadow-sm mt-2"
                   >
                     {isSavingGskConfig ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Save className="w-4 h-4 mr-1.5" />}
                     Lưu cấu hình

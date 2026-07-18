@@ -433,7 +433,8 @@ export function LiveMatchControlPanel({
             </Button>
             <Button
               disabled={!overrideEnabled || !overrideReason.trim()}
-              className="w-full bg-amber-600 font-bold text-white hover:bg-amber-700 disabled:bg-slate-200 disabled:text-slate-400 sm:w-auto"
+              variant="warning"
+              className="w-full font-bold disabled:bg-slate-200 disabled:text-slate-400 sm:w-auto"
               onClick={() => {
                 if (confirmWinner) {
                   onCompleteMatch(confirmWinner);

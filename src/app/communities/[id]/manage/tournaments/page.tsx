@@ -248,7 +248,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
           <div className="flex items-center gap-3 flex-wrap">
             <Button
               onClick={() => setIsLiteModalOpen(true)}
-              className="bg-indigo-600 hover:bg-indigo-755 hover:bg-indigo-700 text-white font-bold flex items-center gap-2 shadow-sm"
+              className="font-bold flex items-center gap-2 shadow-sm"
             >
               <Plus className="w-4 h-4" /> Tạo giải nhanh (Lite)
             </Button>
@@ -327,7 +327,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
                     </Button>
                   </Link>
                   <Link href={`/tournaments/${t.id}`} target="_blank" className="flex-1">
-                    <Button variant="outline" className="w-full border-blue-200 hover:bg-blue-50 text-blue-600 text-xs font-bold flex items-center justify-center gap-1">
+                    <Button variant="outline" className="w-full text-xs font-bold flex items-center justify-center gap-1">
                       <Eye className="w-3.5 h-3.5" /> Xem trang giải
                     </Button>
                   </Link>
@@ -488,7 +488,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
                   <Button
                     onClick={handleCreateLiteTournament}
                     disabled={isSubmitting}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-5"
+                    className="font-bold px-5"
                   >
                     {isSubmitting ? 'Đang tạo...' : 'Tạo giải nhanh'}
                   </Button>

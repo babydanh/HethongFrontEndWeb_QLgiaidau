@@ -316,7 +316,7 @@ export function Header() {
           {/* Nút Tải App */}
           <Link
             href="/download"
-            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition-all active:scale-95"
+            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition-all active:scale-95"
           >
             <Smartphone className="w-4 h-4" />
             Tải App
@@ -711,11 +711,7 @@ export function Header() {
               </a>
               <a
                 href="/register"
-                className={getButtonClasses(
-                  'default',
-                  'sm',
-                  'bg-slate-900 text-white hover:bg-slate-800',
-                )}
+                className={getButtonClasses('default', 'sm')}
               >
                 Đăng ký
               </a>

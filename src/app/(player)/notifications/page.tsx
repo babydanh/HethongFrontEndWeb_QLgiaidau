@@ -13,6 +13,7 @@ import {
 import toast from 'react-hot-toast';
 import { communitiesApi } from '@/features/communities/api';
 import { tournamentsApi } from '@/features/tournaments/api';
+import { Button } from '@/components/ui/Button';
 import type { NotificationItem } from '@/features/notifications/types';
 import { useSocket } from '@/hooks/useSocket';
 import {
@@ -440,7 +441,7 @@ export default function NotificationsPage() {
                                             );
                                           }
                                         }}
-                                        className="inline-flex items-center gap-1 rounded-2xl border border-rose-200 bg-white px-3.5 py-2 text-sm font-semibold text-rose-700 transition-colors hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                        className="inline-flex items-center gap-1 rounded-2xl border border-red-200 bg-white px-3.5 py-2 text-sm font-semibold text-red-700 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
                                       >
                                         <X className="h-4 w-4" />
                                         Từ chối

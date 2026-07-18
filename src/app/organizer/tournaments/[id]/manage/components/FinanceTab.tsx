@@ -186,7 +186,7 @@ export function FinanceTab({
                 <Button
                   onClick={handleSubmitPayout}
                   disabled={isPayoutLoading}
-                  className="bg-purple-600 hover:bg-purple-700 text-white font-bold w-full md:w-auto mt-2"
+                  className="font-bold w-full md:w-auto mt-2"
                 >
                   {isPayoutLoading ? <><Loader2 className="w-4 h-4 animate-spin mr-1" /> Đang gửi...</> : 'Gửi yêu cầu rút tiền'}
                 </Button>

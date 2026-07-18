@@ -1,5 +1,7 @@
 'use client';
 
+import { Button } from '@/components/ui/Button';
+
 export default function Error({
   error,
   reset,
@@ -17,12 +19,9 @@ export default function Error({
         <p className="text-sm text-slate-500 mb-6 leading-relaxed">
           {error?.message || 'Hệ thống đang gặp sự cố. Vui lòng thử lại sau.'}
         </p>
-        <button
-          onClick={() => reset()}
-          className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors"
-        >
+        <Button onClick={() => reset()}>
           Thử lại
-        </button>
+        </Button>
       </div>
     </div>
   );

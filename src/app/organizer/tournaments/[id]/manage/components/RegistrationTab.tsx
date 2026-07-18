@@ -811,7 +811,7 @@ export function RegistrationTab({
             <Button
               onClick={handleAutoSeed}
               disabled={isAutoSeeding || participants.length < 2}
-              className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs py-2.5 flex items-center justify-center gap-1.5 shadow-sm animate-none"
+              className="w-full text-xs py-2.5 flex items-center justify-center gap-1.5 shadow-sm animate-none font-bold"
             >
               {isAutoSeeding ? (
                 <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Đang xếp hạt giống...</>

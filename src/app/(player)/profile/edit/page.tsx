@@ -781,7 +781,7 @@ export default function EditProfilePage() {
                     </div>
                     
                     <div className="flex justify-end pt-2">
-                      <Button type="submit" variant="secondary" disabled={isSubmittingPassword} className="bg-slate-100 text-slate-900 hover:bg-slate-200 active:scale-[0.98] transition-all font-semibold">
+                      <Button type="submit" variant="secondary" disabled={isSubmittingPassword} className="active:scale-[0.98] transition-all font-semibold">
                         Đổi mật khẩu
                       </Button>
                     </div>
@@ -803,10 +803,11 @@ export default function EditProfilePage() {
                     </p>
                   </div>
                   <div className="pt-2 flex justify-start">
-                    <Button 
-                      type="button" 
+                    <Button
+                      type="button"
                       onClick={() => setIsDeleteModalOpen(true)}
-                      className="bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2.5 rounded-xl border-none shadow-sm active:scale-[0.98] transition-all text-sm"
+                      variant="destructive"
+                      className="font-bold px-4 py-2.5 shadow-sm active:scale-[0.98] transition-all text-sm"
                     >
                       <Trash2 className="w-4 h-4 mr-2" /> Xóa tài khoản
                     </Button>
@@ -1013,10 +1014,11 @@ export default function EditProfilePage() {
               >
                 Hủy bỏ
               </Button>
-              <Button 
+              <Button
                 onClick={handleDeleteAccountSubmit}
                 disabled={isDeletingAccount}
-                className="bg-red-600 hover:bg-red-700 text-white font-bold active:scale-95"
+                variant="destructive"
+                className="font-bold active:scale-95"
               >
                 {isDeletingAccount ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                 Xác nhận xóa

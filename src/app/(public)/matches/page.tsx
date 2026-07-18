@@ -704,19 +704,21 @@ export default function MatchesListPage() {
                         <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
                           <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider flex items-center gap-1">
                             {isLive ? (
-                              <span className="inline-flex items-center gap-1 text-rose-600 animate-pulse">
-                                <span className="w-1.5 h-1.5 rounded-full bg-rose-600" />
-                                Đang diễn ra
-                              </span>
+                              <>
+                                <span className="inline-flex items-center gap-1 text-rose-600 animate-pulse">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-rose-600" />
+                                  Đang diễn ra
+                                </span>
+                                <span>• {friendlyRoundName}</span>
+                              </>
                             ) : isFinished ? (
-                              <span className="text-slate-400">Đã kết thúc</span>
+                              <>
+                                <span className="text-slate-400">Đã kết thúc</span>
+                                <span>• {friendlyRoundName}</span>
+                              </>
                             ) : (
-                              <span className="text-blue-600">Lịch thi đấu</span>
+                              <span>{friendlyRoundName}</span>
                             )}
-                            <span>• {friendlyRoundName}</span>
-                          </span>
-                          <span className="text-[9px] font-extrabold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded uppercase tracking-wide">
-                            {matchTypeLabel}
                           </span>
                         </div>
 
@@ -763,27 +765,23 @@ export default function MatchesListPage() {
                               {/* Tỉ số các set theo cột dọc */}
                               {match.status !== 'SCHEDULED' && (
                                 <div className="flex items-center gap-1 shrink-0">
-                                  {Array.from({ length: maxSetsCount }).map((_, idx) => {
-                                    const set = scoreSets[idx];
-                                    const hasScore = set !== undefined && set.team1Score !== undefined && set.team2Score !== undefined;
-                                    const isSetDone = set?.isFinished;
+                                  {scoreSets.filter(set => set !== undefined && set.team1Score !== undefined && set.team2Score !== undefined).map((set, idx) => {
+                                    const isSetDone = set.isFinished;
                                     return (
                                       <div 
                                         key={idx} 
                                         className={`w-6.5 h-6.5 rounded text-[10px] font-extrabold flex items-center justify-center border transition-all ${
-                                          hasScore 
-                                            ? isSetDone 
-                                              ? 'bg-slate-50 text-slate-600 border-slate-200 shadow-sm' 
-                                              : 'bg-rose-50 text-rose-600 border-rose-100 font-black animate-pulse'
-                                            : 'text-slate-350 bg-slate-50/20 border-slate-100/50'
+                                          isSetDone 
+                                            ? 'bg-slate-50 text-slate-600 border-slate-200 shadow-sm' 
+                                            : 'bg-rose-50 text-rose-600 border-rose-100 font-black animate-pulse'
                                         }`}
                                       >
-                                        {hasScore ? set.team1Score : '-'}
+                                        {set.team1Score}
                                       </div>
                                     );
                                   })}
                                   {/* Tổng Set thắng */}
-                                  <div className="w-7.5 h-7.5 rounded-lg bg-slate-900 text-white font-black text-xs flex items-center justify-center border border-slate-950 shadow ml-1.5">
+                                  <div className="w-7.5 h-7.5 rounded-lg bg-blue-600 text-white font-black text-xs flex items-center justify-center border border-blue-700 shadow ml-1.5">
                                     {match.p1SetsWon ?? 0}
                                   </div>
                                 </div>
@@ -830,27 +828,23 @@ export default function MatchesListPage() {
                               {/* Tỉ số các set theo cột dọc */}
                               {match.status !== 'SCHEDULED' && (
                                 <div className="flex items-center gap-1 shrink-0">
-                                  {Array.from({ length: maxSetsCount }).map((_, idx) => {
-                                    const set = scoreSets[idx];
-                                    const hasScore = set !== undefined && set.team1Score !== undefined && set.team2Score !== undefined;
-                                    const isSetDone = set?.isFinished;
+                                  {scoreSets.filter(set => set !== undefined && set.team1Score !== undefined && set.team2Score !== undefined).map((set, idx) => {
+                                    const isSetDone = set.isFinished;
                                     return (
                                       <div 
                                         key={idx} 
                                         className={`w-6.5 h-6.5 rounded text-[10px] font-extrabold flex items-center justify-center border transition-all ${
-                                          hasScore 
-                                            ? isSetDone 
-                                              ? 'bg-slate-50 text-slate-600 border-slate-200 shadow-sm' 
-                                              : 'bg-rose-50 text-rose-600 border-rose-100 font-black animate-pulse'
-                                            : 'text-slate-350 bg-slate-50/20 border-slate-100/50'
+                                          isSetDone 
+                                            ? 'bg-slate-50 text-slate-600 border-slate-200 shadow-sm' 
+                                            : 'bg-rose-50 text-rose-600 border-rose-100 font-black animate-pulse'
                                         }`}
                                       >
-                                        {hasScore ? set.team2Score : '-'}
+                                        {set.team2Score}
                                       </div>
                                     );
                                   })}
                                   {/* Tổng Set thắng */}
-                                  <div className="w-7.5 h-7.5 rounded-lg bg-slate-900 text-white font-black text-xs flex items-center justify-center border border-slate-950 shadow ml-1.5">
+                                  <div className="w-7.5 h-7.5 rounded-lg bg-blue-600 text-white font-black text-xs flex items-center justify-center border border-blue-700 shadow ml-1.5">
                                     {match.p2SetsWon ?? 0}
                                   </div>
                                 </div>

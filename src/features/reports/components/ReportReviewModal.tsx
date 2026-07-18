@@ -114,7 +114,7 @@ export function ReportReviewModal({ report, open, isModeratorOnly, onOpenChange,
             <div className="flex flex-wrap justify-end gap-2">
               {report.status === 'SUBMITTED' ? <Button onClick={() => void execute('TRIAGE')} isLoading={processing === 'TRIAGE'}><ShieldCheck className="mr-2 h-4 w-4" />Phân loại</Button> : null}
               {report.status === 'TRIAGED' ? <Button variant="outline" onClick={() => void execute('START_REVIEW')} isLoading={processing === 'START_REVIEW'}>Bắt đầu xác minh</Button> : null}
-              {canEscalate ? <Button className="bg-rose-600 hover:bg-rose-700" onClick={() => void execute('ESCALATE')} isLoading={processing === 'ESCALATE'}>Chuyển admin</Button> : null}
+              {canEscalate ? <Button variant="destructive" onClick={() => void execute('ESCALATE')} isLoading={processing === 'ESCALATE'}>Chuyển admin</Button> : null}
               {!isModeratorOnly ? <Button onClick={() => void execute('RESOLVE')} isLoading={processing === 'RESOLVE'}>Xác nhận vi phạm</Button> : null}
               {!isModeratorOnly ? <Button variant="outline" onClick={() => void execute('REJECT')} isLoading={processing === 'REJECT'}>Bác báo cáo</Button> : null}
             </div>

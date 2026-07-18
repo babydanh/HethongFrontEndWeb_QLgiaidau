@@ -652,7 +652,7 @@ export default function ProfilePage() {
             </div>
           </div>
           <Link href="/profile/edit">
-            <Button size="sm" className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-sm">
+            <Button size="sm" variant="warning" className="font-bold text-xs">
               Cập nhật ngay
             </Button>
           </Link>
@@ -748,7 +748,7 @@ export default function ProfilePage() {
                   <div className="text-center py-4 bg-slate-50 rounded-xl border border-dashed border-slate-200">
                     <p className="text-slate-400 text-xs italic">Chưa cấu hình tài khoản nhận hoàn tiền.</p>
                     <Link href="/profile/edit">
-                      <Button size="sm" className="mt-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3 py-1.5 h-auto">
+                      <Button size="sm" className="mt-2.5 text-xs font-bold px-3 py-1.5 h-auto">
                         Cấu hình ngay
                       </Button>
                     </Link>
@@ -797,7 +797,7 @@ export default function ProfilePage() {
                       </div>
                       <Button
                         onClick={() => setIsModalOpen(true)}
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold"
+                        className="w-full font-bold"
                       >
                         Gửi lại yêu cầu
                       </Button>
@@ -809,7 +809,8 @@ export default function ProfilePage() {
                       </p>
                       <Button
                         onClick={() => setIsModalOpen(true)}
-                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+                        variant="success"
+                        className="w-full font-bold"
                       >
                         Yêu cầu quyền Ban tổ chức
                       </Button>
@@ -824,7 +825,7 @@ export default function ProfilePage() {
                 <div className="flex justify-between items-center mb-6">
                   <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Câu lạc bộ của tôi</h3>
                   <Link href="/communities/create">
-                    <Button variant="default" size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg px-4 flex items-center gap-2">
+                    <Button variant="success" size="sm" className="rounded-lg px-4 flex items-center gap-2">
                       <Users className="w-4 h-4" />
                       Tạo câu lạc bộ
                     </Button>
@@ -864,7 +865,7 @@ export default function ProfilePage() {
                     <p className="text-slate-600 font-medium">Bạn chưa tham gia câu lạc bộ nào</p>
                     <p className="text-slate-400 text-sm mt-1 mb-4">Tham gia các câu lạc bộ thể thao để giao lưu và thi đấu</p>
                     <Link href="/communities">
-                      <Button variant="outline" className="border-emerald-200 text-emerald-700 hover:bg-emerald-50">
+                      <Button variant="outline">
                         Khám phá câu lạc bộ
                       </Button>
                     </Link>
@@ -1449,7 +1450,8 @@ export default function ProfilePage() {
               <Button
                 onClick={handleSubmitTicket}
                 isLoading={isSubmittingTicket}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+                variant="success"
+                className="font-bold"
               >
                 Gửi yêu cầu
               </Button>

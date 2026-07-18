@@ -107,7 +107,7 @@ export function ReportViolationButton({
         variant="outline"
         size={compact ? 'icon' : 'default'}
         onClick={handleOpen}
-        className={cn('border-rose-200 text-rose-700 hover:bg-rose-50 hover:text-rose-800', className)}
+        className={cn('border-red-200 text-red-700 hover:bg-red-50 hover:text-red-800', className)}
         aria-label={`Báo cáo ${targetLabel}`}
       >
         <Flag className="h-4 w-4" />

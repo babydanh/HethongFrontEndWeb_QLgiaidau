@@ -212,7 +212,7 @@ export default function DashboardPage() {
   const matchesPlayed = activeRank ? activeRank.matchesPlayed : 0;
   const matchesWon = activeRank ? activeRank.matchesWon : 0;
   const winRate = matchesPlayed > 0 ? Math.round((matchesWon / matchesPlayed) * 100) : 0;
-  const tierName = activeRank?.tier?.name || 'Bronze (Unranked)';
+  const tierName = matchesPlayed > 0 ? (activeRank?.tier?.name || 'Chưa xếp hạng') : 'Chưa xếp hạng';
 
   const organizedCount = workspace?.organizedTournaments.length || 0;
   const coOrganizerCount = workspace?.coOrganizerTournaments.length || 0;

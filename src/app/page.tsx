@@ -741,6 +741,7 @@ export default function HomePage() {
   const eloPoints = activeRankInfo ? activeRankInfo.eloPoints : 1000;
   const tierName = activeRankInfo?.tier?.name || activeRankInfo?.tierName || 'Chưa xếp hạng';
   const matchesPlayed = activeRankInfo ? activeRankInfo.matchesPlayed : 0;
+  const displayTier = matchesPlayed > 0 ? tierName : 'Chưa xếp hạng';
   const matchesWon = activeRankInfo ? activeRankInfo.matchesWon : 0;
   const winRate = matchesPlayed > 0 ? Math.round((matchesWon / matchesPlayed) * 100) : 0;
   const sportName = categories.find(c => c.id === activeRankInfo?.categoryId)?.name || (selectedCategoryId ? categories.find(c => c.id === selectedCategoryId)?.name : 'Chung');
@@ -776,10 +777,10 @@ export default function HomePage() {
           <div className="flex overflow-x-auto gap-2 pb-2 no-scrollbar">
             <button
               onClick={() => setSelectedCategoryId('')}
-              className={`relative flex items-center gap-1.5 px-4 py-2 rounded-full border text-xs font-bold transition-all shrink-0 cursor-pointer ${
+              className={`relative flex items-center gap-1.5 px-4.5 py-2.5 rounded-full text-xs font-black transition-all shrink-0 cursor-pointer ${
                 selectedCategoryId === ''
-                  ? 'text-white border-transparent'
-                  : 'bg-white text-slate-650 border-slate-205 hover:border-slate-350 hover:text-slate-900'
+                  ? 'text-white'
+                  : 'bg-slate-100/80 text-slate-650 hover:bg-slate-200/90 hover:text-slate-900'
               }`}
             >
               {selectedCategoryId === '' && (
@@ -800,10 +801,10 @@ export default function HomePage() {
                 <button
                   key={cat.id}
                   onClick={() => setSelectedCategoryId(cat.id)}
-                  className={`relative flex items-center gap-1.5 px-4 py-2 rounded-full border text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                  className={`relative flex items-center gap-1.5 px-4.5 py-2.5 rounded-full text-xs font-black transition-all shrink-0 cursor-pointer ${
                     isActive
-                      ? 'text-white border-transparent'
-                      : 'bg-white text-slate-650 border-slate-205 hover:border-slate-350 hover:text-slate-900'
+                      ? 'text-white'
+                      : 'bg-slate-100/80 text-slate-650 hover:bg-slate-200/90 hover:text-slate-900'
                   }`}
                 >
                   {isActive && (
@@ -861,8 +862,12 @@ export default function HomePage() {
                 <div className="bg-slate-200 animate-pulse h-40 rounded-2xl" />
               </div>
             ) : liveMatches.length === 0 ? (
-              <div className="bg-white border rounded-2xl p-12 text-center text-slate-455 font-bold text-xs">
-                Hiện chưa có trận đấu nào đang trực tiếp.
+              <div className="flex flex-col items-center justify-center p-10 bg-slate-100/40 rounded-3xl border border-dashed border-slate-200/80 text-center text-slate-400">
+                <div className="relative flex h-3.5 w-3.5 mb-2.5 justify-center items-center">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-slate-350 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-slate-400"></span>
+                </div>
+                <span className="text-xs font-bold text-slate-450">Hiện chưa có trận đấu nào đang trực tiếp.</span>
               </div>
             ) : (
               <div className="space-y-6">
@@ -1330,7 +1335,7 @@ export default function HomePage() {
                <div className="flex items-center gap-2 bg-slate-50 px-3 py-1 rounded-full border border-slate-150 shadow-sm z-10">
                  <Trophy className="w-3.5 h-3.5 text-amber-500" />
                  <span className="text-[10px] font-bold text-slate-700 max-w-[120px] truncate">
-                   {sportName === 'Chung' ? tierName : `${sportName}: ${tierName}`}
+                   {sportName === 'Chung' ? displayTier : `${sportName}: ${displayTier}`}
                  </span>
                  <span className="text-[10px] bg-blue-600 text-white px-2 py-0.5 rounded-full font-bold">
                    ELO {eloPoints}

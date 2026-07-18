@@ -92,7 +92,9 @@ export default function ShareModal({ isOpen, onClose, shareUrl, title, fbAppId }
     `https://threads.net/intent/post?text=${encodeURIComponent(text + ' ' + url)}`;
 
   const getTelegramShareUrl = (url: string, text: string) => 
-    `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${e  return (
+    `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
+
+  return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Background Overlay */}
       <div 

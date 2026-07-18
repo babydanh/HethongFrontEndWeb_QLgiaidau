@@ -7,7 +7,7 @@ import { buildMatchScoreSummary, getMatchScorePresentation, resolveMatchSportRul
 import Image from 'next/image';
 import {
   Trophy, Calendar, Users, MapPin, ArrowRight, Shield, Heart, Share2, Play,
-  Plus, Bell, Mail, ChevronRight, UserPlus, Star, Loader2, MessageSquare
+  Plus, Bell, Mail, ChevronRight, ChevronLeft, UserPlus, Star, Loader2, MessageSquare
 } from 'lucide-react';
 import { getSportLogo } from '@/constants/sports';
 import { categoriesApi } from '@/features/categories/api';
@@ -1006,9 +1006,9 @@ export default function HomePage() {
                               <button
                                 onClick={() => setTournamentPages(prev => ({ ...prev, [tournamentId]: Math.max(1, currentPage - 1) }))}
                                 disabled={currentPage === 1}
-                                className="px-2 py-0.5 text-[9px] font-black text-slate-500 bg-white border border-slate-200 rounded-lg hover:border-slate-350 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer h-6 flex items-center"
+                                className="w-6 h-6 flex items-center justify-center p-1 text-slate-500 bg-white border border-slate-200 rounded-lg hover:border-slate-350 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
                               >
-                                Trước
+                                <ChevronLeft className="w-3.5 h-3.5" />
                               </button>
                               <span className="text-[9px] font-bold text-slate-450 px-0.5">
                                 {currentPage}/{totalPages}
@@ -1016,9 +1016,9 @@ export default function HomePage() {
                               <button
                                 onClick={() => setTournamentPages(prev => ({ ...prev, [tournamentId]: Math.min(totalPages, currentPage + 1) }))}
                                 disabled={currentPage === totalPages}
-                                className="px-2 py-0.5 text-[9px] font-black text-slate-500 bg-white border border-slate-200 rounded-lg hover:border-slate-350 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer h-6 flex items-center"
+                                className="w-6 h-6 flex items-center justify-center p-1 text-slate-500 bg-white border border-slate-200 rounded-lg hover:border-slate-350 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
                               >
-                                Sau
+                                <ChevronRight className="w-3.5 h-3.5" />
                               </button>
                             </div>
                           )}
@@ -1091,9 +1091,9 @@ export default function HomePage() {
                               <button
                                 onClick={() => setTournamentPages(prev => ({ ...prev, [tournamentId]: Math.max(1, currentPage - 1) }))}
                                 disabled={currentPage === 1}
-                                className="px-2 py-0.5 text-[9px] font-black text-slate-500 bg-white border border-slate-200 rounded-lg hover:border-slate-350 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer h-6 flex items-center"
+                                className="w-6 h-6 flex items-center justify-center p-1 text-slate-500 bg-white border border-slate-200 rounded-lg hover:border-slate-350 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
                               >
-                                Trước
+                                <ChevronLeft className="w-3.5 h-3.5" />
                               </button>
                               <span className="text-[9px] font-bold text-slate-450 px-0.5">
                                 {currentPage}/{totalPages}
@@ -1101,9 +1101,9 @@ export default function HomePage() {
                               <button
                                 onClick={() => setTournamentPages(prev => ({ ...prev, [tournamentId]: Math.min(totalPages, currentPage + 1) }))}
                                 disabled={currentPage === totalPages}
-                                className="px-2 py-0.5 text-[9px] font-black text-slate-500 bg-white border border-slate-200 rounded-lg hover:border-slate-350 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer h-6 flex items-center"
+                                className="w-6 h-6 flex items-center justify-center p-1 text-slate-500 bg-white border border-slate-200 rounded-lg hover:border-slate-350 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
                               >
-                                Sau
+                                <ChevronRight className="w-3.5 h-3.5" />
                               </button>
                             </div>
                           )}

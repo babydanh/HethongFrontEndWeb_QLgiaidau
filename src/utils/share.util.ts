@@ -9,7 +9,14 @@ export function getFacebookShareUrl(url: string): string {
  * Tạo link chia sẻ tĩnh của Zalo
  */
 export function getZaloShareUrl(url: string): string {
-  return `https://sp.zalo.me/share?utm_source=zaloshare&url=${encodeURIComponent(url)}`;
+  const isMobile = typeof window !== 'undefined' && 
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+  if (isMobile) {
+    // Mở trực tiếp ứng dụng Zalo trên điện thoại để hiện bảng chọn bạn bè/đăng nhật ký
+    return `zalo://share?url=${encodeURIComponent(url)}`;
+  }
+  return `https://sp.zalo.me/share?url=${encodeURIComponent(url)}`;
 }
 
 /**

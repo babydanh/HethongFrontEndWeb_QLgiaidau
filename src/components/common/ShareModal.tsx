@@ -14,14 +14,13 @@ interface ShareModalProps {
 
 export default function ShareModal({ isOpen, onClose, shareUrl, title, fbAppId }: ShareModalProps) {
   const [copied, setCopied] = useState(false);
-  const [supportNativeShare, setSupportNativeShare] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  // Check if browser supports Web Share API
   useEffect(() => {
-    if (typeof navigator !== 'undefined' && navigator.share) {
-      setSupportNativeShare(true);
-    }
+    setMounted(true);
   }, []);
+
+  const supportNativeShare = mounted && typeof navigator !== 'undefined' && typeof navigator.share === 'function';
 
   // Khóa cuộn trang khi Modal mở
   useEffect(() => {

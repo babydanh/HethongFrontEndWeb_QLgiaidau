@@ -27,16 +27,16 @@ export default function ForgotPasswordPage() {
     try {
       await api.post('/auth/forgot-password', data);
       setSent(true);
-      toast.success('Hướng dẫn đặt lại mật khẩu đã được gửi nếu email tồn tại.');
-    } catch {
-      toast.success('Hướng dẫn đặt lại mật khẩu đã được gửi nếu email tồn tại.');
-      setSent(true);
+      toast.success('Hướng dẫn đặt lại mật khẩu đã được gửi thành công!');
+    } catch (err: any) {
+      const errMsg = err.response?.data?.message || 'Có lỗi xảy ra. Vui lòng thử lại sau.';
+      toast.error(errMsg);
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
+    <div className="min-h-[calc(100vh-140px)] bg-slate-50 flex items-center justify-center px-4 py-8">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-sm border border-slate-200 p-8 my-auto">
         <div className="flex items-center gap-3 mb-6">
           <Link href="/login" className="text-slate-400 hover:text-slate-600">
             <ArrowLeft className="w-5 h-5" />
@@ -50,7 +50,7 @@ export default function ForgotPasswordPage() {
               <CheckCircle2 className="w-7 h-7" />
             </div>
             <p className="text-slate-700 font-semibold">Đã gửi yêu cầu thành công!</p>
-            <p className="text-sm text-slate-500">Nếu email tồn tại, bạn sẽ nhận được hướng dẫn đặt lại mật khẩu. Vui lòng kiểm tra hộp thư (cả mục Spam).</p>
+            <p className="text-sm text-slate-500">Vui lòng kiểm tra hộp thư của bạn (cả mục Spam) để nhận hướng dẫn đặt lại mật khẩu.</p>
             {process.env.NODE_ENV !== 'production' && (
               <p className="text-xs text-slate-400 mt-2">(Môi trường demo: token được in ra console backend)</p>
             )}

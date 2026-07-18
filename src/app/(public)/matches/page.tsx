@@ -649,15 +649,7 @@ export default function MatchesListPage() {
                       </Link>
                     </div>
                   </div>
-
-                  <div className="flex items-center gap-4">
-                    <Link 
-                      href={`/tournaments/${group.tournamentId}`}
-                      className="text-xs font-black text-indigo-600 hover:underline uppercase tracking-wider flex items-center"
-                    >
-                      Chi tiết giải &gt;
-                    </Link>
-                  </div>
+                  
                 </div>
 
                 {/* Grid 3 cột x 2 hàng */}

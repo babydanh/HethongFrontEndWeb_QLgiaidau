@@ -73,7 +73,7 @@ export default function OrganizerSeriesPage() {
             <p className="text-slate-500 mt-1 font-medium">Quản lý các hệ thống tour đấu tích lũy điểm PSR và phân phối suất vé thẳng</p>
           </div>
           <Link href="/organizer/series/create">
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold flex items-center gap-2 px-5 py-2.5 shadow-md shadow-blue-500/20">
+            <Button className="font-semibold flex items-center gap-2 px-5 py-2.5 shadow-md shadow-blue-500/20">
               <Plus className="w-5 h-5" /> Tạo chuỗi giải mới
             </Button>
           </Link>
@@ -89,7 +89,7 @@ export default function OrganizerSeriesPage() {
               Bạn chưa tạo bất kỳ hệ thống chặng đấu nào. Hãy tạo chuỗi giải đấu đầu tiên của bạn để tích lũy xếp hạng PSR cho các vận động viên!
             </p>
             <Link href="/organizer/series/create" className="mt-6">
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6">Tạo chuỗi giải đầu tiên</Button>
+              <Button className="px-6">Tạo chuỗi giải đầu tiên</Button>
             </Link>
           </div>
         ) : (

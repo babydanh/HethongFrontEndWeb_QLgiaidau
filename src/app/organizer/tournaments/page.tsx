@@ -263,14 +263,16 @@ export default function MyTournamentsPage() {
                       <span className="px-2.5 py-1 bg-blue-600 text-white rounded-full text-xs font-bold shadow-sm">
                         {divisions.length} Hình thức
                       </span>
-                      <button
+                      <Button
                         type="button"
-                        className="w-7 h-7 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center transition-colors shadow-sm cursor-pointer"
+                        size="icon"
+                        variant="destructive"
                         onClick={(e) => handleDeleteParent(parent.id, parent.isStandalone || false, e)}
                         title="Xoá giải đấu"
+                        className="w-7 h-7 rounded-full shadow-sm"
                       >
                         <Trash2 className="w-4 h-4" />
-                      </button>
+                      </Button>
                     </div>
 
                     {/* Category Name Badge (neatly positioned, high contrast, no blur) */}

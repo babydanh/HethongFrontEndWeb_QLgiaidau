@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { api } from '@/lib/axios';
 import { useAuthStore } from '@/lib/zustand/authStore';
+import { Button } from '@/components/ui/Button';
 import { toast } from 'react-hot-toast';
 import type { ApiResponse } from '@/types/api';
 import { Check, X, ShieldAlert, Eye, Calendar, Phone, Mail, User, Search, RotateCcw } from 'lucide-react';
@@ -266,18 +267,18 @@ export default function VerificationPage() {
                       <div className="flex items-center justify-end gap-2">
                         {item.ticket.status === 'PENDING' && (
                           <>
-                            <button onClick={() => handleApprove(item.ticket.id)} disabled={processing}
-                              className="bg-emerald-50 hover:bg-emerald-600 text-emerald-600 hover:text-white border border-emerald-200 px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 transition-all"
-                            ><Check className="w-3.5 h-3.5" /> Duyệt</button>
-                            <button onClick={() => { setSelectedTicket(item); setShowRejectModal(true); }} disabled={processing}
-                              className="bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white border border-rose-200 px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 transition-all"
-                            ><X className="w-3.5 h-3.5" /> Từ chối</button>
+                            <Button onClick={() => handleApprove(item.ticket.id)} disabled={processing}
+                              variant="success" size="sm"
+                            ><Check className="w-3.5 h-3.5" /> Duyệt</Button>
+                            <Button onClick={() => { setSelectedTicket(item); setShowRejectModal(true); }} disabled={processing}
+                              variant="destructive" size="sm"
+                            ><X className="w-3.5 h-3.5" /> Từ chối</Button>
                           </>
                         )}
                         {item.ticket.status === 'APPROVED' && (
-                          <button onClick={() => handleRevoke(item.ticket.id)} disabled={processing}
-                            className="bg-amber-50 hover:bg-amber-500 text-amber-600 hover:text-white border border-amber-200 px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 transition-all"
-                          ><RotateCcw className="w-3.5 h-3.5" /> Thu hồi</button>
+                          <Button onClick={() => handleRevoke(item.ticket.id)} disabled={processing}
+                            variant="warning" size="sm"
+                          ><RotateCcw className="w-3.5 h-3.5" /> Thu hồi</Button>
                         )}
                       </div>
                     </td>
@@ -311,10 +312,10 @@ export default function VerificationPage() {
               </div>
             </div>
             <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
-              <button onClick={() => { setShowRejectModal(false); setRejectReason(''); }}
-                className="bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 px-4 py-2 rounded-xl text-xs font-semibold">Hủy</button>
-              <button onClick={handleRejectSubmit} disabled={processing || !rejectReason.trim()}
-                className="bg-rose-600 hover:bg-rose-500 text-white px-4 py-2 rounded-xl text-xs font-semibold disabled:opacity-50">Gửi từ chối</button>
+              <Button variant="outline" onClick={() => { setShowRejectModal(false); setRejectReason(''); }}
+                className="text-xs">Hủy</Button>
+              <Button onClick={handleRejectSubmit} disabled={processing || !rejectReason.trim()}
+                variant="destructive" className="text-xs">Gửi từ chối</Button>
             </div>
           </div>
         </div>

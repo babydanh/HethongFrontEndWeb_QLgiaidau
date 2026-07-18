@@ -115,13 +115,14 @@ export default function AdminLayout({
             <ArrowLeft className="w-5 h-5" />
             Quay lại trang chủ
           </Link>
-          <button 
+          <Button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-rose-600 hover:bg-rose-50 hover:text-rose-700 transition-all duration-200"
+            variant="ghost"
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700"
           >
             <LogOut className="w-5 h-5" />
             Đăng xuất
-          </button>
+          </Button>
         </div>
       </aside>
 

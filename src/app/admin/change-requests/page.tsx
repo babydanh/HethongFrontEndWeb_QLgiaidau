@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { usersApi } from '@/features/users/api';
 import { useAuthStore } from '@/lib/zustand/authStore';
+import { Button } from '@/components/ui/Button';
 import { toast } from 'react-hot-toast';
 import { Check, X, Calendar, Mail, User, ClipboardList, Loader2 } from 'lucide-react';
 import type { UserChangeRequest } from '@/types/user';
@@ -225,20 +226,24 @@ export default function AdminChangeRequestsPage() {
                     {filterStatus === 'PENDING' && (
                       <td className="p-4 pr-6 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <button
+                          <Button
                             onClick={() => handleOpenActionModal(req, 'APPROVE')}
-                            className="bg-emerald-50 hover:bg-emerald-600 text-emerald-600 hover:text-white border border-emerald-200 hover:border-transparent px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 active:scale-95 transition-all"
+                            variant="success"
+                            size="sm"
+                            className="text-xs"
                           >
                             <Check className="w-3.5 h-3.5" />
                             Duyệt
-                          </button>
-                          <button
+                          </Button>
+                          <Button
                             onClick={() => handleOpenActionModal(req, 'REJECT')}
-                            className="bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white border border-rose-200 hover:border-transparent px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 active:scale-95 transition-all"
+                            variant="destructive"
+                            size="sm"
+                            className="text-xs"
                           >
                             <X className="w-3.5 h-3.5" />
                             Từ chối
-                          </button>
+                          </Button>
                         </div>
                       </td>
                     )}

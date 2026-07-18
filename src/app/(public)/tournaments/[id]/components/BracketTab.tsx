@@ -52,7 +52,13 @@ function stageNameLabel(name: string): string {
     upperName.includes('ROUND_ROBIN') ||
     upperName.includes('VONG TRON TINH DIEM')
   ) {
-    return 'Vòng đấu Vòng tròn tính điểm';
+    return 'Vòng tròn tính điểm';
+  }
+  if (upperName.includes('VONG BANG') || upperName.includes('GROUP_STAGE') || upperName.includes('GROUP STAGE')) {
+    return 'Vòng bảng';
+  }
+  if (upperName.includes('VONG PLAYOFFS') || upperName.includes('PLAYOFFS') || upperName.includes('PLAYOFF')) {
+    return 'Vòng Playoffs';
   }
   if (name === 'Winners Bracket' || upperName === 'NHANH THANG') return 'Nhánh thắng';
   if (name === 'Losers Bracket' || upperName === 'NHANH THUA') return 'Nhánh thua';

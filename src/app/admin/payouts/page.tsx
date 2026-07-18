@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { paymentsApi } from '@/features/payments/api';
+import { Button } from '@/components/ui/Button';
 import { AdminPayoutRequest, PayoutStatus } from '@/types/payment';
 import { getErrorMessage } from '@/utils/error';
 import { CreditCard, Landmark, Check, X, AlertCircle, ExternalLink, Calendar, Search } from 'lucide-react';
@@ -292,29 +293,32 @@ export default function AdminPayoutsReview() {
                 <div className="flex flex-col justify-center">
                   {['PENDING', 'REQUESTED', 'UNDER_REVIEW'].includes(request.status) ? (
                     <div className="flex gap-3">
-                      <button
+                      <Button
                         onClick={() => handleOpenReview(request, 'APPROVED')}
-                        className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-emerald-500/10 active:scale-95"
+                        variant="success"
+                        className="flex-1 text-xs"
                       >
                         <Check className="w-4 h-4" />
                         Duyệt hồ sơ
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         onClick={() => handleOpenReview(request, 'REJECTED')}
-                        className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white text-xs font-bold border border-rose-200 rounded-xl transition-all active:scale-95"
+                        variant="destructive"
+                        className="flex-1 text-xs"
                       >
                         <X className="w-4 h-4" />
                         Từ Chối
-                      </button>
+                      </Button>
                     </div>
                   ) : ['APPROVED', 'PROCESSING'].includes(request.status) ? (
                     <div className="space-y-3">
                       <p className="text-xs text-slate-500">
                         Hồ sơ đã duyệt. Chỉ xác nhận sau khi tiền đã được chuyển thực tế.
                       </p>
-                      <button
+                      <Button
                         onClick={() => handleOpenReview(request, 'PAID')}
-                        className="w-full flex items-center justify-center gap-1.5 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-emerald-500/10 active:scale-95"
+                        variant="success"
+                        className="w-full text-xs"
                       >
                         <Check className="w-4 h-4" />
                         Xác nhận đã chuyển tiền

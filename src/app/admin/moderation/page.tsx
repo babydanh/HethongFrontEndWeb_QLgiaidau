@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '@/lib/axios';
 import { toast } from 'react-hot-toast';
+import { Button } from '@/components/ui/Button';
 import { Search, Ban, ShieldAlert, CheckCircle2, UserCheck, AlertTriangle, ShieldCheck, X, Calendar } from 'lucide-react';
 import type { ApiResponse } from '@/types/api';
 
@@ -237,26 +238,30 @@ export default function ModerationPage() {
                     <td className="p-4 pr-6 text-right">
                       <div className="flex items-center justify-end gap-2">
                         {item.activeBan ? (
-                          <button
+                          <Button
                             onClick={() => handleUnban(item.id)}
                             disabled={processing}
-                            className="bg-emerald-50 hover:bg-emerald-600 text-emerald-600 hover:text-white border border-emerald-200 hover:border-transparent px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 transition-all"
+                            variant="success"
+                            size="sm"
+                            className="text-xs"
                           >
                             <UserCheck className="w-3.5 h-3.5" />
                             Gỡ phạt
-                          </button>
+                          </Button>
                         ) : (
-                          <button
+                          <Button
                             onClick={() => {
                               setSelectedUser(item);
                               setShowBanModal(true);
                             }}
                             disabled={processing}
-                            className="bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white border border-rose-200 hover:border-transparent px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 transition-all"
+                            variant="destructive"
+                            size="sm"
+                            className="text-xs"
                           >
                             <Ban className="w-3.5 h-3.5" />
                             Xử phạt
-                          </button>
+                          </Button>
                         )}
                       </div>
                     </td>
@@ -343,13 +348,14 @@ export default function ModerationPage() {
               >
                 Hủy
               </button>
-              <button
+              <Button
                 onClick={handleBanSubmit}
                 disabled={processing || !banReason.trim()}
-                className="bg-rose-600 hover:bg-rose-500 text-white px-4 py-2 rounded-xl text-xs font-semibold disabled:opacity-50 disabled:pointer-events-none transition-colors"
+                variant="destructive"
+                className="text-xs"
               >
                 Xác nhận phạt
-              </button>
+              </Button>
             </div>
           </div>
         </div>

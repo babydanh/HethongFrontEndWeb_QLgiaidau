@@ -881,29 +881,24 @@ export default function HomePage() {
                       <div key={tournamentName} className="bg-white rounded-3xl border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.015)] overflow-hidden flex flex-col">
                         {/* Group Tournament Header */}
                         <div className="px-5 py-3.5 bg-gradient-to-r from-blue-50/20 to-indigo-50/10 border-b border-slate-100 flex items-center justify-between">
-                          <Link 
+                          <Link
                             href={group.id ? `/tournaments/${group.id}` : '#'}
-                            className="flex items-center gap-3 group/header hover:opacity-90 transition-opacity max-w-[70%]"
+                            className="flex items-center gap-3 group/header hover:opacity-90 transition-opacity flex-1 min-w-0"
                           >
                             <div className="w-8 h-8 rounded-full overflow-hidden border border-slate-200 bg-white relative flex-shrink-0 shadow-sm">
                               <TournamentLogoAvatar src={group.logoUrl} alt={group.name} />
                             </div>
-                            <div>
+                            <div className="min-w-0">
                               {isRanked && (
                                 <span className="text-[9px] uppercase tracking-wider font-extrabold text-blue-600 bg-blue-50 px-2 py-0.5 rounded inline-block mb-0.5">
                                   GIẢI ĐẤU HẠNG • {(((group.matches[0] as EnrichedMatch | undefined)?.tournament)?.category?.name || (group.matches[0] as EnrichedMatch | undefined)?.tournament?.categoryName || '').toUpperCase()}
                                 </span>
                               )}
-                              <h3 className="text-sm font-black text-slate-900 group-hover/header:text-blue-600 transition-colors block leading-tight">
+                              <h3 className="text-sm font-black text-slate-900 group-hover/header:text-blue-600 transition-colors block leading-tight truncate">
                                 {group.name}
                               </h3>
                             </div>
                           </Link>
-                          {group.id && (
-                            <Link href={`/tournaments/${group.id}`} className="text-xs font-bold text-slate-650 hover:underline flex items-center gap-0.5 shrink-0">
-                              Chi tiết giải <ChevronRight className="w-4 h-4" />
-                            </Link>
-                          )}
                         </div>
                         {/* Matches List Grid */}
                         <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -986,29 +981,25 @@ export default function HomePage() {
                       <div className="px-5 py-3.5 bg-gradient-to-r from-blue-50/20 to-indigo-50/10 border-b border-slate-100 flex items-center justify-between">
                         <Link 
                           href={group.id ? `/tournaments/${group.id}` : '#'}
-                          className="flex items-center gap-3 group/header hover:opacity-90 transition-opacity max-w-[65%]"
+                          className="flex items-center gap-3 group/header hover:opacity-90 transition-opacity flex-1 min-w-0"
                         >
                           <div className="w-8 h-8 rounded-full overflow-hidden border border-slate-200 bg-white relative flex-shrink-0 shadow-sm">
                             <TournamentLogoAvatar src={group.logoUrl} alt={group.name} />
                           </div>
-                           <div>
-                             {isRanked && (
-                               <span className="text-[9px] uppercase tracking-wider font-extrabold text-blue-600 bg-blue-50 px-2 py-0.5 rounded inline-block mb-0.5">
-                                  GIẢI ĐẤU HẠNG • {(((group.matches[0] as EnrichedMatch | undefined)?.tournament)?.category?.name || (group.matches[0] as EnrichedMatch | undefined)?.tournament?.categoryName || '').toUpperCase()}
-                               </span>
-                             )}
-                             <h3 className="text-sm font-black text-slate-900 group-hover/header:text-blue-600 transition-colors block leading-tight">
-                               {group.name}
-                             </h3>
-                           </div>
+                            <div className="min-w-0">
+                              {isRanked && (
+                                <span className="text-[9px] uppercase tracking-wider font-extrabold text-blue-600 bg-blue-50 px-2 py-0.5 rounded inline-block mb-0.5">
+                                   GIẢI ĐẤU HẠNG • {(((group.matches[0] as EnrichedMatch | undefined)?.tournament)?.category?.name || (group.matches[0] as EnrichedMatch | undefined)?.tournament?.categoryName || '').toUpperCase()}
+                                </span>
+                              )}
+                              <h3 className="text-sm font-black text-slate-900 group-hover/header:text-blue-600 transition-colors block leading-tight truncate">
+                                {group.name}
+                              </h3>
+                            </div>
                         </Link>
 
                         <div className="flex items-center gap-3 shrink-0">
-                          {group.id && (
-                            <Link href={`/tournaments/${group.id}`} className="text-xs font-bold text-slate-655 hover:underline flex items-center gap-0.5">
-                              Chi tiết giải <ChevronRight className="w-4 h-4" />
-                            </Link>
-                          )}
+
                           {/* Mini Pagination controls */}
                           {totalPages > 1 && (
                             <div className="flex items-center gap-1">
@@ -1076,29 +1067,24 @@ export default function HomePage() {
                       <div className="px-5 py-3.5 bg-gradient-to-r from-blue-50/20 to-indigo-50/10 border-b border-slate-100 flex items-center justify-between">
                         <Link 
                           href={group.id ? `/tournaments/${group.id}` : '#'}
-                          className="flex items-center gap-3 group/header hover:opacity-90 transition-opacity max-w-[65%]"
+                          className="flex items-center gap-3 group/header hover:opacity-90 transition-opacity flex-1 min-w-0"
                         >
                           <div className="w-8 h-8 rounded-full overflow-hidden border border-slate-200 bg-white relative flex-shrink-0 shadow-sm">
                             <TournamentLogoAvatar src={group.logoUrl} alt={group.name} />
                           </div>
-                           <div>
-                             {isRanked && (
-                               <span className="text-[9px] uppercase tracking-wider font-extrabold text-blue-600 bg-blue-50 px-2 py-0.5 rounded inline-block mb-0.5">
-                                  GIẢI ĐẤU HẠNG • {(((group.matches[0] as EnrichedMatch | undefined)?.tournament)?.category?.name || (group.matches[0] as EnrichedMatch | undefined)?.tournament?.categoryName || '').toUpperCase()}
-                               </span>
-                             )}
-                             <h3 className="text-sm font-black text-slate-900 group-hover/header:text-blue-600 transition-colors block leading-tight">
-                               {group.name}
-                             </h3>
-                           </div>
+                            <div className="min-w-0">
+                              {isRanked && (
+                                <span className="text-[9px] uppercase tracking-wider font-extrabold text-blue-600 bg-blue-50 px-2 py-0.5 rounded inline-block mb-0.5">
+                                   GIẢI ĐẤU HẠNG • {(((group.matches[0] as EnrichedMatch | undefined)?.tournament)?.category?.name || (group.matches[0] as EnrichedMatch | undefined)?.tournament?.categoryName || '').toUpperCase()}
+                                </span>
+                              )}
+                              <h3 className="text-sm font-black text-slate-900 group-hover/header:text-blue-600 transition-colors block leading-tight truncate">
+                                {group.name}
+                              </h3>
+                            </div>
                         </Link>
 
                         <div className="flex items-center gap-3 shrink-0">
-                          {group.id && (
-                            <Link href={`/tournaments/${group.id}`} className="text-xs font-bold text-slate-655 hover:underline flex items-center gap-0.5">
-                              Chi tiết giải <ChevronRight className="w-4 h-4" />
-                            </Link>
-                          )}
                           {/* Mini Pagination controls */}
                           {totalPages > 1 && (
                             <div className="flex items-center gap-1">

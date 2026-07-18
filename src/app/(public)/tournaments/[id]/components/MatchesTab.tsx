@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { extractMatchScores, getMatchScorePresentation, resolveMatchSportRules } from '@/features/matches/score-display';
 import { Tournament, BracketMatch } from '@/features/tournaments/api';
 import { matchesApi } from '@/features/matches/api';
-import { Calendar, Play, Trophy, MapPin, Info, LayoutGrid } from 'lucide-react';
+import { Calendar, Play, Trophy, MapPin, Info, LayoutGrid, Search } from 'lucide-react';
 import Link from 'next/link';
 import { formatDateTime } from '@/utils/format';
 import { buildRoundFilterOptions, getMatchRoundLabel } from '@/utils/match-round-label';
@@ -25,6 +25,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
   // States for filtering
   const [selectedRoundKey, setSelectedRoundKey] = useState<string | 'ALL'>('ALL');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL');
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Find bracket size for the current division or tournament
   const getBracketSize = () => {
@@ -104,6 +105,8 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
       'Round Robin': 'Vòng tròn tính điểm',
       'Vong tron tinh diem': 'Vòng tròn tính điểm',
       'Vong loai truc tiep': 'Vòng loại trực tiếp',
+      'Vong bang': 'Vòng bảng',
+      'Vong Playoffs': 'Vòng Playoffs',
       'Nhanh thang': 'Nhánh thắng',
       'Nhanh thua': 'Nhánh thua',
       'Final Stage': 'Vòng chung kết',
@@ -140,6 +143,32 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
       if (statusFilter === 'SCHEDULED' && m.status !== 'SCHEDULED') return false;
       if (statusFilter === 'COMPLETED' && m.status !== 'COMPLETED') return false;
       
+      // 3. Filter by search query
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase().trim();
+        
+        const getNames = (p: BracketMatch['participant1']) => {
+          if (!p) return [];
+          const names = [p.teamName || ''];
+          if (p.members && Array.isArray(p.members)) {
+            p.members.forEach((mem) => {
+              if (mem.fullName) names.push(mem.fullName);
+            });
+          }
+          return names.map(n => n.toLowerCase());
+        };
+
+        const p1Names = getNames(m.participant1);
+        const p2Names = getNames(m.participant2);
+
+        const matchesP1 = p1Names.some(name => name.includes(query));
+        const matchesP2 = p2Names.some(name => name.includes(query));
+
+        if (!matchesP1 && !matchesP2) {
+          return false;
+        }
+      }
+
       return true;
     }).sort((a, b) => {
       // Sort Nhánh thắng (MAIN/Winners) first, Nhánh thua (LOSERS) second
@@ -152,7 +181,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
       }
       return a.matchOrder - b.matchOrder;
     });
-  }, [matches, roundOptions, selectedRoundKey, statusFilter, tournament.format, bracketSize]);
+  }, [matches, roundOptions, selectedRoundKey, statusFilter, searchQuery, tournament.format, bracketSize]);
 
   // Count items for badges
   const counts = useMemo(() => {
@@ -240,6 +269,26 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
 
       {/* Filter Options Panel */}
       <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm flex flex-col gap-4">
+        {/* Search Input */}
+        <div className="relative w-full">
+          <input
+            type="text"
+            placeholder="Tìm kiếm theo tên người chơi hoặc tên đội..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-12 py-2 border border-slate-200 rounded-xl bg-slate-50/50 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-slate-800 placeholder-slate-400 h-9"
+          />
+          <Search className="w-3.5 h-3.5 text-slate-450 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400 hover:text-slate-650 cursor-pointer"
+            >
+              XÓA
+            </button>
+          )}
+        </div>
+
         {/* Row 1: Status Filters */}
         <div className="flex flex-wrap gap-2 items-center">
           <span className="text-xs font-black text-slate-400 uppercase tracking-wider mr-2">Trạng thái:</span>

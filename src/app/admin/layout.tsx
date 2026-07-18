@@ -22,6 +22,7 @@ import {
   HandCoins,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
+import { Button } from '@/components/ui/Button';
 
 export default function AdminLayout({
   children,

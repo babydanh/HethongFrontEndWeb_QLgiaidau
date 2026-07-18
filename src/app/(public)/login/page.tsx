@@ -98,9 +98,6 @@ export default function LoginPage() {
     window.location.href = `${getBaseUrl()}/auth/google`;
   };
 
-  const handleFacebookLogin = () => {
-    window.location.href = `${getBaseUrl()}/auth/facebook`;
-  };
 
   return (
     <div className="flex flex-1 min-h-[100dvh] bg-white">
@@ -211,18 +208,6 @@ export default function LoginPage() {
                   <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
                 </svg>
                 Tiếp tục với Google
-              </button>
-
-              {/* Facebook */}
-              <button
-                type="button"
-                onClick={handleFacebookLogin}
-                className="w-full flex items-center justify-center gap-2.5 px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 transition-colors text-sm font-semibold text-slate-700 cursor-pointer"
-              >
-                <svg className="w-4 h-4 shrink-0 fill-[#1877F2]" viewBox="0 0 24 24">
-                  <path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z"/>
-                </svg>
-                Tiếp tục với Facebook
               </button>
             </div>
 

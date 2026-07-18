@@ -227,12 +227,22 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                   Đã xác minh
                 </span>
               )}
-              {!hideEloSection && profile.ranks?.map((rank) => (
-                <div key={`${rank.categoryId}-${rank.matchType}`} className="flex items-center gap-1 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-xl text-xs font-bold shrink-0">
-                  <span className="text-[10px] font-black text-slate-550 uppercase mr-1">{rank.categoryName}:</span>
-                  <EloTierBadge elo={rank.eloPoints} tierName={rank.categoryName} size="sm" className="scale-90 origin-left" />
-                </div>
-              ))}
+              {!hideEloSection && (() => {
+                const activeRanks = profile.ranks?.filter(r => r.matchesPlayed > 0) || [];
+                if (activeRanks.length > 0) {
+                  return activeRanks.map((rank) => (
+                    <div key={`${rank.categoryId}-${rank.matchType}`} className="flex items-center gap-1 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-xl text-xs font-bold shrink-0">
+                      <span className="text-[10px] font-black text-slate-550 uppercase mr-1">{rank.categoryName}:</span>
+                      <EloTierBadge elo={rank.eloPoints} tierName={rank.categoryName} size="sm" className="scale-90 origin-left" />
+                    </div>
+                  ));
+                }
+                return (
+                  <span className="bg-slate-50 border border-slate-200 text-slate-500 px-3 py-1 rounded-xl text-xs font-black uppercase tracking-wider">
+                    Chưa xếp hạng
+                  </span>
+                );
+              })()}
               {profile.achievements?.length ? (
                 <span className="bg-amber-50 border border-amber-200 text-amber-700 px-3.5 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5">
                   <Trophy className="w-3.5 h-3.5 text-amber-500" /> {profile.achievements.length} danh hiệu

@@ -593,12 +593,22 @@ export default function ProfilePage() {
                   </span>
                 );
               })}
-              {userRankings?.publicRanks?.map((rank) => (
-                <div key={rank.id} className="flex items-center gap-1.5 shrink-0">
-                  <span className="text-[10px] font-black text-slate-500 uppercase">{rank.categoryName}:</span>
-                  <EloTierBadge elo={rank.eloPoints} size="sm" />
-                </div>
-              ))}
+              {(() => {
+                const activeRanks = userRankings?.publicRanks?.filter(r => r.matchesPlayed > 0) || [];
+                if (activeRanks.length > 0) {
+                  return activeRanks.map((rank) => (
+                    <div key={rank.id} className="flex items-center gap-1.5 shrink-0 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-xl">
+                      <span className="text-[10px] font-black text-slate-500 uppercase">{rank.categoryName}:</span>
+                      <EloTierBadge elo={rank.eloPoints} size="sm" />
+                    </div>
+                  ));
+                }
+                return (
+                  <span className="bg-slate-50 border border-slate-200 text-slate-500 px-3 py-1 rounded-xl text-xs font-black uppercase tracking-wider">
+                    Chưa xếp hạng
+                  </span>
+                );
+              })()}
               {profileData?.createdAt && (
                 <span className="bg-slate-50 border border-slate-200 text-slate-650 px-3.5 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5">
                   <Calendar className="w-3.5 h-3.5 text-slate-400" /> Tham gia từ {formatDate(profileData.createdAt, 'MM/yyyy')}

@@ -28,8 +28,9 @@ export default function ForgotPasswordPage() {
       await api.post('/auth/forgot-password', data);
       setSent(true);
       toast.success('Hướng dẫn đặt lại mật khẩu đã được gửi thành công!');
-    } catch (err: any) {
-      const errMsg = err.response?.data?.message || 'Có lỗi xảy ra. Vui lòng thử lại sau.';
+    } catch (err) {
+      const axiosError = err as { response?: { data?: { message?: string } } };
+      const errMsg = axiosError.response?.data?.message || 'Có lỗi xảy ra. Vui lòng thử lại sau.';
       toast.error(errMsg);
     }
   };

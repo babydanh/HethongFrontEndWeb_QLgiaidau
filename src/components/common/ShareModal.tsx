@@ -2,19 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { getFacebookShareUrl, getZaloShareUrl, getMessengerShareUrl } from '@/utils/share.util';
-
-interface ShareModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  shareUrl: string;
-  title: string;
-  fbAppId?: string; // Optional Facebook App ID
-}
-
-'use client';
-
-import React, { useState, useEffect } from 'react';
-import { getFacebookShareUrl, getZaloShareUrl, getMessengerShareUrl } from '@/utils/share.util';
 import toast from 'react-hot-toast';
 
 interface ShareModalProps {

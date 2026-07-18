@@ -5,6 +5,7 @@ import { chatApi, ChatConversation, ChatMessage } from '@/features/chat/api';
 import { socketClient } from '@/lib/socket';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { Search, Send, Paperclip, MoreVertical, MessageSquare } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
 
 export default function ChatPage() {
   const { user } = useAuthStore();

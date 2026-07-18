@@ -62,16 +62,16 @@ export default function GalleryCarousel({ images = [], defaultBanner, className 
     >
       {/* Slides Container */}
       <div 
-        className="flex w-full transition-transform duration-[800ms] [transition-timing-function:cubic-bezier(0.16,1,0.3,1)]"
+        className="flex w-full h-full transition-transform duration-[800ms] [transition-timing-function:cubic-bezier(0.16,1,0.3,1)]"
         style={{ transform: `translateX(-${activeIndex * 100}%)` }}
       >
         {allImages.map((src, idx) => (
-          <div key={idx} className="w-full flex-shrink-0 relative overflow-hidden flex items-center justify-center">
+          <div key={idx} className="w-full h-full flex-shrink-0 relative overflow-hidden flex items-center justify-center">
             {/* Sharp crisp full-size dynamic height image */}
             <img
               src={src}
               alt={`Slide ${idx + 1}`}
-              className="w-full h-auto object-contain"
+              className="w-full h-full object-cover"
             />
           </div>
         ))}

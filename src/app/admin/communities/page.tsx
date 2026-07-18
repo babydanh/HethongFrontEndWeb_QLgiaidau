@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { toast } from 'react-hot-toast';
 import { communitiesApi } from '@/features/communities/api';
+import { Button } from '@/components/ui/Button';
 import type { Community } from '@/types/community';
 import { getErrorMessage } from '@/utils/error';
 import {
@@ -283,21 +284,25 @@ export default function AdminCommunitiesReview() {
 
                     {/* Duyệt (nếu PENDING) */}
                     {isPending && (
-                      <button
+                      <Button
                         disabled={submitting}
                         onClick={() => handleApprove(community.id)}
-                        className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-500 px-3 py-2 text-xs font-bold text-white transition-all hover:bg-emerald-400 active:scale-95 disabled:opacity-50"
+                        variant="success"
+                        size="sm"
+                        className="text-xs active:scale-95"
                       >
                         <Check className="w-3.5 h-3.5" />
                         Duyệt
-                      </button>
+                      </Button>
                     )}
 
                     {/* Từ chối / Vô hiệu */}
                     {isPending ? (
-                      <button
+                      <Button
+                        variant="destructive"
+                        size="sm"
                         onClick={() => { setRejectingId(community.id); setRejectReason(''); setModalError(null); }}
-                        className="flex items-center justify-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-600 transition-all hover:bg-red-500 hover:text-white active:scale-95"
+                        className="text-xs active:scale-95"
                       >
                         <X className="w-3.5 h-3.5" />
                         Từ chối
@@ -352,10 +357,11 @@ export default function AdminCommunitiesReview() {
               >
                 Hủy
               </button>
-              <button
+              <Button
                 disabled={submitting}
                 onClick={() => handleReject(rejectingId, rejectReason)}
-                className="inline-flex items-center gap-2 rounded-xl bg-red-500 px-4 py-2 text-xs font-bold text-white transition-all hover:bg-red-400 disabled:opacity-50 active:scale-95"
+                variant="destructive"
+                className="text-xs active:scale-95"
               >
                 {submitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
                 Xác nhận từ chối

@@ -30,6 +30,7 @@ function stageTypeLabel(type: string): string {
     case 'DOUBLE_ELIMINATION':
       return 'Nhánh thắng nhánh thua';
     case 'ROUND_ROBIN':
+    case 'GROUP':
       return 'Vòng tròn tính điểm';
     case 'GROUP_STAGE':
       return 'Vòng bảng (Vòng tròn)';
@@ -43,14 +44,18 @@ function stageNameLabel(name: string): string {
   if (upperName.includes('DOUBLE ELIMINATION STAGE') || upperName.includes('DOUBLE_ELIMINATION')) {
     return 'Vòng đấu Nhánh thắng nhánh thua';
   }
-  if (upperName.includes('ELIMINATION STAGE')) {
+  if (upperName.includes('ELIMINATION STAGE') || upperName.includes('VONG LOAI TRUC TIEP')) {
     return 'Vòng đấu Loại trực tiếp';
   }
-  if (upperName.includes('ROUND ROBIN STAGE') || upperName.includes('ROUND_ROBIN')) {
+  if (
+    upperName.includes('ROUND ROBIN STAGE') ||
+    upperName.includes('ROUND_ROBIN') ||
+    upperName.includes('VONG TRON TINH DIEM')
+  ) {
     return 'Vòng đấu Vòng tròn tính điểm';
   }
-  if (name === 'Winners Bracket') return 'Nhánh thắng';
-  if (name === 'Losers Bracket') return 'Nhánh thua';
+  if (name === 'Winners Bracket' || upperName === 'NHANH THANG') return 'Nhánh thắng';
+  if (name === 'Losers Bracket' || upperName === 'NHANH THUA') return 'Nhánh thua';
   return name;
 }
 
@@ -91,7 +96,7 @@ function GroupView({
     );
   }
 
-  if (stageType === 'ROUND_ROBIN' || stageType === 'GROUP_STAGE') {
+  if (stageType === 'ROUND_ROBIN' || stageType === 'GROUP_STAGE' || stageType === 'GROUP') {
     return <RoundRobinView matches={matches} tiebreakerMode={tiebreakerMode} onScheduleMatch={onScheduleMatch} selectedMatchId={selectedMatchId} onSelectMatch={onSelectMatch} tournamentId={tournamentId} stageId={stageId} fallbackSportRuleKind={fallbackSportRuleKind} roundConfig={roundConfig} />;
   }
 

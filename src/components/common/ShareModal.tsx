@@ -17,7 +17,8 @@ export default function ShareModal({ isOpen, onClose, shareUrl, title, fbAppId }
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    const timer = setTimeout(() => setMounted(true), 0);
+    return () => clearTimeout(timer);
   }, []);
 
   const supportNativeShare = mounted && typeof navigator !== 'undefined' && typeof navigator.share === 'function';

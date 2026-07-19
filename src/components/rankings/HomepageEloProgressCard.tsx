@@ -38,9 +38,9 @@ export interface HomepageEloProgressCardProps {
   /** Derived values (computed by page.tsx for convenience). */
   eloPoints: number;
   displayTier: string;
-  matchesPlayed: number;
-  matchesWon: number;
-  winRate: number;
+  matchesPlayed?: number;
+  matchesWon?: number;
+  winRate?: number;
   peakElo: number;
   sportName: string;
 

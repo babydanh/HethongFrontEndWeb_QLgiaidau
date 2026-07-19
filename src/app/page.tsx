@@ -1314,19 +1314,80 @@ export default function HomePage() {
                </div>
              </motion.div>
            ) : (
-             <HomepageEloProgressCard
-               user={user}
-               activeRankInfo={activeRankInfo}
-               categoryRanks={categoryRanks}
-               eloPoints={eloPoints}
-               displayTier={displayTier}
-               matchesPlayed={matchesPlayed}
-               matchesWon={matchesWon}
-               winRate={winRate}
-               peakElo={peakElo}
-               sportName={sportName}
-               isAuthenticated={isAuthenticated}
-             />
+             <div className="flex flex-col gap-5">
+               {/* Card 1: User Profile Card */}
+               <div className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.02)] p-5 flex flex-col items-center text-center relative overflow-hidden">
+                 {/* Sports cover banner background */}
+                 <div className="absolute top-0 left-0 w-full h-16 bg-gradient-to-b from-slate-900 to-slate-950">
+                   <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.15)_0%,transparent_70%)]" />
+                 </div>
+
+                 {/* Avatar */}
+                 <div className="w-16 h-16 rounded-full border-4 border-white shadow-md z-10 mt-5 relative bg-blue-100 flex items-center justify-center overflow-hidden shrink-0">
+                   {user?.avatarUrl ? (
+                     <img src={user.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                   ) : (
+                     <span className="text-xl font-bold text-blue-600 uppercase">
+                       {user?.fullName?.charAt(0) || 'U'}
+                     </span>
+                   )}
+                 </div>
+
+                 {/* Name & Email */}
+                 <h3 className="text-base font-bold text-slate-900 mt-2.5 line-clamp-1 leading-snug">
+                   {user?.fullName || 'Người dùng'}
+                 </h3>
+                 <p className="text-xs text-slate-400 truncate w-full mb-3.5">
+                   {user?.email}
+                 </p>
+
+                 {/* Stats Grid */}
+                 <div className="grid grid-cols-3 w-full gap-2 mt-2 pt-4 border-t border-slate-100">
+                   <div className="flex flex-col items-center">
+                     <span className="text-base font-black text-slate-800 leading-none">
+                       {matchesPlayed}
+                     </span>
+                     <span className="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-wider">
+                       Trận
+                     </span>
+                   </div>
+                   <div className="flex flex-col items-center border-l border-r border-slate-100">
+                     <span className="text-base font-black text-slate-800 leading-none">
+                       {matchesWon}
+                     </span>
+                     <span className="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-wider">
+                       Thắng
+                     </span>
+                   </div>
+                   <div className="flex flex-col items-center">
+                     <span className="text-base font-black text-slate-800 leading-none">
+                       {winRate}%
+                     </span>
+                     <span className="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-wider">
+                       Tỷ lệ
+                     </span>
+                   </div>
+                 </div>
+
+                 {/* CTA */}
+                 <Link href="/profile" className="w-full mt-4">
+                   <button className="w-full text-xs py-2.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 hover:text-slate-900 font-bold rounded-xl transition-all active:scale-95 duration-150 cursor-pointer shadow-sm">
+                     Trang cá nhân
+                   </button>
+                 </Link>
+               </div>
+
+               {/* Card 2: ELO Progress Card */}
+               <HomepageEloProgressCard
+                 activeRankInfo={activeRankInfo}
+                 categoryRanks={categoryRanks}
+                 eloPoints={eloPoints}
+                 displayTier={displayTier}
+                 peakElo={peakElo}
+                 sportName={sportName}
+                 isAuthenticated={isAuthenticated}
+               />
+             </div>
            )}
 
            {/* Widget 2 — Banner Ads 4:3 */}

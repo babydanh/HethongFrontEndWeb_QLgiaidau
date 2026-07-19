@@ -221,6 +221,7 @@ export interface TournamentParticipant {
   teamName: string;
   seed: number | null;
   isPaid: boolean;
+  eloPoints?: number;
   isWildcard?: boolean;
   tournamentDivisionId?: string | null;
   registeredAt: string;

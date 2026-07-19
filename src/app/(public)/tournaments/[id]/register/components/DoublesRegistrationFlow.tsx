@@ -646,7 +646,7 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
                   </div>
                 </div>
                 <span className="text-xs font-black text-blue-650 bg-blue-50 px-2.5 py-0.5 rounded-full">
-                  {m.elo?.eloPoints || 1000} ELO
+                  {m.elo?.eloPoints || 1000} ELO Cá nhân
                 </span>
               </div>
             ))}

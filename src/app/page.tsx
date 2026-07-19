@@ -19,6 +19,13 @@ import { rankingsApi, PlayerRanking } from '@/features/rankings/api';
 import { matchesApi } from '@/features/matches/api';
 import { BracketMatch } from '@/features/tournaments/api';
 import TournamentHeroBanner from '@/components/ui/TournamentHeroBanner';
+import HomepageEloProgressCard from '@/components/rankings/HomepageEloProgressCard';
+import {
+  getBestRankForCategory,
+  getRanksForCategory,
+  getRankTierName,
+  getRankWinRate,
+} from '@/features/rankings/elo-display';
 import { isNetworkError } from '@/utils/error';
 import { isTournamentCancelled, isTournamentCompleted, isTournamentInProgress } from '@/utils/tournament-status';
 import { getMatchRoundLabel } from '@/utils/match-round-label';
@@ -283,7 +290,6 @@ export default function HomePage() {
   // Widget States
   const [userRankings, setUserRankings] = useState<{ publicRanks: PlayerRanking[]; communityRanks: PlayerRanking[] } | null>(null);
   const [upcomingMatch, setUpcomingMatch] = useState<unknown | null>(null);
-  const [leaderboard, setLeaderboard] = useState<PlayerRanking[]>([]);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsClient(true), 0);
@@ -322,22 +328,16 @@ export default function HomePage() {
         const liveMatchesPromise = matchesApi.getMatches({ status: 'ONGOING', limit: 100, publicOnly: true });
         const upcomingMatchesPromise = matchesApi.getMatches({ status: 'SCHEDULED', limit: 100, publicOnly: true });
         const completedMatchesPromise = matchesApi.getMatches({ status: 'COMPLETED', limit: 100, publicOnly: true });
-        
-        const lbCategoryId = selectedCategoryId || categories[0]?.id;
-        const rankingsPromise = lbCategoryId
-          ? rankingsApi.getRankings({ categoryId: lbCategoryId, limit: 5 })
-          : Promise.resolve({ data: [] });
-          
+
         const userRankingsPromise = isAuthenticated && user?.id
           ? rankingsApi.getUserRankings(user.id)
           : Promise.resolve(null);
 
-        const [tRes, cRes, lRes, uRes, rRes, userRankRes, compRes] = await Promise.allSettled([
+        const [tRes, cRes, lRes, uRes, userRankRes, compRes] = await Promise.allSettled([
           tournamentsPromise,
           communitiesPromise,
           liveMatchesPromise,
           upcomingMatchesPromise,
-          rankingsPromise,
           userRankingsPromise,
           completedMatchesPromise,
         ] as const);
@@ -374,8 +374,6 @@ export default function HomePage() {
 
         const fetchedCompleted = compRes.status === 'fulfilled' ? (compRes.value.data as unknown as BracketMatch[]) || [] : [];
         setCompletedMatches(fetchedCompleted.filter(m => validTournamentIds.has(m.tournamentId ?? '') && !m.isBye));
-
-        setLeaderboard(rRes.status === 'fulfilled' ? rRes.value.data || [] : []);
 
         if (userRankRes.status === 'fulfilled' && userRankRes.value) {
           setUserRankings(userRankRes.value);
@@ -734,17 +732,20 @@ export default function HomePage() {
     ? communities.filter(c => c.categories?.some(cat => cat.id === selectedCategoryId))
     : communities;
 
-  const activeRankInfo = userRankings?.publicRanks?.find(
-    r => selectedCategoryId ? r.categoryId === selectedCategoryId : true
-  ) || userRankings?.publicRanks?.[0];
+  const publicRanks = userRankings?.publicRanks || [];
+  const categoryRanks = getRanksForCategory(publicRanks, selectedCategoryId || undefined);
+  const activeRankInfo = getBestRankForCategory(publicRanks, selectedCategoryId || undefined);
 
-  const eloPoints = activeRankInfo ? activeRankInfo.eloPoints : 1000;
-  const tierName = activeRankInfo?.tier?.name || activeRankInfo?.tierName || 'Chưa xếp hạng';
-  const matchesPlayed = activeRankInfo ? activeRankInfo.matchesPlayed : 0;
-  const displayTier = matchesPlayed > 0 ? tierName : 'Chưa xếp hạng';
-  const matchesWon = activeRankInfo ? activeRankInfo.matchesWon : 0;
-  const winRate = matchesPlayed > 0 ? Math.round((matchesWon / matchesPlayed) * 100) : 0;
-  const sportName = categories.find(c => c.id === activeRankInfo?.categoryId)?.name || (selectedCategoryId ? categories.find(c => c.id === selectedCategoryId)?.name : 'Chung');
+  const eloPoints = activeRankInfo?.eloPoints ?? 1000;
+  const displayTier = getRankTierName(activeRankInfo);
+  const matchesPlayed = activeRankInfo?.matchesPlayed ?? 0;
+  const matchesWon = activeRankInfo?.matchesWon ?? 0;
+  const winRate = getRankWinRate(activeRankInfo);
+  const peakElo = activeRankInfo?.peakElo || eloPoints;
+  const sportName = activeRankInfo?.categoryName
+    || categories.find((c) => c.id === activeRankInfo?.categoryId)?.name
+    || (selectedCategoryId ? categories.find((c) => c.id === selectedCategoryId)?.name : 'Chung')
+    || 'Chung';
 
   const [now] = useState(() => Date.now());
 
@@ -1313,98 +1314,22 @@ export default function HomePage() {
                </div>
              </motion.div>
            ) : (
-             <motion.div 
-               whileHover={{ y: -2 }}
-               className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.02)] p-5 flex flex-col items-center text-center relative overflow-hidden"
-             >
-               {/* Sports cover banner image */}
-               <div className="absolute top-0 left-0 w-full h-16 bg-gradient-to-b from-slate-900 to-slate-950">
-                 <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.15)_0%,transparent_70%)]" />
-               </div>
-
-               <div className="w-16 h-16 rounded-full border-4 border-white shadow-md z-10 mt-5 relative bg-blue-100 flex items-center justify-center overflow-hidden shrink-0">
-                 {user?.avatarUrl ? (
-                   <img src={user.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
-                 ) : (
-                   <span className="text-xl font-bold text-blue-600 uppercase">{user?.fullName?.charAt(0) || 'U'}</span>
-                 )}
-               </div>
-               <h3 className="text-base font-bold text-slate-900 mt-2.5 line-clamp-1 leading-snug">{user?.fullName || 'Người dùng'}</h3>
-               <p className="text-xs text-slate-400 truncate w-full mb-3.5">{user?.email}</p>
-               {/* ELO & Rank display */}
-               <div className="flex items-center gap-2 bg-slate-50 px-3 py-1 rounded-full border border-slate-150 shadow-sm z-10">
-                 <Trophy className="w-3.5 h-3.5 text-amber-500" />
-                 <span className="text-[10px] font-bold text-slate-700 max-w-[120px] truncate">
-                   {sportName === 'Chung' ? displayTier : `${sportName}: ${displayTier}`}
-                 </span>
-                 <span className="text-[10px] bg-blue-600 text-white px-2 py-0.5 rounded-full font-bold">
-                   ELO {eloPoints}
-                 </span>
-               </div>
-
-               {/* Stats Grid */}
-               <div className="grid grid-cols-1 sm:grid-cols-3 w-full gap-2 mt-3 sm:mt-4 pt-4 border-t border-slate-100">
-                 <div className="flex flex-col items-center">
-                   <span className="text-base font-black text-slate-800 leading-none">{matchesPlayed}</span>
-                   <span className="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-wider">Trận</span>
-                 </div>
-                 <div className="flex flex-col items-center border-l border-r border-slate-100">
-                   <span className="text-base font-black text-slate-800 leading-none">{matchesWon}</span>
-                   <span className="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-wider">Thắng</span>
-                 </div>
-                 <div className="flex flex-col items-center">
-                   <span className="text-base font-black text-slate-800 leading-none">{winRate}%</span>
-                   <span className="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-wider">Tỷ lệ</span>
-                 </div>
-               </div>
-
-               <Link href="/profile" className="w-full mt-4">
-                 <button className="w-full text-xs py-2.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 hover:text-slate-900 font-bold rounded-xl transition-all active:scale-95 duration-150 cursor-pointer shadow-sm">
-                   Trang cá nhân
-                 </button>
-               </Link>
-             </motion.div>
+             <HomepageEloProgressCard
+               user={user}
+               activeRankInfo={activeRankInfo}
+               categoryRanks={categoryRanks}
+               eloPoints={eloPoints}
+               displayTier={displayTier}
+               matchesPlayed={matchesPlayed}
+               matchesWon={matchesWon}
+               winRate={winRate}
+               peakElo={peakElo}
+               sportName={sportName}
+               isAuthenticated={isAuthenticated}
+             />
            )}
 
-          {/* Widget 2: Bảng xếp hạng nhanh */}
-          {leaderboard.length > 0 ? (
-            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 flex flex-col gap-4">
-              <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider pb-2 border-b border-slate-100 flex items-center gap-1.5">
-                <Trophy className="w-4 h-4 text-amber-500" /> Bảng xếp hạng nhanh
-              </h3>
-              <div className="flex flex-col gap-3">
-                {leaderboard.slice(0, 5).map((rank, idx) => (
-                  <div key={rank.id || idx} className="flex items-center justify-between text-xs font-semibold text-slate-700">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className={`w-5 h-5 rounded-full flex items-center justify-center font-black shrink-0 ${
-                        idx === 0 ? 'bg-amber-100 text-amber-700' : idx === 1 ? 'bg-slate-100 text-slate-700' : idx === 2 ? 'bg-orange-100 text-orange-700' : 'text-slate-400'
-                      }`}>
-                        {idx + 1}
-                      </span>
-                      <Link 
-                        href={rank.user?.id ? `/users/${rank.user.id}` : '#'}
-                        className="flex items-center gap-2 min-w-0 hover:text-blue-600 transition-colors"
-                      >
-                        <div className="w-5 h-5 rounded-full overflow-hidden border border-slate-200 bg-white relative flex-shrink-0">
-                          {rank.user?.avatarUrl ? (
-                            <img src={rank.user.avatarUrl} alt={rank.user.fullName} className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full bg-slate-100 flex items-center justify-center text-[8px] font-black text-slate-500 uppercase">
-                              {rank.user?.fullName ? rank.user.fullName.charAt(0) : '?'}
-                            </div>
-                          )}
-                        </div>
-                        <span className="truncate">{rank.user?.fullName || 'Người chơi'}</span>
-                      </Link>
-                    </div>
-                    <span className="font-mono font-bold text-slate-950 shrink-0">{rank.eloPoints} ELO</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : null}
-
-          {/* Widget 3: Banner Ads 4:3 */}
+           {/* Widget 2 — Banner Ads 4:3 */}
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col cursor-pointer group">
             <div className="aspect-[4/3] bg-slate-900 relative p-5 flex flex-col justify-end">
               <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/35 to-transparent z-10"></div>

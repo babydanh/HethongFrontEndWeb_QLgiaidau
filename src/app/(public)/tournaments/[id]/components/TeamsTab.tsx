@@ -137,7 +137,7 @@ export default function TeamsTab({ tournament, tournamentId, divisionId }: Props
                                         <p className="text-xs text-slate-500 font-medium flex items-center gap-1 mt-0.5">
                                           <Award className="w-3.5 h-3.5 text-amber-500" />
                                           <span>
-                                            {member.elo.tierName} • <strong>{member.elo.eloPoints}</strong> ELO
+                                            {member.elo.tierName} • <strong>{member.elo.eloPoints}</strong> {tournament.matchType === 'DOUBLES' || tournament.matchType === 'MIXED_DOUBLES' ? 'ELO CN' : 'ELO'}
                                           </span>
                                         </p>
                                       ) : null}

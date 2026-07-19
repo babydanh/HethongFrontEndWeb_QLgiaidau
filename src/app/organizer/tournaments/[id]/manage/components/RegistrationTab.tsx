@@ -13,13 +13,12 @@ import {
   CheckCircle,
   Lock,
   ArrowRight,
-  ArrowUp,
-  ArrowDown,
   UserCheck,
   UserX,
   Users,
   Search,
   Shuffle,
+  GripVertical,
 } from 'lucide-react';
 import { Tournament, TournamentParticipant } from '@/types/tournament';
 import { Division } from '@/features/tournaments/api';
@@ -38,6 +37,20 @@ import {
   isTournamentRegistrationOpen,
 } from '@/utils/tournament-status';
 import toast from 'react-hot-toast';
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  useSortable,
+  SortableContext,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface RegistrationTabProps {
   tournament: Tournament;
@@ -212,7 +225,66 @@ export function RegistrationTab({
     }
   };
 
+  // ─── Kéo thả hạt giống ─────────────────────────────────────────────
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+  );
+
+  const handleSeedDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const seeded = [...participants]
+      .filter((p) => p.seed != null)
+      .sort((a, b) => (a.seed ?? 999) - (b.seed ?? 999));
+
+    const oldIdx = seeded.findIndex((p) => p.id === active.id);
+    const newIdx = seeded.findIndex((p) => p.id === over.id);
+    if (oldIdx === -1 || newIdx === -1) return;
+
+    // Swap seeds between the dragged item and the target
+    const dragged = seeded[oldIdx];
+    const target = seeded[newIdx];
+    void handleSwapSeeds(dragged.id, target.id);
+  };
+
   const canSeedMock = isTournamentDraft(tournament.status);
+
+  // ─── SortableSeedItem ─────────────────────────────────────────────
+  function SortableSeedItem({ p }: { p: TournamentParticipant }) {
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: p.id });
+
+    const style = {
+      transform: CSS.Transform.toString(transform),
+      transition,
+      opacity: isDragging ? 0.5 : 1,
+      zIndex: isDragging ? 50 : 'auto' as const,
+    };
+
+    return (
+      <div
+        ref={setNodeRef}
+        style={style}
+        className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/50 px-3 py-2.5"
+      >
+        <div className="flex items-center gap-2 min-w-0">
+          <button
+            {...attributes}
+            {...listeners}
+            className="cursor-grab active:cursor-grabbing rounded-lg p-1 text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition-colors touch-none"
+            title="Kéo để sắp xếp"
+          >
+            <GripVertical className="w-4 h-4" />
+          </button>
+          <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-blue-100 text-blue-700 text-xs font-black shrink-0">
+            #{p.seed}
+          </span>
+          <span className="text-sm font-bold text-slate-900 truncate">{p.teamName}</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start animate-in fade-in duration-200">
@@ -828,8 +900,10 @@ export function RegistrationTab({
                 const seeded = [...participants]
                   .filter((p) => p.seed != null)
                   .sort((a, b) => (a.seed ?? 999) - (b.seed ?? 999));
+                const unseeded = [...participants]
+                  .filter((p) => p.seed == null);
 
-                if (seeded.length === 0) {
+                if (participants.length === 0) {
                   return (
                     <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center">
                       <Shuffle className="w-6 h-6 text-slate-300" />
@@ -838,41 +912,47 @@ export function RegistrationTab({
                   );
                 }
 
-                return seeded.map((p, index) => {
-                  const prevP = index > 0 ? seeded[index - 1] : null;
-                  const nextP = index < seeded.length - 1 ? seeded[index + 1] : null;
-
-                  return (
-                    <div key={p.id} className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/50 px-3 py-2.5">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-blue-100 text-blue-700 text-xs font-black shrink-0">
-                          #{p.seed}
-                        </span>
-                        <span className="text-sm font-bold text-slate-900 truncate">{p.teamName}</span>
+                return (
+                  <>
+                    {seeded.length > 0 && (
+                      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleSeedDragEnd}>
+                        <SortableContext items={seeded.map((p) => p.id)} strategy={verticalListSortingStrategy}>
+                          <div className="space-y-1">
+                            {seeded.map((p) => (
+                              <SortableSeedItem key={p.id} p={p} />
+                            ))}
+                          </div>
+                        </SortableContext>
+                      </DndContext>
+                    )}
+                    {unseeded.length > 0 && (
+                      <div className="mt-3 pt-3 border-t border-dashed border-slate-200">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                          Chưa có seed ({unseeded.length} đội)
+                        </p>
+                        <div className="space-y-1">
+                          {unseeded.map((p) => (
+                            <div key={p.id} className="flex items-center justify-between rounded-xl border border-dashed border-slate-200 bg-white px-3 py-2.5">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-slate-100 text-slate-400 text-xs font-black shrink-0">
+                                  ?
+                                </span>
+                                <span className="text-sm font-bold text-slate-500 truncate">{p.teamName}</span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleSeedEditStart(p.id, null)}
+                                className="text-[10px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded-lg transition-colors"
+                              >
+                                Gán seed
+                              </button>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1 shrink-0 ml-2">
-                        <button
-                          type="button"
-                          onClick={() => { if (prevP) void handleSwapSeeds(p.id, prevP.id); }}
-                          disabled={!prevP}
-                          className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                          title="Lên trên"
-                        >
-                          <ArrowUp className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => { if (nextP) void handleSwapSeeds(p.id, nextP.id); }}
-                          disabled={!nextP}
-                          className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                          title="Xuống dưới"
-                        >
-                          <ArrowDown className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  );
-                });
+                    )}
+                  </>
+                );
               })()}
             </div>
           )}

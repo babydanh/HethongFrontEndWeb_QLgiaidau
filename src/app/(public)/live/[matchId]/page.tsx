@@ -31,7 +31,7 @@ import type { MatchPenaltyRecord, PickleballSideOutState, TennisLivePointState }
 import { getErrorMessage } from '@/utils/error';
 import { cn } from '@/utils/cn';
 import { trimAndNormalizeSpaces } from '@/utils/string';
-import { Trophy, Clock, MapPin, Activity, Play, AlertCircle, Camera, MessageSquare, Send, Eye, Shield, Users, Heart } from 'lucide-react';
+import { Trophy, Clock, MapPin, Activity, Play, AlertCircle, Camera, MessageSquare, Send, Eye, Shield, Users, Heart, Share2 } from 'lucide-react';
 import { livestreamApi, tournamentsApi, type MatchPlaybackResponse } from '@/features/tournaments/api';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
@@ -39,6 +39,7 @@ import { Button } from '@/components/ui/Button';
 import { OfficialScoreModal } from './components/OfficialScoreModal';
 import type { TournamentParticipant } from '@/types/tournament';
 import { ReportViolationButton } from '@/features/reports/components/ReportViolationButton';
+import ShareModal from '@/components/common/ShareModal';
 
 interface Props {
   params: Promise<{ matchId: string }>;
@@ -63,19 +64,49 @@ export default function LiveMatchPage({ params }: Props) {
   const [hearts, setHearts] = useState<{ id: string; x: number; size: number; delay: number }[]>([]);
   const [playback, setPlayback] = useState<MatchPlaybackResponse | null>(null);
 
+  // Share state
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+
+  // Chat auto scroll ref
+  const commentsEndRef = useRef<HTMLDivElement | null>(null);
+
+
+
+  const getTeamEloDisplay = (part: typeof part1) => {
+    if (!part) return null;
+    
+    // 1. Dùng eloPoints chung từ backend trả về nếu có
+    if (typeof part.eloPoints === 'number') {
+      return part.eloPoints;
+    }
+    
+    // 2. Fallback nếu API cũ chưa update:
+    if (!part.members || part.members.length === 0) return null;
+    const validMembers = part.members.filter(m => !m.isMock);
+    if (validMembers.length === 0) return 1000;
+    
+    const sum = validMembers.reduce((acc, m) => acc + (m.elo?.eloPoints || 1000), 0);
+    return Math.round(sum / validMembers.length);
+  };
+
   const handleSpawnHeart = () => {
     const id = Math.random().toString(36).substring(2, 9);
     const newHeart = {
       id,
       x: Math.random() * 80 + 10,
       size: Math.random() * 12 + 16,
-      delay: Math.random() * 0.2,
+      delay: Math.random() * 0.1,
     };
     setHearts((prev) => [...prev, newHeart]);
     setTimeout(() => {
       setHearts((prev) => prev.filter((h) => h.id !== id));
     }, 2000);
   };
+
+  // Auto scroll chat to bottom when comments list changes
+  useEffect(() => {
+    commentsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [comments]);
 
   useEffect(() => {
     if (!match?.tournamentId) return;
@@ -879,12 +910,12 @@ export default function LiveMatchPage({ params }: Props) {
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
           <div className="flex flex-wrap items-center gap-3">
-            <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
+            <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider ${
               match.status === 'ONGOING' 
-                ? 'bg-rose-100 text-rose-600' 
+                ? 'bg-rose-50 text-rose-600 border border-rose-100' 
                 : match.status === 'COMPLETED' 
-                ? 'bg-slate-200 text-slate-700' 
-                : 'bg-blue-100 text-blue-700'
+                ? 'bg-slate-100 text-slate-700 border border-slate-200' 
+                : 'bg-blue-50 text-blue-700 border border-blue-100'
             }`}>
               {match.status === 'ONGOING' && (
                 <span className="relative flex h-2 w-2">
@@ -894,28 +925,40 @@ export default function LiveMatchPage({ params }: Props) {
               )}
               {match.status === 'ONGOING' ? 'Trực tiếp' : match.status === 'COMPLETED' ? 'Kết thúc' : 'Sắp diễn ra'}
             </span>
-            <span className="text-sm font-semibold text-slate-500 bg-slate-200 px-3 py-1 rounded-full">Vòng {match.roundNumber}</span>
-            <span className="flex items-center gap-1.5 text-sm font-semibold text-slate-600 bg-white border border-slate-200 px-3 py-1 rounded-full">
-              <Eye className="w-4 h-4 text-blue-600" /> {viewerCount} đang xem
+            <span className="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-100 px-3 py-1 rounded-full flex items-center gap-1">
+              <Clock className="w-3.5 h-3.5 text-amber-500" />
+              <span>Vòng {match.roundNumber}</span>
             </span>
-            <span className="text-sm font-semibold text-slate-600 bg-blue-50 border border-blue-100 px-3 py-1 rounded-full">
-              Môn: {scorePresentation.sportLabel}
+            <span className="flex items-center gap-1 text-xs font-bold text-blue-700 bg-blue-50 border border-blue-100 px-3 py-1 rounded-full">
+              <Eye className="w-3.5 h-3.5 text-blue-500 animate-pulse" />
+              <span>{viewerCount} đang xem</span>
             </span>
-            {!canControlLiveMatch && (
-              <span className="text-sm font-semibold text-slate-500 bg-slate-100 border border-slate-200 px-3 py-1 rounded-full">
-                Chế độ chỉ xem
-              </span>
-            )}
+            <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 px-3 py-1 rounded-full flex items-center gap-1">
+              <Activity className="w-3.5 h-3.5 text-emerald-500" />
+              <span>Môn: {scorePresentation.sportLabel}</span>
+            </span>
           </div>
           <div className="flex items-center gap-2">
+            <Button
+              onClick={() => setIsShareModalOpen(true)}
+              variant="outline"
+              className="bg-white hover:bg-slate-50 text-slate-700 border-slate-200 font-bold shadow-xs h-9 text-xs px-3.5 flex items-center gap-1.5 rounded-xl transition-all"
+            >
+              <Share2 className="w-3.5 h-3.5" />
+              <span>Chia sẻ</span>
+            </Button>
             <ReportViolationButton
               targetType="MATCH"
               targetId={match.id}
               targetLabel={`Trận vòng ${match.roundNumber}`}
-              compact
+              className="h-9 text-xs px-3.5 rounded-xl shadow-xs"
             />
-            <Link href={`/tournaments/${match.tournamentId}`} className="text-sm font-bold text-slate-600 hover:text-slate-900 transition-colors">
-              {match.tournament?.name || 'Quay lại giải đấu'}
+            <Link 
+              href={`/tournaments/${match.tournamentId}`} 
+              className="flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-indigo-600 hover:border-indigo-200 transition-all bg-white border border-slate-200 px-3.5 h-9 rounded-xl shadow-xs shrink-0"
+            >
+              <Trophy className="w-3.5 h-3.5 text-indigo-500" />
+              <span>{match.tournament?.name || 'Quay lại giải đấu'}</span>
             </Link>
           </div>
         </div>
@@ -929,6 +972,23 @@ export default function LiveMatchPage({ params }: Props) {
               {/* Static scanner effect for premium vibe */}
               <div className="absolute inset-0 bg-gradient-to-b from-indigo-950/20 via-slate-950/40 to-slate-950 pointer-events-none z-0"></div>
               
+              {/* Floating hearts container inside video container */}
+              <div className="absolute inset-0 pointer-events-none z-40 overflow-hidden">
+                {hearts.map((h) => (
+                  <div
+                    key={h.id}
+                    style={{
+                      left: `${h.x}%`,
+                      fontSize: `${h.size}px`,
+                      animationDelay: `${h.delay}s`,
+                    }}
+                    className="absolute bottom-6 animate-float-up opacity-0 z-30 select-none text-rose-500"
+                  >
+                    ❤️
+                  </div>
+                ))}
+              </div>
+
               <div className="relative z-10 flex h-full w-full flex-col items-center justify-center gap-3.5 p-6 text-center">
                 {playback?.playbackUrl ? (
                   <>
@@ -1014,6 +1074,16 @@ export default function LiveMatchPage({ params }: Props) {
                       )}
                     </div>
                     <h3 className="text-lg font-black text-slate-900 text-center leading-snug">{team1Name}</h3>
+                    {(() => {
+                      const elo = getTeamEloDisplay(part1);
+                      if (elo === null) return null;
+                      return (
+                        <span className="text-[10px] font-extrabold text-blue-600 bg-blue-50/70 border border-blue-100/60 px-2 py-0.5 rounded-full mt-1.5 shadow-3xs flex items-center gap-1">
+                          <Activity className="w-3.5 h-3.5 text-blue-500" />
+                          <span>ELO: {elo}</span>
+                        </span>
+                      );
+                    })()}
                     <div className="text-slate-500 text-xs font-bold mt-1.5 uppercase tracking-wider">{scorePresentation.wonSummaryLabel}: {match.p1SetsWon}</div>
                     
                     {part1 && part1.members && part1.members.length > 0 && (
@@ -1083,6 +1153,16 @@ export default function LiveMatchPage({ params }: Props) {
                       )}
                     </div>
                     <h3 className="text-lg font-black text-slate-900 text-center leading-snug">{team2Name}</h3>
+                    {(() => {
+                      const elo = getTeamEloDisplay(part2);
+                      if (elo === null) return null;
+                      return (
+                        <span className="text-[10px] font-extrabold text-blue-600 bg-blue-50/70 border border-blue-100/60 px-2 py-0.5 rounded-full mt-1.5 shadow-3xs flex items-center gap-1">
+                          <Activity className="w-3.5 h-3.5 text-blue-500" />
+                          <span>ELO: {elo}</span>
+                        </span>
+                      );
+                    })()}
                     <div className="text-slate-500 text-xs font-bold mt-1.5 uppercase tracking-wider">{scorePresentation.wonSummaryLabel}: {match.p2SetsWon}</div>
                     
                     {part2 && part2.members && part2.members.length > 0 && (
@@ -1205,7 +1285,7 @@ export default function LiveMatchPage({ params }: Props) {
 
           {/* Right Column: Comments & Chat */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-[550px] sticky top-6 relative">
+            <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-[510px] sticky top-28 relative">
               <style>{`
                 @keyframes floatUp {
                   0% {
@@ -1228,23 +1308,6 @@ export default function LiveMatchPage({ params }: Props) {
                 }
               `}</style>
               
-              {/* Floating hearts container */}
-              <div className="absolute inset-0 pointer-events-none z-50 overflow-hidden">
-                {hearts.map((h) => (
-                  <div
-                    key={h.id}
-                    style={{
-                      left: `${h.x}%`,
-                      fontSize: `${h.size}px`,
-                      animationDelay: `${h.delay}s`,
-                    }}
-                    className="absolute bottom-16 text-rose-500 animate-float-up opacity-0"
-                  >
-                    ❤️
-                  </div>
-                ))}
-              </div>
-
               <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
                   <MessageSquare className="w-5 h-5 text-blue-600" />
@@ -1282,18 +1345,22 @@ export default function LiveMatchPage({ params }: Props) {
                     Chưa có thảo luận nào. Hãy gửi bình luận đầu tiên!
                   </div>
                 )}
+                <div ref={commentsEndRef} />
               </div>
 
               {/* Comment Form */}
               <form onSubmit={handlePostComment} className="p-4 border-t border-slate-100 bg-white flex gap-2 items-center">
-                <input
-                  type="text"
-                  placeholder={user ? 'Nhập bình luận của bạn...' : 'Đăng nhập để bình luận'}
-                  value={commentText}
-                  onChange={(e) => setCommentText(e.target.value)}
-                  disabled={!user || isCommentSubmitting}
-                  className="flex-grow px-4 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
-                />
+                <div className="relative flex-grow">
+                  <MessageSquare className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+                  <input
+                    type="text"
+                    placeholder={user ? 'Nhập bình luận của bạn...' : 'Đăng nhập để bình luận'}
+                    value={commentText}
+                    onChange={(e) => setCommentText(e.target.value)}
+                    disabled={!user || isCommentSubmitting}
+                    className="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
+                  />
+                </div>
                 <button
                   type="button"
                   onClick={handleSpawnHeart}
@@ -1345,6 +1412,13 @@ export default function LiveMatchPage({ params }: Props) {
           onSetServingTeam={(team) => void handleSetServingTeam(team)}
           onSideOut={() => void handleSideOut()}
           onAddPenalty={(team, kind, label, note) => void handleAddPenalty(team, kind, label, note)}
+        />
+
+        <ShareModal
+          isOpen={isShareModalOpen}
+          onClose={() => setIsShareModalOpen(false)}
+          shareUrl={typeof window !== 'undefined' ? window.location.href : ''}
+          title={`Thảo luận & Theo dõi tỉ số trực tiếp: ${team1Name} vs ${team2Name}`}
         />
 
       </div>

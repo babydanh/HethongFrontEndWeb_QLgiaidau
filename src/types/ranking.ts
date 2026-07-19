@@ -6,6 +6,8 @@ export interface PlayerRanking {
   matchType?: 'SINGLES' | 'DOUBLES' | 'MIXED_DOUBLES';
   genderRestriction?: 'MALE' | 'FEMALE' | 'MIXED' | null;
   eloPoints: number;
+  peakElo?: number;
+  shieldActive?: boolean;
   matchesPlayed: number;
   matchesWon: number;
   winStreak: number;

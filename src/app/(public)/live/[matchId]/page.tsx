@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { startTransition, useEffect, useRef, useState, use } from 'react';
 import { matchesApi, Match, MatchComment } from '@/features/matches/api';
 import {
@@ -47,6 +48,7 @@ interface Props {
 }
 
 export default function LiveMatchPage({ params }: Props) {
+  const router = useRouter();
   const resolvedParams = use(params);
   const matchId = resolvedParams.matchId;
   const { match, scores, viewerCount, cheerCount, setCheerCount, setMatch, setScores, isLoading, error } = useLiveMatch(matchId);
@@ -303,16 +305,8 @@ export default function LiveMatchPage({ params }: Props) {
     match.tournament?.createdBy === user?.id ||
     isAssignedReferee;
 
-  // Chặn comment nếu trận kết thúc hơn 2 tiếng
-  const isCommentDisabled = () => {
-    if (match.status === 'COMPLETED' && match.completedAt) {
-      try {
-        const d = new Date(match.completedAt);
-        if (!isNaN(d.getTime()) && (Date.now() - d.getTime()) > 2 * 60 * 60 * 1000) return true;
-      } catch { return true; }
-    }
-    return false;
-  };
+  // Cho phép bình luận tự do thoải mái
+  const isCommentDisabled = () => false;
 
   const currentSetIdx = scores.findIndex((s) => !s.isFinished);
   const activeSetIdx = currentSetIdx !== -1 ? currentSetIdx : scores.length - 1;
@@ -901,6 +895,11 @@ export default function LiveMatchPage({ params }: Props) {
 
   const handlePostComment = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) {
+      toast.error('Bạn cần đăng nhập để gửi bình luận.');
+      router.push('/login');
+      return;
+    }
     if (!normalizedCommentText) {
       toast.error('Bình luận đang trống. Vui lòng nhập nội dung trước khi gửi.');
       return;
@@ -912,9 +911,13 @@ export default function LiveMatchPage({ params }: Props) {
     try {
       const created = await matchesApi.createComment(matchId, { commentText: normalizedCommentText });
       setCommentText('');
-      // Thêm comment ngay lập tức vào local state, không chờ socket
+      // Thêm comment ngay lập tức vào local state với thông tin user hiện tại
       if (created) {
-        setComments(prev => [created, ...prev]);
+        const enrichedComment = {
+          ...created,
+          user: created.user || (user ? { id: user.id, fullName: user.fullName, avatarUrl: user.avatarUrl } : null),
+        };
+        setComments(prev => [enrichedComment, ...prev]);
       }
       toast.success('Đã gửi bình luận vào phòng thảo luận trận đấu.', { id: `comment-${matchId}` });
     } catch (err: unknown) {
@@ -1087,76 +1090,70 @@ export default function LiveMatchPage({ params }: Props) {
                   
                   {/* Team 1 */}
                   <div className="flex flex-col items-center flex-1 w-full">
-                    <div className={cn(
-                      'mb-4 flex h-20 w-20 items-center justify-center rounded-lg border shadow-md transition-all',
-                      match.winnerId === match.participant1Id && match.status === 'COMPLETED'
-                        ? 'bg-emerald-50 border-emerald-200 text-emerald-600 ring-4 ring-emerald-100'
-                        : 'bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-100 text-blue-600',
-                    )}>
-                      {match.winnerId === match.participant1Id && match.status === 'COMPLETED' ? (
-                        <Trophy className="w-10 h-10" />
-                      ) : part1?.members?.length === 1 ? (
-                        part1.members[0].avatarUrl ? (
-                          <img src={part1.members[0].avatarUrl} alt="" className="w-16 h-16 rounded-full object-cover" />
-                        ) : (
-                          <span className="text-3xl font-bold text-blue-600">{part1.members[0].fullName?.charAt(0) || '?'}</span>
-                        )
-                      ) : part1?.members && part1.members.length > 1 ? (
-                        <div className="flex -space-x-3">
-                          {part1.members.slice(0, 2).map((m) => (
-                            m.avatarUrl ? (
-                              <img key={m.userId} src={m.avatarUrl} alt="" className="w-10 h-10 rounded-full object-cover border-2 border-white" />
-                            ) : (
-                              <span key={m.userId} className="w-10 h-10 rounded-full bg-blue-100 border-2 border-white flex items-center justify-center text-sm font-bold text-blue-600">
-                                {m.fullName?.charAt(0) || '?'}
-                              </span>
-                            )
-                          ))}
-                        </div>
-                      ) : (
-                        <Users className="w-9 h-9" />
-                      )}
+                    {/* Large Premium Team Avatar */}
+                    <div className="mb-4 flex items-center justify-center">
+                      {(() => {
+                        const members = part1?.members || [];
+                        const names = team1Name.split('-').map(n => n.trim());
+                        const isDoubles = names.length > 1 || members.length > 1;
+
+                        if (!isDoubles) {
+                          // ĐƠN - 1 VĐV
+                          const m = members[0];
+                          const name = m?.fullName || team1Name;
+                          return (
+                            <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 p-1 shadow-lg transform hover:scale-105 transition-transform">
+                              <div className="w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden">
+                                {m?.avatarUrl ? (
+                                  <img src={m.avatarUrl} alt="" className="w-full h-full object-cover" />
+                                ) : (
+                                  <span className="text-3xl font-black text-blue-700 uppercase">{name.charAt(0)}</span>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        }
+
+                        // ĐÔI - 2 VĐV
+                        const p1Name = members[0]?.fullName || names[0] || 'VĐV 1';
+                        const p2Name = members[1]?.fullName || names[1] || 'VĐV 2';
+                        return (
+                          <div className="flex items-center -space-x-5 py-1">
+                            <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-blue-600 to-cyan-500 p-1 shadow-lg z-10">
+                              <div className="w-full h-full rounded-full bg-slate-900 border-2 border-white flex items-center justify-center overflow-hidden">
+                                {members[0]?.avatarUrl ? (
+                                  <img src={members[0].avatarUrl} alt="" className="w-full h-full object-cover" />
+                                ) : (
+                                  <span className="text-lg font-black text-blue-400 uppercase">{p1Name.charAt(0)}</span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-500 p-1 shadow-md z-0">
+                              <div className="w-full h-full rounded-full bg-slate-800 border-2 border-white flex items-center justify-center overflow-hidden">
+                                {members[1]?.avatarUrl ? (
+                                  <img src={members[1].avatarUrl} alt="" className="w-full h-full object-cover" />
+                                ) : (
+                                  <span className="text-lg font-black text-purple-300 uppercase">{p2Name.charAt(0)}</span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </div>
-                    <h3 className="text-lg font-bold text-slate-900 text-center leading-snug">{team1Name}</h3>
+
+                    <h3 className="text-xl font-black text-slate-900 text-center leading-snug">{team1Name}</h3>
                     {(() => {
                       const elo = getTeamEloDisplay(part1);
                       if (elo === null) return null;
                       return (
-                        <span className="text-[10px] font-bold text-blue-600 bg-blue-50/70 border border-blue-100/60 px-2 py-0.5 rounded-full mt-1.5 shadow-3xs flex items-center gap-1">
+                        <span className="text-[10px] font-bold text-blue-600 bg-blue-50/70 border border-blue-100/60 px-2.5 py-0.5 rounded-full mt-1.5 shadow-3xs flex items-center gap-1">
                           <Activity className="w-3.5 h-3.5 text-blue-500" />
                           <span>ELO: {elo}</span>
                         </span>
                       );
                     })()}
                     <div className="text-slate-500 text-xs font-bold mt-1.5 uppercase tracking-wider">{scorePresentation.wonSummaryLabel}: {match.p1SetsWon}</div>
-                    
-                    {part1 && part1.members && part1.members.length > 0 && (
-                      <div className="mt-4 flex flex-col items-center gap-1.5 w-full">
-                        <div className="flex flex-wrap justify-center gap-2">
-                          {part1.members.map((member) => (
-                            <div key={member.userId} className="flex items-center gap-1">
-                              <Link
-                                href={`/users/${member.userId}`}
-                                className="flex items-center gap-2 bg-slate-50/80 hover:bg-blue-50 border border-slate-200/60 hover:border-blue-200 rounded-lg px-2.5 py-1 transition-all group shadow-[0_1px_3px_rgba(0,0,0,0.02)]"
-                              >
-                                <div className="text-left leading-none">
-                                  <p className="text-[11px] font-bold text-slate-700 group-hover:text-blue-700 transition-colors">{member.fullName || 'Người chơi'}</p>
-                                  {member.isMock ? (
-                                    <p className="text-[8px] font-medium text-slate-400 mt-0.5">
-                                      VĐV ảo
-                                    </p>
-                                  ) : member.elo ? (
-                                    <p className="text-[8px] font-medium text-slate-400 mt-0.5">
-                                      {member.elo.tierName} • <span className="font-bold text-blue-600">{member.elo.eloPoints} ELO</span>
-                                    </p>
-                                  ) : null}
-                                </div>
-                              </Link>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
                   </div>
 
                   {/* Main Score Display */}
@@ -1178,76 +1175,70 @@ export default function LiveMatchPage({ params }: Props) {
 
                   {/* Team 2 */}
                   <div className="flex flex-col items-center flex-1 w-full">
-                    <div className={cn(
-                      'mb-4 flex h-20 w-20 items-center justify-center rounded-lg border shadow-md transition-all',
-                      match.winnerId === match.participant2Id && match.status === 'COMPLETED'
-                        ? 'bg-emerald-50 border-emerald-200 text-emerald-600 ring-4 ring-emerald-100'
-                        : 'bg-gradient-to-br from-indigo-50 to-blue-50 border-indigo-100 text-indigo-600',
-                    )}>
-                      {match.winnerId === match.participant2Id && match.status === 'COMPLETED' ? (
-                        <Trophy className="w-10 h-10" />
-                      ) : part2?.members?.length === 1 ? (
-                        part2.members[0].avatarUrl ? (
-                          <img src={part2.members[0].avatarUrl} alt="" className="w-16 h-16 rounded-full object-cover" />
-                        ) : (
-                          <span className="text-3xl font-bold text-indigo-600">{part2.members[0].fullName?.charAt(0) || '?'}</span>
-                        )
-                      ) : part2?.members && part2.members.length > 1 ? (
-                        <div className="flex -space-x-3">
-                          {part2.members.slice(0, 2).map((m) => (
-                            m.avatarUrl ? (
-                              <img key={m.userId} src={m.avatarUrl} alt="" className="w-10 h-10 rounded-full object-cover border-2 border-white" />
-                            ) : (
-                              <span key={m.userId} className="w-10 h-10 rounded-full bg-indigo-100 border-2 border-white flex items-center justify-center text-sm font-bold text-indigo-600">
-                                {m.fullName?.charAt(0) || '?'}
-                              </span>
-                            )
-                          ))}
-                        </div>
-                      ) : (
-                        <Users className="w-9 h-9" />
-                      )}
+                    {/* Large Premium Team Avatar */}
+                    <div className="mb-4 flex items-center justify-center">
+                      {(() => {
+                        const members = part2?.members || [];
+                        const names = team2Name.split('-').map(n => n.trim());
+                        const isDoubles = names.length > 1 || members.length > 1;
+
+                        if (!isDoubles) {
+                          // ĐƠN - 1 VĐV
+                          const m = members[0];
+                          const name = m?.fullName || team2Name;
+                          return (
+                            <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-rose-500 via-red-500 to-amber-500 p-1 shadow-lg transform hover:scale-105 transition-transform">
+                              <div className="w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden">
+                                {m?.avatarUrl ? (
+                                  <img src={m.avatarUrl} alt="" className="w-full h-full object-cover" />
+                                ) : (
+                                  <span className="text-3xl font-black text-rose-600 uppercase">{name.charAt(0)}</span>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        }
+
+                        // ĐÔI - 2 VĐV
+                        const p1Name = members[0]?.fullName || names[0] || 'VĐV 1';
+                        const p2Name = members[1]?.fullName || names[1] || 'VĐV 2';
+                        return (
+                          <div className="flex items-center -space-x-5 py-1">
+                            <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-rose-600 to-pink-500 p-0.5 shadow-lg z-10">
+                              <div className="w-full h-full rounded-full bg-slate-900 border-2 border-white flex items-center justify-center overflow-hidden">
+                                {members[0]?.avatarUrl ? (
+                                  <img src={members[0].avatarUrl} alt="" className="w-full h-full object-cover" />
+                                ) : (
+                                  <span className="text-lg font-black text-rose-400 uppercase">{p1Name.charAt(0)}</span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-amber-500 to-orange-500 p-0.5 shadow-md z-0">
+                              <div className="w-full h-full rounded-full bg-slate-800 border-2 border-white flex items-center justify-center overflow-hidden">
+                                {members[1]?.avatarUrl ? (
+                                  <img src={members[1].avatarUrl} alt="" className="w-full h-full object-cover" />
+                                ) : (
+                                  <span className="text-lg font-black text-amber-400 uppercase">{p2Name.charAt(0)}</span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </div>
-                    <h3 className="text-lg font-bold text-slate-900 text-center leading-snug">{team2Name}</h3>
+
+                    <h3 className="text-xl font-black text-slate-900 text-center leading-snug">{team2Name}</h3>
                     {(() => {
                       const elo = getTeamEloDisplay(part2);
                       if (elo === null) return null;
                       return (
-                        <span className="text-[10px] font-bold text-blue-600 bg-blue-50/70 border border-blue-100/60 px-2 py-0.5 rounded-full mt-1.5 shadow-3xs flex items-center gap-1">
+                        <span className="text-[10px] font-bold text-blue-600 bg-blue-50/70 border border-blue-100/60 px-2.5 py-0.5 rounded-full mt-1.5 shadow-3xs flex items-center gap-1">
                           <Activity className="w-3.5 h-3.5 text-blue-500" />
                           <span>ELO: {elo}</span>
                         </span>
                       );
                     })()}
                     <div className="text-slate-500 text-xs font-bold mt-1.5 uppercase tracking-wider">{scorePresentation.wonSummaryLabel}: {match.p2SetsWon}</div>
-                    
-                    {part2 && part2.members && part2.members.length > 0 && (
-                      <div className="mt-4 flex flex-col items-center gap-1.5 w-full">
-                        <div className="flex flex-wrap justify-center gap-2">
-                          {part2.members.map((member) => (
-                            <div key={member.userId} className="flex items-center gap-1">
-                              <Link
-                                href={`/users/${member.userId}`}
-                                className="flex items-center gap-2 bg-slate-50/80 hover:bg-blue-50 border border-slate-200/60 hover:border-blue-200 rounded-lg px-2.5 py-1 transition-all group shadow-[0_1px_3px_rgba(0,0,0,0.02)]"
-                              >
-                                <div className="text-left leading-none">
-                                  <p className="text-[11px] font-bold text-slate-700 group-hover:text-blue-700 transition-colors">{member.fullName || 'Người chơi'}</p>
-                                  {member.isMock ? (
-                                    <p className="text-[8px] font-medium text-slate-400 mt-0.5">
-                                      VĐV ảo
-                                    </p>
-                                  ) : member.elo ? (
-                                    <p className="text-[8px] font-medium text-slate-400 mt-0.5">
-                                      {member.elo.tierName} • <span className="font-bold text-blue-600">{member.elo.eloPoints} ELO</span>
-                                    </p>
-                                  ) : null}
-                                </div>
-                              </Link>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </div>
 
@@ -1375,26 +1366,30 @@ export default function LiveMatchPage({ params }: Props) {
 
               {/* Comments list */}
               <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
-                {comments.map((comment) => (
-                  <div key={comment.id} className="flex gap-3 items-start animate-in fade-in slide-in-from-bottom-2 duration-300">
-                    <div className="w-8 h-8 rounded-full bg-blue-50 border border-slate-200 flex items-center justify-center font-bold text-xs text-blue-600 shrink-0 uppercase overflow-hidden">
-                      {comment.user?.avatarUrl ? (
-                        <img src={comment.user.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
-                      ) : (
-                        (comment.user?.fullName || 'N').charAt(0)
-                      )}
-                    </div>
-                    <div className="bg-slate-50 rounded-lg p-3 border border-slate-100 flex-1 min-w-0">
-                      <div className="flex justify-between items-baseline gap-2">
-                        <span className="text-xs font-bold text-slate-800 truncate">{comment.user?.fullName || 'Người dùng'}</span>
-                        <span className="text-[9px] text-slate-400 font-medium shrink-0">
-                          {new Date(comment.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
-                        </span>
+                {comments.map((comment) => {
+                  const authorName = comment.user?.fullName || 'Người dùng';
+                  const avatarUrl = comment.user?.avatarUrl || null;
+                  return (
+                    <div key={comment.id} className="flex gap-3 items-start animate-in fade-in slide-in-from-bottom-2 duration-300">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 border border-slate-200 flex items-center justify-center font-bold text-xs text-white shrink-0 uppercase overflow-hidden shadow-sm">
+                        {avatarUrl ? (
+                          <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                        ) : (
+                          authorName.charAt(0)
+                        )}
                       </div>
-                      <p className="text-xs text-slate-650 mt-1 leading-relaxed break-words">{comment.commentText}</p>
+                      <div className="bg-slate-50 rounded-lg p-3 border border-slate-100 flex-1 min-w-0">
+                        <div className="flex justify-between items-baseline gap-2">
+                          <span className="text-xs font-bold text-slate-800 truncate">{authorName}</span>
+                          <span className="text-[9px] text-slate-400 font-medium shrink-0">
+                            {new Date(comment.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-650 mt-1 leading-relaxed break-words">{comment.commentText}</p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
                 {comments.length === 0 && (
                   <div className="text-center py-8 text-slate-400 text-sm my-auto">
                     Chưa có thảo luận nào. Hãy gửi bình luận đầu tiên!
@@ -1409,9 +1404,14 @@ export default function LiveMatchPage({ params }: Props) {
                   <MessageSquare className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
                   <input
                     type="text"
-                    placeholder={user ? 'Nhập bình luận của bạn...' : 'Nhập bình luận (khách)...'}
+                    placeholder={user ? `Bình luận dưới tên ${user.fullName || user.email}...` : 'Đăng nhập để gửi bình luận...'}
                     value={commentText}
                     onChange={(e) => setCommentText(e.target.value)}
+                    onFocus={() => {
+                      if (!user) {
+                        toast.error('Vui lòng đăng nhập để bình luận!');
+                      }
+                    }}
                     disabled={isCommentSubmitting || isCommentDisabled()}
                     className="w-full pl-9 pr-4 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
                   />

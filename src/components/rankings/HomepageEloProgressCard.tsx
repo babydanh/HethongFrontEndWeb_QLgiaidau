@@ -54,6 +54,7 @@ export default function HomepageEloProgressCard({
   categoryRanks,
   eloPoints,
   displayTier,
+  sportName,
   isAuthenticated,
 }: HomepageEloProgressCardProps) {
   if (!isAuthenticated) return null;
@@ -82,11 +83,25 @@ export default function HomepageEloProgressCard({
 
   return (
     <div className="bg-white rounded-lg border border-slate-200/80 shadow-[0_8px_30px_rgb(0,0,0,0.02)] p-4 flex flex-col gap-3 relative overflow-hidden">
-      {/* Header: Tên rank + ELO badge */}
+      {/* Header: Tên rank + ELO badge + Môn thể thao & Hình thức */}
       <div className="flex items-center justify-between gap-3">
-        <h4 className="text-base font-bold text-slate-800 tracking-tight">
-          {rankLabel}
-        </h4>
+        <div>
+          <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
+            {sportName && (
+              <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded uppercase tracking-wider">
+                {sportName}
+              </span>
+            )}
+            {activeRankInfo?.matchType && (
+              <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded uppercase tracking-wider">
+                {getEloMatchTypeLabel(activeRankInfo.matchType)}
+              </span>
+            )}
+          </div>
+          <h4 className="text-base font-bold text-slate-800 tracking-tight">
+            {rankLabel}
+          </h4>
+        </div>
         <span className={cn(
           'inline-flex items-center gap-1 text-[11px] px-3 py-1.5 rounded-full font-bold shadow-sm transition-all duration-300 border border-slate-100',
           currentTier.color

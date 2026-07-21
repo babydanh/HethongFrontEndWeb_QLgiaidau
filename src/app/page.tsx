@@ -18,6 +18,7 @@ import { tournamentsApi, Tournament } from '@/features/tournaments/api';
 import { communitiesApi, Community } from '@/features/communities/api';
 import { rankingsApi, PlayerRanking } from '@/features/rankings/api';
 import { matchesApi } from '@/features/matches/api';
+import { socketClient } from '@/lib/socket';
 import { BracketMatch } from '@/features/tournaments/api';
 import TournamentHeroBanner from '@/components/ui/TournamentHeroBanner';
 import HomepageEloProgressCard from '@/components/rankings/HomepageEloProgressCard';
@@ -263,13 +264,7 @@ export default function HomePage() {
   const [liveMatchPage, setLiveMatchPage] = useState(1);
   const [upcomingMatches, setUpcomingMatches] = useState<BracketMatch[]>([]);
   const [completedMatches, setCompletedMatches] = useState<BracketMatch[]>([]);
-  const [highFives, setHighFives] = useState<Record<string, number>>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('match_high_fives');
-      return saved ? JSON.parse(saved) : {};
-    }
-    return {};
-  });
+  const [highFives, setHighFives] = useState<Record<string, number>>({});
 
   const [tournamentPages, setTournamentPages] = useState<Record<string, number>>({});
 
@@ -399,9 +394,21 @@ export default function HomePage() {
         const [allMatchesRes] = await Promise.allSettled([allMatchesPromise] as const);
 
         if (allMatchesRes.status === 'fulfilled') {
-          const allMatches = (allMatchesRes.value.data as unknown as BracketMatch[]) || [];
+          const rawData = (allMatchesRes.value as Record<string, unknown>).data;
+          const allMatchesData = (rawData as Record<string, unknown>)?.data || rawData || [];
+          const allMatches = (Array.isArray(allMatchesData) ? allMatchesData : []) as BracketMatch[];
 
-          // Client-side filter theo status
+          // Populate initial cheer counts from backend for all matches
+          const matchCheerMap: Record<string, number> = {};
+          allMatches.forEach((m: unknown) => {
+            const item = m as Record<string, unknown>;
+            if (item.id && typeof item.cheerCount === 'number') {
+              matchCheerMap[item.id as string] = item.cheerCount;
+            }
+          });
+          if (Object.keys(matchCheerMap).length > 0) {
+            setHighFives(prev => ({ ...prev, ...matchCheerMap }));
+          }
           const allLiveMatches = allMatches.filter(m => m.status === 'ONGOING');
           setLiveMatches(allLiveMatches.filter(m => (!shouldFilterByTournament || validTournamentIds.has(m.tournamentId ?? '')) && !m.isBye));
 
@@ -459,7 +466,19 @@ export default function HomePage() {
             // Extract from Axios response properly
             const responseData = (matchesRes as Record<string, unknown>).data;
             const mData = (responseData as Record<string, unknown>)?.data || responseData || [];
-            setRankedTournamentMatches(mData as unknown as BracketMatch[]);
+            const matchesArray = Array.isArray(mData) ? mData : [];
+            setRankedTournamentMatches(matchesArray as unknown as BracketMatch[]);
+            
+            // Sync initial cheer counts from backend
+            const initialCheerMap: Record<string, number> = {};
+            matchesArray.forEach((m: Record<string, unknown>) => {
+              if (m.id && typeof m.cheerCount === 'number') {
+                initialCheerMap[m.id as string] = m.cheerCount;
+              }
+            });
+            if (Object.keys(initialCheerMap).length > 0) {
+              setHighFives(prev => ({ ...prev, ...initialCheerMap }));
+            }
           } catch (err) {
             console.error('Failed to load ranked tournament matches', err);
             setRankedTournamentMatches([]);
@@ -477,35 +496,45 @@ export default function HomePage() {
     fetchData();
   }, [selectedCategoryId, isAuthenticated, user?.id]);
 
+  useEffect(() => {
+    const socket = socketClient.getMatchSocket();
+    if (!socket.connected) {
+      socket.connect();
+    }
+    const handleCheerUpdate = (rawPayload: { matchId: string; cheerCount: number } | string) => {
+      const payload = typeof rawPayload === 'string'
+        ? JSON.parse(rawPayload) as { matchId: string; cheerCount: number }
+        : rawPayload;
+      if (payload?.matchId) {
+        setHighFives(prev => ({
+          ...prev,
+          [payload.matchId]: payload.cheerCount,
+        }));
+      }
+    };
+    socket.on('cheer:update', handleCheerUpdate);
+    return () => {
+      socket.off('cheer:update', handleCheerUpdate);
+    };
+  }, []);
+
   // High five / cheer handler — optimistic + persist qua API
   const handleHighFive = async (matchId: string) => {
-    setHighFives(prev => {
-      const updated = {
-        ...prev,
-        [matchId]: (prev[matchId] ?? 0) + 1,
-      };
-      localStorage.setItem('match_high_fives', JSON.stringify(updated));
-      return updated;
-    });
+    setHighFives(prev => ({
+      ...prev,
+      [matchId]: (prev[matchId] ?? 0) + 1,
+    }));
     try {
       const res = await matchesApi.cheerMatch(matchId);
-      setHighFives(prev => {
-        const updated = {
-          ...prev,
-          [matchId]: res.cheerCount,
-        };
-        localStorage.setItem('match_high_fives', JSON.stringify(updated));
-        return updated;
-      });
+      setHighFives(prev => ({
+        ...prev,
+        [matchId]: res.cheerCount,
+      }));
     } catch {
-      setHighFives(prev => {
-        const updated = {
-          ...prev,
-          [matchId]: Math.max(0, (prev[matchId] ?? 1) - 1),
-        };
-        localStorage.setItem('match_high_fives', JSON.stringify(updated));
-        return updated;
-      });
+      setHighFives(prev => ({
+        ...prev,
+        [matchId]: Math.max(0, (prev[matchId] ?? 1) - 1),
+      }));
       toast.error('Không thể gửi cổ vũ, vui lòng thử lại.');
     }
   };
@@ -611,7 +640,7 @@ export default function HomePage() {
     contextMatches: BracketMatch[] = [match],
     contextTournament?: Pick<Tournament, 'format' | 'maxParticipants'> | null,
   ) => {
-    const currentHighFives = highFives[match.id] || 0;
+    const currentHighFives = highFives[match.id] ?? ((match as unknown as Record<string, unknown>).cheerCount as number) ?? 0;
     const isCompleted = match.status === 'COMPLETED' || match.winnerId != null;
     const isLive = (match.status === 'ONGOING' || match.status === 'IN_PROGRESS') && !isCompleted;
     const isScheduled = match.status === 'SCHEDULED';

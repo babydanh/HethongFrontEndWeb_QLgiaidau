@@ -12,14 +12,14 @@ export function getEloTier(elo: number, tierName?: string) {
   if (elo >= 1800) {
     return {
       name: 'Tier S',
-      color: 'bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 text-amber-950 border-amber-400 font-extrabold shadow-sm animate-pulse',
+      color: 'bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 text-amber-950 border-amber-400 font-bold shadow-sm animate-pulse',
       icon: '👑',
     };
   }
   if (elo >= 1700) {
     return {
       name: 'High Tier A',
-      color: 'bg-rose-500/15 text-rose-600 border-rose-500/30 font-bold',
+      color: 'bg-rose-500/15 text-rose-600 border-rose-500/30 font-semibold',
       icon: '🔥',
     };
   }
@@ -33,7 +33,7 @@ export function getEloTier(elo: number, tierName?: string) {
   if (elo >= 1500) {
     return {
       name: 'High Tier B',
-      color: 'bg-violet-500/15 text-violet-650 border-violet-550/30 font-bold',
+      color: 'bg-violet-500/15 text-violet-650 border-violet-550/30 font-semibold',
       icon: '⚡',
     };
   }
@@ -47,7 +47,7 @@ export function getEloTier(elo: number, tierName?: string) {
   if (elo >= 1300) {
     return {
       name: 'High Tier C',
-      color: 'bg-teal-500/15 text-teal-650 border-teal-500/30 font-bold',
+      color: 'bg-teal-500/15 text-teal-650 border-teal-500/30 font-semibold',
       icon: '💎',
     };
   }
@@ -61,7 +61,7 @@ export function getEloTier(elo: number, tierName?: string) {
   if (elo >= 1100) {
     return {
       name: 'High Tier D',
-      color: 'bg-slate-500/15 text-slate-700 border-slate-550/25 font-bold',
+      color: 'bg-slate-500/15 text-slate-700 border-slate-550/25 font-semibold',
       icon: '🥈',
     };
   }
@@ -78,13 +78,13 @@ export function EloTierBadge({ elo, tierName, size = 'md', className, ...props }
   const sizeClasses = {
     sm: 'px-2 py-0.5 text-[10px] gap-1',
     md: 'px-2.5 py-1 text-xs gap-1.5',
-    lg: 'px-3 py-1.5 text-sm gap-2 font-bold',
+    lg: 'px-3 py-1.5 text-sm gap-2 font-semibold',
   };
 
   return (
     <div
       className={cn(
-        'inline-flex items-center rounded-full border font-semibold transition-colors shadow-sm',
+        'inline-flex items-center rounded-full border font-medium transition-colors shadow-sm',
         tier.color,
         sizeClasses[size],
         className

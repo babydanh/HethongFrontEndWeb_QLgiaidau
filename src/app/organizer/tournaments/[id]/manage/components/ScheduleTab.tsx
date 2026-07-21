@@ -63,11 +63,11 @@ export function ScheduleTab({
   handleSaveScheduleDetails,
 }: ScheduleTabProps) {
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-6 md:p-8 shadow-sm space-y-6 animate-in fade-in duration-200">
+    <div className="bg-white rounded-lg border border-slate-200 p-6 md:p-8 shadow-sm space-y-6 animate-in fade-in duration-200">
       <h2 className="text-xl font-bold text-slate-900 border-b pb-2 mb-4">Lịch thi đấu & Địa điểm</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        <div className="flex flex-col gap-3.5 bg-slate-50 border p-5 rounded-2xl">
+        <div className="flex flex-col gap-3.5 bg-slate-50 border p-5 rounded-lg">
           <h4 className="font-bold text-slate-800 text-sm border-b pb-2 mb-1">Địa điểm thi đấu</h4>
           
           <Input
@@ -137,7 +137,7 @@ export function ScheduleTab({
           </div>
         </div>
 
-        <div className="flex flex-col gap-3.5 bg-slate-50 border p-5 rounded-2xl">
+        <div className="flex flex-col gap-3.5 bg-slate-50 border p-5 rounded-lg">
           <h4 className="font-bold text-slate-800 text-sm border-b pb-2 mb-1">Thời gian thi đấu</h4>
           
           <DateTimePicker

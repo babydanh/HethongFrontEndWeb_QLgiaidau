@@ -7,7 +7,8 @@ import { buildMatchScoreSummary, getMatchScorePresentation, resolveMatchSportRul
 import Image from 'next/image';
 import {
   Trophy, Calendar, Users, MapPin, ArrowRight, Shield, Heart, Share2, Play,
-  Plus, Bell, Mail, ChevronRight, ChevronLeft, UserPlus, Star, Loader2, MessageSquare
+  Plus, Bell, Mail, ChevronRight, ChevronLeft, UserPlus, Star, Loader2, MessageSquare,
+  Hourglass, Coins, Sparkles
 } from 'lucide-react';
 import { getSportLogo } from '@/constants/sports';
 import { categoriesApi } from '@/features/categories/api';
@@ -106,11 +107,9 @@ function CommunityLogoAvatar({ src, alt }: { src?: string | null; alt: string })
 function LiveMatchSportLabel({ match }: { match: BracketMatch }) {
   const resolvedRules = resolveMatchSportRules(match);
   const presentation = getMatchScorePresentation(resolvedRules.kind);
-  const logo = getSportLogo(presentation.sportLabel);
 
   return (
     <span className="inline-flex items-center gap-1 align-middle">
-      {logo && <img src={logo} alt={presentation.sportLabel} className="w-3.5 h-3.5 object-contain" />}
       <span>{presentation.sportLabel}</span>
     </span>
   );
@@ -166,8 +165,8 @@ function RegistrationCountdown({ targetDate }: { targetDate: string }) {
 
   if (!text) return null;
   return (
-    <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200 whitespace-nowrap">
-      ⏳ {text}
+    <span className="text-[10px] font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200 whitespace-nowrap">
+      <Hourglass className="w-3 h-3 inline-block" /> {text}
     </span>
   );
 }
@@ -202,13 +201,13 @@ function HomepageTournamentCard({ tournament }: { tournament: Tournament }) {
 
   const dateRange = useMemo(() => {
     if (!tournament.startDate || !tournament.endDate) return '';
-    const start = new Date(tournament.startDate).toLocaleDateString('vi-VN');
-    const end = new Date(tournament.endDate).toLocaleDateString('vi-VN');
+    const start = new Date(tournament.startDate).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+    const end = new Date(tournament.endDate).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
     return `${start} - ${end}`;
   }, [tournament.startDate, tournament.endDate]);
 
   return (
-    <div className="bg-white rounded-3xl border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.015)] overflow-hidden flex flex-col group relative">
+    <div className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_2px_12px_rgba(15,23,42,0.06)] overflow-hidden flex flex-col group relative">
       <div className="h-44 bg-slate-900 relative overflow-hidden shrink-0">
         <Image
           src={imageSrc}
@@ -222,10 +221,11 @@ function HomepageTournamentCard({ tournament }: { tournament: Tournament }) {
         
         {/* Badges */}
         <div className="absolute top-4 left-4 z-10 flex gap-2">
-          <span className="px-3 py-1 bg-white/95 backdrop-blur-md rounded-full shadow-sm text-slate-800 text-[9px] font-black tracking-wider uppercase border border-white/20">
-            {getSportLogo(tournament.category?.name) ? '🏸 Cầu lông' : '🏆 Giải đấu'}
+          <span className="px-3 py-1 bg-white/95 backdrop-blur-md rounded-full shadow-sm text-slate-800 text-[9px] font-bold tracking-wider uppercase border border-white/20">
+            <Trophy className="w-3 h-3 inline-block mr-1" />
+            {tournament.category?.name || 'Giải đấu'}
           </span>
-          <span className="px-3 py-1 bg-emerald-600/90 backdrop-blur-md rounded-full shadow-sm text-white text-[9px] font-black tracking-wider uppercase">
+          <span className="px-3 py-1 bg-emerald-600/90 backdrop-blur-md rounded-full shadow-sm text-white text-[9px] font-bold tracking-wider uppercase">
             Vừa kết thúc
           </span>
         </div>
@@ -233,25 +233,16 @@ function HomepageTournamentCard({ tournament }: { tournament: Tournament }) {
 
       <div className="p-5 flex-grow flex flex-col justify-between">
         <div>
-          <h3 className="text-sm font-black text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1 leading-snug">
+          <h3 className="text-sm font-semibold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1 leading-snug">
             {tournament.name}
           </h3>
-          <div className="flex items-center gap-1.5 mt-2 text-[10px] text-slate-500 font-bold">
+          <div className="flex items-center gap-1.5 mt-2 text-[10px] text-slate-500 font-medium">
             <Calendar className="w-3.5 h-3.5 text-slate-400" />
             <span>{dateRange}</span>
           </div>
         </div>
 
-        <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-100 text-[10px] font-bold text-slate-500">
-          <span className="flex items-center gap-1">
-            <Users className="w-3.5 h-3.5 text-slate-400" />
-            {tournament.maxParticipants} VĐV
-          </span>
-          <span className="text-slate-800 bg-slate-100 px-2.5 py-1 rounded-lg">
-            {Number(tournament.entryFee) === 0 ? 'Miễn phí' : `${Number(tournament.entryFee).toLocaleString('vi-VN')} VND`}
-          </span>
         </div>
-      </div>
 
       <Link href={`/tournaments/${tournament.id}`} className="absolute inset-0 z-20" />
     </div>
@@ -294,9 +285,31 @@ export default function HomePage() {
   useEffect(() => {
     const timer = setTimeout(() => setIsClient(true), 0);
     const loadCategories = async () => {
+      // Cache categories trong sessionStorage (5 phút)
+      const CACHE_KEY = 'homepage_categories';
+      const CACHE_TTL = 5 * 60 * 1000; // 5 phút
       try {
+        if (typeof window !== 'undefined') {
+          const cached = sessionStorage.getItem(CACHE_KEY);
+          if (cached) {
+            try {
+              const parsed = JSON.parse(cached);
+              if (Date.now() - parsed.timestamp < CACHE_TTL) {
+                setCategories(parsed.data || []);
+                return; // Dùng cache, không cần gọi API
+              }
+            } catch {
+              // Ignore parse error, fetch fresh
+            }
+          }
+        }
         const res = await categoriesApi.getCategories();
-        setCategories(res.data || []);
+        const data = res.data || [];
+        setCategories(data);
+        // Lưu cache
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: Date.now(), data }));
+        }
       } catch (error: unknown) {
         if (!isNetworkError(error)) {
           console.error('Failed to load categories on homepage', error);
@@ -313,33 +326,46 @@ export default function HomePage() {
       try {
         setIsLoading(true);
         setIsLoadingRanked(true);
+
+        // ── Cache tournaments: kiểm tra sessionStorage trước khi gọi API ──
+        const CACHE_KEY_TOUR = 'homepage_tournaments';
+        const CACHE_TTL = 5 * 60 * 1000; // 5 phút
+        let cachedTournaments: Tournament[] | null = null;
+        if (typeof window !== 'undefined' && !selectedCategoryId) {
+          const cached = sessionStorage.getItem(CACHE_KEY_TOUR);
+          if (cached) {
+            try {
+              const parsed = JSON.parse(cached);
+              if (Date.now() - parsed.timestamp < CACHE_TTL && Array.isArray(parsed.data)) {
+                cachedTournaments = parsed.data || [];
+              } else {
+                // Cache hết hạn hoặc corrupt → xoá để fetch mới
+                sessionStorage.removeItem(CACHE_KEY_TOUR);
+              }
+            } catch {
+              sessionStorage.removeItem(CACHE_KEY_TOUR);
+            }
+          }
+        }
+
         const tParams: Record<string, unknown> = { limit: 20 };
         if (selectedCategoryId) {
           tParams.categoryId = selectedCategoryId;
         }
 
-        const tournamentsPromise = tournamentsApi.getPublicTournaments(tParams);
-        
+        // ── ĐỢT 1 (ngay lập tức): tournaments + communities (2 calls) ──
+        const tournamentsPromise = cachedTournaments
+          ? Promise.resolve({ data: cachedTournaments })
+          : tournamentsApi.getPublicTournaments(tParams);
         const cParams: Record<string, unknown> = { limit: 6 };
         if (selectedCategoryId) {
           cParams.categoryId = selectedCategoryId;
         }
         const communitiesPromise = communitiesApi.getCommunities(cParams);
-        const liveMatchesPromise = matchesApi.getMatches({ status: 'ONGOING', limit: 100, publicOnly: true });
-        const upcomingMatchesPromise = matchesApi.getMatches({ status: 'SCHEDULED', limit: 100, publicOnly: true });
-        const completedMatchesPromise = matchesApi.getMatches({ status: 'COMPLETED', limit: 100, publicOnly: true });
 
-        const userRankingsPromise = isAuthenticated && user?.id
-          ? rankingsApi.getUserRankings(user.id)
-          : Promise.resolve(null);
-
-        const [tRes, cRes, lRes, uRes, userRankRes, compRes] = await Promise.allSettled([
+        const [tRes, cRes] = await Promise.allSettled([
           tournamentsPromise,
           communitiesPromise,
-          liveMatchesPromise,
-          upcomingMatchesPromise,
-          userRankingsPromise,
-          completedMatchesPromise,
         ] as const);
 
         const fetchedTournaments = tRes.status === 'fulfilled' ? tRes.value.data || [] : [];
@@ -349,31 +375,64 @@ export default function HomePage() {
         );
         setTournaments(activeTournaments);
 
+        // Cache tournaments trong sessionStorage (5 phút)
+        if (typeof window !== 'undefined' && !selectedCategoryId) {
+          const CACHE_KEY_TOUR = 'homepage_tournaments';
+          sessionStorage.setItem(CACHE_KEY_TOUR, JSON.stringify({ timestamp: Date.now(), data: activeTournaments }));
+        }
+
         // Build set of valid tournament IDs
         const validTournamentIds = new Set(activeTournaments.map((t: Tournament) => t.id));
-
+        // Nếu tournaments API trả về rỗng, có thể cache cũ hoặc API lỗi.
+        // Vẫn hiển thị matches mà không filter theo tournament ID.
+        const shouldFilterByTournament = validTournamentIds.size > 0;
         setCommunities(cRes.status === 'fulfilled' ? cRes.value.data || [] : []);
 
-        // Lọc live/upcoming/completed matches: chỉ lấy những trận thuộc tournament hợp lệ và không phải trận Bye (miễn đấu)
-        const allLiveMatches = lRes.status === 'fulfilled' ? (lRes.value.data as unknown as BracketMatch[]) || [] : [];
-        setLiveMatches(allLiveMatches.filter(m => validTournamentIds.has(m.tournamentId ?? '') && !m.isBye));
+        // ── ĐỢT 2 (sau 300ms): matches — gộp 1 call multi-status, limit 50 ──
+        await new Promise(resolve => setTimeout(resolve, 300));
 
-        const fetchedUpcoming = uRes.status === 'fulfilled' ? (uRes.value.data as unknown as BracketMatch[]) || [] : [];
-        // Filter by valid tournaments + both participants set + not isBye
-        const validUpcoming = fetchedUpcoming.filter(m =>
-          validTournamentIds.has(m.tournamentId ?? '') &&
-          !m.isBye &&
-          m.participant1 != null && 
-          m.participant2 != null &&
-          m.participant1.teamName.trim().toLowerCase() !== 'tbd' &&
-          m.participant2.teamName.trim().toLowerCase() !== 'tbd' &&
-          m.participant1.teamName.trim().toLowerCase() !== 'chờ xác định' &&
-          m.participant2.teamName.trim().toLowerCase() !== 'chờ xác định'
-        );
-        setUpcomingMatches(validUpcoming);
+        const allMatchesPromise = matchesApi.getMatches({
+          status: 'ONGOING,SCHEDULED,COMPLETED',
+          limit: 50,
+          publicOnly: true,
+        });
+        const [allMatchesRes] = await Promise.allSettled([allMatchesPromise] as const);
 
-        const fetchedCompleted = compRes.status === 'fulfilled' ? (compRes.value.data as unknown as BracketMatch[]) || [] : [];
-        setCompletedMatches(fetchedCompleted.filter(m => validTournamentIds.has(m.tournamentId ?? '') && !m.isBye));
+        if (allMatchesRes.status === 'fulfilled') {
+          const allMatches = (allMatchesRes.value.data as unknown as BracketMatch[]) || [];
+
+          // Client-side filter theo status
+          const allLiveMatches = allMatches.filter(m => m.status === 'ONGOING');
+          setLiveMatches(allLiveMatches.filter(m => (!shouldFilterByTournament || validTournamentIds.has(m.tournamentId ?? '')) && !m.isBye));
+
+          const fetchedUpcoming = allMatches.filter(m => m.status === 'SCHEDULED');
+          const validUpcoming = fetchedUpcoming.filter(m =>
+            (!shouldFilterByTournament || validTournamentIds.has(m.tournamentId ?? '')) &&
+            !m.isBye &&
+            m.participant1 != null &&
+            m.participant2 != null &&
+            m.participant1.teamName.trim().toLowerCase() !== 'tbd' &&
+            m.participant2.teamName.trim().toLowerCase() !== 'tbd' &&
+            m.participant1.teamName.trim().toLowerCase() !== 'chờ xác định' &&
+            m.participant2.teamName.trim().toLowerCase() !== 'chờ xác định'
+          );
+          setUpcomingMatches(validUpcoming);
+
+          const fetchedCompleted = allMatches.filter(m => m.status === 'COMPLETED');
+          setCompletedMatches(fetchedCompleted.filter(m => (!shouldFilterByTournament || validTournamentIds.has(m.tournamentId ?? '')) && !m.isBye));
+        } else {
+          setLiveMatches([]);
+          setUpcomingMatches([]);
+          setCompletedMatches([]);
+        }
+
+        // ── ĐỢT 3 (sau 600ms): rankings (1 call) ──
+        await new Promise(resolve => setTimeout(resolve, 300));
+
+        const userRankingsPromise = isAuthenticated && user?.id
+          ? rankingsApi.getUserRankings(user.id)
+          : Promise.resolve(null);
+        const [userRankRes] = await Promise.allSettled([userRankingsPromise] as const);
 
         if (userRankRes.status === 'fulfilled' && userRankRes.value) {
           setUserRankings(userRankRes.value);
@@ -381,7 +440,7 @@ export default function HomePage() {
           setUserRankings(null);
         }
 
-        // Find active or recently completed ranked tournament
+        // ── ĐỢT 4 (sau 900ms): ranked tournament matches (chỉ fetch nếu tìm thấy) ──
         const foundRanked = fetchedTournaments.find(t => {
           if (!t.isRanked) return false;
           if (t.status === 'DRAFT' || isTournamentCancelled(t.status)) return false;
@@ -416,19 +475,39 @@ export default function HomePage() {
       }
     };
     fetchData();
-  }, [selectedCategoryId, isAuthenticated, user?.id, categories]);
+  }, [selectedCategoryId, isAuthenticated, user?.id]);
 
-  // High five simulation handler
-  const handleHighFive = (matchId: string) => {
+  // High five / cheer handler — optimistic + persist qua API
+  const handleHighFive = async (matchId: string) => {
     setHighFives(prev => {
       const updated = {
         ...prev,
-        [matchId]: (prev[matchId] || 0) + 1
+        [matchId]: (prev[matchId] ?? 0) + 1,
       };
       localStorage.setItem('match_high_fives', JSON.stringify(updated));
       return updated;
     });
-    toast.success('High five! 👏', { icon: '👏', id: `hf-${matchId}` });
+    try {
+      const res = await matchesApi.cheerMatch(matchId);
+      setHighFives(prev => {
+        const updated = {
+          ...prev,
+          [matchId]: res.cheerCount,
+        };
+        localStorage.setItem('match_high_fives', JSON.stringify(updated));
+        return updated;
+      });
+    } catch {
+      setHighFives(prev => {
+        const updated = {
+          ...prev,
+          [matchId]: Math.max(0, (prev[matchId] ?? 1) - 1),
+        };
+        localStorage.setItem('match_high_fives', JSON.stringify(updated));
+        return updated;
+      });
+      toast.error('Không thể gửi cổ vũ, vui lòng thử lại.');
+    }
   };
 
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -548,28 +627,28 @@ export default function HomePage() {
         key={match.id}
         whileHover={{ y: -3, scale: 1.005 }}
         transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-        className={`bg-white rounded-2xl border ${
+        className={`bg-white rounded-lg border ${
           isLive 
             ? 'border-rose-100 shadow-[0_4px_20px_rgba(244,63,94,0.03)]' 
             : 'border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.015)]'
         } overflow-hidden flex flex-col justify-between`}
       >
         {/* Match Header */}
-        <div className={`px-4 py-2.5 ${isLive ? 'bg-rose-50/30' : 'bg-slate-50/50'} border-b border-slate-100 flex items-center justify-between text-[10px] font-bold text-slate-500`}>
+        <div className={`px-4 py-2.5 ${isLive ? 'bg-rose-50/30' : 'bg-slate-50/50'} border-b border-slate-100 flex items-center justify-between text-[10px] font-semibold text-slate-500`}>
           <div className="flex items-center gap-1.5 truncate max-w-[70%]">
-            {isLive ? (
-              <span className="relative flex h-2 w-2">
+            {isLive && (
+              <span className="relative flex h-2 w-2 shrink-0">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-600"></span>
               </span>
-            ) : null}
+            )}
             <span className={`uppercase tracking-wider shrink-0 ${
-              isLive ? 'text-rose-600 font-extrabold animate-pulse' : isCompleted ? 'text-slate-500' : 'text-blue-600'
+              isLive ? 'text-rose-600 font-bold animate-pulse' : isCompleted ? 'text-slate-500' : 'text-blue-600'
             }`}>
               {isLive ? 'Trực tiếp' : isCompleted ? 'Đã kết thúc' : 'Sắp diễn ra'}
             </span>
             <span className="text-slate-300">•</span>
-            <span className="shrink-0 text-slate-600 font-semibold">{roundLabel}</span>
+            <span className="shrink-0 text-slate-600 font-medium">{roundLabel}</span>
             {match.courtName && (
               <>
                 <span className="text-slate-300">•</span>
@@ -580,7 +659,7 @@ export default function HomePage() {
               </>
             )}
           </div>
-          <span className="uppercase text-slate-650 bg-slate-100/80 px-2 py-0.5 rounded text-[8px] font-black truncate max-w-[40%] md:max-w-[28%]">
+          <span className="uppercase text-slate-650 bg-slate-100/80 px-2 py-0.5 rounded text-[8px] font-bold truncate max-w-[40%] md:max-w-[28%]">
             {translateStageName(match.group?.stage?.name) || 'Vòng đấu'}
           </span>
         </div>
@@ -591,31 +670,23 @@ export default function HomePage() {
           <div className="flex items-center gap-2.5 w-5/12 min-w-0">
             <div className="min-w-0">
               <div className="flex items-center gap-1 min-w-0">
-                <span className="text-xs font-black text-slate-800 block leading-tight truncate">
+                <span className={`text-xs font-bold block leading-tight truncate ${isCompleted && match.winnerId === match.participant1?.id ? 'text-emerald-600' : 'text-slate-800'}`}>
                   {match.participant1?.teamName || 'Chờ xác định'}
                 </span>
-                {isCompleted && match.winnerId && match.winnerId === match.participant1?.id && (
-                  <span className="text-[8px] text-emerald-600 bg-emerald-50 border border-emerald-200 px-1 py-0.2 rounded font-black shrink-0">
-                    THẮNG
-                  </span>
-                )}
+
               </div>
-              {match.participant1?.seed && (
-                <span className="text-[8px] text-blue-600 font-extrabold bg-blue-50 px-1 py-0.2 rounded mt-0.5 inline-block">
-                  Hạt giống #{match.participant1.seed}
-                </span>
-              )}
+
             </div>
           </div>
 
           {/* Score Display Panel */}
           <div className="flex flex-col items-center justify-center shrink-0 min-w-[75px]">
             {isScheduled ? (
-              <span className="text-[10px] font-black text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-100/50">
+              <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-100/50">
                 {match.scheduledAt ? new Date(match.scheduledAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : 'VS'}
               </span>
             ) : (
-              <div className={`flex items-center justify-center px-2.5 py-1 rounded-full font-mono text-[10px] font-black leading-none tracking-wider shadow-sm border ${
+              <div className={`flex items-center justify-center px-2.5 py-1 rounded-full font-mono text-[10px] font-bold leading-none tracking-wider shadow-sm border ${
                 isLive 
                   ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
                   : 'bg-slate-100 text-slate-700 border-slate-200'
@@ -633,49 +704,27 @@ export default function HomePage() {
           <div className="flex items-center gap-2.5 w-5/12 min-w-0 justify-end text-right">
             <div className="min-w-0">
               <div className="flex items-center justify-end gap-1 min-w-0">
-                {isCompleted && match.winnerId && match.winnerId === match.participant2?.id && (
-                  <span className="text-[8px] text-emerald-600 bg-emerald-50 border border-emerald-200 px-1 py-0.2 rounded font-black shrink-0">
-                    THẮNG
-                  </span>
-                )}
-                <span className="text-xs font-black text-slate-800 block leading-tight truncate">
+
+                <span className={`text-xs font-bold block leading-tight truncate ${isCompleted && match.winnerId === match.participant2?.id ? 'text-emerald-600' : 'text-slate-800'}`}>
                   {match.participant2?.teamName || 'Chờ xác định'}
                 </span>
               </div>
-              {match.participant2?.seed && (
-                <span className="text-[8px] text-blue-600 font-extrabold bg-blue-50 px-1 py-0.2 rounded mt-0.5 inline-block">
-                  Hạt giống #{match.participant2.seed}
-                </span>
-              )}
+
             </div>
           </div>
         </div>
 
         {/* Location & Sport Row */}
-        <div className="px-4 pb-2.5 pt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] text-slate-500 font-semibold border-t border-slate-100 bg-slate-50/10">
+        <div className="px-4 pb-2.5 pt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] text-slate-500 font-medium border-t border-slate-100 bg-slate-50/10">
           <div className="shrink-0 text-slate-650 flex items-center gap-1">
-            {(() => {
-              const resolvedRules = resolveMatchSportRules(match);
-              const presentation = getMatchScorePresentation(resolvedRules.kind);
-              const logo = getSportLogo(presentation.sportLabel);
-              return (
-                <>
-                  {logo ? (
-                    <img src={logo} alt="" className="w-3.5 h-3.5 object-contain opacity-70" />
-                  ) : (
-                    <span>🏆</span>
-                  )}
-                  <span className="font-bold text-slate-800 text-[10px]">
-                    {getFormatLabel((match as EnrichedMatch).tournament?.matchType || ((match as unknown) as Record<string, unknown>).matchType as string | undefined, (match as EnrichedMatch).tournament?.genderRestriction || ((match as unknown) as Record<string, unknown>).genderRestriction as string | undefined)}
-                  </span>
-                </>
-              );
-            })()}
+            <span className="font-semibold text-slate-700 text-[10px] whitespace-nowrap">
+              {getFormatLabel((match as EnrichedMatch).tournament?.matchType || ((match as unknown) as Record<string, unknown>).matchType as string | undefined, (match as EnrichedMatch).tournament?.genderRestriction || ((match as unknown) as Record<string, unknown>).genderRestriction as string | undefined)}
+            </span>
           </div>
           {match.courtName ? (
             <div className="truncate max-w-[220px]" title={match.courtAddress ? `${match.courtName} - ${match.courtAddress}` : match.courtName}>
-              <span className="text-slate-400 font-bold">Sân:</span>{' '}
-              <span className="font-bold text-slate-750">
+              <span className="text-slate-400 font-semibold">Sân:</span>{' '}
+              <span className="font-semibold text-slate-750">
                 {match.courtName}{match.courtAddress ? ` (${match.courtAddress})` : ''}
               </span>
             </div>
@@ -688,18 +737,18 @@ export default function HomePage() {
         <div className="px-2 py-1.5 bg-slate-50/50 border-t border-slate-100 grid grid-cols-3 gap-1">
           <button 
             onClick={() => handleHighFive(match.id)}
-            className="flex items-center justify-center gap-1 py-1.5 min-h-[44px] hover:bg-white rounded-xl text-[10px] font-black text-slate-600 transition-all border border-transparent hover:border-slate-150 active:scale-95 duration-100 cursor-pointer"
+            className="flex items-center justify-center gap-1 py-1.5 min-h-[44px] hover:bg-white rounded-lg text-[10px] font-bold text-slate-600 transition-all border border-transparent hover:border-slate-150 active:scale-95 duration-100 cursor-pointer"
           >
             <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500/10" />
             <span>Cổ vũ ({currentHighFives})</span>
           </button>
 
           <Link href={`/live/${match.id}`} className="w-full">
-            <div className="flex items-center justify-center gap-1 py-1.5 min-h-[44px] hover:bg-white rounded-xl text-[10px] font-black text-slate-650 transition-all border border-transparent hover:border-slate-150 active:scale-95 duration-100 cursor-pointer w-full">
+            <div className="flex items-center justify-center gap-1 py-1.5 min-h-[44px] hover:bg-white rounded-lg text-[10px] font-bold text-slate-650 transition-all border border-transparent hover:border-slate-150 active:scale-95 duration-100 cursor-pointer w-full">
               {isLive ? (
                 <>
                   <Play className="w-3.5 h-3.5 text-emerald-600 fill-emerald-600/10 animate-pulse" />
-                  <span className="text-emerald-700 font-extrabold">Xem Live</span>
+                  <span className="text-emerald-700 font-bold">Xem Live</span>
                 </>
               ) : (
                 <>
@@ -718,7 +767,7 @@ export default function HomePage() {
               setActiveShareTitle(`Trận đấu: ${p1Name} vs ${p2Name}`);
               setIsShareModalOpen(true);
             }}
-            className="flex items-center justify-center gap-1 py-1.5 min-h-[44px] hover:bg-white rounded-xl text-[10px] font-black text-slate-600 transition-all border border-transparent hover:border-slate-150 active:scale-95 duration-100 cursor-pointer"
+            className="flex items-center justify-center gap-1 py-1.5 min-h-[44px] hover:bg-white rounded-lg text-[10px] font-bold text-slate-600 transition-all border border-transparent hover:border-slate-150 active:scale-95 duration-100 cursor-pointer"
           >
             <Share2 className="w-3.5 h-3.5 text-blue-500" />
             <span>Chia sẻ</span>
@@ -778,7 +827,7 @@ export default function HomePage() {
           <div className="flex overflow-x-auto gap-2 pb-2 no-scrollbar">
             <button
               onClick={() => setSelectedCategoryId('')}
-              className={`relative flex items-center gap-1.5 px-4.5 py-2.5 rounded-full text-xs font-black transition-all shrink-0 cursor-pointer ${
+              className={`relative flex items-center gap-1.5 px-4.5 py-2.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer ${
                 selectedCategoryId === ''
                   ? 'text-white'
                   : 'bg-white text-slate-650 border border-slate-200/60 shadow-sm hover:border-slate-300 hover:text-slate-900'
@@ -802,7 +851,7 @@ export default function HomePage() {
                 <button
                   key={cat.id}
                   onClick={() => setSelectedCategoryId(cat.id)}
-                  className={`relative flex items-center gap-1.5 px-4.5 py-2.5 rounded-full text-xs font-black transition-all shrink-0 cursor-pointer ${
+                  className={`relative flex items-center gap-1.5 px-4.5 py-2.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer ${
                     isActive
                       ? 'text-white'
                       : 'bg-white text-slate-650 border border-slate-200/60 shadow-sm hover:border-slate-300 hover:text-slate-900'
@@ -818,11 +867,8 @@ export default function HomePage() {
                   <span className="relative z-10 flex items-center gap-1.5">
                     {(() => {
                       const logo = getSportLogo(cat.name);
-                      return logo ? (
-                        <img src={logo} alt={cat.name} className="w-4 h-4 object-contain" />
-                      ) : (
-                        <Trophy className="w-3.5 h-3.5" />
-                      );
+                      if (logo) return <img src={logo} alt={cat.name} className="w-3.5 h-3.5 object-contain" />;
+                      return <Trophy className="w-3.5 h-3.5" />;
                     })()}
                     {cat.name}
                   </span>
@@ -833,60 +879,61 @@ export default function HomePage() {
 
           {/* Section 1: Giải đấu nổi bật */}
           <section className="flex flex-col gap-4">
-            <div className="flex justify-between items-end">
-              <h2 className="text-lg font-black text-slate-900 tracking-tight">Giải đấu nổi bật</h2>
-              <Link href="/tournaments" className="text-xs font-black text-blue-600 hover:underline flex items-center gap-1">
+            <div className="flex justify-between items-end relative z-[30]">
+              <h2 className="text-lg font-semibold text-slate-900 tracking-tight">Giải đấu nổi bật</h2>
+              <Link href="/tournaments" className="text-xs font-semibold text-blue-600 hover:underline flex items-center gap-1 relative z-[31]">
                 Xem tất cả <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
             
             {isLoading ? (
-              <div className="w-full h-[220px] md:h-[300px] bg-slate-200 animate-pulse rounded-2xl"></div>
+              <div className="w-full h-[220px] md:h-[300px] bg-slate-200 animate-pulse rounded-lg"></div>
             ) : (
               <TournamentHeroBanner tournaments={activeTournaments} heightClass="h-[320px] md:h-[420px]" />
             )}
           </section>
 
           {/* Section 2: Trận live (Match Feed style) */}
-          <section className="flex flex-col gap-4">
-            <div className="flex justify-between items-end">
-              <h2 className="text-lg font-black text-slate-900 tracking-tight">Trận đấu trực tiếp</h2>
+          <section className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_2px_12px_rgba(15,23,42,0.06)] overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 flex justify-between items-center">
+              <h2 className="text-sm font-semibold text-slate-900 tracking-tight">Trận đấu trực tiếp</h2>
               <span className="flex h-2 w-2 relative">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-450 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-600"></span>
               </span>
             </div>
+            <div className="p-4 flex flex-col gap-4">
 
             {isLoading ? (
               <div className="space-y-4">
-                <div className="bg-slate-200 animate-pulse h-40 rounded-2xl" />
-                <div className="bg-slate-200 animate-pulse h-40 rounded-2xl" />
+                <div className="bg-slate-200 animate-pulse h-40 rounded-xl" />
+                <div className="bg-slate-200 animate-pulse h-40 rounded-xl" />
               </div>
             ) : liveMatches.length === 0 ? (
-              <div className="flex flex-col items-center justify-center p-10 bg-slate-100/40 rounded-3xl border border-dashed border-slate-200/80 text-center text-slate-400">
+              <div className="flex flex-col items-center justify-center py-10 text-center text-slate-400">
                 <div className="relative flex h-3.5 w-3.5 mb-2.5 justify-center items-center">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-slate-350 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-slate-400"></span>
                 </div>
-                <span className="text-xs font-bold text-slate-450">Hiện chưa có trận đấu nào đang trực tiếp.</span>
+                <span className="text-xs font-medium text-slate-450">Hiện chưa có trận đấu nào đang trực tiếp.</span>
               </div>
             ) : (
-              <div className="space-y-6">
+              <div className="space-y-4">
                 <motion.div
                   key={liveMatchPage}
                   initial={{ opacity: 0, x: 12 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.3, ease: 'easeOut' }}
-                  className="space-y-6"
+                  className="space-y-4"
                 >
                   {Object.entries(liveMatchesByTournament).map(([tournamentName, rawGroup]) => {
                     const group = rawGroup as GroupMatchesData;
                     const matchedTournament = tournaments.find(t => t.id === group.id);
                     const isRanked = matchedTournament ? matchedTournament.isRanked : (group.isRanked || group.matches.some(m => (m as EnrichedMatch).tournament?.isRanked));
                     return (
-                      <div key={tournamentName} className="bg-white rounded-3xl border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.015)] overflow-hidden flex flex-col">
+                      <div key={tournamentName} className="bg-slate-50/60 rounded-xl border border-slate-200/80 overflow-hidden flex flex-col">
                         {/* Group Tournament Header */}
-                        <div className="px-5 py-3.5 bg-gradient-to-r from-blue-50/20 to-indigo-50/10 border-b border-slate-100 flex items-center justify-between">
+                        <div className="px-4 py-3 bg-white border-b border-slate-100 flex items-center justify-between">
                           <Link
                             href={group.id ? `/tournaments/${group.id}` : '#'}
                             className="flex items-center gap-3 group/header hover:opacity-90 transition-opacity flex-1 min-w-0"
@@ -896,18 +943,18 @@ export default function HomePage() {
                             </div>
                             <div className="min-w-0">
                               {isRanked && (
-                                <span className="text-[9px] uppercase tracking-wider font-extrabold text-blue-600 bg-blue-50 px-2 py-0.5 rounded inline-block mb-0.5">
-                                  GIẢI ĐẤU HẠNG • {(((group.matches[0] as EnrichedMatch | undefined)?.tournament)?.category?.name || (group.matches[0] as EnrichedMatch | undefined)?.tournament?.categoryName || '').toUpperCase()}
+                                <span className="text-[9px] uppercase tracking-wider font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded inline-block mb-0.5">
+                                  GIẢI ĐẤU HẠNG
                                 </span>
                               )}
-                              <h3 className="text-sm font-black text-slate-900 group-hover/header:text-blue-600 transition-colors block leading-tight truncate">
+                              <h3 className="text-sm font-bold text-slate-900 group-hover/header:text-blue-600 transition-colors block leading-tight truncate">
                                 {group.name}
                               </h3>
                             </div>
                           </Link>
                         </div>
                         {/* Matches List Grid */}
-                        <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-3">
                           {group.matches.map((match) => renderMatchCard(match, true, group.matches, matchedTournament ?? null))}
                         </div>
                       </div>
@@ -917,12 +964,11 @@ export default function HomePage() {
 
                 {/* Pagination Controls */}
                 {totalLivePages > 1 && (
-                  <div className="flex items-center justify-center gap-1.5 pt-2">
+                  <div className="flex items-center justify-center gap-1.5 pt-1">
                     <button
                       onClick={() => setLiveMatchPage(p => Math.max(1, p - 1))}
                       disabled={liveMatchPage === 1}
-                      className="px-3 py-1.5 text-xs font-black text-slate-600 bg-white border border-slate-200 hover:border-slate-350 rounded-xl disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
-                    >
+                      className="px-3 py-1.5 text-xs font-bold text-slate-600 bg-white border border-slate-200 hover:border-slate-350 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer">
                       Trước
                     </button>
                     {Array.from({ length: totalLivePages }).map((_, idx) => {
@@ -932,7 +978,7 @@ export default function HomePage() {
                         <button
                           key={pageNum}
                           onClick={() => setLiveMatchPage(pageNum)}
-                          className={`relative w-8 h-8 flex items-center justify-center text-xs font-black rounded-xl transition-all cursor-pointer border ${
+                          className={`relative w-8 h-8 flex items-center justify-center text-xs font-bold rounded-lg transition-all cursor-pointer border ${
                             isCurrent
                               ? 'bg-blue-600 text-white border-transparent shadow-sm'
                               : 'bg-white text-slate-650 border-slate-200 hover:border-slate-350 hover:text-slate-900'
@@ -945,33 +991,34 @@ export default function HomePage() {
                     <button
                       onClick={() => setLiveMatchPage(p => Math.min(totalLivePages, p + 1))}
                       disabled={liveMatchPage === totalLivePages}
-                      className="px-3 py-1.5 text-xs font-black text-slate-600 bg-white border border-slate-200 hover:border-slate-350 rounded-xl disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
-                    >
+                      className="px-3 py-1.5 text-xs font-bold text-slate-600 bg-white border border-slate-200 hover:border-slate-350 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer">
                       Sau
                     </button>
                   </div>
                 )}
               </div>
             )}
+            </div>
           </section>
 
           {/* Section 2.2: Trận đấu vừa kết thúc */}
-          <section className="flex flex-col gap-4">
-            <div className="flex justify-between items-end">
-              <h2 className="text-lg font-black text-slate-900 tracking-tight">Kết quả trận đấu vừa qua</h2>
-              <span className="text-[10px] font-extrabold text-emerald-650 bg-emerald-50 px-2 py-0.5 rounded uppercase tracking-wider">Kết quả</span>
+          <section className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_2px_12px_rgba(15,23,42,0.06)] overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 flex justify-between items-center">
+              <h2 className="text-sm font-semibold text-slate-900 tracking-tight">Kết quả trận đấu vừa qua</h2>
+              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded uppercase tracking-wider">Kết quả</span>
             </div>
+            <div className="p-4 flex flex-col gap-4">
 
             {isLoading ? (
               <div className="space-y-4">
-                <div className="bg-slate-200 animate-pulse h-40 rounded-2xl" />
+                <div className="bg-slate-200 animate-pulse h-40 rounded-xl" />
               </div>
             ) : completedMatches.length === 0 ? (
-              <div className="bg-white border rounded-2xl p-12 text-center text-slate-455 font-bold text-xs">
+              <div className="py-10 text-center text-slate-500 font-medium text-xs">
                 Hiện chưa có trận đấu nào kết thúc gần đây.
               </div>
             ) : (
-              <div className="space-y-6">
+              <div className="space-y-4">
                 {Object.entries(completedMatchesByTournament).slice(0, 5).map(([tournamentName, rawGroup]) => {
                   const group = rawGroup as GroupMatchesData;
                   const tournamentId = group.id || tournamentName;
@@ -982,9 +1029,9 @@ export default function HomePage() {
                   const isRanked = matchedTournament ? matchedTournament.isRanked : (group.isRanked || group.matches.some(m => (m as EnrichedMatch).tournament?.isRanked));
 
                   return (
-                    <div key={tournamentName} className="bg-white rounded-3xl border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.015)] overflow-hidden flex flex-col">
+                    <div key={tournamentName} className="bg-slate-50/60 rounded-xl border border-slate-200/80 overflow-hidden flex flex-col">
                       {/* Group Tournament Header */}
-                      <div className="px-5 py-3.5 bg-gradient-to-r from-blue-50/20 to-indigo-50/10 border-b border-slate-100 flex items-center justify-between">
+                      <div className="px-4 py-3 bg-white border-b border-slate-100 flex items-center justify-between">
                         <Link 
                           href={group.id ? `/tournaments/${group.id}` : '#'}
                           className="flex items-center gap-3 group/header hover:opacity-90 transition-opacity flex-1 min-w-0"
@@ -994,11 +1041,11 @@ export default function HomePage() {
                           </div>
                             <div className="min-w-0">
                               {isRanked && (
-                                <span className="text-[9px] uppercase tracking-wider font-extrabold text-blue-600 bg-blue-50 px-2 py-0.5 rounded inline-block mb-0.5">
-                                   GIẢI ĐẤU HẠNG • {(((group.matches[0] as EnrichedMatch | undefined)?.tournament)?.category?.name || (group.matches[0] as EnrichedMatch | undefined)?.tournament?.categoryName || '').toUpperCase()}
+                                <span className="text-[9px] uppercase tracking-wider font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded inline-block mb-0.5">
+                                  GIẢI ĐẤU HẠNG
                                 </span>
                               )}
-                              <h3 className="text-sm font-black text-slate-900 group-hover/header:text-blue-600 transition-colors block leading-tight truncate">
+                              <h3 className="text-sm font-bold text-slate-900 group-hover/header:text-blue-600 transition-colors block leading-tight truncate">
                                 {group.name}
                               </h3>
                             </div>
@@ -1012,26 +1059,26 @@ export default function HomePage() {
                               <button
                                 onClick={() => setTournamentPages(prev => ({ ...prev, [tournamentId]: Math.max(1, currentPage - 1) }))}
                                 disabled={currentPage === 1}
-                                className="w-6 h-6 flex items-center justify-center p-1 text-slate-500 bg-white border border-slate-200 rounded-lg hover:border-slate-350 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                                className="w-8 h-8 flex items-center justify-center p-1 text-slate-500 bg-white border border-slate-200 rounded-lg hover:border-slate-350 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
                               >
-                                <ChevronLeft className="w-3.5 h-3.5" />
+                                <ChevronLeft className="w-4 h-4" />
                               </button>
-                              <span className="text-[9px] font-bold text-slate-450 px-0.5">
+                              <span className="text-[11px] font-semibold text-slate-450 px-0.5">
                                 {currentPage}/{totalPages}
                               </span>
                               <button
                                 onClick={() => setTournamentPages(prev => ({ ...prev, [tournamentId]: Math.min(totalPages, currentPage + 1) }))}
                                 disabled={currentPage === totalPages}
-                                className="w-6 h-6 flex items-center justify-center p-1 text-slate-500 bg-white border border-slate-200 rounded-lg hover:border-slate-350 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                                className="w-8 h-8 flex items-center justify-center p-1 text-slate-500 bg-white border border-slate-200 rounded-lg hover:border-slate-350 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
                               >
-                                <ChevronRight className="w-3.5 h-3.5" />
+                                <ChevronRight className="w-4 h-4" />
                               </button>
                             </div>
                           )}
                         </div>
                       </div>
                       {/* Matches List Grid */}
-                      <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-3">
                         {displayMatches.map((match) => renderMatchCard(match, true, group.matches, matchedTournament ?? null))}
                       </div>
                     </div>
@@ -1039,25 +1086,27 @@ export default function HomePage() {
                 })}
               </div>
             )}
+            </div>
           </section>
  
           {/* Section 2.5: Trận đấu sắp diễn ra */}
-          <section className="flex flex-col gap-4">
-            <div className="flex justify-between items-end">
-              <h2 className="text-lg font-black text-slate-900 tracking-tight">Lịch thi đấu sắp diễn ra</h2>
-              <span className="text-[10px] font-extrabold text-blue-600 bg-blue-50 px-2 py-0.5 rounded uppercase tracking-wider">Lịch thi đấu</span>
+          <section className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_2px_12px_rgba(15,23,42,0.06)] overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 flex justify-between items-center">
+              <h2 className="text-sm font-semibold text-slate-900 tracking-tight">Lịch thi đấu sắp diễn ra</h2>
+              <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded uppercase tracking-wider">Lịch thi đấu</span>
             </div>
- 
+            <div className="p-4 flex flex-col gap-4">
+
             {isLoading ? (
               <div className="space-y-4">
-                <div className="bg-slate-200 animate-pulse h-40 rounded-2xl" />
+                <div className="bg-slate-200 animate-pulse h-40 rounded-xl" />
               </div>
             ) : upcomingMatches.length === 0 ? (
-              <div className="bg-white border rounded-2xl p-12 text-center text-slate-455 font-bold text-xs">
+              <div className="py-10 text-center text-slate-500 font-medium text-xs">
                 Hiện chưa có lịch thi đấu sắp diễn ra.
               </div>
             ) : (
-              <div className="space-y-6">
+              <div className="space-y-4">
                 {Object.entries(upcomingMatchesByTournament).map(([tournamentName, rawGroup]) => {
                   const group = rawGroup as GroupMatchesData;
                   const tournamentId = group.id || tournamentName;
@@ -1068,9 +1117,9 @@ export default function HomePage() {
                   const isRanked = matchedTournament ? matchedTournament.isRanked : (group.isRanked || group.matches.some(m => (m as EnrichedMatch).tournament?.isRanked));
 
                   return (
-                    <div key={tournamentName} className="bg-white rounded-3xl border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.015)] overflow-hidden flex flex-col">
+                    <div key={tournamentName} className="bg-slate-50/60 rounded-xl border border-slate-200/80 overflow-hidden flex flex-col">
                       {/* Group Tournament Header */}
-                      <div className="px-5 py-3.5 bg-gradient-to-r from-blue-50/20 to-indigo-50/10 border-b border-slate-100 flex items-center justify-between">
+                      <div className="px-4 py-3 bg-white border-b border-slate-100 flex items-center justify-between">
                         <Link 
                           href={group.id ? `/tournaments/${group.id}` : '#'}
                           className="flex items-center gap-3 group/header hover:opacity-90 transition-opacity flex-1 min-w-0"
@@ -1080,11 +1129,11 @@ export default function HomePage() {
                           </div>
                             <div className="min-w-0">
                               {isRanked && (
-                                <span className="text-[9px] uppercase tracking-wider font-extrabold text-blue-600 bg-blue-50 px-2 py-0.5 rounded inline-block mb-0.5">
-                                   GIẢI ĐẤU HẠNG • {(((group.matches[0] as EnrichedMatch | undefined)?.tournament)?.category?.name || (group.matches[0] as EnrichedMatch | undefined)?.tournament?.categoryName || '').toUpperCase()}
+                                <span className="text-[9px] uppercase tracking-wider font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded inline-block mb-0.5">
+                                  GIẢI ĐẤU HẠNG
                                 </span>
                               )}
-                              <h3 className="text-sm font-black text-slate-900 group-hover/header:text-blue-600 transition-colors block leading-tight truncate">
+                              <h3 className="text-sm font-bold text-slate-900 group-hover/header:text-blue-600 transition-colors block leading-tight truncate">
                                 {group.name}
                               </h3>
                             </div>
@@ -1097,26 +1146,26 @@ export default function HomePage() {
                               <button
                                 onClick={() => setTournamentPages(prev => ({ ...prev, [tournamentId]: Math.max(1, currentPage - 1) }))}
                                 disabled={currentPage === 1}
-                                className="w-6 h-6 flex items-center justify-center p-1 text-slate-500 bg-white border border-slate-200 rounded-lg hover:border-slate-350 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                                className="w-8 h-8 flex items-center justify-center p-1 text-slate-500 bg-white border border-slate-200 rounded-lg hover:border-slate-350 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
                               >
-                                <ChevronLeft className="w-3.5 h-3.5" />
+                                <ChevronLeft className="w-4 h-4" />
                               </button>
-                              <span className="text-[9px] font-bold text-slate-450 px-0.5">
+                              <span className="text-[11px] font-semibold text-slate-450 px-0.5">
                                 {currentPage}/{totalPages}
                               </span>
                               <button
                                 onClick={() => setTournamentPages(prev => ({ ...prev, [tournamentId]: Math.min(totalPages, currentPage + 1) }))}
                                 disabled={currentPage === totalPages}
-                                className="w-6 h-6 flex items-center justify-center p-1 text-slate-500 bg-white border border-slate-200 rounded-lg hover:border-slate-350 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                                className="w-8 h-8 flex items-center justify-center p-1 text-slate-500 bg-white border border-slate-200 rounded-lg hover:border-slate-350 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
                               >
-                                <ChevronRight className="w-3.5 h-3.5" />
+                                <ChevronRight className="w-4 h-4" />
                               </button>
                             </div>
                           )}
                         </div>
                       </div>
                       {/* Matches List Grid */}
-                      <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-3">
                         {displayMatches.map((match) => renderMatchCard(match, true, group.matches, matchedTournament ?? null))}
                       </div>
                     </div>
@@ -1124,16 +1173,18 @@ export default function HomePage() {
                 })}
               </div>
             )}
+            </div>
           </section>
 
           {/* Section 3: Câu lạc bộ (Bento Grid Compounded) */}
-          <section className="flex flex-col gap-4">
-            <div className="flex justify-between items-end">
-              <h2 className="text-lg font-black text-slate-900 tracking-tight">Cộng đồng câu lạc bộ</h2>
-              <Link href="/communities" className="text-xs font-black text-blue-600 hover:underline flex items-center gap-1">
+          <section className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_2px_12px_rgba(15,23,42,0.06)] overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 flex justify-between items-center">
+              <h2 className="text-sm font-semibold text-slate-900 tracking-tight">Cộng đồng câu lạc bộ</h2>
+              <Link href="/communities" className="text-xs font-semibold text-blue-600 hover:underline flex items-center gap-1">
                 Khám phá thêm <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
+            <div className="p-4">
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {isLoading ? (
@@ -1149,7 +1200,7 @@ export default function HomePage() {
                       <motion.div 
                         whileHover={{ y: -5, scale: 1.01 }}
                         transition={{ type: 'spring', stiffness: 450, damping: 25 }}
-                        className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-[0_4px_20px_rgba(15,23,42,0.02)] hover:shadow-[0_12px_32px_rgba(15,23,42,0.06)] transition-shadow duration-500 flex flex-col justify-between group cursor-pointer h-full relative"
+                        className="bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-[0_2px_12px_rgba(15,23,42,0.06)] hover:shadow-[0_8px_24px_rgba(15,23,42,0.1)] transition-shadow duration-500 flex flex-col justify-between group cursor-pointer h-full relative"
                       >
                         {/* Shimmer Effect */}
                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite] pointer-events-none z-20" />
@@ -1172,7 +1223,7 @@ export default function HomePage() {
                             <span className={`w-1.5 h-1.5 rounded-full ${
                               community.joinMode === 'INVITE_ONLY' ? 'bg-rose-500 animate-pulse' : community.joinMode === 'APPROVAL' ? 'bg-amber-500' : 'bg-emerald-500'
                             }`} />
-                            <span className="text-[8px] font-extrabold tracking-wider uppercase text-slate-700">
+                            <span className="text-[8px] font-bold tracking-wider uppercase text-slate-700">
                               {community.joinMode === 'INVITE_ONLY' ? 'Chỉ mời' : community.joinMode === 'APPROVAL' ? 'Xét duyệt' : 'Tự do'}
                             </span>
                           </div>
@@ -1180,7 +1231,7 @@ export default function HomePage() {
                           {/* Floating Location Badge */}
                           <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 px-2.5 py-1 bg-white/90 backdrop-blur-md rounded-full shadow-sm text-slate-800 border border-white/20">
                             <MapPin className="w-2.5 h-2.5 text-emerald-500 fill-emerald-500/20" />
-                            <span className="text-[8px] font-extrabold tracking-wider uppercase truncate max-w-[90px]">{locationText}</span>
+                            <span className="text-[8px] font-bold tracking-wider uppercase truncate max-w-[90px]">{locationText}</span>
                           </div>
                         </div>
 
@@ -1194,7 +1245,7 @@ export default function HomePage() {
                           {/* Text info next to logo */}
                           <div className="flex-grow min-w-0">
                             <div className="flex items-center gap-1.5 flex-wrap">
-                              <h4 className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1 leading-snug">
+                              <h4 className="text-sm font-semibold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1 leading-snug">
                                 {community.name}
                               </h4>
                               {community.status === 'APPROVED' && (
@@ -1203,7 +1254,7 @@ export default function HomePage() {
                             </div>
 
                             {/* Stats row directly below title */}
-                            <div className="flex items-center gap-2 mt-1 text-[10px] text-slate-500 font-semibold flex-wrap">
+                            <div className="flex items-center gap-2 mt-1 text-[10px] text-slate-500 font-medium flex-wrap">
                               <span className="flex items-center gap-0.5">
                                 <Users className="w-3 h-3 text-slate-400" />
                                 {community._count?.members || 0} thành viên
@@ -1219,12 +1270,12 @@ export default function HomePage() {
                             <div className="flex flex-wrap gap-1 mt-1.5">
                               {community.categories && community.categories.length > 0 ? (
                                 community.categories.slice(0, 2).map(cat => (
-                                  <span key={cat.id} className="inline-flex items-center px-1.5 py-0.2 rounded bg-blue-50 text-blue-700 text-[8px] font-bold border border-blue-100 uppercase tracking-wider">
+                                  <span key={cat.id} className="inline-flex items-center px-1.5 py-0.2 rounded bg-blue-50 text-blue-700 text-[8px] font-semibold border border-blue-100 uppercase tracking-wider">
                                     {cat.name}
                                   </span>
                                 ))
                               ) : (
-                                <span className="inline-flex items-center px-1.5 py-0.2 rounded bg-slate-50 text-slate-500 text-[8px] font-bold border border-slate-100 uppercase tracking-wider">
+                                <span className="inline-flex items-center px-1.5 py-0.2 rounded bg-slate-50 text-slate-500 text-[8px] font-semibold border border-slate-100 uppercase tracking-wider">
                                   Giao hữu
                                 </span>
                               )}
@@ -1236,7 +1287,7 @@ export default function HomePage() {
                   );
                 })
               ) : (
-                <div className="col-span-1 sm:col-span-2 text-center py-8 bg-white rounded-2xl border border-slate-200 border-dashed text-slate-450 font-bold text-xs">
+                <div className="col-span-1 sm:col-span-2 text-center py-8 text-slate-500 font-medium text-xs">
                   Chưa có câu lạc bộ nào thi đấu môn này.
                 </div>
               )}
@@ -1246,36 +1297,36 @@ export default function HomePage() {
                 <motion.div 
                   whileHover={{ scale: 1.01 }}
                   whileTap={{ scale: 0.99 }}
-                  className="bg-slate-50 rounded-2xl border border-dashed border-slate-305 p-4 flex items-center justify-center gap-2 hover:border-blue-500 hover:text-blue-700 text-slate-500 transition-colors cursor-pointer"
+                  className="bg-slate-50 rounded-xl border border-dashed border-slate-300 p-4 flex items-center justify-center gap-2 hover:border-blue-400 hover:text-blue-700 text-slate-500 transition-colors cursor-pointer"
                 >
                   <UserPlus className="w-4 h-4 text-blue-500" />
-                  <span className="text-xs font-black">Khám phá và tham gia câu lạc bộ mới</span>
+                  <span className="text-xs font-bold">Khám phá và tham gia câu lạc bộ mới</span>
                 </motion.div>
               </Link>
+            </div>
             </div>
           </section>
 
           {/* Section 4: Giải vừa kết thúc */}
-          <section className="flex flex-col gap-4">
-            <div className="flex justify-between items-end">
+          <section className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_2px_12px_rgba(15,23,42,0.06)] overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 flex justify-between items-center">
               <div>
-                <h2 className="text-lg font-black text-slate-900 tracking-tight">Giải vừa kết thúc</h2>
-                <p className="text-[11px] font-semibold text-slate-500 mt-1">
-                  Chỉ hiển thị giải đã kết thúc trong 14 ngày gần đây, mới nhất ở đầu.
-                </p>
+                <h2 className="text-sm font-semibold text-slate-900 tracking-tight">Giải vừa kết thúc</h2>
+                <p className="text-[11px] font-medium text-slate-500 mt-0.5">14 ngày gần đây</p>
               </div>
-              <Link href="/tournaments" className="text-xs font-black text-blue-600 hover:underline flex items-center gap-1">
+              <Link href="/tournaments" className="text-xs font-semibold text-blue-600 hover:underline flex items-center gap-1">
                 Khám phá <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
+            <div className="p-4">
 
             {isLoading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-slate-200 animate-pulse h-72 rounded-3xl" />
-                <div className="bg-slate-200 animate-pulse h-72 rounded-3xl" />
+                <div className="bg-slate-200 animate-pulse h-72 rounded-xl" />
+                <div className="bg-slate-200 animate-pulse h-72 rounded-xl" />
               </div>
             ) : recentCompletedTournaments.length === 0 ? (
-              <div className="bg-white border border-dashed rounded-3xl p-8 text-center text-slate-455 font-bold text-xs">
+              <div className="py-10 text-center text-slate-500 font-medium text-xs">
                 Hiện chưa có giải nào vừa kết thúc trong 14 ngày gần đây.
               </div>
             ) : (
@@ -1285,6 +1336,7 @@ export default function HomePage() {
                 ))}
               </div>
             )}
+            </div>
           </section>
 
         </div>
@@ -1293,7 +1345,7 @@ export default function HomePage() {
         <div className="lg:col-span-3 flex flex-col gap-6">
           
           {!isClient ? (
-             <div className="animate-pulse bg-slate-200 h-[180px] rounded-xl w-full"></div>
+             <div className="animate-pulse bg-slate-200 h-[180px] rounded-2xl w-full"></div>
            ) : !isAuthenticated ? (
              <motion.div 
                whileHover={{ y: -2 }}
@@ -1302,13 +1354,13 @@ export default function HomePage() {
                <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mb-3 shrink-0">
                  <UserPlus className="w-6 h-6 text-slate-400" />
                </div>
-               <h3 className="text-sm font-bold text-slate-900 mb-1">Chưa đăng nhập</h3>
+               <h3 className="text-sm font-semibold text-slate-900 mb-1">Chưa đăng nhập</h3>
                <p className="text-xs text-slate-500 mb-4">Đăng nhập để xem giải đấu và CLB của bạn.</p>
                <div className="flex flex-col w-full gap-2">
-                 <a href="/login" className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-xl text-center text-xs shadow-sm transition-colors cursor-pointer">
+                 <a href="/login" className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 rounded-xl text-center text-xs shadow-sm transition-colors cursor-pointer">
                    Đăng nhập ngay
                  </a>
-                 <a href="/register" className="border border-slate-205 text-slate-650 hover:bg-slate-50 font-bold py-2.5 px-4 rounded-xl text-center text-xs transition-colors">
+                 <a href="/register" className="border border-slate-205 text-slate-650 hover:bg-slate-50 font-semibold py-2.5 px-4 rounded-xl text-center text-xs transition-colors">
                    Đăng ký tài khoản
                  </a>
                </div>
@@ -1316,7 +1368,7 @@ export default function HomePage() {
            ) : (
              <div className="flex flex-col gap-5">
                {/* Card 1: User Profile Card */}
-               <div className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.02)] p-5 flex flex-col items-center text-center relative overflow-hidden">
+               <div className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.02)] p-4 flex flex-col items-center text-center relative overflow-hidden">
                  {/* Sports cover banner background */}
                  <div className="absolute top-0 left-0 w-full h-16 bg-gradient-to-b from-slate-900 to-slate-950">
                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.15)_0%,transparent_70%)]" />
@@ -1334,7 +1386,7 @@ export default function HomePage() {
                  </div>
 
                  {/* Name & Email */}
-                 <h3 className="text-base font-bold text-slate-900 mt-2.5 line-clamp-1 leading-snug">
+                 <h3 className="text-base font-semibold text-slate-900 mt-2.5 line-clamp-1 leading-snug">
                    {user?.fullName || 'Người dùng'}
                  </h3>
                  <p className="text-xs text-slate-400 truncate w-full mb-3.5">
@@ -1342,28 +1394,28 @@ export default function HomePage() {
                  </p>
 
                  {/* Stats Grid */}
-                 <div className="grid grid-cols-3 w-full gap-2 mt-2 pt-4 border-t border-slate-100">
+                 <div className="grid grid-cols-3 w-full gap-2 mt-1 pt-3 border-t border-slate-100">
                    <div className="flex flex-col items-center">
-                     <span className="text-base font-black text-slate-800 leading-none">
+                     <span className="text-base font-bold text-slate-800 leading-none">
                        {matchesPlayed}
                      </span>
-                     <span className="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-wider">
+                     <span className="text-[9px] font-semibold text-slate-400 mt-1 uppercase tracking-wider">
                        Trận
                      </span>
                    </div>
                    <div className="flex flex-col items-center border-l border-r border-slate-100">
-                     <span className="text-base font-black text-slate-800 leading-none">
+                     <span className="text-base font-bold text-slate-800 leading-none">
                        {matchesWon}
                      </span>
-                     <span className="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-wider">
+                     <span className="text-[9px] font-semibold text-slate-400 mt-1 uppercase tracking-wider">
                        Thắng
                      </span>
                    </div>
                    <div className="flex flex-col items-center">
-                     <span className="text-base font-black text-slate-800 leading-none">
+                     <span className="text-base font-bold text-slate-800 leading-none">
                        {winRate}%
                      </span>
-                     <span className="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-wider">
+                     <span className="text-[9px] font-semibold text-slate-400 mt-1 uppercase tracking-wider">
                        Tỷ lệ
                      </span>
                    </div>
@@ -1371,7 +1423,7 @@ export default function HomePage() {
 
                  {/* CTA */}
                  <Link href="/profile" className="w-full mt-4">
-                   <button className="w-full text-xs py-2.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 hover:text-slate-900 font-bold rounded-xl transition-all active:scale-95 duration-150 cursor-pointer shadow-sm">
+                   <button className="w-full text-xs py-2.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 hover:text-slate-900 font-semibold rounded-xl transition-all active:scale-95 duration-150 cursor-pointer shadow-sm">
                      Trang cá nhân
                    </button>
                  </Link>
@@ -1391,11 +1443,11 @@ export default function HomePage() {
            )}
 
            {/* Widget 2 — Banner Ads 4:3 */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col cursor-pointer group">
+          <div className="bg-white rounded-xl border border-slate-200/80 shadow-[0_2px_12px_rgba(15,23,42,0.06)] overflow-hidden flex flex-col cursor-pointer group">
             <div className="aspect-[4/3] bg-slate-900 relative p-5 flex flex-col justify-end">
               <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/35 to-transparent z-10"></div>
               <div className="absolute inset-0 bg-blue-600 opacity-20 group-hover:opacity-35 transition-opacity duration-300"></div>
-              <div className="absolute top-3 right-3 bg-white/20 backdrop-blur-md text-white/90 text-[9px] px-2 py-0.5 rounded font-black tracking-wider uppercase z-20">QUẢNG CÁO</div>
+              <div className="absolute top-3 right-3 bg-white/20 backdrop-blur-md text-white/90 text-[9px] px-2 py-0.5 rounded font-bold tracking-wider uppercase z-20">QUẢNG CÁO</div>
               
               <div className="relative z-20 mt-auto">
                  <span className="text-[9px] font-bold text-blue-400 uppercase tracking-widest block mb-1">CỬA HÀNG TOURNA</span>

@@ -220,7 +220,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
   if (!community) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 text-center">
-        <div className="max-w-md bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
+        <div className="max-w-md bg-white p-8 rounded-lg border border-slate-200 shadow-sm">
           <h2 className="text-xl font-bold text-slate-900">Không tìm thấy câu lạc bộ</h2>
           <p className="text-slate-500 mt-2">Đường dẫn không hợp lệ hoặc câu lạc bộ không tồn tại.</p>
         </div>
@@ -240,7 +240,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-2xl md:text-3xl font-black text-slate-900">Quản lý Giải đấu CLB</h1>
+            <h1 className="text-2xl md:text-3xl font-bold text-slate-900">Quản lý Giải đấu CLB</h1>
             <p className="text-slate-500 mt-1 font-medium flex items-center gap-1">
               Câu lạc bộ: <span className="text-slate-800 font-bold">{community.name}</span>
             </p>
@@ -262,7 +262,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
         </div>
 
         {/* Description Banner */}
-        <div className="bg-emerald-50 text-emerald-950 p-4 rounded-xl border border-emerald-100 flex items-start gap-3 text-xs leading-relaxed font-semibold mb-8">
+        <div className="bg-emerald-50 text-emerald-950 p-4 rounded-lg border border-emerald-100 flex items-start gap-3 text-xs leading-relaxed font-semibold mb-8">
           <ShieldCheck className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
           <div>
             <p className="font-bold text-emerald-950 text-sm">Chính sách Giải đấu Nội bộ (Club tournaments)</p>
@@ -274,7 +274,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
 
         {/* Tournaments Grid */}
         {tournaments.length === 0 ? (
-          <div className="bg-white rounded-2xl p-12 text-center border border-slate-200 shadow-sm flex flex-col items-center">
+          <div className="bg-white rounded-lg p-12 text-center border border-slate-200 shadow-sm flex flex-col items-center">
             <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 mb-4">
               <Trophy className="w-8 h-8" />
             </div>
@@ -294,7 +294,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
             {tournaments.map((t) => (
               <div
                 key={t.id}
-                className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all duration-200 p-5 flex flex-col justify-between gap-5"
+                className="bg-white rounded-lg border border-slate-200 shadow-sm hover:shadow-md transition-all duration-200 p-5 flex flex-col justify-between gap-5"
               >
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
@@ -339,7 +339,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
 
         {isCreateModalOpen && (
           <Modal open={isCreateModalOpen} onOpenChange={(open) => { if (!open) setIsCreateModalOpen(false); }}>
-            <ModalContent className="bg-white rounded-2xl p-6">
+            <ModalContent className="bg-white rounded-lg p-6">
               <ModalHeader>
                 <ModalTitle className="text-xl font-bold text-slate-900">
                   Tạo Giải Đấu Nội Bộ CLB (Miễn phí)
@@ -412,7 +412,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
 
         {isLiteModalOpen && (
           <Modal open={isLiteModalOpen} onOpenChange={(open) => { if (!open) setIsLiteModalOpen(false); }}>
-            <ModalContent className="bg-white rounded-2xl p-6">
+            <ModalContent className="bg-white rounded-lg p-6">
               <ModalHeader>
                 <ModalTitle className="text-xl font-bold text-slate-900">
                   Tạo Nhanh Giải Đấu (Lite Mode)

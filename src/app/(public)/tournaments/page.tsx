@@ -64,6 +64,7 @@ export default function TournamentsListPage() {
   const [selectedRegion, setSelectedRegion] = useState<string>('');
   const [selectedDistrict, setSelectedDistrict] = useState<string>(''); // Quận huyện đang chọn
   const [selectedContent, setSelectedContent] = useState<string>(''); // Nội dung thi đấu (Đơn Nam, Đôi Nữ...)
+  const [selectedIsRanked, setSelectedIsRanked] = useState<string>(''); // ELO or Recreational filter
   const [selectedBracketType, setSelectedBracketType] = useState<string>(''); // Thể thức thi đấu
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false); // Toggle bộ lọc nâng cao
   const [startDate, setStartDate] = useState<string>(''); // Lọc từ ngày
@@ -174,6 +175,16 @@ export default function TournamentsListPage() {
     };
   }, [user?.id]);
 
+  const formatDateForAPI = (d: string): string | undefined => {
+    if (!d) return undefined;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(d)) return d;
+    const parts = d.split('/');
+    if (parts.length === 3 && parts[0].length === 2 && parts[1].length === 2 && parts[2].length === 4) {
+      return `${parts[2]}-${parts[1]}-${parts[0]}`;
+    }
+    return undefined;
+  };
+
   useEffect(() => {
     const fetchTournaments = async () => {
       setIsLoading(true);
@@ -201,7 +212,15 @@ export default function TournamentsListPage() {
           genderRestriction = 'FEMALE';
         } else if (selectedContent === 'DOUBLE_MIXED') {
           matchType = 'MIXED_DOUBLES';
+          genderRestriction = 'MIXED';
         }
+
+        const apiStartDate = formatDateForAPI(startDate);
+        const apiEndDate = formatDateForAPI(endDate);
+
+        let isRankedParam: boolean | undefined = undefined;
+        if (selectedIsRanked === 'true') isRankedParam = true;
+        if (selectedIsRanked === 'false') isRankedParam = false;
 
         const res = await tournamentsApi.getPublicTournaments({
           page,
@@ -213,8 +232,9 @@ export default function TournamentsListPage() {
           matchType,
           genderRestriction,
           bracketType: selectedBracketType || undefined,
-          startDate: startDate || undefined,
-          endDate: endDate || undefined,
+          startDate: apiStartDate,
+          endDate: apiEndDate,
+          isRanked: isRankedParam,
         });
         setTournaments(sortDiscoveryTournaments(res.data || []));
         setTotalPages(res.meta.totalPages);
@@ -225,7 +245,7 @@ export default function TournamentsListPage() {
       }
     };
     fetchTournaments();
-  }, [page, searchTerm, selectedCategoryId, selectedStatus, selectedRegion, selectedDistrict, selectedContent, selectedBracketType, startDate, endDate]);
+  }, [page, searchTerm, selectedCategoryId, selectedStatus, selectedRegion, selectedDistrict, selectedContent, selectedBracketType, startDate, endDate, selectedIsRanked]);
 
   const handleToggleFollow = async (tournament: Tournament) => {
     if (!user?.id) return;
@@ -265,19 +285,17 @@ export default function TournamentsListPage() {
       
       {/* Page Header */}
       <div>
-        <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 mb-1 leading-tight tracking-tight">Khám phá Giải đấu</h1>
+        <h1 className="text-2xl md:text-3xl font-bold text-slate-900 mb-1 leading-tight tracking-tight">Khám phá Giải đấu</h1>
         <p className="text-sm text-slate-500 max-w-2xl font-medium">
           Tìm kiếm và tham gia các giải đấu thể thao chuyên nghiệp và phong trào phù hợp với trình độ của bạn.
         </p>
       </div>
 
-      <TournamentHeroBanner tournaments={featuredTournaments} />
-
       {/* Filter Bar */}
-      <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-4">
+      <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-sm flex flex-col gap-4">
         {/* Hàng bộ lọc chính */}
-        <div className="flex flex-wrap gap-4 items-end">
-          <div className="flex-grow min-w-[200px]">
+        <div className="flex flex-col sm:flex-row gap-4 items-end">
+          <div className="flex-grow w-full">
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Tìm kiếm</label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
@@ -288,13 +306,13 @@ export default function TournamentsListPage() {
                   setSearchTerm(e.target.value);
                   setPage(1);
                 }}
-                className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50/50 text-slate-900 font-semibold"
+                className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50/50 text-slate-900 font-semibold h-[42px]"
                 placeholder="Tên giải đấu, địa điểm..."
               />
             </div>
           </div>
           
-          <div className="w-full md:w-auto min-w-[150px]">
+          <div className="w-full sm:w-48 shrink-0">
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Môn thể thao</label>
             <div className="relative">
               <select 
@@ -303,7 +321,7 @@ export default function TournamentsListPage() {
                   setSelectedCategoryId(e.target.value);
                   setPage(1);
                 }}
-                className="w-full pl-3 pr-10 py-2 border border-slate-200 rounded-xl text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50/50 text-slate-900 font-bold"
+                className="w-full pl-3 pr-10 py-2 border border-slate-200 rounded-lg text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50/50 text-slate-900 font-bold h-[42px]"
               >
                 <option value="">Tất cả</option>
                 {categories.map(cat => (
@@ -314,7 +332,7 @@ export default function TournamentsListPage() {
             </div>
           </div>
 
-          <div className="w-full md:w-auto min-w-[150px]">
+          <div className="w-full sm:w-48 shrink-0">
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Trạng thái</label>
             <div className="relative">
               <select 
@@ -323,57 +341,13 @@ export default function TournamentsListPage() {
                   setSelectedStatus(e.target.value);
                   setPage(1);
                 }}
-                className="w-full pl-3 pr-10 py-2 border border-slate-200 rounded-xl text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50/50 text-slate-900 font-bold"
+                className="w-full pl-3 pr-10 py-2 border border-slate-200 rounded-lg text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50/50 text-slate-900 font-bold h-[42px]"
               >
                 <option value="">Tất cả</option>
+                <option value="REGISTRATION_OPEN">Mở đăng ký</option>
                 <option value="UPCOMING">Sắp diễn ra</option>
-                <option value="ONGOING">Đang diễn ra</option>
+                <option value="IN_PROGRESS">Đang diễn ra</option>
                 <option value="COMPLETED">Đã kết thúc</option>
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-450 w-4.5 h-4.5 pointer-events-none" />
-            </div>
-          </div>
-
-          {/* Ô Lọc Nội dung thi đấu (Đổi từ ô Khu vực ban đầu) */}
-          <div className="w-full md:w-auto min-w-[150px]">
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Nội dung</label>
-            <div className="relative">
-              <select 
-                value={selectedContent}
-                onChange={(e) => {
-                  setSelectedContent(e.target.value);
-                  setPage(1);
-                }}
-                className="w-full pl-3 pr-10 py-2 border border-slate-200 rounded-xl text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50/50 text-slate-900 font-bold"
-              >
-                <option value="">Tất cả</option>
-                <option value="SINGLE_MALE">Đơn Nam</option>
-                <option value="SINGLE_FEMALE">Đơn Nữ</option>
-                <option value="DOUBLE_MALE">Đôi Nam</option>
-                <option value="DOUBLE_FEMALE">Đôi Nữ</option>
-                <option value="DOUBLE_MIXED">Đôi Nam Nữ</option>
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-455 w-4.5 h-4.5 pointer-events-none" />
-            </div>
-          </div>
-
-          {/* Ô Lọc Thể thức thi đấu */}
-          <div className="w-full md:w-auto min-w-[150px]">
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Thể thức</label>
-            <div className="relative">
-              <select 
-                value={selectedBracketType}
-                onChange={(e) => {
-                  setSelectedBracketType(e.target.value);
-                  setPage(1);
-                }}
-                className="w-full pl-3 pr-10 py-2 border border-slate-200 rounded-xl text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50/50 text-slate-900 font-bold"
-              >
-                <option value="">Tất cả</option>
-                <option value="SINGLE_ELIMINATION">Loại trực tiếp</option>
-                <option value="DOUBLE_ELIMINATION">Nhánh thắng/thua</option>
-                <option value="ROUND_ROBIN">Vòng tròn</option>
-                <option value="GROUP_STAGE_KNOCKOUT">Vòng bảng + Playoffs</option>
               </select>
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-455 w-4.5 h-4.5 pointer-events-none" />
             </div>
@@ -381,10 +355,10 @@ export default function TournamentsListPage() {
 
           <button 
             onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-            className={`w-full md:w-auto px-4 py-2.5 rounded-xl text-xs font-extrabold border transition-all flex items-center justify-center gap-2 h-[42px] cursor-pointer ${
-              showAdvancedFilters 
-                ? 'bg-indigo-50 border-indigo-250 text-indigo-700 shadow-sm' 
-                : 'bg-slate-100 hover:bg-slate-200 text-slate-900 border-slate-200'
+            className={`w-full sm:w-auto px-4 py-2.5 rounded-lg text-xs font-bold border transition-all flex items-center justify-center gap-2 h-[42px] cursor-pointer shrink-0 ${
+              showAdvancedFilters || selectedContent || selectedBracketType || selectedIsRanked || selectedRegion || selectedDistrict || startDate || endDate
+                ? 'bg-indigo-50 border-indigo-250 text-indigo-700 shadow-sm animate-pulse-subtle' 
+                : 'bg-slate-105 hover:bg-slate-200 text-slate-900 border-slate-200'
             }`}
           >
             <SlidersHorizontal className="w-4 h-4" />
@@ -394,10 +368,75 @@ export default function TournamentsListPage() {
 
         {/* Panel Lọc Nâng Cao trượt mở bên dưới */}
         {showAdvancedFilters && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-4 p-4 bg-slate-50 rounded-xl border border-slate-150 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-slate-50 rounded-lg border border-slate-150 animate-in fade-in slide-in-from-top-2 duration-200">
+            {/* Ô Lọc Nội dung thi đấu */}
+            <div>
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Nội dung</label>
+              <div className="relative">
+                <select 
+                  value={selectedContent}
+                  onChange={(e) => {
+                    setSelectedContent(e.target.value);
+                    setPage(1);
+                  }}
+                  className="w-full pl-3 pr-10 py-1.5 border border-slate-250 rounded-lg text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-950 font-bold h-10"
+                >
+                  <option value="">Tất cả</option>
+                  <option value="SINGLE_MALE">Đơn Nam</option>
+                  <option value="SINGLE_FEMALE">Đơn Nữ</option>
+                  <option value="DOUBLE_MALE">Đôi Nam</option>
+                  <option value="DOUBLE_FEMALE">Đôi Nữ</option>
+                  <option value="DOUBLE_MIXED">Đôi Nam Nữ</option>
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-455 w-4 h-4 pointer-events-none" />
+              </div>
+            </div>
+
+            {/* Ô Lọc Thể thức thi đấu */}
+            <div>
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Thể thức</label>
+              <div className="relative">
+                <select 
+                  value={selectedBracketType}
+                  onChange={(e) => {
+                    setSelectedBracketType(e.target.value);
+                    setPage(1);
+                  }}
+                  className="w-full pl-3 pr-10 py-1.5 border border-slate-250 rounded-lg text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-950 font-bold h-10"
+                >
+                  <option value="">Tất cả</option>
+                  <option value="SINGLE_ELIMINATION">Loại trực tiếp</option>
+                  <option value="DOUBLE_ELIMINATION">Nhánh thắng/thua</option>
+                  <option value="ROUND_ROBIN">Vòng tròn</option>
+                  <option value="GROUP_STAGE_KNOCKOUT">Vòng bảng + Playoffs</option>
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-455 w-4 h-4 pointer-events-none" />
+              </div>
+            </div>
+
+            {/* Ô Lọc Xếp hạng ELO / Phong trào */}
+            <div>
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Xếp hạng</label>
+              <div className="relative">
+                <select 
+                  value={selectedIsRanked}
+                  onChange={(e) => {
+                    setSelectedIsRanked(e.target.value);
+                    setPage(1);
+                  }}
+                  className="w-full pl-3 pr-10 py-1.5 border border-slate-250 rounded-lg text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-950 font-bold h-10"
+                >
+                  <option value="">Tất cả</option>
+                  <option value="true">Xếp hạng ELO</option>
+                  <option value="false">Phong trào</option>
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-455 w-4 h-4 pointer-events-none" />
+              </div>
+            </div>
+
             {/* Tỉnh / Thành phố */}
             <div>
-              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Tỉnh / Thành phố</label>
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Tỉnh / Thành phố</label>
               <div className="relative">
                 <select 
                   value={selectedRegion}
@@ -410,7 +449,7 @@ export default function TournamentsListPage() {
                     }
                     setPage(1);
                   }}
-                  className="w-full pl-3 pr-10 py-1.5 border border-slate-200 rounded-lg text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-950 font-bold"
+                  className="w-full pl-3 pr-10 py-1.5 border border-slate-250 rounded-lg text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-950 font-bold h-10"
                 >
                   <option value="">Tất cả</option>
                   {regions.map(reg => (
@@ -423,7 +462,7 @@ export default function TournamentsListPage() {
 
             {/* Quận / Huyện */}
             <div>
-              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Quận / Huyện</label>
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Quận / Huyện</label>
               <div className="relative">
                 <select 
                   disabled={!selectedRegion || districts.length === 0}
@@ -432,7 +471,7 @@ export default function TournamentsListPage() {
                     setSelectedDistrict(e.target.value);
                     setPage(1);
                   }}
-                  className="w-full pl-3 pr-10 py-1.5 border border-slate-200 rounded-lg text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-950 font-bold disabled:opacity-50 disabled:bg-slate-100"
+                  className="w-full pl-3 pr-10 py-1.5 border border-slate-250 rounded-lg text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-950 font-bold disabled:opacity-50 disabled:bg-slate-100 h-10"
                 >
                   <option value="">Tất cả</option>
                   {districts.map(dist => (
@@ -445,34 +484,115 @@ export default function TournamentsListPage() {
 
             {/* Lọc từ ngày */}
             <div>
-              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Diễn ra từ ngày</label>
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => {
-                  setStartDate(e.target.value);
-                  setPage(1);
-                }}
-                className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-950 font-bold h-10"
-              />
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Diễn ra từ ngày</label>
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="dd/mm/yyyy"
+                  value={startDate}
+                  onChange={(e) => {
+                    let val = e.target.value;
+                    if (val.length === 2 && !val.includes('/') && startDate.length < val.length) {
+                      val = val + '/';
+                    }
+                    if (val.length === 5 && val[2] === '/' && !val.includes('/', 3) && startDate.length < val.length) {
+                      val = val + '/';
+                    }
+                    setStartDate(val);
+                    setPage(1);
+                  }}
+                  className="w-full pl-3 pr-9 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-955 font-bold h-10"
+                />
+                <input
+                  type="date"
+                  id="hiddenStartDatePicker"
+                  className="absolute inset-0 opacity-0 pointer-events-none w-0 h-0"
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      const parts = e.target.value.split('-');
+                      if (parts.length === 3) {
+                        setStartDate(`${parts[2]}/${parts[1]}/${parts[0]}`);
+                        setPage(1);
+                      }
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const el = document.getElementById('hiddenStartDatePicker') as HTMLInputElement | null;
+                    if (el) {
+                      if (typeof el.showPicker === 'function') {
+                        el.showPicker();
+                      } else {
+                        el.focus();
+                        el.click();
+                      }
+                    }
+                  }}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 transition-colors p-1 cursor-pointer"
+                  title="Chọn ngày"
+                >
+                  📅
+                </button>
+              </div>
             </div>
 
             {/* Lọc đến ngày */}
             <div>
-              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Diễn ra đến ngày</label>
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => {
-                  setEndDate(e.target.value);
-                  setPage(1);
-                }}
-                className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-950 font-bold h-10"
-              />
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Diễn ra đến ngày</label>
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="dd/mm/yyyy"
+                  value={endDate}
+                  onChange={(e) => {
+                    let val = e.target.value;
+                    if (val.length === 2 && !val.includes('/') && endDate.length < val.length) {
+                      val = val + '/';
+                    }
+                    if (val.length === 5 && val[2] === '/' && !val.includes('/', 3) && endDate.length < val.length) {
+                      val = val + '/';
+                    }
+                    setEndDate(val);
+                    setPage(1);
+                  }}
+                  className="w-full pl-3 pr-9 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-955 font-bold h-10"
+                />
+                <input
+                  type="date"
+                  id="hiddenEndDatePicker"
+                  className="absolute inset-0 opacity-0 pointer-events-none w-0 h-0"
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      const parts = e.target.value.split('-');
+                      if (parts.length === 3) {
+                        setEndDate(`${parts[2]}/${parts[1]}/${parts[0]}`);
+                        setPage(1);
+                      }
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const el = document.getElementById('hiddenEndDatePicker') as HTMLInputElement | null;
+                    if (el) {
+                      if (typeof el.showPicker === 'function') {
+                        el.showPicker();
+                      } else {
+                        el.focus();
+                        el.click();
+                      }
+                    }
+                  }}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 transition-colors p-1 cursor-pointer"
+                  title="Chọn ngày"
+                >
+                  📅
+                </button>
+              </div>
             </div>
-
-            {/* Empty column */}
-            <div></div>
 
             {/* Xóa bộ lọc */}
             <div className="flex items-end">
@@ -482,6 +602,7 @@ export default function TournamentsListPage() {
                   setSelectedStatus('');
                   setSelectedContent('');
                   setSelectedBracketType('');
+                  setSelectedIsRanked('');
                   setStartDate('');
                   setEndDate('');
                   setSelectedRegion('');
@@ -489,10 +610,10 @@ export default function TournamentsListPage() {
                   setSearchTerm('');
                   setPage(1);
                 }}
-                className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-black text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer bg-white h-10 flex items-center justify-center"
+                className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer bg-white h-10 flex items-center justify-center"
                 title="Xóa bộ lọc"
               >
-                <span className="font-extrabold text-rose-600">X</span>
+                <span className="font-bold text-rose-600">XÓA BỘ LỌC</span>
               </button>
             </div>
           </div>
@@ -500,11 +621,39 @@ export default function TournamentsListPage() {
       </div>
 
       {/* Grid Cards */}
-      <div className="flex flex-wrap items-center gap-2 text-[10px] font-black uppercase tracking-wider text-slate-500">
-        <span className="rounded-full bg-slate-100 px-2.5 py-1 border border-slate-200">Vừa kết thúc</span>
-        <span className="rounded-full bg-rose-50 px-2.5 py-1 border border-rose-100 text-rose-700">Đang diễn ra</span>
-        <span className="rounded-full bg-emerald-50 px-2.5 py-1 border border-emerald-100 text-emerald-700">Mở đăng ký</span>
-        <span className="rounded-full bg-blue-50 px-2.5 py-1 border border-blue-100 text-blue-700">Sắp diễn ra</span>
+      <div className="flex flex-wrap items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+        <button 
+          onClick={() => { setSelectedStatus('COMPLETED'); setPage(1); }}
+          className={`rounded-full px-2.5 py-1 border transition-all cursor-pointer ${selectedStatus === 'COMPLETED' ? 'bg-slate-200 text-slate-800 border-slate-350 font-bold' : 'bg-slate-100 border-slate-200 text-slate-500 hover:bg-slate-200/60'}`}
+        >
+          Vừa kết thúc
+        </button>
+        <button 
+          onClick={() => { setSelectedStatus('IN_PROGRESS'); setPage(1); }}
+          className={`rounded-full px-2.5 py-1 border transition-all cursor-pointer ${selectedStatus === 'IN_PROGRESS' ? 'bg-rose-100 text-rose-800 border-rose-350 font-bold' : 'bg-rose-50 border-rose-100 text-rose-700 hover:bg-rose-100/60'}`}
+        >
+          Đang diễn ra
+        </button>
+        <button 
+          onClick={() => { setSelectedStatus('REGISTRATION_OPEN'); setPage(1); }}
+          className={`rounded-full px-2.5 py-1 border transition-all cursor-pointer ${selectedStatus === 'REGISTRATION_OPEN' ? 'bg-emerald-100 text-emerald-800 border-emerald-350 font-bold' : 'bg-emerald-50 border-emerald-100 text-emerald-700 hover:bg-emerald-100/60'}`}
+        >
+          Mở đăng ký
+        </button>
+        <button 
+          onClick={() => { setSelectedStatus('UPCOMING'); setPage(1); }}
+          className={`rounded-full px-2.5 py-1 border transition-all cursor-pointer ${selectedStatus === 'UPCOMING' ? 'bg-blue-100 text-blue-800 border-blue-350 font-bold' : 'bg-blue-50 border-blue-100 text-blue-700 hover:bg-blue-100/60'}`}
+        >
+          Sắp diễn ra
+        </button>
+        {selectedStatus && (
+          <button 
+            onClick={() => { setSelectedStatus(''); setPage(1); }}
+            className="text-rose-600 font-bold text-[9px] hover:underline ml-1"
+          >
+            Bỏ lọc [x]
+          </button>
+        )}
       </div>
 
       {isLoading ? (
@@ -522,7 +671,7 @@ export default function TournamentsListPage() {
               <Link 
                 key={tournament.id} 
                 href={`/tournaments/${tournament.id}`}
-                className="bg-white rounded-xl border border-slate-200 shadow-sm hover:border-slate-350 hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col group cursor-pointer"
+                className="bg-white rounded-lg border border-slate-200 shadow-sm hover:border-slate-350 hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col group cursor-pointer"
               >
                 {/* Top: Large Image Banner */}
                 <div className="relative aspect-[2.1/1] w-full bg-slate-100 overflow-hidden">
@@ -537,14 +686,14 @@ export default function TournamentsListPage() {
                       <img 
                         src="/vndcsport.svg" 
                         alt="VNDC Sport Logo" 
-                        className="w-24 h-auto object-contain opacity-75"
+                        className="w-40 md:w-48 h-auto object-contain opacity-80"
                       />
                     </div>
                   )}
                   
                   {/* Status Overlay (Top-Left) */}
                   <div className="absolute top-3 left-3 z-10">
-                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm border ${getTournamentStatusClassName(tournament.status)}`}>
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm border ${getTournamentStatusClassName(tournament.status)}`}>
                       {isTournamentOpenForRegistration(tournament.status) && (
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                       )}
@@ -562,7 +711,7 @@ export default function TournamentsListPage() {
                       )}
                       {getTournamentStatusLabel(tournament.status)}
                       {isRecentlyCompletedTournament(tournament) && (
-                        <span className="ml-1 inline-flex items-center rounded-full bg-slate-900/75 px-2 py-0.5 text-[9px] font-black text-white">
+                        <span className="ml-1 inline-flex items-center rounded-full bg-slate-900/75 px-2 py-0.5 text-[9px] font-bold text-white">
                           Vừa kết thúc
                         </span>
                       )}
@@ -592,7 +741,7 @@ export default function TournamentsListPage() {
 
                   {/* Location Overlay (Bottom-Left) */}
                   <div className="absolute bottom-3 left-3 z-10">
-                    <span className="bg-white/95 text-slate-800 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm border border-slate-200 flex items-center gap-1">
+                    <span className="bg-white/95 text-slate-800 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm border border-slate-200 flex items-center gap-1">
                       📍 {city}
                     </span>
                   </div>
@@ -601,14 +750,15 @@ export default function TournamentsListPage() {
                 {/* Bottom: Details Section */}
                 <div className="p-5 flex gap-5 flex-grow">
                   {/* Left Column: Date Block */}
-                  <div className="flex flex-col items-center shrink-0 border-r border-slate-100 pr-5">
-                    <div className="flex items-baseline gap-1 text-2xl font-black text-slate-900 leading-none">
+                  <div className="flex flex-col items-center justify-center shrink-0 border-r border-slate-100 pr-5 min-w-[70px]">
+                    <div className="flex items-baseline gap-0.5 text-2xl font-bold text-slate-900 leading-none">
                       <span>{startDay}</span>
-                      <span className="text-slate-300 font-normal text-lg">-</span>
+                      <span className="text-slate-350 font-normal text-lg mx-0.5">-</span>
                       <span>{endDay}</span>
                     </div>
-                    <div className="flex gap-4 mt-1 text-[10px] font-black text-slate-400">
+                    <div className="flex gap-2.5 justify-center mt-1.5 text-[10px] font-bold text-slate-400">
                       <span>{startMonth}</span>
+                      <span>/</span>
                       <span>{endMonth}</span>
                     </div>
                   </div>
@@ -617,13 +767,13 @@ export default function TournamentsListPage() {
                   <div className="flex flex-col justify-between flex-grow min-w-0">
                     <div>
                       {/* Organizer / Category Header */}
-                      <div className="flex items-center gap-1.5 flex-wrap text-[10px] font-extrabold uppercase tracking-wider mb-1.5">
+                      <div className="flex items-center gap-1.5 flex-wrap text-[10px] font-bold uppercase tracking-wider mb-1.5">
                         {(() => {
                           const logo = getSportLogo(tournament.category?.name);
                           return logo ? (
                             <img src={logo} alt={tournament.category?.name || ''} className="w-4 h-4 object-contain" />
                           ) : (
-                            <span className="w-4.5 h-4.5 bg-rose-600 rounded-full flex items-center justify-center text-[9px] text-white font-black">★</span>
+                            <span className="w-4.5 h-4.5 bg-rose-600 rounded-full flex items-center justify-center text-[9px] text-white font-bold">★</span>
                           );
                         })()}
                         <span className="text-slate-500">{tournament.category?.name || 'MULTISPORT'}</span>
@@ -631,7 +781,7 @@ export default function TournamentsListPage() {
                         <span className="text-slate-300">•</span>
                         
                         {/* Ranked or Unranked Badge */}
-                        <span className={`px-1.5 py-0.5 rounded text-[8px] font-extrabold ${
+                        <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold ${
                           tournament.isRanked
                             ? 'bg-amber-50 text-amber-700 border border-amber-200'
                             : 'bg-slate-50 text-slate-600 border border-slate-200'
@@ -643,7 +793,7 @@ export default function TournamentsListPage() {
                         {tournament.parentId && (
                           <>
                             <span className="text-slate-300">•</span>
-                            <span className="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded text-[8px] font-extrabold border border-blue-200">
+                            <span className="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded text-[8px] font-bold border border-blue-200">
                               Chuỗi giải đấu
                             </span>
                           </>
@@ -652,7 +802,7 @@ export default function TournamentsListPage() {
                         {registrationModeUi.mode !== 'OPEN' && (
                           <>
                             <span className="text-slate-300">•</span>
-                            <span className={`rounded border px-1.5 py-0.5 text-[8px] font-extrabold ${registrationModeUi.badgeClassName}`}>
+                            <span className={`rounded border px-1.5 py-0.5 text-[8px] font-bold ${registrationModeUi.badgeClassName}`}>
                               {registrationModeUi.badgeLabel}
                             </span>
                           </>
@@ -660,20 +810,19 @@ export default function TournamentsListPage() {
                       </div>
                       
                       {/* Title */}
-                      <h3 className="text-sm md:text-base font-black text-slate-900 uppercase leading-snug line-clamp-2">
+                      <h3 className="text-sm md:text-base font-bold text-slate-900 uppercase leading-snug line-clamp-2">
                         {tournament.name}
                       </h3>
                     </div>
 
                     {/* Metadata summary */}
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-[10px] text-slate-500 font-bold mt-2.5 uppercase tracking-wider">
-                      <span className="text-emerald-600 font-extrabold">
+                      <span className="text-emerald-600 font-bold">
                         {tournament.entryFee ? formatCurrency(tournament.entryFee) : 'Miễn phí'}
                       </span>
                       {tournament.divisions && tournament.divisions.length > 0 ? (
                         <>
                           <span className="text-slate-300">•</span>
-                          <span className="text-slate-400 font-medium">Hình thức:</span>
                           <div className="flex flex-wrap gap-1">
                             {tournament.divisions.map((div) => {
                               const label = getFormatLabel(div.matchType, div.genderRestriction);
@@ -712,7 +861,7 @@ export default function TournamentsListPage() {
           <button 
             onClick={() => setPage(p => Math.max(1, p - 1))}
             disabled={page === 1}
-            className="p-2 border border-slate-200 rounded-xl text-slate-500 hover:bg-slate-100 transition-colors disabled:opacity-50 cursor-pointer"
+            className="p-2 border border-slate-200 rounded-lg text-slate-500 hover:bg-slate-100 transition-colors disabled:opacity-50 cursor-pointer"
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
@@ -721,7 +870,7 @@ export default function TournamentsListPage() {
             <button 
               key={i + 1}
               onClick={() => setPage(i + 1)}
-              className={`min-w-[44px] min-h-[44px] border rounded-xl font-bold text-xs transition-colors cursor-pointer ${
+              className={`min-w-[44px] min-h-[44px] border rounded-lg font-bold text-xs transition-colors cursor-pointer ${
                 page === i + 1
                   ? 'border-indigo-600 bg-indigo-600 text-white shadow-md shadow-indigo-600/15'
                   : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-100'
@@ -734,7 +883,7 @@ export default function TournamentsListPage() {
           <button 
             onClick={() => setPage(p => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
-            className="p-2 border border-slate-200 rounded-xl text-slate-500 hover:bg-slate-100 transition-colors disabled:opacity-50 cursor-pointer"
+            className="p-2 border border-slate-200 rounded-lg text-slate-500 hover:bg-slate-100 transition-colors disabled:opacity-50 cursor-pointer"
           >
             <ChevronRight className="w-5 h-5" />
           </button>

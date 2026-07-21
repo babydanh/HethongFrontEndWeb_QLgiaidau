@@ -52,15 +52,15 @@ export function JoinCommunityModal({ community, isOpen, onClose, onSuccess }: Jo
 
   return (
     <Modal open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
-      <ModalContent className="sm:max-w-[425px] bg-white rounded-2xl">
+      <ModalContent className="sm:max-w-[425px] bg-white rounded-lg">
         <ModalHeader>
-          <ModalTitle className="text-xl font-bold">
+          <ModalTitle className="text-xl font-semibold">
             {community.joinMode === 'APPROVAL' ? 'Xin tham gia câu lạc bộ' : 'Xác nhận tham gia'}
           </ModalTitle>
         </ModalHeader>
         <div className="space-y-6">
           <div>
-            <h3 className="text-lg font-bold text-slate-900">{community.name}</h3>
+            <h3 className="text-lg font-semibold text-slate-900">{community.name}</h3>
             {community.joinMode === 'APPROVAL' && (
               <p className="text-sm text-slate-500 mt-1">
                 Câu lạc bộ này yêu cầu phê duyệt. Vui lòng trả lời các câu hỏi sau để ban quản trị xem xét.

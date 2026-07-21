@@ -266,7 +266,7 @@ export function RegistrationTab({
       <div
         ref={setNodeRef}
         style={style}
-        className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/50 px-3 py-2.5"
+        className="flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50/50 px-3 py-2.5"
       >
         <div className="flex items-center gap-2 min-w-0">
           <button
@@ -277,7 +277,7 @@ export function RegistrationTab({
           >
             <GripVertical className="w-4 h-4" />
           </button>
-          <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-blue-100 text-blue-700 text-xs font-black shrink-0">
+          <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-blue-100 text-blue-700 text-xs font-bold shrink-0">
             #{p.seed}
           </span>
           <span className="text-sm font-bold text-slate-900 truncate">{p.teamName}</span>
@@ -293,19 +293,19 @@ export function RegistrationTab({
       <div className="lg:col-span-2 space-y-6">
         
         {/* Publish Status Card */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+        <div className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm">
           <h3 className="font-bold text-slate-900 mb-4 text-lg">Trạng thái phát hành giải đấu</h3>
           
           {isTournamentDraft(tournament.status) ? (
             <div className="space-y-4">
-              <div className="flex items-start gap-3 text-slate-700 bg-slate-50 p-4 rounded-xl border border-slate-200">
+              <div className="flex items-start gap-3 text-slate-700 bg-slate-50 p-4 rounded-lg border border-slate-200">
                 <span className="w-5 h-5 flex-shrink-0 mt-0.5 text-slate-400">ℹ</span>
                 <p className="text-xs leading-relaxed font-medium">
                   Giải đấu đang ở trạng thái <strong>Bản nháp</strong>. Giải đấu chỉ hiển thị đối với bạn. Hãy kiểm tra kỹ thông tin cấu hình, thời gian và địa điểm thi đấu trước khi công bố.
                 </p>
               </div>
               {publishFeeAmount > 0 && (
-                <div className="text-xs font-semibold text-blue-700 bg-blue-50 p-3 rounded-xl border border-blue-200">
+                <div className="text-xs font-semibold text-blue-700 bg-blue-50 p-3 rounded-lg border border-blue-200">
                   Khi bấm nút bên dưới, hệ thống sẽ chuyển sang bước thanh toán phí công bố giải đấu: {publishFeeAmount.toLocaleString('vi-VN')}đ.
                 </div>
               )}
@@ -318,7 +318,7 @@ export function RegistrationTab({
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 bg-emerald-50/60 rounded-xl border border-emerald-100">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 bg-emerald-50/60 rounded-lg border border-emerald-100">
                 <div className="flex items-start gap-3">
                   <CheckCircle className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
                   <div>
@@ -341,10 +341,10 @@ export function RegistrationTab({
           )}
         </div>
 
-        <div className="bg-white rounded-3xl border border-slate-200 p-6 md:p-8 shadow-sm space-y-6">
+        <div className="bg-white rounded-xl border border-slate-200 p-6 md:p-8 shadow-sm space-y-6">
           <div className="flex items-start gap-4 justify-between border-b border-slate-100 pb-5">
             <div>
-              <h3 className="font-black text-slate-900 text-lg">Thông tin đăng ký</h3>
+              <h3 className="font-bold text-slate-900 text-lg">Thông tin đăng ký</h3>
               <p className="mt-1.5 text-xs font-semibold text-slate-455">
                 Quản lý cách VĐV đi vào giải, khung thời gian mở đơn và bộ công cụ mời riêng cho đăng ký.
               </p>
@@ -353,18 +353,18 @@ export function RegistrationTab({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Cột 1: Chế độ & Quyền truy cập */}
-            <div className="space-y-4 bg-slate-50/60 border border-slate-100 p-5 rounded-2xl">
+            <div className="space-y-4 bg-slate-50/60 border border-slate-100 p-5 rounded-lg">
               <div>
-                <h4 className="text-xs font-black uppercase tracking-wider text-slate-500 mb-3">Quyền truy cập & Xét duyệt</h4>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Quyền truy cập & Xét duyệt</h4>
               </div>
 
               <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-500">Hiển thị giải đấu</label>
+                  <label className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">Hiển thị giải đấu</label>
                   <select
                     value={visibility}
                     onChange={(e) => setVisibility(e.target.value as 'PUBLIC' | 'PRIVATE')}
-                    className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-xs font-bold text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3.5 text-xs font-bold text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                   >
                     <option value="PUBLIC">Công khai (Tìm kiếm được)</option>
                     <option value="PRIVATE">Không niêm yết (Chỉ truy cập qua link)</option>
@@ -372,11 +372,11 @@ export function RegistrationTab({
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-500">Chế độ nhận đăng ký</label>
+                  <label className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">Chế độ nhận đăng ký</label>
                   <select
                     value={registrationMode}
                     onChange={(e) => setRegistrationMode(e.target.value as 'OPEN' | 'APPROVAL' | 'INVITE_ONLY')}
-                    className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-xs font-bold text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3.5 text-xs font-bold text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                   >
                     <option value="OPEN">Tự do (Vào thẳng danh sách)</option>
                     <option value="APPROVAL">Xét duyệt (Chờ BTC phê duyệt)</option>
@@ -391,7 +391,7 @@ export function RegistrationTab({
                     registrationMode === 'INVITE_ONLY' ? 'bg-amber-500 animate-pulse' :
                     registrationMode === 'APPROVAL' ? 'bg-blue-500' : 'bg-emerald-500'
                   }`} />
-                  <span className="text-xs font-black text-slate-800 uppercase tracking-wider">
+                  <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
                     {registrationMode === 'INVITE_ONLY' && 'Đăng ký đóng kín'}
                     {registrationMode === 'APPROVAL' && 'Xét duyệt thủ công'}
                     {registrationMode === 'OPEN' && 'Mở tự do'}
@@ -406,9 +406,9 @@ export function RegistrationTab({
             </div>
 
             {/* Cột 2: Khung thời gian nhận đăng ký */}
-            <div className="space-y-4 bg-slate-50/60 border border-slate-100 p-5 rounded-2xl flex flex-col justify-between">
+            <div className="space-y-4 bg-slate-50/60 border border-slate-100 p-5 rounded-lg flex flex-col justify-between">
               <div>
-                <h4 className="text-xs font-black uppercase tracking-wider text-slate-500 mb-3">Khung thời gian đăng ký</h4>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Khung thời gian đăng ký</h4>
               </div>
 
               <div className="space-y-4">
@@ -456,7 +456,7 @@ export function RegistrationTab({
           </div>
 
           {/* ELO Constraints */}
-          <div className="bg-slate-50/60 border border-slate-100 rounded-2xl p-5 space-y-3">
+          <div className="bg-slate-50/60 border border-slate-100 rounded-lg p-5 space-y-3">
             <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
@@ -508,11 +508,11 @@ export function RegistrationTab({
           </div>
 
           {!isTournamentDraft(tournament.status) && (
-            <div className="rounded-2xl border border-blue-100 bg-blue-50 p-5">
+            <div className="rounded-lg border border-blue-100 bg-blue-50 p-5">
               <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                 <div className="space-y-1">
-                  <p className="text-[11px] font-black uppercase tracking-[0.12em] text-blue-600">Mã mời đăng ký nhanh</p>
-                  <p className="text-xl font-black tracking-[0.18em] text-blue-700">{tournament.inviteCode || 'Chưa có'}</p>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-600">Mã mời đăng ký nhanh</p>
+                  <p className="text-xl font-bold tracking-[0.18em] text-blue-700">{tournament.inviteCode || 'Chưa có'}</p>
                   <p className="text-xs font-medium text-slate-650">
                     Gửi mã hoặc link này cho VĐV khi cần vào thẳng luồng đăng ký.
                   </p>
@@ -539,8 +539,8 @@ export function RegistrationTab({
                 </div>
               </div>
 
-              <div className="mt-4 rounded-2xl border border-white/80 bg-white/80 p-4">
-                <p className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-400">
+              <div className="mt-4 rounded-lg border border-white/80 bg-white/80 p-4">
+                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">
                   {visibility === 'PRIVATE' ? 'Đường dẫn đăng ký riêng tư' : 'Đường dẫn đăng ký hiện tại'}
                 </p>
                 <div className="mt-2 flex flex-col gap-3 md:flex-row md:items-center">
@@ -561,14 +561,14 @@ export function RegistrationTab({
             <Button
               onClick={handleSaveRegistrationSettings}
               disabled={isSavingConfig}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2.5 rounded-xl shadow-md shadow-blue-500/10 active:scale-[0.98] transition-all"
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2.5 rounded-lg shadow-md shadow-blue-500/10 active:scale-[0.98] transition-all"
             >
               {isSavingConfig ? 'Đang lưu...' : 'Lưu thông tin đăng ký'}
             </Button>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-5">
+        <div className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm space-y-5">
           <div className="flex items-start justify-between gap-4">
             <div>
               <h3 className="font-bold text-slate-900 text-lg">Duyệt hồ sơ đăng ký</h3>
@@ -576,36 +576,36 @@ export function RegistrationTab({
                 Theo dõi toàn bộ trạng thái đăng ký, thanh toán và quyết định duyệt trước khi chốt danh sách.
               </p>
             </div>
-            <div className="rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-right">
-              <p className="text-[11px] font-black uppercase tracking-[0.12em] text-amber-600">Chờ duyệt</p>
-              <p className="mt-1 text-lg font-black text-amber-800">{participantSummary.pending}</p>
+            <div className="rounded-lg border border-amber-100 bg-amber-50 px-4 py-3 text-right">
+              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-amber-600">Chờ duyệt</p>
+              <p className="mt-1 text-lg font-bold text-amber-800">{participantSummary.pending}</p>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3 xl:grid-cols-6">
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
-              <p className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-400">Tổng hồ sơ</p>
-              <p className="mt-2 text-lg font-black text-slate-900">{participantSummary.total}</p>
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">Tổng hồ sơ</p>
+              <p className="mt-2 text-lg font-bold text-slate-900">{participantSummary.total}</p>
             </div>
-            <div className="rounded-2xl border border-amber-100 bg-amber-50 p-3">
-              <p className="text-[11px] font-black uppercase tracking-[0.12em] text-amber-600">Chờ duyệt</p>
-              <p className="mt-2 text-lg font-black text-amber-700">{participantSummary.pending}</p>
+            <div className="rounded-lg border border-amber-100 bg-amber-50 p-3">
+              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-amber-600">Chờ duyệt</p>
+              <p className="mt-2 text-lg font-bold text-amber-700">{participantSummary.pending}</p>
             </div>
-            <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-3">
-              <p className="text-[11px] font-black uppercase tracking-[0.12em] text-emerald-600">Đã duyệt</p>
-              <p className="mt-2 text-lg font-black text-emerald-700">{participantSummary.approved}</p>
+            <div className="rounded-lg border border-emerald-100 bg-emerald-50 p-3">
+              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-emerald-600">Đã duyệt</p>
+              <p className="mt-2 text-lg font-bold text-emerald-700">{participantSummary.approved}</p>
             </div>
-            <div className="rounded-2xl border border-orange-100 bg-orange-50 p-3">
-              <p className="text-[11px] font-black uppercase tracking-[0.12em] text-orange-600">Bị từ chối</p>
-              <p className="mt-2 text-lg font-black text-orange-700">{participantSummary.rejected}</p>
+            <div className="rounded-lg border border-orange-100 bg-orange-50 p-3">
+              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-orange-600">Bị từ chối</p>
+              <p className="mt-2 text-lg font-bold text-orange-700">{participantSummary.rejected}</p>
             </div>
-            <div className="rounded-2xl border border-rose-100 bg-rose-50 p-3">
-              <p className="text-[11px] font-black uppercase tracking-[0.12em] text-rose-600">Chưa thanh toán</p>
-              <p className="mt-2 text-lg font-black text-rose-700">{participantSummary.unpaid}</p>
+            <div className="rounded-lg border border-rose-100 bg-rose-50 p-3">
+              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-rose-600">Chưa thanh toán</p>
+              <p className="mt-2 text-lg font-bold text-rose-700">{participantSummary.unpaid}</p>
             </div>
-            <div className="rounded-2xl border border-blue-100 bg-blue-50 p-3">
-              <p className="text-[11px] font-black uppercase tracking-[0.12em] text-blue-600">Đang chờ ghép</p>
-              <p className="mt-2 text-lg font-black text-blue-700">{participantSummary.partnerInvite}</p>
+            <div className="rounded-lg border border-blue-100 bg-blue-50 p-3">
+              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-600">Đang chờ ghép</p>
+              <p className="mt-2 text-lg font-bold text-blue-700">{participantSummary.partnerInvite}</p>
             </div>
           </div>
 
@@ -629,7 +629,7 @@ export function RegistrationTab({
                   type="button"
                   onClick={() => setFilter(option.value as typeof filter)}
                   className={[
-                    'rounded-full border px-3 py-2 text-xs font-black transition-colors',
+                    'rounded-full border px-3 py-2 text-xs font-bold transition-colors',
                     filter === option.value
                       ? 'border-blue-600 bg-blue-600 text-white'
                       : 'border-slate-200 bg-white text-slate-650 hover:border-slate-300 hover:text-slate-900',
@@ -644,7 +644,7 @@ export function RegistrationTab({
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-slate-100">
               <thead>
-                <tr className="text-left text-xs font-black uppercase tracking-[0.12em] text-slate-400">
+                <tr className="text-left text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
                   <th className="pb-3 pr-4">Đội/Cặp</th>
                   <th className="pb-3 pr-4">Thành viên</th>
                   <th className="pb-3 pr-4">Trạng thái</th>
@@ -656,7 +656,7 @@ export function RegistrationTab({
                 {filteredParticipants.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="py-12">
-                      <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center">
+                      <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center">
                         <Users className="h-8 w-8 text-slate-300" />
                         <p className="mt-3 text-sm font-bold text-slate-700">Không có hồ sơ phù hợp</p>
                         <p className="mt-1 text-xs font-medium text-slate-500">
@@ -676,10 +676,10 @@ export function RegistrationTab({
                       <tr key={participant.id}>
                         <td className="py-4 pr-4">
                           <div className="flex flex-wrap items-center gap-2">
-                            <p className="text-sm font-black text-slate-900 flex items-center gap-1.5">
+                            <p className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
                               {participant.seed != null && (
                                 <span
-                                  className="inline-flex items-center justify-center min-w-[28px] h-[22px] rounded-full border border-blue-300 bg-blue-50 text-blue-700 text-[11px] font-black cursor-pointer hover:bg-blue-100 transition-colors px-2"
+                                  className="inline-flex items-center justify-center min-w-[28px] h-[22px] rounded-full border border-blue-300 bg-blue-50 text-blue-700 text-[11px] font-bold cursor-pointer hover:bg-blue-100 transition-colors px-2"
                                   title="Nhấp để sửa seed"
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -710,11 +710,11 @@ export function RegistrationTab({
                               </div>
                             )}
                             {participant.isWildcard ? (
-                              <span className="rounded-full border border-emerald-100 bg-emerald-50 px-2.5 py-1 text-[11px] font-black text-emerald-700">
+                              <span className="rounded-full border border-emerald-100 bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700">
                                 Đặc cách
                               </span>
                             ) : participant.teamInviteToken ? (
-                              <span className="rounded-full border border-blue-100 bg-blue-50 px-2.5 py-1 text-[11px] font-black text-blue-700">
+                              <span className="rounded-full border border-blue-100 bg-blue-50 px-2.5 py-1 text-[11px] font-bold text-blue-700">
                                 Chờ ghép partner
                               </span>
                             ) : null}
@@ -735,14 +735,14 @@ export function RegistrationTab({
                         </td>
                         <td className="py-4 pr-4">
                           <span className={[
-                            'inline-flex rounded-full border px-2.5 py-1 text-xs font-black',
+                            'inline-flex rounded-full border px-2.5 py-1 text-xs font-bold',
                             getParticipantStatusClassName(participant.teamStatus),
                           ].join(' ')}>
                             {getParticipantStatusLabel(participant.teamStatus)}
                           </span>
                         </td>
                         <td className="py-4 pr-4">
-                          <span className={`text-xs font-black ${participant.isPaid ? 'text-emerald-600' : 'text-rose-600'}`}>
+                          <span className={`text-xs font-bold ${participant.isPaid ? 'text-emerald-600' : 'text-rose-600'}`}>
                             {participant.isPaid ? 'Đã thanh toán' : 'Chưa thanh toán'}
                           </span>
                         </td>
@@ -787,10 +787,10 @@ export function RegistrationTab({
           </div>
         </div>
 
-        <div className="rounded-2xl border border-blue-100 bg-blue-50 p-5 shadow-sm">
+        <div className="rounded-lg border border-blue-100 bg-blue-50 p-5 shadow-sm">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="text-[11px] font-black uppercase tracking-[0.12em] text-blue-600">Sang vận hành khi giải bắt đầu</p>
+              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-600">Sang vận hành khi giải bắt đầu</p>
               <p className="mt-2 text-sm font-semibold text-slate-800">
                 Màn hình `Ops` dùng cho điều phối chuỗi trận, sân đấu, các vấn đề phát sinh và nhật ký vận hành trong ngày thi đấu.
               </p>
@@ -811,9 +811,9 @@ export function RegistrationTab({
       <div className="space-y-6">
         
         {/* Mock Participant Testing Panel */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+        <div className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm space-y-4">
           <div>
-            <h3 className="font-extrabold text-slate-900 text-base flex items-center gap-2">
+            <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
               <RefreshCw className="w-4 h-4 text-blue-600 animate-none" /> Bảng thử nghiệm dữ liệu ảo
             </h3>
             <p className="text-xs text-slate-455 mt-1 font-semibold">
@@ -856,9 +856,9 @@ export function RegistrationTab({
         </div>
 
         {/* Xếp hạt giống */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+        <div className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm space-y-4">
           <div>
-            <h3 className="font-extrabold text-slate-900 text-base flex items-center gap-2">
+            <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
               <Shuffle className="w-4 h-4 text-purple-600" /> Xếp hạt giống
             </h3>
             <p className="text-xs text-slate-455 mt-1 font-semibold">Phân loại đội mạnh yếu để tránh chạm nhau sớm.</p>
@@ -870,7 +870,7 @@ export function RegistrationTab({
             <select
               value={seedingMethod}
               onChange={(e) => setSeedingMethod(e.target.value as 'ELO' | 'RANDOM' | 'MANUAL')}
-              className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-semibold text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3.5 text-sm font-semibold text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             >
               <option value="MANUAL">Xếp thủ công</option>
               <option value="ELO">Tự động theo ELO</option>
@@ -905,7 +905,7 @@ export function RegistrationTab({
 
                 if (participants.length === 0) {
                   return (
-                    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center">
+                    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center">
                       <Shuffle className="w-6 h-6 text-slate-300" />
                       <p className="mt-2 text-sm font-bold text-slate-500">Chưa có đội nào được đăng ký</p>
                     </div>
@@ -932,9 +932,9 @@ export function RegistrationTab({
                         </p>
                         <div className="space-y-1">
                           {unseeded.map((p) => (
-                            <div key={p.id} className="flex items-center justify-between rounded-xl border border-dashed border-slate-200 bg-white px-3 py-2.5">
+                            <div key={p.id} className="flex items-center justify-between rounded-lg border border-dashed border-slate-200 bg-white px-3 py-2.5">
                               <div className="flex items-center gap-2 min-w-0">
-                                <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-slate-100 text-slate-400 text-xs font-black shrink-0">
+                                <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-slate-100 text-slate-400 text-xs font-bold shrink-0">
                                   ?
                                 </span>
                                 <span className="text-sm font-bold text-slate-500 truncate">{p.teamName}</span>
@@ -959,9 +959,9 @@ export function RegistrationTab({
         </div>
 
         {/* Reserved Slots / Wildcards Direct Assignment */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+        <div className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm space-y-4">
           <div>
-            <h3 className="font-extrabold text-slate-900 text-base flex items-center gap-2">
+            <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
               <UserPlus className="w-4 h-4 text-emerald-600" /> Suất đặc cách
             </h3>
             <p className="text-xs text-slate-455 mt-1 font-semibold">Gán trực tiếp khách mời, nhà tài trợ vào danh sách thi đấu. Bỏ qua mọi quy tắc giới hạn ELO.</p>
@@ -990,13 +990,13 @@ export function RegistrationTab({
                         setSelectedDivisionId(div.id);
                         setWildcardPartnerEmailOrPhone('');
                       }}
-                      className={`relative w-full cursor-pointer rounded-xl border px-4 py-3 text-xs font-bold transition-all text-left ${
+                      className={`relative w-full cursor-pointer rounded-lg border px-4 py-3 text-xs font-bold transition-all text-left ${
                         isActive
                           ? 'border-emerald-300 bg-emerald-50 text-emerald-800 shadow-sm'
                           : 'border-slate-200 bg-white text-slate-650 hover:border-emerald-200 hover:text-emerald-700'
                       }`}
                     >
-                      <span className="block text-sm font-black">{div.name}</span>
+                      <span className="block text-sm font-bold">{div.name}</span>
                       <span className="block text-[10px] font-semibold text-slate-500 mt-0.5">
                         {matchLabel} • {bracketLabel} • {count} hồ sơ
                       </span>
@@ -1066,18 +1066,18 @@ export function RegistrationTab({
             if (wildcards.length === 0) return null;
             return (
               <div className="border-t border-slate-100 pt-4">
-                <p className="text-xs font-black text-slate-500 mb-3 uppercase tracking-wider">
+                <p className="text-xs font-bold text-slate-500 mb-3 uppercase tracking-wider">
                   Đã gán đặc cách ({wildcards.length})
                 </p>
                 <div className="space-y-2">
                   {wildcards.map((p) => {
                     const divName = divisions.find(d => d.id === p.tournamentDivisionId)?.name || '';
                     return (
-                      <div key={p.id} className="flex items-center justify-between rounded-xl border border-emerald-100 bg-emerald-50/40 px-3 py-2.5">
+                      <div key={p.id} className="flex items-center justify-between rounded-lg border border-emerald-100 bg-emerald-50/40 px-3 py-2.5">
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
                             <span className="text-sm font-bold text-slate-900 truncate">{p.teamName}</span>
-                            <span className="rounded-full border border-emerald-200 bg-emerald-100 px-2 py-0.5 text-[10px] font-black text-emerald-700 shrink-0">
+                            <span className="rounded-full border border-emerald-200 bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700 shrink-0">
                               Đặc cách
                             </span>
                           </div>

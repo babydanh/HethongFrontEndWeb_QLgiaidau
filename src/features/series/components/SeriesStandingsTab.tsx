@@ -124,10 +124,10 @@ export const SeriesStandingsTab: React.FC<SeriesStandingsTabProps> = ({ seriesId
   return (
     <div className="flex flex-col gap-6">
       {/* Filters Bar */}
-      <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
+      <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-sm flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
         {/* Active Info */}
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 border border-blue-100 shrink-0">
+          <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 border border-blue-100 shrink-0">
             <Trophy className="w-5 h-5" />
           </div>
           <div>
@@ -146,7 +146,7 @@ export const SeriesStandingsTab: React.FC<SeriesStandingsTabProps> = ({ seriesId
             <select
               value={selectedLegId}
               onChange={(e) => setSelectedLegId(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:bg-white focus:border-blue-600 outline-none transition-all cursor-pointer"
+              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 focus:bg-white focus:border-blue-600 outline-none transition-all cursor-pointer"
             >
               {legs.length === 0 ? (
                 <option value="">Chưa có chặng đấu</option>
@@ -166,7 +166,7 @@ export const SeriesStandingsTab: React.FC<SeriesStandingsTabProps> = ({ seriesId
             <select
               value={selectedCategoryId}
               onChange={(e) => setSelectedCategoryId(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:bg-white focus:border-blue-600 outline-none transition-all cursor-pointer"
+              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 focus:bg-white focus:border-blue-600 outline-none transition-all cursor-pointer"
               disabled={isLoadingCategories}
             >
               {isLoadingCategories ? (
@@ -187,12 +187,12 @@ export const SeriesStandingsTab: React.FC<SeriesStandingsTabProps> = ({ seriesId
 
       {/* Standings Table Grid */}
       {isLoadingStandings ? (
-        <div className="bg-white border border-slate-200 rounded-2xl p-12 flex flex-col items-center justify-center min-h-[300px] shadow-sm">
+        <div className="bg-white border border-slate-200 rounded-lg p-12 flex flex-col items-center justify-center min-h-[300px] shadow-sm">
           <Loader2 className="w-8 h-8 text-blue-600 animate-spin mb-3" />
           <p className="text-sm text-slate-500 font-medium">Đang tải bảng xếp hạng PSR...</p>
         </div>
       ) : error ? (
-        <div className="bg-white border border-red-100 rounded-2xl p-12 text-center text-red-500 shadow-sm">
+        <div className="bg-white border border-red-100 rounded-lg p-12 text-center text-red-500 shadow-sm">
           <h4 className="font-bold mb-1">Đã xảy ra lỗi</h4>
           <p className="text-sm max-w-xs mx-auto leading-relaxed">{error}</p>
         </div>

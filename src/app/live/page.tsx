@@ -40,7 +40,7 @@ export default function LiveScorePage() {
             {/* Live Matches Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-gutter mb-12">
                 {/* Match Card 1 */}
-                <div className="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-6 hover:shadow-md transition-shadow flex flex-col gap-6 relative overflow-hidden">
+                <div className="bg-surface-container-lowest rounded-lg border border-outline-variant shadow-sm p-6 hover:shadow-md transition-shadow flex flex-col gap-6 relative overflow-hidden">
                     <div className="absolute top-0 left-0 w-full h-1 bg-primary"></div>
                     <div className="flex justify-between items-center border-b border-surface-variant pb-4">
                         <div className="flex items-center gap-2 text-on-surface-variant font-body-sm text-body-sm">
@@ -95,7 +95,7 @@ export default function LiveScorePage() {
                 </div>
 
                 {/* Match Card 2 */}
-                <div className="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-6 hover:shadow-md transition-shadow flex flex-col gap-6 relative overflow-hidden">
+                <div className="bg-surface-container-lowest rounded-lg border border-outline-variant shadow-sm p-6 hover:shadow-md transition-shadow flex flex-col gap-6 relative overflow-hidden">
                     <div className="absolute top-0 left-0 w-full h-1 bg-primary"></div>
                     <div className="flex justify-between items-center border-b border-surface-variant pb-4">
                         <div className="flex items-center gap-2 text-on-surface-variant font-body-sm text-body-sm">
@@ -145,7 +145,7 @@ export default function LiveScorePage() {
             {/* Recently Finished Section */}
             <h2 className="font-headline-lg text-headline-lg text-on-surface mb-6">Vừa kết thúc</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-gutter mb-12 opacity-80">
-                <div className="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-6 flex flex-col gap-6 grayscale-[20%]">
+                <div className="bg-surface-container-lowest rounded-lg border border-outline-variant shadow-sm p-6 flex flex-col gap-6 grayscale-[20%]">
                     <div className="flex justify-between items-center border-b border-surface-variant pb-4">
                         <div className="flex items-center gap-2 text-on-surface-variant font-body-sm text-body-sm">
                             <span className="material-symbols-outlined text-[16px]">emoji_events</span>

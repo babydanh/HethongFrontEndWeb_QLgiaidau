@@ -75,13 +75,13 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
   ];
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-6 mb-8 shadow-sm">
+    <div className="bg-white rounded-lg border border-slate-200 p-6 mb-8 shadow-sm">
       <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
         <FileText className="w-5 h-5 text-blue-600" /> Tiến trình giải đấu
       </h3>
       
       {isTournamentDraft(tournament.status) && (
-        <div className="flex flex-col items-center justify-center py-6 bg-slate-50/50 rounded-xl border border-dashed border-slate-300 mb-6">
+        <div className="flex flex-col items-center justify-center py-6 bg-slate-50/50 rounded-lg border border-dashed border-slate-300 mb-6">
           <h4 className="font-bold text-slate-700 mb-2">Giải đấu chưa được công bố</h4>
           <p className="text-sm text-slate-500 mb-3 max-w-md text-center">
             Bạn cần công bố giải đấu để kích hoạt thanh tiến trình và bắt đầu nhận đăng ký.
@@ -122,14 +122,14 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
                       <span className={`w-5 h-5 rounded-md flex items-center justify-center border transition-all ${
                         hasDescription ? 'bg-emerald-500 border-emerald-500 text-white shadow-sm shadow-emerald-500/10' : 'border-rose-300 bg-rose-50 text-rose-600'
                       }`}>
-                        {hasDescription ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : <span className="font-extrabold text-[10px]">✕</span>}
+                        {hasDescription ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : <span className="font-bold text-[10px]">✕</span>}
                       </span>
                       <span className={hasDescription ? 'text-slate-400 line-through' : 'text-slate-700'}>
                         Thông tin cơ bản giải đấu
                       </span>
                     </div>
                     {!hasDescription && (
-                      <span className="text-[9px] font-black text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-150 shrink-0">
+                      <span className="text-[9px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-150 shrink-0">
                         Chưa điền
                       </span>
                     )}
@@ -141,14 +141,14 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
                       <span className={`w-5 h-5 rounded-md flex items-center justify-center border transition-all ${
                         hasDivisions ? 'bg-emerald-500 border-emerald-500 text-white shadow-sm shadow-emerald-500/10' : 'border-rose-300 bg-rose-50 text-rose-600'
                       }`}>
-                        {hasDivisions ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : <span className="font-extrabold text-[10px]">✕</span>}
+                        {hasDivisions ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : <span className="font-bold text-[10px]">✕</span>}
                       </span>
                       <span className={hasDivisions ? 'text-slate-400 line-through' : 'text-slate-700'}>
                         Có ít nhất 1 bảng thi đấu (Đơn/Đôi Nam Nữ)
                       </span>
                     </div>
                     {!hasDivisions && (
-                      <span className="text-[9px] font-black text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-150 shrink-0">
+                      <span className="text-[9px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-150 shrink-0">
                         Thiếu bảng
                       </span>
                     )}
@@ -160,14 +160,14 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
                       <span className={`w-5 h-5 rounded-md flex items-center justify-center border transition-all ${
                         hasVenue ? 'bg-emerald-500 border-emerald-500 text-white shadow-sm shadow-emerald-500/10' : 'border-rose-300 bg-rose-50 text-rose-600'
                       }`}>
-                        {hasVenue ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : <span className="font-extrabold text-[10px]">✕</span>}
+                        {hasVenue ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : <span className="font-bold text-[10px]">✕</span>}
                       </span>
                       <span className={hasVenue ? 'text-slate-400 line-through' : 'text-slate-700'}>
                         Địa điểm / Sân thi đấu
                       </span>
                     </div>
                     {!hasVenue && (
-                      <span className="text-[9px] font-black text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-150 shrink-0">
+                      <span className="text-[9px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-150 shrink-0">
                         Chưa điền
                       </span>
                     )}
@@ -179,14 +179,14 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
                       <span className={`w-5 h-5 rounded-md flex items-center justify-center border transition-all ${
                         hasValidDates ? 'bg-emerald-500 border-emerald-500 text-white shadow-sm shadow-emerald-500/10' : 'border-rose-300 bg-rose-50 text-rose-600'
                       }`}>
-                        {hasValidDates ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : <span className="font-extrabold text-[10px]">✕</span>}
+                        {hasValidDates ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : <span className="font-bold text-[10px]">✕</span>}
                       </span>
                       <span className={hasValidDates ? 'text-slate-400 line-through' : 'text-slate-700'}>
                         Thời gian đăng ký & khai mạc hợp lệ
                       </span>
                     </div>
                     {!hasValidDates && (
-                      <span className="text-[9px] font-black text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-150 shrink-0">
+                      <span className="text-[9px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-150 shrink-0">
                         Sai logic ngày
                       </span>
                     )}
@@ -198,14 +198,14 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
                       <span className={`w-5 h-5 rounded-md flex items-center justify-center border transition-all ${
                         hasContact ? 'bg-emerald-500 border-emerald-500 text-white shadow-sm shadow-emerald-500/10' : 'border-rose-300 bg-rose-50 text-rose-600'
                       }`}>
-                        {hasContact ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : <span className="font-extrabold text-[10px]">✕</span>}
+                        {hasContact ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : <span className="font-bold text-[10px]">✕</span>}
                       </span>
                       <span className={hasContact ? 'text-slate-400 line-through' : 'text-slate-700'}>
                         Thông tin liên hệ BTC (Email / Số điện thoại)
                       </span>
                     </div>
                     {!hasContact && (
-                      <span className="text-[9px] font-black text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-150 shrink-0">
+                      <span className="text-[9px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-150 shrink-0">
                         Chưa điền
                       </span>
                     )}
@@ -216,7 +216,7 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
             
             {/* Ràng buộc & Khóa thông tin sau khi công bố */}
             <div className="mt-4 pt-3 border-t border-amber-200/60 space-y-1.5 text-[11px] text-amber-900 font-semibold">
-              <span className="block text-xs font-extrabold text-amber-950 uppercase tracking-wider">🔒 RÀNG BUỘC KHI ĐÃ CÔNG BỐ:</span>
+              <span className="block text-xs font-bold text-amber-950 uppercase tracking-wider">🔒 RÀNG BUỘC KHI ĐÃ CÔNG BỐ:</span>
               <ul className="list-disc pl-4 space-y-1 text-slate-650 font-medium">
                 <li><strong className="text-amber-900">Không thể sửa đổi:</strong> Thể loại môn thể thao, Phân hạng giải đấu, Lệ phí công bố, Lệ phí thi đấu, và Cấu hình phân chia hình thức (nếu đã mở).</li>
                 <li><strong className="text-amber-900">Bị khóa thêm/xóa:</strong> Không thể thêm mới hay xóa bớt các Bảng thi đấu hiện tại.</li>

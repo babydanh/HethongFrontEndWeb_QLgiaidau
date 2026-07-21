@@ -92,7 +92,7 @@ export default function Step3ScheduleFees() {
 
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
         
-        <div className="bg-slate-50 border border-slate-100 rounded-xl p-5 space-y-4">
+        <div className="bg-slate-50 border border-slate-100 rounded-lg p-5 space-y-4">
           <div className="flex items-center gap-2 mb-3">
             <Calendar className="w-5 h-5 text-blue-600" />
             <h4 className="font-bold text-slate-900">Thời Gian Đăng Ký</h4>
@@ -128,7 +128,7 @@ export default function Step3ScheduleFees() {
           </div>
         </div>
 
-        <div className="bg-blue-50 border border-blue-100 rounded-xl p-5 space-y-4">
+        <div className="bg-blue-50 border border-blue-100 rounded-lg p-5 space-y-4">
           <div className="flex items-center gap-2 mb-3">
             <Calendar className="w-5 h-5 text-blue-600" />
             <h4 className="font-bold text-slate-900">Thời Gian Thi Đấu</h4>
@@ -164,14 +164,14 @@ export default function Step3ScheduleFees() {
           </div>
         </div>
 
-        <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-5 space-y-4">
+        <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-5 space-y-4">
           <div className="flex items-center gap-2 mb-3">
             <DollarSign className="w-5 h-5 text-emerald-600" />
             <h4 className="font-bold text-slate-900">Lệ Phí</h4>
           </div>
 
           {isClubTournament && (
-            <div className="rounded-xl border border-emerald-200 bg-white px-4 py-3">
+            <div className="rounded-lg border border-emerald-200 bg-white px-4 py-3">
               <p className="text-sm font-bold text-emerald-900">Miễn phí cho giải trong câu lạc bộ</p>
               <p className="mt-1 text-xs font-semibold leading-relaxed text-emerald-700">
                 Giải thuộc CLB không thu lệ phí qua nền tảng. Nếu CLB có khoản nội bộ riêng, hãy ghi trong mô tả hoặc thông báo CLB.
@@ -191,7 +191,7 @@ export default function Step3ScheduleFees() {
           </div>
         </div>
 
-        <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-4 text-xs text-blue-700 leading-relaxed font-semibold">
+        <div className="bg-blue-50/50 border border-blue-100 rounded-lg p-4 text-xs text-blue-700 leading-relaxed font-semibold">
           <strong>💡 Lưu ý:</strong> Các thông tin về Lịch thi đấu và Lệ phí là <strong>KHÔNG BẮT BUỘC</strong> nhập ngay tại bước này. Bạn có thể bỏ trống và linh hoạt thiết lập/chỉnh sửa chi tiết trong trang quản lý giải đấu sau.
         </div>
 

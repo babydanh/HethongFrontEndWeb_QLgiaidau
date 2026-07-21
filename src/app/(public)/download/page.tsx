@@ -10,10 +10,10 @@ export default function DownloadPage() {
       <div className="max-w-2xl mx-auto px-4 py-16 md:py-24">
         {/* Header */}
         <div className="text-center mb-12">
-          <div className="w-16 h-16 bg-slate-900 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+          <div className="w-16 h-16 bg-slate-900 rounded-lg flex items-center justify-center mx-auto mb-6 shadow-lg">
             <Smartphone className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-3xl md:text-4xl font-black text-slate-900 mb-3">
+          <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-3">
             Tải Ứng Dụng VNSPORT
           </h1>
           <p className="text-slate-500 text-base max-w-md mx-auto leading-relaxed">
@@ -23,9 +23,9 @@ export default function DownloadPage() {
         </div>
 
         {/* App Store Card — fake, chưa có store */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all p-6 flex items-center justify-between gap-4 mb-4">
+        <div className="bg-white rounded-lg border border-slate-200 shadow-sm hover:shadow-md transition-all p-6 flex items-center justify-between gap-4 mb-4">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center shrink-0">
+            <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center shrink-0">
               <Apple className="w-6 h-6 text-slate-700" />
             </div>
             <div>
@@ -40,9 +40,9 @@ export default function DownloadPage() {
         </div>
 
         {/* Google Play Card — fake, chưa có store */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all p-6 flex items-center justify-between gap-4 mb-4">
+        <div className="bg-white rounded-lg border border-slate-200 shadow-sm hover:shadow-md transition-all p-6 flex items-center justify-between gap-4 mb-4">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center shrink-0">
+            <div className="w-12 h-12 bg-emerald-50 rounded-lg flex items-center justify-center shrink-0">
               <Monitor className="w-6 h-6 text-emerald-600" />
             </div>
             <div>
@@ -57,9 +57,9 @@ export default function DownloadPage() {
         </div>
 
         {/* APK Direct Download */}
-        <div className="bg-white rounded-2xl border-2 border-emerald-200 shadow-sm hover:shadow-md transition-all p-6 flex items-center justify-between gap-4">
+        <div className="bg-white rounded-lg border-2 border-emerald-200 shadow-sm hover:shadow-md transition-all p-6 flex items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center shrink-0">
+            <div className="w-12 h-12 bg-emerald-50 rounded-lg flex items-center justify-center shrink-0">
               <Download className="w-6 h-6 text-emerald-600" />
             </div>
             <div>
@@ -78,7 +78,7 @@ export default function DownloadPage() {
         </div>
 
         {/* Hướng dẫn */}
-        <div className="mt-10 p-5 bg-amber-50 border border-amber-200 rounded-2xl">
+        <div className="mt-10 p-5 bg-amber-50 border border-amber-200 rounded-lg">
           <div className="flex items-start gap-3">
             <div className="w-7 h-7 bg-amber-200 rounded-full flex items-center justify-center shrink-0 mt-0.5">
               <span className="text-amber-800 text-sm font-bold">!</span>

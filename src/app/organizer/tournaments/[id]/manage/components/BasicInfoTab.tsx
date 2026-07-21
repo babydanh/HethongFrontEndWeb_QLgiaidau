@@ -163,9 +163,9 @@ export function BasicInfoTab({
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-6 md:p-8 shadow-sm space-y-6 animate-in fade-in duration-200">
+    <div className="bg-white rounded-lg border border-slate-200 p-6 md:p-8 shadow-sm space-y-6 animate-in fade-in duration-200">
       <div className="border-b pb-4">
-        <h2 className="text-xl font-black text-slate-900">Thông tin cơ bản giải đấu</h2>
+        <h2 className="text-xl font-bold text-slate-900">Thông tin cơ bản giải đấu</h2>
         <p className="text-xs text-slate-450 mt-1 font-semibold">Quản lý tên, thương hiệu, mô tả và cấu hình liên hệ của giải đấu.</p>
       </div>
 
@@ -175,7 +175,7 @@ export function BasicInfoTab({
           <button
             type="button"
             onClick={() => setBasicSubTab('general')}
-            className={`flex items-center gap-2 px-4 py-3 text-xs font-bold rounded-xl transition-all whitespace-nowrap md:w-full ${
+            className={`flex items-center gap-2 px-4 py-3 text-xs font-bold rounded-lg transition-all whitespace-nowrap md:w-full ${
               basicSubTab === 'general'
                 ? 'bg-blue-50 text-blue-600 shadow-sm border-l-4 border-blue-600'
                 : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
@@ -187,7 +187,7 @@ export function BasicInfoTab({
           <button
             type="button"
             onClick={() => setBasicSubTab('branding')}
-            className={`flex items-center gap-2 px-4 py-3 text-xs font-bold rounded-xl transition-all whitespace-nowrap md:w-full ${
+            className={`flex items-center gap-2 px-4 py-3 text-xs font-bold rounded-lg transition-all whitespace-nowrap md:w-full ${
               basicSubTab === 'branding'
                 ? 'bg-blue-50 text-blue-600 shadow-sm border-l-4 border-blue-600'
                 : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
@@ -199,7 +199,7 @@ export function BasicInfoTab({
           <button
             type="button"
             onClick={() => setBasicSubTab('prizes')}
-            className={`flex items-center gap-2 px-4 py-3 text-xs font-bold rounded-xl transition-all whitespace-nowrap md:w-full ${
+            className={`flex items-center gap-2 px-4 py-3 text-xs font-bold rounded-lg transition-all whitespace-nowrap md:w-full ${
               basicSubTab === 'prizes'
                 ? 'bg-blue-50 text-blue-600 shadow-sm border-l-4 border-blue-600'
                 : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
@@ -211,7 +211,7 @@ export function BasicInfoTab({
           <button
             type="button"
             onClick={() => setBasicSubTab('contact')}
-            className={`flex items-center gap-2 px-4 py-3 text-xs font-bold rounded-xl transition-all whitespace-nowrap md:w-full ${
+            className={`flex items-center gap-2 px-4 py-3 text-xs font-bold rounded-lg transition-all whitespace-nowrap md:w-full ${
               basicSubTab === 'contact'
                 ? 'bg-blue-50 text-blue-600 shadow-sm border-l-4 border-blue-600'
                 : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
@@ -227,7 +227,7 @@ export function BasicInfoTab({
           {basicSubTab === 'general' && (
             <div className="space-y-6 animate-in fade-in duration-200">
               <div>
-                <h3 className="font-extrabold text-slate-850 text-base">Thông tin chung</h3>
+                <h3 className="font-bold text-slate-850 text-base">Thông tin chung</h3>
                 <p className="text-xs text-slate-450 mt-0.5 font-semibold">Các thông tin cơ bản để định danh giải đấu trên hệ thống.</p>
               </div>
 
@@ -268,7 +268,7 @@ export function BasicInfoTab({
           {basicSubTab === 'branding' && (
             <div className="space-y-6 animate-in fade-in duration-200">
               <div>
-                <h3 className="font-extrabold text-slate-850 text-base">Hình ảnh & Banner</h3>
+                <h3 className="font-bold text-slate-850 text-base">Hình ảnh & Banner</h3>
                 <p className="text-xs text-slate-450 mt-0.5 font-semibold">Tải lên các hình ảnh quảng bá giải đấu của bạn.</p>
               </div>
 
@@ -312,14 +312,14 @@ export function BasicInfoTab({
                     </label>
                   </div>
                   {logoUrl ? (
-                    <div className="relative w-28 h-28 rounded-xl overflow-hidden border border-slate-200 shadow-sm bg-white flex items-center justify-center p-2 mt-2">
+                    <div className="relative w-28 h-28 rounded-lg overflow-hidden border border-slate-200 shadow-sm bg-white flex items-center justify-center p-2 mt-2">
                       <img src={logoUrl} alt="Logo Preview" className="max-w-full max-h-full object-contain" />
                       <div className="absolute bottom-1 right-1 bg-black/60 text-white text-[8px] font-bold px-1.5 py-0.5 rounded backdrop-blur-sm">
                         Logo
                       </div>
                     </div>
                   ) : (
-                    <div className="w-28 h-28 rounded-xl border border-dashed border-slate-300 bg-white flex flex-col items-center justify-center text-slate-400 p-2 mt-2 text-[10px] font-bold">
+                    <div className="w-28 h-28 rounded-lg border border-dashed border-slate-300 bg-white flex flex-col items-center justify-center text-slate-400 p-2 mt-2 text-[10px] font-bold">
                       <span>Chưa có logo</span>
                     </div>
                   )}
@@ -362,14 +362,14 @@ export function BasicInfoTab({
                     </label>
                   </div>
                   {bannerUrl ? (
-                    <div className="relative aspect-[21/9] w-full rounded-xl overflow-hidden border border-slate-200 shadow-sm bg-white mt-2">
+                    <div className="relative aspect-[21/9] w-full rounded-lg overflow-hidden border border-slate-200 shadow-sm bg-white mt-2">
                       <img src={bannerUrl} alt="Banner Preview" className="w-full h-full object-cover" />
                       <div className="absolute top-2 left-2 bg-black/60 text-white text-[10px] font-bold px-2 py-1 rounded-md backdrop-blur-sm">
                         Xem trước Banner
                       </div>
                     </div>
                   ) : (
-                    <div className="aspect-[21/9] w-full rounded-xl border border-dashed border-slate-300 bg-white flex flex-col items-center justify-center text-slate-400 p-2 mt-2 text-[10px] font-bold">
+                    <div className="aspect-[21/9] w-full rounded-lg border border-dashed border-slate-300 bg-white flex flex-col items-center justify-center text-slate-400 p-2 mt-2 text-[10px] font-bold">
                       <span>Chưa có banner</span>
                     </div>
                   )}
@@ -386,7 +386,7 @@ export function BasicInfoTab({
                       onChange={(e) => setNewGalleryUrl(e.target.value)}
                       className="flex-grow text-slate-800"
                     />
-                    <label className="bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 font-bold px-4 py-2.5 rounded-xl cursor-pointer text-xs flex items-center justify-center gap-1.5 transition-colors select-none shrink-0 h-11 shadow-sm mt-1">
+                    <label className="bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 font-bold px-4 py-2.5 rounded-lg cursor-pointer text-xs flex items-center justify-center gap-1.5 transition-colors select-none shrink-0 h-11 shadow-sm mt-1">
                       <input 
                         type="file" 
                         accept="image/*" 
@@ -423,7 +423,7 @@ export function BasicInfoTab({
                   </div>
 
                   {tournament.galleryImages && tournament.galleryImages.length > 0 ? (
-                    <div className="grid grid-cols-3 gap-2 overflow-y-auto max-h-[260px] p-2 bg-white border rounded-xl">
+                    <div className="grid grid-cols-3 gap-2 overflow-y-auto max-h-[260px] p-2 bg-white border rounded-lg">
                       {tournament.galleryImages.map((imgUrl, index) => (
                         <div key={`${imgUrl}-${index}`} className="relative group border rounded-lg overflow-hidden aspect-video bg-slate-50">
                           <img src={imgUrl} alt={`Gallery ${index}`} className="w-full h-full object-cover" />
@@ -440,7 +440,7 @@ export function BasicInfoTab({
                       ))}
                     </div>
                   ) : (
-                    <div className="border border-dashed rounded-xl p-8 text-center text-slate-400 bg-white">
+                    <div className="border border-dashed rounded-lg p-8 text-center text-slate-400 bg-white">
                       <p className="text-xs font-semibold italic">Chưa có ảnh nào trong album.</p>
                     </div>
                   )}
@@ -452,7 +452,7 @@ export function BasicInfoTab({
           {basicSubTab === 'prizes' && (
             <div className="space-y-6 animate-in fade-in duration-200">
               <div>
-                <h3 className="font-extrabold text-slate-850 text-base">Cơ cấu giải thưởng</h3>
+                <h3 className="font-bold text-slate-850 text-base">Cơ cấu giải thưởng</h3>
                 <p className="text-xs text-slate-450 mt-0.5 font-semibold">Thông tin chi tiết về phần thưởng của giải đấu.</p>
               </div>
 
@@ -470,7 +470,7 @@ export function BasicInfoTab({
           {basicSubTab === 'contact' && (
             <div className="space-y-6 animate-in fade-in duration-200">
               <div>
-                <h3 className="font-extrabold text-slate-850 text-base">Liên hệ & Mã mời</h3>
+                <h3 className="font-bold text-slate-850 text-base">Liên hệ & Mã mời</h3>
                 <p className="text-xs text-slate-455 mt-0.5 font-semibold">Thông tin liên hệ của Ban tổ chức và quản lý lời mời.</p>
               </div>
 
@@ -500,7 +500,7 @@ export function BasicInfoTab({
                     .map(([key, val]) => {
                       const displayLabel = key.charAt(0).toUpperCase() + key.slice(1);
                       return (
-                        <div key={key} className="flex gap-2 items-center bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                        <div key={key} className="flex gap-2 items-center bg-slate-50 p-2.5 rounded-lg border border-slate-200">
                           <span className="text-xs font-bold text-slate-600 min-w-[100px]">{displayLabel}:</span>
                           <span className="text-sm text-slate-800 flex-grow truncate">{val}</span>
                           <button
@@ -520,7 +520,7 @@ export function BasicInfoTab({
                 </div>
 
                 {/* Add Form */}
-                <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-200 flex flex-col sm:flex-row gap-3 items-end">
+                <div className="bg-slate-50/50 p-4 rounded-lg border border-slate-200 flex flex-col sm:flex-row gap-3 items-end">
                   <div className="flex-1 w-full space-y-1">
                     <label className="text-[10px] font-bold text-slate-500 uppercase">Loại liên hệ</label>
                     <select

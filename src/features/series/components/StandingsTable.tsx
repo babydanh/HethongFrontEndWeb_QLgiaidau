@@ -26,7 +26,7 @@ export const StandingsTable: React.FC<StandingsTableProps> = ({ standings, class
   };
 
   return (
-    <div className={cn('border border-slate-150 rounded-2xl overflow-hidden shadow-sm bg-white', className)}>
+    <div className={cn('border border-slate-150 rounded-lg overflow-hidden shadow-sm bg-white', className)}>
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-left text-sm text-slate-700">
           <thead>
@@ -73,7 +73,7 @@ export const StandingsTable: React.FC<StandingsTableProps> = ({ standings, class
                         </div>
                       </div>
                     </td>
-                    <td className="py-4 px-6 text-center font-black text-blue-600 text-sm">
+                    <td className="py-4 px-6 text-center font-bold text-blue-600 text-sm">
                       {standing.totalPsrPoints} pts
                     </td>
                     <td className="py-4 px-6 text-center font-semibold text-slate-500 text-sm">

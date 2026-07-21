@@ -133,15 +133,15 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
   if (error || !profile) {
     return (
       <div className="min-h-screen bg-slate-50 text-slate-800 flex items-center justify-center p-6">
-        <div className="text-center bg-white border border-slate-200 p-8 rounded-3xl max-w-md shadow-lg">
+        <div className="text-center bg-white border border-slate-200 p-8 rounded-xl max-w-md shadow-lg">
           <div className="w-24 h-24 flex items-center justify-center mx-auto mb-4">
             <img src="/vndcsport.svg" alt="VNDC Sport" className="w-full h-full object-contain" />
           </div>
-          <h2 className="text-xl font-black text-slate-900 mb-2">{error || 'Không tìm thấy người dùng'}</h2>
+          <h2 className="text-xl font-bold text-slate-900 mb-2">{error || 'Không tìm thấy người dùng'}</h2>
           <p className="text-slate-500 text-sm mb-6 font-medium">Tài khoản này có thể không tồn tại hoặc đã bị khóa khỏi hệ thống.</p>
           <Link
             href="/tournaments"
-            className="inline-flex items-center justify-center px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all shadow-md"
+            className="inline-flex items-center justify-center px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-all shadow-md"
           >
             Quay lại trang chủ
           </Link>
@@ -178,7 +178,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
       </div>
 
       {/* Profile Header */}
-      <div className="bg-white rounded-3xl border border-slate-150 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
+      <div className="bg-white rounded-xl border border-slate-150 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
         {/* Cover Photo */}
         <div className="h-56 bg-slate-900 relative group overflow-hidden">
           {profile.coverUrl ? (
@@ -200,7 +200,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
               {profile.avatarUrl ? (
                 <img src={profile.avatarUrl} alt="Avatar" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
               ) : (
-                <span className="text-4xl font-black text-slate-400 uppercase">{profile.fullName?.charAt(0) || 'U'}</span>
+                <span className="text-4xl font-bold text-slate-400 uppercase">{profile.fullName?.charAt(0) || 'U'}</span>
               )}
             </div>
           </div>
@@ -208,7 +208,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
           {/* Info */}
           <div className="space-y-3">
             <div>
-              <h1 className="text-3xl font-black text-slate-900 flex items-center gap-2 tracking-tight">
+              <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-2 tracking-tight">
                 {profile.fullName}
                 {profile.isVerified && (
                   <span title="Thành viên đã xác minh" className="bg-blue-50 p-1 rounded-full border border-blue-200">
@@ -219,11 +219,11 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
             </div>
             
       <div className="flex flex-wrap items-center gap-2">
-              <span className="px-3 py-1 text-xs font-black rounded-xl border bg-blue-50 text-blue-700 border-blue-200 uppercase tracking-wider">
+              <span className="px-3 py-1 text-xs font-bold rounded-lg border bg-blue-50 text-blue-700 border-blue-200 uppercase tracking-wider">
                 Vận động viên
               </span>
               {profile.isVerified && (
-                <span className="px-3 py-1 text-xs font-black rounded-xl border bg-emerald-50 text-emerald-700 border-emerald-250 uppercase tracking-wider">
+                <span className="px-3 py-1 text-xs font-bold rounded-lg border bg-emerald-50 text-emerald-700 border-emerald-250 uppercase tracking-wider">
                   Đã xác minh
                 </span>
               )}
@@ -231,25 +231,25 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                 const activeRanks = profile.ranks?.filter(r => r.matchesPlayed > 0) || [];
                 if (activeRanks.length > 0) {
                   return activeRanks.map((rank) => (
-                    <div key={`${rank.categoryId}-${rank.matchType}`} className="flex items-center gap-1 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-xl text-xs font-bold shrink-0">
-                      <span className="text-[10px] font-black text-slate-550 uppercase mr-1">{rank.categoryName}:</span>
+                    <div key={`${rank.categoryId}-${rank.matchType}`} className="flex items-center gap-1 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-lg text-xs font-bold shrink-0">
+                      <span className="text-[10px] font-bold text-slate-550 uppercase mr-1">{rank.categoryName}:</span>
                       <EloTierBadge elo={rank.eloPoints} tierName={rank.categoryName} size="sm" className="scale-90 origin-left" />
                     </div>
                   ));
                 }
                 return (
-                  <span className="bg-slate-50 border border-slate-200 text-slate-500 px-3 py-1 rounded-xl text-xs font-black uppercase tracking-wider">
+                  <span className="bg-slate-50 border border-slate-200 text-slate-500 px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider">
                     Chưa xếp hạng
                   </span>
                 );
               })()}
               {profile.achievements?.length ? (
-                <span className="bg-amber-50 border border-amber-200 text-amber-700 px-3.5 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5">
+                <span className="bg-amber-50 border border-amber-200 text-amber-700 px-3.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5">
                   <Trophy className="w-3.5 h-3.5 text-amber-500" /> {profile.achievements.length} danh hiệu
                 </span>
               ) : null}
               {profile.createdAt && (
-                <span className="bg-slate-50 border border-slate-200 text-slate-650 px-3.5 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5">
+                <span className="bg-slate-50 border border-slate-200 text-slate-650 px-3.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5">
                   <Calendar className="w-3.5 h-3.5 text-slate-400" /> Tham gia từ {formatDate(profile.createdAt, 'MM/yyyy')}
                 </span>
               )}
@@ -281,7 +281,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="md:col-span-1 flex flex-col gap-6">
               {/* Giới thiệu */}
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+              <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
                 <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">Giới thiệu</h3>
                 {profile.bio ? (
                   <p className="text-slate-650 text-sm leading-relaxed whitespace-pre-wrap font-medium">
@@ -295,7 +295,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
               </div>
 
               {/* Thông tin chi tiết */}
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+              <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
                 <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">Thông tin chi tiết</h3>
                 <div className="flex flex-col gap-4 text-sm">
                   <div className="flex flex-col gap-1 border-b border-slate-100 pb-3">
@@ -307,7 +307,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
             </div>
 
             <div className="md:col-span-2 space-y-6">
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 text-center py-12 border-dashed">
+              <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6 text-center py-12 border-dashed">
                 <Activity className="w-12 h-12 text-slate-350 mx-auto mb-3" />
                 <p className="text-slate-550 font-semibold text-lg">Chưa có dữ liệu hoạt động</p>
                 <p className="text-slate-450 text-xs font-medium mt-1">Hệ thống ghi nhận hoạt động tự động khi bắt đầu tham gia các giải đấu.</p>
@@ -336,7 +336,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                   return (
                     <div
                       key={match.id}
-                      className="bg-white border border-slate-200 hover:border-slate-300 rounded-2xl p-5 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4 transition-all"
+                      className="bg-white border border-slate-200 hover:border-slate-300 rounded-lg p-5 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4 transition-all"
                     >
                       <div className="space-y-1">
                         <div className="flex items-center gap-2 text-xs font-semibold text-slate-400">
@@ -346,12 +346,12 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                         </div>
                         <div className="text-sm font-bold text-slate-800 flex items-center gap-2">
                           <span className="text-slate-400">Đối thủ:</span>
-                          <span className="text-blue-600 font-extrabold">{opponentName}</span>
+                          <span className="text-blue-600 font-bold">{opponentName}</span>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
-                        <div className="bg-slate-50 px-4 py-2 rounded-xl border border-slate-100 text-sm font-black text-slate-700 tabular-nums">
+                        <div className="bg-slate-50 px-4 py-2 rounded-lg border border-slate-100 text-sm font-bold text-slate-700 tabular-nums">
                           {buildMatchScoreSummary({
                             p1SetsWon: match.p1SetsWon,
                             p2SetsWon: match.p2SetsWon,
@@ -362,16 +362,16 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
 
                         {isCompleted ? (
                           isWinner ? (
-                            <span className="px-3 py-1 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase tracking-wide">
+                            <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase tracking-wide">
                               Thắng
                             </span>
                           ) : (
-                            <span className="px-3 py-1 rounded-full text-[10px] font-black bg-rose-50 text-rose-700 border border-rose-200 uppercase tracking-wide">
+                            <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 uppercase tracking-wide">
                               Thua
                             </span>
                           )
                         ) : (
-                          <span className="px-3 py-1 rounded-full text-[10px] font-black bg-blue-50 text-blue-700 border border-blue-200 uppercase tracking-wide">
+                          <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 uppercase tracking-wide">
                             Đang đấu
                           </span>
                         )}
@@ -388,9 +388,9 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                 })}
               </div>
             ) : (
-              <div className="text-center py-16 bg-white rounded-2xl border border-slate-200 border-dashed">
+              <div className="text-center py-16 bg-white rounded-lg border border-slate-200 border-dashed">
                 <Activity className="w-16 h-16 text-slate-350 mx-auto mb-4" />
-                <h3 className="text-lg font-black text-slate-700 mb-2">Chưa thi đấu trận nào</h3>
+                <h3 className="text-lg font-bold text-slate-700 mb-2">Chưa thi đấu trận nào</h3>
                 <p className="text-slate-500 max-w-sm mx-auto text-sm font-medium">
                   Thành viên này chưa ghi nhận trận đấu chính thức nào gần đây trên hệ thống.
                 </p>
@@ -401,7 +401,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
 
         {activeTab === 'achievements' && (
           <div className="space-y-6">
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+            <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
               <div className="flex items-center gap-2 mb-4">
                 <Trophy className="w-5 h-5 text-amber-600" />
                 <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Danh hiệu thành tích</h3>
@@ -420,18 +420,18 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                       const title = item.rank === 1 ? 'Quán quân' : item.rank === 2 ? 'Á quân' : 'Hạng ba';
 
                       return (
-                        <div key={`${item.tournamentId}-${item.rank}`} className={`rounded-2xl border p-4 shadow-sm ${badgeClass}`}>
+                        <div key={`${item.tournamentId}-${item.rank}`} className={`rounded-lg border p-4 shadow-sm ${badgeClass}`}>
                           <div className="flex items-center justify-between gap-3">
                             <div className="min-w-0">
-                              <span className={`text-[10px] font-black uppercase px-2 py-1 rounded-full border bg-white ${badgeClass}`}>
+                              <span className={`text-[10px] font-bold uppercase px-2 py-1 rounded-full border bg-white ${badgeClass}`}>
                                 {title}
                               </span>
-                              <h4 className="mt-2 text-base font-black text-slate-900 line-clamp-1">{item.tournamentName}</h4>
+                              <h4 className="mt-2 text-base font-bold text-slate-900 line-clamp-1">{item.tournamentName}</h4>
                               <p className="text-xs text-slate-500 mt-1">
                                 {item.tournamentDate ? formatDate(item.tournamentDate, 'dd/MM/yyyy') : 'Chưa có ngày kết thúc'}
                               </p>
                             </div>
-                            <div className={`shrink-0 w-12 h-12 rounded-2xl border flex items-center justify-center font-black bg-white ${badgeClass}`}>
+                            <div className={`shrink-0 w-12 h-12 rounded-lg border flex items-center justify-center font-bold bg-white ${badgeClass}`}>
                               {item.rank}
                             </div>
                           </div>
@@ -440,7 +440,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                     })}
                 </div>
               ) : (
-                <div className="text-center py-10 border-2 border-dashed border-slate-100 rounded-2xl">
+                <div className="text-center py-10 border-2 border-dashed border-slate-100 rounded-lg">
                   <Trophy className="w-12 h-12 text-slate-300 mx-auto mb-3" />
                   <p className="text-slate-600 font-semibold">Chưa có danh hiệu thành tích</p>
                   <p className="text-slate-400 text-sm mt-1">Danh hiệu sẽ hiện khi người chơi có top 3 ở giải public ELO.</p>
@@ -462,28 +462,28 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                 {profile.ranks && profile.ranks.length > 0 ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {profile.ranks.map((rank) => (
-                      <div key={`${rank.categoryId}-${rank.matchType}`} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-all flex items-center justify-between group">
+                      <div key={`${rank.categoryId}-${rank.matchType}`} className="bg-white rounded-lg border border-slate-200 p-5 shadow-sm hover:shadow-md transition-all flex items-center justify-between group">
                         <div className="space-y-1.5 flex-1">
-                          <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase bg-slate-100 text-slate-500 border border-slate-200">
+                          <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-slate-100 text-slate-500 border border-slate-200">
                             {rank.categoryName} • {getMatchTypeLabel(rank.matchType)}
                           </span>
                           <div className="flex items-center gap-2">
                             <Award className="w-5 h-5 text-blue-500 group-hover:scale-110 transition-transform" />
-                            <h4 className="font-extrabold text-slate-900 text-base">{rank.eloPoints} ELO</h4>
+                            <h4 className="font-bold text-slate-900 text-base">{rank.eloPoints} ELO</h4>
                             <EloTierBadge elo={rank.eloPoints} tierName={rank.categoryName} size="sm" />
                           </div>
                           <div className="grid grid-cols-3 gap-2 pt-2 text-center text-xs">
-                            <div className="bg-slate-50 p-2 rounded-xl border border-slate-100">
+                            <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
                               <div className="text-[10px] text-slate-400 font-bold uppercase">Số Trận</div>
-                              <div className="font-extrabold text-slate-700 mt-0.5">{rank.matchesPlayed}</div>
+                              <div className="font-bold text-slate-700 mt-0.5">{rank.matchesPlayed}</div>
                             </div>
-                            <div className="bg-slate-50 p-2 rounded-xl border border-slate-100">
+                            <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
                               <div className="text-[10px] text-slate-400 font-bold uppercase">Thắng</div>
-                              <div className="font-extrabold text-emerald-600 mt-0.5">{rank.matchesWon}</div>
+                              <div className="font-bold text-emerald-600 mt-0.5">{rank.matchesWon}</div>
                             </div>
-                            <div className="bg-slate-50 p-2 rounded-xl border border-slate-100">
+                            <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
                               <div className="text-[10px] text-slate-400 font-bold uppercase">Chuỗi</div>
-                              <div className="font-extrabold text-blue-600 mt-0.5 flex items-center justify-center gap-0.5">
+                              <div className="font-bold text-blue-600 mt-0.5 flex items-center justify-center gap-0.5">
                                 <Zap className="w-3 h-3 fill-blue-500 text-blue-650" /> {rank.winStreak}
                               </div>
                             </div>
@@ -493,14 +493,14 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                     ))}
                   </div>
                 ) : (
-                  <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-450 text-sm font-medium">
+                  <div className="bg-white rounded-lg border border-slate-200 p-8 text-center text-slate-450 text-sm font-medium">
                     Chưa tham gia thi đấu xếp hạng ELO chính thức.
                   </div>
                 )}
               </div>
 
               {eloHistory.length > 0 && (
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+                <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
                   <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-6">Biến động ELO theo thời gian</h3>
                   <div className="h-80 w-full">
                     <ResponsiveContainer width="100%" height="100%">
@@ -522,7 +522,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                             if (active && payload && payload.length) {
                               const data = payload[0].payload;
                               return (
-                                <div className="bg-slate-900 text-white p-3 rounded-xl border border-slate-800 text-xs shadow-md">
+                                <div className="bg-slate-900 text-white p-3 rounded-lg border border-slate-800 text-xs shadow-md">
                                   <p className="font-bold">{data.date}</p>
                                   <p className="text-blue-400 mt-1 font-bold">ELO: {data.ELO}</p>
                                   <p className="text-slate-400 mt-0.5">{data.reason}</p>
@@ -547,7 +547,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                 </div>
               )}
 
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+              <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
                 <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">Lịch sử thay đổi ELO</h3>
                 {eloHistory.length > 0 ? (
                   <div className="flex flex-col gap-4">
@@ -562,7 +562,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                           <div className="flex items-center gap-3 text-right">
                             <div>
                               <span className="text-[10px] text-slate-450 block font-bold">ELO mới</span>
-                              <span className="text-sm font-extrabold text-slate-750">{item.newElo}</span>
+                              <span className="text-sm font-bold text-slate-750">{item.newElo}</span>
                             </div>
                             <span className={`inline-block px-2 py-1 rounded text-xs font-bold min-w-[45px] text-center ${
                               isGain ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'

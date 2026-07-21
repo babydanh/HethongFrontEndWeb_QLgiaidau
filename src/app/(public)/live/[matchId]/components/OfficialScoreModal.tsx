@@ -35,17 +35,17 @@ export function OfficialScoreModal({
         <div className="grid max-h-[92vh] grid-cols-1 overflow-hidden lg:grid-cols-[340px_minmax(0,1fr)]">
           <div className="flex flex-col border-b border-slate-800 bg-slate-950 p-6 text-white lg:border-b-0 lg:border-r lg:border-slate-850">
             <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-600/20 text-blue-400">
+              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-600/20 text-blue-400">
                 <Shield className="h-6 w-6" />
               </div>
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Bảng trọng tài</p>
-                <h3 className="mt-0.5 text-lg font-extrabold leading-tight text-white">Chấm điểm & Nghiệp vụ</h3>
+                <h3 className="mt-0.5 text-lg font-bold leading-tight text-white">Chấm điểm & Nghiệp vụ</h3>
               </div>
             </div>
 
             <div className="mt-8 space-y-4 flex-grow">
-              <div className="rounded-2xl border border-white/5 bg-white/[0.03] p-4">
+              <div className="rounded-lg border border-white/5 bg-white/[0.03] p-4">
                 <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">Đội hình thi đấu</p>
                 <p className="text-sm font-bold text-white leading-snug">{team1Name}</p>
                 <div className="my-2 flex items-center gap-2">
@@ -56,7 +56,7 @@ export function OfficialScoreModal({
                 <p className="text-sm font-bold text-white leading-snug">{team2Name}</p>
               </div>
 
-              <div className="rounded-2xl border border-white/5 bg-white/[0.03] p-4 space-y-3.5">
+              <div className="rounded-lg border border-white/5 bg-white/[0.03] p-4 space-y-3.5">
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Môn thi đấu</p>
                   <p className="mt-1 text-sm font-semibold text-slate-200">{scorePresentation.sportLabel}</p>
@@ -84,7 +84,7 @@ export function OfficialScoreModal({
               </div>
             </div>
 
-            <div className="mt-8 rounded-2xl border border-white/5 bg-white/[0.02] p-4 text-[11px] leading-relaxed text-slate-400">
+            <div className="mt-8 rounded-lg border border-white/5 bg-white/[0.02] p-4 text-[11px] leading-relaxed text-slate-400">
               <span className="font-bold text-slate-300 block mb-1">💡 Lưu ý trọng tài:</span>
               Mọi thay đổi điểm số sẽ cập nhật thời gian thực lên màn hình live công khai của khán giả.
             </div>
@@ -94,19 +94,19 @@ export function OfficialScoreModal({
             <ModalHeader className="border-b border-slate-200 px-6 py-5 text-left">
               <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div>
-                  <ModalTitle className="text-2xl font-black text-slate-900">
+                  <ModalTitle className="text-2xl font-bold text-slate-900">
                     Điều khiển điểm số trận
                   </ModalTitle>
                   <ModalDescription className="mt-2 text-sm font-medium text-slate-500">
                     Cập nhật tỷ số, xử phạt, ngoại lệ và quyết định đặc biệt theo đúng preset của từng môn.
                   </ModalDescription>
-                  <div className="mt-3 inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-[11px] font-black uppercase tracking-[0.14em] text-slate-700">
+                  <div className="mt-3 inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-700">
                     Môn: {scorePresentation.sportLabel}
                   </div>
                 </div>
                 <div
                   className={cn(
-                    'inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-black',
+                    'inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-bold',
                     isSubmitting
                       ? 'bg-amber-50 text-amber-800'
                       : 'bg-emerald-50 text-emerald-700',

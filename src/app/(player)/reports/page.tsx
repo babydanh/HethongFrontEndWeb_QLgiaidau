@@ -50,18 +50,18 @@ export default function MyReportsPage() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-rose-600">An toàn tài khoản</p>
-            <h1 className="mt-1 text-3xl font-black text-slate-950">Báo cáo của tôi</h1>
+            <h1 className="mt-1 text-3xl font-bold text-slate-950">Báo cáo của tôi</h1>
             <p className="mt-2 text-sm text-slate-600">Theo dõi tiến độ tiếp nhận, xác minh và kết luận từ bộ phận điều phối.</p>
           </div>
           <Button asChild variant="outline"><Link href="/dashboard">Về trang cá nhân</Link></Button>
         </div>
 
         {loading ? (
-          <div className="flex min-h-64 items-center justify-center rounded-3xl border border-slate-200 bg-white">
+          <div className="flex min-h-64 items-center justify-center rounded-2xl border border-slate-200 bg-white">
             <Loader2 className="h-7 w-7 animate-spin text-blue-600" />
           </div>
         ) : reports.length === 0 ? (
-          <div className="rounded-3xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
+          <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
             <FileWarning className="mx-auto h-10 w-10 text-slate-400" />
             <h2 className="mt-4 text-lg font-bold text-slate-900">Bạn chưa gửi báo cáo nào</h2>
             <p className="mt-2 text-sm text-slate-500">Nút Báo cáo có tại hồ sơ thành viên, giải đấu, trận đấu và câu lạc bộ.</p>
@@ -71,7 +71,7 @@ export default function MyReportsPage() {
             {reports.map((report) => {
               const href = targetHref(report);
               return (
-                <article key={report.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <article key={report.id} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
@@ -90,7 +90,7 @@ export default function MyReportsPage() {
                     ) : null}
                   </div>
                   {report.resolutionNote ? (
-                    <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+                    <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
                       <strong>Kết luận:</strong> {report.resolutionNote}
                     </div>
                   ) : null}

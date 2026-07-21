@@ -375,7 +375,7 @@ export default function EditProfilePage() {
         
         {/* Left Column: Navigation & Avatar */}
         <div className="md:col-span-4 flex flex-col gap-6">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col items-center text-center">
+          <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6 flex flex-col items-center text-center">
             <input 
               type="file" 
               accept="image/*" 
@@ -408,7 +408,7 @@ export default function EditProfilePage() {
             <div className="w-full flex flex-col gap-2">
               <button
                 onClick={() => setActiveTab('profile')}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-sm active:scale-95 ${
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all font-medium text-sm active:scale-95 ${
                   activeTab === 'profile' 
                     ? 'bg-blue-50 text-blue-700' 
                     : 'text-slate-600 hover:bg-slate-50'
@@ -419,7 +419,7 @@ export default function EditProfilePage() {
               </button>
               <button
                 onClick={() => setActiveTab('refund')}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-sm active:scale-95 ${
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all font-medium text-sm active:scale-95 ${
                   activeTab === 'refund' 
                     ? 'bg-blue-50 text-blue-700' 
                     : 'text-slate-600 hover:bg-slate-50'
@@ -430,7 +430,7 @@ export default function EditProfilePage() {
               </button>
               <button
                 onClick={() => setActiveTab('security')}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-sm active:scale-95 ${
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all font-medium text-sm active:scale-95 ${
                   activeTab === 'security' 
                     ? 'bg-blue-50 text-blue-700' 
                     : 'text-slate-600 hover:bg-slate-50'
@@ -447,7 +447,7 @@ export default function EditProfilePage() {
         <div className="md:col-span-8 flex flex-col gap-6">
           
           {activeTab === 'profile' && (
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
               {/* Cover Photo Banner Preview & Upload */}
               <div className="h-32 bg-slate-900 relative group overflow-hidden">
                 <input 
@@ -510,7 +510,7 @@ export default function EditProfilePage() {
                       <label className="text-sm font-semibold text-slate-700">Giới tính</label>
                       <select
                         disabled={user?.isGenderLocked}
-                        className={`w-full px-4 py-2.5 rounded-xl border bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all ${
+                        className={`w-full px-4 py-2.5 rounded-lg border bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all ${
                           user?.isGenderLocked ? 'bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed' : 'border-slate-200'
                         }`}
                         {...profileForm.register('gender')}
@@ -546,7 +546,7 @@ export default function EditProfilePage() {
                         <MapPin className="w-4 h-4 text-slate-400" /> Khu vực tranh tài
                       </label>
                       <select
-                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
+                        className="w-full px-4 py-2.5 rounded-lg border border-slate-200 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
                         {...profileForm.register('provinceCode')}
                       >
                         <option value="">Chưa chọn (Không tranh hạng Tier S)</option>
@@ -595,7 +595,7 @@ export default function EditProfilePage() {
               <div className="p-6 flex flex-col gap-6">
                 
                 {/* Email Verification Row */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-slate-200 bg-white">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-lg border border-slate-200 bg-white">
                   <div className="flex items-start gap-3">
                     <div className="p-2 bg-blue-50 rounded-lg text-blue-600 mt-0.5">
                       <Mail className="w-5 h-5" />
@@ -631,7 +631,7 @@ export default function EditProfilePage() {
                 </div>
 
                 {/* Phone Verification Row */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-slate-200 bg-white">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-lg border border-slate-200 bg-white">
                   <div className="flex items-start gap-3">
                     <div className="p-2 bg-blue-50 rounded-lg text-blue-600 mt-0.5">
                       <Phone className="w-5 h-5" />
@@ -671,7 +671,7 @@ export default function EditProfilePage() {
           )}
 
           {activeTab === 'refund' && (
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
                 <CreditCard className="w-5 h-5 text-blue-600" />
                 <h2 className="text-lg font-bold text-slate-900">Tài khoản nhận hoàn tiền</h2>
@@ -685,7 +685,7 @@ export default function EditProfilePage() {
                     <div className="flex flex-col gap-1.5">
                       <label className="text-sm font-semibold text-slate-700">Ngân hàng / Ví nhận tiền</label>
                       <select
-                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
+                        className="w-full px-4 py-2.5 rounded-lg border border-slate-200 bg-white text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
                         {...profileForm.register('bankName')}
                       >
                         <option value="">Chưa chọn ngân hàng/ví</option>
@@ -749,7 +749,7 @@ export default function EditProfilePage() {
           {activeTab === 'security' && (
             <div className="flex flex-col gap-6">
               {/* Change Password Card */}
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
                   <Lock className="w-5 h-5 text-emerald-600" />
                   <h2 className="text-lg font-bold text-slate-900">Đổi mật khẩu</h2>
@@ -790,7 +790,7 @@ export default function EditProfilePage() {
               </div>
 
               {/* Danger Zone Card */}
-              <div className="bg-white rounded-2xl border border-red-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="bg-white rounded-lg border border-red-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="px-6 py-5 border-b border-red-100 bg-red-50/30 flex items-center gap-2">
                   <ShieldAlert className="w-5 h-5 text-red-600" />
                   <h2 className="text-lg font-bold text-red-900">Vùng nguy hiểm</h2>
@@ -825,7 +825,7 @@ export default function EditProfilePage() {
       {/* 1. Gender Change Request Modal */}
       {isGenderModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white w-full max-w-md rounded-2xl border border-slate-200 shadow-xl overflow-hidden p-6 flex flex-col gap-4 animate-in zoom-in-95 duration-200">
+          <div className="bg-white w-full max-w-md rounded-lg border border-slate-200 shadow-xl overflow-hidden p-6 flex flex-col gap-4 animate-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h3 className="text-base font-bold text-slate-900">Yêu cầu thay đổi giới tính</h3>
               <button 
@@ -844,7 +844,7 @@ export default function EditProfilePage() {
               <select
                 value={requestGender}
                 onChange={(e) => setRequestGender(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
+                className="w-full px-4 py-2.5 rounded-lg border border-slate-200 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
               >
                 <option value="Nam">Nam</option>
                 <option value="Nữ">Nữ</option>
@@ -876,7 +876,7 @@ export default function EditProfilePage() {
       {/* 2. Email Verification Token Modal */}
       {isEmailModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white w-full max-w-md rounded-2xl border border-slate-200 shadow-xl overflow-hidden p-6 flex flex-col gap-4 animate-in zoom-in-95 duration-200">
+          <div className="bg-white w-full max-w-md rounded-lg border border-slate-200 shadow-xl overflow-hidden p-6 flex flex-col gap-4 animate-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h3 className="text-base font-bold text-slate-900">Xác thực địa chỉ Email</h3>
               <button 
@@ -925,7 +925,7 @@ export default function EditProfilePage() {
       {/* 3. Phone OTP Modal */}
       {isPhoneModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white w-full max-w-md rounded-2xl border border-slate-200 shadow-xl overflow-hidden p-6 flex flex-col gap-4 animate-in zoom-in-95 duration-200">
+          <div className="bg-white w-full max-w-md rounded-lg border border-slate-200 shadow-xl overflow-hidden p-6 flex flex-col gap-4 animate-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h3 className="text-base font-bold text-slate-900">Xác thực số điện thoại</h3>
               <button 
@@ -975,7 +975,7 @@ export default function EditProfilePage() {
       {/* 4. Delete Account Modal */}
       {isDeleteModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white w-full max-w-md rounded-2xl border border-red-200 shadow-xl overflow-hidden p-6 flex flex-col gap-4 animate-in zoom-in-95 duration-200">
+          <div className="bg-white w-full max-w-md rounded-lg border border-red-200 shadow-xl overflow-hidden p-6 flex flex-col gap-4 animate-in zoom-in-95 duration-200">
             <div className="flex items-center gap-2 border-b border-red-100 pb-3 text-red-600">
               <AlertTriangle className="w-6 h-6" />
               <h3 className="text-base font-bold">Xác nhận xóa tài khoản cá nhân</h3>

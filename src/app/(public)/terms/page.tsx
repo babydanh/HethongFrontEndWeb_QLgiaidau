@@ -6,16 +6,16 @@ import Link from 'next/navigation';
 export default function TermsPage() {
   return (
     <div className="bg-slate-50 min-h-screen py-16 px-4 md:px-8">
-      <div className="max-w-3xl mx-auto bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="max-w-3xl mx-auto bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         {/* Header Block */}
         <div className="p-8 md:p-12 border-b border-slate-100 bg-slate-50/50">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center">
               <FileText className="w-5 h-5" />
             </div>
-            <span className="text-xs font-black uppercase tracking-wider text-slate-450">Pháp lý & Điều khoản</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-450">Pháp lý & Điều khoản</span>
           </div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">
+          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
             Điều khoản sử dụng VNSPORT
           </h1>
           <p className="text-slate-500 font-medium text-xs mt-2">
@@ -26,7 +26,7 @@ export default function TermsPage() {
         {/* Content Block */}
         <div className="p-8 md:p-12 space-y-8 text-sm text-slate-650 leading-relaxed font-medium">
           <section className="space-y-3">
-            <h2 className="text-base font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
+            <h2 className="text-base font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
               1. Chấp thuận điều khoản
             </h2>
             <p>
@@ -35,7 +35,7 @@ export default function TermsPage() {
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-base font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
+            <h2 className="text-base font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
               2. Tài khoản và Bảo mật
             </h2>
             <p>
@@ -44,7 +44,7 @@ export default function TermsPage() {
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-base font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
+            <h2 className="text-base font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
               3. Quy chế tổ chức &amp; tham gia giải đấu
             </h2>
             <ul className="list-disc pl-5 space-y-2">
@@ -58,7 +58,7 @@ export default function TermsPage() {
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-base font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
+            <h2 className="text-base font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
               4. Giao dịch tài chính &amp; Hoàn tiền
             </h2>
             <p>
@@ -67,7 +67,7 @@ export default function TermsPage() {
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-base font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
+            <h2 className="text-base font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
               5. Quyền sở hữu trí tuệ
             </h2>
             <p>
@@ -76,7 +76,7 @@ export default function TermsPage() {
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-base font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
+            <h2 className="text-base font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
               6. Giới hạn trách nhiệm
             </h2>
             <p>
@@ -84,7 +84,7 @@ export default function TermsPage() {
             </p>
           </section>
 
-          <div className="bg-amber-50 rounded-2xl border border-amber-200 p-5 flex gap-3 text-amber-900 mt-8">
+          <div className="bg-amber-50 rounded-lg border border-amber-200 p-5 flex gap-3 text-amber-900 mt-8">
             <ShieldAlert className="w-5 h-5 shrink-0 mt-0.5" />
             <div className="text-xs space-y-1">
               <h4 className="font-bold">Lưu ý quan trọng đối với thành viên hệ thống:</h4>

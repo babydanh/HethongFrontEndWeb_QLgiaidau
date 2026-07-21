@@ -27,7 +27,7 @@ export default function AboutTab({
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
       {/* Left: General Information (8/12) */}
       <div className="lg:col-span-8 space-y-4">
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 md:p-6">
+        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-5 md:p-6">
           <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2 border-b pb-3">
             <Info className="w-5 h-5 text-emerald-600" />
             Về câu lạc bộ này
@@ -159,14 +159,14 @@ export default function AboutTab({
  
       {/* Right: Images collage Sidebar (4/12) */}
       <div className="lg:col-span-4 space-y-4">
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4">
+        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4">
           <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-3 flex items-center gap-2 border-b pb-2.5">
             <ImageIcon className="w-4.5 h-4.5 text-emerald-600" />
             Ảnh ({galleryImages.length})
           </h3>
 
           {galleryImages.length === 0 ? (
-            <div className="py-10 text-center border-2 border-dashed border-slate-200 rounded-xl bg-slate-50/50">
+            <div className="py-10 text-center border-2 border-dashed border-slate-200 rounded-lg bg-slate-50/50">
               <ImageIcon className="w-10 h-10 text-slate-300 mx-auto mb-2" />
               <p className="text-xs text-slate-450 font-bold uppercase tracking-wider animate-pulse">Chưa có ảnh nào</p>
             </div>
@@ -180,7 +180,7 @@ export default function AboutTab({
                   <div 
                     key={img.id}
                     onClick={() => setLightboxIndex(idx)}
-                    className="relative aspect-square rounded-xl overflow-hidden bg-slate-100 border border-slate-150 cursor-pointer group hover:opacity-95 transition-opacity"
+                    className="relative aspect-square rounded-lg overflow-hidden bg-slate-100 border border-slate-150 cursor-pointer group hover:opacity-95 transition-opacity"
                   >
                     <img 
                       src={img.imageUrl} 
@@ -188,7 +188,7 @@ export default function AboutTab({
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                     {isLast && remainingCount > 0 && (
-                      <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-[2px] flex items-center justify-center text-white text-base font-black tracking-wider transition-colors group-hover:bg-slate-950/75">
+                      <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-[2px] flex items-center justify-center text-white text-base font-bold tracking-wider transition-colors group-hover:bg-slate-950/75">
                         +{remainingCount}
                       </div>
                     )}

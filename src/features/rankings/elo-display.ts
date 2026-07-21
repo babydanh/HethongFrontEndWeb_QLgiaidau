@@ -9,7 +9,7 @@
 import type { PlayerRanking } from '@/types/ranking';
 import {
   TIER_THRESHOLDS,
-  calcEloProgress,
+  findTierIndex,
 } from '@/utils/elo';
 
 /* ------------------------------------------------------------------ */
@@ -119,11 +119,24 @@ export interface EloProgressInfo {
 /** Compute tier progress info from raw ELO points. */
 export const getEloProgressInfo = (eloPoints: number): EloProgressInfo => {
   const clamped = Math.max(0, eloPoints);
-  const { progress, currentIdx, nextIdx } = calcEloProgress(clamped);
+  const currentIdx = findTierIndex(clamped);
+  const nextIdx = currentIdx < TIER_THRESHOLDS.length - 1 ? currentIdx + 1 : null;
+
+  let percent: number;
+  if (nextIdx === null) {
+    percent = 100;
+  } else {
+    const currentMin = TIER_THRESHOLDS[currentIdx].minElo;
+    const nextMin = TIER_THRESHOLDS[nextIdx].minElo;
+    const range = nextMin - currentMin;
+    percent = range > 0
+      ? Math.min(100, Math.max(0, ((clamped - currentMin) / range) * 100))
+      : 0;
+  }
 
   let label: string;
   if (nextIdx === null) {
-    label = '🏆 Đã đạt đỉnh — Tier S';
+    label = '🏆 Đã đạt đỉnh — S';
   } else {
     const currentMin = TIER_THRESHOLDS[currentIdx].minElo;
     const nextMin = TIER_THRESHOLDS[nextIdx].minElo;
@@ -136,7 +149,7 @@ export const getEloProgressInfo = (eloPoints: number): EloProgressInfo => {
     }
   }
 
-  return { percent: progress, currentIdx, nextIdx, label };
+  return { percent, currentIdx, nextIdx, label };
 };
 
 /* ------------------------------------------------------------------ */

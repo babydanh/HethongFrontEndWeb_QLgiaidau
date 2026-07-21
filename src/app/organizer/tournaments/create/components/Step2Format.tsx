@@ -152,7 +152,7 @@ export default function Step2Format() {
                 <div 
                   key={opt.id}
                   onClick={() => setValue('format', opt.id as 'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION' | 'ROUND_ROBIN' | 'GROUP_STAGE_KNOCKOUT')}
-                  className={`cursor-pointer rounded-xl border p-4 transition-all ${
+                  className={`cursor-pointer rounded-lg border p-4 transition-all ${
                     isSelected ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500' : 'border-slate-200 bg-white hover:border-slate-300'
                   }`}
                 >
@@ -176,12 +176,12 @@ export default function Step2Format() {
           error={errors.maxParticipants?.message}
         />
 
-        <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-4 text-xs text-blue-700 leading-relaxed font-medium">
+        <div className="bg-blue-50/50 border border-blue-100 rounded-lg p-4 text-xs text-blue-700 leading-relaxed font-medium">
           <strong>💡 Mẹo:</strong> Số lượng đội tham gia tối đa này có thể được linh hoạt tùy chỉnh hoặc sửa đổi thêm trong mục <strong>Cài đặt nâng cao</strong> sau khi tạo giải đấu thành công.
         </div>
 
         {isPickleballVariant && (
-          <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-4">
+          <div className="rounded-lg border border-emerald-100 bg-emerald-50 p-4">
             <p className="text-sm font-bold text-emerald-900">Chọn mode tính điểm Pickleball</p>
             <p className="mt-1 text-xs font-semibold text-emerald-700">
               `Rally` dễ vận hành và nhập tỷ số. `Side-out` chuẩn sâu hơn, chỉ bên giao bóng mới ghi điểm.
@@ -199,7 +199,7 @@ export default function Step2Format() {
                     key={option.kind}
                     type="button"
                     onClick={() => handleSportKindChange(option.kind)}
-                    className={`rounded-xl border px-4 py-3 text-left transition-all ${
+                    className={`rounded-lg border px-4 py-3 text-left transition-all ${
                       isActive
                         ? 'border-emerald-500 bg-white ring-2 ring-emerald-200'
                         : 'border-emerald-100 bg-white/80 hover:border-emerald-300'
@@ -214,7 +214,7 @@ export default function Step2Format() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 p-5 bg-slate-50 border border-slate-100 rounded-xl">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 p-5 bg-slate-50 border border-slate-100 rounded-lg">
           <div className="md:col-span-2 mb-2 border-b border-slate-200 pb-2">
             <h4 className="font-bold text-slate-900">Quy định tính điểm</h4>
             <p className="mt-1 text-xs font-semibold text-slate-500">

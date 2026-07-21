@@ -279,7 +279,7 @@ export default function SettingsTab({ community }: { community: Community }) {
       {/* LEFT & CENTER: Form Settings */}
       <div className="lg:col-span-2 space-y-8">
         {/* General Settings */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
+        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6 md:p-8">
           <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2 border-b pb-4">
             <Settings className="w-5 h-5 text-emerald-600" />
             Cài đặt chung
@@ -418,7 +418,7 @@ export default function SettingsTab({ community }: { community: Community }) {
                 {Object.entries(socialLinks).map(([key, val]) => {
                   const displayLabel = key.charAt(0).toUpperCase() + key.slice(1);
                   return (
-                    <div key={key} className="flex gap-2 items-center bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                    <div key={key} className="flex gap-2 items-center bg-slate-50 p-2.5 rounded-lg border border-slate-200">
                       <span className="text-xs font-bold text-slate-650 min-w-[100px]">{displayLabel}:</span>
                       <span className="text-sm text-slate-800 flex-grow truncate">{val}</span>
                       <button
@@ -438,7 +438,7 @@ export default function SettingsTab({ community }: { community: Community }) {
               </div>
 
               {/* Add Form */}
-              <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-200 flex flex-col sm:flex-row gap-3 items-end">
+              <div className="bg-slate-50/50 p-4 rounded-lg border border-slate-200 flex flex-col sm:flex-row gap-3 items-end">
                 <div className="flex-1 w-full space-y-1">
                   <label className="text-[10px] font-bold text-slate-500 uppercase">Loại liên kết</label>
                   <select
@@ -691,7 +691,7 @@ export default function SettingsTab({ community }: { community: Community }) {
         </div>
 
         {/* Danger Zone */}
-        <div className="bg-red-50 rounded-2xl shadow-sm border border-red-200 p-6 md:p-8">
+        <div className="bg-red-50 rounded-lg shadow-sm border border-red-200 p-6 md:p-8">
           <h3 className="text-xl font-bold text-red-950 mb-2 flex items-center gap-2">
             <Trash2 className="w-5 h-5 text-red-700" />
             Vùng nguy hiểm

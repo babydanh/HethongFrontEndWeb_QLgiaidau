@@ -193,7 +193,7 @@ export default function JoinTeamPage({ params }: { params: Promise<{ id: string 
 
     return (
       <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
-        <div className="max-w-md w-full bg-white p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+        <div className="max-w-md w-full bg-white p-8 rounded-lg border border-slate-200 shadow-sm space-y-6">
           <div className="flex flex-col items-center text-center space-y-3">
             <div className="w-12 h-12 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center">
               <AlertTriangle className="w-6 h-6 text-rose-600" />
@@ -227,10 +227,10 @@ export default function JoinTeamPage({ params }: { params: Promise<{ id: string 
           <ArrowLeft className="w-4 h-4" /> Quay lại giải đấu
         </button>
 
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
           {/* Header */}
           <div className="p-6 md:p-8 bg-gradient-to-br from-slate-900 to-slate-800 text-white relative">
-            <span className="flex items-center gap-1 bg-blue-600/20 text-blue-300 text-[10px] font-black px-2 py-0.5 rounded border border-blue-500/20 uppercase tracking-wider w-fit">
+            <span className="flex items-center gap-1 bg-blue-600/20 text-blue-300 text-[10px] font-bold px-2 py-0.5 rounded border border-blue-500/20 uppercase tracking-wider w-fit">
               {(() => {
                 const logo = getSportLogo(tournament.category?.name);
                 return logo ? (
@@ -239,7 +239,7 @@ export default function JoinTeamPage({ params }: { params: Promise<{ id: string 
               })()}
               {tournament.category?.name || 'Cầu Lông'}
             </span>
-            <h1 className="text-xl md:text-2xl font-black mt-2 mb-3 text-white">{tournament.name}</h1>
+            <h1 className="text-xl md:text-2xl font-bold mt-2 mb-3 text-white">{tournament.name}</h1>
 
             <div className="flex flex-wrap gap-x-4 gap-y-2 mt-4 pt-4 border-t border-slate-700/50 text-xs text-slate-350 font-semibold">
               <div className="flex items-center gap-1.5">
@@ -259,7 +259,7 @@ export default function JoinTeamPage({ params }: { params: Promise<{ id: string 
               <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-105 text-blue-600 mb-1">
                 <Users className="w-6 h-6 text-blue-600" />
               </div>
-              <h2 className="text-lg font-black text-slate-900">Lời mời tham gia đấu đôi</h2>
+              <h2 className="text-lg font-bold text-slate-900">Lời mời tham gia đấu đôi</h2>
               <p className="text-slate-500 text-xs leading-relaxed">
                 Bạn được mời gia nhập đội <strong className="text-slate-800">{participant.teamName}</strong> tham gia giải đấu này.
               </p>
@@ -267,7 +267,7 @@ export default function JoinTeamPage({ params }: { params: Promise<{ id: string 
 
             {/* Team Leader Profile */}
             {leader && (
-              <div className="bg-slate-50 border rounded-xl p-4 flex items-center justify-between">
+              <div className="bg-slate-50 border rounded-lg p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-sm uppercase">
                     {leader.fullName?.substring(0, 2) || 'LD'}
@@ -277,7 +277,7 @@ export default function JoinTeamPage({ params }: { params: Promise<{ id: string 
                     <p className="text-sm font-bold text-slate-800">{leader.fullName || 'Người dùng'}</p>
                   </div>
                 </div>
-                <span className="text-xs font-black text-blue-700 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-100">
+                <span className="text-xs font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-100">
                   {leader.elo?.eloPoints || 1000} ELO
                 </span>
               </div>
@@ -286,7 +286,7 @@ export default function JoinTeamPage({ params }: { params: Promise<{ id: string 
             {/* Constraints warnings */}
             <div className="space-y-3">
               {tournament.genderRestriction && (
-                <div className="flex items-start gap-2.5 bg-amber-50 text-amber-800 text-xs font-semibold p-3.5 rounded-xl border border-amber-200/50">
+                <div className="flex items-start gap-2.5 bg-amber-50 text-amber-800 text-xs font-semibold p-3.5 rounded-lg border border-amber-200/50">
                   <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
                   <div>
                     <p className="font-bold text-amber-900">Yêu cầu giới tính</p>
@@ -302,7 +302,7 @@ export default function JoinTeamPage({ params }: { params: Promise<{ id: string 
               )}
 
               {Number(tournament.entryFee || 0) > 0 && (
-                <div className="flex items-start gap-2.5 bg-blue-50 text-blue-800 text-xs font-semibold p-3.5 rounded-xl border border-blue-200/50">
+                <div className="flex items-start gap-2.5 bg-blue-50 text-blue-800 text-xs font-semibold p-3.5 rounded-lg border border-blue-200/50">
                   <ShieldCheck className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
                   <div>
                     <p className="font-bold text-blue-950">Lệ phí giải đấu</p>
@@ -317,7 +317,7 @@ export default function JoinTeamPage({ params }: { params: Promise<{ id: string 
 
             {/* Actions */}
             {isTeamFull ? (
-              <div className="text-center py-4 bg-slate-50 border border-dashed rounded-xl text-slate-400 font-bold text-sm">
+              <div className="text-center py-4 bg-slate-50 border border-dashed rounded-lg text-slate-400 font-bold text-sm">
                 Đội này đã đủ thành viên. Bạn không thể gia nhập.
               </div>
             ) : (

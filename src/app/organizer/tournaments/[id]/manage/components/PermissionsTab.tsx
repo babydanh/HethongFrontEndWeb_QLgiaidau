@@ -183,7 +183,7 @@ export function PermissionsTab({ id, tournament }: PermissionsTabProps) {
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-6 md:p-8 shadow-sm space-y-6 animate-in fade-in duration-200">
+    <div className="bg-white rounded-lg border border-slate-200 p-6 md:p-8 shadow-sm space-y-6 animate-in fade-in duration-200">
       <div className="border-b pb-2 flex flex-col gap-4">
         <div>
           <h2 className="text-xl font-bold text-slate-900">Quản lý phân quyền</h2>
@@ -212,23 +212,23 @@ export function PermissionsTab({ id, tournament }: PermissionsTabProps) {
       {subTab === 'referees' ? (
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-4">
+            <div className="rounded-lg border border-amber-200 bg-amber-50/70 p-4">
               <div className="text-xs font-bold uppercase tracking-wider text-amber-700">Đang chờ phản hồi</div>
-              <div className="mt-2 text-3xl font-black text-amber-800">{pendingReferees.length}</div>
+              <div className="mt-2 text-3xl font-bold text-amber-800">{pendingReferees.length}</div>
               <div className="mt-1 text-xs text-amber-700">Đã mời nhưng chưa nhận vai trò.</div>
             </div>
-            <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4">
+            <div className="rounded-lg border border-emerald-200 bg-emerald-50/70 p-4">
               <div className="text-xs font-bold uppercase tracking-wider text-emerald-700">Đã nhận lời</div>
-              <div className="mt-2 text-3xl font-black text-emerald-800">{acceptedReferees.length}</div>
+              <div className="mt-2 text-3xl font-bold text-emerald-800">{acceptedReferees.length}</div>
               <div className="mt-1 text-xs text-emerald-700">Có thể phân công vào các trận đấu.</div>
             </div>
-            <div className="rounded-2xl border border-rose-200 bg-rose-50/70 p-4">
+            <div className="rounded-lg border border-rose-200 bg-rose-50/70 p-4">
               <div className="text-xs font-bold uppercase tracking-wider text-rose-700">Đã từ chối</div>
-              <div className="mt-2 text-3xl font-black text-rose-800">{declinedReferees.length}</div>
+              <div className="mt-2 text-3xl font-bold text-rose-800">{declinedReferees.length}</div>
               <div className="mt-1 text-xs text-rose-700">Cần mời người thay thế nếu vẫn thiếu.</div>
             </div>
           </div>
-          <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-xs text-slate-600">
+          <div className="rounded-lg border border-slate-200 bg-slate-50/80 px-4 py-3 text-xs text-slate-600">
             {refereeFilter === 'INVITED'
               ? 'Các lời mời đang chờ phản hồi có thể được thu hồi nếu bạn muốn đổi người.'
               : refereeFilter === 'DECLINED'
@@ -242,7 +242,7 @@ export function PermissionsTab({ id, tournament }: PermissionsTabProps) {
 
       <form
         onSubmit={handleAdd}
-        className="bg-slate-50 p-5 rounded-2xl border border-slate-150 flex sm:flex-row items-end gap-4 max-w-xl"
+        className="bg-slate-50 p-5 rounded-lg border border-slate-150 flex sm:flex-row items-end gap-4 max-w-xl"
       >
         <div className="flex-1 w-full space-y-1">
           <label className="block text-xs font-bold text-slate-700">
@@ -260,7 +260,7 @@ export function PermissionsTab({ id, tournament }: PermissionsTabProps) {
         <Button
           type="submit"
           disabled={isAdding || !email.trim()}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-bold h-10 px-5 rounded-xl shrink-0"
+          className="bg-blue-600 hover:bg-blue-700 text-white font-bold h-10 px-5 rounded-lg shrink-0"
         >
           {isAdding
             ? subTab === 'referees'
@@ -316,7 +316,7 @@ export function PermissionsTab({ id, tournament }: PermissionsTabProps) {
             </div>
 
             {displayedReferees.length === 0 ? (
-              <div className="text-center py-10 text-slate-400 italic text-xs border border-dashed border-slate-200 rounded-xl bg-slate-50/50">
+              <div className="text-center py-10 text-slate-400 italic text-xs border border-dashed border-slate-200 rounded-lg bg-slate-50/50">
                 {filterEmptyLabelMap[refereeFilter]}
               </div>
             ) : (
@@ -327,7 +327,7 @@ export function PermissionsTab({ id, tournament }: PermissionsTabProps) {
                 return (
                   <div
                     key={referee.id}
-                    className={`rounded-2xl border p-4 shadow-sm ${meta.cardClassName}`}
+                    className={`rounded-lg border p-4 shadow-sm ${meta.cardClassName}`}
                   >
                     <div className="flex items-start gap-3">
                       <div className="w-11 h-11 rounded-full bg-white border border-slate-200 flex items-center justify-center font-bold text-sm text-slate-700 shrink-0 uppercase overflow-hidden">
@@ -392,7 +392,7 @@ export function PermissionsTab({ id, tournament }: PermissionsTabProps) {
           )}
           </>
         ) : filteredStaff.length === 0 ? (
-          <div className="text-center py-10 text-slate-400 italic text-xs border border-dashed border-slate-200 rounded-xl bg-slate-50/50">
+          <div className="text-center py-10 text-slate-400 italic text-xs border border-dashed border-slate-200 rounded-lg bg-slate-50/50">
             Chưa có ai. Nhập email bên trên để thêm vào vai trò này.
           </div>
         ) : (
@@ -400,7 +400,7 @@ export function PermissionsTab({ id, tournament }: PermissionsTabProps) {
             {filteredStaff.map((member) => (
               <div
                 key={member.userId}
-                className="flex items-center gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm relative group overflow-hidden"
+                className="flex items-center gap-3 bg-white p-4 rounded-lg border border-slate-200 shadow-sm relative group overflow-hidden"
               >
                 <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center font-bold text-xs text-slate-600 shrink-0 uppercase overflow-hidden">
                   {member.avatarUrl ? (
@@ -427,7 +427,7 @@ export function PermissionsTab({ id, tournament }: PermissionsTabProps) {
       </div>
 
       <Modal open={Boolean(confirmAction)} onOpenChange={(open) => !open && setConfirmAction(null)}>
-        <ModalContent className="max-w-md rounded-2xl bg-white p-6">
+        <ModalContent className="max-w-md rounded-lg bg-white p-6">
           <ModalHeader>
             <ModalTitle className="text-slate-900">
               {confirmAction?.type === 'revoke' ? 'Thu hồi lời mời trọng tài?' : 'Gửi lại lời mời trọng tài?'}
@@ -438,7 +438,7 @@ export function PermissionsTab({ id, tournament }: PermissionsTabProps) {
                 : `Hệ thống sẽ gửi lại lời mời trọng tài cho ${confirmAction?.referee.fullName} qua email ${confirmAction?.referee.email}.`}
             </ModalDescription>
           </ModalHeader>
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
             {confirmAction?.type === 'revoke'
               ? 'Chỉ nên thu hồi khi bạn đã quyết định đổi người hoặc lời mời được gửi nhầm.'
               : 'Chỉ nên mời lại khi bạn đã trao đổi trước với người được mời để tránh gây phiền.'}

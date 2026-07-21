@@ -247,9 +247,9 @@ export default function AdminDashboard() {
       <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="bg-white border border-slate-200 rounded-2xl p-6 animate-pulse space-y-4">
+            <div key={i} className="bg-white border border-slate-200 rounded-lg p-6 animate-pulse space-y-4">
               <div className="flex justify-between items-center">
-                <div className="w-10 h-10 bg-slate-100 rounded-xl"></div>
+                <div className="w-10 h-10 bg-slate-100 rounded-lg"></div>
                 <div className="w-12 h-4 bg-slate-100 rounded"></div>
               </div>
               <div className="w-24 h-8 bg-slate-100 rounded"></div>
@@ -257,7 +257,7 @@ export default function AdminDashboard() {
             </div>
           ))}
         </div>
-        <div className="h-96 bg-white border border-slate-200 rounded-2xl p-6 animate-pulse flex items-center justify-center">
+        <div className="h-96 bg-white border border-slate-200 rounded-lg p-6 animate-pulse flex items-center justify-center">
           <div className="text-slate-400">Đang tải biểu đồ thống kê...</div>
         </div>
       </div>
@@ -266,11 +266,11 @@ export default function AdminDashboard() {
 
   if (error) {
     return (
-      <div className="bg-rose-50 border border-rose-200 rounded-2xl p-6 text-center text-rose-700">
+      <div className="bg-rose-50 border border-rose-200 rounded-lg p-6 text-center text-rose-700">
         <p className="font-semibold">{error}</p>
         <button 
           onClick={() => window.location.reload()}
-          className="mt-4 px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl transition-all"
+          className="mt-4 px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-lg transition-all"
         >
           Tải lại trang
         </button>
@@ -305,17 +305,17 @@ export default function AdminDashboard() {
 
       {/* Banner thông báo — hiển thị đầu trang */}
       {(pendingCounts.communities + pendingCounts.verifications + pendingCounts.payouts + pendingCounts.reports + pendingCounts.changeRequests) > 0 ? (
-        <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-5 shadow-sm">
+        <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg p-5 shadow-sm">
           <div className="flex items-start gap-4">
             <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
-              <span className="text-amber-600 text-lg font-black">
+              <span className="text-amber-600 text-lg font-bold">
                 {pendingCounts.communities + pendingCounts.verifications + pendingCounts.payouts + pendingCounts.reports + pendingCounts.changeRequests}
               </span>
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                <h3 className="text-sm font-black text-amber-900 uppercase tracking-wide">Có việc cần xử lý ngay</h3>
+                <h3 className="text-sm font-bold text-amber-900 uppercase tracking-wide">Có việc cần xử lý ngay</h3>
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
                 {pendingCounts.communities > 0 && (
@@ -361,12 +361,12 @@ export default function AdminDashboard() {
           return (
             <div
               key={idx}
-              className="bg-white border border-slate-200 rounded-2xl p-6 flex flex-col justify-between shadow-sm relative overflow-hidden group hover:border-slate-300 transition-all duration-300"
+              className="bg-white border border-slate-200 rounded-lg p-6 flex flex-col justify-between shadow-sm relative overflow-hidden group hover:border-slate-300 transition-all duration-300"
             >
               <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-blue-50 to-transparent rounded-full blur-xl group-hover:scale-150 transition-transform duration-500"></div>
 
               <div className="flex justify-between items-center mb-4">
-                <div className="p-3 bg-slate-50 rounded-xl group-hover:bg-slate-100 transition-colors">
+                <div className="p-3 bg-slate-50 rounded-lg group-hover:bg-slate-100 transition-colors">
                   <Icon className="w-5 h-5 text-blue-600" />
                 </div>
                 {card.change !== undefined && (
@@ -402,7 +402,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Analytics Chart Block */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+      <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-sm">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6 pb-6 border-b border-slate-100">
           <div className="space-y-1">
             <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
@@ -417,7 +417,7 @@ export default function AdminDashboard() {
           {/* Filters controls */}
           <div className="flex flex-wrap items-center gap-4">
             {/* Interval buttons */}
-            <div className="bg-slate-50 p-1 rounded-xl border border-slate-200 flex gap-1">
+            <div className="bg-slate-50 p-1 rounded-lg border border-slate-200 flex gap-1">
               {(['day', 'week', 'month', 'year'] as const).map((interval) => (
                 <button
                   key={interval}
@@ -461,7 +461,7 @@ export default function AdminDashboard() {
         {/* Chart render */}
         <div className="relative h-96 min-h-96 min-w-0 w-full">
           {chartLoading && (
-            <div className="absolute inset-0 bg-white/40 backdrop-blur-[2px] rounded-xl flex items-center justify-center z-10">
+            <div className="absolute inset-0 bg-white/40 backdrop-blur-[2px] rounded-lg flex items-center justify-center z-10">
               <div className="flex flex-col items-center gap-2 text-slate-600 text-xs">
                 <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
                 <span>Đang đồng bộ dữ liệu...</span>
@@ -470,7 +470,7 @@ export default function AdminDashboard() {
           )}
 
           {chartData.length === 0 ? (
-            <div className="h-full flex items-center justify-center border-2 border-dashed border-slate-200 rounded-2xl text-slate-400 text-sm">
+            <div className="h-full flex items-center justify-center border-2 border-dashed border-slate-200 rounded-lg text-slate-400 text-sm">
               Không có dữ liệu giao dịch trong khoảng thời gian đã chọn.
             </div>
           ) : (

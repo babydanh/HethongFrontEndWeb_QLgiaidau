@@ -113,7 +113,7 @@ export default function Step4Fees() {
 
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
         
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+        <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm">
           <h4 className="font-bold text-slate-900 mb-4">Lệ phí tham gia (VNĐ)</h4>
           <Input
             type="number"
@@ -130,7 +130,7 @@ export default function Step4Fees() {
         </div>
 
         {/* Summary Card */}
-        <div className="bg-slate-50 border border-slate-200 rounded-xl p-5">
+        <div className="bg-slate-50 border border-slate-200 rounded-lg p-5">
           <h4 className="font-bold text-slate-900 mb-4 border-b border-slate-200 pb-2">Tóm tắt giải đấu</h4>
           <div className="grid grid-cols-2 gap-y-3 text-sm">
             <div className="text-slate-500">Tên giải đấu:</div>

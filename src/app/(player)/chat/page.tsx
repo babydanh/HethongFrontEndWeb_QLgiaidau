@@ -120,7 +120,7 @@ export default function ChatPage() {
       {/* Left Sidebar - Conversations */}
       <div className="w-full md:w-80 bg-white border-r border-slate-200 flex flex-col h-full flex-shrink-0">
         <div className="p-4 border-b border-slate-100">
-          <h2 className="text-xl font-black text-slate-900 mb-4">Tin nhắn</h2>
+          <h2 className="text-xl font-bold text-slate-900 mb-4">Tin nhắn</h2>
           <div className="relative">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input 
@@ -222,7 +222,7 @@ export default function ChatPage() {
                       
                       {/* Message Bubble */}
                       <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
-                        <div className={`px-4 py-2.5 rounded-2xl ${
+                        <div className={`px-4 py-2.5 rounded-lg ${
                           isMe 
                             ? 'bg-blue-600 text-white rounded-br-sm' 
                             : 'bg-white border border-slate-200 text-slate-900 rounded-bl-sm shadow-sm'

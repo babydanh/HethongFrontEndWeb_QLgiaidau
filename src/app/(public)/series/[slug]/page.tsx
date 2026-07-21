@@ -66,7 +66,7 @@ export default function SeriesDetailPage() {
   if (error || !series) {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center py-20 px-4">
-        <div className="text-center max-w-md bg-white p-8 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center">
+        <div className="text-center max-w-md bg-white p-8 rounded-lg border border-slate-200 shadow-sm flex flex-col items-center">
           <Trophy className="w-16 h-16 text-slate-300 mb-4" />
           <h1 className="text-xl font-bold text-slate-805 mb-2">Chuỗi giải đấu không tồn tại</h1>
           <p className="text-sm text-slate-500 mb-6">
@@ -74,7 +74,7 @@ export default function SeriesDetailPage() {
           </p>
           <Link
             href="/series"
-            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-all shadow-sm"
+            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-lg text-sm transition-all shadow-sm"
           >
             <ArrowLeft className="w-4 h-4" /> Quay lại danh sách
           </Link>
@@ -115,7 +115,7 @@ export default function SeriesDetailPage() {
 
       {/* Hero Banner Section */}
       <div className="max-w-7xl mx-auto px-4 md:px-8 py-6">
-        <div className="relative rounded-3xl overflow-hidden aspect-[21/9] md:aspect-[3/1] bg-slate-900 border border-slate-800 shadow-lg flex flex-col justify-end p-6 md:p-10 min-h-[280px]">
+        <div className="relative rounded-2xl overflow-hidden aspect-[21/9] md:aspect-[3/1] bg-slate-900 border border-slate-800 shadow-lg flex flex-col justify-end p-6 md:p-10 min-h-[280px]">
           {series.bannerUrl && (
             <img
               src={series.bannerUrl}
@@ -129,7 +129,7 @@ export default function SeriesDetailPage() {
           {/* Banner details */}
           <div className="relative z-10 flex flex-col gap-3 max-w-3xl">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className={cn('px-2.5 py-0.5 rounded-full text-[10px] font-black border tracking-wider', status.classes)}>
+              <span className={cn('px-2.5 py-0.5 rounded-full text-[10px] font-bold border tracking-wider', status.classes)}>
                 {status.text}
               </span>
               <span className="bg-white/10 backdrop-blur-md text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-white/10">
@@ -137,7 +137,7 @@ export default function SeriesDetailPage() {
               </span>
             </div>
 
-            <h1 className="text-2xl md:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight">
+            <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold text-white tracking-tight leading-tight">
               {series.name}
             </h1>
 
@@ -157,7 +157,7 @@ export default function SeriesDetailPage() {
 
             {/* Progress Bar */}
             {totalEvents.length > 0 && (
-              <div className="flex flex-col gap-1.5 mt-4 max-w-md bg-white/5 backdrop-blur-md p-3.5 rounded-2xl border border-white/5">
+              <div className="flex flex-col gap-1.5 mt-4 max-w-md bg-white/5 backdrop-blur-md p-3.5 rounded-lg border border-white/5">
                 <div className="flex justify-between items-center text-[10px] font-bold text-slate-300">
                   <span>TIẾN ĐỘ CHUỖI GIẢI</span>
                   <span>{completedEvents}/{totalEvents.length} GIẢI ĐÃ ĐẤU ({completionPercentage}%)</span>

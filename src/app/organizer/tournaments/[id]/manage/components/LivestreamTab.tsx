@@ -161,13 +161,13 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
         <div className="flex items-start gap-3">
-          <div className="rounded-2xl bg-blue-50 p-3 text-blue-600">
+          <div className="rounded-lg bg-blue-50 p-3 text-blue-600">
             <Radio className="h-5 w-5" />
           </div>
           <div>
-            <h2 className="text-lg font-black text-slate-900">Trực tiếp</h2>
+            <h2 className="text-lg font-bold text-slate-900">Trực tiếp</h2>
             <p className="mt-1 text-sm font-medium text-slate-500">
               BTC tạo camera và gán camera vào trận. Trọng tài chỉ được start/dừng stream nếu đã được phân công đúng trận đó và trận đã có camera.
             </p>
@@ -176,15 +176,15 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
       </section>
 
       <section className="grid gap-6 lg:grid-cols-[1fr_1.2fr]">
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h3 className="text-sm font-black uppercase tracking-[0.12em] text-slate-700">Thêm camera PUSH</h3>
+        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+          <h3 className="text-sm font-bold uppercase tracking-[0.12em] text-slate-700">Thêm camera PUSH</h3>
           <div className="mt-4 space-y-4">
             <div>
               <label className="text-xs font-bold text-slate-500">Tên camera</label>
               <input
                 value={cameraName}
                 onChange={(event) => setCameraName(event.target.value)}
-                className="mt-1 h-11 w-full rounded-xl border border-slate-200 px-3 text-sm"
+                className="mt-1 h-11 w-full rounded-lg border border-slate-200 px-3 text-sm"
                 placeholder="Ví dụ: Camera sân 1"
               />
             </div>
@@ -193,7 +193,7 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
               <select
                 value={protocol}
                 onChange={(event) => setProtocol(event.target.value as 'RTMP' | 'SRT')}
-                className="mt-1 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm"
+                className="mt-1 h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm"
               >
                 <option value="RTMP">RTMP - OBS/Larix dễ dùng</option>
                 <option value="SRT">SRT - ổn định hơn nếu app hỗ trợ</option>
@@ -206,8 +206,8 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
           </div>
 
           {lastPublish ? (
-            <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50 p-4">
-              <p className="text-xs font-black uppercase tracking-[0.12em] text-blue-700">Link publish vừa tạo</p>
+            <div className="mt-5 rounded-lg border border-blue-100 bg-blue-50 p-4">
+              <p className="text-xs font-bold uppercase tracking-[0.12em] text-blue-700">Link publish vừa tạo</p>
               <p className="mt-2 break-all text-xs font-semibold text-blue-900">{lastPublish.url}</p>
               <Button variant="outline" className="mt-3" onClick={() => void copyText(lastPublish.url, 'link publish')}>
                 <Copy className="mr-2 h-4 w-4" />
@@ -217,22 +217,22 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
           ) : null}
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
           <div className="flex items-center justify-between gap-3">
-            <h3 className="text-sm font-black uppercase tracking-[0.12em] text-slate-700">Camera của giải</h3>
+            <h3 className="text-sm font-bold uppercase tracking-[0.12em] text-slate-700">Camera của giải</h3>
             {isLoading ? <Loader2 className="h-4 w-4 animate-spin text-slate-400" /> : null}
           </div>
           <div className="mt-4 space-y-3">
             {cameras.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm font-bold text-slate-500">
+              <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm font-bold text-slate-500">
                 Chưa có camera. Tạo camera trước rồi gán vào trận.
               </div>
             ) : (
               cameras.map((camera) => (
-                <div key={camera.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <div key={camera.id} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="font-black text-slate-900">{camera.name}</p>
+                      <p className="font-bold text-slate-900">{camera.name}</p>
                       <p className="mt-1 text-xs font-semibold text-slate-500">
                         {camera.protocol} • {statusLabel[camera.status] ?? camera.status}
                       </p>
@@ -251,13 +251,13 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
         </div>
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h3 className="text-sm font-black uppercase tracking-[0.12em] text-slate-700">Gán camera vào trận</h3>
+      <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+        <h3 className="text-sm font-bold uppercase tracking-[0.12em] text-slate-700">Gán camera vào trận</h3>
         <div className="mt-4 grid gap-4 lg:grid-cols-[1.3fr_1fr_auto]">
           <select
             value={selectedMatchId}
             onChange={(event) => setSelectedMatchId(event.target.value)}
-            className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm"
+            className="h-11 rounded-lg border border-slate-200 bg-white px-3 text-sm"
           >
             <option value="">Chọn trận</option>
             {readyMatches.map((match) => (
@@ -269,7 +269,7 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
           <select
             value={selectedCameraId}
             onChange={(event) => setSelectedCameraId(event.target.value)}
-            className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm"
+            className="h-11 rounded-lg border border-slate-200 bg-white px-3 text-sm"
           >
             <option value="">Chọn camera</option>
             {cameras.map((camera) => (
@@ -285,9 +285,9 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
 
         <div className="mt-6 space-y-3">
           {readyMatches.slice(0, 12).map((match) => (
-            <div key={match.id} className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 lg:flex-row lg:items-center lg:justify-between">
+            <div key={match.id} className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 lg:flex-row lg:items-center lg:justify-between">
               <div>
-                <p className="text-sm font-black text-slate-900">
+                <p className="text-sm font-bold text-slate-900">
                   {getCameraMatchLabel(match)} • Trận {match.matchOrder}
                 </p>
                 <p className="mt-1 text-xs font-semibold text-slate-500">

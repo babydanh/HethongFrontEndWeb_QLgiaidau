@@ -242,16 +242,16 @@ export default function SeriesManagePage() {
         </Link>
 
         {/* Dashboard Header */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+        <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-blue-50 border border-blue-100 text-blue-600 rounded-2xl flex items-center justify-center shrink-0">
+            <div className="w-12 h-12 bg-blue-50 border border-blue-100 text-blue-600 rounded-lg flex items-center justify-center shrink-0">
               <Trophy className="w-6 h-6" />
             </div>
             <div>
-              <span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-[10px] font-black uppercase border border-blue-100 tracking-wider">
+              <span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-[10px] font-bold uppercase border border-blue-100 tracking-wider">
                 QUẢN LÝ CHUỖI GIẢI
               </span>
-              <h1 className="text-xl md:text-2xl font-black text-slate-900 mt-1">{series.name}</h1>
+              <h1 className="text-xl md:text-2xl font-bold text-slate-900 mt-1">{series.name}</h1>
             </div>
           </div>
           <div className="flex gap-2 w-full md:w-auto">
@@ -268,9 +268,9 @@ export default function SeriesManagePage() {
           
           {/* Left Side: Legs List (5 columns) */}
           <div className="lg:col-span-5 flex flex-col gap-4">
-            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-4">
+            <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-sm flex flex-col gap-4">
               <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-                <h3 className="text-sm font-black text-slate-800 uppercase tracking-wide flex items-center gap-1.5">
+                <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide flex items-center gap-1.5">
                   <Layers className="w-4.5 h-4.5 text-blue-500" /> Các chặng đấu ({legs.length})
                 </h3>
                 <Button 
@@ -293,7 +293,7 @@ export default function SeriesManagePage() {
                     return (
                       <div 
                         key={leg.id}
-                        className={`p-3.5 rounded-xl border flex items-center justify-between transition-all cursor-pointer ${
+                        className={`p-3.5 rounded-lg border flex items-center justify-between transition-all cursor-pointer ${
                           isSelected 
                             ? 'bg-blue-50/70 border-blue-300 shadow-sm' 
                             : 'bg-white border-slate-200 hover:bg-slate-50'
@@ -354,10 +354,10 @@ export default function SeriesManagePage() {
           {/* Right Side: Linked Tournaments in Selected Leg (7 columns) */}
           <div className="lg:col-span-7 flex flex-col gap-4">
             {selectedLeg ? (
-              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-5">
+              <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-sm flex flex-col gap-5">
                 <div className="flex justify-between items-center border-b border-slate-100 pb-3">
                   <div>
-                    <h3 className="text-sm font-black text-slate-800 uppercase tracking-wide">
+                    <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide">
                       Giải đấu trong chặng: {selectedLeg.name}
                     </h3>
                     <p className="text-[10px] text-slate-400 mt-0.5">
@@ -383,11 +383,11 @@ export default function SeriesManagePage() {
                         return (
                           <div 
                             key={event.id}
-                            className="bg-slate-50 border border-slate-200 p-4 rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:border-slate-300 transition-all"
+                            className="bg-slate-50 border border-slate-200 p-4 rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:border-slate-300 transition-all"
                           >
                             <div className="flex flex-col gap-1">
                               <div className="flex items-center gap-2 flex-wrap">
-                                <span className="text-[9px] font-black bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">
+                                <span className="text-[9px] font-bold bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">
                                   GIẢI #{event.order}
                                 </span>
                                 {event.region && (
@@ -430,7 +430,7 @@ export default function SeriesManagePage() {
                 )}
               </div>
             ) : (
-              <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center text-slate-400 text-xs font-semibold">
+              <div className="bg-white border border-slate-200 rounded-lg p-12 text-center text-slate-400 text-xs font-semibold">
                 Vui lòng tạo chặng đấu hoặc chọn chặng bên trái để quản lý giải đấu thành viên.
               </div>
             )}
@@ -441,9 +441,9 @@ export default function SeriesManagePage() {
       {/* Leg Form Dialog Modal */}
       {isLegModalOpen && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-md rounded-2xl border border-slate-200 shadow-xl overflow-hidden animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-md rounded-lg border border-slate-200 shadow-xl overflow-hidden animate-in fade-in duration-200">
             <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-              <h3 className="text-sm font-black text-slate-950 uppercase tracking-wide">
+              <h3 className="text-sm font-bold text-slate-950 uppercase tracking-wide">
                 {editingLeg ? 'Sửa chặng đấu' : 'Thêm chặng đấu mới'}
               </h3>
               <button onClick={() => setIsLegModalOpen(false)} className="p-1 text-slate-400 hover:text-slate-700 rounded-lg">
@@ -533,9 +533,9 @@ export default function SeriesManagePage() {
       {/* Link Tournament Modal */}
       {isLinkModalOpen && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-md rounded-2xl border border-slate-200 shadow-xl overflow-hidden animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-md rounded-lg border border-slate-200 shadow-xl overflow-hidden animate-in fade-in duration-200">
             <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-              <h3 className="text-sm font-black text-slate-950 uppercase tracking-wide">
+              <h3 className="text-sm font-bold text-slate-950 uppercase tracking-wide">
                 Liên kết giải đấu thành viên
               </h3>
               <button onClick={() => setIsLinkModalOpen(false)} className="p-1 text-slate-400 hover:text-slate-700 rounded-lg">
@@ -549,7 +549,7 @@ export default function SeriesManagePage() {
                 <select
                   value={targetTournamentId}
                   onChange={(e) => setTargetTournamentId(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 focus:bg-white focus:border-blue-600 outline-none transition-all cursor-pointer h-[42px]"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 focus:bg-white focus:border-blue-600 outline-none transition-all cursor-pointer h-[42px]"
                 >
                   {availableTournaments.map((t) => (
                     <option key={t.id} value={t.id}>

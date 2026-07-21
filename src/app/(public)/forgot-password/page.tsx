@@ -37,7 +37,7 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="min-h-[calc(100vh-140px)] bg-slate-50 flex items-center justify-center px-4 py-8">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-sm border border-slate-200 p-8 my-auto">
+      <div className="w-full max-w-md bg-white rounded-lg shadow-sm border border-slate-200 p-8 my-auto">
         <div className="flex items-center gap-3 mb-6">
           <Link href="/login" className="text-slate-400 hover:text-slate-600">
             <ArrowLeft className="w-5 h-5" />
@@ -61,7 +61,7 @@ export default function ForgotPasswordPage() {
           </div>
         ) : (
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-            <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 text-xs text-slate-600">
+            <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 text-xs text-slate-600">
               Nhập email đã đăng ký tài khoản. Hệ thống sẽ gửi hướng dẫn đặt lại mật khẩu.
             </div>
 
@@ -70,7 +70,7 @@ export default function ForgotPasswordPage() {
               <Input type="email" placeholder="name@example.com" {...register('email')} error={errors.email?.message} />
             </div>
 
-            <Button type="submit" disabled={isSubmitting} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl">
+            <Button type="submit" disabled={isSubmitting} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg">
               {isSubmitting ? 'Đang gửi...' : 'Gửi yêu cầu'}
             </Button>
           </form>

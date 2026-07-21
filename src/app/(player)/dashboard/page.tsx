@@ -92,9 +92,9 @@ function TournamentListSection({
   roleLabel: string;
 }) {
   return (
-    <section className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+    <section className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
       <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
-        <h2 className="text-base font-black text-slate-900 flex items-center gap-2">
+        <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
           <span className={accentClass}>{icon}</span>
           {title}
         </h2>
@@ -108,13 +108,13 @@ function TournamentListSection({
             {tournaments.slice(0, 4).map((tournament) => (
               <div
                 key={`${roleLabel}-${tournament.id}`}
-                className="rounded-xl border border-slate-200 p-4 bg-gradient-to-br from-white to-slate-50"
+                className="rounded-lg border border-slate-200 p-4 bg-gradient-to-br from-white to-slate-50"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="font-bold text-slate-900 line-clamp-1">{tournament.name}</h3>
-                      <span className="px-2 py-0.5 rounded-md text-[10px] font-black tracking-wide uppercase bg-indigo-50 text-indigo-700">
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wide uppercase bg-indigo-50 text-indigo-700">
                         {roleLabel}
                       </span>
                     </div>
@@ -127,7 +127,7 @@ function TournamentListSection({
                       <span>Khai mạc: {formatDate(tournament.startDate)}</span>
                     </div>
                   </div>
-                  <span className={`shrink-0 px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wide border ${getTournamentStatusClassName(tournament.status)}`}>
+                  <span className={`shrink-0 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide border ${getTournamentStatusClassName(tournament.status)}`}>
                     {getTournamentStatusLabel(tournament.status)}
                   </span>
                 </div>
@@ -142,7 +142,7 @@ function TournamentListSection({
             ))}
           </div>
         ) : (
-          <div className="text-center py-8 border border-dashed border-slate-200 rounded-xl text-sm text-slate-500">
+          <div className="text-center py-8 border border-dashed border-slate-200 rounded-lg text-sm text-slate-500">
             {emptyLabel}
           </div>
         )}
@@ -221,7 +221,7 @@ export default function DashboardPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-8 py-8 flex flex-col gap-8">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
         <div className="flex items-center gap-4">
           <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center border-4 border-white shadow-sm overflow-hidden shrink-0">
             {user?.avatarUrl ? (
@@ -261,9 +261,9 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <div className="xl:col-span-2 flex flex-col gap-6">
-          <section className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <section className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
             <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/60">
-              <h2 className="text-base font-black text-slate-900 flex items-center gap-2">
+              <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
                 <ShieldCheck className="w-5 h-5 text-amber-600" /> Lời mời và vai trò cần xử lý
               </h2>
             </div>
@@ -277,12 +277,12 @@ export default function DashboardPage() {
                   {workspace.refereeInvites.map((invite) => {
                     const isBusy = respondingInviteId === invite.refereeId;
                     return (
-                      <div key={invite.refereeId} className="rounded-2xl border border-amber-200 bg-amber-50/70 p-4">
+                      <div key={invite.refereeId} className="rounded-lg border border-amber-200 bg-amber-50/70 p-4">
                         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                           <div>
                             <div className="flex items-center gap-2 flex-wrap">
                               <h3 className="font-bold text-slate-900">{invite.tournamentName}</h3>
-                              <span className="px-2 py-0.5 rounded-md text-[10px] font-black tracking-wide uppercase bg-white text-amber-700 border border-amber-200">
+                              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wide uppercase bg-white text-amber-700 border border-amber-200">
                                 Mời làm trọng tài
                               </span>
                             </div>
@@ -318,7 +318,7 @@ export default function DashboardPage() {
                   })}
                 </div>
               ) : (
-                <div className="text-center py-8 border border-dashed border-slate-200 rounded-xl text-sm text-slate-500">
+                <div className="text-center py-8 border border-dashed border-slate-200 rounded-lg text-sm text-slate-500">
                   Hiện không có lời mời trọng tài nào đang chờ bạn phản hồi.
                 </div>
               )}
@@ -347,9 +347,9 @@ export default function DashboardPage() {
             roleLabel="BTC"
           />
 
-          <section className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <section className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
             <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/60">
-              <h2 className="text-base font-black text-slate-900 flex items-center gap-2">
+              <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
                 <Clock3 className="w-5 h-5 text-rose-500" /> Ca trọng tài của tôi
               </h2>
               <span className="text-sm font-semibold text-slate-500">{workspace?.refereeMatches.length || 0} trận</span>
@@ -362,7 +362,7 @@ export default function DashboardPage() {
               ) : workspace && workspace.refereeMatches.length > 0 ? (
                 <div className="flex flex-col gap-4">
                   {workspace.refereeMatches.slice(0, 5).map((match: WorkspaceRefereeMatch) => (
-                    <div key={match.id} className="rounded-2xl border border-slate-200 p-4 bg-white">
+                    <div key={match.id} className="rounded-lg border border-slate-200 p-4 bg-white">
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <h3 className="font-bold text-slate-900 line-clamp-1">{match.tournamentName}</h3>
@@ -377,7 +377,7 @@ export default function DashboardPage() {
                             <span>Lịch: {formatDate(match.scheduledAt, true)}</span>
                           </div>
                         </div>
-                        <span className={`shrink-0 px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wide border ${getTournamentStatusClassName(match.status)}`}>
+                        <span className={`shrink-0 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide border ${getTournamentStatusClassName(match.status)}`}>
                           {getMatchStatusLabel(match.status)}
                         </span>
                       </div>
@@ -392,16 +392,16 @@ export default function DashboardPage() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8 border border-dashed border-slate-200 rounded-xl text-sm text-slate-500">
+                <div className="text-center py-8 border border-dashed border-slate-200 rounded-lg text-sm text-slate-500">
                   Bạn chưa được phân công trận nào với vai trò trọng tài.
                 </div>
               )}
             </div>
           </section>
 
-          <section className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <section className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
             <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/60">
-              <h2 className="text-base font-black text-slate-900 flex items-center gap-2">
+              <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
                 <Activity className="w-5 h-5 text-rose-500" /> Trận đấu tiếp theo của tôi
               </h2>
             </div>
@@ -411,7 +411,7 @@ export default function DashboardPage() {
                   <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
                 </div>
               ) : upcomingMatch ? (
-                <div className="bg-slate-900 rounded-xl p-6 relative overflow-hidden">
+                <div className="bg-slate-900 rounded-lg p-6 relative overflow-hidden">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500 rounded-full blur-[80px] opacity-20" />
                   <div className="absolute bottom-0 left-0 w-32 h-32 bg-blue-500 rounded-full blur-[80px] opacity-20" />
                   <div className="relative z-10">
@@ -427,7 +427,7 @@ export default function DashboardPage() {
                       <div className="text-center">
                         <div className="text-sm font-bold line-clamp-2">{upcomingMatch.participant1?.teamName || 'Bạn'}</div>
                       </div>
-                      <div className="text-xl font-black text-slate-500 italic">VS</div>
+                      <div className="text-xl font-bold text-slate-500 italic">VS</div>
                       <div className="text-center">
                         <div className="text-sm font-bold line-clamp-2">{upcomingMatch.participant2?.teamName || 'Chưa xác định'}</div>
                       </div>
@@ -442,7 +442,7 @@ export default function DashboardPage() {
                   </div>
                 </div>
               ) : (
-                <div className="text-center py-8 border border-dashed border-slate-200 rounded-xl text-sm text-slate-500">
+                <div className="text-center py-8 border border-dashed border-slate-200 rounded-lg text-sm text-slate-500">
                   Bạn không có trận đấu nào sắp tới.
                 </div>
               )}
@@ -450,10 +450,10 @@ export default function DashboardPage() {
           </section>
 
           {/* Giải đang theo dõi */}
-          <section className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <section className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
             <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
               <div>
-                <h2 className="text-base font-black text-slate-900 flex items-center gap-2">
+                <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
                   <Bookmark className="w-5 h-5 text-amber-500" /> Giải đang theo dõi
                 </h2>
                 <p className="text-[11px] font-semibold text-slate-500 mt-1">
@@ -473,7 +473,7 @@ export default function DashboardPage() {
                     <Link
                       key={t.id}
                       href={`/tournaments/${t.id}`}
-                      className="block rounded-xl border border-slate-200 p-3 hover:border-amber-200 hover:shadow-sm transition-all"
+                      className="block rounded-lg border border-slate-200 p-3 hover:border-amber-200 hover:shadow-sm transition-all"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
@@ -490,7 +490,7 @@ export default function DashboardPage() {
                               : `${t.startDate ? `Bắt đầu ${formatDate(t.startDate)}` : 'Đang theo dõi'}${t.endDate ? ` • Kết thúc ${formatDate(t.endDate)}` : ''}`}
                           </p>
                         </div>
-                        <span className={`shrink-0 px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-wide border ${getTournamentStatusClassName(t.status)}`}>
+                        <span className={`shrink-0 px-2 py-1 rounded-md text-[9px] font-bold uppercase tracking-wide border ${getTournamentStatusClassName(t.status)}`}>
                           {getTournamentStatusLabel(t.status)}
                         </span>
                       </div>
@@ -509,7 +509,7 @@ export default function DashboardPage() {
         </div>
 
         <div className="xl:col-span-1 flex flex-col gap-6">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 relative overflow-hidden">
+          <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6 relative overflow-hidden">
             <div className="absolute top-0 right-0 p-4 opacity-5">
               <Trophy className="w-24 h-24" />
             </div>
@@ -521,24 +521,24 @@ export default function DashboardPage() {
             ) : (
               <>
                 <div className="flex items-end gap-2 mb-6">
-                  <span className="text-4xl font-black text-blue-600">{eloPoints}</span>
+                  <span className="text-4xl font-bold text-blue-600">{eloPoints}</span>
                   {activeRank && activeRank.winStreak > 0 ? (
-                    <span className="text-xs font-black text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded flex items-center gap-0.5 mb-1.5">
+                    <span className="text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded flex items-center gap-0.5 mb-1.5">
                       <Zap className="w-3 h-3 fill-emerald-600" /> {activeRank.winStreak}
                     </span>
                   ) : null}
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                  <div className="bg-slate-50 rounded-lg p-3 border border-slate-100">
                     <span className="text-[10px] text-slate-500 font-semibold block mb-1">Trận thắng</span>
                     <span className="text-lg font-bold text-slate-800">{matchesWon} / {matchesPlayed}</span>
                   </div>
-                  <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                  <div className="bg-slate-50 rounded-lg p-3 border border-slate-100">
                     <span className="text-[10px] text-slate-500 font-semibold block mb-1">Tỉ lệ thắng</span>
                     <span className="text-lg font-bold text-slate-800">{winRate}%</span>
                   </div>
-                  <div className="bg-slate-50 rounded-xl p-3 border border-slate-100 col-span-2 flex justify-between items-center">
+                  <div className="bg-slate-50 rounded-lg p-3 border border-slate-100 col-span-2 flex justify-between items-center">
                     <div>
                       <span className="text-[10px] text-slate-500 font-semibold block mb-1">Xếp hạng hiện tại</span>
                       <span className="text-xs font-bold text-slate-900">{tierName}</span>
@@ -552,44 +552,44 @@ export default function DashboardPage() {
             )}
           </div>
 
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+          <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
             <h3 className="text-sm font-bold text-slate-900 mb-4">Vai trò của tôi</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                 <div className="text-[11px] font-semibold text-slate-500">Giải đã đăng ký</div>
-                <div className="mt-1 text-2xl font-black text-slate-900">{workspace?.participatingTournaments.length || 0}</div>
+                <div className="mt-1 text-2xl font-bold text-slate-900">{workspace?.participatingTournaments.length || 0}</div>
               </div>
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                 <div className="text-[11px] font-semibold text-slate-500">Lời mời chờ phản hồi</div>
-                <div className="mt-1 text-2xl font-black text-amber-600">{inviteCount}</div>
+                <div className="mt-1 text-2xl font-bold text-amber-600">{inviteCount}</div>
               </div>
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                 <div className="text-[11px] font-semibold text-slate-500">Vai trò BTC</div>
-                <div className="mt-1 text-2xl font-black text-indigo-600">{organizedCount + coOrganizerCount}</div>
+                <div className="mt-1 text-2xl font-bold text-indigo-600">{organizedCount + coOrganizerCount}</div>
               </div>
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                 <div className="text-[11px] font-semibold text-slate-500">Giải làm trọng tài</div>
-                <div className="mt-1 text-2xl font-black text-rose-600">{refereeCount}</div>
+                <div className="mt-1 text-2xl font-bold text-rose-600">{refereeCount}</div>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+          <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
             <h3 className="text-sm font-bold text-slate-900 mb-4">Lối tắt nhanh</h3>
             <div className="flex flex-col gap-2">
-              <Link href="/profile" className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 text-slate-700 font-bold text-xs transition-all border border-transparent hover:border-slate-200">
+              <Link href="/profile" className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 text-slate-700 font-bold text-xs transition-all border border-transparent hover:border-slate-200">
                 <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 shrink-0">
                   <Settings className="w-4 h-4" />
                 </div>
                 Xem trang cá nhân
               </Link>
-              <Link href="/notifications" className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 text-slate-700 font-bold text-xs transition-all border border-transparent hover:border-slate-200">
+              <Link href="/notifications" className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 text-slate-700 font-bold text-xs transition-all border border-transparent hover:border-slate-200">
                 <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600 shrink-0">
                   <ShieldCheck className="w-4 h-4" />
                 </div>
                 Xem thông báo và lời mời
               </Link>
-              <Link href="/organizer/tournaments" className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 text-slate-700 font-bold text-xs transition-all border border-transparent hover:border-slate-200">
+              <Link href="/organizer/tournaments" className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 text-slate-700 font-bold text-xs transition-all border border-transparent hover:border-slate-200">
                 <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-500 shrink-0">
                   <Trophy className="w-4 h-4" />
                 </div>

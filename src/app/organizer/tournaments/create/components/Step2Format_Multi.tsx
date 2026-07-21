@@ -85,7 +85,7 @@ export default function Step2FormatMulti() {
         <p className="text-sm text-slate-500">Bạn có thể chọn một hoặc nhiều hình thức. Mỗi hình thức sẽ tạo một bảng thi đấu riêng.</p>
       </div>
 
-      <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3">
+      <div className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3">
         <p className="text-sm font-bold text-blue-900">
           Bộ luật hiện tại: {presentation.sportLabel}
         </p>
@@ -123,7 +123,7 @@ export default function Step2FormatMulti() {
         })}
       </div>
 
-      <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 space-y-3">
+      <div className="bg-slate-50 border border-slate-200 rounded-lg p-5 space-y-3">
         <label className="text-sm font-semibold text-slate-700">Chọn Loại nhánh thi đấu <span className="text-red-500">*</span></label>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {BRACKET_TYPE_OPTIONS.map((opt) => (

@@ -142,9 +142,9 @@ export default function AdminCommunitiesReview() {
   };
 
   const StatCard = ({ label, value, color }: { label: string; value: number; color: string }) => (
-    <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm flex-1">
+    <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm flex-1">
       <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">{label}</p>
-      <p className={`mt-1 text-2xl font-black ${color}`}>{value}</p>
+      <p className={`mt-1 text-2xl font-bold ${color}`}>{value}</p>
     </div>
   );
 
@@ -154,10 +154,10 @@ export default function AdminCommunitiesReview() {
       <div className="space-y-4">
         <div className="h-8 w-48 rounded-lg bg-gray-100 animate-pulse" />
         <div className="grid grid-cols-4 gap-4">
-          {[...Array(4)].map((_, i) => <div key={i} className="h-20 rounded-2xl bg-gray-100 animate-pulse" />)}
+          {[...Array(4)].map((_, i) => <div key={i} className="h-20 rounded-lg bg-gray-100 animate-pulse" />)}
         </div>
         {[...Array(2)].map((_, i) => (
-          <div key={i} className="rounded-2xl border border-gray-200 bg-white p-6 animate-pulse space-y-3">
+          <div key={i} className="rounded-lg border border-gray-200 bg-white p-6 animate-pulse space-y-3">
             <div className="h-6 w-48 bg-gray-100 rounded" />
             <div className="h-12 w-full bg-gray-100 rounded" />
           </div>
@@ -177,7 +177,7 @@ export default function AdminCommunitiesReview() {
       </div>
 
       {error && (
-        <div className="flex items-center gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-red-700">
+        <div className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-700">
           <AlertCircle className="w-5 h-5 flex-shrink-0" />
           <span className="text-sm font-semibold">{error}</span>
         </div>
@@ -192,7 +192,7 @@ export default function AdminCommunitiesReview() {
       </div>
 
       {/* Search + Filter */}
-      <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-2xl border border-gray-200 shadow-sm">
+      <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
         <div className="flex-1 relative">
           <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
@@ -200,13 +200,13 @@ export default function AdminCommunitiesReview() {
             placeholder="Tìm kiếm cộng đồng..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-10 pr-4 py-2.5 text-xs text-gray-700 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            className="w-full bg-gray-50 border border-gray-200 rounded-lg pl-10 pr-4 py-2.5 text-xs text-gray-700 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
           />
         </div>
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-          className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-xs text-gray-600 focus:outline-none focus:border-blue-500"
+          className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 text-xs text-gray-600 focus:outline-none focus:border-blue-500"
         >
           <option value="ALL">Tất cả</option>
           <option value="ACTIVE">Hoạt động</option>
@@ -217,7 +217,7 @@ export default function AdminCommunitiesReview() {
 
       {/* List */}
       {filtered.length === 0 ? (
-        <div className="rounded-2xl border border-gray-200 bg-white p-14 text-center shadow-sm">
+        <div className="rounded-lg border border-gray-200 bg-white p-14 text-center shadow-sm">
           <Building className="mx-auto h-12 w-12 text-gray-300" />
           <p className="mt-4 text-base font-semibold text-gray-700">Không có cộng đồng nào</p>
           <p className="mt-1 text-xs text-gray-400">Thử thay đổi bộ lọc hoặc từ khoá tìm kiếm.</p>
@@ -237,12 +237,12 @@ export default function AdminCommunitiesReview() {
             return (
               <div
                 key={community.id}
-                className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition-all hover:shadow-md"
+                className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition-all hover:shadow-md"
               >
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                   <div className="flex-1 space-y-3">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 font-bold uppercase text-blue-700 border border-blue-100">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-blue-50 font-bold uppercase text-blue-700 border border-blue-100">
                         {community.name.charAt(0)}
                       </div>
                       <div>
@@ -266,7 +266,7 @@ export default function AdminCommunitiesReview() {
                     </div>
 
                     {community.description && (
-                      <p className="text-sm text-gray-500 line-clamp-2 bg-gray-50 rounded-xl p-3 border border-gray-100">
+                      <p className="text-sm text-gray-500 line-clamp-2 bg-gray-50 rounded-lg p-3 border border-gray-100">
                         {community.description}
                       </p>
                     )}
@@ -276,7 +276,7 @@ export default function AdminCommunitiesReview() {
                     {/* Xem */}
                     <button
                       onClick={() => window.open(`/communities/${community.id}`, '_blank')}
-                      className="flex items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-bold text-gray-600 transition-all hover:bg-gray-50 active:scale-95"
+                      className="flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-bold text-gray-600 transition-all hover:bg-gray-50 active:scale-95"
                     >
                       <Eye className="w-3.5 h-3.5" />
                       Xem
@@ -311,7 +311,7 @@ export default function AdminCommunitiesReview() {
                       <button
                         disabled={submitting}
                         onClick={() => handleDeactivate(community.id)}
-                        className="flex items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-bold text-gray-500 transition-all hover:bg-gray-100 active:scale-95"
+                        className="flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-bold text-gray-500 transition-all hover:bg-gray-100 active:scale-95"
                       >
                         <Ban className="w-3.5 h-3.5" />
                         Vô hiệu
@@ -328,7 +328,7 @@ export default function AdminCommunitiesReview() {
       {/* Reject Modal */}
       {rejectingId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white shadow-xl overflow-hidden">
+          <div className="w-full max-w-md rounded-lg border border-gray-200 bg-white shadow-xl overflow-hidden">
             <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
               <h3 className="text-sm font-bold text-gray-800">Từ chối cộng đồng</h3>
               <button onClick={() => setRejectingId(null)} className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100">
@@ -344,7 +344,7 @@ export default function AdminCommunitiesReview() {
                   value={rejectReason}
                   onChange={(e) => setRejectReason(e.target.value)}
                   placeholder="Nhập lý do cụ thể..."
-                  className="h-28 w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700 outline-none placeholder:text-gray-400 focus:border-blue-500"
+                  className="h-28 w-full resize-none rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700 outline-none placeholder:text-gray-400 focus:border-blue-500"
                 />
               </div>
               {modalError && <p className="text-xs font-semibold text-red-500">{modalError}</p>}

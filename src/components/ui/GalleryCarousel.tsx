@@ -47,8 +47,8 @@ export default function GalleryCarousel({ images = [], defaultBanner, className 
           <div className="bg-white/10 p-4 rounded-full border border-white/10 backdrop-blur-md shadow-lg mb-1 animate-pulse">
             <ImageIcon className="w-8 h-8 text-blue-200" />
           </div>
-          <span className="text-lg font-black tracking-widest text-white/90 uppercase">VNDC SPORT</span>
-          <span className="text-[10px] tracking-wide text-blue-200/70 font-semibold">HỆ THỐNG QUẢN LÝ GIẢI ĐẤU CHUYÊN NGHIỆP</span>
+          <span className="text-lg font-bold tracking-widest text-white/90 uppercase">VNDC SPORT</span>
+          <span className="text-[10px] tracking-wide text-blue-200/70 font-medium">HỆ THỐNG QUẢN LÝ GIẢI ĐẤU CHUYÊN NGHIỆP</span>
         </div>
       </div>
     );

@@ -380,7 +380,7 @@ export function BracketTab({
     if (!suggestion) return null;
     const isWarning = suggestion.variant === 'warning';
     return (
-      <div className={`rounded-xl border p-4 space-y-2 ${isWarning ? 'border-amber-200 bg-amber-50' : 'border-blue-200 bg-blue-50'}`}>
+      <div className={`rounded-lg border p-4 space-y-2 ${isWarning ? 'border-amber-200 bg-amber-50' : 'border-blue-200 bg-blue-50'}`}>
         <p className={`text-xs font-bold flex items-center gap-1.5 ${isWarning ? 'text-amber-800' : 'text-blue-700'}`}>
           <span className="text-base">{isWarning ? '⚠️' : '💡'}</span>
           {isWarning
@@ -407,9 +407,9 @@ export function BracketTab({
       {selectedDivisionId && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Cấp độ 1: Cấu hình mặc định của hình thức */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+          <div className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm space-y-4">
             <div>
-              <h3 className="font-extrabold text-slate-900 text-base flex items-center gap-2">
+              <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
                 <Settings className="w-5 h-5 text-blue-600" />
                 Cấu hình mặc định hình thức thi đấu
               </h3>
@@ -419,8 +419,8 @@ export function BracketTab({
             </div>
 
             {isPickleballVariant && (
-              <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-4">
-                <p className="text-xs font-black uppercase tracking-[0.12em] text-emerald-700">Mode Pickleball</p>
+              <div className="rounded-lg border border-emerald-100 bg-emerald-50 p-4">
+                <p className="text-xs font-bold uppercase tracking-[0.12em] text-emerald-700">Mode Pickleball</p>
                 <div className="mt-3 grid gap-3 md:grid-cols-2">
                   {([
                     { kind: 'PICKLEBALL_RALLY', title: 'Rally', description: 'Pha bóng nào thắng cũng có điểm.' },
@@ -434,7 +434,7 @@ export function BracketTab({
                         key={option.kind}
                         type="button"
                         onClick={() => handleSportRuleKindChange(option.kind)}
-                        className={`rounded-xl border px-4 py-3 text-left transition-all ${
+                        className={`rounded-lg border px-4 py-3 text-left transition-all ${
                           isActive
                             ? 'border-emerald-500 bg-white ring-2 ring-emerald-200'
                             : 'border-emerald-100 bg-white/80 hover:border-emerald-300'
@@ -449,22 +449,22 @@ export function BracketTab({
               </div>
             )}
 
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-600">Preset theo môn</p>
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+              <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-600">Preset theo môn</p>
               <div className="mt-3 grid gap-3">
                 {presets.map((preset) => (
                   <button
                     key={preset.id}
                     type="button"
                     onClick={() => applyPreset(preset)}
-                    className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-left transition-all hover:border-blue-300 hover:bg-blue-50"
+                    className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-left transition-all hover:border-blue-300 hover:bg-blue-50"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="text-sm font-bold text-slate-900">{preset.label}</p>
                         <p className="mt-1 text-xs font-semibold text-slate-500">{preset.description}</p>
                       </div>
-                      <div className="rounded-lg bg-slate-100 px-2 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-slate-600">
+                      <div className="rounded-lg bg-slate-100 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-600">
                         {preset.setsToWin} chạm • {preset.pointsPerSet}
                       </div>
                     </div>
@@ -548,7 +548,7 @@ export function BracketTab({
               />
             )}
 
-            <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-xs font-semibold text-blue-900">
+            <div className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-xs font-semibold text-blue-900">
               Thiết lập hiện tại: thắng {setsToWin} {sportRuleKind === 'PICKLEBALL_SIDE_OUT' ? 'game' : 'set'}
               {' • '}
               {pointsPerSet} {sportRuleKind === 'TENNIS' ? 'game/set' : 'điểm'}
@@ -556,7 +556,7 @@ export function BracketTab({
               {supportsTiebreakInput ? ` • ${presentation.tiebreakLabel.toLowerCase()}: ${superTiebreakPoints}` : ''}
             </div>
 
-            <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-3">
+            <div className="bg-slate-50 border border-slate-200 p-4 rounded-lg space-y-3">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-bold text-slate-650 uppercase tracking-wider">Giới hạn số đội đăng ký</label>
                 <input
@@ -591,12 +591,12 @@ export function BracketTab({
           </div>
 
           {/* Cấp độ 2: Cài đặt chi tiết theo vòng đấu */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col justify-between">
+          <div className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm flex flex-col justify-between">
             {isRoundRobin && setTiebreakerMode && !isGroupStageKnockout ? (
               <div className="space-y-4">
                 {renderSuggestionBox(getRRSuggestion(participantCount))}
                 <div>
-                  <h3 className="font-extrabold text-slate-900 text-base flex items-center gap-2">
+                  <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
                     <Settings className="w-5 h-5 text-indigo-600" />
                     Cấu hình Vòng Tròn (Round Robin)
                   </h3>
@@ -674,7 +674,7 @@ export function BracketTab({
               <div className="space-y-4">
                 {renderSuggestionBox(getGSKSuggestion(participantCount))}
                 <div>
-                  <h3 className="font-extrabold text-slate-900 text-base flex items-center gap-2">
+                  <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
                     <LayoutGrid className="w-5 h-5 text-indigo-600" />
                     Cấu hình Vòng Bảng + Knockout
                   </h3>
@@ -684,8 +684,8 @@ export function BracketTab({
                       : 'Thiết lập bảng đấu, số đội đi tiếp và thể thức loại trực tiếp.'}
                   </p>
                 </div>
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
-                  <p className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-600">Vòng bảng</p>
+                <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-3">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-600">Vòng bảng</p>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="flex flex-col gap-1.5">
                       <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Số bảng</label>
@@ -706,8 +706,8 @@ export function BracketTab({
                   </div>
                 </div>
 
-                <div className="rounded-xl border border-indigo-100 bg-indigo-50 p-4 space-y-3">
-                  <p className="text-[10px] font-black uppercase tracking-[0.12em] text-indigo-700">Knockout</p>
+                <div className="rounded-lg border border-indigo-100 bg-indigo-50 p-4 space-y-3">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-indigo-700">Knockout</p>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="flex flex-col gap-1.5">
                       <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Thể thức playoff</label>
@@ -736,14 +736,14 @@ export function BracketTab({
                   </div>
                 </div>
 
-                <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
-                  <p className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-600">Cấu hình từng vòng knockout</p>
+                <div className="rounded-lg border border-slate-200 bg-white p-4 space-y-3">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-600">Cấu hình từng vòng knockout</p>
                   {gskConfigurableRounds.length > 0 ? (
                     <div className="divide-y divide-slate-100">
                       {gskConfigurableRounds.map(({ stage, roundNumber, name, override }) => (
                         <div key={`${stage.id}-${roundNumber}`} className="py-2.5 flex items-center justify-between gap-4">
                           <div>
-                            <p className="text-sm font-extrabold text-slate-800">{name}</p>
+                            <p className="text-sm font-bold text-slate-800">{name}</p>
                             <p className="text-[11px] text-slate-500 font-semibold">
                               {override ? `${override.sets_to_win} set thắng, ${override.points_per_set || pointsPerSet} điểm/set` : 'Kế thừa luật mặc định của hình thức'}
                             </p>
@@ -883,7 +883,7 @@ export function BracketTab({
             ) : (
               <div className="space-y-4">
                 <div>
-                  <h3 className="font-extrabold text-slate-900 text-base flex items-center gap-2">
+                  <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
                     <Settings className="w-5 h-5 text-indigo-600" />
                     Cấu hình theo vòng đấu
                   </h3>
@@ -896,7 +896,7 @@ export function BracketTab({
                       return (
                         <div key={`${stage.id}-${roundNumber}`} className="pt-2.5 flex items-center justify-between gap-4 first:pt-0">
                           <div className="space-y-0.5">
-                            <p className="text-sm font-extrabold text-slate-800">{name}</p>
+                            <p className="text-sm font-bold text-slate-800">{name}</p>
                             <p className="text-[11px] text-slate-500 font-semibold">
                               {override ? (
                                 `${override.sets_to_win === 1 ? 'Thắng 1 set' : override.sets_to_win === 2 ? 'Thắng 2 set' : 'Thắng 3 set'}, ${override.points_per_set || 21} điểm/set, ${override.deuce_enabled ? 'có cách biệt 2 điểm' : 'không áp dụng cách biệt 2 điểm'}`
@@ -918,7 +918,7 @@ export function BracketTab({
                     })}
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center justify-center py-8 bg-slate-50 rounded-xl border border-dashed text-center">
+                  <div className="flex flex-col items-center justify-center py-8 bg-slate-50 rounded-lg border border-dashed text-center">
                     <p className="text-xs font-semibold text-slate-455">Sơ đồ thi đấu chưa được khởi tạo.</p>
                     <p className="text-[11px] text-slate-400 mt-0.5">Khởi tạo sơ đồ ở bên dưới để thiết lập luật thi đấu chi tiết cho từng vòng.</p>
                   </div>
@@ -931,7 +931,7 @@ export function BracketTab({
 
       {/* Nút khởi tạo bracket nếu chưa có */}
       {(!bracket || !bracket.stages || bracket.stages.length === 0) && (
-        <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm flex flex-col items-center gap-4">
+        <div className="bg-white rounded-lg border border-slate-200 p-8 shadow-sm flex flex-col items-center gap-4">
           <div className="text-center">
             <h2 className="text-xl font-bold text-slate-900 mb-1">Sơ đồ thi đấu</h2>
             <p className="text-sm text-slate-500">Chưa có sơ đồ. Hãy khởi tạo để bắt đầu phân lịch và sơ đồ.</p>
@@ -939,7 +939,7 @@ export function BracketTab({
           <Button
             onClick={handleGenerateBracket}
             disabled={isGeneratingBracket || !selectedDivisionId || participants.length < 2}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-2.5 rounded-xl shadow-lg shadow-blue-500/20"
+            className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-2.5 rounded-lg shadow-lg shadow-blue-500/20"
           >
             {isGeneratingBracket
               ? 'Đang khởi tạo...'
@@ -960,9 +960,9 @@ export function BracketTab({
       
       {/* Visual bracket tree */}
       {bracket && bracket.stages && bracket.stages.length > 0 && (
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+        <div className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm">
           <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <h3 className="font-extrabold text-slate-900 text-base">Sơ đồ thi đấu</h3>
+            <h3 className="font-bold text-slate-900 text-base">Sơ đồ thi đấu</h3>
             {canResetDraftBracket && (
               <Button
                 type="button"

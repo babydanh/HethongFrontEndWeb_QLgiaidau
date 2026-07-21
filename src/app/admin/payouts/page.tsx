@@ -147,7 +147,7 @@ export default function AdminPayoutsReview() {
     return (
       <div className="space-y-6">
         {[...Array(3)].map((_, i) => (
-          <div key={i} className="bg-white border border-slate-200 rounded-2xl p-6 animate-pulse space-y-4">
+          <div key={i} className="bg-white border border-slate-200 rounded-lg p-6 animate-pulse space-y-4">
             <div className="flex justify-between">
               <div className="space-y-2">
                 <div className="w-48 h-6 bg-slate-100 rounded"></div>
@@ -175,14 +175,14 @@ export default function AdminPayoutsReview() {
       </div>
 
       {error && (
-        <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-xl flex items-center gap-3">
+        <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-lg flex items-center gap-3">
           <AlertCircle className="w-5 h-5 flex-shrink-0" />
           <span className="text-sm font-semibold">{error}</span>
         </div>
       )}
 
       {/* Filter Bar */}
-      <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-2xl border border-gray-200 shadow-sm">
+      <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
         <div className="flex items-center gap-2 min-w-[140px]">
           <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
           <input
@@ -190,7 +190,7 @@ export default function AdminPayoutsReview() {
             placeholder="Từ ngày (dd/mm/yyyy)"
             value={dateFrom}
             onChange={(e) => setDateFrom(e.target.value)}
-            className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-xs text-gray-600 focus:outline-none focus:border-blue-500 placeholder-gray-400"
+            className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 text-xs text-gray-600 focus:outline-none focus:border-blue-500 placeholder-gray-400"
           />
         </div>
         <div className="flex items-center gap-2 min-w-[140px]">
@@ -200,7 +200,7 @@ export default function AdminPayoutsReview() {
             placeholder="Đến ngày (dd/mm/yyyy)"
             value={dateTo}
             onChange={(e) => setDateTo(e.target.value)}
-            className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-xs text-gray-600 focus:outline-none focus:border-blue-500 placeholder-gray-400"
+            className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 text-xs text-gray-600 focus:outline-none focus:border-blue-500 placeholder-gray-400"
           />
         </div>
         <div className="flex items-center gap-2 min-w-[180px]">
@@ -208,7 +208,7 @@ export default function AdminPayoutsReview() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-xs text-gray-600 focus:outline-none focus:border-blue-500"
+            className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 text-xs text-gray-600 focus:outline-none focus:border-blue-500"
           >
             <option value="ALL">Tất cả</option>
             {Object.entries(PAYOUT_STATUS_LABELS).map(([key, label]) => (
@@ -220,7 +220,7 @@ export default function AdminPayoutsReview() {
 
       {/* Payouts list */}
       {filteredPayouts.length === 0 ? (
-        <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center text-slate-500 space-y-3 shadow-sm">
+        <div className="bg-white border border-slate-200 rounded-lg p-12 text-center text-slate-500 space-y-3 shadow-sm">
           <CreditCard className="w-12 h-12 text-slate-400 mx-auto" />
           <p className="font-bold text-slate-800">Không có yêu cầu rút tiền nào</p>
           <p className="text-xs text-slate-500">Mọi yêu cầu đối soát và rút tiền đã hoàn thành xong.</p>
@@ -230,7 +230,7 @@ export default function AdminPayoutsReview() {
           {filteredPayouts.map((request) => (
             <div 
               key={request.id}
-              className="bg-white border border-slate-200 rounded-2xl p-6 hover:border-slate-300 transition-all duration-300 shadow-sm flex flex-col gap-6"
+              className="bg-white border border-slate-200 rounded-lg p-6 hover:border-slate-300 transition-all duration-300 shadow-sm flex flex-col gap-6"
             >
               {/* Header inside card */}
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-slate-100">
@@ -260,7 +260,7 @@ export default function AdminPayoutsReview() {
               {/* Grid content */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Financial Summary */}
-                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
+                <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-2">
                   <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Đối soát tài chính</p>
                   <div className="flex justify-between text-xs text-slate-600">
                     <span>Tổng thu được:</span>
@@ -277,7 +277,7 @@ export default function AdminPayoutsReview() {
                 </div>
 
                 {/* Bank account details */}
-                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
+                <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-2">
                   <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider flex items-center gap-1.5">
                     <Landmark className="w-3.5 h-3.5 text-blue-600" />
                     Tài khoản thụ hưởng
@@ -353,7 +353,7 @@ export default function AdminPayoutsReview() {
       {/* Review Modal */}
       {reviewingPayout && reviewAction && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-scale-up">
+          <div className="bg-white border border-slate-200 rounded-lg w-full max-w-md overflow-hidden shadow-2xl animate-scale-up">
             {/* Header */}
             <div className="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
               <h3 className="text-base font-bold text-slate-900">
@@ -374,7 +374,7 @@ export default function AdminPayoutsReview() {
             {/* Body Form */}
             <form onSubmit={handleReviewSubmit}>
               <div className="p-6 space-y-4">
-                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-1 text-xs">
+                <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-1 text-xs">
                   <p><span className="text-slate-500">Người nhận:</span> <span className="font-semibold text-slate-800">{reviewingPayout.bankAccountName}</span></p>
                   <p><span className="text-slate-500">Ngân hàng:</span> <span className="font-semibold text-slate-800">{reviewingPayout.bankName} - {reviewingPayout.bankAccountNumber}</span></p>
                   <p className="pt-1 border-t border-slate-200 mt-1">
@@ -391,7 +391,7 @@ export default function AdminPayoutsReview() {
                       value={proofUrl}
                       onChange={(e) => setProofUrl(e.target.value)}
                       placeholder="https://example.com/payout-proof.png"
-                      className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
+                      className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
                     />
                     <p className="text-[10px] text-slate-400">Nhập link hình ảnh biên lai để ban tổ chức đối chiếu kiểm tra.</p>
                   </div>
@@ -406,7 +406,7 @@ export default function AdminPayoutsReview() {
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
                     placeholder={reviewAction === 'REJECTED' ? 'Nhập lý do cụ thể từ chối yêu cầu...' : 'Nhập ghi chú đối soát nếu cần.'}
-                    className="w-full h-24 bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 resize-none"
+                    className="w-full h-24 bg-white border border-slate-200 rounded-lg px-4 py-3 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 resize-none"
                   />
                 </div>
 
@@ -420,14 +420,14 @@ export default function AdminPayoutsReview() {
                 <button
                   type="button"
                   onClick={() => setReviewingPayout(null)}
-                  className="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-sm font-bold rounded-xl transition-all"
+                  className="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-sm font-bold rounded-lg transition-all"
                 >
                   Hủy bỏ
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className={`px-4 py-2 disabled:opacity-50 text-white text-sm font-bold rounded-xl transition-all shadow-lg active:scale-95 ${
+                  className={`px-4 py-2 disabled:opacity-50 text-white text-sm font-bold rounded-lg transition-all shadow-lg active:scale-95 ${
                     reviewAction !== 'REJECTED'
                       ? 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-500/10' 
                       : 'bg-rose-600 hover:bg-rose-500 shadow-rose-500/10'

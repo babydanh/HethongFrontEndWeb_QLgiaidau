@@ -87,7 +87,7 @@ export function MatchCard({
       data-bracket-match-id={match.id}
       style={{ width: CARD_W, height: actualCardH }}
       className={
-        'rounded-xl overflow-hidden border-2 flex flex-col shadow-sm transition-all duration-150 hover:shadow-md hover:-translate-y-px bg-white ' +
+        'rounded-lg overflow-hidden border-2 flex flex-col shadow-sm transition-all duration-150 hover:shadow-md hover:-translate-y-px bg-white ' +
         (selected
           ? 'border-amber-500 ring-4 ring-amber-200 shadow-amber-100'
           : live
@@ -115,13 +115,13 @@ export function MatchCard({
               <div className="flex justify-center">
                 <button
                   onClick={() => onScheduleMatch!(match)}
-                  className="min-w-[132px] text-center text-[9px] font-extrabold text-blue-600 border-2 border-blue-200 bg-white hover:bg-blue-50 rounded-lg px-3 py-1 transition-colors cursor-pointer"
+                  className="min-w-[132px] text-center text-[9px] font-bold text-blue-600 border-2 border-blue-200 bg-white hover:bg-blue-50 rounded-lg px-3 py-1 transition-colors cursor-pointer"
                 >
                   Xếp Sân & Giờ
                 </button>
               </div>
             ) : (
-              <div className="w-full text-center text-[9px] font-extrabold text-slate-500 bg-slate-100/50 rounded-lg py-1 border border-slate-250/60 select-none">
+              <div className="w-full text-center text-[9px] font-bold text-slate-500 bg-slate-100/50 rounded-lg py-1 border border-slate-250/60 select-none">
                 Chờ đối thủ
               </div>
             )
@@ -138,29 +138,29 @@ export function MatchCard({
         {/* Header */}
         <div
           className={
-            'flex items-center justify-between px-2.5 py-1.5 border-b-2 text-[10px] font-extrabold flex-shrink-0 ' +
+            'flex items-center justify-between px-2.5 py-1.5 border-b-2 text-[10px] font-bold flex-shrink-0 ' +
             (live
               ? 'bg-blue-100 border-blue-200 text-blue-800'
               : 'bg-slate-100 border-slate-200 text-slate-700')
           }
         >
-          <span className="text-slate-500 font-extrabold">#{match.matchOrder}</span>
+          <span className="text-slate-500 font-bold">#{match.matchOrder}</span>
           {live ? (
-            <span className="flex items-center gap-0.5 text-blue-700 font-black animate-pulse">
+            <span className="flex items-center gap-0.5 text-blue-700 font-bold animate-pulse">
               <Play className="w-2.5 h-2.5 fill-blue-700" /> Trực tiếp
             </span>
           ) : done ? (
             match.isBye ? (
-              <span className="text-blue-600 font-extrabold uppercase tracking-wider text-[9px]">Vô thẳng</span>
+              <span className="text-blue-600 font-bold uppercase tracking-wider text-[9px]">Vô thẳng</span>
             ) : (
-              <span className="flex items-center gap-1 text-emerald-600 font-extrabold">
+              <span className="flex items-center gap-1 text-emerald-600 font-bold">
                 <CheckCircle className="w-3 h-3" /> Đã kết thúc
               </span>
             )
           ) : match.isBye ? (
-            <span className="text-slate-500 font-extrabold uppercase tracking-wider text-[9px]">Miễn vòng</span>
+            <span className="text-slate-500 font-bold uppercase tracking-wider text-[9px]">Miễn vòng</span>
           ) : (
-            <span className="flex items-center gap-1 text-slate-500 font-extrabold">
+            <span className="flex items-center gap-1 text-slate-500 font-bold">
               <Clock className="w-2.5 h-2.5" /> Sắp diễn ra
             </span>
           )}
@@ -171,7 +171,7 @@ export function MatchCard({
           <div className="flex border-b border-slate-100 bg-slate-50/40">
             <div className="flex-1" />
             {Array.from({ length: maxCols }).map((_, ci) => (
-              <div key={ci} className="w-8 text-center text-[8px] font-black tracking-wider text-slate-400 py-1 border-l border-slate-100/80">
+              <div key={ci} className="w-8 text-center text-[8px] font-bold tracking-wider text-slate-400 py-1 border-l border-slate-100/80">
                 S{ci + 1}
               </div>
             ))}
@@ -207,7 +207,7 @@ export function MatchCard({
         {/* Schedule Info */}
         {!match.isBye && (
           <div className="flex flex-col gap-2 px-3 py-3 bg-slate-50/30 flex-1 justify-center min-h-[96px]">
-            <div className="flex items-center gap-1 text-[9px] text-slate-600 font-extrabold">
+            <div className="flex items-center gap-1 text-[9px] text-slate-600 font-bold">
               <span className="truncate" title={ruleSummary}>{ruleSummary}</span>
             </div>
             <div className="flex items-center gap-1 text-[9px] text-slate-500 font-bold">
@@ -262,7 +262,7 @@ function RowSide({
       {/* Team info */}
       <div className="flex items-center gap-1.5 min-w-0 px-3 py-2.5 flex-1">
         {p?.seed != null && (
-          <span className="text-[9px] bg-slate-200 text-slate-700 px-1 rounded font-extrabold flex-shrink-0 leading-4">
+          <span className="text-[9px] bg-slate-200 text-slate-700 px-1 rounded font-bold flex-shrink-0 leading-4">
             {p.seed}
           </span>
         )}
@@ -270,7 +270,7 @@ function RowSide({
           className={
             'text-[11px] truncate flex-1 leading-5 md:text-[12px] ' +
             (won
-              ? 'font-black text-emerald-950'
+              ? 'font-bold text-emerald-950'
               : !p || isByeSlot
                 ? 'italic text-slate-400 font-semibold'
                 : 'font-bold text-slate-800')
@@ -290,10 +290,10 @@ function RowSide({
             className="w-8 flex items-center justify-center border-l border-slate-100/80"
           >
             <span className={
-              'text-[10px] font-black w-6 h-6 flex items-center justify-center rounded-md ' +
+              'text-[10px] font-bold w-6 h-6 flex items-center justify-center rounded-md ' +
               (val
                 ? won
-                  ? 'bg-emerald-50 text-emerald-700 font-black'
+                  ? 'bg-emerald-50 text-emerald-700 font-bold'
                   : 'bg-slate-50 text-slate-700 font-bold'
                 : 'text-slate-300 font-medium')
             }>

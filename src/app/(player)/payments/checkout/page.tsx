@@ -208,7 +208,7 @@ function CheckoutContent() {
 
         {/* Title */}
         <div className="mb-8 text-center">
-          <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mx-auto mb-3">
+          <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center mx-auto mb-3">
             <CreditCard className="w-6 h-6" />
           </div>
           <h1 className="text-2xl font-bold text-slate-900">Thanh Toán Lệ Phí</h1>
@@ -216,7 +216,7 @@ function CheckoutContent() {
         </div>
 
         {/* Invoice Card */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-6">
+        <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden mb-6">
           <div className="p-6 md:p-8">
             <h2 className="text-slate-900 font-bold border-b border-slate-100 pb-3 mb-4">Chi tiết hóa đơn</h2>
             
@@ -231,19 +231,19 @@ function CheckoutContent() {
               </div>
               <div className="flex justify-between items-center border-t border-slate-100 pt-4 mt-2">
                 <span className="text-base font-bold text-slate-900">Tổng cộng</span>
-                <span className="text-xl font-black text-blue-600">{formatCurrency(entryFeeVal)}</span>
+                <span className="text-xl font-bold text-blue-600">{formatCurrency(entryFeeVal)}</span>
               </div>
             </div>
           </div>
         </div>
 
         {/* Payment Gateway */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 mb-6">
+        <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6 mb-6">
           <h2 className="text-slate-900 font-bold mb-4">Phương thức thanh toán</h2>
 
-          <div className="rounded-xl border-2 border-blue-600 bg-blue-50/50 p-4 flex items-center gap-4 shadow-sm">
+          <div className="rounded-lg border-2 border-blue-600 bg-blue-50/50 p-4 flex items-center gap-4 shadow-sm">
               <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mb-2">
-                <span className="text-base font-extrabold text-blue-700">QR</span>
+                <span className="text-base font-bold text-blue-700">QR</span>
               </div>
               <div>
                 <p className="text-sm font-bold text-slate-900">PayOS VietQR</p>
@@ -264,7 +264,7 @@ function CheckoutContent() {
         <Button
           onClick={handlePayment}
           disabled={submitting}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 text-base rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20"
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 text-base rounded-lg font-bold flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20"
         >
           {submitting ? (
             <>
@@ -280,7 +280,7 @@ function CheckoutContent() {
         {/* PayOS QR Modal */}
         {showQrModal && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-3xl max-w-md w-full p-6 md:p-8 shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95 duration-200">
+            <div className="bg-white rounded-xl max-w-md w-full p-6 md:p-8 shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95 duration-200">
               <div className="text-center">
                 <div className="inline-block px-3 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded-full mb-3">
                   Cổng Thanh Toán VietQR
@@ -288,7 +288,7 @@ function CheckoutContent() {
                 <h3 className="text-xl font-bold text-slate-900">Quét mã QR để thanh toán</h3>
                 <p className="text-xs text-slate-500 mt-1">Mã QR động tự điền số tiền và thông tin chuyển khoản</p>
                 
-                <div className="bg-slate-50 rounded-2xl p-4 my-6 inline-block border border-slate-100">
+                <div className="bg-slate-50 rounded-lg p-4 my-6 inline-block border border-slate-100">
                   <img
                     src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(qrCodeData)}`}
                     alt="VietQR PayOS"
@@ -296,10 +296,10 @@ function CheckoutContent() {
                   />
                 </div>
 
-                <div className="bg-slate-50 rounded-2xl p-4 text-left border border-slate-100 space-y-2 mb-6">
+                <div className="bg-slate-50 rounded-lg p-4 text-left border border-slate-100 space-y-2 mb-6">
                   <div className="flex justify-between text-xs">
                     <span className="text-slate-500 font-medium">Số tiền:</span>
-                    <span className="text-slate-900 font-extrabold text-sm text-blue-600">
+                    <span className="text-slate-900 font-bold text-sm text-blue-600">
                       {formatCurrency(confirmedAmount ?? 0)}
                     </span>
                   </div>
@@ -320,7 +320,7 @@ function CheckoutContent() {
                       setSubmitting(false);
                     }}
                     variant="outline"
-                    className="w-full border-slate-200 hover:bg-slate-50 text-slate-700 font-bold rounded-xl"
+                    className="w-full border-slate-200 hover:bg-slate-50 text-slate-700 font-bold rounded-lg"
                   >
                     Hủy giao dịch
                   </Button>

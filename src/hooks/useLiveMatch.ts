@@ -36,6 +36,7 @@ export function useLiveMatch(matchId: string) {
   const [viewerCount, setViewerCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [cheerCount, setCheerCount] = useState(0);
 
   useEffect(() => {
     let isMounted = true;
@@ -46,6 +47,7 @@ export function useLiveMatch(matchId: string) {
         if (isMounted) {
           setMatch(data);
           setScores(extractMatchScores(data.scoreDetails));
+          setCheerCount(data.cheerCount ?? 0);
         }
       } catch (err: unknown) {
         console.error('Failed to fetch match details:', err);
@@ -60,6 +62,19 @@ export function useLiveMatch(matchId: string) {
     };
 
     fetchMatch();
+
+    // Fetch cheer count
+    const fetchCheerCount = async () => {
+      try {
+        const cheerRes = await matchesApi.getCheerCount(matchId);
+        if (isMounted) {
+          setCheerCount(cheerRes.cheerCount);
+        }
+      } catch {
+        // silent
+      }
+    };
+    fetchCheerCount();
 
     return () => {
       isMounted = false;
@@ -125,12 +140,24 @@ export function useLiveMatch(matchId: string) {
     socket.on('match:status', handleMatchStatus);
     socket.on('viewer:count', handleViewerCount);
 
+    // Lắng nghe sự kiện cổ vũ real-time
+    const handleCheerUpdate = (rawPayload: { matchId: string; cheerCount: number } | string) => {
+      const payload = typeof rawPayload === 'string'
+        ? JSON.parse(rawPayload) as { matchId: string; cheerCount: number }
+        : rawPayload;
+      if (payload.matchId === matchId) {
+        setCheerCount(payload.cheerCount);
+      }
+    };
+    socket.on('cheer:update', handleCheerUpdate);
+
     return () => {
       socket.emit('leaveMatch', matchId);
       socket.off('connect', joinRoom);
       socket.off('score:update', handleScoreUpdate);
       socket.off('match:status', handleMatchStatus);
       socket.off('viewer:count', handleViewerCount);
+      socket.off('cheer:update', handleCheerUpdate);
     };
   }, [matchId]);
 
@@ -138,8 +165,10 @@ export function useLiveMatch(matchId: string) {
     match,
     scores,
     viewerCount,
+    cheerCount,
     setMatch,
     setScores,
+    setCheerCount,
     isLoading,
     error,
   };

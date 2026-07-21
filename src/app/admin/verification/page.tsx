@@ -152,13 +152,13 @@ export default function VerificationPage() {
       </div>
 
       {/* Filter Bar */}
-      <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-2xl border border-gray-200 shadow-sm">
+      <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
         <div className="flex items-center gap-2 min-w-[140px]">
           <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
           <input
             type="text" placeholder="Từ ngày (dd/mm/yyyy)" value={dateFrom}
             onChange={(e) => setDateFrom(e.target.value)}
-            className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-600 focus:outline-none focus:border-blue-500 placeholder-gray-400"
+            className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-600 focus:outline-none focus:border-blue-500 placeholder-gray-400"
           />
         </div>
         <div className="flex items-center gap-2 min-w-[140px]">
@@ -166,7 +166,7 @@ export default function VerificationPage() {
           <input
             type="text" placeholder="Đến ngày (dd/mm/yyyy)" value={dateTo}
             onChange={(e) => setDateTo(e.target.value)}
-            className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-600 focus:outline-none focus:border-blue-500 placeholder-gray-400"
+            className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-600 focus:outline-none focus:border-blue-500 placeholder-gray-400"
           />
         </div>
         <div className="flex items-center gap-2 min-w-[180px]">
@@ -174,7 +174,7 @@ export default function VerificationPage() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-600 focus:outline-none focus:border-blue-500"
+            className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-600 focus:outline-none focus:border-blue-500"
           >
             <option value="PENDING">Chờ duyệt</option>
             <option value="APPROVED">Đã cấp</option>
@@ -188,13 +188,13 @@ export default function VerificationPage() {
           <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
         </div>
       ) : filteredTickets.length === 0 ? (
-        <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center text-slate-500 space-y-2">
+        <div className="bg-white border border-slate-200 rounded-lg p-12 text-center text-slate-500 space-y-2">
           <ShieldAlert className="w-12 h-12 mx-auto text-slate-400" />
           <p className="text-base font-medium text-slate-800">Không có đơn xác minh nào</p>
           <p className="text-xs text-slate-500">Thử thay đổi bộ lọc trạng thái hoặc ngày.</p>
         </div>
       ) : (
-        <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+        <div className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
@@ -293,7 +293,7 @@ export default function VerificationPage() {
       {/* Reject Modal */}
       {showRejectModal && selectedTicket && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="w-full max-w-md bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xl">
+          <div className="w-full max-w-md bg-white border border-slate-200 rounded-lg overflow-hidden shadow-xl">
             <div className="p-6 border-b border-slate-100 flex items-center justify-between">
               <h3 className="text-lg font-bold text-slate-900">Từ Chối Yêu Cầu Xác Minh</h3>
               <button onClick={() => { setShowRejectModal(false); setRejectReason(''); }}
@@ -308,7 +308,7 @@ export default function VerificationPage() {
                 <label className="text-xs text-slate-500">Lý do từ chối</label>
                 <textarea rows={4} value={rejectReason} onChange={(e) => setRejectReason(e.target.value)}
                   placeholder="Nhập lý do chi tiết..."
-                  className="w-full bg-slate-50 border border-slate-200 focus:border-blue-500 rounded-xl px-4 py-3 text-sm text-slate-800 placeholder-slate-400 outline-none resize-none" />
+                  className="w-full bg-slate-50 border border-slate-200 focus:border-blue-500 rounded-lg px-4 py-3 text-sm text-slate-800 placeholder-slate-400 outline-none resize-none" />
               </div>
             </div>
             <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">

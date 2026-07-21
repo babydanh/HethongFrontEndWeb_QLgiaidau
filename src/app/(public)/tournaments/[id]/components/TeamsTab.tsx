@@ -42,7 +42,7 @@ export default function TeamsTab({ tournament, tournamentId, divisionId }: Props
     return (
       <div className="flex flex-col gap-4">
         <div className="animate-pulse bg-slate-100 h-10 rounded-lg w-1/3"></div>
-        <div className="animate-pulse bg-slate-100 h-48 rounded-xl w-full"></div>
+        <div className="animate-pulse bg-slate-100 h-48 rounded-lg w-full"></div>
       </div>
     );
   }
@@ -61,7 +61,7 @@ export default function TeamsTab({ tournament, tournamentId, divisionId }: Props
       </div>
       
       {participants.length > 0 ? (
-        <div className="overflow-x-auto rounded-xl border border-slate-200">
+        <div className="overflow-x-auto rounded-lg border border-slate-200">
           <table className="w-full text-sm text-left">
             <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-200">
               <tr>
@@ -84,7 +84,7 @@ export default function TeamsTab({ tournament, tournamentId, divisionId }: Props
                       <td className="px-6 py-4 font-bold text-slate-950 flex items-center gap-2">
                         {team.teamName}
                         {team.seed !== null && (
-                          <span className="bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-extrabold px-1.5 py-0.5 rounded">
+                          <span className="bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-bold px-1.5 py-0.5 rounded">
                             Seed {team.seed}
                           </span>
                         )}
@@ -117,7 +117,7 @@ export default function TeamsTab({ tournament, tournamentId, divisionId }: Props
                               {team.members.map((member) => (
                                 <div 
                                   key={member.userId} 
-                                  className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between"
+                                  className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex items-center justify-between"
                                 >
                                   <Link href={`/users/${member.userId}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
                                     <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center font-bold text-slate-600 text-sm overflow-hidden">
@@ -143,7 +143,7 @@ export default function TeamsTab({ tournament, tournamentId, divisionId }: Props
                                       ) : null}
                                     </div>
                                   </Link>
-                                  <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold uppercase border ${
+                                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${
                                     member.role === 'CAPTAIN' 
                                       ? 'bg-blue-50 text-blue-700 border-blue-200' 
                                       : 'bg-slate-50 text-slate-600 border-slate-200'
@@ -164,7 +164,7 @@ export default function TeamsTab({ tournament, tournamentId, divisionId }: Props
           </table>
         </div>
       ) : (
-        <div className="text-center py-12 border border-dashed border-slate-200 rounded-xl text-slate-500">
+        <div className="text-center py-12 border border-dashed border-slate-200 rounded-lg text-slate-500">
           Chưa có đội nào đăng ký tham gia.
         </div>
       )}

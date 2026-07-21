@@ -219,7 +219,7 @@ export default function TournamentsTab({
             <button
               key={opt.key}
               onClick={() => setActiveTypeFilter(opt.key)}
-              className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all ${
+              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
                 activeTypeFilter === opt.key
                   ? 'bg-slate-900 text-white shadow-sm shadow-slate-900/10'
                   : 'text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200/60'
@@ -271,12 +271,12 @@ export default function TournamentsTab({
       </div>
 
       {isLoading ? (
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-12 flex flex-col items-center justify-center">
+        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-12 flex flex-col items-center justify-center">
           <Loader2 className="w-8 h-8 animate-spin text-emerald-500 mb-2" />
           <p className="text-slate-500 text-sm">Đang tải danh sách giải đấu...</p>
         </div>
       ) : groupedTournaments.length === 0 ? (
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 border-dashed p-12 text-center">
+        <div className="bg-white rounded-lg shadow-sm border border-slate-200 border-dashed p-12 text-center">
           <Trophy className="w-16 h-16 text-slate-300 mx-auto mb-4" />
           <p className="text-slate-700 font-medium text-lg">Chưa có giải đấu nào</p>
           <p className="text-slate-500 mt-1 max-w-sm mx-auto text-sm">
@@ -289,7 +289,7 @@ export default function TournamentsTab({
             <div 
               key={t.id}
               onClick={() => router.push(`/tournaments/${t.divisions[0].id}`)}
-              className="group cursor-pointer bg-white border border-slate-200 hover:border-emerald-500/80 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
+              className="group cursor-pointer bg-white border border-slate-200 hover:border-emerald-500/80 rounded-lg p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-start justify-between gap-3 mb-3">
@@ -336,7 +336,7 @@ export default function TournamentsTab({
                           </button>
                         )}
                       </div>
-                      <span className="px-1.5 py-0.5 bg-slate-900 text-white rounded text-[9px] font-black uppercase tracking-wider">
+                      <span className="px-1.5 py-0.5 bg-slate-900 text-white rounded text-[9px] font-bold uppercase tracking-wider">
                         {t.divisions.length} hình thức
                       </span>
                     </div>

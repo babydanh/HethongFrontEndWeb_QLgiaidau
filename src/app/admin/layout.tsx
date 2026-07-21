@@ -93,7 +93,7 @@ export default function AdminLayout({
                   key={item.path} 
                   href={item.path}
                   className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group",
+                    "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 group",
                     active 
                       ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20" 
                       : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
@@ -111,7 +111,7 @@ export default function AdminLayout({
         <div className="p-4 border-t border-slate-200 space-y-1">
           <Link 
             href="/"
-            className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-all duration-200"
+            className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-all duration-200"
           >
             <ArrowLeft className="w-5 h-5" />
             Quay lại trang chủ
@@ -119,7 +119,7 @@ export default function AdminLayout({
           <Button
             onClick={handleLogout}
             variant="ghost"
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700"
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700"
           >
             <LogOut className="w-5 h-5" />
             Đăng xuất

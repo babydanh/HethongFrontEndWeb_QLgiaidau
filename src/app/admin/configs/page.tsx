@@ -83,7 +83,7 @@ export default function ConfigsPage() {
         </div>
         <button
           onClick={fetchConfigs}
-          className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 p-2 rounded-xl transition-all"
+          className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 p-2 rounded-lg transition-all"
         >
           <RefreshCw className="w-4 h-4" />
         </button>
@@ -95,12 +95,12 @@ export default function ConfigsPage() {
           <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
         </div>
       ) : configs.length === 0 ? (
-        <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center text-slate-500 shadow-sm">
+        <div className="bg-white border border-slate-200 rounded-lg p-12 text-center text-slate-500 shadow-sm">
           <p className="text-base font-medium text-slate-800">Chưa có cấu hình hệ thống nào</p>
           <p className="text-xs text-slate-500 mt-1">Admin có thể thêm mới cấu hình bằng API hoặc các DDL script.</p>
         </div>
       ) : (
-        <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+        <div className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
@@ -120,7 +120,7 @@ export default function ConfigsPage() {
                     <td className="p-4 pr-6 text-right">
                       <button
                         onClick={() => handleEdit(config)}
-                        className="bg-blue-50 hover:bg-blue-600 text-blue-600 hover:text-white border border-blue-200 hover:border-transparent p-1.5 rounded-xl transition-all"
+                        className="bg-blue-50 hover:bg-blue-600 text-blue-600 hover:text-white border border-blue-200 hover:border-transparent p-1.5 rounded-lg transition-all"
                       >
                         <Edit className="w-4 h-4" />
                       </button>
@@ -136,7 +136,7 @@ export default function ConfigsPage() {
       {/* Edit Config Modal */}
       {showEditModal && selectedConfig && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="w-full max-w-md bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200">
+          <div className="w-full max-w-md bg-white border border-slate-200 rounded-lg overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200">
             <div className="p-6 border-b border-slate-200 flex items-center justify-between">
               <h3 className="text-lg font-bold text-slate-900">Cập Nhật Biến Hệ Thống</h3>
               <button 
@@ -159,7 +159,7 @@ export default function ConfigsPage() {
                   value={editValue}
                   onChange={(e) => setEditValue(e.target.value)}
                   placeholder="Nhập giá trị cấu hình..."
-                  className="w-full bg-white border border-slate-200 focus:border-blue-500 rounded-xl px-4 py-2.5 text-sm text-slate-800 outline-none transition-colors"
+                  className="w-full bg-white border border-slate-200 focus:border-blue-500 rounded-lg px-4 py-2.5 text-sm text-slate-800 outline-none transition-colors"
                 />
               </div>
 
@@ -170,21 +170,21 @@ export default function ConfigsPage() {
                   value={editDesc}
                   onChange={(e) => setEditDesc(e.target.value)}
                   placeholder="Nhập mô tả cho biến này..."
-                  className="w-full bg-white border border-slate-200 focus:border-blue-500 rounded-xl px-4 py-2.5 text-sm text-slate-800 placeholder-slate-400 outline-none transition-colors resize-none"
+                  className="w-full bg-white border border-slate-200 focus:border-blue-500 rounded-lg px-4 py-2.5 text-sm text-slate-800 placeholder-slate-400 outline-none transition-colors resize-none"
                 />
               </div>
             </div>
             <div className="p-6 bg-slate-50 border-t border-slate-200 flex justify-end gap-3">
               <button
                 onClick={() => setShowEditModal(false)}
-                className="bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 px-4 py-2 rounded-xl text-xs font-semibold transition-colors"
+                className="bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 px-4 py-2 rounded-lg text-xs font-semibold transition-colors"
               >
                 Hủy
               </button>
               <button
                 onClick={handleUpdate}
                 disabled={processing || !editValue.trim()}
-                className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-xs font-semibold disabled:opacity-50 disabled:pointer-events-none transition-colors flex items-center gap-1.5"
+                className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-xs font-semibold disabled:opacity-50 disabled:pointer-events-none transition-colors flex items-center gap-1.5"
               >
                 <Save className="w-3.5 h-3.5" />
                 Lưu cấu hình

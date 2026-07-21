@@ -89,7 +89,7 @@ export default function ModerationLayout({
                     key={item.path}
                     href={item.path}
                     className={cn(
-                      'group flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200',
+                      'group flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-all duration-200',
                       active
                         ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/20'
                         : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
@@ -112,7 +112,7 @@ export default function ModerationLayout({
             {user?.roles?.includes('ADMIN') ? (
               <Link
                 href="/admin"
-                className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-blue-600 transition-all duration-200 hover:bg-blue-50 hover:text-blue-700"
+                className="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-blue-600 transition-all duration-200 hover:bg-blue-50 hover:text-blue-700"
               >
                 <LayoutDashboard className="h-5 w-5" />
                 Sang khu admin
@@ -120,14 +120,14 @@ export default function ModerationLayout({
             ) : null}
             <Link
               href="/"
-              className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-slate-600 transition-all duration-200 hover:bg-slate-100 hover:text-slate-900"
+              className="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-slate-600 transition-all duration-200 hover:bg-slate-100 hover:text-slate-900"
             >
               <ArrowLeft className="h-5 w-5" />
               Quay lại trang chủ
             </Link>
             <button
               onClick={handleLogout}
-              className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-rose-600 transition-all duration-200 hover:bg-rose-50 hover:text-rose-700"
+              className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-rose-600 transition-all duration-200 hover:bg-rose-50 hover:text-rose-700"
             >
               <LogOut className="h-5 w-5" />
               Đăng xuất

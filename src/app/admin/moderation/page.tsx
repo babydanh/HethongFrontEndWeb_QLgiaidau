@@ -156,7 +156,7 @@ export default function ModerationPage() {
       </div>
 
       {/* Search Bar + Date Filter */}
-      <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-2xl border border-gray-200 shadow-sm">
+      <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
         <form onSubmit={handleSearchSubmit} className="flex gap-3 flex-1">
           <div className="relative flex-1">
             <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
@@ -165,22 +165,22 @@ export default function ModerationPage() {
               placeholder="Tìm theo tên hoặc email..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-gray-50 border border-slate-200 focus:border-blue-500 rounded-xl pl-11 pr-4 py-2.5 text-sm text-slate-800 placeholder-slate-400 outline-none transition-colors"
+              className="w-full bg-gray-50 border border-slate-200 focus:border-blue-500 rounded-lg pl-11 pr-4 py-2.5 text-sm text-slate-800 placeholder-slate-400 outline-none transition-colors"
             />
           </div>
-          <button type="submit" className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-5 py-2.5 rounded-xl transition-colors">Tìm kiếm</button>
+          <button type="submit" className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-5 py-2.5 rounded-lg transition-colors">Tìm kiếm</button>
         </form>
         <div className="flex items-center gap-2 min-w-[130px]">
           <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
           <input type="text" placeholder="Từ ngày (dd/mm/yyyy)" value={dateFrom}
             onChange={(e) => setDateFrom(e.target.value)}
-            className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-600 focus:outline-none focus:border-blue-500 placeholder-gray-400" />
+            className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-600 focus:outline-none focus:border-blue-500 placeholder-gray-400" />
         </div>
         <div className="flex items-center gap-2 min-w-[130px]">
           <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
           <input type="text" placeholder="Đến ngày (dd/mm/yyyy)" value={dateTo}
             onChange={(e) => setDateTo(e.target.value)}
-            className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-600 focus:outline-none focus:border-blue-500 placeholder-gray-400" />
+            className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-600 focus:outline-none focus:border-blue-500 placeholder-gray-400" />
         </div>
       </div>
 
@@ -190,12 +190,12 @@ export default function ModerationPage() {
           <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
         </div>
       ) : filteredUsers.length === 0 ? (
-        <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center text-slate-500 space-y-1 shadow-sm">
+        <div className="bg-white border border-slate-200 rounded-lg p-12 text-center text-slate-500 space-y-1 shadow-sm">
           <p className="text-base font-medium text-slate-800">Không tìm thấy người dùng nào</p>
           <p className="text-xs text-slate-500">Hãy thử tìm với từ khóa khác.</p>
         </div>
       ) : (
-        <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+        <div className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
@@ -276,7 +276,7 @@ export default function ModerationPage() {
       {/* Ban Modal */}
       {showBanModal && selectedUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="w-full max-w-md bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200">
+          <div className="w-full max-w-md bg-white border border-slate-200 rounded-lg overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200">
             <div className="p-6 border-b border-slate-200 flex items-center justify-between">
               <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                 <AlertTriangle className="w-5 h-5 text-rose-500" />
@@ -304,7 +304,7 @@ export default function ModerationPage() {
                 <select
                   value={banType}
                   onChange={(e) => setBanType(e.target.value as BanType)}
-                  className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 outline-none focus:border-blue-500 transition-colors"
+                  className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-sm text-slate-800 outline-none focus:border-blue-500 transition-colors"
                 >
                   <option value="WARN">Cảnh cáo (Gửi thông báo)</option>
                   <option value="SOFT_BAN">Khóa tạm thời (Soft Ban)</option>
@@ -318,7 +318,7 @@ export default function ModerationPage() {
                   <select
                     value={banDurationDays}
                     onChange={(e) => setBanDurationDays(e.target.value)}
-                    className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 outline-none focus:border-blue-500 transition-colors"
+                    className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-sm text-slate-800 outline-none focus:border-blue-500 transition-colors"
                   >
                     <option value="7">7 ngày</option>
                     <option value="15">15 ngày</option>
@@ -334,7 +334,7 @@ export default function ModerationPage() {
                   value={banReason}
                   onChange={(e) => setBanReason(e.target.value)}
                   placeholder="Mô tả hành vi vi phạm điều lệ..."
-                  className="w-full bg-white border border-slate-200 focus:border-blue-500 rounded-xl px-4 py-3 text-sm text-slate-800 placeholder-slate-400 outline-none transition-colors resize-none"
+                  className="w-full bg-white border border-slate-200 focus:border-blue-500 rounded-lg px-4 py-3 text-sm text-slate-800 placeholder-slate-400 outline-none transition-colors resize-none"
                 />
               </div>
             </div>
@@ -344,7 +344,7 @@ export default function ModerationPage() {
                   setShowBanModal(false);
                   setBanReason('');
                 }}
-                className="bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 px-4 py-2 rounded-xl text-xs font-semibold transition-colors"
+                className="bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 px-4 py-2 rounded-lg text-xs font-semibold transition-colors"
               >
                 Hủy
               </button>

@@ -151,7 +151,7 @@ export default function ClubChallengesPage({ params }: { params: Promise<{ id: s
   if (!community) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 text-center">
-        <div className="max-w-md bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
+        <div className="max-w-md bg-white p-8 rounded-lg border border-slate-200 shadow-sm">
           <h2 className="text-xl font-bold text-slate-900">Không tìm thấy câu lạc bộ</h2>
           <p className="text-slate-500 mt-2">Đường dẫn không hợp lệ hoặc câu lạc bộ không tồn tại.</p>
         </div>
@@ -170,7 +170,7 @@ export default function ClubChallengesPage({ params }: { params: Promise<{ id: s
 
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-2xl md:text-3xl font-black text-slate-900 flex items-center gap-2">
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 flex items-center gap-2">
             <ArrowRightLeft className="w-7 h-7 text-emerald-600" /> Thách Đấu / Giao Lưu CLB
           </h1>
           <p className="text-slate-500 mt-1 font-medium">
@@ -179,7 +179,7 @@ export default function ClubChallengesPage({ params }: { params: Promise<{ id: s
         </div>
 
         {/* Sub Navigation Tabs */}
-        <div className="flex border-b border-slate-200 mb-8 bg-white p-1 rounded-xl shadow-sm border">
+        <div className="flex border-b border-slate-200 mb-8 bg-white p-1 rounded-lg shadow-sm border">
           <button
             onClick={() => setSubTab('received')}
             className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-bold rounded-lg transition-all ${
@@ -210,7 +210,7 @@ export default function ClubChallengesPage({ params }: { params: Promise<{ id: s
         {subTab === 'received' && (
           <div className="space-y-4 animate-in fade-in duration-200">
             {receivedChallenges.length === 0 ? (
-              <div className="bg-white rounded-2xl p-12 text-center border border-slate-200 shadow-sm flex flex-col items-center">
+              <div className="bg-white rounded-lg p-12 text-center border border-slate-200 shadow-sm flex flex-col items-center">
                 <Mail className="w-8 h-8 text-slate-350 mb-2" />
                 <p className="text-slate-500 text-sm font-medium">Chưa nhận được lời thách đấu giao lưu nào.</p>
               </div>
@@ -219,7 +219,7 @@ export default function ClubChallengesPage({ params }: { params: Promise<{ id: s
                 {receivedChallenges.map((c) => (
                   <div
                     key={c.id}
-                    className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:shadow-md transition-shadow"
+                    className="bg-white rounded-lg border border-slate-200 p-5 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:shadow-md transition-shadow"
                   >
                     <div className="flex gap-4">
                       {/* Logo of challenger */}
@@ -285,7 +285,7 @@ export default function ClubChallengesPage({ params }: { params: Promise<{ id: s
         {subTab === 'sent' && (
           <div className="space-y-4 animate-in fade-in duration-200">
             {sentChallenges.length === 0 ? (
-              <div className="bg-white rounded-2xl p-12 text-center border border-slate-200 shadow-sm flex flex-col items-center">
+              <div className="bg-white rounded-lg p-12 text-center border border-slate-200 shadow-sm flex flex-col items-center">
                 <Send className="w-8 h-8 text-slate-350 mb-2" />
                 <p className="text-slate-500 text-sm font-medium">Bạn chưa gửi lời mời thách đấu nào.</p>
               </div>
@@ -294,7 +294,7 @@ export default function ClubChallengesPage({ params }: { params: Promise<{ id: s
                 {sentChallenges.map((c) => (
                   <div
                     key={c.id}
-                    className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:shadow-md transition-shadow"
+                    className="bg-white rounded-lg border border-slate-200 p-5 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:shadow-md transition-shadow"
                   >
                     <div className="flex gap-4">
                       {/* Logo of challenged */}
@@ -345,12 +345,12 @@ export default function ClubChallengesPage({ params }: { params: Promise<{ id: s
                 placeholder="Tìm câu lạc bộ theo tên..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-900 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none shadow-sm"
+                className="w-full pl-9 pr-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none shadow-sm"
               />
             </div>
 
             {filteredClubs.length === 0 ? (
-              <div className="bg-white rounded-2xl p-12 text-center border border-slate-200 shadow-sm">
+              <div className="bg-white rounded-lg p-12 text-center border border-slate-200 shadow-sm">
                 <p className="text-slate-500 text-sm font-medium">Không tìm thấy câu lạc bộ nào phù hợp.</p>
               </div>
             ) : (
@@ -358,7 +358,7 @@ export default function ClubChallengesPage({ params }: { params: Promise<{ id: s
                 {filteredClubs.map((club) => (
                   <div
                     key={club.id}
-                    className="bg-white border rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow flex justify-between items-center gap-4"
+                    className="bg-white border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow flex justify-between items-center gap-4"
                   >
                     <div className="flex gap-3 min-w-0">
                       <div className="w-12 h-12 rounded-full border overflow-hidden bg-slate-50 relative shrink-0">
@@ -388,7 +388,7 @@ export default function ClubChallengesPage({ params }: { params: Promise<{ id: s
       {/* CHALLENGE INVITATION MODAL */}
       {challengeModalTarget && (
         <Modal open={!!challengeModalTarget} onOpenChange={(open) => { if (!open) setChallengeModalTarget(null); }}>
-          <ModalContent className="bg-white rounded-2xl p-6">
+          <ModalContent className="bg-white rounded-lg p-6">
             <ModalHeader>
               <ModalTitle className="text-xl font-bold text-slate-900">
                 Gửi lời mời thách đấu tới {challengeModalTarget.name}

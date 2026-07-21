@@ -88,17 +88,17 @@ export default function ModerationDashboardPage() {
     <div className="space-y-6">
       {/* Banner thông báo */}
       {(pendingCounts.verifications + pendingCounts.communities + pendingCounts.changeRequests + pendingCounts.tournaments) > 0 ? (
-        <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-5 shadow-sm">
+        <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg p-5 shadow-sm">
           <div className="flex items-start gap-4">
             <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
-              <span className="text-amber-600 text-lg font-black">
+              <span className="text-amber-600 text-lg font-bold">
                 {pendingCounts.verifications + pendingCounts.communities + pendingCounts.changeRequests + pendingCounts.tournaments}
               </span>
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                <h3 className="text-sm font-black text-amber-900 uppercase tracking-wide">Có việc cần xử lý ngay</h3>
+                <h3 className="text-sm font-bold text-amber-900 uppercase tracking-wide">Có việc cần xử lý ngay</h3>
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
                 {pendingCounts.verifications > 0 && (
@@ -131,11 +131,11 @@ export default function ModerationDashboardPage() {
         </div>
       ) : null}
 
-      <section className="rounded-3xl border border-amber-200 bg-gradient-to-br from-amber-50 via-white to-orange-50 p-6 shadow-sm md:p-8">
+      <section className="rounded-xl border border-amber-200 bg-gradient-to-br from-amber-50 via-white to-orange-50 p-6 shadow-sm md:p-8">
         <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-amber-600">
           Khu điều phối
         </p>
-        <h2 className="mt-2 text-3xl font-black text-slate-900">
+        <h2 className="mt-2 text-3xl font-bold text-slate-900">
           Điều phối kiểm duyệt an toàn
         </h2>
         <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
@@ -152,9 +152,9 @@ export default function ModerationDashboardPage() {
             <Link
               key={item.href}
               href={item.href}
-              className="group rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
+              className="group rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
             >
-              <div className={`inline-flex rounded-2xl border p-3 ${item.tone}`}>
+              <div className={`inline-flex rounded-lg border p-3 ${item.tone}`}>
                 <Icon className="h-5 w-5" />
               </div>
               <h3 className="mt-4 text-lg font-bold text-slate-900">{item.title}</h3>

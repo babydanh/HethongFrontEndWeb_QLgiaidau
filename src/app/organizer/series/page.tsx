@@ -69,7 +69,7 @@ export default function OrganizerSeriesPage() {
         {/* Top Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-black text-slate-900">Chuỗi Giải Đấu Của Tôi</h1>
+            <h1 className="text-3xl font-bold text-slate-900">Chuỗi Giải Đấu Của Tôi</h1>
             <p className="text-slate-500 mt-1 font-medium">Quản lý các hệ thống tour đấu tích lũy điểm PSR và phân phối suất vé thẳng</p>
           </div>
           <Link href="/organizer/series/create">
@@ -80,7 +80,7 @@ export default function OrganizerSeriesPage() {
         </div>
 
         {seriesList.length === 0 ? (
-          <div className="bg-white rounded-2xl p-12 text-center border border-slate-200 shadow-sm flex flex-col items-center max-w-xl mx-auto">
+          <div className="bg-white rounded-lg p-12 text-center border border-slate-200 shadow-sm flex flex-col items-center max-w-xl mx-auto">
             <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 mb-4">
               <Trophy className="w-8 h-8" />
             </div>
@@ -97,7 +97,7 @@ export default function OrganizerSeriesPage() {
             {seriesList.map((series) => (
               <div 
                 key={series.id} 
-                className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col justify-between"
+                className="bg-white rounded-lg border border-slate-200 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col justify-between"
               >
                 {/* Visual Header */}
                 <div className="relative h-24 bg-gradient-to-r from-blue-600 to-indigo-700 p-4 flex items-end">

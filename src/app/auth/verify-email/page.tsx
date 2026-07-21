@@ -63,7 +63,7 @@ function VerifyEmailContent() {
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md bg-white rounded-3xl border border-slate-200/80 shadow-[0_8px_32px_rgba(15,23,42,0.04)] p-8 text-center"
+        className="w-full max-w-md bg-white rounded-xl border border-slate-200/80 shadow-[0_8px_32px_rgba(15,23,42,0.04)] p-8 text-center"
       >
         <div className="flex justify-center mb-6">
           <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center font-bold">
@@ -82,13 +82,13 @@ function VerifyEmailContent() {
         {status === 'success' && (
           <div className="flex flex-col items-center py-6">
             <CheckCircle className="w-14 h-14 text-emerald-500 mb-4" />
-            <h2 className="text-lg font-black text-slate-900 tracking-tight">Xác minh thành công!</h2>
+            <h2 className="text-lg font-bold text-slate-900 tracking-tight">Xác minh thành công!</h2>
             <p className="text-xs text-slate-500 mt-2 px-4 leading-relaxed">
               Email của bạn đã được xác thực thành công. Bây giờ bạn có thể tham gia đầy đủ các giải đấu của VNDC Sport.
             </p>
             <Link 
               href="/" 
-              className="mt-8 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-6 rounded-xl text-xs shadow-md transition-colors"
+              className="mt-8 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-6 rounded-lg text-xs shadow-md transition-colors"
             >
               Về trang chủ
             </Link>
@@ -98,20 +98,20 @@ function VerifyEmailContent() {
         {status === 'error' && (
           <div className="flex flex-col items-center py-6">
             <XCircle className="w-14 h-14 text-rose-500 mb-4" />
-            <h2 className="text-lg font-black text-slate-900 tracking-tight">Xác minh thất bại</h2>
-            <p className="text-xs text-rose-600 font-semibold bg-rose-50 px-4 py-2 rounded-xl mt-3 leading-relaxed">
+            <h2 className="text-lg font-bold text-slate-900 tracking-tight">Xác minh thất bại</h2>
+            <p className="text-xs text-rose-600 font-semibold bg-rose-50 px-4 py-2 rounded-lg mt-3 leading-relaxed">
               {errorMsg}
             </p>
             <div className="flex flex-col sm:flex-row gap-2 mt-8 w-full">
               <Link 
                 href="/profile/edit" 
-                className="flex-1 border border-slate-205 text-slate-650 hover:bg-slate-50 font-bold py-2.5 rounded-xl text-xs transition-colors flex items-center justify-center"
+                className="flex-1 border border-slate-205 text-slate-650 hover:bg-slate-50 font-bold py-2.5 rounded-lg text-xs transition-colors flex items-center justify-center"
               >
                 Nhập mã thủ công
               </Link>
               <Link 
                 href="/" 
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-xs shadow-md transition-colors flex items-center justify-center"
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg text-xs shadow-md transition-colors flex items-center justify-center"
               >
                 Về trang chủ
               </Link>

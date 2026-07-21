@@ -83,11 +83,11 @@ export function FinanceTab({
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-6 md:p-8 shadow-sm space-y-6 animate-in fade-in duration-200">
+    <div className="bg-white rounded-lg border border-slate-200 p-6 md:p-8 shadow-sm space-y-6 animate-in fade-in duration-200">
       <h2 className="text-xl font-bold text-slate-900 border-b pb-2 mb-4">Quản lý Tài chính</h2>
 
       {false && tournament?.status === 'REGISTRATION_CLOSED' ? (
-        <div className="text-center py-16 px-4 bg-slate-50 rounded-2xl border border-dashed flex flex-col items-center">
+        <div className="text-center py-16 px-4 bg-slate-50 rounded-lg border border-dashed flex flex-col items-center">
           <Lock className="w-12 h-12 text-blue-500 mb-3" />
           <h4 className="font-bold text-slate-850 text-lg">Chưa thanh toán lệ phí sàn</h4>
           <p className="text-slate-500 text-sm mt-1 max-w-sm mb-6">
@@ -135,23 +135,23 @@ export function FinanceTab({
           )}
 
           {/* Financial Report Summary */}
-          <div className="bg-slate-50 rounded-2xl border border-slate-200 p-6 space-y-6 mt-6">
+          <div className="bg-slate-50 rounded-lg border border-slate-200 p-6 space-y-6 mt-6">
             <h3 className="font-bold text-slate-900 border-b pb-2 flex items-center gap-1.5">
               <DollarSign className="w-5 h-5 text-blue-600" /> Bảng tổng kết tài chính giải đấu
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-white p-4 rounded-xl border shadow-sm">
+              <div className="bg-white p-4 rounded-lg border shadow-sm">
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Tổng lệ phí thu dự kiến</p>
-                <p className="text-2xl font-black text-slate-800 mt-2">
+                <p className="text-2xl font-bold text-slate-800 mt-2">
                   {totalExpectedFee.toLocaleString('vi-VN')} VNĐ
                 </p>
                 <p className="text-xs text-slate-500 font-semibold mt-1">Tính trên {participants.length} đội đăng ký</p>
               </div>
 
-              <div className="bg-white p-4 rounded-xl border shadow-sm">
+              <div className="bg-white p-4 rounded-lg border shadow-sm">
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Phí nền tảng</p>
-                <p className="text-2xl font-black text-red-500 mt-2">
+                <p className="text-2xl font-bold text-red-500 mt-2">
                   {totalPlatformFee.toLocaleString('vi-VN')} VNĐ
                 </p>
                 <p className="text-xs text-slate-500 font-semibold mt-1">
@@ -159,9 +159,9 @@ export function FinanceTab({
                 </p>
               </div>
 
-              <div className="bg-white p-4 rounded-xl border border-emerald-200 shadow-sm bg-emerald-50/20">
+              <div className="bg-white p-4 rounded-lg border border-emerald-200 shadow-sm bg-emerald-50/20">
                 <p className="text-xs font-bold text-slate-550 uppercase tracking-wider">Thực nhận của Ban tổ chức</p>
-                <p className="text-2xl font-black text-emerald-600 mt-2">
+                <p className="text-2xl font-bold text-emerald-600 mt-2">
                   {netOrganizerEarnings.toLocaleString('vi-VN')} VNĐ
                 </p>
                 <p className="text-xs text-slate-500 font-semibold mt-1">Đã khấu trừ toàn bộ phí sàn</p>
@@ -170,7 +170,7 @@ export function FinanceTab({
 
             {/* Payout form */}
             {canPayout ? (
-              <div className="bg-white border rounded-xl p-5 space-y-4">
+              <div className="bg-white border rounded-lg p-5 space-y-4">
                 <h4 className="font-bold text-slate-850 flex items-center gap-1">
                   <Gift className="w-5 h-5 text-purple-600" /> Yêu cầu rút tiền
                 </h4>
@@ -192,7 +192,7 @@ export function FinanceTab({
                 </Button>
               </div>
             ) : (
-              <div className="bg-blue-50/50 p-4 rounded-xl border flex gap-3 text-xs leading-relaxed font-semibold text-blue-900">
+              <div className="bg-blue-50/50 p-4 rounded-lg border flex gap-3 text-xs leading-relaxed font-semibold text-blue-900">
                 <Info className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
                 <p>Cổng rút tiền chỉ mở khi giải đấu <strong>đang thi đấu</strong> hoặc <strong>đã kết thúc</strong>.</p>
               </div>

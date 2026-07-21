@@ -89,7 +89,7 @@ export default function LiveMatchPage({ params }: Props) {
     return Math.round(sum / validMembers.length);
   };
 
-  const handleSpawnHeart = () => {
+  const handleSpawnHeart = async () => {
     const id = Math.random().toString(36).substring(2, 9);
     const newHeart = {
       id,
@@ -101,6 +101,13 @@ export default function LiveMatchPage({ params }: Props) {
     setTimeout(() => {
       setHearts((prev) => prev.filter((h) => h.id !== id));
     }, 2000);
+
+    // Gọi API cổ vũ và broadcast realtime
+    try {
+      await matchesApi.cheerMatch(matchId);
+    } catch {
+      // Silent — heart animation đã hiển thị rồi
+    }
   };
 
   // Auto scroll chat to bottom when comments list changes
@@ -266,11 +273,11 @@ export default function LiveMatchPage({ params }: Props) {
   if (error || !match) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-center bg-white p-8 rounded-3xl shadow-sm border border-slate-100 max-w-md">
+        <div className="text-center bg-white p-8 rounded-xl shadow-sm border border-slate-100 max-w-md">
           <img src="/vndcsport.svg" alt="VNDC Sport Logo" className="w-20 h-20 object-contain mx-auto mb-4" />
           <h2 className="text-xl font-bold text-slate-900 mb-2">{error || 'Không tìm thấy trận đấu'}</h2>
           <p className="text-slate-500 text-sm mb-6">Trận đấu này có thể không tồn tại hoặc đã bị hủy.</p>
-          <Link href="/tournaments" className="inline-flex items-center justify-center px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all shadow-sm">
+          <Link href="/tournaments" className="inline-flex items-center justify-center px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-all shadow-sm">
             Quay lại giải đấu
           </Link>
         </div>
@@ -889,8 +896,12 @@ export default function LiveMatchPage({ params }: Props) {
     setIsCommentSubmitting(true);
 
     try {
-      await matchesApi.createComment(matchId, { commentText: normalizedCommentText });
+      const created = await matchesApi.createComment(matchId, { commentText: normalizedCommentText });
       setCommentText('');
+      // Thêm comment ngay lập tức vào local state, không chờ socket
+      if (created) {
+        setComments(prev => [created, ...prev]);
+      }
       toast.success('Đã gửi bình luận vào phòng thảo luận trận đấu.', { id: `comment-${matchId}` });
     } catch (err: unknown) {
       console.error(err);
@@ -910,7 +921,7 @@ export default function LiveMatchPage({ params }: Props) {
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
           <div className="flex flex-wrap items-center gap-3">
-            <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider ${
+            <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
               match.status === 'ONGOING' 
                 ? 'bg-rose-50 text-rose-600 border border-rose-100' 
                 : match.status === 'COMPLETED' 
@@ -942,7 +953,7 @@ export default function LiveMatchPage({ params }: Props) {
             <Button
               onClick={() => setIsShareModalOpen(true)}
               variant="outline"
-              className="bg-white hover:bg-slate-50 text-slate-700 border-slate-200 font-bold shadow-xs h-9 text-xs px-3.5 flex items-center gap-1.5 rounded-xl transition-all"
+              className="bg-white hover:bg-slate-50 text-slate-700 border-slate-200 font-bold shadow-xs h-9 text-xs px-3.5 flex items-center gap-1.5 rounded-lg transition-all"
             >
               <Share2 className="w-3.5 h-3.5" />
               <span>Chia sẻ</span>
@@ -951,11 +962,11 @@ export default function LiveMatchPage({ params }: Props) {
               targetType="MATCH"
               targetId={match.id}
               targetLabel={`Trận vòng ${match.roundNumber}`}
-              className="h-9 text-xs px-3.5 rounded-xl shadow-xs"
+              className="h-9 text-xs px-3.5 rounded-lg shadow-xs"
             />
             <Link 
               href={`/tournaments/${match.tournamentId}`} 
-              className="flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-indigo-600 hover:border-indigo-200 transition-all bg-white border border-slate-200 px-3.5 h-9 rounded-xl shadow-xs shrink-0"
+              className="flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-indigo-600 hover:border-indigo-200 transition-all bg-white border border-slate-200 px-3.5 h-9 rounded-lg shadow-xs shrink-0"
             >
               <Trophy className="w-3.5 h-3.5 text-indigo-500" />
               <span>{match.tournament?.name || 'Quay lại giải đấu'}</span>
@@ -968,7 +979,7 @@ export default function LiveMatchPage({ params }: Props) {
           <div className="lg:col-span-2 flex flex-col gap-6">
             
             {/* VNDC Sport Camera Live Stream / Replay Container */}
-            <div className="bg-slate-950 rounded-3xl overflow-hidden shadow-2xl relative aspect-video flex flex-col items-center justify-center border border-slate-800 group">
+            <div className="bg-slate-950 rounded-2xl overflow-hidden shadow-2xl relative aspect-video flex flex-col items-center justify-center border border-slate-800 group">
               {/* Static scanner effect for premium vibe */}
               <div className="absolute inset-0 bg-gradient-to-b from-indigo-950/20 via-slate-950/40 to-slate-950 pointer-events-none z-0"></div>
               
@@ -998,11 +1009,11 @@ export default function LiveMatchPage({ params }: Props) {
                       playsInline
                       src={playback.playbackUrl}
                     />
-                    <div className="absolute left-4 top-4 rounded-full border border-rose-400/40 bg-rose-600/90 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-white">
+                    <div className="absolute left-4 top-4 rounded-full border border-rose-400/40 bg-rose-600/90 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
                       {playback.streamStatus === 'LIVE' ? 'LIVE' : playback.streamStatus}
                     </div>
-                    <div className="absolute bottom-4 left-4 right-4 rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-left backdrop-blur">
-                      <p className="text-sm font-black text-white">{playback.cameraName || 'Camera trận đấu'}</p>
+                    <div className="absolute bottom-4 left-4 right-4 rounded-lg border border-white/10 bg-slate-950/70 px-4 py-3 text-left backdrop-blur">
+                      <p className="text-sm font-bold text-white">{playback.cameraName || 'Camera trận đấu'}</p>
                       <p className="mt-1 text-xs font-semibold text-slate-300">Người xem chỉ có quyền xem luồng phát và bảng điểm realtime.</p>
                     </div>
                   </>
@@ -1012,10 +1023,10 @@ export default function LiveMatchPage({ params }: Props) {
                       <Camera className="w-7 h-7" />
                       <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-4 w-4 bg-rose-600 border-2 border-slate-950 flex items-center justify-center text-[7px] font-black text-white">LIVE</span>
+                        <span className="relative inline-flex rounded-full h-4 w-4 bg-rose-600 border-2 border-slate-950 flex items-center justify-center text-[7px] font-bold text-white">LIVE</span>
                       </span>
                     </div>
-                    <h4 className="text-white font-extrabold text-base tracking-tight">Camera Trực Tiếp Sân Đấu</h4>
+                    <h4 className="text-white font-bold text-base tracking-tight">Camera Trực Tiếp Sân Đấu</h4>
                     <p className="text-xs text-slate-400 font-semibold leading-relaxed">Luồng truyền hình trực tiếp (Live Stream) từ camera thông minh của VNDC Sport đang hoạt động.</p>
                   </>
                 ) : match.status === 'COMPLETED' ? (
@@ -1023,7 +1034,7 @@ export default function LiveMatchPage({ params }: Props) {
                     <div className="flex h-14 w-14 items-center justify-center rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
                       <Play className="w-7 h-7 fill-current ml-0.5" />
                     </div>
-                    <h4 className="text-white font-extrabold text-base tracking-tight">Video Phát Lại (Replay)</h4>
+                    <h4 className="text-white font-bold text-base tracking-tight">Video Phát Lại (Replay)</h4>
                     <p className="text-xs text-slate-455 font-medium leading-relaxed">Trận đấu đã kết thúc. Video ghi hình tự động và các set highlight sẽ khả dụng sau khi Ban tổ chức phê duyệt và tải lên.</p>
                   </>
                 ) : match.status === 'CANCELLED' ? (
@@ -1031,7 +1042,7 @@ export default function LiveMatchPage({ params }: Props) {
                     <div className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-800 border border-slate-700 text-slate-500">
                       <AlertCircle className="w-7 h-7" />
                     </div>
-                    <h4 className="text-slate-400 font-extrabold text-base tracking-tight">Trận đấu bị Hủy</h4>
+                    <h4 className="text-slate-400 font-bold text-base tracking-tight">Trận đấu bị Hủy</h4>
                     <p className="text-xs text-slate-500 font-medium leading-relaxed">Trận đấu này đã bị hủy bỏ bởi Ban tổ chức. Không có luồng trực tiếp hoặc phát lại.</p>
                   </>
                 ) : (
@@ -1039,7 +1050,7 @@ export default function LiveMatchPage({ params }: Props) {
                     <div className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-900 border border-slate-800 text-slate-400">
                       <Camera className="w-7 h-7" />
                     </div>
-                    <h4 className="text-slate-300 font-extrabold text-base tracking-tight">Trực Tiếp Sắp Khả Dụng</h4>
+                    <h4 className="text-slate-300 font-bold text-base tracking-tight">Trực Tiếp Sắp Khả Dụng</h4>
                     <p className="text-xs text-slate-500 font-medium leading-relaxed">Luồng phát sóng trực tiếp sẽ tự động bắt đầu khi trận đấu được trọng tài kích hoạt khởi tranh.</p>
                   </>
                 )}
@@ -1053,7 +1064,7 @@ export default function LiveMatchPage({ params }: Props) {
             </div>
 
             {/* Score Card */}
-            <div className="bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden relative">
+            <div className="bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden relative">
               <div className="h-2 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500"></div>
               
               <div className="p-8 md:p-12">
@@ -1062,7 +1073,7 @@ export default function LiveMatchPage({ params }: Props) {
                   {/* Team 1 */}
                   <div className="flex flex-col items-center flex-1 w-full">
                     <div className={cn(
-                      'mb-4 flex h-20 w-20 items-center justify-center rounded-2xl border shadow-md transition-all',
+                      'mb-4 flex h-20 w-20 items-center justify-center rounded-lg border shadow-md transition-all',
                       match.winnerId === match.participant1Id && match.status === 'COMPLETED'
                         ? 'bg-emerald-50 border-emerald-200 text-emerald-600 ring-4 ring-emerald-100'
                         : 'bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-100 text-blue-600',
@@ -1073,12 +1084,12 @@ export default function LiveMatchPage({ params }: Props) {
                         <Users className="w-9 h-9" />
                       )}
                     </div>
-                    <h3 className="text-lg font-black text-slate-900 text-center leading-snug">{team1Name}</h3>
+                    <h3 className="text-lg font-bold text-slate-900 text-center leading-snug">{team1Name}</h3>
                     {(() => {
                       const elo = getTeamEloDisplay(part1);
                       if (elo === null) return null;
                       return (
-                        <span className="text-[10px] font-extrabold text-blue-600 bg-blue-50/70 border border-blue-100/60 px-2 py-0.5 rounded-full mt-1.5 shadow-3xs flex items-center gap-1">
+                        <span className="text-[10px] font-bold text-blue-600 bg-blue-50/70 border border-blue-100/60 px-2 py-0.5 rounded-full mt-1.5 shadow-3xs flex items-center gap-1">
                           <Activity className="w-3.5 h-3.5 text-blue-500" />
                           <span>ELO: {elo}</span>
                         </span>
@@ -1093,7 +1104,7 @@ export default function LiveMatchPage({ params }: Props) {
                             <Link
                               key={member.userId}
                               href={`/users/${member.userId}`}
-                              className="flex items-center gap-2 bg-slate-50/80 hover:bg-blue-50 border border-slate-200/60 hover:border-blue-200 rounded-xl px-2.5 py-1 transition-all group shadow-[0_1px_3px_rgba(0,0,0,0.02)]"
+                              className="flex items-center gap-2 bg-slate-50/80 hover:bg-blue-50 border border-slate-200/60 hover:border-blue-200 rounded-lg px-2.5 py-1 transition-all group shadow-[0_1px_3px_rgba(0,0,0,0.02)]"
                             >
                               <div className="w-5 h-5 rounded-full overflow-hidden bg-slate-200 relative shrink-0">
                                 {member.avatarUrl ? (
@@ -1124,9 +1135,9 @@ export default function LiveMatchPage({ params }: Props) {
                   {/* Main Score Display */}
                   <div className="flex flex-col items-center justify-center mx-4 flex-shrink-0">
                     <div className="flex items-center justify-center gap-6">
-                      <div className="text-6xl md:text-8xl font-black tabular-nums tracking-tighter text-slate-900">{currentDisplayTeam1}</div>
-                      <div className="text-4xl font-black text-slate-300">-</div>
-                      <div className="text-6xl md:text-8xl font-black tabular-nums tracking-tighter text-slate-900">{currentDisplayTeam2}</div>
+                      <div className="text-6xl md:text-8xl font-bold tabular-nums tracking-tighter text-slate-900">{currentDisplayTeam1}</div>
+                      <div className="text-4xl font-bold text-slate-300">-</div>
+                      <div className="text-6xl md:text-8xl font-bold tabular-nums tracking-tighter text-slate-900">{currentDisplayTeam2}</div>
                     </div>
                     <div className="mt-4 text-xs font-bold text-slate-400 tracking-widest uppercase flex items-center gap-2">
                       <Activity className="w-3.5 h-3.5 animate-pulse text-rose-500" /> {scorePresentation.currentScoreLabel}
@@ -1141,7 +1152,7 @@ export default function LiveMatchPage({ params }: Props) {
                   {/* Team 2 */}
                   <div className="flex flex-col items-center flex-1 w-full">
                     <div className={cn(
-                      'mb-4 flex h-20 w-20 items-center justify-center rounded-2xl border shadow-md transition-all',
+                      'mb-4 flex h-20 w-20 items-center justify-center rounded-lg border shadow-md transition-all',
                       match.winnerId === match.participant2Id && match.status === 'COMPLETED'
                         ? 'bg-emerald-50 border-emerald-200 text-emerald-600 ring-4 ring-emerald-100'
                         : 'bg-gradient-to-br from-indigo-50 to-blue-50 border-indigo-100 text-indigo-600',
@@ -1152,12 +1163,12 @@ export default function LiveMatchPage({ params }: Props) {
                         <Users className="w-9 h-9" />
                       )}
                     </div>
-                    <h3 className="text-lg font-black text-slate-900 text-center leading-snug">{team2Name}</h3>
+                    <h3 className="text-lg font-bold text-slate-900 text-center leading-snug">{team2Name}</h3>
                     {(() => {
                       const elo = getTeamEloDisplay(part2);
                       if (elo === null) return null;
                       return (
-                        <span className="text-[10px] font-extrabold text-blue-600 bg-blue-50/70 border border-blue-100/60 px-2 py-0.5 rounded-full mt-1.5 shadow-3xs flex items-center gap-1">
+                        <span className="text-[10px] font-bold text-blue-600 bg-blue-50/70 border border-blue-100/60 px-2 py-0.5 rounded-full mt-1.5 shadow-3xs flex items-center gap-1">
                           <Activity className="w-3.5 h-3.5 text-blue-500" />
                           <span>ELO: {elo}</span>
                         </span>
@@ -1172,7 +1183,7 @@ export default function LiveMatchPage({ params }: Props) {
                             <Link
                               key={member.userId}
                               href={`/users/${member.userId}`}
-                              className="flex items-center gap-2 bg-slate-50/80 hover:bg-blue-50 border border-slate-200/60 hover:border-blue-200 rounded-xl px-2.5 py-1 transition-all group shadow-[0_1px_3px_rgba(0,0,0,0.02)]"
+                              className="flex items-center gap-2 bg-slate-50/80 hover:bg-blue-50 border border-slate-200/60 hover:border-blue-200 rounded-lg px-2.5 py-1 transition-all group shadow-[0_1px_3px_rgba(0,0,0,0.02)]"
                             >
                               <div className="w-5 h-5 rounded-full overflow-hidden bg-slate-200 relative shrink-0">
                                 {member.avatarUrl ? (
@@ -1214,7 +1225,7 @@ export default function LiveMatchPage({ params }: Props) {
                           const isPlayed = idx < scores.length;
                           const isOngoing = isPlayed && !set.isFinished;
                           return (
-                            <div key={idx} className={`px-5 py-2.5 rounded-2xl border flex flex-col items-center shadow-sm min-w-[80px] ${
+                            <div key={idx} className={`px-5 py-2.5 rounded-lg border flex flex-col items-center shadow-sm min-w-[80px] ${
                               isOngoing 
                                 ? 'bg-rose-50 border-rose-100 ring-2 ring-rose-100' 
                                 : isPlayed
@@ -1222,7 +1233,7 @@ export default function LiveMatchPage({ params }: Props) {
                                 : 'bg-slate-50/50 border-slate-100 opacity-60'
                             }`}>
                               <span className="text-[10px] font-bold text-slate-500 mb-1 uppercase">{sequenceLabelTitle} {idx + 1}</span>
-                              <span className={`text-xl font-black ${isOngoing ? 'text-rose-600' : isPlayed ? 'text-slate-800' : 'text-slate-400'}`}>
+                              <span className={`text-xl font-bold ${isOngoing ? 'text-rose-600' : isPlayed ? 'text-slate-800' : 'text-slate-400'}`}>
                                 {isPlayed ? `${set.team1Score} - ${set.team2Score}` : '-'}
                               </span>
                             </div>
@@ -1246,13 +1257,13 @@ export default function LiveMatchPage({ params }: Props) {
             </div>
 
             {canControlLiveMatch ? (
-              <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                   <div>
-                    <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">
+                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
                       Khu điều khiển trọng tài
                     </p>
-                    <h3 className="mt-2 text-xl font-black text-slate-900">
+                    <h3 className="mt-2 text-xl font-bold text-slate-900">
                       Mở bảng chấm điểm chuyên dụng
                     </h3>
                     <p className="mt-1 text-sm font-medium text-slate-500">
@@ -1262,7 +1273,7 @@ export default function LiveMatchPage({ params }: Props) {
                   <Button
                     size="lg"
                     onClick={() => setIsOfficialScoreModalOpen(true)}
-                    className="h-auto rounded-2xl px-5 py-3 text-left text-sm font-black shadow-md"
+                    className="h-auto rounded-lg px-5 py-3 text-left text-sm font-bold shadow-md"
                   >
                     <span className="flex items-center gap-2">
                       <Shield className="h-4 w-4" />
@@ -1274,7 +1285,7 @@ export default function LiveMatchPage({ params }: Props) {
             ) : null}
 
             {scoreOverride?.reason ? (
-              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm font-semibold text-violet-900">
+              <div className="rounded-lg border border-violet-200 bg-violet-50 px-4 py-3 text-sm font-semibold text-violet-900">
                 Trận này đang dùng chế độ ngoại lệ của trọng tài/BTC: {scoreOverride.reason}
                 {scoreOverride.decidedAt
                   ? ` • ${new Date(scoreOverride.decidedAt).toLocaleString('vi-VN')}`
@@ -1285,7 +1296,7 @@ export default function LiveMatchPage({ params }: Props) {
 
           {/* Right Column: Comments & Chat */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-[510px] sticky top-28 relative">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-[510px] sticky top-28 relative">
               <style>{`
                 @keyframes floatUp {
                   0% {
@@ -1329,7 +1340,7 @@ export default function LiveMatchPage({ params }: Props) {
                         (comment.user?.fullName || 'N').charAt(0)
                       )}
                     </div>
-                    <div className="bg-slate-50 rounded-2xl p-3 border border-slate-100 flex-1 min-w-0">
+                    <div className="bg-slate-50 rounded-lg p-3 border border-slate-100 flex-1 min-w-0">
                       <div className="flex justify-between items-baseline gap-2">
                         <span className="text-xs font-bold text-slate-800 truncate">{comment.user?.fullName || 'Người dùng'}</span>
                         <span className="text-[9px] text-slate-400 font-medium shrink-0">
@@ -1358,13 +1369,13 @@ export default function LiveMatchPage({ params }: Props) {
                     value={commentText}
                     onChange={(e) => setCommentText(e.target.value)}
                     disabled={!user || isCommentSubmitting}
-                    className="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
+                    className="w-full pl-9 pr-4 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
                   />
                 </div>
                 <button
                   type="button"
                   onClick={handleSpawnHeart}
-                  className="bg-rose-50 hover:bg-rose-100 text-rose-500 rounded-xl p-2.5 flex items-center justify-center transition-colors cursor-pointer shrink-0"
+                  className="bg-rose-50 hover:bg-rose-100 text-rose-500 rounded-lg p-2.5 flex items-center justify-center transition-colors cursor-pointer shrink-0"
                   title="Thả tim"
                 >
                   <Heart className="w-3.5 h-3.5 fill-rose-500 text-rose-500" />
@@ -1372,7 +1383,7 @@ export default function LiveMatchPage({ params }: Props) {
                 <button
                   type="submit"
                   disabled={!user || isCommentSubmitting || !normalizedCommentText}
-                  className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl p-2.5 flex items-center justify-center transition-colors disabled:opacity-50"
+                  className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg p-2.5 flex items-center justify-center transition-colors disabled:opacity-50"
                 >
                   <Send className="w-3.5 h-3.5" />
                 </button>

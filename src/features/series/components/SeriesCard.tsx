@@ -37,7 +37,7 @@ export const SeriesCard: React.FC<SeriesCardProps> = ({ series, className }) => 
   return (
     <div
       className={cn(
-        'group bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col hover:border-blue-500/40 hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5',
+        'group bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden flex flex-col hover:border-blue-500/40 hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5',
         className
       )}
     >
@@ -104,7 +104,7 @@ export const SeriesCard: React.FC<SeriesCardProps> = ({ series, className }) => 
         </div>
 
         {/* Stats Row */}
-        <div className="grid grid-cols-2 gap-4 py-3 px-4 bg-slate-50 rounded-xl border border-slate-100 mt-auto">
+        <div className="grid grid-cols-2 gap-4 py-3 px-4 bg-slate-50 rounded-lg border border-slate-100 mt-auto">
           <div className="flex flex-col items-start">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Số chặng</span>
             <div className="flex items-center gap-1.5 mt-0.5 text-slate-700 font-bold text-sm">
@@ -124,7 +124,7 @@ export const SeriesCard: React.FC<SeriesCardProps> = ({ series, className }) => 
         {/* Action Button */}
         <Link
           href={`/series/${series.slug}`}
-          className="mt-4 inline-flex items-center justify-center gap-1.5 w-full bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 group/btn"
+          className="mt-4 inline-flex items-center justify-center gap-1.5 w-full bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 group/btn"
         >
           Chi tiết chuỗi giải
           <ArrowRight className="w-4 h-4 transform group-hover/btn:translate-x-1 transition-transform" />

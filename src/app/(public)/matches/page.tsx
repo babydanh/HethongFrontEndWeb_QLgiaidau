@@ -1,13 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Search, ChevronDown, Play, Trophy, Heart, Share2, X, SlidersHorizontal, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { matchesApi, type Match } from '@/features/matches/api';
 import { categoriesApi, type Category } from '@/features/categories/api';
 import { regionsApi, type Region } from '@/features/regions/api';
-import { getSportLogo } from '@/constants/sports';
 import type { SportRulesEnvelope } from '@/types/tournament';
 import { getMatchRoundLabel } from '@/utils/match-round-label';
 import ShareModal from '@/components/common/ShareModal';
@@ -29,6 +28,10 @@ interface EnrichedTournament {
   // Added fields for location filtering
   city?: string;
   locationAddress?: string;
+  logoUrl?: string | null;
+  community?: {
+    logoUrl?: string | null;
+  } | null;
 }
 
 interface EnrichedParticipant {
@@ -51,6 +54,18 @@ interface EnrichedMatch extends Omit<Match, 'tournament' | 'participant1' | 'par
   participant1?: EnrichedParticipant | null;
   participant2?: EnrichedParticipant | null;
   viewerCount?: number;
+  cheerCount?: number;
+  group?: {
+    name?: string;
+    stage?: {
+      name?: string;
+      type?: string;
+    };
+  } | null;
+  stage?: {
+    name?: string;
+    type?: string;
+  } | null;
 }
 
 const getShortName = (fullName: string | null | undefined): string => {
@@ -75,7 +90,7 @@ const renderTeamAvatars = (part: EnrichedParticipant | null | undefined, default
 
   if (members.length === 0) {
     return (
-      <div className={`w-8 h-8 rounded-xl ${defaultBg} border border-slate-200 flex items-center justify-center font-black ${defaultText} shrink-0 text-[10px] shadow-xs`}>
+      <div className={`w-8 h-8 rounded-full ${defaultBg} border border-slate-200 flex items-center justify-center font-bold ${defaultText} shrink-0 text-[10px] shadow-xs`}>
         {part?.teamName?.substring(0, 2).toUpperCase() || 'P'}
       </div>
     );
@@ -87,10 +102,10 @@ const renderTeamAvatars = (part: EnrichedParticipant | null | undefined, default
       <img
         src={member.avatarUrl}
         alt={member.fullName || ''}
-        className="w-8 h-8 rounded-xl border border-slate-200 object-cover shrink-0 shadow-xs"
+        className="w-8 h-8 rounded-full border border-slate-200 object-cover shrink-0 shadow-xs"
       />
     ) : (
-      <div className={`w-8 h-8 rounded-xl ${defaultBg} border border-slate-200 flex items-center justify-center font-black ${defaultText} shrink-0 text-[10px] shadow-xs`}>
+      <div className={`w-8 h-8 rounded-full ${defaultBg} border border-slate-200 flex items-center justify-center font-bold ${defaultText} shrink-0 text-[10px] shadow-xs`}>
         {(member.fullName || 'P').substring(0, 2).toUpperCase()}
       </div>
     );
@@ -115,7 +130,7 @@ const renderTeamAvatars = (part: EnrichedParticipant | null | undefined, default
               idx === 0 
                 ? 'bg-blue-100 text-blue-700 border-blue-200' 
                 : 'bg-indigo-100 text-indigo-700 border-indigo-200'
-            } flex items-center justify-center font-extrabold text-[9px] shadow-xs ${zIndexClass}`}
+            } flex items-center justify-center font-bold text-[9px] shadow-xs ${zIndexClass}`}
           >
             {(member.fullName || 'P').charAt(0).toUpperCase()}
           </div>
@@ -123,6 +138,28 @@ const renderTeamAvatars = (part: EnrichedParticipant | null | undefined, default
       })}
     </div>
   );
+};
+
+const getBracketTypeLabel = (type?: string) => {
+  if (!type) return '';
+  if (type === 'SINGLE_ELIMINATION') return 'LOẠI TRỰC TIẾP';
+  if (type === 'DOUBLE_ELIMINATION') return 'NHÁNH THẮNG THUA';
+  if (type === 'ROUND_ROBIN') return 'VÒNG TRÒN';
+  if (type === 'GROUP_STAGE_KNOCKOUT') return 'VÒNG BẢNG + PLAYOFFS';
+  return type;
+};
+
+const detectMatchGender = (match: EnrichedMatch): 'MALE' | 'FEMALE' | 'MIXED' | 'OPEN' => {
+  if (match.tournament?.genderRestriction) {
+    return match.tournament.genderRestriction as 'MALE' | 'FEMALE' | 'MIXED';
+  }
+
+  const tName = (match.tournament?.name || '').toLowerCase();
+  if (tName.includes('nam nữ') || tName.includes('mixed')) return 'MIXED';
+  if (tName.includes('nữ')) return 'FEMALE';
+  if (tName.includes('nam')) return 'MALE';
+
+  return 'OPEN';
 };
 
 const getFormatLabel = (matchType?: string, genderRestriction?: string | null) => {
@@ -151,6 +188,7 @@ export default function MatchesListPage() {
   const [selectedBracketType, setSelectedBracketType] = useState<string>('');
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
+  const [isRanked, setIsRanked] = useState<string>('');
 
   const [provinces, setProvinces] = useState<Region[]>([]);
   const [districts, setDistricts] = useState<Region[]>([]);
@@ -220,12 +258,25 @@ export default function MatchesListPage() {
     loadDistricts();
   }, [selectedProvince, provinces, districts.length, selectedDistrict]);
 
+  // Helper: chuyển dd/mm/yyyy → yyyy-mm-dd cho API
+  const formatDateForAPI = (d: string): string | undefined => {
+    if (!d) return undefined;
+    // Nếu đã là yyyy-mm-dd thì giữ nguyên
+    if (/^\d{4}-\d{2}-\d{2}$/.test(d)) return d;
+    // Convert dd/mm/yyyy → yyyy-mm-dd
+    const parts = d.split('/');
+    if (parts.length === 3 && parts[0].length === 2 && parts[1].length === 2 && parts[2].length === 4) {
+      return `${parts[2]}-${parts[1]}-${parts[0]}`;
+    }
+    return undefined;
+  };
+
   // Fetch danh sách trận đấu dựa trên bộ lọc
   useEffect(() => {
     const fetchMatches = async () => {
       setIsLoading(true);
       try {
-        // Map lựa chọn nội dung đấu sang matchType và genderRestriction
+        // Map lựa chọn nội dung đấu sang matchType + genderRestriction
         let matchType: string | undefined;
         let genderRestriction: string | undefined;
 
@@ -242,8 +293,13 @@ export default function MatchesListPage() {
           matchType = 'DOUBLES';
           genderRestriction = 'FEMALE';
         } else if (selectedContent === 'DOUBLE_MIXED') {
-          matchType = 'MIXED_DOUBLES';
+          matchType = 'DOUBLES';
+          genderRestriction = 'MIXED';
         }
+
+        // Convert dd/mm/yyyy → yyyy-mm-dd trước khi gửi API
+        const apiStartDate = formatDateForAPI(startDate);
+        const apiEndDate = formatDateForAPI(endDate);
 
         const res = await matchesApi.getMatches({
           page: 1, // Reset API page to 1 since we are paging tournaments locally now
@@ -251,11 +307,10 @@ export default function MatchesListPage() {
           search: searchTerm || undefined,
           categoryId: selectedCategoryId || undefined,
           status: selectedStatus || undefined,
-          matchType,
-          genderRestriction,
-          bracketType: selectedBracketType || undefined,
-          startDate: startDate || undefined,
-          endDate: endDate || undefined,
+          city: selectedProvince || undefined,
+          isRanked: isRanked === 'true' ? true : isRanked === 'false' ? false : undefined,
+          startDate: apiStartDate,
+          endDate: apiEndDate,
         });
         
         if (res && res.data) {
@@ -269,55 +324,168 @@ export default function MatchesListPage() {
       }
     };
     fetchMatches();
-  }, [searchTerm, selectedCategoryId, selectedStatus, selectedContent, selectedBracketType, startDate, endDate]);
+  }, [searchTerm, selectedCategoryId, selectedStatus, selectedContent, selectedBracketType, startDate, endDate, selectedProvince, selectedDistrict, isRanked]);
 
-  // Lọc bỏ trận đấu đã kết thúc quá 30 ngày
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-  
-  const filteredMatches = matches.filter(match => {
-    // Bỏ qua trận đấu có trạng thái hoặc cờ isBye là true (trận đấu bye/miễn đấu/vô thẳng)
-    if (match.isBye) {
-      return false;
+  // Fetch cheer counts for all visible matches
+  useEffect(() => {
+    if (matches.length === 0) return;
+    const ids = matches.map(m => m.id);
+    const loadCheerCounts = async () => {
+      try {
+        const counts: Record<string, number> = {};
+        // Use cheerCount from match data if available, or fetch individually
+        for (const match of matches) {
+          if (typeof match.cheerCount === 'number') {
+            counts[match.id] = match.cheerCount;
+          } else {
+            try {
+              const res = await matchesApi.getCheerCount(match.id);
+              counts[match.id] = res.cheerCount;
+            } catch {
+              counts[match.id] = 0;
+            }
+          }
+        }
+        setCheerCounts(counts);
+      } catch {
+        // silent
+      }
+    };
+    loadCheerCounts();
+  }, [matches]);
+
+  // Tìm category name từ selectedCategoryId để filter client-side
+  const selectedCategoryName = useMemo(() => {
+    if (!selectedCategoryId) return null;
+    const cat = categories.find(c => c.id === selectedCategoryId);
+    const name = cat?.name?.toLowerCase() || null;
+    console.log('🐛 [sport-filter] selectedCategoryId:', selectedCategoryId, '→ name:', name);
+    if (!cat) {
+      console.log('🐛 [sport-filter] categories available:', categories.map(c => ({ id: c.id, name: c.name, slug: c.slug })));
     }
-    // Bỏ qua trận có tên đội là TBD hoặc không xác định
-    if (!match.participant1?.teamName || !match.participant2?.teamName ||
-        match.participant1.teamName === 'TBD' || match.participant2.teamName === 'TBD') {
-      return false;
-    }
-    // Lọc bỏ trận đấu đã kết thúc quá 30 ngày
-    if (match.status === 'COMPLETED' && match.completedAt) {
-      return new Date(match.completedAt) >= thirtyDaysAgo;
+    return name;
+  }, [selectedCategoryId, categories]);
+
+  // Ngưỡng 30 ngày, chỉ tính 1 lần khi deps thay đổi
+  const thirtyDaysAgo = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 30);
+    return d;
+  }, []);
+
+  const filteredMatches = useMemo(() => {
+    // 🐛 DEBUG: Log category filter state
+    if (selectedCategoryName) {
+      console.log('🐛 [sport-filter] ========================');
+      console.log('🐛 [sport-filter] selectedCategoryName:', selectedCategoryName);
+      console.log('🐛 [sport-filter] total matches:', matches.length);
+      matches.forEach((match, idx) => {
+        const matchCatName = (match.tournament?.category?.name || match.tournament?.categoryName || '').toLowerCase();
+        const matchCat = match.tournament?.category;
+        const matchCatNameFallback = match.tournament?.categoryName;
+        const matchCatSlug = match.tournament?.categorySlug;
+        const tournamentId = match.tournamentId?.slice(0, 8);
+        const status = match.status;
+        const passesFilter = matchCatName === selectedCategoryName;
+        console.log(
+          `🐛 [sport-filter] match[${idx}] (${tournamentId}) status=${status}` +
+          ` | cat.name=${matchCat?.name}` +
+          ` | catName=${matchCatNameFallback}` +
+          ` | catSlug=${matchCatSlug}` +
+          ` | matchCatName="${matchCatName}"` +
+          ` | passes=${passesFilter}`
+        );
+        if (!passesFilter) {
+          console.log('   🐛 FULL tournament:', JSON.stringify(match.tournament, null, 2));
+        }
+      });
+      console.log('🐛 [sport-filter] ========================');
     }
 
-    // Lọc theo Tỉnh / Thành phố
-    if (selectedProvince) {
-      const tourCity = match.tournament?.city || '';
-      const cleanTourCity = tourCity.replace(/^(Thành phố|Tỉnh)\s+/i, '').trim().toLowerCase();
-      const cleanSelectedProv = selectedProvince.replace(/^(Thành phố|Tỉnh)\s+/i, '').trim().toLowerCase();
-      if (cleanTourCity !== cleanSelectedProv) {
+    return matches.filter(match => {
+      // Bỏ qua trận đấu có cờ isBye (trận đấu bye/miễn đấu/vô thẳng)
+      if (match.isBye) {
         return false;
       }
-    }
-
-    // Lọc theo Quận / Huyện
-    if (selectedDistrict) {
-      const tourAddress = match.tournament?.locationAddress || '';
-      const cleanTourAddress = tourAddress.toLowerCase();
-      const cleanSelectedDist = selectedDistrict.replace(/^(Quận|Huyện|Thị xã)\s+/i, '').trim().toLowerCase();
-      if (!cleanTourAddress.includes(cleanSelectedDist)) {
+      // Bỏ qua trận có tên đội là TBD hoặc không xác định
+      if (!match.participant1?.teamName || !match.participant2?.teamName ||
+          match.participant1.teamName === 'TBD' || match.participant2.teamName === 'TBD') {
         return false;
       }
-    }
 
-    return true;
-  });
+      // Lọc theo Môn thể thao (client-side fallback khi API không filter đúng)
+      // Đặt filter này TRƯỚC filter thời gian để đảm bảo không bị skip
+      if (selectedCategoryName) {
+        const matchCatName = (match.tournament?.category?.name || match.tournament?.categoryName || '').toLowerCase();
+        // Dùng exact match thay vì substring để tránh false positive
+        if (matchCatName !== selectedCategoryName) {
+          return false;
+        }
+      }
+
+      // Lọc bỏ trận đấu đã kết thúc quá 30 ngày
+      if (match.status === 'COMPLETED' && match.completedAt) {
+        return new Date(match.completedAt) >= thirtyDaysAgo;
+      }
+
+      // Lọc theo Thể thức (client-side fallback)
+      if (selectedBracketType) {
+        const stageType = match.group?.stage?.type || match.stage?.type || '';
+        if (stageType !== selectedBracketType) return false;
+      }
+
+      // Lọc theo Nội dung (client-side fallback)
+      if (selectedContent) {
+        const nameLower = (match.tournament?.name || '').toLowerCase();
+        
+        // Suy luận matchType thực tế từ tên giải đấu
+        let actualMatchType = match.tournament?.matchType || '';
+        if (nameLower.includes('đơn')) {
+          actualMatchType = 'SINGLES';
+        } else if (nameLower.includes('đôi')) {
+          actualMatchType = 'DOUBLES';
+        }
+
+        const genderRestriction = match.tournament?.genderRestriction || '';
+        
+        let targetMatchType = '';
+        let targetGender = '';
+        
+        if (selectedContent === 'SINGLE_MALE') {
+          targetMatchType = 'SINGLES';
+          targetGender = 'MALE';
+        } else if (selectedContent === 'SINGLE_FEMALE') {
+          targetMatchType = 'SINGLES';
+          targetGender = 'FEMALE';
+        } else if (selectedContent === 'DOUBLE_MALE') {
+          targetMatchType = 'DOUBLES';
+          targetGender = 'MALE';
+        } else if (selectedContent === 'DOUBLE_FEMALE') {
+          targetMatchType = 'DOUBLES';
+          targetGender = 'FEMALE';
+        } else if (selectedContent === 'DOUBLE_MIXED') {
+          targetMatchType = 'DOUBLES';
+          targetGender = 'MIXED';
+        }
+        
+        if (targetMatchType && actualMatchType !== targetMatchType) return false;
+
+        if (targetGender) {
+          const detectedGender = detectMatchGender(match);
+          if (detectedGender !== 'OPEN' && detectedGender !== targetGender) return false;
+        }
+      }
+
+      return true;
+    });
+  }, [matches, selectedCategoryName, selectedContent, selectedBracketType, selectedProvince, selectedDistrict, thirtyDaysAgo]);
 
   // Gom nhóm trận đấu theo giải đấu
   interface GroupedMatches {
     tournamentId: string;
     tournamentName: string;
     tournamentCategory: string;
+    tournamentLogoUrl: string | null;
     matches: EnrichedMatch[];
   }
 
@@ -330,6 +498,7 @@ export default function MatchesListPage() {
         tournamentId: tId,
         tournamentName: match.tournament?.name || 'Giải đấu',
         tournamentCategory: match.tournament?.category?.name || match.tournament?.categoryName || 'Chưa cập nhật',
+        tournamentLogoUrl: match.tournament?.logoUrl || match.tournament?.community?.logoUrl || null,
         matches: []
       };
       groupedMatches.push(group);
@@ -375,6 +544,7 @@ export default function MatchesListPage() {
     endDate,
     selectedProvince,
     selectedDistrict,
+    isRanked,
   ].filter(Boolean).length;
 
   // Pagination for Tournaments: Show 5 tournaments per page
@@ -387,279 +557,376 @@ export default function MatchesListPage() {
       
       {/* Page Header */}
       <div>
-        <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 mb-1 leading-tight tracking-tight">Lịch thi đấu & Kết quả</h1>
+        <h1 className="text-2xl md:text-3xl font-bold text-slate-900 mb-1 leading-tight tracking-tight">Lịch thi đấu & Kết quả</h1>
         <p className="text-sm text-slate-500 max-w-2xl font-medium">
           Cập nhật lịch thi đấu, tỉ số trực tiếp các giải đấu Cầu lông, Pickleball, Tennis đang diễn ra.
         </p>
       </div>
-      <section className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-slate-100 bg-slate-50/70">
-          <div>
-            <h2 className="text-sm font-black text-slate-900">Bộ lọc trận đấu</h2>
-            <p className="mt-0.5 text-xs font-medium text-slate-500">Thu hẹp danh sách theo môn, trạng thái và thời gian.</p>
-          </div>
-          {activeFilterCount > 0 && (
-            <span className="shrink-0 rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-[10px] font-black text-indigo-700">
-              {activeFilterCount} bộ lọc
-            </span>
-          )}
-        </div>
-
+      <section className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="p-5 flex flex-col gap-4">
-        {/* Row 1: Main Filters */}
-        <div className="flex flex-col md:flex-row items-end gap-2 sm:gap-4 w-full">
-          {/* Tìm kiếm */}
-          <div className="flex-grow w-full flex flex-col gap-1.5">
-            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider">Tìm kiếm</label>
-            <div className="relative w-full">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setPage(1);
-                }}
-                className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50/50 text-slate-900 font-bold h-11"
-                placeholder="Tên vận động viên, CLB..."
-              />
+          {/* Row 1: Main Filters */}
+          <div className="flex flex-col md:flex-row items-end gap-2 sm:gap-4 w-full">
+            {/* Tìm kiếm */}
+            <div className="flex-grow w-full flex flex-col gap-1.5">
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tìm kiếm</label>
+              <div className="relative w-full">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setPage(1);
+                  }}
+                  className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-900 font-bold h-11"
+                  placeholder="Tên vận động viên, CLB..."
+                />
+              </div>
             </div>
-          </div>
 
-          {/* Môn thể thao */}
-          <div className="w-full md:w-44 shrink-0 flex flex-col gap-1.5">
-            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider">Môn thể thao</label>
-            <div className="relative w-full">
-              <select
-                value={selectedCategoryId}
-                onChange={(e) => {
-                  setSelectedCategoryId(e.target.value);
-                  setPage(1);
-                }}
-                className="w-full pl-3 pr-9 py-2 border border-slate-200 rounded-xl text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50/50 text-slate-900 font-bold h-11"
-              >
-                <option value="">Tất cả</option>
-                {categories.map(cat => (
-                  <option key={cat.id} value={cat.id}>{cat.name}</option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
+            {/* Môn thể thao */}
+            <div className="w-full md:w-44 shrink-0 flex flex-col gap-1.5">
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Môn thể thao</label>
+              <div className="relative w-full">
+                <select
+                  value={selectedCategoryId}
+                  onChange={(e) => {
+                    setSelectedCategoryId(e.target.value);
+                    setPage(1);
+                  }}
+                  className="w-full pl-3 pr-9 py-2 border border-slate-200 rounded-lg text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-900 font-bold h-11"
+                >
+                  <option value="">Tất cả</option>
+                  {categories.map(cat => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
+              </div>
             </div>
-          </div>
 
-          {/* Thể thức */}
-          <div className="w-full md:w-44 shrink-0 flex flex-col gap-1.5">
-            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider">Thể thức</label>
-            <div className="relative w-full">
-              <select
-                value={selectedBracketType}
-                onChange={(e) => {
-                  setSelectedBracketType(e.target.value);
-                  setPage(1);
-                }}
-                className="w-full pl-3 pr-9 py-2 border border-slate-200 rounded-xl text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50/50 text-slate-900 font-bold h-11"
-              >
-                <option value="">Tất cả</option>
-                <option value="SINGLE_ELIMINATION">Loại trực tiếp</option>
-                <option value="DOUBLE_ELIMINATION">Nhánh thắng/thua</option>
-                <option value="ROUND_ROBIN">Vòng tròn</option>
-                <option value="GROUP_STAGE_KNOCKOUT">Vòng bảng + Playoffs</option>
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-450 w-4.5 h-4.5 pointer-events-none" />
-            </div>
-          </div>
-
-          {/* Nội dung */}
-          <div className="w-full md:w-44 shrink-0 flex flex-col gap-1.5">
-            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider">Nội dung</label>
-            <div className="relative w-full">
-              <select
-                value={selectedContent}
-                onChange={(e) => {
-                  setSelectedContent(e.target.value);
-                  setPage(1);
-                }}
-                className="w-full pl-3 pr-9 py-2 border border-slate-200 rounded-xl text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50/50 text-slate-900 font-bold h-11"
-              >
-                <option value="">Tất cả</option>
-                <option value="SINGLE_MALE">Đơn Nam</option>
-                <option value="SINGLE_FEMALE">Đơn Nữ</option>
-                <option value="DOUBLE_MALE">Đôi Nam</option>
-                <option value="DOUBLE_FEMALE">Đôi Nữ</option>
-                <option value="DOUBLE_MIXED">Đôi Nam Nữ</option>
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
-            </div>
-          </div>
-
-          {/* Lọc thêm button */}
-          <button
-            onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-            className={`h-11 flex items-center justify-center gap-2 px-4 py-2 border rounded-xl text-xs font-bold transition-all w-full md:w-auto shrink-0 cursor-pointer ${
-              showAdvancedFilters || startDate || endDate || selectedProvince || selectedDistrict || selectedStatus
-                ? 'bg-indigo-50 border-indigo-200 text-indigo-700 shadow-sm'
-                : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
-            }`}
-          >
-            <SlidersHorizontal className="w-3.5 h-3.5" />
-            Lọc thêm
-          </button>
-        </div>
-
-        {/* Row 2: Advanced filters panel */}
-        {showAdvancedFilters && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-200 animate-in fade-in slide-in-from-top-2 duration-200">
             {/* Trạng thái */}
-            <div>
-              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Trạng thái</label>
-              <select
-                value={selectedStatus}
-                onChange={(e) => {
-                  setSelectedStatus(e.target.value);
-                  setPage(1);
-                }}
-                className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-950 font-bold h-10"
-              >
-                <option value="">Tất cả</option>
-                <option value="ONGOING">Đang đấu</option>
-                <option value="SCHEDULED">Sắp đấu</option>
-                <option value="COMPLETED">Đã kết thúc</option>
-              </select>
-            </div>
-
-            {/* Tỉnh / Thành phố */}
-            <div>
-              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Tỉnh / Thành phố</label>
-              <div className="relative">
+            <div className="w-full md:w-44 shrink-0 flex flex-col gap-1.5">
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Trạng thái</label>
+              <div className="relative w-full">
                 <select
-                  value={selectedProvince}
-                  onChange={(event) => {
-                    setSelectedProvince(event.target.value);
-                    setSelectedDistrict('');
+                  value={selectedStatus}
+                  onChange={(e) => {
+                    setSelectedStatus(e.target.value);
                     setPage(1);
                   }}
-                  className="w-full h-10 appearance-none rounded-xl border border-slate-200 bg-white px-3 pr-8 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full pl-3 pr-9 py-2 border border-slate-200 rounded-lg text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-900 font-bold h-11"
                 >
-                  <option value="">Tất cả khu vực</option>
-                  {provinces.map((province) => (
-                    <option key={province.code} value={province.name.replace(/^(Thành phố|Tỉnh)\s+/i, '')}>
-                      {province.name}
-                    </option>
-                  ))}
+                  <option value="">Tất cả</option>
+                  <option value="ONGOING">Đang diễn ra</option>
+                  <option value="SCHEDULED">Sắp diễn ra</option>
+                  <option value="COMPLETED">Vừa kết thúc</option>
                 </select>
-                <ChevronDown className="absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
               </div>
             </div>
 
-            {/* Quận / Huyện */}
-            <div>
-              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Quận / Huyện</label>
-              <div className="relative">
-                <select
-                  value={selectedDistrict}
-                  onChange={(event) => {
-                    setSelectedDistrict(event.target.value);
-                    setPage(1);
-                  }}
-                  disabled={!selectedProvince}
-                  className="w-full h-10 appearance-none rounded-xl border border-slate-200 bg-white px-3 pr-8 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
-                >
-                  <option value="">Tất cả quận / huyện</option>
-                  {districts.map((district) => (
-                    <option key={district.code} value={district.name}>{district.name}</option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 pointer-events-none" />
-              </div>
-            </div>
-
-            {/* Từ ngày */}
-            <div>
-              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Từ ngày</label>
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => {
-                  setStartDate(e.target.value);
-                  setPage(1);
-                }}
-                className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-950 font-bold h-10"
-              />
-            </div>
-
-            {/* Đến ngày */}
-            <div>
-              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Đến ngày</label>
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => {
-                  setEndDate(e.target.value);
-                  setPage(1);
-                }}
-                className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-950 font-bold h-10"
-              />
-            </div>
-
-            {/* Xóa bộ lọc */}
-            <div className="flex items-end">
-              <button
-                onClick={() => {
-                  setSelectedCategoryId('');
-                  setSelectedStatus('');
-                  setSelectedContent('');
-                  setSelectedBracketType('');
-                  setStartDate('');
-                  setEndDate('');
-                  setSelectedProvince('');
-                  setSelectedDistrict('');
-                  setSearchTerm('');
-                  setPage(1);
-                }}
-                className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-black text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer bg-white h-10 flex items-center justify-center"
-                title="Xóa bộ lọc"
-              >
-                <span className="font-extrabold text-rose-600">X</span>
-              </button>
-            </div>
-          </div>
-        )}
-
-      {/* Quick Status Chips */}
-      <div className="flex flex-col gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:items-center">
-        <span className="shrink-0 text-[10px] font-black uppercase tracking-wider text-slate-400">Xem nhanh</span>
-        <div className="flex flex-wrap items-center gap-2">
-        {[
-          { label: 'TẤT CẢ', value: '', activeClass: 'bg-indigo-50 text-indigo-700 border border-indigo-200/50 shadow-sm', inactiveClass: 'bg-slate-100 text-slate-500 hover:bg-slate-200/70 hover:text-slate-800' },
-          { label: 'ĐANG DIỄN RA', value: 'ONGOING', activeClass: 'bg-rose-50 text-rose-600 border border-rose-200/50 shadow-sm', inactiveClass: 'bg-rose-50/40 text-rose-500 hover:bg-rose-50 hover:text-rose-600' },
-          { label: 'SẮP DIỄN RA', value: 'SCHEDULED', activeClass: 'bg-blue-50 text-blue-600 border border-blue-200/50 shadow-sm', inactiveClass: 'bg-blue-50/40 text-blue-500 hover:bg-blue-50 hover:text-blue-600' },
-          { label: 'VỪA KẾT THÚC', value: 'COMPLETED', activeClass: 'bg-slate-200 text-slate-700 border border-slate-300/50 shadow-sm', inactiveClass: 'bg-slate-100 text-slate-500 hover:bg-slate-200/70 hover:text-slate-800' },
-          { label: 'TỈ SỐ NÓNG', value: 'RECENT', activeClass: 'bg-amber-50 text-amber-600 border border-amber-200/50 shadow-sm', inactiveClass: 'bg-amber-50/40 text-amber-600 hover:bg-amber-50' },
-        ].map((chip) => {
-          const isActive = selectedStatus === chip.value;
-          return (
+            {/* Lọc thêm button */}
             <button
-              key={chip.value}
-              onClick={() => {
-                setSelectedStatus(chip.value);
-                setPage(1);
-              }}
-              className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
-                isActive ? chip.activeClass : chip.inactiveClass
+              onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+              className={`h-11 flex items-center justify-center gap-2 px-4 py-2 border rounded-lg text-xs font-bold transition-all w-full md:w-auto shrink-0 cursor-pointer ${
+                showAdvancedFilters || selectedBracketType || selectedContent || isRanked || selectedProvince || selectedDistrict || startDate || endDate
+                  ? 'bg-indigo-50 border-indigo-200 text-indigo-700 shadow-sm'
+                  : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
               }`}
             >
-              {chip.label}
+              <SlidersHorizontal className="w-3.5 h-3.5" />
+              Lọc thêm
+              {activeFilterCount > 0 && (
+                <span className="ml-1 px-1.5 py-0.2 bg-indigo-200 text-indigo-800 text-[9px] rounded-full">
+                  {activeFilterCount}
+                </span>
+              )}
             </button>
-          );
-        })}
-        </div>
-      </div>
+          </div>
+
+          {/* Status Tab Chips */}
+          <div className="flex flex-wrap items-center gap-2 pt-1">
+            {[
+              { label: 'Tất cả', value: '', activeClass: 'bg-indigo-50 text-indigo-700 border border-indigo-200/50 shadow-xs', inactiveClass: 'bg-slate-100/80 text-slate-500 hover:bg-slate-200/70 hover:text-slate-800 border border-transparent' },
+              { label: 'Đang diễn ra', value: 'ONGOING', activeClass: 'bg-rose-50 text-rose-600 border border-rose-200/50 shadow-xs', inactiveClass: 'bg-rose-55/40 text-rose-500 hover:bg-rose-50 hover:text-rose-600 border border-transparent' },
+              { label: 'Sắp diễn ra', value: 'SCHEDULED', activeClass: 'bg-blue-50 text-blue-600 border border-blue-200/50 shadow-xs', inactiveClass: 'bg-blue-50/40 text-blue-500 hover:bg-blue-50 hover:text-blue-600 border border-transparent' },
+              { label: 'Vừa kết thúc', value: 'COMPLETED', activeClass: 'bg-slate-200 text-slate-700 border border-slate-300/50 shadow-xs', inactiveClass: 'bg-slate-100/60 text-slate-500 hover:bg-slate-200/70 hover:text-slate-800 border border-transparent' },
+            ].map((chip) => {
+              const isActive = selectedStatus === chip.value;
+              return (
+                <button
+                  key={chip.value}
+                  onClick={() => {
+                    setSelectedStatus(chip.value);
+                    setPage(1);
+                  }}
+                  className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                    isActive ? chip.activeClass : chip.inactiveClass
+                  }`}
+                >
+                  {chip.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Row 2: Advanced filters panel */}
+          {showAdvancedFilters && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8 gap-4 p-4 bg-slate-50 rounded-lg border border-slate-200 animate-in fade-in slide-in-from-top-2 duration-200">
+              {/* Thể thức */}
+              <div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Thể thức</label>
+                <div className="relative">
+                  <select
+                    value={selectedBracketType}
+                    onChange={(e) => {
+                      setSelectedBracketType(e.target.value);
+                      setPage(1);
+                    }}
+                    className="w-full h-10 appearance-none rounded-lg border border-slate-200 bg-white px-3 pr-8 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="">Tất cả</option>
+                    <option value="SINGLE_ELIMINATION">Loại trực tiếp</option>
+                    <option value="DOUBLE_ELIMINATION">Nhánh thắng/thua</option>
+                    <option value="ROUND_ROBIN">Vòng tròn</option>
+                    <option value="GROUP_STAGE_KNOCKOUT">Vòng bảng + Playoffs</option>
+                  </select>
+                  <ChevronDown className="absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                </div>
+              </div>
+
+              {/* Nội dung */}
+              <div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Nội dung</label>
+                <div className="relative">
+                  <select
+                    value={selectedContent}
+                    onChange={(e) => {
+                      setSelectedContent(e.target.value);
+                      setPage(1);
+                    }}
+                    className="w-full h-10 appearance-none rounded-lg border border-slate-200 bg-white px-3 pr-8 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="">Tất cả</option>
+                    <option value="SINGLE_MALE">Đơn Nam</option>
+                    <option value="SINGLE_FEMALE">Đơn Nữ</option>
+                    <option value="DOUBLE_MALE">Đôi Nam</option>
+                    <option value="DOUBLE_FEMALE">Đôi Nữ</option>
+                    <option value="DOUBLE_MIXED">Đôi Nam Nữ</option>
+                  </select>
+                  <ChevronDown className="absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                </div>
+              </div>
+
+              {/* Xếp hạng */}
+              <div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Xếp hạng</label>
+                <div className="relative">
+                  <select
+                    value={isRanked}
+                    onChange={(e) => {
+                      setIsRanked(e.target.value);
+                      setPage(1);
+                    }}
+                    className="w-full h-10 appearance-none rounded-lg border border-slate-200 bg-white px-3 pr-8 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="">Tất cả</option>
+                    <option value="true">Xếp hạng</option>
+                    <option value="false">Phong trào</option>
+                  </select>
+                  <ChevronDown className="absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                </div>
+              </div>
+
+              {/* Tỉnh / Thành phố */}
+              <div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Tỉnh / Thành phố</label>
+                <div className="relative">
+                  <select
+                    value={selectedProvince}
+                    onChange={(event) => {
+                      setSelectedProvince(event.target.value);
+                      setSelectedDistrict('');
+                      setPage(1);
+                    }}
+                    className="w-full h-10 appearance-none rounded-lg border border-slate-200 bg-white px-3 pr-8 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="">Tất cả khu vực</option>
+                    {provinces.map((province) => (
+                      <option key={province.code} value={province.name.replace(/^(Thành phố|Tỉnh)\s+/i, '')}>
+                        {province.name}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                </div>
+              </div>
+
+              {/* Quận / Huyện */}
+              <div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Quận / Huyện</label>
+                <div className="relative">
+                  <select
+                    value={selectedDistrict}
+                    onChange={(event) => {
+                      setSelectedDistrict(event.target.value);
+                      setPage(1);
+                    }}
+                    disabled={!selectedProvince}
+                    className="w-full h-10 appearance-none rounded-lg border border-slate-200 bg-white px-3 pr-8 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                  >
+                    <option value="">Tất cả quận / huyện</option>
+                    {districts.map((district) => (
+                      <option key={district.code} value={district.name}>{district.name}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                </div>
+              </div>
+
+              {/* Từ ngày */}
+              <div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Từ ngày</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="dd/mm/yyyy"
+                    value={startDate}
+                    onChange={(e) => {
+                      let val = e.target.value;
+                      if (val.length === 2 && !val.includes('/') && startDate.length < val.length) {
+                        val = val + '/';
+                      }
+                      if (val.length === 5 && val[2] === '/' && !val.includes('/', 3) && startDate.length < val.length) {
+                        val = val + '/';
+                      }
+                      setStartDate(val);
+                      setPage(1);
+                    }}
+                    className="w-full pl-3 pr-9 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-950 font-bold h-10"
+                  />
+                  <input
+                    type="date"
+                    id="hiddenMatchStartDatePicker"
+                    className="absolute inset-0 opacity-0 pointer-events-none w-0 h-0"
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        const parts = e.target.value.split('-');
+                        if (parts.length === 3) {
+                          setStartDate(`${parts[2]}/${parts[1]}/${parts[0]}`);
+                          setPage(1);
+                        }
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const el = document.getElementById('hiddenMatchStartDatePicker') as HTMLInputElement | null;
+                      if (el) {
+                        if (typeof el.showPicker === 'function') {
+                          el.showPicker();
+                        } else {
+                          el.focus();
+                          el.click();
+                        }
+                      }
+                    }}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 transition-colors p-1 cursor-pointer"
+                    title="Chọn ngày"
+                  >
+                    📅
+                  </button>
+                </div>
+              </div>
+
+              {/* Đến ngày */}
+              <div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Đến ngày</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="dd/mm/yyyy"
+                    value={endDate}
+                    onChange={(e) => {
+                      let val = e.target.value;
+                      if (val.length === 2 && !val.includes('/') && endDate.length < val.length) {
+                        val = val + '/';
+                      }
+                      if (val.length === 5 && val[2] === '/' && !val.includes('/', 3) && endDate.length < val.length) {
+                        val = val + '/';
+                      }
+                      setEndDate(val);
+                      setPage(1);
+                    }}
+                    className="w-full pl-3 pr-9 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-950 font-bold h-10"
+                  />
+                  <input
+                    type="date"
+                    id="hiddenMatchEndDatePicker"
+                    className="absolute inset-0 opacity-0 pointer-events-none w-0 h-0"
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        const parts = e.target.value.split('-');
+                        if (parts.length === 3) {
+                          setEndDate(`${parts[2]}/${parts[1]}/${parts[0]}`);
+                          setPage(1);
+                        }
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const el = document.getElementById('hiddenMatchEndDatePicker') as HTMLInputElement | null;
+                      if (el) {
+                        if (typeof el.showPicker === 'function') {
+                          el.showPicker();
+                        } else {
+                          el.focus();
+                          el.click();
+                        }
+                      }
+                    }}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 transition-colors p-1 cursor-pointer"
+                    title="Chọn ngày"
+                  >
+                    📅
+                  </button>
+                </div>
+              </div>
+
+              {/* Xóa bộ lọc */}
+              <div className="flex items-end">
+                <button
+                  onClick={() => {
+                    setSelectedCategoryId('');
+                    setSelectedStatus('');
+                    setSelectedContent('');
+                    setSelectedBracketType('');
+                    setStartDate('');
+                    setEndDate('');
+                    setSelectedProvince('');
+                    setSelectedDistrict('');
+                    setSearchTerm('');
+                    setIsRanked('');
+                    setPage(1);
+                  }}
+                  className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer bg-white h-10 flex items-center justify-center"
+                  title="Xóa bộ lọc"
+                >
+                  <span className="font-bold text-rose-650">Xóa hết</span>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </section>
 
       <div className="flex items-end justify-between gap-4">
         <div>
-          <h2 className="text-lg font-black text-slate-900">Danh sách trận đấu</h2>
+          <h2 className="text-lg font-bold text-slate-900">Danh sách trận đấu</h2>
           <p className="mt-0.5 text-xs font-medium text-slate-500">Các trận được nhóm theo từng giải để dễ theo dõi.</p>
         </div>
         {!isLoading && (
@@ -671,7 +938,7 @@ export default function MatchesListPage() {
       {isLoading ? (
         <div className="flex justify-center items-center h-64 text-slate-500 font-bold">Đang tải danh sách trận đấu...</div>
       ) : currentTournaments.length === 0 ? (
-        <div className="flex flex-col justify-center items-center h-64 text-slate-400 bg-white border border-slate-200 rounded-2xl p-6 text-center">
+        <div className="flex flex-col justify-center items-center h-64 text-slate-400 bg-white border border-slate-200 rounded-lg p-6 text-center">
           <Trophy className="w-12 h-12 text-slate-300 mb-2 stroke-[1.5]" />
           <p className="text-sm font-bold text-slate-500">Không tìm thấy trận đấu nào phù hợp.</p>
           <p className="text-xs text-slate-400 mt-1">Vui lòng thay đổi bộ lọc để thử lại.</p>
@@ -679,7 +946,6 @@ export default function MatchesListPage() {
       ) : (
         <div className="flex flex-col gap-6">
           {currentTournaments.map(group => {
-            const sportLogo = getSportLogo(group.tournamentCategory);
             // Cấu hình 3x2 (6 trận đấu trên mỗi trang của card giải đấu)
             const MATCHES_PER_PAGE = 6;
             const groupPage = groupPages[group.tournamentId] || 1;
@@ -691,23 +957,35 @@ export default function MatchesListPage() {
             return (
               <div 
                 key={group.tournamentId} 
-                className="bg-slate-50/80 p-4 sm:p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col gap-5"
+                className="bg-slate-50/80 p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-5"
               >
                 {/* Header giải đấu */}
                 <div className="flex items-center justify-between pb-4 border-b border-slate-100 flex-wrap gap-3">
                   <div className="flex items-center gap-3">
-                    <Link 
-                      href={`/tournaments/${group.tournamentId}`}
-                      className="w-10 h-10 rounded-full bg-slate-100 overflow-hidden flex items-center justify-center border border-slate-200 shrink-0 hover:opacity-85 transition-opacity"
-                    >
-                      <img src="/vndcsport.svg" alt="VNSPORT Logo" className="w-8 h-8 object-contain" />
-                    </Link>
-                    <div>
-                      <span className="inline-block bg-indigo-50 text-indigo-700 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider mb-1">
-                        GIẢI ĐẤU HẠNG • {group.tournamentCategory}
-                      </span>
+                  <Link 
+                    href={`/tournaments/${group.tournamentId}`}
+                    className="w-10 h-10 rounded-full bg-slate-100 overflow-hidden flex items-center justify-center border border-slate-200 shrink-0 hover:opacity-85 transition-opacity"
+                  >
+                    {group.tournamentLogoUrl ? (
+                      <img src={group.tournamentLogoUrl} alt={group.tournamentName} className="w-6 h-6 object-contain" />
+                    ) : (
+                      <img src="/vndcsport.svg" alt="VNDC Sport" className="w-6 h-6 object-contain opacity-60" />
+                    )}
+                  </Link>
+                  <div>
+                    <span className="inline-flex items-center gap-1 bg-indigo-50 text-indigo-700 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider mb-1">
+                      GIẢI ĐẤU HẠNG • {group.tournamentCategory}
+                      {(() => {
+                        const firstMatch = group.matches[0];
+                        const tConfig = firstMatch?.tournament as Record<string, unknown> | undefined;
+                        const tConfigObj = tConfig?.tournamentConfig as Record<string, unknown> | undefined;
+                        const bType = tConfig?.bracketType as string || tConfigObj?.bracketType as string || firstMatch?.stage?.type;
+                        const label = getBracketTypeLabel(bType);
+                        return label ? ` • ${label}` : '';
+                      })()}
+                    </span>
                       <Link href={`/tournaments/${group.tournamentId}`} className="hover:text-blue-600 transition-colors">
-                        <h3 className="font-black text-slate-900 text-sm md:text-base uppercase tracking-tight leading-none">
+                        <h3 className="font-bold text-slate-900 text-sm md:text-base uppercase tracking-tight leading-none">
                           {group.tournamentName}
                         </h3>
                       </Link>
@@ -754,11 +1032,11 @@ export default function MatchesListPage() {
                     return (
                       <div 
                         key={match.id}
-                        className="bg-white rounded-2xl border border-slate-200 hover:border-slate-300 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col justify-between"
+                        className="bg-white rounded-lg border border-slate-200 hover:border-slate-350 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col justify-between"
                       >
                         {/* Header trận */}
                         <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
-                          <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
                           {isLive ? (
                               <>
                                 <span className="inline-flex items-center gap-1 text-rose-600 animate-pulse">
@@ -774,7 +1052,7 @@ export default function MatchesListPage() {
                               </>
                             ) : (
                               <>
-                                <span className="text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded font-black border border-indigo-100">Sắp đấu</span>
+                                <span className="text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded font-bold border border-indigo-100">Sắp đấu</span>
                                 {match.scheduledAt ? (
                                   <span>• {new Date(match.scheduledAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} {new Date(match.scheduledAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })} • {friendlyRoundName}</span>
                                 ) : (
@@ -796,15 +1074,11 @@ export default function MatchesListPage() {
                         <div className="p-4 flex flex-col gap-3 flex-grow justify-center">
                           <div className="flex flex-col gap-2.5">
                             {/* VĐV / Đội 1 */}
-                            <div className={`flex items-center justify-between gap-3 p-2.5 rounded-xl border transition-all ${
-                              p1Won 
-                                ? 'bg-emerald-100/60 border-emerald-200/85 shadow-2xs text-emerald-950' 
-                                : 'bg-slate-50/50 border-slate-100/70'
-                            }`}>
+                            <div className="flex items-center justify-between gap-3 p-2.5 rounded-lg border border-slate-100/70 bg-slate-50/50 transition-all">
                               <div className="flex items-center gap-2.5 flex-1 min-w-0">
                                 {renderTeamAvatars(match.participant1, 'bg-blue-50', 'text-blue-700')}
                                 <div className="min-w-0 flex-1">
-                                  <div className="font-bold text-slate-800 text-xs truncate">
+                                  <div className={`text-xs truncate ${p1Won ? 'text-emerald-700 font-extrabold' : 'text-slate-800 font-bold'}`}>
                                     {getTeamShortName(match.participant1?.teamName)}
                                   </div>
                                   
@@ -816,14 +1090,25 @@ export default function MatchesListPage() {
                                                   match.participant1?.members?.[0]?.elo?.eloPoints ?? 
                                                   1000;
                                       return (
-                                        <span className="text-[9px] font-bold text-blue-600 bg-blue-50/60 px-1.5 py-0.5 rounded-full border border-blue-100/50 block w-max mt-1">
+                                        <span className="text-[9px] font-bold text-blue-650 bg-blue-50/60 px-1.5 py-0.5 rounded-full border border-blue-100/55 block w-max mt-1">
                                           ELO: {elo}
                                         </span>
                                       );
                                     })()
                                   ) : (
-                                    // Đấu đôi: Hiển thị tên thành viên và ELO cặp
-                                    <div className="flex flex-wrap gap-x-2 gap-y-0.5 mt-0.5">
+                                    // Đấu đôi: Hiển thị tên thành viên và ELO cặp nằm dưới
+                                    <div className="flex flex-col mt-0.5">
+                                      <div className="flex flex-wrap gap-x-2 gap-y-0.5">
+                                        {(() => {
+                                          const members = match.participant1?.members || [];
+                                          const memberEloList = members as Array<{ fullName?: string | null; isMock?: boolean; elo?: { eloPoints: number } }>;
+                                          return memberEloList.slice(0, 2).map((m, i) => (
+                                            <span key={i} className={`text-[9px] font-medium ${p1Won ? 'text-emerald-600/80' : 'text-slate-400'}`}>
+                                              {getShortName(m.fullName) || (m.isMock ? 'VĐV ảo' : 'N/A')}
+                                            </span>
+                                          ));
+                                        })()}
+                                      </div>
                                       {(() => {
                                         const members = match.participant1?.members || [];
                                         const memberEloList = members as Array<{ fullName?: string | null; isMock?: boolean; elo?: { eloPoints: number } }>;
@@ -831,20 +1116,11 @@ export default function MatchesListPage() {
                                         const pairElo = validMembers.length > 0
                                           ? Math.round(validMembers.reduce((acc: number, m) => acc + (m.elo?.eloPoints || 1000), 0) / validMembers.length)
                                           : null;
-                                        return (
-                                          <>
-                                            {memberEloList.slice(0, 2).map((m, i) => (
-                                              <span key={i} className="text-[9px] text-slate-400 font-medium">
-                                                {getShortName(m.fullName) || (m.isMock ? 'VĐV ảo' : 'N/A')}
-                                              </span>
-                                            ))}
-                                            {pairElo !== null && (
-                                              <span className="text-[9px] font-bold text-blue-600 bg-blue-50/60 px-1.5 py-0.5 rounded-full border border-blue-100/50 ml-1">
-                                                ELO Cặp: {pairElo}
-                                              </span>
-                                            )}
-                                          </>
-                                        );
+                                        return pairElo !== null ? (
+                                          <span className="text-[9px] font-bold text-blue-650 bg-blue-50/80 px-1.5 py-0.5 rounded-full border border-blue-150 block w-max mt-1">
+                                            ELO Cặp: {pairElo}
+                                          </span>
+                                        ) : null;
                                       })()}
                                     </div>
                                   )}
@@ -856,37 +1132,32 @@ export default function MatchesListPage() {
                                 <div className="flex items-center gap-1 shrink-0">
                                   {scoreSets.filter(set => set !== undefined && set.team1Score !== undefined && set.team2Score !== undefined).map((set, idx) => {
                                     const isSetDone = set.isFinished;
+                                    const isWinner = isSetDone && (Number(set.team1Score) > Number(set.team2Score));
                                     return (
                                       <div 
                                         key={idx} 
-                                        className={`w-6.5 h-6.5 rounded text-[10px] font-extrabold flex items-center justify-center border transition-all ${
-                                          isSetDone 
-                                            ? 'bg-slate-50 text-slate-600 border-slate-200 shadow-sm' 
-                                            : 'bg-rose-50 text-rose-600 border-rose-100 font-black animate-pulse'
+                                        className={`w-6.5 h-6.5 rounded text-[10px] flex items-center justify-center border transition-all ${
+                                          isLive 
+                                            ? 'bg-rose-50 text-rose-600 border-rose-100 font-bold animate-pulse'
+                                            : isWinner
+                                            ? 'bg-emerald-50 text-emerald-700 border-emerald-250 font-extrabold shadow-xs scale-103'
+                                            : 'bg-slate-50/70 text-slate-400 border-slate-200/50 font-medium'
                                         }`}
                                       >
                                         {set.team1Score}
                                       </div>
                                     );
                                   })}
-                                  {/* Tổng Set thắng */}
-                                  <div className="w-7.5 h-7.5 rounded-lg bg-blue-600 text-white font-black text-xs flex items-center justify-center border border-blue-700 shadow ml-1.5">
-                                    {match.p1SetsWon ?? 0}
-                                  </div>
                                 </div>
                               )}
                             </div>
 
                             {/* VĐV / Đội 2 */}
-                            <div className={`flex items-center justify-between gap-3 p-2.5 rounded-xl border transition-all ${
-                              p2Won 
-                                ? 'bg-emerald-100/60 border-emerald-200/85 shadow-2xs text-emerald-950' 
-                                : 'bg-slate-50/50 border-slate-100/70'
-                            }`}>
+                            <div className="flex items-center justify-between gap-3 p-2.5 rounded-lg border border-slate-100/70 bg-slate-50/50 transition-all">
                               <div className="flex items-center gap-2.5 flex-1 min-w-0">
                                 {renderTeamAvatars(match.participant2, 'bg-indigo-50', 'text-indigo-700')}
                                 <div className="min-w-0 flex-1">
-                                  <div className="font-bold text-slate-800 text-xs truncate">
+                                  <div className={`text-xs truncate ${p2Won ? 'text-emerald-700 font-extrabold' : 'text-slate-800 font-bold'}`}>
                                     {getTeamShortName(match.participant2?.teamName)}
                                   </div>
                                   
@@ -898,14 +1169,25 @@ export default function MatchesListPage() {
                                                   match.participant2?.members?.[0]?.elo?.eloPoints ?? 
                                                   1000;
                                       return (
-                                        <span className="text-[9px] font-bold text-blue-600 bg-blue-50/60 px-1.5 py-0.5 rounded-full border border-blue-100/50 block w-max mt-1">
+                                        <span className="text-[9px] font-bold text-blue-650 bg-blue-50/60 px-1.5 py-0.5 rounded-full border border-blue-100/55 block w-max mt-1">
                                           ELO: {elo}
                                         </span>
                                       );
                                     })()
                                   ) : (
-                                  // Đấu đôi: Hiển thị tên thành viên và ELO cặp
-                                    <div className="flex flex-wrap gap-x-2 gap-y-0.5 mt-0.5">
+                                    // Đấu đôi: Hiển thị tên thành viên và ELO cặp nằm dưới
+                                    <div className="flex flex-col mt-0.5">
+                                      <div className="flex flex-wrap gap-x-2 gap-y-0.5">
+                                        {(() => {
+                                          const members = match.participant2?.members || [];
+                                          const memberEloList = members as Array<{ fullName?: string | null; isMock?: boolean; elo?: { eloPoints: number } }>;
+                                          return memberEloList.slice(0, 2).map((m, i) => (
+                                            <span key={i} className={`text-[9px] font-medium ${p2Won ? 'text-emerald-600/80' : 'text-slate-400'}`}>
+                                              {getShortName(m.fullName) || (m.isMock ? 'VĐV ảo' : 'N/A')}
+                                            </span>
+                                          ));
+                                        })()}
+                                      </div>
                                       {(() => {
                                         const members = match.participant2?.members || [];
                                         const memberEloList = members as Array<{ fullName?: string | null; isMock?: boolean; elo?: { eloPoints: number } }>;
@@ -913,20 +1195,11 @@ export default function MatchesListPage() {
                                         const pairElo = validMembers.length > 0
                                           ? Math.round(validMembers.reduce((acc: number, m) => acc + (m.elo?.eloPoints || 1000), 0) / validMembers.length)
                                           : null;
-                                        return (
-                                          <>
-                                            {memberEloList.slice(0, 2).map((m, i) => (
-                                              <span key={i} className="text-[9px] text-slate-400 font-medium">
-                                                {getShortName(m.fullName) || (m.isMock ? 'VĐV ảo' : 'N/A')}
-                                              </span>
-                                            ))}
-                                            {pairElo !== null && (
-                                              <span className="text-[9px] font-bold text-blue-600 bg-blue-50/60 px-1.5 py-0.5 rounded-full border border-blue-100/50 ml-1">
-                                                ELO Cặp: {pairElo}
-                                              </span>
-                                            )}
-                                          </>
-                                        );
+                                        return pairElo !== null ? (
+                                          <span className="text-[9px] font-bold text-blue-650 bg-blue-50/80 px-1.5 py-0.5 rounded-full border border-blue-150 block w-max mt-1">
+                                            ELO Cặp: {pairElo}
+                                          </span>
+                                        ) : null;
                                       })()}
                                     </div>
                                   )}
@@ -938,23 +1211,22 @@ export default function MatchesListPage() {
                                 <div className="flex items-center gap-1 shrink-0">
                                   {scoreSets.filter(set => set !== undefined && set.team1Score !== undefined && set.team2Score !== undefined).map((set, idx) => {
                                     const isSetDone = set.isFinished;
+                                    const isWinner = isSetDone && (Number(set.team2Score) > Number(set.team1Score));
                                     return (
                                       <div 
                                         key={idx} 
-                                        className={`w-6.5 h-6.5 rounded text-[10px] font-extrabold flex items-center justify-center border transition-all ${
-                                          isSetDone 
-                                            ? 'bg-slate-50 text-slate-600 border-slate-200 shadow-sm' 
-                                            : 'bg-rose-50 text-rose-600 border-rose-100 font-black animate-pulse'
+                                        className={`w-6.5 h-6.5 rounded text-[10px] flex items-center justify-center border transition-all ${
+                                          isLive 
+                                            ? 'bg-rose-50 text-rose-600 border-rose-100 font-bold animate-pulse'
+                                            : isWinner
+                                            ? 'bg-emerald-50 text-emerald-700 border-emerald-250 font-extrabold shadow-xs scale-103'
+                                            : 'bg-slate-50/70 text-slate-400 border-slate-200/50 font-medium'
                                         }`}
                                       >
                                         {set.team2Score}
                                       </div>
                                     );
                                   })}
-                                  {/* Tổng Set thắng */}
-                                  <div className="w-7.5 h-7.5 rounded-lg bg-blue-600 text-white font-black text-xs flex items-center justify-center border border-blue-700 shadow ml-1.5">
-                                    {match.p2SetsWon ?? 0}
-                                  </div>
                                 </div>
                               )}
                             </div>
@@ -963,12 +1235,7 @@ export default function MatchesListPage() {
                           {/* Phân môn & Sân */}
                           <div className="text-[10px] font-bold text-slate-400 flex items-center gap-2.5 justify-center border-t border-slate-100 pt-2.5">
                             <span className="flex items-center gap-1 text-slate-500">
-                              {sportLogo ? (
-                                <img src={sportLogo} alt="" className="w-3.5 h-3.5 object-contain opacity-70" />
-                              ) : (
-                                <span>🏆</span>
-                              )}
-                              <span className="font-bold text-slate-800">
+                              <span className="font-bold text-slate-800 whitespace-nowrap">
                                 {getFormatLabel(match.tournament?.matchType, match.tournament?.genderRestriction)}
                               </span>
                             </span>
@@ -982,12 +1249,24 @@ export default function MatchesListPage() {
                         {/* Actions */}
                         <div className="px-3 py-1.5 bg-slate-50/50 border-t border-slate-100 grid grid-cols-3 gap-1 text-center text-[11px] font-bold text-slate-500">
                           <button 
-                            onClick={() => {
+                            onClick={async () => {
                               setCheerCounts(prev => ({
                                 ...prev,
-                                [match.id]: (prev[match.id] || 0) + 1
+                                [match.id]: (prev[match.id] ?? match.cheerCount ?? 0) + 1,
                               }));
-                              toast.success('Cảm ơn bạn đã cổ vũ!');
+                              try {
+                                const res = await matchesApi.cheerMatch(match.id);
+                                setCheerCounts(prev => ({
+                                  ...prev,
+                                  [match.id]: res.cheerCount,
+                                }));
+                              } catch {
+                                setCheerCounts(prev => ({
+                                  ...prev,
+                                  [match.id]: Math.max(0, (prev[match.id] ?? 1) - 1),
+                                }));
+                                toast.error('Không thể gửi cổ vũ, vui lòng thử lại.');
+                              }
                             }}
                             className="flex items-center justify-center gap-1 hover:text-rose-600 transition-colors py-2 min-h-[44px] cursor-pointer"
                           >
@@ -1054,13 +1333,13 @@ export default function MatchesListPage() {
           <button
             onClick={() => setPage(p => Math.max(1, p - 1))}
             disabled={page === 1}
-            className="px-3 py-1.5 text-xs font-black text-slate-655 bg-white border border-slate-200 hover:border-slate-350 rounded-xl disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+            className="px-3 py-1.5 text-xs font-bold text-slate-655 bg-white border border-slate-200 hover:border-slate-350 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
           >
             Trước
           </button>
           
           <button
-            className="relative px-3.5 py-2 flex items-center justify-center text-xs font-black rounded-xl border border-indigo-600 bg-indigo-600 text-white shadow-sm"
+            className="relative px-3.5 py-2 flex items-center justify-center text-xs font-bold rounded-lg border border-indigo-600 bg-indigo-600 text-white shadow-sm"
           >
             Trang {page}
           </button>
@@ -1068,7 +1347,7 @@ export default function MatchesListPage() {
           {page < totalTournamentsPages && (
             <button
               onClick={() => setPage(page + 1)}
-              className="relative px-3.5 py-2 flex items-center justify-center text-xs font-black rounded-xl border border-slate-200 bg-white text-slate-700 hover:border-slate-350 hover:text-slate-900 cursor-pointer"
+              className="relative px-3.5 py-2 flex items-center justify-center text-xs font-bold rounded-lg border border-slate-200 bg-white text-slate-700 hover:border-slate-350 hover:text-slate-900 cursor-pointer"
             >
               Trang {page + 1}
             </button>
@@ -1077,7 +1356,7 @@ export default function MatchesListPage() {
           <button
             onClick={() => setPage(p => Math.min(totalTournamentsPages, p + 1))}
             disabled={page === totalTournamentsPages}
-            className="px-3 py-1.5 text-xs font-black text-slate-655 bg-white border border-slate-200 hover:border-slate-350 rounded-xl disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+            className="px-3 py-1.5 text-xs font-bold text-slate-655 bg-white border border-slate-200 hover:border-slate-350 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
           >
             Sau
           </button>

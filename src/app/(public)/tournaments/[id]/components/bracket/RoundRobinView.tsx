@@ -87,7 +87,7 @@ export function RoundRobinView({
     <div className="flex flex-col gap-8">
       {/* standings table */}
       <div>
-        <h5 className="text-sm font-extrabold text-slate-800 mb-3 flex items-center gap-2">
+        <h5 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
           <Trophy className="w-4 h-4 text-amber-500" /> Bảng xếp hạng
           <button
             onClick={() => setShowInfo(!showInfo)}
@@ -99,7 +99,7 @@ export function RoundRobinView({
         </h5>
 
         {showInfo && (
-          <div className="relative mb-4 bg-blue-50 border border-blue-200 rounded-xl p-4 pr-8 text-xs text-blue-900 leading-relaxed">
+          <div className="relative mb-4 bg-blue-50 border border-blue-200 rounded-lg p-4 pr-8 text-xs text-blue-900 leading-relaxed">
             <button
               onClick={() => setShowInfo(false)}
               className="absolute top-2 right-2 text-blue-400 hover:text-blue-700 cursor-pointer"
@@ -130,7 +130,7 @@ export function RoundRobinView({
           </div>
         )}
  
-        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+        <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
           <table className="w-full text-sm">
             <thead className="bg-slate-50 border-b border-slate-200 text-[10px] uppercase text-slate-500 font-bold">
               <tr>
@@ -168,7 +168,7 @@ export function RoundRobinView({
                   >
                     <td className="px-3 py-3 text-center">
                       {isTied ? (
-                        <span className="text-amber-500 font-black text-xs">?</span>
+                        <span className="text-amber-500 font-bold text-xs">?</span>
                       ) : idx === 0 && allDone && !hasTies ? (
                         <span className="inline-flex items-center justify-center w-7 h-7 bg-amber-400 rounded-full ring-2 ring-amber-300 shadow-lg shadow-amber-200">
                            <Trophy className="w-4 h-4 text-white fill-white" />
@@ -186,13 +186,13 @@ export function RoundRobinView({
                     <td className="px-3 py-3 font-semibold text-slate-800">
                       <span className="flex items-center gap-1.5">
                         {row.seed != null && (
-                          <span className="text-[9px] bg-slate-200 text-slate-600 px-1 rounded font-extrabold leading-4">
+                          <span className="text-[9px] bg-slate-200 text-slate-600 px-1 rounded font-bold leading-4">
                             #{row.seed}
                           </span>
                         )}
                         {row.teamName}
                         {teamsAdvancing > 0 && idx < teamsAdvancing && (
-                          <span className="inline-flex items-center gap-0.5 text-[9px] font-extrabold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded-full whitespace-nowrap">
+                          <span className="inline-flex items-center gap-0.5 text-[9px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded-full whitespace-nowrap">
                             <CheckCircle2 className="w-2.5 h-2.5" />
                             Đi tiếp
                           </span>
@@ -222,18 +222,18 @@ export function RoundRobinView({
                       {row.pointsFor - row.pointsAgainst >= 0 ? '+' : ''}
                       {row.pointsFor - row.pointsAgainst}
                     </td>
-                    <td className="px-3 py-3 text-center font-black text-blue-700 bg-blue-50/20">
+                    <td className="px-3 py-3 text-center font-bold text-blue-700 bg-blue-50/20">
                       {row.points}
                     </td>
                     <td className="px-3 py-3 text-center">
                       {isTied &&
                         (tiebreakerMode === 'playoff' ? (
-                          <span className="inline-flex items-center gap-0.5 text-[9px] font-extrabold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded-full whitespace-nowrap">
+                          <span className="inline-flex items-center gap-0.5 text-[9px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded-full whitespace-nowrap">
                             <AlertTriangle className="w-2.5 h-2.5" />
                             Trận phụ
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-0.5 text-[9px] font-extrabold text-slate-500 bg-slate-200 px-1.5 py-0.5 rounded-full whitespace-nowrap">
+                          <span className="inline-flex items-center gap-0.5 text-[9px] font-bold text-slate-500 bg-slate-200 px-1.5 py-0.5 rounded-full whitespace-nowrap">
                             Đồng hạng
                           </span>
                         ))}
@@ -303,7 +303,7 @@ export function RoundRobinView({
 
       {/* match schedule — flat list (khong chia vong) */}
       <div>
-        <h5 className="text-sm font-extrabold text-slate-800 mb-3 flex items-center gap-2">
+        <h5 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
           <Clock className="w-4 h-4 text-slate-400" /> Lịch trận đấu
           <span className="text-[10px] text-slate-400 font-semibold normal-case">
             ({matches.filter((m) => !m.isBye).length} trận)
@@ -312,11 +312,11 @@ export function RoundRobinView({
 
         <div className="flex gap-4 overflow-x-auto pb-4 pt-1 -mx-1 px-1 no-scrollbar">
           {matches.filter((m) => !m.isBye).length === 0 ? (
-            <div className="w-full text-center py-10 text-slate-400 italic text-sm border border-dashed border-slate-200 rounded-xl">
+            <div className="w-full text-center py-10 text-slate-400 italic text-sm border border-dashed border-slate-200 rounded-lg">
               Chưa có trận đấu nào.
             </div>
           ) : (
-            <div className="w-full bg-slate-50/60 rounded-xl border border-slate-200 p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+            <div className="w-full bg-slate-50/60 rounded-lg border border-slate-200 p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
               {matches
                 .filter((m) => !m.isBye)
                 .sort((a, b) => a.matchOrder - b.matchOrder)
@@ -329,7 +329,7 @@ export function RoundRobinView({
                       data-bracket-match-id={m.id}
                       onClick={() => onSelectMatch?.(m)}
                       className={
-                        'flex min-h-[148px] cursor-pointer flex-col rounded-xl border p-3.5 text-xs font-semibold shadow-sm transition-all ' +
+                        'flex min-h-[148px] cursor-pointer flex-col rounded-lg border p-3.5 text-xs font-semibold shadow-sm transition-all ' +
                         (selectedMatchId === m.id
                           ? 'border-amber-400 ring-4 ring-amber-100 bg-amber-50/60'
                           : live
@@ -342,18 +342,18 @@ export function RoundRobinView({
                       <div className="mb-1.5 flex items-center justify-between">
                         <span className="flex items-center gap-1">
                           <span className="text-[8px] text-slate-400">#{m.matchOrder}</span>
-                          <span className="text-[8px] font-extrabold text-slate-500 bg-slate-200 px-1.5 py-0.5 rounded">Vòng {m.roundNumber}</span>
+                          <span className="text-[8px] font-bold text-slate-500 bg-slate-200 px-1.5 py-0.5 rounded">Vòng {m.roundNumber}</span>
                         </span>
-                        {live && <span className="flex items-center gap-0.5 text-[8px] font-extrabold text-blue-600 animate-pulse"><Play className="w-2 h-2 fill-blue-600" /> TRỰC TIẾP</span>}
+                        {live && <span className="flex items-center gap-0.5 text-[8px] font-bold text-blue-600 animate-pulse"><Play className="w-2 h-2 fill-blue-600" /> TRỰC TIẾP</span>}
                       </div>
                       <div className="space-y-2.5">
                         <div className="flex min-h-[28px] items-center justify-between">
                           <span className={'truncate flex-1 pr-2 ' + (m.winnerId === m.participant1?.id ? 'font-bold text-emerald-800' : 'text-slate-600')}>{m.participant1?.teamName ?? 'Chờ xác định'}</span>
-                          <span className={'font-black text-xs ' + (m.winnerId === m.participant1?.id ? 'text-emerald-700' : 'text-slate-400')}>{done || live ? m.p1SetsWon : '-'}</span>
+                          <span className={'font-bold text-xs ' + (m.winnerId === m.participant1?.id ? 'text-emerald-700' : 'text-slate-400')}>{done || live ? m.p1SetsWon : '-'}</span>
                         </div>
                         <div className="flex min-h-[28px] items-center justify-between">
                           <span className={'truncate flex-1 pr-2 ' + (m.winnerId === m.participant2?.id ? 'font-bold text-emerald-800' : 'text-slate-600')}>{m.participant2?.teamName ?? 'Chờ xác định'}</span>
-                          <span className={'font-black text-xs ' + (m.winnerId === m.participant2?.id ? 'text-emerald-700' : 'text-slate-400')}>{done || live ? m.p2SetsWon : '-'}</span>
+                          <span className={'font-bold text-xs ' + (m.winnerId === m.participant2?.id ? 'text-emerald-700' : 'text-slate-400')}>{done || live ? m.p2SetsWon : '-'}</span>
                         </div>
                       </div>
                       <div className="mt-2.5 pt-2.5 border-t border-slate-150 flex flex-1 flex-col justify-end gap-1.5">
@@ -366,7 +366,7 @@ export function RoundRobinView({
                           <span className="truncate">{m.courtName ? m.courtName + (m.courtAddress ? ' (' + m.courtAddress + ')' : '') : 'Chưa xếp sân'}</span>
                         </div>
                         {onScheduleMatch && !done && m.participant1 && m.participant2 && (
-                          <button onClick={() => onScheduleMatch(m)} className="mt-1 w-full text-[8px] font-extrabold text-blue-600 border border-blue-200 bg-white hover:bg-blue-50 rounded-lg py-1 transition-colors cursor-pointer">Xếp Sân & Giờ</button>
+                          <button onClick={() => onScheduleMatch(m)} className="mt-1 w-full text-[8px] font-bold text-blue-600 border border-blue-200 bg-white hover:bg-blue-50 rounded-lg py-1 transition-colors cursor-pointer">Xếp Sân & Giờ</button>
                         )}
                       </div>
                     </div>

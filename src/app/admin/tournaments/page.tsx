@@ -314,7 +314,7 @@ export default function AdminTournamentsPage() {
       </div>
 
       {/* Search and Filter Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white border border-slate-200 p-4 rounded-2xl shadow-sm">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white border border-slate-200 p-4 rounded-lg shadow-sm">
         <form onSubmit={handleSearchSubmit} className="flex gap-3 max-w-md w-full">
           <div className="relative flex-1">
             <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
@@ -323,12 +323,12 @@ export default function AdminTournamentsPage() {
               placeholder="Tìm kiếm theo tên giải đấu..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white rounded-xl pl-11 pr-4 py-2 text-sm text-slate-800 placeholder-slate-400 outline-none transition-colors"
+              className="w-full bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white rounded-lg pl-11 pr-4 py-2 text-sm text-slate-800 placeholder-slate-400 outline-none transition-colors"
             />
           </div>
           <button
             type="submit"
-            className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-5 py-2 rounded-xl transition-colors active:scale-95 whitespace-nowrap"
+            className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-5 py-2 rounded-lg transition-colors active:scale-95 whitespace-nowrap"
           >
             Tìm kiếm
           </button>
@@ -339,13 +339,13 @@ export default function AdminTournamentsPage() {
           <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
           <input type="text" placeholder="Từ ngày (dd/mm/yyyy)" value={dateFrom}
             onChange={(e) => setDateFrom(e.target.value)}
-            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-600 focus:outline-none focus:border-blue-500 placeholder-gray-400" />
+            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-600 focus:outline-none focus:border-blue-500 placeholder-gray-400" />
         </div>
         <div className="flex items-center gap-2 min-w-[130px]">
           <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
           <input type="text" placeholder="Đến ngày (dd/mm/yyyy)" value={dateTo}
             onChange={(e) => setDateTo(e.target.value)}
-            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-600 focus:outline-none focus:border-blue-500 placeholder-gray-400" />
+            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-600 focus:outline-none focus:border-blue-500 placeholder-gray-400" />
         </div>
 
         {/* Status Filter Tabs */}
@@ -384,12 +384,12 @@ export default function AdminTournamentsPage() {
 
       {/* Main Content */}
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-20 bg-white border border-slate-200 rounded-2xl shadow-sm">
+        <div className="flex flex-col items-center justify-center py-20 bg-white border border-slate-200 rounded-lg shadow-sm">
           <Loader2 className="w-10 h-10 text-blue-600 animate-spin mb-3" />
           <p className="text-xs text-slate-500 font-medium">Đang tải danh sách giải đấu...</p>
         </div>
       ) : filteredTournaments.length === 0 ? (
-        <div className="bg-white border border-slate-200 rounded-2xl p-16 text-center text-slate-500 space-y-2 shadow-sm">
+        <div className="bg-white border border-slate-200 rounded-lg p-16 text-center text-slate-500 space-y-2 shadow-sm">
           <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto text-slate-400">
             <Trophy className="w-6 h-6" />
           </div>
@@ -397,7 +397,7 @@ export default function AdminTournamentsPage() {
           <p className="text-xs text-slate-500">Thử tìm kiếm với từ khóa khác.</p>
         </div>
       ) : (
-        <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+        <div className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
@@ -449,7 +449,7 @@ export default function AdminTournamentsPage() {
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => handleOpenDetail(item.id)}
-                          className="bg-blue-50 hover:bg-blue-600 text-blue-600 hover:text-white border border-blue-200 hover:border-transparent px-2.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 transition-all active:scale-95 disabled:opacity-50"
+                          className="bg-blue-50 hover:bg-blue-600 text-blue-600 hover:text-white border border-blue-200 hover:border-transparent px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all active:scale-95 disabled:opacity-50"
                         >
                           <Eye className="w-3.5 h-3.5" />
                           Chi tiết
@@ -459,7 +459,7 @@ export default function AdminTournamentsPage() {
                             <button
                               onClick={() => handleTournamentAction(item.id, 'approve-delete')}
                               disabled={processing}
-                              className="bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white border border-rose-200 hover:border-transparent px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 transition-all active:scale-95 disabled:opacity-50"
+                              className="bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white border border-rose-200 hover:border-transparent px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all active:scale-95 disabled:opacity-50"
                             >
                               <Check className="w-3.5 h-3.5" />
                               Duyệt xóa
@@ -467,7 +467,7 @@ export default function AdminTournamentsPage() {
                             <button
                               onClick={() => handleOpenActionModal(item.id, item.name, 'reject-delete')}
                               disabled={processing}
-                              className="bg-slate-50 hover:bg-slate-600 text-slate-600 hover:text-white border border-slate-200 hover:border-transparent px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 transition-all active:scale-95 disabled:opacity-50"
+                              className="bg-slate-50 hover:bg-slate-600 text-slate-600 hover:text-white border border-slate-200 hover:border-transparent px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all active:scale-95 disabled:opacity-50"
                             >
                               <X className="w-3.5 h-3.5" />
                               Từ chối
@@ -479,7 +479,7 @@ export default function AdminTournamentsPage() {
                             <button
                               onClick={() => handleTournamentAction(item.id, 'approve')}
                               disabled={processing}
-                              className="bg-emerald-50 hover:bg-emerald-600 text-emerald-600 hover:text-white border border-emerald-200 hover:border-transparent px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 transition-all active:scale-95 disabled:opacity-50"
+                              className="bg-emerald-50 hover:bg-emerald-600 text-emerald-600 hover:text-white border border-emerald-200 hover:border-transparent px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all active:scale-95 disabled:opacity-50"
                             >
                               <Check className="w-3.5 h-3.5" />
                               Duyệt
@@ -487,7 +487,7 @@ export default function AdminTournamentsPage() {
                             <button
                               onClick={() => handleOpenActionModal(item.id, item.name, 'reject')}
                               disabled={processing}
-                              className="bg-amber-50 hover:bg-amber-600 text-amber-600 hover:text-white border border-amber-200 hover:border-transparent px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 transition-all active:scale-95 disabled:opacity-50"
+                              className="bg-amber-50 hover:bg-amber-600 text-amber-600 hover:text-white border border-amber-200 hover:border-transparent px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all active:scale-95 disabled:opacity-50"
                             >
                               <X className="w-3.5 h-3.5" />
                               Từ chối
@@ -498,7 +498,7 @@ export default function AdminTournamentsPage() {
                           <button
                             onClick={() => handleOpenActionModal(item.id, item.name, 'suspend')}
                             disabled={processing}
-                            className="bg-red-50 hover:bg-red-600 text-red-600 hover:text-white border border-red-200 hover:border-transparent px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 transition-all active:scale-95 disabled:opacity-50"
+                            className="bg-red-50 hover:bg-red-600 text-red-600 hover:text-white border border-red-200 hover:border-transparent px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all active:scale-95 disabled:opacity-50"
                           >
                             <Lock className="w-3.5 h-3.5" />
                             Đình chỉ
@@ -508,7 +508,7 @@ export default function AdminTournamentsPage() {
                           <button
                             onClick={() => handleTournamentAction(item.id, 'unsuspend')}
                             disabled={processing}
-                            className="bg-emerald-50 hover:bg-emerald-600 text-emerald-600 hover:text-white border border-emerald-200 hover:border-transparent px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 transition-all active:scale-95 disabled:opacity-50"
+                            className="bg-emerald-50 hover:bg-emerald-600 text-emerald-600 hover:text-white border border-emerald-200 hover:border-transparent px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all active:scale-95 disabled:opacity-50"
                           >
                             <Unlock className="w-3.5 h-3.5" />
                             Khôi phục
@@ -518,7 +518,7 @@ export default function AdminTournamentsPage() {
                           <button
                             onClick={() => handleOpenActionModal(item.id, item.name, 'ban')}
                             disabled={processing}
-                            className="bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white border border-rose-200 hover:border-transparent px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 transition-all active:scale-95 disabled:opacity-50"
+                            className="bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white border border-rose-200 hover:border-transparent px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all active:scale-95 disabled:opacity-50"
                           >
                             <XCircle className="w-3.5 h-3.5" />
                             Hủy vĩnh viễn
@@ -538,7 +538,7 @@ export default function AdminTournamentsPage() {
               <button
                 disabled={page === 1}
                 onClick={() => setPage(p => Math.max(p - 1, 1))}
-                className="bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 px-4 py-2 rounded-xl text-xs font-semibold disabled:opacity-50 transition-colors"
+                className="bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 px-4 py-2 rounded-lg text-xs font-semibold disabled:opacity-50 transition-colors"
               >
                 Trước
               </button>
@@ -546,7 +546,7 @@ export default function AdminTournamentsPage() {
               <button
                 disabled={page === totalPages}
                 onClick={() => setPage(p => Math.min(p + 1, totalPages))}
-                className="bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 px-4 py-2 rounded-xl text-xs font-semibold disabled:opacity-50 transition-colors"
+                className="bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 px-4 py-2 rounded-lg text-xs font-semibold disabled:opacity-50 transition-colors"
               >
                 Sau
               </button>
@@ -558,7 +558,7 @@ export default function AdminTournamentsPage() {
       {/* Details Modal */}
       {selectedTournamentId && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-all">
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-2xl w-full max-h-[85vh] overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-white rounded-xl border border-slate-200 shadow-2xl max-w-2xl w-full max-h-[85vh] overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200">
             {/* Header */}
             <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
               <div className="flex items-center gap-2.5">
@@ -586,7 +586,7 @@ export default function AdminTournamentsPage() {
               ) : detailTournament ? (
                 <div className="space-y-6">
                   {/* Banner & Basic Info */}
-                  <div className="relative rounded-2xl overflow-hidden aspect-[21/9] bg-slate-100 border border-slate-200">
+                  <div className="relative rounded-lg overflow-hidden aspect-[21/9] bg-slate-100 border border-slate-200">
                     {detailTournament.bannerUrl ? (
                       <img
                         src={detailTournament.bannerUrl}
@@ -709,7 +709,7 @@ export default function AdminTournamentsPage() {
                   {detailTournament.description && (
                     <div className="border-t border-slate-100 pt-4">
                       <span className="text-xs text-slate-400 block font-medium mb-1">Mô tả giải đấu</span>
-                      <div className="bg-slate-50 rounded-xl p-4 text-xs text-slate-600 leading-relaxed max-h-36 overflow-y-auto whitespace-pre-wrap">
+                      <div className="bg-slate-50 rounded-lg p-4 text-xs text-slate-600 leading-relaxed max-h-36 overflow-y-auto whitespace-pre-wrap">
                         {detailTournament.description}
                       </div>
                     </div>
@@ -732,7 +732,7 @@ export default function AdminTournamentsPage() {
                           setSelectedTournamentId(null);
                         }}
                         disabled={processing}
-                        className="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all active:scale-95 disabled:opacity-50"
+                        className="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all active:scale-95 disabled:opacity-50"
                       >
                         <Check className="w-4 h-4" />
                         Duyệt xóa vĩnh viễn
@@ -743,7 +743,7 @@ export default function AdminTournamentsPage() {
                           setSelectedTournamentId(null);
                         }}
                         disabled={processing}
-                        className="bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all active:scale-95 disabled:opacity-50"
+                        className="bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all active:scale-95 disabled:opacity-50"
                       >
                         <X className="w-4 h-4" />
                         Từ chối yêu cầu xóa
@@ -758,7 +758,7 @@ export default function AdminTournamentsPage() {
                           setSelectedTournamentId(null);
                         }}
                         disabled={processing}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all active:scale-95 disabled:opacity-50"
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all active:scale-95 disabled:opacity-50"
                       >
                         <Check className="w-4 h-4" />
                         Phê duyệt ELO
@@ -769,7 +769,7 @@ export default function AdminTournamentsPage() {
                           setSelectedTournamentId(null);
                         }}
                         disabled={processing}
-                        className="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all active:scale-95 disabled:opacity-50"
+                        className="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all active:scale-95 disabled:opacity-50"
                       >
                         <X className="w-4 h-4" />
                         Từ chối phê duyệt
@@ -783,7 +783,7 @@ export default function AdminTournamentsPage() {
                         setSelectedTournamentId(null);
                       }}
                       disabled={processing}
-                      className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all active:scale-95 disabled:opacity-50"
+                      className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all active:scale-95 disabled:opacity-50"
                     >
                       <Lock className="w-4 h-4" />
                       Tạm đình chỉ giải đấu
@@ -796,7 +796,7 @@ export default function AdminTournamentsPage() {
                         setSelectedTournamentId(null);
                       }}
                       disabled={processing}
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all active:scale-95 disabled:opacity-50"
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all active:scale-95 disabled:opacity-50"
                     >
                       <Unlock className="w-4 h-4" />
                       Khôi phục giải đấu
@@ -809,7 +809,7 @@ export default function AdminTournamentsPage() {
                         setSelectedTournamentId(null);
                       }}
                       disabled={processing}
-                      className="bg-rose-50 hover:bg-rose-100 text-rose-600 px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all active:scale-95 disabled:opacity-50"
+                      className="bg-rose-50 hover:bg-rose-100 text-rose-600 px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all active:scale-95 disabled:opacity-50"
                     >
                       <XCircle className="w-4 h-4" />
                       Hủy vĩnh viễn (Cấm)
@@ -822,7 +822,7 @@ export default function AdminTournamentsPage() {
                   setSelectedTournamentId(null);
                   setDetailTournament(null);
                 }}
-                className="bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 px-4 py-2 rounded-xl text-xs font-semibold transition-all active:scale-95"
+                className="bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 px-4 py-2 rounded-lg text-xs font-semibold transition-all active:scale-95"
               >
                 Đóng
               </button>
@@ -833,7 +833,7 @@ export default function AdminTournamentsPage() {
 
       {actionModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-lg overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+          <div className="w-full max-w-lg overflow-hidden rounded-lg border border-slate-200 bg-white shadow-2xl">
             <div className="border-b border-slate-200 p-6">
               <h3 className="text-lg font-bold text-slate-900">{actionModalTitle}</h3>
               <p className="mt-1 text-sm text-slate-500">
@@ -850,7 +850,7 @@ export default function AdminTournamentsPage() {
                 value={actionNote}
                 onChange={(event) => setActionNote(event.target.value)}
                 placeholder="Ví dụ: Hồ sơ chưa đủ điều kiện tính điểm ELO, thiếu minh chứng hoặc đang vi phạm chính sách hệ thống."
-                className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-800 outline-none transition-colors focus:border-blue-500"
+                className="w-full rounded-lg border border-slate-200 px-4 py-3 text-sm text-slate-800 outline-none transition-colors focus:border-blue-500"
               />
               <p className="text-xs text-slate-500">
                 Ghi chú này sẽ được dùng làm lý do xử lý cho các nhánh từ chối hoặc chế tài.
@@ -863,14 +863,14 @@ export default function AdminTournamentsPage() {
                   setActionModal(null);
                   setActionNote('');
                 }}
-                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-100"
+                className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-100"
               >
                 Hủy
               </button>
               <button
                 onClick={() => void handleSubmitActionModal()}
                 disabled={processing}
-                className="rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-blue-500 disabled:opacity-50"
+                className="rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-blue-500 disabled:opacity-50"
               >
                 {processing ? 'Đang xử lý...' : 'Xác nhận'}
               </button>

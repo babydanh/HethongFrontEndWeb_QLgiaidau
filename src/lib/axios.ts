@@ -136,6 +136,16 @@ api.interceptors.response.use(
       toast.error('Hệ thống đang gặp lỗi. Vui lòng thử lại sau.');
     }
 
+    // Retry on 429 — max 1 lần, delay 1.5s (fail fast)
+    if (error.response?.status === 429) {
+      if (!originalRequest._retry429) {
+        originalRequest._retry429 = true;
+        console.warn('[429] Retrying in 1.5s...');
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        return api(originalRequest);
+      }
+    }
+
     return Promise.reject(error);
   }
 );

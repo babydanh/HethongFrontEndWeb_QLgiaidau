@@ -180,11 +180,11 @@ export function DoubleElimView({
       className={
         isFullscreen
           ? 'fixed inset-0 z-50 bg-slate-50 p-6 overflow-hidden flex flex-col'
-          : 'relative border border-slate-200/80 bg-slate-50/20 rounded-2xl p-4 shadow-sm'
+          : 'relative border border-slate-200/80 bg-slate-50/20 rounded-lg p-4 shadow-sm'
       }
     >
       {/* Zoom Controls */}
-      <div className="absolute top-4 right-4 z-20 flex items-center gap-1.5 bg-white border border-slate-200 shadow-sm rounded-xl p-1 text-xs font-bold text-slate-600">
+      <div className="absolute top-4 right-4 z-20 flex items-center gap-1.5 bg-white border border-slate-200 shadow-sm rounded-lg p-1 text-xs font-bold text-slate-600">
         <button
           onClick={() => setZoom((z) => Math.max(z - 0.1, 0.5))}
           className="w-7 h-7 flex items-center justify-center hover:bg-slate-50 rounded-lg transition-colors cursor-pointer border border-slate-100"
@@ -299,7 +299,7 @@ export function DoubleElimView({
               style={{ top: UB_TOP - 56, left: 0 }}
             >
               <div className="w-1 h-3.5 bg-indigo-500 rounded-full" />
-                <span className="text-[11px] font-extrabold text-slate-600 uppercase tracking-widest">
+                <span className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">
                   Nhánh thắng
               </span>
             </div>
@@ -311,7 +311,7 @@ export function DoubleElimView({
                 style={{ top: LB_TOP - 56, left: 0 }}
               >
                 <div className="w-1 h-3.5 bg-rose-500 rounded-full" />
-                  <span className="text-[11px] font-extrabold text-slate-600 uppercase tracking-widest">
+                  <span className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">
                     Nhánh thua
                 </span>
               </div>
@@ -328,7 +328,7 @@ export function DoubleElimView({
                   className="absolute flex justify-center"
                   style={{ left: colX, width: CARD_W, top: UB_TOP - 36 }}
                 >
-                  <div className="text-[10px] font-extrabold text-indigo-650 uppercase tracking-widest bg-indigo-50/80 border border-indigo-100 rounded-full px-3 py-1 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+                  <div className="text-[10px] font-bold text-indigo-650 uppercase tracking-widest bg-indigo-50/80 border border-indigo-100 rounded-full px-3 py-1 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
                     {label}
                   </div>
                 </div>
@@ -351,7 +351,7 @@ export function DoubleElimView({
                   className="absolute flex justify-center"
                   style={{ left: colX, width: CARD_W, top: LB_TOP - 36 }}
                 >
-                  <div className="text-[10px] font-extrabold text-rose-650 uppercase tracking-widest bg-rose-50/80 border border-rose-100 rounded-full px-3 py-1 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+                  <div className="text-[10px] font-bold text-rose-650 uppercase tracking-widest bg-rose-50/80 border border-rose-100 rounded-full px-3 py-1 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
                     {label}
                   </div>
                 </div>
@@ -368,7 +368,7 @@ export function DoubleElimView({
                 }}
               >
                 <div className="w-1 h-3.5 bg-amber-500 rounded-full" />
-                <span className="text-[11px] font-extrabold text-slate-600 uppercase tracking-widest">
+                <span className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">
                   Chung kết tổng
                 </span>
               </div>
@@ -383,7 +383,7 @@ export function DoubleElimView({
               >
                 <div className="flex items-center gap-2">
                   <div className="w-1 h-3.5 bg-slate-400 rounded-full" />
-                  <span className="text-[11px] font-extrabold text-slate-500 uppercase tracking-widest">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
                     Chung kết phụ
                   </span>
                 </div>

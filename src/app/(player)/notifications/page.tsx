@@ -195,7 +195,7 @@ export default function NotificationsPage() {
   return (
     <main className="min-h-[calc(100vh-4rem)] bg-slate-50">
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-8 md:px-6 lg:px-8">
-        <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+        <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
           <div className="flex flex-col gap-6 border-b border-slate-100 px-6 py-6 md:flex-row md:items-end md:justify-between">
             <div className="space-y-2">
               <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
@@ -213,12 +213,12 @@ export default function NotificationsPage() {
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <div className="inline-flex rounded-2xl bg-slate-100 p-1">
+              <div className="inline-flex rounded-lg bg-slate-100 p-1">
                 <button
                   type="button"
                   onClick={() => setFilter('all')}
                   className={cn(
-                    'rounded-xl px-4 py-2 text-sm font-semibold transition-colors',
+                    'rounded-lg px-4 py-2 text-sm font-semibold transition-colors',
                     filter === 'all'
                       ? 'bg-white text-slate-900 shadow-sm'
                       : 'text-slate-500 hover:text-slate-700',
@@ -230,7 +230,7 @@ export default function NotificationsPage() {
                   type="button"
                   onClick={() => setFilter('unread')}
                   className={cn(
-                    'rounded-xl px-4 py-2 text-sm font-semibold transition-colors',
+                    'rounded-lg px-4 py-2 text-sm font-semibold transition-colors',
                     filter === 'unread'
                       ? 'bg-white text-slate-900 shadow-sm'
                       : 'text-slate-500 hover:text-slate-700',
@@ -244,7 +244,7 @@ export default function NotificationsPage() {
                 type="button"
                 onClick={handleMarkAllAsRead}
                 disabled={unreadCount === 0}
-                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <CheckCheck className="h-4 w-4" />
                 Đánh dấu tất cả
@@ -253,19 +253,19 @@ export default function NotificationsPage() {
           </div>
 
           <div className="grid gap-4 border-b border-slate-100 bg-slate-50/80 px-6 py-4 md:grid-cols-3">
-            <div className="rounded-2xl bg-white p-4 shadow-sm">
+            <div className="rounded-lg bg-white p-4 shadow-sm">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
                 Tổng số
               </p>
               <p className="mt-2 text-2xl font-bold text-slate-950">{notifications.length}</p>
             </div>
-            <div className="rounded-2xl bg-white p-4 shadow-sm">
+            <div className="rounded-lg bg-white p-4 shadow-sm">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
                 Chưa đọc
               </p>
               <p className="mt-2 text-2xl font-bold text-blue-700">{unreadCount}</p>
             </div>
-            <div className="rounded-2xl bg-white p-4 shadow-sm">
+            <div className="rounded-lg bg-white p-4 shadow-sm">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
                 Bộ lọc hiện tại
               </p>
@@ -277,7 +277,7 @@ export default function NotificationsPage() {
 
           <div className="px-6 py-6">
             {errorMessage ? (
-              <div className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
+              <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
                 <p className="text-sm text-amber-900">{errorMessage}</p>
                 <button
                   type="button"
@@ -296,7 +296,7 @@ export default function NotificationsPage() {
                 {Array.from({ length: 5 }).map((_, index) => (
                   <div
                     key={`notifications-page-skeleton-${index}`}
-                    className="rounded-3xl border border-slate-100 p-5"
+                    className="rounded-2xl border border-slate-100 p-5"
                   >
                     <div className="mb-3 h-4 w-40 animate-pulse rounded bg-slate-100" />
                     <div className="mb-2 h-3 w-full animate-pulse rounded bg-slate-100" />
@@ -321,7 +321,7 @@ export default function NotificationsPage() {
                         <article
                           key={notification.id}
                           className={cn(
-                            'rounded-3xl border p-5 transition-all',
+                            'rounded-2xl border p-5 transition-all',
                             notification.isRead
                               ? 'border-slate-200 bg-white hover:border-slate-300'
                               : 'border-slate-200 bg-slate-50/85 shadow-sm',
@@ -414,7 +414,7 @@ export default function NotificationsPage() {
                                             );
                                           }
                                         }}
-                                        className="inline-flex items-center gap-1 rounded-2xl bg-emerald-600 px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                        className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
                                       >
                                         <Check className="h-4 w-4" />
                                         {notificationAction.kind === 'referee-invite' ? 'Nhận vai trò' : 'Đồng ý'}
@@ -441,7 +441,7 @@ export default function NotificationsPage() {
                                             );
                                           }
                                         }}
-                                        className="inline-flex items-center gap-1 rounded-2xl border border-red-200 bg-white px-3.5 py-2 text-sm font-semibold text-red-700 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                        className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-white px-3.5 py-2 text-sm font-semibold text-red-700 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
                                       >
                                         <X className="h-4 w-4" />
                                         Từ chối
@@ -459,7 +459,7 @@ export default function NotificationsPage() {
                                           );
                                         });
                                       }}
-                                      className="inline-flex items-center rounded-2xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+                                      className="inline-flex items-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
                                     >
                                       Đánh dấu đã đọc
                                     </button>
@@ -473,7 +473,7 @@ export default function NotificationsPage() {
                                         notification.isRead,
                                       )
                                     }
-                                    className="inline-flex items-center gap-1 rounded-2xl px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100"
+                                    className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100"
                                   >
                                     Mở
                                     <ChevronRight className="h-4 w-4" />
@@ -489,7 +489,7 @@ export default function NotificationsPage() {
                 ))}
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-slate-50 px-6 py-16 text-center">
+              <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-6 py-16 text-center">
                 {filter === 'unread' ? (
                   <Bell className="h-10 w-10 text-blue-600" />
                 ) : (

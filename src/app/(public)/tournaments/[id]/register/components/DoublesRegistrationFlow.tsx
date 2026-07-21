@@ -350,20 +350,20 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
   return (
     <div className="space-y-8">
       {/* Progress Tracker */}
-      <div className="flex items-center justify-between max-w-md mx-auto bg-white border rounded-xl p-4 shadow-sm text-xs font-bold text-slate-500">
+      <div className="flex items-center justify-between max-w-md mx-auto bg-white border rounded-lg p-4 shadow-sm text-xs font-bold text-slate-500">
         <div className="flex items-center gap-1.5">
           <span className={`flex items-center justify-center w-5 h-5 rounded-full text-[10px] ${step >= 1 ? 'bg-blue-600 text-white' : 'bg-slate-100'}`}>1</span>
-          <span className={step === 1 ? 'text-blue-600 font-extrabold' : ''}>Tạo Đội</span>
+          <span className={step === 1 ? 'text-blue-600 font-bold' : ''}>Tạo Đội</span>
         </div>
         <ArrowRight className="w-4 h-4 text-slate-300" />
         <div className="flex items-center gap-1.5">
           <span className={`flex items-center justify-center w-5 h-5 rounded-full text-[10px] ${step >= 2 ? 'bg-blue-600 text-white' : 'bg-slate-100'}`}>2</span>
-          <span className={step === 2 ? 'text-blue-600 font-extrabold' : ''}>Mời Đồng Đội</span>
+          <span className={step === 2 ? 'text-blue-600 font-bold' : ''}>Mời Đồng Đội</span>
         </div>
         <ArrowRight className="w-4 h-4 text-slate-300" />
         <div className="flex items-center gap-1.5">
           <span className={`flex items-center justify-center w-5 h-5 rounded-full text-[10px] ${step >= 3 ? 'bg-blue-600 text-white' : 'bg-slate-100'}`}>3</span>
-          <span className={step === 3 ? 'text-blue-600 font-extrabold' : ''}>
+          <span className={step === 3 ? 'text-blue-600 font-bold' : ''}>
             {isApprovalMode ? 'Chờ BTC duyệt' : 'Thanh Toán / Hoàn Tất'}
           </span>
         </div>
@@ -371,9 +371,9 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
 
       {/* STEP 1: CREATE TEAM */}
       {step === 1 && (
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 md:p-8 shadow-sm space-y-6">
+        <div className="bg-white rounded-lg border border-slate-200 p-6 md:p-8 shadow-sm space-y-6">
           <div className="space-y-1">
-            <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
+            <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
               <Users className="w-5 h-5 text-blue-600" /> Bước 1: Khởi tạo thông tin đội
             </h3>
             <p className="text-slate-500 text-xs leading-relaxed">
@@ -389,7 +389,7 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
             </p>
           </div>
 
-          <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded-xl p-4 flex gap-3 text-xs leading-relaxed font-semibold">
+          <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded-lg p-4 flex gap-3 text-xs leading-relaxed font-semibold">
             <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
             <div>
               <p className="font-bold text-amber-950">Lưu ý giới hạn thời gian (2 giờ)</p>
@@ -430,12 +430,12 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
 
             {/* Partner Search Form (only if not inviting later) */}
             {!inviteLater && (
-              <div className="border border-slate-150 rounded-xl p-4 bg-slate-50/50 space-y-4">
-                <span className="text-xs font-black text-slate-600 uppercase tracking-wider block">Thông tin đồng đội</span>
+              <div className="border border-slate-150 rounded-lg p-4 bg-slate-50/50 space-y-4">
+                <span className="text-xs font-bold text-slate-600 uppercase tracking-wider block">Thông tin đồng đội</span>
                 
                 {searchedPartner ? (
                   // Display verified partner profile
-                  <div className="flex items-center justify-between p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl">
+                  <div className="flex items-center justify-between p-3.5 bg-emerald-50 border border-emerald-200 rounded-lg">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full border border-emerald-300 bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-sm uppercase overflow-hidden">
                         {searchedPartner.avatarUrl ? (
@@ -470,7 +470,7 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
                           placeholder="Nhập email hoặc số điện thoại..."
                           value={partnerQuery}
                           onChange={(e) => setPartnerQuery(e.target.value)}
-                          className="w-full border border-slate-300 rounded-xl px-3.5 py-2 text-sm bg-white text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 h-11"
+                          className="w-full border border-slate-300 rounded-lg px-3.5 py-2 text-sm bg-white text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 h-11"
                         />
                       </div>
                       <Button
@@ -500,14 +500,14 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
             )}
 
             {/* Fee summary block */}
-            <div className="bg-slate-50 border border-slate-205 rounded-xl p-4 space-y-2.5 text-xs">
+            <div className="bg-slate-50 border border-slate-205 rounded-lg p-4 space-y-2.5 text-xs">
               <div className="flex justify-between items-center font-semibold">
                 <span className="text-slate-500">Lệ phí cơ bản:</span>
                 <span className="text-slate-800 font-bold">{Number(tournament.entryFee) > 0 ? formatCurrency(Number(tournament.entryFee)) : 'Miễn phí'} / người</span>
               </div>
-              <div className="flex justify-between items-center font-extrabold text-sm border-t border-slate-200 pt-2.5">
+              <div className="flex justify-between items-center font-bold text-sm border-t border-slate-200 pt-2.5">
                 <span className="text-slate-700">Tổng lệ phí nộp (x2):</span>
-                <span className="text-blue-700 font-black">
+                <span className="text-blue-700 font-bold">
                   {Number(tournament.entryFee) > 0 ? formatCurrency(Number(tournament.entryFee) * 2) : 'Miễn phí'}
                 </span>
               </div>
@@ -535,27 +535,27 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
 
       {/* STEP 2: SHARE INVITE LINK & POLL */}
       {step === 2 && participant && (
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 md:p-8 shadow-sm space-y-6">
+        <div className="bg-white rounded-lg border border-slate-200 p-6 md:p-8 shadow-sm space-y-6">
           <div className="space-y-1 text-center max-w-sm mx-auto">
-            <h3 className="text-lg font-black text-slate-900">Bước 2: Mời đồng đội tham gia</h3>
+            <h3 className="text-lg font-bold text-slate-900">Bước 2: Mời đồng đội tham gia</h3>
             <p className="text-slate-500 text-xs leading-relaxed">
               Đội <strong className="text-slate-800">{participant.teamName}</strong> đã được khởi tạo. Hãy chia sẻ link hoặc mã QR dưới đây cho đồng đội của bạn.
             </p>
           </div>
 
           {timeLeft && (
-            <div className="bg-rose-50 border border-rose-100 rounded-xl p-4 text-center animate-in fade-in duration-300">
+            <div className="bg-rose-50 border border-rose-100 rounded-lg p-4 text-center animate-in fade-in duration-300">
               <span className="text-[10px] font-bold text-rose-650 block uppercase tracking-wider">Thời gian còn lại để hoàn tất đội:</span>
-              <span className="text-lg font-black text-rose-600 mt-1 block tracking-wider tabular-nums">{timeLeft}</span>
+              <span className="text-lg font-bold text-rose-600 mt-1 block tracking-wider tabular-nums">{timeLeft}</span>
             </div>
           )}
 
           {/* QR Code Container */}
-          <div className="flex flex-col items-center justify-center bg-slate-50 border p-6 rounded-2xl max-w-xs mx-auto">
+          <div className="flex flex-col items-center justify-center bg-slate-50 border p-6 rounded-lg max-w-xs mx-auto">
             {qrImageUrl ? (
-              <img src={qrImageUrl} alt="QR Code" className="w-44 h-44 object-contain bg-white p-2 rounded-xl border" />
+              <img src={qrImageUrl} alt="QR Code" className="w-44 h-44 object-contain bg-white p-2 rounded-lg border" />
             ) : (
-              <div className="w-44 h-44 flex items-center justify-center bg-white border border-dashed rounded-xl">
+              <div className="w-44 h-44 flex items-center justify-center bg-white border border-dashed rounded-lg">
                 <QrCode className="w-12 h-12 text-slate-300" />
               </div>
             )}
@@ -583,7 +583,7 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
           </div>
 
           {/* Polling Indicator */}
-          <div className="flex flex-col items-center justify-center border border-dashed rounded-xl p-5 bg-blue-50/20 text-center space-y-3">
+          <div className="flex flex-col items-center justify-center border border-dashed rounded-lg p-5 bg-blue-50/20 text-center space-y-3">
             <div className="flex items-center gap-2 text-xs font-bold text-blue-700">
               <Loader2 className="w-4 h-4 animate-spin" />
               <span>Đang chờ đồng đội nhấp link và đồng ý tham gia...</span>
@@ -614,12 +614,12 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
 
       {/* STEP 3: PAYMENT / COMPLETE */}
       {step === 3 && participant && (
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 md:p-8 shadow-sm space-y-6">
+        <div className="bg-white rounded-lg border border-slate-200 p-6 md:p-8 shadow-sm space-y-6">
           <div className="text-center space-y-2">
             <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 mb-2">
               <CheckCircle className="w-6 h-6" />
             </div>
-            <h3 className="text-lg font-black text-slate-900">
+            <h3 className="text-lg font-bold text-slate-900">
               {isApprovalMode ? 'Đã gửi yêu cầu tham gia!' : 'Đăng ký đội thành công!'}
             </h3>
             <p className="text-slate-500 text-xs max-w-sm mx-auto">
@@ -630,7 +630,7 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
           </div>
 
           {/* Team Members List */}
-          <div className="border border-slate-200 rounded-xl overflow-hidden divide-y">
+          <div className="border border-slate-200 rounded-lg overflow-hidden divide-y">
             <div className="bg-slate-50 px-4 py-2.5 text-xs font-bold text-slate-500 uppercase tracking-wider">
               Thành viên đội: {participant.teamName}
             </div>
@@ -645,7 +645,7 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
                     <p className="text-[10px] text-slate-400 font-semibold">{m.role === 'MAIN' ? 'Đội trưởng / Leader' : 'Thành viên / Partner'}</p>
                   </div>
                 </div>
-                <span className="text-xs font-black text-blue-650 bg-blue-50 px-2.5 py-0.5 rounded-full">
+                <span className="text-xs font-bold text-blue-650 bg-blue-50 px-2.5 py-0.5 rounded-full">
                   {m.elo?.eloPoints || 1000} ELO Cá nhân
                 </span>
               </div>
@@ -655,7 +655,7 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
           {/* Action Details */}
           {isApprovalMode ? (
             <div className="space-y-3">
-              <div className="rounded-xl border border-blue-100 bg-blue-50 p-4 text-center text-xs font-semibold text-blue-800">
+              <div className="rounded-lg border border-blue-100 bg-blue-50 p-4 text-center text-xs font-semibold text-blue-800">
                 BTC sẽ thông báo sau khi duyệt yêu cầu. Đội của bạn chưa cần thanh toán ở bước này.
               </div>
               <Button
@@ -667,10 +667,10 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
             </div>
           ) : Number(tournament.entryFee || 0) > 0 ? (
             <div className="space-y-4">
-              <div className="bg-slate-50 border p-4 rounded-xl space-y-2">
+              <div className="bg-slate-50 border p-4 rounded-lg space-y-2">
                 <div className="flex justify-between items-center text-sm font-semibold">
                   <span className="text-slate-500">Lệ phí giải đấu:</span>
-                  <span className="text-slate-900 font-black">{formatCurrency(Number(tournament.entryFee))} / Đội</span>
+                  <span className="text-slate-900 font-bold">{formatCurrency(Number(tournament.entryFee))} / Đội</span>
                 </div>
                 <div className="flex justify-between items-center text-xs text-slate-500">
                   <span>Trạng thái nộp phí:</span>
@@ -712,7 +712,7 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="bg-emerald-50 border border-emerald-100 text-emerald-800 text-xs font-semibold p-4 rounded-xl text-center">
+              <div className="bg-emerald-50 border border-emerald-100 text-emerald-800 text-xs font-semibold p-4 rounded-lg text-center">
                 Giải đấu này miễn phí lệ phí tham gia. Bạn đã hoàn tất toàn bộ quy trình đăng ký giải đấu!
               </div>
 
@@ -740,9 +740,9 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
       {/* Modal Hoàn Tiền Thủ Công cho Đánh Đôi */}
       {showWithdrawModal && (
         <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-md bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-2xl animate-in zoom-in duration-200">
+          <div className="w-full max-w-md bg-white border border-slate-200 rounded-lg overflow-hidden shadow-2xl animate-in zoom-in duration-200">
             <div className="p-6 border-b border-slate-200 flex items-center justify-between bg-slate-50">
-              <h3 className="text-base font-extrabold text-slate-900">Thông tin hoàn trả lệ phí đôi</h3>
+              <h3 className="text-base font-bold text-slate-900">Thông tin hoàn trả lệ phí đôi</h3>
               <button 
                 onClick={() => setShowWithdrawModal(false)}
                 className="text-slate-400 hover:text-slate-650 p-1 rounded-lg hover:bg-slate-100 transition-all"
@@ -752,7 +752,7 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
             </div>
             <form onSubmit={handleConfirmWithdrawWithBank}>
               <div className="p-6 space-y-4.5">
-                <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-4 text-xs text-slate-650 leading-relaxed font-semibold">
+                <div className="bg-blue-50/50 border border-blue-100 rounded-lg p-4 text-xs text-slate-650 leading-relaxed font-semibold">
                   Đội của bạn đã đăng ký nội dung có phí. Ban tổ chức sẽ hoàn trả lệ phí qua số tài khoản ngân hàng của Đội trưởng (người nộp lệ phí) dưới đây.
                 </div>
 
@@ -798,14 +798,14 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
                   type="button"
                   variant="outline"
                   onClick={() => setShowWithdrawModal(false)}
-                  className="px-4 py-2 border-slate-205 hover:bg-slate-100 text-slate-700 text-xs font-bold rounded-xl"
+                  className="px-4 py-2 border-slate-205 hover:bg-slate-100 text-slate-700 text-xs font-bold rounded-lg"
                 >
                   Hủy bỏ
                 </Button>
                 <Button
                   type="submit"
                   disabled={isWithdrawing}
-                  className="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 shadow-md shadow-rose-500/10"
+                  className="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-lg flex items-center gap-1.5 shadow-md shadow-rose-500/10"
                 >
                   {isWithdrawing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
                   Xác nhận rút & hoàn tiền

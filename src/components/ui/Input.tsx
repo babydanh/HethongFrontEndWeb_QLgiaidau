@@ -13,7 +13,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="w-full relative flex flex-col gap-1.5">
         {label && (
-          <label className="text-sm font-semibold text-slate-700">
+          <label className="text-sm font-medium text-slate-700">
             {label}
           </label>
         )}
@@ -35,7 +35,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           {...props}
         />
         {error && (
-          <p className="absolute -bottom-5 text-xs font-semibold text-red-500 left-1">{error}</p>
+          <p className="absolute -bottom-5 text-xs font-medium text-red-500 left-1">{error}</p>
         )}
         </div>
       </div>
@@ -94,7 +94,7 @@ export const DateTimePicker = React.forwardRef<HTMLInputElement, DateTimePickerP
     return (
       <div className="w-full relative flex flex-col gap-1.5">
         {label && (
-          <label className="text-sm font-semibold text-slate-700">
+          <label className="text-sm font-medium text-slate-700">
             {label}
           </label>
         )}
@@ -107,7 +107,7 @@ export const DateTimePicker = React.forwardRef<HTMLInputElement, DateTimePickerP
             className
           )}
         >
-          <span className={value ? "text-slate-800 font-semibold" : "text-slate-400 font-normal"}>
+          <span className={value ? "text-slate-800 font-medium" : "text-slate-400 font-normal"}>
             {value ? formatDateTime(value) : "dd/mm/yyyy --:--"}
           </span>
           <svg
@@ -138,7 +138,7 @@ export const DateTimePicker = React.forwardRef<HTMLInputElement, DateTimePickerP
             className="absolute inset-0 opacity-0 pointer-events-none w-full h-full"
           />
           {error && (
-            <p className="absolute -bottom-5 text-xs font-semibold text-red-500 left-1">{error}</p>
+            <p className="absolute -bottom-5 text-xs font-medium text-red-500 left-1">{error}</p>
           )}
         </div>
       </div>
@@ -184,7 +184,7 @@ const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
     return (
       <div className="w-full relative flex flex-col gap-1.5">
         {label && (
-          <label className="text-sm font-semibold text-slate-700">
+          <label className="text-sm font-medium text-slate-700">
             {label}
           </label>
         )}
@@ -197,7 +197,7 @@ const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
             className
           )}
         >
-          <span className={value ? "text-slate-800 font-semibold" : "text-slate-400 font-normal"}>
+          <span className={value ? "text-slate-800 font-medium" : "text-slate-400 font-normal"}>
             {value ? formatDate(value) : "dd/mm/yyyy"}
           </span>
           <svg
@@ -228,7 +228,7 @@ const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
             className="absolute inset-0 opacity-0 pointer-events-none w-full h-full"
           />
           {error && (
-            <p className="absolute -bottom-5 text-xs font-semibold text-red-500 left-1">{error}</p>
+            <p className="absolute -bottom-5 text-xs font-medium text-red-500 left-1">{error}</p>
           )}
         </div>
       </div>

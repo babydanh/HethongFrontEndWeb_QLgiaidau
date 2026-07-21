@@ -1,0 +1,1 @@
+{"statusCode":400,"code":"Bad Request","message":"Thuộc tính \"categoryId\" không được phép tồn tại","details":["property categoryId should not exist"],"timestamp":"2026-07-20T13:49:11.468Z","path":"/api/v1/matches?categoryId=9dfac581-0113-4cee-9c4c-89334df543fc&limit=5"}

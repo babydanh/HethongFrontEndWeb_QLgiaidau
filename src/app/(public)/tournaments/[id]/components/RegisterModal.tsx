@@ -73,7 +73,7 @@ export default function RegisterModal({ tournamentId, tournamentName, entryFee, 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-md overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
           <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
             <Users className="w-5 h-5 text-blue-600" /> Đăng ký tham gia
@@ -98,7 +98,7 @@ export default function RegisterModal({ tournamentId, tournamentName, entryFee, 
             
             {/* In a real scenario, we might have inputs to search and add roster members here */}
 
-            <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl mt-2">
+            <div className="bg-blue-50 border border-blue-100 p-4 rounded-lg mt-2">
               <p className="text-xs text-blue-700 font-medium">
                 * Lưu ý: Lệ phí tham gia sẽ được thông báo ở bước tiếp theo nếu có. Bằng việc đăng ký, bạn đồng ý với các điều khoản của Ban tổ chức.
               </p>

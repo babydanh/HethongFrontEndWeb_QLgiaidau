@@ -196,14 +196,14 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
           <ArrowLeft className="w-4 h-4" /> Quay lại danh sách
         </button>
 
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
           {/* Header */}
           <div className="p-6 md:p-8 bg-gradient-to-br from-slate-900 to-slate-800 text-white relative">
             <div className="absolute top-4 right-4 bg-emerald-500 text-white font-bold text-xs px-2.5 py-1 rounded-md">
               ĐƯỢC MỜI
             </div>
             
-            <h1 className="text-2xl md:text-3xl font-black mb-3 leading-tight text-white">{tournament.name}</h1>
+            <h1 className="text-2xl md:text-3xl font-bold mb-3 leading-tight text-white">{tournament.name}</h1>
             
             {tournament.description && (
               <p className="text-slate-300 text-xs line-clamp-2 mb-4 leading-relaxed">
@@ -246,8 +246,8 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
               <div className="space-y-3 pb-2 border-b border-slate-100">
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-slate-700 block">Hình thức thi đấu</label>
-                  <div className="rounded-xl border border-blue-100 bg-blue-50 px-3.5 py-3 text-xs text-blue-900">
-                    Bạn đang đăng ký cho hình thức: <span className="font-black">{selectedDivision.name} ({selectedDivisionLabel})</span>
+                  <div className="rounded-lg border border-blue-100 bg-blue-50 px-3.5 py-3 text-xs text-blue-900">
+                    Bạn đang đăng ký cho hình thức: <span className="font-bold">{selectedDivision.name} ({selectedDivisionLabel})</span>
                   </div>
                   <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold text-slate-500">
                     <span className="px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200">
@@ -272,7 +272,7 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
                           type="button"
                           onClick={() => setSelectedDivisionId(div.id)}
                           disabled={isSubmitting}
-                          className={`relative min-h-[104px] flex flex-col items-center justify-center gap-1 px-5 py-3 rounded-xl border text-xs font-bold transition-all w-full cursor-pointer ${
+                          className={`relative min-h-[104px] flex flex-col items-center justify-center gap-1 px-5 py-3 rounded-lg border text-xs font-bold transition-all w-full cursor-pointer ${
                             isActive
                               ? 'text-white border-transparent shadow-md'
                               : 'bg-white text-slate-650 border-slate-200 hover:border-blue-300 hover:text-blue-700'
@@ -281,13 +281,13 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
                           {isActive && (
                             <motion.div
                               layoutId="activeInviteDivision"
-                              className="absolute inset-0 bg-blue-600 rounded-xl z-0"
+                              className="absolute inset-0 bg-blue-600 rounded-lg z-0"
                               transition={{ type: 'spring', stiffness: 380, damping: 30 }}
                             />
                           )}
                           <span className="relative z-10 flex flex-col items-center gap-0.5">
-                            <span className="text-sm font-black leading-tight">{div.name}</span>
-                            <span className={`text-[10px] font-extrabold ${isActive ? 'text-blue-100' : 'text-slate-500'}`}>
+                            <span className="text-sm font-bold leading-tight">{div.name}</span>
+                            <span className={`text-[10px] font-bold ${isActive ? 'text-blue-100' : 'text-slate-500'}`}>
                               {matchLabel}
                             </span>
                             <span className={`text-[9px] font-bold ${isActive ? 'text-blue-200' : 'text-slate-400'}`}>
@@ -299,13 +299,13 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
                     })}
                   </div>
                 )}
-                <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-4 shadow-sm">
+                <div className="rounded-lg border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-4 shadow-sm">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="space-y-1">
-                      <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">
                         Nội dung đang chọn
                       </p>
-                      <h3 className="text-base font-black text-slate-900">{selectedDivision.name}</h3>
+                      <h3 className="text-base font-bold text-slate-900">{selectedDivision.name}</h3>
                       <p className="text-xs font-semibold text-slate-500">
                         {selectedDivisionLabel}
                       </p>
@@ -344,17 +344,17 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
                 />
               )}
 
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
+              <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 space-y-3">
                 <div className="flex justify-between items-center text-sm">
                   <span className="text-slate-500 font-semibold">Lệ phí giải đấu:</span>
-                  <span className="font-extrabold text-slate-900">
+                  <span className="font-bold text-slate-900">
                     {entryFeeVal > 0 ? formatCurrency(entryFeeVal) : 'Miễn phí'}
                   </span>
                 </div>
               </div>
 
               {!isAuthenticated ? (
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs text-amber-800 leading-relaxed">
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-xs text-amber-800 leading-relaxed">
                   Bạn cần đăng nhập tài khoản trước khi hoàn tất đăng ký. Hệ thống sẽ tự động chuyển hướng bạn quay lại trang này sau khi đăng nhập thành công.
                 </div>
               ) : null}

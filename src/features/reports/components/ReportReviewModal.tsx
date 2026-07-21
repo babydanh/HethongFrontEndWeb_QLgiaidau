@@ -63,7 +63,7 @@ export function ReportReviewModal({ report, open, isModeratorOnly, onOpenChange,
 
   return (
     <Modal open={open} onOpenChange={onOpenChange}>
-      <ModalContent className="max-h-[92vh] w-[calc(100%-2rem)] overflow-y-auto rounded-2xl bg-white sm:max-w-2xl">
+      <ModalContent className="max-h-[92vh] w-[calc(100%-2rem)] overflow-y-auto rounded-lg bg-white sm:max-w-2xl">
         <ModalHeader>
           <div className="flex flex-wrap items-center gap-2"><ReportStatusBadge status={report.status} /><span className="text-xs font-semibold text-slate-500">Mã {report.id?.slice(0, 8) ?? 'N/A'}</span></div>
           <ModalTitle className="pt-2 text-xl font-black text-slate-950">Hồ sơ báo cáo {REPORT_TARGET_LABELS[report.targetType].toLowerCase()}</ModalTitle>
@@ -74,7 +74,7 @@ export function ReportReviewModal({ report, open, isModeratorOnly, onOpenChange,
         </ModalHeader>
 
         <div className="space-y-5">
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
             <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Đối tượng</p>
             <p className="mt-1 font-bold text-slate-900">{report.target?.name ?? report.targetUser?.fullName ?? report.targetTournament?.name ?? report.targetId}</p>
             <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-slate-700">{report.reason}</p>
@@ -104,7 +104,7 @@ export function ReportReviewModal({ report, open, isModeratorOnly, onOpenChange,
 
           <div>
             <label className="mb-2 block text-sm font-bold text-slate-800">{terminal ? 'Kết luận' : 'Biên bản xác minh / hướng xử lý'}</label>
-            <Textarea value={note} onChange={(event) => setNote(event.target.value)} disabled={terminal} rows={5} className="rounded-xl border-slate-300 bg-white" placeholder="Ghi dữ kiện đã kiểm tra, kết luận ban đầu và đề xuất xử lý..." />
+            <Textarea value={note} onChange={(event) => setNote(event.target.value)} disabled={terminal} rows={5} className="rounded-lg border-slate-300 bg-white" placeholder="Ghi dữ kiện đã kiểm tra, kết luận ban đầu và đề xuất xử lý..." />
           </div>
         </div>
 

@@ -485,7 +485,7 @@ export default function ProfilePage() {
     <div className="max-w-5xl mx-auto px-4 md:px-8 py-8 flex flex-col gap-6">
       
       {/* Profile Header */}
-      <div className="bg-white rounded-3xl border border-slate-150 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
+      <div className="bg-white rounded-xl border border-slate-150 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
         {/* Cover Photo */}
         <div className="h-56 bg-slate-900 relative group overflow-hidden">
           <input 
@@ -510,7 +510,7 @@ export default function ProfilePage() {
             type="button" 
             onClick={handleCoverClick}
             disabled={isUploadingCover}
-            className="absolute top-4 right-4 bg-black/40 hover:bg-black/60 text-white px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-200 backdrop-blur-md border border-white/10 shadow-lg cursor-pointer"
+            className="absolute top-4 right-4 bg-black/40 hover:bg-black/60 text-white px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-200 backdrop-blur-md border border-white/10 shadow-lg cursor-pointer"
           >
             {isUploadingCover ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -528,19 +528,19 @@ export default function ProfilePage() {
               {displayUser?.avatarUrl ? (
                 <img src={displayUser.avatarUrl} alt="Avatar" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
               ) : (
-                <span className="text-4xl font-black text-slate-400 uppercase">{displayUser?.fullName?.charAt(0) || 'U'}</span>
+                <span className="text-4xl font-bold text-slate-400 uppercase">{displayUser?.fullName?.charAt(0) || 'U'}</span>
               )}
             </div>
             <div className="flex gap-3 w-full md:w-auto mt-4 md:mt-0">
               <Link href="/profile/edit" className="w-full md:w-auto">
-                <Button variant="outline" className="w-full md:w-auto border-slate-200 text-slate-650 hover:bg-slate-50 hover:text-slate-900 rounded-xl font-bold transition-all shadow-sm">
+                <Button variant="outline" className="w-full md:w-auto border-slate-200 text-slate-650 hover:bg-slate-50 hover:text-slate-900 rounded-lg font-bold transition-all shadow-sm">
                   <Edit3 className="w-4 h-4 mr-2" /> Chỉnh sửa hồ sơ
                 </Button>
               </Link>
               <Button
                 type="button"
                 variant="secondary"
-                className="w-full md:w-auto rounded-xl font-bold shadow-sm"
+                className="w-full md:w-auto rounded-lg font-bold shadow-sm"
                 onClick={() => setActiveTab('tournaments')}
               >
                 <Bookmark className="w-4 h-4 mr-2" />
@@ -552,7 +552,7 @@ export default function ProfilePage() {
           {/* Info */}
           <div className="space-y-3">
             <div>
-              <h1 className="text-3xl font-black text-slate-900 flex items-center gap-2 tracking-tight">
+              <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-2 tracking-tight">
                 {isLoading ? (
                   <span className="w-48 h-8 bg-slate-200 animate-pulse rounded-lg"></span>
                 ) : (
@@ -588,7 +588,7 @@ export default function ProfilePage() {
                   roleColor = 'bg-rose-50 text-rose-700 border-rose-200';
                 }
                 return (
-                  <span key={role} className={`px-3 py-1 text-xs font-black rounded-xl border uppercase tracking-wider ${roleColor}`}>
+                  <span key={role} className={`px-3 py-1 text-xs font-bold rounded-lg border uppercase tracking-wider ${roleColor}`}>
                     {roleLabel}
                   </span>
                 );
@@ -597,20 +597,20 @@ export default function ProfilePage() {
                 const activeRanks = userRankings?.publicRanks?.filter(r => r.matchesPlayed > 0) || [];
                 if (activeRanks.length > 0) {
                   return activeRanks.map((rank) => (
-                    <div key={rank.id} className="flex items-center gap-1.5 shrink-0 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-xl">
-                      <span className="text-[10px] font-black text-slate-500 uppercase">{rank.categoryName}:</span>
+                    <div key={rank.id} className="flex items-center gap-1.5 shrink-0 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-lg">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase">{rank.categoryName}:</span>
                       <EloTierBadge elo={rank.eloPoints} size="sm" />
                     </div>
                   ));
                 }
                 return (
-                  <span className="bg-slate-50 border border-slate-200 text-slate-500 px-3 py-1 rounded-xl text-xs font-black uppercase tracking-wider">
+                  <span className="bg-slate-50 border border-slate-200 text-slate-500 px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider">
                     Chưa xếp hạng
                   </span>
                 );
               })()}
               {profileData?.createdAt && (
-                <span className="bg-slate-50 border border-slate-200 text-slate-650 px-3.5 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5">
+                <span className="bg-slate-50 border border-slate-200 text-slate-650 px-3.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5">
                   <Calendar className="w-3.5 h-3.5 text-slate-400" /> Tham gia từ {formatDate(profileData.createdAt, 'MM/yyyy')}
                 </span>
               )}
@@ -643,7 +643,7 @@ export default function ProfilePage() {
       </div>
       {/* Warning banner for missing gender */}
       {!isLoading && displayUser && !displayUser.gender && (
-        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center justify-between shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-center justify-between shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
           <div className="flex items-center gap-3">
             <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
             <div>
@@ -664,7 +664,7 @@ export default function ProfilePage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="md:col-span-1 flex flex-col gap-6">
               {/* Giới thiệu */}
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+              <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
                 <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">Giới thiệu</h3>
                 {isLoading ? (
                   <div className="space-y-2">
@@ -683,7 +683,7 @@ export default function ProfilePage() {
               </div>
 
               {/* Thông tin chi tiết */}
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+              <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
                 <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">Thông tin chi tiết</h3>
                 {isLoading ? (
                   <div className="space-y-4">
@@ -717,7 +717,7 @@ export default function ProfilePage() {
               </div>
 
               {/* Tài khoản hoàn tiền */}
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+              <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Tài khoản hoàn tiền</h3>
                   <Link href="/profile/edit" className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline">
@@ -745,7 +745,7 @@ export default function ProfilePage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="text-center py-4 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                  <div className="text-center py-4 bg-slate-50 rounded-lg border border-dashed border-slate-200">
                     <p className="text-slate-400 text-xs italic">Chưa cấu hình tài khoản nhận hoàn tiền.</p>
                     <Link href="/profile/edit">
                       <Button size="sm" className="mt-2.5 text-xs font-bold px-3 py-1.5 h-auto">
@@ -758,11 +758,11 @@ export default function ProfilePage() {
 
               {/* Yêu cầu quyền Ban tổ chức (Organizer) */}
               {!isLoading && (
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col gap-4">
+                <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6 flex flex-col gap-4">
                   <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Vai trò Ban tổ chức</h3>
                   {(profileData?.roles || user?.roles || []).includes('ORGANIZER') ||
                    (profileData?.roles || user?.roles || []).includes('ADMIN') ? (
-                    <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4 text-xs font-semibold text-emerald-800 space-y-2">
+                    <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-4 text-xs font-semibold text-emerald-800 space-y-2">
                       <div className="flex items-center gap-1.5 font-bold text-sm text-emerald-950">
                         <ShieldCheck className="w-5 h-5 text-emerald-600" />
                         Đã xác minh Ban tổ chức
@@ -772,7 +772,7 @@ export default function ProfilePage() {
                       </p>
                     </div>
                   ) : tickets.length > 0 && tickets[0].status === 'PENDING' ? (
-                    <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 text-xs font-semibold text-amber-800 space-y-2">
+                    <div className="bg-amber-50 border border-amber-100 rounded-lg p-4 text-xs font-semibold text-amber-800 space-y-2">
                       <div className="flex items-center gap-1.5 font-bold text-sm text-amber-900">
                         <Loader2 className="w-4 h-4 animate-spin text-amber-600" />
                         Đang chờ duyệt...
@@ -786,7 +786,7 @@ export default function ProfilePage() {
                     </div>
                   ) : tickets.length > 0 && tickets[0].status === 'REJECTED' ? (
                     <div className="space-y-4">
-                      <div className="bg-rose-50 border border-rose-100 rounded-xl p-4 text-xs font-semibold text-rose-800 space-y-2">
+                      <div className="bg-rose-50 border border-rose-100 rounded-lg p-4 text-xs font-semibold text-rose-800 space-y-2">
                         <div className="flex items-center gap-1.5 font-bold text-sm text-rose-900">
                           <X className="w-4 h-4 text-rose-600" />
                           Yêu cầu bị từ chối
@@ -821,7 +821,7 @@ export default function ProfilePage() {
             </div>
             <div className="md:col-span-2 space-y-6">
               {/* Câu lạc bộ của tôi */}
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+              <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
                 <div className="flex justify-between items-center mb-6">
                   <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Câu lạc bộ của tôi</h3>
                   <Link href="/communities/create">
@@ -844,7 +844,7 @@ export default function ProfilePage() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {myCommunities.map(community => (
                       <Link href={`/communities/${community.id}`} key={community.id}>
-                        <div className="flex items-center gap-4 p-4 rounded-xl border border-slate-100 hover:border-emerald-500 hover:shadow-md transition-all group bg-slate-50 cursor-pointer">
+                        <div className="flex items-center gap-4 p-4 rounded-lg border border-slate-100 hover:border-emerald-500 hover:shadow-md transition-all group bg-slate-50 cursor-pointer">
                           <div className="w-14 h-14 rounded-full overflow-hidden border border-slate-200 relative shrink-0">
                             <Image src={community.logoUrl || "https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=150&auto=format&fit=crop"} alt={community.name} fill className="object-cover" />
                           </div>
@@ -860,7 +860,7 @@ export default function ProfilePage() {
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-8 border-2 border-dashed border-slate-100 rounded-xl">
+                  <div className="text-center py-8 border-2 border-dashed border-slate-100 rounded-lg">
                     <Users className="w-10 h-10 text-slate-300 mx-auto mb-3" />
                     <p className="text-slate-600 font-medium">Bạn chưa tham gia câu lạc bộ nào</p>
                     <p className="text-slate-400 text-sm mt-1 mb-4">Tham gia các câu lạc bộ thể thao để giao lưu và thi đấu</p>
@@ -873,7 +873,7 @@ export default function ProfilePage() {
                 )}
               </div>
 
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 text-center py-12 border-dashed">
+              <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6 text-center py-12 border-dashed">
                 <Activity className="w-12 h-12 text-slate-300 mx-auto mb-3" />
                 <p className="text-slate-500 font-medium text-lg">Chưa có dữ liệu hoạt động</p>
                 <p className="text-slate-400 text-sm mt-1">Hãy tham gia giải đấu để bắt đầu ghi nhận thành tích!</p>
@@ -885,12 +885,12 @@ export default function ProfilePage() {
         {activeTab === 'tournaments' && (
           <div className="space-y-6">
             {isLoadingTab ? (
-              <div className="flex justify-center items-center py-12 bg-white rounded-2xl border border-slate-200">
+              <div className="flex justify-center items-center py-12 bg-white rounded-lg border border-slate-200">
                 <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
               </div>
             ) : followedTournaments.length > 0 ? (
               <>
-                <div className="flex flex-wrap items-center gap-2 mb-3 text-[10px] font-black uppercase tracking-wider text-slate-500">
+                <div className="flex flex-wrap items-center gap-2 mb-3 text-[10px] font-bold uppercase tracking-wider text-slate-500">
                   <span className="rounded-full bg-slate-100 px-2.5 py-1 border border-slate-200">Vừa kết thúc</span>
                   <span className="rounded-full bg-rose-50 px-2.5 py-1 border border-rose-100 text-rose-700">Đang diễn ra</span>
                   <span className="rounded-full bg-emerald-50 px-2.5 py-1 border border-emerald-100 text-emerald-700">Mở đăng ký</span>
@@ -925,7 +925,7 @@ export default function ProfilePage() {
                       <Link 
                         key={tournament.id} 
                         href={`/tournaments/${tournament.id}`}
-                        className="bg-white rounded-xl border border-slate-200 shadow-sm hover:border-slate-350 hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col group cursor-pointer"
+                        className="bg-white rounded-lg border border-slate-200 shadow-sm hover:border-slate-350 hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col group cursor-pointer"
                       >
                         {/* Top: Large Image Banner */}
                         <div className="relative aspect-[2.1/1] w-full bg-slate-100 overflow-hidden">
@@ -947,7 +947,7 @@ export default function ProfilePage() {
                           
                           {/* Status Overlay (Top-Left) */}
                           <div className="absolute top-3 left-3 z-10">
-                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm border ${statusClassName}`}>
+                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm border ${statusClassName}`}>
                               {isOpen && (
                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                               )}
@@ -971,7 +971,7 @@ export default function ProfilePage() {
 
                           {/* Location Overlay (Bottom-Left) */}
                           <div className="absolute bottom-3 left-3 z-10">
-                            <span className="bg-white/95 text-slate-800 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm border border-slate-200 flex items-center gap-1">
+                            <span className="bg-white/95 text-slate-800 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm border border-slate-200 flex items-center gap-1">
                               📍 {tournament.locationAddress ? tournament.locationAddress.split(',').slice(-1)[0]?.trim() || 'Việt Nam' : 'Chưa cập nhật'}
                             </span>
                           </div>
@@ -981,12 +981,12 @@ export default function ProfilePage() {
                         <div className="p-4 flex gap-4 flex-grow">
                           {/* Left Column: Date Block */}
                           <div className="flex flex-col items-center shrink-0 border-r border-slate-100 pr-4">
-                            <div className="flex items-baseline gap-0.5 text-xl font-black text-slate-900 leading-none">
+                            <div className="flex items-baseline gap-0.5 text-xl font-bold text-slate-900 leading-none">
                               <span>{tournament.startDate ? new Date(tournament.startDate).getDate().toString().padStart(2, '0') : '--'}</span>
                               <span className="text-slate-300 font-normal text-sm">-</span>
                               <span>{tournament.endDate ? new Date(tournament.endDate).getDate().toString().padStart(2, '0') : '--'}</span>
                             </div>
-                            <div className="flex gap-3 mt-1 text-[9px] font-black text-slate-400">
+                            <div className="flex gap-3 mt-1 text-[9px] font-bold text-slate-400">
                               <span>{tournament.startDate ? (new Date(tournament.startDate).getMonth() + 1).toString().padStart(2, '0') : '--'}</span>
                               <span>{tournament.endDate ? (new Date(tournament.endDate).getMonth() + 1).toString().padStart(2, '0') : '--'}</span>
                             </div>
@@ -995,10 +995,10 @@ export default function ProfilePage() {
                           {/* Right Column: Name & Category Block */}
                           <div className="flex flex-col justify-between flex-grow min-w-0">
                             <div>
-                              <div className="flex items-center gap-1.5 flex-wrap text-[10px] font-extrabold uppercase tracking-wider mb-1">
+                              <div className="flex items-center gap-1.5 flex-wrap text-[10px] font-bold uppercase tracking-wider mb-1">
                                 <span className="text-slate-500">{tournament.category?.name?.toUpperCase() || 'MULTISPORT'}</span>
                                 <span className="text-slate-300">•</span>
-                                <span className={`px-1.5 py-0.5 rounded text-[8px] font-extrabold ${
+                                <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold ${
                                   tournament.isRanked
                                     ? 'bg-amber-50 text-amber-700 border border-amber-200'
                                     : 'bg-slate-50 text-slate-600 border border-slate-200'
@@ -1012,14 +1012,14 @@ export default function ProfilePage() {
                                 {formattedStartDate && formattedEndDate && !isEnded ? ` • ${formattedStartDate} → ${formattedEndDate}` : ''}
                               </p>
                               
-                              <h3 className="text-sm font-black text-slate-900 uppercase leading-snug line-clamp-2">
+                              <h3 className="text-sm font-bold text-slate-900 uppercase leading-snug line-clamp-2">
                                 {tournament.name}
                               </h3>
                             </div>
 
                             {/* Metadata summary */}
                             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[9px] text-slate-500 font-bold mt-2 uppercase tracking-wider">
-                              <span className="text-emerald-600 font-extrabold">
+                              <span className="text-emerald-600 font-bold">
                                 {tournament.entryFee ? formatCurrency(tournament.entryFee) : 'Miễn phí'}
                               </span>
                               {tournament.divisions && tournament.divisions.length > 0 ? (
@@ -1054,7 +1054,7 @@ export default function ProfilePage() {
                 </div>
               </>
             ) : (
-              <div className="text-center py-16 bg-white rounded-2xl border border-slate-200 border-dashed">
+              <div className="text-center py-16 bg-white rounded-lg border border-slate-200 border-dashed">
                 <Bookmark className="w-16 h-16 text-slate-200 mx-auto mb-4" />
                 <h3 className="text-lg font-bold text-slate-700 mb-2">Chưa theo dõi giải đấu nào</h3>
                 <p className="text-slate-500 max-w-sm mx-auto text-sm">
@@ -1067,7 +1067,7 @@ export default function ProfilePage() {
 
         {activeTab === 'achievements' && (
           <div className="space-y-6">
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+            <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
               <div className="flex items-center gap-2 mb-4">
                 <Award className="w-5 h-5 text-amber-600" />
                 <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Danh hiệu thành tích</h3>
@@ -1077,24 +1077,24 @@ export default function ProfilePage() {
                   {achievements.map((item) => (
                     <div
                       key={`${item.tournamentId}-${item.rank}`}
-                      className={`rounded-2xl border p-4 shadow-sm ${item.colorClass} ${item.borderClass}`}
+                      className={`rounded-lg border p-4 shadow-sm ${item.colorClass} ${item.borderClass}`}
                     >
                       <div className="flex items-center justify-between gap-3">
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className={`text-[10px] font-black uppercase px-2 py-1 rounded-full border ${item.textClass} ${item.borderClass} bg-white`}>
+                            <span className={`text-[10px] font-bold uppercase px-2 py-1 rounded-full border ${item.textClass} ${item.borderClass} bg-white`}>
                               {item.label}
                             </span>
                             <span className="text-[10px] font-bold text-slate-500 uppercase">
                               Giải public ELO
                             </span>
                           </div>
-                          <h4 className="mt-2 text-base font-black text-slate-900 line-clamp-1">{item.tournamentName}</h4>
+                          <h4 className="mt-2 text-base font-bold text-slate-900 line-clamp-1">{item.tournamentName}</h4>
                           <p className="text-xs text-slate-500 mt-1">
                             {item.tournamentDate ? formatDate(item.tournamentDate, 'dd/MM/yyyy') : 'Chưa có ngày kết thúc'}
                           </p>
                         </div>
-                        <div className={`shrink-0 w-12 h-12 rounded-2xl border flex items-center justify-center font-black ${item.textClass} ${item.borderClass} bg-white`}>
+                        <div className={`shrink-0 w-12 h-12 rounded-lg border flex items-center justify-center font-bold ${item.textClass} ${item.borderClass} bg-white`}>
                           {item.rank}
                         </div>
                       </div>
@@ -1102,7 +1102,7 @@ export default function ProfilePage() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-10 border-2 border-dashed border-slate-100 rounded-2xl">
+                <div className="text-center py-10 border-2 border-dashed border-slate-100 rounded-lg">
                   <Trophy className="w-12 h-12 text-slate-300 mx-auto mb-3" />
                   <p className="text-slate-600 font-semibold">Chưa có danh hiệu thành tích</p>
                   <p className="text-slate-400 text-sm mt-1">Khi tham gia giải public ELO và vào top 3, badge sẽ tự hiện ở đây.</p>
@@ -1115,7 +1115,7 @@ export default function ProfilePage() {
         {activeTab === 'matches' && (
           <div className="space-y-6">
             {isLoadingTab ? (
-              <div className="flex justify-center items-center py-12 bg-white rounded-2xl border border-slate-200">
+              <div className="flex justify-center items-center py-12 bg-white rounded-lg border border-slate-200">
                 <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
               </div>
             ) : matches.length > 0 ? (
@@ -1136,7 +1136,7 @@ export default function ProfilePage() {
                   return (
                     <div
                       key={match.id}
-                      className="bg-white border border-slate-200 hover:border-slate-350 rounded-2xl p-5 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4 transition-all"
+                      className="bg-white border border-slate-200 hover:border-slate-350 rounded-lg p-5 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4 transition-all"
                     >
                       <div className="space-y-1">
                         <div className="flex items-center gap-2 text-xs font-semibold text-slate-450">
@@ -1146,12 +1146,12 @@ export default function ProfilePage() {
                         </div>
                         <div className="text-sm font-bold text-slate-800 flex items-center gap-2">
                           <span className="text-slate-400">Đối thủ:</span>
-                          <span className="text-blue-650 font-extrabold">{opponentName}</span>
+                          <span className="text-blue-650 font-bold">{opponentName}</span>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
-                        <div className="bg-slate-50 px-4 py-2 rounded-xl border border-slate-100 text-sm font-black text-slate-705 tabular-nums">
+                        <div className="bg-slate-50 px-4 py-2 rounded-lg border border-slate-100 text-sm font-bold text-slate-705 tabular-nums">
                           {buildMatchScoreSummary({
                             p1SetsWon: match.p1SetsWon,
                             p2SetsWon: match.p2SetsWon,
@@ -1162,16 +1162,16 @@ export default function ProfilePage() {
 
                         {isCompleted ? (
                           isWinner ? (
-                            <span className="px-3 py-1 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-250 uppercase tracking-wide">
+                            <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-250 uppercase tracking-wide">
                               Thắng
                             </span>
                           ) : (
-                            <span className="px-3 py-1 rounded-full text-[10px] font-black bg-rose-50 text-rose-700 border border-rose-250 uppercase tracking-wide">
+                            <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-250 uppercase tracking-wide">
                               Thua
                             </span>
                           )
                         ) : (
-                          <span className="px-3 py-1 rounded-full text-[10px] font-black bg-blue-50 text-blue-700 border border-blue-250 uppercase tracking-wide">
+                          <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-250 uppercase tracking-wide">
                             Đang đấu
                           </span>
                         )}
@@ -1212,7 +1212,7 @@ export default function ProfilePage() {
                 )}
               </div>
             ) : (
-              <div className="text-center py-16 bg-white rounded-2xl border border-slate-200 border-dashed">
+              <div className="text-center py-16 bg-white rounded-lg border border-slate-200 border-dashed">
                 <Activity className="w-16 h-16 text-slate-200 mx-auto mb-4" />
                 <h3 className="text-lg font-bold text-slate-700 mb-2">Chưa thi đấu trận nào</h3>
                 <p className="text-slate-500 max-w-sm mx-auto text-sm">
@@ -1226,7 +1226,7 @@ export default function ProfilePage() {
         {activeTab === 'elo' && (
           <div className="space-y-6">
             {isLoadingTab ? (
-              <div className="flex justify-center items-center py-12 bg-white rounded-2xl border border-slate-200">
+              <div className="flex justify-center items-center py-12 bg-white rounded-lg border border-slate-200">
                 <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
               </div>
             ) : (
@@ -1240,28 +1240,28 @@ export default function ProfilePage() {
                   {userRankings?.publicRanks && userRankings.publicRanks.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {userRankings.publicRanks.map((rank) => (
-                        <div key={rank.id} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-all flex items-center justify-between group">
+                        <div key={rank.id} className="bg-white rounded-lg border border-slate-200 p-5 shadow-sm hover:shadow-md transition-all flex items-center justify-between group">
                           <div className="space-y-1.5 flex-1">
-                            <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase bg-slate-100 text-slate-550 border border-slate-200">
+                            <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-slate-100 text-slate-550 border border-slate-200">
                               {rank.categoryName} • {rank.matchType === 'SINGLES' ? 'Đánh đơn' : 'Đánh đôi'}
                             </span>
                             <div className="flex items-center gap-2 flex-wrap">
                               <Award className="w-5 h-5 text-blue-500 group-hover:scale-110 transition-transform" />
-                              <h4 className="font-extrabold text-slate-900 text-base">{rank.eloPoints} ELO</h4>
+                              <h4 className="font-bold text-slate-900 text-base">{rank.eloPoints} ELO</h4>
                               <EloTierBadge elo={rank.eloPoints} size="sm" />
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2 text-center text-xs">
-                              <div className="bg-slate-50/80 p-2 rounded-xl border border-slate-100">
+                              <div className="bg-slate-50/80 p-2 rounded-lg border border-slate-100">
                                 <div className="text-[10px] text-slate-400 font-bold uppercase">Số Trận</div>
-                                <div className="font-extrabold text-slate-700 mt-0.5">{rank.matchesPlayed}</div>
+                                <div className="font-bold text-slate-700 mt-0.5">{rank.matchesPlayed}</div>
                               </div>
-                              <div className="bg-slate-50/80 p-2 rounded-xl border border-slate-100">
+                              <div className="bg-slate-50/80 p-2 rounded-lg border border-slate-100">
                                 <div className="text-[10px] text-slate-400 font-bold uppercase">Thắng</div>
-                                <div className="font-extrabold text-emerald-600 mt-0.5">{rank.matchesWon}</div>
+                                <div className="font-bold text-emerald-600 mt-0.5">{rank.matchesWon}</div>
                               </div>
-                              <div className="bg-slate-50/80 p-2 rounded-xl border border-slate-100">
+                              <div className="bg-slate-50/80 p-2 rounded-lg border border-slate-100">
                                 <div className="text-[10px] text-slate-400 font-bold uppercase">Chuỗi</div>
-                                <div className="font-extrabold text-blue-600 mt-0.5 flex items-center justify-center gap-0.5">
+                                <div className="font-bold text-blue-600 mt-0.5 flex items-center justify-center gap-0.5">
                                   <Zap className="w-3 h-3 fill-blue-500 text-blue-600" /> {rank.winStreak}
                                 </div>
                               </div>
@@ -1271,14 +1271,14 @@ export default function ProfilePage() {
                       ))}
                     </div>
                   ) : (
-                    <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-400 text-sm">
+                    <div className="bg-white rounded-lg border border-slate-200 p-8 text-center text-slate-400 text-sm">
                       Bạn chưa tham gia thi đấu xếp hạng ELO chính thức.
                     </div>
                   )}
                 </div>
 
                 {eloHistory.length > 0 && (
-                  <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+                  <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
                     <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-6">Biến động ELO theo thời gian</h3>
                     <div className="h-80 w-full">
                       <ResponsiveContainer width="100%" height="100%">
@@ -1300,7 +1300,7 @@ export default function ProfilePage() {
                               if (active && payload && payload.length) {
                                 const data = payload[0].payload;
                                 return (
-                                  <div className="bg-slate-900 text-white p-3 rounded-xl border border-slate-800 text-xs shadow-md">
+                                  <div className="bg-slate-900 text-white p-3 rounded-lg border border-slate-800 text-xs shadow-md">
                                     <p className="font-bold">{data.date}</p>
                                     <p className="text-blue-400 mt-1 font-bold">ELO: {data.ELO}</p>
                                     <p className="text-slate-400 mt-0.5">{data.reason}</p>
@@ -1325,7 +1325,7 @@ export default function ProfilePage() {
                   </div>
                 )}
 
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+                <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
                   <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">Lịch sử thay đổi ELO</h3>
                   {eloHistory.length > 0 ? (
                     <div className="flex flex-col gap-4">
@@ -1340,7 +1340,7 @@ export default function ProfilePage() {
                             <div className="flex items-center gap-3 text-right">
                               <div>
                                 <span className="text-[10px] text-slate-400 block font-bold">ELO mới</span>
-                                <span className="text-sm font-extrabold text-slate-700">{item.newElo}</span>
+                                <span className="text-sm font-bold text-slate-700">{item.newElo}</span>
                               </div>
                               <span className={`inline-block px-2 py-1 rounded text-xs font-bold min-w-[45px] text-center ${
                                 isGain ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
@@ -1369,7 +1369,7 @@ export default function ProfilePage() {
       <Modal open={isModalOpen} onOpenChange={setIsModalOpen}>
         <ModalContent className="max-w-md p-6">
           <ModalHeader>
-            <ModalTitle className="text-xl font-black text-slate-900">Đăng ký Ban tổ chức giải</ModalTitle>
+            <ModalTitle className="text-xl font-bold text-slate-900">Đăng ký Ban tổ chức giải</ModalTitle>
             <p className="text-slate-500 text-xs mt-1 font-medium leading-relaxed">
               (Dùng để tạo chuỗi giải đấu hoặc giải đấu công khai tính Rank ELO. Nếu chỉ tổ chức giải nội bộ CLB thì bạn không cần đăng ký quyền này).
             </p>
@@ -1401,7 +1401,7 @@ export default function ProfilePage() {
                 Ảnh minh chứng năng lực <span className="text-rose-500">*</span>
               </label>
               
-              <div className="flex flex-col items-center justify-center p-4 bg-slate-50 rounded-xl border border-slate-200">
+              <div className="flex flex-col items-center justify-center p-4 bg-slate-50 rounded-lg border border-slate-200">
                 <input
                   type="file"
                   onChange={handleUploadEvidence}

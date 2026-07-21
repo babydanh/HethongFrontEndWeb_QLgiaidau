@@ -27,7 +27,7 @@ export function ReportFiltersBar({ filters, onChange }: ReportFiltersBarProps) {
   );
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+    <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
       <div className="flex items-center gap-2 text-sm font-bold text-slate-800">
         <Filter className="h-4 w-4 text-blue-600" /> Bộ lọc hồ sơ
       </div>

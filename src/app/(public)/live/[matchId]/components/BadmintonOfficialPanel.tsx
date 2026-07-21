@@ -21,7 +21,7 @@ export function BadmintonOfficialPanel({
 }: BadmintonOfficialPanelProps) {
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-900">
+      <div className="rounded-lg border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-900">
         Cầu lông dùng rally point. UI này hiện điểm trực tiếp theo set, còn cảnh báo/thẻ được ghi ở panel hình phạt phía dưới.
       </div>
       <RallyScoreControls

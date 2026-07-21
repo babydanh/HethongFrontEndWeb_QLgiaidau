@@ -241,12 +241,12 @@ export default function MembersTab({
       </div>
 
       {isLoading ? (
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-12 flex flex-col items-center justify-center">
+        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-12 flex flex-col items-center justify-center">
           <Loader2 className="w-8 h-8 animate-spin text-emerald-500 mb-2" />
           <p className="text-slate-500 text-sm">Đang tải danh sách thành viên...</p>
         </div>
       ) : (
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-8">
+        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6 space-y-8">
           {/* Section: Ban Quản Trị */}
           <div>
             <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-4 border-b pb-2 flex items-center gap-1.5">
@@ -264,7 +264,7 @@ export default function MembersTab({
                   return (
                     <div 
                       key={item.member?.id} 
-                      className="flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100/70 border border-slate-200/60 rounded-xl transition-all relative"
+                      className="flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100/70 border border-slate-200/60 rounded-lg transition-all relative"
                     >
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 font-bold shrink-0 relative overflow-hidden">
@@ -356,7 +356,7 @@ export default function MembersTab({
             </h4>
             
             {filteredMembers.length === 0 ? (
-              <div className="bg-slate-50 border border-slate-150 rounded-xl p-8 text-center">
+              <div className="bg-slate-50 border border-slate-150 rounded-lg p-8 text-center">
                 <p className="text-slate-400 text-sm">Chưa có thành viên nào khác hoặc không có kết quả phù hợp.</p>
               </div>
             ) : (
@@ -367,7 +367,7 @@ export default function MembersTab({
                   return (
                     <div 
                       key={item.member?.id} 
-                      className="flex items-center justify-between p-3.5 bg-white border border-slate-200 rounded-xl hover:shadow-sm transition-all relative"
+                      className="flex items-center justify-between p-3.5 bg-white border border-slate-200 rounded-lg hover:shadow-sm transition-all relative"
                     >
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-bold shrink-0 relative overflow-hidden">
@@ -449,7 +449,7 @@ export default function MembersTab({
       {/* Invite Member Modal */}
       {isInviteOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full border border-slate-200 shadow-xl overflow-hidden flex flex-col max-h-[85vh]">
+          <div className="bg-white rounded-lg max-w-md w-full border border-slate-200 shadow-xl overflow-hidden flex flex-col max-h-[85vh]">
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
               <h3 className="font-bold text-slate-900 text-base">Mời thành viên mới</h3>
               <button 
@@ -483,7 +483,7 @@ export default function MembersTab({
               ) : inviteResults.length > 0 ? (
                 <div className="space-y-3 max-h-[35vh] overflow-y-auto pr-1">
                   {inviteResults.map((user) => (
-                    <div key={user.id} className="flex items-center justify-between p-3 border border-slate-150 rounded-xl hover:bg-slate-50 transition-colors">
+                    <div key={user.id} className="flex items-center justify-between p-3 border border-slate-150 rounded-lg hover:bg-slate-50 transition-colors">
                       <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden relative">
                           {user.avatarUrl ? (
@@ -521,7 +521,7 @@ export default function MembersTab({
       {/* Transfer Ownership Confirmation Modal */}
       {confirmTransferUserId && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-sm w-full border border-slate-200 shadow-xl overflow-hidden p-6 space-y-4">
+          <div className="bg-white rounded-lg max-w-sm w-full border border-slate-200 shadow-xl overflow-hidden p-6 space-y-4">
             <div className="text-center space-y-2">
               <div className="w-12 h-12 rounded-full bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center mx-auto shadow-sm">
                 <Crown className="w-6 h-6" />

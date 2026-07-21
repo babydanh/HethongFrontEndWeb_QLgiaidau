@@ -76,11 +76,11 @@ export function SingleElimView({
       className={
         isFullscreen
           ? 'fixed inset-0 z-50 bg-slate-50 p-6 overflow-hidden flex flex-col'
-          : 'relative border border-slate-200/80 bg-slate-50/20 rounded-2xl p-4 shadow-sm'
+          : 'relative border border-slate-200/80 bg-slate-50/20 rounded-lg p-4 shadow-sm'
       }
     >
       {/* Zoom Controls */}
-      <div className="absolute top-4 right-4 z-20 flex items-center gap-1.5 bg-white border border-slate-200 shadow-sm rounded-xl p-1 text-xs font-bold text-slate-600">
+      <div className="absolute top-4 right-4 z-20 flex items-center gap-1.5 bg-white border border-slate-200 shadow-sm rounded-lg p-1 text-xs font-bold text-slate-600">
         <button
           onClick={() => setZoom((z) => Math.max(z - 0.1, 0.5))}
           className="w-9 h-9 flex items-center justify-center hover:bg-slate-50 rounded-lg transition-colors cursor-pointer border border-slate-100"
@@ -146,7 +146,7 @@ export function SingleElimView({
                   style={{ width: CARD_W, flexShrink: 0 }}
                   className="text-center"
                 >
-                  <span className="inline-block text-[10px] font-extrabold uppercase tracking-widest px-3 py-1 rounded-full border bg-slate-50 text-slate-600 border-slate-200">
+                  <span className="inline-block text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full border bg-slate-50 text-slate-600 border-slate-200">
                     {getRoundLabel(ri, maxRound)}
                   </span>
                 </div>

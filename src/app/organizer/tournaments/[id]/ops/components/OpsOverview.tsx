@@ -25,7 +25,7 @@ export function OpsOverview({ summary }: OpsOverviewProps) {
   return (
     <section className="space-y-4">
       <div>
-        <h2 className="text-lg font-black text-slate-900">Tổng quan vận hành</h2>
+        <h2 className="text-lg font-bold text-slate-900">Tổng quan vận hành</h2>
         <p className="text-sm font-medium text-slate-500">Một màn nhìn nhanh nhịp chạy trận đấu, mức độ hoàn thành và các tình huống cần quyết định ngay.</p>
       </div>
 
@@ -35,13 +35,13 @@ export function OpsOverview({ summary }: OpsOverviewProps) {
           const value = summary[card.key];
 
           return (
-            <div key={card.key} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div key={card.key} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">{card.label}</p>
-                  <p className="mt-3 text-3xl font-black text-slate-900">{value}</p>
+                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">{card.label}</p>
+                  <p className="mt-3 text-3xl font-bold text-slate-900">{value}</p>
                 </div>
-                <div className={`inline-flex h-11 w-11 items-center justify-center rounded-xl border ${card.tone}`}>
+                <div className={`inline-flex h-11 w-11 items-center justify-center rounded-lg border ${card.tone}`}>
                   <Icon className="h-5 w-5" />
                 </div>
               </div>

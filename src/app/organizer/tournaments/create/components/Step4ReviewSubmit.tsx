@@ -175,7 +175,7 @@ export default function Step4ReviewSubmit() {
         <p className="text-sm text-slate-500">Kiểm tra lại thông tin trước khi tạo giải đấu.</p>
       </div>
 
-      <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 space-y-4">
+      <div className="bg-slate-50 border border-slate-200 rounded-lg p-5 space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6 text-sm">
           <div className="flex flex-col gap-1">
             <span className="text-slate-400 font-medium">Tên Giải Đấu</span>

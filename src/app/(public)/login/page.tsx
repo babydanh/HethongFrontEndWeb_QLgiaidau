@@ -113,17 +113,17 @@ export default function LoginPage() {
         <div className="absolute inset-0 bg-gradient-to-b from-slate-900/85 via-slate-900/55 to-slate-900/90" />
 
         {/* Logo — larger */}
-        <div className="relative z-10 p-10">
+        <div className="relative z-10 p-10 pb-0">
           <img
             src="/vndcsport.svg"
             alt="VNDC Sport"
-            className="h-16 w-auto object-contain brightness-200 contrast-0"
+            className="h-28 w-auto object-contain brightness-200 contrast-0"
           />
         </div>
 
         {/* Headline + highlights */}
         <div className="relative z-10 px-10 pb-4">
-          <h1 className="text-4xl font-black text-white leading-tight tracking-tight">
+          <h1 className="text-4xl font-bold text-white leading-tight tracking-tight">
             Nền tảng quản lý
             <br />
             <span className="text-blue-400">giải đấu thể thao</span>
@@ -153,7 +153,7 @@ export default function LoginPage() {
           <div className="mt-8 flex gap-6">
             {STATS.map(({ value, label }) => (
               <div key={label}>
-                <p className="text-2xl font-black text-white leading-none">{value}</p>
+                <p className="text-2xl font-bold text-white leading-none">{value}</p>
                 <p className="text-xs text-slate-400 mt-0.5">{label}</p>
               </div>
             ))}
@@ -178,17 +178,17 @@ export default function LoginPage() {
           className="relative z-10 w-full max-w-[400px] px-4"
         >
           {/* Form card */}
-          <div className="bg-white rounded-2xl shadow-lg border border-slate-100 px-8 py-8">
+          <div className="bg-white rounded-lg shadow-lg border border-slate-100 px-8 py-8">
             {/* Logo inside card for right panel */}
-            <div className="flex items-center gap-2.5 mb-6">
+            <div className="flex items-center justify-center mb-4">
               <img
                 src="/vndcsport.svg"
                 alt="VNDC Sport"
-                className="h-14 w-auto object-contain"
+                className="h-24 w-auto object-contain scale-110"
               />
             </div>
 
-            <h2 className="text-xl font-black text-slate-900 tracking-tight">Chào mừng trở lại</h2>
+            <h2 className="text-xl font-bold text-slate-900 tracking-tight">Chào mừng trở lại</h2>
             <p className="mt-1 text-sm text-slate-500 mb-5">
               Đăng nhập để quản lý giải đấu và xem xếp hạng ELO
             </p>
@@ -199,7 +199,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={handleGoogleLogin}
-                className="w-full flex items-center justify-center gap-2.5 px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 transition-colors text-sm font-semibold text-slate-700 cursor-pointer"
+                className="w-full flex items-center justify-center gap-2.5 px-4 py-2.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 transition-colors text-sm font-semibold text-slate-700 cursor-pointer"
               >
                 <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
@@ -235,7 +235,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-blue-600 hover:bg-blue-700 active:scale-[0.98] disabled:opacity-50 text-white font-bold py-2.5 rounded-xl shadow-sm transition-all cursor-pointer text-sm mt-1"
+                className="w-full bg-blue-600 hover:bg-blue-700 active:scale-[0.98] disabled:opacity-50 text-white font-bold py-2.5 rounded-lg shadow-sm transition-all cursor-pointer text-sm mt-1"
               >
                 {isLoading ? 'Đang xử lý...' : 'Đăng nhập'}
               </button>

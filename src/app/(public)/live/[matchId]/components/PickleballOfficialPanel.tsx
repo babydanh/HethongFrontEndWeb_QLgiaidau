@@ -25,13 +25,13 @@ export function PickleballOfficialPanel({
 }: PickleballOfficialPanelProps) {
   return (
     <div className="space-y-3">
-      <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900">
+      <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900">
         Chế độ pickleball side-out đang bám theo đội giao bóng hiện tại. Chỉ đội giao bóng mới được cộng điểm.
       </div>
-      <div className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 md:grid-cols-[1.2fr_1fr]">
+      <div className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 md:grid-cols-[1.2fr_1fr]">
         <div>
-          <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Trạng thái giao bóng</p>
-          <p className="mt-2 text-sm font-black text-slate-900">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Trạng thái giao bóng</p>
+          <p className="mt-2 text-sm font-bold text-slate-900">
             {servingTeam == null ? 'Chưa chọn đội giao' : `${servingTeamName} đang giao • lượt ${serverNumber}`}
           </p>
           <p className="mt-1 text-xs font-medium text-slate-500">
@@ -45,7 +45,7 @@ export function PickleballOfficialPanel({
               onClick={() => onSetServingTeam(1)}
               disabled={isSubmitting}
               className={cn(
-                'rounded-xl border px-3 py-2 text-xs font-black transition-colors',
+                'rounded-lg border px-3 py-2 text-xs font-bold transition-colors',
                 servingTeam === 1
                   ? 'border-blue-600 bg-blue-600 text-white'
                   : 'border-slate-200 bg-white text-slate-700 hover:border-blue-300',
@@ -58,7 +58,7 @@ export function PickleballOfficialPanel({
               onClick={() => onSetServingTeam(2)}
               disabled={isSubmitting}
               className={cn(
-                'rounded-xl border px-3 py-2 text-xs font-black transition-colors',
+                'rounded-lg border px-3 py-2 text-xs font-bold transition-colors',
                 servingTeam === 2
                   ? 'border-indigo-600 bg-indigo-600 text-white'
                   : 'border-slate-200 bg-white text-slate-700 hover:border-indigo-300',
@@ -71,7 +71,7 @@ export function PickleballOfficialPanel({
             type="button"
             onClick={onSideOut}
             disabled={isSubmitting || servingTeam == null}
-            className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-black text-amber-800 hover:bg-amber-100 disabled:opacity-50"
+            className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800 hover:bg-amber-100 disabled:opacity-50"
           >
             Mất quyền giao
           </button>

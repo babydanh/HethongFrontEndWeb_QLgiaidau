@@ -49,13 +49,13 @@ function CreateTournamentForm() {
           <div className="w-24 h-24 flex items-center justify-center mx-auto mb-4">
             <Image src="/vndcsport.svg" alt="VNDC Sport Logo" width={96} height={96} className="w-full h-full object-contain" priority />
           </div>
-          <h1 className="text-3xl font-black text-slate-900">Tạo Giải Đấu Mới</h1>
+          <h1 className="text-3xl font-bold text-slate-900">Tạo Giải Đấu Mới</h1>
           <p className="text-slate-500 mt-2 font-medium">Lập giải đấu nháp rõ ràng trong 4 bước</p>
         </div>
 
         {isClubAdvanced && (
-          <div className="mb-8 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-left">
-            <p className="text-sm font-extrabold text-emerald-900">Tạo giải nâng cao trong câu lạc bộ</p>
+          <div className="mb-8 rounded-lg border border-emerald-200 bg-emerald-50 px-5 py-4 text-left">
+            <p className="text-sm font-bold text-emerald-900">Tạo giải nâng cao trong câu lạc bộ</p>
             <p className="mt-1 text-xs font-semibold leading-relaxed text-emerald-700">
               Giải vẫn thuộc CLB và miễn phí đăng ký. Bạn có thể chọn công khai để người ngoài xem được trang giải,
               hoặc không niêm yết để chỉ chia sẻ trong phạm vi nội bộ/mã mời.
@@ -91,7 +91,7 @@ function CreateTournamentForm() {
         </div>
 
         {/* Form Content */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mt-16">
+        <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden mt-16">
           <div className="p-6 md:p-8">
             {currentStep === 1 && <Step1Info />}
             {currentStep === 2 && <Step2FormatMulti />}

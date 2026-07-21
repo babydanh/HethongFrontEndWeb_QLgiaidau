@@ -206,10 +206,10 @@ export default function Step1Info() {
         </div>
 
         {formData.communityId && (
-          <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 flex flex-col gap-3">
+          <div className="bg-slate-50 border border-slate-200 rounded-lg p-5 flex flex-col gap-3">
             <label className="text-sm font-semibold text-slate-900">Đối tượng tham gia <span className="text-red-500">*</span></label>
             <div className="flex flex-col sm:flex-row gap-4 mt-1">
-              <label className="flex-1 flex flex-col p-4 border rounded-xl bg-white hover:bg-slate-50 cursor-pointer transition-all relative border-slate-200">
+              <label className="flex-1 flex flex-col p-4 border rounded-lg bg-white hover:bg-slate-50 cursor-pointer transition-all relative border-slate-200">
                 <div className="flex items-center gap-2">
                   <input 
                     type="radio" 
@@ -226,7 +226,7 @@ export default function Step1Info() {
                 </span>
               </label>
 
-              <label className="flex-1 flex flex-col p-4 border rounded-xl bg-white hover:bg-slate-50 cursor-pointer transition-all relative border-slate-200">
+              <label className="flex-1 flex flex-col p-4 border rounded-lg bg-white hover:bg-slate-50 cursor-pointer transition-all relative border-slate-200">
                 <div className="flex items-center gap-2">
                   <input 
                     type="radio" 
@@ -247,7 +247,7 @@ export default function Step1Info() {
         )}
 
         {/* Ranked or Unranked Option */}
-        <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 flex flex-col gap-3">
+        <div className="bg-slate-50 border border-slate-200 rounded-lg p-5 flex flex-col gap-3">
           <label className="text-sm font-semibold text-slate-900">Cách tính thành tích <span className="text-red-500">*</span></label>
           <div className="flex gap-6 mt-1">
             <label className="flex items-center gap-2 cursor-pointer">
@@ -289,11 +289,11 @@ export default function Step1Info() {
           </div>
         </div>
 
-        <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 flex flex-col gap-3">
+        <div className="bg-slate-50 border border-slate-200 rounded-lg p-5 flex flex-col gap-3">
           <label className="text-sm font-semibold text-slate-900">Hiển thị giải đấu <span className="text-red-500">*</span></label>
           <p className="text-xs text-slate-500">Chỉ quyết định cộng đồng có tìm thấy giải hay không, độc lập với cách duyệt đăng ký.</p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-1">
-            <label className={`flex flex-col p-4 border rounded-xl bg-white cursor-pointer transition-all ${watchVisibility === 'PUBLIC' ? 'border-blue-500 ring-2 ring-blue-100' : 'border-slate-200 hover:bg-slate-50'}`}>
+            <label className={`flex flex-col p-4 border rounded-lg bg-white cursor-pointer transition-all ${watchVisibility === 'PUBLIC' ? 'border-blue-500 ring-2 ring-blue-100' : 'border-slate-200 hover:bg-slate-50'}`}>
               <div className="flex items-center gap-2">
                 <input type="radio" value="PUBLIC" {...register('visibility')} checked={watchVisibility === 'PUBLIC'} onChange={() => setValue('visibility', 'PUBLIC')} className="w-4 h-4 text-blue-600 focus:ring-blue-500" />
                 <span className="text-sm font-bold text-slate-800">Công khai</span>
@@ -305,7 +305,7 @@ export default function Step1Info() {
               </span>
             </label>
 
-            <label className={`flex flex-col p-4 border rounded-xl bg-white cursor-pointer transition-all ${watchVisibility === 'PRIVATE' ? 'border-blue-500 ring-2 ring-blue-100' : 'border-slate-200 hover:bg-slate-50'}`}>
+            <label className={`flex flex-col p-4 border rounded-lg bg-white cursor-pointer transition-all ${watchVisibility === 'PRIVATE' ? 'border-blue-500 ring-2 ring-blue-100' : 'border-slate-200 hover:bg-slate-50'}`}>
               <div className="flex items-center gap-2">
                 <input type="radio" value="PRIVATE" {...register('visibility')} checked={watchVisibility === 'PRIVATE'} onChange={() => setValue('visibility', 'PRIVATE')} className="w-4 h-4 text-blue-600 focus:ring-blue-500" />
                 <span className="text-sm font-bold text-slate-800">Không niêm yết</span>
@@ -320,10 +320,10 @@ export default function Step1Info() {
         </div>
 
         {/* Registration Mode Option */}
-        <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 flex flex-col gap-3">
+        <div className="bg-slate-50 border border-slate-200 rounded-lg p-5 flex flex-col gap-3">
           <label className="text-sm font-semibold text-slate-900">Chế độ đăng ký giải đấu <span className="text-red-500">*</span></label>
           <div className="flex flex-col md:flex-row gap-4 mt-1">
-            <label className="flex-1 flex flex-col p-4 border rounded-xl bg-white hover:bg-slate-50 cursor-pointer transition-all relative border-slate-200">
+            <label className="flex-1 flex flex-col p-4 border rounded-lg bg-white hover:bg-slate-50 cursor-pointer transition-all relative border-slate-200">
               <div className="flex items-center gap-2">
                 <input 
                   type="radio" 
@@ -340,7 +340,7 @@ export default function Step1Info() {
               </span>
             </label>
 
-            <label className="flex-1 flex flex-col p-4 border rounded-xl bg-white hover:bg-slate-50 cursor-pointer transition-all relative border-slate-200">
+            <label className="flex-1 flex flex-col p-4 border rounded-lg bg-white hover:bg-slate-50 cursor-pointer transition-all relative border-slate-200">
               <div className="flex items-center gap-2">
                 <input 
                   type="radio" 
@@ -357,7 +357,7 @@ export default function Step1Info() {
               </span>
             </label>
 
-            <label className="flex-1 flex flex-col p-4 border rounded-xl bg-white hover:bg-slate-50 cursor-pointer transition-all relative border-slate-200">
+            <label className="flex-1 flex flex-col p-4 border rounded-lg bg-white hover:bg-slate-50 cursor-pointer transition-all relative border-slate-200">
               <div className="flex items-center gap-2">
                 <input 
                   type="radio" 
@@ -378,7 +378,7 @@ export default function Step1Info() {
 
         {/* ELO Constraints Section */}
         {watchIsRanked && (
-          <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 space-y-4">
+          <div className="bg-slate-50 border border-slate-200 rounded-lg p-5 space-y-4">
             <div>
               <h4 className="text-sm font-bold text-slate-800">Giới hạn trình độ ELO (Tùy chọn)</h4>
               <p className="text-xs text-slate-500 mt-1">Thiết lập khoảng ELO cho phép của các vận động viên đăng ký giải đấu này.</p>
@@ -436,7 +436,7 @@ export default function Step1Info() {
                 <div
                   key={opt.id}
                   onClick={() => setSelectedFormat(opt.id)}
-                  className={`cursor-pointer rounded-xl border p-4 transition-all ${
+                  className={`cursor-pointer rounded-lg border p-4 transition-all ${
                     isSelected ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500' : 'border-slate-200 bg-white hover:border-slate-300'
                   }`}
                 >

@@ -28,7 +28,7 @@ export function RefereesTab({
   onAddReferee
 }: RefereesTabProps) {
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-6 md:p-8 shadow-sm space-y-6 animate-in fade-in duration-200">
+    <div className="bg-white rounded-lg border border-slate-200 p-6 md:p-8 shadow-sm space-y-6 animate-in fade-in duration-200">
       <div className="border-b pb-4 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
         <div>
           <h2 className="text-xl font-bold text-slate-900">Ban Trọng Tài</h2>
@@ -39,7 +39,7 @@ export function RefereesTab({
       {/* Add Referee Form */}
       <form
         onSubmit={onAddReferee}
-        className="bg-slate-50 p-5 rounded-2xl border border-slate-150 flex flex-col sm:flex-row items-end gap-4 max-w-xl"
+        className="bg-slate-50 p-5 rounded-lg border border-slate-150 flex flex-col sm:flex-row items-end gap-4 max-w-xl"
       >
         <div className="flex-1 w-full">
           <label className="block text-xs font-bold text-slate-700 mb-1.5">Email trọng tài</label>
@@ -55,7 +55,7 @@ export function RefereesTab({
         <Button
           type="submit"
           disabled={isAddingReferee}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-bold h-10 px-5 rounded-xl shrink-0"
+          className="bg-blue-600 hover:bg-blue-700 text-white font-bold h-10 px-5 rounded-lg shrink-0"
         >
           {isAddingReferee ? 'Đang gửi mời...' : 'Gửi lời mời'}
         </Button>
@@ -69,7 +69,7 @@ export function RefereesTab({
         
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           {referees.map((ref) => (
-            <div key={ref.id} className="flex items-center gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm relative group overflow-hidden">
+            <div key={ref.id} className="flex items-center gap-3 bg-white p-4 rounded-lg border border-slate-200 shadow-sm relative group overflow-hidden">
               <div className="w-10 h-10 rounded-full bg-indigo-50 border border-slate-200 flex items-center justify-center font-bold text-xs text-indigo-650 shrink-0 uppercase overflow-hidden">
                 {ref.avatarUrl ? (
                   <img src={ref.avatarUrl} alt="Ảnh đại diện trọng tài" className="w-full h-full object-cover" />
@@ -86,7 +86,7 @@ export function RefereesTab({
             </div>
           ))}
           {referees.length === 0 && (
-            <div className="col-span-full text-center py-10 text-slate-455 italic text-xs border border-dashed border-slate-200 rounded-2xl bg-slate-50/50">
+            <div className="col-span-full text-center py-10 text-slate-455 italic text-xs border border-dashed border-slate-200 rounded-lg bg-slate-50/50">
               Chưa có trọng tài nào trong ban trọng tài. Hãy mời trọng tài đầu tiên bằng Email ở trên.
             </div>
           )}

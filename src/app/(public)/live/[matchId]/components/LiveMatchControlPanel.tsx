@@ -125,7 +125,7 @@ export function LiveMatchControlPanel({
         />
       ) : null}
 
-      <div className="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-900">
+      <div className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-900">
         {scoreGuidance.targetSummary}
         <div className="mt-1 text-xs font-semibold text-blue-700">
           Ví dụ hợp lệ: {scoreGuidance.examples.join(' • ')}. {scoreGuidance.operatorHint}
@@ -137,11 +137,11 @@ export function LiveMatchControlPanel({
         ) : null}
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-4">
+      <div className="rounded-lg border border-slate-200 bg-white p-4">
         <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Tiến trình set</p>
-            <p className="mt-1 text-sm font-black text-slate-900">
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Tiến trình set</p>
+            <p className="mt-1 text-sm font-bold text-slate-900">
               Set hiện tại: {activeSetIndex + 1} · {currentSet.team1Score} - {currentSet.team2Score}
             </p>
           </div>
@@ -154,17 +154,17 @@ export function LiveMatchControlPanel({
             <div
               key={`set-log-${index}`}
               className={cn(
-                'rounded-xl border px-3 py-2.5',
+                'rounded-lg border px-3 py-2.5',
                 index === activeSetIndex && !set.isFinished
                   ? 'border-blue-300 bg-blue-50'
                   : 'border-slate-200 bg-slate-50',
               )}
             >
               <div className="flex items-center justify-between gap-2">
-                <span className="text-xs font-black text-slate-700">Set {index + 1}</span>
+                <span className="text-xs font-bold text-slate-700">Set {index + 1}</span>
                 <span
                   className={cn(
-                    'rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide',
+                    'rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide',
                     set.scoreOverride?.reason
                       ? 'bg-amber-100 text-amber-800'
                       : set.isFinished
@@ -175,7 +175,7 @@ export function LiveMatchControlPanel({
                   {set.scoreOverride?.reason ? 'Ngoại lệ' : set.isFinished ? 'Đã chốt' : 'Đang đấu'}
                 </span>
               </div>
-              <p className="mt-1 text-lg font-black text-slate-950">
+              <p className="mt-1 text-lg font-bold text-slate-950">
                 {set.team1Score} - {set.team2Score}
               </p>
               {set.scoreOverride?.reason ? (
@@ -197,11 +197,11 @@ export function LiveMatchControlPanel({
         onAddPenalty={onAddPenalty}
       />
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-4">
+      <div className="rounded-lg border border-slate-200 bg-white p-4">
         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Chế độ trọng tài</p>
-            <p className="mt-2 text-sm font-black text-slate-900">
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Chế độ trọng tài</p>
+            <p className="mt-2 text-sm font-bold text-slate-900">
               {overrideEnabled ? 'Chế độ ngoại lệ đang bật' : 'Bám luật mặc định'}
             </p>
             <p className="mt-1 text-xs font-medium text-slate-500">
@@ -212,7 +212,7 @@ export function LiveMatchControlPanel({
             type="button"
             onClick={() => onOverrideEnabledChange(!overrideEnabled)}
             className={cn(
-              'rounded-xl border px-4 py-2 text-xs font-black transition-colors',
+              'rounded-lg border px-4 py-2 text-xs font-bold transition-colors',
               overrideEnabled
                 ? 'border-amber-500 bg-amber-500 text-white'
                 : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100',
@@ -224,13 +224,13 @@ export function LiveMatchControlPanel({
 
         {overrideEnabled ? (
           <div className="mt-4 space-y-2">
-            <label className="text-xs font-black uppercase tracking-[0.14em] text-amber-700">
+            <label className="text-xs font-bold uppercase tracking-[0.14em] text-amber-700">
               Lý do ngoại lệ bắt buộc
             </label>
             <textarea
               value={overrideReason}
               onChange={(event) => onOverrideReasonChange(event.target.value)}
-              className="min-h-24 w-full rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-slate-800"
+              className="min-h-24 w-full rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-slate-800"
               placeholder="Ví dụ: trận chung kết áp dụng loạt phụ rút gọn theo thống nhất của trọng tài và BTC..."
             />
             <p className="text-xs font-medium text-amber-700">
@@ -241,12 +241,12 @@ export function LiveMatchControlPanel({
       </div>
 
       <div className={cn(
-        "rounded-2xl border px-4 py-3 text-sm font-semibold transition-all duration-200",
+        "rounded-lg border px-4 py-3 text-sm font-semibold transition-all duration-200",
         scoreWarnings.length > 0
           ? "border-orange-200 bg-orange-50 text-orange-900"
           : "border-emerald-100 bg-emerald-50/50 text-emerald-900"
       )}>
-        <p className="font-black">Cảnh báo bám luật mặc định</p>
+        <p className="font-bold">Cảnh báo bám luật mặc định</p>
         <div className="mt-2 space-y-1 text-xs font-semibold">
           {scoreWarnings.length > 0 ? (
             scoreWarnings.map((warning) => (
@@ -263,19 +263,19 @@ export function LiveMatchControlPanel({
         ) : null}
       </div>
 
-      <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-lg md:p-8">
+      <div className="rounded-xl border border-slate-100 bg-white p-6 shadow-lg md:p-8">
         <div className="mb-6 flex items-center gap-3 border-b border-slate-100 pb-4">
           <div className="rounded-lg bg-blue-50 p-2 text-blue-600">
             <Activity className="h-5 w-5" />
           </div>
           <div>
-            <h3 className="text-lg font-black text-slate-900">Bảng điều khiển trận đấu</h3>
+            <h3 className="text-lg font-bold text-slate-900">Bảng điều khiển trận đấu</h3>
             <p className="text-xs text-slate-500">Cập nhật điểm số và trạng thái trận đấu theo thời gian thực</p>
           </div>
         </div>
 
         {match.status === 'SCHEDULED' ? (
-          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center">
+          <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-slate-200 bg-slate-50 p-8 text-center">
             <AlertCircle className="mb-2 h-12 w-12 text-blue-500" />
             <h4 className="mb-1 font-bold text-slate-800">Trận đấu chưa bắt đầu</h4>
             {!match.participant1Id || !match.participant2Id ? (
@@ -285,7 +285,7 @@ export function LiveMatchControlPanel({
                 </p>
                 <button
                   disabled
-                  className="flex cursor-not-allowed items-center gap-2 rounded-xl bg-slate-200 px-6 py-3 font-bold text-slate-400 transition-all"
+                  className="flex cursor-not-allowed items-center gap-2 rounded-lg bg-slate-200 px-6 py-3 font-bold text-slate-400 transition-all"
                 >
                   <Play className="h-4 w-4 fill-current" /> Bắt đầu trận đấu
                 </button>
@@ -298,7 +298,7 @@ export function LiveMatchControlPanel({
                 <button
                   onClick={onStartMatch}
                   disabled={isSubmitting}
-                  className="flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 font-bold text-white shadow-md transition-all hover:bg-blue-700 hover:shadow-lg disabled:opacity-50"
+                  className="flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-3 font-bold text-white shadow-md transition-all hover:bg-blue-700 hover:shadow-lg disabled:opacity-50"
                 >
                   <Play className="h-4 w-4 fill-current" /> Bắt đầu trận đấu
                 </button>
@@ -354,7 +354,7 @@ export function LiveMatchControlPanel({
               <button
                 onClick={onFinishSet}
                 disabled={isSubmitting || !match.participant1Id || !match.participant2Id}
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-3 font-bold text-slate-700 shadow-sm transition-all hover:bg-slate-50 disabled:opacity-50"
+                className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white py-3 font-bold text-slate-700 shadow-sm transition-all hover:bg-slate-50 disabled:opacity-50"
               >
                 <Check className="h-4 w-4 text-emerald-500" /> {scorePresentation.completeActionLabel}
               </button>
@@ -390,7 +390,7 @@ export function LiveMatchControlPanel({
         ) : null}
 
         {match.status === 'COMPLETED' ? (
-          <div className="flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 p-6 text-center">
+          <div className="flex flex-col items-center justify-center rounded-lg border border-slate-200 bg-slate-50 p-6 text-center">
             <Trophy className="mb-2 h-12 w-12 text-emerald-500" />
             <h4 className="mb-1 font-bold text-slate-800">Trận đấu đã hoàn thành</h4>
             <p className="text-xs text-slate-500">
@@ -404,17 +404,17 @@ export function LiveMatchControlPanel({
       </div>
 
       <Modal open={confirmWinner !== null} onOpenChange={(open) => !open && setConfirmWinner(null)}>
-        <ModalContent className="max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-xl">
+        <ModalContent className="max-w-md rounded-lg border border-slate-200 bg-white p-6 shadow-xl">
           <ModalHeader className="text-center sm:text-left">
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-orange-100 text-orange-600 sm:mx-0">
               <AlertCircle className="h-6 w-6" />
             </div>
-            <ModalTitle className="mt-3 text-lg font-black text-slate-900 sm:mt-4">
+            <ModalTitle className="mt-3 text-lg font-bold text-slate-900 sm:mt-4">
               Xác nhận chốt thắng ngoại lệ
             </ModalTitle>
             <ModalDescription className="mt-2 text-sm font-semibold text-slate-500 leading-relaxed">
               Bạn có chắc chắn muốn chốt kết quả chiến thắng toàn trận cho đội:
-              <span className="mt-1.5 block text-base font-black text-slate-900 underline decoration-blue-500 decoration-2 underline-offset-4">
+              <span className="mt-1.5 block text-base font-bold text-slate-900 underline decoration-blue-500 decoration-2 underline-offset-4">
                 {confirmWinner === 1 ? team1Name : team2Name}
               </span>
               Hành động này sẽ kết thúc trận đấu và khóa bảng điểm. Lý do ngoại lệ:

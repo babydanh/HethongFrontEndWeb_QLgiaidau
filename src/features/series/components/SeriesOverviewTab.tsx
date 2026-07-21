@@ -29,7 +29,7 @@ export const SeriesOverviewTab: React.FC<SeriesOverviewTabProps> = ({ series, le
       {/* Description & Intro (8 columns) */}
       <div className="lg:col-span-8 flex flex-col gap-6">
         {/* Editor.js Content View */}
-        <div className="bg-white p-6 md:p-8 rounded-2xl border border-slate-200 shadow-sm">
+        <div className="bg-white p-6 md:p-8 rounded-lg border border-slate-200 shadow-sm">
           <h2 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-blue-600" /> Về Chuỗi Giải Đấu
           </h2>
@@ -47,7 +47,7 @@ export const SeriesOverviewTab: React.FC<SeriesOverviewTabProps> = ({ series, le
       {/* Sidebar Info & Featured Event (4 columns) */}
       <div className="lg:col-span-4 flex flex-col gap-6">
         {/* Series Quick Metrics Card */}
-        <div className="bg-gradient-to-br from-slate-900 to-slate-950 text-white p-6 rounded-2xl border border-slate-800 shadow-lg relative overflow-hidden">
+        <div className="bg-gradient-to-br from-slate-900 to-slate-950 text-white p-6 rounded-lg border border-slate-800 shadow-lg relative overflow-hidden">
           <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/10 rounded-full blur-2xl"></div>
           <div className="absolute bottom-0 left-0 w-32 h-32 bg-emerald-600/10 rounded-full blur-2xl"></div>
           
@@ -58,7 +58,7 @@ export const SeriesOverviewTab: React.FC<SeriesOverviewTabProps> = ({ series, le
           <div className="flex flex-col gap-4">
             <div>
               <span className="text-xs text-slate-400">Tổng giải thưởng chuỗi</span>
-              <div className="text-2xl font-black text-amber-400 mt-0.5">{formattedPrize}</div>
+              <div className="text-2xl font-bold text-amber-400 mt-0.5">{formattedPrize}</div>
             </div>
             
             <div className="h-px bg-slate-800"></div>
@@ -94,7 +94,7 @@ export const SeriesOverviewTab: React.FC<SeriesOverviewTabProps> = ({ series, le
 
         {/* Featured Upcoming Tournament Event Card */}
         {upcomingEvent && upcomingEvent.tournament && (
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-4">
+          <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-sm flex flex-col gap-4">
             <div>
               <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">
                 Giải đấu tiếp theo
@@ -123,7 +123,7 @@ export const SeriesOverviewTab: React.FC<SeriesOverviewTabProps> = ({ series, le
 
             <Link
               href={`/tournaments/${upcomingEvent.tournamentId}`}
-              className="w-full inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-xl text-sm font-bold shadow-sm transition-all duration-200"
+              className="w-full inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg text-sm font-bold shadow-sm transition-all duration-200"
             >
               Xem giải đấu này
             </Link>

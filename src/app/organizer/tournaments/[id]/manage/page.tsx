@@ -45,7 +45,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
 
   if (!s.tournament) return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 text-center">
-      <div className="max-w-md bg-white p-8 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center">
+      <div className="max-w-md bg-white p-8 rounded-lg border border-slate-200 shadow-sm flex flex-col items-center">
         <AlertTriangle className="w-12 h-12 text-rose-500 mb-4" />
         <h2 className="text-xl font-bold text-slate-900">Không tìm thấy giải đấu</h2>
         <p className="text-slate-500 mt-2">Giải đấu không tồn tại hoặc bạn không có quyền truy cập quản trị.</p>
@@ -99,7 +99,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
     <div className="min-h-screen bg-slate-50 py-8 px-4 md:px-8">
       <div className="max-w-5xl mx-auto">
         {/* Header */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 mb-8 shadow-sm flex justify-between items-center gap-6">
+        <div className="bg-white rounded-lg border border-slate-200 p-6 mb-8 shadow-sm flex justify-between items-center gap-6">
           <div className="space-y-2">
             <div className="flex items-center gap-3">
               <span className="flex items-center gap-1 bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
@@ -108,7 +108,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
               </span>
               {s.getStatusLabel(s.tournament.status)}
             </div>
-            <h1 className="text-2xl md:text-3xl font-black text-slate-900">{s.tournament.name}</h1>
+            <h1 className="text-2xl md:text-3xl font-bold text-slate-900">{s.tournament.name}</h1>
             <p className="text-slate-500 font-medium text-sm flex items-center gap-1">
               <Calendar className="w-4 h-4 text-slate-400" />
               Khai mạc: {s.tournament.startDate ? formatDate(s.tournament.startDate) : 'Chưa thiết lập'}
@@ -138,10 +138,10 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
           onNextStep={s.handleTournamentStepTransition} publishFeeAmount={s.publishFeeAmount} isLoading={s.isLoading || s.isPayingPublishFee} />
 
         {/* Divisions Selector */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-4 mb-4 shadow-sm">
+        <div className="bg-white rounded-lg border border-slate-200 p-4 mb-4 shadow-sm">
           <div className="flex justify-between items-center mb-4">
             <div>
-              <p className="text-xs font-black text-slate-500 uppercase tracking-wider">Hình thức thi đấu</p>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Hình thức thi đấu</p>
               <p className="text-xs text-slate-400">Chọn hình thức để xem cấu hình riêng</p>
             </div>
             <Button size="sm" onClick={() => s.setIsCreateDivisionModalOpen(true)}
@@ -156,7 +156,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                 const isActive = div.id === s.selectedDivisionId;
                 const bracketFormatLabel = s.getBracketLabel(div.bracketType);
                 return (
-                  <div key={div.id} className={`group inline-flex items-center rounded-xl border transition-all ${isActive ? 'border-blue-600 bg-blue-600 text-white shadow-md' : 'border-slate-200 bg-white text-slate-650 hover:border-blue-300'}`}>
+                  <div key={div.id} className={`group inline-flex items-center rounded-lg border transition-all ${isActive ? 'border-blue-600 bg-blue-600 text-white shadow-md' : 'border-slate-200 bg-white text-slate-650 hover:border-blue-300'}`}>
                     <button 
                       type="button" 
                       onClick={() => { s.setSelectedDivisionId(div.id); s.applyDivisionFormValues(div); }}
@@ -164,7 +164,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                       title="Nhấn để xem chi tiết & thiết lập cấu hình riêng"
                     >
                       <span className="min-w-0">
-                        <span className="block max-w-[150px] truncate text-xs font-black">{div.name}</span>
+                        <span className="block max-w-[150px] truncate text-xs font-bold">{div.name}</span>
                         <span className={`block text-[10px] font-semibold mt-0.5 ${isActive ? 'text-blue-100' : 'text-slate-400'}`}>
                           {s.getFormatLabel(div.matchType, div.genderRestriction)} • <span className="underline">{bracketFormatLabel}</span>
                         </span>
@@ -184,16 +184,16 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
         </div>
 
         {/* Tabs nav */}
-        <div className="grid grid-cols-3 md:grid-cols-7 gap-1.5 mb-6 bg-white rounded-2xl border border-slate-200 p-1.5 shadow-sm">
+        <div className="grid grid-cols-3 md:grid-cols-7 gap-1.5 mb-6 bg-white rounded-lg border border-slate-200 p-1.5 shadow-sm">
           {TABS.map(({ key, label, icon: Icon }) => (
             <button key={key} onClick={() => s.setActiveTab(key)}
-              className={`flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-bold transition-all w-full cursor-pointer ${
+              className={`flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-bold transition-all w-full cursor-pointer ${
                 s.activeTab === key ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
               }`}>
               <Icon className="w-4 h-4 shrink-0" />
               <span className="truncate">{label}</span>
               {key === 'permissions' && pendingRefereeCount > 0 ? (
-                <span className={`inline-flex min-w-[18px] justify-center rounded-full px-1.5 py-0.5 text-[10px] font-black ${
+                <span className={`inline-flex min-w-[18px] justify-center rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
                   s.activeTab === key ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-700'
                 }`}>
                   {pendingRefereeCount}
@@ -331,15 +331,15 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
         {/* Stage config modal */}
         {s.selectedStage && s.selectedRoundNumber !== null && (
           <Modal open={!!s.selectedStage} onOpenChange={(open) => { if (!open) { s.setSelectedStage(null); s.setSelectedRoundNumber(null); } }}>
-            <ModalContent className="bg-white rounded-2xl p-6">
+            <ModalContent className="bg-white rounded-lg p-6">
               <ModalHeader><ModalTitle className="text-xl font-bold text-slate-900">Cấu hình vòng đấu</ModalTitle></ModalHeader>
               <div className="space-y-4 mt-4">
-                <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
                   <p className="text-sm font-bold text-slate-900">{sportPresentation.sportLabel}: {sportPresentation.scoringLabel}</p>
                   <p className="mt-1 text-xs font-semibold text-slate-500">{sportPresentation.roundConfigHint}</p>
                 </div>
-                <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3">
-                  <p className="text-xs font-black uppercase tracking-[0.12em] text-blue-700">Preset nhanh cho vòng đấu</p>
+                <div className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3">
+                  <p className="text-xs font-bold uppercase tracking-[0.12em] text-blue-700">Preset nhanh cho vòng đấu</p>
                   <div className="mt-3 grid gap-3 md:grid-cols-3">
                     {sportPresets.map((preset) => (
                       <button
@@ -353,7 +353,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                           s.setStageSuperTiebreakEnabled(preset.tiebreakPoints !== null);
                           s.setStageSuperTiebreakPoints(preset.tiebreakPoints ?? preset.pointsPerSet);
                         }}
-                        className="rounded-xl border border-blue-200 bg-white px-3 py-3 text-left transition-all hover:border-blue-400 hover:bg-blue-100"
+                        className="rounded-lg border border-blue-200 bg-white px-3 py-3 text-left transition-all hover:border-blue-400 hover:bg-blue-100"
                       >
                         <p className="text-sm font-bold text-slate-900">{preset.label}</p>
                         <p className="mt-1 text-xs font-semibold text-slate-500">{preset.description}</p>
@@ -387,7 +387,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                       <input type="number" value={s.stageSuperTiebreakPoints} onChange={e => s.setStageSuperTiebreakPoints(Number(e.target.value))} className="w-full border rounded-lg p-2 text-sm" />
                     </div>
                   )}
-                  <div className="col-span-2 rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-900">
+                  <div className="col-span-2 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-900">
                     Vòng này sẽ đánh: thắng {Math.ceil(s.stageMaxSets / 2)} {s.sportRuleKind === 'PICKLEBALL_SIDE_OUT' ? 'game' : 'set'}
                     {' • '}
                     {s.stagePointsPerSet} {s.sportRuleKind === 'TENNIS' ? 'game/set' : 'điểm'}
@@ -395,11 +395,11 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                     {supportsTiebreakInput ? ` • ${sportPresentation.tiebreakLabel.toLowerCase()}: ${s.stageSuperTiebreakPoints}` : ''}
                   </div>
                   {isPickleballSideOut && (
-                    <div className="col-span-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800">
+                    <div className="col-span-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800">
                       Mode side-out: chỉ đội giao bóng mới ghi điểm. Vòng này hiện mới cấu hình score mục tiêu, chưa có state giao bóng live chi tiết.
                     </div>
                   )}
-                  <div className="col-span-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700">
+                  <div className="col-span-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700">
                     Gợi ý nhập điểm: {scoreGuidance.targetSummary} Ví dụ: {scoreGuidance.examples.join(' • ')}.
                   </div>
                   <div className="col-span-2"><label className="text-xs font-bold text-slate-500">Ghi chú điều phối vòng này</label>
@@ -416,10 +416,10 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
         {/* Lock modal */}
         {s.isLockModalOpen && (
           <Modal open={s.isLockModalOpen} onOpenChange={(open) => { if (!open) s.setIsLockModalOpen(false); }}>
-            <ModalContent className="bg-white rounded-2xl p-6">
+            <ModalContent className="bg-white rounded-lg p-6">
               <ModalHeader><ModalTitle className="text-xl font-bold text-slate-900">Xác nhận chốt danh sách</ModalTitle></ModalHeader>
               <div className="space-y-4 mt-4">
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs text-amber-800 font-semibold">
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-xs text-amber-800 font-semibold">
                   ⚠️ Sau khi chốt, không thể thêm/sửa người chơi. Hệ thống sẽ tự động sinh sơ đồ thi đấu.
                 </div>
                 {s.lockSummary && (
@@ -443,7 +443,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
         {/* Division delete confirm modal */}
         {s.divisionPendingDelete && (
           <Modal open={!!s.divisionPendingDelete} onOpenChange={() => s.setDivisionPendingDelete(null)}>
-            <ModalContent className="bg-white rounded-2xl p-6">
+            <ModalContent className="bg-white rounded-lg p-6">
               <ModalHeader><ModalTitle className="text-lg font-bold">Xóa hình thức này?</ModalTitle></ModalHeader>
               <p className="text-sm text-slate-600 mt-2">Không thể hoàn tác sau khi xóa.</p>
               <div className="flex justify-end gap-3 mt-6">
@@ -459,7 +459,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
         {/* Create Division Modal */}
         {s.isCreateDivisionModalOpen && (
           <Modal open={s.isCreateDivisionModalOpen} onOpenChange={s.setIsCreateDivisionModalOpen}>
-            <ModalContent className="bg-white rounded-2xl p-6">
+            <ModalContent className="bg-white rounded-lg p-6">
               <ModalHeader><ModalTitle className="text-lg font-bold">Thêm hình thức thi đấu</ModalTitle></ModalHeader>
               <div className="space-y-4 mt-4">
                 <div><label className="text-xs font-bold text-slate-500">Loại</label>
@@ -491,10 +491,10 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
         {/* Match Schedule Modal */}
         {s.selectedMatch && (
           <Modal open={!!s.selectedMatch} onOpenChange={() => s.setSelectedMatch(null)}>
-            <ModalContent className="bg-white rounded-2xl p-6 max-w-lg">
+            <ModalContent className="bg-white rounded-lg p-6 max-w-lg">
               <ModalHeader><ModalTitle className="text-lg font-bold">Xếp lịch thi đấu</ModalTitle></ModalHeader>
               <div className="space-y-4 mt-4">
-                <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
                   <p className="text-sm font-bold text-slate-900">{sportPresentation.sportLabel}: {sportPresentation.scoringLabel}</p>
                   <p className="mt-1 text-xs font-semibold text-slate-500">{sportPresentation.presetSummary}</p>
                 </div>
@@ -508,8 +508,8 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                 </label>
                 {s.isCustomMatchConfig && (
                   <>
-                    <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3">
-                      <p className="text-xs font-black uppercase tracking-[0.12em] text-blue-700">Preset nhanh cho trận này</p>
+                    <div className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3">
+                      <p className="text-xs font-bold uppercase tracking-[0.12em] text-blue-700">Preset nhanh cho trận này</p>
                       <div className="mt-3 grid gap-3">
                         {sportPresets.map((preset) => (
                           <button
@@ -523,7 +523,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                               s.setMatchSuperTiebreakEnabled(preset.tiebreakPoints !== null);
                               s.setMatchSuperTiebreakPoints(preset.tiebreakPoints ?? preset.pointsPerSet);
                             }}
-                            className="rounded-xl border border-blue-200 bg-white px-3 py-3 text-left transition-all hover:border-blue-400 hover:bg-blue-100"
+                            className="rounded-lg border border-blue-200 bg-white px-3 py-3 text-left transition-all hover:border-blue-400 hover:bg-blue-100"
                           >
                             <p className="text-sm font-bold text-slate-900">{preset.label}</p>
                             <p className="mt-1 text-xs font-semibold text-slate-500">{preset.description}</p>
@@ -540,14 +540,14 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                       </div>
                       {s.matchDeuceEnabled && <div><label className="text-xs text-slate-500">{sportPresentation.maxScoreLabel}</label><input type="number" value={s.matchMaxPoints} onChange={e => s.setMatchMaxPoints(Number(e.target.value))} className="w-full border rounded-lg p-2 text-sm" /></div>}
                       {supportsTiebreakInput && <div><label className="text-xs text-slate-500">{sportPresentation.tiebreakLabel}</label><input type="number" value={s.matchSuperTiebreakPoints} onChange={e => s.setMatchSuperTiebreakPoints(Number(e.target.value))} className="w-full border rounded-lg p-2 text-sm" /></div>}
-                      <div className="col-span-2 rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-900">
+                      <div className="col-span-2 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-900">
                         Trận này sẽ đánh: thắng {s.matchSetsToWin} {s.sportRuleKind === 'PICKLEBALL_SIDE_OUT' ? 'game' : 'set'}
                         {' • '}
                         {s.matchPointsPerSet} {s.sportRuleKind === 'TENNIS' ? 'game/set' : 'điểm'}
                         {s.matchDeuceEnabled ? ' • hơn 2' : ' • chạm đích là chốt'}
                         {supportsTiebreakInput ? ` • ${sportPresentation.tiebreakLabel.toLowerCase()}: ${s.matchSuperTiebreakPoints}` : ''}
                       </div>
-                      <div className="col-span-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700">
+                      <div className="col-span-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700">
                         Gợi ý nhập điểm cho trận này: {scoreGuidance.targetSummary} Ví dụ: {scoreGuidance.examples.join(' • ')}.
                       </div>
                     </div>

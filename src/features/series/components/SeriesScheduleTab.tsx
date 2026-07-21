@@ -71,7 +71,7 @@ export const SeriesScheduleTab: React.FC<SeriesScheduleTabProps> = ({ legs }) =>
                 key={leg.id}
                 onClick={() => setSelectedLegId(leg.id)}
                 className={cn(
-                  'w-full text-left px-4 py-3 rounded-xl border font-bold text-xs md:text-sm transition-all flex items-center justify-between shrink-0 lg:shrink',
+                  'w-full text-left px-4 py-3 rounded-lg border font-bold text-xs md:text-sm transition-all flex items-center justify-between shrink-0 lg:shrink',
                   isActive
                     ? 'bg-blue-600 text-white border-transparent shadow-sm'
                     : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50 hover:text-slate-950'
@@ -88,7 +88,7 @@ export const SeriesScheduleTab: React.FC<SeriesScheduleTabProps> = ({ legs }) =>
       {/* Timeline Section (9 columns) */}
       <div className="lg:col-span-9 flex flex-col gap-6">
         {selectedLeg ? (
-          <div className="bg-white p-6 md:p-8 rounded-2xl border border-slate-200 shadow-sm">
+          <div className="bg-white p-6 md:p-8 rounded-lg border border-slate-200 shadow-sm">
             {/* Leg Header Info */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-slate-150 pb-5 mb-6 gap-4">
               <div>
@@ -131,10 +131,10 @@ export const SeriesScheduleTab: React.FC<SeriesScheduleTabProps> = ({ legs }) =>
                         ></div>
 
                         {/* Event Details Card */}
-                        <div className="bg-slate-50/50 hover:bg-slate-50 hover:border-slate-300 p-4 md:p-5 rounded-2xl border border-slate-200 transition-all duration-200 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+                        <div className="bg-slate-50/50 hover:bg-slate-50 hover:border-slate-300 p-4 md:p-5 rounded-lg border border-slate-200 transition-all duration-200 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
                           <div className="flex flex-col gap-1.5">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <span className="text-[10px] font-black bg-blue-100 text-blue-800 px-2 py-0.5 rounded-md">
+                              <span className="text-[10px] font-bold bg-blue-100 text-blue-800 px-2 py-0.5 rounded-md">
                                 GIẢI #{event.order}
                               </span>
                               {event.region && (

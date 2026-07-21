@@ -58,11 +58,11 @@ export function ConfigTab({
   const setUnitLabel = presentation.setUnitLabel;
   const winByTwoLabel = presentation.winByTwoLabel;
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-6 md:p-8 shadow-sm space-y-6 animate-in fade-in duration-200">
+    <div className="bg-white rounded-lg border border-slate-200 p-6 md:p-8 shadow-sm space-y-6 animate-in fade-in duration-200">
       <h2 className="text-xl font-bold text-slate-900 border-b pb-2 mb-4">Cấu hình luật chơi</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        <div className="flex flex-col gap-2 bg-slate-50 border p-4 rounded-xl">
+        <div className="flex flex-col gap-2 bg-slate-50 border p-4 rounded-lg">
           <div className="flex items-center justify-between">
             <label className="text-sm font-semibold text-slate-700">Giới hạn số đội đăng ký</label>
             <input
@@ -86,7 +86,7 @@ export function ConfigTab({
           )}
         </div>
 
-        <div className="flex flex-col gap-1.5 bg-slate-50 border p-4 rounded-xl">
+        <div className="flex flex-col gap-1.5 bg-slate-50 border p-4 rounded-lg">
           <label className="text-sm font-semibold text-slate-700">Hình thức / Thể loại thi đấu</label>
           <select
             value={matchType}
@@ -107,7 +107,7 @@ export function ConfigTab({
           )}
         </div>
 
-        <div className="flex flex-col gap-1.5 bg-slate-50 border p-4 rounded-xl">
+        <div className="flex flex-col gap-1.5 bg-slate-50 border p-4 rounded-lg">
           <label className="text-sm font-semibold text-slate-700">Thể thức thi đấu (Sơ đồ giải)</label>
           <select
             value={bracketTypeState}
@@ -129,7 +129,7 @@ export function ConfigTab({
       </div>
 
       {/* Sport Rules Card */}
-      <div className="bg-slate-50 rounded-xl border p-5 space-y-4">
+      <div className="bg-slate-50 rounded-lg border p-5 space-y-4">
         <h4 className="font-bold text-slate-800 border-b pb-2">Luật tính điểm mặc định</h4>
         <p className="text-xs font-semibold text-slate-500">
           {presentation.sportLabel}: {presentation.scoringLabel}. {presentation.presetSummary}

@@ -22,7 +22,7 @@ export function RallyScoreControls({
 }: RallyScoreControlsProps) {
   return (
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-      <div className="flex flex-col items-center rounded-2xl border border-slate-150 bg-slate-50 p-5">
+      <div className="flex flex-col items-center rounded-lg border border-slate-150 bg-slate-50 p-5">
         <span className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-400">
           Đội 1: {team1Name}
         </span>
@@ -34,7 +34,7 @@ export function RallyScoreControls({
           >
             <Minus className="h-5 w-5" />
           </button>
-          <span className={cn('w-12 text-center text-4xl font-black tabular-nums text-slate-900')}>
+          <span className={cn('w-12 text-center text-4xl font-bold tabular-nums text-slate-900')}>
             {currentPointTeam1}
           </span>
           <button
@@ -47,7 +47,7 @@ export function RallyScoreControls({
         </div>
       </div>
 
-      <div className="flex flex-col items-center rounded-2xl border border-slate-150 bg-slate-50 p-5">
+      <div className="flex flex-col items-center rounded-lg border border-slate-150 bg-slate-50 p-5">
         <span className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-400">
           Đội 2: {team2Name}
         </span>
@@ -59,7 +59,7 @@ export function RallyScoreControls({
           >
             <Minus className="h-5 w-5" />
           </button>
-          <span className={cn('w-12 text-center text-4xl font-black tabular-nums text-slate-900')}>
+          <span className={cn('w-12 text-center text-4xl font-bold tabular-nums text-slate-900')}>
             {currentPointTeam2}
           </span>
           <button

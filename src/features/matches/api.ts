@@ -44,4 +44,8 @@ export const matchesApi = {
     api.get<{ data: MatchComment[] }>(`/matches/${id}/comments`).then((res) => res.data),
   createComment: (id: string, payload: { commentText: string }) =>
     api.post<{ data: MatchComment }>(`/matches/${id}/comments`, payload).then((res) => res.data),
+  cheerMatch: (id: string) =>
+    api.post<{ data: { cheerCount: number } }>(`/matches/${id}/cheer`).then((res) => res.data),
+  getCheerCount: (id: string) =>
+    api.get<{ data: { cheerCount: number } }>(`/matches/${id}/cheer-count`).then((res) => res.data),
 };

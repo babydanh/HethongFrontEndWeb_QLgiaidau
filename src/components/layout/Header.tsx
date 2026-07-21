@@ -302,7 +302,7 @@ export function Header() {
                 className={cn(
                   'flex h-full items-center border-b-2 text-sm transition-colors',
                   isActive(link.path)
-                    ? 'border-blue-600 font-bold text-blue-600'
+                    ? 'border-blue-600 font-semibold text-blue-600'
                     : 'border-transparent font-medium text-slate-500 hover:text-blue-600',
                 )}
               >
@@ -316,7 +316,7 @@ export function Header() {
           {/* Nút Tải App */}
           <Link
             href="/download"
-            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition-all active:scale-95"
+            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition-all active:scale-95"
           >
             <Smartphone className="w-4 h-4" />
             Tải App
@@ -327,13 +327,13 @@ export function Header() {
               <button
                 type="button"
                 onClick={() => setIsNotificationOpen((current) => !current)}
-                className="relative rounded-xl p-2 text-slate-500 transition-all hover:bg-slate-100 hover:text-slate-700 active:scale-95"
+                className="relative rounded-lg p-2 text-slate-500 transition-all hover:bg-slate-100 hover:text-slate-700 active:scale-95"
                 aria-label="Mở thông báo"
                 aria-expanded={isNotificationOpen}
               >
                 <Bell className="h-6 w-6" />
                 {unreadCount > 0 ? (
-                  <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[9px] font-bold text-white">
+                  <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[9px] font-semibold text-white ring-2 ring-white">
                     {unreadCount > 9 ? '9+' : unreadCount}
                   </span>
                 ) : null}
@@ -346,11 +346,11 @@ export function Header() {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
                     transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
-                    className="absolute left-4 right-4 md:left-auto md:right-0 mt-2 w-auto md:w-[22rem] overflow-hidden rounded-2xl border border-slate-200/60 bg-white/95 backdrop-blur-md shadow-xl z-50"
+                    className="absolute left-4 right-4 md:left-auto md:right-0 mt-2 w-auto md:w-[22rem] overflow-hidden rounded-lg border border-slate-200/60 bg-white/95 backdrop-blur-md shadow-xl z-50"
                   >
                     <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
                       <div>
-                        <p className="text-sm font-bold text-slate-900">Thông báo</p>
+                        <p className="text-sm font-semibold text-slate-900">Thông báo</p>
                         <p className="text-xs text-slate-500">
                           {unreadCount > 0 ? `${unreadCount} chưa đọc` : 'Đã cập nhật'}
                         </p>
@@ -360,7 +360,7 @@ export function Header() {
                         <button
                           type="button"
                           onClick={handleMarkAllNotificationsAsRead}
-                          className="text-xs font-semibold text-blue-600 transition-colors hover:text-blue-800"
+                          className="text-xs font-medium text-blue-600 transition-colors hover:text-blue-800"
                         >
                           Đánh dấu tất cả
                         </button>
@@ -373,7 +373,7 @@ export function Header() {
                           {Array.from({ length: 3 }).map((_, index) => (
                             <div
                               key={`notification-skeleton-${index}`}
-                              className="rounded-2xl border border-slate-100 p-3"
+                              className="rounded-lg border border-slate-100 p-3"
                             >
                               <div className="mb-2 h-3 w-2/3 animate-pulse rounded bg-slate-100" />
                               <div className="mb-2 h-3 w-full animate-pulse rounded bg-slate-100" />
@@ -390,7 +390,7 @@ export function Header() {
                               <article
                                 key={notification.id}
                                 className={cn(
-                                  'rounded-xl border px-3.5 py-3.5 transition-colors',
+                                  'rounded-lg border px-3.5 py-3.5 transition-colors',
                                   notification.isRead
                                     ? 'border-transparent bg-white hover:border-slate-200 hover:bg-slate-50/80'
                                     : 'border-slate-200 bg-slate-50/85 shadow-sm',
@@ -414,21 +414,21 @@ export function Header() {
                                           <div className="mb-1.5 flex flex-wrap items-center gap-2">
                                             <span
                                               className={cn(
-                                                'rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em]',
+                                                'rounded-full px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.14em]',
                                                 getNotificationTypeMeta(notification.type).badgeClassName,
                                               )}
                                             >
                                               {getNotificationTypeLabel(notification.type)}
                                             </span>
                                             {!notification.isRead ? (
-                                              <span className="text-[10px] font-semibold text-slate-500">
+                                              <span className="text-[10px] font-medium text-slate-500">
                                                 {getNotificationSummary(notification.type)}
                                               </span>
                                             ) : null}
                                           </div>
                                           <p
                                             className={cn(
-                                              'text-sm font-semibold',
+                                              'text-sm font-medium',
                                               notification.isRead ? 'text-slate-700' : 'text-slate-950',
                                             )}
                                           >
@@ -436,7 +436,7 @@ export function Header() {
                                           </p>
                                         </div>
                                         {!notification.isRead ? (
-                                          <span className="inline-flex shrink-0 whitespace-nowrap rounded-full bg-blue-600 px-2 py-1 text-[10px] font-semibold text-white">
+                                          <span className="inline-flex shrink-0 whitespace-nowrap rounded-full bg-blue-600 px-2 py-1 text-[10px] font-medium text-white">
                                             Chưa đọc
                                           </span>
                                         ) : (
@@ -482,7 +482,7 @@ export function Header() {
                                               );
                                             }
                                           }}
-                                          className="inline-flex items-center gap-1 rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                          className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
                                         >
                                           <Check className="h-3.5 w-3.5" />
                                           {notificationAction.kind === 'referee-invite' ? 'Nhận vai trò' : 'Đồng ý'}
@@ -509,7 +509,7 @@ export function Header() {
                                               );
                                             }
                                           }}
-                                          className="rounded-xl border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-700 transition-colors hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                          className="rounded-lg border border-rose-200 px-3 py-1.5 text-xs font-medium text-rose-700 transition-colors hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
                                         >
                                           Từ chối
                                         </button>
@@ -523,7 +523,7 @@ export function Header() {
                         </div>
                       ) : (
                         <div className="px-6 py-10 text-center">
-                          <p className="text-sm font-semibold text-slate-700">
+                          <p className="text-sm font-medium text-slate-700">
                             Chưa có thông báo nào
                           </p>
                           <p className="mt-1 text-xs text-slate-500">
@@ -536,7 +536,7 @@ export function Header() {
                     <div className="border-t border-slate-100 p-2 bg-slate-50/50">
                       <Link
                         href="/notifications"
-                        className="block rounded-xl px-3 py-2 text-center text-sm font-semibold text-blue-600 transition-colors hover:bg-blue-100/50 hover:text-blue-750"
+                        className="block rounded-lg px-3 py-2 text-center text-sm font-medium text-blue-600 transition-colors hover:bg-blue-100/50 hover:text-blue-750"
                       >
                         Xem tất cả thông báo
                       </Link>
@@ -558,7 +558,7 @@ export function Header() {
                 aria-label="Mở menu tài khoản"
                 aria-expanded={isDropdownOpen}
               >
-                <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-blue-100 text-sm font-bold uppercase text-blue-600 transition-all hover:ring-2 hover:ring-blue-600 hover:ring-offset-2">
+                <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-blue-100 text-sm font-semibold uppercase text-blue-600 transition-all hover:ring-2 hover:ring-blue-600 hover:ring-offset-2">
                   {user?.avatarUrl ? (
                     <span
                       role="img"
@@ -579,10 +579,10 @@ export function Header() {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
                     transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
-                    className="absolute right-0 mt-2 w-64 rounded-xl border border-slate-200 bg-white py-2 shadow-lg z-50"
+                    className="absolute right-0 mt-2 w-64 rounded-lg border border-slate-200 bg-white py-2 shadow-lg z-50"
                   >
                     <div className="mb-2 border-b border-slate-100 px-4 py-2.5">
-                      <p className="truncate text-sm font-bold text-slate-900">{user?.fullName}</p>
+                      <p className="truncate text-sm font-semibold text-slate-900">{user?.fullName}</p>
                       <p className="truncate text-xs text-slate-500">{user?.email}</p>
                     </div>
 
@@ -591,7 +591,7 @@ export function Header() {
                       <div className="border-b border-slate-100/60 pb-2 mb-2">
                         {canAccessAdmin && (
                           <Link href="/admin">
-                            <div className="flex cursor-pointer items-center gap-3 px-4 py-2.5 text-sm font-bold text-slate-500 hover:text-blue-600 transition-colors hover:bg-blue-50/30">
+                            <div className="flex cursor-pointer items-center gap-3 px-4 py-2.5 text-sm font-semibold text-slate-500 hover:text-blue-600 transition-colors hover:bg-blue-50/30">
                               <LayoutDashboard className="h-4 w-4 text-slate-400" />
                               Quản trị hệ thống
                             </div>
@@ -599,7 +599,7 @@ export function Header() {
                         )}
                         {canAccessModeration && (
                           <Link href="/moderation">
-                            <div className="flex cursor-pointer items-center gap-3 px-4 py-2.5 text-sm font-bold text-slate-500 hover:text-amber-600 transition-colors hover:bg-amber-50/30">
+                            <div className="flex cursor-pointer items-center gap-3 px-4 py-2.5 text-sm font-semibold text-slate-500 hover:text-amber-600 transition-colors hover:bg-amber-50/30">
                               <Check className="h-4 w-4 text-slate-400" />
                               Điều phối kiểm duyệt
                             </div>
@@ -621,7 +621,7 @@ export function Header() {
                     {/* Nhóm 3: Quản lý (chỉ đối với BTC / Admin) */}
                     {(user?.roles?.includes('ORGANIZER') || user?.roles?.includes('ADMIN')) && (
                       <div className="border-b border-slate-100/60 pb-2 mb-2">
-                        <div className="px-4 py-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Tổ chức giải</div>
+                        <div className="px-4 py-1 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Tổ chức giải</div>
                         <Link href="/organizer/tournaments">
                           <div className="flex cursor-pointer items-center gap-3 px-4 py-2 text-sm text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900">
                             <LayoutDashboard className="h-4 w-4 text-slate-400" />
@@ -639,7 +639,7 @@ export function Header() {
 
                     {/* Nhóm 3: Cá nhân & Tương tác */}
                     <div className="border-b border-slate-100/60 pb-2 mb-2">
-                      <div className="px-4 py-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Cá nhân</div>
+                      <div className="px-4 py-1 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Cá nhân</div>
                       <Link href="/notifications">
                         <div className="flex cursor-pointer items-center gap-3 px-4 py-2 text-sm text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900">
                           <Bell className="h-4 w-4 text-slate-400" />
@@ -688,7 +688,7 @@ export function Header() {
                         }
                         window.location.href = '/login'; // Hard redirect to clear everything
                       }}
-                      className="flex w-full items-center gap-3 px-4 py-2.5 text-sm font-bold text-red-500 transition-all hover:bg-red-50/50 hover:text-red-600"
+                      className="flex w-full items-center gap-3 px-4 py-2.5 text-sm font-semibold text-red-500 transition-all hover:bg-red-50/50 hover:text-red-600"
                     >
                       <LogOut className="h-4 w-4 text-red-400" />
                       Đăng xuất
@@ -737,9 +737,9 @@ export function Header() {
                 key={link.path}
                 href={link.path}
                 className={cn(
-                  'rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-200',
+                  'rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200',
                   isActive(link.path)
-                    ? 'bg-blue-50 font-bold text-blue-600'
+                    ? 'bg-blue-50 font-semibold text-blue-600'
                     : 'text-slate-600 hover:bg-slate-50 hover:text-blue-600',
                 )}
               >
@@ -748,7 +748,7 @@ export function Header() {
             ))}
             <Link
               href="/download"
-              className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-blue-600"
+              className="flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-blue-600"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               <Smartphone className="w-4 h-4" />

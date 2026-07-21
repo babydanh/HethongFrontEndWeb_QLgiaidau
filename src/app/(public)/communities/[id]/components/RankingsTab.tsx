@@ -47,7 +47,7 @@ export default function RankingsTab({ communityId, categories }: RankingsTabProp
 
   if (categories.length === 0) {
     return (
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-12 text-center">
+      <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-12 text-center">
         <Award className="w-16 h-16 text-slate-350 mx-auto mb-4" />
         <p className="text-slate-700 font-bold text-lg">Chưa thiết lập bộ môn</p>
         <p className="text-slate-500 mt-1 max-w-sm mx-auto text-xs leading-relaxed">
@@ -87,7 +87,7 @@ export default function RankingsTab({ communityId, categories }: RankingsTabProp
 
         {/* Category switcher */}
         {categories.length > 1 && (
-          <div className="flex flex-wrap gap-1.5 bg-slate-100 p-1 rounded-xl">
+          <div className="flex flex-wrap gap-1.5 bg-slate-100 p-1 rounded-lg">
             {categories.map((cat) => (
               <button
                 key={cat.id}
@@ -106,17 +106,17 @@ export default function RankingsTab({ communityId, categories }: RankingsTabProp
       </div>
 
       {isLoading ? (
-        <div className="py-24 flex flex-col items-center justify-center bg-white rounded-2xl border border-slate-200/80 shadow-sm">
+        <div className="py-24 flex flex-col items-center justify-center bg-white rounded-lg border border-slate-200/80 shadow-sm">
           <Loader2 className="w-10 h-10 animate-spin text-emerald-600 mb-3" />
           <p className="text-sm text-slate-450 font-bold animate-pulse">
             Đang tải dữ liệu xếp hạng...
           </p>
         </div>
       ) : rankings.length === 0 ? (
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+        <div className="bg-white rounded-lg shadow-sm border border-slate-200/80 overflow-hidden">
           <div className="p-16 text-center">
             <Award className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-            <p className="text-slate-800 font-extrabold text-lg">Chưa có dữ liệu xếp hạng</p>
+            <p className="text-slate-800 font-bold text-lg">Chưa có dữ liệu xếp hạng</p>
             <p className="text-slate-450 mt-2 max-w-sm mx-auto text-xs leading-relaxed font-semibold">
               Hệ thống điểm ELO {activeCategory ? `môn ${activeCategory.name}` : ''} sẽ tự động kích hoạt và cập nhật khi các thành viên tham gia thi đấu các giải đấu của câu lạc bộ.
             </p>
@@ -130,8 +130,8 @@ export default function RankingsTab({ communityId, categories }: RankingsTabProp
               {/* Podium Column 2: 2nd place (renders left on md) */}
               <div className="order-2 md:order-1 flex flex-col items-center">
                 {podiumOrder[0] ? (
-                  <div className="w-full bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all text-center flex flex-col items-center relative md:h-52 justify-center">
-                    <div className="absolute -top-5 w-10 h-10 rounded-full bg-slate-100 border-2 border-slate-350 text-slate-700 font-extrabold text-sm flex items-center justify-center shadow-sm">
+                  <div className="w-full bg-white border border-slate-200/80 rounded-lg p-5 shadow-sm hover:shadow-md transition-all text-center flex flex-col items-center relative md:h-52 justify-center">
+                    <div className="absolute -top-5 w-10 h-10 rounded-full bg-slate-100 border-2 border-slate-350 text-slate-700 font-bold text-sm flex items-center justify-center shadow-sm">
                       2
                     </div>
                     <div className="w-14 h-14 rounded-full border-2 border-slate-300 overflow-hidden bg-slate-100 mb-3 relative">
@@ -147,10 +147,10 @@ export default function RankingsTab({ communityId, categories }: RankingsTabProp
                         </span>
                       )}
                     </div>
-                    <p className="font-extrabold text-slate-800 text-sm truncate max-w-full">
+                    <p className="font-bold text-slate-800 text-sm truncate max-w-full">
                       {podiumOrder[0].user?.fullName}
                     </p>
-                    <p className="text-lg font-black text-slate-650 mt-1">
+                    <p className="text-lg font-bold text-slate-650 mt-1">
                       {podiumOrder[0].eloPoints} <span className="text-[10px] text-slate-400 font-bold">ELO</span>
                     </p>
                     <div className="mt-2.5 flex items-center gap-3 text-[10px] text-slate-400 font-bold border-t w-full pt-2 justify-center">
@@ -159,15 +159,15 @@ export default function RankingsTab({ communityId, categories }: RankingsTabProp
                     </div>
                   </div>
                 ) : (
-                  <div className="hidden md:block w-full h-52 border border-dashed rounded-2xl bg-slate-50/50"></div>
+                  <div className="hidden md:block w-full h-52 border border-dashed rounded-lg bg-slate-50/50"></div>
                 )}
               </div>
 
               {/* Podium Column 1: 1st place (renders middle) */}
               <div className="order-1 md:order-2 flex flex-col items-center">
                 {podiumOrder[1] ? (
-                  <div className="w-full bg-gradient-to-b from-amber-50/50 to-white border-2 border-amber-400/80 rounded-2xl p-6 shadow-md hover:shadow-lg transition-all text-center flex flex-col items-center relative md:h-60 justify-center">
-                    <div className="absolute -top-7 w-12 h-12 rounded-full bg-amber-400 text-white font-extrabold text-base flex items-center justify-center shadow-md border-2 border-white animate-bounce">
+                  <div className="w-full bg-gradient-to-b from-amber-50/50 to-white border-2 border-amber-400/80 rounded-lg p-6 shadow-md hover:shadow-lg transition-all text-center flex flex-col items-center relative md:h-60 justify-center">
+                    <div className="absolute -top-7 w-12 h-12 rounded-full bg-amber-400 text-white font-bold text-base flex items-center justify-center shadow-md border-2 border-white animate-bounce">
                       👑
                     </div>
                     <div className="w-16 h-16 rounded-full border-2 border-amber-400 overflow-hidden bg-slate-100 mb-3 relative shadow-md">
@@ -183,11 +183,11 @@ export default function RankingsTab({ communityId, categories }: RankingsTabProp
                         </span>
                       )}
                     </div>
-                    <p className="font-extrabold text-slate-900 text-base truncate max-w-full">
+                    <p className="font-bold text-slate-900 text-base truncate max-w-full">
                       {podiumOrder[1].user?.fullName}
                     </p>
-                    <p className="text-2xl font-black text-amber-600 mt-1">
-                      {podiumOrder[1].eloPoints} <span className="text-xs text-amber-500 font-black">ELO</span>
+                    <p className="text-2xl font-bold text-amber-600 mt-1">
+                      {podiumOrder[1].eloPoints} <span className="text-xs text-amber-500 font-bold">ELO</span>
                     </p>
                     <div className="mt-3 flex items-center gap-3 text-xs text-slate-500 font-bold border-t border-amber-100 w-full pt-2.5 justify-center">
                       <span>Thắng: {podiumOrder[1].matchesWon}</span>
@@ -198,15 +198,15 @@ export default function RankingsTab({ communityId, categories }: RankingsTabProp
                     </div>
                   </div>
                 ) : (
-                  <div className="w-full h-60 border border-dashed rounded-2xl bg-slate-50/50"></div>
+                  <div className="w-full h-60 border border-dashed rounded-lg bg-slate-50/50"></div>
                 )}
               </div>
 
               {/* Podium Column 3: 3rd place (renders right on md) */}
               <div className="order-3 md:order-3 flex flex-col items-center">
                 {podiumOrder[2] ? (
-                  <div className="w-full bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all text-center flex flex-col items-center relative md:h-48 justify-center">
-                    <div className="absolute -top-5 w-10 h-10 rounded-full bg-amber-50/50 border-2 border-amber-700/30 text-amber-800 font-extrabold text-sm flex items-center justify-center shadow-sm">
+                  <div className="w-full bg-white border border-slate-200/80 rounded-lg p-5 shadow-sm hover:shadow-md transition-all text-center flex flex-col items-center relative md:h-48 justify-center">
+                    <div className="absolute -top-5 w-10 h-10 rounded-full bg-amber-50/50 border-2 border-amber-700/30 text-amber-800 font-bold text-sm flex items-center justify-center shadow-sm">
                       3
                     </div>
                     <div className="w-12 h-12 rounded-full border-2 border-amber-600/30 overflow-hidden bg-slate-100 mb-3 relative">
@@ -222,10 +222,10 @@ export default function RankingsTab({ communityId, categories }: RankingsTabProp
                         </span>
                       )}
                     </div>
-                    <p className="font-extrabold text-slate-800 text-sm truncate max-w-full">
+                    <p className="font-bold text-slate-800 text-sm truncate max-w-full">
                       {podiumOrder[2].user?.fullName}
                     </p>
-                    <p className="text-lg font-black text-slate-650 mt-1">
+                    <p className="text-lg font-bold text-slate-650 mt-1">
                       {podiumOrder[2].eloPoints} <span className="text-[10px] text-slate-400 font-bold">ELO</span>
                     </p>
                     <div className="mt-2.5 flex items-center gap-3 text-[10px] text-slate-400 font-bold border-t w-full pt-2 justify-center">
@@ -234,7 +234,7 @@ export default function RankingsTab({ communityId, categories }: RankingsTabProp
                     </div>
                   </div>
                 ) : (
-                  <div className="hidden md:block w-full h-48 border border-dashed rounded-2xl bg-slate-50/50"></div>
+                  <div className="hidden md:block w-full h-48 border border-dashed rounded-lg bg-slate-50/50"></div>
                 )}
               </div>
             </div>
@@ -242,7 +242,7 @@ export default function RankingsTab({ communityId, categories }: RankingsTabProp
 
           {/* Ranks 4+ Table */}
           {restRankings.length > 0 && (
-            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden mt-6">
+            <div className="bg-white rounded-lg border border-slate-200/80 shadow-sm overflow-hidden mt-6">
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
@@ -291,7 +291,7 @@ export default function RankingsTab({ communityId, categories }: RankingsTabProp
                               </span>
                             </div>
                           </td>
-                          <td className="py-4 px-6 text-center font-extrabold text-slate-950">
+                          <td className="py-4 px-6 text-center font-bold text-slate-950">
                             {row.eloPoints}
                           </td>
                           <td className="py-4 px-6 text-center font-medium text-slate-500">

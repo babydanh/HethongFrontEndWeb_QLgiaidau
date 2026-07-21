@@ -59,7 +59,7 @@ export default function Step3Venue() {
 
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 p-5 bg-white border border-slate-200 rounded-xl shadow-sm">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 p-5 bg-white border border-slate-200 rounded-lg shadow-sm">
           <div className="md:col-span-2 border-b border-slate-100 pb-2 mb-2">
             <h4 className="font-bold text-slate-900">Thời gian đăng ký</h4>
           </div>
@@ -78,7 +78,7 @@ export default function Step3Venue() {
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 p-5 bg-white border border-slate-200 rounded-xl shadow-sm">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 p-5 bg-white border border-slate-200 rounded-lg shadow-sm">
           <div className="md:col-span-2 border-b border-slate-100 pb-2 mb-2">
             <h4 className="font-bold text-slate-900">Thời gian diễn ra</h4>
           </div>
@@ -97,7 +97,7 @@ export default function Step3Venue() {
           />
         </div>
 
-        <div className="flex flex-col gap-1.5 p-5 bg-slate-50 border border-slate-200 rounded-xl">
+        <div className="flex flex-col gap-1.5 p-5 bg-slate-50 border border-slate-200 rounded-lg">
           <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
             <MapPin className="w-4 h-4 text-rose-500" /> Địa điểm thi đấu (Venue)
           </label>

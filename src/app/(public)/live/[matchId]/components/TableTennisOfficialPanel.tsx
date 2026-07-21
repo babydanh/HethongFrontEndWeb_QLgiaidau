@@ -21,7 +21,7 @@ export function TableTennisOfficialPanel({
 }: TableTennisOfficialPanelProps) {
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl border border-cyan-100 bg-cyan-50 px-4 py-3 text-sm font-semibold text-cyan-900">
+      <div className="rounded-lg border border-cyan-100 bg-cyan-50 px-4 py-3 text-sm font-semibold text-cyan-900">
         Bóng bàn cũng là rally point nhưng nhịp deuce cuối set dễ dồn. Bảng này chỉ giữ thao tác điểm gọn, còn luật phạt nằm ở schema bên dưới.
       </div>
       <RallyScoreControls

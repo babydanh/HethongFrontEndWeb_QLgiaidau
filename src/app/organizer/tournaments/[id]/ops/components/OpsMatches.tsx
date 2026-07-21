@@ -338,7 +338,7 @@ export function OpsMatches({
         key={match.id}
         id={`ops-match-card-${match.id}`}
         className={cn(
-          'rounded-2xl border bg-slate-50 p-4 transition-all',
+          'rounded-lg border bg-slate-50 p-4 transition-all',
           focusedMatchId === match.id
             ? 'border-amber-400 ring-4 ring-amber-100'
             : 'border-slate-200',
@@ -346,27 +346,27 @@ export function OpsMatches({
       >
         <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div className="space-y-2">
-            <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-400">
+            <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
               {match.bracketBranch || 'Nhánh chính'} • {roundLabel} • Trận {match.matchOrder}
             </p>
-            <p className="text-sm font-black text-slate-900">
+            <p className="text-sm font-bold text-slate-900">
               {match.participant1?.teamName || 'Chờ xác định'} gặp {match.participant2?.teamName || 'Chờ xác định'}
             </p>
             <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-slate-700">
+              <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-slate-700">
                 {STATUS_FILTERS.find((option) => option.value === match.status)?.label ?? match.status}
               </span>
               {attentionCount > 0 || scoreOverride?.reason ? (
-                <span className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-amber-800">
+                <span className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-amber-800">
                   Cần chú ý: {attentionCount || 1}
                 </span>
               ) : (
-                <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-emerald-700">
+                <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-emerald-700">
                   Không có ngoại lệ
                 </span>
               )}
               {matchInsight?.hasCustomConfig ? (
-                <span className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-blue-700">
+                <span className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-blue-700">
                   Luật riêng
                 </span>
               ) : null}
@@ -382,7 +382,7 @@ export function OpsMatches({
                   <span
                     key={`ops-set-${match.id}-${index}`}
                     className={cn(
-                      'rounded-lg border px-2.5 py-1 text-[11px] font-black',
+                      'rounded-lg border px-2.5 py-1 text-[11px] font-bold',
                       set.scoreOverride?.reason
                         ? 'border-amber-300 bg-amber-50 text-amber-900'
                         : set.isFinished
@@ -398,25 +398,25 @@ export function OpsMatches({
               </div>
             ) : null}
             {isDirectAdvance ? (
-              <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-900">
+              <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-900">
                 Đi thẳng / miễn đấu: trận này không cần điều phối sân vì nhánh đã tự xác định đội đi tiếp.
               </div>
             ) : null}
             {specialResult?.action ? (
-              <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900">
+              <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900">
                 Quyết định BTC: {specialResult.action}
                 {specialResult.reason ? ` • ${specialResult.reason}` : ''}
               </div>
             ) : null}
             {scoreOverride?.reason ? (
-              <div className="rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-xs font-semibold text-violet-900">
+              <div className="rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-xs font-semibold text-violet-900">
                 Ngoại lệ điểm số: {scoreOverride.reason}
                 {scoreOverride.decidedAt ? ` • ${formatDateTime(scoreOverride.decidedAt)}` : ''}
               </div>
             ) : null}
             {overriddenSets.length > 0 ? (
-              <details className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950">
-                <summary className="cursor-pointer font-black">
+              <details className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950">
+                <summary className="cursor-pointer font-bold">
                   Ngoại lệ theo set ({overriddenSets.length})
                 </summary>
                 <div className="mt-2 space-y-2">
@@ -430,14 +430,14 @@ export function OpsMatches({
               </details>
             ) : null}
             {penalties.length > 0 ? (
-              <details className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-950">
-                <summary className="cursor-pointer font-black">
+              <details className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-950">
+                <summary className="cursor-pointer font-bold">
                   Thẻ & hình phạt ({penalties.length})
                 </summary>
                 <div className="mt-2 space-y-2">
                   {penalties.map((penalty) => (
                     <div key={penalty.id} className="rounded-lg border border-rose-200 bg-white/70 px-3 py-2">
-                      <p className="font-black">
+                      <p className="font-bold">
                         {penalty.team === 1 ? match.participant1?.teamName || 'Đội 1' : penalty.team === 2 ? match.participant2?.teamName || 'Đội 2' : 'Toàn trận'}: {penalty.label}
                       </p>
                       <p className="mt-1 font-medium text-rose-800">
@@ -449,24 +449,24 @@ export function OpsMatches({
               </details>
             ) : null}
             {matchInsight?.hasCustomConfig ? (
-              <div className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-900">
+              <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-900">
                 Cấu hình riêng: {matchInsight.customConfigSummary.join(' • ')}
               </div>
             ) : null}
             {sideOutState ? (
-              <div className="rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-xs font-semibold text-violet-900">
+              <div className="rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-xs font-semibold text-violet-900">
                 {servingTeamLabel
                   ? `${servingTeamLabel} đang giao • lượt ${sideOutState.serverNumber}`
                   : 'Chưa chốt đội giao hiện tại'}
               </div>
             ) : null}
             {matchInsight?.dependencyBlocked ? (
-              <div className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-900">
+              <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-900">
                 Chưa đủ điều kiện nhánh đấu: {matchInsight.dependencySummary.join(' • ')}
               </div>
             ) : null}
             {!match.participant1Id || !match.participant2Id ? (
-              <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700">
+              <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700">
                 Chưa đủ hai đối thủ. Chỉ nên điều phối sau khi nhánh trước chốt xong.
               </div>
             ) : null}
@@ -479,7 +479,7 @@ export function OpsMatches({
                 void onUpdateMatchStatus(match, event.target.value as Match['status']);
               }}
               disabled={isBusy || isDirectAdvance}
-              className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold text-slate-700"
+              className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm font-bold text-slate-700"
             >
               {STATUS_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -554,11 +554,11 @@ export function OpsMatches({
   ) => (
     <div className="space-y-3">
       <div>
-        <h3 className="text-sm font-black uppercase tracking-[0.12em] text-slate-700">{title}</h3>
+        <h3 className="text-sm font-bold uppercase tracking-[0.12em] text-slate-700">{title}</h3>
         <p className="mt-1 text-xs font-medium text-slate-500">{description}</p>
       </div>
       {items.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center">
+        <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center">
           <p className="text-sm font-bold text-slate-700">{emptyLabel}</p>
         </div>
       ) : (
@@ -569,11 +569,11 @@ export function OpsMatches({
 
   return (
     <>
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <h2 className="text-lg font-black text-slate-900">Điều phối trận đấu</h2>
+              <h2 className="text-lg font-bold text-slate-900">Điều phối trận đấu</h2>
               <p className="text-sm font-medium text-slate-500">
                 Đây là khu vực chính của ngày thi đấu: gọi trận, gán sân, cập nhật tỷ số và chốt các tình huống đặc biệt ngay tại bàn điều hành.
               </p>
@@ -581,25 +581,25 @@ export function OpsMatches({
           </div>
 
           <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
-              <p className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-400">Đã xếp lịch</p>
-              <p className="mt-2 text-lg font-black text-slate-900">{summary.scheduled}</p>
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">Đã xếp lịch</p>
+              <p className="mt-2 text-lg font-bold text-slate-900">{summary.scheduled}</p>
             </div>
-            <div className="rounded-2xl border border-amber-100 bg-amber-50 p-3">
-              <p className="text-[11px] font-black uppercase tracking-[0.12em] text-amber-600">Chờ xếp lịch</p>
-              <p className="mt-2 text-lg font-black text-amber-700">{summary.unscheduledReady}</p>
+            <div className="rounded-lg border border-amber-100 bg-amber-50 p-3">
+              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-amber-600">Chờ xếp lịch</p>
+              <p className="mt-2 text-lg font-bold text-amber-700">{summary.unscheduledReady}</p>
             </div>
-            <div className="rounded-2xl border border-blue-100 bg-blue-50 p-3">
-              <p className="text-[11px] font-black uppercase tracking-[0.12em] text-blue-600">Đang đấu</p>
-              <p className="mt-2 text-lg font-black text-blue-700">{summary.ongoing}</p>
+            <div className="rounded-lg border border-blue-100 bg-blue-50 p-3">
+              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-600">Đang đấu</p>
+              <p className="mt-2 text-lg font-bold text-blue-700">{summary.ongoing}</p>
             </div>
-            <div className="rounded-2xl border border-rose-100 bg-rose-50 p-3">
-              <p className="text-[11px] font-black uppercase tracking-[0.12em] text-rose-600">Đang nghẽn nhánh</p>
-              <p className="mt-2 text-lg font-black text-rose-700">{summary.blocked}</p>
+            <div className="rounded-lg border border-rose-100 bg-rose-50 p-3">
+              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-rose-600">Đang nghẽn nhánh</p>
+              <p className="mt-2 text-lg font-bold text-rose-700">{summary.blocked}</p>
             </div>
-            <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-3">
-              <p className="text-[11px] font-black uppercase tracking-[0.12em] text-emerald-600">Đi thẳng / miễn đấu</p>
-              <p className="mt-2 text-lg font-black text-emerald-700">{summary.directAdvance}</p>
+            <div className="rounded-lg border border-emerald-100 bg-emerald-50 p-3">
+              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-emerald-600">Đi thẳng / miễn đấu</p>
+              <p className="mt-2 text-lg font-bold text-emerald-700">{summary.directAdvance}</p>
             </div>
           </div>
 
@@ -610,7 +610,7 @@ export function OpsMatches({
                 type="button"
                 onClick={() => setStatusFilter(option.value)}
                 className={cn(
-                  'rounded-full border px-3 py-2 text-xs font-black transition-colors',
+                  'rounded-full border px-3 py-2 text-xs font-bold transition-colors',
                   statusFilter === option.value
                     ? 'border-blue-600 bg-blue-600 text-white'
                     : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:text-slate-900',
@@ -651,7 +651,7 @@ export function OpsMatches({
               )}
             </>
           ) : filteredMatches.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center">
+            <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center">
               <p className="text-sm font-bold text-slate-700">Không có trận phù hợp</p>
               <p className="mt-1 text-xs font-medium text-slate-500">Đổi bộ lọc để xem thêm trận trong giải.</p>
             </div>
@@ -674,7 +674,7 @@ export function OpsMatches({
               <input
                 value={scheduleDraft.courtName}
                 onChange={(event) => setScheduleDraft((current) => ({ ...current, courtName: event.target.value }))}
-                className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm"
+                className="h-11 w-full rounded-lg border border-slate-200 px-3 text-sm"
                 placeholder="Ví dụ: Sân trung tâm"
               />
             </div>
@@ -690,7 +690,7 @@ export function OpsMatches({
               <input
                 value={scheduleDraft.courtAddress}
                 onChange={(event) => setScheduleDraft((current) => ({ ...current, courtAddress: event.target.value }))}
-                className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm"
+                className="h-11 w-full rounded-lg border border-slate-200 px-3 text-sm"
                 placeholder="Ví dụ: 12 Nguyễn Trãi, Quận 1"
               />
             </div>
@@ -699,7 +699,7 @@ export function OpsMatches({
               <select
                 value={scheduleDraft.refereeId}
                 onChange={(event) => setScheduleDraft((current) => ({ ...current, refereeId: event.target.value }))}
-                className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm"
+                className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm"
               >
                 <option value="">Chưa phân công</option>
                 {referees.map((referee) => (
@@ -757,13 +757,13 @@ export function OpsMatches({
                   type="button"
                   onClick={() => setOperationDraft((current) => ({ ...current, action: option.value }))}
                   className={cn(
-                    'rounded-2xl border p-4 text-left transition-colors',
+                    'rounded-lg border p-4 text-left transition-colors',
                     operationDraft.action === option.value
                       ? 'border-amber-500 bg-amber-50'
                       : 'border-slate-200 bg-white hover:border-slate-300',
                   )}
                 >
-                  <p className="text-sm font-black text-slate-900">{option.label}</p>
+                  <p className="text-sm font-bold text-slate-900">{option.label}</p>
                   <p className="mt-1 text-xs font-medium text-slate-500">{option.description}</p>
                 </button>
               ))}
@@ -775,7 +775,7 @@ export function OpsMatches({
                 <select
                   value={operationDraft.winnerId}
                   onChange={(event) => setOperationDraft((current) => ({ ...current, winnerId: event.target.value }))}
-                  className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm"
+                  className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm"
                 >
                   <option value="">Chọn đội thắng</option>
                   {selectedOperationMatch?.participant1Id ? (
@@ -790,7 +790,7 @@ export function OpsMatches({
                   ) : null}
                 </select>
               </div>
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-xs font-medium text-slate-600">
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-xs font-medium text-slate-600">
                 Kết quả này sẽ tự chốt trận, đẩy nhánh đấu đi tiếp và để lại audit log để BTC tra cứu sau.
               </div>
             </div>
@@ -800,7 +800,7 @@ export function OpsMatches({
               <textarea
                 value={operationDraft.reason}
                 onChange={(event) => setOperationDraft((current) => ({ ...current, reason: event.target.value }))}
-                className="min-h-28 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                className="min-h-28 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
                 placeholder="Ví dụ: đội B xin dừng vì chấn thương cổ chân, đã xác nhận cùng trọng tài..."
               />
             </div>

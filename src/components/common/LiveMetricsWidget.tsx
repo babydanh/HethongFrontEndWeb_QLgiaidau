@@ -86,16 +86,16 @@ export default function LiveMetricsWidget() {
           <Activity className="w-4 h-4" />
         </button>
       ) : (
-        <div className="w-56 rounded-2xl border border-white/10 bg-zinc-950/90 p-3.5 text-xs text-zinc-300 backdrop-blur-md shadow-[0_12px_40px_rgba(0,0,0,0.5)] flex flex-col gap-3">
+        <div className="w-56 rounded-lg border border-white/10 bg-zinc-950/90 p-3.5 text-xs text-zinc-300 backdrop-blur-md shadow-[0_12px_40px_rgba(0,0,0,0.5)] flex flex-col gap-3">
           {/* Header */}
           <div className="flex items-center justify-between border-b border-white/5 pb-2">
-            <span className="flex items-center gap-1.5 font-black text-[10px] text-zinc-400 uppercase tracking-wider">
+            <span className="flex items-center gap-1.5 font-bold text-[10px] text-zinc-400 uppercase tracking-wider">
               <span className={`h-2 w-2 rounded-full shadow-[0_0_8px_1px] ${getStatusColor()}`} />
               Hệ thống (Dev)
             </span>
             <button
               onClick={() => setIsMinimized(true)}
-              className="text-[10px] text-zinc-500 hover:text-zinc-300 font-bold transition-all px-1.5 py-0.5 rounded hover:bg-white/5 cursor-pointer"
+              className="text-[10px] text-zinc-500 hover:text-zinc-300 font-semibold transition-all px-1.5 py-0.5 rounded hover:bg-white/5 cursor-pointer"
             >
               Thu nhỏ
             </button>
@@ -109,7 +109,7 @@ export default function LiveMetricsWidget() {
                 <Network className="w-3.5 h-3.5 text-zinc-450" />
                 Kết nối (Conns)
               </span>
-              <span className="font-bold text-white text-right">
+              <span className="font-semibold text-white text-right">
                 {metrics ? `${metrics.connections} client` : '...'}
               </span>
             </div>
@@ -120,7 +120,7 @@ export default function LiveMetricsWidget() {
                 <Cpu className="w-3.5 h-3.5 text-zinc-450" />
                 Event Loop (Lag)
               </span>
-              <span className={`font-bold text-right ${
+              <span className={`font-semibold text-right ${
                 metrics && metrics.eventLoopLag > 50 ? 'text-amber-400' : 'text-emerald-400'
               }`}>
                 {metrics ? `${metrics.eventLoopLag} ms` : '...'}
@@ -133,7 +133,7 @@ export default function LiveMetricsWidget() {
                 <ShieldAlert className="w-3.5 h-3.5 text-zinc-450" />
                 Bộ đệm (Buffer)
               </span>
-              <span className={`font-bold text-right ${
+              <span className={`font-semibold text-right ${
                 metrics && metrics.bufferedSize > 100 ? 'text-rose-400 animate-pulse' : 'text-white'
               }`}>
                 {metrics ? `${metrics.bufferedSize} KB` : '...'}

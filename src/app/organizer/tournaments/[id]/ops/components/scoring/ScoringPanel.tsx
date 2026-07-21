@@ -98,7 +98,7 @@ export function ScoringPanel({
 }: ScoringPanelProps) {
   if (!match) {
     return (
-      <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm font-semibold text-slate-500">
+      <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm font-semibold text-slate-500">
         Không có dữ liệu trận để nhập điểm.
       </div>
     );
@@ -145,28 +145,28 @@ export function ScoringPanel({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
+      <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
         {scorePresentation.sportLabel} • {scorePresentation.summaryLabel} • Chạm đích: {resolvedRules.pointsPerSet}
         {resolvedRules.kind === 'TENNIS' ? ` game, loạt phụ ${resolvedRules.tiebreakPoints}` : ''}
       </div>
-      <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-900">
+      <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-900">
         {activeSetSummary}
         <div className="mt-1 text-xs font-medium text-emerald-700">
           Modal này chỉ nên có 1 {scorePresentation.sequenceLabel} đang mở. Nếu có nhiều dòng 0-0 chưa chốt, backend tennis sẽ từ chối.
         </div>
       </div>
-      <div className="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-900">
+      <div className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-900">
         {scoreGuidance.targetSummary}
         <div className="mt-1 text-xs font-semibold text-blue-700">
           Ví dụ hợp lệ: {scoreGuidance.examples.join(' • ')}. {scoreGuidance.operatorHint}
         </div>
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-4">
+      <div className="rounded-lg border border-slate-200 bg-white p-4">
         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Chế độ trọng tài / BTC</p>
-            <p className="mt-2 text-sm font-black text-slate-900">
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Chế độ trọng tài / BTC</p>
+            <p className="mt-2 text-sm font-bold text-slate-900">
               {overrideEnabled ? 'Chế độ ngoại lệ đang bật' : 'Đang bám cấu hình luật mặc định'}
             </p>
             <p className="mt-1 text-xs font-medium text-slate-500">
@@ -183,7 +183,7 @@ export function ScoringPanel({
               }))
             }
             className={cn(
-              'rounded-xl border px-4 py-2 text-xs font-black transition-colors',
+              'rounded-lg border px-4 py-2 text-xs font-bold transition-colors',
               overrideEnabled
                 ? 'border-amber-500 bg-amber-500 text-white'
                 : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100',
@@ -195,7 +195,7 @@ export function ScoringPanel({
 
         {overrideEnabled ? (
           <div className="mt-4 space-y-2">
-            <label className="text-xs font-black uppercase tracking-[0.14em] text-amber-700">
+            <label className="text-xs font-bold uppercase tracking-[0.14em] text-amber-700">
               Lý do ngoại lệ bắt buộc
             </label>
             <textarea
@@ -206,7 +206,7 @@ export function ScoringPanel({
                   overrideReason: event.target.value,
                 }))
               }
-              className="min-h-24 w-full rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-slate-800"
+              className="min-h-24 w-full rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-slate-800"
               placeholder="Ví dụ: trận tranh hạng ba thống nhất chơi loạt phụ rút gọn theo quyết định trọng tài và BTC..."
             />
             <p className="text-xs font-medium text-amber-700">
@@ -217,7 +217,7 @@ export function ScoringPanel({
       </div>
 
       {sideOutState ? (
-        <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm font-semibold text-violet-900">
+        <div className="rounded-lg border border-violet-200 bg-violet-50 px-4 py-3 text-sm font-semibold text-violet-900">
           {servingTeamLabel
             ? `${servingTeamLabel} đang giữ quyền giao • lượt ${sideOutState.serverNumber}. Panel này sẽ lưu luôn trạng thái giao bóng hiện tại.`
             : 'Chế độ mất quyền giao đang bật nhưng trận chưa chốt đội giao hiện tại ở bảng điểm trực tiếp.'}
@@ -225,10 +225,10 @@ export function ScoringPanel({
       ) : null}
 
       {sideOutState ? (
-        <div className="grid gap-3 rounded-2xl border border-violet-200 bg-white p-4 md:grid-cols-[1.2fr_1fr]">
+        <div className="grid gap-3 rounded-lg border border-violet-200 bg-white p-4 md:grid-cols-[1.2fr_1fr]">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.14em] text-violet-500">Điều khiển giao bóng trong modal</p>
-            <p className="mt-2 text-sm font-black text-slate-900">
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-violet-500">Điều khiển giao bóng trong modal</p>
+            <p className="mt-2 text-sm font-bold text-slate-900">
               {sideOutState.servingTeam == null
                 ? 'Chưa chọn đội giao hiện tại'
                 : `${servingTeamLabel} đang giao • lượt ${sideOutState.serverNumber}`}
@@ -252,7 +252,7 @@ export function ScoringPanel({
                   }))
                 }
                 className={cn(
-                  'rounded-xl border px-3 py-2 text-xs font-black transition-colors',
+                  'rounded-lg border px-3 py-2 text-xs font-bold transition-colors',
                   sideOutState.servingTeam === 1
                     ? 'border-blue-600 bg-blue-600 text-white'
                     : 'border-slate-200 bg-white text-slate-700 hover:border-blue-300',
@@ -272,7 +272,7 @@ export function ScoringPanel({
                   }))
                 }
                 className={cn(
-                  'rounded-xl border px-3 py-2 text-xs font-black transition-colors',
+                  'rounded-lg border px-3 py-2 text-xs font-bold transition-colors',
                   sideOutState.servingTeam === 2
                     ? 'border-indigo-600 bg-indigo-600 text-white'
                     : 'border-slate-200 bg-white text-slate-700 hover:border-indigo-300',
@@ -294,7 +294,7 @@ export function ScoringPanel({
                   }))
                 }
                 disabled={sideOutState.servingTeam == null}
-                className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-black text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+                className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 disabled:opacity-50"
               >
                 Lượt giao 1
               </button>
@@ -309,7 +309,7 @@ export function ScoringPanel({
                   }))
                 }
                 disabled={sideOutState.servingTeam == null}
-                className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-black text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+                className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 disabled:opacity-50"
               >
                 Lượt giao 2
               </button>
@@ -326,7 +326,7 @@ export function ScoringPanel({
                 }))
               }
               disabled={sideOutState.servingTeam == null}
-              className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-black text-amber-800 hover:bg-amber-100 disabled:opacity-50"
+              className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800 hover:bg-amber-100 disabled:opacity-50"
             >
               Mất quyền giao
             </button>
@@ -335,8 +335,8 @@ export function ScoringPanel({
       ) : null}
 
       {scoreWarnings.length > 0 ? (
-        <div className="rounded-2xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm font-semibold text-orange-900">
-          <p className="font-black">Cảnh báo bám luật mặc định</p>
+        <div className="rounded-lg border border-orange-200 bg-orange-50 px-4 py-3 text-sm font-semibold text-orange-900">
+          <p className="font-bold">Cảnh báo bám luật mặc định</p>
           <div className="mt-2 space-y-1 text-xs font-semibold text-orange-800">
             {scoreWarnings.map((warning) => (
               <p key={warning.id}>- {warning.message}</p>
@@ -354,30 +354,30 @@ export function ScoringPanel({
         {scoreDraft.sets.map((set, index) => (
           <div
             key={`score-row-${index}`}
-            className="grid grid-cols-[1fr_120px_120px] items-end gap-3 rounded-2xl border border-slate-200 bg-white p-4"
+            className="grid grid-cols-[1fr_120px_120px] items-end gap-3 rounded-lg border border-slate-200 bg-white p-4"
           >
             <div>
-              <p className="text-sm font-black text-slate-900">
+              <p className="text-sm font-bold text-slate-900">
                 {scorePresentation.sequenceLabel.charAt(0).toUpperCase() + scorePresentation.sequenceLabel.slice(1)} {index + 1}
                 {!set.isFinished && index === activeSetIndex ? (
-                  <span className="ml-2 rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.12em] text-blue-700">
+                  <span className="ml-2 rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-blue-700">
                     Đang diễn ra
                   </span>
                 ) : null}
                 {set.scoreOverride?.reason ? (
-                  <span className="ml-2 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.12em] text-amber-800">
+                  <span className="ml-2 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-amber-800">
                     Ngoại lệ
                   </span>
                 ) : set.isFinished ? (
-                  <span className="ml-2 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.12em] text-emerald-700">
+                  <span className="ml-2 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-emerald-700">
                     Đã chốt
                   </span>
                 ) : index === activeSetIndex ? (
-                  <span className="ml-2 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.12em] text-amber-700">
+                  <span className="ml-2 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-amber-700">
                     Set hiện tại
                   </span>
                 ) : (
-                  <span className="ml-2 rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">
+                  <span className="ml-2 rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">
                     Chưa mở
                   </span>
                 )}
@@ -402,7 +402,7 @@ export function ScoringPanel({
                           sets: applyQuickScoreTemplate(current.sets, index, 1, template.winnerScore, template.loserScore),
                         }))
                       }
-                      className="rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-1 text-[11px] font-black text-blue-700 hover:bg-blue-100"
+                      className="rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-1 text-[11px] font-bold text-blue-700 hover:bg-blue-100"
                     >
                       {match.participant1?.teamName || 'Đội 1'} {template.winnerScore}-{template.loserScore}
                     </button>
@@ -414,7 +414,7 @@ export function ScoringPanel({
                           sets: applyQuickScoreTemplate(current.sets, index, 2, template.winnerScore, template.loserScore),
                         }))
                       }
-                      className="rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-[11px] font-black text-indigo-700 hover:bg-indigo-100"
+                      className="rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-[11px] font-bold text-indigo-700 hover:bg-indigo-100"
                     >
                       {match.participant2?.teamName || 'Đội 2'} {template.loserScore}-{template.winnerScore}
                     </button>
@@ -431,7 +431,7 @@ export function ScoringPanel({
                       ),
                     }))
                   }
-                  className="w-fit rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-black text-slate-600 hover:bg-slate-100"
+                  className="w-fit rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-bold text-slate-600 hover:bg-slate-100"
                 >
                   Xóa nhanh {scorePresentation.sequenceLabel} này
                 </button>
@@ -457,7 +457,7 @@ export function ScoringPanel({
                     ),
                   }))
                 }
-                className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm"
+                className="h-11 w-full rounded-lg border border-slate-200 px-3 text-sm"
               />
             </div>
 
@@ -480,24 +480,24 @@ export function ScoringPanel({
                     ),
                   }))
                 }
-                className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm"
+                className="h-11 w-full rounded-lg border border-slate-200 px-3 text-sm"
               />
             </div>
           </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-2 gap-4 rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm font-semibold text-blue-900">
+      <div className="grid grid-cols-2 gap-4 rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm font-semibold text-blue-900">
         <div>
-          {scorePresentation.wonSummaryLabel} {match.participant1?.teamName || 'Đội 1'}: <span className="font-black">{p1Won}</span>
+          {scorePresentation.wonSummaryLabel} {match.participant1?.teamName || 'Đội 1'}: <span className="font-bold">{p1Won}</span>
         </div>
         <div>
-          {scorePresentation.wonSummaryLabel} {match.participant2?.teamName || 'Đội 2'}: <span className="font-black">{p2Won}</span>
+          {scorePresentation.wonSummaryLabel} {match.participant2?.teamName || 'Đội 2'}: <span className="font-bold">{p2Won}</span>
         </div>
       </div>
 
       {!canSubmitScore ? (
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">
             {finishedSets.length === 0
               ? hasEnteredScore
                 ? `Set hiện tại đang ở mức ${activeSet.team1Score} - ${activeSet.team2Score}. Hãy chốt bằng một tỉ số không hòa trước khi lưu.`
@@ -506,7 +506,7 @@ export function ScoringPanel({
         </div>
       ) : null}
       {overrideEnabled && !canSubmitWithOverride ? (
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">
           Bật override thì bắt buộc phải nhập lý do để BTC và trọng tài tra cứu lại sau.
         </div>
       ) : null}

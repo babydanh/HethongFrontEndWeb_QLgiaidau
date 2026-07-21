@@ -5,16 +5,16 @@ import { Shield, Eye, Lock } from 'lucide-react';
 export default function PrivacyPage() {
   return (
     <div className="bg-slate-50 min-h-screen py-16 px-4 md:px-8">
-      <div className="max-w-3xl mx-auto bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="max-w-3xl mx-auto bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         {/* Header Block */}
         <div className="p-8 md:p-12 border-b border-slate-100 bg-slate-50/50">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center">
               <Shield className="w-5 h-5" />
             </div>
-            <span className="text-xs font-black uppercase tracking-wider text-slate-450">Bảo mật thông tin</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-450">Bảo mật thông tin</span>
           </div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">
+          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
             Chính sách bảo mật VNSPORT
           </h1>
           <p className="text-slate-500 font-medium text-xs mt-2">
@@ -25,7 +25,7 @@ export default function PrivacyPage() {
         {/* Content Block */}
         <div className="p-8 md:p-12 space-y-8 text-sm text-slate-650 leading-relaxed font-medium">
           <section className="space-y-3">
-            <h2 className="text-base font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
+            <h2 className="text-base font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
               1. Thông tin chúng tôi thu thập
             </h2>
             <p>
@@ -45,7 +45,7 @@ export default function PrivacyPage() {
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-base font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
+            <h2 className="text-base font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
               2. Cách thức sử dụng thông tin
             </h2>
             <p>
@@ -60,7 +60,7 @@ export default function PrivacyPage() {
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-base font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
+            <h2 className="text-base font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
               3. Chia sẻ thông tin với bên thứ ba
             </h2>
             <p>
@@ -74,7 +74,7 @@ export default function PrivacyPage() {
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-base font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
+            <h2 className="text-base font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
               4. Bảo mật và lưu trữ dữ liệu
             </h2>
             <p>
@@ -83,7 +83,7 @@ export default function PrivacyPage() {
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-base font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
+            <h2 className="text-base font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
               5. Quyền của người dùng
             </h2>
             <p>
@@ -91,7 +91,7 @@ export default function PrivacyPage() {
             </p>
           </section>
 
-          <div className="bg-emerald-50 rounded-2xl border border-emerald-200 p-5 flex gap-3 text-emerald-900 mt-8">
+          <div className="bg-emerald-50 rounded-lg border border-emerald-200 p-5 flex gap-3 text-emerald-900 mt-8">
             <Lock className="w-5 h-5 shrink-0 mt-0.5" />
             <div className="text-xs space-y-1">
               <h4 className="font-bold">Cam kết bảo mật tuyệt đối:</h4>

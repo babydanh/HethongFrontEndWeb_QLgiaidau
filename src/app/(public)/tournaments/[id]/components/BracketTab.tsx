@@ -96,7 +96,7 @@ function GroupView({
 
   if (!matches.length) {
     return (
-      <div className="text-center py-10 text-slate-400 italic text-sm border border-dashed border-slate-200 rounded-xl">
+      <div className="text-center py-10 text-slate-400 italic text-sm border border-dashed border-slate-200 rounded-lg">
         Chưa có trận đấu nào trong bảng {group.name}.
       </div>
     );
@@ -219,7 +219,7 @@ export default function BracketTab({
             </span>
           )}
         </div>
-        <div className="flex flex-col items-center justify-center py-20 border border-dashed border-slate-200 rounded-2xl">
+        <div className="flex flex-col items-center justify-center py-20 border border-dashed border-slate-200 rounded-lg">
           <Trophy className="w-12 h-12 text-slate-200 mb-3" />
           <h4 className="font-bold text-slate-600 mb-1">Chưa có nhánh đấu</h4>
           <p className="text-slate-400 text-sm text-center max-w-xs">
@@ -272,7 +272,7 @@ export default function BracketTab({
         <div className="flex flex-col gap-8">
           {/* Stage header */}
           <div>
-            <h3 className="text-lg font-extrabold text-slate-900">
+            <h3 className="text-lg font-bold text-slate-900">
               {stageNameLabel(activeStage.name)}
             </h3>
             <p className="text-xs text-slate-400 font-semibold mt-0.5">

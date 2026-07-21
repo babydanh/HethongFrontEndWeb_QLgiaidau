@@ -168,7 +168,7 @@ export default function OrganizerPayoutsPage() {
           {!isOpenForm && tournaments.length > 0 && (
             <Button
               onClick={() => setIsOpenForm(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1.5 rounded-xl font-bold py-2.5 shadow-md shadow-blue-500/20"
+              className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1.5 rounded-lg font-bold py-2.5 shadow-md shadow-blue-500/20"
             >
               <PlusCircle className="w-4 h-4" /> Yêu cầu rút tiền
             </Button>
@@ -177,7 +177,7 @@ export default function OrganizerPayoutsPage() {
 
         {/* Payout Request Form Modal/Card */}
         {isOpenForm && (
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 md:p-8 shadow-sm mb-8 animate-in slide-in-from-top-4 duration-300">
+          <div className="bg-white border border-slate-200 rounded-lg p-6 md:p-8 shadow-sm mb-8 animate-in slide-in-from-top-4 duration-300">
             <h2 className="text-lg font-bold text-slate-900 border-b border-slate-100 pb-3 mb-5 flex items-center gap-2">
               <Building2 className="w-5 h-5 text-blue-600" /> Tạo yêu cầu rút tiền mới
             </h2>
@@ -198,7 +198,7 @@ export default function OrganizerPayoutsPage() {
               </div>
 
               {selectedTournamentId && (
-                <div className="md:col-span-2 bg-blue-50 border border-blue-100 rounded-xl p-4 text-sm text-blue-800">
+                <div className="md:col-span-2 bg-blue-50 border border-blue-100 rounded-lg p-4 text-sm text-blue-800">
                   Số tiền được rút sẽ được hệ thống kiểm tra lại theo số dư khả dụng, các khoản hoàn đang giữ và yêu cầu giải ngân chưa hoàn tất.
                 </div>
               )}
@@ -241,14 +241,14 @@ export default function OrganizerPayoutsPage() {
                     setIsOpenForm(false);
                   }}
                   disabled={submitting}
-                  className="border-slate-200 text-slate-600 rounded-xl"
+                  className="border-slate-200 text-slate-600 rounded-lg"
                 >
                   Hủy bỏ
                 </Button>
                 <Button
                   type="submit"
                   disabled={submitting}
-                  className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold px-6 py-2 shadow-md shadow-blue-500/10"
+                  className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold px-6 py-2 shadow-md shadow-blue-500/10"
                 >
                   {submitting ? 'Đang gửi...' : 'Gửi yêu cầu'}
                 </Button>
@@ -258,7 +258,7 @@ export default function OrganizerPayoutsPage() {
         )}
 
         {/* Payout History */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
           <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center">
             <h2 className="font-bold text-slate-800">Lịch sử rút tiền</h2>
             <span className="text-xs font-semibold bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full">
@@ -297,7 +297,7 @@ export default function OrganizerPayoutsPage() {
                         <td className="py-4 px-6 font-bold text-slate-800 max-w-[200px] truncate">
                           {p.tournament?.name || 'Giải đấu'}
                         </td>
-                        <td className="py-4 px-6 font-black text-slate-900">
+                        <td className="py-4 px-6 font-bold text-slate-900">
                           {formatCurrency(Number(p.amountRequested))}
                         </td>
                         <td className="py-4 px-6 text-xs text-slate-500 leading-normal">

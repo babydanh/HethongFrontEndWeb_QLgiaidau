@@ -167,15 +167,15 @@ function MockGatewayContent() {
         </button>
 
         {/* Gateway Card */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
           {/* Header */}
           <div className={`bg-gradient-to-r ${gateway.color} p-6 text-white text-center`}>
             <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center mx-auto mb-3">
-              <span className="text-2xl font-black tracking-wider">
+              <span className="text-2xl font-bold tracking-wider">
                 {gatewayParam.toUpperCase() === 'VNPAY' ? 'VN' : gatewayParam.toUpperCase() === 'MOMO' ? 'Mo' : '$'}
               </span>
             </div>
-            <h1 className="text-xl font-black">Thanh toán qua {gateway.name}</h1>
+            <h1 className="text-xl font-bold">Thanh toán qua {gateway.name}</h1>
             <p className="text-sm text-white/70 mt-1">Cổng thanh toán mô phỏng (Mock Gateway)</p>
           </div>
 
@@ -183,10 +183,10 @@ function MockGatewayContent() {
           <div className="p-6 md:p-8 space-y-6">
 
             {/* Amount & Transaction ID */}
-            <div className={`${gateway.bgColor} border ${gateway.borderColor} rounded-xl p-5 space-y-3`}>
+            <div className={`${gateway.bgColor} border ${gateway.borderColor} rounded-lg p-5 space-y-3`}>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-slate-600 font-medium">Số tiền</span>
-                <span className={`text-2xl font-black ${gateway.textColor}`}>
+                <span className={`text-2xl font-bold ${gateway.textColor}`}>
                   {formatCurrency(Number(amount))}
                 </span>
               </div>
@@ -224,7 +224,7 @@ function MockGatewayContent() {
                     onChange={(e) => handleOtpChange(index, e.target.value)}
                     onKeyDown={(e) => handleOtpKeyDown(index, e)}
                     onPaste={index === 0 ? handlePaste : undefined}
-                    className={`w-12 h-14 text-center text-xl font-black border-2 rounded-xl transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    className={`w-12 h-14 text-center text-xl font-bold border-2 rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                       digit
                         ? 'border-blue-500 bg-blue-50'
                         : isExpired
@@ -249,7 +249,7 @@ function MockGatewayContent() {
 
             {/* Expired state */}
             {isExpired && (
-              <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 flex items-start gap-3">
+              <div className="bg-rose-50 border border-rose-200 rounded-lg p-4 flex items-start gap-3">
                 <AlertTriangle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
                 <div>
                   <p className="text-sm font-bold text-rose-800">Mã OTP đã hết hạn</p>
@@ -270,7 +270,7 @@ function MockGatewayContent() {
             </div>
 
             {/* Security Notice */}
-            <div className="flex items-start gap-2 text-xs text-slate-400 bg-slate-50 rounded-xl p-4 border border-slate-100">
+            <div className="flex items-start gap-2 text-xs text-slate-400 bg-slate-50 rounded-lg p-4 border border-slate-100">
               <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
               <p>
                 Đây là cổng thanh toán mô phỏng dành cho mục đích kiểm thử. Mã OTP mặc định là <strong className="text-slate-600">123456</strong>.

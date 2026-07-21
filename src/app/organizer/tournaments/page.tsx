@@ -191,7 +191,7 @@ export default function MyTournamentsPage() {
         {/* Top Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-black text-slate-900">Giải Đấu Của Tôi</h1>
+            <h1 className="text-3xl font-bold text-slate-900">Giải Đấu Của Tôi</h1>
             <p className="text-slate-500 mt-1 font-medium">Quản lý các Giải đấu đã tạo</p>
           </div>
           <Link href="/organizer/tournaments/create">
@@ -202,7 +202,7 @@ export default function MyTournamentsPage() {
         </div>
 
         {parents.length === 0 ? (
-          <div className="bg-white rounded-2xl p-12 text-center border border-slate-200 shadow-sm flex flex-col items-center max-w-xl mx-auto">
+          <div className="bg-white rounded-lg p-12 text-center border border-slate-200 shadow-sm flex flex-col items-center max-w-xl mx-auto">
             <div className="w-24 h-24 flex items-center justify-center mb-4">
               <img src="/vndcsport.svg" alt="VNDC Sport" className="w-full h-full object-contain" />
             </div>
@@ -231,7 +231,7 @@ export default function MyTournamentsPage() {
               return (
                 <div 
                   key={parent.id} 
-                  className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col justify-between"
+                  className="bg-white rounded-lg border border-slate-200 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col justify-between"
                 >
                   {/* Visual Header */}
                   <div className="relative h-44 bg-slate-100 overflow-hidden group">

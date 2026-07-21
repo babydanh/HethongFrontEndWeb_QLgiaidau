@@ -88,7 +88,7 @@ export default function Step2Confirm() {
         <p className="text-sm text-slate-500">Xem lại thông tin và xác nhận lưu bản nháp giải đấu.</p>
       </div>
 
-      <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 space-y-4">
+      <div className="bg-slate-50 border border-slate-200 rounded-lg p-5 space-y-4">
         <div className="border-b border-slate-200 pb-3">
           <h4 className="font-bold text-slate-900">Chi tiết giải đấu nháp</h4>
         </div>
@@ -155,7 +155,7 @@ export default function Step2Confirm() {
         </div>
       </div>
 
-      <div className="flex items-start gap-3 text-blue-700 bg-blue-50 p-4 rounded-xl border border-blue-100">
+      <div className="flex items-start gap-3 text-blue-700 bg-blue-50 p-4 rounded-lg border border-blue-100">
         <Info className="w-5 h-5 flex-shrink-0 mt-0.5" />
         <div className="text-xs leading-relaxed font-medium">
           <p className="font-bold mb-1">Quy trình lưu nháp:</p>

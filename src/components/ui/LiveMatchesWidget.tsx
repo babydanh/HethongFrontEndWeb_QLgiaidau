@@ -42,11 +42,11 @@ export default function LiveMatchesWidget({ limit = 5, showAllLink = true }: Pro
 
   if (isLoading) {
     return (
-      <div className="w-full bg-slate-900/40 border border-slate-800 rounded-2xl p-6 backdrop-blur-md animate-pulse">
+      <div className="w-full bg-slate-900/40 border border-slate-800 rounded-lg p-6 backdrop-blur-md animate-pulse">
         <div className="h-6 w-36 bg-slate-800 rounded mb-4" />
         <div className="space-y-3">
-          <div className="h-20 bg-slate-800/60 rounded-xl" />
-          <div className="h-20 bg-slate-800/60 rounded-xl" />
+          <div className="h-20 bg-slate-800/60 rounded-lg" />
+          <div className="h-20 bg-slate-800/60 rounded-lg" />
         </div>
       </div>
     );
@@ -57,7 +57,7 @@ export default function LiveMatchesWidget({ limit = 5, showAllLink = true }: Pro
   }
 
   return (
-    <div className="w-full bg-slate-950/60 border border-slate-800/80 rounded-2xl p-5 md:p-6 backdrop-blur-md shadow-xl flex flex-col gap-4 relative overflow-hidden">
+    <div className="w-full bg-slate-950/60 border border-slate-800/80 rounded-lg p-5 md:p-6 backdrop-blur-md shadow-xl flex flex-col gap-4 relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-r from-rose-500/5 via-transparent to-indigo-500/5 pointer-events-none" />
       
       {/* Header */}
@@ -67,17 +67,17 @@ export default function LiveMatchesWidget({ limit = 5, showAllLink = true }: Pro
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
           </span>
-          <h3 className="text-sm font-extrabold uppercase tracking-wider text-rose-500 font-sans">
+          <h3 className="text-sm font-bold uppercase tracking-wider text-rose-500 font-sans">
             Đang Thi Đấu
           </h3>
-          <span className="text-xs bg-rose-500/10 text-rose-400 border border-rose-500/20 px-2 py-0.5 rounded-full font-bold">
+          <span className="text-xs bg-rose-500/10 text-rose-400 border border-rose-500/20 px-2 py-0.5 rounded-full font-semibold">
             {matches.length} Trận
           </span>
         </div>
         {showAllLink && (
           <Link
             href="/tournaments"
-            className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition-colors"
+            className="text-xs font-medium text-indigo-400 hover:text-indigo-300 transition-colors"
           >
             Xem Tất Cả Trận →
           </Link>
@@ -101,11 +101,11 @@ export default function LiveMatchesWidget({ limit = 5, showAllLink = true }: Pro
           return (
             <div
               key={match.id}
-              className="group bg-slate-900/50 hover:bg-slate-900/80 border border-slate-800 hover:border-slate-700/80 rounded-xl p-4 transition-all duration-300 flex flex-col md:flex-row justify-between items-center gap-4"
+              className="group bg-slate-900/50 hover:bg-slate-900/80 border border-slate-800 hover:border-slate-700/80 rounded-lg p-4 transition-all duration-300 flex flex-col md:flex-row justify-between items-center gap-4"
             >
               {/* Match context */}
               <div className="flex flex-col items-center md:items-start text-center md:text-left md:w-1/3">
-                <span className="text-xs font-semibold text-indigo-400 font-sans line-clamp-1">
+                <span className="text-xs font-medium text-indigo-400 font-sans line-clamp-1">
                   {roundLabel} {match.courtName ? `— Sân: ${match.courtName}` : ''}
                 </span>
                 <span className="text-xs text-slate-400 font-medium line-clamp-1">
@@ -117,11 +117,11 @@ export default function LiveMatchesWidget({ limit = 5, showAllLink = true }: Pro
               <div className="flex flex-1 justify-center items-center gap-6 w-full md:w-auto">
                 {/* Team 1 */}
                 <div className="flex-1 text-right max-w-[180px]">
-                  <span className="text-sm font-bold text-white tracking-wide block truncate group-hover:text-indigo-300 transition-colors">
+                  <span className="text-sm font-semibold text-white tracking-wide block truncate group-hover:text-indigo-300 transition-colors">
                     {match.participant1?.teamName || 'Chưa xác định'}
                   </span>
                   {match.participant1?.seed && (
-                    <span className="text-[10px] bg-slate-800 text-slate-400 border border-slate-700 px-1 py-0.2 rounded font-semibold ml-1">
+                    <span className="text-[10px] bg-slate-800 text-slate-400 border border-slate-700 px-1 py-0.2 rounded font-medium ml-1">
                       #{match.participant1.seed}
                     </span>
                   )}
@@ -132,18 +132,18 @@ export default function LiveMatchesWidget({ limit = 5, showAllLink = true }: Pro
                   {sets.length > 0 ? (
                     sets.map((set, idx) => (
                       <div key={idx} className="flex flex-col items-center gap-0.5 px-1.5 py-0.5 bg-slate-900 border border-slate-800 rounded">
-                        <span className={`text-xs font-extrabold ${set.team1Score > set.team2Score ? 'text-indigo-400' : 'text-slate-500'}`}>
+                        <span className={`text-xs font-bold ${set.team1Score > set.team2Score ? 'text-indigo-400' : 'text-slate-500'}`}>
                           {set.team1Score}
                         </span>
                         <span className="w-4 border-t border-slate-800" />
-                        <span className={`text-xs font-extrabold ${set.team2Score > set.team1Score ? 'text-indigo-400' : 'text-slate-500'}`}>
+                        <span className={`text-xs font-bold ${set.team2Score > set.team1Score ? 'text-indigo-400' : 'text-slate-500'}`}>
                           {set.team2Score}
                         </span>
                       </div>
                     ))
                   ) : (
                     <div className="flex items-center justify-center py-1">
-                      <span className="text-xs font-bold text-indigo-400 animate-pulse">
+                      <span className="text-xs font-semibold text-indigo-400 animate-pulse">
                         {match.p1SetsWon} : {match.p2SetsWon}
                       </span>
                     </div>
@@ -152,11 +152,11 @@ export default function LiveMatchesWidget({ limit = 5, showAllLink = true }: Pro
 
                 {/* Team 2 */}
                 <div className="flex-1 text-left max-w-[180px]">
-                  <span className="text-sm font-bold text-white tracking-wide block truncate group-hover:text-indigo-300 transition-colors">
+                  <span className="text-sm font-semibold text-white tracking-wide block truncate group-hover:text-indigo-300 transition-colors">
                     {match.participant2?.teamName || 'Chưa xác định'}
                   </span>
                   {match.participant2?.seed && (
-                    <span className="text-[10px] bg-slate-800 text-slate-400 border border-slate-700 px-1 py-0.2 rounded font-semibold ml-1">
+                    <span className="text-[10px] bg-slate-800 text-slate-400 border border-slate-700 px-1 py-0.2 rounded font-medium ml-1">
                       #{match.participant2.seed}
                     </span>
                   )}
@@ -167,7 +167,7 @@ export default function LiveMatchesWidget({ limit = 5, showAllLink = true }: Pro
               <div className="md:w-1/3 flex justify-center md:justify-end w-full">
                 <Link
                   href={`/live/${match.id}`}
-                  className="w-full md:w-auto px-4 py-2 rounded-lg text-xs font-bold text-slate-300 hover:text-white bg-slate-800/50 hover:bg-indigo-600 border border-slate-700/50 hover:border-indigo-500 transition-all text-center cursor-pointer"
+                  className="w-full md:w-auto px-4 py-2 rounded-lg text-xs font-semibold text-slate-300 hover:text-white bg-slate-800/50 hover:bg-indigo-600 border border-slate-700/50 hover:border-indigo-500 transition-all text-center cursor-pointer"
                 >
                   Xem Trận
                 </Link>

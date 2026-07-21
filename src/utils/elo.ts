@@ -1,6 +1,6 @@
 /** Các mốc ELO xác định tier — dùng chung cho toàn bộ frontend */
 export const TIER_THRESHOLDS = [
-  { minElo: 0, name: 'Low Tier D' },
+  { minElo: 1000, name: 'Low Tier D' },
   { minElo: 1100, name: 'High Tier D' },
   { minElo: 1200, name: 'Low Tier C' },
   { minElo: 1300, name: 'High Tier C' },

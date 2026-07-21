@@ -97,7 +97,7 @@ export default function GalleryTab({ communityId, isOwnerOrMod }: { communityId:
       {isLoading ? (
         <div className="p-12 text-center text-slate-500">Đang tải dữ liệu...</div>
       ) : images.length === 0 ? (
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 border-dashed p-12 text-center">
+        <div className="bg-white rounded-lg shadow-sm border border-slate-200 border-dashed p-12 text-center">
           <ImageIcon className="w-16 h-16 text-slate-300 mx-auto mb-4" />
           <p className="text-slate-700 font-medium text-lg">Chưa có hình ảnh nào</p>
           <p className="text-slate-500 mt-1">Câu lạc bộ chưa đăng tải hình ảnh hoạt động nào.</p>
@@ -108,7 +108,7 @@ export default function GalleryTab({ communityId, isOwnerOrMod }: { communityId:
             <div 
               key={img.id} 
               onClick={() => setLightboxIndex(idx)}
-              className="group relative aspect-square rounded-xl overflow-hidden bg-slate-100 border border-slate-200 cursor-pointer hover:opacity-95 transition-opacity"
+              className="group relative aspect-square rounded-lg overflow-hidden bg-slate-100 border border-slate-200 cursor-pointer hover:opacity-95 transition-opacity"
             >
               <img src={img.imageUrl} alt="Gallery" className="w-full h-full object-cover transition-transform group-hover:scale-105" />
               {isOwnerOrMod && (

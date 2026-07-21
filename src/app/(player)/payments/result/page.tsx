@@ -174,7 +174,7 @@ function ResultContent() {
       <div className="max-w-md mx-auto">
         
         {/* Status card */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-6 p-8 text-center">
+        <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden mb-6 p-8 text-center">
           
           {status === 'SUCCESS' && (
             <div className="flex flex-col items-center">
@@ -232,7 +232,7 @@ function ResultContent() {
 
           {/* Details table */}
           {details && (
-            <div className="bg-slate-50 rounded-xl p-5 border border-slate-100 text-left text-sm mb-8">
+            <div className="bg-slate-50 rounded-lg p-5 border border-slate-100 text-left text-sm mb-8">
               <h3 className="font-bold text-slate-800 mb-3 border-b border-slate-200 pb-1.5 flex items-center gap-1.5">
                 <TrophyIcon className="w-4 h-4 text-blue-600" /> {details.tournamentName}
               </h3>
@@ -273,7 +273,7 @@ function ResultContent() {
             {details?.tournamentId && (
               <Button
                 onClick={() => router.push(details.participantId ? buildTournamentDetailHref(details.tournamentId) : `/organizer/tournaments/${details.tournamentId}/manage`)}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl py-2.5 font-bold"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2.5 font-bold"
               >
                 {details.participantId ? 'Về Trang Giải Đấu' : 'Về Trang Quản Lý Giải'}
               </Button>
@@ -281,7 +281,7 @@ function ResultContent() {
             <Button
               variant="outline"
               onClick={() => router.push('/tournaments')}
-              className="w-full border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl py-2.5"
+              className="w-full border-slate-200 text-slate-600 hover:bg-slate-50 rounded-lg py-2.5"
             >
               Xem Các Giải Khác
             </Button>

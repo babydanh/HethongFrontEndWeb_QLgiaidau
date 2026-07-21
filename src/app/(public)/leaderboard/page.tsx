@@ -143,7 +143,7 @@ export default function LeaderboardPage() {
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b pb-4 border-slate-200">
                 <div>
-                    <h1 className="text-2xl md:text-3xl font-black text-slate-900 mb-2">Bảng Xếp Hạng</h1>
+                    <h1 className="text-2xl md:text-3xl font-bold text-slate-900 mb-2">Bảng Xếp Hạng</h1>
                     <p className="text-slate-500 text-xs font-semibold leading-relaxed">
                         Hệ thống xếp hạng ELO chính thức dành cho các vận động viên.
                     </p>
@@ -151,7 +151,7 @@ export default function LeaderboardPage() {
             </div>
 
             {/* Sub-Filters: Sport Category & Province Selector */}
-            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex flex-wrap gap-2">
                     {categories.map(cat => (
                         <button
@@ -231,21 +231,21 @@ export default function LeaderboardPage() {
                 {/* Left Column: Podium & List */}
                 <div className="lg:col-span-8 xl:col-span-9 flex flex-col gap-6">
                     {isLoading ? (
-                        <div className="bg-white rounded-2xl border border-slate-200 p-16 flex flex-col items-center justify-center min-h-[300px]">
+                        <div className="bg-white rounded-lg border border-slate-200 p-16 flex flex-col items-center justify-center min-h-[300px]">
                             <Loader2 className="w-10 h-10 animate-spin text-blue-600 mb-3" />
                             <p className="text-slate-500 font-medium text-sm">Đang tải bảng xếp hạng...</p>
                         </div>
                     ) : (
                         <>
                             {/* Top 3 Podium Stage (Light Theme) */}
-                            <div className="bg-gradient-to-b from-blue-50/70 via-sky-50/40 to-white rounded-3xl border border-blue-100 shadow-sm p-6 md:p-8 text-slate-800 relative overflow-hidden mb-8">
+                            <div className="bg-gradient-to-b from-blue-50/70 via-sky-50/40 to-white rounded-xl border border-blue-100 shadow-sm p-6 md:p-8 text-slate-800 relative overflow-hidden mb-8">
                                 <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-100/10 via-sky-50/5 to-transparent pointer-events-none" />
                                 
                                 <div className="relative z-10 text-center mb-8">
-                                    <span className="text-[10px] uppercase font-black tracking-[0.25em] text-blue-600 bg-blue-50/80 px-3 py-1.5 rounded-full border border-blue-100">
+                                    <span className="text-[10px] uppercase font-bold tracking-[0.25em] text-blue-600 bg-blue-50/80 px-3 py-1.5 rounded-full border border-blue-100">
                                         ✨ SÂN KHẤU VINH DANH ✨
                                     </span>
-                                    <h2 className="text-xl md:text-2xl font-black mt-3 text-slate-900 tracking-tight">
+                                    <h2 className="text-xl md:text-2xl font-bold mt-3 text-slate-900 tracking-tight">
                                         TOP 10 VẬN ĐỘNG VIÊN XUẤT SẮC
                                     </h2>
                                 </div>
@@ -260,7 +260,7 @@ export default function LeaderboardPage() {
                                             className="flex flex-col items-center hover:opacity-90 transition-opacity"
                                         >
                                             <div className="relative mb-4 transition-transform duration-300 group-hover:scale-105">
-                                                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20 bg-slate-100 text-slate-700 font-black text-[10px] px-3 py-1 rounded-full border border-slate-205 shadow-xs">
+                                                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20 bg-slate-100 text-slate-700 font-bold text-[10px] px-3 py-1 rounded-full border border-slate-205 shadow-xs">
                                                     #2 SECOND
                                                 </div>
                                                 
@@ -276,7 +276,7 @@ export default function LeaderboardPage() {
                                                             {rankings[1]?.user?.avatarUrl ? (
                                                                 <Image src={rankings[1].user.avatarUrl} alt="Rank 2" fill className="object-cover rounded-full" />
                                                             ) : (
-                                                                <div className="w-full h-full flex items-center justify-center bg-slate-100 text-slate-400 font-black uppercase text-lg rounded-full">
+                                                                <div className="w-full h-full flex items-center justify-center bg-slate-100 text-slate-400 font-bold uppercase text-lg rounded-full">
                                                                     {rankings[1] ? (rankings[1].user?.fullName?.substring(0, 2) || 'VĐ') : '?'}
                                                                 </div>
                                                             )}
@@ -287,14 +287,14 @@ export default function LeaderboardPage() {
                                                         {rankings[1]?.user?.avatarUrl ? (
                                                             <Image src={rankings[1].user.avatarUrl} alt="Rank 2" fill className="object-cover rounded-full" />
                                                         ) : (
-                                                            <div className="w-full h-full flex items-center justify-center bg-slate-100 text-slate-400 font-black uppercase text-2xl rounded-full">
+                                                            <div className="w-full h-full flex items-center justify-center bg-slate-100 text-slate-400 font-bold uppercase text-2xl rounded-full">
                                                                 {rankings[1] ? (rankings[1].user?.fullName?.substring(0, 2) || 'VĐ') : '?'}
                                                             </div>
                                                         )}
                                                     </div>
                                                 )}
                                             </div>
-                                            <h3 className="font-extrabold text-slate-800 text-center text-sm mb-1 truncate max-w-[200px] group-hover/podium:text-blue-600 transition-colors">
+                                            <h3 className="font-bold text-slate-800 text-center text-sm mb-1 truncate max-w-[200px] group-hover/podium:text-blue-600 transition-colors">
                                                 {rankings[1]?.user?.fullName || "Đang chờ..."}
                                             </h3>
                                             {selectedMatchType.includes('DOUBLES') && rankings[1] && (
@@ -311,7 +311,7 @@ export default function LeaderboardPage() {
                                         
                                         {/* Stand 2 */}
                                         <div className="w-full h-24 bg-gradient-to-b from-blue-100/50 to-blue-200/20 rounded-t-2xl border-t border-x border-blue-200/80 flex flex-col items-center justify-center shadow-xs">
-                                            <span className="text-3xl font-black text-blue-300/80 select-none">II</span>
+                                            <span className="text-3xl font-bold text-blue-300/80 select-none">II</span>
                                             <span className="text-blue-600/70 text-[10px] font-bold mt-1">
                                                 {rankings[1] ? `Thắng: ${rankings[1].matchesWon}/${rankings[1].matchesPlayed}` : "Thắng: --/--"}
                                             </span>
@@ -325,7 +325,7 @@ export default function LeaderboardPage() {
                                             className="flex flex-col items-center hover:opacity-90 transition-opacity animate-none"
                                         >
                                             <div className="relative mb-5 transition-transform duration-300 group-hover:scale-105">
-                                                <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-20 bg-amber-400 text-amber-955 font-black text-[10px] px-4 py-1.5 rounded-full shadow-sm flex items-center gap-1 border border-amber-300 animate-bounce">
+                                                <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-20 bg-amber-400 text-amber-955 font-bold text-[10px] px-4 py-1.5 rounded-full shadow-sm flex items-center gap-1 border border-amber-300 animate-bounce">
                                                     👑 CHAMPION
                                                 </div>
                                                 
@@ -341,7 +341,7 @@ export default function LeaderboardPage() {
                                                             {rankings[0]?.user?.avatarUrl ? (
                                                                 <Image src={rankings[0].user.avatarUrl} alt="Rank 1" fill className="object-cover rounded-full" />
                                                             ) : (
-                                                                <div className="w-full h-full flex items-center justify-center bg-amber-50 text-amber-600 font-black uppercase text-xl rounded-full">
+                                                                <div className="w-full h-full flex items-center justify-center bg-amber-50 text-amber-600 font-bold uppercase text-xl rounded-full">
                                                                     {rankings[0] ? (rankings[0].user?.fullName?.substring(0, 2) || 'VĐ') : '?'}
                                                                 </div>
                                                             )}
@@ -352,18 +352,18 @@ export default function LeaderboardPage() {
                                                         {rankings[0]?.user?.avatarUrl ? (
                                                             <Image src={rankings[0].user.avatarUrl} alt="Rank 1" fill className="object-cover rounded-full" />
                                                         ) : (
-                                                            <div className="w-full h-full flex items-center justify-center bg-amber-50 text-amber-600 font-black uppercase text-2xl rounded-full">
+                                                            <div className="w-full h-full flex items-center justify-center bg-amber-50 text-amber-600 font-bold uppercase text-2xl rounded-full">
                                                                 {rankings[0] ? (rankings[0].user?.fullName?.substring(0, 2) || 'VĐ') : '?'}
                                                             </div>
                                                         )}
                                                     </div>
                                                 )}
                                             </div>
-                                            <h3 className="font-black text-amber-600 text-center text-base mb-1 truncate max-w-[220px] group-hover/podium:text-blue-600 transition-colors">
+                                            <h3 className="font-bold text-amber-600 text-center text-base mb-1 truncate max-w-[220px] group-hover/podium:text-blue-600 transition-colors">
                                                 {rankings[0]?.user?.fullName || "Đang chờ..."}
                                             </h3>
                                             {selectedMatchType.includes('DOUBLES') && rankings[0] && (
-                                                <span className="text-[10px] text-amber-655 font-black bg-amber-50 px-2 py-0.5 rounded-md mb-1.5 border border-amber-200">
+                                                <span className="text-[10px] text-amber-655 font-bold bg-amber-50 px-2 py-0.5 rounded-md mb-1.5 border border-amber-200">
                                                     Đồng đội
                                                 </span>
                                             )}
@@ -376,7 +376,7 @@ export default function LeaderboardPage() {
                                         
                                         {/* Stand 1 */}
                                         <div className="w-full h-32 bg-gradient-to-b from-blue-100/70 to-blue-200/30 rounded-t-2xl border-t border-x border-blue-300 flex flex-col items-center justify-center shadow-xs relative overflow-hidden">
-                                            <span className="text-4xl font-black text-blue-400 select-none">I</span>
+                                            <span className="text-4xl font-bold text-blue-400 select-none">I</span>
                                             <span className="text-blue-700 text-xs font-bold mt-1">
                                                 {rankings[0] ? `Thắng: ${rankings[0].matchesWon}/${rankings[0].matchesPlayed}` : "Thắng: --/--"}
                                             </span>
@@ -390,7 +390,7 @@ export default function LeaderboardPage() {
                                             className="flex flex-col items-center hover:opacity-90 transition-opacity"
                                         >
                                             <div className="relative mb-4 transition-transform duration-300 group-hover:scale-105">
-                                                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20 bg-orange-100 text-orange-700 font-black text-[10px] px-3 py-1 rounded-full border border-orange-205 shadow-xs">
+                                                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20 bg-orange-100 text-orange-700 font-bold text-[10px] px-3 py-1 rounded-full border border-orange-205 shadow-xs">
                                                     #3 THIRD
                                                 </div>
                                                 
@@ -406,7 +406,7 @@ export default function LeaderboardPage() {
                                                             {rankings[2]?.user?.avatarUrl ? (
                                                                 <Image src={rankings[2].user.avatarUrl} alt="Rank 3" fill className="object-cover rounded-full" />
                                                             ) : (
-                                                                <div className="w-full h-full flex items-center justify-center bg-slate-100 text-orange-500 font-black uppercase text-lg rounded-full">
+                                                                <div className="w-full h-full flex items-center justify-center bg-slate-100 text-orange-500 font-bold uppercase text-lg rounded-full">
                                                                     {rankings[2] ? (rankings[2].user?.fullName?.substring(0, 2) || 'VĐ') : '?'}
                                                                 </div>
                                                             )}
@@ -417,14 +417,14 @@ export default function LeaderboardPage() {
                                                         {rankings[2]?.user?.avatarUrl ? (
                                                             <Image src={rankings[2].user.avatarUrl} alt="Rank 3" fill className="object-cover rounded-full" />
                                                         ) : (
-                                                            <div className="w-full h-full flex items-center justify-center bg-slate-100 text-orange-500 font-black uppercase text-xl rounded-full">
+                                                            <div className="w-full h-full flex items-center justify-center bg-slate-100 text-orange-500 font-bold uppercase text-xl rounded-full">
                                                                 {rankings[2] ? (rankings[2].user?.fullName?.substring(0, 2) || 'VĐ') : '?'}
                                                             </div>
                                                         )}
                                                     </div>
                                                 )}
                                             </div>
-                                            <h3 className="font-extrabold text-slate-800 text-center text-sm mb-1 truncate max-w-[200px] group-hover/podium:text-blue-600 transition-colors">
+                                            <h3 className="font-bold text-slate-800 text-center text-sm mb-1 truncate max-w-[200px] group-hover/podium:text-blue-600 transition-colors">
                                                 {rankings[2]?.user?.fullName || "Đang chờ..."}
                                             </h3>
                                             {selectedMatchType.includes('DOUBLES') && rankings[2] && (
@@ -441,7 +441,7 @@ export default function LeaderboardPage() {
                                         
                                         {/* Stand 3 */}
                                         <div className="w-full h-20 bg-gradient-to-b from-blue-100/40 to-blue-200/15 rounded-t-2xl border-t border-x border-blue-200/70 flex flex-col items-center justify-center shadow-xs">
-                                            <span className="text-3xl font-black text-blue-300/70 select-none">III</span>
+                                            <span className="text-3xl font-bold text-blue-300/70 select-none">III</span>
                                             <span className="text-blue-600/60 text-[10px] font-bold mt-1">
                                                 {rankings[2] ? `Thắng: ${rankings[2].matchesWon}/${rankings[2].matchesPlayed}` : "Thắng: --/--"}
                                             </span>
@@ -459,9 +459,9 @@ export default function LeaderboardPage() {
                                                 <Link 
                                                     key={idx} 
                                                     href={player?.user?.id ? `/users/${player.user.id}` : '#'}
-                                                    className="bg-white/80 backdrop-blur-xs rounded-2xl border border-blue-100/60 p-3 flex flex-col items-center justify-between shadow-xs transition-all duration-300 hover:scale-105 hover:shadow-sm hover:border-blue-300 hover:text-blue-650"
+                                                    className="bg-white/80 backdrop-blur-xs rounded-lg border border-blue-100/60 p-3 flex flex-col items-center justify-between shadow-xs transition-all duration-300 hover:scale-105 hover:shadow-sm hover:border-blue-300 hover:text-blue-650"
                                                 >
-                                                    <span className="text-[10px] font-black text-blue-600 bg-blue-50/50 px-2 py-0.5 rounded-full mb-2">
+                                                    <span className="text-[10px] font-bold text-blue-600 bg-blue-50/50 px-2 py-0.5 rounded-full mb-2">
                                                         #{rankNum}
                                                     </span>
                                                     
@@ -493,11 +493,11 @@ export default function LeaderboardPage() {
                                                         </div>
                                                     )}
                                                     
-                                                    <span className="font-extrabold text-slate-700 text-xs text-center truncate w-full mb-1">
+                                                    <span className="font-bold text-slate-700 text-xs text-center truncate w-full mb-1">
                                                         {player?.user?.fullName || "Đang chờ..."}
                                                     </span>
                                                     {player ? (
-                                                        <span className="text-[11px] font-black text-blue-600">{player.eloPoints} ELO</span>
+                                                        <span className="text-[11px] font-bold text-blue-600">{player.eloPoints} ELO</span>
                                                     ) : (
                                                         <span className="text-[10px] text-slate-400 font-bold">--- ELO</span>
                                                     )}
@@ -518,58 +518,58 @@ export default function LeaderboardPage() {
                 <div className="lg:col-span-4 xl:col-span-3">
                     <div className="flex flex-col gap-6 sticky top-28 lg:top-32">
                         {/* Tier Breakdown Card */}
-                        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-6">
+                        <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6 space-y-6">
                             <div className="space-y-1">
-                                <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
+                                <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
                                     <Info className="w-4 h-4 text-blue-600" />
                                     Hệ thống phân hạng ELO
                                 </h3>
                                 <p className="text-slate-500 text-[11px] leading-relaxed">Điểm ELO tích lũy sau mỗi trận đấu sẽ xếp người chơi vào các Tier trình độ tương ứng.</p>
                             </div>
                             <div className="flex flex-col gap-2">
-                                <div className="flex justify-between items-center p-2.5 rounded-xl border bg-slate-50 border-slate-205">
-                                    <span className="bg-amber-500/10 text-amber-600 px-2 py-0.5 rounded text-[10px] font-black uppercase">Tier S</span>
-                                    <span className="font-black text-xs text-slate-800">1800+ ELO</span>
+                                <div className="flex justify-between items-center p-2.5 rounded-lg border bg-slate-50 border-slate-205">
+                                    <span className="bg-amber-500/10 text-amber-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase">Tier S</span>
+                                    <span className="font-bold text-xs text-slate-800">1800+ ELO</span>
                                 </div>
-                                <div className="flex justify-between items-center p-2.5 rounded-xl border bg-slate-50 border-slate-205">
-                                    <span className="bg-rose-500/15 text-rose-600 px-2 py-0.5 rounded text-[10px] font-black uppercase">High Tier A</span>
-                                    <span className="font-black text-xs text-slate-800">1700 - 1799 ELO</span>
+                                <div className="flex justify-between items-center p-2.5 rounded-lg border bg-slate-50 border-slate-205">
+                                    <span className="bg-rose-500/15 text-rose-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase">High Tier A</span>
+                                    <span className="font-bold text-xs text-slate-800">1700 - 1799 ELO</span>
                                 </div>
-                                <div className="flex justify-between items-center p-2.5 rounded-xl border bg-slate-55 border-slate-205">
-                                    <span className="bg-rose-500/10 text-rose-500 px-2 py-0.5 rounded text-[10px] font-black uppercase">Low Tier A</span>
-                                    <span className="font-black text-xs text-slate-800">1600 - 1699 ELO</span>
+                                <div className="flex justify-between items-center p-2.5 rounded-lg border bg-slate-55 border-slate-205">
+                                    <span className="bg-rose-500/10 text-rose-500 px-2 py-0.5 rounded text-[10px] font-bold uppercase">Low Tier A</span>
+                                    <span className="font-bold text-xs text-slate-800">1600 - 1699 ELO</span>
                                 </div>
-                                <div className="flex justify-between items-center p-2.5 rounded-xl border bg-slate-50 border-slate-205">
-                                    <span className="bg-violet-500/15 text-violet-650 px-2 py-0.5 rounded text-[10px] font-black uppercase">High Tier B</span>
-                                    <span className="font-black text-xs text-slate-800">1500 - 1599 ELO</span>
+                                <div className="flex justify-between items-center p-2.5 rounded-lg border bg-slate-50 border-slate-205">
+                                    <span className="bg-violet-500/15 text-violet-650 px-2 py-0.5 rounded text-[10px] font-bold uppercase">High Tier B</span>
+                                    <span className="font-bold text-xs text-slate-800">1500 - 1599 ELO</span>
                                 </div>
-                                <div className="flex justify-between items-center p-2.5 rounded-xl border bg-slate-50 border-slate-205">
-                                    <span className="bg-violet-500/10 text-violet-550 px-2 py-0.5 rounded text-[10px] font-black uppercase">Low Tier B</span>
-                                    <span className="font-black text-xs text-slate-800">1400 - 1499 ELO</span>
+                                <div className="flex justify-between items-center p-2.5 rounded-lg border bg-slate-50 border-slate-205">
+                                    <span className="bg-violet-500/10 text-violet-550 px-2 py-0.5 rounded text-[10px] font-bold uppercase">Low Tier B</span>
+                                    <span className="font-bold text-xs text-slate-800">1400 - 1499 ELO</span>
                                 </div>
-                                <div className="flex justify-between items-center p-2.5 rounded-xl border bg-slate-50 border-slate-205">
-                                    <span className="bg-teal-500/10 text-teal-650 px-2 py-0.5 rounded text-[10px] font-black uppercase">High Tier C</span>
-                                    <span className="font-black text-xs text-slate-800">1300 - 1399 ELO</span>
+                                <div className="flex justify-between items-center p-2.5 rounded-lg border bg-slate-50 border-slate-205">
+                                    <span className="bg-teal-500/10 text-teal-650 px-2 py-0.5 rounded text-[10px] font-bold uppercase">High Tier C</span>
+                                    <span className="font-bold text-xs text-slate-800">1300 - 1399 ELO</span>
                                 </div>
-                                <div className="flex justify-between items-center p-2.5 rounded-xl border bg-slate-55 border-slate-205">
-                                    <span className="bg-cyan-500/10 text-cyan-600 px-2 py-0.5 rounded text-[10px] font-black uppercase">Low Tier C</span>
-                                    <span className="font-black text-xs text-slate-800">1200 - 1299 ELO</span>
+                                <div className="flex justify-between items-center p-2.5 rounded-lg border bg-slate-55 border-slate-205">
+                                    <span className="bg-cyan-500/10 text-cyan-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase">Low Tier C</span>
+                                    <span className="font-bold text-xs text-slate-800">1200 - 1299 ELO</span>
                                 </div>
-                                <div className="flex justify-between items-center p-2.5 rounded-xl border bg-slate-50 border-slate-205">
-                                    <span className="bg-slate-500/10 text-slate-700 px-2 py-0.5 rounded text-[10px] font-black uppercase">High Tier D</span>
-                                    <span className="font-black text-xs text-slate-800">1100 - 1199 ELO</span>
+                                <div className="flex justify-between items-center p-2.5 rounded-lg border bg-slate-50 border-slate-205">
+                                    <span className="bg-slate-500/10 text-slate-700 px-2 py-0.5 rounded text-[10px] font-bold uppercase">High Tier D</span>
+                                    <span className="font-bold text-xs text-slate-800">1100 - 1199 ELO</span>
                                 </div>
-                                <div className="flex justify-between items-center p-2.5 rounded-xl border bg-slate-50 border-slate-205">
-                                    <span className="bg-orange-700/10 text-orange-600 px-2 py-0.5 rounded text-[10px] font-black uppercase">Low Tier D</span>
-                                    <span className="font-black text-xs text-slate-800">0 - 1099 ELO</span>
+                                <div className="flex justify-between items-center p-2.5 rounded-lg border bg-slate-50 border-slate-205">
+                                    <span className="bg-orange-700/10 text-orange-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase">Low Tier D</span>
+                                    <span className="font-bold text-xs text-slate-800">0 - 1099 ELO</span>
                                 </div>
                             </div>
                         </div>
 
                         {/* Search User Elo Card */}
-                        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
+                        <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6 space-y-4">
                             <div className="space-y-1">
-                                <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
+                                <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
                                     <Search className="w-4 h-4 text-blue-600" />
                                     Tra cứu ELO kỳ thủ
                                 </h3>
@@ -587,7 +587,7 @@ export default function LeaderboardPage() {
                                 <button
                                     type="submit"
                                     disabled={searchLoading}
-                                    className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-black transition-all flex items-center justify-center shrink-0 disabled:opacity-50 cursor-pointer animate-none"
+                                    className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-all flex items-center justify-center shrink-0 disabled:opacity-50 cursor-pointer animate-none"
                                 >
                                     {searchLoading ? (
                                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -598,7 +598,7 @@ export default function LeaderboardPage() {
                             </form>
 
                             {searchError && (
-                                <p className="text-[10px] text-rose-500 font-extrabold">{searchError}</p>
+                                <p className="text-[10px] text-rose-500 font-bold">{searchError}</p>
                             )}
 
                             {searchResult.length > 0 && (
@@ -607,25 +607,25 @@ export default function LeaderboardPage() {
                                         <Link
                                             key={u.id}
                                             href={`/users/${u.id}`}
-                                            className="flex items-center gap-3 p-2.5 rounded-xl border border-slate-150 bg-slate-50/50 hover:bg-blue-50/20 hover:border-blue-200 transition-all cursor-pointer group"
+                                            className="flex items-center gap-3 p-2.5 rounded-lg border border-slate-150 bg-slate-50/50 hover:bg-blue-50/20 hover:border-blue-200 transition-all cursor-pointer group"
                                         >
                                             <div className="w-9 h-9 rounded-full object-cover relative overflow-hidden bg-slate-100 shrink-0">
                                                 {u.avatarUrl ? (
                                                     <Image src={u.avatarUrl} alt="Avatar" fill className="object-cover" />
                                                 ) : (
-                                                    <div className="w-full h-full flex items-center justify-center bg-blue-50 text-blue-600 font-black text-xs uppercase">
+                                                    <div className="w-full h-full flex items-center justify-center bg-blue-50 text-blue-600 font-bold text-xs uppercase">
                                                         {u.fullName?.substring(0, 2) || "VĐ"}
                                                     </div>
                                                 )}
                                             </div>
                                             <div className="min-w-0 flex-1">
-                                                <h4 className="font-extrabold text-xs text-slate-800 truncate group-hover:text-blue-600 transition-colors">
+                                                <h4 className="font-bold text-xs text-slate-800 truncate group-hover:text-blue-600 transition-colors">
                                                     {u.fullName || "Kỳ thủ"}
                                                 </h4>
                                                 <p className="text-[10px] text-slate-400 font-medium truncate">{u.email}</p>
                                             </div>
                                             <div className="text-right shrink-0 flex flex-col items-end gap-1">
-                                                <span className="text-[10px] font-black text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded-md border border-blue-100">
+                                                <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded-md border border-blue-100">
                                                     {u.eloPoints} ELO
                                                 </span>
                                                 <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider">
@@ -680,7 +680,7 @@ function RestRankingsTable({ rankings, selectedMatchType }: { rankings: PlayerRa
 
     const renderTable = (data: PlayerRanking[], startRank: number) => {
         return (
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
                      <table className="w-full text-left border-collapse text-xs">
                         <thead>
@@ -699,7 +699,7 @@ function RestRankingsTable({ rankings, selectedMatchType }: { rankings: PlayerRa
                                 const winRate = rank.matchesPlayed > 0 ? ((rank.matchesWon / rank.matchesPlayed) * 100).toFixed(0) : '0';
                                 return (
                                     <tr key={rank.id} className="transition-colors hover:bg-slate-55/40 border-b">
-                                        <td className="py-2.5 px-3 text-center font-black text-slate-400">
+                                        <td className="py-2.5 px-3 text-center font-bold text-slate-400">
                                             #{rankNum}
                                         </td>
                                         <td className="py-2.5 px-3">
@@ -717,7 +717,7 @@ function RestRankingsTable({ rankings, selectedMatchType }: { rankings: PlayerRa
                                                             {rank.user?.avatarUrl ? (
                                                                 <Image src={rank.user.avatarUrl} alt="Player" fill className="object-cover" />
                                                             ) : (
-                                                                <div className="w-full h-full flex items-center justify-center bg-slate-200 text-slate-500 font-black text-[8px] uppercase">
+                                                                <div className="w-full h-full flex items-center justify-center bg-slate-200 text-slate-500 font-bold text-[8px] uppercase">
                                                                     {isPlaceholder ? "?" : (rank.user?.fullName?.substring(0, 2) || 'VĐ')}
                                                                 </div>
                                                             )}
@@ -728,7 +728,7 @@ function RestRankingsTable({ rankings, selectedMatchType }: { rankings: PlayerRa
                                                         {rank.user?.avatarUrl ? (
                                                             <Image src={rank.user.avatarUrl} alt="Player" fill className="object-cover" />
                                                         ) : (
-                                                            <div className="w-full h-full flex items-center justify-center bg-slate-200 text-slate-500 font-black text-[9px] uppercase">
+                                                            <div className="w-full h-full flex items-center justify-center bg-slate-200 text-slate-500 font-bold text-[9px] uppercase">
                                                                 {isPlaceholder ? "?" : (rank.user?.fullName?.substring(0, 2) || 'VĐ')}
                                                             </div>
                                                         )}
@@ -746,7 +746,7 @@ function RestRankingsTable({ rankings, selectedMatchType }: { rankings: PlayerRa
                                                 <EloTierBadge elo={rank.eloPoints} tierName={rank.tier?.name} size="sm" className="scale-90 origin-left" />
                                             )}
                                         </td>
-                                        <td className="py-2.5 px-3 text-right font-black text-blue-650">
+                                        <td className="py-2.5 px-3 text-right font-bold text-blue-650">
                                             {isPlaceholder ? (
                                                 <span className="text-slate-450 font-bold">---</span>
                                             ) : (
@@ -772,7 +772,7 @@ function RestRankingsTable({ rankings, selectedMatchType }: { rankings: PlayerRa
 
     return (
         <div className="space-y-4">
-            <h3 className="text-base font-black text-slate-900 px-1">Danh sách xếp hạng (Hạng 11 - 100)</h3>
+            <h3 className="text-base font-bold text-slate-900 px-1">Danh sách xếp hạng (Hạng 11 - 100)</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>

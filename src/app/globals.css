@@ -28,7 +28,7 @@
     --color-warning: #d97706; /* amber-600 */
     --color-danger: #dc2626; /* red-600 */
 
-    --radius: 0.5rem; /* rounded-lg */
+    --radius: 0.375rem; /* rounded-md */
 }
 
 body {

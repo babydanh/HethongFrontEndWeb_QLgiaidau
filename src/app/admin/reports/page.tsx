@@ -52,14 +52,14 @@ export default function ReportsPage() {
       <header className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.16em] text-rose-600">Hàng đợi an toàn</p>
-          <h2 className="mt-1 text-3xl font-black text-slate-950">
+          <h2 className="mt-1 text-3xl font-bold text-slate-950">
             {isModeratorOnly ? 'Điều phối báo cáo vi phạm' : 'Quản lý báo cáo vi phạm'}
           </h2>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
             Phân loại, xác minh và chuyển cấp theo mức độ. Moderator không áp dụng khóa tài chính hoặc chế tài vĩnh viễn.
           </p>
         </div>
-        <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm">
+        <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm">
           {reports.length} hồ sơ trong trang này
         </div>
       </header>
@@ -67,17 +67,17 @@ export default function ReportsPage() {
       <ReportFiltersBar filters={filters} onChange={setFilters} />
 
       {loading ? (
-        <div className="flex min-h-72 items-center justify-center rounded-3xl border border-slate-200 bg-white">
+        <div className="flex min-h-72 items-center justify-center rounded-2xl border border-slate-200 bg-white">
           <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
         </div>
       ) : reports.length === 0 ? (
-        <div className="rounded-3xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
+        <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
           <ShieldAlert className="mx-auto h-10 w-10 text-slate-400" />
           <h3 className="mt-4 text-lg font-bold text-slate-900">Không có hồ sơ phù hợp</h3>
           <p className="mt-2 text-sm text-slate-500">Thử bỏ bớt bộ lọc hoặc chọn khoảng thời gian khác.</p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
           <div className="hidden overflow-x-auto lg:block">
             <table className="w-full text-left text-sm">
               <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">

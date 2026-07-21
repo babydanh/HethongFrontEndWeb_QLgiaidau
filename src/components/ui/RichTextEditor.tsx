@@ -336,7 +336,7 @@ export default function RichTextEditor({ value, onChange, placeholder, error, la
   if (!isMounted) {
     return (
       <div className="flex flex-col gap-1.5">
-        {label && <label className="text-sm font-semibold text-slate-700">{label}</label>}
+        {label && <label className="text-sm font-medium text-slate-700">{label}</label>}
         <div className="h-28 w-full bg-slate-100 rounded-lg animate-pulse border border-slate-200 flex items-center justify-center text-xs text-slate-400">
           Đang tải trình soạn thảo văn bản...
         </div>
@@ -346,7 +346,7 @@ export default function RichTextEditor({ value, onChange, placeholder, error, la
 
   return (
     <div className="flex flex-col gap-1.5 w-full">
-      {label && <label className="text-sm font-semibold text-slate-700">{label}</label>}
+      {label && <label className="text-sm font-medium text-slate-700">{label}</label>}
       <div 
         onClick={() => setIsFocused(true)}
         onBlur={(e) => {
@@ -355,7 +355,7 @@ export default function RichTextEditor({ value, onChange, placeholder, error, la
             setIsFocused(false);
           }
         }}
-        className={`w-full bg-white border border-slate-300 rounded-xl px-4 py-3 transition-all duration-300 ${
+        className={`w-full bg-white border border-slate-300 rounded-lg px-4 py-3 transition-all duration-300 ${
           isFocused 
             ? 'ring-2 ring-blue-500/20 border-blue-500 shadow-sm min-h-[300px]' 
             : 'hover:border-slate-400 min-h-[140px]'
@@ -363,7 +363,7 @@ export default function RichTextEditor({ value, onChange, placeholder, error, la
       >
         <div ref={containerRef} className="prose prose-slate max-w-none text-slate-800 text-sm editorjs-container" />
       </div>
-      {error && <p className="text-xs font-semibold text-red-500">{error}</p>}
+      {error && <p className="text-xs font-medium text-red-500">{error}</p>}
 
       <style jsx global>{`
         .editorjs-container .codex-editor__redactor {

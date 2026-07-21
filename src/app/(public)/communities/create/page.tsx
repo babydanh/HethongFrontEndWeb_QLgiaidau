@@ -205,7 +205,7 @@ export default function CreateCommunityPage() {
           Quay lại
         </button>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
           <div className="bg-emerald-600 px-8 py-10 text-white text-center">
             <h1 className="text-3xl font-bold mb-2">Tạo Câu Lạc Bộ Mới</h1>
             <p className="text-emerald-100">Xây dựng và phát triển câu lạc bộ thể thao của riêng bạn</p>
@@ -320,7 +320,7 @@ export default function CreateCommunityPage() {
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 {/* Logo Uploader */}
-                <div className="flex flex-col items-center justify-center p-6 bg-slate-50 rounded-2xl border border-slate-200">
+                <div className="flex flex-col items-center justify-center p-6 bg-slate-50 rounded-lg border border-slate-200">
                   <label className="block text-sm font-semibold text-slate-700 mb-4 text-center">
                     Logo / Avatar nhóm <span className="text-red-500">*</span>
                   </label>
@@ -376,7 +376,7 @@ export default function CreateCommunityPage() {
                 </div>
 
                 {/* Banner Uploader */}
-                <div className="md:col-span-2 flex flex-col p-6 bg-slate-50 rounded-2xl border border-slate-200">
+                <div className="md:col-span-2 flex flex-col p-6 bg-slate-50 rounded-lg border border-slate-200">
                   <label className="block text-sm font-semibold text-slate-700 mb-4">
                     Ảnh bìa (Cover Banner) <span className="text-red-500">*</span>
                   </label>
@@ -391,7 +391,7 @@ export default function CreateCommunityPage() {
                   
                   <div 
                     onClick={() => !isUploadingBanner && bannerInputRef.current?.click()}
-                    className={`group w-full h-36 rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all overflow-hidden relative ${
+                    className={`group w-full h-36 rounded-lg border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all overflow-hidden relative ${
                       watchBannerUrl 
                         ? 'border-emerald-500 bg-white' 
                         : 'border-slate-300 hover:border-emerald-500 bg-white hover:bg-slate-50'
@@ -494,7 +494,7 @@ export default function CreateCommunityPage() {
               </div>
 
               {watchJoinMode === 'APPROVAL' && (
-                <div className="mt-8 bg-slate-50 p-6 rounded-xl border border-slate-200">
+                <div className="mt-8 bg-slate-50 p-6 rounded-lg border border-slate-200">
                   <label className="block text-sm font-semibold text-slate-800 mb-4">Câu hỏi xin vào nhóm</label>
                   <p className="text-sm text-slate-500 mb-4">Người xin vào nhóm sẽ phải trả lời các câu hỏi này.</p>
                   

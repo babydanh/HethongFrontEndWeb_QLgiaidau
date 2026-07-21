@@ -55,6 +55,7 @@ export interface Match {
   matchOrder: number;
   bracketBranch: string;
   isBye: boolean;
+  cheerCount?: number;
   scheduledAt?: string | null;
   startedAt?: string | null;
   completedAt?: string | null;

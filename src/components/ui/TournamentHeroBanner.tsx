@@ -3,8 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Tournament } from '@/features/tournaments/api';
 import Link from 'next/link';
-import { Users } from 'lucide-react';
-import { formatDate } from '@/utils/format';
+import { Calendar, MapPin, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getSportLogo } from '@/constants/sports';
 
 interface Props {
@@ -27,7 +26,7 @@ function CountdownTimer({ targetDate }: { targetDate: string }) {
   }, [targetDate]);
   if (!text) return null;
   return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-400/30 text-amber-300 text-[10px] font-bold whitespace-nowrap">
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-400/30 text-amber-300 text-[10px] font-semibold whitespace-nowrap">
       ⏳ {text}
     </span>
   );
@@ -100,6 +99,28 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[25
     }
   };
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length > 0) {
+      isDraggingRef.current = true;
+      setIsDragging(true);
+      startX.current = e.touches[0].pageX;
+      dragDistance.current = 0;
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDraggingRef.current || e.touches.length === 0) return;
+    const deltaX = e.touches[0].pageX - startX.current;
+    setDragOffset(deltaX);
+    dragDistance.current = Math.abs(deltaX);
+  };
+
+  const handleTouchEnd = () => {
+    if (isDraggingRef.current) {
+      handleMouseUp();
+    }
+  };
+
   const handleLinkClick = (e: React.MouseEvent) => {
     // If the user dragged more than 10px, prevent click navigation
     if (dragDistance.current > 10) {
@@ -109,9 +130,9 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[25
 
   if (!tournaments || tournaments.length === 0) {
     return (
-      <div className={`w-full ${heightClass} rounded-xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 flex flex-col justify-center items-center text-center p-6 border border-slate-800 shadow-xl relative overflow-hidden`}>
+      <div className={`w-full ${heightClass} rounded-lg bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 flex flex-col justify-center items-center text-center p-6 border border-slate-800 shadow-xl relative overflow-hidden`}>
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.08)_0%,transparent_70%)]" />
-        <h3 className="text-xl md:text-2xl font-bold text-white mb-2 relative z-10 font-sans tracking-wide">
+        <h3 className="text-xl md:text-2xl font-semibold text-white mb-2 relative z-10 font-sans tracking-wide">
           Chưa Có Giải Đấu Nào Sắp Diễn Ra
         </h3>
         <p className="text-sm text-slate-400 max-w-md relative z-10">
@@ -147,20 +168,20 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[25
     switch (status) {
       case 'REGISTRATION_OPEN':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[9px] uppercase font-black bg-emerald-500 text-white shadow-sm">
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[9px] uppercase font-bold bg-emerald-500 text-white shadow-sm">
             <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
             Mở Đăng Ký
           </span>
         );
       case 'REGISTRATION_CLOSED':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[9px] uppercase font-black bg-amber-600 text-white shadow-sm">
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[9px] uppercase font-bold bg-amber-600 text-white shadow-sm">
             Đóng Đăng Ký
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[9px] uppercase font-black bg-blue-600 text-white shadow-sm">
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[9px] uppercase font-bold bg-blue-600 text-white shadow-sm">
             Sắp Diễn Ra
           </span>
         );
@@ -168,15 +189,18 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[25
   };
 
   return (
-    <div className="relative w-full select-none group overflow-hidden rounded-xl">
+    <div className="relative w-full select-none group overflow-hidden rounded-lg">
       {/* Slider Wrapper */}
       <div 
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseLeave}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
         onDragStart={(e) => e.preventDefault()}
-        className="flex py-1 cursor-grab active:cursor-grabbing"
+        className="flex py-1 cursor-grab active:cursor-grabbing touch-pan-y"
         style={{
           transform: `translateX(calc(-${currentIndex * slideWidth}% + ${dragOffset}px))`,
           transition: isDragging ? 'none' : 'transform 750ms cubic-bezier(0.16, 1, 0.3, 1)',
@@ -192,7 +216,7 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[25
                 width: `${slideWidth}%`,
               }}
             >
-              <div className={`w-full ${heightClass} rounded-xl relative overflow-hidden border border-slate-205 dark:border-slate-800 shadow-md bg-slate-950 transition-all duration-500 ${isActive ? 'scale-[1] opacity-100' : 'scale-[0.985] opacity-90'}`}>
+              <div className={`w-full ${heightClass} rounded-lg relative overflow-hidden border border-slate-205 dark:border-slate-800 shadow-md bg-slate-950 transition-all duration-500 ${isActive ? 'scale-[1] opacity-100' : 'scale-[0.985] opacity-90'}`}>
                 {/* Background Image / Gradient */}
                 <div className="absolute inset-0 transition-transform duration-1000 ease-out transform scale-100 group-hover:scale-105">
                   {tournament.bannerUrl ? (
@@ -228,7 +252,7 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[25
                 <div className="absolute bottom-6 left-6 right-6 z-20 pointer-events-none max-w-xl flex flex-col gap-2">
                   <div className="flex items-center gap-2">
                     {tournament.category?.name && (
-                      <span className="flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-blue-300 font-sans [text-shadow:_0_1px_2px_rgba(0,0,0,0.8)]">
+                      <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-blue-300 font-sans [text-shadow:_0_1px_2px_rgba(0,0,0,0.8)]">
                         {(() => {
                           const logo = getSportLogo(tournament.category?.name);
                           return logo ? (
@@ -241,15 +265,15 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[25
                     {getStatusBadge(tournament.status)}
                   </div>
 
-                  <h2 className="text-lg md:text-2xl font-black text-white tracking-tight leading-tight line-clamp-2 [text-shadow:_0_2px_4px_rgba(0,0,0,0.8)]">
+                  <h2 className="text-lg md:text-2xl font-bold text-white tracking-tight leading-tight line-clamp-2 [text-shadow:_0_2px_4px_rgba(0,0,0,0.8)]">
                     {tournament.name}
                   </h2>
 
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] md:text-xs text-slate-200 font-semibold [text-shadow:_0_1px_2px_rgba(0,0,0,0.8)]">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] md:text-xs text-slate-200 font-normal [text-shadow:_0_1px_2px_rgba(0,0,0,0.8)]">
                     {tournament.startDate && (
                       <span className="flex items-center gap-1">
-                        📅 {formatDate(tournament.startDate)}
-                        {tournament.endDate && ` - ${formatDate(tournament.endDate)}`}
+                        <Calendar className="w-3.5 h-3.5 inline-block" /> {new Date(tournament.startDate).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}
+                        {tournament.endDate && ` - ${new Date(tournament.endDate).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}`}
                       </span>
                     )}
                     {tournament.status === 'UPCOMING' && tournament.registrationStartDate && (
@@ -257,30 +281,8 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[25
                     )}
                     {tournament.locationAddress && (
                       <span className="flex items-center gap-1 line-clamp-1">
-                        📍 {tournament.locationAddress.split(',').slice(-3).join(',').trim()}
+                        <MapPin className="w-3.5 h-3.5 inline-block" /> {tournament.locationAddress.split(',').slice(-3).join(',').trim()}
                       </span>
-                    )}
-                    {tournament.entryFee !== undefined && (
-                      <span className="flex items-center gap-1 text-emerald-400 font-bold">
-                        💰 {tournament.entryFee === 0 ? 'Miễn phí' : `${Number(tournament.entryFee).toLocaleString('vi-VN')} VNĐ`}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-3 mt-2 pointer-events-auto relative z-20 flex-wrap">
-                    {tournament._count?.participants !== undefined && (
-                      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-black/40 backdrop-blur-sm border border-white/10 text-white text-[10px] font-bold">
-                        <Users className="w-3 h-3" />
-                        <span>{tournament._count.participants} VĐV</span>
-                      </div>
-                    )}
-                    {tournament.status === 'REGISTRATION_OPEN' && (
-                      <Link
-                        href={`/tournaments/${tournament.id}/register`}
-                        className="px-4 py-1.5 rounded-lg text-[11px] font-black text-white bg-blue-600 hover:bg-blue-700 shadow-md active:scale-95 transition-all cursor-pointer"
-                      >
-                        Đăng Ký Ngay
-                      </Link>
                     )}
                   </div>
                 </div>
@@ -298,14 +300,14 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[25
             onClick={handlePrev}
             className="absolute left-6 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full flex items-center justify-center bg-white/80 hover:bg-white border border-slate-200 text-slate-800 shadow-md cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm z-20"
           >
-            ←
+            <ChevronLeft className="w-4 h-4" />
           </button>
           {/* Arrow Right */}
           <button
             onClick={handleNext}
             className="absolute right-6 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full flex items-center justify-center bg-white/80 hover:bg-white border border-slate-200 text-slate-800 shadow-md cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm z-20"
           >
-            →
+            <ChevronRight className="w-4 h-4" />
           </button>
 
           {/* Dots Indicators */}

@@ -135,32 +135,32 @@ export function OperationsWorkspace({
 
   return (
     <section className="space-y-6">
-      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-xl font-black text-slate-900">Panel vận hành giải đấu</h2>
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="text-xl font-bold text-slate-900">Panel vận hành giải đấu</h2>
         <p className="mt-2 max-w-3xl text-sm font-medium text-slate-500">
           Màn hình này dùng để theo dõi nhịp chạy thực tế của giải: trận nào sắp gọi vào sân, trận nào đang nghẽn, vấn đề nào chưa chốt và roster nào cần xử lý kỹ thuật.
         </p>
       </div>
 
       {isDraft ? (
-        <div className="flex items-start gap-3 rounded-2xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-950">
+        <div className="flex items-start gap-3 rounded-lg border border-sky-200 bg-sky-50 p-4 text-sm text-sky-950">
           <FlaskConical className="mt-0.5 h-5 w-5 flex-shrink-0 text-sky-700" />
           <div>
-            <p className="font-black">Chế độ thử nghiệm Draft</p>
+            <p className="font-bold">Chế độ thử nghiệm Draft</p>
             <p className="mt-1 font-medium text-sky-800">
               Bạn có thể thử bracket, lịch, tỷ số và nghiệp vụ với {mockParticipantCount} VĐV/đội ảo. Khi công bố giải, hệ thống xóa toàn bộ participant mock và bracket thử trước khi nhận dữ liệu thi đấu thật.
             </p>
           </div>
         </div>
       ) : mockParticipantCount > 0 ? (
-        <div className="flex items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm font-semibold text-rose-900">
+        <div className="flex items-start gap-3 rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm font-semibold text-rose-900">
           <ShieldAlert className="mt-0.5 h-5 w-5 flex-shrink-0" />
           Phát hiện {mockParticipantCount} participant mock ngoài trạng thái Draft. Cần dọn dữ liệu thử trước khi tiếp tục vận hành thật.
         </div>
       ) : null}
 
       {error ? (
-        <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-800">
+        <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-800">
           <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0" />
           <span>{error}</span>
         </div>
@@ -169,31 +169,31 @@ export function OperationsWorkspace({
       <OpsOverview summary={summary} />
 
       <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
-          <p className="text-[11px] font-black uppercase tracking-[0.12em] text-amber-600">Sẵn sàng gọi vào sân</p>
-          <p className="mt-2 text-2xl font-black text-amber-900">{readyToCall}</p>
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-amber-600">Sẵn sàng gọi vào sân</p>
+          <p className="mt-2 text-2xl font-bold text-amber-900">{readyToCall}</p>
           <p className="mt-1 text-xs font-medium text-amber-800">Trận đã có sân và trọng tài, có thể chuyển sang trạng thái thi đấu ngay.</p>
         </div>
-        <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
-          <p className="text-[11px] font-black uppercase tracking-[0.12em] text-blue-600">Thiếu điều phối</p>
-          <p className="mt-2 text-2xl font-black text-blue-900">{pendingAssignments}</p>
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-600">Thiếu điều phối</p>
+          <p className="mt-2 text-2xl font-bold text-blue-900">{pendingAssignments}</p>
           <p className="mt-1 text-xs font-medium text-blue-800">Trận chưa gán đủ sân hoặc trọng tài.</p>
         </div>
-        <div className="rounded-2xl border border-slate-200 bg-slate-100 p-4">
-          <p className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-500">Quá giờ chưa start</p>
-          <p className="mt-2 text-2xl font-black text-slate-900">{overdueStarts}</p>
+        <div className="rounded-lg border border-slate-200 bg-slate-100 p-4">
+          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">Quá giờ chưa start</p>
+          <p className="mt-2 text-2xl font-bold text-slate-900">{overdueStarts}</p>
           <p className="mt-1 text-xs font-medium text-slate-600">Trận đã qua giờ dự kiến nhưng vẫn chưa bắt đầu.</p>
         </div>
-        <div className="rounded-2xl border border-violet-200 bg-violet-50 p-4">
-          <p className="text-[11px] font-black uppercase tracking-[0.12em] text-violet-700">Ngoại lệ & kỷ luật</p>
-          <p className="mt-2 text-2xl font-black text-violet-950">{exceptionalMatchCount + penaltyCount}</p>
+        <div className="rounded-lg border border-violet-200 bg-violet-50 p-4">
+          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-violet-700">Ngoại lệ & kỷ luật</p>
+          <p className="mt-2 text-2xl font-bold text-violet-950">{exceptionalMatchCount + penaltyCount}</p>
           <p className="mt-1 text-xs font-medium text-violet-800">
             {exceptionalMatchCount} trận có quyết định/ngoại lệ · {penaltyCount} thẻ hoặc hình phạt.
           </p>
         </div>
       </section>
 
-      <div className="sticky top-20 z-20 rounded-2xl border border-slate-200 bg-white/95 p-2 shadow-sm backdrop-blur">
+      <div className="sticky top-20 z-20 rounded-lg border border-slate-200 bg-white/95 p-2 shadow-sm backdrop-blur">
         <div className="grid grid-cols-3 gap-2">
           {([
             { id: 'MATCHES', label: 'Trận đấu', count: matches.length, icon: ListChecks },
@@ -208,7 +208,7 @@ export function OperationsWorkspace({
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
-                  'flex min-w-0 items-center justify-center gap-2 rounded-xl px-3 py-3 text-xs font-black transition-colors sm:text-sm',
+                  'flex min-w-0 items-center justify-center gap-2 rounded-lg px-3 py-3 text-xs font-bold transition-colors sm:text-sm',
                   isActive
                     ? 'bg-slate-950 text-white shadow-sm'
                     : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950',

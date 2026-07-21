@@ -116,19 +116,19 @@ export default function CreateSeriesPage() {
         <div className="flex items-center gap-4 mb-8">
           <Link 
             href="/"
-            className="w-12 h-12 bg-white border border-slate-200 rounded-2xl flex items-center justify-center overflow-hidden shadow-sm shrink-0 hover:scale-105 transition-transform"
+            className="w-12 h-12 bg-white border border-slate-200 rounded-lg flex items-center justify-center overflow-hidden shadow-sm shrink-0 hover:scale-105 transition-transform"
           >
             <img src="/vndcsport.svg" alt="VNDC Sport Logo" className="w-9 h-9 object-contain" />
           </Link>
           <div>
-            <h1 className="text-2xl md:text-3xl font-black text-slate-900">Thiết Lập Chuỗi Giải Đấu Mới</h1>
+            <h1 className="text-2xl md:text-3xl font-bold text-slate-900">Thiết Lập Chuỗi Giải Đấu Mới</h1>
             <p className="text-xs text-slate-500 mt-0.5">Khởi tạo hệ thống giải đấu vòng loại tích lũy và điều lệ suất vé đặc cách</p>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-8">
           {/* Section 1: General Info */}
-          <div className="bg-white p-6 md:p-8 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-6">
+          <div className="bg-white p-6 md:p-8 rounded-lg border border-slate-200 shadow-sm flex flex-col gap-6">
             <h2 className="text-base font-bold text-slate-900 border-b border-slate-100 pb-3">Thông Tin Chung</h2>
             
             <div className="flex flex-col gap-1.5">
@@ -148,7 +148,7 @@ export default function CreateSeriesPage() {
                 placeholder="Mô tả tóm tắt về chuỗi đấu, quy mô và nhà tài trợ..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-sm focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all outline-none"
+                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-3.5 text-sm focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all outline-none"
               />
             </div>
 
@@ -205,7 +205,7 @@ export default function CreateSeriesPage() {
               <select
                 value={visibility}
                 onChange={(e) => setVisibility(e.target.value as 'PUBLIC' | 'PRIVATE')}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 focus:bg-white focus:border-blue-600 outline-none transition-all cursor-pointer h-[42px]"
+                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 focus:bg-white focus:border-blue-600 outline-none transition-all cursor-pointer h-[42px]"
               >
                 <option value="PUBLIC">Công khai</option>
                 <option value="PRIVATE">Riêng tư</option>
@@ -214,7 +214,7 @@ export default function CreateSeriesPage() {
           </div>
 
           {/* Section 2: PSR Calculation Rules */}
-          <div className="bg-white p-6 md:p-8 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-6">
+          <div className="bg-white p-6 md:p-8 rounded-lg border border-slate-200 shadow-sm flex flex-col gap-6">
             <h2 className="text-base font-bold text-slate-900 border-b border-slate-100 pb-3">Quy Tắc Tích Lũy Điểm PSR</h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -270,7 +270,7 @@ export default function CreateSeriesPage() {
                   <select
                     value={exclusionScope}
                     onChange={(e) => setExclusionScope(e.target.value as ExclusionScope)}
-                    className="w-full max-w-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 focus:bg-white focus:border-blue-600 outline-none transition-all cursor-pointer h-[42px]"
+                    className="w-full max-w-xs bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 focus:bg-white focus:border-blue-600 outline-none transition-all cursor-pointer h-[42px]"
                   >
                     <option value="CATEGORY">Chỉ khóa trong nội dung đó</option>
                     <option value="ALL">Khóa toàn bộ chặng đấu</option>
@@ -286,7 +286,7 @@ export default function CreateSeriesPage() {
                 placeholder="Điều lệ chặng..."
                 value={rulesDescription}
                 onChange={(e) => setRulesDescription(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-sm focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all outline-none"
+                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-3.5 text-sm focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all outline-none"
               />
             </div>
 
@@ -294,7 +294,7 @@ export default function CreateSeriesPage() {
             <div className="flex flex-col gap-4 border-t border-slate-100 pt-6">
               <div className="flex justify-between items-center">
                 <div>
-                  <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider">Cấu hình phân phối điểm theo thứ hạng</h3>
+                  <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Cấu hình phân phối điểm theo thứ hạng</h3>
                   <p className="text-[10px] text-slate-400 mt-0.5">Xác định số điểm PSR tương ứng khi VĐV đạt thứ hạng</p>
                 </div>
                 <Button 
@@ -309,7 +309,7 @@ export default function CreateSeriesPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {pointsByRank.map((item, index) => (
-                  <div key={`${item.rank}-${index}`} className="flex items-center gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200 justify-between">
+                  <div key={`${item.rank}-${index}`} className="flex items-center gap-2 bg-slate-50 p-2.5 rounded-lg border border-slate-200 justify-between">
                     <div className="flex items-center gap-2 text-xs">
                       <span className="font-bold text-slate-400">Hạng:</span>
                       <input
@@ -325,7 +325,7 @@ export default function CreateSeriesPage() {
                         min={0}
                         value={item.points}
                         onChange={(e) => handleRankChange(index, 'points', Number(e.target.value))}
-                        className="w-16 bg-white border border-slate-200 rounded-lg p-1 text-center font-black text-blue-600"
+                        className="w-16 bg-white border border-slate-200 rounded-lg p-1 text-center font-bold text-blue-600"
                       />
                       <span className="font-semibold text-slate-400">pts</span>
                     </div>

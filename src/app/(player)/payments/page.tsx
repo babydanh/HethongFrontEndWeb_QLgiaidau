@@ -92,39 +92,39 @@ export default function PaymentsPage() {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-sm flex items-center gap-4">
+            <div className="w-12 h-12 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
               <DollarSign className="w-6 h-6" />
             </div>
             <div>
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Tổng tiền đã chi</p>
-              <h3 className="text-2xl font-black text-slate-800 mt-1">{formatCurrency(totalSpent)}</h3>
+              <h3 className="text-2xl font-bold text-slate-800 mt-1">{formatCurrency(totalSpent)}</h3>
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-green-50 text-green-600 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-sm flex items-center gap-4">
+            <div className="w-12 h-12 rounded-lg bg-green-50 text-green-600 flex items-center justify-center">
               <CheckCircle2 className="w-6 h-6" />
             </div>
             <div>
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Giao dịch thành công</p>
-              <h3 className="text-2xl font-black text-slate-800 mt-1">{successCount}</h3>
+              <h3 className="text-2xl font-bold text-slate-800 mt-1">{successCount}</h3>
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-sm flex items-center gap-4">
+            <div className="w-12 h-12 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
               <AlertCircle className="w-6 h-6" />
             </div>
             <div>
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Giao dịch chờ xử lý</p>
-              <h3 className="text-2xl font-black text-slate-800 mt-1">{pendingCount}</h3>
+              <h3 className="text-2xl font-bold text-slate-800 mt-1">{pendingCount}</h3>
             </div>
           </div>
         </div>
 
         {/* History Table */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
           <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center">
             <h2 className="font-bold text-slate-850">Chi tiết các hóa đơn</h2>
             <span className="text-xs font-semibold bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full">
@@ -170,7 +170,7 @@ export default function PaymentsPage() {
                         <td className="py-4 px-6 font-bold text-slate-800 max-w-[280px] truncate">
                           {p.tournament?.name || 'Giải đấu đã bị xóa'}
                         </td>
-                        <td className="py-4 px-6 font-black text-slate-950">
+                        <td className="py-4 px-6 font-bold text-slate-950">
                           {formatCurrency(Number(p.amount))}
                         </td>
                         <td className="py-4 px-6 font-semibold text-slate-500 text-xs">

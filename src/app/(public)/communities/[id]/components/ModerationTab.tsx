@@ -180,7 +180,7 @@ export default function ModerationTab({
 
   return (
     <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.05fr_0.95fr]">
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
         <div className="mb-5 flex items-center gap-2 border-b border-slate-100 pb-3">
           <Users className="h-4 w-4 text-emerald-600" />
           <h3 className="text-lg font-bold text-slate-900">Đơn tham gia chờ duyệt</h3>
@@ -195,7 +195,7 @@ export default function ModerationTab({
             Đang tải dữ liệu...
           </div>
         ) : requests.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-10 text-center text-sm text-slate-500">
+          <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-10 text-center text-sm text-slate-500">
             Chưa có đơn xin tham gia nào.
           </div>
         ) : (
@@ -207,7 +207,7 @@ export default function ModerationTab({
               const joinAnswers = req.member?.joinAnswers;
 
               return (
-                <article key={req.member?.id} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <article key={req.member?.id} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
                   <div className="flex justify-between gap-4">
                     <div className="min-w-0 flex-1">
                       <h4 className="text-sm font-bold text-slate-900">{fullName}</h4>
@@ -259,7 +259,7 @@ export default function ModerationTab({
             { label: 'Đã mời', value: invitedMembers.length, tone: 'text-indigo-700' },
             { label: 'Đã cấm', value: bannedMembers.length, tone: 'text-rose-700' },
           ].map((item) => (
-            <div key={item.label} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div key={item.label} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
                 {item.label}
               </p>
@@ -268,13 +268,13 @@ export default function ModerationTab({
           ))}
         </section>
 
-        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
           <div className="mb-5 flex items-center gap-2 border-b border-slate-100 pb-3">
             <UserPlus className="h-4 w-4 text-emerald-600" />
             <h3 className="text-lg font-bold text-slate-900">Mời thành viên mới</h3>
           </div>
 
-          <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs leading-5 text-slate-600">
+          <div className="mb-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-xs leading-5 text-slate-600">
             {isOwner
               ? 'Chủ sở hữu có thể mời người dùng vào vai trò Thành viên hoặc Quản trị viên.'
               : 'Quản trị viên chỉ có thể mời người dùng vào vai trò Thành viên.'}
@@ -284,7 +284,7 @@ export default function ModerationTab({
             <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
               Vai trò khi mời
             </p>
-            <div className="inline-flex rounded-xl bg-slate-100 p-1">
+            <div className="inline-flex rounded-lg bg-slate-100 p-1">
               <button
                 type="button"
                 onClick={() => setInviteRole('MEMBER')}
@@ -330,7 +330,7 @@ export default function ModerationTab({
           </div>
 
           {searchResults.length > 0 ? (
-            <div className="mt-3 space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-2">
+            <div className="mt-3 space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-2">
               {searchResults.map((user) => (
                 <div key={user.id} className="flex items-center justify-between gap-3 rounded-lg bg-white px-3 py-2">
                   <div className="min-w-0">
@@ -350,13 +350,13 @@ export default function ModerationTab({
               ))}
             </div>
           ) : userSearchQuery.trim().length >= 2 && !isSearchingUsers ? (
-            <div className="mt-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center text-xs text-slate-500">
+            <div className="mt-3 rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center text-xs text-slate-500">
               Không tìm thấy người dùng phù hợp hoặc họ đã có trạng thái trong cộng đồng.
             </div>
           ) : null}
         </section>
 
-        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
           <div className="mb-4 flex items-center gap-2 border-b border-slate-100 pb-3">
             <UserPlus className="h-4 w-4 text-slate-600" />
             <h3 className="text-base font-bold text-slate-900">Lời mời đã gửi</h3>
@@ -390,7 +390,7 @@ export default function ModerationTab({
           )}
         </section>
 
-        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
           <div className="mb-4 flex items-center gap-2 border-b border-slate-100 pb-3">
             <Ban className="h-4 w-4 text-rose-600" />
             <h3 className="text-base font-bold text-slate-900">Thành viên đã cấm</h3>

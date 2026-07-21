@@ -244,7 +244,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
   if (isInitialLoading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
-        <div className="rounded-2xl border border-slate-200 bg-white px-6 py-5 text-sm font-semibold text-slate-600 shadow-sm">
+        <div className="rounded-lg border border-slate-200 bg-white px-6 py-5 text-sm font-semibold text-slate-600 shadow-sm">
           Đang tải dữ liệu giải đấu...
         </div>
       </div>
@@ -254,8 +254,8 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
   if (!tournament || !activeTournament) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
-        <div className="max-w-md rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm">
-          <h1 className="text-lg font-black text-slate-900">Không mở được trang giải đấu</h1>
+        <div className="max-w-md rounded-lg border border-slate-200 bg-white p-6 text-center shadow-sm">
+          <h1 className="text-lg font-bold text-slate-900">Không mở được trang giải đấu</h1>
           <p className="mt-2 text-sm font-medium text-slate-500">
             {initialLoadError || 'Dữ liệu giải đấu không tồn tại hoặc chưa sẵn sàng trên web.'}
           </p>
@@ -340,7 +340,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
     <div className="bg-slate-50 min-h-screen pb-12">
       {/* Banner Carousel Showcase */}
       <div className="max-w-screen-2xl mx-auto px-4 md:px-8 pt-4 md:pt-6">
-        <div className="relative w-full h-44 sm:h-60 md:h-72 lg:h-[340px] rounded-2xl md:rounded-3xl overflow-hidden shadow-xl">
+        <div className="relative w-full h-44 sm:h-60 md:h-72 lg:h-[340px] rounded-lg md:rounded-2xl overflow-hidden shadow-xl">
           <GalleryCarousel 
             images={activeTournament.galleryImages && activeTournament.galleryImages.length > 0 ? activeTournament.galleryImages : []} 
             defaultBanner={activeTournament.bannerUrl || undefined}
@@ -349,7 +349,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
           
           {/* Only name inside banner, at bottom-left */}
           <div className="absolute bottom-4 left-6 md:bottom-6 md:left-8 z-10 space-y-1">
-            <h1 className="text-xl md:text-2xl font-black text-white drop-shadow-md tracking-wide uppercase truncate">
+            <h1 className="text-xl md:text-2xl font-bold text-white drop-shadow-md tracking-wide uppercase truncate">
               {tournament.name}
             </h1>
           </div>
@@ -358,7 +358,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
 
       {/* Info Panel below banner */}
       <div className="max-w-screen-2xl mx-auto px-4 md:px-8 mt-6">
-        <div className="bg-white border border-slate-200/80 rounded-2xl p-5 md:p-6 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+        <div className="bg-white border border-slate-200/80 rounded-lg p-5 md:p-6 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 w-full md:w-auto">
             <Link 
               href={`/tournaments/${activeTournament.id}`}
@@ -465,7 +465,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
               </Button>
             )}
             {isOwner && !isTournamentDraft(activeTournament.status) && (
-              <div className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-center w-full md:w-auto shadow-sm flex items-center justify-center h-10">
+              <div className="bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-center w-full md:w-auto shadow-sm flex items-center justify-center h-10">
                 <p className="text-xs text-slate-600 font-bold whitespace-nowrap">
                   Bạn là chủ sở hữu
                 </p>
@@ -498,19 +498,19 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
             </div>
 
             {/* Tab Content */}
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 md:p-8 min-h-[500px]">
+            <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6 md:p-8 min-h-[500px]">
               {/* Division selector inside tab card */}
               {divisionsList.length > 0 && (
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b pb-4 mb-6 gap-3">
                   <div className="space-y-0.5">
-                    <h3 className="font-extrabold text-slate-900 text-sm">Nội dung thi đấu</h3>
+                    <h3 className="font-bold text-slate-900 text-sm">Nội dung thi đấu</h3>
                     <p className="text-[11px] text-slate-400 font-bold">Chọn phân hạng hoặc hình thức thi đấu để xem chi tiết</p>
                   </div>
                   <select
                     value={selectedDivisionId}
                     onChange={(e) => setSelectedDivisionId(e.target.value)}
                     disabled={false}
-                    className="border border-slate-200 rounded-xl px-3 py-2 bg-white text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500 text-xs h-10 w-full sm:w-60 shadow-sm cursor-pointer"
+                    className="border border-slate-200 rounded-lg px-3 py-2 bg-white text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500 text-xs h-10 w-full sm:w-60 shadow-sm cursor-pointer"
                   >
                     {divisionsList.map((div) => (
                       <option key={div.id} value={div.id}>
@@ -551,11 +551,11 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
 
           {/* Right Area - Registration & Info Card (takes 1 col) */}
           <div className="lg:col-span-1 lg:sticky lg:top-6">
-            <div className="bg-white rounded-2xl border border-slate-250/80 p-6 flex flex-col gap-6 shadow-sm">
+            <div className="bg-white rounded-lg border border-slate-250/80 p-6 flex flex-col gap-6 shadow-sm">
               {/* Entry Fee */}
               <div>
                 <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Lệ phí tham gia</span>
-                <div className="text-2xl font-black text-emerald-600">
+                <div className="text-2xl font-bold text-emerald-600">
                   {selectedDivision?.entryFee && selectedDivision.entryFee > 0 
                     ? `${Number(selectedDivision.entryFee).toLocaleString('vi-VN')} VNĐ` 
                     : 'Miễn phí'}
@@ -568,11 +568,11 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                   if (!activeDiv || (activeDiv.minElo === null && activeDiv.maxElo === null)) return null;
                   const isDoublesDiv = activeDiv.matchType === 'DOUBLES' || activeDiv.matchType === 'MIXED_DOUBLES';
                   return (
-                    <div className="mt-3 bg-blue-50/60 border border-blue-100 rounded-xl p-2.5">
-                      <span className="text-[10px] font-black text-slate-455 uppercase tracking-wider block mb-0.5">
+                    <div className="mt-3 bg-blue-50/60 border border-blue-100 rounded-lg p-2.5">
+                      <span className="text-[10px] font-bold text-slate-455 uppercase tracking-wider block mb-0.5">
                         Yêu cầu {isDoublesDiv ? 'ELO Đôi' : 'ELO Đơn'}
                       </span>
-                      <span className="text-xs font-extrabold text-blue-700">
+                      <span className="text-xs font-bold text-blue-700">
                         {activeDiv.minElo !== null ? activeDiv.minElo : '0'}
                         {' - '}
                         {activeDiv.maxElo !== null ? activeDiv.maxElo : 'Không giới hạn'}
@@ -601,11 +601,11 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <p className="text-slate-900 font-bold text-sm">{activeTournament.organizer?.fullName || 'Ban Tổ Chức'}</p>
                       {activeTournament.organizer?.isTrusted ? (
-                        <span className="inline-flex items-center text-[9px] font-extrabold bg-blue-100 text-blue-700 px-1.5 py-0.2 rounded-md" title="Ban tổ chức uy tín">
+                        <span className="inline-flex items-center text-[9px] font-bold bg-blue-100 text-blue-700 px-1.5 py-0.2 rounded-md" title="Ban tổ chức uy tín">
                           👑 Uy Tín
                         </span>
                       ) : (
-                        <span className="inline-flex items-center text-[9px] font-extrabold bg-slate-100 text-slate-650 px-1.5 py-0.2 rounded-md" title="BTC Mới">
+                        <span className="inline-flex items-center text-[9px] font-bold bg-slate-100 text-slate-650 px-1.5 py-0.2 rounded-md" title="BTC Mới">
                           🔰 Mới Tạo
                         </span>
                       )}
@@ -631,7 +631,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                           <div className="flex flex-col min-w-0">
                             <span className="text-slate-700 truncate max-w-[150px]">{div.name}</span>
                             {hasElo && (
-                              <span className="text-[9px] text-blue-600 font-extrabold">
+                              <span className="text-[9px] text-blue-600 font-bold">
                                 ELO {isDivDoubles ? 'Đôi' : 'Đơn'}: {div.minElo !== null ? div.minElo : '0'} - {div.maxElo !== null ? div.maxElo : '∞'}
                               </span>
                             )}
@@ -713,7 +713,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                   </div>
                 )}
                 {isTournamentCompleted(activeTournament.status) && (
-                  <div className="mt-2 p-2.5 border rounded-xl bg-slate-50 border-slate-200 text-slate-400">
+                  <div className="mt-2 p-2.5 border rounded-lg bg-slate-50 border-slate-200 text-slate-400">
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 rounded-full bg-slate-400" />
                       <span className="text-xs font-bold text-slate-400">Đã kết thúc</span>
@@ -725,7 +725,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
 
               {/* Warnings and Info Banners */}
               {isRegistrationOpen && isRegistrationLocked && (
-                <div className="bg-amber-50 border border-amber-250/60 rounded-xl p-3.5 flex items-start gap-2.5">
+                <div className="bg-amber-50 border border-amber-250/60 rounded-lg p-3.5 flex items-start gap-2.5">
                   <AlertCircle className="w-4.5 h-4.5 text-amber-600 shrink-0 mt-0.5" />
                   <p className="text-xs font-semibold text-amber-800 leading-normal">
                     Giải đấu đã tạm ngưng nhận đăng ký mới từ Ban tổ chức.
@@ -733,7 +733,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                 </div>
               )}
               {isRegistrationOpen && isRegistrationExpired && (
-                <div className="bg-rose-50 border border-rose-250/60 rounded-xl p-3.5 flex items-start gap-2.5">
+                <div className="bg-rose-50 border border-rose-250/60 rounded-lg p-3.5 flex items-start gap-2.5">
                   <AlertCircle className="w-4.5 h-4.5 text-rose-600 shrink-0 mt-0.5" />
                   <p className="text-xs font-semibold text-rose-800 leading-normal">
                     Hạn đăng ký giải đấu đã kết thúc.
@@ -745,12 +745,12 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
               {!isOwner && !isTournamentDraft(activeTournament.status) && (
                 <div className="mt-1 block w-full">
                   {isRegistrationButtonDisabled ? (
-                    <Button disabled className="w-full bg-slate-100 text-slate-400 font-bold py-2.5 rounded-xl border border-slate-200 text-sm cursor-not-allowed">
+                    <Button disabled className="w-full bg-slate-100 text-slate-400 font-bold py-2.5 rounded-lg border border-slate-200 text-sm cursor-not-allowed">
                       {registrationButtonLabel}
                     </Button>
                   ) : (
                     <Link href={registerHref} className="block w-full">
-                      <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl shadow-md cursor-pointer text-sm">
+                      <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg shadow-md cursor-pointer text-sm">
                         {registrationButtonLabel}
                       </Button>
                     </Link>
@@ -759,7 +759,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
               )}
 
               {isOwner && !isTournamentDraft(activeTournament.status) && (
-                <div className="bg-slate-50 border border-slate-100 rounded-xl p-3.5 mt-1 text-center">
+                <div className="bg-slate-50 border border-slate-100 rounded-lg p-3.5 mt-1 text-center">
                   <p className="text-xs text-slate-800 font-bold">
                     Bạn là quản trị viên giải đấu
                   </p>
@@ -772,7 +772,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
 
             {/* Contact Info Card */}
             {activeTournament.contactInfo && (
-              <div className="bg-white rounded-2xl border border-slate-250/80 p-6 flex flex-col gap-2.5 shadow-sm mt-4">
+              <div className="bg-white rounded-lg border border-slate-250/80 p-6 flex flex-col gap-2.5 shadow-sm mt-4">
                 <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Thông tin liên hệ</span>
                 {activeTournament.contactInfo.phone && (
                   <div className="flex items-center gap-2.5">

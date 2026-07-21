@@ -54,7 +54,7 @@ export default function CountdownTimer({
 
   if (expired) {
     return (
-      <div className={`flex items-center gap-1.5 ${size === 'sm' ? 'text-xs' : size === 'lg' ? 'text-base' : 'text-sm'} font-semibold text-slate-400`}>
+      <div className={`flex items-center gap-1.5 ${size === 'sm' ? 'text-xs' : size === 'lg' ? 'text-base' : 'text-sm'} font-medium text-slate-400`}>
         <span>•</span>
         <span>{labels.expired}</span>
       </div>
@@ -78,10 +78,10 @@ export default function CountdownTimer({
   const padding = size === 'sm' ? 'p-2.5' : 'p-3';
 
   return (
-    <div className={`mt-2 ${padding} border rounded-xl ${colors[variant]}`}>
+    <div className={`mt-2 ${padding} border rounded-lg ${colors[variant]}`}>
       <div className="flex items-center gap-2">
         <div className={`w-2 h-2 rounded-full ${dotColors[variant]}`} />
-        <span className={`font-bold ${size === 'sm' ? 'text-xs' : size === 'lg' ? 'text-base' : 'text-sm'}`}>
+        <span className={`font-semibold ${size === 'sm' ? 'text-xs' : size === 'lg' ? 'text-base' : 'text-sm'}`}>
           {display}
         </span>
       </div>

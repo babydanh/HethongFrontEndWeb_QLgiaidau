@@ -253,7 +253,7 @@ export default function CommunityDetailPage() {
     <div className="min-h-screen bg-slate-50 pb-12">
       {/* Banner / Cover */}
       <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 pt-4 md:pt-6">
-        <div className="relative h-[280px] md:h-[400px] w-full bg-slate-200 shadow-xl rounded-2xl md:rounded-3xl overflow-hidden group/banner">
+        <div className="relative h-[280px] md:h-[400px] w-full bg-slate-200 shadow-xl rounded-lg md:rounded-2xl overflow-hidden group/banner">
           {slides.length > 0 ? (
             <Image 
               src={slides[currentSlide]} 
@@ -305,7 +305,7 @@ export default function CommunityDetailPage() {
 
           {/* Only name inside banner, at bottom-left */}
           <div className="absolute bottom-4 left-6 md:bottom-6 md:left-8 z-10">
-            <h1 className="text-xl md:text-2xl font-black text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] tracking-wide uppercase">
+            <h1 className="text-xl md:text-2xl font-bold text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] tracking-wide uppercase">
               {community.name}
             </h1>
           </div>
@@ -314,14 +314,14 @@ export default function CommunityDetailPage() {
 
       {/* Info Panel below banner */}
       <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 mt-6">
-        <div className="bg-white border border-slate-200/80 rounded-2xl p-5 md:p-6 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+        <div className="bg-white border border-slate-200/80 rounded-lg p-5 md:p-6 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 w-full md:w-auto">
-            <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl border border-slate-200 overflow-hidden bg-white shadow-md relative shrink-0 p-1.5">
+            <div className="w-20 h-20 md:w-24 md:h-24 rounded-lg border border-slate-200 overflow-hidden bg-white shadow-md relative shrink-0 p-1.5">
               <Image 
                 src={community.logoUrl || "/vndcsport.svg"} 
                 alt={community.name} 
                 fill 
-                className="object-cover rounded-xl"
+                className="object-cover rounded-lg"
               />
             </div>
             <div className="space-y-2.5">
@@ -353,7 +353,7 @@ export default function CommunityDetailPage() {
             <Button 
               onClick={handleJoinAction}
               disabled={isJoinLoading || membership?.status === 'PENDING'}
-              className={`flex-1 md:flex-none px-6 font-bold text-xs shadow-sm transition-all h-10 rounded-xl ${
+              className={`flex-1 md:flex-none px-6 font-bold text-xs shadow-sm transition-all h-10 rounded-lg ${
                 isOwner ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200' :
                 membership?.status === 'JOINED' ? 'bg-emerald-50 hover:bg-red-50 hover:text-red-600 hover:border-red-200 text-emerald-700 border border-emerald-200' :
                 'bg-emerald-600 hover:bg-emerald-700 text-white border-none'
@@ -363,7 +363,7 @@ export default function CommunityDetailPage() {
               {getJoinButtonLabel()}
             </Button>
             
-            <Button variant="outline" className="h-10 px-3 bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700 rounded-xl shadow-sm">
+            <Button variant="outline" className="h-10 px-3 bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700 rounded-lg shadow-sm">
               <Share2 className="w-4 h-4" />
             </Button>
             
@@ -371,7 +371,7 @@ export default function CommunityDetailPage() {
               <Button 
                 variant="outline" 
                 onClick={() => setActiveTab('settings')}
-                className={`h-10 px-3 rounded-xl shadow-sm border-slate-200 transition-colors ${
+                className={`h-10 px-3 rounded-lg shadow-sm border-slate-200 transition-colors ${
                   activeTab === 'settings' 
                     ? 'bg-slate-200 text-slate-800 font-semibold' 
                     : 'bg-slate-50 hover:bg-slate-100 text-slate-700'
@@ -387,7 +387,7 @@ export default function CommunityDetailPage() {
               targetLabel={community.name}
               hidden={isOwner}
               compact
-              className="h-10 rounded-xl shadow-sm"
+              className="h-10 rounded-lg shadow-sm"
             />
           </div>
         </div>

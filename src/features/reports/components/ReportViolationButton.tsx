@@ -115,9 +115,9 @@ export function ReportViolationButton({
       </Button>
 
       <Modal open={open} onOpenChange={setOpen}>
-        <ModalContent className="max-h-[90vh] w-[calc(100%-2rem)] overflow-y-auto rounded-2xl border-slate-200 bg-white sm:max-w-xl">
+        <ModalContent className="max-h-[90vh] w-[calc(100%-2rem)] overflow-y-auto rounded-lg border-slate-200 bg-white sm:max-w-xl">
           <ModalHeader>
-            <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 text-rose-700">
+            <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-rose-50 text-rose-700">
               <ShieldAlert className="h-5 w-5" />
             </div>
             <ModalTitle className="text-xl font-bold text-slate-950">Báo cáo vi phạm</ModalTitle>
@@ -131,7 +131,7 @@ export function ReportViolationButton({
               <label className="mb-2 block text-sm font-semibold text-slate-800">Loại vi phạm</label>
               <select
                 {...form.register('category')}
-                className="h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+                className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
               >
                 {REPORT_CATEGORIES.map((category) => (
                   <option key={category} value={category}>{REPORT_CATEGORY_LABELS[category]}</option>
@@ -145,7 +145,7 @@ export function ReportViolationButton({
                 {...form.register('reason')}
                 rows={6}
                 placeholder="Nêu rõ sự việc, thời gian, người liên quan và ảnh hưởng..."
-                className="min-h-32 rounded-xl border-slate-300 bg-white text-slate-800 focus-visible:ring-blue-600"
+                className="min-h-32 rounded-lg border-slate-300 bg-white text-slate-800 focus-visible:ring-blue-600"
               />
               {form.formState.errors.reason ? (
                 <p className="mt-1 text-xs font-semibold text-rose-600">{form.formState.errors.reason.message}</p>
@@ -158,7 +158,7 @@ export function ReportViolationButton({
                 {...form.register('evidenceText')}
                 rows={3}
                 placeholder={'Mỗi dòng một liên kết ảnh hoặc video\nTối đa 5 liên kết'}
-                className="rounded-xl border-slate-300 bg-white text-slate-800 focus-visible:ring-blue-600"
+                className="rounded-lg border-slate-300 bg-white text-slate-800 focus-visible:ring-blue-600"
               />
               {form.formState.errors.evidenceText ? (
                 <p className="mt-1 text-xs font-semibold text-rose-600">{form.formState.errors.evidenceText.message}</p>

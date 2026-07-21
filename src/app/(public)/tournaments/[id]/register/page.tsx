@@ -542,7 +542,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
     const isInviteOnlyMode = tournament?.tournamentConfig?.registrationMode === 'INVITE_ONLY';
     return (
       <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
-        <div className="max-w-md w-full bg-white p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+        <div className="max-w-md w-full bg-white p-8 rounded-lg border border-slate-200 shadow-sm space-y-6">
           <div className="flex flex-col items-center text-center space-y-3">
             <div className="w-12 h-12 rounded-full bg-blue-105 text-blue-600 flex items-center justify-center">
               <ShieldAlert className="w-6 h-6 text-blue-600" />
@@ -608,7 +608,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
   if (isProfileIncomplete) {
     return (
       <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8 flex items-center justify-center animate-in fade-in duration-200">
-        <div className="max-w-md w-full bg-white p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+        <div className="max-w-md w-full bg-white p-8 rounded-lg border border-slate-200 shadow-sm space-y-6">
           <div className="flex flex-col items-center text-center space-y-3">
             <div className="w-12 h-12 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center">
               <AlertTriangle className="w-6 h-6 text-amber-500" />
@@ -621,7 +621,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
           <Button
             type="button"
             onClick={() => router.push('/profile')}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl shadow-md"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg shadow-md"
           >
             Cập nhật hồ sơ ngay
           </Button>
@@ -643,7 +643,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
 
     return (
       <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
-        <div className="max-w-md w-full bg-white p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+        <div className="max-w-md w-full bg-white p-8 rounded-lg border border-slate-200 shadow-sm space-y-6">
           <div className="flex flex-col items-center text-center space-y-3">
             <div className="w-12 h-12 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center">
               <AlertTriangle className="w-6 h-6 text-rose-600" />
@@ -685,7 +685,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
           <ArrowLeft className="w-4 h-4" /> Quay lại giải đấu
         </button>
 
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
           {/* Header Card */}
           <div className="p-6 md:p-8 bg-gradient-to-br from-slate-900 to-slate-800 text-white relative">
             {tournament.visibility === 'PRIVATE' && (
@@ -694,7 +694,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
               </div>
             )}
 
-            <span className="flex items-center gap-1 bg-blue-600/20 text-blue-300 text-[10px] font-black px-2 py-0.5 rounded border border-blue-500/20 uppercase tracking-wider w-fit">
+            <span className="flex items-center gap-1 bg-blue-600/20 text-blue-300 text-[10px] font-bold px-2 py-0.5 rounded border border-blue-500/20 uppercase tracking-wider w-fit">
               {(() => {
                 const logo = getSportLogo(tournament.category?.name);
                 return logo ? (
@@ -703,7 +703,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
               })()}
               {tournament.category?.name || 'Tennis'}
             </span>
-            <h1 className="text-xl md:text-2xl font-black mt-2 mb-3 leading-tight text-white">{tournament.name}</h1>
+            <h1 className="text-xl md:text-2xl font-bold mt-2 mb-3 leading-tight text-white">{tournament.name}</h1>
 
             <div className="grid grid-cols-2 gap-y-2 gap-x-4 text-xs font-semibold text-slate-350 border-t border-slate-700/50 pt-4 mt-4">
               <div className="flex items-center gap-2">
@@ -752,7 +752,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                         onClick={() => setSelectedDivisionId(div.id)}
                         disabled={isSubmitting}
                         className={cn(
-                          'relative min-h-[104px] w-full cursor-pointer rounded-xl border px-5 py-3 text-xs font-bold transition-all',
+                          'relative min-h-[104px] w-full cursor-pointer rounded-lg border px-5 py-3 text-xs font-bold transition-all',
                           'flex flex-col items-center justify-center gap-1',
                           isActive
                             ? 'border-transparent text-white shadow-md'
@@ -762,13 +762,13 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                         {isActive && (
                           <motion.div
                             layoutId="activeDivision"
-                            className="absolute inset-0 bg-blue-600 rounded-xl z-0"
+                            className="absolute inset-0 bg-blue-600 rounded-lg z-0"
                             transition={{ type: 'spring', stiffness: 380, damping: 30 }}
                           />
                         )}
                         <span className="relative z-10 flex flex-col items-center gap-0.5">
-                          <span className="text-sm font-black leading-tight">{div.name}</span>
-                          <span className={`text-[10px] font-extrabold ${isActive ? 'text-blue-100' : 'text-slate-500'}`}>
+                          <span className="text-sm font-bold leading-tight">{div.name}</span>
+                          <span className={`text-[10px] font-bold ${isActive ? 'text-blue-100' : 'text-slate-500'}`}>
                             {matchLabel}
                           </span>
                           <span className={`text-[9px] font-bold ${isActive ? 'text-blue-200' : 'text-slate-400'}`}>
@@ -780,13 +780,13 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                   })}
                 </div>
                 {selectedDivision && (
-                  <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-4 shadow-sm">
+                  <div className="rounded-lg border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-4 shadow-sm">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div className="space-y-1">
-                        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
+                        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">
                           Nội dung đang chọn
                         </p>
-                        <h3 className="text-base font-black text-slate-900">{selectedDivision.name}</h3>
+                        <h3 className="text-base font-bold text-slate-900">{selectedDivision.name}</h3>
                         <p className="text-xs font-semibold text-slate-500">
                           {getDivisionMatchLabel(selectedDivision.matchType, selectedDivision.genderRestriction)}
                         </p>
@@ -828,7 +828,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
 
             {selectedDivision ? (
               isGenderMismatched ? (
-                <div className="bg-rose-50 border border-rose-100 rounded-xl p-5 text-center space-y-3 animate-in fade-in duration-200">
+                <div className="bg-rose-50 border border-rose-100 rounded-lg p-5 text-center space-y-3 animate-in fade-in duration-200">
                   <AlertTriangle className="w-8 h-8 text-rose-500 mx-auto" />
                   <p className="text-sm font-bold text-rose-900">Giới tính không phù hợp</p>
                   <p className="text-xs text-slate-600 font-semibold leading-relaxed">
@@ -857,13 +857,13 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                     <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 mb-2">
                       <CheckCircle className="w-6 h-6" />
                     </div>
-                    <h3 className="text-lg font-black text-slate-900 font-bold">Đăng ký tham gia thành công!</h3>
+                    <h3 className="text-lg font-bold text-slate-900 font-bold">Đăng ký tham gia thành công!</h3>
                     <p className="text-slate-500 text-xs max-w-sm mx-auto">
                       Bạn đã đăng ký thi đấu đơn ở nội dung: <strong className="text-slate-700">{selectedDivision?.name}</strong>.
                     </p>
                   </div>
 
-                  <div className="border border-slate-200 rounded-xl overflow-hidden divide-y">
+                  <div className="border border-slate-200 rounded-lg overflow-hidden divide-y">
                     <div className="bg-slate-50 px-4 py-2.5 text-xs font-bold text-slate-500 uppercase tracking-wider">
                       Thông tin đăng ký: {participant.teamName}
                     </div>
@@ -925,7 +925,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      <div className="bg-emerald-50 border border-emerald-100 text-emerald-800 text-xs font-semibold p-4 rounded-xl text-center">
+                      <div className="bg-emerald-50 border border-emerald-100 text-emerald-800 text-xs font-semibold p-4 rounded-lg text-center">
                         Nội dung này được miễn phí lệ phí tham gia. Bạn đã hoàn tất đăng ký!
                       </div>
 
@@ -968,10 +968,10 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                       disabled={isSubmitting}
                     />
 
-                    <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
+                    <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 space-y-3">
                       <div className="flex justify-between items-center text-sm">
                         <span className="text-slate-500 font-semibold">Lệ phí giải đấu:</span>
-                        <span className="font-extrabold text-slate-900">
+                        <span className="font-bold text-slate-900">
                           {entryFeeVal > 0 ? formatCurrency(entryFeeVal) : 'Miễn phí'}
                         </span>
                       </div>

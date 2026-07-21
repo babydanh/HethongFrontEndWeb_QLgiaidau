@@ -31,6 +31,7 @@ import type { MatchPenaltyRecord, PickleballSideOutState, TennisLivePointState }
 import { getErrorMessage } from '@/utils/error';
 import { cn } from '@/utils/cn';
 import { trimAndNormalizeSpaces } from '@/utils/string';
+import { formatCompact } from '@/utils/format';
 import { Trophy, Clock, MapPin, Activity, Play, AlertCircle, Camera, MessageSquare, Send, Eye, Shield, Users, Heart, Share2 } from 'lucide-react';
 import { livestreamApi, tournamentsApi, type MatchPlaybackResponse } from '@/features/tournaments/api';
 import Link from 'next/link';
@@ -48,7 +49,7 @@ interface Props {
 export default function LiveMatchPage({ params }: Props) {
   const resolvedParams = use(params);
   const matchId = resolvedParams.matchId;
-  const { match, scores, viewerCount, setMatch, setScores, isLoading, error } = useLiveMatch(matchId);
+  const { match, scores, viewerCount, cheerCount, setCheerCount, setMatch, setScores, isLoading, error } = useLiveMatch(matchId);
   const { user } = useAuthStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCommentSubmitting, setIsCommentSubmitting] = useState(false);
@@ -102,12 +103,18 @@ export default function LiveMatchPage({ params }: Props) {
       setHearts((prev) => prev.filter((h) => h.id !== id));
     }, 2000);
 
-    // Gọi API cổ vũ và broadcast realtime
+    try {
+      const res = await matchesApi.cheerMatch(matchId);
+      setCheerCount(res.cheerCount);
+    } catch {
+      // Silent
+    }
+  };
+
+  const handleCheer = async () => {
     try {
       await matchesApi.cheerMatch(matchId);
-    } catch {
-      // Silent — heart animation đã hiển thị rồi
-    }
+    } catch {}
   };
 
   // Auto scroll chat to bottom when comments list changes
@@ -295,6 +302,17 @@ export default function LiveMatchPage({ params }: Props) {
     hasAdminRole ||
     match.tournament?.createdBy === user?.id ||
     isAssignedReferee;
+
+  // Chặn comment nếu trận kết thúc hơn 2 tiếng
+  const isCommentDisabled = () => {
+    if (match.status === 'COMPLETED' && match.completedAt) {
+      try {
+        const d = new Date(match.completedAt);
+        if (!isNaN(d.getTime()) && (Date.now() - d.getTime()) > 2 * 60 * 60 * 1000) return true;
+      } catch { return true; }
+    }
+    return false;
+  };
 
   const currentSetIdx = scores.findIndex((s) => !s.isFinished);
   const activeSetIdx = currentSetIdx !== -1 ? currentSetIdx : scores.length - 1;
@@ -887,10 +905,6 @@ export default function LiveMatchPage({ params }: Props) {
       toast.error('Bình luận đang trống. Vui lòng nhập nội dung trước khi gửi.');
       return;
     }
-    if (!user) {
-      toast.error('Bạn cần đăng nhập tài khoản VNDC Sport để gửi bình luận trong trận live.');
-      return;
-    }
     if (isCommentSubmitting) return;
 
     setIsCommentSubmitting(true);
@@ -940,9 +954,10 @@ export default function LiveMatchPage({ params }: Props) {
               <Clock className="w-3.5 h-3.5 text-amber-500" />
               <span>Vòng {match.roundNumber}</span>
             </span>
+
             <span className="flex items-center gap-1 text-xs font-bold text-blue-700 bg-blue-50 border border-blue-100 px-3 py-1 rounded-full">
               <Eye className="w-3.5 h-3.5 text-blue-500 animate-pulse" />
-              <span>{viewerCount} đang xem</span>
+              <span>{formatCompact(viewerCount)} đang xem</span>
             </span>
             <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 px-3 py-1 rounded-full flex items-center gap-1">
               <Activity className="w-3.5 h-3.5 text-emerald-500" />
@@ -1080,6 +1095,24 @@ export default function LiveMatchPage({ params }: Props) {
                     )}>
                       {match.winnerId === match.participant1Id && match.status === 'COMPLETED' ? (
                         <Trophy className="w-10 h-10" />
+                      ) : part1?.members?.length === 1 ? (
+                        part1.members[0].avatarUrl ? (
+                          <img src={part1.members[0].avatarUrl} alt="" className="w-16 h-16 rounded-full object-cover" />
+                        ) : (
+                          <span className="text-3xl font-bold text-blue-600">{part1.members[0].fullName?.charAt(0) || '?'}</span>
+                        )
+                      ) : part1?.members && part1.members.length > 1 ? (
+                        <div className="flex -space-x-3">
+                          {part1.members.slice(0, 2).map((m) => (
+                            m.avatarUrl ? (
+                              <img key={m.userId} src={m.avatarUrl} alt="" className="w-10 h-10 rounded-full object-cover border-2 border-white" />
+                            ) : (
+                              <span key={m.userId} className="w-10 h-10 rounded-full bg-blue-100 border-2 border-white flex items-center justify-center text-sm font-bold text-blue-600">
+                                {m.fullName?.charAt(0) || '?'}
+                              </span>
+                            )
+                          ))}
+                        </div>
                       ) : (
                         <Users className="w-9 h-9" />
                       )}
@@ -1101,31 +1134,25 @@ export default function LiveMatchPage({ params }: Props) {
                       <div className="mt-4 flex flex-col items-center gap-1.5 w-full">
                         <div className="flex flex-wrap justify-center gap-2">
                           {part1.members.map((member) => (
-                            <Link
-                              key={member.userId}
-                              href={`/users/${member.userId}`}
-                              className="flex items-center gap-2 bg-slate-50/80 hover:bg-blue-50 border border-slate-200/60 hover:border-blue-200 rounded-lg px-2.5 py-1 transition-all group shadow-[0_1px_3px_rgba(0,0,0,0.02)]"
-                            >
-                              <div className="w-5 h-5 rounded-full overflow-hidden bg-slate-200 relative shrink-0">
-                                {member.avatarUrl ? (
-                                  <img src={member.avatarUrl} alt={member.fullName ?? 'Người chơi'} className="w-full h-full object-cover" />
-                                ) : (
-                                  <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-slate-500 uppercase">{member.fullName?.charAt(0) || 'U'}</span>
-                                )}
-                              </div>
-                              <div className="text-left leading-none">
-                                <p className="text-[11px] font-bold text-slate-700 group-hover:text-blue-700 transition-colors">{member.fullName || 'Người chơi'}</p>
-                                {member.isMock ? (
-                                  <p className="text-[8px] font-medium text-slate-400 mt-0.5">
-                                    VĐV ảo
-                                  </p>
-                                ) : member.elo ? (
-                                  <p className="text-[8px] font-medium text-slate-400 mt-0.5">
-                                    {member.elo.tierName} • <span className="font-bold text-blue-600">{member.elo.eloPoints} ELO</span>
-                                  </p>
-                                ) : null}
-                              </div>
-                            </Link>
+                            <div key={member.userId} className="flex items-center gap-1">
+                              <Link
+                                href={`/users/${member.userId}`}
+                                className="flex items-center gap-2 bg-slate-50/80 hover:bg-blue-50 border border-slate-200/60 hover:border-blue-200 rounded-lg px-2.5 py-1 transition-all group shadow-[0_1px_3px_rgba(0,0,0,0.02)]"
+                              >
+                                <div className="text-left leading-none">
+                                  <p className="text-[11px] font-bold text-slate-700 group-hover:text-blue-700 transition-colors">{member.fullName || 'Người chơi'}</p>
+                                  {member.isMock ? (
+                                    <p className="text-[8px] font-medium text-slate-400 mt-0.5">
+                                      VĐV ảo
+                                    </p>
+                                  ) : member.elo ? (
+                                    <p className="text-[8px] font-medium text-slate-400 mt-0.5">
+                                      {member.elo.tierName} • <span className="font-bold text-blue-600">{member.elo.eloPoints} ELO</span>
+                                    </p>
+                                  ) : null}
+                                </div>
+                              </Link>
+                            </div>
                           ))}
                         </div>
                       </div>
@@ -1159,6 +1186,24 @@ export default function LiveMatchPage({ params }: Props) {
                     )}>
                       {match.winnerId === match.participant2Id && match.status === 'COMPLETED' ? (
                         <Trophy className="w-10 h-10" />
+                      ) : part2?.members?.length === 1 ? (
+                        part2.members[0].avatarUrl ? (
+                          <img src={part2.members[0].avatarUrl} alt="" className="w-16 h-16 rounded-full object-cover" />
+                        ) : (
+                          <span className="text-3xl font-bold text-indigo-600">{part2.members[0].fullName?.charAt(0) || '?'}</span>
+                        )
+                      ) : part2?.members && part2.members.length > 1 ? (
+                        <div className="flex -space-x-3">
+                          {part2.members.slice(0, 2).map((m) => (
+                            m.avatarUrl ? (
+                              <img key={m.userId} src={m.avatarUrl} alt="" className="w-10 h-10 rounded-full object-cover border-2 border-white" />
+                            ) : (
+                              <span key={m.userId} className="w-10 h-10 rounded-full bg-indigo-100 border-2 border-white flex items-center justify-center text-sm font-bold text-indigo-600">
+                                {m.fullName?.charAt(0) || '?'}
+                              </span>
+                            )
+                          ))}
+                        </div>
                       ) : (
                         <Users className="w-9 h-9" />
                       )}
@@ -1180,31 +1225,25 @@ export default function LiveMatchPage({ params }: Props) {
                       <div className="mt-4 flex flex-col items-center gap-1.5 w-full">
                         <div className="flex flex-wrap justify-center gap-2">
                           {part2.members.map((member) => (
-                            <Link
-                              key={member.userId}
-                              href={`/users/${member.userId}`}
-                              className="flex items-center gap-2 bg-slate-50/80 hover:bg-blue-50 border border-slate-200/60 hover:border-blue-200 rounded-lg px-2.5 py-1 transition-all group shadow-[0_1px_3px_rgba(0,0,0,0.02)]"
-                            >
-                              <div className="w-5 h-5 rounded-full overflow-hidden bg-slate-200 relative shrink-0">
-                                {member.avatarUrl ? (
-                                  <img src={member.avatarUrl} alt={member.fullName ?? 'Người chơi'} className="w-full h-full object-cover" />
-                                ) : (
-                                  <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-slate-500 uppercase">{member.fullName?.charAt(0) || 'U'}</span>
-                                )}
-                              </div>
-                              <div className="text-left leading-none">
-                                <p className="text-[11px] font-bold text-slate-700 group-hover:text-blue-700 transition-colors">{member.fullName || 'Người chơi'}</p>
-                                {member.isMock ? (
-                                  <p className="text-[8px] font-medium text-slate-400 mt-0.5">
-                                    VĐV ảo
-                                  </p>
-                                ) : member.elo ? (
-                                  <p className="text-[8px] font-medium text-slate-400 mt-0.5">
-                                    {member.elo.tierName} • <span className="font-bold text-blue-600">{member.elo.eloPoints} ELO</span>
-                                  </p>
-                                ) : null}
-                              </div>
-                            </Link>
+                            <div key={member.userId} className="flex items-center gap-1">
+                              <Link
+                                href={`/users/${member.userId}`}
+                                className="flex items-center gap-2 bg-slate-50/80 hover:bg-blue-50 border border-slate-200/60 hover:border-blue-200 rounded-lg px-2.5 py-1 transition-all group shadow-[0_1px_3px_rgba(0,0,0,0.02)]"
+                              >
+                                <div className="text-left leading-none">
+                                  <p className="text-[11px] font-bold text-slate-700 group-hover:text-blue-700 transition-colors">{member.fullName || 'Người chơi'}</p>
+                                  {member.isMock ? (
+                                    <p className="text-[8px] font-medium text-slate-400 mt-0.5">
+                                      VĐV ảo
+                                    </p>
+                                  ) : member.elo ? (
+                                    <p className="text-[8px] font-medium text-slate-400 mt-0.5">
+                                      {member.elo.tierName} • <span className="font-bold text-blue-600">{member.elo.eloPoints} ELO</span>
+                                    </p>
+                                  ) : null}
+                                </div>
+                              </Link>
+                            </div>
                           ))}
                         </div>
                       </div>
@@ -1325,7 +1364,12 @@ export default function LiveMatchPage({ params }: Props) {
                   <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Thảo luận trận đấu</h3>
                 </div>
                 <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500">
-                  <Eye className="w-3.5 h-3.5" /> {viewerCount}
+                  <button onClick={handleSpawnHeart} className="flex items-center gap-1 text-xs font-bold text-rose-600 hover:bg-rose-50 transition-colors px-2 py-1 rounded-lg">
+                    <Heart className="w-3.5 h-3.5 fill-rose-500 text-rose-500" />
+                    <span>{formatCompact(cheerCount)}</span>
+                  </button>
+                  <span className="mx-1 text-slate-200">|</span>
+                  <Eye className="w-3.5 h-3.5" /> {formatCompact(viewerCount)}
                 </div>
               </div>
 
@@ -1365,24 +1409,16 @@ export default function LiveMatchPage({ params }: Props) {
                   <MessageSquare className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
                   <input
                     type="text"
-                    placeholder={user ? 'Nhập bình luận của bạn...' : 'Đăng nhập để bình luận'}
+                    placeholder={user ? 'Nhập bình luận của bạn...' : 'Nhập bình luận (khách)...'}
                     value={commentText}
                     onChange={(e) => setCommentText(e.target.value)}
-                    disabled={!user || isCommentSubmitting}
+                    disabled={isCommentSubmitting || isCommentDisabled()}
                     className="w-full pl-9 pr-4 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
                   />
                 </div>
                 <button
-                  type="button"
-                  onClick={handleSpawnHeart}
-                  className="bg-rose-50 hover:bg-rose-100 text-rose-500 rounded-lg p-2.5 flex items-center justify-center transition-colors cursor-pointer shrink-0"
-                  title="Thả tim"
-                >
-                  <Heart className="w-3.5 h-3.5 fill-rose-500 text-rose-500" />
-                </button>
-                <button
                   type="submit"
-                  disabled={!user || isCommentSubmitting || !normalizedCommentText}
+                  disabled={isCommentSubmitting || !normalizedCommentText || isCommentDisabled()}
                   className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg p-2.5 flex items-center justify-center transition-colors disabled:opacity-50"
                 >
                   <Send className="w-3.5 h-3.5" />

@@ -21,6 +21,23 @@ export const formatNumber = (num: number | null | undefined): string => {
 };
 
 /**
+ * Format số dạng compact (K, M)
+ * n < 1000: số nguyên (999)
+ * n >= 1000: "1K", "2.5K", "12K"
+ * n >= 1000000: "1M"
+ */
+export const formatCompact = (n: number | null | undefined): string => {
+  if (n === null || n === undefined) return '0';
+  if (n < 1000) return String(Math.round(n));
+  if (n >= 1_000_000) {
+    const m = n / 1_000_000;
+    return m % 1 === 0 ? `${m}M` : `${m.toFixed(1)}M`;
+  }
+  const k = n / 1000;
+  return k % 1 === 0 ? `${k}K` : `${k.toFixed(1)}K`;
+};
+
+/**
  * Rút gọn chuỗi dài
  * VD: "Đây là một đoạn text rất dài" -> "Đây là một..."
  */

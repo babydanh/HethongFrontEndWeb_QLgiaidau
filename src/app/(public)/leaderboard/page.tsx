@@ -233,202 +233,224 @@ export default function LeaderboardPage() {
                     {isLoading ? (
                         <div className="bg-white rounded-lg border border-slate-200 p-16 flex flex-col items-center justify-center min-h-[300px]">
                             <Loader2 className="w-10 h-10 animate-spin text-blue-600 mb-3" />
-                            <p className="text-slate-500 font-medium text-sm">Đang tải bảng xếp h�                            {/* Top 3 Podium Stage (Modern Dynamic Colors) */}
-                            <div className="bg-gradient-to-b from-slate-900 via-slate-850 to-slate-900 rounded-2xl border border-slate-800 shadow-xl p-6 md:p-8 text-white relative overflow-hidden mb-8">
-                                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-500/10 via-blue-500/5 to-transparent pointer-events-none" />
+                            <p className="text-slate-500 font-medium text-sm">Đang tải bảng xếp hạng...</p>
+                        </div>
+                    ) : (
+                        <>
+                            {/* Top 3 Podium Stage (Light Theme) */}
+                            <div className="bg-gradient-to-b from-blue-50/70 via-sky-50/40 to-white rounded-xl border border-blue-100 shadow-sm p-6 md:p-8 text-slate-800 relative overflow-hidden mb-8">
+                                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-100/10 via-sky-50/5 to-transparent pointer-events-none" />
                                 
-                                <div className="relative z-10 text-center mb-6">
-                                    <span className="text-[10px] uppercase font-extrabold tracking-[0.25em] text-amber-400 bg-amber-400/10 px-3 py-1.5 rounded-full border border-amber-400/20 shadow-xs">
+                                <div className="relative z-10 text-center mb-8">
+                                    <span className="text-[10px] uppercase font-bold tracking-[0.25em] text-blue-600 bg-blue-50/80 px-3 py-1.5 rounded-full border border-blue-100">
                                         ✨ SÂN KHẤU VINH DANH ✨
                                     </span>
-                                    <h2 className="text-xl md:text-2xl font-black mt-3 text-white tracking-tight drop-shadow-sm">
+                                    <h2 className="text-xl md:text-2xl font-bold mt-3 text-slate-900 tracking-tight">
                                         TOP 10 VẬN ĐỘNG VIÊN XUẤT SẮC
                                     </h2>
                                 </div>
 
                                 {/* Podium Top 3 */}
-                                <div className="relative z-10 flex flex-col md:flex-row items-end justify-center gap-6 md:gap-4 lg:gap-8 max-w-4xl mx-auto pb-2 mt-8 md:mt-12">
+                                <div className="relative z-10 flex flex-col md:flex-row items-end justify-center gap-6 md:gap-4 lg:gap-8 max-w-4xl mx-auto pb-2 mt-12 md:mt-16">
                                     
-                                    {/* Rank 2 (Silver - Left) */}
+                                    {/* Rank 2 (Left) */}
                                     <div className="w-full md:w-1/3 order-2 md:order-1 flex flex-col items-center group/podium">
                                         <Link 
                                             href={rankings[1]?.user?.id ? `/users/${rankings[1].user.id}` : '#'}
-                                            className="flex flex-col items-center group-hover/podium:scale-105 transition-all duration-300 w-full"
+                                            className="flex flex-col items-center hover:opacity-90 transition-opacity"
                                         >
-                                            <div className="relative mb-3">
-                                                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20 bg-slate-200 text-slate-900 font-black text-[10px] px-3 py-0.5 rounded-full border border-slate-300 shadow-md whitespace-nowrap">
-                                                    🥈 #2 HẠNG NHÌ
+                                            <div className="relative mb-4 transition-transform duration-300 group-hover:scale-105">
+                                                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20 bg-slate-100 text-slate-700 font-bold text-[10px] px-3 py-1 rounded-full border border-slate-205 shadow-xs">
+                                                    #2 SECOND
                                                 </div>
                                                 
-                                                {/* Avatar for Rank 2 */}
+                                                {/* Stacked Avatar for Doubles */}
                                                 {selectedMatchType.includes('DOUBLES') ? (
                                                     <div className="relative w-24 h-20 flex items-center justify-center">
-                                                        <div className="w-14 h-14 rounded-full border-2 border-slate-300 absolute right-0 bottom-0 bg-slate-800 flex items-center justify-center shadow-md">
-                                                            <Users className="w-6 h-6 text-slate-300" />
+                                                        {/* Partner shadow avatar */}
+                                                        <div className="w-16 h-16 rounded-full border-2 border-slate-300 absolute -right-2 bottom-0 bg-slate-100 flex items-center justify-center shadow-xs">
+                                                            <Users className="w-6 h-6 text-slate-400" />
                                                         </div>
-                                                        <div className="w-14 h-14 rounded-full border-2 border-slate-200 p-0.5 absolute left-0 top-0 overflow-hidden bg-slate-800 shadow-lg flex items-center justify-center">
+                                                        {/* Primary avatar */}
+                                                        <div className="w-16 h-16 rounded-full border-4 border-slate-350 p-0.5 absolute -left-2 top-0 overflow-hidden bg-slate-55 shadow-sm flex items-center justify-center">
                                                             {rankings[1]?.user?.avatarUrl ? (
                                                                 <Image src={rankings[1].user.avatarUrl} alt="Rank 2" fill className="object-cover rounded-full" />
                                                             ) : (
-                                                                <span className="text-slate-300 font-bold uppercase text-base">
+                                                                <div className="w-full h-full flex items-center justify-center bg-slate-100 text-slate-400 font-bold uppercase text-lg rounded-full">
                                                                     {rankings[1] ? (rankings[1].user?.fullName?.substring(0, 2) || 'VĐ') : '?'}
-                                                                </span>
+                                                                </div>
                                                             )}
                                                         </div>
                                                     </div>
                                                 ) : (
-                                                    <div className="w-20 h-20 rounded-full border-3 border-slate-300 p-0.5 relative overflow-hidden bg-slate-800 shadow-lg flex items-center justify-center ring-4 ring-slate-400/20">
+                                                    <div className="w-20 h-20 rounded-full border-4 border-slate-350 p-0.5 relative overflow-hidden bg-slate-55 shadow-sm flex items-center justify-center">
                                                         {rankings[1]?.user?.avatarUrl ? (
                                                             <Image src={rankings[1].user.avatarUrl} alt="Rank 2" fill className="object-cover rounded-full" />
                                                         ) : (
-                                                            <span className="text-slate-300 font-bold uppercase text-xl">
+                                                            <div className="w-full h-full flex items-center justify-center bg-slate-100 text-slate-400 font-bold uppercase text-2xl rounded-full">
                                                                 {rankings[1] ? (rankings[1].user?.fullName?.substring(0, 2) || 'VĐ') : '?'}
-                                                            </span>
+                                                            </div>
                                                         )}
                                                     </div>
                                                 )}
                                             </div>
-                                            
-                                            <h3 className="font-bold text-slate-100 text-center text-sm mb-1 truncate max-w-[180px] group-hover/podium:text-slate-300 transition-colors">
-                                                {rankings[1]?.user?.fullName || "Chưa xác định"}
+                                            <h3 className="font-bold text-slate-800 text-center text-sm mb-1 truncate max-w-[200px] group-hover/podium:text-blue-600 transition-colors">
+                                                {rankings[1]?.user?.fullName || "Đang chờ..."}
                                             </h3>
+                                            {selectedMatchType.includes('DOUBLES') && rankings[1] && (
+                                                <span className="text-[10px] text-slate-450 font-bold bg-slate-100 px-2 py-0.5 rounded-md mb-1.5 border border-slate-200">
+                                                    Đồng đội
+                                                </span>
+                                            )}
                                             {rankings[1] ? (
-                                                <EloTierBadge elo={rankings[1].eloPoints} tierName={rankings[1].tier?.name} size="sm" className="mb-3 shadow-md" />
+                                                <EloTierBadge elo={rankings[1].eloPoints} tierName={rankings[1].tier?.name} size="sm" className="mb-3 border-slate-200/80 bg-white" />
                                             ) : (
-                                                <div className="text-[10px] text-slate-500 font-bold mb-3">--- ELO</div>
+                                                <div className="text-[10px] text-slate-400 font-bold mb-3">--- ELO</div>
                                             )}
                                         </Link>
                                         
                                         {/* Stand 2 */}
-                                        <div className="w-full h-24 bg-gradient-to-b from-slate-700/80 to-slate-800/90 rounded-t-xl border-t-2 border-x border-slate-500/50 flex flex-col items-center justify-center shadow-lg">
-                                            <span className="text-3xl font-black text-slate-300 select-none">II</span>
-                                            <span className="text-slate-400 text-[10px] font-bold mt-1">
+                                        <div className="w-full h-24 bg-gradient-to-b from-blue-100/50 to-blue-200/20 rounded-t-2xl border-t border-x border-blue-200/80 flex flex-col items-center justify-center shadow-xs">
+                                            <span className="text-3xl font-bold text-blue-300/80 select-none">II</span>
+                                            <span className="text-blue-600/70 text-[10px] font-bold mt-1">
                                                 {rankings[1] ? `Thắng: ${rankings[1].matchesWon}/${rankings[1].matchesPlayed}` : "Thắng: --/--"}
                                             </span>
                                         </div>
                                     </div>
  
-                                    {/* Rank 1 (Gold - Center) */}
+                                    {/* Rank 1 (Center) */}
                                     <div className="w-full md:w-1/3 order-1 md:order-2 flex flex-col items-center group/podium relative -translate-y-2 md:-translate-y-4">
                                         <Link 
                                             href={rankings[0]?.user?.id ? `/users/${rankings[0].user.id}` : '#'}
-                                            className="flex flex-col items-center group-hover/podium:scale-105 transition-all duration-300 w-full"
+                                            className="flex flex-col items-center hover:opacity-90 transition-opacity animate-none"
                                         >
-                                            <div className="relative mb-4">
-                                                <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-20 bg-amber-400 text-amber-950 font-black text-[10px] px-3.5 py-1 rounded-full shadow-lg flex items-center gap-1 border border-amber-300 whitespace-nowrap animate-pulse">
-                                                    👑 #1 QUÁN QUÂN
+                                            <div className="relative mb-5 transition-transform duration-300 group-hover:scale-105">
+                                                <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-20 bg-amber-400 text-amber-955 font-bold text-[10px] px-4 py-1.5 rounded-full shadow-sm flex items-center gap-1 border border-amber-300 animate-bounce">
+                                                    👑 CHAMPION
                                                 </div>
                                                 
-                                                {/* Avatar for Rank 1 */}
+                                                {/* Stacked Avatar for Doubles */}
                                                 {selectedMatchType.includes('DOUBLES') ? (
                                                     <div className="relative w-28 h-24 flex items-center justify-center">
-                                                        <div className="w-16 h-16 rounded-full border-2 border-amber-400 absolute right-0 bottom-0 bg-slate-800 flex items-center justify-center shadow-lg">
-                                                            <Users className="w-7 h-7 text-amber-400" />
+                                                        {/* Partner shadow avatar */}
+                                                        <div className="w-20 h-20 rounded-full border-2 border-amber-300 absolute -right-2 bottom-0 bg-slate-100/50 flex items-center justify-center shadow-xs">
+                                                            <Users className="w-8 h-8 text-blue-500/80" />
                                                         </div>
-                                                        <div className="w-16 h-16 rounded-full border-3 border-amber-400 p-0.5 absolute left-0 top-0 overflow-hidden bg-slate-800 shadow-xl flex items-center justify-center">
+                                                        {/* Primary avatar */}
+                                                        <div className="w-20 h-20 rounded-full border-4 border-amber-400/85 p-0.5 absolute -left-2 top-0 overflow-hidden bg-slate-55 shadow-md flex items-center justify-center">
                                                             {rankings[0]?.user?.avatarUrl ? (
                                                                 <Image src={rankings[0].user.avatarUrl} alt="Rank 1" fill className="object-cover rounded-full" />
                                                             ) : (
-                                                                <span className="text-amber-400 font-bold uppercase text-lg">
+                                                                <div className="w-full h-full flex items-center justify-center bg-slate-100 text-slate-600 font-bold uppercase text-xl rounded-full">
                                                                     {rankings[0] ? (rankings[0].user?.fullName?.substring(0, 2) || 'VĐ') : '?'}
-                                                                </span>
+                                                                </div>
                                                             )}
                                                         </div>
                                                     </div>
                                                 ) : (
-                                                    <div className="w-24 h-24 rounded-full border-4 border-amber-400 p-0.5 relative overflow-hidden bg-slate-800 shadow-xl flex items-center justify-center ring-4 ring-amber-400/30">
+                                                    <div className="w-24 h-24 rounded-full border-4 border-amber-400/80 p-1 relative overflow-hidden bg-slate-55 shadow-md flex items-center justify-center">
                                                         {rankings[0]?.user?.avatarUrl ? (
                                                             <Image src={rankings[0].user.avatarUrl} alt="Rank 1" fill className="object-cover rounded-full" />
                                                         ) : (
-                                                            <span className="text-amber-400 font-bold uppercase text-2xl">
+                                                            <div className="w-full h-full flex items-center justify-center bg-slate-100 text-slate-600 font-bold uppercase text-2xl rounded-full">
                                                                 {rankings[0] ? (rankings[0].user?.fullName?.substring(0, 2) || 'VĐ') : '?'}
-                                                            </span>
+                                                            </div>
                                                         )}
                                                     </div>
                                                 )}
                                             </div>
-                                            
-                                            <h3 className="font-black text-amber-400 text-center text-base mb-1 truncate max-w-[200px] group-hover/podium:text-amber-300 transition-colors">
-                                                {rankings[0]?.user?.fullName || "Chưa xác định"}
+                                            <h3 className="font-bold text-blue-600 text-center text-base mb-1 truncate max-w-[220px] group-hover/podium:text-blue-600 transition-colors">
+                                                {rankings[0]?.user?.fullName || "Đang chờ..."}
                                             </h3>
+                                            {selectedMatchType.includes('DOUBLES') && rankings[0] && (
+                                                <span className="text-[10px] text-amber-655 font-bold bg-amber-50 px-2 py-0.5 rounded-md mb-1.5 border border-amber-200">
+                                                    Đồng đội
+                                                </span>
+                                            )}
                                             {rankings[0] ? (
-                                                <EloTierBadge elo={rankings[0].eloPoints} tierName={rankings[0].tier?.name} size="md" className="mb-3 shadow-lg" />
+                                                <EloTierBadge elo={rankings[0].eloPoints} tierName={rankings[0].tier?.name} size="md" className="mb-3 border-amber-400/50 bg-white" />
                                             ) : (
-                                                <div className="text-[10px] text-amber-500/80 font-bold mb-3">--- ELO</div>
+                                                <div className="text-[10px] text-blue-500 font-bold mb-3">--- ELO</div>
                                             )}
                                         </Link>
                                         
                                         {/* Stand 1 */}
-                                        <div className="w-full h-32 bg-gradient-to-b from-amber-500/30 via-amber-600/20 to-slate-800 rounded-t-xl border-t-2 border-x border-amber-400/60 flex flex-col items-center justify-center shadow-xl relative overflow-hidden">
-                                            <span className="text-4xl font-black text-amber-400 select-none drop-shadow-md">I</span>
-                                            <span className="text-amber-300 text-xs font-bold mt-1">
+                                        <div className="w-full h-32 bg-gradient-to-b from-blue-100/70 to-blue-200/30 rounded-t-2xl border-t border-x border-blue-300 flex flex-col items-center justify-center shadow-xs relative overflow-hidden">
+                                            <span className="text-4xl font-bold text-blue-400 select-none">I</span>
+                                            <span className="text-blue-700 text-xs font-bold mt-1">
                                                 {rankings[0] ? `Thắng: ${rankings[0].matchesWon}/${rankings[0].matchesPlayed}` : "Thắng: --/--"}
                                             </span>
                                         </div>
                                     </div>
  
-                                    {/* Rank 3 (Bronze - Right) */}
+                                    {/* Rank 3 (Right) */}
                                     <div className="w-full md:w-1/3 order-3 md:order-3 flex flex-col items-center group/podium">
                                         <Link 
                                             href={rankings[2]?.user?.id ? `/users/${rankings[2].user.id}` : '#'}
-                                            className="flex flex-col items-center group-hover/podium:scale-105 transition-all duration-300 w-full"
+                                            className="flex flex-col items-center hover:opacity-90 transition-opacity"
                                         >
-                                            <div className="relative mb-3">
-                                                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20 bg-amber-700 text-amber-100 font-black text-[10px] px-3 py-0.5 rounded-full border border-amber-600 shadow-md whitespace-nowrap">
-                                                    🥉 #3 HẠNG BA
+                                            <div className="relative mb-4 transition-transform duration-300 group-hover:scale-105">
+                                                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20 bg-amber-100 text-amber-700 font-bold text-[10px] px-3 py-1 rounded-full border border-amber-205 shadow-xs">
+                                                    #3 THIRD
                                                 </div>
                                                 
-                                                {/* Avatar for Rank 3 */}
+                                                {/* Stacked Avatar for Doubles */}
                                                 {selectedMatchType.includes('DOUBLES') ? (
                                                     <div className="relative w-24 h-20 flex items-center justify-center">
-                                                        <div className="w-14 h-14 rounded-full border-2 border-amber-600 absolute right-0 bottom-0 bg-slate-800 flex items-center justify-center shadow-md">
-                                                            <Users className="w-6 h-6 text-amber-500" />
+                                                        {/* Partner shadow avatar */}
+                                                        <div className="w-16 h-16 rounded-full border-2 border-amber-200 absolute -right-2 bottom-0 bg-amber-50/50 flex items-center justify-center shadow-xs">
+                                                            <Users className="w-6 h-6 text-amber-450" />
                                                         </div>
-                                                        <div className="w-14 h-14 rounded-full border-2 border-amber-500 p-0.5 absolute left-0 top-0 overflow-hidden bg-slate-800 shadow-lg flex items-center justify-center">
+                                                        {/* Primary avatar */}
+                                                        <div className="w-16 h-16 rounded-full border-4 border-amber-350 p-0.5 absolute -left-2 top-0 overflow-hidden bg-slate-55 shadow-sm flex items-center justify-center">
                                                             {rankings[2]?.user?.avatarUrl ? (
                                                                 <Image src={rankings[2].user.avatarUrl} alt="Rank 3" fill className="object-cover rounded-full" />
                                                             ) : (
-                                                                <span className="text-amber-500 font-bold uppercase text-base">
+                                                                <div className="w-full h-full flex items-center justify-center bg-slate-100 text-amber-500 font-bold uppercase text-lg rounded-full">
                                                                     {rankings[2] ? (rankings[2].user?.fullName?.substring(0, 2) || 'VĐ') : '?'}
-                                                                </span>
+                                                                </div>
                                                             )}
                                                         </div>
                                                     </div>
                                                 ) : (
-                                                    <div className="w-20 h-20 rounded-full border-3 border-amber-600 p-0.5 relative overflow-hidden bg-slate-800 shadow-lg flex items-center justify-center ring-4 ring-amber-700/20">
+                                                    <div className="w-20 h-20 rounded-full border-4 border-amber-350 p-0.5 relative overflow-hidden bg-slate-55 shadow-sm flex items-center justify-center">
                                                         {rankings[2]?.user?.avatarUrl ? (
                                                             <Image src={rankings[2].user.avatarUrl} alt="Rank 3" fill className="object-cover rounded-full" />
                                                         ) : (
-                                                            <span className="text-amber-500 font-bold uppercase text-xl">
+                                                            <div className="w-full h-full flex items-center justify-center bg-slate-100 text-amber-500 font-bold uppercase text-xl rounded-full">
                                                                 {rankings[2] ? (rankings[2].user?.fullName?.substring(0, 2) || 'VĐ') : '?'}
-                                                            </span>
+                                                            </div>
                                                         )}
                                                     </div>
                                                 )}
                                             </div>
-                                            
-                                            <h3 className="font-bold text-slate-100 text-center text-sm mb-1 truncate max-w-[180px] group-hover/podium:text-amber-400 transition-colors">
-                                                {rankings[2]?.user?.fullName || "Chưa xác định"}
+                                            <h3 className="font-bold text-slate-800 text-center text-sm mb-1 truncate max-w-[200px] group-hover/podium:text-blue-600 transition-colors">
+                                                {rankings[2]?.user?.fullName || "Đang chờ..."}
                                             </h3>
+                                            {selectedMatchType.includes('DOUBLES') && rankings[2] && (
+                                                <span className="text-[10px] text-amber-655 font-bold bg-amber-50 px-2 py-0.5 rounded-md mb-1.5 border border-amber-200">
+                                                    Đồng đội
+                                                </span>
+                                            )}
                                             {rankings[2] ? (
-                                                <EloTierBadge elo={rankings[2].eloPoints} tierName={rankings[2].tier?.name} size="sm" className="mb-3 shadow-md" />
+                                                <EloTierBadge elo={rankings[2].eloPoints} tierName={rankings[2].tier?.name} size="sm" className="mb-3 border-slate-200/80 bg-white" />
                                             ) : (
-                                                <div className="text-[10px] text-slate-500 font-bold mb-3">--- ELO</div>
+                                                <div className="text-[10px] text-slate-400 font-bold mb-3">--- ELO</div>
                                             )}
                                         </Link>
                                         
                                         {/* Stand 3 */}
-                                        <div className="w-full h-20 bg-gradient-to-b from-amber-800/40 to-slate-800 rounded-t-xl border-t-2 border-x border-amber-700/50 flex flex-col items-center justify-center shadow-lg">
-                                            <span className="text-3xl font-black text-amber-600 select-none">III</span>
-                                            <span className="text-amber-500/80 text-[10px] font-bold mt-1">
+                                        <div className="w-full h-20 bg-gradient-to-b from-blue-100/40 to-blue-200/15 rounded-t-2xl border-t border-x border-blue-200/70 flex flex-col items-center justify-center shadow-xs">
+                                            <span className="text-3xl font-bold text-blue-300/70 select-none">III</span>
+                                            <span className="text-blue-600/60 text-[10px] font-bold mt-1">
                                                 {rankings[2] ? `Thắng: ${rankings[2].matchesWon}/${rankings[2].matchesPlayed}` : "Thắng: --/--"}
                                             </span>
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* Ranks 4-10 Cards/Stands (Dark Theme Modern Grid) */}
-                                <div className="mt-8 pt-6 border-t border-slate-800">
+                                {/* Ranks 4-10 Cards/Stands (Light Theme) */}
+                                <div className="mt-8 pt-6 border-t border-blue-100/50">
                                     <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-3">
                                         {[3, 4, 5, 6, 7, 8, 9].map((idx) => {
                                             const player = rankings[idx];
@@ -437,19 +459,19 @@ export default function LeaderboardPage() {
                                                 <Link 
                                                     key={idx} 
                                                     href={player?.user?.id ? `/users/${player.user.id}` : '#'}
-                                                    className="bg-slate-800/80 hover:bg-slate-800 backdrop-blur-xs rounded-xl border border-slate-700/70 p-3 flex flex-col items-center justify-between shadow-md transition-all duration-300 hover:scale-105 hover:border-blue-500 group/rankcard"
+                                                    className="bg-white/80 backdrop-blur-xs rounded-lg border border-blue-100/60 p-3 flex flex-col items-center justify-between shadow-xs transition-all duration-300 hover:scale-105 hover:shadow-sm hover:border-blue-300 hover:text-blue-650"
                                                 >
-                                                    <span className="text-[10px] font-bold text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded-full mb-2">
+                                                    <span className="text-[10px] font-bold text-blue-600 bg-blue-50/50 px-2 py-0.5 rounded-full mb-2">
                                                         #{rankNum}
                                                     </span>
                                                     
-                                                    {/* Avatar for Ranks 4-10 */}
+                                                    {/* Stacked Avatar for Doubles Ranks 4-10 */}
                                                     {selectedMatchType.includes('DOUBLES') ? (
                                                         <div className="relative w-14 h-11 mb-2">
-                                                            <div className="w-8 h-8 rounded-full border border-slate-600 absolute right-0 bottom-0 bg-slate-700 flex items-center justify-center shadow-xs">
+                                                            <div className="w-8 h-8 rounded-full border border-slate-200 absolute right-0 bottom-0 bg-slate-100 flex items-center justify-center shadow-xs">
                                                                 <Users className="w-3.5 h-3.5 text-slate-400" />
                                                             </div>
-                                                            <div className="w-8 h-8 rounded-full border border-slate-500 absolute left-0 top-0 overflow-hidden bg-slate-700 flex items-center justify-center">
+                                                            <div className="w-8 h-8 rounded-full border-2 border-slate-200 absolute left-0 top-0 overflow-hidden bg-slate-50 flex items-center justify-center">
                                                                 {player?.user?.avatarUrl ? (
                                                                     <Image src={player.user.avatarUrl} alt={`Rank ${rankNum}`} fill className="object-cover" />
                                                                 ) : (
@@ -460,7 +482,7 @@ export default function LeaderboardPage() {
                                                             </div>
                                                         </div>
                                                     ) : (
-                                                        <div className="w-12 h-12 rounded-full border border-slate-600 relative overflow-hidden bg-slate-700 flex items-center justify-center mb-2 group-hover/rankcard:border-blue-400 transition-colors">
+                                                        <div className="w-12 h-12 rounded-full border-2 border-slate-200 relative overflow-hidden bg-slate-50 flex items-center justify-center mb-2">
                                                             {player?.user?.avatarUrl ? (
                                                                 <Image src={player.user.avatarUrl} alt={`Rank ${rankNum}`} fill className="object-cover" />
                                                             ) : (
@@ -471,20 +493,16 @@ export default function LeaderboardPage() {
                                                         </div>
                                                     )}
                                                     
-                                                    <span className="font-bold text-slate-200 text-xs text-center truncate w-full mb-1 group-hover/rankcard:text-blue-400 transition-colors">
-                                                        {player?.user?.fullName || "Chưa xác định"}
+                                                    <span className="font-bold text-slate-700 text-xs text-center truncate w-full mb-1">
+                                                        {player?.user?.fullName || "Đang chờ..."}
                                                     </span>
                                                     {player ? (
-                                                        <span className="text-[11px] font-bold text-blue-400">{player.eloPoints} ELO</span>
+                                                        <span className="text-[11px] font-bold text-blue-600">{player.eloPoints} ELO</span>
                                                     ) : (
-                                                        <span className="text-[10px] text-slate-500 font-bold">--- ELO</span>
+                                                        <span className="text-[10px] text-slate-400 font-bold">--- ELO</span>
                                                     )}
                                                 </Link>
                                             );
-                                        })}
-                                    </div>
-                                </div>
-                            </div>   );
                                         })}
                                     </div>
                                 </div>
@@ -501,88 +519,64 @@ export default function LeaderboardPage() {
                     <div className="flex flex-col gap-6 sticky top-28 lg:top-32">
                         {/* Tier Breakdown Card */}
                         <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6 space-y-5">
-                            <div className="space-y-1">
-                                <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                                    <button 
-                                        type="button"
-                                        onClick={() => {
-                                            const modal = document.getElementById('eloRulesModal') as HTMLDialogElement | null;
-                                            if (modal) modal.showModal();
-                                        }}
-                                        className="p-1 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors cursor-pointer"
-                                        title="Xem quy tắc tính điểm ELO"
-                                    >
-                                        <Info className="w-4 h-4" />
-                                    </button>
-                                    Hệ thống phân hạng ELO
-                                </h3>
-                                <p className="text-slate-500 text-[11px] leading-relaxed">
-                                    Điểm ELO tích lũy sau mỗi trận đấu chính thức sẽ xếp người chơi vào các Tier trình độ tương ứng.
-                                </p>
+                            <div className="flex items-start justify-between">
+                                <div className="space-y-1">
+                                    <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                                        <button 
+                                            type="button"
+                                            onClick={() => {
+                                                const modal = document.getElementById('eloRulesModal') as HTMLDialogElement | null;
+                                                if (modal) modal.showModal();
+                                            }}
+                                            className="p-1 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors cursor-pointer"
+                                            title="Xem chi tiết quy tắc ELO"
+                                        >
+                                            <Info className="w-4 h-4" />
+                                        </button>
+                                        Hệ thống phân hạng ELO
+                                    </h3>
+                                    <p className="text-slate-500 text-[11px] leading-relaxed">Điểm ELO tích lũy sau mỗi trận đấu sẽ xếp người chơi vào các Tier trình độ tương ứng. <button type="button" onClick={() => { const modal = document.getElementById('eloRulesModal') as HTMLDialogElement | null; if (modal) modal.showModal(); }} className="text-blue-600 font-bold hover:underline cursor-pointer">Xem quy tắc [i]</button></p>
+                                </div>
                             </div>
 
-                            {/* Modal Quy tắc ELO - Căn giữa màn hình, viền gọn nhẹ, không bo quá đà & thuần Việt */}
-                            <dialog id="eloRulesModal" className="m-auto rounded-xl p-0 backdrop:bg-slate-900/50 backdrop:backdrop-blur-xs border border-slate-200 shadow-xl max-w-lg w-full outline-none">
-                                <div className="bg-white p-6 space-y-5">
+                            {/* Modal Quy tắc ELO */}
+                            <dialog id="eloRulesModal" className="rounded-2xl p-0 backdrop:bg-slate-900/40 border border-slate-200 shadow-2xl max-w-lg w-full">
+                                <div className="bg-white p-6 space-y-4">
                                     <div className="flex items-center justify-between border-b pb-3 border-slate-100">
                                         <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
                                             <Info className="w-5 h-5 text-blue-600" />
-                                            Quy định tính điểm ELO & Thăng hạng
+                                            Quy tắc tính điểm ELO & Phân hạng
                                         </h3>
                                         <form method="dialog">
-                                            <button className="text-slate-400 hover:text-slate-600 font-bold text-base cursor-pointer px-1">✕</button>
+                                            <button className="text-slate-400 hover:text-slate-600 font-bold text-lg cursor-pointer">✕</button>
                                         </form>
                                     </div>
                                     
-                                    <div className="space-y-4 text-xs text-slate-700 leading-relaxed max-h-[65vh] overflow-y-auto pr-1">
-                                        <div className="space-y-1">
-                                            <h4 className="font-bold text-slate-900 text-sm flex items-center gap-1.5">
-                                                ⚡ 1. Tích lũy điểm trận đấu
-                                            </h4>
-                                            <p className="text-slate-600 pl-5">
-                                                • **Vận động viên mới** (dưới 10 trận): Điểm ELO cộng/trừ với biên độ cao để nhanh chóng xác định đúng trình độ thực tế.<br />
-                                                • **Vận động viên quen thuộc** (10–30 trận): Biên độ điểm vừa phải.<br />
-                                                • **Vận động viên kỳ cựu** (trên 30 trận): Điểm ELO tăng/giảm ổn định theo từng trận thắng/thua.
-                                            </p>
+                                    <div className="space-y-3 text-xs text-slate-600 leading-relaxed max-h-[60vh] overflow-y-auto pr-1">
+                                        <div className="bg-blue-50/70 p-3 rounded-lg border border-blue-100">
+                                            <h4 className="font-bold text-blue-900 mb-1">⚡ 1. Hệ số K-Factor linh hoạt</h4>
+                                            <p className="text-slate-600">• Kỳ thủ mới (&lt;10 trận): Hệ số K = 40 (tăng/giảm điểm nhanh để xác định đúng trình độ).<br />• Kỳ thủ kinh nghiệm (10 - 30 trận): K = 24.<br />• Kỳ thủ kỳ cựu (&gt;30 trận): K = 16 (điểm số ổn định hơn).</p>
                                         </div>
 
-                                        <div className="space-y-1 border-t border-slate-100 pt-3">
-                                            <h4 className="font-bold text-slate-900 text-sm flex items-center gap-1.5">
-                                                🔥 2. Điểm thưởng chuỗi thắng & Thắng áp đảo
-                                            </h4>
-                                            <p className="text-slate-600 pl-5">
-                                                • **Chuỗi 3 trận thắng liên tiếp**: Thưởng thêm +10% điểm ELO nhận được.<br />
-                                                • **Chuỗi 5 trận thắng**: Thưởng +20% điểm ELO.<br />
-                                                • **Chuỗi 7+ trận thắng**: Thưởng +30% điểm ELO.<br />
-                                                • **Thắng cách biệt hủy diệt** (thắng áp đảo tỉ số các set) được thưởng thêm hệ số điểm hiệu số.
-                                            </p>
+                                        <div className="bg-emerald-50/70 p-3 rounded-lg border border-emerald-100">
+                                            <h4 className="font-bold text-emerald-900 mb-1">🔥 2. Thưởng chuỗi thắng & Thắng cách biệt</h4>
+                                            <p className="text-slate-600">• Chuỗi thắng 3 trận: ×1.1 điểm ELO nhận được.<br />• Chuỗi thắng 5 trận: ×1.2 điểm ELO.<br />• Chuỗi thắng 7+ trận: ×1.3 điểm ELO.<br />• Thắng cách biệt hủy diệt (tỉ số set áp đảo) được nhân thêm hệ số hiệu số điểm.</p>
                                         </div>
 
-                                        <div className="space-y-1 border-t border-slate-100 pt-3">
-                                            <h4 className="font-bold text-slate-900 text-sm flex items-center gap-1.5">
-                                                👑 3. Thưởng lội ngược dòng trước đối thủ mạnh
-                                            </h4>
-                                            <p className="text-slate-600 pl-5">
-                                                • Thắng đối thủ có điểm ELO cao hơn **200+ điểm**: Thưởng thêm +5 điểm ELO.<br />
-                                                • Thắng đối thủ vượt trội hơn **400+ điểm ELO**: Thưởng thêm +10 điểm ELO.
-                                            </p>
+                                        <div className="bg-amber-50/70 p-3 rounded-lg border border-amber-100">
+                                            <h4 className="font-bold text-amber-900 mb-1">👑 3. Thưởng lội ngược dòng (Upset Bonus)</h4>
+                                            <p className="text-slate-600">• Thắng đối thủ cao hơn 200+ ELO: Thưởng thêm +5 ELO.<br />• Thắng đối thủ vượt trội 400+ ELO: Thưởng thêm +10 ELO.</p>
                                         </div>
 
-                                        <div className="space-y-1 border-t border-slate-100 pt-3">
-                                            <h4 className="font-bold text-slate-900 text-sm flex items-center gap-1.5">
-                                                ⏳ 4. Quy định bảo lưu thứ hạng khi nghỉ thi đấu
-                                            </h4>
-                                            <p className="text-slate-600 pl-5">
-                                                • Người chơi **không tham gia giải đấu/trận đấu chính thức nào trong 30 ngày liên tục** sẽ bắt đầu bị trừ dần điểm ELO tự động (giảm điểm phong độ) nhằm giữ tính cạnh tranh công bằng trên Bảng xếp hạng.
-                                            </p>
+                                        <div className="bg-rose-50/70 p-3 rounded-lg border border-rose-100">
+                                            <h4 className="font-bold text-rose-900 mb-1">⏳ 4. Quy định không thi đấu (ELO Decay)</h4>
+                                            <p className="text-slate-600">• Người chơi không tham gia trận đấu chính thức nào trong **30 ngày liên tục** sẽ bắt đầu bị trừ dần điểm ELO ngầm (Inactive Decay) để đảm bảo tính công bằng của Bảng xếp hạng.</p>
                                         </div>
                                     </div>
 
-                                    <div className="pt-2 flex justify-end border-t border-slate-100">
+                                    <div className="pt-2 flex justify-end">
                                         <form method="dialog">
-                                            <button className="px-5 py-2 bg-blue-600 text-white font-bold rounded-lg text-xs hover:bg-blue-700 transition-colors cursor-pointer">
-                                                Đã hiểu
-                                            </button>
+                                            <button className="px-4 py-2 bg-blue-600 text-white font-bold rounded-lg text-xs hover:bg-blue-700 cursor-pointer">Đã hiểu</button>
                                         </form>
                                     </div>
                                 </div>

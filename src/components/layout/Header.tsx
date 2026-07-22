@@ -284,14 +284,8 @@ export function Header() {
     >
       <div className="flex h-16 w-full items-center justify-between px-6 md:px-16 lg:px-24 xl:px-32">
         <div className="flex h-full items-center gap-8">
-          <Link href="/" className="relative flex h-full items-center py-0">
-            <Image
-              src="/vndcsport.svg"
-              alt="VNDC Sport Logo"
-              width={140}
-              height={140}
-              className="h-[140px] w-auto object-contain transition-transform duration-200 hover:scale-105"
-            />
+          <Link href="/" className="text-sm font-bold text-slate-800 hover:text-blue-600 transition-colors flex items-center gap-1.5 mr-2">
+            TRANG CHỦ
           </Link>
 
           {/* Dropdown Chọn Môn Thể Thao Chuẩn Hóa */}

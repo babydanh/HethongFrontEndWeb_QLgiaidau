@@ -130,12 +130,48 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[25
 
   if (!tournaments || tournaments.length === 0) {
     return (
-      <div className={`w-full ${heightClass} rounded-lg bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 flex flex-col justify-center items-center text-center p-6 border border-slate-800 shadow-xl relative overflow-hidden`}>
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.08)_0%,transparent_70%)]" />
-        <h3 className="text-xl md:text-2xl font-semibold text-white mb-2 relative z-10 font-sans tracking-wide">
+      <div className={`w-full ${heightClass} rounded-2xl bg-gradient-to-br from-blue-50/80 via-white to-sky-50/80 flex flex-col justify-center items-center text-center p-8 border border-blue-100/80 shadow-sm relative overflow-hidden group`}>
+        {/* Background Sports Decorative Watermarks */}
+        <div className="absolute -left-6 -bottom-6 w-36 h-36 opacity-[0.07] text-blue-600 pointer-events-none transform -rotate-12">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <circle cx="12" cy="9" r="6" />
+            <path d="M12 15v7M10 22h4" />
+            <line x1="9" y1="9" x2="15" y2="9" />
+            <line x1="12" y1="6" x2="12" y2="12" />
+          </svg>
+        </div>
+        <div className="absolute -right-6 -top-6 w-44 h-44 opacity-[0.06] text-indigo-600 pointer-events-none transform rotate-45">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <path d="M12 2a7 7 0 0 1 7 7c0 2.5-1.3 4.7-3.3 6L14 22h-4l-1.7-7A7.002 7.002 0 0 1 12 2z" />
+            <line x1="8" y1="7" x2="16" y2="7" />
+            <line x1="9" y1="10" x2="15" y2="10" />
+          </svg>
+        </div>
+
+        {/* Center Icon Badge: Racket with Flying Shuttlecock / Ball */}
+        <div className="relative z-10 w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-500 to-sky-400 text-white flex items-center justify-center shadow-lg shadow-blue-500/25 mb-4 group-hover:scale-110 transition-transform duration-300">
+          <svg className="w-9 h-9" viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            {/* Racket Head */}
+            <ellipse cx="12" cy="12" rx="7" ry="8" transform="rotate(-30 12 12)" />
+            {/* Racket Strings */}
+            <line x1="9" y1="8" x2="15" y2="16" opacity="0.6" strokeWidth="1" />
+            <line x1="15" y1="8" x2="9" y2="16" opacity="0.6" strokeWidth="1" />
+            {/* Racket Handle */}
+            <line x1="16" y1="18" x2="25" y2="28" strokeWidth="2.5" />
+            {/* Flying Shuttlecock / Ball */}
+            <circle cx="23" cy="7" r="2.5" fill="currentColor" stroke="none" />
+            {/* Flying Motion Lines */}
+            <path d="M26 4 L28 2" strokeWidth="1.5" opacity="0.8" />
+            <path d="M21 4 L22 2" strokeWidth="1.5" opacity="0.8" />
+            <path d="M26 9 L28 10" strokeWidth="1.5" opacity="0.8" />
+          </svg>
+        </div>
+
+        {/* Text Contents */}
+        <h3 className="text-xl md:text-2xl font-bold text-slate-800 mb-2 relative z-10 font-sans tracking-wide">
           Chưa Có Giải Đấu Nào Sắp Diễn Ra
         </h3>
-        <p className="text-sm text-slate-400 max-w-md relative z-10">
+        <p className="text-sm text-slate-500 max-w-md relative z-10 leading-relaxed font-medium">
           Hãy theo dõi trang để cập nhật thông tin về các giải đấu tennis, pickleball và cầu lông mới nhất sắp sửa diễn ra.
         </p>
       </div>

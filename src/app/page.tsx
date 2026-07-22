@@ -300,10 +300,10 @@ export default function HomePage() {
         }
         const res = await categoriesApi.getCategories();
         const data = (res.data && res.data.length > 0) ? res.data : [
-          { id: 'pickleball', name: 'Pickleball' },
-          { id: 'tennis', name: 'Tennis' },
-          { id: 'badminton', name: 'Cầu lông' },
-          { id: 'table_tennis', name: 'Bóng bàn' },
+          { id: 'pickleball', name: 'Pickleball', slug: 'pickleball' },
+          { id: 'tennis', name: 'Tennis', slug: 'tennis' },
+          { id: 'badminton', name: 'Cầu lông', slug: 'badminton' },
+          { id: 'table_tennis', name: 'Bóng bàn', slug: 'table-tennis' },
         ];
         setCategories(data);
         if (typeof window !== 'undefined') {
@@ -314,10 +314,10 @@ export default function HomePage() {
           console.error('Failed to load categories on homepage', error);
         }
         setCategories([
-          { id: 'pickleball', name: 'Pickleball' },
-          { id: 'tennis', name: 'Tennis' },
-          { id: 'badminton', name: 'Cầu lông' },
-          { id: 'table_tennis', name: 'Bóng bàn' },
+          { id: 'pickleball', name: 'Pickleball', slug: 'pickleball' },
+          { id: 'tennis', name: 'Tennis', slug: 'tennis' },
+          { id: 'badminton', name: 'Cầu lông', slug: 'badminton' },
+          { id: 'table_tennis', name: 'Bóng bàn', slug: 'table-tennis' },
         ]);
       }
     };

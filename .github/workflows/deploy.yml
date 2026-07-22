@@ -1,0 +1,37 @@
+name: Deploy Frontend to VPS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy Next.js Frontend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Deploy to VPS via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 203.167.15.81
+          port: 36789
+          username: root
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            # 1. Đi tới thư mục chứa Frontend trên VPS
+            cd /usr/local/lsws/giaidau.vnvar.com/frontend-web_qlgiaidau
+
+            # 2. Pull code mới nhất của Frontend
+            git pull origin main
+
+            # 3. Quay lại root dự án và rebuild/restart Frontend
+            cd /usr/local/lsws/giaidau.vnvar.com
+            docker compose build --no-cache frontend
+            docker compose up -d frontend
+
+            # 4. Dọn dẹp Docker Image rác
+            docker image prune -f

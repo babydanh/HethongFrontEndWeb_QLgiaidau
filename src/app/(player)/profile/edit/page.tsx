@@ -521,7 +521,7 @@ export default function EditProfilePage() {
                         <option value="Khác">Khác</option>
                       </select>
                       {user?.isGenderLocked ? (
-                        <p className="text-xs font-semibold text-amber-600 mt-1 flex items-center justify-between">
+                        <p className="text-xs font-semibold text-blue-600 mt-1 flex items-center justify-between">
                           <span>Giới tính đã bị khóa sau khi giải đấu hoàn thành.</span>
                           <button
                             type="button"
@@ -536,7 +536,7 @@ export default function EditProfilePage() {
                         </p>
                       ) : (
                         profileForm.formState.errors.gender && (
-                          <p className="text-xs font-semibold text-red-500">{profileForm.formState.errors.gender.message}</p>
+                          <p className="text-xs font-semibold text-rose-500">{profileForm.formState.errors.gender.message}</p>
                         )
                       )}
                     </div>
@@ -555,7 +555,7 @@ export default function EditProfilePage() {
                         ))}
                       </select>
                       {profileForm.formState.errors.provinceCode && (
-                        <p className="text-xs font-semibold text-red-500">{profileForm.formState.errors.provinceCode.message}</p>
+                        <p className="text-xs font-semibold text-rose-500">{profileForm.formState.errors.provinceCode.message}</p>
                       )}
                     </div>
                   </div>
@@ -575,7 +575,7 @@ export default function EditProfilePage() {
                       {...profileForm.register('bio')}
                     />
                     {profileForm.formState.errors.bio && (
-                      <p className="text-xs font-semibold text-red-500">{profileForm.formState.errors.bio.message}</p>
+                      <p className="text-xs font-semibold text-rose-500">{profileForm.formState.errors.bio.message}</p>
                     )}
                   </div>
 
@@ -589,7 +589,7 @@ export default function EditProfilePage() {
 
               {/* Account Verification Section */}
               <div className="px-6 py-5 border-t border-slate-100 bg-slate-50/50 flex items-center gap-2">
-                <Shield className="w-5 h-5 text-emerald-600" />
+                <Shield className="w-5 h-5 text-blue-600" />
                 <h2 className="text-lg font-bold text-slate-900">Xác minh tài khoản</h2>
               </div>
               <div className="p-6 flex flex-col gap-6">
@@ -607,12 +607,12 @@ export default function EditProfilePage() {
                   </div>
                   <div className="flex items-center gap-2 self-end sm:self-center">
                     {user?.isEmailVerified ? (
-                      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
                         <CheckCircle2 className="w-3.5 h-3.5" /> Đã xác minh
                       </span>
                     ) : (
                       <div className="flex items-center gap-2">
-                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-slate-50 text-slate-600 border border-slate-200">
                           <AlertTriangle className="w-3.5 h-3.5" /> Chưa xác minh
                         </span>
                         <Button 
@@ -643,12 +643,12 @@ export default function EditProfilePage() {
                   </div>
                   <div className="flex items-center gap-2 self-end sm:self-center">
                     {user?.isPhoneVerified ? (
-                      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
                         <CheckCircle2 className="w-3.5 h-3.5" /> Đã xác minh
                       </span>
                     ) : (
                       <div className="flex items-center gap-2">
-                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-slate-50 text-slate-600 border border-slate-200">
                           <AlertTriangle className="w-3.5 h-3.5" /> Chưa xác minh
                         </span>
                         <Button 
@@ -709,7 +709,7 @@ export default function EditProfilePage() {
                         </optgroup>
                       </select>
                       {profileForm.formState.errors.bankName && (
-                        <p className="text-xs font-semibold text-red-500">{profileForm.formState.errors.bankName.message}</p>
+                        <p className="text-xs font-semibold text-rose-500">{profileForm.formState.errors.bankName.message}</p>
                       )}
                     </div>
                     
@@ -751,7 +751,7 @@ export default function EditProfilePage() {
               {/* Change Password Card */}
               <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
-                  <Lock className="w-5 h-5 text-emerald-600" />
+                  <Lock className="w-5 h-5 text-blue-600" />
                   <h2 className="text-lg font-bold text-slate-900">Đổi mật khẩu</h2>
                 </div>
                 <div className="p-6">
@@ -790,10 +790,10 @@ export default function EditProfilePage() {
               </div>
 
               {/* Danger Zone Card */}
-              <div className="bg-white rounded-lg border border-red-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="px-6 py-5 border-b border-red-100 bg-red-50/30 flex items-center gap-2">
-                  <ShieldAlert className="w-5 h-5 text-red-600" />
-                  <h2 className="text-lg font-bold text-red-900">Vùng nguy hiểm</h2>
+              <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="px-6 py-5 border-b border-rose-100 bg-rose-50/30 flex items-center gap-2">
+                  <ShieldAlert className="w-5 h-5 text-rose-600" />
+                  <h2 className="text-lg font-bold text-rose-900">Vùng nguy hiểm</h2>
                 </div>
                 <div className="p-6 flex flex-col gap-4">
                   <div>
@@ -975,13 +975,13 @@ export default function EditProfilePage() {
       {/* 4. Delete Account Modal */}
       {isDeleteModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white w-full max-w-md rounded-lg border border-red-200 shadow-xl overflow-hidden p-6 flex flex-col gap-4 animate-in zoom-in-95 duration-200">
-            <div className="flex items-center gap-2 border-b border-red-100 pb-3 text-red-600">
+          <div className="bg-white w-full max-w-md rounded-lg border border-slate-200 shadow-xl overflow-hidden p-6 flex flex-col gap-4 animate-in zoom-in-95 duration-200">
+            <div className="flex items-center gap-2 border-b border-rose-100 pb-3 text-rose-600">
               <AlertTriangle className="w-6 h-6" />
               <h3 className="text-base font-bold">Xác nhận xóa tài khoản cá nhân</h3>
             </div>
             <div className="text-sm text-slate-600 leading-relaxed">
-              Hành động này <span className="font-bold text-red-600">không thể hoàn tác</span>. Vui lòng nhập mật khẩu hiện tại của bạn để tiếp tục xóa tài khoản.
+              Hành động này <span className="font-bold text-rose-600">không thể hoàn tác</span>. Vui lòng nhập mật khẩu hiện tại của bạn để tiếp tục xóa tài khoản.
             </div>
             
             <div className="flex flex-col gap-1.5 relative">

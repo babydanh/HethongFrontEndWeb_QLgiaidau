@@ -157,11 +157,11 @@ export default function ModerationLayout({
             <div className="flex items-center gap-3">
               <div className="hidden text-right sm:block">
                 <p className="text-xs font-bold text-slate-800">{user?.fullName}</p>
-                <p className="text-[10px] uppercase tracking-[0.12em] text-amber-600">
+                <p className="text-[10px] uppercase tracking-[0.12em] text-blue-600">
                   {user?.roles?.includes('ADMIN') ? 'Admin đang ở khu điều phối' : 'Người điều phối'}
                 </p>
               </div>
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-500 text-sm font-bold uppercase text-white">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-1000 text-sm font-bold uppercase text-white">
                 {user?.fullName?.charAt(0) || 'M'}
               </div>
             </div>

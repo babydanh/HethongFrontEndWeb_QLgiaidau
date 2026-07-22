@@ -53,7 +53,7 @@ export function getSportColor(name?: string | null): string {
   if (!name) return 'bg-slate-500';
   const lower = name.toLowerCase();
   if (lower.includes('tennis') || lower.includes('quần vợt')) return 'bg-amber-500';
-  if (lower.includes('badminton') || lower.includes('cầu lông')) return 'bg-sky-500';
+  if (lower.includes('badminton') || lower.includes('cầu lông')) return 'bg-blue-500';
   if (lower.includes('bóng bàn') || lower.includes('ping')) return 'bg-rose-500';
   if (lower.includes('pickleball')) return 'bg-emerald-500';
   return 'bg-slate-500';

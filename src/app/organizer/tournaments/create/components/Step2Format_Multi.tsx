@@ -124,7 +124,7 @@ export default function Step2FormatMulti() {
       </div>
 
       <div className="bg-slate-50 border border-slate-200 rounded-lg p-5 space-y-3">
-        <label className="text-sm font-semibold text-slate-700">Chọn Loại nhánh thi đấu <span className="text-red-500">*</span></label>
+        <label className="text-sm font-semibold text-slate-700">Chọn Loại nhánh thi đấu <span className="text-rose-500">*</span></label>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {BRACKET_TYPE_OPTIONS.map((opt) => (
             <button
@@ -144,7 +144,7 @@ export default function Step2FormatMulti() {
         </div>
       </div>
 
-      <div className="flex items-start gap-3 text-amber-700 bg-amber-50 p-4 rounded-lg border border-amber-100">
+      <div className="flex items-start gap-3 text-slate-600 bg-slate-50 p-4 rounded-lg border border-slate-200">
         <Zap className="w-5 h-5 flex-shrink-0 mt-0.5" />
         <p className="text-sm font-medium">
           {selected.length === 0 && 'Vui lòng chọn ít nhất một hình thức.'}

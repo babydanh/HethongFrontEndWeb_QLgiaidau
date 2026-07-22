@@ -151,7 +151,7 @@ export function FinanceTab({
 
               <div className="bg-white p-4 rounded-lg border shadow-sm">
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Phí nền tảng</p>
-                <p className="text-2xl font-bold text-red-500 mt-2">
+                <p className="text-2xl font-bold text-rose-500 mt-2">
                   {totalPlatformFee.toLocaleString('vi-VN')} VNĐ
                 </p>
                 <p className="text-xs text-slate-500 font-semibold mt-1">
@@ -159,9 +159,9 @@ export function FinanceTab({
                 </p>
               </div>
 
-              <div className="bg-white p-4 rounded-lg border border-emerald-200 shadow-sm bg-emerald-50/20">
+              <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm bg-slate-50/20">
                 <p className="text-xs font-bold text-slate-550 uppercase tracking-wider">Thực nhận của Ban tổ chức</p>
-                <p className="text-2xl font-bold text-emerald-600 mt-2">
+                <p className="text-2xl font-bold text-blue-600 mt-2">
                   {netOrganizerEarnings.toLocaleString('vi-VN')} VNĐ
                 </p>
                 <p className="text-xs text-slate-500 font-semibold mt-1">Đã khấu trừ toàn bộ phí sàn</p>

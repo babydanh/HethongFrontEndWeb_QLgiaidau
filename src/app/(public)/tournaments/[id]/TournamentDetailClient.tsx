@@ -380,7 +380,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                   {getTournamentStatusLabel(activeTournament.status).toUpperCase()}
                 </span>
                 <span className="px-2.5 py-0.5 text-[10px] uppercase font-bold rounded-md bg-slate-100 text-slate-700 border border-slate-200/80 shadow-sm flex items-center gap-1">
-                  <Trophy className="w-3 h-3 text-amber-500" /> 
+                  <Trophy className="w-3 h-3 text-blue-500" /> 
                   {(() => {
                     const fmt = (activeTournament.format ?? '').replace('.', '_').replace(' ', '_').toUpperCase();
                     if (fmt === 'SINGLE_ELIMINATION') return 'LOẠI TRỰC TIẾP';
@@ -555,7 +555,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
               {/* Entry Fee */}
               <div>
                 <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Lệ phí tham gia</span>
-                <div className="text-2xl font-bold text-emerald-600">
+                <div className="text-2xl font-bold text-blue-600">
                   {selectedDivision?.entryFee && selectedDivision.entryFee > 0 
                     ? `${Number(selectedDivision.entryFee).toLocaleString('vi-VN')} VNĐ` 
                     : 'Miễn phí'}
@@ -593,8 +593,8 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                       className="w-10 h-10 rounded-full border border-slate-200 object-cover"
                     />
                   ) : (
-                    <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center border border-indigo-100">
-                      <User className="w-5 h-5 text-indigo-500" />
+                    <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center border border-blue-100">
+                      <User className="w-5 h-5 text-blue-500" />
                     </div>
                   )}
                   <div>
@@ -660,7 +660,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                     <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
                       <div 
                         className={`h-full rounded-full transition-all duration-500 ${
-                          percentageFilled >= 90 ? 'bg-rose-500' : percentageFilled >= 70 ? 'bg-amber-500' : 'bg-indigo-650'
+                          percentageFilled >= 90 ? 'bg-rose-500' : percentageFilled >= 70 ? 'bg-amber-500' : 'bg-blue-650'
                         }`}
                         style={{ width: `${percentageFilled}%` }}
                       />
@@ -725,8 +725,8 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
 
               {/* Warnings and Info Banners */}
               {isRegistrationOpen && isRegistrationLocked && (
-                <div className="bg-amber-50 border border-amber-250/60 rounded-lg p-3.5 flex items-start gap-2.5">
-                  <AlertCircle className="w-4.5 h-4.5 text-amber-600 shrink-0 mt-0.5" />
+                <div className="bg-slate-50 border border-amber-250/60 rounded-lg p-3.5 flex items-start gap-2.5">
+                  <AlertCircle className="w-4.5 h-4.5 text-blue-600 shrink-0 mt-0.5" />
                   <p className="text-xs font-semibold text-amber-800 leading-normal">
                     Giải đấu đã tạm ngưng nhận đăng ký mới từ Ban tổ chức.
                   </p>

@@ -277,7 +277,7 @@ export default function NotificationsPage() {
 
           <div className="px-6 py-6">
             {errorMessage ? (
-              <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+              <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
                 <p className="text-sm text-amber-900">{errorMessage}</p>
                 <button
                   type="button"
@@ -441,7 +441,7 @@ export default function NotificationsPage() {
                                             );
                                           }
                                         }}
-                                        className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-white px-3.5 py-2 text-sm font-semibold text-red-700 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                        className="inline-flex items-center gap-1 rounded-lg border border-rose-200 bg-white px-3.5 py-2 text-sm font-semibold text-rose-700 transition-colors hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
                                       >
                                         <X className="h-4 w-4" />
                                         Từ chối

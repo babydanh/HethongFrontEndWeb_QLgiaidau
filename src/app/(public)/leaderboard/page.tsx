@@ -333,15 +333,15 @@ export default function LeaderboardPage() {
                                                 {selectedMatchType.includes('DOUBLES') ? (
                                                     <div className="relative w-28 h-24 flex items-center justify-center">
                                                         {/* Partner shadow avatar */}
-                                                        <div className="w-20 h-20 rounded-full border-2 border-amber-300 absolute -right-2 bottom-0 bg-amber-50/50 flex items-center justify-center shadow-xs">
-                                                            <Users className="w-8 h-8 text-amber-500/80" />
+                                                        <div className="w-20 h-20 rounded-full border-2 border-amber-300 absolute -right-2 bottom-0 bg-slate-100/50 flex items-center justify-center shadow-xs">
+                                                            <Users className="w-8 h-8 text-blue-500/80" />
                                                         </div>
                                                         {/* Primary avatar */}
                                                         <div className="w-20 h-20 rounded-full border-4 border-amber-400/85 p-0.5 absolute -left-2 top-0 overflow-hidden bg-slate-55 shadow-md flex items-center justify-center">
                                                             {rankings[0]?.user?.avatarUrl ? (
                                                                 <Image src={rankings[0].user.avatarUrl} alt="Rank 1" fill className="object-cover rounded-full" />
                                                             ) : (
-                                                                <div className="w-full h-full flex items-center justify-center bg-amber-50 text-amber-600 font-bold uppercase text-xl rounded-full">
+                                                                <div className="w-full h-full flex items-center justify-center bg-slate-100 text-slate-600 font-bold uppercase text-xl rounded-full">
                                                                     {rankings[0] ? (rankings[0].user?.fullName?.substring(0, 2) || 'VĐ') : '?'}
                                                                 </div>
                                                             )}
@@ -352,14 +352,14 @@ export default function LeaderboardPage() {
                                                         {rankings[0]?.user?.avatarUrl ? (
                                                             <Image src={rankings[0].user.avatarUrl} alt="Rank 1" fill className="object-cover rounded-full" />
                                                         ) : (
-                                                            <div className="w-full h-full flex items-center justify-center bg-amber-50 text-amber-600 font-bold uppercase text-2xl rounded-full">
+                                                            <div className="w-full h-full flex items-center justify-center bg-slate-100 text-slate-600 font-bold uppercase text-2xl rounded-full">
                                                                 {rankings[0] ? (rankings[0].user?.fullName?.substring(0, 2) || 'VĐ') : '?'}
                                                             </div>
                                                         )}
                                                     </div>
                                                 )}
                                             </div>
-                                            <h3 className="font-bold text-amber-600 text-center text-base mb-1 truncate max-w-[220px] group-hover/podium:text-blue-600 transition-colors">
+                                            <h3 className="font-bold text-blue-600 text-center text-base mb-1 truncate max-w-[220px] group-hover/podium:text-blue-600 transition-colors">
                                                 {rankings[0]?.user?.fullName || "Đang chờ..."}
                                             </h3>
                                             {selectedMatchType.includes('DOUBLES') && rankings[0] && (
@@ -370,7 +370,7 @@ export default function LeaderboardPage() {
                                             {rankings[0] ? (
                                                 <EloTierBadge elo={rankings[0].eloPoints} tierName={rankings[0].tier?.name} size="md" className="mb-3 border-amber-400/50 bg-white" />
                                             ) : (
-                                                <div className="text-[10px] text-amber-500 font-bold mb-3">--- ELO</div>
+                                                <div className="text-[10px] text-blue-500 font-bold mb-3">--- ELO</div>
                                             )}
                                         </Link>
                                         
@@ -390,7 +390,7 @@ export default function LeaderboardPage() {
                                             className="flex flex-col items-center hover:opacity-90 transition-opacity"
                                         >
                                             <div className="relative mb-4 transition-transform duration-300 group-hover:scale-105">
-                                                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20 bg-orange-100 text-orange-700 font-bold text-[10px] px-3 py-1 rounded-full border border-orange-205 shadow-xs">
+                                                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20 bg-amber-100 text-amber-700 font-bold text-[10px] px-3 py-1 rounded-full border border-amber-205 shadow-xs">
                                                     #3 THIRD
                                                 </div>
                                                 
@@ -398,26 +398,26 @@ export default function LeaderboardPage() {
                                                 {selectedMatchType.includes('DOUBLES') ? (
                                                     <div className="relative w-24 h-20 flex items-center justify-center">
                                                         {/* Partner shadow avatar */}
-                                                        <div className="w-16 h-16 rounded-full border-2 border-orange-200 absolute -right-2 bottom-0 bg-orange-50/50 flex items-center justify-center shadow-xs">
-                                                            <Users className="w-6 h-6 text-orange-450" />
+                                                        <div className="w-16 h-16 rounded-full border-2 border-amber-200 absolute -right-2 bottom-0 bg-amber-50/50 flex items-center justify-center shadow-xs">
+                                                            <Users className="w-6 h-6 text-amber-450" />
                                                         </div>
                                                         {/* Primary avatar */}
-                                                        <div className="w-16 h-16 rounded-full border-4 border-orange-350 p-0.5 absolute -left-2 top-0 overflow-hidden bg-slate-55 shadow-sm flex items-center justify-center">
+                                                        <div className="w-16 h-16 rounded-full border-4 border-amber-350 p-0.5 absolute -left-2 top-0 overflow-hidden bg-slate-55 shadow-sm flex items-center justify-center">
                                                             {rankings[2]?.user?.avatarUrl ? (
                                                                 <Image src={rankings[2].user.avatarUrl} alt="Rank 3" fill className="object-cover rounded-full" />
                                                             ) : (
-                                                                <div className="w-full h-full flex items-center justify-center bg-slate-100 text-orange-500 font-bold uppercase text-lg rounded-full">
+                                                                <div className="w-full h-full flex items-center justify-center bg-slate-100 text-amber-500 font-bold uppercase text-lg rounded-full">
                                                                     {rankings[2] ? (rankings[2].user?.fullName?.substring(0, 2) || 'VĐ') : '?'}
                                                                 </div>
                                                             )}
                                                         </div>
                                                     </div>
                                                 ) : (
-                                                    <div className="w-20 h-20 rounded-full border-4 border-orange-350 p-0.5 relative overflow-hidden bg-slate-55 shadow-sm flex items-center justify-center">
+                                                    <div className="w-20 h-20 rounded-full border-4 border-amber-350 p-0.5 relative overflow-hidden bg-slate-55 shadow-sm flex items-center justify-center">
                                                         {rankings[2]?.user?.avatarUrl ? (
                                                             <Image src={rankings[2].user.avatarUrl} alt="Rank 3" fill className="object-cover rounded-full" />
                                                         ) : (
-                                                            <div className="w-full h-full flex items-center justify-center bg-slate-100 text-orange-500 font-bold uppercase text-xl rounded-full">
+                                                            <div className="w-full h-full flex items-center justify-center bg-slate-100 text-amber-500 font-bold uppercase text-xl rounded-full">
                                                                 {rankings[2] ? (rankings[2].user?.fullName?.substring(0, 2) || 'VĐ') : '?'}
                                                             </div>
                                                         )}
@@ -428,7 +428,7 @@ export default function LeaderboardPage() {
                                                 {rankings[2]?.user?.fullName || "Đang chờ..."}
                                             </h3>
                                             {selectedMatchType.includes('DOUBLES') && rankings[2] && (
-                                                <span className="text-[10px] text-orange-655 font-bold bg-orange-50 px-2 py-0.5 rounded-md mb-1.5 border border-orange-200">
+                                                <span className="text-[10px] text-amber-655 font-bold bg-amber-50 px-2 py-0.5 rounded-md mb-1.5 border border-amber-200">
                                                     Đồng đội
                                                 </span>
                                             )}
@@ -540,19 +540,19 @@ export default function LeaderboardPage() {
                                     <span className="font-bold text-xs text-slate-800">1600 - 1699 ELO</span>
                                 </div>
                                 <div className="flex justify-between items-center p-2.5 rounded-lg border bg-slate-50 border-slate-205">
-                                    <span className="bg-violet-500/15 text-violet-650 px-2 py-0.5 rounded text-[10px] font-bold uppercase">High Tier B</span>
+                                    <span className="bg-blue-500/15 text-blue-650 px-2 py-0.5 rounded text-[10px] font-bold uppercase">High Tier B</span>
                                     <span className="font-bold text-xs text-slate-800">1500 - 1599 ELO</span>
                                 </div>
                                 <div className="flex justify-between items-center p-2.5 rounded-lg border bg-slate-50 border-slate-205">
-                                    <span className="bg-violet-500/10 text-violet-550 px-2 py-0.5 rounded text-[10px] font-bold uppercase">Low Tier B</span>
+                                    <span className="bg-blue-500/10 text-blue-550 px-2 py-0.5 rounded text-[10px] font-bold uppercase">Low Tier B</span>
                                     <span className="font-bold text-xs text-slate-800">1400 - 1499 ELO</span>
                                 </div>
                                 <div className="flex justify-between items-center p-2.5 rounded-lg border bg-slate-50 border-slate-205">
-                                    <span className="bg-teal-500/10 text-teal-650 px-2 py-0.5 rounded text-[10px] font-bold uppercase">High Tier C</span>
+                                    <span className="bg-emerald-500/10 text-emerald-650 px-2 py-0.5 rounded text-[10px] font-bold uppercase">High Tier C</span>
                                     <span className="font-bold text-xs text-slate-800">1300 - 1399 ELO</span>
                                 </div>
                                 <div className="flex justify-between items-center p-2.5 rounded-lg border bg-slate-55 border-slate-205">
-                                    <span className="bg-cyan-500/10 text-cyan-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase">Low Tier C</span>
+                                    <span className="bg-blue-500/10 text-blue-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase">Low Tier C</span>
                                     <span className="font-bold text-xs text-slate-800">1200 - 1299 ELO</span>
                                 </div>
                                 <div className="flex justify-between items-center p-2.5 rounded-lg border bg-slate-50 border-slate-205">
@@ -560,7 +560,7 @@ export default function LeaderboardPage() {
                                     <span className="font-bold text-xs text-slate-800">1100 - 1199 ELO</span>
                                 </div>
                                 <div className="flex justify-between items-center p-2.5 rounded-lg border bg-slate-50 border-slate-205">
-                                    <span className="bg-orange-700/10 text-orange-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase">Low Tier D</span>
+                                    <span className="bg-amber-700/10 text-amber-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase">Low Tier D</span>
                                     <span className="font-bold text-xs text-slate-800">0 - 1099 ELO</span>
                                 </div>
                             </div>

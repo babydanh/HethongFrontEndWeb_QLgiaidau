@@ -182,7 +182,7 @@ export default function ModerationTab({
     <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.05fr_0.95fr]">
       <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
         <div className="mb-5 flex items-center gap-2 border-b border-slate-100 pb-3">
-          <Users className="h-4 w-4 text-emerald-600" />
+          <Users className="h-4 w-4 text-blue-600" />
           <h3 className="text-lg font-bold text-slate-900">Đơn tham gia chờ duyệt</h3>
           <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
             {requests.length}
@@ -256,7 +256,7 @@ export default function ModerationTab({
           {[
             { label: 'Đang hoạt động', value: joinedMembers.length, tone: 'text-slate-900' },
             { label: 'Chờ duyệt', value: requests.length, tone: 'text-amber-700' },
-            { label: 'Đã mời', value: invitedMembers.length, tone: 'text-indigo-700' },
+            { label: 'Đã mời', value: invitedMembers.length, tone: 'text-blue-700' },
             { label: 'Đã cấm', value: bannedMembers.length, tone: 'text-rose-700' },
           ].map((item) => (
             <div key={item.label} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
@@ -270,7 +270,7 @@ export default function ModerationTab({
 
         <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
           <div className="mb-5 flex items-center gap-2 border-b border-slate-100 pb-3">
-            <UserPlus className="h-4 w-4 text-emerald-600" />
+            <UserPlus className="h-4 w-4 text-blue-600" />
             <h3 className="text-lg font-bold text-slate-900">Mời thành viên mới</h3>
           </div>
 
@@ -325,7 +325,7 @@ export default function ModerationTab({
               type="text"
             />
             {isSearchingUsers ? (
-              <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-emerald-600" />
+              <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-blue-600" />
             ) : null}
           </div>
 
@@ -342,7 +342,7 @@ export default function ModerationTab({
                   <button
                     onClick={() => handleInvite(user.id)}
                     disabled={isInviting[user.id]}
-                    className="shrink-0 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 disabled:opacity-60"
+                    className="shrink-0 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:bg-emerald-100 disabled:opacity-60"
                   >
                     {isInviting[user.id] ? 'Đang gửi...' : 'Mời'}
                   </button>
@@ -394,7 +394,7 @@ export default function ModerationTab({
           <div className="mb-4 flex items-center gap-2 border-b border-slate-100 pb-3">
             <Ban className="h-4 w-4 text-rose-600" />
             <h3 className="text-base font-bold text-slate-900">Thành viên đã cấm</h3>
-            <span className="rounded-full bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-700">
+            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
               {bannedMembers.length}
             </span>
           </div>
@@ -413,7 +413,7 @@ export default function ModerationTab({
                   </div>
                   <button
                     onClick={() => member.user?.id && handleUnbanMember(member.user.id)}
-                    className="rounded-lg border border-emerald-200 bg-white p-1.5 text-emerald-600 transition-colors hover:bg-emerald-50"
+                    className="rounded-lg border border-slate-200 bg-white p-1.5 text-blue-600 transition-colors hover:bg-slate-50"
                     title="Gỡ cấm"
                   >
                     <Check className="h-3.5 w-3.5" />

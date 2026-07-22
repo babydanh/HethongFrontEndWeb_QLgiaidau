@@ -25,7 +25,7 @@ export const SeriesCard: React.FC<SeriesCardProps> = ({ series, className }) => 
     },
     CANCELLED: {
       text: '❌ Đã hủy',
-      classes: 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20'
+      classes: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20'
     }
   };
 
@@ -115,7 +115,7 @@ export const SeriesCard: React.FC<SeriesCardProps> = ({ series, className }) => 
           <div className="flex flex-col items-start border-l border-slate-200 pl-4">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Số giải đấu</span>
             <div className="flex items-center gap-1.5 mt-0.5 text-slate-700 font-bold text-sm">
-              <Trophy className="w-4 h-4 text-amber-500 shrink-0" />
+              <Trophy className="w-4 h-4 text-blue-500 shrink-0" />
               <span>{series._count?.events || 0} giải</span>
             </div>
           </div>

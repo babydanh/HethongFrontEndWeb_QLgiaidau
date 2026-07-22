@@ -506,7 +506,7 @@ export function BasicInfoTab({
                           <button
                             type="button"
                             onClick={() => handleRemoveContactLink(key)}
-                            className="text-slate-400 hover:text-red-500 p-1 transition-colors"
+                            className="text-slate-400 hover:text-rose-500 p-1 transition-colors"
                             title="Xóa"
                           >
                             <Trash2 className="w-4 h-4" />

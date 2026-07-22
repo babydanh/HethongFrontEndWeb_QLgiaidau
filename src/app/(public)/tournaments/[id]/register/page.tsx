@@ -610,8 +610,8 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
       <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8 flex items-center justify-center animate-in fade-in duration-200">
         <div className="max-w-md w-full bg-white p-8 rounded-lg border border-slate-200 shadow-sm space-y-6">
           <div className="flex flex-col items-center text-center space-y-3">
-            <div className="w-12 h-12 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center">
-              <AlertTriangle className="w-6 h-6 text-amber-500" />
+            <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center">
+              <AlertTriangle className="w-6 h-6 text-blue-500" />
             </div>
             <h2 className="text-xl font-bold text-slate-900">Hồ sơ chưa hoàn thiện</h2>
             <p className="text-slate-550 text-xs leading-relaxed font-semibold">
@@ -799,7 +799,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                           {selectedDivision._count?.participants ?? 0}
                           {selectedDivision.maxParticipants ? ` / ${selectedDivision.maxParticipants}` : ''} đăng ký
                         </span>
-                        <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 text-[11px] font-bold">
+                        <span className="px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-[11px] font-bold">
                           {entryFeeVal > 0 ? formatCurrency(entryFeeVal) : 'Miễn phí'}
                         </span>
                       </div>
@@ -812,12 +812,12 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                       </div>
                     )}
                     {eloCheck && !eloCheck.ok && (
-                      <div className="mt-3 text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg p-2.5 font-semibold">
+                      <div className="mt-3 text-xs text-blue-600 bg-slate-50 border border-slate-200 rounded-lg p-2.5 font-semibold">
                         ⚠️ {eloCheck.message}
                       </div>
                     )}
                     {eloCheck?.ok && (
-                      <div className="mt-3 text-xs text-emerald-600 font-medium">
+                      <div className="mt-3 text-xs text-blue-600 font-medium">
                         ✓ {eloCheck.message}
                       </div>
                     )}
@@ -839,7 +839,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                   <Button
                     onClick={() => router.push('/profile')}
                     variant="outline"
-                    className="border-rose-200 text-rose-700 hover:bg-rose-100 text-xs font-bold px-4 h-9 mx-auto block"
+                    className="border-slate-200 text-rose-700 hover:bg-rose-100 text-xs font-bold px-4 h-9 mx-auto block"
                   >
                     Thay đổi giới tính trong hồ sơ
                   </Button>
@@ -925,7 +925,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      <div className="bg-emerald-50 border border-emerald-100 text-emerald-800 text-xs font-semibold p-4 rounded-lg text-center">
+                      <div className="bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold p-4 rounded-lg text-center">
                         Nội dung này được miễn phí lệ phí tham gia. Bạn đã hoàn tất đăng ký!
                       </div>
 

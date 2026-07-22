@@ -187,14 +187,14 @@ export const getShieldStatus = (rank: PlayerRanking | null | undefined): ShieldS
     return {
       state: 'active',
       copy: 'Khiên còn nguyên — đỡ 1 lần rớt khỏi mốc rank hiện tại.',
-      themeClass: 'text-emerald-600',
+      themeClass: 'text-blue-600',
     };
   }
 
   return {
     state: 'broken',
     copy: 'Khiên đã vỡ — cần lên rank hoặc rớt rank để hồi lại khiên.',
-    themeClass: 'text-amber-600',
+    themeClass: 'text-blue-600',
   };
 };
 

@@ -84,7 +84,7 @@ export default function TermsPage() {
             </p>
           </section>
 
-          <div className="bg-amber-50 rounded-lg border border-amber-200 p-5 flex gap-3 text-amber-900 mt-8">
+          <div className="bg-slate-50 rounded-lg border border-slate-200 p-5 flex gap-3 text-slate-800 mt-8">
             <ShieldAlert className="w-5 h-5 shrink-0 mt-0.5" />
             <div className="text-xs space-y-1">
               <h4 className="font-bold">Lưu ý quan trọng đối với thành viên hệ thống:</h4>

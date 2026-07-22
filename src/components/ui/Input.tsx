@@ -27,7 +27,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           type={type}
           className={cn(
             "flex h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:border-blue-600 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 transition-colors duration-200",
-            error && "border-red-500 focus-visible:ring-red-500 focus-visible:border-red-500",
+            error && "border-rose-500 focus-visible:ring-red-500 focus-visible:border-rose-500",
             icon && "pl-10",
             className
           )}
@@ -35,7 +35,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           {...props}
         />
         {error && (
-          <p className="absolute -bottom-5 text-xs font-medium text-red-500 left-1">{error}</p>
+          <p className="absolute -bottom-5 text-xs font-medium text-rose-500 left-1">{error}</p>
         )}
         </div>
       </div>
@@ -103,7 +103,7 @@ export const DateTimePicker = React.forwardRef<HTMLInputElement, DateTimePickerP
           className={cn(
             "relative w-full cursor-pointer flex h-11 items-center justify-between rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus-within:ring-2 focus-within:ring-blue-600 focus-within:border-blue-600 transition-colors duration-200 select-none",
             disabled && "cursor-not-allowed opacity-50 bg-slate-50",
-            error && "border-red-500 focus-within:ring-red-500 focus-within:border-red-500",
+            error && "border-rose-500 focus-within:ring-red-500 focus-within:border-rose-500",
             className
           )}
         >
@@ -138,7 +138,7 @@ export const DateTimePicker = React.forwardRef<HTMLInputElement, DateTimePickerP
             className="absolute inset-0 opacity-0 pointer-events-none w-full h-full"
           />
           {error && (
-            <p className="absolute -bottom-5 text-xs font-medium text-red-500 left-1">{error}</p>
+            <p className="absolute -bottom-5 text-xs font-medium text-rose-500 left-1">{error}</p>
           )}
         </div>
       </div>
@@ -193,7 +193,7 @@ const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
           className={cn(
             "relative w-full cursor-pointer flex h-11 items-center justify-between rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus-within:ring-2 focus-within:ring-blue-600 focus-within:border-blue-600 transition-colors duration-200 select-none",
             disabled && "cursor-not-allowed opacity-50 bg-slate-50",
-            error && "border-red-500 focus-within:ring-red-500 focus-within:border-red-500",
+            error && "border-rose-500 focus-within:ring-red-500 focus-within:border-rose-500",
             className
           )}
         >
@@ -228,7 +228,7 @@ const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
             className="absolute inset-0 opacity-0 pointer-events-none w-full h-full"
           />
           {error && (
-            <p className="absolute -bottom-5 text-xs font-medium text-red-500 left-1">{error}</p>
+            <p className="absolute -bottom-5 text-xs font-medium text-rose-500 left-1">{error}</p>
           )}
         </div>
       </div>

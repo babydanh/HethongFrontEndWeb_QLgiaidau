@@ -29,11 +29,11 @@ export const SeriesScheduleTab: React.FC<SeriesScheduleTabProps> = ({ legs }) =>
       },
       REGISTRATION_OPEN: {
         text: '🟢 Đăng ký mở',
-        classes: 'bg-emerald-50 text-emerald-700 border-emerald-200 animate-pulse'
+        classes: 'bg-blue-50 text-blue-700 border-blue-200 animate-pulse'
       },
       REGISTRATION_CLOSED: {
         text: '🔴 Đăng ký đóng',
-        classes: 'bg-red-50 text-red-700 border-red-200'
+        classes: 'bg-rose-50 text-rose-700 border-slate-200'
       },
       IN_PROGRESS: {
         text: '⚡ Đang diễn ra',
@@ -104,7 +104,7 @@ export const SeriesScheduleTab: React.FC<SeriesScheduleTabProps> = ({ legs }) =>
                 <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-lg text-xs font-bold border border-blue-100 shadow-sm shrink-0">
                   🎟️ Vé thẳng: Top {selectedLeg.directEntrySlots}
                 </span>
-                <span className="bg-emerald-50 text-emerald-700 px-3 py-1 rounded-lg text-xs font-bold border border-emerald-100 shadow-sm shrink-0">
+                <span className="bg-slate-50 text-slate-600 px-3 py-1 rounded-lg text-xs font-bold border border-slate-200 shadow-sm shrink-0">
                   🎟️ Vé vớt: Top {selectedLeg.wildcardSlots} PSR
                 </span>
               </div>
@@ -143,7 +143,7 @@ export const SeriesScheduleTab: React.FC<SeriesScheduleTabProps> = ({ legs }) =>
                                 </span>
                               )}
                               {event.pointMultiplier > 1 && (
-                                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-100">
+                                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-600 bg-slate-50 px-2 py-0.5 rounded-md border border-slate-200">
                                   ⚡ Hệ số x{event.pointMultiplier}
                                 </span>
                               )}

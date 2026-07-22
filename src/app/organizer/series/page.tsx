@@ -41,11 +41,11 @@ export default function OrganizerSeriesPage() {
       case 'DRAFT':
         return <Badge className="bg-slate-100 text-slate-700 border-slate-200">Bản nháp</Badge>;
       case 'ACTIVE':
-        return <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200">Đang diễn ra</Badge>;
+        return <Badge className="bg-blue-50 text-blue-700 border-blue-200">Đang diễn ra</Badge>;
       case 'COMPLETED':
         return <Badge className="bg-purple-50 text-purple-700 border-purple-200">Đã kết thúc</Badge>;
       case 'CANCELLED':
-        return <Badge className="bg-red-50 text-red-700 border-red-200">Đã hủy</Badge>;
+        return <Badge className="bg-rose-50 text-rose-700 border-rose-200">Đã hủy</Badge>;
       default:
         return <Badge>{status}</Badge>;
     }

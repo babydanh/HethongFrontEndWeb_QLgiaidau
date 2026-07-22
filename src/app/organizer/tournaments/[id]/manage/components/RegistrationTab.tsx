@@ -318,9 +318,9 @@ export function RegistrationTab({
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 bg-emerald-50/60 rounded-lg border border-emerald-100">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 bg-slate-50/60 rounded-lg border border-slate-200">
                 <div className="flex items-start gap-3">
-                  <CheckCircle className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+                  <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
                   <div>
                     <p className="font-bold text-emerald-950 text-sm">Giải đấu đã được công bố!</p>
                     <p className="text-emerald-700 text-xs mt-1">Người chơi có thể đăng ký tài khoản và truy cập link để tham gia.</p>
@@ -576,7 +576,7 @@ export function RegistrationTab({
                 Theo dõi toàn bộ trạng thái đăng ký, thanh toán và quyết định duyệt trước khi chốt danh sách.
               </p>
             </div>
-            <div className="rounded-lg border border-amber-100 bg-amber-50 px-4 py-3 text-right">
+            <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-right">
               <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-amber-600">Chờ duyệt</p>
               <p className="mt-1 text-lg font-bold text-amber-800">{participantSummary.pending}</p>
             </div>
@@ -587,17 +587,17 @@ export function RegistrationTab({
               <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">Tổng hồ sơ</p>
               <p className="mt-2 text-lg font-bold text-slate-900">{participantSummary.total}</p>
             </div>
-            <div className="rounded-lg border border-amber-100 bg-amber-50 p-3">
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
               <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-amber-600">Chờ duyệt</p>
               <p className="mt-2 text-lg font-bold text-amber-700">{participantSummary.pending}</p>
             </div>
-            <div className="rounded-lg border border-emerald-100 bg-emerald-50 p-3">
-              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-emerald-600">Đã duyệt</p>
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-600">Đã duyệt</p>
               <p className="mt-2 text-lg font-bold text-emerald-700">{participantSummary.approved}</p>
             </div>
-            <div className="rounded-lg border border-orange-100 bg-orange-50 p-3">
-              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-orange-600">Bị từ chối</p>
-              <p className="mt-2 text-lg font-bold text-orange-700">{participantSummary.rejected}</p>
+            <div className="rounded-lg border border-amber-100 bg-amber-50 p-3">
+              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-amber-600">Bị từ chối</p>
+              <p className="mt-2 text-lg font-bold text-amber-700">{participantSummary.rejected}</p>
             </div>
             <div className="rounded-lg border border-rose-100 bg-rose-50 p-3">
               <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-rose-600">Chưa thanh toán</p>
@@ -710,7 +710,7 @@ export function RegistrationTab({
                               </div>
                             )}
                             {participant.isWildcard ? (
-                              <span className="rounded-full border border-emerald-100 bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700">
+                              <span className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-[11px] font-bold text-blue-700">
                                 Đặc cách
                               </span>
                             ) : participant.teamInviteToken ? (
@@ -742,7 +742,7 @@ export function RegistrationTab({
                           </span>
                         </td>
                         <td className="py-4 pr-4">
-                          <span className={`text-xs font-bold ${participant.isPaid ? 'text-emerald-600' : 'text-rose-600'}`}>
+                          <span className={`text-xs font-bold ${participant.isPaid ? 'text-blue-600' : 'text-rose-600'}`}>
                             {participant.isPaid ? 'Đã thanh toán' : 'Chưa thanh toán'}
                           </span>
                         </td>
@@ -771,7 +771,7 @@ export function RegistrationTab({
                               disabled={!canReject || isBusy}
                               className={isMockParticipant
                                 ? 'border-rose-200 text-rose-700 hover:bg-rose-50 font-bold'
-                                : 'border-orange-200 text-orange-700 hover:bg-orange-50 font-bold'}
+                                : 'border-amber-200 text-amber-700 hover:bg-amber-50 font-bold'}
                             >
                               {isMockParticipant ? <Trash2 className="mr-2 h-4 w-4" /> : <UserX className="mr-2 h-4 w-4" />}
                               {isMockParticipant ? 'Xóa mock' : 'Từ chối'}
@@ -962,7 +962,7 @@ export function RegistrationTab({
         <div className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm space-y-4">
           <div>
             <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
-              <UserPlus className="w-4 h-4 text-emerald-600" /> Suất đặc cách
+              <UserPlus className="w-4 h-4 text-blue-600" /> Suất đặc cách
             </h3>
             <p className="text-xs text-slate-455 mt-1 font-semibold">Gán trực tiếp khách mời, nhà tài trợ vào danh sách thi đấu. Bỏ qua mọi quy tắc giới hạn ELO.</p>
           </div>
@@ -1073,7 +1073,7 @@ export function RegistrationTab({
                   {wildcards.map((p) => {
                     const divName = divisions.find(d => d.id === p.tournamentDivisionId)?.name || '';
                     return (
-                      <div key={p.id} className="flex items-center justify-between rounded-lg border border-emerald-100 bg-emerald-50/40 px-3 py-2.5">
+                      <div key={p.id} className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50/40 px-3 py-2.5">
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
                             <span className="text-sm font-bold text-slate-900 truncate">{p.teamName}</span>

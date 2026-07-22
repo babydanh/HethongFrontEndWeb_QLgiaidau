@@ -149,7 +149,7 @@ export function WithdrawModal({
           </form>
         ) : (
           <div className="p-6">
-            <div className="bg-amber-50/50 border border-amber-100 rounded-lg p-4 text-xs text-slate-650 leading-relaxed font-medium mb-4">
+            <div className="bg-slate-50/50 border border-slate-200 rounded-lg p-4 text-xs text-slate-650 leading-relaxed font-medium mb-4">
               Bạn chưa thanh toán lệ phí, nên sẽ không có hoàn tiền. Xác nhận hủy đăng ký?
             </div>
             <div className="flex justify-end gap-3">

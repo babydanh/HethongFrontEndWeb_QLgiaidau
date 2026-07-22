@@ -42,8 +42,8 @@ export default function DownloadPage() {
         {/* Google Play Card — fake, chưa có store */}
         <div className="bg-white rounded-lg border border-slate-200 shadow-sm hover:shadow-md transition-all p-6 flex items-center justify-between gap-4 mb-4">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-emerald-50 rounded-lg flex items-center justify-center shrink-0">
-              <Monitor className="w-6 h-6 text-emerald-600" />
+            <div className="w-12 h-12 bg-slate-50 rounded-lg flex items-center justify-center shrink-0">
+              <Monitor className="w-6 h-6 text-blue-600" />
             </div>
             <div>
               <h3 className="font-bold text-slate-900">Google Play</h3>
@@ -59,8 +59,8 @@ export default function DownloadPage() {
         {/* APK Direct Download */}
         <div className="bg-white rounded-lg border-2 border-emerald-200 shadow-sm hover:shadow-md transition-all p-6 flex items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-emerald-50 rounded-lg flex items-center justify-center shrink-0">
-              <Download className="w-6 h-6 text-emerald-600" />
+            <div className="w-12 h-12 bg-slate-50 rounded-lg flex items-center justify-center shrink-0">
+              <Download className="w-6 h-6 text-blue-600" />
             </div>
             <div>
               <h3 className="font-bold text-slate-900">APK trực tiếp</h3>
@@ -78,7 +78,7 @@ export default function DownloadPage() {
         </div>
 
         {/* Hướng dẫn */}
-        <div className="mt-10 p-5 bg-amber-50 border border-amber-200 rounded-lg">
+        <div className="mt-10 p-5 bg-slate-50 border border-slate-200 rounded-lg">
           <div className="flex items-start gap-3">
             <div className="w-7 h-7 bg-amber-200 rounded-full flex items-center justify-center shrink-0 mt-0.5">
               <span className="text-amber-800 text-sm font-bold">!</span>

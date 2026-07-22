@@ -22,7 +22,7 @@ import {
 const PAYMENT_STATUS_CONFIG: Record<PaymentStatus, { bg: string; text: string; icon: typeof AlertCircle }> = {
   PENDING: { bg: 'bg-amber-50 text-amber-600 border-amber-100', text: 'Chờ thanh toán', icon: AlertCircle },
   COMPLETED: { bg: 'bg-green-50 text-green-600 border-green-100', text: 'Thành công', icon: CheckCircle2 },
-  FAILED: { bg: 'bg-red-50 text-red-600 border-red-100', text: 'Thất bại', icon: XCircle },
+  FAILED: { bg: 'bg-rose-50 text-rose-600 border-rose-100', text: 'Thất bại', icon: XCircle },
   CANCELLED: { bg: 'bg-slate-100 text-slate-600 border-slate-200', text: 'Đã hủy', icon: XCircle },
   EXPIRED: { bg: 'bg-slate-100 text-slate-600 border-slate-200', text: 'Hết hạn', icon: XCircle },
   REFUNDED: { bg: 'bg-slate-100 text-slate-600 border-slate-200', text: 'Đã hoàn tiền', icon: XCircle },
@@ -113,7 +113,7 @@ export default function PaymentsPage() {
           </div>
 
           <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-lg bg-slate-50 text-blue-600 flex items-center justify-center">
               <AlertCircle className="w-6 h-6" />
             </div>
             <div>

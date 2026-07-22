@@ -91,7 +91,7 @@ export default function PrivacyPage() {
             </p>
           </section>
 
-          <div className="bg-emerald-50 rounded-lg border border-emerald-200 p-5 flex gap-3 text-emerald-900 mt-8">
+          <div className="bg-slate-50 rounded-lg border border-slate-200 p-5 flex gap-3 text-slate-800 mt-8">
             <Lock className="w-5 h-5 shrink-0 mt-0.5" />
             <div className="text-xs space-y-1">
               <h4 className="font-bold">Cam kết bảo mật tuyệt đối:</h4>

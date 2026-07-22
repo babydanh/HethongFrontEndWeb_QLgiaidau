@@ -230,7 +230,7 @@ export function LiveMatchControlPanel({
             <textarea
               value={overrideReason}
               onChange={(event) => onOverrideReasonChange(event.target.value)}
-              className="min-h-24 w-full rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-slate-800"
+              className="min-h-24 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800"
               placeholder="Ví dụ: trận chung kết áp dụng loạt phụ rút gọn theo thống nhất của trọng tài và BTC..."
             />
             <p className="text-xs font-medium text-amber-700">
@@ -243,21 +243,21 @@ export function LiveMatchControlPanel({
       <div className={cn(
         "rounded-lg border px-4 py-3 text-sm font-semibold transition-all duration-200",
         scoreWarnings.length > 0
-          ? "border-orange-200 bg-orange-50 text-orange-900"
+          ? "border-amber-200 bg-amber-50 text-amber-900"
           : "border-emerald-100 bg-emerald-50/50 text-emerald-900"
       )}>
         <p className="font-bold">Cảnh báo bám luật mặc định</p>
         <div className="mt-2 space-y-1 text-xs font-semibold">
           {scoreWarnings.length > 0 ? (
             scoreWarnings.map((warning) => (
-              <p className="text-orange-850" key={warning.id}>- {warning.message}</p>
+              <p className="text-amber-850" key={warning.id}>- {warning.message}</p>
             ))
           ) : (
             <p className="text-emerald-700 font-medium">✓ Điểm số hiện tại hợp lệ, bám sát luật thi đấu chuẩn.</p>
           )}
         </div>
         {!overrideEnabled && scoreWarnings.length > 0 ? (
-          <p className="mt-2 text-xs font-semibold text-orange-800">
+          <p className="mt-2 text-xs font-semibold text-amber-800">
             Nếu trọng tài xác nhận đây là kết quả đặc biệt nhưng hợp lệ, hãy bật chế độ ngoại lệ rồi ghi rõ lý do.
           </p>
         ) : null}
@@ -280,7 +280,7 @@ export function LiveMatchControlPanel({
             <h4 className="mb-1 font-bold text-slate-800">Trận đấu chưa bắt đầu</h4>
             {!match.participant1Id || !match.participant2Id ? (
               <>
-                <p className="mb-6 max-w-sm rounded-lg border border-amber-100 bg-amber-50 p-2.5 text-xs font-bold text-amber-600">
+                <p className="mb-6 max-w-sm rounded-lg border border-slate-200 bg-slate-50 p-2.5 text-xs font-bold text-blue-600">
                   Chưa xác định đầy đủ hai đối thủ tham gia thi đấu. Vui lòng chờ các trận ở vòng trước hoàn thành.
                 </p>
                 <button
@@ -356,7 +356,7 @@ export function LiveMatchControlPanel({
                 disabled={isSubmitting || !match.participant1Id || !match.participant2Id}
                 className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white py-3 font-bold text-slate-700 shadow-sm transition-all hover:bg-slate-50 disabled:opacity-50"
               >
-                <Check className="h-4 w-4 text-emerald-500" /> {scorePresentation.completeActionLabel}
+                <Check className="h-4 w-4 text-blue-500" /> {scorePresentation.completeActionLabel}
               </button>
 
               <div className="flex flex-grow flex-col items-end gap-2">
@@ -391,11 +391,11 @@ export function LiveMatchControlPanel({
 
         {match.status === 'COMPLETED' ? (
           <div className="flex flex-col items-center justify-center rounded-lg border border-slate-200 bg-slate-50 p-6 text-center">
-            <Trophy className="mb-2 h-12 w-12 text-emerald-500" />
+            <Trophy className="mb-2 h-12 w-12 text-blue-500" />
             <h4 className="mb-1 font-bold text-slate-800">Trận đấu đã hoàn thành</h4>
             <p className="text-xs text-slate-500">
               Người chiến thắng:{' '}
-              <span className="font-bold text-emerald-600">
+              <span className="font-bold text-blue-600">
                 {match.winnerId === match.participant1Id ? team1Name : team2Name}
               </span>
             </p>
@@ -406,7 +406,7 @@ export function LiveMatchControlPanel({
       <Modal open={confirmWinner !== null} onOpenChange={(open) => !open && setConfirmWinner(null)}>
         <ModalContent className="max-w-md rounded-lg border border-slate-200 bg-white p-6 shadow-xl">
           <ModalHeader className="text-center sm:text-left">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-orange-100 text-orange-600 sm:mx-0">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 text-amber-600 sm:mx-0">
               <AlertCircle className="h-6 w-6" />
             </div>
             <ModalTitle className="mt-3 text-lg font-bold text-slate-900 sm:mt-4">
@@ -418,7 +418,7 @@ export function LiveMatchControlPanel({
                 {confirmWinner === 1 ? team1Name : team2Name}
               </span>
               Hành động này sẽ kết thúc trận đấu và khóa bảng điểm. Lý do ngoại lệ:
-              <span className="mt-2 block rounded-lg bg-amber-50 px-3 py-2 text-xs font-bold text-amber-900">
+              <span className="mt-2 block rounded-lg bg-slate-50 px-3 py-2 text-xs font-bold text-slate-800">
                 {overrideReason.trim()}
               </span>
             </ModalDescription>

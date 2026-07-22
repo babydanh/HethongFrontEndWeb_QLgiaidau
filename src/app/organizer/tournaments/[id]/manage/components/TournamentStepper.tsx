@@ -91,7 +91,7 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
               Bước tiếp theo sẽ chuyển sang thanh toán phí công bố: {publishFeeAmount.toLocaleString('vi-VN')}đ
             </p>
           )}
-          <div className="bg-amber-50 text-amber-800 text-[13px] px-4 py-3 rounded-lg mb-5 max-w-lg border border-amber-200">
+          <div className="bg-slate-50 text-slate-700 text-[13px] px-4 py-3 rounded-lg mb-5 max-w-lg border border-slate-200">
             <span className="font-bold flex items-center gap-1.5 mb-1 text-amber-900">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
               Lưu ý quan trọng trước khi công bố:

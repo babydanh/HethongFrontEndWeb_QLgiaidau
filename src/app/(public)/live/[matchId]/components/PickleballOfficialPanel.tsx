@@ -25,7 +25,7 @@ export function PickleballOfficialPanel({
 }: PickleballOfficialPanelProps) {
   return (
     <div className="space-y-3">
-      <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900">
+      <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-800">
         Chế độ pickleball side-out đang bám theo đội giao bóng hiện tại. Chỉ đội giao bóng mới được cộng điểm.
       </div>
       <div className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 md:grid-cols-[1.2fr_1fr]">
@@ -60,8 +60,8 @@ export function PickleballOfficialPanel({
               className={cn(
                 'rounded-lg border px-3 py-2 text-xs font-bold transition-colors',
                 servingTeam === 2
-                  ? 'border-indigo-600 bg-indigo-600 text-white'
-                  : 'border-slate-200 bg-white text-slate-700 hover:border-indigo-300',
+                  ? 'border-blue-600 bg-blue-600 text-white'
+                  : 'border-slate-200 bg-white text-slate-700 hover:border-blue-300',
               )}
             >
               {team2Name} giao
@@ -71,7 +71,7 @@ export function PickleballOfficialPanel({
             type="button"
             onClick={onSideOut}
             disabled={isSubmitting || servingTeam == null}
-            className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800 hover:bg-amber-100 disabled:opacity-50"
+            className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-amber-100 disabled:opacity-50"
           >
             Mất quyền giao
           </button>

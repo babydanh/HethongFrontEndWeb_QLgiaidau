@@ -55,18 +55,18 @@ const refereeStatusMeta: Record<
     label: 'Chờ phản hồi',
     badgeClassName: 'bg-amber-50 text-amber-700 border-amber-200',
     cardClassName: 'border-amber-200 bg-amber-50/50',
-    icon: <Clock3 className="w-4 h-4 text-amber-600" />,
+    icon: <Clock3 className="w-4 h-4 text-blue-600" />,
   },
   ACCEPTED: {
     label: 'Đã nhận lời',
-    badgeClassName: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    cardClassName: 'border-emerald-200 bg-emerald-50/40',
-    icon: <CheckCircle2 className="w-4 h-4 text-emerald-600" />,
+    badgeClassName: 'bg-blue-50 text-blue-700 border-blue-200',
+    cardClassName: 'border-blue-200 bg-blue-50/40',
+    icon: <CheckCircle2 className="w-4 h-4 text-blue-600" />,
   },
   DECLINED: {
     label: 'Đã từ chối',
-    badgeClassName: 'bg-rose-50 text-rose-700 border-rose-200',
-    cardClassName: 'border-rose-200 bg-rose-50/40',
+    badgeClassName: 'bg-rose-50 text-rose-700 border-slate-200',
+    cardClassName: 'border-slate-200 bg-rose-50/40',
     icon: <XCircle className="w-4 h-4 text-rose-600" />,
   },
 };
@@ -212,17 +212,17 @@ export function PermissionsTab({ id, tournament }: PermissionsTabProps) {
       {subTab === 'referees' ? (
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="rounded-lg border border-amber-200 bg-amber-50/70 p-4">
+            <div className="rounded-lg border border-slate-200 bg-slate-50/70 p-4">
               <div className="text-xs font-bold uppercase tracking-wider text-amber-700">Đang chờ phản hồi</div>
               <div className="mt-2 text-3xl font-bold text-amber-800">{pendingReferees.length}</div>
               <div className="mt-1 text-xs text-amber-700">Đã mời nhưng chưa nhận vai trò.</div>
             </div>
-            <div className="rounded-lg border border-emerald-200 bg-emerald-50/70 p-4">
+            <div className="rounded-lg border border-slate-200 bg-slate-50/70 p-4">
               <div className="text-xs font-bold uppercase tracking-wider text-emerald-700">Đã nhận lời</div>
               <div className="mt-2 text-3xl font-bold text-emerald-800">{acceptedReferees.length}</div>
               <div className="mt-1 text-xs text-emerald-700">Có thể phân công vào các trận đấu.</div>
             </div>
-            <div className="rounded-lg border border-rose-200 bg-rose-50/70 p-4">
+            <div className="rounded-lg border border-slate-200 bg-rose-50/70 p-4">
               <div className="text-xs font-bold uppercase tracking-wider text-rose-700">Đã từ chối</div>
               <div className="mt-2 text-3xl font-bold text-rose-800">{declinedReferees.length}</div>
               <div className="mt-1 text-xs text-rose-700">Cần mời người thay thế nếu vẫn thiếu.</div>
@@ -275,11 +275,11 @@ export function PermissionsTab({ id, tournament }: PermissionsTabProps) {
       <div className="space-y-4">
         <h3 className="font-bold text-slate-900 flex items-center gap-1.5 text-sm">
           {subTab === 'organizers' ? (
-            <Users className="w-5 h-5 text-indigo-600" />
+            <Users className="w-5 h-5 text-blue-600" />
           ) : subTab === 'referees' ? (
             <Shield className="w-5 h-5 text-blue-600" />
           ) : (
-            <UserCheck className="w-5 h-5 text-violet-600" />
+            <UserCheck className="w-5 h-5 text-blue-600" />
           )}
           {subTab === 'referees'
             ? 'Danh sách trọng tài và trạng thái phản hồi'

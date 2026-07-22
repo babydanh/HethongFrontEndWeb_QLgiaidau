@@ -177,7 +177,7 @@ export default function Step1Info() {
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-semibold text-slate-700">Bộ môn thi đấu <span className="text-red-500">*</span></label>
+            <label className="text-sm font-semibold text-slate-700">Bộ môn thi đấu <span className="text-rose-500">*</span></label>
             <select 
               {...register('categoryId')} 
               className="border border-slate-300 rounded-lg px-3 py-2.5 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-50"
@@ -188,7 +188,7 @@ export default function Step1Info() {
                 <option key={cat.id} value={cat.id}>{cat.name}</option>
               ))}
             </select>
-            {errors.categoryId && <p className="text-xs font-semibold text-red-500">{errors.categoryId.message}</p>}
+            {errors.categoryId && <p className="text-xs font-semibold text-rose-500">{errors.categoryId.message}</p>}
           </div>
 
           <div className="flex flex-col">
@@ -207,7 +207,7 @@ export default function Step1Info() {
 
         {formData.communityId && (
           <div className="bg-slate-50 border border-slate-200 rounded-lg p-5 flex flex-col gap-3">
-            <label className="text-sm font-semibold text-slate-900">Đối tượng tham gia <span className="text-red-500">*</span></label>
+            <label className="text-sm font-semibold text-slate-900">Đối tượng tham gia <span className="text-rose-500">*</span></label>
             <div className="flex flex-col sm:flex-row gap-4 mt-1">
               <label className="flex-1 flex flex-col p-4 border rounded-lg bg-white hover:bg-slate-50 cursor-pointer transition-all relative border-slate-200">
                 <div className="flex items-center gap-2">
@@ -248,7 +248,7 @@ export default function Step1Info() {
 
         {/* Ranked or Unranked Option */}
         <div className="bg-slate-50 border border-slate-200 rounded-lg p-5 flex flex-col gap-3">
-          <label className="text-sm font-semibold text-slate-900">Cách tính thành tích <span className="text-red-500">*</span></label>
+          <label className="text-sm font-semibold text-slate-900">Cách tính thành tích <span className="text-rose-500">*</span></label>
           <div className="flex gap-6 mt-1">
             <label className="flex items-center gap-2 cursor-pointer">
               <input 
@@ -274,15 +274,15 @@ export default function Step1Info() {
           
           <div className="mt-1 text-xs leading-relaxed text-slate-500 border-t border-slate-200/60 pt-3">
             {watchTournamentType === 'CLUB' ? (
-              <p className="text-emerald-700 font-medium bg-emerald-50/50 p-2.5 rounded-lg border border-emerald-100/50">
+              <p className="text-slate-600 font-medium bg-slate-50/50 p-2.5 rounded-lg border border-slate-200/50">
                 💡 <strong>Giải đấu Nội bộ CLB:</strong> Miễn phí xuất bản hoàn toàn (0đ). Phí sàn lệ phí tham gia là <strong>{fees.pctClub}%</strong>. Điểm xếp hạng chỉ được tính nội bộ trong câu lạc bộ của bạn, Giải đấu tự động hoạt động ngay lập tức mà không cần Admin duyệt.
               </p>
             ) : watchIsRanked ? (
-              <p className="text-amber-700 font-medium bg-amber-50/50 p-2.5 rounded-lg border border-amber-100/50">
+              <p className="text-slate-600 font-medium bg-slate-50/50 p-2.5 rounded-lg border border-slate-200/50">
                 💡 <strong>Giải đấu Xếp hạng:</strong> Phí xuất bản Giải đấu là <strong>{(fees.feePublicRanked / 1000).toString()}k VND</strong> (thanh toán khi xuất bản). Phí sàn <strong>{fees.pctPublicRanked}%</strong> trên lệ phí tham gia của mỗi người nếu có thu phí. Điểm ELO của người chơi sẽ được tính toán trên bảng xếp hạng chung. Giải đấu cần sự phê duyệt của Admin trước khi hoạt động công khai.
               </p>
             ) : (
-              <p className="text-emerald-700 font-medium bg-emerald-50/50 p-2.5 rounded-lg border border-emerald-100/50">
+              <p className="text-slate-600 font-medium bg-slate-50/50 p-2.5 rounded-lg border border-slate-200/50">
                 💡 <strong>Giải phong trào:</strong> Phí xuất bản Giải đấu là <strong>{(fees.feePublicUnranked / 1000).toString()}k VND</strong> (thanh toán khi xuất bản). Phí sàn <strong>{fees.pctPublicUnranked}%</strong> trên lệ phí tham gia của mỗi người nếu có thu phí. Không tính điểm ELO, Giải đấu tự động hoạt động ngay lập tức mà không cần Admin kiểm duyệt.
               </p>
             )}
@@ -290,7 +290,7 @@ export default function Step1Info() {
         </div>
 
         <div className="bg-slate-50 border border-slate-200 rounded-lg p-5 flex flex-col gap-3">
-          <label className="text-sm font-semibold text-slate-900">Hiển thị giải đấu <span className="text-red-500">*</span></label>
+          <label className="text-sm font-semibold text-slate-900">Hiển thị giải đấu <span className="text-rose-500">*</span></label>
           <p className="text-xs text-slate-500">Chỉ quyết định cộng đồng có tìm thấy giải hay không, độc lập với cách duyệt đăng ký.</p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-1">
             <label className={`flex flex-col p-4 border rounded-lg bg-white cursor-pointer transition-all ${watchVisibility === 'PUBLIC' ? 'border-blue-500 ring-2 ring-blue-100' : 'border-slate-200 hover:bg-slate-50'}`}>
@@ -321,7 +321,7 @@ export default function Step1Info() {
 
         {/* Registration Mode Option */}
         <div className="bg-slate-50 border border-slate-200 rounded-lg p-5 flex flex-col gap-3">
-          <label className="text-sm font-semibold text-slate-900">Chế độ đăng ký giải đấu <span className="text-red-500">*</span></label>
+          <label className="text-sm font-semibold text-slate-900">Chế độ đăng ký giải đấu <span className="text-rose-500">*</span></label>
           <div className="flex flex-col md:flex-row gap-4 mt-1">
             <label className="flex-1 flex flex-col p-4 border rounded-lg bg-white hover:bg-slate-50 cursor-pointer transition-all relative border-slate-200">
               <div className="flex items-center gap-2">
@@ -460,7 +460,7 @@ export default function Step1Info() {
             className="h-24 resize-none"
             {...register('description')}
           />
-          {errors.description && <p className="text-xs font-semibold text-red-500">{errors.description.message}</p>}
+          {errors.description && <p className="text-xs font-semibold text-rose-500">{errors.description.message}</p>}
         </div>
 
         <div className="flex justify-end mt-4 pt-6 border-t border-slate-100">

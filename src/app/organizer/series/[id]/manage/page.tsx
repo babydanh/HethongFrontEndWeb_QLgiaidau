@@ -337,7 +337,7 @@ export default function SeriesManagePage() {
                             }}
                             variant="ghost"
                             size="icon"
-                            className="text-slate-400 hover:text-red-600"
+                            className="text-slate-400 hover:text-rose-600"
                             title="Xóa chặng"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -396,7 +396,7 @@ export default function SeriesManagePage() {
                                   </span>
                                 )}
                                 {event.pointMultiplier > 1 && (
-                                  <span className="inline-flex items-center gap-1 text-[9px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100">
+                                  <span className="inline-flex items-center gap-1 text-[9px] font-bold text-blue-600 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200">
                                     Hệ số x{event.pointMultiplier}
                                   </span>
                                 )}

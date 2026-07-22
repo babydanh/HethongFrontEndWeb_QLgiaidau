@@ -73,7 +73,7 @@ export function JoinCommunityModal({ community, isOpen, onClose, onSuccess }: Jo
               {questions.map((q, idx) => (
                 <div key={idx}>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
-                    {q} <span className="text-red-500">*</span>
+                    {q} <span className="text-rose-500">*</span>
                   </label>
                   <textarea
                     className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none transition-all"

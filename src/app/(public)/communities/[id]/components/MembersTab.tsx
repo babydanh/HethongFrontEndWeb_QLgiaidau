@@ -242,7 +242,7 @@ export default function MembersTab({
 
       {isLoading ? (
         <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-12 flex flex-col items-center justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-emerald-500 mb-2" />
+          <Loader2 className="w-8 h-8 animate-spin text-blue-500 mb-2" />
           <p className="text-slate-500 text-sm">Đang tải danh sách thành viên...</p>
         </div>
       ) : (
@@ -250,7 +250,7 @@ export default function MembersTab({
           {/* Section: Ban Quản Trị */}
           <div>
             <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-4 border-b pb-2 flex items-center gap-1.5">
-              <ShieldCheck className="w-4 h-4 text-emerald-600" /> Ban Quản Trị
+              <ShieldCheck className="w-4 h-4 text-blue-600" /> Ban Quản Trị
             </h4>
             
             {filteredAdmins.length === 0 ? (
@@ -285,11 +285,11 @@ export default function MembersTab({
                       
                       <div className="flex items-center gap-2">
                         {isOwnerRole ? (
-                          <span className="px-2.5 py-1 bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-bold rounded-full flex items-center gap-1 shadow-sm">
+                          <span className="px-2.5 py-1 bg-slate-50 text-slate-600 border border-slate-200 text-[11px] font-bold rounded-full flex items-center gap-1 shadow-sm">
                             <Crown className="w-3.5 h-3.5" /> Owner
                           </span>
                         ) : (
-                          <span className="px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold rounded-full flex items-center gap-1 shadow-sm">
+                          <span className="px-2.5 py-1 bg-blue-50 text-blue-700 border border-blue-200 text-[11px] font-bold rounded-full flex items-center gap-1 shadow-sm">
                             <ShieldCheck className="w-3.5 h-3.5" /> Mod
                           </span>
                         )}
@@ -322,14 +322,14 @@ export default function MembersTab({
                                   }}
                                   className="w-full text-left px-4 py-2 text-xs text-amber-700 hover:bg-amber-50 flex items-center gap-2 transition-colors font-medium"
                                 >
-                                  <Crown className="w-4 h-4 text-amber-600" /> Chuyển chủ sở hữu
+                                  <Crown className="w-4 h-4 text-blue-600" /> Chuyển chủ sở hữu
                                 </button>
                                 <hr className="my-1 border-slate-100" />
                                 <button
                                   onClick={() => handleKickMember(item.user.id, item.user.fullName)}
-                                  className="w-full text-left px-4 py-2 text-xs text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
+                                  className="w-full text-left px-4 py-2 text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2 transition-colors"
                                 >
-                                  <Trash2 className="w-4 h-4 text-red-500" /> Kích khỏi nhóm
+                                  <Trash2 className="w-4 h-4 text-rose-500" /> Kích khỏi nhóm
                                 </button>
                                 <button
                                   onClick={() => handleBanMember(item.user.id, item.user.fullName)}
@@ -407,7 +407,7 @@ export default function MembersTab({
                                     onClick={() => handleUpdateRole(item.user.id, 'MODERATOR')}
                                     className="w-full text-left px-4 py-2 text-xs text-slate-700 hover:bg-slate-100 flex items-center gap-2 transition-colors"
                                   >
-                                    <ShieldCheck className="w-4 h-4 text-emerald-600" /> Thăng chức Quản trị viên
+                                    <ShieldCheck className="w-4 h-4 text-blue-600" /> Thăng chức Quản trị viên
                                   </button>
                                   <button
                                     onClick={() => {
@@ -416,16 +416,16 @@ export default function MembersTab({
                                     }}
                                     className="w-full text-left px-4 py-2 text-xs text-amber-700 hover:bg-amber-50 flex items-center gap-2 transition-colors font-medium"
                                   >
-                                    <Crown className="w-4 h-4 text-amber-600" /> Chuyển chủ sở hữu
+                                    <Crown className="w-4 h-4 text-blue-600" /> Chuyển chủ sở hữu
                                   </button>
                                   <hr className="my-1 border-slate-100" />
                                 </>
                               )}
                               <button
                                   onClick={() => handleKickMember(item.user.id, item.user.fullName)}
-                                  className="w-full text-left px-4 py-2 text-xs text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
+                                  className="w-full text-left px-4 py-2 text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2 transition-colors"
                                 >
-                                  <Trash2 className="w-4 h-4 text-red-500" /> Kích khỏi nhóm
+                                  <Trash2 className="w-4 h-4 text-rose-500" /> Kích khỏi nhóm
                                 </button>
                               <button
                                 onClick={() => handleBanMember(item.user.id, item.user.fullName)}
@@ -478,7 +478,7 @@ export default function MembersTab({
 
               {isSearchingUsers ? (
                 <div className="py-8 flex justify-center">
-                  <Loader2 className="w-6 h-6 animate-spin text-emerald-500" />
+                  <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
                 </div>
               ) : inviteResults.length > 0 ? (
                 <div className="space-y-3 max-h-[35vh] overflow-y-auto pr-1">
@@ -523,7 +523,7 @@ export default function MembersTab({
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg max-w-sm w-full border border-slate-200 shadow-xl overflow-hidden p-6 space-y-4">
             <div className="text-center space-y-2">
-              <div className="w-12 h-12 rounded-full bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center mx-auto shadow-sm">
+              <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-600 border border-slate-200 flex items-center justify-center mx-auto shadow-sm">
                 <Crown className="w-6 h-6" />
               </div>
               <h3 className="font-bold text-slate-900 text-base">Xác nhận chuyển chủ câu lạc bộ</h3>

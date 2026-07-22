@@ -66,13 +66,13 @@ export default function CountdownTimer({
   const colors = {
     info: 'bg-blue-50 border-blue-200 text-blue-700',
     warning: 'bg-amber-50 border-amber-200 text-amber-700',
-    danger: 'bg-red-50 border-red-200 text-red-700',
+    danger: 'bg-rose-50 border-slate-200 text-rose-700',
   };
 
   const dotColors = {
     info: 'bg-blue-500',
     warning: 'bg-amber-500',
-    danger: 'bg-red-500 animate-pulse',
+    danger: 'bg-rose-500 animate-pulse',
   };
 
   const padding = size === 'sm' ? 'p-2.5' : 'p-3';

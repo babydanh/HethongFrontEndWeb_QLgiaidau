@@ -65,7 +65,7 @@ export function RallyScoreControls({
           <button
             onClick={() => onUpdatePoints(2, 'inc')}
             disabled={isSubmitting}
-            className="flex h-12 w-12 items-center justify-center rounded-full bg-indigo-600 text-white shadow-md transition-colors hover:bg-indigo-700 disabled:opacity-50"
+            className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-600 text-white shadow-md transition-colors hover:bg-blue-700 disabled:opacity-50"
           >
             <Plus className="h-5 w-5" />
           </button>

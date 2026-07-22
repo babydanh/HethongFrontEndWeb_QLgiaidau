@@ -190,17 +190,17 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
       case 'DRAFT':
         return <Badge className="bg-slate-100 text-slate-700">Nháp (Ẩn)</Badge>;
       case 'REGISTRATION_OPEN':
-        return <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200">Mở Đăng Ký</Badge>;
+        return <Badge className="bg-blue-50 text-blue-700 border-blue-200">Mở Đăng Ký</Badge>;
       case 'REGISTRATION_CLOSED':
         return <Badge className="bg-amber-50 text-amber-700 border-amber-200">Đóng Đăng Ký</Badge>;
       case 'UPCOMING':
         return <Badge className="bg-blue-50 text-blue-700 border-blue-200">Sắp Khởi Tranh</Badge>;
       case 'IN_PROGRESS':
-        return <Badge className="bg-rose-50 text-rose-700 border-rose-200 animate-pulse">Đang Đấu</Badge>;
+        return <Badge className="bg-rose-50 text-rose-700 border-slate-200 animate-pulse">Đang Đấu</Badge>;
       case 'COMPLETED':
         return <Badge className="bg-purple-50 text-purple-700 border-purple-200">Đã Kết Thúc</Badge>;
       case 'CANCELLED':
-        return <Badge className="bg-red-50 text-red-700 border-red-200">Đã Hủy</Badge>;
+        return <Badge className="bg-rose-50 text-rose-700 border-slate-200">Đã Hủy</Badge>;
       default:
         return <Badge>{status}</Badge>;
     }
@@ -262,8 +262,8 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
         </div>
 
         {/* Description Banner */}
-        <div className="bg-emerald-50 text-emerald-950 p-4 rounded-lg border border-emerald-100 flex items-start gap-3 text-xs leading-relaxed font-semibold mb-8">
-          <ShieldCheck className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+        <div className="bg-slate-50 text-emerald-950 p-4 rounded-lg border border-slate-200 flex items-start gap-3 text-xs leading-relaxed font-semibold mb-8">
+          <ShieldCheck className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
           <div>
             <p className="font-bold text-emerald-950 text-sm">Chính sách Giải đấu Nội bộ (Club tournaments)</p>
             <p className="mt-1 text-emerald-700">

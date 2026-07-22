@@ -254,7 +254,7 @@ function CheckoutContent() {
 
         {/* Security / Trust */}
         <div className="flex items-center gap-2 text-slate-500 mb-8 px-1">
-          <ShieldCheck className="w-5 h-5 text-emerald-500 flex-shrink-0" />
+          <ShieldCheck className="w-5 h-5 text-blue-500 flex-shrink-0" />
           <p className="text-xs leading-normal">
             Giao dịch được bảo mật tuyệt đối. Chúng tôi không lưu trữ thông tin thẻ ngân hàng của bạn.
           </p>

@@ -218,14 +218,14 @@ export default function CreateCommunityPage() {
               
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Tên câu lạc bộ <span className="text-red-500">*</span>
+                  Tên câu lạc bộ <span className="text-rose-500">*</span>
                 </label>
                 <input 
                   {...register('name')}
                   placeholder="VD: CLB Cầu Lông Ba Đình"
                   className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
                 />
-                {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>}
+                {errors.name && <p className="text-rose-500 text-sm mt-1">{errors.name.message}</p>}
               </div>
 
               <div>
@@ -260,7 +260,7 @@ export default function CreateCommunityPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Tỉnh/Thành phố <span className="text-red-500">*</span>
+                    Tỉnh/Thành phố <span className="text-rose-500">*</span>
                   </label>
                   <select
                     {...register('provinceCode')}
@@ -269,7 +269,7 @@ export default function CreateCommunityPage() {
                     <option value="">Chọn Tỉnh/Thành phố</option>
                     {provinces.map(p => <option key={p.code} value={p.code}>{p.name}</option>)}
                   </select>
-                  {errors.provinceCode && <p className="text-red-500 text-sm mt-1">{errors.provinceCode.message}</p>}
+                  {errors.provinceCode && <p className="text-rose-500 text-sm mt-1">{errors.provinceCode.message}</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
@@ -288,7 +288,7 @@ export default function CreateCommunityPage() {
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-3">
-                  Môn thể thao <span className="text-red-500">*</span>
+                  Môn thể thao <span className="text-rose-500">*</span>
                 </label>
                 <div className="flex flex-wrap gap-3">
                   {categories.map(cat => {
@@ -300,7 +300,7 @@ export default function CreateCommunityPage() {
                         onClick={() => handleCategoryToggle(cat.id)}
                         className={`px-4 py-2 rounded-full border text-sm font-medium transition-colors ${
                           isSelected 
-                            ? 'bg-emerald-50 border-emerald-500 text-emerald-700'
+                            ? 'bg-blue-50 border-emerald-500 text-blue-700'
                             : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
                         }`}
                       >
@@ -309,7 +309,7 @@ export default function CreateCommunityPage() {
                     )
                   })}
                 </div>
-                {errors.categoryIds && <p className="text-red-500 text-sm mt-2">{errors.categoryIds.message}</p>}
+                {errors.categoryIds && <p className="text-rose-500 text-sm mt-2">{errors.categoryIds.message}</p>}
               </div>
             </section>
 
@@ -322,7 +322,7 @@ export default function CreateCommunityPage() {
                 {/* Logo Uploader */}
                 <div className="flex flex-col items-center justify-center p-6 bg-slate-50 rounded-lg border border-slate-200">
                   <label className="block text-sm font-semibold text-slate-700 mb-4 text-center">
-                    Logo / Avatar nhóm <span className="text-red-500">*</span>
+                    Logo / Avatar nhóm <span className="text-rose-500">*</span>
                   </label>
                   
                   <input
@@ -343,7 +343,7 @@ export default function CreateCommunityPage() {
                   >
                     {isUploadingLogo ? (
                       <div className="flex flex-col items-center justify-center text-slate-500">
-                        <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
+                        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
                         <span className="text-[10px] mt-1">Đang tải...</span>
                       </div>
                     ) : watchLogoUrl ? (
@@ -356,7 +356,7 @@ export default function CreateCommunityPage() {
                         </div>
                       </>
                     ) : (
-                      <div className="flex flex-col items-center justify-center text-slate-400 group-hover:text-emerald-500 p-4 text-center">
+                      <div className="flex flex-col items-center justify-center text-slate-400 group-hover:text-blue-500 p-4 text-center">
                         <UploadCloud className="w-8 h-8 mb-1" />
                         <span className="text-xs font-medium">Chọn Logo</span>
                       </div>
@@ -367,18 +367,18 @@ export default function CreateCommunityPage() {
                     <button
                       type="button"
                       onClick={() => setValue('logoUrl', '')}
-                      className="mt-3 text-xs text-red-500 hover:text-red-600 flex items-center gap-1 font-medium transition-colors"
+                      className="mt-3 text-xs text-rose-500 hover:text-rose-600 flex items-center gap-1 font-medium transition-colors"
                     >
                       <X className="w-3.5 h-3.5" /> Gỡ ảnh Logo
                     </button>
                   )}
-                  {errors.logoUrl && <p className="text-red-500 text-sm mt-2 text-center">{errors.logoUrl.message}</p>}
+                  {errors.logoUrl && <p className="text-rose-500 text-sm mt-2 text-center">{errors.logoUrl.message}</p>}
                 </div>
 
                 {/* Banner Uploader */}
                 <div className="md:col-span-2 flex flex-col p-6 bg-slate-50 rounded-lg border border-slate-200">
                   <label className="block text-sm font-semibold text-slate-700 mb-4">
-                    Ảnh bìa (Cover Banner) <span className="text-red-500">*</span>
+                    Ảnh bìa (Cover Banner) <span className="text-rose-500">*</span>
                   </label>
                   
                   <input
@@ -399,7 +399,7 @@ export default function CreateCommunityPage() {
                   >
                     {isUploadingBanner ? (
                       <div className="flex flex-col items-center justify-center text-slate-500">
-                        <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
+                        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
                         <span className="text-xs mt-1">Đang tải ảnh lên...</span>
                       </div>
                     ) : watchBannerUrl ? (
@@ -412,7 +412,7 @@ export default function CreateCommunityPage() {
                         </div>
                       </>
                     ) : (
-                      <div className="flex flex-col items-center justify-center text-slate-400 group-hover:text-emerald-500 p-6">
+                      <div className="flex flex-col items-center justify-center text-slate-400 group-hover:text-blue-500 p-6">
                         <UploadCloud className="w-10 h-10 mb-2" />
                         <span className="text-sm font-medium">Nhấp chọn hoặc kéo thả ảnh bìa nhóm vào đây</span>
                         <span className="text-xs text-slate-400 mt-1">Hỗ trợ JPG, PNG (tối đa 10MB)</span>
@@ -424,12 +424,12 @@ export default function CreateCommunityPage() {
                     <button
                       type="button"
                       onClick={() => setValue('bannerUrl', '')}
-                      className="mt-3 text-xs text-red-500 hover:text-red-600 flex items-center gap-1 font-medium self-start transition-colors"
+                      className="mt-3 text-xs text-rose-500 hover:text-rose-600 flex items-center gap-1 font-medium self-start transition-colors"
                     >
                       <X className="w-3.5 h-3.5" /> Gỡ ảnh bìa
                     </button>
                   )}
-                  {errors.bannerUrl && <p className="text-red-500 text-sm mt-2">{errors.bannerUrl.message}</p>}
+                  {errors.bannerUrl && <p className="text-rose-500 text-sm mt-2">{errors.bannerUrl.message}</p>}
                 </div>
               </div>
             </section>
@@ -454,11 +454,11 @@ export default function CreateCommunityPage() {
                             type="radio"
                             value={opt.value}
                             {...register('visibility')}
-                            className="w-4 h-4 text-emerald-600 border-slate-300 focus:ring-emerald-500"
+                            className="w-4 h-4 text-blue-600 border-slate-300 focus:ring-emerald-500"
                           />
                         </div>
                         <div className="ml-3 text-sm">
-                          <span className="font-medium text-slate-700 block group-hover:text-emerald-600">{opt.label}</span>
+                          <span className="font-medium text-slate-700 block group-hover:text-blue-600">{opt.label}</span>
                           <span className="text-slate-500">{opt.desc}</span>
                         </div>
                       </label>
@@ -480,11 +480,11 @@ export default function CreateCommunityPage() {
                             type="radio"
                             value={opt.value}
                             {...register('joinMode')}
-                            className="w-4 h-4 text-emerald-600 border-slate-300 focus:ring-emerald-500"
+                            className="w-4 h-4 text-blue-600 border-slate-300 focus:ring-emerald-500"
                           />
                         </div>
                         <div className="ml-3 text-sm">
-                          <span className="font-medium text-slate-700 block group-hover:text-emerald-600">{opt.label}</span>
+                          <span className="font-medium text-slate-700 block group-hover:text-blue-600">{opt.label}</span>
                           <span className="text-slate-500">{opt.desc}</span>
                         </div>
                       </label>
@@ -509,7 +509,7 @@ export default function CreateCommunityPage() {
                         <button
                           type="button"
                           onClick={() => removeQuestion(index)}
-                          className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                          className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
                         >
                           <Trash2 className="w-5 h-5" />
                         </button>
@@ -520,7 +520,7 @@ export default function CreateCommunityPage() {
                   <button
                     type="button"
                     onClick={() => appendQuestion({ value: '' })}
-                    className="flex items-center text-sm text-emerald-600 font-medium hover:text-emerald-700"
+                    className="flex items-center text-sm text-blue-600 font-medium hover:text-emerald-700"
                   >
                     <Plus className="w-4 h-4 mr-1" /> Thêm câu hỏi
                   </button>

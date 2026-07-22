@@ -306,7 +306,7 @@ export default function TournamentsListPage() {
                   setSearchTerm(e.target.value);
                   setPage(1);
                 }}
-                className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50/50 text-slate-900 font-semibold h-[42px]"
+                className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50/50 text-slate-900 font-semibold h-[42px]"
                 placeholder="Tên giải đấu, địa điểm..."
               />
             </div>
@@ -321,7 +321,7 @@ export default function TournamentsListPage() {
                   setSelectedCategoryId(e.target.value);
                   setPage(1);
                 }}
-                className="w-full pl-3 pr-10 py-2 border border-slate-200 rounded-lg text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50/50 text-slate-900 font-bold h-[42px]"
+                className="w-full pl-3 pr-10 py-2 border border-slate-200 rounded-lg text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50/50 text-slate-900 font-bold h-[42px]"
               >
                 <option value="">Tất cả</option>
                 {categories.map(cat => (
@@ -341,7 +341,7 @@ export default function TournamentsListPage() {
                   setSelectedStatus(e.target.value);
                   setPage(1);
                 }}
-                className="w-full pl-3 pr-10 py-2 border border-slate-200 rounded-lg text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50/50 text-slate-900 font-bold h-[42px]"
+                className="w-full pl-3 pr-10 py-2 border border-slate-200 rounded-lg text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50/50 text-slate-900 font-bold h-[42px]"
               >
                 <option value="">Tất cả</option>
                 <option value="REGISTRATION_OPEN">Mở đăng ký</option>
@@ -357,7 +357,7 @@ export default function TournamentsListPage() {
             onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
             className={`w-full sm:w-auto px-4 py-2.5 rounded-lg text-xs font-bold border transition-all flex items-center justify-center gap-2 h-[42px] cursor-pointer shrink-0 ${
               showAdvancedFilters || selectedContent || selectedBracketType || selectedIsRanked || selectedRegion || selectedDistrict || startDate || endDate
-                ? 'bg-indigo-50 border-indigo-250 text-indigo-700 shadow-sm animate-pulse-subtle' 
+                ? 'bg-blue-50 border-blue-250 text-blue-700 shadow-sm animate-pulse-subtle' 
                 : 'bg-slate-105 hover:bg-slate-200 text-slate-900 border-slate-200'
             }`}
           >
@@ -379,7 +379,7 @@ export default function TournamentsListPage() {
                     setSelectedContent(e.target.value);
                     setPage(1);
                   }}
-                  className="w-full pl-3 pr-10 py-1.5 border border-slate-250 rounded-lg text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-950 font-bold h-10"
+                  className="w-full pl-3 pr-10 py-1.5 border border-slate-250 rounded-lg text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-950 font-bold h-10"
                 >
                   <option value="">Tất cả</option>
                   <option value="SINGLE_MALE">Đơn Nam</option>
@@ -402,7 +402,7 @@ export default function TournamentsListPage() {
                     setSelectedBracketType(e.target.value);
                     setPage(1);
                   }}
-                  className="w-full pl-3 pr-10 py-1.5 border border-slate-250 rounded-lg text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-950 font-bold h-10"
+                  className="w-full pl-3 pr-10 py-1.5 border border-slate-250 rounded-lg text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-950 font-bold h-10"
                 >
                   <option value="">Tất cả</option>
                   <option value="SINGLE_ELIMINATION">Loại trực tiếp</option>
@@ -424,7 +424,7 @@ export default function TournamentsListPage() {
                     setSelectedIsRanked(e.target.value);
                     setPage(1);
                   }}
-                  className="w-full pl-3 pr-10 py-1.5 border border-slate-250 rounded-lg text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-950 font-bold h-10"
+                  className="w-full pl-3 pr-10 py-1.5 border border-slate-250 rounded-lg text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-950 font-bold h-10"
                 >
                   <option value="">Tất cả</option>
                   <option value="true">Xếp hạng ELO</option>
@@ -449,7 +449,7 @@ export default function TournamentsListPage() {
                     }
                     setPage(1);
                   }}
-                  className="w-full pl-3 pr-10 py-1.5 border border-slate-250 rounded-lg text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-950 font-bold h-10"
+                  className="w-full pl-3 pr-10 py-1.5 border border-slate-250 rounded-lg text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-950 font-bold h-10"
                 >
                   <option value="">Tất cả</option>
                   {regions.map(reg => (
@@ -471,7 +471,7 @@ export default function TournamentsListPage() {
                     setSelectedDistrict(e.target.value);
                     setPage(1);
                   }}
-                  className="w-full pl-3 pr-10 py-1.5 border border-slate-250 rounded-lg text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-950 font-bold disabled:opacity-50 disabled:bg-slate-100 h-10"
+                  className="w-full pl-3 pr-10 py-1.5 border border-slate-250 rounded-lg text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-950 font-bold disabled:opacity-50 disabled:bg-slate-100 h-10"
                 >
                   <option value="">Tất cả</option>
                   {districts.map(dist => (
@@ -501,7 +501,7 @@ export default function TournamentsListPage() {
                     setStartDate(val);
                     setPage(1);
                   }}
-                  className="w-full pl-3 pr-9 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-955 font-bold h-10"
+                  className="w-full pl-3 pr-9 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-955 font-bold h-10"
                 />
                 <input
                   type="date"
@@ -530,7 +530,7 @@ export default function TournamentsListPage() {
                       }
                     }
                   }}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 transition-colors p-1 cursor-pointer"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-600 transition-colors p-1 cursor-pointer"
                   title="Chọn ngày"
                 >
                   📅
@@ -557,7 +557,7 @@ export default function TournamentsListPage() {
                     setEndDate(val);
                     setPage(1);
                   }}
-                  className="w-full pl-3 pr-9 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-955 font-bold h-10"
+                  className="w-full pl-3 pr-9 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-955 font-bold h-10"
                 />
                 <input
                   type="date"
@@ -586,7 +586,7 @@ export default function TournamentsListPage() {
                       }
                     }
                   }}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 transition-colors p-1 cursor-pointer"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-600 transition-colors p-1 cursor-pointer"
                   title="Chọn ngày"
                 >
                   📅
@@ -636,7 +636,7 @@ export default function TournamentsListPage() {
         </button>
         <button 
           onClick={() => { setSelectedStatus('REGISTRATION_OPEN'); setPage(1); }}
-          className={`rounded-full px-2.5 py-1 border transition-all cursor-pointer ${selectedStatus === 'REGISTRATION_OPEN' ? 'bg-blue-100 text-blue-800 border-blue-300 font-bold' : 'bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100/60'}`}
+          className={`rounded-full px-2.5 py-1 border transition-all cursor-pointer ${selectedStatus === 'REGISTRATION_OPEN' ? 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold' : 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100/60'}`}
         >
           Mở đăng ký
         </button>
@@ -805,7 +805,7 @@ export default function TournamentsListPage() {
 
                     {/* Metadata summary */}
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-[10px] text-slate-500 font-bold mt-2.5 uppercase tracking-wider">
-                      <span className="text-emerald-600 font-bold">
+                      <span className="text-blue-600 font-bold">
                         {tournament.entryFee ? formatCurrency(tournament.entryFee) : 'Miễn phí'}
                       </span>
                       {tournament.divisions && tournament.divisions.length > 0 ? (
@@ -860,7 +860,7 @@ export default function TournamentsListPage() {
               onClick={() => setPage(i + 1)}
               className={`min-w-[44px] min-h-[44px] border rounded-lg font-bold text-xs transition-colors cursor-pointer ${
                 page === i + 1
-                  ? 'border-indigo-600 bg-indigo-600 text-white shadow-md shadow-indigo-600/15'
+                  ? 'border-blue-600 bg-blue-600 text-white shadow-md shadow-indigo-600/15'
                   : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-100'
               }`}
             >

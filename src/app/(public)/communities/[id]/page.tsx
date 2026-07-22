@@ -208,9 +208,9 @@ export default function CommunityDetailPage() {
 
   const getJoinButtonStyles = () => {
     if (isOwner) return 'bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200';
-    if (membership?.status === 'JOINED') return 'bg-emerald-50 hover:bg-red-50 hover:text-red-600 hover:border-red-200 text-emerald-700 border border-emerald-200';
+    if (membership?.status === 'JOINED') return 'bg-blue-50 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 text-blue-700 border border-blue-200';
     if (membership?.status === 'PENDING') return 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200';
-    if (membership?.status === 'INVITED') return 'bg-indigo-600 hover:bg-indigo-700 text-white animate-pulse';
+    if (membership?.status === 'INVITED') return 'bg-blue-600 hover:bg-blue-700 text-white animate-pulse';
     if (community?.joinMode === 'INVITE_ONLY') return 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200';
     return 'bg-emerald-600 hover:bg-emerald-700 text-white';
   };
@@ -327,7 +327,7 @@ export default function CommunityDetailPage() {
             <div className="space-y-2.5">
               <div className="flex flex-wrap items-center gap-2">
                 {community.status === 'APPROVED' && (
-                  <span className="px-2.5 py-0.5 bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-bold rounded-md flex items-center gap-1 shadow-sm">
+                  <span className="px-2.5 py-0.5 bg-blue-50 border border-blue-200 text-blue-700 text-[10px] font-bold rounded-md flex items-center gap-1 shadow-sm">
                     <ShieldCheck className="w-3.5 h-3.5" /> Đã kiểm duyệt
                   </span>
                 )}
@@ -355,7 +355,7 @@ export default function CommunityDetailPage() {
               disabled={isJoinLoading || membership?.status === 'PENDING'}
               className={`flex-1 md:flex-none px-6 font-bold text-xs shadow-sm transition-all h-10 rounded-lg ${
                 isOwner ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200' :
-                membership?.status === 'JOINED' ? 'bg-emerald-50 hover:bg-red-50 hover:text-red-600 hover:border-red-200 text-emerald-700 border border-emerald-200' :
+                membership?.status === 'JOINED' ? 'bg-blue-50 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 text-blue-700 border border-blue-200' :
                 'bg-emerald-600 hover:bg-emerald-700 text-white border-none'
               }`}
             >

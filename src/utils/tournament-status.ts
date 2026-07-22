@@ -56,11 +56,11 @@ export const getTournamentStatusClassName = (status?: string | null) => {
     case 'DRAFT':
       return 'bg-slate-100 text-slate-600 border-slate-200';
     case 'PENDING_APPROVAL':
-      return 'bg-slate-100 text-slate-600 border-slate-200';
+      return 'bg-amber-50 text-amber-700 border-amber-200';
     case 'UPCOMING':
       return 'bg-blue-50 text-blue-700 border-blue-200';
     case 'REGISTRATION_OPEN':
-      return 'bg-blue-50 text-blue-700 border-blue-200';
+      return 'bg-emerald-50 text-emerald-700 border-emerald-200';
     case 'REGISTRATION_CLOSED':
       return 'bg-slate-100 text-slate-600 border-slate-200';
     case 'IN_PROGRESS':

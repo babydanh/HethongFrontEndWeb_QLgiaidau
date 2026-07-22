@@ -713,9 +713,9 @@ export function Header() {
                         }
                         window.location.href = '/login'; // Hard redirect to clear everything
                       }}
-                      className="flex w-full items-center gap-3 px-4 py-2.5 text-sm font-semibold text-red-500 transition-all hover:bg-red-50/50 hover:text-red-600"
+                      className="flex w-full items-center gap-3 px-4 py-2.5 text-sm font-semibold text-rose-500 transition-all hover:bg-rose-50/50 hover:text-rose-600"
                     >
-                      <LogOut className="h-4 w-4 text-red-400" />
+                      <LogOut className="h-4 w-4 text-rose-400" />
                       Đăng xuất
                     </button>
                   </motion.div>

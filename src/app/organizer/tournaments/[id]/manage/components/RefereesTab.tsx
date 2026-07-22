@@ -70,7 +70,7 @@ export function RefereesTab({
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           {referees.map((ref) => (
             <div key={ref.id} className="flex items-center gap-3 bg-white p-4 rounded-lg border border-slate-200 shadow-sm relative group overflow-hidden">
-              <div className="w-10 h-10 rounded-full bg-indigo-50 border border-slate-200 flex items-center justify-center font-bold text-xs text-indigo-650 shrink-0 uppercase overflow-hidden">
+              <div className="w-10 h-10 rounded-full bg-blue-50 border border-slate-200 flex items-center justify-center font-bold text-xs text-blue-650 shrink-0 uppercase overflow-hidden">
                 {ref.avatarUrl ? (
                   <img src={ref.avatarUrl} alt="Ảnh đại diện trọng tài" className="w-full h-full object-cover" />
                 ) : (

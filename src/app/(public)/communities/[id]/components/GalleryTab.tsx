@@ -114,7 +114,7 @@ export default function GalleryTab({ communityId, isOwnerOrMod }: { communityId:
               {isOwnerOrMod && (
                 <button 
                   onClick={(e) => handleDelete(img.id, e)}
-                  className="absolute top-2 right-2 p-2 bg-white/80 hover:bg-red-50 text-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-all shadow-sm z-10"
+                  className="absolute top-2 right-2 p-2 bg-white/80 hover:bg-rose-50 text-rose-500 rounded-full opacity-0 group-hover:opacity-100 transition-all shadow-sm z-10"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>

@@ -298,7 +298,7 @@ export function DoubleElimView({
               className="absolute flex items-center gap-2"
               style={{ top: UB_TOP - 56, left: 0 }}
             >
-              <div className="w-1 h-3.5 bg-indigo-500 rounded-full" />
+              <div className="w-1 h-3.5 bg-blue-500 rounded-full" />
                 <span className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">
                   Nhánh thắng
               </span>
@@ -328,7 +328,7 @@ export function DoubleElimView({
                   className="absolute flex justify-center"
                   style={{ left: colX, width: CARD_W, top: UB_TOP - 36 }}
                 >
-                  <div className="text-[10px] font-bold text-indigo-650 uppercase tracking-widest bg-indigo-50/80 border border-indigo-100 rounded-full px-3 py-1 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+                  <div className="text-[10px] font-bold text-blue-650 uppercase tracking-widest bg-blue-50/80 border border-blue-100 rounded-full px-3 py-1 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
                     {label}
                   </div>
                 </div>
@@ -367,7 +367,7 @@ export function DoubleElimView({
                   left: GF_X,
                 }}
               >
-                <div className="w-1 h-3.5 bg-amber-500 rounded-full" />
+                <div className="w-1 h-3.5 bg-slate-1000 rounded-full" />
                 <span className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">
                   Chung kết tổng
                 </span>

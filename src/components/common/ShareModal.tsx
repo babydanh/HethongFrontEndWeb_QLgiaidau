@@ -165,7 +165,7 @@ export default function ShareModal({ isOpen, onClose, shareUrl, title, fbAppId }
           {/* Telegram */}
           <button
             onClick={() => openSharePopup(getTelegramShareUrl(shareUrl, title))}
-            className="flex flex-col items-center justify-center gap-2 rounded-lg border border-slate-100 bg-slate-50/60 py-3.5 px-1.5 transition-all hover:-translate-y-0.5 hover:border-sky-200 hover:bg-sky-50/30 group cursor-pointer"
+            className="flex flex-col items-center justify-center gap-2 rounded-lg border border-slate-100 bg-slate-50/60 py-3.5 px-1.5 transition-all hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50/30 group cursor-pointer"
           >
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#229ED9] text-white transition-all group-hover:scale-105 shadow-sm">
               <svg className="h-4.5 w-4.5 fill-current" viewBox="0 0 24 24">
@@ -216,7 +216,7 @@ export default function ShareModal({ isOpen, onClose, shareUrl, title, fbAppId }
           {supportNativeShare && (
             <button
               onClick={handleNativeShare}
-              className="flex flex-col items-center justify-center gap-2 rounded-lg border border-emerald-100 bg-emerald-50/20 py-3.5 px-1.5 transition-all hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-50/40 group cursor-pointer"
+              className="flex flex-col items-center justify-center gap-2 rounded-lg border border-slate-200 bg-slate-50/20 py-3.5 px-1.5 transition-all hover:-translate-y-0.5 hover:border-slate-200 hover:bg-slate-50/40 group cursor-pointer"
             >
               <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-600 text-white transition-all group-hover:scale-105 shadow-sm">
                 <svg className="h-4.5 w-4.5 fill-current" viewBox="0 0 24 24">

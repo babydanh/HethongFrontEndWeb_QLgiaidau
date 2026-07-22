@@ -386,7 +386,7 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
 
   if (!tournament) {
     return (
-      <div className="rounded-lg border border-amber-200 bg-amber-50 p-6 text-amber-900">
+      <div className="rounded-lg border border-slate-200 bg-slate-50 p-6 text-slate-800">
         <div className="flex items-start gap-3">
           <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0" />
           <div>
@@ -430,7 +430,7 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
               </span>
               <span className={`rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-wider ${
                 tournament.status === 'IN_PROGRESS' || tournament.status === 'ONGOING'
-                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200 animate-pulse'
+                  ? 'bg-blue-50 text-blue-700 border-blue-200 animate-pulse'
                   : 'bg-slate-100 text-slate-655 border-slate-200'
               }`}>
                 {tournament.status}
@@ -459,10 +459,10 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
             </Button>
             <Button
               variant="outline"
-              className="border-amber-200 bg-amber-50/60 hover:bg-amber-100 text-amber-700 font-bold text-xs px-4 py-2.5 rounded-lg transition-all"
+              className="border-slate-200 bg-slate-50/60 hover:bg-amber-100 text-slate-600 font-bold text-xs px-4 py-2.5 rounded-lg transition-all"
               onClick={() => window.open(buildPublicTournamentUrl('bracket'), '_blank')}
             >
-              <Trophy className="mr-2 h-4 w-4 text-amber-500" />
+              <Trophy className="mr-2 h-4 w-4 text-blue-500" />
               Mở bracket public
             </Button>
             <Button
@@ -648,7 +648,7 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
               <p className="text-[10px] font-bold uppercase tracking-wider text-blue-650">Chưa xếp lịch</p>
               <p className="mt-2 text-2xl font-bold text-blue-700">{divisionHealth.unscheduledCount}</p>
             </div>
-            <div className="rounded-lg border border-amber-150 bg-amber-50/40 p-4 transition-all hover:bg-amber-50/70">
+            <div className="rounded-lg border border-amber-150 bg-slate-50/40 p-4 transition-all hover:bg-slate-50/70">
               <p className="text-[10px] font-bold uppercase tracking-wider text-amber-650">Cấu hình riêng</p>
               <p className="mt-2 text-2xl font-bold text-amber-700">{divisionHealth.customConfigCount}</p>
             </div>

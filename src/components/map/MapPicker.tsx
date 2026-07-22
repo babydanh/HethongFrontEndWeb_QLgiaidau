@@ -44,7 +44,7 @@ export function MapPicker({ defaultLat = 21.028511, defaultLng = 105.804817, onC
         <NavigationControl position="bottom-right" />
         {marker && (
           <Marker longitude={marker.lng} latitude={marker.lat} anchor="bottom">
-            <MapPin className="w-8 h-8 text-red-500 fill-white" />
+            <MapPin className="w-8 h-8 text-rose-500 fill-white" />
           </Marker>
         )}
       </Map>

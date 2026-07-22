@@ -18,7 +18,7 @@ const cards = [
   { key: 'scheduledMatches', label: 'Trận chờ bắt đầu', icon: Calendar, tone: 'bg-slate-100 text-slate-700 border-slate-200' },
   { key: 'ongoingMatches', label: 'Trận đang diễn ra', icon: Clock3, tone: 'bg-rose-50 text-rose-700 border-rose-100' },
   { key: 'completedMatches', label: 'Trận đã xong', icon: CheckCircle2, tone: 'bg-emerald-50 text-emerald-700 border-emerald-100' },
-  { key: 'kickedParticipants', label: 'Đội bị loại', icon: XCircle, tone: 'bg-orange-50 text-orange-700 border-orange-100' },
+  { key: 'kickedParticipants', label: 'Đội bị loại', icon: XCircle, tone: 'bg-amber-50 text-amber-700 border-amber-100' },
 ] as const;
 
 export function OpsOverview({ summary }: OpsOverviewProps) {

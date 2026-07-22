@@ -442,7 +442,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                 key={match.id}
                 className={`bg-white border rounded-xl overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between ${
                   isLive 
-                    ? 'border-rose-200 bg-rose-50/5' 
+                    ? 'border-slate-200 bg-rose-50/5' 
                     : 'border-slate-200/80'
                 }`}
               >
@@ -474,7 +474,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                   <div className="flex justify-between items-center gap-2">
                     <div className="flex items-center gap-2 min-w-0 max-w-[70%]">
                       {isP1Winner ? (
-                        <Trophy className="w-4 h-4 text-amber-500 shrink-0" />
+                        <Trophy className="w-4 h-4 text-blue-500 shrink-0" />
                       ) : (
                         isCompleted && <div className="w-4 h-4 shrink-0" /> // Giữ khoảng trống đều đặn
                       )}
@@ -517,7 +517,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                   <div className="flex justify-between items-center gap-2">
                     <div className="flex items-center gap-2 min-w-0 max-w-[70%]">
                       {isP2Winner ? (
-                        <Trophy className="w-4 h-4 text-amber-500 shrink-0" />
+                        <Trophy className="w-4 h-4 text-blue-500 shrink-0" />
                       ) : (
                         isCompleted && <div className="w-4 h-4 shrink-0" />
                       )}

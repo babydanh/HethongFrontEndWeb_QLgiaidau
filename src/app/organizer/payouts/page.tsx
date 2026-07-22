@@ -45,8 +45,8 @@ const PAYOUT_STATUS_CONFIG: Record<PayoutStatus, { bg: string; text: string; ico
   APPROVED: { bg: 'bg-blue-50 text-blue-600 border-blue-100', text: 'Đã duyệt hồ sơ', icon: CheckCircle2 },
   PROCESSING: { bg: 'bg-blue-50 text-blue-600 border-blue-100', text: 'Đang chuyển tiền', icon: AlertCircle },
   PAID: { bg: 'bg-green-50 text-green-600 border-green-100', text: 'Đã chuyển tiền', icon: CheckCircle2 },
-  REJECTED: { bg: 'bg-red-50 text-red-600 border-red-100', text: 'Bị từ chối', icon: XCircle },
-  FAILED: { bg: 'bg-red-50 text-red-600 border-red-100', text: 'Chuyển tiền lỗi', icon: XCircle },
+  REJECTED: { bg: 'bg-rose-50 text-rose-600 border-rose-100', text: 'Bị từ chối', icon: XCircle },
+  FAILED: { bg: 'bg-rose-50 text-rose-600 border-rose-100', text: 'Chuyển tiền lỗi', icon: XCircle },
   CANCELLED: { bg: 'bg-slate-50 text-slate-600 border-slate-100', text: 'Đã hủy', icon: XCircle },
 };
 
@@ -184,7 +184,7 @@ export default function OrganizerPayoutsPage() {
             
             <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="flex flex-col gap-1.5 md:col-span-2">
-                <label className="text-sm font-semibold text-slate-700">Giải đấu cần rút tiền <span className="text-red-500">*</span></label>
+                <label className="text-sm font-semibold text-slate-700">Giải đấu cần rút tiền <span className="text-rose-500">*</span></label>
                 <select
                   {...register('tournamentId')}
                   className="border border-slate-300 rounded-lg px-3 py-2.5 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -194,7 +194,7 @@ export default function OrganizerPayoutsPage() {
                     <option key={t.id} value={t.id}>{t.name}</option>
                   ))}
                 </select>
-                {errors.tournamentId && <p className="text-xs font-semibold text-red-500">{errors.tournamentId.message}</p>}
+                {errors.tournamentId && <p className="text-xs font-semibold text-rose-500">{errors.tournamentId.message}</p>}
               </div>
 
               {selectedTournamentId && (

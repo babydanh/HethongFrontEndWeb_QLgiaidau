@@ -28,7 +28,7 @@ const GATEWAY_INFO: Record<string, { name: string; color: string; bgColor: strin
     name: 'Chuyển khoản ngân hàng',
     color: 'from-emerald-500 to-emerald-600',
     bgColor: 'bg-emerald-50',
-    textColor: 'text-emerald-600',
+    textColor: 'text-blue-600',
     borderColor: 'border-emerald-200',
   },
 };
@@ -148,7 +148,7 @@ function MockGatewayContent() {
   if (!paymentId) {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center gap-4">
-        <AlertTriangle className="w-12 h-12 text-amber-500" />
+        <AlertTriangle className="w-12 h-12 text-blue-500" />
         <p className="text-slate-600 font-medium">Thiếu thông tin giao dịch</p>
         <Button onClick={() => router.push('/tournaments')}>Quay lại danh sách giải</Button>
       </div>
@@ -228,7 +228,7 @@ function MockGatewayContent() {
                       digit
                         ? 'border-blue-500 bg-blue-50'
                         : isExpired
-                        ? 'border-red-300 bg-red-50'
+                        ? 'border-rose-300 bg-rose-50'
                         : 'border-slate-300 bg-white'
                     }`}
                     disabled={isSubmitting || isExpired}
@@ -239,9 +239,9 @@ function MockGatewayContent() {
 
             {/* Countdown Timer */}
             <div className="flex items-center justify-center gap-2 text-sm">
-              <Clock className={`w-4 h-4 ${isExpired ? 'text-red-500' : timeLeft <= 30 ? 'text-amber-500 animate-pulse' : 'text-slate-400'}`} />
+              <Clock className={`w-4 h-4 ${isExpired ? 'text-rose-500' : timeLeft <= 30 ? 'text-blue-500 animate-pulse' : 'text-slate-400'}`} />
               <span className={`font-bold font-mono tracking-wider ${
-                isExpired ? 'text-red-500' : timeLeft <= 30 ? 'text-amber-500' : 'text-slate-600'
+                isExpired ? 'text-rose-500' : timeLeft <= 30 ? 'text-blue-500' : 'text-slate-600'
               }`}>
                 Còn {formatTime(timeLeft)}
               </span>
@@ -249,7 +249,7 @@ function MockGatewayContent() {
 
             {/* Expired state */}
             {isExpired && (
-              <div className="bg-rose-50 border border-rose-200 rounded-lg p-4 flex items-start gap-3">
+              <div className="bg-rose-50 border border-slate-200 rounded-lg p-4 flex items-start gap-3">
                 <AlertTriangle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
                 <div>
                   <p className="text-sm font-bold text-rose-800">Mã OTP đã hết hạn</p>
@@ -271,7 +271,7 @@ function MockGatewayContent() {
 
             {/* Security Notice */}
             <div className="flex items-start gap-2 text-xs text-slate-400 bg-slate-50 rounded-lg p-4 border border-slate-100">
-              <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+              <ShieldCheck className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
               <p>
                 Đây là cổng thanh toán mô phỏng dành cho mục đích kiểm thử. Mã OTP mặc định là <strong className="text-slate-600">123456</strong>.
                 Không có giao dịch thực tế nào được xử lý.

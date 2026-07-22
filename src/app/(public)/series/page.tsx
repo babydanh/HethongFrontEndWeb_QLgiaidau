@@ -67,7 +67,7 @@ export default function SeriesListPage() {
         <div className="absolute top-1/3 right-1/4 -translate-y-1/2 w-[300px] h-[300px] bg-blue-500/10 rounded-full blur-[100px]"></div>
 
         <div className="max-w-7xl mx-auto px-4 md:px-8 relative z-10 text-center flex flex-col items-center">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 mb-4 animate-fade-in">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-500/10 text-emerald-400 border border-emerald-500/25 mb-4 animate-fade-in">
             <Trophy className="w-3.5 h-3.5" /> HỆ THỐNG LEAGUE & TOUR
           </span>
           <h1 className="text-3xl md:text-5xl font-bold text-white tracking-tight mb-4 max-w-3xl leading-tight font-sans">
@@ -137,7 +137,7 @@ export default function SeriesListPage() {
             ))}
           </div>
         ) : error ? (
-          <div className="text-center py-20 bg-white rounded-lg border border-red-200 max-w-xl mx-auto p-8 text-red-500">
+          <div className="text-center py-20 bg-white rounded-lg border border-slate-200 max-w-xl mx-auto p-8 text-rose-500">
             <h3 className="text-base font-bold mb-1">Đã xảy ra lỗi</h3>
             <p className="text-sm max-w-xs mx-auto leading-relaxed">{error}</p>
           </div>

@@ -92,7 +92,7 @@ export default function SeriesDetailPage() {
     DRAFT: { text: '📝 BẢN NHÁP', classes: 'bg-slate-500/10 text-slate-400 border border-slate-500/20' },
     ACTIVE: { text: '🟢 ĐANG DIỄN RA', classes: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' },
     COMPLETED: { text: '✅ ĐÃ KẾT THÚC', classes: 'bg-slate-500/10 text-slate-400 border border-slate-500/20' },
-    CANCELLED: { text: '❌ ĐÃ HỦY', classes: 'bg-red-500/10 text-red-400 border border-red-500/20' }
+    CANCELLED: { text: '❌ ĐÃ HỦY', classes: 'bg-rose-500/10 text-rose-400 border border-rose-500/20' }
   };
   const status = statusConfigs[series.status];
 

@@ -164,9 +164,9 @@ export default function Step3ScheduleFees() {
           </div>
         </div>
 
-        <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-5 space-y-4">
+        <div className="bg-slate-50 border border-slate-200 rounded-lg p-5 space-y-4">
           <div className="flex items-center gap-2 mb-3">
-            <DollarSign className="w-5 h-5 text-emerald-600" />
+            <DollarSign className="w-5 h-5 text-blue-600" />
             <h4 className="font-bold text-slate-900">Lệ Phí</h4>
           </div>
 

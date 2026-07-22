@@ -88,7 +88,7 @@ export function RoundRobinView({
       {/* standings table */}
       <div>
         <h5 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
-          <Trophy className="w-4 h-4 text-amber-500" /> Bảng xếp hạng
+          <Trophy className="w-4 h-4 text-blue-500" /> Bảng xếp hạng
           <button
             onClick={() => setShowInfo(!showInfo)}
             className="ml-1 inline-flex items-center justify-center w-5 h-5 rounded-full bg-slate-300 hover:bg-slate-400 text-white transition-colors cursor-pointer flex-shrink-0"
@@ -137,7 +137,7 @@ export function RoundRobinView({
                 <th className="px-4 py-3 text-center w-10" rowSpan={2}>#</th>
                 <th className="px-4 py-3 text-left min-w-[130px]" rowSpan={2}>Đội</th>
                 <th className="px-4 py-3 text-center w-12" rowSpan={2}>Trận</th>
-                <th className="px-4 py-3 text-center text-emerald-600 w-9" rowSpan={2}>T</th>
+                <th className="px-4 py-3 text-center text-blue-600 w-9" rowSpan={2}>T</th>
                 <th className="px-4 py-3 text-center text-rose-500 w-9" rowSpan={2}>B</th>
                 <th className="px-4 py-3 text-center border-l border-slate-100" colSpan={2}>Set</th>
                 <th className="px-4 py-3 text-center border-l border-slate-100" colSpan={2}>{statLabels.aggregateLabel}</th>
@@ -168,14 +168,14 @@ export function RoundRobinView({
                   >
                     <td className="px-3 py-3 text-center">
                       {isTied ? (
-                        <span className="text-amber-500 font-bold text-xs">?</span>
+                        <span className="text-blue-500 font-bold text-xs">?</span>
                       ) : idx === 0 && allDone && !hasTies ? (
                         <span className="inline-flex items-center justify-center w-7 h-7 bg-amber-400 rounded-full ring-2 ring-amber-300 shadow-lg shadow-amber-200">
                            <Trophy className="w-4 h-4 text-white fill-white" />
                         </span>
                       ) : idx === 0 ? (
                         <span className="inline-flex items-center justify-center w-6 h-6 bg-amber-100 rounded-full">
-                          <Trophy className="w-3.5 h-3.5 text-amber-500" />
+                          <Trophy className="w-3.5 h-3.5 text-blue-500" />
                         </span>
                       ) : (
                         <span className="text-slate-400 font-bold text-xs">
@@ -202,7 +202,7 @@ export function RoundRobinView({
                     <td className="px-3 py-3 text-center text-slate-500 font-medium">
                       {row.played}
                     </td>
-                    <td className="px-3 py-3 text-center font-bold text-emerald-600">
+                    <td className="px-3 py-3 text-center font-bold text-blue-600">
                       {row.won}
                     </td>
                     <td className="px-3 py-3 text-center font-bold text-rose-400">
@@ -211,14 +211,14 @@ export function RoundRobinView({
                     <td className="px-3 py-3 text-center text-slate-600 font-semibold">
                       {row.setsWon}-{row.setsLost}
                     </td>
-                    <td className={'px-3 py-3 text-center font-semibold ' + (row.setsWon - row.setsLost > 0 ? 'text-emerald-600' : row.setsWon - row.setsLost < 0 ? 'text-rose-500' : 'text-slate-500')}>
+                    <td className={'px-3 py-3 text-center font-semibold ' + (row.setsWon - row.setsLost > 0 ? 'text-blue-600' : row.setsWon - row.setsLost < 0 ? 'text-rose-500' : 'text-slate-500')}>
                       {row.setsWon - row.setsLost >= 0 ? '+' : ''}
                       {row.setsWon - row.setsLost}
                     </td>
                     <td className="px-3 py-3 text-center text-slate-600 font-semibold">
                       {row.pointsFor}-{row.pointsAgainst}
                     </td>
-                    <td className={'px-3 py-3 text-center font-semibold ' + (row.pointsFor - row.pointsAgainst > 0 ? 'text-emerald-600' : row.pointsFor - row.pointsAgainst < 0 ? 'text-rose-500' : 'text-slate-500')}>
+                    <td className={'px-3 py-3 text-center font-semibold ' + (row.pointsFor - row.pointsAgainst > 0 ? 'text-blue-600' : row.pointsFor - row.pointsAgainst < 0 ? 'text-rose-500' : 'text-slate-500')}>
                       {row.pointsFor - row.pointsAgainst >= 0 ? '+' : ''}
                       {row.pointsFor - row.pointsAgainst}
                     </td>

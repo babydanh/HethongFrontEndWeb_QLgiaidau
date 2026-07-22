@@ -29,7 +29,7 @@ export default function AboutTab({
       <div className="lg:col-span-8 space-y-4">
         <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-5 md:p-6">
           <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2 border-b pb-3">
-            <Info className="w-5 h-5 text-emerald-600" />
+            <Info className="w-5 h-5 text-blue-600" />
             Về câu lạc bộ này
           </h3>
           
@@ -72,7 +72,7 @@ export default function AboutTab({
                     <span className="col-span-2 text-slate-800 flex flex-wrap gap-1">
                       {community.categories && community.categories.length > 0 ? (
                         community.categories.map((cat) => (
-                          <span key={cat.id} className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-50 text-emerald-700 border border-emerald-100">
+                          <span key={cat.id} className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-blue-50 text-blue-700 border border-blue-200">
                             {cat.name}
                           </span>
                         ))
@@ -116,7 +116,7 @@ export default function AboutTab({
               {community.socialLinks && Object.keys(community.socialLinks).length > 0 && (
                 <div className="mt-4 pt-4 border-t border-slate-100">
                   <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-3 flex items-center gap-2">
-                    <Globe className="w-4 h-4 text-emerald-600" /> Mạng xã hội & liên hệ
+                    <Globe className="w-4 h-4 text-blue-600" /> Mạng xã hội & liên hệ
                   </h4>
                   <div className="flex flex-wrap gap-2">
                     {Object.entries(community.socialLinks).map(([key, val]) => {
@@ -161,7 +161,7 @@ export default function AboutTab({
       <div className="lg:col-span-4 space-y-4">
         <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4">
           <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-3 flex items-center gap-2 border-b pb-2.5">
-            <ImageIcon className="w-4.5 h-4.5 text-emerald-600" />
+            <ImageIcon className="w-4.5 h-4.5 text-blue-600" />
             Ảnh ({galleryImages.length})
           </h3>
 

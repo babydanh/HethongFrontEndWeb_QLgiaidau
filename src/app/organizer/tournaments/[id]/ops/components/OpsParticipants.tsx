@@ -149,20 +149,20 @@ export function OpsParticipants({
             <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">Tổng roster</p>
             <p className="mt-2 text-lg font-bold text-slate-900">{summary.total}</p>
           </div>
-          <div className="rounded-lg border border-emerald-100 bg-emerald-50 p-3">
-            <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-emerald-600">Đủ điều kiện đấu</p>
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+            <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-600">Đủ điều kiện đấu</p>
             <p className="mt-2 text-lg font-bold text-emerald-700">{summary.active}</p>
           </div>
           <div className="rounded-lg border border-rose-100 bg-rose-50 p-3">
             <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-rose-600">Chưa thanh toán</p>
             <p className="mt-2 text-lg font-bold text-rose-700">{summary.unpaid}</p>
           </div>
-          <div className="rounded-lg border border-orange-100 bg-orange-50 p-3">
-            <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-orange-600">Kỷ luật khác</p>
-            <p className="mt-2 text-lg font-bold text-orange-700">{summary.disciplined}</p>
-          </div>
           <div className="rounded-lg border border-amber-100 bg-amber-50 p-3">
-            <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-amber-600">Đã loại</p>
+            <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-amber-600">Kỷ luật khác</p>
+            <p className="mt-2 text-lg font-bold text-amber-700">{summary.disciplined}</p>
+          </div>
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+            <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-600">Đã loại</p>
             <p className="mt-2 text-lg font-bold text-amber-700">{summary.kicked}</p>
           </div>
         </div>
@@ -219,7 +219,7 @@ export function OpsParticipants({
                         </span>
                       </td>
                       <td className="py-4 pr-4">
-                        <span className={`text-xs font-bold ${participant.isPaid ? 'text-emerald-600' : 'text-amber-600'}`}>
+                        <span className={`text-xs font-bold ${participant.isPaid ? 'text-blue-600' : 'text-blue-600'}`}>
                           {participant.isPaid ? 'Đã thanh toán' : 'Chưa thanh toán'}
                         </span>
                       </td>

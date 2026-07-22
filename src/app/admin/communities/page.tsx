@@ -177,7 +177,7 @@ export default function AdminCommunitiesReview() {
       </div>
 
       {error && (
-        <div className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-700">
+        <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-rose-50 px-4 py-3 text-rose-700">
           <AlertCircle className="w-5 h-5 flex-shrink-0" />
           <span className="text-sm font-semibold">{error}</span>
         </div>
@@ -186,9 +186,9 @@ export default function AdminCommunitiesReview() {
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <StatCard label="Tổng số" value={stats.total} color="text-gray-800" />
-        <StatCard label="Hoạt động" value={stats.active} color="text-emerald-600" />
+        <StatCard label="Hoạt động" value={stats.active} color="text-blue-600" />
         <StatCard label="Chờ duyệt" value={stats.pending} color="text-amber-600" />
-        <StatCard label="Đã khoá" value={stats.rejected} color="text-red-600" />
+        <StatCard label="Đã khoá" value={stats.rejected} color="text-rose-600" />
       </div>
 
       {/* Search + Filter */}
@@ -347,7 +347,7 @@ export default function AdminCommunitiesReview() {
                   className="h-28 w-full resize-none rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700 outline-none placeholder:text-gray-400 focus:border-blue-500"
                 />
               </div>
-              {modalError && <p className="text-xs font-semibold text-red-500">{modalError}</p>}
+              {modalError && <p className="text-xs font-semibold text-rose-500">{modalError}</p>}
             </div>
 
             <div className="flex justify-end gap-3 border-t border-gray-100 bg-gray-50 px-5 py-4">

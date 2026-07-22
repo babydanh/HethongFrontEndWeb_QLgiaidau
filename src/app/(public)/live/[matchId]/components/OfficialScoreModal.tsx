@@ -109,7 +109,7 @@ export function OfficialScoreModal({
                     'inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-bold',
                     isSubmitting
                       ? 'bg-amber-50 text-amber-800'
-                      : 'bg-emerald-50 text-emerald-700',
+                      : 'bg-blue-50 text-blue-700',
                   )}
                 >
                   <TimerReset className="h-3.5 w-3.5" />

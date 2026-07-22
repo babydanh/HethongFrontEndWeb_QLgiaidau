@@ -333,7 +333,7 @@ export default function CreateSeriesPage() {
                     <button
                       type="button"
                       onClick={() => handleRemoveRank(index)}
-                      className="p-1 hover:bg-red-50 text-slate-300 hover:text-red-600 rounded-lg transition-colors"
+                      className="p-1 hover:bg-rose-50 text-slate-300 hover:text-rose-600 rounded-lg transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>

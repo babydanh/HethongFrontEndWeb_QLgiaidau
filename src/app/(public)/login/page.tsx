@@ -169,7 +169,7 @@ export default function LoginPage() {
       <div className="flex-1 flex flex-col items-center justify-center bg-slate-50 relative overflow-hidden">
         {/* Subtle decorative bg circles */}
         <div className="absolute top-0 right-0 w-80 h-80 bg-blue-50 rounded-full -translate-y-1/2 translate-x-1/2 opacity-70" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-50 rounded-full translate-y-1/2 -translate-x-1/2 opacity-70" />
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-50 rounded-full translate-y-1/2 -translate-x-1/2 opacity-70" />
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}

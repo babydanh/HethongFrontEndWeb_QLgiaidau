@@ -143,24 +143,24 @@ export function OperationsWorkspace({
       </div>
 
       {isDraft ? (
-        <div className="flex items-start gap-3 rounded-lg border border-sky-200 bg-sky-50 p-4 text-sm text-sky-950">
-          <FlaskConical className="mt-0.5 h-5 w-5 flex-shrink-0 text-sky-700" />
+        <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-950">
+          <FlaskConical className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-700" />
           <div>
             <p className="font-bold">Chế độ thử nghiệm Draft</p>
-            <p className="mt-1 font-medium text-sky-800">
+            <p className="mt-1 font-medium text-blue-800">
               Bạn có thể thử bracket, lịch, tỷ số và nghiệp vụ với {mockParticipantCount} VĐV/đội ảo. Khi công bố giải, hệ thống xóa toàn bộ participant mock và bracket thử trước khi nhận dữ liệu thi đấu thật.
             </p>
           </div>
         </div>
       ) : mockParticipantCount > 0 ? (
-        <div className="flex items-start gap-3 rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm font-semibold text-rose-900">
+        <div className="flex items-start gap-3 rounded-lg border border-slate-200 bg-rose-50 p-4 text-sm font-semibold text-rose-900">
           <ShieldAlert className="mt-0.5 h-5 w-5 flex-shrink-0" />
           Phát hiện {mockParticipantCount} participant mock ngoài trạng thái Draft. Cần dọn dữ liệu thử trước khi tiếp tục vận hành thật.
         </div>
       ) : null}
 
       {error ? (
-        <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-800">
+        <div className="flex items-start gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm font-semibold text-slate-700">
           <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0" />
           <span>{error}</span>
         </div>
@@ -169,8 +169,8 @@ export function OperationsWorkspace({
       <OpsOverview summary={summary} />
 
       <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
-          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-amber-600">Sẵn sàng gọi vào sân</p>
+        <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-600">Sẵn sàng gọi vào sân</p>
           <p className="mt-2 text-2xl font-bold text-amber-900">{readyToCall}</p>
           <p className="mt-1 text-xs font-medium text-amber-800">Trận đã có sân và trọng tài, có thể chuyển sang trạng thái thi đấu ngay.</p>
         </div>
@@ -184,10 +184,10 @@ export function OperationsWorkspace({
           <p className="mt-2 text-2xl font-bold text-slate-900">{overdueStarts}</p>
           <p className="mt-1 text-xs font-medium text-slate-600">Trận đã qua giờ dự kiến nhưng vẫn chưa bắt đầu.</p>
         </div>
-        <div className="rounded-lg border border-violet-200 bg-violet-50 p-4">
-          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-violet-700">Ngoại lệ & kỷ luật</p>
-          <p className="mt-2 text-2xl font-bold text-violet-950">{exceptionalMatchCount + penaltyCount}</p>
-          <p className="mt-1 text-xs font-medium text-violet-800">
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-700">Ngoại lệ & kỷ luật</p>
+          <p className="mt-2 text-2xl font-bold text-blue-950">{exceptionalMatchCount + penaltyCount}</p>
+          <p className="mt-1 text-xs font-medium text-blue-800">
             {exceptionalMatchCount} trận có quyết định/ngoại lệ · {penaltyCount} thẻ hoặc hình phạt.
           </p>
         </div>

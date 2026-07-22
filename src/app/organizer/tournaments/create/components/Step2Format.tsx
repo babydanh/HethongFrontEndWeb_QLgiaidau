@@ -165,7 +165,7 @@ export default function Step2Format() {
               );
             })}
           </div>
-          {errors.format && <p className="text-xs font-semibold text-red-500">{errors.format.message}</p>}
+          {errors.format && <p className="text-xs font-semibold text-rose-500">{errors.format.message}</p>}
         </div>
 
         <Input
@@ -181,7 +181,7 @@ export default function Step2Format() {
         </div>
 
         {isPickleballVariant && (
-          <div className="rounded-lg border border-emerald-100 bg-emerald-50 p-4">
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
             <p className="text-sm font-bold text-emerald-900">Chọn mode tính điểm Pickleball</p>
             <p className="mt-1 text-xs font-semibold text-emerald-700">
               `Rally` dễ vận hành và nhập tỷ số. `Side-out` chuẩn sâu hơn, chỉ bên giao bóng mới ghi điểm.

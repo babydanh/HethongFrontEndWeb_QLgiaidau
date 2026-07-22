@@ -380,7 +380,7 @@ export function BracketTab({
     if (!suggestion) return null;
     const isWarning = suggestion.variant === 'warning';
     return (
-      <div className={`rounded-lg border p-4 space-y-2 ${isWarning ? 'border-amber-200 bg-amber-50' : 'border-blue-200 bg-blue-50'}`}>
+      <div className={`rounded-lg border p-4 space-y-2 ${isWarning ? 'border-slate-200 bg-slate-50' : 'border-blue-200 bg-blue-50'}`}>
         <p className={`text-xs font-bold flex items-center gap-1.5 ${isWarning ? 'text-amber-800' : 'text-blue-700'}`}>
           <span className="text-base">{isWarning ? '⚠️' : '💡'}</span>
           {isWarning
@@ -419,7 +419,7 @@ export function BracketTab({
             </div>
 
             {isPickleballVariant && (
-              <div className="rounded-lg border border-emerald-100 bg-emerald-50 p-4">
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
                 <p className="text-xs font-bold uppercase tracking-[0.12em] text-emerald-700">Mode Pickleball</p>
                 <div className="mt-3 grid gap-3 md:grid-cols-2">
                   {([
@@ -597,7 +597,7 @@ export function BracketTab({
                 {renderSuggestionBox(getRRSuggestion(participantCount))}
                 <div>
                   <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
-                    <Settings className="w-5 h-5 text-indigo-600" />
+                    <Settings className="w-5 h-5 text-blue-600" />
                     Cấu hình Vòng Tròn (Round Robin)
                   </h3>
                   <p className="text-xs text-slate-500 mt-0.5 font-semibold">
@@ -675,7 +675,7 @@ export function BracketTab({
                 {renderSuggestionBox(getGSKSuggestion(participantCount))}
                 <div>
                   <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
-                    <LayoutGrid className="w-5 h-5 text-indigo-600" />
+                    <LayoutGrid className="w-5 h-5 text-blue-600" />
                     Cấu hình Vòng Bảng + Knockout
                   </h3>
                   <p className="text-xs text-slate-500 mt-0.5 font-semibold">
@@ -706,8 +706,8 @@ export function BracketTab({
                   </div>
                 </div>
 
-                <div className="rounded-lg border border-indigo-100 bg-indigo-50 p-4 space-y-3">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-indigo-700">Knockout</p>
+                <div className="rounded-lg border border-blue-100 bg-blue-50 p-4 space-y-3">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-blue-700">Knockout</p>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="flex flex-col gap-1.5">
                       <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Thể thức playoff</label>
@@ -725,11 +725,11 @@ export function BracketTab({
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-3 text-xs font-bold text-slate-700">
-                    <div className="rounded-lg bg-white px-3 py-2 border border-indigo-100">
+                    <div className="rounded-lg bg-white px-3 py-2 border border-blue-100">
                       <p className="text-[10px] uppercase text-slate-400">Qua vòng bảng</p>
                       <p>{gskAdvancingTotal} đội</p>
                     </div>
-                    <div className="rounded-lg bg-white px-3 py-2 border border-indigo-100">
+                    <div className="rounded-lg bg-white px-3 py-2 border border-blue-100">
                       <p className="text-[10px] uppercase text-slate-400">Bắt đầu knockout</p>
                       <p>{gskDisplayStartRoundLabel}</p>
                     </div>
@@ -884,7 +884,7 @@ export function BracketTab({
               <div className="space-y-4">
                 <div>
                   <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
-                    <Settings className="w-5 h-5 text-indigo-600" />
+                    <Settings className="w-5 h-5 text-blue-600" />
                     Cấu hình theo vòng đấu
                   </h3>
                   <p className="text-xs text-slate-500 mt-0.5 font-semibold">{presentation.roundConfigHint}</p>
@@ -950,10 +950,10 @@ export function BracketTab({
                   : 'Khởi tạo sơ đồ thi đấu'}
           </Button>
           {!selectedDivisionId && (
-            <p className="text-xs text-amber-600 font-semibold">⚠ Vui lòng chọn hình thức thi đấu trước</p>
+            <p className="text-xs text-blue-600 font-semibold">⚠ Vui lòng chọn hình thức thi đấu trước</p>
           )}
           {participants.length < 2 && selectedDivisionId && (
-            <p className="text-xs text-amber-600 font-semibold">⚠ Cần ít nhất 2 đội/VĐV để tạo sơ đồ</p>
+            <p className="text-xs text-blue-600 font-semibold">⚠ Cần ít nhất 2 đội/VĐV để tạo sơ đồ</p>
           )}
         </div>
       )}

@@ -91,7 +91,7 @@ export default function TeamsTab({ tournament, tournamentId, divisionId }: Props
                       </td>
                       <td className="px-6 py-4">
                         {team.isPaid ? (
-                          <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 rounded-md text-xs font-bold">
+                          <span className="bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-1 rounded-md text-xs font-bold">
                             Đã đóng phí
                           </span>
                         ) : (
@@ -135,7 +135,7 @@ export default function TeamsTab({ tournament, tournamentId, divisionId }: Props
                                         </p>
                                       ) : member.elo ? (
                                         <p className="text-xs text-slate-500 font-medium flex items-center gap-1 mt-0.5">
-                                          <Award className="w-3.5 h-3.5 text-amber-500" />
+                                          <Award className="w-3.5 h-3.5 text-blue-500" />
                                           <span>
                                             {member.elo.tierName} • <strong>{member.elo.eloPoints}</strong> {tournament.matchType === 'DOUBLES' || tournament.matchType === 'MIXED_DOUBLES' ? 'ELO CN' : 'ELO'}
                                           </span>

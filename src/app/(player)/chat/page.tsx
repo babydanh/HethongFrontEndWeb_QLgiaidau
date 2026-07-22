@@ -194,7 +194,7 @@ export default function ChatPage() {
                       ? activeConversation.participants.find(p => p.id !== user?.id)?.fullName 
                       : activeConversation.name || 'Nhóm Chat'}
                   </h3>
-                  <p className="text-xs text-emerald-500 font-medium">Đang trực tuyến</p>
+                  <p className="text-xs text-blue-500 font-medium">Đang trực tuyến</p>
                 </div>
               </div>
               <button className="w-10 h-10 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-500 transition-colors">

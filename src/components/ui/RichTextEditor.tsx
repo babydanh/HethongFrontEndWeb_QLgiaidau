@@ -363,7 +363,7 @@ export default function RichTextEditor({ value, onChange, placeholder, error, la
       >
         <div ref={containerRef} className="prose prose-slate max-w-none text-slate-800 text-sm editorjs-container" />
       </div>
-      {error && <p className="text-xs font-medium text-red-500">{error}</p>}
+      {error && <p className="text-xs font-medium text-rose-500">{error}</p>}
 
       <style jsx global>{`
         .editorjs-container .codex-editor__redactor {

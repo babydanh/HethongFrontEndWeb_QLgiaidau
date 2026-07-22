@@ -286,8 +286,8 @@ export default function JoinTeamPage({ params }: { params: Promise<{ id: string 
             {/* Constraints warnings */}
             <div className="space-y-3">
               {tournament.genderRestriction && (
-                <div className="flex items-start gap-2.5 bg-amber-50 text-amber-800 text-xs font-semibold p-3.5 rounded-lg border border-amber-200/50">
-                  <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                <div className="flex items-start gap-2.5 bg-slate-50 text-slate-700 text-xs font-semibold p-3.5 rounded-lg border border-slate-200/50">
+                  <AlertTriangle className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
                   <div>
                     <p className="font-bold text-amber-900">Yêu cầu giới tính</p>
                     <p className="mt-0.5 leading-relaxed text-slate-600 font-medium">
@@ -323,7 +323,7 @@ export default function JoinTeamPage({ params }: { params: Promise<{ id: string 
             ) : (
               <div className="space-y-3">
                 {!isAuthenticated && (
-                  <p className="text-xs text-amber-600 font-semibold text-center">
+                  <p className="text-xs text-blue-600 font-semibold text-center">
                     Bạn cần đăng nhập tài khoản để xác nhận chấp nhận lời mời.
                   </p>
                 )}

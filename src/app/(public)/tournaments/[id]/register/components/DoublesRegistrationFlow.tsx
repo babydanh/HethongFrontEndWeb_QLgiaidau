@@ -389,8 +389,8 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
             </p>
           </div>
 
-          <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded-lg p-4 flex gap-3 text-xs leading-relaxed font-semibold">
-            <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <div className="bg-slate-50 border border-slate-200 text-slate-800 rounded-lg p-4 flex gap-3 text-xs leading-relaxed font-semibold">
+            <AlertTriangle className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
             <div>
               <p className="font-bold text-amber-950">Lưu ý giới hạn thời gian (2 giờ)</p>
               <p className="mt-1">
@@ -435,7 +435,7 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
                 
                 {searchedPartner ? (
                   // Display verified partner profile
-                  <div className="flex items-center justify-between p-3.5 bg-emerald-50 border border-emerald-200 rounded-lg">
+                  <div className="flex items-center justify-between p-3.5 bg-slate-50 border border-slate-200 rounded-lg">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full border border-emerald-300 bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-sm uppercase overflow-hidden">
                         {searchedPartner.avatarUrl ? (
@@ -576,7 +576,7 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
                 variant="outline"
                 className="border-slate-205 hover:bg-slate-50 text-slate-700 shrink-0 flex items-center gap-1.5 font-bold h-11 mt-1"
               >
-                {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                {copied ? <Check className="w-4 h-4 text-blue-600" /> : <Copy className="w-4 h-4" />}
                 {copied ? 'Đã copy' : 'Sao chép'}
               </Button>
             </div>
@@ -712,7 +712,7 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="bg-emerald-50 border border-emerald-100 text-emerald-800 text-xs font-semibold p-4 rounded-lg text-center">
+              <div className="bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold p-4 rounded-lg text-center">
                 Giải đấu này miễn phí lệ phí tham gia. Bạn đã hoàn tất toàn bộ quy trình đăng ký giải đấu!
               </div>
 

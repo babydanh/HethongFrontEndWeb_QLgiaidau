@@ -33,14 +33,14 @@ export default function EloPeakCard({
     <div className="bg-white rounded-lg border border-slate-200/80 shadow-sm p-5 flex flex-col gap-4">
       {/* Header */}
       <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider pb-2 border-b border-slate-100 flex items-center gap-1.5">
-        <TrendingUp className="w-4 h-4 text-emerald-500" /> ELO Peak
+        <TrendingUp className="w-4 h-4 text-blue-500" /> ELO Peak
       </h3>
 
       {/* Peak & Current ELO */}
       <div className="grid grid-cols-2 gap-2">
         <div className="bg-slate-50 rounded-lg p-3 text-center">
           <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Cao nhất</span>
-          <span className="text-2xl font-bold text-emerald-600 leading-none mt-1 block">{peakElo}</span>
+          <span className="text-2xl font-bold text-blue-600 leading-none mt-1 block">{peakElo}</span>
           <span className="text-[9px] font-medium text-slate-500 mt-1 block">{peakTier.name}</span>
         </div>
         <div className="bg-slate-50 rounded-lg p-3 text-center">
@@ -52,7 +52,7 @@ export default function EloPeakCard({
 
       {/* Gap from peak */}
       {peakElo > eloPoints && (
-        <div className="flex items-center justify-center gap-1 text-[10px] font-semibold text-amber-600 bg-amber-50 py-1.5 px-3 rounded-lg">
+        <div className="flex items-center justify-center gap-1 text-[10px] font-semibold text-blue-600 bg-slate-50 py-1.5 px-3 rounded-lg">
           <TrendingDown className="w-3 h-3" />
           Cách đỉnh {peakElo - eloPoints} ELO
         </div>
@@ -81,7 +81,7 @@ export default function EloPeakCard({
         </div>
       ) : (
         <div className="text-center py-2">
-          <span className="text-[10px] font-semibold text-amber-600 bg-amber-50 px-3 py-1.5 rounded-lg inline-block">
+          <span className="text-[10px] font-semibold text-blue-600 bg-slate-50 px-3 py-1.5 rounded-lg inline-block">
             👑 Đã đạt đỉnh — Tier S
           </span>
         </div>
@@ -93,19 +93,19 @@ export default function EloPeakCard({
           className={cn(
             'flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold border',
             hasShield
-              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-              : 'bg-red-50 text-red-500 border-red-200'
+              ? 'bg-blue-50 text-blue-700 border-blue-200'
+              : 'bg-rose-50 text-rose-500 border-slate-200'
           )}
         >
           {hasShield ? (
             <>
-              <ShieldCheck className="w-4 h-4 text-emerald-500" />
+              <ShieldCheck className="w-4 h-4 text-blue-500" />
               <span>🛡️ Khiên bảo vệ: <span className="text-emerald-700">Còn nguyên</span></span>
             </>
           ) : (
             <>
-              <Shield className="w-4 h-4 text-red-400" />
-              <span>🛡️ Khiên bảo vệ: <span className="text-red-500">Đã vỡ</span></span>
+              <Shield className="w-4 h-4 text-rose-400" />
+              <span>🛡️ Khiên bảo vệ: <span className="text-rose-500">Đã vỡ</span></span>
             </>
           )}
           <span className="text-[9px] font-medium ml-auto opacity-70">

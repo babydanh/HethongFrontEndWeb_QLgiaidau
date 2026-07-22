@@ -153,7 +153,7 @@ export function MatchCard({
             match.isBye ? (
               <span className="text-blue-600 font-bold uppercase tracking-wider text-[9px]">Vô thẳng</span>
             ) : (
-              <span className="flex items-center gap-1 text-emerald-600 font-bold">
+              <span className="flex items-center gap-1 text-blue-600 font-bold">
                 <CheckCircle className="w-3 h-3" /> Đã kết thúc
               </span>
             )
@@ -293,7 +293,7 @@ function RowSide({
               'text-[10px] font-bold w-6 h-6 flex items-center justify-center rounded-md ' +
               (val
                 ? won
-                  ? 'bg-emerald-50 text-emerald-700 font-bold'
+                  ? 'bg-blue-50 text-blue-700 font-bold'
                   : 'bg-slate-50 text-slate-700 font-bold'
                 : 'text-slate-300 font-medium')
             }>

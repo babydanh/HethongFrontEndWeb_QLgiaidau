@@ -81,7 +81,7 @@ function VerifyEmailContent() {
 
         {status === 'success' && (
           <div className="flex flex-col items-center py-6">
-            <CheckCircle className="w-14 h-14 text-emerald-500 mb-4" />
+            <CheckCircle className="w-14 h-14 text-blue-500 mb-4" />
             <h2 className="text-lg font-bold text-slate-900 tracking-tight">Xác minh thành công!</h2>
             <p className="text-xs text-slate-500 mt-2 px-4 leading-relaxed">
               Email của bạn đã được xác thực thành công. Bây giờ bạn có thể tham gia đầy đủ các giải đấu của VNDC Sport.

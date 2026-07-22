@@ -170,7 +170,7 @@ export default function AdminTransactionsList() {
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center gap-3">
+        <div className="bg-rose-50 border border-slate-200 text-rose-700 px-4 py-3 rounded-lg flex items-center gap-3">
           <AlertCircle className="w-5 h-5 flex-shrink-0" />
           <span className="text-sm font-semibold">{error}</span>
         </div>
@@ -294,7 +294,7 @@ export default function AdminTransactionsList() {
                     </td>
 
                     {/* Platform Fee */}
-                    <td className="px-6 py-4 text-red-500 font-semibold">
+                    <td className="px-6 py-4 text-rose-500 font-semibold">
                       {item.platformFeeAmount ? formatCurrency(item.platformFeeAmount) : '—'}
                     </td>
 
@@ -306,7 +306,7 @@ export default function AdminTransactionsList() {
                     {/* Status Badge */}
                     <td className="px-6 py-4">
                       {item.refundStatus === 'PENDING_REFUND' ? (
-                        <span className="inline-block text-[9px] font-bold px-2 py-0.5 rounded-full uppercase border bg-amber-50 text-amber-600 border-amber-200">
+                        <span className="inline-block text-[9px] font-bold px-2 py-0.5 rounded-full uppercase border bg-slate-100 text-slate-600 border-slate-200">
                           Chờ hoàn tiền
                         </span>
                       ) : item.refundStatus === 'REFUNDED' ? (
@@ -320,7 +320,7 @@ export default function AdminTransactionsList() {
                             : item.status === 'PENDING'
                             ? 'bg-amber-50 text-amber-600 border-amber-200'
                             : item.status === 'FAILED'
-                            ? 'bg-red-50 text-red-600 border-red-200'
+                            ? 'bg-rose-50 text-rose-600 border-slate-200'
                             : 'bg-gray-50 text-gray-500 border-gray-200'
                         }`}>
                           {item.status === 'COMPLETED'
@@ -351,7 +351,7 @@ export default function AdminTransactionsList() {
                         {item.refundStatus === 'PENDING_REFUND' && (
                           <button
                             onClick={(e) => { e.stopPropagation(); handleOpenRefundModal(item); }}
-                            className="px-2.5 py-1 bg-amber-500 hover:bg-amber-400 text-white font-bold text-[10px] rounded-lg transition-all active:scale-95 cursor-pointer"
+                            className="px-2.5 py-1 bg-slate-500 hover:bg-amber-400 text-white font-bold text-[10px] rounded-lg transition-all active:scale-95 cursor-pointer"
                           >
                             Xử lý hoàn
                           </button>
@@ -369,7 +369,7 @@ export default function AdminTransactionsList() {
             <span>Hiển thị {filteredTransactions.length} trên tổng số {transactions.length} giao dịch</span>
             <span className="text-gray-500 text-xs">
               Thành công:{' '}
-              <span className="text-emerald-600 font-bold text-sm">
+              <span className="text-blue-600 font-bold text-sm">
                 {formatCurrency(
                   filteredTransactions
                     .filter(t => t.status === 'COMPLETED')
@@ -454,14 +454,14 @@ export default function AdminTransactionsList() {
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-500">Phí sàn (5%)</span>
-                  <span className="text-sm font-bold text-red-500">
+                  <span className="text-sm font-bold text-rose-500">
                     {selectedPayment.platformFeeAmount ? `-${formatCurrency(selectedPayment.platformFeeAmount)}` : '—'}
                   </span>
                 </div>
                 <div className="h-px bg-gray-200" />
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-bold text-gray-700">Người nhận (BTC)</span>
-                  <span className="text-sm font-bold text-emerald-600">
+                  <span className="text-sm font-bold text-blue-600">
                     {selectedPayment.platformFeeAmount
                       ? formatCurrency(parseFloat(selectedPayment.amount) - parseFloat(selectedPayment.platformFeeAmount))
                       : '—'}
@@ -473,21 +473,21 @@ export default function AdminTransactionsList() {
               {selectedPayment.refundStatus && (
                 <>
                   <div className="h-px bg-gray-100" />
-                  <div className="bg-amber-50 rounded-lg p-4 space-y-2">
+                  <div className="bg-slate-50 rounded-lg p-4 space-y-2">
                     <p className="text-[10px] font-bold uppercase tracking-wider text-amber-700">Thông tin hoàn tiền</p>
                     <div className="flex justify-between text-sm">
-                      <span className="text-amber-600">Trạng thái</span>
+                      <span className="text-blue-600">Trạng thái</span>
                       <span className="font-bold text-amber-700">{selectedPayment.refundStatus === 'REFUNDED' ? 'Đã hoàn' : 'Chờ hoàn'}</span>
                     </div>
                     {selectedPayment.refundBankName && (
                       <div className="flex justify-between text-sm">
-                        <span className="text-amber-600">Ngân hàng</span>
+                        <span className="text-blue-600">Ngân hàng</span>
                         <span className="font-bold text-amber-700">{selectedPayment.refundBankName}</span>
                       </div>
                     )}
                     {selectedPayment.refundedAmount && (
                       <div className="flex justify-between text-sm">
-                        <span className="text-amber-600">Số tiền hoàn</span>
+                        <span className="text-blue-600">Số tiền hoàn</span>
                         <span className="font-bold text-amber-700">{formatCurrency(selectedPayment.refundedAmount)}</span>
                       </div>
                     )}
@@ -506,7 +506,7 @@ export default function AdminTransactionsList() {
               {selectedPayment.refundStatus === 'PENDING_REFUND' && (
                 <button
                   onClick={() => { const p = selectedPayment; setSelectedPayment(null); handleOpenRefundModal(p); }}
-                  className="px-4 py-2 bg-amber-500 text-white text-xs font-bold rounded-lg hover:bg-amber-400 transition-all"
+                  className="px-4 py-2 bg-slate-500 text-white text-xs font-bold rounded-lg hover:bg-amber-400 transition-all"
                 >
                   Xử lý hoàn tiền
                 </button>
@@ -528,7 +528,7 @@ export default function AdminTransactionsList() {
             </div>
 
             <div className="p-6 space-y-5">
-              <div className="bg-amber-50 border border-amber-200 text-amber-700 p-4 rounded-lg text-xs leading-relaxed font-semibold">
+              <div className="bg-slate-50 border border-slate-200 text-slate-600 p-4 rounded-lg text-xs leading-relaxed font-semibold">
                 Quét mã VietQR bằng ứng dụng Ngân hàng để chuyển khoản hoàn trả lệ phí cho VĐV. Sau khi chuyển khoản thành công, hãy bấm xác nhận để cập nhật hệ thống.
               </div>
 
@@ -553,7 +553,7 @@ export default function AdminTransactionsList() {
                 </div>
                 <div className="flex justify-between border-t border-gray-200 pt-2 mt-2">
                   <span className="text-gray-500 font-bold">Số tiền hoàn:</span>
-                  <span className="font-bold text-red-500 text-sm">{formatCurrency(selectedRefundPayment.amount)}</span>
+                  <span className="font-bold text-rose-500 text-sm">{formatCurrency(selectedRefundPayment.amount)}</span>
                 </div>
               </div>
 
@@ -574,7 +574,7 @@ export default function AdminTransactionsList() {
               <button onClick={() => setSelectedRefundPayment(null)} className="px-4 py-2 bg-white hover:bg-gray-50 border border-gray-200 text-gray-600 text-xs font-bold rounded-lg transition-all">
                 Hủy bỏ
               </button>
-              <button disabled={submittingRefund} onClick={handleConfirmRefund} className="px-5 py-2 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-white text-xs font-bold rounded-lg transition-all shadow-sm active:scale-95">
+              <button disabled={submittingRefund} onClick={handleConfirmRefund} className="px-5 py-2 bg-slate-500 hover:bg-emerald-400 disabled:opacity-50 text-white text-xs font-bold rounded-lg transition-all shadow-sm active:scale-95">
                 {submittingRefund ? 'Đang cập nhật...' : 'Đã chuyển khoản thành công'}
               </button>
             </div>

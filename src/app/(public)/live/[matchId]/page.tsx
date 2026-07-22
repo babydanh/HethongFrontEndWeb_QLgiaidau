@@ -953,8 +953,8 @@ export default function LiveMatchPage({ params }: Props) {
               )}
               {match.status === 'ONGOING' ? 'Trực tiếp' : match.status === 'COMPLETED' ? 'Kết thúc' : 'Sắp diễn ra'}
             </span>
-            <span className="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-100 px-3 py-1 rounded-full flex items-center gap-1">
-              <Clock className="w-3.5 h-3.5 text-amber-500" />
+            <span className="text-xs font-bold text-slate-600 bg-slate-50 border border-slate-200 px-3 py-1 rounded-full flex items-center gap-1">
+              <Clock className="w-3.5 h-3.5 text-blue-500" />
               <span>Vòng {match.roundNumber}</span>
             </span>
 
@@ -962,8 +962,8 @@ export default function LiveMatchPage({ params }: Props) {
               <Eye className="w-3.5 h-3.5 text-blue-500 animate-pulse" />
               <span>{formatCompact(viewerCount)} đang xem</span>
             </span>
-            <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 px-3 py-1 rounded-full flex items-center gap-1">
-              <Activity className="w-3.5 h-3.5 text-emerald-500" />
+            <span className="text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200 px-3 py-1 rounded-full flex items-center gap-1">
+              <Activity className="w-3.5 h-3.5 text-blue-500" />
               <span>Môn: {scorePresentation.sportLabel}</span>
             </span>
           </div>
@@ -984,9 +984,9 @@ export default function LiveMatchPage({ params }: Props) {
             />
             <Link 
               href={`/tournaments/${match.tournamentId}`} 
-              className="flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-indigo-600 hover:border-indigo-200 transition-all bg-white border border-slate-200 px-3.5 h-9 rounded-lg shadow-xs shrink-0"
+              className="flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-blue-600 hover:border-blue-200 transition-all bg-white border border-slate-200 px-3.5 h-9 rounded-lg shadow-xs shrink-0"
             >
-              <Trophy className="w-3.5 h-3.5 text-indigo-500" />
+              <Trophy className="w-3.5 h-3.5 text-blue-500" />
               <span>{match.tournament?.name || 'Quay lại giải đấu'}</span>
             </Link>
           </div>
@@ -1049,7 +1049,7 @@ export default function LiveMatchPage({ params }: Props) {
                   </>
                 ) : match.status === 'COMPLETED' ? (
                   <>
-                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400">
                       <Play className="w-7 h-7 fill-current ml-0.5" />
                     </div>
                     <h4 className="text-white font-bold text-base tracking-tight">Video Phát Lại (Replay)</h4>
@@ -1315,7 +1315,7 @@ export default function LiveMatchPage({ params }: Props) {
             ) : null}
 
             {scoreOverride?.reason ? (
-              <div className="rounded-lg border border-violet-200 bg-violet-50 px-4 py-3 text-sm font-semibold text-violet-900">
+              <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-900">
                 Trận này đang dùng chế độ ngoại lệ của trọng tài/BTC: {scoreOverride.reason}
                 {scoreOverride.decidedAt
                   ? ` • ${new Date(scoreOverride.decidedAt).toLocaleString('vi-VN')}`

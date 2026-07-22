@@ -33,7 +33,7 @@ export function MapView({ lat, lng, zoom = 14, className = '', popupText }: MapV
         <NavigationControl position="bottom-right" />
         <Marker longitude={lng} latitude={lat} anchor="bottom">
           <div className="relative group cursor-pointer">
-            <MapPin className="w-8 h-8 text-emerald-600 fill-white drop-shadow-md" />
+            <MapPin className="w-8 h-8 text-blue-600 fill-white drop-shadow-md" />
             {popupText && (
               <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-slate-900 text-white text-xs font-medium px-3 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
                 {popupText}

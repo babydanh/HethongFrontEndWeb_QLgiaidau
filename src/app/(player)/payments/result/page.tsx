@@ -192,7 +192,7 @@ function ResultContent() {
 
           {status === 'FAILED' && (
             <div className="flex flex-col items-center">
-              <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-4">
+              <div className="w-16 h-16 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mb-4">
                 <XCircle className="w-10 h-10" />
               </div>
               <h1 className="text-2xl font-bold text-slate-900 mb-2">Thất Bại</h1>

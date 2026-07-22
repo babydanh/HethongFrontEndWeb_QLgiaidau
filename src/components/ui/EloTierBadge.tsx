@@ -33,28 +33,28 @@ export function getEloTier(elo: number, tierName?: string) {
   if (elo >= 1500) {
     return {
       name: 'High Tier B',
-      color: 'bg-violet-500/15 text-violet-650 border-violet-550/30 font-semibold',
+      color: 'bg-blue-500/15 text-blue-650 border-blue-550/30 font-semibold',
       icon: '⚡',
     };
   }
   if (elo >= 1400) {
     return {
       name: 'Low Tier B',
-      color: 'bg-violet-500/10 text-violet-550 border-violet-500/20',
+      color: 'bg-blue-500/10 text-blue-550 border-blue-500/20',
       icon: '🥇',
     };
   }
   if (elo >= 1300) {
     return {
       name: 'High Tier C',
-      color: 'bg-teal-500/15 text-teal-650 border-teal-500/30 font-semibold',
+      color: 'bg-emerald-500/15 text-emerald-650 border-emerald-500/30 font-semibold',
       icon: '💎',
     };
   }
   if (elo >= 1200) {
     return {
       name: 'Low Tier C',
-      color: 'bg-cyan-500/10 text-cyan-650 border-cyan-500/20',
+      color: 'bg-blue-500/10 text-blue-650 border-blue-500/20',
       icon: '💠',
     };
   }
@@ -67,7 +67,7 @@ export function getEloTier(elo: number, tierName?: string) {
   }
   return {
     name: 'Low Tier D',
-    color: 'bg-orange-700/10 text-orange-650 border-orange-700/20',
+    color: 'bg-amber-700/10 text-amber-650 border-amber-700/20',
     icon: '🥉',
   };
 }

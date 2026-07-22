@@ -104,7 +104,7 @@ export function PenaltyPanel({
                         <p className="mt-1 text-[11px] font-semibold text-slate-500">{item.effectLabel}</p>
                       </div>
                       {item.cardLabel ? (
-                        <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-amber-700">
+                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-600">
                           {item.cardLabel}
                         </span>
                       ) : null}
@@ -178,7 +178,7 @@ export function PenaltyPanel({
       </div>
 
       {schema.cardStyle === 'yellow-red' ? (
-        <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-semibold text-amber-900">
+        <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold text-slate-800">
           Môn này có lớp hiển thị thẻ riêng. UI sẽ cho thấy thẻ vàng/thẻ đỏ rõ ràng, nhưng quyết định cuối vẫn thuộc trọng tài/BTC.
         </div>
       ) : (

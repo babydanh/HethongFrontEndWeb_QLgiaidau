@@ -15,7 +15,7 @@ const getCategoryStyles = (name: string) => {
   const normalized = name.toLowerCase();
   if (normalized.includes("pickleball")) {
     return {
-      bg: "bg-emerald-50/80 text-emerald-700 border-emerald-200/30",
+      bg: "bg-blue-50/80 text-blue-700 border-blue-200/30",
       dot: "bg-emerald-500"
     };
   }
@@ -27,13 +27,13 @@ const getCategoryStyles = (name: string) => {
   }
   if (normalized.includes("badminton") || normalized.includes("cầu lông")) {
     return {
-      bg: "bg-sky-50/80 text-sky-700 border-sky-200/30",
-      dot: "bg-sky-500"
+      bg: "bg-blue-50/80 text-blue-700 border-blue-200/30",
+      dot: "bg-blue-500"
     };
   }
   if (normalized.includes("table tennis") || normalized.includes("bóng bàn")) {
     return {
-      bg: "bg-rose-50/80 text-rose-700 border-rose-200/30",
+      bg: "bg-rose-50/80 text-rose-700 border-slate-200/30",
       dot: "bg-rose-500"
     };
   }
@@ -166,7 +166,7 @@ export default function CommunitiesPage() {
       {/* Grid of Community Cards */}
       {isLoading ? (
         <div className="py-24 flex flex-col items-center justify-center">
-          <Loader2 className="w-10 h-10 animate-spin text-emerald-600 mb-3" />
+          <Loader2 className="w-10 h-10 animate-spin text-blue-600 mb-3" />
           <p className="text-xs text-slate-450 font-bold animate-pulse uppercase tracking-wider">Đang tải danh sách câu lạc bộ...</p>
         </div>
       ) : communities.length === 0 ? (
@@ -215,7 +215,7 @@ export default function CommunitiesPage() {
 
                   {/* Floating Location Badge */}
                   <div className="absolute top-3 right-3 z-10 flex items-center gap-1 px-2.5 py-0.5 bg-white/95 backdrop-blur-md rounded-full shadow-sm text-slate-800 border border-white/20">
-                    <MapPin className="w-2.5 h-2.5 text-emerald-500 fill-emerald-500/20" />
+                    <MapPin className="w-2.5 h-2.5 text-blue-500 fill-emerald-500/20" />
                     <span className="text-[8px] font-bold tracking-wider uppercase">{provinceName}</span>
                   </div>
                 </div>
@@ -236,11 +236,11 @@ export default function CommunitiesPage() {
                     {/* Text info next to logo */}
                     <div className="flex-grow min-w-0">
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <h4 className="text-sm font-bold text-slate-900 group-hover:text-emerald-600 transition-colors line-clamp-1 leading-snug">
+                        <h4 className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1 leading-snug">
                           {community.name}
                         </h4>
                         {community.status === 'APPROVED' && (
-                          <Star className="w-3 h-3 fill-amber-500 text-amber-500 shrink-0" />
+                          <Star className="w-3 h-3 fill-amber-500 text-blue-500 shrink-0" />
                         )}
                       </div>
 
@@ -296,7 +296,7 @@ export default function CommunitiesPage() {
                       </div>
                     ) : isJoined ? (
                       <div 
-                        className="w-full text-[10px] font-bold border border-emerald-600/20 bg-emerald-50 text-emerald-700 py-2 rounded-lg transition-all flex items-center justify-center h-8"
+                        className="w-full text-[10px] font-bold border border-emerald-600/20 bg-slate-50 text-slate-600 py-2 rounded-lg transition-all flex items-center justify-center h-8"
                       >
                         Đã tham gia
                       </div>
@@ -311,7 +311,7 @@ export default function CommunitiesPage() {
                           }
                           setSelectedCommunity(community);
                         }}
-                        className="w-full text-[10px] font-bold bg-emerald-600 hover:bg-emerald-500 text-white py-2 rounded-lg transition-all h-8 flex items-center justify-center gap-1 shadow-sm active:scale-[0.98]"
+                        className="w-full text-[10px] font-bold bg-emerald-600 hover:bg-slate-500 text-white py-2 rounded-lg transition-all h-8 flex items-center justify-center gap-1 shadow-sm active:scale-[0.98]"
                       >
                         {community.joinMode === 'APPROVAL' ? 'Xin gia nhập' : 'Tham gia ngay'}
                       </button>

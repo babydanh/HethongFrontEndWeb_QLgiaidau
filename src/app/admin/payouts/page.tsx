@@ -175,7 +175,7 @@ export default function AdminPayoutsReview() {
       </div>
 
       {error && (
-        <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-lg flex items-center gap-3">
+        <div className="bg-rose-50 border border-slate-200 text-rose-700 px-4 py-3 rounded-lg flex items-center gap-3">
           <AlertCircle className="w-5 h-5 flex-shrink-0" />
           <span className="text-sm font-semibold">{error}</span>
         </div>
@@ -250,7 +250,7 @@ export default function AdminPayoutsReview() {
                       ? 'bg-blue-50 text-blue-600 border-blue-200'
                       : request.status === 'PAID'
                       ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
-                      : 'bg-rose-50 text-rose-600 border-rose-200'
+                      : 'bg-rose-50 text-rose-600 border-slate-200'
                   }`}>
                     {PAYOUT_STATUS_LABELS[request.status]}
                   </span>
@@ -272,7 +272,7 @@ export default function AdminPayoutsReview() {
                   </div>
                   <div className="flex justify-between text-sm pt-2 border-t border-slate-200">
                     <span className="font-bold text-slate-800">Thực nhận:</span>
-                    <span className="font-bold text-emerald-600">{formatCurrency(request.amountRequested)}</span>
+                    <span className="font-bold text-blue-600">{formatCurrency(request.amountRequested)}</span>
                   </div>
                 </div>
 
@@ -378,7 +378,7 @@ export default function AdminPayoutsReview() {
                   <p><span className="text-slate-500">Người nhận:</span> <span className="font-semibold text-slate-800">{reviewingPayout.bankAccountName}</span></p>
                   <p><span className="text-slate-500">Ngân hàng:</span> <span className="font-semibold text-slate-800">{reviewingPayout.bankName} - {reviewingPayout.bankAccountNumber}</span></p>
                   <p className="pt-1 border-t border-slate-200 mt-1">
-                    <span className="text-slate-500">Số tiền chuyển:</span> <span className="font-bold text-emerald-600">{formatCurrency(reviewingPayout.amountRequested)}</span>
+                    <span className="text-slate-500">Số tiền chuyển:</span> <span className="font-bold text-blue-600">{formatCurrency(reviewingPayout.amountRequested)}</span>
                   </p>
                 </div>
 

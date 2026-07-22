@@ -127,11 +127,11 @@ export default function ClubChallengesPage({ params }: { params: Promise<{ id: s
       case 'PENDING':
         return <Badge className="bg-amber-50 text-amber-700 border-amber-200">Đang chờ</Badge>;
       case 'ACCEPTED':
-        return <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200">Chấp nhận</Badge>;
+        return <Badge className="bg-blue-50 text-blue-700 border-blue-200">Chấp nhận</Badge>;
       case 'REJECTED':
         return <Badge className="bg-slate-100 text-slate-700 border-slate-200">Từ chối</Badge>;
       case 'CANCELLED':
-        return <Badge className="bg-red-50 text-red-700 border-red-200">Đã hủy</Badge>;
+        return <Badge className="bg-rose-50 text-rose-700 border-rose-200">Đã hủy</Badge>;
       default:
         return <Badge>{status}</Badge>;
     }
@@ -171,7 +171,7 @@ export default function ClubChallengesPage({ params }: { params: Promise<{ id: s
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-2xl md:text-3xl font-bold text-slate-900 flex items-center gap-2">
-            <ArrowRightLeft className="w-7 h-7 text-emerald-600" /> Thách Đấu / Giao Lưu CLB
+            <ArrowRightLeft className="w-7 h-7 text-blue-600" /> Thách Đấu / Giao Lưu CLB
           </h1>
           <p className="text-slate-500 mt-1 font-medium">
             Gửi lời mời thách đấu giao hữu với các câu lạc bộ khác trên hệ thống. Tự động sinh giải đấu khi được đồng ý!
@@ -249,7 +249,7 @@ export default function ClubChallengesPage({ params }: { params: Promise<{ id: s
                           <Button
                             size="sm"
                             onClick={() => handleRespond(c.id, 'REJECTED')}
-                            className="border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 font-bold text-xs px-4"
+                            className="border-rose-200 text-rose-600 hover:bg-rose-50 hover:border-rose-300 font-bold text-xs px-4"
                           >
                             Từ chối
                           </Button>
@@ -395,7 +395,7 @@ export default function ClubChallengesPage({ params }: { params: Promise<{ id: s
               </ModalTitle>
             </ModalHeader>
             <div className="space-y-4 mt-4">
-              <div className="bg-emerald-50 border border-emerald-150 p-3 rounded-lg text-emerald-950 text-xs font-semibold leading-relaxed">
+              <div className="bg-slate-50 border border-emerald-150 p-3 rounded-lg text-emerald-950 text-xs font-semibold leading-relaxed">
                 Lời mời thách đấu khi được chấp thuận sẽ tự động sinh ra một giải đấu giao hữu nội bộ, làm sân chơi chung cho thành viên cả 2 câu lạc bộ.
               </div>
 

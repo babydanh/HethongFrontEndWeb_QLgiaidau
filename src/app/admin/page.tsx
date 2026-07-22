@@ -266,7 +266,7 @@ export default function AdminDashboard() {
 
   if (error) {
     return (
-      <div className="bg-rose-50 border border-rose-200 rounded-lg p-6 text-center text-rose-700">
+      <div className="bg-rose-50 border border-slate-200 rounded-lg p-6 text-center text-rose-700">
         <p className="font-semibold">{error}</p>
         <button 
           onClick={() => window.location.reload()}
@@ -308,42 +308,42 @@ export default function AdminDashboard() {
         <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg p-5 shadow-sm">
           <div className="flex items-start gap-4">
             <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
-              <span className="text-amber-600 text-lg font-bold">
+              <span className="text-blue-600 text-lg font-bold">
                 {pendingCounts.communities + pendingCounts.verifications + pendingCounts.payouts + pendingCounts.reports + pendingCounts.changeRequests}
               </span>
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                <div className="w-2 h-2 rounded-full bg-slate-1000 animate-pulse" />
                 <h3 className="text-sm font-bold text-amber-900 uppercase tracking-wide">Có việc cần xử lý ngay</h3>
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
                 {pendingCounts.communities > 0 && (
-                  <a href="/admin/communities" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-lg border border-amber-200 text-xs font-bold text-amber-700 hover:bg-amber-50 transition-all">
+                  <a href="/admin/communities" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-lg border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all">
                     <Building className="w-3.5 h-3.5" />
                     CLB ({pendingCounts.communities})
                   </a>
                 )}
                 {pendingCounts.verifications > 0 && (
-                  <a href="/admin/verification" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-lg border border-amber-200 text-xs font-bold text-amber-700 hover:bg-amber-50 transition-all">
+                  <a href="/admin/verification" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-lg border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all">
                     <ShieldAlert className="w-3.5 h-3.5" />
                     Sao uy tín ({pendingCounts.verifications})
                   </a>
                 )}
                 {pendingCounts.payouts > 0 && (
-                  <a href="/admin/payouts" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-lg border border-amber-200 text-xs font-bold text-amber-700 hover:bg-amber-50 transition-all">
+                  <a href="/admin/payouts" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-lg border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all">
                     <CreditCard className="w-3.5 h-3.5" />
                     Rút tiền ({pendingCounts.payouts})
                   </a>
                 )}
                 {pendingCounts.reports > 0 && (
-                  <a href="/admin/reports" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-lg border border-amber-200 text-xs font-bold text-amber-700 hover:bg-amber-50 transition-all">
+                  <a href="/admin/reports" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-lg border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all">
                     <FileWarning className="w-3.5 h-3.5" />
                     Báo cáo ({pendingCounts.reports})
                   </a>
                 )}
                 {pendingCounts.changeRequests > 0 && (
-                  <a href="/admin/change-requests" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-lg border border-amber-200 text-xs font-bold text-amber-700 hover:bg-amber-50 transition-all">
+                  <a href="/admin/change-requests" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-lg border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all">
                     <Users className="w-3.5 h-3.5" />
                     Đổi TT ({pendingCounts.changeRequests})
                   </a>
@@ -372,7 +372,7 @@ export default function AdminDashboard() {
                 {card.change !== undefined && (
                   <span className={`text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1 ${
                     card.change > 0
-                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
+                      ? 'bg-blue-50 text-blue-700 border border-blue-200'
                       : card.change < 0
                         ? 'bg-rose-50 text-rose-700 border border-rose-100'
                         : 'bg-slate-100 text-slate-600'
@@ -406,7 +406,7 @@ export default function AdminDashboard() {
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6 pb-6 border-b border-slate-100">
           <div className="space-y-1">
             <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-emerald-600" />
+              <TrendingUp className="w-5 h-5 text-blue-600" />
               Phân Tích Doanh Thu
             </h3>
             <p className="text-xs text-slate-500">

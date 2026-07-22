@@ -78,7 +78,7 @@ export default function RankingsTab({ communityId, categories }: RankingsTabProp
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
         <div>
           <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-            <Trophy className="w-5 h-5 text-amber-500" /> Bảng xếp hạng ELO nội bộ
+            <Trophy className="w-5 h-5 text-blue-500" /> Bảng xếp hạng ELO nội bộ
           </h3>
           <p className="text-xs text-slate-450 mt-0.5">
             Xếp hạng được tính dựa trên kết quả thi đấu các giải đấu của CLB.
@@ -107,7 +107,7 @@ export default function RankingsTab({ communityId, categories }: RankingsTabProp
 
       {isLoading ? (
         <div className="py-24 flex flex-col items-center justify-center bg-white rounded-lg border border-slate-200/80 shadow-sm">
-          <Loader2 className="w-10 h-10 animate-spin text-emerald-600 mb-3" />
+          <Loader2 className="w-10 h-10 animate-spin text-blue-600 mb-3" />
           <p className="text-sm text-slate-450 font-bold animate-pulse">
             Đang tải dữ liệu xếp hạng...
           </p>
@@ -186,13 +186,13 @@ export default function RankingsTab({ communityId, categories }: RankingsTabProp
                     <p className="font-bold text-slate-900 text-base truncate max-w-full">
                       {podiumOrder[1].user?.fullName}
                     </p>
-                    <p className="text-2xl font-bold text-amber-600 mt-1">
-                      {podiumOrder[1].eloPoints} <span className="text-xs text-amber-500 font-bold">ELO</span>
+                    <p className="text-2xl font-bold text-blue-600 mt-1">
+                      {podiumOrder[1].eloPoints} <span className="text-xs text-blue-500 font-bold">ELO</span>
                     </p>
                     <div className="mt-3 flex items-center gap-3 text-xs text-slate-500 font-bold border-t border-amber-100 w-full pt-2.5 justify-center">
                       <span>Thắng: {podiumOrder[1].matchesWon}</span>
-                      <span className="text-amber-600 flex items-center gap-0.5">
-                        <Flame className="w-3.5 h-3.5 fill-amber-500 text-amber-500 shrink-0" />
+                      <span className="text-blue-600 flex items-center gap-0.5">
+                        <Flame className="w-3.5 h-3.5 fill-amber-500 text-blue-500 shrink-0" />
                         {podiumOrder[1].winStreak}
                       </span>
                     </div>
@@ -206,7 +206,7 @@ export default function RankingsTab({ communityId, categories }: RankingsTabProp
               <div className="order-3 md:order-3 flex flex-col items-center">
                 {podiumOrder[2] ? (
                   <div className="w-full bg-white border border-slate-200/80 rounded-lg p-5 shadow-sm hover:shadow-md transition-all text-center flex flex-col items-center relative md:h-48 justify-center">
-                    <div className="absolute -top-5 w-10 h-10 rounded-full bg-amber-50/50 border-2 border-amber-700/30 text-amber-800 font-bold text-sm flex items-center justify-center shadow-sm">
+                    <div className="absolute -top-5 w-10 h-10 rounded-full bg-slate-100/50 border-2 border-amber-700/30 text-amber-800 font-bold text-sm flex items-center justify-center shadow-sm">
                       3
                     </div>
                     <div className="w-12 h-12 rounded-full border-2 border-amber-600/30 overflow-hidden bg-slate-100 mb-3 relative">
@@ -297,13 +297,13 @@ export default function RankingsTab({ communityId, categories }: RankingsTabProp
                           <td className="py-4 px-6 text-center font-medium text-slate-500">
                             {row.matchesPlayed}
                           </td>
-                          <td className="py-4 px-6 text-center font-bold text-emerald-600">
+                          <td className="py-4 px-6 text-center font-bold text-blue-600">
                             {winRate}%
                           </td>
                           <td className="py-4 px-6 text-center">
                             {row.winStreak > 0 ? (
-                              <span className="inline-flex items-center gap-0.5 text-xs font-bold text-amber-600 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-100">
-                                <Flame className="w-3.5 h-3.5 fill-amber-500 text-amber-500 shrink-0" />
+                              <span className="inline-flex items-center gap-0.5 text-xs font-bold text-blue-600 bg-slate-50 px-2.5 py-0.5 rounded-full border border-slate-200">
+                                <Flame className="w-3.5 h-3.5 fill-amber-500 text-blue-500 shrink-0" />
                                 {row.winStreak}
                               </span>
                             ) : (

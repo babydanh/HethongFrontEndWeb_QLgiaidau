@@ -357,11 +357,11 @@ export function OpsMatches({
                 {STATUS_FILTERS.find((option) => option.value === match.status)?.label ?? match.status}
               </span>
               {attentionCount > 0 || scoreOverride?.reason ? (
-                <span className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-amber-800">
+                <span className="rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-amber-800">
                   Cần chú ý: {attentionCount || 1}
                 </span>
               ) : (
-                <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-emerald-700">
+                <span className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-blue-700">
                   Không có ngoại lệ
                 </span>
               )}
@@ -398,24 +398,24 @@ export function OpsMatches({
               </div>
             ) : null}
             {isDirectAdvance ? (
-              <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-900">
+              <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-800">
                 Đi thẳng / miễn đấu: trận này không cần điều phối sân vì nhánh đã tự xác định đội đi tiếp.
               </div>
             ) : null}
             {specialResult?.action ? (
-              <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900">
+              <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-800">
                 Quyết định BTC: {specialResult.action}
                 {specialResult.reason ? ` • ${specialResult.reason}` : ''}
               </div>
             ) : null}
             {scoreOverride?.reason ? (
-              <div className="rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-xs font-semibold text-violet-900">
+              <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-900">
                 Ngoại lệ điểm số: {scoreOverride.reason}
                 {scoreOverride.decidedAt ? ` • ${formatDateTime(scoreOverride.decidedAt)}` : ''}
               </div>
             ) : null}
             {overriddenSets.length > 0 ? (
-              <details className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950">
+              <details className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-amber-950">
                 <summary className="cursor-pointer font-bold">
                   Ngoại lệ theo set ({overriddenSets.length})
                 </summary>
@@ -430,13 +430,13 @@ export function OpsMatches({
               </details>
             ) : null}
             {penalties.length > 0 ? (
-              <details className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-950">
+              <details className="rounded-lg border border-slate-200 bg-rose-50 px-3 py-2 text-xs text-rose-950">
                 <summary className="cursor-pointer font-bold">
                   Thẻ & hình phạt ({penalties.length})
                 </summary>
                 <div className="mt-2 space-y-2">
                   {penalties.map((penalty) => (
-                    <div key={penalty.id} className="rounded-lg border border-rose-200 bg-white/70 px-3 py-2">
+                    <div key={penalty.id} className="rounded-lg border border-slate-200 bg-white/70 px-3 py-2">
                       <p className="font-bold">
                         {penalty.team === 1 ? match.participant1?.teamName || 'Đội 1' : penalty.team === 2 ? match.participant2?.teamName || 'Đội 2' : 'Toàn trận'}: {penalty.label}
                       </p>
@@ -454,14 +454,14 @@ export function OpsMatches({
               </div>
             ) : null}
             {sideOutState ? (
-              <div className="rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-xs font-semibold text-violet-900">
+              <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-900">
                 {servingTeamLabel
                   ? `${servingTeamLabel} đang giao • lượt ${sideOutState.serverNumber}`
                   : 'Chưa chốt đội giao hiện tại'}
               </div>
             ) : null}
             {matchInsight?.dependencyBlocked ? (
-              <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-900">
+              <div className="rounded-lg border border-slate-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-900">
                 Chưa đủ điều kiện nhánh đấu: {matchInsight.dependencySummary.join(' • ')}
               </div>
             ) : null}
@@ -585,7 +585,7 @@ export function OpsMatches({
               <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">Đã xếp lịch</p>
               <p className="mt-2 text-lg font-bold text-slate-900">{summary.scheduled}</p>
             </div>
-            <div className="rounded-lg border border-amber-100 bg-amber-50 p-3">
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
               <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-amber-600">Chờ xếp lịch</p>
               <p className="mt-2 text-lg font-bold text-amber-700">{summary.unscheduledReady}</p>
             </div>
@@ -597,8 +597,8 @@ export function OpsMatches({
               <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-rose-600">Đang nghẽn nhánh</p>
               <p className="mt-2 text-lg font-bold text-rose-700">{summary.blocked}</p>
             </div>
-            <div className="rounded-lg border border-emerald-100 bg-emerald-50 p-3">
-              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-emerald-600">Đi thẳng / miễn đấu</p>
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-600">Đi thẳng / miễn đấu</p>
               <p className="mt-2 text-lg font-bold text-emerald-700">{summary.directAdvance}</p>
             </div>
           </div>

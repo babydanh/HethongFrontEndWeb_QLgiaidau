@@ -223,7 +223,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                 Vận động viên
               </span>
               {profile.isVerified && (
-                <span className="px-3 py-1 text-xs font-bold rounded-lg border bg-emerald-50 text-emerald-700 border-emerald-250 uppercase tracking-wider">
+                <span className="px-3 py-1 text-xs font-bold rounded-lg border bg-slate-50 text-slate-600 border-emerald-250 uppercase tracking-wider">
                   Đã xác minh
                 </span>
               )}
@@ -244,8 +244,8 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                 );
               })()}
               {profile.achievements?.length ? (
-                <span className="bg-amber-50 border border-amber-200 text-amber-700 px-3.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5">
-                  <Trophy className="w-3.5 h-3.5 text-amber-500" /> {profile.achievements.length} danh hiệu
+                <span className="bg-slate-50 border border-slate-200 text-slate-600 px-3.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5">
+                  <Trophy className="w-3.5 h-3.5 text-blue-500" /> {profile.achievements.length} danh hiệu
                 </span>
               ) : null}
               {profile.createdAt && (
@@ -362,11 +362,11 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
 
                         {isCompleted ? (
                           isWinner ? (
-                            <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase tracking-wide">
+                            <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 uppercase tracking-wide">
                               Thắng
                             </span>
                           ) : (
-                            <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 uppercase tracking-wide">
+                            <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200 uppercase tracking-wide">
                               Thua
                             </span>
                           )
@@ -403,7 +403,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
           <div className="space-y-6">
             <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
               <div className="flex items-center gap-2 mb-4">
-                <Trophy className="w-5 h-5 text-amber-600" />
+                <Trophy className="w-5 h-5 text-blue-600" />
                 <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Danh hiệu thành tích</h3>
               </div>
               {profile.achievements && profile.achievements.length > 0 ? (
@@ -416,7 +416,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                           ? 'bg-amber-50 text-amber-700 border-amber-200'
                           : item.rank === 2
                             ? 'bg-slate-50 text-slate-700 border-slate-200'
-                            : 'bg-orange-50 text-orange-700 border-orange-200';
+                            : 'bg-amber-50 text-amber-700 border-amber-200';
                       const title = item.rank === 1 ? 'Quán quân' : item.rank === 2 ? 'Á quân' : 'Hạng ba';
 
                       return (
@@ -479,7 +479,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                             </div>
                             <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
                               <div className="text-[10px] text-slate-400 font-bold uppercase">Thắng</div>
-                              <div className="font-bold text-emerald-600 mt-0.5">{rank.matchesWon}</div>
+                              <div className="font-bold text-blue-600 mt-0.5">{rank.matchesWon}</div>
                             </div>
                             <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
                               <div className="text-[10px] text-slate-400 font-bold uppercase">Chuỗi</div>
@@ -565,7 +565,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                               <span className="text-sm font-bold text-slate-750">{item.newElo}</span>
                             </div>
                             <span className={`inline-block px-2 py-1 rounded text-xs font-bold min-w-[45px] text-center ${
-                              isGain ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
+                              isGain ? 'bg-blue-50 text-blue-700' : 'bg-rose-50 text-rose-700'
                             }`}>
                               {isGain ? `+${item.changedPoints}` : item.changedPoints}
                             </span>

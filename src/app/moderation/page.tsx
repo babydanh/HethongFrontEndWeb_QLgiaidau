@@ -28,28 +28,28 @@ const moderationCards = [
     description: 'Phê duyệt hoặc từ chối câu lạc bộ mới gửi lên hệ thống.',
     href: '/moderation/communities',
     icon: Building,
-    tone: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+    tone: 'border-blue-200 bg-blue-50 text-blue-700',
   },
   {
     title: 'Duyệt đổi thông tin',
     description: 'Kiểm tra yêu cầu đổi email hoặc giới tính nhạy cảm.',
     href: '/moderation/change-requests',
     icon: UserCog,
-    tone: 'border-violet-200 bg-violet-50 text-violet-700',
+    tone: 'border-blue-200 bg-blue-50 text-blue-700',
   },
   {
     title: 'Báo cáo vi phạm',
     description: 'Đọc hồ sơ tố cáo, xử lý và chuyển cấp khi vượt thẩm quyền.',
     href: '/moderation/reports',
     icon: ShieldAlert,
-    tone: 'border-rose-200 bg-rose-50 text-rose-700',
+    tone: 'border-slate-200 bg-rose-50 text-rose-700',
   },
   {
     title: 'Duyệt giải đấu',
     description: 'Duyệt giải mới trước khi lên hệ thống xếp hạng và công khai.',
     href: '/moderation/tournaments',
     icon: Trophy,
-    tone: 'border-sky-200 bg-sky-50 text-sky-700',
+    tone: 'border-blue-200 bg-blue-50 text-blue-700',
   },
 ];
 
@@ -91,36 +91,36 @@ export default function ModerationDashboardPage() {
         <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg p-5 shadow-sm">
           <div className="flex items-start gap-4">
             <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
-              <span className="text-amber-600 text-lg font-bold">
+              <span className="text-blue-600 text-lg font-bold">
                 {pendingCounts.verifications + pendingCounts.communities + pendingCounts.changeRequests + pendingCounts.tournaments}
               </span>
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                <div className="w-2 h-2 rounded-full bg-slate-1000 animate-pulse" />
                 <h3 className="text-sm font-bold text-amber-900 uppercase tracking-wide">Có việc cần xử lý ngay</h3>
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
                 {pendingCounts.verifications > 0 && (
-                  <a href="/moderation/verification" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-lg border border-amber-200 text-xs font-bold text-amber-700 hover:bg-amber-50 transition-all">
+                  <a href="/moderation/verification" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-lg border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all">
                     <ShieldCheck className="w-3.5 h-3.5" />
                     Sao uy tín ({pendingCounts.verifications})
                   </a>
                 )}
                 {pendingCounts.communities > 0 && (
-                  <a href="/moderation/communities" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-lg border border-amber-200 text-xs font-bold text-amber-700 hover:bg-amber-50 transition-all">
+                  <a href="/moderation/communities" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-lg border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all">
                     <Building className="w-3.5 h-3.5" />
                     CLB ({pendingCounts.communities})
                   </a>
                 )}
                 {pendingCounts.changeRequests > 0 && (
-                  <a href="/moderation/change-requests" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-lg border border-amber-200 text-xs font-bold text-amber-700 hover:bg-amber-50 transition-all">
+                  <a href="/moderation/change-requests" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-lg border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all">
                     <UserCog className="w-3.5 h-3.5" />
                     Đổi TT ({pendingCounts.changeRequests})
                   </a>
                 )}
                 {pendingCounts.tournaments > 0 && (
-                  <a href="/moderation/tournaments" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-lg border border-amber-200 text-xs font-bold text-amber-700 hover:bg-amber-50 transition-all">
+                  <a href="/moderation/tournaments" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-lg border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all">
                     <Trophy className="w-3.5 h-3.5" />
                     Giải đấu ({pendingCounts.tournaments})
                   </a>
@@ -132,7 +132,7 @@ export default function ModerationDashboardPage() {
       ) : null}
 
       <section className="rounded-xl border border-amber-200 bg-gradient-to-br from-amber-50 via-white to-orange-50 p-6 shadow-sm md:p-8">
-        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-amber-600">
+        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-blue-600">
           Khu điều phối
         </p>
         <h2 className="mt-2 text-3xl font-bold text-slate-900">

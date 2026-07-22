@@ -26,7 +26,7 @@ export const SeriesRulesTab: React.FC<SeriesRulesTabProps> = ({ series }) => {
       <div className="lg:col-span-7 flex flex-col gap-6">
         <div className="bg-white p-6 md:p-8 rounded-lg border border-slate-200 shadow-sm">
           <h2 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
-            <Trophy className="w-5 h-5 text-amber-500" /> Bảng Điểm Tích Lũy PSR
+            <Trophy className="w-5 h-5 text-blue-500" /> Bảng Điểm Tích Lũy PSR
           </h2>
           <p className="text-sm text-slate-500 mb-6 leading-relaxed">
             Mỗi VĐV hoặc Đội thi đấu tại các giải đấu thành viên thuộc Chuỗi giải đấu sẽ tích lũy điểm Player Series Rating (PSR) dựa trên thành tích xếp hạng chung cuộc tại giải đấu đó. Điểm này dùng để xếp hạng chặng và xét vé vớt.
@@ -63,9 +63,9 @@ export const SeriesRulesTab: React.FC<SeriesRulesTabProps> = ({ series }) => {
       <div className="lg:col-span-5 flex flex-col gap-6">
         {/* Exclusion Rule Explainer */}
         {rules.exclusionRule && (
-          <div className="bg-amber-50/60 p-6 rounded-lg border border-amber-200/60 shadow-sm relative overflow-hidden">
+          <div className="bg-slate-50/60 p-6 rounded-lg border border-slate-200/60 shadow-sm relative overflow-hidden">
             <h3 className="text-base font-bold text-amber-800 mb-3 flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-amber-600" /> Luật Khóa Suất (Exclusion Rule)
+              <AlertTriangle className="w-5 h-5 text-blue-600" /> Luật Khóa Suất (Exclusion Rule)
             </h3>
             <p className="text-sm text-amber-700 leading-relaxed">
               Nhằm tăng tính hấp dẫn và trao cơ hội cọ xát bình đẳng cho toàn bộ cộng đồng VĐV:

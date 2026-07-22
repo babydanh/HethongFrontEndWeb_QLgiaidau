@@ -169,7 +169,7 @@ export default function MyTournamentsPage() {
 
   const getStatusBadge = (status: string) => {
     if (status === 'PENDING_DELETE') {
-      return <Badge className="bg-rose-50 text-rose-700 border-rose-200">Chờ Xóa</Badge>;
+      return <Badge className="bg-rose-50 text-rose-700 border-slate-200">Chờ Xóa</Badge>;
     }
 
     return <Badge className={getTournamentStatusClassName(status)}>{getTournamentStatusLabel(status)}</Badge>;

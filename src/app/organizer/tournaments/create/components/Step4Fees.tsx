@@ -121,7 +121,7 @@ export default function Step4Fees() {
             {...register('entryFee', { valueAsNumber: true })}
             error={errors.entryFee?.message}
           />
-          <div className="mt-3 flex items-start gap-2 text-amber-700 bg-amber-50 p-3 rounded-lg border border-amber-100">
+          <div className="mt-3 flex items-start gap-2 text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-200">
             <Info className="w-5 h-5 flex-shrink-0 mt-0.5" />
             <p className="text-xs leading-relaxed">
               <strong>Lưu ý về Thanh toán:</strong> Nền tảng sẽ thu hộ lệ phí tham gia và tự động đối soát. Phí nền tảng (Platform fee) là 5% trên tổng lệ phí thu được. Nhập 0 nếu giải đấu miễn phí.

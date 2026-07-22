@@ -166,7 +166,7 @@ function RegistrationCountdown({ targetDate }: { targetDate: string }) {
 
   if (!text) return null;
   return (
-    <span className="text-[10px] font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200 whitespace-nowrap">
+    <span className="text-[10px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200 whitespace-nowrap">
       <Hourglass className="w-3 h-3 inline-block" /> {text}
     </span>
   );
@@ -299,9 +299,13 @@ export default function HomePage() {
           }
         }
         const res = await categoriesApi.getCategories();
-        const data = res.data || [];
+        const data = (res.data && res.data.length > 0) ? res.data : [
+          { id: 'pickleball', name: 'Pickleball' },
+          { id: 'tennis', name: 'Tennis' },
+          { id: 'badminton', name: 'Cầu lông' },
+          { id: 'table_tennis', name: 'Bóng bàn' },
+        ];
         setCategories(data);
-        // Lưu cache
         if (typeof window !== 'undefined') {
           sessionStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: Date.now(), data }));
         }
@@ -309,7 +313,12 @@ export default function HomePage() {
         if (!isNetworkError(error)) {
           console.error('Failed to load categories on homepage', error);
         }
-        setCategories([]);
+        setCategories([
+          { id: 'pickleball', name: 'Pickleball' },
+          { id: 'tennis', name: 'Tennis' },
+          { id: 'badminton', name: 'Cầu lông' },
+          { id: 'table_tennis', name: 'Bóng bàn' },
+        ]);
       }
     };
     loadCategories();
@@ -717,7 +726,7 @@ export default function HomePage() {
             ) : (
               <div className={`flex items-center justify-center px-2.5 py-1 rounded-full font-mono text-[10px] font-bold leading-none tracking-wider shadow-sm border ${
                 isLive 
-                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                  ? 'bg-blue-50 text-blue-700 border-blue-200' 
                   : 'bg-slate-100 text-slate-700 border-slate-200'
               }`}>
                 {(() => {
@@ -776,7 +785,7 @@ export default function HomePage() {
             <div className="flex items-center justify-center gap-1 py-1 min-h-[32px] hover:bg-white rounded-lg text-[10px] font-bold text-slate-650 transition-all border border-transparent hover:border-slate-150 active:scale-95 duration-100 cursor-pointer w-full">
               {isLive ? (
                 <>
-                  <Play className="w-3.5 h-3.5 text-emerald-600 fill-emerald-600/10 animate-pulse" />
+                  <Play className="w-3.5 h-3.5 text-blue-600 fill-emerald-600/10 animate-pulse" />
                   <span className="text-emerald-700 font-bold">Xem Live</span>
                 </>
               ) : (
@@ -1077,7 +1086,7 @@ export default function HomePage() {
           <section className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_2px_12px_rgba(15,23,42,0.06)] overflow-hidden">
             <div className="px-5 py-4 border-b border-slate-100 flex justify-between items-center">
               <h2 className="text-sm font-semibold text-slate-900 tracking-tight">Kết quả trận đấu vừa qua</h2>
-              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded uppercase tracking-wider">Kết quả</span>
+              <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded uppercase tracking-wider">Kết quả</span>
             </div>
             <div className="p-4 flex flex-col gap-4">
 
@@ -1302,7 +1311,7 @@ export default function HomePage() {
 
                           {/* Floating Location Badge */}
                           <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 px-2.5 py-1 bg-white/90 backdrop-blur-md rounded-full shadow-sm text-slate-800 border border-white/20">
-                            <MapPin className="w-2.5 h-2.5 text-emerald-500 fill-emerald-500/20" />
+                            <MapPin className="w-2.5 h-2.5 text-blue-500 fill-emerald-500/20" />
                             <span className="text-[8px] font-bold tracking-wider uppercase truncate max-w-[90px]">{locationText}</span>
                           </div>
                         </div>
@@ -1321,7 +1330,7 @@ export default function HomePage() {
                                 {community.name}
                               </h4>
                               {community.status === 'APPROVED' && (
-                                <Star className="w-3 h-3 fill-amber-500 text-amber-500 shrink-0" />
+                                <Star className="w-3 h-3 fill-amber-500 text-blue-500 shrink-0" />
                               )}
                             </div>
 

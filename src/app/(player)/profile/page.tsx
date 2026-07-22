@@ -84,9 +84,9 @@ const getAchievementMeta = (rank: AchievementRank) => {
     default:
       return {
         label: 'Hạng ba',
-        colorClass: 'bg-orange-50',
-        textClass: 'text-orange-700',
-        borderClass: 'border-orange-200',
+        colorClass: 'bg-amber-50',
+        textClass: 'text-amber-700',
+        borderClass: 'border-amber-200',
       };
   }
 };
@@ -576,7 +576,7 @@ export default function ProfilePage() {
             <div className="flex flex-wrap items-center gap-2">
               {Array.from(new Set((user as unknown as Record<string, unknown>)?.roles as string[] | undefined || [])).map((role: string) => {
                 let roleLabel = role;
-                let roleColor = 'bg-emerald-50 text-emerald-700 border-emerald-250';
+                let roleColor = 'bg-blue-50 text-blue-700 border-emerald-250';
                 if (role === 'PLAYER') {
                   roleLabel = 'Vận động viên';
                   roleColor = 'bg-blue-50 text-blue-700 border-blue-200';
@@ -585,7 +585,7 @@ export default function ProfilePage() {
                   roleColor = 'bg-purple-50 text-purple-700 border-purple-200';
                 } else if (role === 'ADMIN') {
                   roleLabel = 'Quản trị viên';
-                  roleColor = 'bg-rose-50 text-rose-700 border-rose-200';
+                  roleColor = 'bg-rose-50 text-rose-700 border-slate-200';
                 }
                 return (
                   <span key={role} className={`px-3 py-1 text-xs font-bold rounded-lg border uppercase tracking-wider ${roleColor}`}>
@@ -643,9 +643,9 @@ export default function ProfilePage() {
       </div>
       {/* Warning banner for missing gender */}
       {!isLoading && displayUser && !displayUser.gender && (
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-center justify-between shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
+        <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 flex items-center justify-between shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
           <div className="flex items-center gap-3">
-            <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
+            <AlertTriangle className="w-5 h-5 text-blue-600 shrink-0" />
             <div>
               <h4 className="font-bold text-amber-900 text-sm">Chưa cập nhật giới tính</h4>
               <p className="text-amber-700 text-xs mt-0.5">Vui lòng cập nhật giới tính trong hồ sơ để có thể đăng ký tham gia các giải đấu.</p>
@@ -762,9 +762,9 @@ export default function ProfilePage() {
                   <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Vai trò Ban tổ chức</h3>
                   {(profileData?.roles || user?.roles || []).includes('ORGANIZER') ||
                    (profileData?.roles || user?.roles || []).includes('ADMIN') ? (
-                    <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-4 text-xs font-semibold text-emerald-800 space-y-2">
+                    <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 text-xs font-semibold text-slate-700 space-y-2">
                       <div className="flex items-center gap-1.5 font-bold text-sm text-emerald-950">
-                        <ShieldCheck className="w-5 h-5 text-emerald-600" />
+                        <ShieldCheck className="w-5 h-5 text-blue-600" />
                         Đã xác minh Ban tổ chức
                       </div>
                       <p className="text-emerald-700 leading-relaxed">
@@ -772,15 +772,15 @@ export default function ProfilePage() {
                       </p>
                     </div>
                   ) : tickets.length > 0 && tickets[0].status === 'PENDING' ? (
-                    <div className="bg-amber-50 border border-amber-100 rounded-lg p-4 text-xs font-semibold text-amber-800 space-y-2">
+                    <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 text-xs font-semibold text-slate-700 space-y-2">
                       <div className="flex items-center gap-1.5 font-bold text-sm text-amber-900">
-                        <Loader2 className="w-4 h-4 animate-spin text-amber-600" />
+                        <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
                         Đang chờ duyệt...
                       </div>
                       <p className="text-amber-700 leading-relaxed">
                         Yêu cầu nâng cấp tài khoản của bạn đang được Ban quản trị hệ thống xử lý.
                       </p>
-                      <div className="pt-2 border-t border-amber-100/50 text-[10px] text-amber-600">
+                      <div className="pt-2 border-t border-amber-100/50 text-[10px] text-blue-600">
                         SĐT liên hệ: {tickets[0].contactPhone}
                       </div>
                     </div>
@@ -849,7 +849,7 @@ export default function ProfilePage() {
                             <Image src={community.logoUrl || "https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=150&auto=format&fit=crop"} alt={community.name} fill className="object-cover" />
                           </div>
                           <div>
-                            <h4 className="font-semibold text-slate-900 group-hover:text-emerald-600 transition-colors line-clamp-1">{community.name}</h4>
+                            <h4 className="font-semibold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1">{community.name}</h4>
                             <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
                               <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
                               Đang hoạt động
@@ -965,7 +965,7 @@ export default function ProfilePage() {
                           </div>
 
                           {/* Bookmark Button (Top-Right) */}
-                          <button className="absolute top-3 right-3 p-1.5 bg-white/90 rounded-full text-amber-500 hover:text-amber-600 transition-colors shadow-sm z-10 cursor-pointer">
+                          <button className="absolute top-3 right-3 p-1.5 bg-white/90 rounded-full text-blue-500 hover:text-blue-600 transition-colors shadow-sm z-10 cursor-pointer">
                             <Bookmark className="w-4 h-4 fill-amber-500" />
                           </button>
 
@@ -1019,7 +1019,7 @@ export default function ProfilePage() {
 
                             {/* Metadata summary */}
                             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[9px] text-slate-500 font-bold mt-2 uppercase tracking-wider">
-                              <span className="text-emerald-600 font-bold">
+                              <span className="text-blue-600 font-bold">
                                 {tournament.entryFee ? formatCurrency(tournament.entryFee) : 'Miễn phí'}
                               </span>
                               {tournament.divisions && tournament.divisions.length > 0 ? (
@@ -1069,7 +1069,7 @@ export default function ProfilePage() {
           <div className="space-y-6">
             <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
               <div className="flex items-center gap-2 mb-4">
-                <Award className="w-5 h-5 text-amber-600" />
+                <Award className="w-5 h-5 text-blue-600" />
                 <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Danh hiệu thành tích</h3>
               </div>
               {achievements.length > 0 ? (
@@ -1162,11 +1162,11 @@ export default function ProfilePage() {
 
                         {isCompleted ? (
                           isWinner ? (
-                            <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-250 uppercase tracking-wide">
+                            <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-emerald-250 uppercase tracking-wide">
                               Thắng
                             </span>
                           ) : (
-                            <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-250 uppercase tracking-wide">
+                            <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-rose-250 uppercase tracking-wide">
                               Thua
                             </span>
                           )
@@ -1257,7 +1257,7 @@ export default function ProfilePage() {
                               </div>
                               <div className="bg-slate-50/80 p-2 rounded-lg border border-slate-100">
                                 <div className="text-[10px] text-slate-400 font-bold uppercase">Thắng</div>
-                                <div className="font-bold text-emerald-600 mt-0.5">{rank.matchesWon}</div>
+                                <div className="font-bold text-blue-600 mt-0.5">{rank.matchesWon}</div>
                               </div>
                               <div className="bg-slate-50/80 p-2 rounded-lg border border-slate-100">
                                 <div className="text-[10px] text-slate-400 font-bold uppercase">Chuỗi</div>
@@ -1343,7 +1343,7 @@ export default function ProfilePage() {
                                 <span className="text-sm font-bold text-slate-700">{item.newElo}</span>
                               </div>
                               <span className={`inline-block px-2 py-1 rounded text-xs font-bold min-w-[45px] text-center ${
-                                isGain ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
+                                isGain ? 'bg-blue-50 text-blue-700' : 'bg-rose-50 text-rose-700'
                               }`}>
                                 {isGain ? `+${item.changedPoints}` : item.changedPoints}
                               </span>
@@ -1412,7 +1412,7 @@ export default function ProfilePage() {
                 
                 {isUploading ? (
                   <div className="flex flex-col items-center justify-center py-4 text-slate-500">
-                    <Loader2 className="w-6 h-6 animate-spin text-emerald-500" />
+                    <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
                     <span className="text-xs mt-2 font-medium">Đang tải ảnh lên...</span>
                   </div>
                 ) : evidenceUrl ? (
@@ -1429,7 +1429,7 @@ export default function ProfilePage() {
                 ) : (
                   <label
                     htmlFor="evidence-upload"
-                    className="flex flex-col items-center justify-center py-6 cursor-pointer text-slate-400 hover:text-emerald-500 text-center w-full"
+                    className="flex flex-col items-center justify-center py-6 cursor-pointer text-slate-400 hover:text-blue-500 text-center w-full"
                   >
                     <UploadCloud className="w-8 h-8 mb-1" />
                     <span className="text-xs font-bold">Chọn ảnh chứng chỉ, giấy phép...</span>

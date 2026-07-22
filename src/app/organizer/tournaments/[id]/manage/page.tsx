@@ -124,7 +124,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
             <Button
               variant="outline"
               onClick={handleOpenManageBracket}
-              className="border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 flex items-center gap-1.5 font-bold"
+              className="border-slate-200 bg-slate-50 text-slate-600 hover:bg-amber-100 flex items-center gap-1.5 font-bold"
             >
               <Trophy className="w-4 h-4" /> Xem bracket hiện tại
             </Button>
@@ -395,7 +395,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                     {supportsTiebreakInput ? ` • ${sportPresentation.tiebreakLabel.toLowerCase()}: ${s.stageSuperTiebreakPoints}` : ''}
                   </div>
                   {isPickleballSideOut && (
-                    <div className="col-span-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800">
+                    <div className="col-span-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700">
                       Mode side-out: chỉ đội giao bóng mới ghi điểm. Vòng này hiện mới cấu hình score mục tiêu, chưa có state giao bóng live chi tiết.
                     </div>
                   )}
@@ -419,7 +419,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
             <ModalContent className="bg-white rounded-lg p-6">
               <ModalHeader><ModalTitle className="text-xl font-bold text-slate-900">Xác nhận chốt danh sách</ModalTitle></ModalHeader>
               <div className="space-y-4 mt-4">
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-xs text-amber-800 font-semibold">
+                <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 text-xs text-slate-700 font-semibold">
                   ⚠️ Sau khi chốt, không thể thêm/sửa người chơi. Hệ thống sẽ tự động sinh sơ đồ thi đấu.
                 </div>
                 {s.lockSummary && (

@@ -129,7 +129,7 @@ const renderTeamAvatars = (part: EnrichedParticipant | null | undefined, default
             className={`w-7.5 h-7.5 rounded-full border border-white ${
               idx === 0 
                 ? 'bg-blue-100 text-blue-700 border-blue-200' 
-                : 'bg-indigo-100 text-indigo-700 border-indigo-200'
+                : 'bg-blue-100 text-blue-700 border-blue-200'
             } flex items-center justify-center font-bold text-[9px] shadow-xs ${zIndexClass}`}
           >
             {(member.fullName || 'P').charAt(0).toUpperCase()}
@@ -578,7 +578,7 @@ export default function MatchesListPage() {
                     setSearchTerm(e.target.value);
                     setPage(1);
                   }}
-                  className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-900 font-bold h-11"
+                  className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-900 font-bold h-11"
                   placeholder="Tên vận động viên, CLB..."
                 />
               </div>
@@ -594,7 +594,7 @@ export default function MatchesListPage() {
                     setSelectedCategoryId(e.target.value);
                     setPage(1);
                   }}
-                  className="w-full pl-3 pr-9 py-2 border border-slate-200 rounded-lg text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-900 font-bold h-11"
+                  className="w-full pl-3 pr-9 py-2 border border-slate-200 rounded-lg text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-900 font-bold h-11"
                 >
                   <option value="">Tất cả</option>
                   {categories.map(cat => (
@@ -615,7 +615,7 @@ export default function MatchesListPage() {
                     setSelectedStatus(e.target.value);
                     setPage(1);
                   }}
-                  className="w-full pl-3 pr-9 py-2 border border-slate-200 rounded-lg text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-900 font-bold h-11"
+                  className="w-full pl-3 pr-9 py-2 border border-slate-200 rounded-lg text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-900 font-bold h-11"
                 >
                   <option value="">Tất cả</option>
                   <option value="ONGOING">Đang diễn ra</option>
@@ -631,14 +631,14 @@ export default function MatchesListPage() {
               onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
               className={`h-11 flex items-center justify-center gap-2 px-4 py-2 border rounded-lg text-xs font-bold transition-all w-full md:w-auto shrink-0 cursor-pointer ${
                 showAdvancedFilters || selectedBracketType || selectedContent || isRanked || selectedProvince || selectedDistrict || startDate || endDate
-                  ? 'bg-indigo-50 border-indigo-200 text-indigo-700 shadow-sm'
+                  ? 'bg-blue-50 border-blue-200 text-blue-700 shadow-sm'
                   : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
               }`}
             >
               <SlidersHorizontal className="w-3.5 h-3.5" />
               Lọc thêm
               {activeFilterCount > 0 && (
-                <span className="ml-1 px-1.5 py-0.2 bg-indigo-200 text-indigo-800 text-[9px] rounded-full">
+                <span className="ml-1 px-1.5 py-0.2 bg-blue-200 text-blue-800 text-[9px] rounded-full">
                   {activeFilterCount}
                 </span>
               )}
@@ -648,7 +648,7 @@ export default function MatchesListPage() {
           {/* Status Tab Chips */}
           <div className="flex flex-wrap items-center gap-2 pt-1">
             {[
-              { label: 'Tất cả', value: '', activeClass: 'bg-indigo-50 text-indigo-700 border border-indigo-200/50 shadow-xs', inactiveClass: 'bg-slate-100/80 text-slate-500 hover:bg-slate-200/70 hover:text-slate-800 border border-transparent' },
+              { label: 'Tất cả', value: '', activeClass: 'bg-blue-50 text-blue-700 border border-blue-200/50 shadow-xs', inactiveClass: 'bg-slate-100/80 text-slate-500 hover:bg-slate-200/70 hover:text-slate-800 border border-transparent' },
               { label: 'Đang diễn ra', value: 'ONGOING', activeClass: 'bg-rose-50 text-rose-600 border border-rose-200/50 shadow-xs', inactiveClass: 'bg-rose-55/40 text-rose-500 hover:bg-rose-50 hover:text-rose-600 border border-transparent' },
               { label: 'Sắp diễn ra', value: 'SCHEDULED', activeClass: 'bg-blue-50 text-blue-600 border border-blue-200/50 shadow-xs', inactiveClass: 'bg-blue-50/40 text-blue-500 hover:bg-blue-50 hover:text-blue-600 border border-transparent' },
               { label: 'Vừa kết thúc', value: 'COMPLETED', activeClass: 'bg-slate-200 text-slate-700 border border-slate-300/50 shadow-xs', inactiveClass: 'bg-slate-100/60 text-slate-500 hover:bg-slate-200/70 hover:text-slate-800 border border-transparent' },
@@ -684,7 +684,7 @@ export default function MatchesListPage() {
                       setSelectedBracketType(e.target.value);
                       setPage(1);
                     }}
-                    className="w-full h-10 appearance-none rounded-lg border border-slate-200 bg-white px-3 pr-8 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full h-10 appearance-none rounded-lg border border-slate-200 bg-white px-3 pr-8 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="">Tất cả</option>
                     <option value="SINGLE_ELIMINATION">Loại trực tiếp</option>
@@ -706,7 +706,7 @@ export default function MatchesListPage() {
                       setSelectedContent(e.target.value);
                       setPage(1);
                     }}
-                    className="w-full h-10 appearance-none rounded-lg border border-slate-200 bg-white px-3 pr-8 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full h-10 appearance-none rounded-lg border border-slate-200 bg-white px-3 pr-8 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="">Tất cả</option>
                     <option value="SINGLE_MALE">Đơn Nam</option>
@@ -729,7 +729,7 @@ export default function MatchesListPage() {
                       setIsRanked(e.target.value);
                       setPage(1);
                     }}
-                    className="w-full h-10 appearance-none rounded-lg border border-slate-200 bg-white px-3 pr-8 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full h-10 appearance-none rounded-lg border border-slate-200 bg-white px-3 pr-8 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="">Tất cả</option>
                     <option value="true">Xếp hạng</option>
@@ -750,7 +750,7 @@ export default function MatchesListPage() {
                       setSelectedDistrict('');
                       setPage(1);
                     }}
-                    className="w-full h-10 appearance-none rounded-lg border border-slate-200 bg-white px-3 pr-8 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full h-10 appearance-none rounded-lg border border-slate-200 bg-white px-3 pr-8 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="">Tất cả khu vực</option>
                     {provinces.map((province) => (
@@ -774,7 +774,7 @@ export default function MatchesListPage() {
                       setPage(1);
                     }}
                     disabled={!selectedProvince}
-                    className="w-full h-10 appearance-none rounded-lg border border-slate-200 bg-white px-3 pr-8 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                    className="w-full h-10 appearance-none rounded-lg border border-slate-200 bg-white px-3 pr-8 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
                   >
                     <option value="">Tất cả quận / huyện</option>
                     {districts.map((district) => (
@@ -804,7 +804,7 @@ export default function MatchesListPage() {
                       setStartDate(val);
                       setPage(1);
                     }}
-                    className="w-full pl-3 pr-9 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-950 font-bold h-10"
+                    className="w-full pl-3 pr-9 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-950 font-bold h-10"
                   />
                   <input
                     type="date"
@@ -833,7 +833,7 @@ export default function MatchesListPage() {
                         }
                       }
                     }}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 transition-colors p-1 cursor-pointer"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-600 transition-colors p-1 cursor-pointer"
                     title="Chọn ngày"
                   >
                     📅
@@ -860,7 +860,7 @@ export default function MatchesListPage() {
                       setEndDate(val);
                       setPage(1);
                     }}
-                    className="w-full pl-3 pr-9 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-950 font-bold h-10"
+                    className="w-full pl-3 pr-9 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-950 font-bold h-10"
                   />
                   <input
                     type="date"
@@ -889,7 +889,7 @@ export default function MatchesListPage() {
                         }
                       }
                     }}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 transition-colors p-1 cursor-pointer"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-600 transition-colors p-1 cursor-pointer"
                     title="Chọn ngày"
                   >
                     📅
@@ -973,7 +973,7 @@ export default function MatchesListPage() {
                     )}
                   </Link>
                   <div>
-                    <span className="inline-flex items-center gap-1 bg-indigo-50 text-indigo-700 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider mb-1">
+                    <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider mb-1">
                       GIẢI ĐẤU HẠNG • {group.tournamentCategory}
                       {(() => {
                         const firstMatch = group.matches[0];
@@ -1052,7 +1052,7 @@ export default function MatchesListPage() {
                               </>
                             ) : (
                               <>
-                                <span className="text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded font-bold border border-indigo-100">Sắp đấu</span>
+                                <span className="text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded font-bold border border-blue-100">Sắp đấu</span>
                                 {match.scheduledAt ? (
                                   <span>• {new Date(match.scheduledAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} {new Date(match.scheduledAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })} • {friendlyRoundName}</span>
                                 ) : (
@@ -1103,7 +1103,7 @@ export default function MatchesListPage() {
                                           const members = match.participant1?.members || [];
                                           const memberEloList = members as Array<{ fullName?: string | null; isMock?: boolean; elo?: { eloPoints: number } }>;
                                           return memberEloList.slice(0, 2).map((m, i) => (
-                                            <span key={i} className={`text-[9px] font-medium ${p1Won ? 'text-emerald-600/80' : 'text-slate-400'}`}>
+                                            <span key={i} className={`text-[9px] font-medium ${p1Won ? 'text-blue-600/80' : 'text-slate-400'}`}>
                                               {getShortName(m.fullName) || (m.isMock ? 'VĐV ảo' : 'N/A')}
                                             </span>
                                           ));
@@ -1140,7 +1140,7 @@ export default function MatchesListPage() {
                                           isLive 
                                             ? 'bg-rose-50 text-rose-600 border-rose-100 font-bold animate-pulse'
                                             : isWinner
-                                            ? 'bg-emerald-50 text-emerald-700 border-emerald-250 font-extrabold shadow-xs scale-103'
+                                            ? 'bg-blue-50 text-blue-700 border-emerald-250 font-extrabold shadow-xs scale-103'
                                             : 'bg-slate-50/70 text-slate-400 border-slate-200/50 font-medium'
                                         }`}
                                       >
@@ -1155,7 +1155,7 @@ export default function MatchesListPage() {
                             {/* VĐV / Đội 2 */}
                             <div className="flex items-center justify-between gap-3 p-2.5 rounded-lg border border-slate-100/70 bg-slate-50/50 transition-all">
                               <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                                {renderTeamAvatars(match.participant2, 'bg-indigo-50', 'text-indigo-700')}
+                                {renderTeamAvatars(match.participant2, 'bg-blue-50', 'text-blue-700')}
                                 <div className="min-w-0 flex-1">
                                   <div className={`text-xs truncate ${p2Won ? 'text-emerald-700 font-extrabold' : 'text-slate-800 font-bold'}`}>
                                     {getTeamShortName(match.participant2?.teamName)}
@@ -1182,7 +1182,7 @@ export default function MatchesListPage() {
                                           const members = match.participant2?.members || [];
                                           const memberEloList = members as Array<{ fullName?: string | null; isMock?: boolean; elo?: { eloPoints: number } }>;
                                           return memberEloList.slice(0, 2).map((m, i) => (
-                                            <span key={i} className={`text-[9px] font-medium ${p2Won ? 'text-emerald-600/80' : 'text-slate-400'}`}>
+                                            <span key={i} className={`text-[9px] font-medium ${p2Won ? 'text-blue-600/80' : 'text-slate-400'}`}>
                                               {getShortName(m.fullName) || (m.isMock ? 'VĐV ảo' : 'N/A')}
                                             </span>
                                           ));
@@ -1219,7 +1219,7 @@ export default function MatchesListPage() {
                                           isLive 
                                             ? 'bg-rose-50 text-rose-600 border-rose-100 font-bold animate-pulse'
                                             : isWinner
-                                            ? 'bg-emerald-50 text-emerald-700 border-emerald-250 font-extrabold shadow-xs scale-103'
+                                            ? 'bg-blue-50 text-blue-700 border-emerald-250 font-extrabold shadow-xs scale-103'
                                             : 'bg-slate-50/70 text-slate-400 border-slate-200/50 font-medium'
                                         }`}
                                       >
@@ -1275,9 +1275,9 @@ export default function MatchesListPage() {
                           </button>
                           <Link 
                             href={`/live/${match.id}`}
-                            className="flex items-center justify-center gap-1 hover:text-indigo-600 transition-colors py-1 min-h-[32px] cursor-pointer"
+                            className="flex items-center justify-center gap-1 hover:text-blue-600 transition-colors py-1 min-h-[32px] cursor-pointer"
                           >
-                            <Play className="w-3 h-3 text-indigo-600 fill-current" />
+                            <Play className="w-3 h-3 text-blue-600 fill-current" />
                             <span>Chi tiết</span>
                           </Link>
                            <button 
@@ -1339,7 +1339,7 @@ export default function MatchesListPage() {
           </button>
           
           <button
-            className="relative px-3.5 py-2 flex items-center justify-center text-xs font-bold rounded-lg border border-indigo-600 bg-indigo-600 text-white shadow-sm"
+            className="relative px-3.5 py-2 flex items-center justify-center text-xs font-bold rounded-lg border border-blue-600 bg-blue-600 text-white shadow-sm"
           >
             Trang {page}
           </button>

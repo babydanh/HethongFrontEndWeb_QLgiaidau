@@ -101,7 +101,7 @@ export function ConfigTab({
             <option value="MIXED_DOUBLES">Đôi Nam Nữ (Mixed Doubles)</option>
           </select>
           {isRegistrationOpen && (
-            <p className="text-xs text-amber-600 font-semibold mt-1 flex items-center gap-1">
+            <p className="text-xs text-blue-600 font-semibold mt-1 flex items-center gap-1">
               <span>⚠</span> Không thể thay đổi hình thức thi đấu khi đang mở đăng ký.
             </p>
           )}
@@ -121,7 +121,7 @@ export function ConfigTab({
             <option value="GROUP_STAGE_KNOCKOUT">Vòng Bảng + Loại Trực Tiếp (Group Stage + Playoff)</option>
           </select>
           {isRegistrationOpen && (
-            <p className="text-xs text-amber-600 font-semibold mt-1 flex items-center gap-1">
+            <p className="text-xs text-blue-600 font-semibold mt-1 flex items-center gap-1">
               <span>⚠</span> Không thể thay đổi thể thức thi đấu khi đang mở đăng ký.
             </p>
           )}

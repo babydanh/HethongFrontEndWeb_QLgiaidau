@@ -13,7 +13,7 @@ export default function DeleteAccountPage() {
         
         {/* Header */}
         <div className="text-center space-y-3">
-          <div className="inline-flex p-3 bg-red-950/50 border border-red-800/30 text-red-500 rounded-full">
+          <div className="inline-flex p-3 bg-rose-950/50 border border-rose-800/30 text-rose-500 rounded-full">
             <Trash2 className="w-8 h-8" />
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
@@ -29,7 +29,7 @@ export default function DeleteAccountPage() {
         {/* Section 1: Hướng dẫn các bước */}
         <div className="space-y-4">
           <h2 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
-            <Info className="w-5 h-5 text-indigo-400" />
+            <Info className="w-5 h-5 text-blue-400" />
             Các bước yêu cầu xóa tài khoản
           </h2>
           <p className="text-slate-300 text-sm sm:text-base">
@@ -37,17 +37,17 @@ export default function DeleteAccountPage() {
           </p>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="p-5 bg-slate-950 border border-slate-800 rounded-xl space-y-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-indigo-400">Cách 1</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-blue-400">Cách 1</span>
               <h3 className="font-semibold text-white">Xóa trực tiếp trong App</h3>
               <p className="text-xs sm:text-sm text-slate-400">
-                Đăng nhập vào ứng dụng di động của bạn ➔ Đi tới phần <strong className="text-slate-200">Cài đặt cá nhân</strong> ➔ Chọn <strong className="text-red-400">Xóa tài khoản</strong> và xác nhận.
+                Đăng nhập vào ứng dụng di động của bạn ➔ Đi tới phần <strong className="text-slate-200">Cài đặt cá nhân</strong> ➔ Chọn <strong className="text-rose-400">Xóa tài khoản</strong> và xác nhận.
               </p>
             </div>
             <div className="p-5 bg-slate-950 border border-slate-800 rounded-xl space-y-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-indigo-400">Cách 2</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-blue-400">Cách 2</span>
               <h3 className="font-semibold text-white">Yêu cầu qua Email hỗ trợ</h3>
               <p className="text-xs sm:text-sm text-slate-400">
-                Gửi email trực tiếp từ tài khoản đăng ký của bạn đến <a href="mailto:support@vnvar.com" className="text-indigo-400 hover:underline">support@vnvar.com</a> với tiêu đề &quot;Yêu cầu xóa tài khoản giải đấu&quot;.
+                Gửi email trực tiếp từ tài khoản đăng ký của bạn đến <a href="mailto:support@vnvar.com" className="text-blue-400 hover:underline">support@vnvar.com</a> với tiêu đề &quot;Yêu cầu xóa tài khoản giải đấu&quot;.
               </p>
             </div>
           </div>
@@ -61,13 +61,13 @@ export default function DeleteAccountPage() {
           </h2>
           <div className="space-y-3 text-sm sm:text-base text-slate-300">
             <div className="flex gap-2 items-start">
-              <div className="w-2 h-2 rounded-full bg-red-500 mt-2 shrink-0" />
+              <div className="w-2 h-2 rounded-full bg-rose-500 mt-2 shrink-0" />
               <p>
                 <strong className="text-white">Dữ liệu bị xóa vĩnh viễn:</strong> Thông tin hồ sơ cá nhân (Họ tên, Email, Số điện thoại, Ảnh đại diện), Thông tin liên kết Google/Facebook và lịch sử đăng nhập.
               </p>
             </div>
             <div className="flex gap-2 items-start">
-              <div className="w-2 h-2 rounded-full bg-amber-500 mt-2 shrink-0" />
+              <div className="w-2 h-2 rounded-full bg-slate-1000 mt-2 shrink-0" />
               <p>
                 <strong className="text-white">Dữ liệu được lưu trữ ẩn danh (Anonymized Data):</strong> Lịch sử thi đấu, kết quả giải đấu và điểm Elo sẽ được giữ lại để đảm bảo tính minh bạch và lịch sử của giải đấu, nhưng tất cả thông tin định danh cá nhân của bạn sẽ bị gỡ bỏ (hiển thị dưới dạng &quot;Người chơi đã xóa&quot;).
               </p>
@@ -91,11 +91,11 @@ export default function DeleteAccountPage() {
         </div>
 
         {/* Cảnh báo */}
-        <div className="p-4 bg-red-950/30 border border-red-900/50 rounded-xl flex gap-3 items-start">
-          <AlertTriangle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+        <div className="p-4 bg-rose-950/30 border border-rose-900/50 rounded-xl flex gap-3 items-start">
+          <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
           <div className="space-y-1">
-            <h4 className="text-sm font-semibold text-red-200">Lưu ý quan trọng</h4>
-            <p className="text-xs sm:text-sm text-red-300/80">
+            <h4 className="text-sm font-semibold text-rose-200">Lưu ý quan trọng</h4>
+            <p className="text-xs sm:text-sm text-rose-300/80">
               Hành động này không thể hoàn tác. Một khi dữ liệu đã bị xóa, bạn sẽ không thể khôi phục lại tài khoản cũng như lịch sử thi đấu liên quan.
             </p>
           </div>

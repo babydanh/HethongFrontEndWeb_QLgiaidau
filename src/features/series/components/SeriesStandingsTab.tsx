@@ -192,7 +192,7 @@ export const SeriesStandingsTab: React.FC<SeriesStandingsTabProps> = ({ seriesId
           <p className="text-sm text-slate-500 font-medium">Đang tải bảng xếp hạng PSR...</p>
         </div>
       ) : error ? (
-        <div className="bg-white border border-red-100 rounded-lg p-12 text-center text-red-500 shadow-sm">
+        <div className="bg-white border border-rose-100 rounded-lg p-12 text-center text-rose-500 shadow-sm">
           <h4 className="font-bold mb-1">Đã xảy ra lỗi</h4>
           <p className="text-sm max-w-xs mx-auto leading-relaxed">{error}</p>
         </div>

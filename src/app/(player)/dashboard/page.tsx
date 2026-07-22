@@ -114,8 +114,8 @@ function TournamentListSection({
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="font-bold text-slate-900 line-clamp-1">{tournament.name}</h3>
-                      <span className="px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wide uppercase bg-indigo-50 text-indigo-700">
-                        {roleLabel}
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wide uppercase bg-blue-50 text-blue-700">
+                                              {roleLabel}
                       </span>
                     </div>
                     <div className="mt-2 flex flex-wrap gap-3 text-xs text-slate-500">
@@ -264,7 +264,7 @@ export default function DashboardPage() {
           <section className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
             <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/60">
               <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                <ShieldCheck className="w-5 h-5 text-amber-600" /> Lời mời và vai trò cần xử lý
+                <ShieldCheck className="w-5 h-5 text-blue-600" /> Lời mời và vai trò cần xử lý
               </h2>
             </div>
             <div className="p-6">
@@ -277,7 +277,7 @@ export default function DashboardPage() {
                   {workspace.refereeInvites.map((invite) => {
                     const isBusy = respondingInviteId === invite.refereeId;
                     return (
-                      <div key={invite.refereeId} className="rounded-lg border border-amber-200 bg-amber-50/70 p-4">
+                      <div key={invite.refereeId} className="rounded-lg border border-slate-200 bg-slate-50/70 p-4">
                         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                           <div>
                             <div className="flex items-center gap-2 flex-wrap">
@@ -342,7 +342,7 @@ export default function DashboardPage() {
             actionLabel="Vào quản lý"
             tournaments={[...(workspace?.organizedTournaments || []), ...(workspace?.coOrganizerTournaments || [])]}
             emptyLabel="Bạn chưa có vai trò ban tổ chức nào."
-            icon={<UserCheck className="w-5 h-5 text-indigo-600" />}
+            icon={<UserCheck className="w-5 h-5 text-blue-600" />}
             accentClass="inline-flex"
             roleLabel="BTC"
           />
@@ -454,7 +454,7 @@ export default function DashboardPage() {
             <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
               <div>
                 <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                  <Bookmark className="w-5 h-5 text-amber-500" /> Giải đang theo dõi
+                  <Bookmark className="w-5 h-5 text-blue-500" /> Giải đang theo dõi
                 </h2>
                 <p className="text-[11px] font-semibold text-slate-500 mt-1">
                   Card sẽ cho biết rõ giải còn mở, đang diễn ra, vừa kết thúc gần đây hay đã kết thúc.
@@ -561,11 +561,11 @@ export default function DashboardPage() {
               </div>
               <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                 <div className="text-[11px] font-semibold text-slate-500">Lời mời chờ phản hồi</div>
-                <div className="mt-1 text-2xl font-bold text-amber-600">{inviteCount}</div>
+                <div className="mt-1 text-2xl font-bold text-blue-600">{inviteCount}</div>
               </div>
               <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                 <div className="text-[11px] font-semibold text-slate-500">Vai trò BTC</div>
-                <div className="mt-1 text-2xl font-bold text-indigo-600">{organizedCount + coOrganizerCount}</div>
+                <div className="mt-1 text-2xl font-bold text-blue-600">{organizedCount + coOrganizerCount}</div>
               </div>
               <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                 <div className="text-[11px] font-semibold text-slate-500">Giải làm trọng tài</div>
@@ -584,13 +584,13 @@ export default function DashboardPage() {
                 Xem trang cá nhân
               </Link>
               <Link href="/notifications" className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 text-slate-700 font-bold text-xs transition-all border border-transparent hover:border-slate-200">
-                <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600 shrink-0">
+                <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-blue-600 shrink-0">
                   <ShieldCheck className="w-4 h-4" />
                 </div>
                 Xem thông báo và lời mời
               </Link>
               <Link href="/organizer/tournaments" className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 text-slate-700 font-bold text-xs transition-all border border-transparent hover:border-slate-200">
-                <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-500 shrink-0">
+                <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-500 shrink-0">
                   <Trophy className="w-4 h-4" />
                 </div>
                 Quản lý giải đấu

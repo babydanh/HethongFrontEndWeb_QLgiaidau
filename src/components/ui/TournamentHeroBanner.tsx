@@ -26,7 +26,7 @@ function CountdownTimer({ targetDate }: { targetDate: string }) {
   }, [targetDate]);
   if (!text) return null;
   return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-400/30 text-amber-300 text-[10px] font-semibold whitespace-nowrap">
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-500/20 border border-amber-400/30 text-amber-300 text-[10px] font-semibold whitespace-nowrap">
       ⏳ {text}
     </span>
   );

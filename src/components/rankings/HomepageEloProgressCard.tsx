@@ -44,8 +44,8 @@ const BAR_TRACK_COLORS = [
   'bg-blue-100/60',     // C+
   'bg-amber-100/60',    // B
   'bg-amber-100/60',    // B+
-  'bg-violet-100/60',   // A
-  'bg-violet-100/60',   // A+
+  'bg-blue-100/60',   // A
+  'bg-blue-100/60',   // A+
   'bg-rose-100/60',     // S
 ];
 
@@ -93,7 +93,7 @@ export default function HomepageEloProgressCard({
               </span>
             )}
             {activeRankInfo?.matchType && (
-              <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded uppercase tracking-wider">
+              <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded uppercase tracking-wider">
                 {getEloMatchTypeLabel(activeRankInfo.matchType)}
               </span>
             )}
@@ -114,8 +114,8 @@ export default function HomepageEloProgressCard({
       <div className="flex items-center gap-2">
         <ShieldIcon className={cn(
           'w-4 h-4 shrink-0',
-          shieldStatus.state === 'active' && 'text-emerald-600',
-          shieldStatus.state === 'broken' && 'text-amber-600',
+          shieldStatus.state === 'active' && 'text-blue-600',
+          shieldStatus.state === 'broken' && 'text-blue-600',
           shieldStatus.state === 'onboarding' && 'text-slate-400',
         )} />
         <div className="flex-1 flex items-center gap-2">

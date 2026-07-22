@@ -54,7 +54,7 @@ function CreateTournamentForm() {
         </div>
 
         {isClubAdvanced && (
-          <div className="mb-8 rounded-lg border border-emerald-200 bg-emerald-50 px-5 py-4 text-left">
+          <div className="mb-8 rounded-lg border border-slate-200 bg-slate-50 px-5 py-4 text-left">
             <p className="text-sm font-bold text-emerald-900">Tạo giải nâng cao trong câu lạc bộ</p>
             <p className="mt-1 text-xs font-semibold leading-relaxed text-emerald-700">
               Giải vẫn thuộc CLB và miễn phí đăng ký. Bạn có thể chọn công khai để người ngoài xem được trang giải,
@@ -80,7 +80,7 @@ function CreateTournamentForm() {
                     {isPast ? <Check className="w-5 h-5" /> : <Icon className="w-5 h-5" />}
                   </div>
                   <span className={`text-xs font-bold whitespace-nowrap absolute -bottom-6 text-center ${
-                    isActive ? 'text-blue-600' : isPast ? 'text-emerald-600' : 'text-slate-400'
+                    isActive ? 'text-blue-600' : isPast ? 'text-blue-600' : 'text-slate-400'
                   }`}>
                     {step.label}
                   </span>

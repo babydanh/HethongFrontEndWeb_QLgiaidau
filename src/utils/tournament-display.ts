@@ -101,7 +101,7 @@ export const isParticipantReadyForNextStep = (status?: string | null) =>
 
 export const getParticipantStatusClassName = (status?: string | null) => {
   if (isParticipantApproved(status)) {
-    return 'border-emerald-100 bg-emerald-50 text-emerald-700';
+    return 'border-blue-200 bg-blue-50 text-blue-700';
   }
 
   if (isParticipantPendingApproval(status)) {
@@ -109,15 +109,15 @@ export const getParticipantStatusClassName = (status?: string | null) => {
   }
 
   if (isParticipantPendingPartner(status)) {
-    return 'border-sky-100 bg-sky-50 text-sky-700';
+    return 'border-blue-100 bg-blue-50 text-blue-700';
   }
 
   if (isParticipantWaitlisted(status)) {
-    return 'border-violet-100 bg-violet-50 text-violet-700';
+    return 'border-blue-100 bg-blue-50 text-blue-700';
   }
 
   if (status === 'REJECTED') {
-    return 'border-orange-100 bg-orange-50 text-orange-700';
+    return 'border-amber-100 bg-amber-50 text-amber-700';
   }
 
   if (status === 'KICKED') {
@@ -125,7 +125,7 @@ export const getParticipantStatusClassName = (status?: string | null) => {
   }
 
   if (status === 'DISQUALIFIED') {
-    return 'border-red-100 bg-red-50 text-red-700';
+    return 'border-rose-100 bg-rose-50 text-rose-700';
   }
 
   if (status === 'WITHDRAWN') {

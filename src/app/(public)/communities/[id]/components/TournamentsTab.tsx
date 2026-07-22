@@ -95,7 +95,7 @@ export default function TournamentsTab({
       );
     }
     return (
-      <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-200">
+      <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
         Giải mở rộng
       </span>
     );
@@ -234,7 +234,7 @@ export default function TournamentsTab({
             <Button 
               onClick={() => router.push(`/communities/${communityId}/manage/tournaments`)}
               variant="outline"
-              className="w-full sm:w-auto border-emerald-600 text-emerald-700 hover:bg-emerald-50 font-bold shadow-sm transition-all"
+              className="w-full sm:w-auto border-emerald-600 text-blue-700 hover:bg-blue-50 font-bold shadow-sm transition-all"
             >
               ⚙️ Quản lý giải đấu CLB
             </Button>
@@ -261,7 +261,7 @@ export default function TournamentsTab({
             onClick={() => setActiveFilter(opt.key)}
             className={`px-3 py-1.5 rounded-lg border text-[11px] font-bold transition-all ${
               activeFilter === opt.key
-                ? 'border-emerald-600 text-emerald-700 bg-emerald-50 shadow-sm'
+                ? 'border-emerald-600 text-blue-700 bg-blue-50 shadow-sm'
                 : 'border-slate-200 text-slate-600 bg-white hover:bg-slate-50'
             }`}
           >
@@ -272,7 +272,7 @@ export default function TournamentsTab({
 
       {isLoading ? (
         <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-12 flex flex-col items-center justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-emerald-500 mb-2" />
+          <Loader2 className="w-8 h-8 animate-spin text-blue-500 mb-2" />
           <p className="text-slate-500 text-sm">Đang tải danh sách giải đấu...</p>
         </div>
       ) : groupedTournaments.length === 0 ? (
@@ -317,7 +317,7 @@ export default function TournamentsTab({
 
                         {/* Sport Category Badge */}
                         {t.divisions[0]?.category?.name && (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
                             {(() => {
                               const logo = getSportLogo(t.divisions[0].category.name);
                               return logo ? <img src={logo} alt="" className="w-3 h-3 object-contain" /> : null;
@@ -380,7 +380,7 @@ export default function TournamentsTab({
               </div>
 
               <div className="mt-5 pt-4 border-t border-slate-100 flex justify-end">
-                <span className="text-xs font-bold text-emerald-600 group-hover:text-emerald-700 flex items-center gap-1 transition-colors">
+                <span className="text-xs font-bold text-blue-600 group-hover:text-emerald-700 flex items-center gap-1 transition-colors">
                   Xem chi tiết giải đấu →
                 </span>
               </div>

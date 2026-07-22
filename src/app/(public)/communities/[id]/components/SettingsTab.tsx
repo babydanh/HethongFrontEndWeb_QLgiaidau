@@ -281,7 +281,7 @@ export default function SettingsTab({ community }: { community: Community }) {
         {/* General Settings */}
         <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6 md:p-8">
           <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2 border-b pb-4">
-            <Settings className="w-5 h-5 text-emerald-600" />
+            <Settings className="w-5 h-5 text-blue-600" />
             Cài đặt chung
           </h3>
           
@@ -398,7 +398,7 @@ export default function SettingsTab({ community }: { community: Community }) {
                       onClick={() => handleToggleCategory(cat.id)}
                       className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all border ${
                         isSelected 
-                          ? 'bg-emerald-50 text-emerald-700 border-emerald-300' 
+                          ? 'bg-blue-50 text-blue-700 border-emerald-300' 
                           : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
                       }`}
                     >
@@ -424,7 +424,7 @@ export default function SettingsTab({ community }: { community: Community }) {
                       <button
                         type="button"
                         onClick={() => handleRemoveSocialLink(key)}
-                        className="text-slate-400 hover:text-red-500 p-1 transition-colors"
+                        className="text-slate-400 hover:text-rose-500 p-1 transition-colors"
                         title="Xóa"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -553,11 +553,11 @@ export default function SettingsTab({ community }: { community: Community }) {
                           value={item.val} 
                           checked={visibility === item.val}
                           onChange={() => setVisibility(item.val as 'PUBLIC' | 'RESTRICTED' | 'PRIVATE')}
-                          className="mt-1 text-emerald-600 focus:ring-emerald-500" 
+                          className="mt-1 text-blue-600 focus:ring-emerald-500" 
                         />
                         <div>
                           <span className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                            <Icon className="w-4 h-4 text-emerald-600 shrink-0" />
+                            <Icon className="w-4 h-4 text-blue-600 shrink-0" />
                             {item.label}
                           </span>
                           <p className="text-xs text-slate-500 mt-0.5">{item.desc}</p>
@@ -591,7 +591,7 @@ export default function SettingsTab({ community }: { community: Community }) {
                         value={item.val} 
                         checked={joinMode === item.val}
                         onChange={() => setJoinMode(item.val as 'OPEN' | 'APPROVAL' | 'INVITE_ONLY')}
-                        className="mt-1 text-emerald-600 focus:ring-emerald-500" 
+                        className="mt-1 text-blue-600 focus:ring-emerald-500" 
                       />
                       <div>
                         <span className="text-sm font-bold text-slate-900">{item.label}</span>
@@ -617,7 +617,7 @@ export default function SettingsTab({ community }: { community: Community }) {
               </div>
               <div className="md:col-span-2">
                 <label className="block text-sm font-semibold text-slate-700 mb-1 flex items-center gap-1.5">
-                  <AlignLeft className="w-4 h-4 text-emerald-600" />
+                  <AlignLeft className="w-4 h-4 text-blue-600" />
                   Nội quy câu lạc bộ
                 </label>
                 <textarea 
@@ -634,7 +634,7 @@ export default function SettingsTab({ community }: { community: Community }) {
             {joinMode === 'APPROVAL' && (
               <div className="pt-4 border-t border-slate-100 space-y-4">
                 <label className="block text-sm font-semibold text-slate-700 flex items-center gap-1.5">
-                  <ListChecks className="w-4 h-4 text-emerald-600" />
+                  <ListChecks className="w-4 h-4 text-blue-600" />
                   Câu hỏi dành cho người muốn tham gia
                 </label>
                 <p className="text-xs text-slate-500 -mt-2">Giúp lọc thành viên phù hợp bằng cách yêu cầu họ trả lời khi nhấn nút xin vào nhóm.</p>
@@ -647,7 +647,7 @@ export default function SettingsTab({ community }: { community: Community }) {
                       <button 
                         type="button" 
                         onClick={() => handleRemoveQuestion(idx)}
-                        className="text-slate-400 hover:text-red-500 p-1"
+                        className="text-slate-400 hover:text-rose-500 p-1"
                         title="Xoá câu hỏi"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -691,18 +691,18 @@ export default function SettingsTab({ community }: { community: Community }) {
         </div>
 
         {/* Danger Zone */}
-        <div className="bg-red-50 rounded-lg shadow-sm border border-red-200 p-6 md:p-8">
-          <h3 className="text-xl font-bold text-red-950 mb-2 flex items-center gap-2">
-            <Trash2 className="w-5 h-5 text-red-700" />
+        <div className="bg-rose-50 rounded-lg shadow-sm border border-slate-200 p-6 md:p-8">
+          <h3 className="text-xl font-bold text-rose-950 mb-2 flex items-center gap-2">
+            <Trash2 className="w-5 h-5 text-rose-700" />
             Vùng nguy hiểm
           </h3>
-          <p className="text-sm text-red-700 mb-6 leading-relaxed">
+          <p className="text-sm text-rose-700 mb-6 leading-relaxed">
             Hành động này sẽ xóa vĩnh viễn Câu lạc bộ này khỏi hệ thống cùng với toàn bộ thành viên, hình ảnh và lịch sử giải đấu. Hành động này không thể hoàn tác.
           </p>
           <Button 
             onClick={handleDeleteCommunity}
             disabled={isSaving || isDeleting}
-            className="bg-red-650 hover:bg-red-700 text-white border-0 shadow-sm"
+            className="bg-rose-650 hover:bg-rose-700 text-white border-0 shadow-sm"
           >
             {isDeleting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Trash2 className="w-4 h-4 mr-2" />}
             Xoá Câu lạc bộ

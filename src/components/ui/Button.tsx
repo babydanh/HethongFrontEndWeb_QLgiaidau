@@ -13,7 +13,7 @@ export interface ButtonProps
 export const getButtonClasses = (variant: string = "default", size: string = "default", className?: string) => {
   const variants: Record<string, string> = {
     default: "bg-blue-600 text-white hover:bg-blue-700 shadow-sm",
-    destructive: "bg-red-500 text-white hover:bg-red-600 shadow-sm",
+    destructive: "bg-rose-500 text-white hover:bg-rose-600 shadow-sm",
     success: "bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm",
     warning: "bg-amber-500 text-white hover:bg-amber-600 shadow-sm",
     outline: "border border-slate-200 bg-white hover:bg-slate-100 hover:text-slate-900 text-slate-700",
@@ -38,7 +38,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     // Classes matching the blue/white clean theme
     const variants = {
       default: "bg-blue-600 text-white hover:bg-blue-700 shadow-sm",
-      destructive: "bg-red-500 text-white hover:bg-red-600 shadow-sm",
+      destructive: "bg-rose-500 text-white hover:bg-rose-600 shadow-sm",
       outline: "border border-slate-200 bg-white hover:bg-slate-100 hover:text-slate-900 text-slate-700",
       secondary: "bg-blue-50 text-blue-900 hover:bg-blue-100",
       ghost: "hover:bg-slate-100 hover:text-slate-900 text-slate-600",

@@ -318,7 +318,7 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
                         {selectedDivision._count?.participants ?? 0}
                         {selectedDivision.maxParticipants ? ` / ${selectedDivision.maxParticipants}` : ''} đăng ký
                       </span>
-                      <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 text-[11px] font-bold">
+                      <span className="px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-[11px] font-bold">
                         {entryFeeVal > 0 ? formatCurrency(entryFeeVal) : 'Miễn phí'}
                       </span>
                     </div>
@@ -354,7 +354,7 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
               </div>
 
               {!isAuthenticated ? (
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-xs text-amber-800 leading-relaxed">
+                <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 text-xs text-slate-700 leading-relaxed">
                   Bạn cần đăng nhập tài khoản trước khi hoàn tất đăng ký. Hệ thống sẽ tự động chuyển hướng bạn quay lại trang này sau khi đăng nhập thành công.
                 </div>
               ) : null}

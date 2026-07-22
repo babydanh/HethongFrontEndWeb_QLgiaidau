@@ -137,14 +137,14 @@ export default function ModerationPage() {
     if (user.activeBan) {
       const ban = user.activeBan;
       if (ban.banType === 'HARD_BAN') {
-        return <span className="bg-red-50 text-red-600 text-xs px-2.5 py-1 rounded-full font-semibold border border-red-200">Khóa Vĩnh Viễn</span>;
+        return <span className="bg-rose-50 text-rose-600 text-xs px-2.5 py-1 rounded-full font-semibold border border-slate-200">Khóa Vĩnh Viễn</span>;
       }
       if (ban.banType === 'SOFT_BAN') {
-        return <span className="bg-amber-50 text-amber-600 text-xs px-2.5 py-1 rounded-full font-semibold border border-amber-200">Khóa Tạm Thời</span>;
+        return <span className="bg-slate-100 text-slate-600 text-xs px-2.5 py-1 rounded-full font-semibold border border-slate-200">Khóa Tạm Thời</span>;
       }
       return <span className="bg-yellow-50 text-yellow-600 text-xs px-2.5 py-1 rounded-full font-semibold border border-yellow-200">Cảnh Cáo</span>;
     }
-    return <span className="bg-emerald-50 text-emerald-600 text-xs px-2.5 py-1 rounded-full font-semibold border border-emerald-200">Hoạt Động</span>;
+    return <span className="bg-blue-50 text-blue-600 text-xs px-2.5 py-1 rounded-full font-semibold border border-blue-200">Hoạt Động</span>;
   };
 
   return (

@@ -16,7 +16,7 @@ const REGISTRATION_MODE_UI: Record<RegistrationMode, RegistrationModeUi> = {
     mode: 'OPEN',
     ctaLabel: 'Đăng ký tham gia',
     badgeLabel: 'Đăng ký tự do',
-    badgeClassName: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+    badgeClassName: 'border-blue-200 bg-blue-50 text-blue-700',
   },
   APPROVAL: {
     mode: 'APPROVAL',
@@ -28,7 +28,7 @@ const REGISTRATION_MODE_UI: Record<RegistrationMode, RegistrationModeUi> = {
     mode: 'INVITE_ONLY',
     ctaLabel: 'Đăng ký bằng mã mời',
     badgeLabel: 'Cần mã mời',
-    badgeClassName: 'border-amber-200 bg-amber-50 text-amber-700',
+    badgeClassName: 'border-slate-200 bg-slate-100 text-slate-600',
   },
 };
 

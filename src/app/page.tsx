@@ -370,8 +370,8 @@ export default function HomePage() {
         );
         setTournaments(activeTournaments);
 
-        // Cache tournaments trong sessionStorage (5 phút)
-        if (typeof window !== 'undefined' && !selectedCategoryId) {
+        // Cache tournaments trong sessionStorage (5 phút) - chỉ cache khi có dữ liệu
+        if (typeof window !== 'undefined' && !selectedCategoryId && activeTournaments.length > 0) {
           const CACHE_KEY_TOUR = 'homepage_tournaments';
           sessionStorage.setItem(CACHE_KEY_TOUR, JSON.stringify({ timestamp: Date.now(), data: activeTournaments }));
         }
@@ -699,7 +699,7 @@ export default function HomePage() {
           <div className="flex items-center gap-2.5 w-5/12 min-w-0">
             <div className="min-w-0">
               <div className="flex items-center gap-1 min-w-0">
-                <span className={`text-xs font-bold block leading-tight truncate ${isCompleted && match.winnerId === match.participant1?.id ? 'text-emerald-600' : 'text-slate-800'}`}>
+                <span className={`text-xs font-bold block leading-snug line-clamp-2 break-words ${isCompleted && match.winnerId === match.participant1?.id ? 'text-emerald-600' : 'text-slate-800'}`}>
                   {match.participant1?.teamName || 'Chờ xác định'}
                 </span>
 
@@ -734,7 +734,7 @@ export default function HomePage() {
             <div className="min-w-0">
               <div className="flex items-center justify-end gap-1 min-w-0">
 
-                <span className={`text-xs font-bold block leading-tight truncate ${isCompleted && match.winnerId === match.participant2?.id ? 'text-emerald-600' : 'text-slate-800'}`}>
+                <span className={`text-xs font-bold block leading-snug line-clamp-2 break-words ${isCompleted && match.winnerId === match.participant2?.id ? 'text-emerald-600' : 'text-slate-800'}`}>
                   {match.participant2?.teamName || 'Chờ xác định'}
                 </span>
               </div>
@@ -763,17 +763,17 @@ export default function HomePage() {
         </div>
 
         {/* Interactive Footer (High five, Replay, Share) */}
-        <div className="px-2 py-1.5 bg-slate-50/50 border-t border-slate-100 grid grid-cols-3 gap-1">
+        <div className="px-2 py-1 bg-slate-50/50 border-t border-slate-100 grid grid-cols-3 gap-1">
           <button 
             onClick={() => handleHighFive(match.id)}
-            className="flex items-center justify-center gap-1 py-1.5 min-h-[44px] hover:bg-white rounded-lg text-[10px] font-bold text-slate-600 transition-all border border-transparent hover:border-slate-150 active:scale-95 duration-100 cursor-pointer"
+            className="flex items-center justify-center gap-1 py-1 min-h-[32px] hover:bg-white rounded-lg text-[10px] font-bold text-slate-600 transition-all border border-transparent hover:border-slate-150 active:scale-95 duration-100 cursor-pointer"
           >
             <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500/10" />
             <span>Cổ vũ ({currentHighFives})</span>
           </button>
 
           <Link href={`/live/${match.id}`} className="w-full">
-            <div className="flex items-center justify-center gap-1 py-1.5 min-h-[44px] hover:bg-white rounded-lg text-[10px] font-bold text-slate-650 transition-all border border-transparent hover:border-slate-150 active:scale-95 duration-100 cursor-pointer w-full">
+            <div className="flex items-center justify-center gap-1 py-1 min-h-[32px] hover:bg-white rounded-lg text-[10px] font-bold text-slate-650 transition-all border border-transparent hover:border-slate-150 active:scale-95 duration-100 cursor-pointer w-full">
               {isLive ? (
                 <>
                   <Play className="w-3.5 h-3.5 text-emerald-600 fill-emerald-600/10 animate-pulse" />

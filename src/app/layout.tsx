@@ -19,6 +19,14 @@ export const metadata: Metadata = {
     siteName: "VNDC Sport",
     type: "website",
   },
+  icons: {
+    icon: [
+      { url: '/icon.png', type: 'image/png' },
+      { url: '/favicon.ico' },
+    ],
+    shortcut: '/icon.png',
+    apple: '/icon.png',
+  },
 };
 
 export default function RootLayout({

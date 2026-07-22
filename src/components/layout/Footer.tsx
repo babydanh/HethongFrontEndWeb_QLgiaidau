@@ -9,15 +9,12 @@ export function Footer() {
       <div className="container mx-auto px-4 py-8 md:px-6 md:py-12">
         <div className="grid gap-6 sm:gap-8 md:grid-cols-2 lg:grid-cols-4">
           <div>
-            <Link href="/" className="flex items-center gap-2 mb-3">
+            <Link href="/" className="flex items-center mb-3">
               <img 
                 src="/vndcsport.svg" 
                 alt="VNSPORT Logo" 
                 className="h-10 w-auto object-contain"
               />
-              <span className="font-bold text-2xl tracking-wider text-blue-600 uppercase select-none">
-                VN<span className="text-slate-800">SPORT</span>
-              </span>
             </Link>
             <p className="text-sm text-slate-500">
               Nền tảng quản lý giải đấu chuyên nghiệp và dễ sử dụng nhất.

@@ -1247,7 +1247,7 @@ export default function MatchesListPage() {
                         </div>
 
                         {/* Actions */}
-                        <div className="px-3 py-1.5 bg-slate-50/50 border-t border-slate-100 grid grid-cols-3 gap-1 text-center text-[11px] font-bold text-slate-500">
+                        <div className="px-3 py-1 bg-slate-50/50 border-t border-slate-100 grid grid-cols-3 gap-1 text-center text-[11px] font-bold text-slate-500">
                           <button 
                             onClick={async () => {
                               setCheerCounts(prev => ({
@@ -1268,14 +1268,14 @@ export default function MatchesListPage() {
                                 toast.error('Không thể gửi cổ vũ, vui lòng thử lại.');
                               }
                             }}
-                            className="flex items-center justify-center gap-1 hover:text-rose-600 transition-colors py-2 min-h-[44px] cursor-pointer"
+                            className="flex items-center justify-center gap-1 hover:text-rose-600 transition-colors py-1 min-h-[32px] cursor-pointer"
                           >
                             <Heart className="w-3 h-3 text-rose-500 fill-current" />
                             <span>Cổ vũ ({cheerCounts[match.id] || 0})</span>
                           </button>
                           <Link 
                             href={`/live/${match.id}`}
-                            className="flex items-center justify-center gap-1 hover:text-indigo-600 transition-colors py-2 min-h-[44px] cursor-pointer"
+                            className="flex items-center justify-center gap-1 hover:text-indigo-600 transition-colors py-1 min-h-[32px] cursor-pointer"
                           >
                             <Play className="w-3 h-3 text-indigo-600 fill-current" />
                             <span>Chi tiết</span>
@@ -1288,7 +1288,7 @@ export default function MatchesListPage() {
                               setActiveShareTitle(`Trận đấu: ${p1Name} vs ${p2Name}`);
                               setIsShareModalOpen(true);
                             }}
-                            className="flex items-center justify-center gap-1 hover:text-slate-700 transition-colors py-2 min-h-[44px] cursor-pointer"
+                            className="flex items-center justify-center gap-1 hover:text-slate-700 transition-colors py-1 min-h-[32px] cursor-pointer"
                           >
                             <Share2 className="w-3 h-3 text-slate-400" />
                             <span>Chia sẻ</span>

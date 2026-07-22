@@ -527,41 +527,41 @@ export default function LeaderboardPage() {
                                 <p className="text-slate-500 text-[11px] leading-relaxed">Điểm ELO tích lũy sau mỗi trận đấu sẽ xếp người chơi vào các Tier trình độ tương ứng.</p>
                             </div>
                             <div className="flex flex-col gap-2">
-                                <div className="flex justify-between items-center p-2.5 rounded-lg border bg-slate-50 border-slate-205">
-                                    <span className="bg-amber-500/10 text-amber-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase">Tier S</span>
-                                    <span className="font-bold text-xs text-slate-800">1800+ ELO</span>
+                                <div className="flex justify-between items-center p-2.5 rounded-lg border bg-[#FEF3C7] border-amber-300">
+                                    <span className="bg-[#D97706] text-white px-2.5 py-0.5 rounded text-[10px] font-bold uppercase shadow-xs">Tier S</span>
+                                    <span className="font-bold text-xs text-[#92400E]">1800+ ELO</span>
                                 </div>
-                                <div className="flex justify-between items-center p-2.5 rounded-lg border bg-slate-50 border-slate-205">
-                                    <span className="bg-rose-500/15 text-rose-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase">High Tier A</span>
-                                    <span className="font-bold text-xs text-slate-800">1700 - 1799 ELO</span>
+                                <div className="flex justify-between items-center p-2.5 rounded-lg border bg-[#F8C4B4] border-rose-300">
+                                    <span className="bg-[#DC2626] text-white px-2.5 py-0.5 rounded text-[10px] font-bold uppercase shadow-xs">High Tier A</span>
+                                    <span className="font-bold text-xs text-[#991B1B]">1700 - 1799 ELO</span>
                                 </div>
-                                <div className="flex justify-between items-center p-2.5 rounded-lg border bg-slate-55 border-slate-205">
-                                    <span className="bg-rose-500/10 text-rose-500 px-2 py-0.5 rounded text-[10px] font-bold uppercase">Low Tier A</span>
-                                    <span className="font-bold text-xs text-slate-800">1600 - 1699 ELO</span>
+                                <div className="flex justify-between items-center p-2.5 rounded-lg border bg-[#FBE8E0] border-rose-200">
+                                    <span className="bg-[#EF4444] text-white px-2.5 py-0.5 rounded text-[10px] font-bold uppercase shadow-xs">Low Tier A</span>
+                                    <span className="font-bold text-xs text-[#B91C1C]">1600 - 1699 ELO</span>
                                 </div>
-                                <div className="flex justify-between items-center p-2.5 rounded-lg border bg-slate-50 border-slate-205">
-                                    <span className="bg-blue-500/15 text-blue-650 px-2 py-0.5 rounded text-[10px] font-bold uppercase">High Tier B</span>
-                                    <span className="font-bold text-xs text-slate-800">1500 - 1599 ELO</span>
+                                <div className="flex justify-between items-center p-2.5 rounded-lg border bg-[#BFDBFE] border-blue-300">
+                                    <span className="bg-[#2563EB] text-white px-2.5 py-0.5 rounded text-[10px] font-bold uppercase shadow-xs">High Tier B</span>
+                                    <span className="font-bold text-xs text-[#1E40AF]">1500 - 1599 ELO</span>
                                 </div>
-                                <div className="flex justify-between items-center p-2.5 rounded-lg border bg-slate-50 border-slate-205">
-                                    <span className="bg-blue-500/10 text-blue-550 px-2 py-0.5 rounded text-[10px] font-bold uppercase">Low Tier B</span>
-                                    <span className="font-bold text-xs text-slate-800">1400 - 1499 ELO</span>
+                                <div className="flex justify-between items-center p-2.5 rounded-lg border bg-[#EFF6FF] border-blue-200">
+                                    <span className="bg-[#3B82F6] text-white px-2.5 py-0.5 rounded text-[10px] font-bold uppercase shadow-xs">Low Tier B</span>
+                                    <span className="font-bold text-xs text-[#1D4ED8]">1400 - 1499 ELO</span>
                                 </div>
-                                <div className="flex justify-between items-center p-2.5 rounded-lg border bg-slate-50 border-slate-205">
-                                    <span className="bg-emerald-500/10 text-emerald-650 px-2 py-0.5 rounded text-[10px] font-bold uppercase">High Tier C</span>
-                                    <span className="font-bold text-xs text-slate-800">1300 - 1399 ELO</span>
+                                <div className="flex justify-between items-center p-2.5 rounded-lg border bg-[#A7F3D0] border-emerald-300">
+                                    <span className="bg-[#059669] text-white px-2.5 py-0.5 rounded text-[10px] font-bold uppercase shadow-xs">High Tier C</span>
+                                    <span className="font-bold text-xs text-[#065F46]">1300 - 1399 ELO</span>
                                 </div>
-                                <div className="flex justify-between items-center p-2.5 rounded-lg border bg-slate-55 border-slate-205">
-                                    <span className="bg-blue-500/10 text-blue-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase">Low Tier C</span>
-                                    <span className="font-bold text-xs text-slate-800">1200 - 1299 ELO</span>
+                                <div className="flex justify-between items-center p-2.5 rounded-lg border bg-[#ECFDF5] border-emerald-200">
+                                    <span className="bg-[#10B981] text-white px-2.5 py-0.5 rounded text-[10px] font-bold uppercase shadow-xs">Low Tier C</span>
+                                    <span className="font-bold text-xs text-[#047857]">1200 - 1299 ELO</span>
                                 </div>
-                                <div className="flex justify-between items-center p-2.5 rounded-lg border bg-slate-50 border-slate-205">
-                                    <span className="bg-slate-500/10 text-slate-700 px-2 py-0.5 rounded text-[10px] font-bold uppercase">High Tier D</span>
-                                    <span className="font-bold text-xs text-slate-800">1100 - 1199 ELO</span>
+                                <div className="flex justify-between items-center p-2.5 rounded-lg border bg-[#E2E8F0] border-slate-300">
+                                    <span className="bg-[#475569] text-white px-2.5 py-0.5 rounded text-[10px] font-bold uppercase shadow-xs">High Tier D</span>
+                                    <span className="font-bold text-xs text-[#1E293B]">1100 - 1199 ELO</span>
                                 </div>
-                                <div className="flex justify-between items-center p-2.5 rounded-lg border bg-slate-50 border-slate-205">
-                                    <span className="bg-amber-700/10 text-amber-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase">Low Tier D</span>
-                                    <span className="font-bold text-xs text-slate-800">0 - 1099 ELO</span>
+                                <div className="flex justify-between items-center p-2.5 rounded-lg border bg-[#F5F5F4] border-stone-300">
+                                    <span className="bg-[#78716C] text-white px-2.5 py-0.5 rounded text-[10px] font-bold uppercase shadow-xs">Low Tier D</span>
+                                    <span className="font-bold text-xs text-[#44403C]">0 - 1099 ELO</span>
                                 </div>
                             </div>
                         </div>

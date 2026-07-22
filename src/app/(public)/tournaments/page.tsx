@@ -620,56 +620,61 @@ export default function TournamentsListPage() {
         )}
       </div>
 
-      {/* Filter Status Pills - Chuẩn Hình 1 */}
-      <div className="flex flex-wrap items-center gap-2.5 text-xs font-semibold text-slate-700">
+      {/* Filter Status Pills - Chuẩn Hình 1 (Luôn có màu pastel + chấm/chữ tương ứng) */}
+      <div className="flex flex-wrap items-center gap-2.5 text-xs font-semibold">
         <button 
           onClick={() => { setSelectedStatus(selectedStatus === 'COMPLETED' ? '' : 'COMPLETED'); setPage(1); }}
-          className={`rounded-full px-4 py-2 border transition-all cursor-pointer ${
+          className={`rounded-full px-4 py-2 border transition-all cursor-pointer flex items-center gap-1.5 ${
             selectedStatus === 'COMPLETED'
-              ? 'bg-[#F3F4F1] text-[#4A4E4D] border-slate-300 font-bold shadow-xs'
-              : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+              ? 'bg-[#F3F4F1] text-[#4A4E4D] border-slate-400 font-bold shadow-xs'
+              : 'bg-[#F3F4F1]/70 text-[#4A4E4D] border-transparent hover:border-slate-300'
           }`}
         >
+          <span className="w-2 h-2 rounded-full bg-[#8E9290]" />
           Vừa kết thúc
         </button>
         <button 
           onClick={() => { setSelectedStatus(selectedStatus === 'IN_PROGRESS' ? '' : 'IN_PROGRESS'); setPage(1); }}
-          className={`rounded-full px-4 py-2 border transition-all cursor-pointer ${
+          className={`rounded-full px-4 py-2 border transition-all cursor-pointer flex items-center gap-1.5 ${
             selectedStatus === 'IN_PROGRESS'
-              ? 'bg-[#EBF5FF] text-[#1E56A0] border-blue-200 font-bold shadow-xs'
-              : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+              ? 'bg-[#EBF5FF] text-[#1E56A0] border-blue-300 font-bold shadow-xs'
+              : 'bg-[#EBF5FF]/70 text-[#1E56A0] border-transparent hover:border-blue-200'
           }`}
         >
+          <span className="w-2 h-2 rounded-full bg-[#2563EB]" />
           Đang diễn ra
         </button>
         <button 
           onClick={() => { setSelectedStatus(selectedStatus === 'REGISTRATION_OPEN' ? '' : 'REGISTRATION_OPEN'); setPage(1); }}
-          className={`rounded-full px-4 py-2 border transition-all cursor-pointer ${
+          className={`rounded-full px-4 py-2 border transition-all cursor-pointer flex items-center gap-1.5 ${
             selectedStatus === 'REGISTRATION_OPEN'
-              ? 'bg-[#EFF8E9] text-[#386629] border-emerald-200 font-bold shadow-xs'
-              : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+              ? 'bg-[#EFF8E9] text-[#386629] border-emerald-300 font-bold shadow-xs'
+              : 'bg-[#EFF8E9]/70 text-[#386629] border-transparent hover:border-emerald-200'
           }`}
         >
+          <span className="w-2 h-2 rounded-full bg-[#16A34A]" />
           Mở đăng ký
         </button>
         <button 
           onClick={() => { setSelectedStatus(selectedStatus === 'UPCOMING' ? '' : 'UPCOMING'); setPage(1); }}
-          className={`rounded-full px-4 py-2 border transition-all cursor-pointer ${
+          className={`rounded-full px-4 py-2 border transition-all cursor-pointer flex items-center gap-1.5 ${
             selectedStatus === 'UPCOMING'
-              ? 'bg-[#FFF5E6] text-[#995C00] border-amber-200 font-bold shadow-xs'
-              : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+              ? 'bg-[#FFF5E6] text-[#995C00] border-amber-300 font-bold shadow-xs'
+              : 'bg-[#FFF5E6]/70 text-[#995C00] border-transparent hover:border-amber-200'
           }`}
         >
+          <span className="w-2 h-2 rounded-full bg-[#D97706]" />
           Sắp diễn ra
         </button>
         <button 
           onClick={() => { setSelectedStatus(selectedStatus === 'FINISHED' ? '' : 'FINISHED'); setPage(1); }}
-          className={`rounded-full px-4 py-2 border transition-all cursor-pointer ${
+          className={`rounded-full px-4 py-2 border transition-all cursor-pointer flex items-center gap-1.5 ${
             selectedStatus === 'FINISHED'
               ? 'bg-[#F1F5F9] text-[#64748B] border-slate-300 font-bold shadow-xs'
-              : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+              : 'bg-[#F1F5F9]/70 text-[#64748B] border-transparent hover:border-slate-200'
           }`}
         >
+          <span className="w-2 h-2 rounded-full bg-[#64748B]" />
           Đã kết thúc
         </button>
         {selectedStatus && (

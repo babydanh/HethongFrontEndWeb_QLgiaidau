@@ -964,8 +964,8 @@ export default function HomePage() {
                   <h3 className="text-2xl md:text-3xl font-extrabold text-[#0f1b33] mb-3 tracking-tight">
                     Chưa Có Giải Đấu Nào Sắp Diễn Ra
                   </h3>
-                  <p className="text-sm leading-relaxed text-[#5b6b85]">
-                    Hãy theo dõi trang để cập nhật thông tin về các giải đấu tennis, pickleball và cầu lông mới nhất sắp sửa diễn ra.
+                  <p className="text-sm leading-relaxed text-[#0f1b33] font-bold">
+                    Hãy theo dõi trang để cập nhật thông tin về các giải đấu mới nhất sắp sửa diễn ra.
                   </p>
                 </div>
               </div>

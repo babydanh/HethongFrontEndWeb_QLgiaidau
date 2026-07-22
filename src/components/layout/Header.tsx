@@ -294,30 +294,7 @@ export function Header() {
             />
           </Link>
 
-          {/* Dropdown Chọn Môn Thể Thao Chuẩn Hóa */}
-          <div className="relative flex items-center">
-            <select
-              aria-label="Chọn môn thể thao"
-              onChange={(e) => {
-                const catId = e.target.value;
-                if (catId) {
-                  router.push(`/tournaments?categoryId=${catId}`);
-                } else {
-                  router.push('/tournaments');
-                }
-              }}
-              className="appearance-none bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-lg pl-3 pr-7 py-1.5 text-xs font-bold text-slate-700 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all shadow-sm"
-            >
-              <option value="">Tất cả môn</option>
-              <option value="pickleball">Pickleball</option>
-              <option value="tennis">Tennis</option>
-              <option value="badminton">Cầu lông</option>
-              <option value="table_tennis">Bóng bàn</option>
-            </select>
-            <div className="absolute right-2.5 pointer-events-none text-slate-400 text-[10px]">
-              ▼
-            </div>
-          </div>
+
 
           <nav className="hidden h-full items-center gap-6 md:flex">
             {navLinks.map((link) => (

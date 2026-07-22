@@ -223,7 +223,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                 Vận động viên
               </span>
               {profile.isVerified && (
-                <span className="px-3 py-1 text-xs font-bold rounded-lg border bg-slate-50 text-slate-600 border-emerald-250 uppercase tracking-wider">
+                <span className="px-3 py-1 text-xs font-bold rounded-lg border bg-blue-50 text-blue-700 border-blue-200 uppercase tracking-wider">
                   Đã xác minh
                 </span>
               )}

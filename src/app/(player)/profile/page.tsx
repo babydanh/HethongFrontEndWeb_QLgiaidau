@@ -576,7 +576,7 @@ export default function ProfilePage() {
             <div className="flex flex-wrap items-center gap-2">
               {Array.from(new Set((user as unknown as Record<string, unknown>)?.roles as string[] | undefined || [])).map((role: string) => {
                 let roleLabel = role;
-                let roleColor = 'bg-blue-50 text-blue-700 border-emerald-250';
+                let roleColor = 'bg-blue-50 text-blue-700 border-blue-200';
                 if (role === 'PLAYER') {
                   roleLabel = 'Vận động viên';
                   roleColor = 'bg-blue-50 text-blue-700 border-blue-200';
@@ -585,7 +585,7 @@ export default function ProfilePage() {
                   roleColor = 'bg-purple-50 text-purple-700 border-purple-200';
                 } else if (role === 'ADMIN') {
                   roleLabel = 'Quản trị viên';
-                  roleColor = 'bg-rose-50 text-rose-700 border-slate-200';
+                  roleColor = 'bg-rose-50 text-rose-700 border-rose-200';
                 }
                 return (
                   <span key={role} className={`px-3 py-1 text-xs font-bold rounded-lg border uppercase tracking-wider ${roleColor}`}>
@@ -604,7 +604,7 @@ export default function ProfilePage() {
                   ));
                 }
                 return (
-                  <span className="bg-slate-50 border border-slate-200 text-slate-500 px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider">
+                  <span className="bg-slate-50 border border-slate-200 text-slate-600 px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider">
                     Chưa xếp hạng
                   </span>
                 );

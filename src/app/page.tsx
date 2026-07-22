@@ -851,8 +851,59 @@ export default function HomePage() {
         
         {/* Left Column (9/12) */}
         <div className="lg:col-span-9 flex flex-col gap-8">
-          
-
+          {/* Sports Selector Bar */}
+          <div className="flex overflow-x-auto gap-2 pb-2 no-scrollbar">
+            <button
+              onClick={() => setSelectedCategoryId('')}
+              className={`relative flex items-center gap-1.5 px-4.5 py-2.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                selectedCategoryId === ''
+                  ? 'text-white'
+                  : 'bg-white text-slate-650 border border-slate-200/60 shadow-sm hover:border-slate-300 hover:text-slate-900'
+              }`}
+            >
+              {selectedCategoryId === '' && (
+                <motion.div
+                  layoutId="activeCategory"
+                  className="absolute inset-0 bg-blue-600 rounded-full z-0"
+                  transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                />
+              )}
+              <span className="relative z-10 flex items-center gap-1.5">
+                <Trophy className="w-3.5 h-3.5" />
+                Tất cả
+              </span>
+            </button>
+            {categories.map((cat) => {
+              const isActive = selectedCategoryId === cat.id;
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => setSelectedCategoryId(cat.id)}
+                  className={`relative flex items-center gap-1.5 px-4.5 py-2.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                    isActive
+                      ? 'text-white'
+                      : 'bg-white text-slate-650 border border-slate-200/60 shadow-sm hover:border-slate-300 hover:text-slate-900'
+                  }`}
+                >
+                  {isActive && (
+                    <motion.div
+                      layoutId="activeCategory"
+                      className="absolute inset-0 bg-blue-600 rounded-full z-0"
+                      transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                    />
+                  )}
+                  <span className="relative z-10 flex items-center gap-1.5">
+                    {(() => {
+                      const logo = getSportLogo(cat.name);
+                      if (logo) return <img src={logo} alt={cat.name} className="w-3.5 h-3.5 object-contain" />;
+                      return <Trophy className="w-3.5 h-3.5" />;
+                    })()}
+                    {cat.name}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
 
           {/* Section 1: Giải đấu nổi bật */}
           <section className="flex flex-col gap-4">

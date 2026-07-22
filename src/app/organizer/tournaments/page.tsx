@@ -161,7 +161,9 @@ export default function MyTournamentsPage() {
         toast.success('Đã xoá giải đấu thành công');
       }
     } catch (err) {
-      toast.error(getErrorMessage(err, 'Có lỗi xảy ra khi xoá giải đấu'));
+      const msg = getErrorMessage(err);
+      // Hiện rõ lý do từ backend (vd: chưa hoàn tiền, đang chờ hoàn tiền)
+      toast.error(msg || 'Có lỗi xảy ra khi xoá giải đấu');
     }
   };
 

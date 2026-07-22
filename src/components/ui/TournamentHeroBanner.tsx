@@ -130,50 +130,55 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[25
 
   if (!tournaments || tournaments.length === 0) {
     return (
-      <div className={`w-full ${heightClass} rounded-2xl bg-gradient-to-br from-blue-50/80 via-white to-sky-50/80 flex flex-col justify-center items-center text-center p-8 border border-blue-100/80 shadow-sm relative overflow-hidden group`}>
-        {/* Background Sports Decorative Watermarks */}
-        <div className="absolute -left-6 -bottom-6 w-36 h-36 opacity-[0.07] text-blue-600 pointer-events-none transform -rotate-12">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <circle cx="12" cy="9" r="6" />
-            <path d="M12 15v7M10 22h4" />
-            <line x1="9" y1="9" x2="15" y2="9" />
-            <line x1="12" y1="6" x2="12" y2="12" />
-          </svg>
-        </div>
-        <div className="absolute -right-6 -top-6 w-44 h-44 opacity-[0.06] text-indigo-600 pointer-events-none transform rotate-45">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <path d="M12 2a7 7 0 0 1 7 7c0 2.5-1.3 4.7-3.3 6L14 22h-4l-1.7-7A7.002 7.002 0 0 1 12 2z" />
-            <line x1="8" y1="7" x2="16" y2="7" />
-            <line x1="9" y1="10" x2="15" y2="10" />
+      <div className={`w-full ${heightClass} rounded-[20px] bg-[#a9c9fb] flex flex-col justify-center items-center text-center p-8 md:p-14 shadow-lg shadow-blue-500/15 relative overflow-hidden min-h-[300px] md:min-h-[400px]`}>
+        {/* Faint racket + shuttlecock background icon watermark */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] md:w-[600px] h-[350px] md:h-[600px] opacity-[0.16] pointer-events-none z-0">
+          <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+            {/* Racket */}
+            <g transform="translate(30,20) rotate(-18 80 80)">
+              <ellipse cx="80" cy="60" rx="46" ry="56" fill="none" stroke="white" strokeWidth="6"/>
+              {/* Strings */}
+              <g stroke="white" strokeWidth="1.4" opacity="0.9">
+                <line x1="80" y1="8" x2="80" y2="112"/>
+                <line x1="60" y1="10" x2="60" y2="108"/>
+                <line x1="100" y1="10" x2="100" y2="108"/>
+                <line x1="42" y1="20" x2="42" y2="96"/>
+                <line x1="118" y1="20" x2="118" y2="96"/>
+                <line x1="36" y1="60" x2="124" y2="60"/>
+                <line x1="38" y1="40" x2="122" y2="40"/>
+                <line x1="38" y1="80" x2="122" y2="80"/>
+                <line x1="46" y1="24" x2="114" y2="24"/>
+                <line x1="46" y1="96" x2="114" y2="96"/>
+              </g>
+              {/* Shaft */}
+              <rect x="74" y="112" width="12" height="70" rx="5" fill="white"/>
+              {/* Handle */}
+              <rect x="70" y="176" width="20" height="34" rx="7" fill="white"/>
+            </g>
+            {/* Shuttlecock */}
+            <g transform="translate(128,118) rotate(20)">
+              <circle cx="0" cy="0" r="9" fill="white"/>
+              <path d="M -7 -4 L -26 -34 L -20 -36 L -2 -8 Z" fill="white" opacity="0.95"/>
+              <path d="M 0 -8 L 0 -40 L 6 -40 L 6 -8 Z" fill="white" opacity="0.95"/>
+              <path d="M 7 -4 L 26 -34 L 20 -36 L 2 -8 Z" fill="white" opacity="0.95"/>
+              <path d="M -5 -6 L -14 -30 L -10 -31 L -2 -8 Z" fill="white" opacity="0.7"/>
+              <path d="M 5 -6 L 14 -30 L 10 -31 L 2 -8 Z" fill="white" opacity="0.7"/>
+            </g>
           </svg>
         </div>
 
-        {/* Center Icon Badge: Racket with Flying Shuttlecock / Ball */}
-        <div className="relative z-10 w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-500 to-sky-400 text-white flex items-center justify-center shadow-lg shadow-blue-500/25 mb-4 group-hover:scale-110 transition-transform duration-300">
-          <svg className="w-9 h-9" viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            {/* Racket Head */}
-            <ellipse cx="12" cy="12" rx="7" ry="8" transform="rotate(-30 12 12)" />
-            {/* Racket Strings */}
-            <line x1="9" y1="8" x2="15" y2="16" opacity="0.6" strokeWidth="1" />
-            <line x1="15" y1="8" x2="9" y2="16" opacity="0.6" strokeWidth="1" />
-            {/* Racket Handle */}
-            <line x1="16" y1="18" x2="25" y2="28" strokeWidth="2.5" />
-            {/* Flying Shuttlecock / Ball */}
-            <circle cx="23" cy="7" r="2.5" fill="currentColor" stroke="none" />
-            {/* Flying Motion Lines */}
-            <path d="M26 4 L28 2" strokeWidth="1.5" opacity="0.8" />
-            <path d="M21 4 L22 2" strokeWidth="1.5" opacity="0.8" />
-            <path d="M26 9 L28 10" strokeWidth="1.5" opacity="0.8" />
-          </svg>
+        {/* Content */}
+        <div className="relative z-10 max-w-[520px] flex flex-col items-center">
+          <span className="inline-block text-[12px] font-bold tracking-[0.14em] uppercase text-[#1d5fe0] bg-white/70 border border-[#1d5fe0]/20 px-3.5 py-1.5 rounded-full mb-5 shadow-sm">
+            Cầu lông
+          </span>
+          <h1 className="text-2xl md:text-3xl font-extrabold text-[#0f1b33] mb-4 tracking-tight leading-snug">
+            Chưa Có Giải Đấu Nào Sắp Diễn Ra
+          </h1>
+          <p className="text-sm md:text-base leading-relaxed text-[#5b6b85] font-normal">
+            Hãy theo dõi trang để cập nhật thông tin về các giải đấu tennis, pickleball và cầu lông mới nhất sắp sửa diễn ra.
+          </p>
         </div>
-
-        {/* Text Contents */}
-        <h3 className="text-xl md:text-2xl font-bold text-slate-800 mb-2 relative z-10 font-sans tracking-wide">
-          Chưa Có Giải Đấu Nào Sắp Diễn Ra
-        </h3>
-        <p className="text-sm text-slate-500 max-w-md relative z-10 leading-relaxed font-medium">
-          Hãy theo dõi trang để cập nhật thông tin về các giải đấu tennis, pickleball và cầu lông mới nhất sắp sửa diễn ra.
-        </p>
       </div>
     );
   }

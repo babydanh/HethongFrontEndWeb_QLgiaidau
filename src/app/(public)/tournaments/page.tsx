@@ -624,32 +624,32 @@ export default function TournamentsListPage() {
       <div className="flex flex-wrap items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
         <button 
           onClick={() => { setSelectedStatus('COMPLETED'); setPage(1); }}
-          className={`rounded-full px-2.5 py-1 border transition-all cursor-pointer ${selectedStatus === 'COMPLETED' ? 'bg-slate-200 text-slate-800 border-slate-350 font-bold' : 'bg-slate-100 border-slate-200 text-slate-500 hover:bg-slate-200/60'}`}
+          className={`rounded-full px-2.5 py-1 border transition-all cursor-pointer ${selectedStatus === 'COMPLETED' ? 'bg-slate-200 text-slate-800 border-slate-300 font-bold' : 'bg-slate-100 border-slate-200 text-slate-500 hover:bg-slate-200/60'}`}
         >
           Vừa kết thúc
         </button>
         <button 
           onClick={() => { setSelectedStatus('IN_PROGRESS'); setPage(1); }}
-          className={`rounded-full px-2.5 py-1 border transition-all cursor-pointer ${selectedStatus === 'IN_PROGRESS' ? 'bg-rose-100 text-rose-800 border-rose-350 font-bold' : 'bg-rose-50 border-rose-100 text-rose-700 hover:bg-rose-100/60'}`}
+          className={`rounded-full px-2.5 py-1 border transition-all cursor-pointer ${selectedStatus === 'IN_PROGRESS' ? 'bg-blue-600 text-white border-blue-700 font-bold' : 'bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100/60'}`}
         >
           Đang diễn ra
         </button>
         <button 
           onClick={() => { setSelectedStatus('REGISTRATION_OPEN'); setPage(1); }}
-          className={`rounded-full px-2.5 py-1 border transition-all cursor-pointer ${selectedStatus === 'REGISTRATION_OPEN' ? 'bg-emerald-100 text-emerald-800 border-emerald-350 font-bold' : 'bg-emerald-50 border-emerald-100 text-emerald-700 hover:bg-emerald-100/60'}`}
+          className={`rounded-full px-2.5 py-1 border transition-all cursor-pointer ${selectedStatus === 'REGISTRATION_OPEN' ? 'bg-blue-100 text-blue-800 border-blue-300 font-bold' : 'bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100/60'}`}
         >
           Mở đăng ký
         </button>
         <button 
           onClick={() => { setSelectedStatus('UPCOMING'); setPage(1); }}
-          className={`rounded-full px-2.5 py-1 border transition-all cursor-pointer ${selectedStatus === 'UPCOMING' ? 'bg-blue-100 text-blue-800 border-blue-350 font-bold' : 'bg-blue-50 border-blue-100 text-blue-700 hover:bg-blue-100/60'}`}
+          className={`rounded-full px-2.5 py-1 border transition-all cursor-pointer ${selectedStatus === 'UPCOMING' ? 'bg-blue-100 text-blue-800 border-blue-300 font-bold' : 'bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100/60'}`}
         >
           Sắp diễn ra
         </button>
         {selectedStatus && (
           <button 
             onClick={() => { setSelectedStatus(''); setPage(1); }}
-            className="text-rose-600 font-bold text-[9px] hover:underline ml-1"
+            className="text-slate-500 font-bold text-[9px] hover:underline ml-1"
           >
             Bỏ lọc [x]
           </button>
@@ -694,20 +694,8 @@ export default function TournamentsListPage() {
                   {/* Status Overlay (Top-Left) */}
                   <div className="absolute top-3 left-3 z-10">
                     <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm border ${getTournamentStatusClassName(tournament.status)}`}>
-                      {isTournamentOpenForRegistration(tournament.status) && (
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                      )}
-                      {isTournamentUpcoming(tournament.status) && (
-                        <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
-                      )}
-                      {isTournamentRegistrationClosed(tournament.status) && (
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                      )}
                       {isTournamentInProgress(tournament.status) && (
-                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
-                      )}
-                      {isTournamentCompleted(tournament.status) && (
-                        <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
                       )}
                       {getTournamentStatusLabel(tournament.status)}
                       {isRecentlyCompletedTournament(tournament) && (
@@ -730,8 +718,8 @@ export default function TournamentsListPage() {
                       disabled={followLoadingIds.has(tournament.id)}
                       className={`absolute top-3 right-3 p-1.5 rounded-full transition-colors shadow-sm z-10 cursor-pointer border ${
                         followedTournamentIds.has(tournament.id)
-                          ? 'bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100'
-                          : 'bg-white/90 text-slate-650 border-slate-200 hover:text-indigo-650 hover:bg-white'
+                          ? 'bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100'
+                          : 'bg-white/90 text-slate-650 border-slate-200 hover:text-blue-600 hover:bg-white'
                       }`}
                       aria-label={followedTournamentIds.has(tournament.id) ? 'Bỏ theo dõi' : 'Theo dõi'}
                     >
@@ -773,7 +761,7 @@ export default function TournamentsListPage() {
                           return logo ? (
                             <img src={logo} alt={tournament.category?.name || ''} className="w-4 h-4 object-contain" />
                           ) : (
-                            <span className="w-4.5 h-4.5 bg-rose-600 rounded-full flex items-center justify-center text-[9px] text-white font-bold">★</span>
+                            <span className="w-4.5 h-4.5 bg-slate-200 rounded-full flex items-center justify-center text-[9px] text-slate-600 font-bold">★</span>
                           );
                         })()}
                         <span className="text-slate-500">{tournament.category?.name || 'MULTISPORT'}</span>
@@ -783,7 +771,7 @@ export default function TournamentsListPage() {
                         {/* Ranked or Unranked Badge */}
                         <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold ${
                           tournament.isRanked
-                            ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                            ? 'bg-blue-50 text-blue-700 border border-blue-200'
                             : 'bg-slate-50 text-slate-600 border border-slate-200'
                         }`}>
                           {tournament.isRanked ? 'Xếp hạng ELO' : 'Phong trào'}

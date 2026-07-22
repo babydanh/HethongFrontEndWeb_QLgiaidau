@@ -54,24 +54,24 @@ export const getTournamentStatusLabel = (status?: string | null) => {
 export const getTournamentStatusClassName = (status?: string | null) => {
   switch (normalizeTournamentStatus(status)) {
     case 'DRAFT':
-      return 'bg-slate-100 text-slate-700 border-slate-200';
+      return 'bg-slate-100 text-slate-600 border-slate-200';
     case 'PENDING_APPROVAL':
-      return 'bg-cyan-50 text-cyan-700 border-cyan-200';
+      return 'bg-slate-100 text-slate-600 border-slate-200';
     case 'UPCOMING':
       return 'bg-blue-50 text-blue-700 border-blue-200';
     case 'REGISTRATION_OPEN':
-      return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+      return 'bg-blue-50 text-blue-700 border-blue-200';
     case 'REGISTRATION_CLOSED':
-      return 'bg-amber-50 text-amber-700 border-amber-200';
+      return 'bg-slate-100 text-slate-600 border-slate-200';
     case 'IN_PROGRESS':
     case 'ONGOING':
-      return 'bg-rose-50 text-rose-700 border-rose-200';
+      return 'bg-blue-600 text-white border-blue-700';
     case 'COMPLETED':
-      return 'bg-slate-100 text-slate-600 border-slate-200';
+      return 'bg-slate-100 text-slate-500 border-slate-200';
     case 'CANCELLED':
-      return 'bg-red-50 text-red-700 border-red-200';
+      return 'bg-rose-50 text-rose-600 border-rose-200';
     default:
-      return 'bg-slate-100 text-slate-700 border-slate-200';
+      return 'bg-slate-100 text-slate-600 border-slate-200';
   }
 };
 

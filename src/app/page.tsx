@@ -865,6 +865,50 @@ export default function HomePage() {
             
             {isLoading ? (
               <div className="w-full h-[220px] md:h-[300px] bg-slate-200 animate-pulse rounded-lg"></div>
+            ) : activeTournaments.length === 0 ? (
+              <div className="relative w-full rounded-2xl overflow-hidden bg-blue-300 shadow-[0_10px_30px_rgba(29,95,224,0.18)] min-h-[320px] md:min-h-[420px] flex items-center justify-center text-center px-10 py-14">
+                {/* Watermark racket + shuttlecock */}
+                <div className="absolute inset-0 flex items-center justify-center opacity-15 pointer-events-none">
+                  <svg viewBox="0 0 200 200" className="w-[400px] h-[400px] md:w-[500px] md:h-[500px]" xmlns="http://www.w3.org/2000/svg">
+                    <g transform="translate(30,20) rotate(-18 80 80)">
+                      <ellipse cx="80" cy="60" rx="46" ry="56" fill="none" stroke="white" strokeWidth="6"/>
+                      <g stroke="white" strokeWidth="1.4" opacity="0.9">
+                        <line x1="80" y1="8" x2="80" y2="112"/>
+                        <line x1="60" y1="10" x2="60" y2="108"/>
+                        <line x1="100" y1="10" x2="100" y2="108"/>
+                        <line x1="42" y1="20" x2="42" y2="96"/>
+                        <line x1="118" y1="20" x2="118" y2="96"/>
+                        <line x1="36" y1="60" x2="124" y2="60"/>
+                        <line x1="38" y1="40" x2="122" y2="40"/>
+                        <line x1="38" y1="80" x2="122" y2="80"/>
+                        <line x1="46" y1="24" x2="114" y2="24"/>
+                        <line x1="46" y1="96" x2="114" y2="96"/>
+                      </g>
+                      <rect x="74" y="112" width="12" height="70" rx="5" fill="white"/>
+                      <rect x="70" y="176" width="20" height="34" rx="7" fill="white"/>
+                    </g>
+                    <g transform="translate(128,118) rotate(20)">
+                      <circle cx="0" cy="0" r="9" fill="white"/>
+                      <path d="M -7 -4 L -26 -34 L -20 -36 L -2 -8 Z" fill="white" opacity="0.95"/>
+                      <path d="M 0 -8 L 0 -40 L 6 -40 L 6 -8 Z" fill="white" opacity="0.95"/>
+                      <path d="M 7 -4 L 26 -34 L 20 -36 L 2 -8 Z" fill="white" opacity="0.95"/>
+                      <path d="M -5 -6 L -14 -30 L -10 -31 L -2 -8 Z" fill="white" opacity="0.7"/>
+                      <path d="M 5 -6 L 14 -30 L 10 -31 L 2 -8 Z" fill="white" opacity="0.7"/>
+                    </g>
+                  </svg>
+                </div>
+                <div className="relative z-10 max-w-md">
+                  <span className="inline-block text-[11px] font-bold tracking-[0.14em] uppercase text-blue-700 bg-white/70 border border-blue-200/50 px-3.5 py-1.5 rounded-full mb-5">
+                    Giải đấu nổi bật
+                  </span>
+                  <h3 className="text-2xl md:text-3xl font-extrabold text-[#0f1b33] mb-3 tracking-tight">
+                    Chưa Có Giải Đấu Nào Sắp Diễn Ra
+                  </h3>
+                  <p className="text-sm leading-relaxed text-[#5b6b85]">
+                    Hãy theo dõi trang để cập nhật thông tin về các giải đấu tennis, pickleball và cầu lông mới nhất sắp sửa diễn ra.
+                  </p>
+                </div>
+              </div>
             ) : (
               <TournamentHeroBanner tournaments={activeTournaments} heightClass="h-[320px] md:h-[420px]" />
             )}

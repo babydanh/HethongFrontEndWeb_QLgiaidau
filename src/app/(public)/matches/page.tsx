@@ -645,23 +645,24 @@ export default function MatchesListPage() {
             </button>
           </div>
 
-          {/* Status Tab Chips */}
-          <div className="flex flex-wrap items-center gap-2 pt-1">
+          {/* Status Tab Chips - Chuẩn Hình 1 */}
+          <div className="flex flex-wrap items-center gap-2.5 text-xs font-semibold text-slate-700">
             {[
-              { label: 'Tất cả', value: '', activeClass: 'bg-blue-50 text-blue-700 border border-blue-200/50 shadow-xs', inactiveClass: 'bg-slate-100/80 text-slate-500 hover:bg-slate-200/70 hover:text-slate-800 border border-transparent' },
-              { label: 'Đang diễn ra', value: 'ONGOING', activeClass: 'bg-rose-50 text-rose-600 border border-rose-200/50 shadow-xs', inactiveClass: 'bg-rose-55/40 text-rose-500 hover:bg-rose-50 hover:text-rose-600 border border-transparent' },
-              { label: 'Sắp diễn ra', value: 'SCHEDULED', activeClass: 'bg-blue-50 text-blue-600 border border-blue-200/50 shadow-xs', inactiveClass: 'bg-blue-50/40 text-blue-500 hover:bg-blue-50 hover:text-blue-600 border border-transparent' },
-              { label: 'Vừa kết thúc', value: 'COMPLETED', activeClass: 'bg-slate-200 text-slate-700 border border-slate-300/50 shadow-xs', inactiveClass: 'bg-slate-100/60 text-slate-500 hover:bg-slate-200/70 hover:text-slate-800 border border-transparent' },
+              { label: 'Vừa kết thúc', value: 'COMPLETED', activeClass: 'bg-[#F3F4F1] text-[#4A4E4D] border-slate-300 font-bold shadow-xs', inactiveClass: 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50' },
+              { label: 'Đang diễn ra', value: 'ONGOING', activeClass: 'bg-[#EBF5FF] text-[#1E56A0] border-blue-200 font-bold shadow-xs', inactiveClass: 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50' },
+              { label: 'Mở đăng ký', value: 'REGISTRATION_OPEN', activeClass: 'bg-[#EFF8E9] text-[#386629] border-emerald-200 font-bold shadow-xs', inactiveClass: 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50' },
+              { label: 'Sắp diễn ra', value: 'SCHEDULED', activeClass: 'bg-[#FFF5E6] text-[#995C00] border-amber-200 font-bold shadow-xs', inactiveClass: 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50' },
+              { label: 'Đã kết thúc', value: 'FINISHED', activeClass: 'bg-[#F1F5F9] text-[#64748B] border-slate-300 font-bold shadow-xs', inactiveClass: 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50' },
             ].map((chip) => {
               const isActive = selectedStatus === chip.value;
               return (
                 <button
                   key={chip.value}
                   onClick={() => {
-                    setSelectedStatus(chip.value);
+                    setSelectedStatus(isActive ? '' : chip.value);
                     setPage(1);
                   }}
-                  className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                  className={`rounded-full px-4 py-2 border transition-all cursor-pointer ${
                     isActive ? chip.activeClass : chip.inactiveClass
                   }`}
                 >

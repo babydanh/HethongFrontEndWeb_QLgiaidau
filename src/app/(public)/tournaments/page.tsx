@@ -620,36 +620,62 @@ export default function TournamentsListPage() {
         )}
       </div>
 
-      {/* Grid Cards */}
-      <div className="flex flex-wrap items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+      {/* Filter Status Pills - Chuẩn Hình 1 */}
+      <div className="flex flex-wrap items-center gap-2.5 text-xs font-semibold text-slate-700">
         <button 
-          onClick={() => { setSelectedStatus('COMPLETED'); setPage(1); }}
-          className={`rounded-full px-2.5 py-1 border transition-all cursor-pointer ${selectedStatus === 'COMPLETED' ? 'bg-slate-200 text-slate-800 border-slate-300 font-bold' : 'bg-slate-100 border-slate-200 text-slate-500 hover:bg-slate-200/60'}`}
+          onClick={() => { setSelectedStatus(selectedStatus === 'COMPLETED' ? '' : 'COMPLETED'); setPage(1); }}
+          className={`rounded-full px-4 py-2 border transition-all cursor-pointer ${
+            selectedStatus === 'COMPLETED'
+              ? 'bg-[#F3F4F1] text-[#4A4E4D] border-slate-300 font-bold shadow-xs'
+              : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+          }`}
         >
           Vừa kết thúc
         </button>
         <button 
-          onClick={() => { setSelectedStatus('IN_PROGRESS'); setPage(1); }}
-          className={`rounded-full px-2.5 py-1 border transition-all cursor-pointer ${selectedStatus === 'IN_PROGRESS' ? 'bg-blue-600 text-white border-blue-700 font-bold' : 'bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100/60'}`}
+          onClick={() => { setSelectedStatus(selectedStatus === 'IN_PROGRESS' ? '' : 'IN_PROGRESS'); setPage(1); }}
+          className={`rounded-full px-4 py-2 border transition-all cursor-pointer ${
+            selectedStatus === 'IN_PROGRESS'
+              ? 'bg-[#EBF5FF] text-[#1E56A0] border-blue-200 font-bold shadow-xs'
+              : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+          }`}
         >
           Đang diễn ra
         </button>
         <button 
-          onClick={() => { setSelectedStatus('REGISTRATION_OPEN'); setPage(1); }}
-          className={`rounded-full px-2.5 py-1 border transition-all cursor-pointer ${selectedStatus === 'REGISTRATION_OPEN' ? 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold' : 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100/60'}`}
+          onClick={() => { setSelectedStatus(selectedStatus === 'REGISTRATION_OPEN' ? '' : 'REGISTRATION_OPEN'); setPage(1); }}
+          className={`rounded-full px-4 py-2 border transition-all cursor-pointer ${
+            selectedStatus === 'REGISTRATION_OPEN'
+              ? 'bg-[#EFF8E9] text-[#386629] border-emerald-200 font-bold shadow-xs'
+              : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+          }`}
         >
           Mở đăng ký
         </button>
         <button 
-          onClick={() => { setSelectedStatus('UPCOMING'); setPage(1); }}
-          className={`rounded-full px-2.5 py-1 border transition-all cursor-pointer ${selectedStatus === 'UPCOMING' ? 'bg-blue-100 text-blue-800 border-blue-300 font-bold' : 'bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100/60'}`}
+          onClick={() => { setSelectedStatus(selectedStatus === 'UPCOMING' ? '' : 'UPCOMING'); setPage(1); }}
+          className={`rounded-full px-4 py-2 border transition-all cursor-pointer ${
+            selectedStatus === 'UPCOMING'
+              ? 'bg-[#FFF5E6] text-[#995C00] border-amber-200 font-bold shadow-xs'
+              : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+          }`}
         >
           Sắp diễn ra
+        </button>
+        <button 
+          onClick={() => { setSelectedStatus(selectedStatus === 'FINISHED' ? '' : 'FINISHED'); setPage(1); }}
+          className={`rounded-full px-4 py-2 border transition-all cursor-pointer ${
+            selectedStatus === 'FINISHED'
+              ? 'bg-[#F1F5F9] text-[#64748B] border-slate-300 font-bold shadow-xs'
+              : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+          }`}
+        >
+          Đã kết thúc
         </button>
         {selectedStatus && (
           <button 
             onClick={() => { setSelectedStatus(''); setPage(1); }}
-            className="text-slate-500 font-bold text-[9px] hover:underline ml-1"
+            className="text-slate-500 font-bold text-xs hover:underline ml-1 cursor-pointer"
           >
             Bỏ lọc [x]
           </button>

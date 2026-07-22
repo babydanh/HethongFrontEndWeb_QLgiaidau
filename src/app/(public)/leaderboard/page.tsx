@@ -518,14 +518,69 @@ export default function LeaderboardPage() {
                 <div className="lg:col-span-4 xl:col-span-3">
                     <div className="flex flex-col gap-6 sticky top-28 lg:top-32">
                         {/* Tier Breakdown Card */}
-                        <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6 space-y-6">
-                            <div className="space-y-1">
-                                <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                                    <Info className="w-4 h-4 text-blue-600" />
-                                    Hệ thống phân hạng ELO
-                                </h3>
-                                <p className="text-slate-500 text-[11px] leading-relaxed">Điểm ELO tích lũy sau mỗi trận đấu sẽ xếp người chơi vào các Tier trình độ tương ứng.</p>
+                        <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6 space-y-5">
+                            <div className="flex items-start justify-between">
+                                <div className="space-y-1">
+                                    <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                                        <button 
+                                            type="button"
+                                            onClick={() => {
+                                                const modal = document.getElementById('eloRulesModal') as HTMLDialogElement | null;
+                                                if (modal) modal.showModal();
+                                            }}
+                                            className="p-1 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors cursor-pointer"
+                                            title="Xem chi tiết quy tắc ELO"
+                                        >
+                                            <Info className="w-4 h-4" />
+                                        </button>
+                                        Hệ thống phân hạng ELO
+                                    </h3>
+                                    <p className="text-slate-500 text-[11px] leading-relaxed">Điểm ELO tích lũy sau mỗi trận đấu sẽ xếp người chơi vào các Tier trình độ tương ứng. <button type="button" onClick={() => { const modal = document.getElementById('eloRulesModal') as HTMLDialogElement | null; if (modal) modal.showModal(); }} className="text-blue-600 font-bold hover:underline cursor-pointer">Xem quy tắc [i]</button></p>
+                                </div>
                             </div>
+
+                            {/* Modal Quy tắc ELO */}
+                            <dialog id="eloRulesModal" className="rounded-2xl p-0 backdrop:bg-slate-900/40 border border-slate-200 shadow-2xl max-w-lg w-full">
+                                <div className="bg-white p-6 space-y-4">
+                                    <div className="flex items-center justify-between border-b pb-3 border-slate-100">
+                                        <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
+                                            <Info className="w-5 h-5 text-blue-600" />
+                                            Quy tắc tính điểm ELO & Phân hạng
+                                        </h3>
+                                        <form method="dialog">
+                                            <button className="text-slate-400 hover:text-slate-600 font-bold text-lg cursor-pointer">✕</button>
+                                        </form>
+                                    </div>
+                                    
+                                    <div className="space-y-3 text-xs text-slate-600 leading-relaxed max-h-[60vh] overflow-y-auto pr-1">
+                                        <div className="bg-blue-50/70 p-3 rounded-lg border border-blue-100">
+                                            <h4 className="font-bold text-blue-900 mb-1">⚡ 1. Hệ số K-Factor linh hoạt</h4>
+                                            <p className="text-slate-600">• Kỳ thủ mới (&lt;10 trận): Hệ số K = 40 (tăng/giảm điểm nhanh để xác định đúng trình độ).<br />• Kỳ thủ kinh nghiệm (10 - 30 trận): K = 24.<br />• Kỳ thủ kỳ cựu (&gt;30 trận): K = 16 (điểm số ổn định hơn).</p>
+                                        </div>
+
+                                        <div className="bg-emerald-50/70 p-3 rounded-lg border border-emerald-100">
+                                            <h4 className="font-bold text-emerald-900 mb-1">🔥 2. Thưởng chuỗi thắng & Thắng cách biệt</h4>
+                                            <p className="text-slate-600">• Chuỗi thắng 3 trận: ×1.1 điểm ELO nhận được.<br />• Chuỗi thắng 5 trận: ×1.2 điểm ELO.<br />• Chuỗi thắng 7+ trận: ×1.3 điểm ELO.<br />• Thắng cách biệt hủy diệt (tỉ số set áp đảo) được nhân thêm hệ số hiệu số điểm.</p>
+                                        </div>
+
+                                        <div className="bg-amber-50/70 p-3 rounded-lg border border-amber-100">
+                                            <h4 className="font-bold text-amber-900 mb-1">👑 3. Thưởng lội ngược dòng (Upset Bonus)</h4>
+                                            <p className="text-slate-600">• Thắng đối thủ cao hơn 200+ ELO: Thưởng thêm +5 ELO.<br />• Thắng đối thủ vượt trội 400+ ELO: Thưởng thêm +10 ELO.</p>
+                                        </div>
+
+                                        <div className="bg-rose-50/70 p-3 rounded-lg border border-rose-100">
+                                            <h4 className="font-bold text-rose-900 mb-1">⏳ 4. Quy định không thi đấu (ELO Decay)</h4>
+                                            <p className="text-slate-600">• Người chơi không tham gia trận đấu chính thức nào trong **30 ngày liên tục** sẽ bắt đầu bị trừ dần điểm ELO ngầm (Inactive Decay) để đảm bảo tính công bằng của Bảng xếp hạng.</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="pt-2 flex justify-end">
+                                        <form method="dialog">
+                                            <button className="px-4 py-2 bg-blue-600 text-white font-bold rounded-lg text-xs hover:bg-blue-700 cursor-pointer">Đã hiểu</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </dialog>
                             <div className="flex flex-col gap-2">
                                 <div className="flex justify-between items-center p-2.5 rounded-lg border bg-[#FEF3C7] border-amber-300">
                                     <span className="bg-[#D97706] text-white px-2.5 py-0.5 rounded text-[10px] font-bold uppercase shadow-xs">Tier S</span>

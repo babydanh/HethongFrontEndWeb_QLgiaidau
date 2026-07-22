@@ -796,7 +796,7 @@ export default function HomePage() {
               setActiveShareTitle(`Trận đấu: ${p1Name} vs ${p2Name}`);
               setIsShareModalOpen(true);
             }}
-            className="flex items-center justify-center gap-1 py-1.5 min-h-[44px] hover:bg-white rounded-lg text-[10px] font-bold text-slate-600 transition-all border border-transparent hover:border-slate-150 active:scale-95 duration-100 cursor-pointer"
+            className="flex items-center justify-center gap-1 py-1 min-h-[32px] hover:bg-white rounded-lg text-[10px] font-bold text-slate-600 transition-all border border-transparent hover:border-slate-150 active:scale-95 duration-100 cursor-pointer"
           >
             <Share2 className="w-3.5 h-3.5 text-blue-500" />
             <span>Chia sẻ</span>

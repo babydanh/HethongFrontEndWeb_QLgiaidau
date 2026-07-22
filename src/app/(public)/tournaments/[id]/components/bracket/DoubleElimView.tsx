@@ -399,14 +399,13 @@ export function DoubleElimView({
               if (!pos) return null;
               const isP1Bye = isSlotBye(match, 1, allMatchesForLogic);
               const isP2Bye = isSlotBye(match, 2, allMatchesForLogic);
-              const actualCardH = (!match.participant1 || !match.participant2 || match.isBye) ? 100 : cardH;
               return (
                 <div
                   key={match.id}
                   className="absolute"
                   style={{
                     left: pos.x,
-                    top: pos.y - actualCardH / 2,
+                    top: pos.y - cardH / 2,
                   }}
                 >
                   <MatchCard

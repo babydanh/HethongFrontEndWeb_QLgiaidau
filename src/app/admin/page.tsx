@@ -80,10 +80,10 @@ export default function AdminDashboard() {
     const fetchPending = async () => {
       try {
         const [commRes, verifRes, payoutsRes, changeRes] = await Promise.allSettled([
-          api.get<ApiResponse<any[]>>('/communities/pending'),
-          api.get<ApiResponse<any[]>>('/admin/verification-tickets?status=PENDING'),
+          api.get<ApiResponse<unknown[]>>('/communities/pending'),
+          api.get<ApiResponse<unknown[]>>('/admin/verification-tickets?status=PENDING'),
           api.get<ApiResponse<PendingPayoutSummary[]>>('/payments/admin/payouts'),
-          api.get<ApiResponse<any[]>>('/admin/change-requests?status=PENDING'),
+          api.get<ApiResponse<unknown[]>>('/admin/change-requests?status=PENDING'),
         ]);
 
         const communities = commRes.status === 'fulfilled' ? getResponseItems(commRes.value).length : 0;

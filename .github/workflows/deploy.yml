@@ -79,7 +79,7 @@ jobs:
             echo "${{ secrets.GHCR_PAT }}" | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
 
             # 4. Pull image mới nhất đã build từ GitHub về
-            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            docker pull ghcr.io/babydanh/hethongfrontendweb_qlgiaidau:latest
 
             # 5. Thực thi restart service frontend với image mới (Không downtime các service khác)
             docker compose up -d --no-deps frontend

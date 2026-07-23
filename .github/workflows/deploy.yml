@@ -4,16 +4,62 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'next.config.ts'
+      - 'Dockerfile'
+      - '.github/workflows/deploy.yml'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  deploy:
-    name: Deploy Next.js Frontend
+  # Job 1: Build Docker Image ngay trên máy chủ GitHub và Push lên Registry (GHCR)
+  build-and-push:
+    name: Build & Push Docker Image
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_PAT }}
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend-web_qlgiaidau
+          file: ./frontend-web_qlgiaidau/Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # Job 2: Chỉ kéo bản build sạch về chạy trên VPS (Mất 5s, không tốn tài nguyên build)
+  deploy:
+    name: Deploy to VPS
+    needs: build-and-push
+    runs-on: ubuntu-latest
+
+    steps:
       - name: Deploy to VPS via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -21,17 +67,22 @@ jobs:
           port: 36789
           username: root
           key: ${{ secrets.VPS_SSH_KEY }}
+          command_timeout: 10m
           script: |
-            # 1. Đi tới thư mục chứa Frontend trên VPS
-            cd /usr/local/lsws/giaidau.vnvar.com/frontend-web_qlgiaidau
+            # 1. Đi tới thư mục dự án trên VPS
+            cd /usr/local/lsws/giaidau.vnvar.com
 
-            # 2. Pull code mới nhất của Frontend
+            # 2. Cập nhật file docker-compose.yml và các config mới nhất trên VPS
             git pull origin main
 
-            # 3. Quay lại root dự án và rebuild/restart Frontend
-            cd /usr/local/lsws/giaidau.vnvar.com
-            docker compose build --no-cache frontend
-            docker compose up -d frontend
+            # 3. Đăng nhập vào GHCR trên VPS để tải Image private
+            echo "${{ secrets.GHCR_PAT }}" | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
 
-            # 4. Dọn dẹp Docker Image rác
+            # 4. Pull image mới nhất đã build từ GitHub về
+            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+            # 5. Thực thi restart service frontend với image mới (Không downtime các service khác)
+            docker compose up -d --no-deps frontend
+
+            # 6. Dọn dẹp các Docker Image cũ không dùng để tránh đầy ổ cứng
             docker image prune -f

@@ -392,10 +392,10 @@ export function BasicInfoTab({
                   />
                   <span className="space-y-1">
                     <span className="block text-sm font-bold text-slate-850">
-                      Ẩn chữ trên card giải đấu nổi bật
+                      Ẩn chữ phủ trên banner công khai
                     </span>
                     <span className="block text-xs font-semibold leading-relaxed text-slate-500">
-                      Bật tùy chọn này khi banner đã có tên/logo/text thiết kế sẵn. Trang chủ sẽ chỉ hiển thị ảnh banner, không phủ tên giải, badge, ngày giờ hoặc địa điểm.
+                      Bật tùy chọn này khi banner đã có tên/logo/text thiết kế sẵn. Trang chủ và banner trang chi tiết sẽ không phủ tên giải, badge, ngày giờ hoặc địa điểm lên ảnh.
                     </span>
                   </span>
                 </label>

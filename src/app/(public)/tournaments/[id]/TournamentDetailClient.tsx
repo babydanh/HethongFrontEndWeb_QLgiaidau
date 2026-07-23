@@ -272,6 +272,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
   const isRegistrationExpired = activeTournament.registrationEndDate ? new Date() > new Date(activeTournament.registrationEndDate) : false;
   const isRegistrationOpen = isTournamentOpenForRegistration(activeTournament.status);
   const registrationModeUi = getRegistrationModeUi(activeTournament.tournamentConfig?.registrationMode);
+  const hidePublicBannerText = activeTournament.tournamentConfig?.hideFeaturedCardText === true;
 
   let registrationButtonLabel = registrationModeUi.ctaLabel;
   let isRegistrationButtonDisabled = false;
@@ -345,12 +346,13 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
             className="w-full h-44 sm:h-60 md:h-72 lg:h-[340px]"
           />
           
-          {/* Only name inside banner, at bottom-left */}
-          <div className="absolute bottom-4 left-6 md:bottom-6 md:left-8 z-10 space-y-1">
-            <h1 className="text-xl md:text-2xl font-bold text-white drop-shadow-md tracking-wide uppercase truncate">
-              {tournament.name}
-            </h1>
-          </div>
+          {!hidePublicBannerText && (
+            <div className="absolute bottom-4 left-6 md:bottom-6 md:left-8 z-10 space-y-1">
+              <h1 className="text-xl md:text-2xl font-bold text-white drop-shadow-md tracking-wide uppercase truncate">
+                {tournament.name}
+              </h1>
+            </div>
+          )}
         </div>
       </div>
 

@@ -199,6 +199,7 @@ function HomepageTournamentCard({ tournament }: { tournament: Tournament }) {
   const [imgError, setImgError] = useState(false);
   const fallbackSrc = '/vndcsport.svg';
   const imageSrc = (!imgError && tournament.bannerUrl?.trim()) ? tournament.bannerUrl.split(',')[0] : fallbackSrc;
+  const hideFeaturedCardText = tournament.tournamentConfig?.hideFeaturedCardText === true;
 
   const dateRange = useMemo(() => {
     if (!tournament.startDate || !tournament.endDate) return '';
@@ -208,8 +209,8 @@ function HomepageTournamentCard({ tournament }: { tournament: Tournament }) {
   }, [tournament.startDate, tournament.endDate]);
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_2px_12px_rgba(15,23,42,0.06)] overflow-hidden flex flex-col group relative">
-      <div className="h-44 bg-slate-900 relative overflow-hidden shrink-0">
+    <div className={`${hideFeaturedCardText ? 'aspect-[21/9] bg-slate-900' : 'bg-white'} rounded-2xl border border-slate-200/80 shadow-[0_2px_12px_rgba(15,23,42,0.06)] overflow-hidden flex flex-col group relative`}>
+      <div className={`${hideFeaturedCardText ? 'absolute inset-0' : 'h-44 shrink-0'} bg-slate-900 relative overflow-hidden`}>
         <Image
           src={imageSrc}
           alt={tournament.name}
@@ -218,9 +219,12 @@ function HomepageTournamentCard({ tournament }: { tournament: Tournament }) {
           onError={() => setImgError(true)}
           unoptimized={imageSrc === fallbackSrc}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
+        {!hideFeaturedCardText && (
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
+        )}
         
         {/* Badges */}
+        {!hideFeaturedCardText && (
         <div className="absolute top-4 left-4 z-10 flex gap-2">
           <span className="px-3 py-1 bg-white/95 backdrop-blur-md rounded-full shadow-sm text-slate-800 text-[9px] font-bold tracking-wider uppercase border border-white/20">
             <Trophy className="w-3 h-3 inline-block mr-1" />
@@ -230,20 +234,22 @@ function HomepageTournamentCard({ tournament }: { tournament: Tournament }) {
             Vừa kết thúc
           </span>
         </div>
+        )}
       </div>
 
-      <div className="p-5 flex-grow flex flex-col justify-between">
-        <div>
-          <h3 className="text-sm font-semibold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1 leading-snug">
-            {tournament.name}
-          </h3>
-          <div className="flex items-center gap-1.5 mt-2 text-[10px] text-slate-500 font-medium">
-            <Calendar className="w-3.5 h-3.5 text-slate-400" />
-            <span>{dateRange}</span>
+      {!hideFeaturedCardText && (
+        <div className="p-5 flex-grow flex flex-col justify-between">
+          <div>
+            <h3 className="text-sm font-semibold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1 leading-snug">
+              {tournament.name}
+            </h3>
+            <div className="flex items-center gap-1.5 mt-2 text-[10px] text-slate-500 font-medium">
+              <Calendar className="w-3.5 h-3.5 text-slate-400" />
+              <span>{dateRange}</span>
+            </div>
           </div>
         </div>
-
-        </div>
+      )}
 
       <Link href={`/tournaments/${tournament.id}`} className="absolute inset-0 z-20" />
     </div>

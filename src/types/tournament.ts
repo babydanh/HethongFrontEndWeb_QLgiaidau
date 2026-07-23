@@ -175,6 +175,7 @@ export interface Tournament {
     maxCombinedElo?: number | null;
     maxTeammateGap?: number | null;
     registrationMode?: 'OPEN' | 'APPROVAL' | 'INVITE_ONLY';
+    hideFeaturedCardText?: boolean;
   } | null;
   createdAt?: string;
   updatedAt?: string;

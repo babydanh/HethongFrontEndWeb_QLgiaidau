@@ -35,6 +35,8 @@ interface PublicProfile {
   gender: string | null;
   bio: string | null;
   isVerified: boolean;
+  role?: string;
+  roles?: string[];
   ranks: UserRank[];
   achievements?: {
     tournamentId: string;
@@ -219,11 +221,24 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
             </div>
             
       <div className="flex flex-wrap items-center gap-2">
-              <span className="px-3 py-1 text-xs font-bold rounded-lg border bg-blue-50 text-blue-700 border-blue-200 uppercase tracking-wider">
-                Vận động viên
-              </span>
+              {Array.from(new Set(profile.roles || (profile.role ? [profile.role] : ['PLAYER']))).map((role: string) => {
+                let roleLabel = 'Vận động viên';
+                let roleColor = 'bg-blue-50 text-blue-700 border-blue-200';
+                if (role === 'ORGANIZER') {
+                  roleLabel = 'Ban tổ chức';
+                  roleColor = 'bg-purple-50 text-purple-700 border-purple-200';
+                } else if (role === 'ADMIN') {
+                  roleLabel = 'Quản trị viên';
+                  roleColor = 'bg-rose-50 text-rose-700 border-rose-200';
+                }
+                return (
+                  <span key={role} className={`px-3 py-1 text-xs font-bold rounded-md border uppercase tracking-wider ${roleColor}`}>
+                    {roleLabel}
+                  </span>
+                );
+              })}
               {profile.isVerified && (
-                <span className="px-3 py-1 text-xs font-bold rounded-lg border bg-blue-50 text-blue-700 border-blue-200 uppercase tracking-wider">
+                <span className="px-3 py-1 text-xs font-bold rounded-md border bg-emerald-50 text-emerald-700 border-emerald-200 uppercase tracking-wider">
                   Đã xác minh
                 </span>
               )}
@@ -231,25 +246,25 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                 const activeRanks = profile.ranks?.filter(r => r.matchesPlayed > 0) || [];
                 if (activeRanks.length > 0) {
                   return activeRanks.map((rank) => (
-                    <div key={`${rank.categoryId}-${rank.matchType}`} className="flex items-center gap-1 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-lg text-xs font-bold shrink-0">
+                    <div key={`${rank.categoryId}-${rank.matchType}`} className="flex items-center gap-1 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-md text-xs font-bold shrink-0">
                       <span className="text-[10px] font-bold text-slate-550 uppercase mr-1">{rank.categoryName}:</span>
                       <EloTierBadge elo={rank.eloPoints} tierName={rank.categoryName} size="sm" className="scale-90 origin-left" />
                     </div>
                   ));
                 }
                 return (
-                  <span className="bg-slate-50 border border-slate-200 text-slate-500 px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider">
+                  <span className="bg-slate-50 border border-slate-200 text-slate-500 px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wider">
                     Chưa xếp hạng
                   </span>
                 );
               })()}
               {profile.achievements?.length ? (
-                <span className="bg-slate-50 border border-slate-200 text-slate-600 px-3.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5">
+                <span className="bg-slate-50 border border-slate-200 text-slate-600 px-3.5 py-1 rounded-md text-xs font-bold flex items-center gap-1.5">
                   <Trophy className="w-3.5 h-3.5 text-blue-500" /> {profile.achievements.length} danh hiệu
                 </span>
               ) : null}
               {profile.createdAt && (
-                <span className="bg-slate-50 border border-slate-200 text-slate-650 px-3.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5">
+                <span className="bg-slate-50 border border-slate-200 text-slate-650 px-3.5 py-1 rounded-md text-xs font-bold flex items-center gap-1.5">
                   <Calendar className="w-3.5 h-3.5 text-slate-400" /> Tham gia từ {formatDate(profile.createdAt, 'MM/yyyy')}
                 </span>
               )}

@@ -29,6 +29,8 @@ interface BasicInfoTabProps {
   setLogoUrl: (val: string) => void;
   bannerUrl: string;
   setBannerUrl: (val: string) => void;
+  hideFeaturedCardText: boolean;
+  setHideFeaturedCardText: (val: boolean) => void;
   newGalleryUrl: string;
   setNewGalleryUrl: (val: string) => void;
   isAddingImage: boolean;
@@ -74,6 +76,8 @@ export function BasicInfoTab({
   setLogoUrl,
   bannerUrl,
   setBannerUrl,
+  hideFeaturedCardText,
+  setHideFeaturedCardText,
   newGalleryUrl,
   setNewGalleryUrl,
   isAddingImage,
@@ -361,6 +365,9 @@ export function BasicInfoTab({
                       Chọn file
                     </label>
                   </div>
+                  <p className="text-[11px] font-semibold leading-relaxed text-slate-500">
+                    Kích thước banner khuyến nghị: 1920 x 823px, tỉ lệ 21:9. Nội dung quan trọng nên đặt ở vùng giữa ảnh để không bị cắt trên mobile hoặc card nhỏ trang chủ.
+                  </p>
                   {bannerUrl ? (
                     <div className="relative aspect-[21/9] w-full rounded-lg overflow-hidden border border-slate-200 shadow-sm bg-white mt-2">
                       <img src={bannerUrl} alt="Banner Preview" className="w-full h-full object-cover" />
@@ -376,6 +383,23 @@ export function BasicInfoTab({
                 </div>
 
                 {/* Album ảnh */}
+                <label className="mt-1 flex cursor-pointer items-start gap-3 rounded-lg border border-blue-100 bg-blue-50/70 p-4 transition-colors hover:bg-blue-50">
+                  <input
+                    type="checkbox"
+                    checked={hideFeaturedCardText}
+                    onChange={(e) => setHideFeaturedCardText(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="space-y-1">
+                    <span className="block text-sm font-bold text-slate-850">
+                      Ẩn chữ trên card giải đấu nổi bật
+                    </span>
+                    <span className="block text-xs font-semibold leading-relaxed text-slate-500">
+                      Bật tùy chọn này khi banner đã có tên/logo/text thiết kế sẵn. Trang chủ sẽ chỉ hiển thị ảnh banner, không phủ tên giải, badge, ngày giờ hoặc địa điểm.
+                    </span>
+                  </span>
+                </label>
+
                 <div className="space-y-4 border-t pt-5">
                   <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block font-semibold">Album ảnh bổ sung (Gallery)</label>
                   

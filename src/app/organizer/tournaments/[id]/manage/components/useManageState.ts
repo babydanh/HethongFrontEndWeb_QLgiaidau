@@ -68,6 +68,7 @@ export function useManageState(id: string) {
   const [description, setDescription] = useState('');
   const [bannerUrl, setBannerUrl] = useState('');
   const [logoUrl, setLogoUrl] = useState('');
+  const [hideFeaturedCardText, setHideFeaturedCardText] = useState(false);
   const [prizeDescription, setPrizeDescription] = useState('');
   const [contactInfo, setContactInfo] = useState<Record<string,string|undefined>>({});
   const [visibility, setVisibility] = useState<'PUBLIC'|'PRIVATE'>('PUBLIC');
@@ -299,7 +300,21 @@ export function useManageState(id: string) {
   const handleSaveBasicInfo = async () => {
     setIsSavingConfig(true);
     try {
-      await tournamentsApi.updateTournament(id, { name, categoryId, description, bannerUrl: bannerUrl||null, logoUrl: logoUrl||null, prizeDescription: prizeDescription||null, contactInfo, visibility, genderRestriction: null });
+      await tournamentsApi.updateTournament(id, {
+        name,
+        categoryId,
+        description,
+        bannerUrl: bannerUrl || null,
+        logoUrl: logoUrl || null,
+        prizeDescription: prizeDescription || null,
+        contactInfo,
+        visibility,
+        genderRestriction: null,
+        tournamentConfig: {
+          ...tournament?.tournamentConfig,
+          hideFeaturedCardText,
+        },
+      });
       if (selectedDivisionId && tournament) {
         const pm: Record<string,{mt:MatchTypeDB;gr:GenderRestriction|null}> = {
           MALE_SINGLES: {mt:MatchTypeDB.SINGLES, gr:GenderRestriction.MALE},
@@ -950,6 +965,7 @@ export function useManageState(id: string) {
         const t = tRes.data; setTournament(t);
         setName(t.name); setCategoryId(t.categoryId); setDescription(t.description||''); setBannerUrl(t.bannerUrl||''); setLogoUrl(t.logoUrl||'');
         setPrizeDescription(t.prizeDescription||''); setContactInfo(t.contactInfo||{}); setVisibility(t.visibility||'PUBLIC'); setGenderRestriction(t.genderRestriction||'');
+        setHideFeaturedCardText(t.tournamentConfig?.hideFeaturedCardText === true);
         setRegistrationMode(t.tournamentConfig?.registrationMode || 'OPEN');
         setVenueId(t.venueId||'');
         if (t.venue) { setCustomVenueName(t.venue.name||''); setCustomVenueAddress(t.venue.locationAddress||''); }
@@ -1115,7 +1131,7 @@ export function useManageState(id: string) {
     newDivisionMatchType, setNewDivisionMatchType, newDivisionBracketType, setNewDivisionBracketType,
     isCreatingDivision, setIsCreatingDivision, divisionPendingDelete, setDivisionPendingDelete, isDeletingDivision, setIsDeletingDivision,
     name, setName, categoryId, setCategoryId, description, setDescription,
-    bannerUrl, setBannerUrl, logoUrl, setLogoUrl, prizeDescription, setPrizeDescription,
+    bannerUrl, setBannerUrl, logoUrl, setLogoUrl, hideFeaturedCardText, setHideFeaturedCardText, prizeDescription, setPrizeDescription,
     contactInfo, setContactInfo, visibility, setVisibility, registrationMode, setRegistrationMode, genderRestriction, setGenderRestriction,
     venueId, setVenueId, customVenueName, setCustomVenueName, customVenueAddress, setCustomVenueAddress,
     provinces, setProvinces, districts, setDistricts, wards, setWards,

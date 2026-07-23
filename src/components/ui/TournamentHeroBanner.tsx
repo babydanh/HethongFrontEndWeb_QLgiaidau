@@ -249,6 +249,7 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[25
       >
         {tournaments.map((tournament, idx) => {
           const isActive = idx === currentIndex;
+          const hideFeaturedCardText = tournament.tournamentConfig?.hideFeaturedCardText === true;
           return (
             <div 
               key={tournament.id} 
@@ -278,8 +279,9 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[25
                       />
                     </div>
                   )}
-                  {/* Dark gradient overlay to guarantee text contrast */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent" />
+                  {!hideFeaturedCardText && (
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent" />
+                  )}
                 </div>
 
                 {/* Clickable Overlay for the whole card */}
@@ -289,7 +291,7 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[25
                   className="absolute inset-0 z-10" 
                 />
 
-                {/* Hero content */}
+                {!hideFeaturedCardText && (
                 <div className="absolute bottom-6 left-6 right-6 z-20 pointer-events-none max-w-xl flex flex-col gap-2">
                   <div className="flex items-center gap-2">
                     {tournament.category?.name && (
@@ -327,6 +329,7 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[25
                     )}
                   </div>
                 </div>
+                )}
               </div>
             </div>
           );

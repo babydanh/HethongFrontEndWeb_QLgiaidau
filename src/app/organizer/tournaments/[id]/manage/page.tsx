@@ -209,6 +209,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
           name={s.name} setName={s.setName} categoryId={s.categoryId} setCategoryId={s.setCategoryId}
           description={s.description} setDescription={s.setDescription}
           logoUrl={s.logoUrl} setLogoUrl={s.setLogoUrl} bannerUrl={s.bannerUrl} setBannerUrl={s.setBannerUrl}
+          hideFeaturedCardText={s.hideFeaturedCardText} setHideFeaturedCardText={s.setHideFeaturedCardText}
           newGalleryUrl={s.newGalleryUrl} setNewGalleryUrl={s.setNewGalleryUrl}
           isAddingImage={s.isAddingImage} setIsAddingImage={s.setIsAddingImage}
           prizeDescription={s.prizeDescription} setPrizeDescription={s.setPrizeDescription}

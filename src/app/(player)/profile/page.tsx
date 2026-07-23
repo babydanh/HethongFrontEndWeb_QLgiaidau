@@ -576,19 +576,19 @@ export default function ProfilePage() {
             <div className="flex flex-wrap items-center gap-2">
               {Array.from(new Set((user as unknown as Record<string, unknown>)?.roles as string[] | undefined || [])).map((role: string) => {
                 let roleLabel = role;
-                let roleColor = 'bg-blue-50 text-blue-700 border-blue-200';
+                let roleColor = 'bg-[#e0f2fe] text-[#1e3a8a]';
                 if (role === 'PLAYER') {
                   roleLabel = 'Vận động viên';
-                  roleColor = 'bg-blue-50 text-blue-700 border-blue-200';
+                  roleColor = 'bg-[#e0f2fe] text-[#1e3a8a]';
                 } else if (role === 'ORGANIZER') {
                   roleLabel = 'Ban tổ chức';
-                  roleColor = 'bg-purple-50 text-purple-700 border-purple-200';
+                  roleColor = 'bg-[#f3e8ff] text-[#6b21a8]';
                 } else if (role === 'ADMIN') {
                   roleLabel = 'Quản trị viên';
-                  roleColor = 'bg-rose-50 text-rose-700 border-rose-200';
+                  roleColor = 'bg-[#fdf2e9] text-[#991b1b]';
                 }
                 return (
-                  <span key={role} className={`px-3 py-1 text-xs font-bold rounded-md border uppercase tracking-wider ${roleColor}`}>
+                  <span key={role} className={`px-3.5 py-1.5 text-xs font-bold rounded-md uppercase tracking-wider ${roleColor}`}>
                     {roleLabel}
                   </span>
                 );
@@ -604,13 +604,13 @@ export default function ProfilePage() {
                   ));
                 }
                 return (
-                  <span className="bg-slate-50 border border-slate-200 text-slate-600 px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wider">
+                  <span className="bg-[#f3f4f6] text-[#4b5563] px-3.5 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider">
                     Chưa xếp hạng
                   </span>
                 );
               })()}
               {profileData?.createdAt && (
-                <span className="bg-slate-50 border border-slate-200 text-slate-600 px-3.5 py-1 rounded-md text-xs font-bold flex items-center gap-1.5">
+                <span className="bg-[#f3f4f6] text-[#4b5563] px-3.5 py-1.5 rounded-md text-xs font-bold flex items-center gap-1.5">
                   <Calendar className="w-3.5 h-3.5 text-slate-400" /> Tham gia từ {formatDate(profileData.createdAt, 'MM/yyyy')}
                 </span>
               )}

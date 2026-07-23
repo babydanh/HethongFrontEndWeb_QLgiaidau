@@ -321,55 +321,55 @@ export default function LeaderboardPage() {
                                             className="flex flex-col items-center hover:opacity-95 transition-opacity"
                                         >
                                             <div className="relative mb-5 transition-transform duration-300 group-hover:scale-105">
-                                                <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-20 bg-[#F59E0B] text-amber-950 font-extrabold text-[10px] px-4 py-1 rounded-full shadow-xs flex items-center gap-1 border border-amber-300 whitespace-nowrap">
-                                                    ✨ CHAMPION
+                                                <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-20 bg-amber-400 text-amber-950 font-extrabold text-[10px] px-4 py-1 rounded-full shadow-sm flex items-center gap-1 border border-amber-300 whitespace-nowrap animate-bounce">
+                                                    👑 CHAMPION
                                                 </div>
                                                 
                                                 {/* Stacked Avatar for Doubles */}
                                                 {selectedMatchType.includes('DOUBLES') ? (
                                                     <div className="relative w-28 h-24 flex items-center justify-center">
                                                         {/* Partner avatar */}
-                                                        <div className="w-20 h-20 rounded-full border-[3px] border-[#F59E0B] absolute right-0 bottom-0 bg-white flex items-center justify-center shadow-xs overflow-hidden">
-                                                            <span className="text-[#D97706] font-bold text-xl">?</span>
+                                                        <div className="w-20 h-20 rounded-full border-[3px] border-amber-400 absolute right-0 bottom-0 bg-white flex items-center justify-center shadow-xs overflow-hidden">
+                                                            <span className="text-amber-500 font-bold text-xl">?</span>
                                                         </div>
                                                         {/* Primary avatar */}
-                                                        <div className="w-20 h-20 rounded-full border-[3px] border-[#F59E0B] p-0.5 absolute left-0 top-0 overflow-hidden bg-white shadow-xs flex items-center justify-center">
+                                                        <div className="w-20 h-20 rounded-full border-[3px] border-amber-400 p-0.5 absolute left-0 top-0 overflow-hidden bg-white shadow-xs flex items-center justify-center">
                                                             {rankings[0]?.user?.avatarUrl ? (
                                                                 <Image src={rankings[0].user.avatarUrl} alt="Rank 1" fill className="object-cover rounded-full" />
                                                             ) : (
-                                                                <span className="text-[#D97706] font-bold text-xl">?</span>
+                                                                <span className="text-amber-500 font-bold text-xl">?</span>
                                                             )}
                                                         </div>
                                                     </div>
                                                 ) : (
-                                                    <div className="w-24 h-24 rounded-full border-[3px] border-[#F59E0B] p-0.5 relative overflow-hidden bg-white shadow-xs flex items-center justify-center">
+                                                    <div className="w-24 h-24 rounded-full border-[3px] border-amber-400 p-0.5 relative overflow-hidden bg-white shadow-xs flex items-center justify-center">
                                                         {rankings[0]?.user?.avatarUrl ? (
                                                             <Image src={rankings[0].user.avatarUrl} alt="Rank 1" fill className="object-cover rounded-full" />
                                                         ) : (
-                                                            <span className="text-[#D97706] font-bold text-2xl">?</span>
+                                                            <span className="text-amber-500 font-bold text-2xl">?</span>
                                                         )}
                                                     </div>
                                                 )}
                                             </div>
-                                            <h3 className="font-bold text-[#B45309] text-center text-base mb-1 truncate max-w-[220px] group-hover/podium:text-amber-800 transition-colors">
+                                            <h3 className="font-bold text-amber-600 text-center text-base mb-1 truncate max-w-[220px] group-hover/podium:text-amber-700 transition-colors">
                                                 {rankings[0]?.user?.fullName || "Đang chờ..."}
                                             </h3>
                                             {selectedMatchType.includes('DOUBLES') && rankings[0] && (
-                                                <span className="text-[10px] text-[#B45309] font-bold bg-amber-50 px-2 py-0.5 rounded-md mb-1.5 border border-amber-200">
+                                                <span className="text-[10px] text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded-md mb-1.5 border border-amber-200">
                                                     Đồng đội
                                                 </span>
                                             )}
                                             {rankings[0] ? (
                                                 <EloTierBadge elo={rankings[0].eloPoints} tierName={rankings[0].tier?.name} size="md" className="mb-3 border-amber-200 bg-white text-amber-700" />
                                             ) : (
-                                                <div className="text-[10px] text-[#B45309] font-bold mb-3">--- ELO</div>
+                                                <div className="text-[10px] text-amber-500 font-bold mb-3">--- ELO</div>
                                             )}
                                         </Link>
                                         
                                         {/* Stand 1 (Gold) */}
-                                        <div className="w-full h-44 bg-[#FFFBEB] rounded-t-2xl border-2 border-[#F59E0B]/70 flex flex-col items-center justify-center shadow-xs relative overflow-hidden">
-                                            <span className="text-4xl font-black text-[#D97706] select-none">I</span>
-                                            <span className="text-[#B45309] text-xs font-bold mt-2">
+                                        <div className="w-full h-44 bg-amber-50/70 rounded-t-2xl border-2 border-amber-300/80 flex flex-col items-center justify-center shadow-xs relative overflow-hidden">
+                                            <span className="text-4xl font-black text-amber-400 select-none">I</span>
+                                            <span className="text-amber-600 text-xs font-bold mt-2">
                                                 {rankings[0] ? `Thắng: ${rankings[0].matchesWon}/${rankings[0].matchesPlayed}` : "Thắng: --/--"}
                                             </span>
                                         </div>

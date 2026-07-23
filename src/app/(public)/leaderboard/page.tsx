@@ -264,20 +264,20 @@ export default function LeaderboardPage() {
                                                     #2 SECOND
                                                 </div>
                                                 
-                                                {/* Stacked Avatar for Doubles */}
+                                                {/* Stacked Avatar for Doubles Top 2 */}
                                                 {selectedMatchType.includes('DOUBLES') ? (
-                                                    <div className="relative w-24 h-20 flex items-center justify-center">
-                                                        {/* Partner avatar */}
-                                                        <div className="w-16 h-16 rounded-full border-[3px] border-[#94A3B8] absolute right-0 bottom-0 bg-white flex items-center justify-center shadow-xs overflow-hidden">
-                                                            <span className="text-[#64748B] font-bold text-lg">?</span>
-                                                        </div>
+                                                    <div className="flex items-center -space-x-4 relative z-10 my-1">
                                                         {/* Primary avatar */}
-                                                        <div className="w-16 h-16 rounded-full border-[3px] border-[#94A3B8] p-0.5 absolute left-0 top-0 overflow-hidden bg-white shadow-xs flex items-center justify-center">
+                                                        <div className="w-16 h-16 rounded-full border-[3px] border-[#94A3B8] p-0.5 relative overflow-hidden bg-white shadow-xs flex items-center justify-center z-20 shrink-0">
                                                             {rankings[1]?.user?.avatarUrl ? (
                                                                 <Image src={rankings[1].user.avatarUrl} alt="Rank 2" fill className="object-cover rounded-full" />
                                                             ) : (
-                                                                <span className="text-[#64748B] font-bold text-lg">?</span>
+                                                                <span className="text-[#64748B] font-extrabold text-lg">?</span>
                                                             )}
+                                                        </div>
+                                                        {/* Partner avatar */}
+                                                        <div className="w-16 h-16 rounded-full border-[3px] border-[#94A3B8] relative overflow-hidden bg-[#F1F5F9] shadow-xs flex items-center justify-center z-10 pl-3 shrink-0">
+                                                            <span className="text-[#64748B] font-extrabold text-lg">?</span>
                                                         </div>
                                                     </div>
                                                 ) : (
@@ -321,24 +321,24 @@ export default function LeaderboardPage() {
                                             className="flex flex-col items-center hover:opacity-95 transition-opacity"
                                         >
                                             <div className="relative mb-5 transition-transform duration-300 group-hover:scale-105">
-                                                <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-20 bg-amber-400 text-amber-950 font-extrabold text-[10px] px-4 py-1 rounded-full shadow-sm flex items-center gap-1 border border-amber-300 whitespace-nowrap animate-bounce">
+                                                <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-30 bg-amber-400 text-amber-950 font-extrabold text-[10px] px-4 py-1 rounded-full shadow-sm flex items-center gap-1 border border-amber-300 whitespace-nowrap animate-bounce">
                                                     👑 CHAMPION
                                                 </div>
                                                 
-                                                {/* Stacked Avatar for Doubles */}
+                                                {/* Stacked Avatar for Doubles Top 1 */}
                                                 {selectedMatchType.includes('DOUBLES') ? (
-                                                    <div className="relative w-28 h-24 flex items-center justify-center">
-                                                        {/* Partner avatar */}
-                                                        <div className="w-20 h-20 rounded-full border-[3px] border-amber-400 absolute right-0 bottom-0 bg-white flex items-center justify-center shadow-xs overflow-hidden">
-                                                            <span className="text-amber-500 font-bold text-xl">?</span>
-                                                        </div>
+                                                    <div className="flex items-center -space-x-5 relative z-10 my-1">
                                                         {/* Primary avatar */}
-                                                        <div className="w-20 h-20 rounded-full border-[3px] border-amber-400 p-0.5 absolute left-0 top-0 overflow-hidden bg-white shadow-xs flex items-center justify-center">
+                                                        <div className="w-20 h-20 rounded-full border-[3px] border-amber-300 p-0.5 relative overflow-hidden bg-white shadow-sm flex items-center justify-center z-20 shrink-0">
                                                             {rankings[0]?.user?.avatarUrl ? (
                                                                 <Image src={rankings[0].user.avatarUrl} alt="Rank 1" fill className="object-cover rounded-full" />
                                                             ) : (
-                                                                <span className="text-amber-500 font-bold text-xl">?</span>
+                                                                <span className="text-amber-500 font-extrabold text-xl">?</span>
                                                             )}
+                                                        </div>
+                                                        {/* Partner avatar */}
+                                                        <div className="w-20 h-20 rounded-full border-[3px] border-amber-300 relative overflow-hidden bg-amber-50/90 shadow-sm flex items-center justify-center z-10 pl-4 shrink-0">
+                                                            <span className="text-amber-500 font-extrabold text-xl">?</span>
                                                         </div>
                                                     </div>
                                                 ) : (
@@ -386,20 +386,20 @@ export default function LeaderboardPage() {
                                                     #3 THIRD
                                                 </div>
                                                 
-                                                {/* Stacked Avatar for Doubles */}
+                                                {/* Stacked Avatar for Doubles Top 3 */}
                                                 {selectedMatchType.includes('DOUBLES') ? (
-                                                    <div className="relative w-24 h-20 flex items-center justify-center">
-                                                        {/* Partner avatar */}
-                                                        <div className="w-16 h-16 rounded-full border-[3px] border-[#C2410C] absolute right-0 bottom-0 bg-white flex items-center justify-center shadow-xs overflow-hidden">
-                                                            <span className="text-[#C2410C] font-bold text-lg">?</span>
-                                                        </div>
+                                                    <div className="flex items-center -space-x-4 relative z-10 my-1">
                                                         {/* Primary avatar */}
-                                                        <div className="w-16 h-16 rounded-full border-[3px] border-[#C2410C] p-0.5 absolute left-0 top-0 overflow-hidden bg-white shadow-xs flex items-center justify-center">
+                                                        <div className="w-16 h-16 rounded-full border-[3px] border-[#C2410C] p-0.5 relative overflow-hidden bg-white shadow-xs flex items-center justify-center z-20 shrink-0">
                                                             {rankings[2]?.user?.avatarUrl ? (
                                                                 <Image src={rankings[2].user.avatarUrl} alt="Rank 3" fill className="object-cover rounded-full" />
                                                             ) : (
-                                                                <span className="text-[#C2410C] font-bold text-lg">?</span>
+                                                                <span className="text-[#C2410C] font-extrabold text-lg">?</span>
                                                             )}
+                                                        </div>
+                                                        {/* Partner avatar */}
+                                                        <div className="w-16 h-16 rounded-full border-[3px] border-[#C2410C] relative overflow-hidden bg-[#FFF7ED] shadow-xs flex items-center justify-center z-10 pl-3 shrink-0">
+                                                            <span className="text-[#C2410C] font-extrabold text-lg">?</span>
                                                         </div>
                                                     </div>
                                                 ) : (
@@ -455,18 +455,16 @@ export default function LeaderboardPage() {
                                                     
                                                     {/* Stacked Avatar for Doubles Ranks 4-10 */}
                                                     {selectedMatchType.includes('DOUBLES') ? (
-                                                        <div className="relative w-14 h-11 mb-2">
-                                                            <div className="w-8 h-8 rounded-full border border-slate-200 absolute right-0 bottom-0 bg-slate-100 flex items-center justify-center shadow-xs">
-                                                                <Users className="w-3.5 h-3.5 text-slate-400" />
-                                                            </div>
-                                                            <div className="w-8 h-8 rounded-full border-2 border-slate-200 absolute left-0 top-0 overflow-hidden bg-slate-50 flex items-center justify-center">
+                                                        <div className="flex items-center -space-x-3 mb-2">
+                                                            <div className="w-8 h-8 rounded-full border-2 border-slate-200 relative overflow-hidden bg-slate-50 flex items-center justify-center z-20 shadow-xs">
                                                                 {player?.user?.avatarUrl ? (
                                                                     <Image src={player.user.avatarUrl} alt={`Rank ${rankNum}`} fill className="object-cover" />
                                                                 ) : (
-                                                                    <span className="text-slate-400 font-bold text-[10px]">
-                                                                        {player ? (player.user?.fullName?.substring(0, 2) || 'VĐ') : '?'}
-                                                                    </span>
+                                                                    <span className="text-slate-400 font-bold text-[10px]">?</span>
                                                                 )}
+                                                            </div>
+                                                            <div className="w-8 h-8 rounded-full border-2 border-slate-200 relative overflow-hidden bg-slate-100 flex items-center justify-center z-10 pl-1.5 shadow-xs">
+                                                                <span className="text-slate-400 font-bold text-[10px]">?</span>
                                                             </div>
                                                         </div>
                                                     ) : (
@@ -752,18 +750,16 @@ function RestRankingsTable({ rankings, selectedMatchType }: { rankings: PlayerRa
                                             >
                                                 {/* Stacked Avatar for Doubles in table list */}
                                                 {selectedMatchType.includes('DOUBLES') ? (
-                                                    <div className="relative w-10 h-7 flex-shrink-0">
-                                                        <div className="w-5.5 h-5.5 rounded-full border border-slate-200 absolute right-0 bottom-0 bg-slate-100 flex items-center justify-center">
-                                                            <Users className="w-2.5 h-2.5 text-slate-400" />
-                                                        </div>
-                                                        <div className="w-5.5 h-5.5 rounded-full border border-slate-200 absolute left-0 top-0 overflow-hidden bg-slate-50 flex items-center justify-center">
+                                                    <div className="flex items-center -space-x-2.5 flex-shrink-0">
+                                                        <div className="w-6 h-6 rounded-full border border-slate-200 relative overflow-hidden bg-slate-50 flex items-center justify-center z-20 shadow-xs">
                                                             {rank.user?.avatarUrl ? (
                                                                 <Image src={rank.user.avatarUrl} alt="Player" fill className="object-cover" />
                                                             ) : (
-                                                                <div className="w-full h-full flex items-center justify-center bg-slate-200 text-slate-500 font-bold text-[8px] uppercase">
-                                                                    {isPlaceholder ? "?" : (rank.user?.fullName?.substring(0, 2) || 'VĐ')}
-                                                                </div>
+                                                                <span className="text-slate-400 font-bold text-[9px]">?</span>
                                                             )}
+                                                        </div>
+                                                        <div className="w-6 h-6 rounded-full border border-slate-200 relative overflow-hidden bg-slate-100 flex items-center justify-center z-10 pl-1 shadow-xs">
+                                                            <span className="text-slate-400 font-bold text-[9px]">?</span>
                                                         </div>
                                                     </div>
                                                 ) : (

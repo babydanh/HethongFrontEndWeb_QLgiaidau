@@ -535,7 +535,7 @@ export default function LeaderboardPage() {
                                         </button>
                                         Hệ thống phân hạng ELO
                                     </h3>
-                                    <p className="text-slate-500 text-[11px] leading-relaxed">Điểm ELO tích lũy sau mỗi trận đấu sẽ xếp người chơi vào các Tier trình độ tương ứng. <button type="button" onClick={() => { const modal = document.getElementById('eloRulesModal') as HTMLDialogElement | null; if (modal) modal.showModal(); }} className="text-blue-600 font-bold hover:underline cursor-pointer">Xem quy tắc [i]</button></p>
+                                    <p className="text-slate-500 text-[11px] leading-relaxed">Điểm ELO tích lũy sau mỗi trận đấu sẽ xếp người chơi vào các Tier trình độ tương ứng.</p>
                                 </div>
                             </div>
 

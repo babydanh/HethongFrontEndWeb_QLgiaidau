@@ -52,11 +52,10 @@ interface Props {
   initialTournament: Tournament | null;
 }
 
-type TournamentDetailTab = 'overview' | 'prizes' | 'teams' | 'bracket' | 'matches';
+type TournamentDetailTab = 'overview' | 'teams' | 'bracket' | 'matches';
 
 const TOURNAMENT_DETAIL_TABS: TournamentDetailTab[] = [
   'overview',
-  'prizes',
   'teams',
   'bracket',
   'matches',
@@ -330,7 +329,6 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
 
   const tabs: { id: TournamentDetailTab; label: string }[] = [
     { id: 'overview', label: 'Tổng quan' },
-    { id: 'prizes', label: 'Giải thưởng' },
     { id: 'teams', label: 'Đội tham gia' },
     { id: 'bracket', label: 'Bảng đấu' },
     { id: 'matches', label: 'Lịch thi đấu' },
@@ -524,15 +522,6 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
               {selectedDivision ? (
                 <>
                   {activeTab === 'overview' && <OverviewTab tournament={selectedDivision} />}
-                  {activeTab === 'prizes' && (
-                    <div className="prose prose-slate max-w-none text-slate-800 text-base leading-relaxed editorjs-content-view">
-                      {selectedDivision.prizeDescription ? (
-                        <div dangerouslySetInnerHTML={{ __html: selectedDivision.prizeDescription }} />
-                      ) : (
-                        <p className="italic text-slate-400 text-center">Ban tổ chức chưa cập nhật cơ cấu giải thưởng cho giải đấu này.</p>
-                      )}
-                    </div>
-                  )}
                   {activeTab === 'teams' && (
                     <TeamsTab tournament={selectedDivision} tournamentId={tournament.id} divisionId={selectedDivisionId || undefined} />
                   )}

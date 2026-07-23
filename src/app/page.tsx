@@ -1025,7 +1025,7 @@ export default function HomePage() {
                             href={group.id ? `/tournaments/${group.id}` : '#'}
                             className="flex items-center gap-3 group/header hover:opacity-90 transition-opacity flex-1 min-w-0"
                           >
-                            <div className="w-8 h-8 rounded-full overflow-hidden border border-slate-200 bg-white relative flex-shrink-0 shadow-sm">
+                            <div className="w-12 h-12 rounded-full overflow-hidden border border-slate-200 bg-white relative flex-shrink-0 shadow-sm">
                               <TournamentLogoAvatar src={group.logoUrl} alt={group.name} />
                             </div>
                             <div className="min-w-0">
@@ -1123,7 +1123,7 @@ export default function HomePage() {
                           href={group.id ? `/tournaments/${group.id}` : '#'}
                           className="flex items-center gap-3 group/header hover:opacity-90 transition-opacity flex-1 min-w-0"
                         >
-                          <div className="w-8 h-8 rounded-full overflow-hidden border border-slate-200 bg-white relative flex-shrink-0 shadow-sm">
+                          <div className="w-12 h-12 rounded-full overflow-hidden border border-slate-200 bg-white relative flex-shrink-0 shadow-sm">
                             <TournamentLogoAvatar src={group.logoUrl} alt={group.name} />
                           </div>
                             <div className="min-w-0">
@@ -1211,7 +1211,7 @@ export default function HomePage() {
                           href={group.id ? `/tournaments/${group.id}` : '#'}
                           className="flex items-center gap-3 group/header hover:opacity-90 transition-opacity flex-1 min-w-0"
                         >
-                          <div className="w-8 h-8 rounded-full overflow-hidden border border-slate-200 bg-white relative flex-shrink-0 shadow-sm">
+                          <div className="w-12 h-12 rounded-full overflow-hidden border border-slate-200 bg-white relative flex-shrink-0 shadow-sm">
                             <TournamentLogoAvatar src={group.logoUrl} alt={group.name} />
                           </div>
                             <div className="min-w-0">

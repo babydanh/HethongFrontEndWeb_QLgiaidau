@@ -965,12 +965,12 @@ export default function MatchesListPage() {
                   <div className="flex items-center gap-3">
                   <Link 
                     href={`/tournaments/${group.tournamentId}`}
-                    className="w-10 h-10 rounded-full bg-slate-100 overflow-hidden flex items-center justify-center border border-slate-200 shrink-0 hover:opacity-85 transition-opacity"
+                    className="w-14 h-14 rounded-full bg-white overflow-hidden flex items-center justify-center border border-slate-200 shrink-0 hover:opacity-85 transition-opacity shadow-sm"
                   >
                     {group.tournamentLogoUrl ? (
-                      <img src={group.tournamentLogoUrl} alt={group.tournamentName} className="w-6 h-6 object-contain" />
+                      <img src={group.tournamentLogoUrl} alt={group.tournamentName} className="w-10 h-10 object-contain" />
                     ) : (
-                      <img src="/vndcsport.svg" alt="VNDC Sport" className="w-6 h-6 object-contain opacity-60" />
+                      <img src="/vndcsport.svg" alt="VNDC Sport" className="w-10 h-10 object-contain opacity-60" />
                     )}
                   </Link>
                   <div>

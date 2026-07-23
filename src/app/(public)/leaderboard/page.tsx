@@ -251,43 +251,43 @@ export default function LeaderboardPage() {
                                 </div>
 
                                 {/* Podium Top 3 */}
-                                <div className="relative z-10 flex flex-col md:flex-row items-end justify-center gap-6 md:gap-4 lg:gap-8 max-w-4xl mx-auto pb-2 mt-12 md:mt-16">
+                                <div className="relative z-10 flex flex-col md:flex-row items-end justify-center gap-6 md:gap-4 lg:gap-8 max-w-4xl mx-auto pb-2 mt-10 md:mt-14">
                                     
-                                    {/* Rank 2 (Left) */}
+                                    {/* Rank 2 - Silver (Left) */}
                                     <div className="w-full md:w-1/3 order-2 md:order-1 flex flex-col items-center group/podium">
                                         <Link 
                                             href={rankings[1]?.user?.id ? `/users/${rankings[1].user.id}` : '#'}
-                                            className="flex flex-col items-center hover:opacity-90 transition-opacity"
+                                            className="flex flex-col items-center hover:opacity-95 transition-opacity"
                                         >
                                             <div className="relative mb-4 transition-transform duration-300 group-hover:scale-105">
-                                                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20 bg-slate-100 text-slate-700 font-bold text-[10px] px-3 py-1 rounded-full border border-slate-205 shadow-xs">
+                                                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20 bg-slate-200 text-slate-800 font-bold text-[10px] px-3 py-1 rounded-full border border-slate-300 shadow-sm">
                                                     #2 SECOND
                                                 </div>
                                                 
                                                 {/* Stacked Avatar for Doubles */}
                                                 {selectedMatchType.includes('DOUBLES') ? (
                                                     <div className="relative w-24 h-20 flex items-center justify-center">
-                                                        {/* Partner shadow avatar */}
-                                                        <div className="w-16 h-16 rounded-full border-2 border-slate-300 absolute -right-2 bottom-0 bg-slate-100 flex items-center justify-center shadow-xs">
-                                                            <Users className="w-6 h-6 text-slate-300" />
+                                                        {/* Partner avatar */}
+                                                        <div className="w-16 h-16 rounded-full border-4 border-slate-300 absolute right-0 bottom-0 bg-slate-100 flex items-center justify-center shadow-sm overflow-hidden">
+                                                            <Users className="w-6 h-6 text-slate-400" />
                                                         </div>
                                                         {/* Primary avatar */}
-                                                        <div className="w-16 h-16 rounded-full border-4 border-slate-350 p-0.5 absolute -left-2 top-0 overflow-hidden bg-slate-55 shadow-sm flex items-center justify-center">
+                                                        <div className="w-16 h-16 rounded-full border-4 border-slate-300 p-0.5 absolute left-0 top-0 overflow-hidden bg-white shadow-sm flex items-center justify-center">
                                                             {rankings[1]?.user?.avatarUrl ? (
                                                                 <Image src={rankings[1].user.avatarUrl} alt="Rank 2" fill className="object-cover rounded-full" />
                                                             ) : (
-                                                                <div className="w-full h-full flex items-center justify-center bg-slate-100 text-slate-400 font-bold uppercase text-lg rounded-full">
+                                                                <div className="w-full h-full flex items-center justify-center bg-slate-50 text-slate-400 font-bold uppercase text-base rounded-full">
                                                                     {rankings[1] ? (rankings[1].user?.fullName?.substring(0, 2) || 'VĐ') : '?'}
                                                                 </div>
                                                             )}
                                                         </div>
                                                     </div>
                                                 ) : (
-                                                    <div className="w-20 h-20 rounded-full border-4 border-slate-350 p-0.5 relative overflow-hidden bg-slate-55 shadow-sm flex items-center justify-center">
+                                                    <div className="w-20 h-20 rounded-full border-4 border-slate-300 p-0.5 relative overflow-hidden bg-white shadow-md flex items-center justify-center">
                                                         {rankings[1]?.user?.avatarUrl ? (
                                                             <Image src={rankings[1].user.avatarUrl} alt="Rank 2" fill className="object-cover rounded-full" />
                                                         ) : (
-                                                            <div className="w-full h-full flex items-center justify-center bg-slate-100 text-slate-400 font-bold uppercase text-2xl rounded-full">
+                                                            <div className="w-full h-full flex items-center justify-center bg-slate-50 text-slate-400 font-bold uppercase text-xl rounded-full">
                                                                 {rankings[1] ? (rankings[1].user?.fullName?.substring(0, 2) || 'VĐ') : '?'}
                                                             </div>
                                                         )}
@@ -298,151 +298,151 @@ export default function LeaderboardPage() {
                                                 {rankings[1]?.user?.fullName || "Đang chờ..."}
                                             </h3>
                                             {selectedMatchType.includes('DOUBLES') && rankings[1] && (
-                                                <span className="text-[10px] text-slate-450 font-bold bg-slate-100 px-2 py-0.5 rounded-md mb-1.5 border border-slate-200">
+                                                <span className="text-[10px] text-slate-600 font-bold bg-slate-100 px-2 py-0.5 rounded-md mb-1.5 border border-slate-200">
                                                     Đồng đội
                                                 </span>
                                             )}
                                             {rankings[1] ? (
                                                 <EloTierBadge elo={rankings[1].eloPoints} tierName={rankings[1].tier?.name} size="sm" className="mb-3 border-slate-200/80 bg-white" />
                                             ) : (
-                                                <div className="text-[10px] text-slate-300/80 font-bold mb-3">--- ELO</div>
+                                                <div className="text-[10px] text-slate-400 font-bold mb-3">--- ELO</div>
                                             )}
                                         </Link>
                                         
-                                        {/* Stand 2 */}
-                                        <div className="w-full h-24 bg-gradient-to-b from-blue-100/50 to-blue-200/20 rounded-t-2xl border-t border-x border-blue-200/80 flex flex-col items-center justify-center shadow-xs">
-                                            <span className="text-3xl font-bold text-blue-300/80 select-none">II</span>
-                                            <span className="text-blue-600/70 text-[10px] font-bold mt-1">
+                                        {/* Stand 2 (Silver) */}
+                                        <div className="w-full h-24 bg-gradient-to-b from-slate-200/90 via-slate-100/60 to-slate-50/30 rounded-t-2xl border-t-2 border-x border-slate-300/80 flex flex-col items-center justify-center shadow-xs">
+                                            <span className="text-3xl font-black text-slate-400 select-none">II</span>
+                                            <span className="text-slate-600 text-[10px] font-bold mt-1">
                                                 {rankings[1] ? `Thắng: ${rankings[1].matchesWon}/${rankings[1].matchesPlayed}` : "Thắng: --/--"}
                                             </span>
                                         </div>
                                     </div>
- 
-                                    {/* Rank 1 (Center) */}
+
+                                    {/* Rank 1 - Champion Gold (Center) */}
                                     <div className="w-full md:w-1/3 order-1 md:order-2 flex flex-col items-center group/podium relative -translate-y-2 md:-translate-y-4">
                                         <Link 
                                             href={rankings[0]?.user?.id ? `/users/${rankings[0].user.id}` : '#'}
-                                            className="flex flex-col items-center hover:opacity-90 transition-opacity animate-none"
+                                            className="flex flex-col items-center hover:opacity-95 transition-opacity"
                                         >
                                             <div className="relative mb-5 transition-transform duration-300 group-hover:scale-105">
-                                                <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-20 bg-amber-400 text-amber-955 font-bold text-[10px] px-4 py-1.5 rounded-full shadow-sm flex items-center gap-1 border border-amber-300 animate-bounce">
+                                                <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-20 bg-amber-400 text-amber-950 font-black text-[10px] px-4 py-1.5 rounded-full shadow-md flex items-center gap-1 border border-amber-300">
                                                     👑 CHAMPION
                                                 </div>
                                                 
                                                 {/* Stacked Avatar for Doubles */}
                                                 {selectedMatchType.includes('DOUBLES') ? (
                                                     <div className="relative w-28 h-24 flex items-center justify-center">
-                                                        {/* Partner shadow avatar */}
-                                                        <div className="w-20 h-20 rounded-full border-2 border-amber-300 absolute -right-2 bottom-0 bg-slate-100/50 flex items-center justify-center shadow-xs">
-                                                            <Users className="w-8 h-8 text-blue-500/80" />
+                                                        {/* Partner avatar */}
+                                                        <div className="w-20 h-20 rounded-full border-4 border-amber-400 absolute right-0 bottom-0 bg-amber-50/50 flex items-center justify-center shadow-md overflow-hidden">
+                                                            <Users className="w-8 h-8 text-amber-500" />
                                                         </div>
                                                         {/* Primary avatar */}
-                                                        <div className="w-20 h-20 rounded-full border-4 border-amber-400/85 p-0.5 absolute -left-2 top-0 overflow-hidden bg-slate-55 shadow-md flex items-center justify-center">
+                                                        <div className="w-20 h-20 rounded-full border-4 border-amber-400 p-0.5 absolute left-0 top-0 overflow-hidden bg-white shadow-md flex items-center justify-center">
                                                             {rankings[0]?.user?.avatarUrl ? (
                                                                 <Image src={rankings[0].user.avatarUrl} alt="Rank 1" fill className="object-cover rounded-full" />
                                                             ) : (
-                                                                <div className="w-full h-full flex items-center justify-center bg-slate-100 text-slate-600 font-bold uppercase text-xl rounded-full">
+                                                                <div className="w-full h-full flex items-center justify-center bg-amber-50 text-amber-500 font-bold uppercase text-xl rounded-full">
                                                                     {rankings[0] ? (rankings[0].user?.fullName?.substring(0, 2) || 'VĐ') : '?'}
                                                                 </div>
                                                             )}
                                                         </div>
                                                     </div>
                                                 ) : (
-                                                    <div className="w-24 h-24 rounded-full border-4 border-amber-400/80 p-1 relative overflow-hidden bg-slate-55 shadow-md flex items-center justify-center">
+                                                    <div className="w-24 h-24 rounded-full border-4 border-amber-400 p-0.5 relative overflow-hidden bg-white shadow-lg flex items-center justify-center">
                                                         {rankings[0]?.user?.avatarUrl ? (
                                                             <Image src={rankings[0].user.avatarUrl} alt="Rank 1" fill className="object-cover rounded-full" />
                                                         ) : (
-                                                            <div className="w-full h-full flex items-center justify-center bg-slate-100 text-slate-600 font-bold uppercase text-2xl rounded-full">
+                                                            <div className="w-full h-full flex items-center justify-center bg-amber-50 text-amber-500 font-bold uppercase text-2xl rounded-full">
                                                                 {rankings[0] ? (rankings[0].user?.fullName?.substring(0, 2) || 'VĐ') : '?'}
                                                             </div>
                                                         )}
                                                     </div>
                                                 )}
                                             </div>
-                                            <h3 className="font-bold text-blue-600 text-center text-base mb-1 truncate max-w-[220px] group-hover/podium:text-blue-600 transition-colors">
+                                            <h3 className="font-bold text-amber-700 text-center text-base mb-1 truncate max-w-[220px] group-hover/podium:text-amber-800 transition-colors">
                                                 {rankings[0]?.user?.fullName || "Đang chờ..."}
                                             </h3>
                                             {selectedMatchType.includes('DOUBLES') && rankings[0] && (
-                                                <span className="text-[10px] text-amber-655 font-bold bg-amber-50 px-2 py-0.5 rounded-md mb-1.5 border border-amber-200">
+                                                <span className="text-[10px] text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded-md mb-1.5 border border-amber-200">
                                                     Đồng đội
                                                 </span>
                                             )}
                                             {rankings[0] ? (
-                                                <EloTierBadge elo={rankings[0].eloPoints} tierName={rankings[0].tier?.name} size="md" className="mb-3 border-amber-400/50 bg-white" />
+                                                <EloTierBadge elo={rankings[0].eloPoints} tierName={rankings[0].tier?.name} size="md" className="mb-3 border-amber-200 bg-white text-amber-700" />
                                             ) : (
-                                                <div className="text-[10px] text-blue-500 font-bold mb-3">--- ELO</div>
+                                                <div className="text-[10px] text-amber-500 font-bold mb-3">--- ELO</div>
                                             )}
                                         </Link>
                                         
-                                        {/* Stand 1 */}
-                                        <div className="w-full h-32 bg-gradient-to-b from-blue-100/70 to-blue-200/30 rounded-t-2xl border-t border-x border-blue-300 flex flex-col items-center justify-center shadow-xs relative overflow-hidden">
-                                            <span className="text-4xl font-bold text-blue-400 select-none">I</span>
-                                            <span className="text-blue-700 text-xs font-bold mt-1">
+                                        {/* Stand 1 (Gold) */}
+                                        <div className="w-full h-32 bg-gradient-to-b from-amber-200/80 via-amber-100/50 to-amber-50/30 rounded-t-2xl border-t-2 border-x border-amber-400/80 flex flex-col items-center justify-center shadow-md relative overflow-hidden">
+                                            <span className="text-4xl font-black text-amber-500 select-none">I</span>
+                                            <span className="text-amber-700 text-xs font-bold mt-1">
                                                 {rankings[0] ? `Thắng: ${rankings[0].matchesWon}/${rankings[0].matchesPlayed}` : "Thắng: --/--"}
                                             </span>
                                         </div>
                                     </div>
- 
-                                    {/* Rank 3 (Right) */}
+
+                                    {/* Rank 3 - Bronze (Right) */}
                                     <div className="w-full md:w-1/3 order-3 md:order-3 flex flex-col items-center group/podium">
                                         <Link 
                                             href={rankings[2]?.user?.id ? `/users/${rankings[2].user.id}` : '#'}
-                                            className="flex flex-col items-center hover:opacity-90 transition-opacity"
+                                            className="flex flex-col items-center hover:opacity-95 transition-opacity"
                                         >
                                             <div className="relative mb-4 transition-transform duration-300 group-hover:scale-105">
-                                                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20 bg-amber-100 text-amber-700 font-bold text-[10px] px-3 py-1 rounded-full border border-amber-205 shadow-xs">
+                                                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20 bg-amber-100 text-amber-800 font-bold text-[10px] px-3 py-1 rounded-full border border-amber-300/80 shadow-sm">
                                                     #3 THIRD
                                                 </div>
                                                 
                                                 {/* Stacked Avatar for Doubles */}
                                                 {selectedMatchType.includes('DOUBLES') ? (
                                                     <div className="relative w-24 h-20 flex items-center justify-center">
-                                                        {/* Partner shadow avatar */}
-                                                        <div className="w-16 h-16 rounded-full border-2 border-amber-200 absolute -right-2 bottom-0 bg-amber-50/50 flex items-center justify-center shadow-xs">
-                                                            <Users className="w-6 h-6 text-amber-450" />
+                                                        {/* Partner avatar */}
+                                                        <div className="w-16 h-16 rounded-full border-4 border-amber-600 absolute right-0 bottom-0 bg-amber-100/40 flex items-center justify-center shadow-sm overflow-hidden">
+                                                            <Users className="w-6 h-6 text-amber-600" />
                                                         </div>
                                                         {/* Primary avatar */}
-                                                        <div className="w-16 h-16 rounded-full border-4 border-amber-350 p-0.5 absolute -left-2 top-0 overflow-hidden bg-slate-55 shadow-sm flex items-center justify-center">
+                                                        <div className="w-16 h-16 rounded-full border-4 border-amber-600 p-0.5 absolute left-0 top-0 overflow-hidden bg-white shadow-sm flex items-center justify-center">
                                                             {rankings[2]?.user?.avatarUrl ? (
                                                                 <Image src={rankings[2].user.avatarUrl} alt="Rank 3" fill className="object-cover rounded-full" />
                                                             ) : (
-                                                                <div className="w-full h-full flex items-center justify-center bg-slate-100 text-amber-500 font-bold uppercase text-lg rounded-full">
+                                                                <div className="w-full h-full flex items-center justify-center bg-amber-50 text-amber-600 font-bold uppercase text-base rounded-full">
                                                                     {rankings[2] ? (rankings[2].user?.fullName?.substring(0, 2) || 'VĐ') : '?'}
                                                                 </div>
                                                             )}
                                                         </div>
                                                     </div>
                                                 ) : (
-                                                    <div className="w-20 h-20 rounded-full border-4 border-amber-350 p-0.5 relative overflow-hidden bg-slate-55 shadow-sm flex items-center justify-center">
+                                                    <div className="w-20 h-20 rounded-full border-4 border-amber-600 p-0.5 relative overflow-hidden bg-white shadow-md flex items-center justify-center">
                                                         {rankings[2]?.user?.avatarUrl ? (
                                                             <Image src={rankings[2].user.avatarUrl} alt="Rank 3" fill className="object-cover rounded-full" />
                                                         ) : (
-                                                            <div className="w-full h-full flex items-center justify-center bg-slate-100 text-amber-600 font-bold uppercase text-xl rounded-full">
+                                                            <div className="w-full h-full flex items-center justify-center bg-amber-50 text-amber-600 font-bold uppercase text-xl rounded-full">
                                                                 {rankings[2] ? (rankings[2].user?.fullName?.substring(0, 2) || 'VĐ') : '?'}
                                                             </div>
                                                         )}
                                                     </div>
                                                 )}
                                             </div>
-                                            <h3 className="font-bold text-slate-800 text-center text-sm mb-1 truncate max-w-[200px] group-hover/podium:text-blue-600 transition-colors">
+                                            <h3 className="font-bold text-amber-900 text-center text-sm mb-1 truncate max-w-[200px] group-hover/podium:text-amber-700 transition-colors">
                                                 {rankings[2]?.user?.fullName || "Đang chờ..."}
                                             </h3>
                                             {selectedMatchType.includes('DOUBLES') && rankings[2] && (
-                                                <span className="text-[10px] text-amber-655 font-bold bg-amber-50 px-2 py-0.5 rounded-md mb-1.5 border border-amber-200">
+                                                <span className="text-[10px] text-amber-800 font-bold bg-amber-50 px-2 py-0.5 rounded-md mb-1.5 border border-amber-200">
                                                     Đồng đội
                                                 </span>
                                             )}
                                             {rankings[2] ? (
-                                                <EloTierBadge elo={rankings[2].eloPoints} tierName={rankings[2].tier?.name} size="sm" className="mb-3 border-slate-200/80 bg-white" />
+                                                <EloTierBadge elo={rankings[2].eloPoints} tierName={rankings[2].tier?.name} size="sm" className="mb-3 border-amber-200 bg-white" />
                                             ) : (
-                                                <div className="text-[10px] text-slate-300/80 font-bold mb-3">--- ELO</div>
+                                                <div className="text-[10px] text-amber-600 font-bold mb-3">--- ELO</div>
                                             )}
                                         </Link>
                                         
-                                        {/* Stand 3 */}
-                                        <div className="w-full h-20 bg-gradient-to-b from-blue-100/40 to-blue-200/15 rounded-t-2xl border-t border-x border-blue-200/70 flex flex-col items-center justify-center shadow-xs">
-                                            <span className="text-3xl font-bold text-blue-300/70 select-none">III</span>
-                                            <span className="text-blue-600/60 text-[10px] font-bold mt-1">
+                                        {/* Stand 3 (Bronze) */}
+                                        <div className="w-full h-20 bg-gradient-to-b from-amber-200/60 via-amber-100/40 to-amber-50/20 rounded-t-2xl border-t-2 border-x border-amber-500/70 flex flex-col items-center justify-center shadow-xs">
+                                            <span className="text-3xl font-black text-amber-600 select-none">III</span>
+                                            <span className="text-amber-800 text-[10px] font-bold mt-1">
                                                 {rankings[2] ? `Thắng: ${rankings[2].matchesWon}/${rankings[2].matchesPlayed}` : "Thắng: --/--"}
                                             </span>
                                         </div>

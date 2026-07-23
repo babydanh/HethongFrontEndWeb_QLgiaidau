@@ -195,7 +195,6 @@ export default function AdminDashboard() {
         subText: 'Tổng số tài khoản đã đăng ký',
         icon: Users,
         color: 'from-blue-500 to-indigo-500 shadow-blue-500/10',
-        isPercent: true,
       },
       {
         name: 'Cộng đồng (CLB)',
@@ -204,7 +203,6 @@ export default function AdminDashboard() {
         subText: 'Tổng số câu lạc bộ thể thao',
         icon: Building,
         color: 'from-purple-500 to-indigo-500 shadow-purple-500/10',
-        isPercent: true,
       },
       {
         name: 'Giải đấu',
@@ -213,7 +211,6 @@ export default function AdminDashboard() {
         subText: 'Giải đã và đang tổ chức',
         icon: Trophy,
         color: 'from-amber-500 to-orange-500 shadow-amber-500/10',
-        isPercent: true,
       },
       {
         name: 'Tổng GMV Giao dịch',

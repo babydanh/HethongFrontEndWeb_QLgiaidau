@@ -4,14 +4,7 @@ on:
   push:
     branches:
       - main
-    paths:
-      - 'src/**'
-      - 'public/**'
-      - 'package.json'
-      - 'pnpm-lock.yaml'
-      - 'next.config.ts'
-      - 'Dockerfile'
-      - '.github/workflows/deploy.yml'
+  workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io

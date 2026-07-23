@@ -666,140 +666,125 @@ export default function HomePage() {
       bracketSize: contextTournament?.maxParticipants ?? rankedTournament?.maxParticipants ?? null,
     });
 
+    const getSingleInitials = (s: string) => {
+      if (!s || s === 'Chờ xác định') return '??';
+      const words = s.trim().split(' ').filter(Boolean);
+      if (words.length >= 2) {
+        return `${words[words.length - 2][0]}${words[words.length - 1][0]}`.toUpperCase();
+      }
+      return s.slice(0, 2).toUpperCase();
+    };
+
+    const getTeamInitials = (name: string) => {
+      if (!name || name === 'Chờ xác định') return ['NM', 'HD'];
+      const parts = name.split('-').map(s => s.trim()).filter(Boolean);
+      if (parts.length >= 2) {
+        return [getSingleInitials(parts[0]), getSingleInitials(parts[1])];
+      }
+      return [getSingleInitials(name), getSingleInitials(name)];
+    };
+
+    const t1Initials = getTeamInitials(match.participant1?.teamName || '');
+    const t2Initials = getTeamInitials(match.participant2?.teamName || '');
+
+    const scores = extractMatchScores(match.scoreDetails);
+    const targetSet = scores.find((s: { isFinished: boolean }) => !s.isFinished) || scores[scores.length - 1] || { team1Score: 0, team2Score: 0 };
+
     return (
       <motion.div 
         key={match.id}
         whileHover={{ y: -3, scale: 1.005 }}
         transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-        className={`bg-white rounded-lg border ${
-          isLive 
-            ? 'border-rose-100 shadow-[0_4px_20px_rgba(244,63,94,0.03)]' 
-            : 'border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.015)]'
-        } overflow-hidden flex flex-col justify-between`}
+        className="bg-white rounded-2xl border border-sky-100 shadow-[0_4px_20px_rgba(0,82,255,0.04)] p-4 space-y-3.5 flex flex-col justify-between"
       >
-        {/* Match Header */}
-        <div className={`px-4 py-2.5 ${isLive ? 'bg-rose-50/30' : 'bg-slate-50/50'} border-b border-slate-100 flex items-center justify-between text-[10px] font-semibold text-slate-500`}>
-          <div className="flex items-center gap-1.5 truncate max-w-[70%]">
-            {isLive && (
-              <span className="relative flex h-2 w-2 shrink-0">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-600"></span>
-              </span>
-            )}
-            <span className={`uppercase tracking-wider shrink-0 ${
-              isLive ? 'text-rose-600 font-bold animate-pulse' : isCompleted ? 'text-slate-500' : 'text-blue-600'
-            }`}>
-              {isLive ? 'Trực tiếp' : isCompleted ? 'Đã kết thúc' : 'Sắp diễn ra'}
-            </span>
-            <span className="text-slate-300">•</span>
-            <span className="shrink-0 text-slate-600 font-medium">{roundLabel}</span>
-            {match.courtName && (
-              <>
-                <span className="text-slate-300">•</span>
-                <span className="flex items-center gap-0.5 truncate max-w-[120px]">
-                  <MapPin className="w-2.5 h-2.5 text-slate-400" />
-                  {match.courtName}
-                </span>
-              </>
-            )}
-          </div>
-          <span className="uppercase text-slate-650 bg-slate-100/80 px-2 py-0.5 rounded text-[8px] font-bold truncate max-w-[40%] md:max-w-[28%]">
-            {translateStageName(match.group?.stage?.name) || 'Vòng đấu'}
+        {/* Top Badges Row */}
+        <div className="flex items-center justify-between gap-2">
+          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold ${
+            isLive ? 'bg-rose-50 text-rose-600' : 'bg-sky-50 text-sky-600'
+          }`}>
+            {isLive ? <Play className="w-3 h-3 text-rose-600 animate-pulse fill-rose-600" /> : <Hourglass className="w-3 h-3 text-sky-600" />}
+            {isLive ? 'ĐANG DIỄN RA' : isCompleted ? 'ĐÃ HOÀN THÀNH' : 'SẮP DIỄN RA'} • {roundLabel}
+          </span>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold bg-purple-50 text-purple-600">
+            <Trophy className="w-3 h-3 text-purple-600" />
+            {translateStageName(match.group?.stage?.name) || 'VÒNG KNOCKOUT'}
           </span>
         </div>
 
-        {/* Opponents Match Grid */}
-        <div className="p-4 flex items-center justify-between gap-3 relative">
-          {/* Player 1 */}
-          <div className="flex items-center gap-2.5 w-5/12 min-w-0">
-            <div className="min-w-0">
-              <div className="flex items-center gap-1 min-w-0">
-                <span className={`text-xs font-bold block leading-snug line-clamp-2 break-words ${isCompleted && match.winnerId === match.participant1?.id ? 'text-emerald-600' : 'text-slate-800'}`}>
-                  {match.participant1?.teamName || 'Chờ xác định'}
-                </span>
-
+        {/* Center Teams & Score Grid */}
+        <div className="flex items-center justify-between gap-4 py-1">
+          {/* Teams stacked vertically */}
+          <div className="flex-1 min-w-0 space-y-1.5">
+            {/* Team 1 */}
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="flex items-center -space-x-2 shrink-0">
+                <div className="w-7 h-7 rounded-full bg-white border-2 border-sky-500 flex items-center justify-center text-[10px] font-bold text-sky-600 shadow-sm">
+                  {t1Initials[0]}
+                </div>
+                <div className="w-7 h-7 rounded-full bg-white border-2 border-sky-500 flex items-center justify-center text-[10px] font-bold text-sky-600 shadow-sm">
+                  {t1Initials[1]}
+                </div>
               </div>
-
-            </div>
-          </div>
-
-          {/* Score Display Panel */}
-          <div className="flex flex-col items-center justify-center shrink-0 min-w-[75px]">
-            {isScheduled ? (
-              <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-100/50">
-                {match.scheduledAt ? new Date(match.scheduledAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : 'VS'}
+              <span className="text-sm font-bold text-slate-900 truncate">
+                {match.participant1?.teamName || 'Chờ xác định'}
               </span>
-            ) : (
-              <div className={`flex items-center justify-center px-2.5 py-1 rounded-full font-mono text-[10px] font-bold leading-none tracking-wider shadow-sm border ${
-                isLive 
-                  ? 'bg-blue-50 text-blue-700 border-blue-200' 
-                  : 'bg-slate-100 text-slate-700 border-slate-200'
-              }`}>
-                {(() => {
-                  const scores = extractMatchScores(match.scoreDetails);
-                  const targetSet = scores.find((s: { isFinished: boolean }) => !s.isFinished) || scores[scores.length - 1] || { team1Score: 0, team2Score: 0 };
-                  return `${targetSet.team1Score} - ${targetSet.team2Score}`;
-                })()}
+            </div>
+
+            {/* VS Divider */}
+            <div className="text-[11px] font-black text-blue-600 pl-11">
+              VS
+            </div>
+
+            {/* Team 2 */}
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="flex items-center -space-x-2 shrink-0">
+                <div className="w-7 h-7 rounded-full bg-white border-2 border-emerald-500 flex items-center justify-center text-[10px] font-bold text-emerald-600 shadow-sm">
+                  {t2Initials[0]}
+                </div>
+                <div className="w-7 h-7 rounded-full bg-white border-2 border-emerald-500 flex items-center justify-center text-[10px] font-bold text-emerald-600 shadow-sm">
+                  {t2Initials[1]}
+                </div>
               </div>
-            )}
-          </div>
-
-          {/* Player 2 */}
-          <div className="flex items-center gap-2.5 w-5/12 min-w-0 justify-end text-right">
-            <div className="min-w-0">
-              <div className="flex items-center justify-end gap-1 min-w-0">
-
-                <span className={`text-xs font-bold block leading-snug line-clamp-2 break-words ${isCompleted && match.winnerId === match.participant2?.id ? 'text-emerald-600' : 'text-slate-800'}`}>
-                  {match.participant2?.teamName || 'Chờ xác định'}
-                </span>
-              </div>
-
+              <span className="text-sm font-bold text-slate-900 truncate">
+                {match.participant2?.teamName || 'Chờ xác định'}
+              </span>
             </div>
           </div>
-        </div>
 
-        {/* Location & Sport Row */}
-        <div className="px-4 pb-2.5 pt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] text-slate-500 font-medium border-t border-slate-100 bg-slate-50/10">
-          <div className="shrink-0 text-slate-650 flex items-center gap-1">
-            <span className="font-semibold text-slate-700 text-[10px] whitespace-nowrap">
-              {getFormatLabel((match as EnrichedMatch).tournament?.matchType || ((match as unknown) as Record<string, unknown>).matchType as string | undefined, (match as EnrichedMatch).tournament?.genderRestriction || ((match as unknown) as Record<string, unknown>).genderRestriction as string | undefined)}
+          {/* Big Score Display */}
+          <div className="shrink-0 text-right">
+            <span className="text-2xl md:text-3xl font-black text-slate-900 font-mono tracking-wider">
+              {isScheduled ? '0 - 0' : `${targetSet.team1Score} - ${targetSet.team2Score}`}
             </span>
           </div>
-          {match.courtName ? (
-            <div className="truncate max-w-[220px]" title={match.courtAddress ? `${match.courtName} - ${match.courtAddress}` : match.courtName}>
-              <span className="text-slate-400 font-semibold">Sân:</span>{' '}
-              <span className="font-semibold text-slate-750">
-                {match.courtName}{match.courtAddress ? ` (${match.courtAddress})` : ''}
-              </span>
-            </div>
-          ) : (
-            <div className="text-slate-400 italic">Chưa xếp sân</div>
-          )}
         </div>
 
-        {/* Interactive Footer (High five, Replay, Share) */}
-        <div className="px-2 py-1 bg-slate-50/50 border-t border-slate-100 grid grid-cols-3 gap-1">
+        {/* Sub Info Row */}
+        <div className="pt-2.5 border-t border-slate-100 flex items-center gap-4 text-xs font-semibold text-slate-600">
+          <span className="flex items-center gap-1.5">
+            <Trophy className="w-3.5 h-3.5 text-slate-500" />
+            Pickleball
+          </span>
+          <span className="flex items-center gap-1.5 truncate">
+            <MapPin className="w-3.5 h-3.5 text-slate-400" />
+            {match.courtName || 'Chưa xếp sân'}
+          </span>
+        </div>
+
+        {/* Action Buttons Row */}
+        <div className="pt-1 flex items-center gap-2">
           <button 
             onClick={() => handleHighFive(match.id)}
-            className="flex items-center justify-center gap-1 py-1 min-h-[32px] hover:bg-white rounded-lg text-[10px] font-bold text-slate-600 transition-all border border-transparent hover:border-slate-150 active:scale-95 duration-100 cursor-pointer"
+            className="flex-1 py-2 px-3 rounded-xl bg-slate-50 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 text-slate-700 hover:text-rose-600 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
           >
-            <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500/10" />
+            <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500/20" />
             <span>Cổ vũ ({currentHighFives})</span>
           </button>
 
-          <Link href={`/live/${match.id}`} className="w-full">
-            <div className="flex items-center justify-center gap-1 py-1 min-h-[32px] hover:bg-white rounded-lg text-[10px] font-bold text-slate-650 transition-all border border-transparent hover:border-slate-150 active:scale-95 duration-100 cursor-pointer w-full">
-              {isLive ? (
-                <>
-                  <Play className="w-3.5 h-3.5 text-blue-600 fill-emerald-600/10 animate-pulse" />
-                  <span className="text-emerald-700 font-bold">Xem Live</span>
-                </>
-              ) : (
-                <>
-                  <Play className="w-3.5 h-3.5 text-blue-600 fill-blue-600/10" />
-                  <span>Chi tiết</span>
-                </>
-              )}
+          <Link href={`/live/${match.id}`} className="flex-1">
+            <div className="w-full py-2 px-3 rounded-xl bg-sky-50/80 hover:bg-sky-100 border border-sky-100 text-sky-700 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer text-center">
+              <Play className="w-3.5 h-3.5 text-sky-600 fill-sky-600/20" />
+              <span>Chi tiết</span>
             </div>
           </Link>
 
@@ -811,9 +796,9 @@ export default function HomePage() {
               setActiveShareTitle(`Trận đấu: ${p1Name} vs ${p2Name}`);
               setIsShareModalOpen(true);
             }}
-            className="flex items-center justify-center gap-1 py-1 min-h-[32px] hover:bg-white rounded-lg text-[10px] font-bold text-slate-600 transition-all border border-transparent hover:border-slate-150 active:scale-95 duration-100 cursor-pointer"
+            className="flex-1 py-2 px-3 rounded-xl bg-sky-50/80 hover:bg-sky-100 border border-sky-100 text-sky-700 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
           >
-            <Share2 className="w-3.5 h-3.5 text-blue-500" />
+            <Share2 className="w-3.5 h-3.5 text-sky-600" />
             <span>Chia sẻ</span>
           </button>
         </div>

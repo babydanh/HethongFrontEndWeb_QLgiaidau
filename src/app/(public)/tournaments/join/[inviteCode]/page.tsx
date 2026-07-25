@@ -17,7 +17,7 @@ import { formatDate, formatCurrency } from '@/utils/format';
 import toast from 'react-hot-toast';
 
 const registerSchema = z.object({
-  teamName: z.string().min(3, 'Tên đội phải có ít nhất 3 ký tự').max(100, 'Tên đội quá dài'),
+  teamName: z.string().max(100, 'Tên đội quá dài').optional(),
   partnerEmailOrPhone: z.string().optional(),
 });
 
@@ -129,7 +129,7 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
     try {
       setIsSubmitting(true);
       const cleanData = {
-        teamName: trimAndNormalizeSpaces(data.teamName),
+        teamName: data.teamName ? trimAndNormalizeSpaces(data.teamName) : '',
         memberIds: [user.id],
         partnerEmailOrPhone: data.partnerEmailOrPhone ? trimAndNormalizeSpaces(data.partnerEmailOrPhone) : undefined,
         tournamentDivisionId: selectedDivisionId || undefined,
@@ -328,20 +328,33 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
             )}
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-              <Input
-                label="Tên đội / Tên thi đấu"
-                placeholder="Ví dụ: Team Lan Anh Cầu Giấy"
-                {...register('teamName')}
-                error={errors.teamName?.message}
-              />
+              {effectiveDivision.matchType === 'SINGLES' ? (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-xs text-blue-600 font-medium mb-1">Tên thi đấu</p>
+                  <p className="text-sm font-bold text-slate-900">{user?.fullName || 'Chưa cập nhật'}</p>
+                  <p className="text-xs text-slate-500 mt-1">Tên sẽ được lấy từ tài khoản của bạn</p>
+                </div>
+              ) : (
+                <Input
+                  label="Tên đội"
+                  placeholder="Ví dụ: Team Lan Anh Cầu Giấy"
+                  {...register('teamName')}
+                  error={errors.teamName?.message}
+                />
+              )}
 
               {(effectiveDivision.matchType === 'DOUBLES' || effectiveDivision.matchType === 'MIXED_DOUBLES') && (
-                <Input
-                  label="Tài khoản VNDC Sport của đồng đội (Email hoặc SĐT)"
-                  placeholder="partner@vndcsport.vn hoặc 08xxxx (Không bắt buộc)"
-                  {...register('partnerEmailOrPhone')}
-                  error={errors.partnerEmailOrPhone?.message}
-                />
+                <>
+                  <Input
+                    label="Email hoặc SĐT đồng đội"
+                    placeholder="partner@vnsport.com hoặc 0912***"
+                    {...register('partnerEmailOrPhone')}
+                    error={errors.partnerEmailOrPhone?.message}
+                  />
+                  <p className="text-xs text-slate-400 -mt-3">
+                    Đồng đội cần có tài khoản VNSport. Nếu chưa có, hãy đăng ký trước khi điền.
+                  </p>
+                </>
               )}
 
               <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 space-y-3">

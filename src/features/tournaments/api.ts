@@ -361,6 +361,12 @@ export const tournamentsApi = {
     api.patch<ApiResponse<TournamentParticipant>>(`/tournaments/${id}/participants/${participantId}`, { seed }),
   updateDivisionConfig: (id: string, divisionId: string, data: Record<string, unknown>) =>
     api.patch<ApiResponse<unknown>>(`/tournaments/${id}/divisions/${divisionId}/config`, data),
+  getLiteJoinStatus: (inviteCode: string) =>
+    api.get<ApiResponse<unknown>>(`/tournaments/lite/join/${inviteCode}`).then(res => res.data),
+
+  joinLite: (inviteCode: string) =>
+    api.post<ApiResponse<unknown>>(`/tournaments/lite/join/${inviteCode}`).then(res => res.data),
+
   createLiteTournament: (data: {
     name: string;
     sport: 'badminton' | 'tennis' | 'pickleball' | 'table_tennis';

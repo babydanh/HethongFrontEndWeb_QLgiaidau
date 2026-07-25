@@ -14,24 +14,28 @@ import { X, Users } from 'lucide-react';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { useRouter } from 'next/navigation';
 
-const registerSchema = z.object({
-  teamName: z.string().min(3, 'Tên đội phải có ít nhất 3 ký tự').max(100, 'Tên đội quá dài'),
-});
-
-type RegisterFormValues = z.infer<typeof registerSchema>;
-
 interface Props {
   tournamentId: string;
   tournamentName: string;
   entryFee: number;
+  matchType?: string;
   isOpen: boolean;
   onClose: () => void;
 }
 
-export default function RegisterModal({ tournamentId, tournamentName, entryFee, isOpen, onClose }: Props) {
+export default function RegisterModal({ tournamentId, tournamentName, entryFee, matchType, isOpen, onClose }: Props) {
   const { user, isAuthenticated } = useAuthStore();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isSingles = matchType === 'SINGLES';
+
+  const registerSchema = z.object({
+    teamName: isSingles
+      ? z.string().optional()
+      : z.string().min(3, 'Tên đội phải có ít nhất 3 ký tự').max(100, 'Tên đội quá dài'),
+  });
+
+  type RegisterFormValues = z.infer<typeof registerSchema>;
 
   const { register, handleSubmit, formState: { errors }, reset } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -48,11 +52,8 @@ export default function RegisterModal({ tournamentId, tournamentName, entryFee, 
 
     try {
       setIsSubmitting(true);
-      const cleanData = {
-        teamName: trimAndNormalizeSpaces(data.teamName),
-      };
-
-      const res = await tournamentsApi.register(tournamentId, cleanData);
+      const teamName = isSingles ? (user?.fullName || '') : trimAndNormalizeSpaces(data.teamName || '');
+      const res = await tournamentsApi.register(tournamentId, { teamName });
       const participantId = res?.data?.participant?.id;
       
       toast.success('Đăng ký thành công!');
@@ -89,15 +90,21 @@ export default function RegisterModal({ tournamentId, tournamentName, entryFee, 
           </p>
           
           <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
-            <Input
-              label="Tên đội / Tên thi đấu"
-              placeholder="Ví dụ: VNDC Sport"
-              {...register('teamName')}
-              error={errors.teamName?.message}
-            />
+            {isSingles ? (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <p className="text-xs text-blue-600 font-medium mb-1">Tên thi đấu</p>
+                <p className="text-sm font-bold text-slate-900">{user?.fullName || 'Chưa cập nhật'}</p>
+                <p className="text-xs text-slate-500 mt-1">Tên sẽ được lấy từ tài khoản của bạn</p>
+              </div>
+            ) : (
+              <Input
+                label="Tên đội"
+                placeholder="Ví dụ: VNDC Sport"
+                {...register('teamName')}
+                error={errors.teamName?.message}
+              />
+            )}
             
-            {/* In a real scenario, we might have inputs to search and add roster members here */}
-
             <div className="bg-blue-50 border border-blue-100 p-4 rounded-lg mt-2">
               <p className="text-xs text-blue-700 font-medium">
                 * Lưu ý: Lệ phí tham gia sẽ được thông báo ở bước tiếp theo nếu có. Bằng việc đăng ký, bạn đồng ý với các điều khoản của Ban tổ chức.

@@ -820,7 +820,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
         tournamentId={activeTournament.id} 
         tournamentName={tournament.name} 
         entryFee={selectedDivision ? (Number(selectedDivision.entryFee) || 0) : 0}
-        matchType={selectedDivision?.matchType}
+        matchType={selectedDivision?.matchType || divisionsList[0]?.matchType}
         isOpen={isRegisterModalOpen} 
         onClose={() => setIsRegisterModalOpen(false)} 
       />

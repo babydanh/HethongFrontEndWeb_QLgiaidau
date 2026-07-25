@@ -146,7 +146,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
   const [inviteInput, setInviteInput] = useState('');
   const [isValidatingInvite, setIsValidatingInvite] = useState(false);
 
-  const { register, handleSubmit, formState: { errors } } = useForm<RegisterFormValues>({
+  const { register, handleSubmit, formState: { errors: _errors } } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
   });
 
@@ -960,13 +960,11 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                   </div>
 
                   <form onSubmit={handleSubmit(onSubmitSingles)} className="space-y-5">
-                    <Input
-                      label="Tên đội / Tên thi đấu (Không bắt buộc)"
-                      placeholder={`Mặc định sử dụng: ${user?.fullName || 'Tên của bạn'}`}
-                      {...register('teamName')}
-                      error={errors.teamName?.message}
-                      disabled={isSubmitting}
-                    />
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                      <p className="text-xs text-blue-600 font-medium mb-1">Tên thi đấu</p>
+                      <p className="text-sm font-bold text-slate-900">{user?.fullName || 'Chưa cập nhật'}</p>
+                      <p className="text-xs text-slate-500 mt-1">Tên sẽ được lấy từ tài khoản của bạn</p>
+                    </div>
 
                     <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 space-y-3">
                       <div className="flex justify-between items-center text-sm">

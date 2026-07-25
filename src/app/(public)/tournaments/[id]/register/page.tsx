@@ -146,7 +146,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
   const [inviteInput, setInviteInput] = useState('');
   const [isValidatingInvite, setIsValidatingInvite] = useState(false);
 
-  const { register, handleSubmit, formState: { errors: _errors } } = useForm<RegisterFormValues>({
+  const { register, handleSubmit } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
   });
 

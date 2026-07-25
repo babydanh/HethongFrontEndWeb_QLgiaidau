@@ -430,7 +430,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
     try {
       setIsSubmitting(true);
       const cleanData = {
-        teamName: trimAndNormalizeSpaces(data.teamName),
+        teamName: trimAndNormalizeSpaces(data.teamName) || user?.fullName || 'Vận động viên',
         inviteCode: inviteCode || undefined,
         tournamentDivisionId: selectedDivisionId || undefined,
       };
@@ -961,8 +961,8 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
 
                   <form onSubmit={handleSubmit(onSubmitSingles)} className="space-y-5">
                     <Input
-                      label="Tên đội / Tên thi đấu"
-                      placeholder="Ví dụ: Nguyễn Văn A - Hà Nội"
+                      label="Tên đội / Tên thi đấu (Không bắt buộc)"
+                      placeholder={`Mặc định sử dụng: ${user?.fullName || 'Tên của bạn'}`}
                       {...register('teamName')}
                       error={errors.teamName?.message}
                       disabled={isSubmitting}

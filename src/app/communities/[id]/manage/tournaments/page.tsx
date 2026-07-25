@@ -111,7 +111,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
       // Redirect directly to the manage page of the newly created tournament
       const newId = res?.id;
       if (newId) {
-        router.push(`/organizer/tournaments/${newId}/manage`);
+        router.push(`/lite/tournaments/${newId}/manage`);
       }
     } catch (err) {
       toast.error(getErrorMessage(err));

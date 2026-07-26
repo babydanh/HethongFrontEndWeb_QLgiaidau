@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button, getButtonClasses } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+import { Input, DatePicker } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { getErrorMessage } from '@/utils/error';
 import { trimSpaces, trimAndNormalizeSpaces } from '@/utils/string';
@@ -511,10 +511,10 @@ export default function EditProfilePage() {
                       {...profileForm.register('phone')}
                       error={profileForm.formState.errors.phone?.message}
                     />
-                    <Input
+                    <DatePicker
                       label="Ngày sinh"
-                      type="date"
-                      {...profileForm.register('dateOfBirth')}
+                      value={profileForm.watch('dateOfBirth') || ''}
+                      onChange={(val) => profileForm.setValue('dateOfBirth', val, { shouldValidate: true, shouldDirty: true })}
                       error={profileForm.formState.errors.dateOfBirth?.message}
                     />
                     

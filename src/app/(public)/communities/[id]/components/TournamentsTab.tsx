@@ -238,7 +238,7 @@ export default function TournamentsTab({
               variant="outline"
               className="w-full sm:w-auto border-emerald-600 text-blue-700 hover:bg-blue-50 font-bold shadow-sm transition-all"
             >
-              ⚙️ Quản lý giải đấu CLB
+              Quản lý giải đấu CLB
             </Button>
             <Button 
               onClick={() => setIsChoiceModalOpen(true)}
@@ -303,12 +303,12 @@ export default function TournamentsTab({
                         
                         {/* Lite vs Advanced Badge */}
                         {(t.divisions.some(d => d.inviteCode) || t.description?.toLowerCase().includes('nhanh') || t.name?.toLowerCase().includes('lite')) ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-300">
-                            ⚡ Giải Nhanh (Lite)
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-300">
+                            Giải Nhanh (Lite)
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-800 border border-purple-200">
-                            🏆 Giải Nâng Cao
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-800 border border-purple-200">
+                            Giải Nâng Cao
                           </span>
                         )}
 
@@ -378,8 +378,8 @@ export default function TournamentsTab({
 
                 {/* Note for Lite Tournaments */}
                 {(t.divisions.some(d => d.inviteCode) || t.description?.toLowerCase().includes('nhanh') || t.name?.toLowerCase().includes('lite')) && (
-                  <div className="mb-3 text-[11px] text-amber-800 bg-amber-50/90 px-3 py-1.5 rounded-lg border border-amber-200/80 font-medium flex items-center gap-1.5">
-                    <span>⚡ <strong>Giải Nhanh (Lite):</strong> Tạo nhanh gọn, chia sẻ mã/link tham gia ngay lập tức</span>
+                  <div className="mb-3 text-[11px] text-amber-800 bg-amber-50/90 px-3 py-1.5 rounded-lg border border-amber-200/80 font-medium">
+                    <span><strong>Note: Giải đấu tạo nhanh (Lite)</strong> — Quản lý đơn giản, chia sẻ mã/link tham gia ngay lập tức</span>
                   </div>
                 )}
 

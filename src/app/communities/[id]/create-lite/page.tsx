@@ -104,8 +104,8 @@ export default function CreateLiteTournamentPage({
 
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <Zap className="w-6 h-6 text-amber-500" /> Tạo giải đấu nhanh (Lite)
+          <h1 className="text-2xl font-bold text-slate-900">
+            Tạo giải đấu nhanh (Lite)
           </h1>
           <p className="text-slate-500 mt-1 text-sm">
             {community?.name ? `Câu lạc bộ: ${community.name}` : 'Tạo giải đấu nội bộ nhanh chóng'}

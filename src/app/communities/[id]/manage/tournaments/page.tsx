@@ -307,12 +307,12 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
                         {t.category?.name || 'Bộ môn'}
                       </span>
                       {(t.inviteCode || t.description?.toLowerCase().includes('nhanh') || t.name?.toLowerCase().includes('lite')) ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-300">
-                          ⚡ Giải Nhanh (Lite)
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-300">
+                          Giải Nhanh (Lite)
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-800 border border-purple-200">
-                          🏆 Giải Nâng Cao
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-800 border border-purple-200">
+                          Giải Nâng Cao
                         </span>
                       )}
                     </div>
@@ -322,7 +322,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
 
                   {(t.inviteCode || t.description?.toLowerCase().includes('nhanh') || t.name?.toLowerCase().includes('lite')) && (
                     <div className="text-[11px] text-amber-800 bg-amber-50/90 px-2.5 py-1 rounded border border-amber-200/80 font-medium">
-                      ⚡ <strong>Giải Nhanh (Lite):</strong> Tạo nhanh gọn, chia sẻ mã/link tham gia ngay
+                      <strong>Note: Giải đấu tạo nhanh (Lite)</strong> — Quản lý đơn giản, chia sẻ mã/link tham gia ngay
                     </div>
                   )}
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-slate-500 text-xs font-semibold pt-1">

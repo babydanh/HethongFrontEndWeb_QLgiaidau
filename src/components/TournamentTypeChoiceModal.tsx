@@ -42,16 +42,13 @@ export function TournamentTypeChoiceModal({
             }}
             className="w-full rounded-lg border border-slate-200 p-4 text-left hover:border-emerald-400 hover:shadow-sm transition-all group bg-white"
           >
-            <div className="flex items-start gap-3">
-              <span className="text-2xl mt-0.5">⚡</span>
-              <div>
-                <h3 className="font-semibold text-slate-900 group-hover:text-emerald-700 transition-colors">
-                  Lite — Tạo nhanh
-                </h3>
-                <p className="text-sm text-slate-500 mt-0.5">
-                  Tạo giải đấu nhanh chóng trong vài bước, phù hợp cho giải nội bộ
-                </p>
-              </div>
+            <div>
+              <h3 className="font-semibold text-slate-900 group-hover:text-emerald-700 transition-colors">
+                Giải Nhanh (Lite)
+              </h3>
+              <p className="text-sm text-slate-500 mt-0.5">
+                Tạo giải đấu nhanh chóng trong vài bước, phù hợp cho giải nội bộ
+              </p>
             </div>
           </button>
 
@@ -63,16 +60,13 @@ export function TournamentTypeChoiceModal({
             }}
             className="w-full rounded-lg border border-slate-200 p-4 text-left hover:border-blue-400 hover:shadow-sm transition-all group bg-white"
           >
-            <div className="flex items-start gap-3">
-              <span className="text-2xl mt-0.5">🔧</span>
-              <div>
-                <h3 className="font-semibold text-slate-900 group-hover:text-blue-700 transition-colors">
-                  Nâng cao — Wizard 4 bước
-                </h3>
-                <p className="text-sm text-slate-500 mt-0.5">
-                  Cấu hình đầy đủ với 4 bước: giải đấu, bảng, thể thức và đăng ký
-                </p>
-              </div>
+            <div>
+              <h3 className="font-semibold text-slate-900 group-hover:text-blue-700 transition-colors">
+                Giải Nâng Cao (Full)
+              </h3>
+              <p className="text-sm text-slate-500 mt-0.5">
+                Cấu hình đầy đủ với 4 bước: giải đấu, bảng, thể thức và đăng ký
+              </p>
             </div>
           </button>
         </div>

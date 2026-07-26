@@ -254,16 +254,28 @@ export default function EditProfilePage() {
     }
   };
 
+  const [emailCooldown, setEmailCooldown] = useState(0);
+
+  // Email resend countdown timer
+  useEffect(() => {
+    if (emailCooldown <= 0) return;
+    const timer = setInterval(() => {
+      setEmailCooldown(prev => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [emailCooldown]);
+
   // Email Verification Flow
   const handleRequestEmailVerification = async () => {
+    if (emailCooldown > 0) {
+      toast.error(`Vui lòng chờ ${emailCooldown}s trước khi yêu cầu gửi lại email xác minh.`);
+      return;
+    }
     try {
       setIsRequestingEmailCode(true);
       await authApi.requestEmailVerification();
-      toast.success(
-        process.env.NODE_ENV === 'production'
-          ? 'Mã kích hoạt đã được gửi tới email của bạn. Vui lòng kiểm tra hộp thư.'
-          : 'Mã kích hoạt đã được gửi tới email của bạn (Vui lòng kiểm tra Console logs của Backend)'
-      );
+      setEmailCooldown(120);
+      toast.success('Mã kích hoạt có hiệu lực trong 120 giây (2 phút) đã được gửi tới email của bạn.');
       setIsEmailModalOpen(true);
     } catch (error) {
       toast.error(getErrorMessage(error));
@@ -887,13 +899,38 @@ export default function EditProfilePage() {
               </button>
             </div>
             <div className="text-sm text-slate-600 leading-relaxed">
-              {process.env.NODE_ENV === 'production'
-                ? 'Mã kích hoạt xác thực đã được gửi tới địa chỉ email của bạn. Vui lòng kiểm tra và nhập vào ô dưới đây.'
-                : 'Mã kích hoạt xác thực đã được tạo và hiển thị trong Console log của hệ thống backend. Vui lòng sao chép mã đó và nhập vào ô dưới đây.'}
+              Mã kích hoạt xác thực đã được gửi tới địa chỉ email của bạn. Vui lòng kiểm tra hộp thư (hoặc mục Thư rác/Spam) và nhập vào ô dưới đây.
+            </div>
+
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800 font-semibold flex items-center justify-between">
+              <span>⏱️ Mã xác thực hết hạn sau 120 giây (2 phút)</span>
+              {emailCooldown > 0 && (
+                <span className="text-blue-600 font-bold bg-white px-2 py-0.5 rounded border border-blue-200">
+                  {emailCooldown}s
+                </span>
+              )}
             </div>
             
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-semibold text-slate-700">Mã kích thực (Token)</label>
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-semibold text-slate-700">Mã kích thực (Token)</label>
+                <button
+                  type="button"
+                  disabled={emailCooldown > 0 || isRequestingEmailCode}
+                  onClick={handleRequestEmailVerification}
+                  className={`text-xs font-bold transition-all ${
+                    emailCooldown > 0
+                      ? 'text-slate-400 cursor-not-allowed'
+                      : 'text-blue-600 hover:text-blue-700 underline active:scale-95'
+                  }`}
+                >
+                  {isRequestingEmailCode
+                    ? 'Đang gửi...'
+                    : emailCooldown > 0
+                    ? `Gửi lại sau (${emailCooldown}s)`
+                    : 'Gửi lại mã mới'}
+                </button>
+              </div>
               <Input
                 placeholder="Nhập mã xác thực email"
                 value={emailToken}

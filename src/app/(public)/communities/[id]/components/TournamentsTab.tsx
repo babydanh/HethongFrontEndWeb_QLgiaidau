@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Trophy, Calendar, DollarSign, Loader2, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { TournamentTypeChoiceModal } from '@/components/TournamentTypeChoiceModal';
 import { communitiesApi } from '@/features/communities/api';
 import { tournamentsApi } from '@/features/tournaments/api';
 import { getSportLogo } from '@/constants/sports';
@@ -33,6 +34,7 @@ export default function TournamentsTab({
   const [isLoading, setIsLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<'ALL' | 'UPCOMING' | 'ONGOING' | 'COMPLETED'>('ALL');
   const [activeTypeFilter, setActiveTypeFilter] = useState<'ALL' | 'CLUB' | 'PUBLIC'>('ALL');
+  const [isChoiceModalOpen, setIsChoiceModalOpen] = useState(false);
 
   const fetchTournaments = useCallback(async () => {
     try {
@@ -239,7 +241,7 @@ export default function TournamentsTab({
               ⚙️ Quản lý giải đấu CLB
             </Button>
             <Button 
-              onClick={() => router.push(`/organizer/tournaments/create?communityId=${communityId}`)}
+              onClick={() => setIsChoiceModalOpen(true)}
               className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-sm transition-all"
             >
               + Tạo giải đấu cấp CLB
@@ -299,6 +301,17 @@ export default function TournamentsTab({
                         {getTypeBadge(t.tournamentType)}
                         {getStatusBadge(t.status)}
                         
+                        {/* Lite vs Advanced Badge */}
+                        {(t.divisions.some(d => d.inviteCode) || t.description?.toLowerCase().includes('nhanh') || t.name?.toLowerCase().includes('lite')) ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-300">
+                            ⚡ Giải Nhanh (Lite)
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-800 border border-purple-200">
+                            🏆 Giải Nâng Cao
+                          </span>
+                        )}
+
                         {/* Ranked or Unranked Badge */}
                         <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border ${
                           t.divisions[0]?.isRanked
@@ -349,7 +362,7 @@ export default function TournamentsTab({
 
 
                 {/* Division Tags */}
-                <div className="flex flex-wrap gap-1 mb-4 mt-2">
+                <div className="flex flex-wrap gap-1 mb-3 mt-2">
                   {t.divisions.map((div) => {
                     const label = getFormatLabel(div.matchType, div.genderRestriction);
                     return (
@@ -362,6 +375,13 @@ export default function TournamentsTab({
                     );
                   })}
                 </div>
+
+                {/* Note for Lite Tournaments */}
+                {(t.divisions.some(d => d.inviteCode) || t.description?.toLowerCase().includes('nhanh') || t.name?.toLowerCase().includes('lite')) && (
+                  <div className="mb-3 text-[11px] text-amber-800 bg-amber-50/90 px-3 py-1.5 rounded-lg border border-amber-200/80 font-medium flex items-center gap-1.5">
+                    <span>⚡ <strong>Giải Nhanh (Lite):</strong> Tạo nhanh gọn, chia sẻ mã/link tham gia ngay lập tức</span>
+                  </div>
+                )}
 
                 <div className="space-y-2.5 text-xs text-slate-600">
                   <div className="flex items-center gap-2">
@@ -388,6 +408,12 @@ export default function TournamentsTab({
           ))}
         </div>
       )}
+
+      <TournamentTypeChoiceModal
+        communityId={communityId}
+        isOpen={isChoiceModalOpen}
+        onClose={() => setIsChoiceModalOpen(false)}
+      />
     </div>
   );
 }

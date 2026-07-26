@@ -297,17 +297,34 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
                 className="bg-white rounded-lg border border-slate-200 shadow-sm hover:shadow-md transition-all duration-200 p-5 flex flex-col justify-between gap-5"
               >
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="flex items-center gap-1 bg-slate-100 text-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                      {(() => {
-                        const logo = getSportLogo(t.category?.name);
-                        return logo ? <img src={logo} alt="" className="w-2.5 h-2.5 object-contain" /> : null;
-                      })()}
-                      {t.category?.name || 'Bộ môn'}
-                    </span>
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="flex items-center gap-1 bg-slate-100 text-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                        {(() => {
+                          const logo = getSportLogo(t.category?.name);
+                          return logo ? <img src={logo} alt="" className="w-2.5 h-2.5 object-contain" /> : null;
+                        })()}
+                        {t.category?.name || 'Bộ môn'}
+                      </span>
+                      {(t.inviteCode || t.description?.toLowerCase().includes('nhanh') || t.name?.toLowerCase().includes('lite')) ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-300">
+                          ⚡ Giải Nhanh (Lite)
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-800 border border-purple-200">
+                          🏆 Giải Nâng Cao
+                        </span>
+                      )}
+                    </div>
                     {getStatusBadge(t.status)}
                   </div>
                   <h3 className="text-lg font-bold text-slate-900 line-clamp-1">{t.name}</h3>
+
+                  {(t.inviteCode || t.description?.toLowerCase().includes('nhanh') || t.name?.toLowerCase().includes('lite')) && (
+                    <div className="text-[11px] text-amber-800 bg-amber-50/90 px-2.5 py-1 rounded border border-amber-200/80 font-medium">
+                      ⚡ <strong>Giải Nhanh (Lite):</strong> Tạo nhanh gọn, chia sẻ mã/link tham gia ngay
+                    </div>
+                  )}
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-slate-500 text-xs font-semibold pt-1">
                     <span className="flex items-center gap-1">
                       <Calendar className="w-3.5 h-3.5 text-slate-450" />

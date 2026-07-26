@@ -30,15 +30,16 @@ export default function RegisterModal({ tournamentId, tournamentName, entryFee, 
   const isSingles = matchType === 'SINGLES';
 
   const registerSchema = z.object({
-    teamName: isSingles
-      ? z.string().optional()
-      : z.string().min(3, 'Tên đội phải có ít nhất 3 ký tự').max(100, 'Tên đội quá dài'),
+    teamName: z.string().optional(),
   });
 
   type RegisterFormValues = z.infer<typeof registerSchema>;
 
   const { register, handleSubmit, formState: { errors }, reset } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
+    defaultValues: {
+      teamName: user?.fullName || '',
+    },
   });
 
   if (!isOpen) return null;
@@ -52,7 +53,8 @@ export default function RegisterModal({ tournamentId, tournamentName, entryFee, 
 
     try {
       setIsSubmitting(true);
-      const teamName = isSingles ? (user?.fullName || '') : trimAndNormalizeSpaces(data.teamName || '');
+      const rawName = trimAndNormalizeSpaces(data.teamName || '');
+      const teamName = rawName.length > 0 ? rawName : (user?.fullName || 'Người chơi');
       const res = await tournamentsApi.register(tournamentId, { teamName });
       const participantId = res?.data?.participant?.id;
       
@@ -85,21 +87,24 @@ export default function RegisterModal({ tournamentId, tournamentName, entryFee, 
         </div>
         
         <div className="p-6">
-          <p className="text-sm text-slate-600 mb-6">
-            Bạn đang đăng ký tham gia giải đấu <strong className="text-slate-900">{tournamentName}</strong>. Vui lòng nhập thông tin đội của bạn.
+          <p className="text-sm text-slate-600 mb-5">
+            Bạn đang đăng ký tham gia giải đấu <strong className="text-slate-900">{tournamentName}</strong>.
           </p>
           
-          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
-            {isSingles ? (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                <p className="text-xs text-blue-600 font-medium mb-1">Tên thi đấu</p>
-                <p className="text-sm font-bold text-slate-900">{user?.fullName || 'Chưa cập nhật'}</p>
-                <p className="text-xs text-slate-500 mt-1">Tên sẽ được lấy từ tài khoản của bạn</p>
+          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+            <div className="bg-blue-50/70 border border-blue-200/80 rounded-lg p-3.5 flex items-center justify-between">
+              <div>
+                <p className="text-xs text-blue-600 font-semibold mb-0.5">Tên VĐV đăng ký</p>
+                <p className="text-base font-bold text-slate-900">{user?.fullName || 'Chưa cập nhật'}</p>
+                <p className="text-xs text-slate-500 mt-0.5">Tên mặc định lấy từ tài khoản cá nhân</p>
               </div>
-            ) : (
+            </div>
+
+            {!isSingles && (
               <Input
-                label="Tên đội"
-                placeholder="Ví dụ: VNDC Sport"
+                label="Tên đội thi đấu (Mặc định dùng tên chính mình)"
+                placeholder={user?.fullName || "Ví dụ: VNDC Sport"}
+                defaultValue={user?.fullName || ''}
                 {...register('teamName')}
                 error={errors.teamName?.message}
               />

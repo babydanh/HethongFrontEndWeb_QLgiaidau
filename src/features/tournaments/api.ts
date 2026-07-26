@@ -375,6 +375,7 @@ export const tournamentsApi = {
     bracketType?: 'single_elimination' | 'double_elimination' | 'round_robin';
     maxTeams?: number;
     description?: string;
+    isRanked?: boolean;
   }) => api.post<ApiResponse<{ id: string; name: string; status: string; inviteCode?: string; joinUrl?: string; qrPayload?: string }>>('/tournaments/lite', data).then(res => res.data),
 };
 

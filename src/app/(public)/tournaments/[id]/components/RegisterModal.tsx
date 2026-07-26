@@ -1,15 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
 import { tournamentsApi } from '@/features/tournaments/api';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '@/utils/error';
-import { trimAndNormalizeSpaces } from '@/utils/string';
 import { X, Users } from 'lucide-react';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { useRouter } from 'next/navigation';
@@ -23,28 +18,15 @@ interface Props {
   onClose: () => void;
 }
 
-export default function RegisterModal({ tournamentId, tournamentName, entryFee, matchType, isOpen, onClose }: Props) {
+export default function RegisterModal({ tournamentId, tournamentName, entryFee, isOpen, onClose }: Props) {
   const { user, isAuthenticated } = useAuthStore();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const isSingles = matchType === 'SINGLES';
-
-  const registerSchema = z.object({
-    teamName: z.string().optional(),
-  });
-
-  type RegisterFormValues = z.infer<typeof registerSchema>;
-
-  const { register, handleSubmit, formState: { errors }, reset } = useForm<RegisterFormValues>({
-    resolver: zodResolver(registerSchema),
-    defaultValues: {
-      teamName: user?.fullName || '',
-    },
-  });
 
   if (!isOpen) return null;
 
-  const onSubmit = async (data: RegisterFormValues) => {
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!isAuthenticated || !user) {
       toast.error('Vui lòng đăng nhập để đăng ký tham gia giải đấu');
       window.location.assign(`/login?redirect=/tournaments/${tournamentId}`);
@@ -53,13 +35,11 @@ export default function RegisterModal({ tournamentId, tournamentName, entryFee, 
 
     try {
       setIsSubmitting(true);
-      const rawName = trimAndNormalizeSpaces(data.teamName || '');
-      const teamName = rawName.length > 0 ? rawName : (user?.fullName || 'Người chơi');
+      const teamName = user?.fullName || 'Người chơi';
       const res = await tournamentsApi.register(tournamentId, { teamName });
       const participantId = res?.data?.participant?.id;
       
       toast.success('Đăng ký thành công!');
-      reset();
       onClose();
       
       if (entryFee > 0 && participantId) {
@@ -91,27 +71,17 @@ export default function RegisterModal({ tournamentId, tournamentName, entryFee, 
             Bạn đang đăng ký tham gia giải đấu <strong className="text-slate-900">{tournamentName}</strong>.
           </p>
           
-          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-            <div className="bg-blue-50/70 border border-blue-200/80 rounded-lg p-3.5 flex items-center justify-between">
+          <form onSubmit={handleRegisterSubmit} className="flex flex-col gap-4">
+            <div className="bg-blue-50/70 border border-blue-200/80 rounded-lg p-4 flex items-center justify-between">
               <div>
-                <p className="text-xs text-blue-600 font-semibold mb-0.5">Tên VĐV đăng ký</p>
+                <p className="text-xs text-blue-600 font-semibold mb-0.5">VĐV Đăng ký</p>
                 <p className="text-base font-bold text-slate-900">{user?.fullName || 'Chưa cập nhật'}</p>
-                <p className="text-xs text-slate-500 mt-0.5">Tên mặc định lấy từ tài khoản cá nhân</p>
+                <p className="text-xs text-slate-500 mt-0.5">Tự động sử dụng tên tài khoản cá nhân</p>
               </div>
             </div>
-
-            {!isSingles && (
-              <Input
-                label="Tên đội thi đấu (Mặc định dùng tên chính mình)"
-                placeholder={user?.fullName || "Ví dụ: VNDC Sport"}
-                defaultValue={user?.fullName || ''}
-                {...register('teamName')}
-                error={errors.teamName?.message}
-              />
-            )}
             
-            <div className="bg-blue-50 border border-blue-100 p-4 rounded-lg mt-2">
-              <p className="text-xs text-blue-700 font-medium">
+            <div className="bg-slate-50 border border-slate-200/80 p-4 rounded-lg mt-1">
+              <p className="text-xs text-slate-600 font-medium leading-relaxed">
                 * Lưu ý: Lệ phí tham gia sẽ được thông báo ở bước tiếp theo nếu có. Bằng việc đăng ký, bạn đồng ý với các điều khoản của Ban tổ chức.
               </p>
             </div>
@@ -120,7 +90,7 @@ export default function RegisterModal({ tournamentId, tournamentName, entryFee, 
               <Button type="button" variant="outline" onClick={onClose} className="border-slate-200 text-slate-600">
                 Hủy
               </Button>
-              <Button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700 text-white">
+              <Button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold">
                 {isSubmitting ? 'Đang xử lý...' : 'Xác nhận Đăng ký'}
               </Button>
             </div>

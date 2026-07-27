@@ -975,6 +975,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                       <p className="text-xs text-blue-600 font-medium mb-1">Tên thi đấu</p>
                       <p className="text-sm font-bold text-slate-900">{user?.fullName || 'Chưa cập nhật'}</p>
                       <p className="text-xs text-slate-500 mt-1">Tên sẽ được lấy từ tài khoản của bạn</p>
+                      <input type="hidden" {...register('teamName')} value={user?.fullName || 'Vận động viên'} />
                     </div>
 
                     <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 space-y-3">

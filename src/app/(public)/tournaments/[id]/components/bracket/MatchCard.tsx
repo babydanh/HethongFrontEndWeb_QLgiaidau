@@ -1,55 +1,29 @@
 /**
- * MatchCard — reusable match card component
+ * MatchCard — Sleek, modern bracket match node component
  *
- * Used by SingleElimView and DoubleElimView to render each match node.
- * Renders differently for public (compact) vs. organiser (taller + schedule button).
- *
- * Shows per-set score columns based on best-of (BO3 = 3 cols, BO5 = 5 cols).
+ * Renders participant names, seeds, per-set scores, live/completed badges,
+ * and a 1-line scheduled time footer with zero text clipping.
  */
 
 'use client';
 
 import React from 'react';
 import Link from 'next/link';
-import {
-  Trophy,
-  Play,
-  CheckCircle,
-  Clock,
-  Info,
-} from 'lucide-react';
+import { Play, CheckCircle, Clock } from 'lucide-react';
 import type { BracketMatch } from '@/features/tournaments/api';
 import { extractMatchScores } from '@/features/matches/score-display';
 import type { SportRuleKind } from '@/types/tournament';
 import { formatDateTime } from '@/utils/format';
-import type {
-  OnScheduleMatch,
-  OnSelectBracketMatch,
-  ScoreDetailsShape,
-} from './types';
-import {
-  CARD_W,
-  CARD_H_PUBLIC,
-  CARD_H_ORGANIZER,
-} from './types';
-import { buildMatchRuleSummary } from './sportRuleDisplay';
+import type { OnScheduleMatch, OnSelectBracketMatch } from './types';
+import { CARD_W, CARD_H_PUBLIC, CARD_H_ORGANIZER } from './types';
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// Helpers
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-/** Derive max columns from setsToWin. BO1 → 1, BO3 → 3, BO5 → 5 */
 function getMaxColumns(match: BracketMatch): number {
   const stw = match.matchConfig?.setsToWin;
   if (stw === 1) return 1;
   if (stw === 2) return 3;
   if (stw === 3) return 5;
-  return 3; // default fallback
+  return 3;
 }
-
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// MatchCard
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 export function MatchCard({
   match,
@@ -58,7 +32,6 @@ export function MatchCard({
   selected = false,
   isP1Bye = false,
   isP2Bye = false,
-  fallbackSportRuleKind,
 }: {
   match: BracketMatch;
   onScheduleMatch?: OnScheduleMatch;
@@ -74,27 +47,26 @@ export function MatchCard({
   const p2Won = done && match.winnerId != null && match.winnerId === match.participant2?.id;
   const isOrganizer = !!onScheduleMatch;
   const showByeLabel = (isP1Bye && match.participant2) || (isP2Bye && match.participant1);
-  const cardH = (isOrganizer && !showByeLabel) ? CARD_H_ORGANIZER : CARD_H_PUBLIC;
+  const cardH = isOrganizer && !showByeLabel ? CARD_H_ORGANIZER : CARD_H_PUBLIC;
 
   const setList = extractMatchScores(match.scoreDetails as Record<string, unknown> | undefined | null);
   const maxCols = getMaxColumns(match);
-  const ruleSummary = buildMatchRuleSummary(match, fallbackSportRuleKind);
 
-  const actualCardH = match.isBye ? 148 : cardH;
+  const actualCardH = match.isBye ? 140 : cardH;
 
   return (
     <div
       data-bracket-match-id={match.id}
       style={{ width: CARD_W, height: actualCardH }}
       className={
-        'rounded-lg overflow-hidden border-2 flex flex-col shadow-sm transition-all duration-150 hover:shadow-md hover:-translate-y-px bg-white ' +
+        'rounded-xl overflow-hidden border flex flex-col shadow-sm transition-all duration-150 hover:shadow-md hover:-translate-y-0.5 bg-white ' +
         (selected
           ? 'border-amber-500 ring-4 ring-amber-200 shadow-amber-100'
           : live
             ? 'border-blue-500 ring-2 ring-blue-500/20 shadow-blue-100'
             : done
-              ? 'border-slate-350 bg-slate-50/10'
-              : 'border-slate-300')
+              ? 'border-slate-300 bg-slate-50/20'
+              : 'border-slate-200/90')
       }
       onClick={() => onSelectMatch?.(match)}
     >
@@ -109,19 +81,22 @@ export function MatchCard({
       )}
 
       {isOrganizer && !match.isBye && !showByeLabel && (
-          <div className="px-2.5 pb-2.5 pt-2 bg-slate-50/60 flex-shrink-0 border-t border-slate-200">
-            {!done ? (
+        <div className="px-2.5 py-1.5 bg-slate-50 flex-shrink-0 border-t border-slate-200/80">
+          {!done ? (
             match.participant1 && match.participant2 ? (
               <div className="flex justify-center">
                 <button
-                  onClick={() => onScheduleMatch!(match)}
-                  className="min-w-[132px] text-center text-[9px] font-bold text-blue-600 border-2 border-blue-200 bg-white hover:bg-blue-50 rounded-lg px-3 py-1 transition-colors cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onScheduleMatch!(match);
+                  }}
+                  className="w-full text-center text-[10px] font-bold text-blue-600 border border-blue-200 bg-white hover:bg-blue-50 rounded-md py-1 transition-colors cursor-pointer"
                 >
                   Xếp Sân & Giờ
                 </button>
               </div>
             ) : (
-              <div className="w-full text-center text-[9px] font-bold text-slate-500 bg-slate-100/50 rounded-lg py-1 border border-slate-250/60 select-none">
+              <div className="w-full text-center text-[10px] font-bold text-slate-400 bg-slate-100/50 rounded-md py-1 select-none">
                 Chờ đối thủ
               </div>
             )
@@ -131,29 +106,28 @@ export function MatchCard({
     </div>
   );
 
-  // ── Internal card content ──
   function CardContent() {
     return (
-      <>
-        {/* Header */}
+      <div className="flex flex-col flex-1 h-full justify-between">
+        {/* Header Bar */}
         <div
           className={
-            'flex items-center justify-between px-2.5 py-1.5 border-b-2 text-[10px] font-bold flex-shrink-0 ' +
+            'flex items-center justify-between px-3 py-1.5 border-b text-[10px] font-bold flex-shrink-0 ' +
             (live
-              ? 'bg-blue-100 border-blue-200 text-blue-800'
-              : 'bg-slate-100 border-slate-200 text-slate-700')
+              ? 'bg-blue-50 border-blue-200 text-blue-800'
+              : 'bg-slate-100/70 border-slate-200/80 text-slate-700')
           }
         >
-          <span className="text-slate-500 font-bold">#{match.matchOrder}</span>
+          <span className="text-slate-500 font-bold">Trận #{match.matchOrder}</span>
           {live ? (
-            <span className="flex items-center gap-0.5 text-blue-700 font-bold animate-pulse">
-              <Play className="w-2.5 h-2.5 fill-blue-700" /> Trực tiếp
+            <span className="flex items-center gap-1 text-blue-600 font-bold animate-pulse">
+              <Play className="w-2.5 h-2.5 fill-blue-600" /> Trực tiếp
             </span>
           ) : done ? (
             match.isBye ? (
               <span className="text-blue-600 font-bold uppercase tracking-wider text-[9px]">Vô thẳng</span>
             ) : (
-              <span className="flex items-center gap-1 text-blue-600 font-bold">
+              <span className="flex items-center gap-1 text-emerald-600 font-bold">
                 <CheckCircle className="w-3 h-3" /> Đã kết thúc
               </span>
             )
@@ -166,27 +140,27 @@ export function MatchCard({
           )}
         </div>
 
-        {/* Set columns header */}
+        {/* Set Header Row */}
         {!match.isBye && (
-          <div className="flex border-b border-slate-100 bg-slate-50/40">
+          <div className="flex border-b border-slate-100 bg-slate-50/50 flex-shrink-0">
             <div className="flex-1" />
             {Array.from({ length: maxCols }).map((_, ci) => (
-              <div key={ci} className="w-8 text-center text-[8px] font-bold tracking-wider text-slate-400 py-1 border-l border-slate-100/80">
+              <div
+                key={ci}
+                className="w-7 text-center text-[8px] font-bold text-slate-400 py-0.5 border-l border-slate-100"
+              >
                 S{ci + 1}
               </div>
             ))}
           </div>
         )}
 
-        {/* Participant rows */}
-        <div className="flex flex-col border-b border-slate-200">
+        {/* Participant Rows */}
+        <div className="flex flex-col flex-1 justify-center divide-y divide-slate-100">
           <RowSide
             p={match.participant1}
             won={p1Won}
-            setsTotal={match.p1SetsWon}
             isByeSlot={isP1Bye || (match.isBye && !match.participant1)}
-            done={done}
-            live={live}
             setList={setList.map((set) => ({ p1: String(set.team1Score), p2: String(set.team2Score) }))}
             pickScore={(s) => s.p1}
             maxCols={maxCols}
@@ -194,51 +168,40 @@ export function MatchCard({
           <RowSide
             p={match.participant2}
             won={p2Won}
-            setsTotal={match.p2SetsWon}
             isByeSlot={isP2Bye || (match.isBye && !match.participant2)}
-            done={done}
-            live={live}
             setList={setList.map((set) => ({ p1: String(set.team1Score), p2: String(set.team2Score) }))}
             pickScore={(s) => s.p2}
             maxCols={maxCols}
           />
         </div>
 
-        {/* Compact 1-Line Schedule Footer */}
+        {/* 1-Line Scheduled Time Footer */}
         {!match.isBye && (
-          <div className="flex items-center justify-between px-2.5 py-1 bg-slate-50/60 text-[9px] font-bold text-slate-500 flex-shrink-0">
-            <span className="flex items-center gap-1 truncate">
-              <Clock className="w-2.5 h-2.5 text-slate-400 shrink-0" />
-              <span className="truncate">{match.scheduledAt ? formatDateTime(match.scheduledAt) : 'Chưa xếp giờ'}</span>
+          <div className="flex items-center justify-between px-3 py-1.5 bg-slate-50/80 text-[10px] font-medium text-slate-500 border-t border-slate-100 flex-shrink-0">
+            <span className="flex items-center gap-1.5 min-w-0">
+              <Clock className="w-3 h-3 text-slate-400 shrink-0" />
+              <span className="truncate font-semibold text-slate-600">
+                {match.scheduledAt ? formatDateTime(match.scheduledAt) : 'Chưa xếp giờ'}
+              </span>
             </span>
           </div>
         )}
-      </>
+      </div>
     );
   }
 }
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// RowSide — one participant row with per-set scores
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
 function RowSide({
   p,
   won,
-  setsTotal,
   isByeSlot = false,
-  done,
-  live,
   setList,
   pickScore,
   maxCols,
 }: {
   p: BracketMatch['participant1'];
   won: boolean;
-  setsTotal: number;
   isByeSlot?: boolean;
-  done: boolean;
-  live: boolean;
   setList: { p1: string; p2: string }[];
   pickScore: (s: { p1: string; p2: string }) => string;
   maxCols: number;
@@ -246,53 +209,55 @@ function RowSide({
   return (
     <div
       className={
-        'flex items-center min-h-[48px] ' +
-        (won ? 'bg-emerald-50/90 border-l-4 border-emerald-500' : 'bg-white')
+        'flex items-center justify-between py-1.5 transition-colors ' +
+        (won ? 'bg-emerald-50/80 border-l-4 border-emerald-500 pl-2 pr-3' : 'bg-white px-3')
       }
     >
-      {/* Team info */}
-      <div className="flex items-center gap-1.5 min-w-0 px-3 py-2.5 flex-1">
+      {/* Team Info */}
+      <div className="flex items-center gap-1.5 min-w-0 flex-1 mr-1">
         {p?.seed != null && (
-          <span className="text-[9px] bg-slate-200 text-slate-700 px-1 rounded font-bold flex-shrink-0 leading-4">
+          <span className="text-[9px] bg-slate-200 text-slate-700 px-1 rounded font-bold shrink-0">
             {p.seed}
           </span>
         )}
         <span
           className={
-            'text-[11px] truncate flex-1 leading-5 md:text-[12px] ' +
+            'text-[11px] truncate leading-tight ' +
             (won
               ? 'font-bold text-emerald-950'
               : !p || isByeSlot
-                ? 'italic text-slate-400 font-semibold'
-                : 'font-bold text-slate-800')
+                ? 'italic text-slate-400 font-normal'
+                : 'font-semibold text-slate-800')
           }
+          title={p?.teamName ?? undefined}
         >
           {p?.teamName ?? (isByeSlot ? 'Miễn vòng' : 'Chờ xác định')}
         </span>
       </div>
 
-      {/* Per-set columns */}
-      {Array.from({ length: maxCols }).map((_, ci) => {
-        const score = setList[ci];
-        const val = score ? pickScore(score) : '';
-        return (
-          <div
-            key={ci}
-            className="w-8 flex items-center justify-center border-l border-slate-100/80"
-          >
-            <span className={
-              'text-[10px] font-bold w-6 h-6 flex items-center justify-center rounded-md ' +
-              (val
-                ? won
-                  ? 'bg-blue-50 text-blue-700 font-bold'
-                  : 'bg-slate-50 text-slate-700 font-bold'
-                : 'text-slate-300 font-medium')
-            }>
-              {val || '-'}
-            </span>
-          </div>
-        );
-      })}
+      {/* Per-set scores */}
+      <div className="flex items-center shrink-0">
+        {Array.from({ length: maxCols }).map((_, ci) => {
+          const score = setList[ci];
+          const val = score ? pickScore(score) : '';
+          return (
+            <div key={ci} className="w-7 text-center">
+              <span
+                className={
+                  'inline-block text-[11px] font-bold w-5 h-5 leading-5 rounded text-center ' +
+                  (val
+                    ? won
+                      ? 'bg-emerald-100 text-emerald-800 font-extrabold'
+                      : 'bg-slate-100 text-slate-700 font-bold'
+                    : 'text-slate-300 font-normal')
+                }
+              >
+                {val || '-'}
+              </span>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

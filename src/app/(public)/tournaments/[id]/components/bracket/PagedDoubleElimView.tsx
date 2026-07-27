@@ -97,21 +97,37 @@ export function PagedDoubleElimView({
 
   const [activeRoundIndex, setActiveRoundIndex] = useState<number>(defaultRoundIndex);
 
-  const maxUbRound = ubRounds.length;
   const getUbLabel = (r: number) => {
-    if (gfMatches.length > 0 && r === maxUbRound) return 'Chung kết Tổng';
-    const fromEnd = ubRounds.length - (ubRounds.indexOf(r) + 1);
-    if (fromEnd === 0 || (gfMatches.length > 0 && fromEnd === 1)) return 'Chung kết Nhánh thắng';
-    if (fromEnd === 1 || (gfMatches.length > 0 && fromEnd === 2)) return 'Bán kết Nhánh thắng';
-    if (fromEnd === 2 || (gfMatches.length > 0 && fromEnd === 3)) return 'Tứ kết Nhánh thắng';
+    const rIndex = ubRounds.indexOf(r);
+    if (rIndex < 0) return `Vòng ${r} Nhánh thắng`;
+    if (gfMatches.length > 0 && rIndex === ubRounds.length - 1) return 'Chung kết Tổng';
+
+    const ubOnlyRounds = gfMatches.length > 0 ? ubRounds.length - 1 : ubRounds.length;
+    const fromUbEnd = ubOnlyRounds - 1 - rIndex;
+
+    if (fromUbEnd === 0) return 'Chung kết Nhánh thắng';
+    if (fromUbEnd === 1) return 'Bán kết Nhánh thắng';
+    if (fromUbEnd === 2) return 'Tứ kết Nhánh thắng';
+    if (fromUbEnd === 3) return 'Vòng 16 Nhánh thắng';
+    if (fromUbEnd === 4) return 'Vòng 32 Nhánh thắng';
+    if (fromUbEnd === 5) return 'Vòng 64 Nhánh thắng';
+    if (fromUbEnd === 6) return 'Vòng 128 Nhánh thắng';
     return `Vòng ${r} Nhánh thắng`;
   };
 
   const getLbLabel = (r: number) => {
-    const fromEnd = lbRounds.length - (lbRounds.indexOf(r) + 1);
-    if (fromEnd === 0) return 'Chung kết Nhánh thua';
-    if (fromEnd === 1) return 'Bán kết Nhánh thua';
-    return `Lượt ${r} Nhánh thua`;
+    const rIndex = lbRounds.indexOf(r);
+    if (rIndex < 0) return `Vòng ${r} Nhánh thua`;
+    const fromLbEnd = lbRounds.length - 1 - rIndex;
+
+    if (fromLbEnd === 0) return 'Chung kết Nhánh thua';
+    if (fromLbEnd === 1) return 'Bán kết Nhánh thua';
+    if (fromLbEnd === 2) return 'Tứ kết Nhánh thua';
+    if (fromLbEnd === 3) return 'Vòng 16 Nhánh thua';
+    if (fromLbEnd === 4) return 'Vòng 32 Nhánh thua';
+    if (fromLbEnd === 5) return 'Vòng 64 Nhánh thua';
+    if (fromLbEnd === 6) return 'Vòng 128 Nhánh thua';
+    return `Vòng ${r} Nhánh thua`;
   };
 
   const getRoundTitle = (r: number) =>

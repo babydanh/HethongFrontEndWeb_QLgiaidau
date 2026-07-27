@@ -13,9 +13,9 @@ import type { SportRuleKind } from '@/types/tournament';
 // LAYOUT CONSTANTS
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 export const CARD_W = 250;           // match card width (px)
-export const CARD_H_PUBLIC = 142;    // public view height (sleek & compact 142px)
-export const CARD_H_ORGANIZER = 172; // organizer view height (with schedule button)
-export const BASE_SLOT = 152;        // slot height for densest round
+export const CARD_H_PUBLIC = 114;    // public view height (super compact 114px)
+export const CARD_H_ORGANIZER = 144; // organizer view height (with schedule button)
+export const BASE_SLOT = 124;        // slot height for densest round
 export const COL_GAP = 96;           // horizontal gap between round columns
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

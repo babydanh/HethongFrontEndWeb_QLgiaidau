@@ -1,15 +1,16 @@
 /**
- * MatchCard — Sleek, compact bracket match card matching Web App VNDC Sport design palette
+ * MatchCard — Ultra-compact 114px Bracket Node with Header-Integrated Set Columns
  *
- * Height: 142px (Public) / 172px (Organizer)
- * Brand Colors: Blue-600 (#2563eb), Emerald-600 (#16a34a), Slate-200.
+ * Removes redundant status labels ("Đã kết thúc").
+ * Moves S1, S2, S3 directly into the right side of the top header bar,
+ * perfectly aligned above the score boxes with zero white padding waste.
  */
 
 'use client';
 
 import React from 'react';
 import Link from 'next/link';
-import { Play, CheckCircle, Clock } from 'lucide-react';
+import { Play, Clock } from 'lucide-react';
 import type { BracketMatch } from '@/features/tournaments/api';
 import { extractMatchScores } from '@/features/matches/score-display';
 import type { SportRuleKind } from '@/types/tournament';
@@ -61,7 +62,7 @@ export function MatchCard({
 
   const setList = extractMatchScores(match.scoreDetails as Record<string, unknown> | undefined | null);
   const maxCols = getMaxColumns(match);
-  const actualCardH = match.isBye ? 116 : cardH;
+  const actualCardH = match.isBye ? 92 : cardH;
 
   const rawMatch = match as unknown as Record<string, unknown>;
   const dateStr = match.scheduledAt
@@ -81,7 +82,7 @@ export function MatchCard({
           : live
             ? 'border-blue-500 ring-2 ring-blue-500/20 shadow-blue-100'
             : done
-              ? 'border-slate-300 bg-white'
+              ? 'border-slate-250 bg-white'
               : 'border-slate-200')
       }
       onClick={() => onSelectMatch?.(match)}
@@ -125,42 +126,29 @@ export function MatchCard({
   function CardContent() {
     return (
       <div className="flex flex-col flex-1 h-full justify-between">
-        {/* Web Brand Header Bar */}
+        {/* Integrated Header Bar: Left = Match Order/Live, Right = S1 S2 S3 Headers */}
         <div
           className={
-            'flex items-center justify-between px-2.5 py-1 border-b text-[9.5px] font-bold flex-shrink-0 ' +
+            'flex items-center justify-between border-b text-[9.5px] font-bold flex-shrink-0 border-l-[3.5px] border-transparent pl-2 pr-2.5 py-1 ' +
             (live
               ? 'bg-blue-50 border-blue-200 text-blue-800'
-              : 'bg-slate-100/80 border-slate-200/80 text-slate-700')
+              : 'bg-slate-50 border-slate-200/80 text-slate-700')
           }
         >
-          <span className="text-slate-500 font-bold">Trận #{match.matchOrder}</span>
-
-          {live ? (
-            <span className="flex items-center gap-1 text-blue-600 font-bold animate-pulse">
-              <Play className="w-2.5 h-2.5 fill-blue-600" /> Trực tiếp
-            </span>
-          ) : done ? (
-            match.isBye ? (
-              <span className="text-blue-600 font-bold uppercase tracking-wider text-[8.5px]">Vô thẳng</span>
-            ) : (
-              <span className="flex items-center gap-1 text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200/60 text-[8.5px]">
-                <CheckCircle className="w-2.5 h-2.5" /> Đã kết thúc
+          <div className="flex items-center gap-1.5 min-w-0 truncate">
+            <span className="text-slate-500 font-bold">Trận #{match.matchOrder}</span>
+            {live && (
+              <span className="flex items-center gap-0.5 text-blue-600 font-extrabold animate-pulse text-[9px]">
+                <Play className="w-2.5 h-2.5 fill-blue-600" /> Trực tiếp
               </span>
-            )
-          ) : match.isBye ? (
-            <span className="text-slate-500 font-bold uppercase tracking-wider text-[8.5px]">Miễn vòng</span>
-          ) : (
-            <span className="flex items-center gap-1 text-slate-500 font-semibold text-[8.5px]">
-              <Clock className="w-2.5 h-2.5" /> Sắp diễn ra
-            </span>
-          )}
-        </div>
+            )}
+            {match.isBye && (
+              <span className="text-blue-600 font-bold uppercase tracking-wider text-[8.5px]">Miễn vòng</span>
+            )}
+          </div>
 
-        {/* Set Header Row — Perfectly Aligned */}
-        {!match.isBye && (
-          <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/50 flex-shrink-0 border-l-[3.5px] border-transparent pl-2 pr-2.5 py-0.5">
-            <div className="flex-1" />
+          {/* S1 S2 S3 Headers aligned directly above score boxes */}
+          {!match.isBye && (
             <div className="flex items-center shrink-0">
               {Array.from({ length: maxCols }).map((_, ci) => (
                 <div
@@ -171,10 +159,10 @@ export function MatchCard({
                 </div>
               ))}
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
-        {/* Participant Rows — Matching Web Brand Blue/Emerald Accent */}
+        {/* Participant Rows */}
         <div className="flex flex-col flex-1 justify-center divide-y divide-slate-100">
           <RowSide
             p={match.participant1}
@@ -196,7 +184,7 @@ export function MatchCard({
 
         {/* Compact 1-Line Scheduled Date & Time Footer */}
         {!match.isBye && (
-          <div className="flex items-center justify-between px-2.5 py-1 bg-slate-50/80 text-[9px] font-medium text-slate-500 border-t border-slate-100 flex-shrink-0">
+          <div className="flex items-center justify-between px-2.5 py-0.5 bg-slate-50/70 text-[9px] font-medium text-slate-500 border-t border-slate-100 flex-shrink-0">
             <span className="flex items-center gap-1.5 min-w-0">
               <Clock className="w-2.5 h-2.5 text-slate-400 shrink-0" />
               <span className="truncate font-semibold text-slate-600">

@@ -86,6 +86,7 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
   const [pairingLoading, setPairingLoading] = useState(false);
   const [generatingStrategy, setGeneratingStrategy] = useState<'RANDOM' | 'ELO_BALANCED' | null>(null);
   const [unpairingId, setUnpairingId] = useState<string | null>(null);
+  const [bracketLoading, setBracketLoading] = useState(false);
 
   const fetchParticipants = useCallback(async () => {
     if (!id) return;
@@ -201,6 +202,19 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
       toast.success('Đã sao chép link mời!');
     } catch {
       toast.error('Không thể sao chép. Vui lòng thử lại.');
+    }
+  };
+
+  const handleGenerateBracket = async () => {
+    if (!confirm('Sau khi tạo bracket, không thể ghép thêm cặp mới. Tiếp tục?')) return;
+    setBracketLoading(true);
+    try {
+      await tournamentsApi.generateLiteBracket(id);
+      toast.success('Đã tạo bracket thành công!');
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setBracketLoading(false);
     }
   };
 
@@ -615,6 +629,24 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                       ))}
                     </div>
                   )}
+
+                  {/* Tạo bracket */}
+                  {(tournament?.matchType === 'DOUBLES' ? pairedParticipants.length > 0 : participants.length > 0) && (
+                    <div className="pt-4 border-t border-slate-100">
+                      <Button
+                        onClick={handleGenerateBracket}
+                        disabled={bracketLoading}
+                        className="w-full gap-2"
+                      >
+                        {bracketLoading ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Swords className="w-4 h-4" />
+                        )}
+                        {bracketLoading ? 'Đang tạo...' : 'Tạo bracket'}
+                      </Button>
+                    </div>
+                  )}
                 </>
               )}
             </div>
@@ -626,12 +658,34 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
               <p className="text-sm text-slate-500">
                 Sơ đồ thi đấu sẽ được hiển thị sau khi tạo bracket.
               </p>
-              <div className="bg-slate-50 rounded-lg p-6 text-center">
-                <Swords className="w-8 h-8 mx-auto mb-2 text-slate-300" />
-                <p className="text-sm text-slate-400 mb-4">
-                  Chưa có bracket. Hãy ghép cặp người chơi trước, sau đó tạo bracket.
-                </p>
-              </div>
+              {(participants.length > 0 || (!tournament?.matchType || tournament.matchType !== 'DOUBLES')) && (
+                <div className="bg-slate-50 rounded-lg p-6 text-center">
+                  <Swords className="w-10 h-10 mx-auto mb-3 text-slate-300" />
+                  <p className="text-sm text-slate-500 mb-4">
+                    {tournament?.matchType === 'DOUBLES'
+                      ? 'Đã ghép cặp xong? Hãy tạo bracket để bắt đầu giải đấu.'
+                      : 'Đã có người tham gia? Hãy tạo bracket để bắt đầu giải đấu.'}
+                  </p>
+                  <Button
+                    onClick={handleGenerateBracket}
+                    disabled={bracketLoading}
+                    className="gap-2"
+                  >
+                    {bracketLoading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Swords className="w-4 h-4" />
+                    )}
+                    {bracketLoading ? 'Đang tạo...' : 'Tạo bracket'}
+                  </Button>
+                </div>
+              )}
+              {participants.length === 0 && (
+                <div className="bg-slate-50 rounded-lg p-6 text-center">
+                  <Swords className="w-8 h-8 mx-auto mb-2 text-slate-300" />
+                  <p className="text-sm text-slate-400">Chưa có người tham gia. Hãy chia sẻ link mời.</p>
+                </div>
+              )}
             </div>
           )}
 

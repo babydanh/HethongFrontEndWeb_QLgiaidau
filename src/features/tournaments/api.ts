@@ -392,6 +392,9 @@ export const tournamentsApi = {
 
   unpairLiteParticipant: (id: string, participantId: string) =>
     api.post<ApiResponse<LiteUnpairResponse>>(`/tournaments/lite/${id}/pairs/${participantId}/unpair`),
+
+  generateLiteBracket: (id: string) =>
+    api.post<ApiResponse<{ bracketId: string; totalMatches: number }>>(`/tournaments/lite/${id}/bracket`),
 };
 
 

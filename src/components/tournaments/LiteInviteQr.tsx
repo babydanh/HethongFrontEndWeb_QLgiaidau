@@ -1,11 +1,12 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { Button } from '@/components/ui/Button';
 import { Copy, Download, QrCode, Share2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { isScannableLiteJoinUrl } from '@/features/tournaments/lite-qr';
+import ShareModal from '@/components/common/ShareModal';
 
 type LiteInviteQrProps = {
   inviteUrl: string;
@@ -15,6 +16,7 @@ type LiteInviteQrProps = {
 
 export function LiteInviteQr({ inviteUrl, tournamentName, compact = false }: LiteInviteQrProps) {
   const canvasWrapRef = useRef<HTMLDivElement>(null);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const isValid = isScannableLiteJoinUrl(inviteUrl);
 
   const copyInvite = async () => {
@@ -36,23 +38,6 @@ export function LiteInviteQr({ inviteUrl, tournamentName, compact = false }: Lit
     anchor.download = `qr-moi-${tournamentName.trim().replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '').toLowerCase() || 'giai-lite'}.png`;
     anchor.href = canvas.toDataURL('image/png');
     anchor.click();
-  };
-
-  const shareInvite = async () => {
-    const shareData = {
-      title: `Tham gia giải ${tournamentName}`,
-      text: `Quét mã QR hoặc mở link để tham gia giải ${tournamentName}`,
-      url: inviteUrl,
-    };
-    if (navigator.share) {
-      try {
-        await navigator.share(shareData);
-        return;
-      } catch (error) {
-        if (error instanceof DOMException && error.name === 'AbortError') return;
-      }
-    }
-    await copyInvite();
   };
 
   if (!isValid) {
@@ -99,7 +84,7 @@ export function LiteInviteQr({ inviteUrl, tournamentName, compact = false }: Lit
             <Button size="sm" onClick={copyInvite} className="gap-1.5 font-medium">
               <Copy className="h-3.5 w-3.5" /> Sao chép link
             </Button>
-            <Button size="sm" variant="outline" onClick={shareInvite} className="gap-1.5 font-medium">
+            <Button size="sm" variant="outline" onClick={() => setIsShareModalOpen(true)} className="gap-1.5 font-medium">
               <Share2 className="h-3.5 w-3.5" /> Chia sẻ
             </Button>
             <Button size="sm" variant="outline" onClick={downloadQr} className="gap-1.5 font-medium">
@@ -108,6 +93,12 @@ export function LiteInviteQr({ inviteUrl, tournamentName, compact = false }: Lit
           </div>
         </div>
       </div>
+      <ShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        shareUrl={inviteUrl}
+        title={`Tham gia giải ${tournamentName}`}
+      />
     </section>
   );
 }

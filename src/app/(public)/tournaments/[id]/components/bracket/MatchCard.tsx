@@ -1,9 +1,8 @@
 /**
- * MatchCard — Detailed, high-quality match card component
+ * MatchCard — Sleek, compact bracket match card matching Web App VNDC Sport design palette
  *
- * Shows match header (#Order, Status), set header columns (S1, S2, S3...),
- * participant rows with seeds, team names, winner highlight, per-set scores,
- * and 1-line scheduled date & time footer without clipping.
+ * Height: 142px (Public) / 172px (Organizer)
+ * Brand Colors: Blue-600 (#2563eb), Emerald-600 (#16a34a), Slate-200.
  */
 
 'use client';
@@ -62,8 +61,7 @@ export function MatchCard({
 
   const setList = extractMatchScores(match.scoreDetails as Record<string, unknown> | undefined | null);
   const maxCols = getMaxColumns(match);
-
-  const actualCardH = match.isBye ? 140 : cardH;
+  const actualCardH = match.isBye ? 116 : cardH;
 
   const rawMatch = match as unknown as Record<string, unknown>;
   const dateStr = match.scheduledAt
@@ -77,14 +75,14 @@ export function MatchCard({
       data-bracket-match-id={match.id}
       style={{ width: CARD_W, height: actualCardH }}
       className={
-        'rounded-xl overflow-hidden border flex flex-col shadow-sm transition-all duration-150 hover:shadow-md hover:-translate-y-0.5 bg-white ' +
+        'rounded-xl overflow-hidden border flex flex-col shadow-sm transition-all duration-150 hover:shadow-md hover:-translate-y-0.5 bg-white select-none ' +
         (selected
-          ? 'border-amber-500 ring-4 ring-amber-200 shadow-amber-100'
+          ? 'border-amber-500 ring-2 ring-amber-300 shadow-amber-100'
           : live
             ? 'border-blue-500 ring-2 ring-blue-500/20 shadow-blue-100'
             : done
-              ? 'border-slate-300 bg-slate-50/20'
-              : 'border-slate-200/90')
+              ? 'border-slate-300 bg-white'
+              : 'border-slate-200')
       }
       onClick={() => onSelectMatch?.(match)}
     >
@@ -99,7 +97,7 @@ export function MatchCard({
       )}
 
       {isOrganizer && !match.isBye && !showByeLabel && (
-        <div className="px-2.5 py-1.5 bg-slate-50 flex-shrink-0 border-t border-slate-200/80">
+        <div className="px-2 py-1 bg-slate-50 flex-shrink-0 border-t border-slate-200/80">
           {!done ? (
             match.participant1 && match.participant2 ? (
               <div className="flex justify-center">
@@ -108,13 +106,13 @@ export function MatchCard({
                     e.stopPropagation();
                     onScheduleMatch!(match);
                   }}
-                  className="w-full text-center text-[10px] font-bold text-blue-600 border border-blue-200 bg-white hover:bg-blue-50 rounded-md py-1 transition-colors cursor-pointer"
+                  className="w-full text-center text-[9.5px] font-bold text-blue-600 border border-blue-200 bg-white hover:bg-blue-50 rounded py-0.5 transition-colors cursor-pointer"
                 >
                   Xếp Sân & Giờ
                 </button>
               </div>
             ) : (
-              <div className="w-full text-center text-[10px] font-bold text-slate-400 bg-slate-100/50 rounded-md py-1 select-none">
+              <div className="w-full text-center text-[9px] font-bold text-slate-400 bg-slate-100/50 rounded py-0.5 select-none">
                 Chờ đối thủ
               </div>
             )
@@ -127,46 +125,47 @@ export function MatchCard({
   function CardContent() {
     return (
       <div className="flex flex-col flex-1 h-full justify-between">
-        {/* Header Bar */}
+        {/* Web Brand Header Bar */}
         <div
           className={
-            'flex items-center justify-between px-3 py-1.5 border-b text-[10px] font-bold flex-shrink-0 ' +
+            'flex items-center justify-between px-2.5 py-1 border-b text-[9.5px] font-bold flex-shrink-0 ' +
             (live
               ? 'bg-blue-50 border-blue-200 text-blue-800'
-              : 'bg-slate-100/70 border-slate-200/80 text-slate-700')
+              : 'bg-slate-100/80 border-slate-200/80 text-slate-700')
           }
         >
           <span className="text-slate-500 font-bold">Trận #{match.matchOrder}</span>
+
           {live ? (
             <span className="flex items-center gap-1 text-blue-600 font-bold animate-pulse">
               <Play className="w-2.5 h-2.5 fill-blue-600" /> Trực tiếp
             </span>
           ) : done ? (
             match.isBye ? (
-              <span className="text-blue-600 font-bold uppercase tracking-wider text-[9px]">Vô thẳng</span>
+              <span className="text-blue-600 font-bold uppercase tracking-wider text-[8.5px]">Vô thẳng</span>
             ) : (
-              <span className="flex items-center gap-1 text-emerald-600 font-bold">
-                <CheckCircle className="w-3 h-3" /> Đã kết thúc
+              <span className="flex items-center gap-1 text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200/60 text-[8.5px]">
+                <CheckCircle className="w-2.5 h-2.5" /> Đã kết thúc
               </span>
             )
           ) : match.isBye ? (
-            <span className="text-slate-500 font-bold uppercase tracking-wider text-[9px]">Miễn vòng</span>
+            <span className="text-slate-500 font-bold uppercase tracking-wider text-[8.5px]">Miễn vòng</span>
           ) : (
-            <span className="flex items-center gap-1 text-slate-500 font-bold">
+            <span className="flex items-center gap-1 text-slate-500 font-semibold text-[8.5px]">
               <Clock className="w-2.5 h-2.5" /> Sắp diễn ra
             </span>
           )}
         </div>
 
-        {/* Set Header Row — Perfectly Aligned with Scores Below */}
+        {/* Set Header Row — Perfectly Aligned */}
         {!match.isBye && (
-          <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/60 flex-shrink-0 border-l-4 border-transparent pl-2 pr-3 py-0.5">
+          <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/50 flex-shrink-0 border-l-[3.5px] border-transparent pl-2 pr-2.5 py-0.5">
             <div className="flex-1" />
             <div className="flex items-center shrink-0">
               {Array.from({ length: maxCols }).map((_, ci) => (
                 <div
                   key={ci}
-                  className="w-7 text-center text-[9px] font-bold text-slate-400"
+                  className="w-6.5 text-center text-[8.5px] font-bold text-slate-400"
                 >
                   S{ci + 1}
                 </div>
@@ -175,7 +174,7 @@ export function MatchCard({
           </div>
         )}
 
-        {/* Participant Rows */}
+        {/* Participant Rows — Matching Web Brand Blue/Emerald Accent */}
         <div className="flex flex-col flex-1 justify-center divide-y divide-slate-100">
           <RowSide
             p={match.participant1}
@@ -195,11 +194,11 @@ export function MatchCard({
           />
         </div>
 
-        {/* 1-Line Scheduled Date & Time Footer */}
+        {/* Compact 1-Line Scheduled Date & Time Footer */}
         {!match.isBye && (
-          <div className="flex items-center justify-between px-3 py-1.5 bg-slate-50/80 text-[10px] font-medium text-slate-500 border-t border-slate-100 flex-shrink-0">
+          <div className="flex items-center justify-between px-2.5 py-1 bg-slate-50/80 text-[9px] font-medium text-slate-500 border-t border-slate-100 flex-shrink-0">
             <span className="flex items-center gap-1.5 min-w-0">
-              <Clock className="w-3 h-3 text-slate-400 shrink-0" />
+              <Clock className="w-2.5 h-2.5 text-slate-400 shrink-0" />
               <span className="truncate font-semibold text-slate-600">
                 {dateStr}
               </span>
@@ -229,25 +228,25 @@ function RowSide({
   return (
     <div
       className={
-        'flex items-center justify-between py-1.5 transition-colors border-l-4 pl-2 pr-3 ' +
-        (won ? 'bg-emerald-50/80 border-emerald-500' : 'bg-white border-transparent')
+        'flex items-center justify-between py-1 transition-colors border-l-[3.5px] pl-2 pr-2.5 ' +
+        (won ? 'bg-blue-50/70 border-blue-600' : 'bg-white border-transparent')
       }
     >
       {/* Team Info */}
       <div className="flex items-center gap-1.5 min-w-0 flex-1 mr-1">
         {p?.seed != null && (
-          <span className="text-[9px] bg-slate-200 text-slate-700 px-1 rounded font-bold shrink-0">
+          <span className="text-[8.5px] bg-slate-100 text-slate-600 px-1 rounded font-bold shrink-0">
             {p.seed}
           </span>
         )}
         <span
           className={
-            'text-[11px] truncate leading-tight ' +
+            'text-[10.5px] truncate leading-tight ' +
             (won
-              ? 'font-bold text-emerald-950'
+              ? 'font-bold text-blue-950'
               : !p || isByeSlot
                 ? 'italic text-slate-400 font-normal'
-                : 'font-semibold text-slate-800')
+                : 'font-semibold text-slate-700')
           }
           title={p?.teamName ?? undefined}
         >
@@ -261,13 +260,13 @@ function RowSide({
           const score = setList[ci];
           const val = score ? pickScore(score) : '';
           return (
-            <div key={ci} className="w-7 text-center">
+            <div key={ci} className="w-6.5 text-center">
               <span
                 className={
-                  'inline-block text-[11px] font-bold w-5 h-5 leading-5 rounded text-center ' +
+                  'inline-block text-[10.5px] font-bold w-4.5 h-4.5 leading-4.5 rounded text-center ' +
                   (val
                     ? won
-                      ? 'bg-emerald-100 text-emerald-800 font-extrabold'
+                      ? 'bg-blue-100/90 text-blue-800 font-extrabold'
                       : 'bg-slate-100 text-slate-700 font-bold'
                     : 'text-slate-300 font-normal')
                 }

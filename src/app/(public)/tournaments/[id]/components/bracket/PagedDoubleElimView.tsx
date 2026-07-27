@@ -434,10 +434,12 @@ export function PagedDoubleElimView({
                 return (
                   <path
                     key={m.id}
-                    d={`M ${startPos.x + CARD_W} ${startPos.y} L ${midX} ${startPos.y} L ${midX} ${endPos.y} L ${endPos.x} ${endPos.y}`}
+                    d={`M ${startPos.x + CARD_W} ${startPos.y} H ${midX} V ${endPos.y} H ${endPos.x}`}
                     stroke={stroke}
                     strokeWidth={isConnectedToActive ? 2.5 : 1.5}
                     fill="none"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                     opacity={isConnectedToActive ? 1 : 0.6}
                     className="transition-all duration-300"
                   />

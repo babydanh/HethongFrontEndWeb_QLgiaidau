@@ -1,11 +1,11 @@
 /**
- * PagedSingleElimView — World Cup / Google style round-by-round Single Elimination Bracket
+ * PagedSingleElimView — Clean round-by-round Single Elimination Bracket
  */
 
 'use client';
 
-import React, { useState, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, Trophy, Sparkles } from 'lucide-react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { ChevronLeft, ChevronRight, Trophy } from 'lucide-react';
 import type { BracketMatch } from '@/features/tournaments/api';
 import type { SportRuleKind } from '@/types/tournament';
 import type { OnScheduleMatch, OnSelectBracketMatch } from './types';
@@ -38,8 +38,21 @@ export function PagedSingleElimView({
 
   const maxRound = rounds.length > 0 ? Math.max(...rounds) : 1;
 
-  // Active round index (0-indexed inside rounds array)
-  const [activeRoundIndex, setActiveRoundIndex] = useState<number>(0);
+  // Auto-detect ongoing / upcoming round index
+  const defaultRoundIndex = useMemo(() => {
+    const idx = rounds.findIndex((r) =>
+      byRound[r]?.some(
+        (m) => m.status === 'IN_PROGRESS' || m.status === 'SCHEDULED' || m.status === 'READY',
+      ),
+    );
+    return idx >= 0 ? idx : 0;
+  }, [rounds, byRound]);
+
+  const [activeRoundIndex, setActiveRoundIndex] = useState<number>(defaultRoundIndex);
+
+  useEffect(() => {
+    setActiveRoundIndex(defaultRoundIndex);
+  }, [defaultRoundIndex]);
 
   if (!rounds.length) {
     return (
@@ -69,14 +82,9 @@ export function PagedSingleElimView({
             <Trophy className="w-5 h-5 text-amber-300" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-blue-400 uppercase tracking-wider">
-                Vòng {activeRoundIndex + 1} / {rounds.length}
-              </span>
-              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">
-                <Sparkles className="w-2.5 h-2.5" /> World Cup View
-              </span>
-            </div>
+            <span className="text-xs font-semibold text-blue-400 uppercase tracking-wider">
+              Vòng {activeRoundIndex + 1} / {rounds.length}
+            </span>
             <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
               {getRoundLabel(currentRound - 1, maxRound)}
             </h3>

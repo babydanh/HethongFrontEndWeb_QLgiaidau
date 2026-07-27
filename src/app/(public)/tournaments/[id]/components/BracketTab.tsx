@@ -303,7 +303,7 @@ export default function BracketTab({
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
             }`}
           >
-            <LayoutGrid className="w-3.5 h-3.5" /> Xem theo Vòng (World Cup)
+            <LayoutGrid className="w-3.5 h-3.5" /> Xem theo Vòng
           </button>
           <button
             onClick={() => setViewMode('full')}

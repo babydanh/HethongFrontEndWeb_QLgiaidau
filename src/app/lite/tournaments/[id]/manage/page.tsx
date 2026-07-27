@@ -16,6 +16,8 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '@/utils/error';
 import type { LiteParticipant } from '@/types/tournament';
+import { LiteInviteQr } from '@/components/tournaments/LiteInviteQr';
+import { buildLiteJoinUrl } from '@/features/tournaments/lite-qr';
 
 type LiteTab = 'overview' | 'participants' | 'bracket' | 'matches';
 
@@ -227,8 +229,8 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
     );
   }
 
-  const inviteUrl = tournament.inviteCode
-    ? `${typeof window !== 'undefined' ? window.location.origin : ''}/lite/tournaments/join/${tournament.inviteCode}`
+  const inviteUrl = tournament.inviteCode && typeof window !== 'undefined'
+    ? buildLiteJoinUrl(tournament.inviteCode, window.location.origin)
     : null;
 
   return (
@@ -292,6 +294,14 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                 <Copy className="w-3.5 h-3.5" />
               </Button>
             </div>
+          )}
+
+          {inviteUrl && (
+            <LiteInviteQr
+              inviteUrl={inviteUrl}
+              tournamentName={tournament.name}
+              compact
+            />
           )}
         </div>
 

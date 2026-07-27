@@ -48,13 +48,9 @@ export default function LiteJoinPage({ params }: { params: Promise<{ inviteCode:
   }, [inviteCode]);
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      router.replace(`/login?redirect=/lite/tournaments/join/${inviteCode}`);
-      return;
-    }
     const timer = window.setTimeout(() => void fetchStatus(), 0);
     return () => window.clearTimeout(timer);
-  }, [inviteCode, isAuthenticated, fetchStatus, router]);
+  }, [fetchStatus, isAuthenticated]);
 
   const handleJoin = async () => {
     setIsJoining(true);
@@ -101,6 +97,19 @@ export default function LiteJoinPage({ params }: { params: Promise<{ inviteCode:
           <h1 className="text-xl font-bold text-slate-900">{t.name}</h1>
           {t.category && <p className="text-sm text-slate-500 mt-1">{t.category}</p>}
         </div>
+
+        {status.requiresAuth && (
+          <div className="space-y-3 text-center">
+            <Shield className="w-10 h-10 text-blue-500 mx-auto" />
+            <p className="text-sm text-slate-600">Đăng nhập để tiếp tục tham gia giải</p>
+            <Button
+              onClick={() => router.push(`/login?redirect=/lite/tournaments/join/${inviteCode}`)}
+              className="w-full"
+            >
+              Đăng nhập
+            </Button>
+          </div>
+        )}
 
         {/* Already joined */}
         {status.alreadyJoined && (

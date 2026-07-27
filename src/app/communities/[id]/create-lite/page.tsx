@@ -10,6 +10,14 @@ import { communitiesApi, Community } from '@/features/communities/api';
 import { ChevronLeft, Loader2, Zap, Info } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '@/utils/error';
+import { LiteInviteQr } from '@/components/tournaments/LiteInviteQr';
+import { buildLiteJoinUrl } from '@/features/tournaments/lite-qr';
+
+type CreatedLiteTournament = {
+  id: string;
+  name: string;
+  inviteCode: string;
+};
 
 export default function CreateLiteTournamentPage({
   params,
@@ -23,6 +31,7 @@ export default function CreateLiteTournamentPage({
   const [community, setCommunity] = useState<Community | null>(null);
   const [isLoadingCommunity, setIsLoadingCommunity] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [createdTournament, setCreatedTournament] = useState<CreatedLiteTournament | null>(null);
 
   // Form fields
   const [name, setName] = useState('');
@@ -71,10 +80,16 @@ export default function CreateLiteTournamentPage({
         isRanked,
       });
 
-      toast.success('Tạo giải đấu thành công!');
-      const newId = res?.id;
-      if (newId) {
-        router.push(`/lite/tournaments/${newId}/manage`);
+      if (res?.id && res.inviteCode) {
+        setCreatedTournament({
+          id: res.id,
+          name: res.name || name.trim(),
+          inviteCode: res.inviteCode,
+        });
+        toast.success('Tạo giải đấu thành công! Mã QR đã sẵn sàng.');
+      } else {
+        toast.error('Đã tạo giải nhưng chưa nhận được mã mời. Vui lòng mở trang quản lý.');
+        if (res?.id) router.push(`/lite/tournaments/${res.id}/manage`);
       }
     } catch (err) {
       toast.error(getErrorMessage(err));
@@ -87,6 +102,31 @@ export default function CreateLiteTournamentPage({
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+      </div>
+    );
+  }
+
+  if (createdTournament && typeof window !== 'undefined') {
+    const inviteUrl = buildLiteJoinUrl(createdTournament.inviteCode, window.location.origin);
+    return (
+      <div className="min-h-screen bg-slate-50 px-4 py-8 md:px-8">
+        <div className="mx-auto max-w-2xl space-y-5">
+          <div>
+            <h1 className="text-2xl font-semibold text-slate-900">Tạo giải thành công</h1>
+            <p className="mt-1 text-sm text-slate-500">
+              Đưa mã QR cho người chơi quét bằng camera điện thoại để mở trang tham gia.
+            </p>
+          </div>
+          <LiteInviteQr inviteUrl={inviteUrl} tournamentName={createdTournament.name} />
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button variant="outline" onClick={() => router.push(`/communities/${communityId}/manage/tournaments`)}>
+              Danh sách giải
+            </Button>
+            <Button onClick={() => router.push(`/lite/tournaments/${createdTournament.id}/manage`)}>
+              Vào quản lý giải
+            </Button>
+          </div>
+        </div>
       </div>
     );
   }

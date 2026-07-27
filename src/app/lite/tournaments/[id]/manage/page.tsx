@@ -626,9 +626,11 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
               <p className="text-sm text-slate-500">
                 Sơ đồ thi đấu sẽ được hiển thị sau khi tạo bracket.
               </p>
-              <div className="bg-slate-50 rounded-lg p-6 text-center text-sm text-slate-400">
+              <div className="bg-slate-50 rounded-lg p-6 text-center">
                 <Swords className="w-8 h-8 mx-auto mb-2 text-slate-300" />
-                <p>Chức năng đang được phát triển</p>
+                <p className="text-sm text-slate-400 mb-4">
+                  Chưa có bracket. Hãy ghép cặp người chơi trước, sau đó tạo bracket.
+                </p>
               </div>
             </div>
           )}

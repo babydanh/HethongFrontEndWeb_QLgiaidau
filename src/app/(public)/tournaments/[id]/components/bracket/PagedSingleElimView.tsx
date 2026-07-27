@@ -1,9 +1,7 @@
 /**
- * PagedSingleElimView — Full Tree Bracket with Auto-Focus & Smooth Camera Scroll Navigation
+ * PagedSingleElimView — Full Tree Bracket with Auto-Focus & Dual Axis (X/Y) Smooth Camera Scroll
  *
- * Renders the full connected tree with continuous SVG lines.
- * Auto-scrolls camera to the current active round on load.
- * Controls (< Vòng trước / Vòng tiếp > and Pills) smoothly scroll the camera to the selected round column.
+ * Automatically centers match cards horizontally and vertically when navigating rounds.
  */
 
 'use client';
@@ -48,37 +46,53 @@ export function PagedSingleElimView({
 
   const maxRound = rounds.length > 0 ? Math.max(...rounds) : 1;
 
-  // Find baseline first-round match count for vertical slot height
-  let firstRoundCount = 1;
-  rounds.forEach((r, idx) => {
-    const count = byRound[r]?.length || 0;
-    const estimate = count * Math.pow(2, idx);
-    if (estimate > firstRoundCount) firstRoundCount = estimate;
-  });
-
-  const SLOT_H_1 = cardH + 20;
+  const slotHBase = cardH + 24;
   const roundGap = COL_GAP + 28;
-  const totalHeight = Math.max(firstRoundCount * SLOT_H_1 + 60, 360);
 
-  // Position map for all matches in the full tree based on relative round index (0, 1, 2...)
+  // Calculate compact posMap for all matches
   const posMap = useMemo(() => {
     const map = new Map<string, { x: number; y: number }>();
+
     rounds.forEach((r, idx) => {
       const colX = idx * (CARD_W + roundGap);
-      const slotH = Math.pow(2, idx) * SLOT_H_1;
       const roundMatches = byRound[r] ?? [];
-      const roundH = roundMatches.length * slotH;
-      const roundTop = 32 + (totalHeight - 64 - roundH) / 2;
 
       roundMatches.forEach((match, index) => {
-        map.set(match.id, {
-          x: colX,
-          y: roundTop + index * slotH + slotH / 2,
-        });
+        // Find feeders from previous round
+        const feeders = matches.filter((m) => m.nextMatchId === match.id);
+        let y = 0;
+        if (feeders.length > 0) {
+          let ySum = 0;
+          let count = 0;
+          feeders.forEach((f) => {
+            const fPos = map.get(f.id);
+            if (fPos) {
+              ySum += fPos.y;
+              count++;
+            }
+          });
+          y = count > 0 ? ySum / count : 32 + index * slotHBase + cardH / 2;
+        } else {
+          const step = slotHBase * Math.pow(1.5, Math.min(idx, 2));
+          y = 32 + index * step + cardH / 2;
+        }
+        map.set(match.id, { x: colX, y });
       });
     });
+
     return map;
-  }, [rounds, byRound, totalHeight, roundGap, CARD_W, SLOT_H_1]);
+  }, [rounds, byRound, matches, cardH, roundGap, CARD_W, slotHBase]);
+
+  // Calculate total bounding height from posMap
+  const totalHeight = useMemo(() => {
+    let maxY = 360;
+    posMap.forEach((pos) => {
+      if (pos.y + cardH / 2 + 48 > maxY) {
+        maxY = pos.y + cardH / 2 + 48;
+      }
+    });
+    return maxY;
+  }, [posMap, cardH]);
 
   const numRounds = rounds.length;
   const svgW = numRounds * CARD_W + Math.max(0, numRounds - 1) * roundGap + 48;
@@ -95,19 +109,40 @@ export function PagedSingleElimView({
 
   const [activeRoundIndex, setActiveRoundIndex] = useState<number>(defaultRoundIndex);
 
-  // Function to smoothly scroll viewport camera to focus on target round column
+  // Smoothly scroll viewport camera on both X and Y axis to center active round matches
   const scrollToRoundIndex = (index: number) => {
     setActiveRoundIndex(index);
     if (!scrollContainerRef.current) return;
     const colX = index * (CARD_W + roundGap);
     const targetScrollLeft = Math.max(0, colX * zoom - 24);
+
+    const r = rounds[index];
+    const matchesInRound = byRound[r] ?? [];
+    let targetScrollTop = 0;
+    if (matchesInRound.length > 0) {
+      let ySum = 0;
+      let count = 0;
+      matchesInRound.forEach((m) => {
+        const p = posMap.get(m.id);
+        if (p) {
+          ySum += p.y;
+          count++;
+        }
+      });
+      if (count > 0) {
+        const avgY = ySum / count;
+        const containerH = scrollContainerRef.current.clientHeight || 500;
+        targetScrollTop = Math.max(0, avgY * zoom - containerH / 2);
+      }
+    }
+
     scrollContainerRef.current.scrollTo({
       left: targetScrollLeft,
+      top: targetScrollTop,
       behavior: 'smooth',
     });
   };
 
-  // Auto scroll to active round on mount or when default round changes
   useEffect(() => {
     const timer = setTimeout(() => {
       scrollToRoundIndex(defaultRoundIndex);

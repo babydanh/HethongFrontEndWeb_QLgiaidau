@@ -1,5 +1,5 @@
 /**
- * PagedDoubleElimView — Full Tree Double Elimination with Auto-Focus & Smooth Camera Scroll Navigation
+ * PagedDoubleElimView — Full Tree Double Elimination with Auto-Focus & Dual Axis (X/Y) Smooth Camera Scroll
  */
 
 'use client';
@@ -117,37 +117,53 @@ export function PagedDoubleElimView({
   const getRoundTitle = (r: number) =>
     activeBranch === 'upper' ? getUbLabel(r) : getLbLabel(r);
 
-  // Position map calculation for active branch using 0-based relative round index
-  const SLOT_H_1 = cardH + 20;
+  const slotHBase = cardH + 24;
   const roundGap = COL_GAP + 28;
 
-  let firstRoundCount = 1;
-  activeBranchRounds.forEach((r, idx) => {
-    const count = activeBranchByRound[r]?.length || 0;
-    const estimate = count * Math.pow(2, idx);
-    if (estimate > firstRoundCount) firstRoundCount = estimate;
-  });
-
-  const totalHeight = Math.max(firstRoundCount * SLOT_H_1 + 60, 360);
-
+  // Calculate compact posMap for active branch matches
   const posMap = useMemo(() => {
     const map = new Map<string, { x: number; y: number }>();
+
     activeBranchRounds.forEach((r, idx) => {
       const colX = idx * (CARD_W + roundGap);
-      const slotH = Math.pow(2, idx) * SLOT_H_1;
       const roundMatches = activeBranchByRound[r] ?? [];
-      const roundH = roundMatches.length * slotH;
-      const roundTop = 32 + (totalHeight - 64 - roundH) / 2;
 
       roundMatches.forEach((match, index) => {
-        map.set(match.id, {
-          x: colX,
-          y: roundTop + index * slotH + slotH / 2,
-        });
+        // Find feeders from previous round
+        const feeders = activeBranchMatches.filter((m) => m.nextMatchId === match.id);
+        let y = 0;
+        if (feeders.length > 0) {
+          let ySum = 0;
+          let count = 0;
+          feeders.forEach((f) => {
+            const fPos = map.get(f.id);
+            if (fPos) {
+              ySum += fPos.y;
+              count++;
+            }
+          });
+          y = count > 0 ? ySum / count : 32 + index * slotHBase + cardH / 2;
+        } else {
+          const step = slotHBase * Math.pow(1.5, Math.min(idx, 2));
+          y = 32 + index * step + cardH / 2;
+        }
+        map.set(match.id, { x: colX, y });
       });
     });
+
     return map;
-  }, [activeBranchRounds, activeBranchByRound, totalHeight, roundGap, CARD_W, SLOT_H_1]);
+  }, [activeBranchRounds, activeBranchByRound, activeBranchMatches, cardH, roundGap, CARD_W, slotHBase]);
+
+  // Calculate total bounding height from posMap
+  const totalHeight = useMemo(() => {
+    let maxY = 360;
+    posMap.forEach((pos) => {
+      if (pos.y + cardH / 2 + 48 > maxY) {
+        maxY = pos.y + cardH / 2 + 48;
+      }
+    });
+    return maxY;
+  }, [posMap, cardH]);
 
   const numRounds = activeBranchRounds.length;
   const svgW = numRounds * CARD_W + Math.max(0, numRounds - 1) * roundGap + 48;
@@ -157,8 +173,30 @@ export function PagedDoubleElimView({
     if (!scrollContainerRef.current) return;
     const colX = index * (CARD_W + roundGap);
     const targetScrollLeft = Math.max(0, colX * zoom - 24);
+
+    const r = activeBranchRounds[index];
+    const matchesInRound = activeBranchByRound[r] ?? [];
+    let targetScrollTop = 0;
+    if (matchesInRound.length > 0) {
+      let ySum = 0;
+      let count = 0;
+      matchesInRound.forEach((m) => {
+        const p = posMap.get(m.id);
+        if (p) {
+          ySum += p.y;
+          count++;
+        }
+      });
+      if (count > 0) {
+        const avgY = ySum / count;
+        const containerH = scrollContainerRef.current.clientHeight || 500;
+        targetScrollTop = Math.max(0, avgY * zoom - containerH / 2);
+      }
+    }
+
     scrollContainerRef.current.scrollTo({
       left: targetScrollLeft,
+      top: targetScrollTop,
       behavior: 'smooth',
     });
   };

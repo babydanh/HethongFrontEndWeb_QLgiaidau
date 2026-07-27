@@ -1,13 +1,14 @@
 /**
- * PagedDoubleElimView — 3-Round Sliding Window Double Elimination Bracket
+ * PagedDoubleElimView — Dynamic Adaptive 3-Round Double Elimination Bracket
  *
- * Displays exactly 3 rounds per page window with compact Y-spacing (no blank top gaps),
- * uniform 1.5px Royal Blue (#2563eb) SVG connectors, and smooth navigation.
+ * Removes redundant middle round pill bar.
+ * Top match in 3-round window always starts at y = 16px right under round titles.
+ * Container height dynamically shrinks to fit exact matches with zero blank top/bottom gaps.
  */
 
 'use client';
 
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, ShieldCheck, Flame, Maximize2, Minimize2 } from 'lucide-react';
 import type { BracketMatch } from '@/features/tournaments/api';
 import type { SportRuleKind } from '@/types/tournament';
@@ -38,7 +39,6 @@ export function PagedDoubleElimView({
   fallbackSportRuleKind,
 }: Props) {
   const cardH = onScheduleMatch ? CARD_H_ORGANIZER : CARD_H_PUBLIC;
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -148,7 +148,7 @@ export function PagedDoubleElimView({
 
   const roundGap = COL_GAP + 20;
 
-  // Calculate compact posMap for visible rounds only
+  // Calculate compact posMap for visible rounds (always top-aligned at y = 16px)
   const posMap = useMemo(() => {
     const map = new Map<string, { x: number; y: number }>();
     const visibleSet = new Set(visibleRounds);
@@ -173,10 +173,10 @@ export function PagedDoubleElimView({
               count++;
             }
           });
-          y = count > 0 ? ySum / count : 24 + index * (cardH + 20) + cardH / 2;
+          y = count > 0 ? ySum / count : 16 + index * (cardH + 16) + cardH / 2;
         } else {
-          const step = (cardH + 20) * Math.pow(1.3, Math.min(vIdx, 2));
-          y = 24 + index * step + cardH / 2;
+          const step = (cardH + 16) * Math.pow(1.25, Math.min(vIdx, 2));
+          y = 16 + index * step + cardH / 2;
         }
         map.set(match.id, { x: colX, y });
       });
@@ -185,12 +185,12 @@ export function PagedDoubleElimView({
     return map;
   }, [visibleRounds, activeBranchByRound, activeBranchMatches, cardH, roundGap, CARD_W]);
 
-  // Calculate total bounding height for visible rounds
+  // Calculate dynamic bounding height to fit matches tightly
   const totalHeight = useMemo(() => {
-    let maxY = 240;
+    let maxY = 180;
     posMap.forEach((pos) => {
-      if (pos.y + cardH / 2 + 30 > maxY) {
-        maxY = pos.y + cardH / 2 + 30;
+      if (pos.y + cardH / 2 + 20 > maxY) {
+        maxY = pos.y + cardH / 2 + 20;
       }
     });
     return maxY;
@@ -198,19 +198,6 @@ export function PagedDoubleElimView({
 
   const numVisible = visibleRounds.length;
   const svgW = numVisible * CARD_W + Math.max(0, numVisible - 1) * roundGap + 36;
-
-  const scrollToRoundIndex = (index: number) => {
-    setActiveRoundIndex(index);
-    if (!scrollContainerRef.current) return;
-    scrollContainerRef.current.scrollTo({ left: 0, top: 0, behavior: 'smooth' });
-  };
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      scrollToRoundIndex(defaultRoundIndex);
-    }, 100);
-    return () => clearTimeout(timer);
-  }, [defaultRoundIndex, activeBranch]);
 
   const currentRound = activeBranchRounds[activeRoundIndex] ?? activeBranchRounds[0];
 
@@ -263,7 +250,7 @@ export function PagedDoubleElimView({
         )}
       </div>
 
-      {/* Header Controls */}
+      {/* Top Navigation & Controls Bar */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-50/90 border border-slate-200 rounded-xl px-4 py-3 shadow-sm">
         <div>
           <span className="text-[11px] font-bold text-blue-600 uppercase tracking-wider">
@@ -276,14 +263,14 @@ export function PagedDoubleElimView({
 
         <div className="flex items-center justify-between sm:justify-end gap-2">
           <button
-            onClick={() => scrollToRoundIndex(Math.max(activeRoundIndex - 1, 0))}
+            onClick={() => setActiveRoundIndex(Math.max(activeRoundIndex - 1, 0))}
             disabled={activeRoundIndex === 0}
             className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 disabled:opacity-40 text-xs font-bold text-slate-700 transition-all shadow-sm cursor-pointer"
           >
             <ChevronLeft className="w-4 h-4" /> Vòng trước
           </button>
           <button
-            onClick={() => scrollToRoundIndex(Math.min(activeRoundIndex + 1, activeBranchRounds.length - 1))}
+            onClick={() => setActiveRoundIndex(Math.min(activeRoundIndex + 1, activeBranchRounds.length - 1))}
             disabled={activeRoundIndex === activeBranchRounds.length - 1}
             className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-xs font-bold text-white transition-all shadow-sm cursor-pointer"
           >
@@ -322,46 +309,16 @@ export function PagedDoubleElimView({
         </div>
       </div>
 
-      {/* Round Selector Pills Bar */}
-      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
-        {activeBranchRounds.map((r, idx) => {
-          const isActive = idx === activeRoundIndex;
-          const matchCount = activeBranchByRound[r]?.length ?? 0;
-          return (
-            <button
-              key={r}
-              onClick={() => scrollToRoundIndex(idx)}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all border whitespace-nowrap cursor-pointer ${
-                isActive
-                  ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                  : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-              }`}
-            >
-              <span>{getRoundTitle(r)}</span>
-              <span
-                className={`px-1.5 py-0.5 rounded text-[10px] ${
-                  isActive ? 'bg-white/20' : 'bg-slate-100 text-slate-500'
-                }`}
-              >
-                {matchCount}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Scrollable Tree Viewport (3 Rounds Window) */}
+      {/* Adaptive Tree Viewport — Container Height Automatically Fits Match Height */}
       <div
-        ref={scrollContainerRef}
-        className={`overflow-x-auto overflow-y-auto pb-4 border border-slate-200/80 bg-slate-50/40 rounded-xl p-4 shadow-inner no-scrollbar ${
-          isFullscreen ? 'flex-1 max-h-none' : 'max-h-[75vh]'
+        className={`overflow-x-auto overflow-y-auto border border-slate-200/80 bg-slate-50/40 rounded-xl p-4 shadow-inner no-scrollbar ${
+          isFullscreen ? 'flex-1 max-h-none' : ''
         }`}
-        style={{ scrollBehavior: 'smooth' }}
       >
         <div
           style={{
             width: svgW * zoom,
-            height: totalHeight * zoom,
+            height: (totalHeight + 36) * zoom,
             transition: 'width 0.2s ease-out, height 0.2s ease-out',
           }}
           className="relative"
@@ -374,7 +331,7 @@ export function PagedDoubleElimView({
               width: svgW,
               transition: 'transform 0.2s ease-out',
             }}
-            className="flex mb-3 flex-shrink-0"
+            className="flex mb-2 flex-shrink-0"
           >
             <div className="flex" style={{ gap: roundGap }}>
               {visibleRounds.map((r) => {
@@ -387,7 +344,7 @@ export function PagedDoubleElimView({
                     className="text-center"
                   >
                     <button
-                      onClick={() => scrollToRoundIndex(globalIdx)}
+                      onClick={() => setActiveRoundIndex(globalIdx)}
                       className={`inline-block text-[11px] font-extrabold uppercase tracking-wider px-3.5 py-1 rounded-full border transition-all cursor-pointer ${
                         isActive
                           ? 'bg-blue-600 text-white border-blue-600 shadow-sm'

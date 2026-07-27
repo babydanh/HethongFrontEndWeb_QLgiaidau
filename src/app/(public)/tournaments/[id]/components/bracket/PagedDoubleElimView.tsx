@@ -1,5 +1,8 @@
 /**
- * PagedDoubleElimView — Full Tree Double Elimination with World Cup Style Focus Animations
+ * PagedDoubleElimView — 3-Round Sliding Window Double Elimination Bracket
+ *
+ * Displays exactly 3 rounds per page window with compact Y-spacing (no blank top gaps),
+ * uniform 1.5px Royal Blue (#2563eb) SVG connectors, and smooth navigation.
  */
 
 'use client';
@@ -72,7 +75,7 @@ export function PagedDoubleElimView({
     [lbByRound],
   );
 
-  // Auto-detect branch and round currently active
+  // Auto-detect branch
   const defaultBranch: BranchTab = useMemo(() => {
     const hasLiveOrScheduled = (list: BracketMatch[]) =>
       list.some((m) => m.status === 'IN_PROGRESS' || m.status === 'SCHEDULED' || m.status === 'READY');
@@ -96,6 +99,16 @@ export function PagedDoubleElimView({
   }, [activeBranchRounds, activeBranchByRound]);
 
   const [activeRoundIndex, setActiveRoundIndex] = useState<number>(defaultRoundIndex);
+
+  // Sliding 3-Round Window Logic
+  const visibleStartIndex = useMemo(() => {
+    if (activeBranchRounds.length <= 3) return 0;
+    return Math.max(0, Math.min(activeRoundIndex - 1, activeBranchRounds.length - 3));
+  }, [activeRoundIndex, activeBranchRounds.length]);
+
+  const visibleRounds = useMemo(() => {
+    return activeBranchRounds.slice(visibleStartIndex, visibleStartIndex + 3);
+  }, [activeBranchRounds, visibleStartIndex]);
 
   const getUbLabel = (r: number) => {
     const rIndex = ubRounds.indexOf(r);
@@ -133,19 +146,22 @@ export function PagedDoubleElimView({
   const getRoundTitle = (r: number) =>
     activeBranch === 'upper' ? getUbLabel(r) : getLbLabel(r);
 
-  const slotHBase = cardH + 20;
-  const roundGap = COL_GAP + 28;
+  const roundGap = COL_GAP + 20;
 
-  // Calculate compact posMap for active branch matches
+  // Calculate compact posMap for visible rounds only
   const posMap = useMemo(() => {
     const map = new Map<string, { x: number; y: number }>();
+    const visibleSet = new Set(visibleRounds);
 
-    activeBranchRounds.forEach((r, idx) => {
-      const colX = idx * (CARD_W + roundGap);
+    visibleRounds.forEach((r, vIdx) => {
+      const colX = vIdx * (CARD_W + roundGap);
       const roundMatches = activeBranchByRound[r] ?? [];
 
       roundMatches.forEach((match, index) => {
-        const feeders = activeBranchMatches.filter((m) => m.nextMatchId === match.id);
+        const feeders = activeBranchMatches.filter(
+          (m) => m.nextMatchId === match.id && visibleSet.has(m.roundNumber),
+        );
+
         let y = 0;
         if (feeders.length > 0) {
           let ySum = 0;
@@ -157,69 +173,42 @@ export function PagedDoubleElimView({
               count++;
             }
           });
-          y = count > 0 ? ySum / count : 32 + index * slotHBase + cardH / 2;
+          y = count > 0 ? ySum / count : 24 + index * (cardH + 20) + cardH / 2;
         } else {
-          const step = slotHBase * Math.pow(1.4, Math.min(idx, 2));
-          y = 32 + index * step + cardH / 2;
+          const step = (cardH + 20) * Math.pow(1.3, Math.min(vIdx, 2));
+          y = 24 + index * step + cardH / 2;
         }
         map.set(match.id, { x: colX, y });
       });
     });
 
     return map;
-  }, [activeBranchRounds, activeBranchByRound, activeBranchMatches, cardH, roundGap, CARD_W, slotHBase]);
+  }, [visibleRounds, activeBranchByRound, activeBranchMatches, cardH, roundGap, CARD_W]);
 
-  // Calculate total bounding height
+  // Calculate total bounding height for visible rounds
   const totalHeight = useMemo(() => {
-    let maxY = 320;
+    let maxY = 240;
     posMap.forEach((pos) => {
-      if (pos.y + cardH / 2 + 40 > maxY) {
-        maxY = pos.y + cardH / 2 + 40;
+      if (pos.y + cardH / 2 + 30 > maxY) {
+        maxY = pos.y + cardH / 2 + 30;
       }
     });
     return maxY;
   }, [posMap, cardH]);
 
-  const numRounds = activeBranchRounds.length;
-  const svgW = numRounds * CARD_W + Math.max(0, numRounds - 1) * roundGap + 48;
+  const numVisible = visibleRounds.length;
+  const svgW = numVisible * CARD_W + Math.max(0, numVisible - 1) * roundGap + 36;
 
   const scrollToRoundIndex = (index: number) => {
     setActiveRoundIndex(index);
     if (!scrollContainerRef.current) return;
-    const colX = index * (CARD_W + roundGap);
-    const targetScrollLeft = Math.max(0, colX * zoom - 24);
-
-    const r = activeBranchRounds[index];
-    const matchesInRound = activeBranchByRound[r] ?? [];
-    let targetScrollTop = 0;
-    if (matchesInRound.length > 0) {
-      let ySum = 0;
-      let count = 0;
-      matchesInRound.forEach((m) => {
-        const p = posMap.get(m.id);
-        if (p) {
-          ySum += p.y;
-          count++;
-        }
-      });
-      if (count > 0) {
-        const avgY = ySum / count;
-        const containerH = scrollContainerRef.current.clientHeight || 450;
-        targetScrollTop = Math.max(0, avgY * zoom - containerH / 2);
-      }
-    }
-
-    scrollContainerRef.current.scrollTo({
-      left: targetScrollLeft,
-      top: targetScrollTop,
-      behavior: 'smooth',
-    });
+    scrollContainerRef.current.scrollTo({ left: 0, top: 0, behavior: 'smooth' });
   };
 
   useEffect(() => {
     const timer = setTimeout(() => {
       scrollToRoundIndex(defaultRoundIndex);
-    }, 150);
+    }, 100);
     return () => clearTimeout(timer);
   }, [defaultRoundIndex, activeBranch]);
 
@@ -344,7 +333,7 @@ export function PagedDoubleElimView({
               onClick={() => scrollToRoundIndex(idx)}
               className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all border whitespace-nowrap cursor-pointer ${
                 isActive
-                  ? 'bg-blue-600 text-white border-blue-600 shadow-sm scale-105'
+                  ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
                   : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
               }`}
             >
@@ -361,7 +350,7 @@ export function PagedDoubleElimView({
         })}
       </div>
 
-      {/* Scrollable Tree Viewport */}
+      {/* Scrollable Tree Viewport (3 Rounds Window) */}
       <div
         ref={scrollContainerRef}
         className={`overflow-x-auto overflow-y-auto pb-4 border border-slate-200/80 bg-slate-50/40 rounded-xl p-4 shadow-inner no-scrollbar ${
@@ -377,7 +366,7 @@ export function PagedDoubleElimView({
           }}
           className="relative"
         >
-          {/* Round Titles Canvas Header */}
+          {/* Round Titles Header for Visible 3 Rounds */}
           <div
             style={{
               transform: `scale(${zoom})`,
@@ -385,11 +374,12 @@ export function PagedDoubleElimView({
               width: svgW,
               transition: 'transform 0.2s ease-out',
             }}
-            className="flex mb-4 flex-shrink-0"
+            className="flex mb-3 flex-shrink-0"
           >
             <div className="flex" style={{ gap: roundGap }}>
-              {activeBranchRounds.map((r, idx) => {
-                const isActive = idx === activeRoundIndex;
+              {visibleRounds.map((r) => {
+                const globalIdx = activeBranchRounds.indexOf(r);
+                const isActive = globalIdx === activeRoundIndex;
                 return (
                   <div
                     key={r}
@@ -397,11 +387,11 @@ export function PagedDoubleElimView({
                     className="text-center"
                   >
                     <button
-                      onClick={() => scrollToRoundIndex(idx)}
-                      className={`inline-block text-[11px] font-extrabold uppercase tracking-wider px-3.5 py-1 rounded-full border transition-all duration-300 cursor-pointer ${
+                      onClick={() => scrollToRoundIndex(globalIdx)}
+                      className={`inline-block text-[11px] font-extrabold uppercase tracking-wider px-3.5 py-1 rounded-full border transition-all cursor-pointer ${
                         isActive
-                          ? 'bg-blue-600 text-white border-blue-600 shadow-md scale-105 ring-2 ring-blue-400/30'
-                          : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-100 opacity-80 hover:opacity-100'
+                          ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                          : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
                       }`}
                     >
                       {getRoundTitle(r)}
@@ -412,7 +402,7 @@ export function PagedDoubleElimView({
             </div>
           </div>
 
-          {/* Interactive Tree Canvas */}
+          {/* Interactive Tree Canvas for Visible 3 Rounds */}
           <div
             style={{
               transform: `scale(${zoom})`,
@@ -420,11 +410,11 @@ export function PagedDoubleElimView({
               width: svgW,
               height: totalHeight,
               transition: 'transform 0.2s ease-out',
-              marginTop: '36px',
+              marginTop: '32px',
             }}
             className="absolute"
           >
-            {/* SVG Connectors between rounds with dynamic highlight animation */}
+            {/* SVG Connectors between visible 3 rounds (Uniform 1.5px Royal Blue / Slate) */}
             <svg
               className="absolute inset-0 pointer-events-none"
               width={svgW}
@@ -436,45 +426,36 @@ export function PagedDoubleElimView({
                 const endPos = posMap.get(m.nextMatchId);
                 if (!endPos) return null;
 
-                const isConnectedToActive =
-                  m.roundNumber === currentRound ||
-                  activeBranchMatches.find((nm) => nm.id === m.nextMatchId)?.roundNumber === currentRound;
-
                 const midX = (startPos.x + CARD_W + endPos.x) / 2;
-                const stroke = isConnectedToActive || m.status === 'COMPLETED' ? '#2563eb' : '#cbd5e1';
+                const isBlue = m.status === 'COMPLETED' || m.status === 'ONGOING' || m.status === 'IN_PROGRESS';
+                const stroke = isBlue ? '#2563eb' : '#cbd5e1';
 
                 return (
                   <path
                     key={m.id}
                     d={`M ${startPos.x + CARD_W} ${startPos.y} H ${midX} V ${endPos.y} H ${endPos.x}`}
                     stroke={stroke}
-                    strokeWidth={isConnectedToActive ? 2.5 : 1.5}
+                    strokeWidth={1.5}
                     fill="none"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    opacity={isConnectedToActive ? 1 : 0.6}
-                    className="transition-all duration-300"
+                    opacity={isBlue ? 0.95 : 0.65}
                   />
                 );
               })}
             </svg>
 
-            {/* Match Cards with Smooth Round Focus Scale & Opacity Animations */}
+            {/* Match Cards for Visible 3 Rounds */}
             {activeBranchMatches.map((match) => {
               const pos = posMap.get(match.id);
               if (!pos) return null;
               const isP1Bye = isSlotBye(match, 1, activeBranchMatches);
               const isP2Bye = isSlotBye(match, 2, activeBranchMatches);
-              const isActiveRound = match.roundNumber === currentRound;
 
               return (
                 <div
                   key={match.id}
-                  className={`absolute transition-all duration-300 ${
-                    isActiveRound
-                      ? 'scale-105 z-20 opacity-100 drop-shadow-md'
-                      : 'scale-100 z-10 opacity-75 hover:opacity-100 hover:scale-102'
-                  }`}
+                  className="absolute transition-all duration-200 hover:-translate-y-0.5"
                   style={{
                     left: pos.x,
                     top: pos.y - cardH / 2,

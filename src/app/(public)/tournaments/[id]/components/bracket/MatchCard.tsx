@@ -203,6 +203,16 @@ export function MatchCard({
             maxCols={maxCols}
           />
         </div>
+
+        {/* Compact 1-Line Schedule Footer */}
+        {!match.isBye && (
+          <div className="flex items-center justify-between px-2.5 py-1 bg-slate-50/60 text-[9px] font-bold text-slate-500 flex-shrink-0">
+            <span className="flex items-center gap-1 truncate">
+              <Clock className="w-2.5 h-2.5 text-slate-400 shrink-0" />
+              <span className="truncate">{match.scheduledAt ? formatDateTime(match.scheduledAt) : 'Chưa xếp giờ'}</span>
+            </span>
+          </div>
+        )}
       </>
     );
   }

@@ -4,12 +4,11 @@ import { useEffect, useState } from 'react';
 import type { Tournament, BracketStage, BracketMatch } from '@/features/tournaments/api';
 import { tournamentsApi } from '@/features/tournaments/api';
 import { getSportRuleKind } from '@/features/tournaments/sport-rules/normalize';
-import { Trophy, Info, Loader2 } from 'lucide-react';
+import { LayoutGrid, Maximize2, Trophy, Info, Loader2 } from 'lucide-react';
 import type { OnScheduleMatch, OnSelectBracketMatch, BracketTabProps } from './bracket';
 import { UPPER_SET, LOWER_SET } from './bracket';
-import { SingleElimView } from './bracket';
-import { DoubleElimView } from './bracket';
-import { RoundRobinView } from './bracket';
+import { SingleElimView, DoubleElimView, RoundRobinView } from './bracket';
+import { PagedSingleElimView, PagedDoubleElimView, PagedRoundRobinView } from './bracket';
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // HELPERS
@@ -80,6 +79,7 @@ function GroupView({
   onSelectMatch,
   fallbackSportRuleKind,
   roundConfig,
+  viewMode = 'paged',
 }: {
   group: { id: string; name: string; matches: BracketMatch[] };
   stageType: string;
@@ -91,6 +91,7 @@ function GroupView({
   selectedMatchId?: string | null;
   fallbackSportRuleKind?: BracketTabProps['fallbackSportRuleKind'];
   roundConfig?: BracketStage['roundConfig'];
+  viewMode?: 'paged' | 'full';
 }) {
   const { matches } = group;
 
@@ -103,7 +104,31 @@ function GroupView({
   }
 
   if (stageType === 'ROUND_ROBIN' || stageType === 'GROUP_STAGE' || stageType === 'GROUP') {
-    return <RoundRobinView matches={matches} tiebreakerMode={tiebreakerMode} onScheduleMatch={onScheduleMatch} selectedMatchId={selectedMatchId} onSelectMatch={onSelectMatch} tournamentId={tournamentId} stageId={stageId} fallbackSportRuleKind={fallbackSportRuleKind} roundConfig={roundConfig} />;
+    return viewMode === 'paged' ? (
+      <PagedRoundRobinView
+        matches={matches}
+        tiebreakerMode={tiebreakerMode}
+        onScheduleMatch={onScheduleMatch}
+        selectedMatchId={selectedMatchId}
+        onSelectMatch={onSelectMatch}
+        tournamentId={tournamentId}
+        stageId={stageId}
+        fallbackSportRuleKind={fallbackSportRuleKind}
+        roundConfig={roundConfig}
+      />
+    ) : (
+      <RoundRobinView
+        matches={matches}
+        tiebreakerMode={tiebreakerMode}
+        onScheduleMatch={onScheduleMatch}
+        selectedMatchId={selectedMatchId}
+        onSelectMatch={onSelectMatch}
+        tournamentId={tournamentId}
+        stageId={stageId}
+        fallbackSportRuleKind={fallbackSportRuleKind}
+        roundConfig={roundConfig}
+      />
+    );
   }
 
   if (stageType === 'DOUBLE_ELIMINATION') {
@@ -118,7 +143,17 @@ function GroupView({
     );
 
     if (upper.length > 0 || lower.length > 0) {
-      return (
+      return viewMode === 'paged' ? (
+        <PagedDoubleElimView
+          upperMatches={upper}
+          lowerMatches={lower}
+          gfMatches={gf}
+          onScheduleMatch={onScheduleMatch}
+          selectedMatchId={selectedMatchId}
+          onSelectMatch={onSelectMatch}
+          fallbackSportRuleKind={fallbackSportRuleKind}
+        />
+      ) : (
         <DoubleElimView
           upperMatches={upper}
           lowerMatches={lower}
@@ -132,7 +167,15 @@ function GroupView({
     }
   }
 
-  return (
+  return viewMode === 'paged' ? (
+    <PagedSingleElimView
+      matches={matches}
+      onScheduleMatch={onScheduleMatch}
+      selectedMatchId={selectedMatchId}
+      onSelectMatch={onSelectMatch}
+      fallbackSportRuleKind={fallbackSportRuleKind}
+    />
+  ) : (
     <SingleElimView
       matches={matches}
       onScheduleMatch={onScheduleMatch}
@@ -163,6 +206,7 @@ export default function BracketTab({
   const [stages, setStages] = useState<BracketStage[]>([]);
   const [activeStageId, setActiveStageId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<'paged' | 'full'>('paged');
 
   useEffect(() => {
     const fetchBracket = async () => {
@@ -234,18 +278,44 @@ export default function BracketTab({
   // ── Main ──
   return (
     <div className="flex flex-col gap-5">
-      {/* Division info bar */}
-      <div className="flex items-center gap-2 text-xs text-slate-400 font-semibold pb-2 border-b border-slate-100">
-        <Info className="w-3.5 h-3.5" />
-        <span>
-          Phân hạng:{' '}
-          <strong className="text-slate-700">{tournament.name}</strong>
-        </span>
-        {tournament.genderRestriction && (
-          <span className="text-slate-300">
-            • {tournament.genderRestriction}
+      {/* Division info bar & View Mode Switcher */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+        <div className="flex items-center gap-2 text-xs text-slate-400 font-semibold">
+          <Info className="w-3.5 h-3.5" />
+          <span>
+            Phân hạng:{' '}
+            <strong className="text-slate-700">{tournament.name}</strong>
           </span>
-        )}
+          {tournament.genderRestriction && (
+            <span className="text-slate-300">
+              • {tournament.genderRestriction}
+            </span>
+          )}
+        </div>
+
+        {/* View Mode Switcher */}
+        <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200/80 shadow-inner self-end sm:self-auto">
+          <button
+            onClick={() => setViewMode('paged')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              viewMode === 'paged'
+                ? 'bg-blue-600 text-white shadow-sm'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
+            }`}
+          >
+            <LayoutGrid className="w-3.5 h-3.5" /> Xem theo Vòng (World Cup)
+          </button>
+          <button
+            onClick={() => setViewMode('full')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              viewMode === 'full'
+                ? 'bg-blue-600 text-white shadow-sm'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
+            }`}
+          >
+            <Maximize2 className="w-3.5 h-3.5" /> Xem Full sơ đồ
+          </button>
+        </div>
       </div>
 
       {/* Stage tabs */}
@@ -294,7 +364,17 @@ export default function BracketTab({
                 const gf = allMatches.filter(
                   (m) => m.bracketBranch === 'GRAND_FINALS',
                 );
-                return (
+                return viewMode === 'paged' ? (
+                  <PagedDoubleElimView
+                    upperMatches={upper}
+                    lowerMatches={lower}
+                    gfMatches={gf}
+                    onScheduleMatch={onScheduleMatch}
+                    selectedMatchId={selectedMatchId}
+                    onSelectMatch={onSelectMatch}
+                    fallbackSportRuleKind={effectiveSportRuleKind}
+                  />
+                ) : (
                   <DoubleElimView
                     upperMatches={upper}
                     lowerMatches={lower}
@@ -326,6 +406,7 @@ export default function BracketTab({
                   onSelectMatch={onSelectMatch}
                   fallbackSportRuleKind={effectiveSportRuleKind}
                   roundConfig={activeStage?.roundConfig}
+                  viewMode={viewMode}
                 />
               </div>
             ))

@@ -38,4 +38,7 @@ export { MatchCard } from './MatchCard';
 export { SingleElimView } from './SingleElimView';
 export { DoubleElimView } from './DoubleElimView';
 export { RoundRobinView } from './RoundRobinView';
+export { PagedSingleElimView } from './PagedSingleElimView';
+export { PagedDoubleElimView } from './PagedDoubleElimView';
+export { PagedRoundRobinView } from './PagedRoundRobinView';
 export { tiebreakerSort } from './tiebreaker';

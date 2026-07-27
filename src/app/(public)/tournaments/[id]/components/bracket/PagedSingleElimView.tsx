@@ -1,8 +1,8 @@
 /**
- * PagedSingleElimView — GPU-Accelerated 60fps 3-Round Sliding Bracket View
+ * PagedSingleElimView — Smooth FLIP Morphing Bracket Re-ordering Animations
  *
- * Uses GPU translate3d hardware rendering and React.memo optimizations to deliver
- * silky-smooth 60fps animations with zero lag.
+ * Cards fluidly glide, slide, and morph into new 3-round positions over 350ms cubic-bezier transitions.
+ * SVG connector lines dynamically stretch and morph with the cards. Zero snapping or blinking.
  */
 
 'use client';
@@ -69,7 +69,7 @@ export function PagedSingleElimView({
     return rounds.slice(visibleStartIndex, visibleStartIndex + 3);
   }, [rounds, visibleStartIndex]);
 
-  // Calculate compact posMap for visible rounds (always top-aligned at y = 16px)
+  // Calculate compact posMap for visible rounds (top-aligned at y = 16px)
   const posMap = useMemo(() => {
     const map = new Map<string, { x: number; y: number }>();
     const visibleSet = new Set(visibleRounds);
@@ -211,7 +211,7 @@ export function PagedSingleElimView({
           style={{
             width: svgW * zoom,
             height: (totalHeight + 36) * zoom,
-            transition: 'width 0.25s ease-out, height 0.25s ease-out',
+            transition: 'width 0.35s cubic-bezier(0.4, 0, 0.2, 1), height 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
           }}
           className="relative"
         >
@@ -221,7 +221,7 @@ export function PagedSingleElimView({
               transform: `scale(${zoom})`,
               transformOrigin: 'top left',
               width: svgW,
-              transition: 'transform 0.25s ease-out',
+              transition: 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
             }}
             className="flex mb-2 flex-shrink-0"
           >
@@ -237,7 +237,7 @@ export function PagedSingleElimView({
                   >
                     <button
                       onClick={() => setActiveRoundIndex(globalIdx)}
-                      className={`inline-block text-[11px] font-extrabold uppercase tracking-wider px-3.5 py-1 rounded-full border transition-all duration-200 cursor-pointer ${
+                      className={`inline-block text-[11px] font-extrabold uppercase tracking-wider px-3.5 py-1 rounded-full border transition-all duration-300 cursor-pointer ${
                         isActive
                           ? 'bg-blue-600 text-white border-blue-600 shadow-sm scale-105'
                           : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
@@ -251,19 +251,19 @@ export function PagedSingleElimView({
             </div>
           </div>
 
-          {/* GPU Hardware Accelerated Interactive Canvas with Smooth 60fps Transition */}
+          {/* Interactive Canvas with Smooth Fluid Morphing Transitions */}
           <div
-            key={visibleStartIndex}
             style={{
               transform: `scale(${zoom})`,
               transformOrigin: 'top left',
               width: svgW,
               height: totalHeight,
               marginTop: '32px',
+              transition: 'height 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
             }}
-            className="absolute transition-all duration-300 ease-out animate-in fade-in-50 slide-in-from-right-1"
+            className="absolute"
           >
-            {/* SVG Connectors between visible 3 rounds (Uniform 1.5px Royal Blue / Slate) */}
+            {/* SVG Connectors with Smooth Fluid Morphing */}
             <svg
               className="absolute inset-0 pointer-events-none"
               width={svgW}
@@ -289,12 +289,15 @@ export function PagedSingleElimView({
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     opacity={isBlue ? 0.95 : 0.65}
+                    style={{
+                      transition: 'd 0.35s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.3s ease-out, opacity 0.3s ease-out',
+                    }}
                   />
                 );
               })}
             </svg>
 
-            {/* GPU Compositor Accelerated Match Cards */}
+            {/* Match Cards with Smooth FLIP Position Gliding Transitions */}
             {matches.map((match) => {
               const pos = posMap.get(match.id);
               if (!pos) return null;
@@ -304,11 +307,12 @@ export function PagedSingleElimView({
               return (
                 <div
                   key={match.id}
-                  className="absolute transition-transform duration-200 hover:-translate-y-0.5"
+                  className="absolute"
                   style={{
                     transform: `translate3d(${pos.x}px, ${pos.y - cardH / 2}px, 0px)`,
                     width: CARD_W,
                     willChange: 'transform',
+                    transition: 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease-out',
                   }}
                 >
                   <MatchCard

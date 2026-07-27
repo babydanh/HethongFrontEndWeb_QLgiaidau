@@ -166,6 +166,7 @@ export interface Tournament {
   }[] | null;
   city?: string | null;
   tournamentConfig?: {
+    mode?: 'LITE' | 'ADVANCED';
     bracketType?: string;
     maxTeams?: number;
     seedingMethod?: 'ELO' | 'RANDOM' | 'MANUAL';
@@ -291,6 +292,40 @@ export interface BracketMatch {
   tournament?: {
     name: string;
   } | null;
+}
+
+// --- Lite pairing types ---
+
+export interface LiteParticipant {
+  id: string;
+  teamName: string;
+  teamStatus: 'PENDING_PARTNER' | 'COMPLETE' | 'PENDING_APPROVAL' | 'WITHDRAWN';
+  isPaid: boolean;
+  teamInviteToken?: string | null;
+  rosters: {
+    userId: string;
+    role: string;
+    profile: {
+      fullName: string | null;
+      avatarUrl: string | null;
+    } | null;
+  }[];
+}
+
+export interface LiteGeneratePairsResponse {
+  message: string;
+  paired: Array<{
+    participant1Id: string;
+    participant2Id: string;
+    teamName: string;
+  }>;
+  unpairedParticipantIds: string[];
+  strategy: 'RANDOM' | 'ELO_BALANCED';
+}
+
+export interface LiteUnpairResponse {
+  leader: LiteParticipant;
+  partner: LiteParticipant;
 }
 
 export interface BracketGroup {

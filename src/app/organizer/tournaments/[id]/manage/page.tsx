@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useRef } from 'react';
+import { use, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Modal, ModalContent, ModalHeader, ModalTitle } from '@/components/ui/Modal';
@@ -21,10 +21,12 @@ import { LivestreamTab } from './components/LivestreamTab';
 import { getSportRulePresentation } from '@/features/tournaments/sport-rules/presentation';
 import { getScoreEntryGuidance, getSportRulePresets } from '@/features/tournaments/sport-rules/ui-guidance';
 import { isTournamentRegistrationClosed, isTournamentRegistrationOpen } from '@/utils/tournament-status';
+import { useRouter } from 'next/navigation';
 
 export default function TournamentManagePage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const id = resolvedParams.id;
+  const router = useRouter();
   const s = useManageState(id);
   const pendingRefereeCount = s.referees.filter((ref) => ref.status === 'INVITED').length;
   const bracketSectionRef = useRef<HTMLDivElement | null>(null);
@@ -33,6 +35,13 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
   const isPickleballSideOut = s.sportRuleKind === 'PICKLEBALL_SIDE_OUT';
   const scoreGuidance = getScoreEntryGuidance(s.sportRuleKind);
   const sportPresets = getSportRulePresets(s.sportRuleKind);
+
+  // Lite tournament → redirect to dedicated Lite manager
+  useEffect(() => {
+    if (!s.isLoading && s.tournament?.tournamentConfig?.mode === 'LITE') {
+      router.replace(`/lite/tournaments/${id}/manage`);
+    }
+  }, [s.isLoading, s.tournament, id, router]);
 
   if (s.isLoading) return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center">

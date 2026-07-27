@@ -44,7 +44,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
   const [liteName, setLiteName] = useState('');
   const [liteSport, setLiteSport] = useState<'badminton' | 'tennis' | 'pickleball' | 'table_tennis'>('badminton');
   const [liteFormat, setLiteFormat] = useState<'singles' | 'doubles'>('doubles');
-  const [liteBracketType, setLiteBracketType] = useState<'single_elimination' | 'double_elimination' | 'round_robin'>('single_elimination');
+  const [liteBracketType, setLiteBracketType] = useState<'single_elimination' | 'double_elimination' | 'round_robin' | 'group_stage_knockout'>('single_elimination');
   const [liteMaxTeams, setLiteMaxTeams] = useState(16);
 
   const fetchData = async () => {
@@ -306,7 +306,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
                         })()}
                         {t.category?.name || 'Bộ môn'}
                       </span>
-                      {(t.inviteCode || t.description?.toLowerCase().includes('nhanh') || t.name?.toLowerCase().includes('lite')) ? (
+                      {t.tournamentConfig?.mode === 'LITE' ? (
                         <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-300">
                           Giải Nhanh (Lite)
                         </span>
@@ -320,11 +320,6 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
                   </div>
                   <h3 className="text-lg font-bold text-slate-900 line-clamp-1">{t.name}</h3>
 
-                  {(t.inviteCode || t.description?.toLowerCase().includes('nhanh') || t.name?.toLowerCase().includes('lite')) && (
-                    <div className="text-[11px] text-amber-800 bg-amber-50/90 px-2.5 py-1 rounded border border-amber-200/80 font-medium">
-                      <strong>Note: Giải đấu tạo nhanh (Lite)</strong> — Quản lý đơn giản, chia sẻ mã/link tham gia ngay
-                    </div>
-                  )}
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-slate-500 text-xs font-semibold pt-1">
                     <span className="flex items-center gap-1">
                       <Calendar className="w-3.5 h-3.5 text-slate-450" />
@@ -338,11 +333,19 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
                 </div>
 
                 <div className="flex gap-3 pt-3 border-t border-slate-100">
-                  <Link href={`/organizer/tournaments/${t.id}/manage`} className="flex-1">
-                    <Button variant="outline" className="w-full border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold flex items-center justify-center gap-1">
-                      <Settings className="w-3.5 h-3.5" /> Thiết lập & Quản lý
-                    </Button>
-                  </Link>
+                  {t.tournamentConfig?.mode === 'LITE' ? (
+                    <Link href={`/lite/tournaments/${t.id}/manage`} className="flex-1">
+                      <Button variant="outline" className="w-full border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold flex items-center justify-center gap-1">
+                        <Settings className="w-3.5 h-3.5" /> Quản lý giải nhanh
+                      </Button>
+                    </Link>
+                  ) : (
+                    <Link href={`/organizer/tournaments/${t.id}/manage`} className="flex-1">
+                      <Button variant="outline" className="w-full border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold flex items-center justify-center gap-1">
+                        <Settings className="w-3.5 h-3.5" /> Thiết lập & Quản lý
+                      </Button>
+                    </Link>
+                  )}
                   <Link href={`/tournaments/${t.id}`} target="_blank" className="flex-1">
                     <Button variant="outline" className="w-full text-xs font-bold flex items-center justify-center gap-1">
                       <Eye className="w-3.5 h-3.5" /> Xem trang giải
@@ -476,13 +479,19 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
                     <label className="text-sm font-semibold text-slate-700">Thể thức đấu</label>
                     <select
                       value={liteBracketType}
-                      onChange={(e) => setLiteBracketType(e.target.value as 'single_elimination' | 'double_elimination' | 'round_robin')}
+                      onChange={(e) => setLiteBracketType(e.target.value as 'single_elimination' | 'double_elimination' | 'round_robin' | 'group_stage_knockout')}
                       className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="single_elimination">Loại trực tiếp (Single Elim)</option>
                       <option value="double_elimination">Nhánh thắng/thua (Double Elim)</option>
                       <option value="round_robin">Vòng tròn tính điểm (Round Robin)</option>
+                      <option value="group_stage_knockout">Vòng bảng + loại trực tiếp</option>
                     </select>
+                    {liteBracketType === 'group_stage_knockout' && (
+                      <p className="text-xs text-amber-600 mt-1 font-medium">
+                        Cần tối thiểu 4 đội. Hệ thống tự động chia đều.
+                      </p>
+                    )}
                   </div>
 
                   <Input

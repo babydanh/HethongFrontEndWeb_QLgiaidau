@@ -52,7 +52,8 @@ export default function LiteJoinPage({ params }: { params: Promise<{ inviteCode:
       router.replace(`/login?redirect=/lite/tournaments/join/${inviteCode}`);
       return;
     }
-    fetchStatus();
+    const timer = window.setTimeout(() => void fetchStatus(), 0);
+    return () => window.clearTimeout(timer);
   }, [inviteCode, isAuthenticated, fetchStatus, router]);
 
   const handleJoin = async () => {
@@ -136,7 +137,7 @@ export default function LiteJoinPage({ params }: { params: Promise<{ inviteCode:
               Bạn chưa là thành viên CLB <strong>{status.communityName}</strong>
             </p>
             <Button onClick={handleRequestClub} disabled={isRequestingClub} className="w-full">
-              {isRequestingClub ? 'Đang gửi...' : 'Vào CLB & Tham gia'}
+              {isRequestingClub ? 'Đang gửi...' : 'Vào CLB'}
             </Button>
           </div>
         )}

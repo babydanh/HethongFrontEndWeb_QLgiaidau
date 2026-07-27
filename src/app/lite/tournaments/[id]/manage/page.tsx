@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useEffect, useState } from 'react';
+import { use, useEffect, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
@@ -9,10 +9,13 @@ import { getSportLogo } from '@/constants/sports';
 import {
   Trophy, Users, Swords, Calendar,
   Link as LinkIcon, ExternalLink, Copy, ChevronLeft,
-  AlertTriangle,
+  AlertTriangle, CheckCircle, RefreshCw, UserPlus, Shuffle,
+  Unlink, Loader2, User,
 } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
+import { getErrorMessage } from '@/utils/error';
+import type { LiteParticipant } from '@/types/tournament';
 
 type LiteTab = 'overview' | 'participants' | 'bracket' | 'matches';
 
@@ -72,6 +75,121 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
     };
     fetch();
   }, [id]);
+
+  // --- Participants / pairing state ---
+  const [participants, setParticipants] = useState<LiteParticipant[]>([]);
+  const [participantsLoading, setParticipantsLoading] = useState(false);
+  const [participantsError, setParticipantsError] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [pairingLoading, setPairingLoading] = useState(false);
+  const [generatingStrategy, setGeneratingStrategy] = useState<'RANDOM' | 'ELO_BALANCED' | null>(null);
+  const [unpairingId, setUnpairingId] = useState<string | null>(null);
+
+  const fetchParticipants = useCallback(async () => {
+    if (!id) return;
+    setParticipantsLoading(true);
+    setParticipantsError(null);
+    try {
+      const res = await tournamentsApi.getLiteParticipants(id);
+      setParticipants(res.data ?? []);
+    } catch (err) {
+      setParticipantsError(getErrorMessage(err));
+    } finally {
+      setParticipantsLoading(false);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    if (activeTab !== 'participants') return;
+    const load = async () => {
+      setParticipantsLoading(true);
+      setParticipantsError(null);
+      try {
+        const res = await tournamentsApi.getLiteParticipants(id);
+        setParticipants(res.data ?? []);
+      } catch (err) {
+        setParticipantsError(getErrorMessage(err));
+      } finally {
+        setParticipantsLoading(false);
+      }
+    };
+    load();
+  }, [activeTab, id]);
+
+  const pendingParticipants = participants.filter(
+    (p) => p.teamStatus === 'PENDING_PARTNER'
+  );
+  const pairedParticipants = participants.filter(
+    (p) => p.teamStatus === 'COMPLETE' || p.teamStatus === 'PENDING_APPROVAL'
+  );
+
+  const toggleSelection = (pid: string) => {
+    setSelectedIds((prev) => {
+      if (prev.includes(pid)) return prev.filter((x) => x !== pid);
+      if (prev.length >= 2) {
+        toast('Đã chọn 2 người. Bỏ chọn một người để chọn người khác.', { duration: 2000 });
+        return prev;
+      }
+      return [...prev, pid];
+    });
+  };
+
+  const clearSelection = () => setSelectedIds([]);
+
+  const handleManualPair = async () => {
+    if (selectedIds.length !== 2) return;
+    setPairingLoading(true);
+    try {
+      await tournamentsApi.pairLiteParticipants(id, {
+        participant1Id: selectedIds[0],
+        participant2Id: selectedIds[1],
+      });
+      toast.success('Ghép cặp thành công!');
+      clearSelection();
+      await fetchParticipants();
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setPairingLoading(false);
+    }
+  };
+
+  const handleGeneratePairs = async (strategy: 'RANDOM' | 'ELO_BALANCED') => {
+    const label = strategy === 'RANDOM' ? 'ngẫu nhiên' : 'ELO cân bằng';
+    if (!confirm(`Xác nhận ghép cặp ${label}? Hành động này sẽ ghép tất cả người chơi đang chờ.`)) return;
+    setGeneratingStrategy(strategy);
+    try {
+      const res = await tournamentsApi.generateLitePairs(id, { strategy });
+      const unpairedIds = res.data?.unpairedParticipantIds ?? [];
+      if (unpairedIds.length > 0) {
+        toast.success(
+          `Đã ghép cặp ${label}. ${unpairedIds.length} người chơi lẻ giữ lại chờ ghép sau.`
+        );
+      } else {
+        toast.success(`Ghép cặp ${label} thành công!`);
+      }
+      clearSelection();
+      await fetchParticipants();
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setGeneratingStrategy(null);
+    }
+  };
+
+  const handleUnpair = async (participantId: string) => {
+    if (!confirm('Hủy ghép cặp này? Cả hai người chơi sẽ trở lại trạng thái chờ ghép.')) return;
+    setUnpairingId(participantId);
+    try {
+      await tournamentsApi.unpairLiteParticipant(id, participantId);
+      toast.success('Đã hủy ghép cặp');
+      await fetchParticipants();
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setUnpairingId(null);
+    }
+  };
 
   const handleCopyInvite = async () => {
     if (!tournament?.inviteCode) return;
@@ -233,15 +351,262 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
           )}
 
           {activeTab === 'participants' && (
-            <div className="space-y-4">
-              <h3 className="text-base font-bold text-slate-900">Người tham gia</h3>
-              <p className="text-sm text-slate-500">
-                Danh sách người tham gia sẽ được hiển thị sau khi có dữ liệu từ hệ thống.
-              </p>
-              <div className="bg-slate-50 rounded-lg p-6 text-center text-sm text-slate-400">
-                <Users className="w-8 h-8 mx-auto mb-2 text-slate-300" />
-                <p>Chức năng đang được phát triển</p>
+            <div className="space-y-5">
+              <div className="flex items-center justify-between">
+                <h3 className="text-base font-semibold text-slate-900">
+                  Người tham gia
+                  {!participantsLoading && (
+                    <span className="ml-2 text-sm font-medium text-slate-400">
+                      ({participants.length} hồ sơ)
+                    </span>
+                  )}
+                </h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={fetchParticipants}
+                  disabled={participantsLoading}
+                  className="gap-1 text-xs font-semibold"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${participantsLoading ? 'animate-spin' : ''}`} />
+                  Làm mới
+                </Button>
               </div>
+
+              {participantsLoading && participants.length === 0 ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+                </div>
+              ) : participantsError ? (
+                <div className="bg-rose-50 border border-rose-200 rounded-lg p-4 text-center">
+                  <AlertTriangle className="w-8 h-8 text-rose-500 mx-auto mb-2" />
+                  <p className="text-sm font-semibold text-rose-800">{participantsError}</p>
+                  <Button variant="outline" size="sm" onClick={fetchParticipants} className="mt-3 text-xs">
+                    Thử lại
+                  </Button>
+                </div>
+              ) : participants.length === 0 ? (
+                <div className="bg-slate-50 rounded-lg p-8 text-center">
+                  <Users className="w-10 h-10 mx-auto mb-2 text-slate-300" />
+                  <p className="text-sm text-slate-500 font-medium">Chưa có người tham gia</p>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Chia sẻ link mời để người chơi đăng ký
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {/* Doubles: pending pool + pairing */}
+                  {tournament?.matchType === 'DOUBLES' ? (
+                    <>
+                      {/* Pending pool */}
+                      <div>
+                        <h4 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                          <Users className="w-4 h-4 text-amber-500" />
+                          Chờ ghép cặp ({pendingParticipants.length})
+                        </h4>
+                        {pendingParticipants.length === 0 ? (
+                          <p className="text-xs text-slate-400 italic p-3 bg-slate-50 rounded-lg text-center">
+                            Không có người chơi nào đang chờ ghép
+                          </p>
+                        ) : (
+                          <div className="space-y-2">
+                            {pendingParticipants.map((p) => {
+                              const isSelected = selectedIds.includes(p.id);
+                              return (
+                                <div
+                                  key={p.id}
+                                  onClick={() => toggleSelection(p.id)}
+                                  className={`flex items-center gap-3 px-4 py-3 rounded-lg border cursor-pointer transition-colors ${
+                                    isSelected
+                                      ? 'border-blue-400 bg-blue-50 ring-1 ring-blue-400'
+                                      : 'border-slate-200 bg-white hover:border-blue-200 hover:bg-slate-50'
+                                  }`}
+                                >
+                                  <div
+                                    className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 ${
+                                      isSelected
+                                        ? 'border-blue-600 bg-blue-600'
+                                        : 'border-slate-300'
+                                    }`}
+                                  >
+                                    {isSelected && (
+                                      <CheckCircle className="w-4 h-4 text-white" />
+                                    )}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <span className="text-sm font-semibold text-slate-900 truncate block">
+                                      {p.teamName}
+                                    </span>
+                                    <div className="flex items-center gap-2 mt-1 text-xs text-slate-500">
+                                      {p.rosters?.map((m) => (
+                                        <span key={m.userId} className="flex items-center gap-1">
+                                          <User className="w-3 h-3" />
+                                          {m.profile?.fullName || '—'}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                  <Badge className="bg-amber-50 text-amber-700 border-amber-200 text-[10px] font-semibold">
+                                    Chờ ghép
+                                  </Badge>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Pairing actions */}
+                      {pendingParticipants.length >= 2 && (
+                        <div className="flex flex-wrap items-center gap-3 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                          <Button
+                            onClick={handleManualPair}
+                            disabled={selectedIds.length !== 2 || pairingLoading}
+                            className="gap-1.5 text-xs font-semibold"
+                            size="sm"
+                          >
+                            {pairingLoading ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <UserPlus className="w-3.5 h-3.5" />
+                            )}
+                            Ghép thủ công ({selectedIds.length}/2)
+                          </Button>
+                          <div className="flex-1" />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleGeneratePairs('RANDOM')}
+                            disabled={generatingStrategy !== null}
+                            className="gap-1.5 text-xs font-semibold"
+                          >
+                            {generatingStrategy === 'RANDOM' ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <Shuffle className="w-3.5 h-3.5" />
+                            )}
+                            Ghép ngẫu nhiên
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleGeneratePairs('ELO_BALANCED')}
+                            disabled={generatingStrategy !== null}
+                            className="gap-1.5 text-xs font-semibold"
+                          >
+                            {generatingStrategy === 'ELO_BALANCED' ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <Shuffle className="w-3.5 h-3.5" />
+                            )}
+                            Ghép ELO cân bằng
+                          </Button>
+                        </div>
+                      )}
+
+                      {/* Paired teams */}
+                      <div>
+                        <h4 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                          <CheckCircle className="w-4 h-4 text-emerald-500" />
+                          Đã ghép cặp ({pairedParticipants.length})
+                        </h4>
+                        {pairedParticipants.length === 0 ? (
+                          <p className="text-xs text-slate-400 italic p-3 bg-slate-50 rounded-lg text-center">
+                            Chưa có cặp nào được ghép
+                          </p>
+                        ) : (
+                          <div className="space-y-3">
+                            {pairedParticipants.map((p) => (
+                              <div
+                                key={p.id}
+                                className="bg-white rounded-lg border border-slate-200 p-4 flex items-start justify-between gap-4"
+                              >
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 flex-wrap mb-2">
+                                    <span className="text-sm font-semibold text-slate-900">
+                                      {p.teamName}
+                                    </span>
+                                    {p.teamStatus === 'PENDING_APPROVAL' && (
+                                      <Badge className="bg-amber-50 text-amber-700 border-amber-200 text-[10px]">
+                                        Chờ duyệt
+                                      </Badge>
+                                    )}
+                                    {p.teamStatus === 'COMPLETE' && (
+                                      <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px]">
+                                        Sẵn sàng
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <div className="flex flex-col gap-1">
+                                    {p.rosters?.map((m) => (
+                                      <div key={m.userId} className="flex items-center gap-2 text-xs text-slate-600">
+                                        <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden shrink-0">
+                                          {m.profile?.avatarUrl ? (
+                                            <img src={m.profile.avatarUrl} alt="" className="w-full h-full object-cover" />
+                                          ) : (
+                                            <User className="w-3.5 h-3.5 text-slate-400" />
+                                          )}
+                                        </div>
+                                        <span className="font-medium">{m.profile?.fullName || '—'}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                                {/* Only show unpair for actual Doubles pairs (has 2 rosters) */}
+                                {(p.rosters?.length ?? 0) === 2 && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleUnpair(p.id)}
+                                    disabled={unpairingId === p.id}
+                                    className="shrink-0 text-rose-500 hover:text-rose-700 hover:bg-rose-50 gap-1"
+                                  >
+                                    {unpairingId === p.id ? (
+                                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                    ) : (
+                                      <Unlink className="w-3.5 h-3.5" />
+                                    )}
+                                    <span className="text-xs">Hủy ghép</span>
+                                  </Button>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  ) : (
+                    /* Singles: compact participant list, no pairing */
+                    <div className="space-y-2">
+                      {participants.map((p) => (
+                        <div
+                          key={p.id}
+                          className="flex items-center gap-3 px-4 py-3 rounded-lg border border-slate-200 bg-white"
+                        >
+                          <div className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden shrink-0">
+                            {p.rosters?.[0]?.profile?.avatarUrl ? (
+                              <img src={p.rosters[0].profile.avatarUrl} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                              <User className="w-4 h-4 text-slate-400" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <span className="text-sm font-semibold text-slate-900 truncate block">
+                              {p.teamName}
+                            </span>
+                            {p.rosters?.[0]?.profile?.fullName && (
+                              <span className="text-xs text-slate-500">{p.rosters[0].profile.fullName}</span>
+                            )}
+                          </div>
+                          <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px] font-semibold">
+                            Đã tham gia
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           )}
 

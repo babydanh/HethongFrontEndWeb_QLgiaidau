@@ -10,6 +10,9 @@ import {
   MatchTypeUI,
   MatchTypeDB,
   GenderRestriction,
+  LiteParticipant,
+  LiteGeneratePairsResponse,
+  LiteUnpairResponse,
   type StageRoundConfig,
 } from '@/types/tournament';
 import { ApiResponse } from '@/types/api';
@@ -372,11 +375,23 @@ export const tournamentsApi = {
     sport: 'badminton' | 'tennis' | 'pickleball' | 'table_tennis';
     communityId: string;
     format?: 'singles' | 'doubles';
-    bracketType?: 'single_elimination' | 'double_elimination' | 'round_robin';
+    bracketType?: 'single_elimination' | 'double_elimination' | 'round_robin' | 'group_stage_knockout';
     maxTeams?: number;
     description?: string;
     isRanked?: boolean;
   }) => api.post<ApiResponse<{ id: string; name: string; status: string; inviteCode?: string; joinUrl?: string; qrPayload?: string }>>('/tournaments/lite', data).then(res => res.data),
+
+  getLiteParticipants: (id: string) =>
+    api.get<ApiResponse<LiteParticipant[]>>(`/tournaments/lite/${id}/participants`),
+
+  pairLiteParticipants: (id: string, data: { participant1Id: string; participant2Id: string }) =>
+    api.post<ApiResponse<LiteParticipant>>(`/tournaments/lite/${id}/pairs`, data),
+
+  generateLitePairs: (id: string, data: { strategy: 'RANDOM' | 'ELO_BALANCED' }) =>
+    api.post<ApiResponse<LiteGeneratePairsResponse>>(`/tournaments/lite/${id}/pairs/generate`, data),
+
+  unpairLiteParticipant: (id: string, participantId: string) =>
+    api.post<ApiResponse<LiteUnpairResponse>>(`/tournaments/lite/${id}/pairs/${participantId}/unpair`),
 };
 
 

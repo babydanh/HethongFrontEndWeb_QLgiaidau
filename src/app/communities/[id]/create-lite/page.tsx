@@ -28,7 +28,7 @@ export default function CreateLiteTournamentPage({
   const [name, setName] = useState('');
   const [sport, setSport] = useState<'badminton' | 'tennis' | 'pickleball' | 'table_tennis'>('badminton');
   const [format, setFormat] = useState<'singles' | 'doubles'>('singles');
-  const [bracketType, setBracketType] = useState<'single_elimination' | 'double_elimination' | 'round_robin'>('single_elimination');
+  const [bracketType, setBracketType] = useState<'single_elimination' | 'double_elimination' | 'round_robin' | 'group_stage_knockout'>('single_elimination');
   const [maxTeams, setMaxTeams] = useState(16);
   const [description, setDescription] = useState('');
   const [isRanked, setIsRanked] = useState(false);
@@ -161,7 +161,13 @@ export default function CreateLiteTournamentPage({
                 <option value="single_elimination">Loại trực tiếp</option>
                 <option value="double_elimination">Loại kép (Nhánh thắng/thua)</option>
                 <option value="round_robin">Vòng tròn tính điểm</option>
+                <option value="group_stage_knockout">Vòng bảng + loại trực tiếp</option>
               </select>
+              {bracketType === 'group_stage_knockout' && (
+                <p className="text-xs text-amber-600 mt-1 font-medium">
+                  Cần tối thiểu 4 đội để chia bảng. Hệ thống tự động chia đều.
+                </p>
+              )}
             </div>
           </div>
 

@@ -15,6 +15,7 @@ import GalleryCarousel from '@/components/ui/GalleryCarousel';
 import { triggerShare } from '@/utils/share.util';
 import ShareModal from '@/components/common/ShareModal';
 import CountdownTimer from '@/components/shared/CountdownTimer';
+import toast from 'react-hot-toast';
 
 const InstagramIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
@@ -449,15 +450,22 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                     : 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-900/10'
                 } font-bold w-full md:w-auto shadow-sm h-10 text-xs md:text-sm`}
                 onClick={() => {
-                  if (!isRegistrationButtonDisabled) {
-                    const needsRegistrationPage = activeTournament.visibility === 'PRIVATE' || 
-                                                  registrationModeUi.mode !== 'OPEN' ||
-                                                  divisionsList.length > 0;
-                    if (needsRegistrationPage) {
-                      router.push(registerHref);
+                  if (isRegistrationButtonDisabled) return;
+                  if (activeTournament.tournamentConfig?.mode === 'LITE') {
+                    if (activeTournament.inviteCode) {
+                      router.push(`/lite/tournaments/join/${activeTournament.inviteCode}`);
                     } else {
-                      setIsRegisterModalOpen(true);
+                      toast.error('Giải đấu chưa có đường dẫn tham gia.');
                     }
+                    return;
+                  }
+                  const needsRegistrationPage = activeTournament.visibility === 'PRIVATE' ||
+                                                registrationModeUi.mode !== 'OPEN' ||
+                                                divisionsList.length > 0;
+                  if (needsRegistrationPage) {
+                    router.push(registerHref);
+                  } else {
+                    setIsRegisterModalOpen(true);
                   }
                 }}
               >
@@ -734,8 +742,23 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
 
               {/* Action Button */}
               {!isOwner && !isTournamentDraft(activeTournament.status) && (
-                <div className="mt-1 block w-full">
-                  {isRegistrationButtonDisabled ? (
+                  <div className="mt-1 block w-full">
+                    {activeTournament.tournamentConfig?.mode === 'LITE' ? (
+                      activeTournament.inviteCode ? (
+                        <Link
+                          href={`/lite/tournaments/join/${activeTournament.inviteCode}`}
+                          className="block w-full"
+                        >
+                          <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg shadow-sm cursor-pointer text-sm">
+                            Tham gia giải nhanh
+                          </Button>
+                        </Link>
+                      ) : (
+                        <Button disabled className="w-full bg-slate-100 text-slate-400 font-semibold py-2.5 rounded-lg border border-slate-200 text-sm cursor-not-allowed">
+                          Chưa có đường dẫn tham gia
+                        </Button>
+                      )
+                    ) : isRegistrationButtonDisabled ? (
                     <Button disabled className="w-full bg-slate-100 text-slate-400 font-bold py-2.5 rounded-lg border border-slate-200 text-sm cursor-not-allowed">
                       {registrationButtonLabel}
                     </Button>
@@ -754,8 +777,17 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                   <p className="text-xs text-slate-800 font-bold">
                     Bạn là quản trị viên giải đấu
                   </p>
-                  <Link href={`/organizer/tournaments/${activeTournament.id}/manage`} className="mt-1.5 block text-xs text-blue-600 font-bold hover:underline">
-                    Quản lý sơ đồ & lịch thi đấu
+                  <Link
+                    href={activeTournament.tournamentConfig?.mode === 'LITE'
+                      ? `/lite/tournaments/${activeTournament.id}/manage`
+                      : `/organizer/tournaments/${activeTournament.id}/manage`
+                    }
+                    className="mt-1.5 block text-xs text-blue-600 font-bold hover:underline"
+                  >
+                    {activeTournament.tournamentConfig?.mode === 'LITE'
+                      ? 'Quản lý giải nhanh'
+                      : 'Quản lý sơ đồ & lịch thi đấu'
+                    }
                   </Link>
                 </div>
               )}

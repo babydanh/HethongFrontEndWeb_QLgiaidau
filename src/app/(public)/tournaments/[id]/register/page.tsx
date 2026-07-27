@@ -218,7 +218,18 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
       if (res.data) {
         const t = res.data;
         setTournament(t);
-        
+
+        // Lite tournament → redirect to dedicated join page
+        if (t.tournamentConfig?.mode === 'LITE') {
+          if (t.inviteCode) {
+            router.replace(`/lite/tournaments/join/${t.inviteCode}`);
+          } else {
+            toast.error('Giải đấu nhanh chưa có đường dẫn tham gia.');
+            router.push('/tournaments');
+          }
+          return;
+        }
+
         const regMode = t.tournamentConfig?.registrationMode || 'OPEN';
         if (regMode === 'INVITE_ONLY' && !inviteCode) {
           setNeedInviteValidation(true);

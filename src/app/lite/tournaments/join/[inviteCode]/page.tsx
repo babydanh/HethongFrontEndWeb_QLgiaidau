@@ -2,6 +2,7 @@
 
 import { use, useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { tournamentsApi } from '@/features/tournaments/api';
@@ -9,7 +10,7 @@ import { communitiesApi } from '@/features/communities/api';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { getErrorMessage } from '@/utils/error';
 import toast from 'react-hot-toast';
-import { Trophy, CheckCircle, AlertTriangle, Users, Shield, ArrowRight, Sparkles, MapPin, Calendar } from 'lucide-react';
+import { CheckCircle, AlertTriangle, Users, Shield, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
 type JoinStatus = {
@@ -89,7 +90,7 @@ export default function LiteJoinPage({ params }: { params: Promise<{ inviteCode:
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <LoadingSpinner />
       </div>
     );
@@ -98,15 +99,19 @@ export default function LiteJoinPage({ params }: { params: Promise<{ inviteCode:
   if (!status?.tournament) {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 max-w-sm w-full text-center space-y-4">
-          <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto text-slate-400">
-            <Trophy className="w-8 h-8" />
-          </div>
-          <h2 className="text-lg font-bold text-slate-800">Không tìm thấy giải đấu</h2>
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-8 max-w-sm w-full text-center space-y-4">
+          <Image
+            src="/vndcsport.svg"
+            alt="VNDC Sport Logo"
+            width={120}
+            height={40}
+            className="h-10 w-auto object-contain mx-auto"
+          />
+          <h2 className="text-base font-bold text-slate-800">Không tìm thấy giải đấu</h2>
           <p className="text-xs text-slate-500">Mã mời không tồn tại hoặc đã hết hạn.</p>
           <Link href="/tournaments">
-            <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl py-2.5">
-              Khám phá giải đấu khác
+            <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg py-2">
+              Xem danh sách giải đấu
             </Button>
           </Link>
         </div>
@@ -117,190 +122,120 @@ export default function LiteJoinPage({ params }: { params: Promise<{ inviteCode:
   const t = status.tournament;
 
   return (
-    <div className="min-h-screen bg-slate-100/70 flex items-center justify-center p-4 sm:p-6">
-      <div className="max-w-md w-full bg-white rounded-3xl border border-slate-200/90 shadow-xl overflow-hidden flex flex-col">
-        {/* Tournament Card Top Header / Banner */}
-        <div className="relative h-32 bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-700 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent)]" />
-          <div className="relative text-center">
-            <span className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-md text-white text-[10px] font-bold px-3 py-1 rounded-full border border-white/20 uppercase tracking-widest">
-              <Sparkles className="w-3 h-3 text-amber-300" /> VN SPORT TOURNAMENT
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+      <div className="max-w-md w-full bg-white rounded-xl border border-slate-200 shadow-sm p-6 sm:p-8 space-y-6">
+        {/* VNDC Sport Official Logo Centered */}
+        <div className="text-center">
+          <Image
+            src="/vndcsport.svg"
+            alt="VNDC Sport Logo"
+            width={140}
+            height={48}
+            className="h-12 w-auto object-contain mx-auto mb-4"
+            priority
+          />
+
+          {/* Optional Tournament Custom Logo if provided */}
+          {(t.logoUrl || t.bannerUrl) && (
+            <img
+              src={t.logoUrl || t.bannerUrl}
+              alt={t.name}
+              className="w-16 h-16 rounded-lg object-cover border border-slate-200 mx-auto mb-3"
+            />
+          )}
+
+          <h1 className="text-xl font-bold text-slate-900 leading-snug">{t.name}</h1>
+          {t.category && (
+            <span className="inline-block mt-2 text-xs font-semibold text-slate-600 bg-slate-100 rounded-full px-3 py-1">
+              {t.category}
             </span>
-          </div>
-        </div>
-
-        {/* Tournament Avatar / Logo in Center */}
-        <div className="relative px-6 pb-6 pt-0 text-center flex flex-col items-center">
-          <div className="-mt-14 mb-4 relative">
-            {t.logoUrl || t.bannerUrl ? (
-              <img
-                src={t.logoUrl || t.bannerUrl}
-                alt={t.name}
-                className="w-24 h-24 rounded-2xl object-cover shadow-lg ring-4 ring-white bg-white mx-auto"
-              />
-            ) : (
-              <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 ring-4 ring-white shadow-lg flex items-center justify-center mx-auto text-white">
-                <Trophy className="w-12 h-12 stroke-[1.75]" />
-              </div>
-            )}
-          </div>
-
-          {/* Tournament Name & Meta Info */}
-          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-snug max-w-xs">
-            {t.name}
-          </h1>
-
-          <div className="flex flex-wrap items-center justify-center gap-2 mt-2">
-            {t.category && (
-              <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 border border-blue-200/80 text-xs font-bold px-2.5 py-0.5 rounded-full">
-                ⚡ {t.category}
-              </span>
-            )}
-            {status.communityName && (
-              <span className="inline-flex items-center gap-1 bg-slate-100 text-slate-700 border border-slate-200 text-xs font-bold px-2.5 py-0.5 rounded-full">
-                <Users className="w-3 h-3 text-slate-500" /> CLB {status.communityName}
-              </span>
-            )}
-          </div>
-
-          {(t.locationName || t.startDate) && (
-            <div className="flex items-center justify-center gap-4 text-xs text-slate-500 font-medium mt-3">
-              {t.startDate && (
-                <span className="flex items-center gap-1">
-                  <Calendar className="w-3.5 h-3.5 text-slate-400" /> {t.startDate}
-                </span>
-              )}
-              {t.locationName && (
-                <span className="flex items-center gap-1 truncate max-w-[180px]">
-                  <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" /> {t.locationName}
-                </span>
-              )}
-            </div>
           )}
         </div>
 
-        {/* Divider */}
-        <div className="h-px bg-slate-100 w-full" />
+        {/* Dynamic Join States */}
+        {status.requiresAuth && (
+          <div className="space-y-4 pt-2">
+            <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 text-center space-y-1">
+              <Shield className="w-6 h-6 text-blue-600 mx-auto mb-1" />
+              <p className="text-xs font-bold text-slate-800">Yêu cầu đăng nhập</p>
+              <p className="text-xs text-slate-500">
+                Đăng nhập tài khoản để xác nhận tham gia giải đấu này.
+              </p>
+            </div>
+            <Button
+              onClick={() => router.push(`/login?redirect=/lite/tournaments/join/${inviteCode}`)}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <span>Đăng nhập ngay</span>
+              <ArrowRight className="w-4 h-4" />
+            </Button>
+          </div>
+        )}
 
-        {/* Dynamic Action Section */}
-        <div className="p-6 bg-slate-50/50 flex-1 flex flex-col justify-center space-y-4">
-          {/* Case 1: Requires Auth */}
-          {status.requiresAuth && (
-            <div className="space-y-4 text-center">
-              <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2">
-                <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center mx-auto text-blue-600">
-                  <Shield className="w-5 h-5" />
-                </div>
-                <p className="text-sm font-bold text-slate-800">Yêu cầu đăng nhập</p>
-                <p className="text-xs text-slate-500">
-                  Vui lòng đăng nhập tài khoản VN Sport để xác nhận tham gia giải đấu.
-                </p>
-              </div>
-
-              <Button
-                onClick={() => router.push(`/login?redirect=/lite/tournaments/join/${inviteCode}`)}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-sm py-3 rounded-xl shadow-md transition-all shadow-blue-500/20 flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <span>Đăng nhập ngay</span>
-                <ArrowRight className="w-4 h-4" />
+        {/* Already Joined */}
+        {status.alreadyJoined && (
+          <div className="space-y-4 pt-2 text-center">
+            <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 space-y-1">
+              <CheckCircle className="w-8 h-8 text-emerald-600 mx-auto mb-1" />
+              <p className="text-sm font-bold text-emerald-900">Bạn đã tham gia giải này</p>
+              <p className="text-xs text-emerald-700">Hồ sơ thi đấu của bạn đã sẵn sàng.</p>
+            </div>
+            <Link href={`/tournaments/${t.id}`}>
+              <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-lg cursor-pointer">
+                Xem chi tiết giải đấu
               </Button>
-            </div>
-          )}
+            </Link>
+          </div>
+        )}
 
-          {/* Case 2: Already Joined */}
-          {status.alreadyJoined && (
-            <div className="text-center space-y-4">
-              <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-5 space-y-2">
-                <CheckCircle className="w-10 h-10 text-emerald-600 mx-auto" />
-                <h3 className="text-base font-extrabold text-emerald-900">Bạn đã tham gia giải này!</h3>
-                <p className="text-xs text-emerald-700 font-medium">
-                  Hồ sơ thi đấu của bạn đã được ghi nhận trong danh sách.
-                </p>
-              </div>
-              <Link href={`/tournaments/${t.id}`}>
-                <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl py-3 cursor-pointer">
-                  Xem chi tiết giải đấu
-                </Button>
-              </Link>
-            </div>
-          )}
+        {/* Registration Closed */}
+        {status.registrationClosed && (
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-center space-y-1">
+            <AlertTriangle className="w-7 h-7 text-amber-600 mx-auto mb-1" />
+            <p className="text-sm font-bold text-amber-900">Giải đấu đã đóng đăng ký</p>
+          </div>
+        )}
 
-          {/* Case 3: Registration Closed */}
-          {status.registrationClosed && (
-            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 text-center space-y-2">
-              <AlertTriangle className="w-10 h-10 text-amber-600 mx-auto" />
-              <h3 className="text-base font-extrabold text-amber-900">Giải đấu đã đóng đăng ký</h3>
-              <p className="text-xs text-amber-700">Ban tổ chức đã ngưng nhận thêm hồ sơ tham gia.</p>
-            </div>
-          )}
+        {/* Tournament Full */}
+        {status.tournamentFull && (
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-center space-y-1">
+            <AlertTriangle className="w-7 h-7 text-amber-600 mx-auto mb-1" />
+            <p className="text-sm font-bold text-amber-900">Giải đấu đã đủ số lượng</p>
+          </div>
+        )}
 
-          {/* Case 4: Tournament Full */}
-          {status.tournamentFull && (
-            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 text-center space-y-2">
-              <AlertTriangle className="w-10 h-10 text-amber-600 mx-auto" />
-              <h3 className="text-base font-extrabold text-amber-900">Giải đấu đã đủ số lượng</h3>
-              <p className="text-xs text-amber-700">Đã đạt tối đa số lượng VĐV / Đội tham gia.</p>
+        {/* Requires Club Join */}
+        {status.requiresClubJoin && (
+          <div className="space-y-4 pt-2 text-center">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-1">
+              <Users className="w-6 h-6 text-blue-600 mx-auto mb-1" />
+              <p className="text-xs font-bold text-slate-900">Yêu cầu tham gia CLB</p>
+              <p className="text-xs text-slate-600">
+                Giải thuộc CLB <strong>{status.communityName}</strong>. Vui lòng tham gia CLB trước.
+              </p>
             </div>
-          )}
+            <Button onClick={handleRequestClub} disabled={isRequestingClub} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg cursor-pointer">
+              {isRequestingClub ? 'Đang xử lý...' : 'Tham gia CLB'}
+            </Button>
+          </div>
+        )}
 
-          {/* Case 5: Requires Club Join - OPEN */}
-          {status.requiresClubJoin && status.clubPolicy === 'OPEN' && (
-            <div className="space-y-4 text-center">
-              <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 space-y-2">
-                <Users className="w-8 h-8 text-blue-600 mx-auto" />
-                <p className="text-sm font-bold text-slate-900">Tham gia CLB để đấu</p>
-                <p className="text-xs text-slate-600">
-                  Giải đấu thuộc CLB <strong>{status.communityName}</strong>. Vui lòng tham gia CLB trước.
-                </p>
-              </div>
-              <Button onClick={handleRequestClub} disabled={isRequestingClub} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl py-3 cursor-pointer">
-                {isRequestingClub ? 'Đang gửi...' : 'Vào CLB Ngay'}
-              </Button>
+        {/* Can Join Now */}
+        {status.canJoin && (
+          <div className="space-y-4 pt-2">
+            <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs">
+              <span className="text-slate-500 font-medium">Tên thi đấu: </span>
+              <span className="font-bold text-slate-900">{user?.fullName || 'Tài khoản thi đấu'}</span>
             </div>
-          )}
-
-          {/* Case 6: Requires Club Join - APPROVAL */}
-          {status.requiresClubJoin && status.clubPolicy === 'APPROVAL' && (
-            <div className="space-y-4 text-center">
-              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 space-y-2">
-                <Shield className="w-8 h-8 text-amber-600 mx-auto" />
-                <p className="text-sm font-bold text-amber-900">CLB cần duyệt thành viên</p>
-                <p className="text-xs text-amber-700">
-                  Gửi yêu cầu gia nhập CLB <strong>{status.communityName}</strong> để Ban quản trị phê duyệt.
-                </p>
-              </div>
-              <Button onClick={handleRequestClub} disabled={isRequestingClub} className="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl py-3 cursor-pointer">
-                {isRequestingClub ? 'Đang gửi...' : 'Gửi yêu cầu xin vào CLB'}
-              </Button>
-            </div>
-          )}
-
-          {/* Case 7: Can Join Now */}
-          {status.canJoin && (
-            <div className="space-y-4">
-              <div className="bg-blue-50/80 border border-blue-200 rounded-2xl p-4 flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-base shrink-0 shadow-sm">
-                  {user?.fullName ? user.fullName.charAt(0).toUpperCase() : 'V'}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-[10px] uppercase font-bold tracking-wider text-blue-600">Vận động viên</p>
-                  <p className="text-sm font-extrabold text-slate-900 truncate">
-                    {user?.fullName || 'Tài khoản thi đấu'}
-                  </p>
-                </div>
-              </div>
-
-              <Button
-                onClick={handleJoin}
-                disabled={isJoining}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black text-sm py-3.5 rounded-xl shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-[1.01]"
-              >
-                <span>{isJoining ? 'Đang tham gia...' : 'Xác nhận tham gia giải'}</span>
-                <ArrowRight className="w-4 h-4" />
-              </Button>
-            </div>
-          )}
-        </div>
+            <Button
+              onClick={handleJoin}
+              disabled={isJoining}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg cursor-pointer transition-colors"
+            >
+              {isJoining ? 'Đang xử lý...' : 'Xác nhận tham gia'}
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

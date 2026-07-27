@@ -37,6 +37,6 @@ export const reportsApi = {
   escalate: (reportId: string, note: string) =>
     api.post<ApiResponse<ViolationReport>>(`/admin/reports/${reportId}/escalate`, { note }),
 
-  resolve: (reportId: string, status: Extract<ReportStatus, 'RESOLVED' | 'REJECTED'>, resolutionNote: string) =>
-    api.post<ApiResponse<ViolationReport>>(`/admin/reports/${reportId}/resolve`, { status, resolutionNote }),
+  resolve: (reportId: string, status: Extract<ReportStatus, 'RESOLVED' | 'REJECTED'>, resolutionNote: string, category?: ReportCategory) =>
+    api.post<ApiResponse<ViolationReport>>(`/admin/reports/${reportId}/resolve`, { status, resolutionNote, category }),
 };

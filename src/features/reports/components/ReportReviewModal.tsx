@@ -49,8 +49,8 @@ export function ReportReviewModal({ report, open, isModeratorOnly, onOpenChange,
       if (action === 'TRIAGE') await reportsApi.triage(report.id, { category, note: normalizedNote });
       if (action === 'START_REVIEW') await reportsApi.startReview(report.id, normalizedNote);
       if (action === 'ESCALATE') await reportsApi.escalate(report.id, normalizedNote);
-      if (action === 'RESOLVE') await reportsApi.resolve(report.id, 'RESOLVED', normalizedNote);
-      if (action === 'REJECT') await reportsApi.resolve(report.id, 'REJECTED', normalizedNote);
+      if (action === 'RESOLVE') await reportsApi.resolve(report.id, 'RESOLVED', normalizedNote, category);
+      if (action === 'REJECT') await reportsApi.resolve(report.id, 'REJECTED', normalizedNote, category);
       toast.success(action === 'ESCALATE' ? 'Đã chuyển hồ sơ cho admin.' : 'Đã cập nhật hồ sơ báo cáo.');
       onOpenChange(false);
       onCompleted();

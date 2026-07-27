@@ -1,7 +1,8 @@
 /**
- * PagedSingleElimView — Full Tree Bracket with Auto-Focus & Dual Axis (X/Y) Smooth Camera Scroll
+ * PagedSingleElimView — World Cup Style Interactive Bracket with Dynamic Focus Animations
  *
- * Automatically centers match cards horizontally and vertically when navigating rounds.
+ * Highlights the active round with scale, shadow, and vivid SVG line animations.
+ * Camera auto-scrolls X/Y smoothly when switching rounds.
  */
 
 'use client';
@@ -45,8 +46,7 @@ export function PagedSingleElimView({
   );
 
   const maxRound = rounds.length > 0 ? Math.max(...rounds) : 1;
-
-  const slotHBase = cardH + 24;
+  const slotHBase = cardH + 20;
   const roundGap = COL_GAP + 28;
 
   // Calculate compact posMap for all matches
@@ -58,7 +58,6 @@ export function PagedSingleElimView({
       const roundMatches = byRound[r] ?? [];
 
       roundMatches.forEach((match, index) => {
-        // Find feeders from previous round
         const feeders = matches.filter((m) => m.nextMatchId === match.id);
         let y = 0;
         if (feeders.length > 0) {
@@ -73,7 +72,7 @@ export function PagedSingleElimView({
           });
           y = count > 0 ? ySum / count : 32 + index * slotHBase + cardH / 2;
         } else {
-          const step = slotHBase * Math.pow(1.5, Math.min(idx, 2));
+          const step = slotHBase * Math.pow(1.4, Math.min(idx, 2));
           y = 32 + index * step + cardH / 2;
         }
         map.set(match.id, { x: colX, y });
@@ -83,12 +82,12 @@ export function PagedSingleElimView({
     return map;
   }, [rounds, byRound, matches, cardH, roundGap, CARD_W, slotHBase]);
 
-  // Calculate total bounding height from posMap
+  // Calculate total bounding height
   const totalHeight = useMemo(() => {
-    let maxY = 360;
+    let maxY = 320;
     posMap.forEach((pos) => {
-      if (pos.y + cardH / 2 + 48 > maxY) {
-        maxY = pos.y + cardH / 2 + 48;
+      if (pos.y + cardH / 2 + 40 > maxY) {
+        maxY = pos.y + cardH / 2 + 40;
       }
     });
     return maxY;
@@ -97,7 +96,7 @@ export function PagedSingleElimView({
   const numRounds = rounds.length;
   const svgW = numRounds * CARD_W + Math.max(0, numRounds - 1) * roundGap + 48;
 
-  // Auto-detect active round index (round with IN_PROGRESS, SCHEDULED, or READY matches)
+  // Auto-detect active round index
   const defaultRoundIndex = useMemo(() => {
     const idx = rounds.findIndex((r) =>
       byRound[r]?.some(
@@ -109,7 +108,7 @@ export function PagedSingleElimView({
 
   const [activeRoundIndex, setActiveRoundIndex] = useState<number>(defaultRoundIndex);
 
-  // Smoothly scroll viewport camera on both X and Y axis to center active round matches
+  // Smooth camera scroll X/Y
   const scrollToRoundIndex = (index: number) => {
     setActiveRoundIndex(index);
     if (!scrollContainerRef.current) return;
@@ -131,7 +130,7 @@ export function PagedSingleElimView({
       });
       if (count > 0) {
         const avgY = ySum / count;
-        const containerH = scrollContainerRef.current.clientHeight || 500;
+        const containerH = scrollContainerRef.current.clientHeight || 450;
         targetScrollTop = Math.max(0, avgY * zoom - containerH / 2);
       }
     }
@@ -168,7 +167,7 @@ export function PagedSingleElimView({
           : 'relative flex flex-col gap-4 w-full'
       }
     >
-      {/* Top Header Controls — Minimal Light Style */}
+      {/* Header Controls */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-50/90 border border-slate-200 rounded-xl px-4 py-3 shadow-sm">
         <div className="flex items-center gap-2.5">
           <Trophy className="w-4 h-4 text-blue-600 shrink-0" />
@@ -242,7 +241,7 @@ export function PagedSingleElimView({
               onClick={() => scrollToRoundIndex(idx)}
               className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all border whitespace-nowrap cursor-pointer ${
                 isActive
-                  ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                  ? 'bg-blue-600 text-white border-blue-600 shadow-sm scale-105'
                   : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
               }`}
             >
@@ -271,7 +270,7 @@ export function PagedSingleElimView({
           style={{
             width: svgW * zoom,
             height: totalHeight * zoom,
-            transition: 'width 0.15s ease-out, height 0.15s ease-out',
+            transition: 'width 0.2s ease-out, height 0.2s ease-out',
           }}
           className="relative"
         >
@@ -281,29 +280,32 @@ export function PagedSingleElimView({
               transform: `scale(${zoom})`,
               transformOrigin: 'top left',
               width: svgW,
-              transition: 'transform 0.15s ease-out',
+              transition: 'transform 0.2s ease-out',
             }}
             className="flex mb-4 flex-shrink-0"
           >
             <div className="flex" style={{ gap: roundGap }}>
-              {rounds.map((r, idx) => (
-                <div
-                  key={r}
-                  style={{ width: CARD_W, flexShrink: 0 }}
-                  className="text-center"
-                >
-                  <button
-                    onClick={() => scrollToRoundIndex(idx)}
-                    className={`inline-block text-[11px] font-extrabold uppercase tracking-wider px-3.5 py-1 rounded-full border transition-all cursor-pointer ${
-                      idx === activeRoundIndex
-                        ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                        : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
-                    }`}
+              {rounds.map((r, idx) => {
+                const isActive = idx === activeRoundIndex;
+                return (
+                  <div
+                    key={r}
+                    style={{ width: CARD_W, flexShrink: 0 }}
+                    className="text-center"
                   >
-                    {getRoundLabel(r - 1, maxRound)}
-                  </button>
-                </div>
-              ))}
+                    <button
+                      onClick={() => scrollToRoundIndex(idx)}
+                      className={`inline-block text-[11px] font-extrabold uppercase tracking-wider px-3.5 py-1 rounded-full border transition-all duration-300 cursor-pointer ${
+                        isActive
+                          ? 'bg-blue-600 text-white border-blue-600 shadow-md scale-105 ring-2 ring-blue-400/30'
+                          : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-100 opacity-80 hover:opacity-100'
+                      }`}
+                    >
+                      {getRoundLabel(r - 1, maxRound)}
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -314,12 +316,12 @@ export function PagedSingleElimView({
               transformOrigin: 'top left',
               width: svgW,
               height: totalHeight,
-              transition: 'transform 0.15s ease-out',
-              marginTop: '40px',
+              transition: 'transform 0.2s ease-out',
+              marginTop: '36px',
             }}
             className="absolute"
           >
-            {/* SVG Connectors between rounds */}
+            {/* SVG Connectors between rounds with dynamic highlight animation */}
             <svg
               className="absolute inset-0 pointer-events-none"
               width={svgW}
@@ -331,32 +333,47 @@ export function PagedSingleElimView({
                 const endPos = posMap.get(m.nextMatchId);
                 if (!endPos) return null;
 
+                const isConnectedToActive =
+                  m.roundNumber === currentRound ||
+                  matches.find((nm) => nm.id === m.nextMatchId)?.roundNumber === currentRound;
+
                 const midX = (startPos.x + CARD_W + endPos.x) / 2;
-                const stroke = m.status === 'COMPLETED' ? '#10b981' : '#cbd5e1';
+                const stroke = isConnectedToActive
+                  ? '#2563eb'
+                  : m.status === 'COMPLETED'
+                    ? '#10b981'
+                    : '#cbd5e1';
 
                 return (
                   <path
                     key={m.id}
                     d={`M ${startPos.x + CARD_W} ${startPos.y} L ${midX} ${startPos.y} L ${midX} ${endPos.y} L ${endPos.x} ${endPos.y}`}
                     stroke={stroke}
-                    strokeWidth={1.5}
+                    strokeWidth={isConnectedToActive ? 2.5 : 1.5}
                     fill="none"
-                    opacity={0.8}
+                    opacity={isConnectedToActive ? 1 : 0.6}
+                    className="transition-all duration-300"
                   />
                 );
               })}
             </svg>
 
-            {/* Match Cards */}
+            {/* Match Cards with Smooth Round Focus Scale & Opacity Animations */}
             {matches.map((match) => {
               const pos = posMap.get(match.id);
               if (!pos) return null;
               const isP1Bye = isSlotBye(match, 1, matches);
               const isP2Bye = isSlotBye(match, 2, matches);
+              const isActiveRound = match.roundNumber === currentRound;
+
               return (
                 <div
                   key={match.id}
-                  className="absolute transition-transform duration-200 hover:-translate-y-0.5"
+                  className={`absolute transition-all duration-300 ${
+                    isActiveRound
+                      ? 'scale-105 z-20 opacity-100 drop-shadow-md'
+                      : 'scale-100 z-10 opacity-75 hover:opacity-100 hover:scale-102'
+                  }`}
                   style={{
                     left: pos.x,
                     top: pos.y - cardH / 2,

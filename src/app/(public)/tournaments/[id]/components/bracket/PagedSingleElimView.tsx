@@ -1,5 +1,5 @@
 /**
- * PagedSingleElimView — Clean round-by-round Single Elimination Bracket
+ * PagedSingleElimView — Minimal & Light Single Elimination Bracket View
  */
 
 'use client';
@@ -74,39 +74,37 @@ export function PagedSingleElimView({
   };
 
   return (
-    <div className="flex flex-col gap-6 w-full">
-      {/* Top Header & Round Carousel Navigation */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-slate-900 text-white rounded-xl p-4 sm:p-5 shadow-lg border border-slate-800">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
-            <Trophy className="w-5 h-5 text-amber-300" />
-          </div>
+    <div className="flex flex-col gap-4 w-full">
+      {/* Top Header & Round Carousel Navigation - Minimal Light */}
+      <div className="flex items-center justify-between gap-3 bg-slate-50/80 border border-slate-200 rounded-xl px-4 py-3">
+        <div className="flex items-center gap-2.5">
+          <Trophy className="w-4 h-4 text-blue-600 shrink-0" />
           <div>
-            <span className="text-xs font-semibold text-blue-400 uppercase tracking-wider">
+            <span className="text-[11px] font-bold text-blue-600 uppercase tracking-wider">
               Vòng {activeRoundIndex + 1} / {rounds.length}
             </span>
-            <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
+            <h4 className="text-sm sm:text-base font-bold text-slate-900">
               {getRoundLabel(currentRound - 1, maxRound)}
-            </h3>
+            </h4>
           </div>
         </div>
 
         {/* Navigation Arrows */}
-        <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t border-slate-800 sm:border-t-0">
+        <div className="flex items-center gap-2">
           <button
             onClick={handlePrev}
             disabled={activeRoundIndex === 0}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed text-xs font-bold text-slate-200 transition-all border border-slate-700/80 cursor-pointer"
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 disabled:opacity-40 text-xs font-bold text-slate-700 transition-all shadow-sm cursor-pointer"
           >
             <ChevronLeft className="w-4 h-4" /> Vòng trước
           </button>
-          <span className="text-xs font-medium text-slate-400">
-            {currentMatches.length} trận đấu
+          <span className="text-xs font-semibold text-slate-500 hidden sm:inline">
+            {currentMatches.length} trận
           </span>
           <button
             onClick={handleNext}
             disabled={activeRoundIndex === rounds.length - 1}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed text-xs font-bold text-white transition-all shadow-md shadow-blue-600/30 cursor-pointer"
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-xs font-bold text-white transition-all shadow-sm cursor-pointer"
           >
             Vòng tiếp <ChevronRight className="w-4 h-4" />
           </button>
@@ -122,16 +120,16 @@ export function PagedSingleElimView({
             <button
               key={r}
               onClick={() => setActiveRoundIndex(idx)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all border whitespace-nowrap cursor-pointer ${
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all border whitespace-nowrap cursor-pointer ${
                 isActive
-                  ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-500/20 scale-[1.02]'
-                  : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:border-slate-300'
+                  ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                  : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
               }`}
             >
               <span>{getRoundLabel(r - 1, maxRound)}</span>
               <span
-                className={`px-1.5 py-0.5 rounded-md text-[10px] font-extrabold ${
-                  isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'
+                className={`px-1.5 py-0.5 rounded text-[10px] ${
+                  isActive ? 'bg-white/20' : 'bg-slate-100 text-slate-500'
                 }`}
               >
                 {matchCount}

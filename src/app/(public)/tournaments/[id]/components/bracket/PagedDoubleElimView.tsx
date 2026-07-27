@@ -1,14 +1,11 @@
 /**
- * PagedDoubleElimView — Clean Branch-Based Round Navigation (Option 1 Tab Switcher)
- *
- * Tab Switcher: [ 🏆 Nhánh Thắng ] | [ 💀 Nhánh Thua ] | [ 👑 Chung Kết ]
- * Auto-detects and defaults to the currently ongoing / upcoming active round!
+ * PagedDoubleElimView — Minimal & Light Branch-Based Round Navigation
  */
 
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, ShieldCheck, Flame, Crown } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ShieldCheck, Flame } from 'lucide-react';
 import type { BracketMatch } from '@/features/tournaments/api';
 import type { SportRuleKind } from '@/types/tournament';
 import type { OnScheduleMatch, OnSelectBracketMatch } from './types';
@@ -25,7 +22,7 @@ interface Props {
   fallbackSportRuleKind?: SportRuleKind;
 }
 
-type BranchTab = 'upper' | 'lower' | 'grand_finals';
+type BranchTab = 'upper' | 'lower';
 
 export function PagedDoubleElimView({
   upperMatches,
@@ -36,7 +33,22 @@ export function PagedDoubleElimView({
   onSelectMatch,
   fallbackSportRuleKind,
 }: Props) {
-  const ubByRound = useMemo(() => buildMatchesByRound(upperMatches), [upperMatches]);
+  // If there are Grand Finals matches, include them as the last round in Upper Bracket
+  const combinedUpperMatches = useMemo(() => {
+    if (!gfMatches.length) return upperMatches;
+    const maxUbRound = upperMatches.length > 0
+      ? Math.max(...upperMatches.map((m) => m.roundNumber))
+      : 0;
+    return [
+      ...upperMatches,
+      ...gfMatches.map((m) => ({
+        ...m,
+        roundNumber: maxUbRound + 1,
+      })),
+    ];
+  }, [upperMatches, gfMatches]);
+
+  const ubByRound = useMemo(() => buildMatchesByRound(combinedUpperMatches), [combinedUpperMatches]);
   const lbByRound = useMemo(() => buildMatchesByRound(lowerMatches), [lowerMatches]);
 
   const ubRounds = useMemo(
@@ -54,21 +66,18 @@ export function PagedDoubleElimView({
     [lbByRound],
   );
 
-  // Auto-detect branch and round that is currently active/ongoing
+  // Auto-detect branch and round currently active
   const defaultBranch: BranchTab = useMemo(() => {
     const hasLiveOrScheduled = (list: BracketMatch[]) =>
       list.some((m) => m.status === 'IN_PROGRESS' || m.status === 'SCHEDULED' || m.status === 'READY');
-    if (hasLiveOrScheduled(upperMatches)) return 'upper';
-    if (hasLiveOrScheduled(lowerMatches)) return 'lower';
-    if (hasLiveOrScheduled(gfMatches)) return 'grand_finals';
+    if (hasLiveOrScheduled(lowerMatches) && !hasLiveOrScheduled(combinedUpperMatches)) return 'lower';
     return 'upper';
-  }, [upperMatches, lowerMatches, gfMatches]);
+  }, [combinedUpperMatches, lowerMatches]);
 
   const [activeBranch, setActiveBranch] = useState<BranchTab>(defaultBranch);
   const [activeUbIndex, setActiveUbIndex] = useState<number>(0);
   const [activeLbIndex, setActiveLbIndex] = useState<number>(0);
 
-  // Auto-detect initial active round in UB & LB
   useEffect(() => {
     const findActiveIndex = (rounds: number[], byRoundMap: Record<number, BracketMatch[]>) => {
       const idx = rounds.findIndex((r) =>
@@ -82,11 +91,13 @@ export function PagedDoubleElimView({
     setActiveLbIndex(findActiveIndex(lbRounds, lbByRound));
   }, [ubRounds, lbRounds, ubByRound, lbByRound]);
 
+  const maxUbRound = ubRounds.length;
   const getUbLabel = (r: number) => {
+    if (gfMatches.length > 0 && r === maxUbRound) return 'Chung kết Tổng';
     const fromEnd = ubRounds.length - (ubRounds.indexOf(r) + 1);
-    if (fromEnd === 0) return 'Chung kết Nhánh thắng';
-    if (fromEnd === 1) return 'Bán kết Nhánh thắng';
-    if (fromEnd === 2) return 'Tứ kết Nhánh thắng';
+    if (fromEnd === 0 || (gfMatches.length > 0 && fromEnd === 1)) return 'Chung kết Nhánh thắng';
+    if (fromEnd === 1 || (gfMatches.length > 0 && fromEnd === 2)) return 'Bán kết Nhánh thắng';
+    if (fromEnd === 2 || (gfMatches.length > 0 && fromEnd === 3)) return 'Tứ kết Nhánh thắng';
     return `Vòng ${r} Nhánh thắng`;
   };
 
@@ -98,8 +109,8 @@ export function PagedDoubleElimView({
   };
 
   const allMatchesForLogic = useMemo(
-    () => [...upperMatches, ...lowerMatches, ...gfMatches],
-    [upperMatches, lowerMatches, gfMatches],
+    () => [...combinedUpperMatches, ...lowerMatches],
+    [combinedUpperMatches, lowerMatches],
   );
 
   const currentUbRound = ubRounds[activeUbIndex] ?? ubRounds[0];
@@ -109,90 +120,71 @@ export function PagedDoubleElimView({
   const currentLbMatches = lbByRound[currentLbRound] ?? [];
 
   return (
-    <div className="flex flex-col gap-6 w-full">
-      {/* Branch Tabs Switcher */}
-      <div className="flex items-center gap-2 p-1.5 bg-slate-100 rounded-2xl border border-slate-200/80 shadow-inner overflow-x-auto no-scrollbar">
+    <div className="flex flex-col gap-5 w-full">
+      {/* Branch Tabs Switcher - Minimal Light Design */}
+      <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
         <button
           onClick={() => setActiveBranch('upper')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer border ${
             activeBranch === 'upper'
-              ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20 scale-[1.01]'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+              ? 'bg-blue-50 text-blue-700 border-blue-200 font-extrabold shadow-sm'
+              : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
           }`}
         >
-          <ShieldCheck className="w-4 h-4 text-blue-300" />
+          <ShieldCheck className="w-4 h-4 text-blue-600" />
           <span>Nhánh Thắng</span>
-          <span className={`px-1.5 py-0.5 rounded text-[10px] ${activeBranch === 'upper' ? 'bg-white/20' : 'bg-slate-200 text-slate-600'}`}>
-            {upperMatches.length} trận
+          <span className="px-1.5 py-0.5 rounded text-[10px] bg-blue-100/60 text-blue-700 font-semibold">
+            {combinedUpperMatches.length}
           </span>
         </button>
 
         {lowerMatches.length > 0 && (
           <button
             onClick={() => setActiveBranch('lower')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer border ${
               activeBranch === 'lower'
-                ? 'bg-rose-600 text-white shadow-md shadow-rose-500/20 scale-[1.01]'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+                ? 'bg-rose-50 text-rose-700 border-rose-200 font-extrabold shadow-sm'
+                : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
             }`}
           >
-            <Flame className="w-4 h-4 text-amber-300" />
+            <Flame className="w-4 h-4 text-rose-600" />
             <span>Nhánh Thua</span>
-            <span className={`px-1.5 py-0.5 rounded text-[10px] ${activeBranch === 'lower' ? 'bg-white/20' : 'bg-slate-200 text-slate-600'}`}>
-              {lowerMatches.length} trận
+            <span className="px-1.5 py-0.5 rounded text-[10px] bg-rose-100/60 text-rose-700 font-semibold">
+              {lowerMatches.length}
             </span>
-          </button>
-        )}
-
-        {gfMatches.length > 0 && (
-          <button
-            onClick={() => setActiveBranch('grand_finals')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
-              activeBranch === 'grand_finals'
-                ? 'bg-amber-600 text-white shadow-md shadow-amber-500/20 scale-[1.01]'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
-            }`}
-          >
-            <Crown className="w-4 h-4 text-amber-200" />
-            <span>Chung Kết Tổng</span>
           </button>
         )}
       </div>
 
       {/* BRANCH 1: UPPER BRACKET */}
       {activeBranch === 'upper' && (
-        <div className="flex flex-col gap-5">
-          {/* Header Controls */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-slate-900 text-white rounded-xl p-4 sm:p-5 shadow-lg border border-slate-800">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
-                <ShieldCheck className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <span className="text-xs font-semibold text-blue-400 uppercase tracking-wider">
-                  Vòng {activeUbIndex + 1} / {ubRounds.length}
-                </span>
-                <h4 className="text-base sm:text-lg font-bold text-white tracking-tight">
-                  {getUbLabel(currentUbRound)}
-                </h4>
-              </div>
+        <div className="flex flex-col gap-4">
+          {/* Header Controls - Minimal Light */}
+          <div className="flex items-center justify-between gap-3 bg-slate-50/80 border border-slate-200 rounded-xl px-4 py-3">
+            <div>
+              <span className="text-[11px] font-bold text-blue-600 uppercase tracking-wider">
+                Vòng {activeUbIndex + 1} / {ubRounds.length}
+              </span>
+              <h4 className="text-sm sm:text-base font-bold text-slate-900">
+                {getUbLabel(currentUbRound)}
+              </h4>
             </div>
 
-            <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t border-slate-800 sm:border-t-0">
+            <div className="flex items-center gap-2">
               <button
                 onClick={() => setActiveUbIndex((p) => Math.max(p - 1, 0))}
                 disabled={activeUbIndex === 0}
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-40 text-xs font-bold text-slate-200 transition-all border border-slate-700 cursor-pointer"
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 disabled:opacity-40 text-xs font-bold text-slate-700 transition-all shadow-sm cursor-pointer"
               >
                 <ChevronLeft className="w-4 h-4" /> Vòng trước
               </button>
-              <span className="text-xs font-medium text-slate-400">
+              <span className="text-xs font-semibold text-slate-500 hidden sm:inline">
                 {currentUbMatches.length} trận
               </span>
               <button
                 onClick={() => setActiveUbIndex((p) => Math.min(p + 1, ubRounds.length - 1))}
                 disabled={activeUbIndex === ubRounds.length - 1}
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-xs font-bold text-white transition-all shadow-md cursor-pointer"
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-xs font-bold text-white transition-all shadow-sm cursor-pointer"
               >
                 Vòng tiếp <ChevronRight className="w-4 h-4" />
               </button>
@@ -207,10 +199,10 @@ export function PagedDoubleElimView({
                 <button
                   key={r}
                   onClick={() => setActiveUbIndex(idx)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all border whitespace-nowrap cursor-pointer ${
+                  className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all border whitespace-nowrap cursor-pointer ${
                     isActive
-                      ? 'bg-blue-600 text-white border-blue-600 shadow-md scale-[1.02]'
-                      : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                      ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
                   }`}
                 >
                   <span>{getUbLabel(r)}</span>
@@ -250,37 +242,32 @@ export function PagedDoubleElimView({
 
       {/* BRANCH 2: LOWER BRACKET */}
       {activeBranch === 'lower' && (
-        <div className="flex flex-col gap-5">
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-rose-950 text-white rounded-xl p-4 sm:p-5 shadow-lg border border-rose-900">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-rose-600 flex items-center justify-center text-white shadow-md shadow-rose-500/20">
-                <Flame className="w-5 h-5 text-amber-200" />
-              </div>
-              <div>
-                <span className="text-xs font-semibold text-rose-300 uppercase tracking-wider">
-                  Lượt {activeLbIndex + 1} / {lbRounds.length}
-                </span>
-                <h4 className="text-base sm:text-lg font-bold text-white tracking-tight">
-                  {getLbLabel(currentLbRound)}
-                </h4>
-              </div>
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between gap-3 bg-rose-50/60 border border-rose-200 rounded-xl px-4 py-3">
+            <div>
+              <span className="text-[11px] font-bold text-rose-600 uppercase tracking-wider">
+                Lượt {activeLbIndex + 1} / {lbRounds.length}
+              </span>
+              <h4 className="text-sm sm:text-base font-bold text-slate-900">
+                {getLbLabel(currentLbRound)}
+              </h4>
             </div>
 
-            <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t border-rose-900 sm:border-t-0">
+            <div className="flex items-center gap-2">
               <button
                 onClick={() => setActiveLbIndex((p) => Math.max(p - 1, 0))}
                 disabled={activeLbIndex === 0}
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-rose-900 hover:bg-rose-800 disabled:opacity-40 text-xs font-bold text-rose-100 transition-all border border-rose-800 cursor-pointer"
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 disabled:opacity-40 text-xs font-bold text-slate-700 transition-all shadow-sm cursor-pointer"
               >
                 <ChevronLeft className="w-4 h-4" /> Vòng trước
               </button>
-              <span className="text-xs font-medium text-rose-300">
+              <span className="text-xs font-semibold text-slate-500 hidden sm:inline">
                 {currentLbMatches.length} trận
               </span>
               <button
                 onClick={() => setActiveLbIndex((p) => Math.min(p + 1, lbRounds.length - 1))}
                 disabled={activeLbIndex === lbRounds.length - 1}
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-rose-600 hover:bg-rose-500 disabled:opacity-40 text-xs font-bold text-white transition-all shadow-md cursor-pointer"
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 disabled:opacity-40 text-xs font-bold text-white transition-all shadow-sm cursor-pointer"
               >
                 Vòng tiếp <ChevronRight className="w-4 h-4" />
               </button>
@@ -295,10 +282,10 @@ export function PagedDoubleElimView({
                 <button
                   key={r}
                   onClick={() => setActiveLbIndex(idx)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all border whitespace-nowrap cursor-pointer ${
+                  className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all border whitespace-nowrap cursor-pointer ${
                     isActive
-                      ? 'bg-rose-600 text-white border-rose-600 shadow-md scale-[1.02]'
-                      : 'bg-white text-slate-700 border-slate-200 hover:bg-rose-50'
+                      ? 'bg-rose-600 text-white border-rose-600 shadow-sm'
+                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
                   }`}
                 >
                   <span>{getLbLabel(r)}</span>
@@ -320,41 +307,6 @@ export function PagedDoubleElimView({
               const isP2Bye = isSlotBye(match, 2, allMatchesForLogic);
               return (
                 <div key={match.id} className="transition-transform duration-200 hover:-translate-y-0.5">
-                  <MatchCard
-                    match={match}
-                    onScheduleMatch={onScheduleMatch}
-                    onSelectMatch={onSelectMatch}
-                    selected={selectedMatchId === match.id}
-                    isP1Bye={isP1Bye}
-                    isP2Bye={isP2Bye}
-                    fallbackSportRuleKind={fallbackSportRuleKind}
-                  />
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* BRANCH 3: GRAND FINALS */}
-      {activeBranch === 'grand_finals' && gfMatches.length > 0 && (
-        <div className="flex flex-col gap-5">
-          <div className="bg-gradient-to-r from-amber-600 to-amber-700 text-white rounded-xl p-5 shadow-lg flex items-center gap-3">
-            <Crown className="w-6 h-6 text-amber-200" />
-            <div>
-              <span className="text-xs font-semibold text-amber-200 uppercase tracking-wider">
-                Trận Quyết Định Ngôi Vương
-              </span>
-              <h4 className="text-lg font-bold text-white">Chung Kết Tổng (Grand Finals)</h4>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-right-4 duration-300">
-            {gfMatches.map((match) => {
-              const isP1Bye = isSlotBye(match, 1, allMatchesForLogic);
-              const isP2Bye = isSlotBye(match, 2, allMatchesForLogic);
-              return (
-                <div key={match.id}>
                   <MatchCard
                     match={match}
                     onScheduleMatch={onScheduleMatch}

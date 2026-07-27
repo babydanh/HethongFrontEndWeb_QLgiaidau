@@ -203,25 +203,6 @@ export function MatchCard({
             maxCols={maxCols}
           />
         </div>
-
-        {/* Schedule Info */}
-        {!match.isBye && (
-          <div className="flex flex-col gap-2 px-3 py-3 bg-slate-50/30 flex-1 justify-center min-h-[96px]">
-            <div className="flex items-center gap-1 text-[9px] text-slate-600 font-bold">
-              <span className="truncate" title={ruleSummary}>{ruleSummary}</span>
-            </div>
-            <div className="flex items-center gap-1 text-[9px] text-slate-500 font-bold">
-              <Clock className="w-2.5 h-2.5 flex-shrink-0" />
-              <span className="truncate">{match.scheduledAt ? formatDateTime(match.scheduledAt) : 'Chưa xếp giờ'}</span>
-            </div>
-            <div className="flex items-center gap-1 text-[9px] text-slate-500 font-bold">
-              <Info className="w-2.5 h-2.5 flex-shrink-0" />
-              <span className="truncate" title={match.courtAddress ? match.courtName + ' - ' + match.courtAddress : match.courtName || undefined}>
-                {match.courtName ? match.courtName + (match.courtAddress ? ' (' + match.courtAddress + ')' : '') : 'Chưa xếp sân'}
-              </span>
-            </div>
-          </div>
-        )}
       </>
     );
   }

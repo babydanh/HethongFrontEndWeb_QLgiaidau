@@ -1,10 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Award, Filter, Flame, Trophy, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
+import { Award, Trophy, ChevronDown, Loader2, Medal, Crown } from 'lucide-react';
 import { Category } from '@/types/category';
 import { rankingsApi, PlayerRanking } from '@/features/rankings/api';
+import { EloTierBadge } from '@/components/ui/EloTierBadge';
+import { getEloMatchTypeLabel } from '@/features/rankings/elo-display';
 import toast from 'react-hot-toast';
 
 interface RankingsTabProps {
@@ -12,10 +13,13 @@ interface RankingsTabProps {
   categories: Category[];
 }
 
+type MatchType = 'SINGLES' | 'DOUBLES' | 'MIXED_DOUBLES';
+
 export default function RankingsTab({ communityId, categories }: RankingsTabProps) {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>(
     categories[0]?.id || ''
   );
+  const [selectedMatchType, setSelectedMatchType] = useState<MatchType>('SINGLES');
   const [rankings, setRankings] = useState<PlayerRanking[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -29,7 +33,8 @@ export default function RankingsTab({ communityId, categories }: RankingsTabProp
           scope: 'COMMUNITY',
           communityId,
           categoryId: selectedCategoryId,
-          limit: 50,
+          matchType: selectedMatchType,
+          limit: 10,
         });
         if (res.data) {
           setRankings(res.data);
@@ -43,7 +48,9 @@ export default function RankingsTab({ communityId, categories }: RankingsTabProp
     };
 
     fetchRankings();
-  }, [communityId, selectedCategoryId]);
+  }, [communityId, selectedCategoryId, selectedMatchType]);
+
+  const matchTypes: MatchType[] = ['SINGLES', 'DOUBLES', 'MIXED_DOUBLES'];
 
   if (categories.length === 0) {
     return (
@@ -57,52 +64,75 @@ export default function RankingsTab({ communityId, categories }: RankingsTabProp
     );
   }
 
-  // Get top 3 and rest
   const topThree = rankings.slice(0, 3);
-  const restRankings = rankings.slice(3);
+  const restRankings = rankings.slice(3, 10);
 
-  // Rearrange top 3 to: [2nd, 1st, 3rd] for podium layout
-  const podiumOrder = (() => {
-    const result: (PlayerRanking | null)[] = [null, null, null];
-    if (topThree[1]) result[0] = topThree[1]; // 2nd place on left
-    if (topThree[0]) result[1] = topThree[0]; // 1st place in middle
-    if (topThree[2]) result[2] = topThree[2]; // 3rd place on right
-    return result;
-  })();
+  const podiumOrder: (PlayerRanking | null)[] = [null, null, null];
+  if (topThree[1]) podiumOrder[0] = topThree[1]; // 2nd
+  if (topThree[0]) podiumOrder[1] = topThree[0]; // 1st
+  if (topThree[2]) podiumOrder[2] = topThree[2]; // 3rd
 
   const activeCategory = categories.find((c) => c.id === selectedCategoryId);
 
+  const podiumTiers = [
+    { color: 'text-amber-400', bg: 'bg-amber-50', border: 'border-amber-300', label: '🥇' },
+    { color: 'text-slate-400', bg: 'bg-slate-50', border: 'border-slate-300', label: '🥈' },
+    { color: 'text-orange-600', bg: 'bg-orange-50', border: 'border-orange-300', label: '🥉' },
+  ];
+
+  const getWinRate = (p: PlayerRanking) =>
+    p.matchesPlayed > 0 ? Math.round((p.matchesWon / p.matchesPlayed) * 100) : 0;
+
   return (
     <div className="space-y-6">
-      {/* Header and Filter */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+      {/* Header + Filters */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
         <div>
           <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-            <Trophy className="w-5 h-5 text-blue-500" /> Bảng xếp hạng ELO nội bộ
+            <Trophy className="w-5 h-5 text-amber-500" /> Xếp hạng ELO CLB
           </h3>
           <p className="text-xs text-slate-450 mt-0.5">
-            Xếp hạng được tính dựa trên kết quả thi đấu các giải đấu của CLB.
+            Top 10 thành viên xuất sắc nhất •{' '}
+            {activeCategory?.name || ''} {getEloMatchTypeLabel(selectedMatchType)}
           </p>
         </div>
 
-        {/* Category switcher */}
-        {categories.length > 1 && (
-          <div className="flex flex-wrap gap-1.5 bg-slate-100 p-1 rounded-lg">
-            {categories.map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() => setSelectedCategoryId(cat.id)}
-                className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  selectedCategoryId === cat.id
-                    ? 'bg-white text-emerald-700 shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                {cat.name}
-              </button>
-            ))}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Category switcher */}
+          {categories.length > 1 && (
+            <div className="flex gap-1.5 bg-slate-100 p-1 rounded-lg">
+              {categories.map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => setSelectedCategoryId(cat.id)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    selectedCategoryId === cat.id
+                      ? 'bg-white text-emerald-700 shadow-sm'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  {cat.name}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Match type dropdown */}
+          <div className="relative">
+            <select
+              value={selectedMatchType}
+              onChange={(e) => setSelectedMatchType(e.target.value as MatchType)}
+              className="appearance-none pl-3 pr-8 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+            >
+              {matchTypes.map((mt) => (
+                <option key={mt} value={mt}>
+                  {getEloMatchTypeLabel(mt)}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
           </div>
-        )}
+        </div>
       </div>
 
       {isLoading ? (
@@ -118,207 +148,207 @@ export default function RankingsTab({ communityId, categories }: RankingsTabProp
             <Award className="w-16 h-16 text-slate-300 mx-auto mb-4" />
             <p className="text-slate-800 font-bold text-lg">Chưa có dữ liệu xếp hạng</p>
             <p className="text-slate-450 mt-2 max-w-sm mx-auto text-xs leading-relaxed font-semibold">
-              Hệ thống điểm ELO {activeCategory ? `môn ${activeCategory.name}` : ''} sẽ tự động kích hoạt và cập nhật khi các thành viên tham gia thi đấu các giải đấu của câu lạc bộ.
+              Hệ thống điểm ELO{' '}
+              {activeCategory ? `môn ${activeCategory.name}` : ''} sẽ tự động kích hoạt
+              khi các thành viên tham gia thi đấu.
             </p>
           </div>
         </div>
       ) : (
-        <div className="space-y-8">
-          {/* Top 3 Podium layout */}
+        <>
+          {/* ─── Compact Podium ─── */}
           {topThree.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end max-w-3xl mx-auto pt-4 px-2">
-              {/* Podium Column 2: 2nd place (renders left on md) */}
-              <div className="order-2 md:order-1 flex flex-col items-center">
+            <div className="flex items-end justify-center gap-3 sm:gap-4 px-2 pt-4">
+              {/* Silver - 2nd (left) */}
+              <div className="flex-1 max-w-[140px] flex flex-col items-center">
                 {podiumOrder[0] ? (
-                  <div className="w-full bg-white border border-slate-200/80 rounded-lg p-5 shadow-sm hover:shadow-md transition-all text-center flex flex-col items-center relative md:h-52 justify-center">
-                    <div className="absolute -top-5 w-10 h-10 rounded-full bg-slate-100 border-2 border-slate-350 text-slate-700 font-bold text-sm flex items-center justify-center shadow-sm">
-                      2
-                    </div>
-                    <div className="w-14 h-14 rounded-full border-2 border-slate-300 overflow-hidden bg-slate-100 mb-3 relative">
-                      {podiumOrder[0].user?.avatarUrl ? (
-                        <img
-                          src={podiumOrder[0].user.avatarUrl}
-                          alt={podiumOrder[0].user.fullName}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <span className="w-full h-full flex items-center justify-center font-bold text-slate-400 bg-slate-100 text-lg">
-                          {podiumOrder[0].user?.fullName?.charAt(0) || 'U'}
-                        </span>
-                      )}
-                    </div>
-                    <p className="font-bold text-slate-800 text-sm truncate max-w-full">
-                      {podiumOrder[0].user?.fullName}
-                    </p>
-                    <p className="text-lg font-bold text-slate-650 mt-1">
-                      {podiumOrder[0].eloPoints} <span className="text-[10px] text-slate-400 font-bold">ELO</span>
-                    </p>
-                    <div className="mt-2.5 flex items-center gap-3 text-[10px] text-slate-400 font-bold border-t w-full pt-2 justify-center">
-                      <span>Win: {podiumOrder[0].matchesWon}</span>
-                      <span>Streak: {podiumOrder[0].winStreak}🔥</span>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="hidden md:block w-full h-52 border border-dashed rounded-lg bg-slate-50/50"></div>
-                )}
-              </div>
-
-              {/* Podium Column 1: 1st place (renders middle) */}
-              <div className="order-1 md:order-2 flex flex-col items-center">
-                {podiumOrder[1] ? (
-                  <div className="w-full bg-gradient-to-b from-amber-50/50 to-white border-2 border-amber-400/80 rounded-lg p-6 shadow-md hover:shadow-lg transition-all text-center flex flex-col items-center relative md:h-60 justify-center">
-                    <div className="absolute -top-7 w-12 h-12 rounded-full bg-amber-400 text-white font-bold text-base flex items-center justify-center shadow-md border-2 border-white animate-bounce">
-                      👑
-                    </div>
-                    <div className="w-16 h-16 rounded-full border-2 border-amber-400 overflow-hidden bg-slate-100 mb-3 relative shadow-md">
-                      {podiumOrder[1].user?.avatarUrl ? (
-                        <img
-                          src={podiumOrder[1].user.avatarUrl}
-                          alt={podiumOrder[1].user.fullName}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <span className="w-full h-full flex items-center justify-center font-bold text-amber-600 bg-amber-50 text-xl">
-                          {podiumOrder[1].user?.fullName?.charAt(0) || 'U'}
-                        </span>
-                      )}
-                    </div>
-                    <p className="font-bold text-slate-900 text-base truncate max-w-full">
-                      {podiumOrder[1].user?.fullName}
-                    </p>
-                    <p className="text-2xl font-bold text-blue-600 mt-1">
-                      {podiumOrder[1].eloPoints} <span className="text-xs text-blue-500 font-bold">ELO</span>
-                    </p>
-                    <div className="mt-3 flex items-center gap-3 text-xs text-slate-500 font-bold border-t border-amber-100 w-full pt-2.5 justify-center">
-                      <span>Thắng: {podiumOrder[1].matchesWon}</span>
-                      <span className="text-blue-600 flex items-center gap-0.5">
-                        <Flame className="w-3.5 h-3.5 fill-amber-500 text-blue-500 shrink-0" />
-                        {podiumOrder[1].winStreak}
+                  <div className="w-full flex flex-col items-center">
+                    <div className="flex flex-col items-center mb-2">
+                      <div className="w-10 h-10 rounded-full bg-slate-100 border-2 border-slate-300 flex items-center justify-center text-sm font-bold text-slate-600 mb-1.5">
+                        <Medal className="w-4 h-4 text-slate-400" />
+                      </div>
+                      <div className="w-11 h-11 rounded-full overflow-hidden bg-slate-100 border-2 border-slate-300 relative">
+                        {podiumOrder[0].user?.avatarUrl ? (
+                          <img
+                            src={podiumOrder[0].user.avatarUrl}
+                            alt={podiumOrder[0].user.fullName}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <span className="w-full h-full flex items-center justify-center font-bold text-slate-500 bg-slate-100 text-xs">
+                            {podiumOrder[0].user?.fullName?.charAt(0) || '?'}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] font-bold text-slate-700 mt-1.5 truncate max-w-full text-center leading-tight">
+                        {podiumOrder[0].user?.fullName || '---'}
+                      </p>
+                      <span className="text-xs font-bold text-slate-500">
+                        {podiumOrder[0].eloPoints} ELO
                       </span>
+                      <EloTierBadge
+                        elo={podiumOrder[0].eloPoints}
+                        tierName={podiumOrder[0].tier?.name}
+                        size="sm"
+                        className="mt-1 scale-[0.85] origin-center"
+                      />
+                    </div>
+                    <div className="w-full h-24 bg-slate-100 rounded-t-lg border border-slate-200 flex items-center justify-center">
+                      <span className="text-2xl font-black text-slate-400/60">II</span>
                     </div>
                   </div>
                 ) : (
-                  <div className="w-full h-60 border border-dashed rounded-lg bg-slate-50/50"></div>
+                  <div className="w-full h-32 border border-dashed rounded-lg bg-slate-50/50"></div>
                 )}
               </div>
 
-              {/* Podium Column 3: 3rd place (renders right on md) */}
-              <div className="order-3 md:order-3 flex flex-col items-center">
-                {podiumOrder[2] ? (
-                  <div className="w-full bg-white border border-slate-200/80 rounded-lg p-5 shadow-sm hover:shadow-md transition-all text-center flex flex-col items-center relative md:h-48 justify-center">
-                    <div className="absolute -top-5 w-10 h-10 rounded-full bg-slate-100/50 border-2 border-amber-700/30 text-amber-800 font-bold text-sm flex items-center justify-center shadow-sm">
-                      3
+              {/* Gold - 1st (center) */}
+              <div className="flex-[1.2] max-w-[170px] flex flex-col items-center -translate-y-3">
+                {podiumOrder[1] ? (
+                  <div className="w-full flex flex-col items-center">
+                    <div className="flex flex-col items-center mb-2">
+                      <div className="w-7 h-7 rounded-full bg-amber-400 flex items-center justify-center text-xs -mb-2 z-10 shadow-md border-2 border-white">
+                        <Crown className="w-3.5 h-3.5 text-white" />
+                      </div>
+                      <div className="w-14 h-14 rounded-full overflow-hidden bg-amber-50 border-[3px] border-amber-400 relative shadow-md">
+                        {podiumOrder[1].user?.avatarUrl ? (
+                          <img
+                            src={podiumOrder[1].user.avatarUrl}
+                            alt={podiumOrder[1].user.fullName}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <span className="w-full h-full flex items-center justify-center font-bold text-amber-600 bg-amber-50 text-sm">
+                            {podiumOrder[1].user?.fullName?.charAt(0) || '?'}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm font-bold text-amber-700 mt-1.5 truncate max-w-full text-center leading-tight">
+                        {podiumOrder[1].user?.fullName || '---'}
+                      </p>
+                      <span className="text-sm font-bold text-amber-600">
+                        {podiumOrder[1].eloPoints} ELO
+                      </span>
+                      <EloTierBadge
+                        elo={podiumOrder[1].eloPoints}
+                        tierName={podiumOrder[1].tier?.name}
+                        size="sm"
+                        className="mt-1 scale-90 origin-center border-amber-200 bg-white"
+                      />
                     </div>
-                    <div className="w-12 h-12 rounded-full border-2 border-amber-600/30 overflow-hidden bg-slate-100 mb-3 relative">
-                      {podiumOrder[2].user?.avatarUrl ? (
+                    <div className="w-full h-28 bg-gradient-to-t from-amber-50 to-amber-100/70 rounded-t-lg border-2 border-amber-300/80 flex items-center justify-center shadow-sm">
+                      <span className="text-3xl font-black text-amber-400/70">I</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="w-full h-36 border border-dashed rounded-lg bg-slate-50/50"></div>
+                )}
+              </div>
+
+              {/* Bronze - 3rd (right) */}
+              <div className="flex-1 max-w-[140px] flex flex-col items-center">
+                {podiumOrder[2] ? (
+                  <div className="w-full flex flex-col items-center">
+                    <div className="flex flex-col items-center mb-2">
+                      <div className="w-10 h-10 rounded-full bg-orange-50 border-2 border-orange-300 flex items-center justify-center text-sm font-bold text-orange-600 mb-1.5">
+                        <Medal className="w-4 h-4 text-orange-500" />
+                      </div>
+                      <div className="w-11 h-11 rounded-full overflow-hidden bg-orange-50 border-2 border-orange-300 relative">
+                        {podiumOrder[2].user?.avatarUrl ? (
+                          <img
+                            src={podiumOrder[2].user.avatarUrl}
+                            alt={podiumOrder[2].user.fullName}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <span className="w-full h-full flex items-center justify-center font-bold text-orange-500 bg-orange-50 text-xs">
+                            {podiumOrder[2].user?.fullName?.charAt(0) || '?'}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] font-bold text-orange-700 mt-1.5 truncate max-w-full text-center leading-tight">
+                        {podiumOrder[2].user?.fullName || '---'}
+                      </p>
+                      <span className="text-xs font-bold text-orange-600">
+                        {podiumOrder[2].eloPoints} ELO
+                      </span>
+                      <EloTierBadge
+                        elo={podiumOrder[2].eloPoints}
+                        tierName={podiumOrder[2].tier?.name}
+                        size="sm"
+                        className="mt-1 scale-[0.85] origin-center"
+                      />
+                    </div>
+                    <div className="w-full h-20 bg-orange-50 rounded-t-lg border border-orange-200 flex items-center justify-center">
+                      <span className="text-2xl font-black text-orange-400/60">III</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="w-full h-28 border border-dashed rounded-lg bg-slate-50/50"></div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ─── Ranks 4-10 List ─── */}
+          {restRankings.length > 0 && (
+            <div className="space-y-1.5 mt-4">
+              {restRankings.map((player, index) => {
+                const rank = index + 4;
+                const winRate = getWinRate(player);
+                return (
+                  <div
+                    key={player.id}
+                    className="flex items-center gap-3 bg-white rounded-lg border border-slate-200/80 px-4 py-2.5 hover:bg-slate-50/50 transition-colors shadow-sm"
+                  >
+                    {/* Rank number */}
+                    <span className="w-6 text-center text-xs font-bold text-slate-400">
+                      #{rank}
+                    </span>
+
+                    {/* Avatar */}
+                    <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-100 border border-slate-200 shrink-0 relative">
+                      {player.user?.avatarUrl ? (
                         <img
-                          src={podiumOrder[2].user.avatarUrl}
-                          alt={podiumOrder[2].user.fullName}
+                          src={player.user.avatarUrl}
+                          alt={player.user.fullName}
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <span className="w-full h-full flex items-center justify-center font-bold text-slate-400 bg-slate-100 text-base">
-                          {podiumOrder[2].user?.fullName?.charAt(0) || 'U'}
+                        <span className="w-full h-full flex items-center justify-center font-bold text-slate-400 bg-slate-100 text-[10px]">
+                          {player.user?.fullName?.charAt(0) || '?'}
                         </span>
                       )}
                     </div>
-                    <p className="font-bold text-slate-800 text-sm truncate max-w-full">
-                      {podiumOrder[2].user?.fullName}
-                    </p>
-                    <p className="text-lg font-bold text-slate-650 mt-1">
-                      {podiumOrder[2].eloPoints} <span className="text-[10px] text-slate-400 font-bold">ELO</span>
-                    </p>
-                    <div className="mt-2.5 flex items-center gap-3 text-[10px] text-slate-400 font-bold border-t w-full pt-2 justify-center">
-                      <span>Win: {podiumOrder[2].matchesWon}</span>
-                      <span>Streak: {podiumOrder[2].winStreak}🔥</span>
+
+                    {/* Name + Tier badge */}
+                    <div className="flex-1 min-w-0 flex items-center gap-2">
+                      <span className="text-sm font-bold text-slate-800 truncate">
+                        {player.user?.fullName || 'VĐV'}
+                      </span>
+                      <EloTierBadge
+                        elo={player.eloPoints}
+                        tierName={player.tier?.name}
+                        size="sm"
+                        className="shrink-0 scale-[0.85] origin-left"
+                      />
                     </div>
+
+                    {/* Win rate */}
+                    <span className="text-[10px] font-semibold text-slate-400 w-10 text-right shrink-0">
+                      {winRate}%
+                    </span>
+
+                    {/* ELO */}
+                    <span className="text-xs font-bold text-blue-600 w-16 text-right shrink-0">
+                      {player.eloPoints}
+                    </span>
                   </div>
-                ) : (
-                  <div className="hidden md:block w-full h-48 border border-dashed rounded-lg bg-slate-50/50"></div>
-                )}
-              </div>
+                );
+              })}
             </div>
           )}
-
-          {/* Ranks 4+ Table */}
-          {restRankings.length > 0 && (
-            <div className="bg-white rounded-lg border border-slate-200/80 shadow-sm overflow-hidden mt-6">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="bg-slate-50 text-slate-500 text-xs font-bold uppercase tracking-wider border-b border-slate-100">
-                      <th className="py-4 px-6 text-center w-20">Thứ hạng</th>
-                      <th className="py-4 px-6">Vận động viên</th>
-                      <th className="py-4 px-6 text-center">Điểm ELO</th>
-                      <th className="py-4 px-6 text-center">Số trận</th>
-                      <th className="py-4 px-6 text-center">Tỉ lệ thắng</th>
-                      <th className="py-4 px-6 text-center">Chuỗi thắng</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 text-sm text-slate-700">
-                    {restRankings.map((row, index) => {
-                      const rank = index + 4;
-                      const winRate =
-                        row.matchesPlayed > 0
-                          ? Math.round((row.matchesWon / row.matchesPlayed) * 100)
-                          : 0;
-
-                      return (
-                        <tr
-                          key={row.id}
-                          className="hover:bg-slate-50/70 transition-colors"
-                        >
-                          <td className="py-4 px-6 text-center font-bold text-slate-500">
-                            {rank}
-                          </td>
-                          <td className="py-4 px-6">
-                            <div className="flex items-center gap-3">
-                              <div className="w-9 h-9 rounded-full overflow-hidden bg-slate-100 shrink-0 border relative">
-                                {row.user?.avatarUrl ? (
-                                  <img
-                                    src={row.user.avatarUrl}
-                                    alt={row.user.fullName}
-                                    className="w-full h-full object-cover"
-                                  />
-                                ) : (
-                                  <span className="w-full h-full flex items-center justify-center font-bold text-slate-400 bg-slate-100">
-                                    {row.user?.fullName?.charAt(0) || 'U'}
-                                  </span>
-                                )}
-                              </div>
-                              <span className="font-bold text-slate-900">
-                                {row.user?.fullName || 'VĐV Ẩn Danh'}
-                              </span>
-                            </div>
-                          </td>
-                          <td className="py-4 px-6 text-center font-bold text-slate-950">
-                            {row.eloPoints}
-                          </td>
-                          <td className="py-4 px-6 text-center font-medium text-slate-500">
-                            {row.matchesPlayed}
-                          </td>
-                          <td className="py-4 px-6 text-center font-bold text-blue-600">
-                            {winRate}%
-                          </td>
-                          <td className="py-4 px-6 text-center">
-                            {row.winStreak > 0 ? (
-                              <span className="inline-flex items-center gap-0.5 text-xs font-bold text-blue-600 bg-slate-50 px-2.5 py-0.5 rounded-full border border-slate-200">
-                                <Flame className="w-3.5 h-3.5 fill-amber-500 text-blue-500 shrink-0" />
-                                {row.winStreak}
-                              </span>
-                            ) : (
-                              <span className="text-slate-400">-</span>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-        </div>
+        </>
       )}
     </div>
   );

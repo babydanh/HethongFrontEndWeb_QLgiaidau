@@ -242,7 +242,7 @@ export default function CreateLiteTournamentPage({
                 </span>
                 <span className="text-xs text-slate-500 mt-0.5">
                   {isRanked
-                    ? 'Kết quả ảnh hưởng đến điểm ELO của người chơi'
+                    ? 'Kết quả ảnh hưởng đến điểm ELO trong câu lạc bộ'
                     : 'Giải đấu giao hữu, không tính điểm xếp hạng'}
                 </span>
               </div>

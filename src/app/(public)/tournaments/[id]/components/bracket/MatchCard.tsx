@@ -1,39 +1,21 @@
 /**
- * MatchCard — Sleek, modern bracket match node component
+ * MatchCard — Sofascore / World Cup Style Compact Bracket Match Node
  *
- * Pixel-perfect aligned set columns (S1, S2, S3...) according to match settings.
- * Displays formatted Date & Time without text clipping.
+ * Height: 88px (Public) / 118px (Organizer)
+ * Clean, table-aligned 2-row layout with winner indicators and exact right-aligned scores.
  */
 
 'use client';
 
 import React from 'react';
 import Link from 'next/link';
-import { Play, CheckCircle, Clock } from 'lucide-react';
+import { Play } from 'lucide-react';
 import type { BracketMatch } from '@/features/tournaments/api';
 import { extractMatchScores } from '@/features/matches/score-display';
 import type { SportRuleKind } from '@/types/tournament';
 import { formatDateTime } from '@/utils/format';
 import type { OnScheduleMatch, OnSelectBracketMatch } from './types';
 import { CARD_W, CARD_H_PUBLIC, CARD_H_ORGANIZER } from './types';
-
-/** Derive max columns dynamically from match configuration or scores */
-function getMaxColumns(match: BracketMatch): number {
-  const setList = extractMatchScores(match.scoreDetails as Record<string, unknown> | undefined | null);
-  const rawMatch = match as unknown as Record<string, unknown>;
-  const cfgStw = match.matchConfig?.setsToWin ?? rawMatch.setsToWin;
-  const cfgBo = match.matchConfig?.bestOf ?? rawMatch.bestOf;
-
-  if (cfgStw === 1 || cfgBo === 1) return 1;
-  if (cfgStw === 2 || cfgBo === 3) return 3;
-  if (cfgStw === 3 || cfgBo === 5) return 5;
-
-  if (setList.length > 0) {
-    return Math.max(setList.length, 1);
-  }
-
-  return 3;
-}
 
 export function MatchCard({
   match,
@@ -60,30 +42,29 @@ export function MatchCard({
   const cardH = isOrganizer && !showByeLabel ? CARD_H_ORGANIZER : CARD_H_PUBLIC;
 
   const setList = extractMatchScores(match.scoreDetails as Record<string, unknown> | undefined | null);
-  const maxCols = getMaxColumns(match);
+  const actualCardH = match.isBye ? 80 : cardH;
 
-  const actualCardH = match.isBye ? 140 : cardH;
-
+  // Format compact schedule date/time e.g., "14:30 28/07"
   const rawMatch = match as unknown as Record<string, unknown>;
-  const dateStr = match.scheduledAt
+  const dateFormatted = match.scheduledAt
     ? formatDateTime(match.scheduledAt)
     : rawMatch.scheduledDate
       ? String(rawMatch.scheduledDate)
-      : 'Chưa xếp giờ';
+      : null;
 
   return (
     <div
       data-bracket-match-id={match.id}
       style={{ width: CARD_W, height: actualCardH }}
       className={
-        'rounded-xl overflow-hidden border flex flex-col shadow-sm transition-all duration-150 hover:shadow-md hover:-translate-y-0.5 bg-white ' +
+        'rounded-lg overflow-hidden border flex flex-col shadow-sm transition-all duration-150 hover:shadow-md hover:-translate-y-0.5 bg-white select-none ' +
         (selected
-          ? 'border-amber-500 ring-4 ring-amber-200 shadow-amber-100'
+          ? 'border-amber-500 ring-2 ring-amber-300 shadow-amber-100'
           : live
             ? 'border-blue-500 ring-2 ring-blue-500/20 shadow-blue-100'
             : done
-              ? 'border-slate-300 bg-slate-50/20'
-              : 'border-slate-200/90')
+              ? 'border-slate-300 bg-slate-50/10'
+              : 'border-slate-200')
       }
       onClick={() => onSelectMatch?.(match)}
     >
@@ -98,7 +79,7 @@ export function MatchCard({
       )}
 
       {isOrganizer && !match.isBye && !showByeLabel && (
-        <div className="px-2.5 py-1.5 bg-slate-50 flex-shrink-0 border-t border-slate-200/80">
+        <div className="px-2 py-1 bg-slate-50 flex-shrink-0 border-t border-slate-200/80">
           {!done ? (
             match.participant1 && match.participant2 ? (
               <div className="flex justify-center">
@@ -107,13 +88,13 @@ export function MatchCard({
                     e.stopPropagation();
                     onScheduleMatch!(match);
                   }}
-                  className="w-full text-center text-[10px] font-bold text-blue-600 border border-blue-200 bg-white hover:bg-blue-50 rounded-md py-1 transition-colors cursor-pointer"
+                  className="w-full text-center text-[10px] font-bold text-blue-600 border border-blue-200 bg-white hover:bg-blue-50 rounded py-0.5 transition-colors cursor-pointer"
                 >
                   Xếp Sân & Giờ
                 </button>
               </div>
             ) : (
-              <div className="w-full text-center text-[10px] font-bold text-slate-400 bg-slate-100/50 rounded-md py-1 select-none">
+              <div className="w-full text-center text-[9px] font-bold text-slate-400 bg-slate-100/50 rounded py-0.5 select-none">
                 Chờ đối thủ
               </div>
             )
@@ -126,116 +107,88 @@ export function MatchCard({
   function CardContent() {
     return (
       <div className="flex flex-col flex-1 h-full justify-between">
-        {/* Header Bar */}
+        {/* World Cup Header Bar */}
         <div
           className={
-            'flex items-center justify-between px-3 py-1.5 border-b text-[10px] font-bold flex-shrink-0 ' +
+            'flex items-center justify-between px-2.5 py-0.5 border-b text-[9px] font-bold flex-shrink-0 ' +
             (live
-              ? 'bg-blue-50 border-blue-200 text-blue-800'
-              : 'bg-slate-100/70 border-slate-200/80 text-slate-700')
+              ? 'bg-blue-100/80 border-blue-200 text-blue-800'
+              : 'bg-slate-100/80 border-slate-200/80 text-slate-500')
           }
         >
-          <span className="text-slate-500 font-bold">Trận #{match.matchOrder}</span>
+          <span className="truncate">
+            {dateFormatted || `Trận #${match.matchOrder}`}
+          </span>
+
           {live ? (
-            <span className="flex items-center gap-1 text-blue-600 font-bold animate-pulse">
-              <Play className="w-2.5 h-2.5 fill-blue-600" /> Trực tiếp
+            <span className="flex items-center gap-0.5 text-blue-600 font-extrabold animate-pulse uppercase tracking-wider">
+              <Play className="w-2 h-2 fill-blue-600" /> Live
             </span>
           ) : done ? (
-            match.isBye ? (
-              <span className="text-blue-600 font-bold uppercase tracking-wider text-[9px]">Vô thẳng</span>
-            ) : (
-              <span className="flex items-center gap-1 text-emerald-600 font-bold">
-                <CheckCircle className="w-3 h-3" /> Đã kết thúc
-              </span>
-            )
-          ) : match.isBye ? (
-            <span className="text-slate-500 font-bold uppercase tracking-wider text-[9px]">Miễn vòng</span>
+            <span className="text-slate-400 font-extrabold uppercase tracking-wider text-[8px]">
+              {match.isBye ? 'Vô thẳng' : 'KT'}
+            </span>
           ) : (
-            <span className="flex items-center gap-1 text-slate-500 font-bold">
-              <Clock className="w-2.5 h-2.5" /> Sắp diễn ra
+            <span className="text-slate-400 font-extrabold uppercase tracking-wider text-[8px]">
+              {match.isBye ? 'Miễn' : 'VS'}
             </span>
           )}
         </div>
 
-        {/* Set Header Row — Perfectly Aligned with Scores Below */}
-        {!match.isBye && (
-          <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/60 flex-shrink-0 border-l-4 border-transparent pl-2 pr-3 py-0.5">
-            <div className="flex-1" />
-            <div className="flex items-center shrink-0">
-              {Array.from({ length: maxCols }).map((_, ci) => (
-                <div
-                  key={ci}
-                  className="w-7 text-center text-[9px] font-bold text-slate-400"
-                >
-                  S{ci + 1}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Participant Rows */}
+        {/* 2-Row World Cup Team Table */}
         <div className="flex flex-col flex-1 justify-center divide-y divide-slate-100">
-          <RowSide
+          <TeamRow
             p={match.participant1}
             won={p1Won}
+            setsWon={match.p1SetsWon}
             isByeSlot={isP1Bye || (match.isBye && !match.participant1)}
             setList={setList.map((set) => ({ p1: String(set.team1Score), p2: String(set.team2Score) }))}
             pickScore={(s) => s.p1}
-            maxCols={maxCols}
+            done={done}
           />
-          <RowSide
+          <TeamRow
             p={match.participant2}
             won={p2Won}
+            setsWon={match.p2SetsWon}
             isByeSlot={isP2Bye || (match.isBye && !match.participant2)}
             setList={setList.map((set) => ({ p1: String(set.team1Score), p2: String(set.team2Score) }))}
             pickScore={(s) => s.p2}
-            maxCols={maxCols}
+            done={done}
           />
         </div>
-
-        {/* 1-Line Scheduled Date & Time Footer */}
-        {!match.isBye && (
-          <div className="flex items-center justify-between px-3 py-1.5 bg-slate-50/80 text-[10px] font-medium text-slate-500 border-t border-slate-100 flex-shrink-0">
-            <span className="flex items-center gap-1.5 min-w-0">
-              <Clock className="w-3 h-3 text-slate-400 shrink-0" />
-              <span className="truncate font-semibold text-slate-600">
-                {dateStr}
-              </span>
-            </span>
-          </div>
-        )}
       </div>
     );
   }
 }
 
-function RowSide({
+function TeamRow({
   p,
   won,
+  setsWon,
   isByeSlot = false,
   setList,
   pickScore,
-  maxCols,
+  done,
 }: {
   p: BracketMatch['participant1'];
   won: boolean;
+  setsWon?: number;
   isByeSlot?: boolean;
   setList: { p1: string; p2: string }[];
   pickScore: (s: { p1: string; p2: string }) => string;
-  maxCols: number;
+  done: boolean;
 }) {
   return (
     <div
       className={
-        'flex items-center justify-between py-1.5 transition-colors border-l-4 pl-2 pr-3 ' +
-        (won ? 'bg-emerald-50/80 border-emerald-500' : 'bg-white border-transparent')
+        'flex items-center justify-between px-2.5 py-1 transition-colors ' +
+        (won ? 'bg-blue-50/40 font-bold text-slate-900' : 'bg-white text-slate-700')
       }
     >
       {/* Team Info */}
       <div className="flex items-center gap-1.5 min-w-0 flex-1 mr-1">
         {p?.seed != null && (
-          <span className="text-[9px] bg-slate-200 text-slate-700 px-1 rounded font-bold shrink-0">
+          <span className="text-[8px] bg-slate-100 text-slate-500 px-1 rounded font-bold shrink-0">
             {p.seed}
           </span>
         )}
@@ -243,10 +196,10 @@ function RowSide({
           className={
             'text-[11px] truncate leading-tight ' +
             (won
-              ? 'font-bold text-emerald-950'
+              ? 'font-extrabold text-slate-900'
               : !p || isByeSlot
                 ? 'italic text-slate-400 font-normal'
-                : 'font-semibold text-slate-800')
+                : 'font-semibold text-slate-600')
           }
           title={p?.teamName ?? undefined}
         >
@@ -254,28 +207,40 @@ function RowSide({
         </span>
       </div>
 
-      {/* Per-set scores */}
-      <div className="flex items-center shrink-0">
-        {Array.from({ length: maxCols }).map((_, ci) => {
-          const score = setList[ci];
-          const val = score ? pickScore(score) : '';
-          return (
-            <div key={ci} className="w-7 text-center">
-              <span
-                className={
-                  'inline-block text-[11px] font-bold w-5 h-5 leading-5 rounded text-center ' +
-                  (val
-                    ? won
-                      ? 'bg-emerald-100 text-emerald-800 font-extrabold'
-                      : 'bg-slate-100 text-slate-700 font-bold'
-                    : 'text-slate-300 font-normal')
-                }
-              >
-                {val || '-'}
-              </span>
-            </div>
-          );
-        })}
+      {/* Score / Sets Display — World Cup Style */}
+      <div className="flex items-center gap-1 shrink-0 ml-1">
+        {setList.length > 1 ? (
+          // Display per-set scores if multiple sets
+          <div className="flex items-center gap-0.5">
+            {setList.map((s, idx) => {
+              const val = pickScore(s);
+              return (
+                <span
+                  key={idx}
+                  className={`inline-block text-[10px] w-4 text-center font-bold ${
+                    val ? (won ? 'text-blue-700 font-extrabold' : 'text-slate-500') : 'text-slate-300'
+                  }`}
+                >
+                  {val || '-'}
+                </span>
+              );
+            })}
+          </div>
+        ) : setList.length === 1 ? (
+          // Single set score
+          <span className={`text-[11px] font-extrabold ${won ? 'text-blue-700' : 'text-slate-600'}`}>
+            {pickScore(setList[0]) || '-'}
+          </span>
+        ) : setsWon != null && setsWon > 0 ? (
+          <span className={`text-[11px] font-extrabold ${won ? 'text-blue-700' : 'text-slate-600'}`}>
+            {setsWon}
+          </span>
+        ) : null}
+
+        {/* Winner pointer arrow ◄ like Google World Cup */}
+        {done && won && (
+          <span className="text-[10px] text-blue-600 font-extrabold ml-0.5">◄</span>
+        )}
       </div>
     </div>
   );

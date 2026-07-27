@@ -1,5 +1,5 @@
 /**
- * PagedDoubleElimView — Minimal & Light Branch-Based Round Navigation
+ * PagedDoubleElimView — Minimal & Light Double Elimination Bracket View using BracketPairColumns
  */
 
 'use client';
@@ -9,8 +9,8 @@ import { ChevronLeft, ChevronRight, ShieldCheck, Flame } from 'lucide-react';
 import type { BracketMatch } from '@/features/tournaments/api';
 import type { SportRuleKind } from '@/types/tournament';
 import type { OnScheduleMatch, OnSelectBracketMatch } from './types';
-import { buildMatchesByRound, isSlotBye } from './helpers';
-import { MatchCard } from './MatchCard';
+import { buildMatchesByRound } from './helpers';
+import { BracketPairColumns } from './BracketPairColumns';
 
 interface Props {
   upperMatches: BracketMatch[];
@@ -33,7 +33,7 @@ export function PagedDoubleElimView({
   onSelectMatch,
   fallbackSportRuleKind,
 }: Props) {
-  // If there are Grand Finals matches, include them as the last round in Upper Bracket
+  // Merge Grand Finals into Upper Bracket as the final round
   const combinedUpperMatches = useMemo(() => {
     if (!gfMatches.length) return upperMatches;
     const maxUbRound = upperMatches.length > 0
@@ -108,16 +108,19 @@ export function PagedDoubleElimView({
     return `Lượt ${r} Nhánh thua`;
   };
 
-  const allMatchesForLogic = useMemo(
-    () => [...combinedUpperMatches, ...lowerMatches],
-    [combinedUpperMatches, lowerMatches],
-  );
-
+  // Active & Next round matches for Upper Bracket
   const currentUbRound = ubRounds[activeUbIndex] ?? ubRounds[0];
-  const currentUbMatches = ubByRound[currentUbRound] ?? [];
+  const nextUbRound = ubRounds[activeUbIndex + 1];
 
+  const activeUbMatches = ubByRound[currentUbRound] ?? [];
+  const nextUbMatches = nextUbRound ? (ubByRound[nextUbRound] ?? []) : [];
+
+  // Active & Next round matches for Lower Bracket
   const currentLbRound = lbRounds[activeLbIndex] ?? lbRounds[0];
-  const currentLbMatches = lbByRound[currentLbRound] ?? [];
+  const nextLbRound = lbRounds[activeLbIndex + 1];
+
+  const activeLbMatches = lbByRound[currentLbRound] ?? [];
+  const nextLbMatches = nextLbRound ? (lbByRound[nextLbRound] ?? []) : [];
 
   return (
     <div className="flex flex-col gap-5 w-full">
@@ -159,7 +162,7 @@ export function PagedDoubleElimView({
       {/* BRANCH 1: UPPER BRACKET */}
       {activeBranch === 'upper' && (
         <div className="flex flex-col gap-4">
-          {/* Header Controls - Minimal Light */}
+          {/* Header Controls */}
           <div className="flex items-center justify-between gap-3 bg-slate-50/80 border border-slate-200 rounded-xl px-4 py-3">
             <div>
               <span className="text-[11px] font-bold text-blue-600 uppercase tracking-wider">
@@ -179,7 +182,7 @@ export function PagedDoubleElimView({
                 <ChevronLeft className="w-4 h-4" /> Vòng trước
               </button>
               <span className="text-xs font-semibold text-slate-500 hidden sm:inline">
-                {currentUbMatches.length} trận
+                {activeUbMatches.length} trận
               </span>
               <button
                 onClick={() => setActiveUbIndex((p) => Math.min(p + 1, ubRounds.length - 1))}
@@ -214,29 +217,19 @@ export function PagedDoubleElimView({
             })}
           </div>
 
-          {/* UB Grid */}
-          <div
+          {/* UB 2-Column Pair with SVG Lines */}
+          <BracketPairColumns
             key={`ub-${currentUbRound}`}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-in fade-in slide-in-from-right-4 duration-300"
-          >
-            {currentUbMatches.map((match) => {
-              const isP1Bye = isSlotBye(match, 1, allMatchesForLogic);
-              const isP2Bye = isSlotBye(match, 2, allMatchesForLogic);
-              return (
-                <div key={match.id} className="transition-transform duration-200 hover:-translate-y-0.5">
-                  <MatchCard
-                    match={match}
-                    onScheduleMatch={onScheduleMatch}
-                    onSelectMatch={onSelectMatch}
-                    selected={selectedMatchId === match.id}
-                    isP1Bye={isP1Bye}
-                    isP2Bye={isP2Bye}
-                    fallbackSportRuleKind={fallbackSportRuleKind}
-                  />
-                </div>
-              );
-            })}
-          </div>
+            activeRoundMatches={activeUbMatches}
+            nextRoundMatches={nextUbMatches}
+            activeRoundTitle={getUbLabel(currentUbRound)}
+            nextRoundTitle={nextUbRound ? getUbLabel(nextUbRound) : undefined}
+            allMatches={combinedUpperMatches}
+            onScheduleMatch={onScheduleMatch}
+            selectedMatchId={selectedMatchId}
+            onSelectMatch={onSelectMatch}
+            fallbackSportRuleKind={fallbackSportRuleKind}
+          />
         </div>
       )}
 
@@ -262,7 +255,7 @@ export function PagedDoubleElimView({
                 <ChevronLeft className="w-4 h-4" /> Vòng trước
               </button>
               <span className="text-xs font-semibold text-slate-500 hidden sm:inline">
-                {currentLbMatches.length} trận
+                {activeLbMatches.length} trận
               </span>
               <button
                 onClick={() => setActiveLbIndex((p) => Math.min(p + 1, lbRounds.length - 1))}
@@ -297,29 +290,19 @@ export function PagedDoubleElimView({
             })}
           </div>
 
-          {/* LB Grid */}
-          <div
+          {/* LB 2-Column Pair with SVG Lines */}
+          <BracketPairColumns
             key={`lb-${currentLbRound}`}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-in fade-in slide-in-from-right-4 duration-300"
-          >
-            {currentLbMatches.map((match) => {
-              const isP1Bye = isSlotBye(match, 1, allMatchesForLogic);
-              const isP2Bye = isSlotBye(match, 2, allMatchesForLogic);
-              return (
-                <div key={match.id} className="transition-transform duration-200 hover:-translate-y-0.5">
-                  <MatchCard
-                    match={match}
-                    onScheduleMatch={onScheduleMatch}
-                    onSelectMatch={onSelectMatch}
-                    selected={selectedMatchId === match.id}
-                    isP1Bye={isP1Bye}
-                    isP2Bye={isP2Bye}
-                    fallbackSportRuleKind={fallbackSportRuleKind}
-                  />
-                </div>
-              );
-            })}
-          </div>
+            activeRoundMatches={activeLbMatches}
+            nextRoundMatches={nextLbMatches}
+            activeRoundTitle={getLbLabel(currentLbRound)}
+            nextRoundTitle={nextLbRound ? getLbLabel(nextLbRound) : undefined}
+            allMatches={lowerMatches}
+            onScheduleMatch={onScheduleMatch}
+            selectedMatchId={selectedMatchId}
+            onSelectMatch={onSelectMatch}
+            fallbackSportRuleKind={fallbackSportRuleKind}
+          />
         </div>
       )}
     </div>

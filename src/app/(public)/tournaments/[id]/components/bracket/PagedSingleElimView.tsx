@@ -1,5 +1,5 @@
 /**
- * PagedSingleElimView — Minimal & Light Single Elimination Bracket View
+ * PagedSingleElimView — Minimal & Light Single Elimination Bracket View using BracketPairColumns
  */
 
 'use client';
@@ -9,8 +9,8 @@ import { ChevronLeft, ChevronRight, Trophy } from 'lucide-react';
 import type { BracketMatch } from '@/features/tournaments/api';
 import type { SportRuleKind } from '@/types/tournament';
 import type { OnScheduleMatch, OnSelectBracketMatch } from './types';
-import { buildMatchesByRound, getRoundLabel, isSlotBye } from './helpers';
-import { MatchCard } from './MatchCard';
+import { buildMatchesByRound, getRoundLabel } from './helpers';
+import { BracketPairColumns } from './BracketPairColumns';
 
 interface Props {
   matches: BracketMatch[];
@@ -63,7 +63,10 @@ export function PagedSingleElimView({
   }
 
   const currentRound = rounds[activeRoundIndex] ?? rounds[0];
-  const currentMatches = byRound[currentRound] ?? [];
+  const nextRound = rounds[activeRoundIndex + 1];
+
+  const activeRoundMatches = byRound[currentRound] ?? [];
+  const nextRoundMatches = nextRound ? (byRound[nextRound] ?? []) : [];
 
   const handlePrev = () => {
     setActiveRoundIndex((prev) => Math.max(prev - 1, 0));
@@ -99,7 +102,7 @@ export function PagedSingleElimView({
             <ChevronLeft className="w-4 h-4" /> Vòng trước
           </button>
           <span className="text-xs font-semibold text-slate-500 hidden sm:inline">
-            {currentMatches.length} trận
+            {activeRoundMatches.length} trận
           </span>
           <button
             onClick={handleNext}
@@ -139,32 +142,19 @@ export function PagedSingleElimView({
         })}
       </div>
 
-      {/* Matches Grid List for Active Round */}
-      <div
+      {/* 2-Column Bracket View with Connector Lines */}
+      <BracketPairColumns
         key={currentRound}
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-in fade-in slide-in-from-right-4 duration-300"
-      >
-        {currentMatches.map((match) => {
-          const isP1Bye = isSlotBye(match, 1, matches);
-          const isP2Bye = isSlotBye(match, 2, matches);
-          return (
-            <div
-              key={match.id}
-              className="transition-transform duration-200 hover:-translate-y-0.5"
-            >
-              <MatchCard
-                match={match}
-                onScheduleMatch={onScheduleMatch}
-                onSelectMatch={onSelectMatch}
-                selected={selectedMatchId === match.id}
-                isP1Bye={isP1Bye}
-                isP2Bye={isP2Bye}
-                fallbackSportRuleKind={fallbackSportRuleKind}
-              />
-            </div>
-          );
-        })}
-      </div>
+        activeRoundMatches={activeRoundMatches}
+        nextRoundMatches={nextRoundMatches}
+        activeRoundTitle={getRoundLabel(currentRound - 1, maxRound)}
+        nextRoundTitle={nextRound ? getRoundLabel(nextRound - 1, maxRound) : undefined}
+        allMatches={matches}
+        onScheduleMatch={onScheduleMatch}
+        selectedMatchId={selectedMatchId}
+        onSelectMatch={onSelectMatch}
+        fallbackSportRuleKind={fallbackSportRuleKind}
+      />
     </div>
   );
 }

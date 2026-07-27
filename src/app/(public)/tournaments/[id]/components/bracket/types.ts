@@ -12,10 +12,10 @@ import type { SportRuleKind } from '@/types/tournament';
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // LAYOUT CONSTANTS
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-export const CARD_W = 240;           // match card width (px) — compact World Cup style
-export const CARD_H_PUBLIC = 88;     // public view height (compact 88px World Cup style)
-export const CARD_H_ORGANIZER = 118; // organizer view height (with schedule button)
-export const BASE_SLOT = 108;        // slot height for densest round
+export const CARD_W = 260;           // match card width (px)
+export const CARD_H_PUBLIC = 172;    // public view height (172px prevents clipping)
+export const CARD_H_ORGANIZER = 210; // organizer view height (with schedule button)
+export const BASE_SLOT = 180;        // slot height for densest round
 export const COL_GAP = 96;           // horizontal gap between round columns
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

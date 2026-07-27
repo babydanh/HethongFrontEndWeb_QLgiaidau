@@ -10,7 +10,7 @@ import {
   Trophy, Users, Swords, Calendar,
   Link as LinkIcon, ExternalLink, Copy, ChevronLeft,
   AlertTriangle, CheckCircle, RefreshCw, UserPlus, Shuffle,
-  Unlink, Loader2, User,
+  Unlink, Loader2, User, FlaskConical,
 } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
@@ -87,6 +87,7 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
   const [generatingStrategy, setGeneratingStrategy] = useState<'RANDOM' | 'ELO_BALANCED' | null>(null);
   const [unpairingId, setUnpairingId] = useState<string | null>(null);
   const [bracketLoading, setBracketLoading] = useState(false);
+  const [mockLoading, setMockLoading] = useState(false);
 
   const fetchParticipants = useCallback(async () => {
     if (!id) return;
@@ -215,6 +216,23 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
       toast.error(getErrorMessage(err));
     } finally {
       setBracketLoading(false);
+    }
+  };
+
+  const handleSeedMock = async () => {
+    const count = prompt('Số lượng VĐV ảo muốn tạo?', '8');
+    const num = parseInt(count || '0', 10);
+    if (num < 1 || num > 50) return toast.error('Số lượng từ 1 đến 50');
+    setMockLoading(true);
+    try {
+      const names = Array.from({ length: num }, (_, i) => `VĐV ảo ${i + 1}`);
+      await tournamentsApi.seedMockParticipants(id, names);
+      toast.success(`Đã tạo ${num} VĐV ảo!`);
+      await fetchParticipants();
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setMockLoading(false);
     }
   };
 
@@ -394,6 +412,16 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${participantsLoading ? 'animate-spin' : ''}`} />
                   Làm mới
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSeedMock}
+                  disabled={mockLoading}
+                  className="gap-1 text-xs font-semibold text-amber-700 border-amber-300 hover:bg-amber-50"
+                >
+                  <FlaskConical className={`w-3.5 h-3.5 ${mockLoading ? 'animate-pulse' : ''}`} />
+                  {mockLoading ? 'Đang tạo...' : 'Tạo VĐV ảo'}
                 </Button>
               </div>
 

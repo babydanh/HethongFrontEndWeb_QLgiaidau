@@ -111,16 +111,17 @@ export function BracketPairColumns({
                 if (!endPos) return null;
 
                 const midX = (startPos.x + CARD_W + endPos.x) / 2;
-                const stroke = m.status === 'COMPLETED' ? '#10b981' : '#cbd5e1';
-
+                const stroke = m.status === 'COMPLETED' ? '#2563eb' : '#cbd5e1';
                 return (
                   <path
                     key={m.id}
-                    d={`M ${startPos.x + CARD_W} ${startPos.y} L ${midX} ${startPos.y} L ${midX} ${endPos.y} L ${endPos.x} ${endPos.y}`}
+                    d={`M ${startPos.x + CARD_W} ${startPos.y} H ${midX} V ${endPos.y} H ${endPos.x}`}
                     stroke={stroke}
-                    strokeWidth={1.5}
+                    strokeWidth={stroke === '#2563eb' ? 2 : 1.5}
                     fill="none"
-                    opacity={0.8}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    opacity={stroke === '#2563eb' ? 0.9 : 0.65}
                   />
                 );
               })}

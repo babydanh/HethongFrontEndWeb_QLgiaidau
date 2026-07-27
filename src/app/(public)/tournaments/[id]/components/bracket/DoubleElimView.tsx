@@ -274,22 +274,23 @@ export function DoubleElimView({
                   const endPos = posMap.get(m.nextMatchId);
                   if (endPos) {
                     const stroke =
-                      m.status === 'COMPLETED' ? '#10b981' : '#cbd5e1';
-                    elements.push(
-                      <g
-                        key={`win-${m.id}`}
+                      m.status === 'COMPLETED' ? '#2563eb' : '#cbd5e1';
+                    const midX = (startPos.x + CARD_W + endPos.x) / 2;
+                    return (
+                      <path
+                        key={m.id}
+                        d={`M ${startPos.x + CARD_W} ${startPos.y} H ${midX} V ${endPos.y} H ${endPos.x}`}
                         stroke={stroke}
-                        strokeWidth={1.5}
+                        strokeWidth={stroke === '#2563eb' ? 2 : 1.5}
                         fill="none"
-                        opacity={0.65}
-                      >
-                        {makePath(endPos, stroke)}
-                      </g>,
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        opacity={stroke === '#2563eb' ? 0.9 : 0.65}
+                      />
                     );
                   }
                 }
-
-                return elements;
+                return null;
               })}
             </svg>
 

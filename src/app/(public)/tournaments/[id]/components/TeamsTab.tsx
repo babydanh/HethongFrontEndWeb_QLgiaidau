@@ -62,13 +62,13 @@ export default function TeamsTab({ tournament, tournamentId, divisionId }: Props
       
       {participants.length > 0 ? (
         <div className="overflow-x-auto rounded-lg border border-slate-200">
-          <table className="w-full text-sm text-left">
-            <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-200">
+          <table className="w-full text-xs sm:text-sm text-left">
+            <thead className="text-[11px] sm:text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-200">
               <tr>
-                <th className="px-6 py-4 font-bold w-16">#</th>
-                <th className="px-6 py-4 font-bold">Tên đội / Tuyển thủ</th>
-                <th className="px-6 py-4 font-bold w-48">Thanh toán</th>
-                <th className="px-6 py-4 font-bold w-24 text-right">Chi tiết</th>
+                <th className="px-3 py-3 sm:px-6 sm:py-4 font-bold w-10 sm:w-16">#</th>
+                <th className="px-3 py-3 sm:px-6 sm:py-4 font-bold">Tên đội / Tuyển thủ</th>
+                <th className="px-3 py-3 sm:px-6 sm:py-4 font-bold w-32 sm:w-48">Thanh toán</th>
+                <th className="px-3 py-3 sm:px-6 sm:py-4 font-bold w-16 sm:w-24 text-right">Chi tiết</th>
               </tr>
             </thead>
             <tbody>
@@ -80,35 +80,35 @@ export default function TeamsTab({ tournament, tournamentId, divisionId }: Props
                       onClick={() => toggleExpand(team.id)}
                       className="bg-white border-b border-slate-100 hover:bg-slate-50/80 transition-colors cursor-pointer"
                     >
-                      <td className="px-6 py-4 font-medium text-slate-950">{index + 1}</td>
-                      <td className="px-6 py-4 font-bold text-slate-950 flex items-center gap-2">
-                        {team.teamName}
+                      <td className="px-3 py-3 sm:px-6 sm:py-4 font-medium text-slate-950">{index + 1}</td>
+                      <td className="px-3 py-3 sm:px-6 sm:py-4 font-bold text-slate-950 flex flex-wrap items-center gap-1.5 sm:gap-2">
+                        <span>{team.teamName}</span>
                         {team.seed !== null && (
-                          <span className="bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-bold px-1.5 py-0.5 rounded">
+                          <span className="bg-blue-50 text-blue-700 border border-blue-200 text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded">
                             Seed {team.seed}
                           </span>
                         )}
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-3 py-3 sm:px-6 sm:py-4">
                         {team.isPaid ? (
-                          <span className="bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-1 rounded-md text-xs font-bold">
+                          <span className="bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold whitespace-nowrap">
                             Đã đóng phí
                           </span>
                         ) : (
-                          <span className="bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-1 rounded-md text-xs font-bold">
+                          <span className="bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold whitespace-nowrap">
                             Chờ thanh toán
                           </span>
                         )}
                       </td>
-                      <td className="px-6 py-4 text-right">
-                        <button className="text-slate-400 hover:text-slate-700 p-2 min-w-[44px] min-h-[44px]">
-                          {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                      <td className="px-3 py-3 sm:px-6 sm:py-4 text-right">
+                        <button className="text-slate-400 hover:text-slate-700 p-1 sm:p-2 min-w-[36px]">
+                          {isExpanded ? <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5" /> : <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5" />}
                         </button>
                       </td>
                     </tr>
                     {isExpanded && (
                       <tr className="bg-slate-50/50">
-                        <td colSpan={4} className="px-8 py-5 border-b border-slate-150">
+                        <td colSpan={4} className="px-4 py-3 sm:px-8 sm:py-5 border-b border-slate-150">
                           <div className="flex flex-col gap-4">
                             <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 uppercase tracking-widest">
                               <User className="w-4 h-4 text-slate-400" /> Thành viên đăng ký ({team.members.length})

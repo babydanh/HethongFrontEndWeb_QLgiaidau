@@ -489,12 +489,12 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
           {/* Left Area - Tabs & Content (takes 3 cols) */}
           <div className="lg:col-span-3 space-y-6">
             {/* Tabs */}
-            <div className="flex overflow-x-auto gap-2 mb-2 no-scrollbar">
+            <div className="flex overflow-x-auto gap-1.5 sm:gap-2 mb-2 no-scrollbar pb-1">
               {tabs.map(tab => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`px-5 py-2.5 rounded-lg font-bold text-sm whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
+                  className={`px-3.5 py-2 sm:px-5 sm:py-2.5 rounded-lg font-bold text-xs sm:text-sm whitespace-nowrap transition-all flex items-center gap-1.5 sm:gap-2 cursor-pointer ${
                     activeTab === tab.id 
                       ? 'bg-emerald-600 text-white shadow-sm' 
                       : 'bg-slate-200/60 text-slate-600 hover:bg-slate-300/60 hover:text-slate-900'
@@ -506,7 +506,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
             </div>
 
             {/* Tab Content */}
-            <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6 md:p-8 min-h-[500px]">
+            <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-3 sm:p-6 md:p-8 min-h-[500px]">
               {/* Division selector inside tab card */}
               {divisionsList.length > 0 && (
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b pb-4 mb-6 gap-3">

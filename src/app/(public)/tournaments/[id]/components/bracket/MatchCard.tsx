@@ -1,8 +1,8 @@
 /**
  * MatchCard — Sleek, modern bracket match node component
  *
- * Renders participant names, seeds, per-set scores, live/completed badges,
- * and a 1-line scheduled time footer with zero text clipping.
+ * Pixel-perfect aligned set columns (S1, S2, S3...) according to match settings.
+ * Displays formatted Date & Time without text clipping.
  */
 
 'use client';
@@ -17,11 +17,21 @@ import { formatDateTime } from '@/utils/format';
 import type { OnScheduleMatch, OnSelectBracketMatch } from './types';
 import { CARD_W, CARD_H_PUBLIC, CARD_H_ORGANIZER } from './types';
 
+/** Derive max columns dynamically from match configuration or scores */
 function getMaxColumns(match: BracketMatch): number {
-  const stw = match.matchConfig?.setsToWin;
-  if (stw === 1) return 1;
-  if (stw === 2) return 3;
-  if (stw === 3) return 5;
+  const setList = extractMatchScores(match.scoreDetails as Record<string, unknown> | undefined | null);
+  const rawMatch = match as unknown as Record<string, unknown>;
+  const cfgStw = match.matchConfig?.setsToWin ?? rawMatch.setsToWin;
+  const cfgBo = match.matchConfig?.bestOf ?? rawMatch.bestOf;
+
+  if (cfgStw === 1 || cfgBo === 1) return 1;
+  if (cfgStw === 2 || cfgBo === 3) return 3;
+  if (cfgStw === 3 || cfgBo === 5) return 5;
+
+  if (setList.length > 0) {
+    return Math.max(setList.length, 1);
+  }
+
   return 3;
 }
 
@@ -53,6 +63,13 @@ export function MatchCard({
   const maxCols = getMaxColumns(match);
 
   const actualCardH = match.isBye ? 140 : cardH;
+
+  const rawMatch = match as unknown as Record<string, unknown>;
+  const dateStr = match.scheduledAt
+    ? formatDateTime(match.scheduledAt)
+    : rawMatch.scheduledDate
+      ? String(rawMatch.scheduledDate)
+      : 'Chưa xếp giờ';
 
   return (
     <div
@@ -140,18 +157,20 @@ export function MatchCard({
           )}
         </div>
 
-        {/* Set Header Row */}
+        {/* Set Header Row — Perfectly Aligned with Scores Below */}
         {!match.isBye && (
-          <div className="flex border-b border-slate-100 bg-slate-50/50 flex-shrink-0">
+          <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/60 flex-shrink-0 border-l-4 border-transparent pl-2 pr-3 py-0.5">
             <div className="flex-1" />
-            {Array.from({ length: maxCols }).map((_, ci) => (
-              <div
-                key={ci}
-                className="w-7 text-center text-[8px] font-bold text-slate-400 py-0.5 border-l border-slate-100"
-              >
-                S{ci + 1}
-              </div>
-            ))}
+            <div className="flex items-center shrink-0">
+              {Array.from({ length: maxCols }).map((_, ci) => (
+                <div
+                  key={ci}
+                  className="w-7 text-center text-[9px] font-bold text-slate-400"
+                >
+                  S{ci + 1}
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
@@ -175,13 +194,13 @@ export function MatchCard({
           />
         </div>
 
-        {/* 1-Line Scheduled Time Footer */}
+        {/* 1-Line Scheduled Date & Time Footer */}
         {!match.isBye && (
           <div className="flex items-center justify-between px-3 py-1.5 bg-slate-50/80 text-[10px] font-medium text-slate-500 border-t border-slate-100 flex-shrink-0">
             <span className="flex items-center gap-1.5 min-w-0">
               <Clock className="w-3 h-3 text-slate-400 shrink-0" />
               <span className="truncate font-semibold text-slate-600">
-                {match.scheduledAt ? formatDateTime(match.scheduledAt) : 'Chưa xếp giờ'}
+                {dateStr}
               </span>
             </span>
           </div>
@@ -209,8 +228,8 @@ function RowSide({
   return (
     <div
       className={
-        'flex items-center justify-between py-1.5 transition-colors ' +
-        (won ? 'bg-emerald-50/80 border-l-4 border-emerald-500 pl-2 pr-3' : 'bg-white px-3')
+        'flex items-center justify-between py-1.5 transition-colors border-l-4 pl-2 pr-3 ' +
+        (won ? 'bg-emerald-50/80 border-emerald-500' : 'bg-white border-transparent')
       }
     >
       {/* Team Info */}

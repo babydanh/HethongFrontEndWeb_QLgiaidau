@@ -50,9 +50,9 @@ export function PagedSingleElimView({
 
   // Find baseline first-round match count for vertical slot height
   let firstRoundCount = 1;
-  rounds.forEach((r) => {
+  rounds.forEach((r, idx) => {
     const count = byRound[r]?.length || 0;
-    const estimate = count * Math.pow(2, r - 1);
+    const estimate = count * Math.pow(2, idx);
     if (estimate > firstRoundCount) firstRoundCount = estimate;
   });
 
@@ -60,12 +60,12 @@ export function PagedSingleElimView({
   const roundGap = COL_GAP + 28;
   const totalHeight = Math.max(firstRoundCount * SLOT_H_1 + 60, 360);
 
-  // Position map for all matches in the full tree
+  // Position map for all matches in the full tree based on relative round index (0, 1, 2...)
   const posMap = useMemo(() => {
     const map = new Map<string, { x: number; y: number }>();
-    rounds.forEach((r) => {
-      const colX = (r - 1) * (CARD_W + roundGap);
-      const slotH = Math.pow(2, r - 1) * SLOT_H_1;
+    rounds.forEach((r, idx) => {
+      const colX = idx * (CARD_W + roundGap);
+      const slotH = Math.pow(2, idx) * SLOT_H_1;
       const roundMatches = byRound[r] ?? [];
       const roundH = roundMatches.length * slotH;
       const roundTop = 32 + (totalHeight - 64 - roundH) / 2;
@@ -80,7 +80,8 @@ export function PagedSingleElimView({
     return map;
   }, [rounds, byRound, totalHeight, roundGap, CARD_W, SLOT_H_1]);
 
-  const svgW = maxRound * CARD_W + (maxRound - 1) * roundGap + 48;
+  const numRounds = rounds.length;
+  const svgW = numRounds * CARD_W + Math.max(0, numRounds - 1) * roundGap + 48;
 
   // Auto-detect active round index (round with IN_PROGRESS, SCHEDULED, or READY matches)
   const defaultRoundIndex = useMemo(() => {
@@ -98,9 +99,7 @@ export function PagedSingleElimView({
   const scrollToRoundIndex = (index: number) => {
     setActiveRoundIndex(index);
     if (!scrollContainerRef.current) return;
-    const r = rounds[index];
-    if (!r) return;
-    const colX = (r - 1) * (CARD_W + roundGap);
+    const colX = index * (CARD_W + roundGap);
     const targetScrollLeft = Math.max(0, colX * zoom - 24);
     scrollContainerRef.current.scrollTo({
       left: targetScrollLeft,

@@ -117,14 +117,14 @@ export function PagedDoubleElimView({
   const getRoundTitle = (r: number) =>
     activeBranch === 'upper' ? getUbLabel(r) : getLbLabel(r);
 
-  // Position map calculation for active branch
+  // Position map calculation for active branch using 0-based relative round index
   const SLOT_H_1 = cardH + 20;
   const roundGap = COL_GAP + 28;
 
   let firstRoundCount = 1;
-  activeBranchRounds.forEach((r) => {
+  activeBranchRounds.forEach((r, idx) => {
     const count = activeBranchByRound[r]?.length || 0;
-    const estimate = count * Math.pow(2, r - 1);
+    const estimate = count * Math.pow(2, idx);
     if (estimate > firstRoundCount) firstRoundCount = estimate;
   });
 
@@ -132,9 +132,9 @@ export function PagedDoubleElimView({
 
   const posMap = useMemo(() => {
     const map = new Map<string, { x: number; y: number }>();
-    activeBranchRounds.forEach((r) => {
-      const colX = (r - 1) * (CARD_W + roundGap);
-      const slotH = Math.pow(2, r - 1) * SLOT_H_1;
+    activeBranchRounds.forEach((r, idx) => {
+      const colX = idx * (CARD_W + roundGap);
+      const slotH = Math.pow(2, idx) * SLOT_H_1;
       const roundMatches = activeBranchByRound[r] ?? [];
       const roundH = roundMatches.length * slotH;
       const roundTop = 32 + (totalHeight - 64 - roundH) / 2;
@@ -149,15 +149,13 @@ export function PagedDoubleElimView({
     return map;
   }, [activeBranchRounds, activeBranchByRound, totalHeight, roundGap, CARD_W, SLOT_H_1]);
 
-  const maxBranchRound = activeBranchRounds.length > 0 ? Math.max(...activeBranchRounds) : 1;
-  const svgW = maxBranchRound * CARD_W + (maxBranchRound - 1) * roundGap + 48;
+  const numRounds = activeBranchRounds.length;
+  const svgW = numRounds * CARD_W + Math.max(0, numRounds - 1) * roundGap + 48;
 
   const scrollToRoundIndex = (index: number) => {
     setActiveRoundIndex(index);
     if (!scrollContainerRef.current) return;
-    const r = activeBranchRounds[index];
-    if (!r) return;
-    const colX = (r - 1) * (CARD_W + roundGap);
+    const colX = index * (CARD_W + roundGap);
     const targetScrollLeft = Math.max(0, colX * zoom - 24);
     scrollContainerRef.current.scrollTo({
       left: targetScrollLeft,

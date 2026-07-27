@@ -425,11 +425,7 @@ export function PagedDoubleElimView({
                   activeBranchMatches.find((nm) => nm.id === m.nextMatchId)?.roundNumber === currentRound;
 
                 const midX = (startPos.x + CARD_W + endPos.x) / 2;
-                const stroke = isConnectedToActive
-                  ? '#2563eb'
-                  : m.status === 'COMPLETED'
-                    ? '#10b981'
-                    : '#cbd5e1';
+                const stroke = isConnectedToActive || m.status === 'COMPLETED' ? '#2563eb' : '#cbd5e1';
 
                 return (
                   <path

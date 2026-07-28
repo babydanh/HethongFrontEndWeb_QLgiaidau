@@ -516,8 +516,17 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                 </div>
                 <div><label className="text-xs font-bold text-slate-500">Sân</label>
                   <input value={s.matchCourtName} onChange={e => s.setMatchCourtName(e.target.value)} placeholder="Tên sân" className="w-full border rounded-lg p-2 text-sm" /></div>
+                <div><label className="text-xs font-bold text-slate-500">Địa chỉ sân</label>
+                  <input value={s.matchCourtAddress} onChange={e => s.setMatchCourtAddress(e.target.value)} placeholder="Địa chỉ sân" className="w-full border rounded-lg p-2 text-sm" /></div>
                 <div><label className="text-xs font-bold text-slate-500">Giờ thi đấu</label>
                   <DateTimePicker value={s.matchScheduledAt} onChange={s.setMatchScheduledAt} /></div>
+                <div><label className="text-xs font-bold text-slate-500">Trọng tài</label>
+                  <select value={s.matchRefereeId} onChange={e => s.setMatchRefereeId(e.target.value)} className="w-full border rounded-lg p-2 text-sm">
+                    <option value="">Chưa phân công</option>
+                    {s.referees.filter(r => r.status === 'ACCEPTED').map(ref => (
+                      <option key={ref.userId} value={ref.userId}>{ref.fullName}</option>
+                    ))}
+                  </select></div>
                 <label className="flex items-center gap-2 text-xs font-bold text-slate-500">
                   <input type="checkbox" checked={s.isCustomMatchConfig} onChange={e => s.setIsCustomMatchConfig(e.target.checked)} />
                   Cấu hình riêng cho trận này

@@ -88,6 +88,7 @@ export interface Match {
   p1SetsWon: number;
   p2SetsWon: number;
   refereeId?: string | null;
+  refereeName?: string | null;
   tournament?: {
     id: string;
     name: string;

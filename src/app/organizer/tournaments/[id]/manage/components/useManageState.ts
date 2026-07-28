@@ -169,6 +169,7 @@ export function useManageState(id: string) {
   const [matchCourtId, setMatchCourtId] = useState('');
   const [matchCourtName, setMatchCourtName] = useState('');
   const [matchCourtAddress, setMatchCourtAddress] = useState('');
+  const [matchRefereeId, setMatchRefereeId] = useState('');
   const [matchScheduledAt, setMatchScheduledAt] = useState('');
   const [isCustomMatchConfig, setIsCustomMatchConfig] = useState(false);
   const [matchSetsToWin, setMatchSetsToWin] = useState(2);
@@ -965,6 +966,7 @@ export function useManageState(id: string) {
   const handleOpenScheduling = (match: BracketMatch) => {
     setSelectedMatch(match); setMatchCourtName(match.courtName||''); setMatchCourtAddress(match.courtAddress||'');
     setMatchScheduledAt(match.scheduledAt ? match.scheduledAt.substring(0,16) : '');
+    setMatchRefereeId(match.refereeId || '');
     if (match.matchConfig && Object.keys(match.matchConfig).length > 0) {
       const resolvedRules = resolveSportRuleView(match.matchConfig, sportRuleKind);
       setIsCustomMatchConfig(true);
@@ -1015,6 +1017,7 @@ export function useManageState(id: string) {
       await tournamentsApi.updateMatchSchedule(selectedMatch.id, {
         courtName: matchCourtName || null, courtAddress: matchCourtAddress || null,
         scheduledAt: matchScheduledAt ? new Date(matchScheduledAt).toISOString() : null,
+        refereeId: matchRefereeId || null,
         matchConfig: isCustomMatchConfig ? buildSportRulesPayload({
           kind: normalizedKind,
           setsToWin: matchSetsToWin,
@@ -1236,7 +1239,7 @@ export function useManageState(id: string) {
     isEndModalOpen, setIsEndModalOpen, isEnding, setIsEnding, endChecklist, setEndChecklist,
     selectedCategory,
     selectedMatch, setSelectedMatch, matchCourtId, setMatchCourtId, matchCourtName, setMatchCourtName,
-    matchCourtAddress, setMatchCourtAddress, matchScheduledAt, setMatchScheduledAt,
+    matchCourtAddress, setMatchCourtAddress, matchRefereeId, setMatchRefereeId, matchScheduledAt, setMatchScheduledAt,
     isCustomMatchConfig, setIsCustomMatchConfig,
     matchSetsToWin, setMatchSetsToWin, matchPointsPerSet, setMatchPointsPerSet,
     matchDeuceEnabled, setMatchDeuceEnabled, matchMaxPoints, setMatchMaxPoints,

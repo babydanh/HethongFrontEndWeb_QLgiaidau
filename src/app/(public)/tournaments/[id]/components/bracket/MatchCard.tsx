@@ -139,6 +139,11 @@ export const MatchCard = memo(function MatchCard({
           </span>
         </div>
       )}
+      {match.refereeName && (
+        <div className="flex items-center gap-1 px-2 py-0.5 text-[9px] font-semibold text-amber-700 bg-amber-50 border-t border-amber-100">
+          ⚖️ {match.refereeName}
+        </div>
+      )}
     </div>
   );
 

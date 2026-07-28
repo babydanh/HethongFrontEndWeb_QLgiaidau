@@ -299,7 +299,8 @@ export default function LiveMatchPage({ params }: Props) {
   const hasAdminRole = user?.roles?.includes('ADMIN');
   const hasOrganizerRole = user?.roles?.includes('ORGANIZER');
 
-  const isAssignedReferee = !!match.refereeId && match.refereeId === user?.id;
+  const isUserReferee = user?.roles?.includes('REFEREE');
+  const isAssignedReferee = isUserReferee && (match.refereeId == null || match.refereeId === user?.id);
   const canControlLiveMatch =
     hasAdminRole ||
     match.tournament?.createdBy === user?.id ||
@@ -1283,6 +1284,11 @@ export default function LiveMatchPage({ params }: Props) {
                 <div className="flex items-center gap-2">
                   <Clock className="w-4 h-4 text-slate-400" /> {match.scheduledAt ? new Date(match.scheduledAt).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'}) : 'Chưa xếp giờ'}
                 </div>
+                {match.refereeName && (
+                  <div className="flex items-center gap-1 text-xs font-medium text-amber-700">
+                    ⚖️ {match.refereeName}
+                  </div>
+                )}
               </div>
             </div>
 

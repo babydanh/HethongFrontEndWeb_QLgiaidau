@@ -281,6 +281,7 @@ export interface BracketMatch {
   courtName?: string | null;
   courtAddress?: string | null;
   refereeId?: string | null;
+  refereeName?: string | null;
   groupId: string;
   matchConfig?: SportRuleScoringConfig | null;
   group?: {

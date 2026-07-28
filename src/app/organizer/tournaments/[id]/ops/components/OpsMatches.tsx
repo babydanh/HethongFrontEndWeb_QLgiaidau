@@ -374,6 +374,7 @@ export function OpsMatches({
             <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs font-semibold text-slate-500">
               <span>Sân: {match.courtName || 'Chưa gán'}</span>
               <span>Lịch: {match.scheduledAt ? formatDateTime(match.scheduledAt) : 'Chưa xếp lịch'}</span>
+              <span>Trọng tài: {match.refereeName || (match.refereeId ? "đã phân công" : "chưa phân công")}</span>
               <span>{scoreSummary}</span>
             </div>
             {matchSets.length > 0 ? (

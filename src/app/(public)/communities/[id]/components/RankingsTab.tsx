@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { Award, Trophy, ChevronDown, Loader2, Medal, Crown, Search } from 'lucide-react';
 import { Category } from '@/types/category';
 import { rankingsApi, PlayerRanking } from '@/features/rankings/api';
+import { communitiesApi } from '@/features/communities/api';
 import { EloTierBadge } from '@/components/ui/EloTierBadge';
 import { getEloMatchTypeLabel } from '@/features/rankings/elo-display';
 import toast from 'react-hot-toast';
@@ -40,9 +41,34 @@ export default function RankingsTab({ communityId, categories }: RankingsTabProp
         genderRestriction: selectedGender,
         limit: 20,
       });
-      if (res.data) {
-        setRankings(res.data);
+      let nextRankings = res.data || [];
+      if (nextRankings.length === 0) {
+        const membersResponse = await communitiesApi.getMembers(communityId);
+        const members = membersResponse.data || [];
+        nextRankings = members
+          .filter((member) => member.member.status === 'JOINED')
+          .map((member, index): PlayerRanking => ({
+            id: `community-member-${member.member.id}`,
+            userId: member.user.id,
+            categoryId: selectedCategoryId,
+            categoryName: undefined,
+            matchType: selectedMatchType,
+            genderRestriction: selectedMatchType === 'MIXED_DOUBLES' ? 'MIXED' : selectedGender,
+            eloPoints: 0,
+            matchesPlayed: 0,
+            matchesWon: 0,
+            winStreak: 0,
+            updatedAt: member.member.joinedAt,
+            tierName: 'Chưa xếp hạng',
+            communityId,
+            user: {
+              id: member.user.id,
+              fullName: member.user.fullName,
+              avatarUrl: member.user.avatarUrl,
+            },
+          }));
       }
+      setRankings(nextRankings);
       if (user?.id) {
         const userRes = await rankingsApi.getUserRankings(user.id);
         const own = userRes.communityRanks?.find((rank) =>
@@ -315,6 +341,9 @@ export default function RankingsTab({ communityId, categories }: RankingsTabProp
                       <EloTierBadge elo={player.eloPoints} tierName={player.tier?.name} size="sm" className="shrink-0 scale-[0.85] origin-left" />
                     </div>
                     <span className="text-[10px] font-semibold text-slate-400 w-10 text-right shrink-0">{winRate}%</span>
+                    <span className="text-[10px] font-bold text-slate-600 w-12 text-right shrink-0">
+                      {player.matchesWon}-{player.matchesPlayed - player.matchesWon}
+                    </span>
                     <span className="text-xs font-bold text-blue-600 w-16 text-right shrink-0">{player.eloPoints}</span>
                   </div>
                 );

@@ -37,6 +37,7 @@ export default function AdminCommunitiesReview() {
   const [rejectReason, setRejectReason] = useState('');
   const [modalError, setModalError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [selectedCommunity, setSelectedCommunity] = useState<ReviewCommunity | null>(null);
 
   const fetchAllCommunities = useCallback(async () => {
     setLoading(true);
@@ -107,6 +108,20 @@ export default function AdminCommunitiesReview() {
       setSubmitting(true);
       await communitiesApi.reviewCommunity(id, { status: 'REJECTED', rejectedReason: 'Vô hiệu hoá bởi Admin' });
       toast.success('Đã vô hiệu hoá cộng đồng');
+      fetchAllCommunities();
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, 'Thao tác thất bại'));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleReactivate = async (id: string) => {
+    if (!window.confirm('Mở lại cộng đồng này?')) return;
+    try {
+      setSubmitting(true);
+      await communitiesApi.reviewCommunity(id, { status: 'APPROVED', rejectedReason: '' });
+      toast.success('Đã mở lại cộng đồng');
       fetchAllCommunities();
     } catch (err: unknown) {
       toast.error(getErrorMessage(err, 'Thao tác thất bại'));
@@ -247,13 +262,18 @@ export default function AdminCommunitiesReview() {
             return (
               <div
                 key={community.id}
-                className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition-all hover:shadow-md"
+                onClick={() => setSelectedCommunity(community)}
+                className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition-all hover:shadow-md cursor-pointer"
               >
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                   <div className="flex-1 space-y-3">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-blue-50 font-bold uppercase text-blue-700 border border-blue-100">
-                        {community.name.charAt(0)}
+                      <div className="flex h-11 w-11 items-center justify-center rounded-lg overflow-hidden shrink-0 font-bold uppercase border bg-blue-50 text-blue-700 border-blue-100">
+                        {community.logoUrl ? (
+                          <img src={community.logoUrl} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          community.name.charAt(0)
+                        )}
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
@@ -317,7 +337,7 @@ export default function AdminCommunitiesReview() {
                         <X className="w-3.5 h-3.5" />
                         Từ chối
                       </Button>
-                    ) : isActive && (
+                    ) : isActive ? (
                       <button
                         disabled={submitting}
                         onClick={() => handleDeactivate(community.id)}
@@ -325,6 +345,14 @@ export default function AdminCommunitiesReview() {
                       >
                         <Ban className="w-3.5 h-3.5" />
                         Vô hiệu
+                      </button>
+                    ) : (
+                      <button
+                        disabled={submitting}
+                        onClick={() => handleReactivate(community.id)}
+                        className="flex items-center justify-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-600 transition-all hover:bg-emerald-100 active:scale-95"
+                      >
+                        Mở lại
                       </button>
                     )}
                   </div>
@@ -377,6 +405,57 @@ export default function AdminCommunitiesReview() {
                 {submitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
                 Xác nhận từ chối
               </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Detail Modal */}
+      {selectedCommunity && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 p-4 backdrop-blur-sm" onClick={() => setSelectedCommunity(null)}>
+          <div className="w-full max-w-lg rounded-lg border border-gray-200 bg-white shadow-xl overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="h-32 bg-gradient-to-br from-blue-500 to-indigo-600 relative overflow-hidden">
+              {selectedCommunity.bannerUrl && <img src={selectedCommunity.bannerUrl} alt="" className="w-full h-full object-cover opacity-60" />}
+              <button onClick={() => setSelectedCommunity(null)} className="absolute top-3 right-3 text-white/80 hover:text-white p-1 rounded-lg hover:bg-white/20">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="px-6 pb-6">
+              <div className="flex items-end -mt-10 mb-4">
+                <div className="w-20 h-20 rounded-xl border-4 border-white bg-white overflow-hidden shadow-md shrink-0">
+                  {selectedCommunity.logoUrl ? (
+                    <img src={selectedCommunity.logoUrl} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-blue-50 text-blue-700 font-bold text-xl">{selectedCommunity.name.charAt(0)}</div>
+                  )}
+                </div>
+                <div className="ml-4 pb-1">
+                  <h3 className="text-lg font-bold text-gray-900">{selectedCommunity.name}</h3>
+                  <p className="text-xs text-gray-500">{selectedCommunity.locationAddress || 'Chưa cập nhật'}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 mb-4">
+                {selectedCommunity.status === 'ACTIVE' && <span className="px-2.5 py-0.5 bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-full text-xs font-bold">Hoạt động</span>}
+                {selectedCommunity.status === 'PENDING' && <span className="px-2.5 py-0.5 bg-amber-50 text-amber-600 border border-amber-200 rounded-full text-xs font-bold">Chờ duyệt</span>}
+                {selectedCommunity.status === 'REJECTED' && <span className="px-2.5 py-0.5 bg-gray-100 text-gray-500 border border-gray-200 rounded-full text-xs font-bold">Đã khoá</span>}
+                <span className="text-[10px] text-gray-400">{new Date(selectedCommunity.createdAt).toLocaleDateString('vi-VN')}</span>
+              </div>
+              {selectedCommunity.description && (
+                <p className="text-sm text-gray-600 bg-gray-50 rounded-lg p-3 border border-gray-100 mb-4">{selectedCommunity.description}</p>
+              )}
+              {selectedCommunity.status === 'REJECTED' && (selectedCommunity as any).rejectedReason && (
+                <div className="bg-rose-50 border border-rose-200 rounded-lg p-3 mb-4">
+                  <p className="text-xs font-bold text-rose-600 mb-1">Lý do khoá</p>
+                  <p className="text-sm text-rose-800">{(selectedCommunity as any).rejectedReason}</p>
+                </div>
+              )}
+              <div className="flex gap-2 pt-3 border-t border-gray-100">
+                <Button variant="outline" size="sm" onClick={() => setSelectedCommunity(null)} className="text-xs flex-1">Đóng</Button>
+                <Button size="sm" onClick={() => window.open(`/communities/${selectedCommunity.id}`, '_blank')} className="text-xs flex-1 bg-blue-600 hover:bg-blue-700 text-white">Xem trang</Button>
+                {selectedCommunity.status === 'REJECTED' && (
+                  <Button size="sm" onClick={() => { setSelectedCommunity(null); handleReactivate(selectedCommunity.id); }} className="text-xs bg-emerald-600 hover:bg-emerald-700 text-white">Mở lại</Button>
+                )}
+              </div>
             </div>
           </div>
         </div>

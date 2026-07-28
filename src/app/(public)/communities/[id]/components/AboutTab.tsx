@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { Community } from '@/features/communities/api';
 import { formatDate } from '@/utils/format';
 import { MapPin, Info, FileText, Image as ImageIcon, X, ChevronLeft, ChevronRight, Globe } from 'lucide-react';
-import MiniClubRanking from './MiniClubRanking';
 
 interface GalleryImage {
   id: string;
@@ -157,13 +156,6 @@ export default function AboutTab({
           </div>
         </div>
 
-        {/* Mini Club Ranking Preview */}
-        {community.categories && community.categories.length > 0 && (
-          <MiniClubRanking
-            communityId={community.id}
-            categories={community.categories}
-          />
-        )}
       </div>
 
       {/* Right: Images collage Sidebar (4/12) */}

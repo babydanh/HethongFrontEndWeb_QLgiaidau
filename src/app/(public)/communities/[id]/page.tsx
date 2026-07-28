@@ -12,6 +12,7 @@ import { JoinCommunityModal } from '@/components/shared/JoinCommunityModal';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '@/utils/error';
 import { ReportViolationButton } from '@/features/reports/components/ReportViolationButton';
+import ShareModal from '@/components/common/ShareModal';
 
 interface CommunityMemberRecord {
   member?: { id?: string; userId?: string; role?: string; status?: string };
@@ -44,11 +45,27 @@ export default function CommunityDetailPage() {
   const [isJoinLoading, setIsJoinLoading] = useState(false);
   const [galleryImages, setGalleryImages] = useState<{ id: string; imageUrl: string }[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   const fetchGallery = async () => {
     try {
       const res = await communitiesApi.getGallery(id);
-      setGalleryImages(res.data || []);
+      const responseData: unknown = res.data;
+      const images = Array.isArray(responseData)
+        ? responseData
+        : responseData && typeof responseData === 'object' && 'data' in responseData && Array.isArray(responseData.data)
+          ? responseData.data
+          : [];
+      setGalleryImages(
+        images.filter(
+          (image): image is { id: string; imageUrl: string } =>
+            Boolean(image) &&
+            typeof image === 'object' &&
+            typeof image.id === 'string' &&
+            typeof image.imageUrl === 'string' &&
+            image.imageUrl.length > 0,
+        ),
+      );
     } catch (err) {
       console.error('Failed to fetch gallery', err);
     }
@@ -370,7 +387,12 @@ export default function CommunityDetailPage() {
               {getJoinButtonLabel()}
             </Button>
             
-            <Button variant="outline" className="h-10 px-3 bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700 rounded-lg shadow-sm">
+            <Button
+              variant="outline"
+              onClick={() => setIsShareModalOpen(true)}
+              className="h-10 px-3 bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700 rounded-lg shadow-sm"
+              aria-label={`Chia sẻ câu lạc bộ ${community.name}`}
+            >
               <Share2 className="w-4 h-4" />
             </Button>
             
@@ -476,6 +498,13 @@ export default function CommunityDetailPage() {
           }}
         />
       )}
+
+      <ShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        shareUrl={typeof window !== 'undefined' ? window.location.href : `/communities/${community.id}`}
+        title={community.name}
+      />
     </div>
   );
 }

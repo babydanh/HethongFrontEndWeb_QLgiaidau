@@ -31,7 +31,22 @@ export default function GalleryTab({ communityId, community, isOwnerOrMod }: Gal
         setIsLoading(true);
       }
       const res = await communitiesApi.getGallery(communityId);
-      setImages(res.data || []);
+      const responseData: unknown = res.data;
+      const images = Array.isArray(responseData)
+        ? responseData
+        : responseData && typeof responseData === 'object' && 'data' in responseData && Array.isArray(responseData.data)
+          ? responseData.data
+          : [];
+      setImages(
+        images.filter(
+          (image): image is GalleryImage =>
+            Boolean(image) &&
+            typeof image === 'object' &&
+            typeof image.id === 'string' &&
+            typeof image.imageUrl === 'string' &&
+            image.imageUrl.length > 0,
+        ),
+      );
     } catch (error) {
       console.error('Failed to fetch gallery', error);
     } finally {

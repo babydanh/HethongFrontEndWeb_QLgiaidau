@@ -105,48 +105,47 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 py-8 px-4 md:px-8">
+    <div className="min-h-screen bg-slate-50 py-6 md:py-8 px-3 md:px-8">
       <div className="max-w-5xl mx-auto">
         {/* Header */}
-        <div className="bg-white rounded-lg border border-slate-200 p-6 mb-8 shadow-sm flex justify-between items-center gap-6">
-          <div className="space-y-2">
+        <div className="bg-white rounded-lg border border-slate-200 p-4 md:p-6 mb-4 md:mb-8 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="space-y-2 w-full md:w-auto">
             <div className="flex items-center gap-3">
-              <span className="flex items-center gap-1 bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+              <span className="flex items-center gap-1 bg-blue-100 text-blue-800 text-[10px] md:text-xs font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
                 {getSportLogo(s.tournament.category?.name) && <img src={getSportLogo(s.tournament.category?.name)!} alt="" className="w-3 h-3 object-contain" />}
                 {s.tournament.category?.name || 'Bộ môn'}
               </span>
               {s.getStatusLabel(s.tournament.status)}
             </div>
-            <h1 className="text-2xl md:text-3xl font-bold text-slate-900">{s.tournament.name}</h1>
-            <p className="text-slate-500 font-medium text-sm flex items-center gap-1">
-              <Calendar className="w-4 h-4 text-slate-400" />
+            <h1 className="text-xl md:text-3xl font-bold text-slate-900">{s.tournament.name}</h1>
+            <p className="text-slate-500 font-medium text-xs md:text-sm flex items-center gap-1">
+              <Calendar className="w-3.5 h-3.5 text-slate-400" />
               Khai mạc: {s.tournament.startDate ? formatDate(s.tournament.startDate) : 'Chưa thiết lập'}
             </p>
           </div>
-          <div className="flex flex-wrap items-center justify-end gap-3">
+          <div className="flex flex-wrap items-center justify-start md:justify-end gap-2 w-full md:w-auto">
             <Button
               onClick={() => { window.location.href = `/organizer/tournaments/${tournament.id}/ops`; }}
-              className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1.5 font-bold"
+              className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1 font-bold text-[11px] md:text-sm h-8 md:h-10 px-3 md:px-4"
             >
-              Vận hành giải
+              Vận hành
             </Button>
             <Button
               variant="outline"
               onClick={handleOpenManageBracket}
-              className="border-slate-200 bg-slate-50 text-slate-600 hover:bg-amber-100 flex items-center gap-1.5 font-bold"
+              className="border-slate-200 bg-slate-50 text-slate-600 hover:bg-amber-100 flex items-center gap-1 font-bold text-[11px] md:text-sm h-8 md:h-10 px-3 md:px-4"
             >
-              <Trophy className="w-4 h-4" /> Xem bracket hiện tại
+              <Trophy className="w-3.5 h-3.5" /> Bracket
             </Button>
-            <Button variant="outline" onClick={() => window.open(buildPublicTournamentUrl(), '_blank')} className="border-slate-200 hover:bg-slate-50 text-slate-700 flex items-center gap-1.5 font-bold">
-              <ExternalLink className="w-4 h-4" /> Xem trang giải
+            <Button variant="outline" onClick={() => window.open(buildPublicTournamentUrl(), '_blank')} className="border-slate-200 hover:bg-slate-50 text-slate-700 flex items-center gap-1 font-bold text-[11px] md:text-sm h-8 md:h-10 px-3 md:px-4">
+              <ExternalLink className="w-3.5 h-3.5" /> Trang giải
             </Button>
           </div>
         </div>
 
         <TournamentStepper tournament={s.tournament} onPublish={s.publishFeeAmount > 0 ? s.handlePayPublishFee : s.handlePublish}
           onNextStep={s.handleTournamentStepTransition} publishFeeAmount={s.publishFeeAmount} isLoading={s.isLoading || s.isPayingPublishFee}
-          isOpenModalOpen={s.isOpenModalOpen} setIsOpenModalOpen={s.setIsOpenModalOpen}
-          handleConfirmOpen={s.handleConfirmOpen} isOpening={s.isOpening}
+          onOpenTournament={s.handleConfirmOpen} isOpening={s.isOpening}
           isEndModalOpen={s.isEndModalOpen} setIsEndModalOpen={s.setIsEndModalOpen}
           handleConfirmEnd={s.handleConfirmEnd} isEnding={s.isEnding} endChecklist={s.endChecklist}
           participants={s.participants} divisions={s.divisions} />
@@ -198,23 +197,25 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
         </div>
 
         {/* Tabs nav */}
-        <div className="grid grid-cols-3 md:grid-cols-7 gap-1.5 mb-6 bg-white rounded-lg border border-slate-200 p-1.5 shadow-sm">
-          {TABS.map(({ key, label, icon: Icon }) => (
-            <button key={key} onClick={() => s.setActiveTab(key)}
-              className={`flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-bold transition-all w-full cursor-pointer ${
-                s.activeTab === key ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
-              }`}>
-              <Icon className="w-4 h-4 shrink-0" />
-              <span className="truncate">{label}</span>
-              {key === 'permissions' && pendingRefereeCount > 0 ? (
-                <span className={`inline-flex min-w-[18px] justify-center rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
-                  s.activeTab === key ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-700'
+        <div className="overflow-x-auto mb-6 bg-white rounded-lg border border-slate-200 shadow-sm hide-scrollbar">
+          <div className="flex md:grid md:grid-cols-7 gap-1.5 p-1.5 min-w-max md:min-w-0">
+            {TABS.map(({ key, label, icon: Icon }) => (
+              <button key={key} onClick={() => s.setActiveTab(key)}
+                className={`flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                  s.activeTab === key ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
                 }`}>
-                  {pendingRefereeCount}
-                </span>
-              ) : null}
-            </button>
-          ))}
+                <Icon className="w-4 h-4 shrink-0" />
+                <span>{label}</span>
+                {key === 'permissions' && pendingRefereeCount > 0 ? (
+                  <span className={`inline-flex min-w-[18px] justify-center rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+                    s.activeTab === key ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-700'
+                  }`}>
+                    {pendingRefereeCount}
+                  </span>
+                ) : null}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Tab content */}

@@ -21,10 +21,7 @@ interface TournamentStepperProps {
   onPayPlatformFee?: () => void;
   publishFeeAmount?: number;
   isLoading?: boolean;
-  // Phase 2 open modal
-  isOpenModalOpen?: boolean;
-  setIsOpenModalOpen?: (open: boolean) => void;
-  handleConfirmOpen?: () => void;
+  onOpenTournament?: () => void;
   isOpening?: boolean;
   // Phase 3 end modal
   isEndModalOpen?: boolean;
@@ -43,7 +40,7 @@ interface TournamentStepperProps {
 }
 
 export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlatformFee, publishFeeAmount = 0, isLoading,
-  isOpenModalOpen, setIsOpenModalOpen, handleConfirmOpen, isOpening = false,
+  onOpenTournament, isOpening = false,
   isEndModalOpen, setIsEndModalOpen, handleConfirmEnd, isEnding = false, endChecklist = null,
   participants = [], divisions = [],
 }: TournamentStepperProps) {
@@ -105,7 +102,7 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
       icon: <GitMerge className="w-4 h-4" />,
       description: 'Chốt sơ đồ nháp, phân lịch',
       actionText: 'Khai mạc giải đấu',
-      onClick: () => onNextStep('IN_PROGRESS'),
+      onClick: () => onOpenTournament?.(),
       canProgress: currentStep === 1,
     },
     {
@@ -333,7 +330,7 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
                   <Button
                     size="sm"
                     onClick={step.onClick}
-                    disabled={isLoading}
+                    disabled={isLoading || (idx === 1 && !phase2MandatoryPass)}
                     className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5 h-8 px-4 rounded-full shadow-md shadow-blue-500/20"
                   >
                     {step.actionText} <ChevronRight className="w-3.5 h-3.5" />

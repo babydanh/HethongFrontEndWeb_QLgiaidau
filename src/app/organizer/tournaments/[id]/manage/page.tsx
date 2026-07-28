@@ -144,7 +144,10 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
         </div>
 
         <TournamentStepper tournament={s.tournament} onPublish={s.publishFeeAmount > 0 ? s.handlePayPublishFee : s.handlePublish}
-          onNextStep={s.handleTournamentStepTransition} publishFeeAmount={s.publishFeeAmount} isLoading={s.isLoading || s.isPayingPublishFee} />
+          onNextStep={s.handleTournamentStepTransition} publishFeeAmount={s.publishFeeAmount} isLoading={s.isLoading || s.isPayingPublishFee}
+          isOpenModalOpen={s.isOpenModalOpen} setIsOpenModalOpen={s.setIsOpenModalOpen}
+          handleConfirmOpen={s.handleConfirmOpen} isOpening={s.isOpening}
+          participants={s.participants} divisions={s.divisions} />
 
         {/* Divisions Selector */}
         <div className="bg-white rounded-lg border border-slate-200 p-4 mb-4 shadow-sm">

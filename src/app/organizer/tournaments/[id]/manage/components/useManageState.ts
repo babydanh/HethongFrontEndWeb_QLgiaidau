@@ -150,6 +150,10 @@ export function useManageState(id: string) {
   const [isLocking, setIsLocking] = useState(false);
   const [lockSummary, setLockSummary] = useState<{totalParticipants:number;totalPlayers:number;platformFeePerPlayer:number;totalPlatformFee:number;platformFeeRuleLabel:string}|null>(null);
 
+  // ── Phase 2 Open modal ──
+  const [isOpenModalOpen, setIsOpenModalOpen] = useState(false);
+  const [isOpening, setIsOpening] = useState(false);
+
   // ── Match schedule modal ──
   const [selectedMatch, setSelectedMatch] = useState<BracketMatch|null>(null);
   const [matchCourtId, setMatchCourtId] = useState('');
@@ -727,6 +731,7 @@ export function useManageState(id: string) {
 
   const handleTournamentStepTransition = async (nextStatus: Tournament['status']) => {
     if (nextStatus === 'UPCOMING') { handleOpenLockModal(); return; }
+    if (nextStatus === 'IN_PROGRESS') { setIsOpenModalOpen(true); return; }
     try { setIsLoading(true); await tournamentsApi.updateTournament(id, { status: nextStatus }); toast.success('Đã cập nhật trạng thái!'); await fetchTournamentData(); }
     catch (err) { toast.error(getErrorMessage(err)); }
     finally { setIsLoading(false); }
@@ -747,6 +752,13 @@ export function useManageState(id: string) {
     try { await tournamentsApi.lockTournament(id); toast.success('Chốt danh sách thành công!'); setIsLockModalOpen(false); await fetchTournamentData(); await refetchDivisionData(); }
     catch (err) { toast.error(getErrorMessage(err)); }
     finally { setIsLocking(false); }
+  };
+
+  const handleConfirmOpen = async () => {
+    setIsOpening(true);
+    try { await tournamentsApi.updateTournament(id, { status: 'IN_PROGRESS' }); toast.success('Giải đấu đã khai mạc!'); setIsOpenModalOpen(false); await fetchTournamentData(); }
+    catch (err) { toast.error(getErrorMessage(err)); }
+    finally { setIsOpening(false); }
   };
 
   const handleSeedMockData = async () => {
@@ -1160,6 +1172,7 @@ export function useManageState(id: string) {
     stageSuperTiebreakEnabled, setStageSuperTiebreakEnabled, stageSuperTiebreakSetIndex, setStageSuperTiebreakSetIndex,
     stageSuperTiebreakPoints, setStageSuperTiebreakPoints,
     isLockModalOpen, setIsLockModalOpen, isLocking, setIsLocking, lockSummary, setLockSummary,
+    isOpenModalOpen, setIsOpenModalOpen, isOpening, setIsOpening,
     selectedCategory,
     selectedMatch, setSelectedMatch, matchCourtId, setMatchCourtId, matchCourtName, setMatchCourtName,
     matchCourtAddress, setMatchCourtAddress, matchScheduledAt, setMatchScheduledAt,
@@ -1183,6 +1196,7 @@ export function useManageState(id: string) {
     handleGenerateBracket, handleRequestPayout, handleRegenerateInviteCode,
     handlePublish, handlePayPublishFee, handleDeleteTournament, handlePayPlatformFee,
     handleTournamentStepTransition, handleOpenLockModal, handleConfirmLock,
+    handleConfirmOpen,
     handleSeedMockData, handleClearMockData, handleAssignWildcard, handleAutoSeed, handleSwapSeeds, handleApproveParticipant, handleRejectParticipant,
     handleOpenRoundModal, handleSaveStageDetails,
     handleOpenScheduling, handleSaveSchedule,

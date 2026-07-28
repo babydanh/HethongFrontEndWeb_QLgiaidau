@@ -1,7 +1,10 @@
 import React from 'react';
-import { Check, ChevronRight, Users, GitMerge, Play, Trophy, FileText } from 'lucide-react';
+import { Check, ChevronRight, Users, GitMerge, Play, Trophy, FileText, Loader2 } from 'lucide-react';
 import { Tournament } from '@/features/tournaments/api';
 import { Button } from '@/components/ui/Button';
+import {
+  Modal, ModalContent, ModalHeader, ModalTitle,
+} from '@/components/ui/Modal';
 import {
   isTournamentCompleted,
   isTournamentDraft,
@@ -18,9 +21,18 @@ interface TournamentStepperProps {
   onPayPlatformFee?: () => void;
   publishFeeAmount?: number;
   isLoading?: boolean;
+  // Phase 2 open modal
+  isOpenModalOpen?: boolean;
+  setIsOpenModalOpen?: (open: boolean) => void;
+  handleConfirmOpen?: () => void;
+  isOpening?: boolean;
+  participants?: { isPaid: boolean; teamStatus?: string }[];
+  divisions?: { id: string; roundConfig?: unknown }[];
 }
 
-export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlatformFee, publishFeeAmount = 0, isLoading }: TournamentStepperProps) {
+export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlatformFee, publishFeeAmount = 0, isLoading,
+  isOpenModalOpen, setIsOpenModalOpen, handleConfirmOpen, isOpening = false, participants = [], divisions = [],
+}: TournamentStepperProps) {
   const getStepIndex = () => {
     if (isTournamentDraft(tournament.status)) return -1;
     if (isTournamentUpcoming(tournament.status) || isTournamentRegistrationClosed(tournament.status)) return 1;
@@ -46,14 +58,8 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
       title: 'Sơ đồ & Lịch đấu',
       icon: <GitMerge className="w-4 h-4" />,
       description: 'Chốt sơ đồ nháp, phân lịch',
-      actionText: (isRegistrationClosed && tournament.tournamentType !== 'CLUB') ? 'Thanh toán phí sàn' : 'Khai mạc giải đấu',
-      onClick: () => {
-        if (isRegistrationClosed && tournament.tournamentType !== 'CLUB') {
-          onPayPlatformFee?.();
-        } else {
-          onNextStep('IN_PROGRESS');
-        }
-      },
+      actionText: 'Khai mạc giải đấu',
+      onClick: () => onNextStep('IN_PROGRESS'),
       canProgress: currentStep === 1,
     },
     {
@@ -288,6 +294,97 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
           );
         })}
       </div>
+
+      {/* Phase 2 — Khai mạc giải đấu (Checklist Modal) */}
+      {isOpenModalOpen && (
+        <Modal open={isOpenModalOpen} onOpenChange={(open) => { if (!open) setIsOpenModalOpen?.(false); }}>
+          <ModalContent className="bg-white rounded-lg p-6 max-w-xl">
+            <ModalHeader><ModalTitle className="text-xl font-bold text-slate-900">Khai mạc giải đấu</ModalTitle></ModalHeader>
+            <div className="space-y-4 mt-4">
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800 font-semibold">
+                ⚠️ Sau khi khai mạc, hệ thống sẽ tự động công bố lịch thi đấu cho VĐV. Cần đảm bảo đầy đủ các mục bắt buộc dưới đây.
+              </div>
+              {(() => {
+                // ── 6 checks ──
+                const t = tournament;
+                const divs = divisions.length > 0 ? divisions : (t.divisions as { id: string; roundConfig?: unknown }[] | undefined ?? []);
+                const paidCheck = (() => {
+                  if (!t.entryFee || t.entryFee <= 0) return true;
+                  return participants.length > 0 && participants.every((p) => p.teamStatus === 'COMPLETE' ? (p as { isPaid: boolean }).isPaid !== false : true);
+                })();
+                const bracketCheck = divs.length > 0 && divs.some((d) => d.roundConfig && typeof d.roundConfig === 'object' && Object.keys(d.roundConfig as object).length > 0);
+                const isRegistrationLocked = t.isRegistrationLocked === true || isTournamentRegistrationClosed(t.status) || isTournamentUpcoming(t.status);
+                const hasVenue = !!(t.venueId || t.venue || (t.locationAddress && t.locationAddress.trim()));
+                const hasSchedule = !!(t.startDate);  // schedule assigned if startDate is set
+                const hasMinTeams = participants.length >= 2;
+
+                const mandatoryPass = isRegistrationLocked && paidCheck && bracketCheck && hasMinTeams;
+
+                const checks = [
+                  { key: 'regLocked', label: 'Đã khóa đăng ký — Không còn VĐV mới nào có thể vào giải', mandatory: true, pass: isRegistrationLocked },
+                  { key: 'paid', label: 'Thanh toán phí tham gia — Tất cả VĐV đã thanh toán phí thi đấu', mandatory: true, pass: paidCheck },
+                  { key: 'bracket', label: 'Sơ đồ thi đấu đã tạo — Các bảng/division đã được khởi tạo sơ đồ (roundConfig)', mandatory: true, pass: bracketCheck },
+                  { key: 'minTeams', label: 'Có ít nhất 2 đội tham gia — Giải cần tối thiểu 2 đội để thi đấu', mandatory: true, pass: hasMinTeams },
+                  { key: 'schedule', label: 'Lịch thi đấu đã phân — Ngày khai mạc/kết thúc đã được thiết lập', mandatory: false, pass: hasSchedule },
+                  { key: 'venue', label: 'Địa điểm đã set — Sân thi đấu đã được xác định', mandatory: false, pass: hasVenue },
+                ];
+
+                return (
+                  <div className="space-y-3">
+                    {checks.map((check) => (
+                      <div key={check.key} className={`flex items-center justify-between text-xs font-bold bg-white/40 p-2.5 rounded-lg border transition-all ${
+                        check.pass ? 'border-emerald-100' : 'border-rose-100'
+                      }`}>
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <span className={`w-5 h-5 rounded-md flex items-center justify-center border shrink-0 transition-all ${
+                            check.pass
+                              ? 'bg-emerald-500 border-emerald-500 text-white shadow-sm shadow-emerald-500/10'
+                              : check.mandatory
+                                ? 'border-rose-300 bg-rose-50 text-rose-600'
+                                : 'border-slate-300 bg-slate-50 text-slate-400'
+                          }`}>
+                            {check.pass
+                              ? <Check className="w-3.5 h-3.5 stroke-[3]" />
+                              : <span className="font-bold text-[10px]">✕</span>
+                            }
+                          </span>
+                          <span className={`truncate ${check.pass ? 'text-slate-400 line-through' : check.mandatory ? 'text-slate-700' : 'text-slate-500'}`}>
+                            {check.mandatory
+                              ? <><span className="text-rose-600 mr-1">[BẮT BUỘC]</span>{check.label}</>
+                              : <><span className="text-slate-400 mr-1">[LINH HOẠT]</span>{check.label}</>
+                            }
+                          </span>
+                        </div>
+                        {!check.pass && check.mandatory && (
+                          <span className="text-[9px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-150 shrink-0 ml-2">
+                            Chưa đạt
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+              <div className="flex justify-end gap-3 pt-2">
+                <Button variant="outline" onClick={() => setIsOpenModalOpen?.(false)} disabled={isOpening}>
+                  Hủy
+                </Button>
+                <Button onClick={handleConfirmOpen} disabled={isOpening || (() => {
+                  const t = tournament;
+                  const divs = divisions.length > 0 ? divisions : (t.divisions as { id: string; roundConfig?: unknown }[] | undefined ?? []);
+                  const paidCheck = !t.entryFee || t.entryFee <= 0 || (participants.length > 0 && participants.every((p) => p.teamStatus === 'COMPLETE' ? (p as { isPaid: boolean }).isPaid !== false : true));
+                  const bracketCheck = divs.length > 0 && divs.some((d) => d.roundConfig && typeof d.roundConfig === 'object' && Object.keys(d.roundConfig as object).length > 0);
+                  const isRegistrationLocked = t.isRegistrationLocked === true || isTournamentRegistrationClosed(t.status) || isTournamentUpcoming(t.status);
+                  const hasMinTeams = participants.length >= 2;
+                  return !(isRegistrationLocked && paidCheck && bracketCheck && hasMinTeams);
+                })()} className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg">
+                  {isOpening ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />} Khai mạc giải đấu
+                </Button>
+              </div>
+            </div>
+          </ModalContent>
+        </Modal>
+      )}
     </div>
   );
 }

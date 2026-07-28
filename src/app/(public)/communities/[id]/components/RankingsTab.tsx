@@ -20,6 +20,7 @@ export default function RankingsTab({ communityId, categories }: RankingsTabProp
     categories[0]?.id || ''
   );
   const [selectedMatchType, setSelectedMatchType] = useState<MatchType>('SINGLES');
+  const [selectedGender, setSelectedGender] = useState<'MALE' | 'FEMALE'>('MALE');
   const [rankings, setRankings] = useState<PlayerRanking[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -34,6 +35,7 @@ export default function RankingsTab({ communityId, categories }: RankingsTabProp
           communityId,
           categoryId: selectedCategoryId,
           matchType: selectedMatchType,
+          genderRestriction: selectedGender,
           limit: 10,
         });
         if (res.data) {
@@ -48,7 +50,7 @@ export default function RankingsTab({ communityId, categories }: RankingsTabProp
     };
 
     fetchRankings();
-  }, [communityId, selectedCategoryId, selectedMatchType]);
+  }, [communityId, selectedCategoryId, selectedMatchType, selectedGender]);
 
   const matchTypes: MatchType[] = ['SINGLES', 'DOUBLES', 'MIXED_DOUBLES'];
 
@@ -117,11 +119,36 @@ export default function RankingsTab({ communityId, categories }: RankingsTabProp
             </div>
           )}
 
+          {/* Gender toggle — hidden for MIXED_DOUBLES */}
+          {selectedMatchType !== 'MIXED_DOUBLES' && (
+            <div className="flex gap-1.5 bg-slate-100 p-1 rounded-lg">
+              {(['MALE', 'FEMALE'] as const).map((g) => (
+                <button
+                  key={g}
+                  onClick={() => setSelectedGender(g)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    selectedGender === g
+                      ? 'bg-white text-emerald-700 shadow-sm'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  {g === 'MALE' ? 'Nam' : 'Nữ'}
+                </button>
+              ))}
+            </div>
+          )}
+
           {/* Match type dropdown */}
           <div className="relative">
             <select
               value={selectedMatchType}
-              onChange={(e) => setSelectedMatchType(e.target.value as MatchType)}
+              onChange={(e) => {
+                const mt = e.target.value as MatchType;
+                setSelectedMatchType(mt);
+                if (mt === 'MIXED_DOUBLES') {
+                  setSelectedGender('MALE');
+                }
+              }}
               className="appearance-none pl-3 pr-8 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
             >
               {matchTypes.map((mt) => (

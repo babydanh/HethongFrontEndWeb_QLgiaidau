@@ -315,7 +315,13 @@ export default function MyTournamentsPage() {
                             >
                               {div.tournamentConfig?.bracketType && (
                                 <span className="text-slate-400 mr-0.5">
-                                  {div.tournamentConfig.bracketType === 'SINGLE_ELIMINATION' ? 'LO' : div.tournamentConfig.bracketType === 'DOUBLE_ELIMINATION' ? 'LK' : 'VT'}
+                                  {div.tournamentConfig.bracketType === 'SINGLE_ELIMINATION'
+                                    ? 'Loại trực tiếp'
+                                    : div.tournamentConfig.bracketType === 'DOUBLE_ELIMINATION'
+                                    ? 'Nhánh thắng/thua'
+                                    : div.tournamentConfig.bracketType === 'ROUND_ROBIN'
+                                    ? 'Vòng tròn'
+                                    : 'Vòng bảng'}
                                 </span>
                               )}
                               <span>{displayDivName}</span>
@@ -348,12 +354,12 @@ export default function MyTournamentsPage() {
                       <div className="grid grid-cols-2 gap-2">
                         <Link href={manageHref}>
                           <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-1 font-bold shadow-sm text-[11px] md:text-sm h-9 md:h-10 active:scale-95 transition-transform px-0">
-                            <Settings className="w-3.5 h-3.5" /> QL
+                            <Settings className="w-3.5 h-3.5" /> Quản lý
                           </Button>
                         </Link>
                         <Link href={opsHref}>
                           <Button variant="outline" className="w-full border-slate-200 bg-white text-slate-700 hover:bg-slate-100 flex items-center justify-center gap-1 font-bold text-[11px] md:text-sm h-9 md:h-10 active:scale-95 transition-transform px-0">
-                            <Eye className="w-3.5 h-3.5" /> VH
+                            <Eye className="w-3.5 h-3.5" /> Vận hành
                           </Button>
                         </Link>
                       </div>

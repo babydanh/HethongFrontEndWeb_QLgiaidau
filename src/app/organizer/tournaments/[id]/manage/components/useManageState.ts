@@ -151,7 +151,6 @@ export function useManageState(id: string) {
   const [lockSummary, setLockSummary] = useState<{totalParticipants:number;totalPlayers:number;platformFeePerPlayer:number;totalPlatformFee:number;platformFeeRuleLabel:string}|null>(null);
 
   // ── Phase 2 Open modal ──
-  const [isOpenModalOpen, setIsOpenModalOpen] = useState(false);
   const [isOpening, setIsOpening] = useState(false);
 
   // ── Phase 3 End modal ──
@@ -742,7 +741,7 @@ export function useManageState(id: string) {
 
   const handleTournamentStepTransition = async (nextStatus: Tournament['status']) => {
     if (nextStatus === 'UPCOMING') { handleOpenLockModal(); return; }
-    if (nextStatus === 'IN_PROGRESS') { setIsOpenModalOpen(true); return; }
+    if (nextStatus === 'IN_PROGRESS') { handleConfirmOpen(); return; }
     if (nextStatus === 'COMPLETED') { handleOpenEndModal(); return; }
     try { setIsLoading(true); await tournamentsApi.updateTournament(id, { status: nextStatus }); toast.success('Đã cập nhật trạng thái!'); await fetchTournamentData(); }
     catch (err) { toast.error(getErrorMessage(err)); }
@@ -768,18 +767,34 @@ export function useManageState(id: string) {
 
   const handleConfirmOpen = async () => {
     setIsOpening(true);
-    try { await tournamentsApi.updateTournament(id, { status: 'IN_PROGRESS' }); toast.success('Giải đấu đã khai mạc!'); setIsOpenModalOpen(false); await fetchTournamentData(); }
+    try { await tournamentsApi.updateTournament(id, { status: 'IN_PROGRESS' }); toast.success('Giải đấu đã khai mạc!'); await fetchTournamentData(); }
     catch (err) { toast.error(getErrorMessage(err)); }
     finally { setIsOpening(false); }
   };
 
-  const handleOpenEndModal = () => {
-    if (!bracket) {
+  const handleOpenEndModal = async () => {
+    // Fetch fresh bracket data to avoid stale state
+    let bracketData = bracket;
+    try {
+      toast.loading('Đang tải dữ liệu sơ đồ thi đấu...', { id: 'end-modal-bracket' });
+      if (selectedDivisionId) {
+        const bRes = await tournamentsApi.getTournamentBracket(id, selectedDivisionId);
+        if (bRes.data) {
+          bracketData = bRes.data;
+          setBracket(bRes.data);
+        }
+      }
+      toast.dismiss('end-modal-bracket');
+    } catch {
+      toast.dismiss('end-modal-bracket');
+      // Graceful degradation: use current bracket data
+    }
+    if (!bracketData) {
       setEndChecklist({ totalMatches: 0, completedMatches: 0, liveMatches: 0, hasLiveMatches: false, allCompleted: true });
       setIsEndModalOpen(true);
       return;
     }
-    const allMatches = bracket.stages?.flatMap(stage =>
+    const allMatches = bracketData.stages?.flatMap(stage =>
       stage.groups?.flatMap(group => group.matches || [])
     ) || [];
     const totalMatches = allMatches.length;
@@ -796,6 +811,10 @@ export function useManageState(id: string) {
   };
 
   const handleConfirmEnd = async () => {
+    if (endChecklist?.hasLiveMatches) {
+      toast.error('Không thể kết thúc giải đấu khi còn trận đấu đang diễn ra');
+      return;
+    }
     setIsEnding(true);
     try { await tournamentsApi.updateTournament(id, { status: 'COMPLETED' }); toast.success('Giải đấu đã kết thúc!'); setIsEndModalOpen(false); await fetchTournamentData(); }
     catch (err) { toast.error(getErrorMessage(err)); }
@@ -1213,7 +1232,7 @@ export function useManageState(id: string) {
     stageSuperTiebreakEnabled, setStageSuperTiebreakEnabled, stageSuperTiebreakSetIndex, setStageSuperTiebreakSetIndex,
     stageSuperTiebreakPoints, setStageSuperTiebreakPoints,
     isLockModalOpen, setIsLockModalOpen, isLocking, setIsLocking, lockSummary, setLockSummary,
-    isOpenModalOpen, setIsOpenModalOpen, isOpening, setIsOpening,
+    isOpening, setIsOpening,
     isEndModalOpen, setIsEndModalOpen, isEnding, setIsEnding, endChecklist, setEndChecklist,
     selectedCategory,
     selectedMatch, setSelectedMatch, matchCourtId, setMatchCourtId, matchCourtName, setMatchCourtName,

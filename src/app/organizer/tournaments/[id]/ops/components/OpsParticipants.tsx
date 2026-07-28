@@ -74,7 +74,7 @@ export function OpsParticipants({
       const matchesSearch =
         !normalizedSearch ||
         participant.teamName.toLowerCase().includes(normalizedSearch) ||
-        participant.members.some((member) => (member.fullName || '').toLowerCase().includes(normalizedSearch));
+        (participant.members || []).some((member) => (member.fullName || '').toLowerCase().includes(normalizedSearch));
 
       return matchesFilter && matchesSearch;
     });

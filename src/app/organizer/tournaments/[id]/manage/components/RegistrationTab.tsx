@@ -196,7 +196,7 @@ export function RegistrationTab({
       const matchesSearch =
         !normalizedSearch ||
         participant.teamName.toLowerCase().includes(normalizedSearch) ||
-        participant.members.some((member) => (member.fullName || '').toLowerCase().includes(normalizedSearch));
+        (participant.members || []).some((member) => (member.fullName || '').toLowerCase().includes(normalizedSearch));
 
       return matchesFilter && matchesSearch;
     });
@@ -668,7 +668,7 @@ export function RegistrationTab({
                 ) : (
                   filteredParticipants.map((participant) => {
                     const isBusy = activeParticipantActionId === participant.id;
-                    const isMockParticipant = participant.members.some((member) => member.isMock);
+                    const isMockParticipant = (participant.members || []).some((member) => member.isMock);
                     const canApprove = isParticipantPendingApproval(participant.teamStatus);
                     const canReject = isParticipantPendingApproval(participant.teamStatus) || isMockParticipant;
 

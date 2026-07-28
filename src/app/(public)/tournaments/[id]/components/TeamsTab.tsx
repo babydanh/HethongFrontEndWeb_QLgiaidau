@@ -74,16 +74,23 @@ export default function TeamsTab({ tournament, tournamentId, divisionId }: Props
             <tbody>
               {participants.map((team, index) => {
                 const isExpanded = expandedTeamId === team.id;
+                
                 const members = team.members && team.members.length > 0
                   ? team.members
-                  : (team.teamName || '').split(/\s*[\/&]\s*/).filter(Boolean).map((name, i) => ({
-                      userId: '',
-                      fullName: name.trim(),
-                      avatarUrl: null,
-                      role: i === 0 ? 'CAPTAIN' : 'MEMBER',
-                      isMock: false,
-                      elo: null as any,
-                    }));
+                  : (team.teamName || '').split(/\s*[\/&]\s*/).filter(Boolean).map((name, i) => {
+                      const trimmed = name.trim();
+                      const isCaptain = i === 0;
+                      const regUser = team.registeredBy;
+                      const isRegMatch = regUser && (isCaptain || (regUser.fullName && regUser.fullName.trim().toLowerCase() === trimmed.toLowerCase()));
+                      return {
+                        userId: isRegMatch ? regUser.id : '',
+                        fullName: trimmed,
+                        avatarUrl: isRegMatch ? regUser.avatarUrl : null,
+                        role: isCaptain ? 'CAPTAIN' : 'MEMBER',
+                        isMock: false,
+                        elo: null as any,
+                      };
+                    });
 
                 return (
                   <React.Fragment key={team.id}>
@@ -125,69 +132,64 @@ export default function TeamsTab({ tournament, tournamentId, divisionId }: Props
                               <User className="w-4 h-4 text-slate-400" /> Thành viên đăng ký ({members.length})
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              {members.map((member, mIdx) => (
-                                <div 
-                                  key={member.userId || `m-${mIdx}`} 
-                                  className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex items-center justify-between"
-                                >
-                                  {member.userId ? (
-                                    <Link href={`/users/${member.userId}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity flex-1 min-w-0">
-                                      <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center font-bold text-slate-600 text-sm overflow-hidden">
-                                        {member.avatarUrl ? (
-                                          <img src={member.avatarUrl} alt={member.fullName || ''} className="w-full h-full object-cover" />
-                                        ) : (
-                                          (member.fullName || 'U').charAt(0).toUpperCase()
-                                        )}
-                                      </div>
-                                      <div>
-                                        <p className="font-bold text-slate-900 text-sm">{member.fullName || 'Thành viên'}</p>
-                                        {member.isMock ? (
-                                          <p className="text-xs text-slate-400 font-medium mt-0.5">
-                                            VĐV ảo
-                                          </p>
-                                        ) : member.elo ? (
-                                          <p className="text-xs text-slate-500 font-medium flex items-center gap-1 mt-0.5">
-                                            <Award className="w-3.5 h-3.5 text-blue-500" />
-                                            <span>
-                                              {member.elo.tierName} • <strong>{member.elo.eloPoints}</strong> {tournament.matchType === 'DOUBLES' || tournament.matchType === 'MIXED_DOUBLES' ? 'ELO CN' : 'ELO'}
-                                            </span>
-                                          </p>
-                                        ) : null}
-                                      </div>
-                                    </Link>
-                                  ) : (
-                                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                                      <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center font-bold text-slate-600 text-sm overflow-hidden">
-                                        {member.avatarUrl ? (
-                                          <img src={member.avatarUrl} alt={member.fullName || ''} className="w-full h-full object-cover" />
-                                        ) : (
-                                          (member.fullName || 'U').charAt(0).toUpperCase()
-                                        )}
-                                      </div>
-                                      <div>
-                                        <p className="font-bold text-slate-900 text-sm">{member.fullName || 'Thành viên'}</p>
-                                        {member.isMock ? (
-                                          <p className="text-xs text-slate-400 font-medium mt-0.5">VĐV ảo</p>
-                                        ) : member.elo ? (
-                                          <p className="text-xs text-slate-500 font-medium flex items-center gap-1 mt-0.5">
-                                            <Award className="w-3.5 h-3.5 text-blue-500" />
-                                            <span>
-                                              {member.elo.tierName} • <strong>{member.elo.eloPoints}</strong> {tournament.matchType === 'DOUBLES' || tournament.matchType === 'MIXED_DOUBLES' ? 'ELO CN' : 'ELO'}
-                                            </span>
-                                          </p>
-                                        ) : null}
-                                      </div>
-                                    </div>
-                                  )}
-                                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${
-                                      member.role === 'CAPTAIN' 
-                                        ? 'bg-blue-50 text-blue-700 border-blue-200' 
-                                        : 'bg-slate-50 text-slate-600 border-slate-200'
+                              {members.map((member, mIdx) => {
+                                const targetUserId = member.userId || (mIdx === 0 && team.registeredBy?.id ? team.registeredBy.id : null);
+                                const avatarSrc = member.avatarUrl || (mIdx === 0 && team.registeredBy?.avatarUrl ? team.registeredBy.avatarUrl : null);
+                                const initial = (member.fullName || 'U').charAt(0).toUpperCase();
+
+                                const CardContent = (
+                                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                                    <div className={`w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center font-bold text-sm overflow-hidden shadow-sm ${
+                                      member.role === 'CAPTAIN'
+                                        ? 'bg-gradient-to-br from-blue-600 to-indigo-700 text-white'
+                                        : 'bg-gradient-to-br from-purple-600 to-pink-600 text-white'
                                     }`}>
-                                      {member.role === 'CAPTAIN' ? 'Đội trưởng' : 'Thành viên'}
-                                    </span>
-                                </div>
-                              ))}
+                                      {avatarSrc ? (
+                                        <img src={avatarSrc} alt={member.fullName || ''} className="w-full h-full object-cover" />
+                                      ) : (
+                                        initial
+                                      )}
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                      <p className="font-bold text-slate-900 text-sm truncate">{member.fullName || 'Thành viên'}</p>
+                                      {member.isMock ? (
+                                        <p className="text-xs text-slate-400 font-medium mt-0.5">VĐV ảo</p>
+                                      ) : member.elo ? (
+                                        <p className="text-xs text-slate-500 font-medium flex items-center gap-1 mt-0.5">
+                                          <Award className="w-3.5 h-3.5 text-blue-500" />
+                                          <span>
+                                            {member.elo.tierName} • <strong>{member.elo.eloPoints}</strong> {tournament.matchType === 'DOUBLES' || tournament.matchType === 'MIXED_DOUBLES' ? 'ELO CN' : 'ELO'}
+                                          </span>
+                                        </p>
+                                      ) : (
+                                        <p className="text-[11px] text-slate-400 font-medium mt-0.5">VĐV chính thức</p>
+                                      )}
+                                    </div>
+                                  </div>
+                                );
+
+                                return (
+                                  <div 
+                                    key={targetUserId || `m-${mIdx}`} 
+                                    className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between hover:border-blue-300 transition-all"
+                                  >
+                                    {targetUserId ? (
+                                      <Link href={`/users/${targetUserId}`} className="flex items-center gap-3 hover:opacity-90 transition-opacity flex-1 min-w-0">
+                                        {CardContent}
+                                      </Link>
+                                    ) : (
+                                      CardContent
+                                    )}
+                                    <span className={`ml-2 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase border shrink-0 ${
+                                        member.role === 'CAPTAIN' 
+                                          ? 'bg-blue-50 text-blue-700 border-blue-200' 
+                                          : 'bg-slate-50 text-slate-600 border-slate-200'
+                                      }`}>
+                                        {member.role === 'CAPTAIN' ? 'Đội trưởng' : 'Thành viên'}
+                                      </span>
+                                  </div>
+                                );
+                              })}
                             </div>
                           </div>
                         </td>

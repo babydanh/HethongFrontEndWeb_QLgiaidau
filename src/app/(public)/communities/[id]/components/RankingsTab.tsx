@@ -6,7 +6,6 @@ import { Category } from '@/types/category';
 import { rankingsApi, PlayerRanking } from '@/features/rankings/api';
 import { EloTierBadge } from '@/components/ui/EloTierBadge';
 import { getEloMatchTypeLabel } from '@/features/rankings/elo-display';
-import MiniClubRanking from './MiniClubRanking';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '@/lib/zustand/authStore';
 
@@ -125,11 +124,6 @@ export default function RankingsTab({ communityId, categories }: RankingsTabProp
   return (
     <div className="space-y-6">
       {/* Mini Preview — top 3 nổi bật */}
-      <MiniClubRanking
-        communityId={communityId}
-        categories={categories}
-      />
-
       {/* Header + Filters */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
         <div>

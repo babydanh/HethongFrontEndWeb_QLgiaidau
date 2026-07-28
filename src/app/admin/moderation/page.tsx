@@ -133,30 +133,71 @@ export default function ModerationPage() {
     }
   };
 
+  type FilterStatus = 'ALL' | 'ACTIVE' | 'BANNED';
+  const [filterStatus, setFilterStatus] = useState<FilterStatus>('ALL');
+
   const getStatusBadge = (user: UserItem) => {
     if (user.activeBan) {
       const ban = user.activeBan;
       if (ban.banType === 'HARD_BAN') {
-        return <span className="bg-rose-50 text-rose-600 text-xs px-2.5 py-1 rounded-full font-semibold border border-slate-200">Khóa Vĩnh Viễn</span>;
+        return <span className="bg-rose-50 text-rose-700 text-xs px-2.5 py-1 rounded-full font-bold border border-rose-200">Khóa Vĩnh Viễn</span>;
       }
       if (ban.banType === 'SOFT_BAN') {
-        return <span className="bg-slate-100 text-slate-600 text-xs px-2.5 py-1 rounded-full font-semibold border border-slate-200">Khóa Tạm Thời</span>;
+        return <span className="bg-amber-50 text-amber-700 text-xs px-2.5 py-1 rounded-full font-bold border border-amber-200">Khóa Tạm Thời</span>;
       }
-      return <span className="bg-yellow-50 text-yellow-600 text-xs px-2.5 py-1 rounded-full font-semibold border border-yellow-200">Cảnh Cáo</span>;
+      return <span className="bg-yellow-50 text-yellow-700 text-xs px-2.5 py-1 rounded-full font-bold border border-yellow-200">Cảnh Cáo</span>;
     }
-    return <span className="bg-blue-50 text-blue-600 text-xs px-2.5 py-1 rounded-full font-semibold border border-blue-200">Hoạt Động</span>;
+    return <span className="bg-emerald-50 text-emerald-700 text-xs px-2.5 py-1 rounded-full font-bold border border-emerald-200">Hoạt Động</span>;
   };
+
+  const filteredUsers = users.filter((u) => {
+    if (filterStatus === 'ACTIVE' && u.activeBan) return false;
+    if (filterStatus === 'BANNED' && !u.activeBan) return false;
+
+    const fromDate = dateFrom ? parseDate(dateFrom) : null;
+    const toDate = dateTo ? parseDate(dateTo) : null;
+    if (!fromDate && !toDate) return true;
+    const itemDate = new Date(u.createdAt);
+    if (fromDate && itemDate < fromDate) return false;
+    if (toDate) {
+      const end = new Date(toDate);
+      end.setHours(23, 59, 59, 999);
+      if (itemDate > end) return false;
+    }
+    return true;
+  });
 
   return (
     <div className="space-y-6">
       {/* Header Section */}
-      <div>
-        <h2 className="text-2xl font-bold text-slate-900">Bảng Điều Phối Moderation</h2>
-        <p className="text-slate-500 text-sm">Quản lý vi phạm, cảnh cáo, khóa tài khoản người dùng hoặc tước Sao Uy Tín.</p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">Khóa / Xử Phạt Người Dùng</h2>
+          <p className="text-slate-500 text-sm font-medium mt-1">
+            Quản lý vi phạm, cảnh cáo, khóa tài khoản người dùng hoặc cấp bậc uy tín hệ thống.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {(['ALL', 'ACTIVE', 'BANNED'] as FilterStatus[]).map((st) => (
+            <button
+              key={st}
+              onClick={() => setFilterStatus(st)}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                filterStatus === st
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              {st === 'ALL' && 'Tất cả'}
+              {st === 'ACTIVE' && 'Hoạt động'}
+              {st === 'BANNED' && 'Đã xử phạt'}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Search Bar + Date Filter */}
-      <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+      <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
         <form onSubmit={handleSearchSubmit} className="flex gap-3 flex-1">
           <div className="relative flex-1">
             <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
@@ -165,22 +206,32 @@ export default function ModerationPage() {
               placeholder="Tìm theo tên hoặc email..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-gray-50 border border-slate-200 focus:border-blue-500 rounded-lg pl-11 pr-4 py-2.5 text-sm text-slate-800 placeholder-slate-400 outline-none transition-colors"
+              className="w-full bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white rounded-lg pl-11 pr-4 py-2.5 text-sm text-slate-800 placeholder-slate-400 outline-none transition-all font-medium"
             />
           </div>
-          <button type="submit" className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-5 py-2.5 rounded-lg transition-colors">Tìm kiếm</button>
+          <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-5 py-2.5 rounded-lg transition-colors shadow-sm">
+            Tìm kiếm
+          </button>
         </form>
-        <div className="flex items-center gap-2 min-w-[130px]">
-          <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
-          <input type="text" placeholder="Từ ngày (dd/mm/yyyy)" value={dateFrom}
+        <div className="flex items-center gap-2 min-w-[140px]">
+          <Calendar className="w-4 h-4 text-slate-400 flex-shrink-0" />
+          <input
+            type="text"
+            placeholder="Từ ngày (dd/mm/yyyy)"
+            value={dateFrom}
             onChange={(e) => setDateFrom(e.target.value)}
-            className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-600 focus:outline-none focus:border-blue-500 placeholder-gray-400" />
+            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs font-medium text-slate-700 focus:outline-none focus:border-blue-500 placeholder-slate-400"
+          />
         </div>
-        <div className="flex items-center gap-2 min-w-[130px]">
-          <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
-          <input type="text" placeholder="Đến ngày (dd/mm/yyyy)" value={dateTo}
+        <div className="flex items-center gap-2 min-w-[140px]">
+          <Calendar className="w-4 h-4 text-slate-400 flex-shrink-0" />
+          <input
+            type="text"
+            placeholder="Đến ngày (dd/mm/yyyy)"
+            value={dateTo}
             onChange={(e) => setDateTo(e.target.value)}
-            className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-600 focus:outline-none focus:border-blue-500 placeholder-gray-400" />
+            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs font-medium text-slate-700 focus:outline-none focus:border-blue-500 placeholder-slate-400"
+          />
         </div>
       </div>
 
@@ -190,83 +241,91 @@ export default function ModerationPage() {
           <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
         </div>
       ) : filteredUsers.length === 0 ? (
-        <div className="bg-white border border-slate-200 rounded-lg p-12 text-center text-slate-500 space-y-1 shadow-sm">
-          <p className="text-base font-medium text-slate-800">Không tìm thấy người dùng nào</p>
-          <p className="text-xs text-slate-500">Hãy thử tìm với từ khóa khác.</p>
+        <div className="bg-white border border-slate-200 rounded-xl p-12 text-center text-slate-500 space-y-1 shadow-sm">
+          <p className="text-base font-bold text-slate-800">Không tìm thấy người dùng nào</p>
+          <p className="text-xs text-slate-500 font-medium">Hãy thử tìm với từ khóa hoặc bộ lọc khác.</p>
         </div>
       ) : (
-        <div className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
+        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-slate-200 bg-slate-50 text-slate-600 text-xs font-semibold uppercase tracking-wider">
+                <tr className="border-b border-slate-200 bg-slate-50/80 text-slate-500 text-xs font-bold uppercase tracking-wider">
                   <th className="p-4 pl-6">Người dùng</th>
                   <th className="p-4">Trạng thái</th>
-                  <th className="p-4">Ngày tạo</th>
-                  <th className="p-4">Sao Uy Tín</th>
+                  <th className="p-4">Ngày tham gia</th>
+                  <th className="p-4">Xác minh</th>
                   <th className="p-4 pr-6 text-right">Hành động</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-slate-600 text-sm">
-                {filteredUsers.map((item) => (
-                  <tr key={item.id} className="hover:bg-slate-50 transition-all duration-150">
-                    <td className="p-4 pl-6">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold uppercase">
-                          {item.profile?.fullName?.charAt(0) || 'U'}
+              <tbody className="divide-y divide-slate-100 text-slate-700 text-sm font-medium">
+                {filteredUsers.map((item) => {
+                  const name = item.profile?.fullName || 'Người dùng';
+                  const initial = name.charAt(0).toUpperCase();
+
+                  return (
+                    <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="p-4 pl-6">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full border border-slate-200 bg-gradient-to-br from-blue-600 to-indigo-700 text-white flex items-center justify-center font-extrabold text-sm shadow-sm shrink-0 overflow-hidden">
+                            {item.profile?.avatarUrl ? (
+                              <img src={item.profile.avatarUrl} alt={name} className="w-full h-full object-cover" />
+                            ) : (
+                              initial
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-bold text-slate-900 text-sm truncate">{name}</p>
+                            <p className="text-xs text-slate-500 font-normal truncate">{item.email}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-semibold text-slate-800">{item.profile?.fullName || 'N/A'}</p>
-                          <p className="text-xs text-slate-500">{item.email}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="p-4">{getStatusBadge(item)}</td>
-                    <td className="p-4 text-xs text-slate-500">
-                      {new Date(item.createdAt).toLocaleDateString('vi-VN')}
-                    </td>
-                    <td className="p-4">
-                      {item.profile?.isVerified ? (
-                        <span className="flex items-center gap-1 text-xs text-blue-600 font-medium">
-                          <ShieldCheck className="w-4 h-4" />
-                          Đã xác minh
-                        </span>
-                      ) : (
-                        <span className="text-xs text-slate-400 font-medium">Chưa xác minh</span>
-                      )}
-                    </td>
-                    <td className="p-4 pr-6 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        {item.activeBan ? (
-                          <Button
-                            onClick={() => handleUnban(item.id)}
-                            disabled={processing}
-                            variant="success"
-                            size="sm"
-                            className="text-xs"
-                          >
-                            <UserCheck className="w-3.5 h-3.5" />
-                            Gỡ phạt
-                          </Button>
+                      </td>
+                      <td className="p-4">{getStatusBadge(item)}</td>
+                      <td className="p-4 text-xs font-semibold text-slate-500">
+                        {new Date(item.createdAt).toLocaleDateString('vi-VN')}
+                      </td>
+                      <td className="p-4">
+                        {item.profile?.isVerified ? (
+                          <span className="inline-flex items-center gap-1 text-xs text-blue-600 font-bold bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-md">
+                            <ShieldCheck className="w-3.5 h-3.5" />
+                            Đã xác minh
+                          </span>
                         ) : (
-                          <Button
-                            onClick={() => {
-                              setSelectedUser(item);
-                              setShowBanModal(true);
-                            }}
-                            disabled={processing}
-                            variant="destructive"
-                            size="sm"
-                            className="text-xs"
-                          >
-                            <Ban className="w-3.5 h-3.5" />
-                            Xử phạt
-                          </Button>
+                          <span className="text-xs text-slate-400 font-semibold">Chưa xác minh</span>
                         )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="p-4 pr-6 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          {item.activeBan ? (
+                            <Button
+                              onClick={() => handleUnban(item.id)}
+                              disabled={processing}
+                              size="sm"
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm"
+                            >
+                              <UserCheck className="w-3.5 h-3.5 mr-1" />
+                              Gỡ phạt
+                            </Button>
+                          ) : (
+                            <Button
+                              onClick={() => {
+                                setSelectedUser(item);
+                                setShowBanModal(true);
+                              }}
+                              disabled={processing}
+                              variant="destructive"
+                              size="sm"
+                              className="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-sm"
+                            >
+                              <Ban className="w-3.5 h-3.5 mr-1" />
+                              Xử phạt
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

@@ -296,10 +296,10 @@ export default function LiveMatchPage({ params }: Props) {
 
   const team1Name = match.participant1?.teamName || 'Chưa xác định';
   const team2Name = match.participant2?.teamName || 'Chưa xác định';
-  const hasAdminRole = user?.roles?.includes('ADMIN');
-  const hasOrganizerRole = user?.roles?.includes('ORGANIZER');
+  const hasAdminRole = user?.roles?.includes('ADMIN') ?? false;
+  const hasOrganizerRole = user?.roles?.includes('ORGANIZER') ?? false;
 
-  const isUserReferee = user?.roles?.includes('REFEREE');
+  const isUserReferee = user?.roles?.includes('REFEREE') ?? false;
   const isAssignedReferee = isUserReferee && (match.refereeId == null || match.refereeId === user?.id);
   const canControlLiveMatch =
     hasAdminRole ||

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Image as ImageIcon, Plus, Trash2, Loader2, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { communitiesApi } from '@/features/communities/api';
+import { communitiesApi, Community } from '@/features/communities/api';
 import { uploadApi } from '@/features/upload/api';
 import toast from 'react-hot-toast';
 
@@ -12,7 +12,13 @@ interface GalleryImage {
   imageUrl: string;
 }
 
-export default function GalleryTab({ communityId, isOwnerOrMod }: { communityId: string, isOwnerOrMod: boolean }) {
+interface GalleryTabProps {
+  communityId: string;
+  community?: Community | null;
+  isOwnerOrMod: boolean;
+}
+
+export default function GalleryTab({ communityId, community, isOwnerOrMod }: GalleryTabProps) {
   const [images, setImages] = useState<GalleryImage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
@@ -75,46 +81,63 @@ export default function GalleryTab({ communityId, isOwnerOrMod }: { communityId:
     }
   };
 
+  const displayImages: Array<{ id: string; imageUrl: string; title: string; isSystem?: boolean }> = [
+    ...(community?.logoUrl ? [{ id: 'sys-logo', imageUrl: community.logoUrl, title: 'Logo CLB', isSystem: true }] : []),
+    ...(community?.bannerUrl ? [{ id: 'sys-banner', imageUrl: community.bannerUrl, title: 'Ảnh bìa CLB', isSystem: true }] : []),
+    ...images.map(img => ({ id: img.id, imageUrl: img.imageUrl, title: 'Ảnh hoạt động', isSystem: false })),
+  ];
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-bold text-slate-900">Ảnh hoạt động</h3>
+        <div>
+          <h3 className="text-lg font-bold text-slate-900">Thư viện ảnh ({displayImages.length})</h3>
+          <p className="text-xs text-slate-500 font-medium">Bao gồm Logo, Banner bìa và bộ sưu tập ảnh hoạt động của CLB.</p>
+        </div>
         {isOwnerOrMod && (
           <>
             <input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={handleFileChange} />
             <Button 
               onClick={handleUploadClick}
               disabled={isUploading}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs"
             >
               {isUploading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}
-              {isUploading ? 'Đang tải lên...' : 'Upload ảnh'}
+              {isUploading ? 'Đang tải lên...' : 'Upload ảnh mới'}
             </Button>
           </>
         )}
       </div>
 
       {isLoading ? (
-        <div className="p-12 text-center text-slate-500">Đang tải dữ liệu...</div>
-      ) : images.length === 0 ? (
-        <div className="bg-white rounded-lg shadow-sm border border-slate-200 border-dashed p-12 text-center">
+        <div className="p-12 text-center text-slate-500 font-medium">Đang tải dữ liệu thư viện ảnh...</div>
+      ) : displayImages.length === 0 ? (
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 border-dashed p-12 text-center">
           <ImageIcon className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-          <p className="text-slate-700 font-medium text-lg">Chưa có hình ảnh nào</p>
-          <p className="text-slate-500 mt-1">Câu lạc bộ chưa đăng tải hình ảnh hoạt động nào.</p>
+          <p className="text-slate-800 font-bold text-lg">Chưa có hình ảnh nào</p>
+          <p className="text-slate-500 text-xs font-medium mt-1">Câu lạc bộ chưa đăng tải hình ảnh hoạt động nào.</p>
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {images.map((img, idx) => (
+          {displayImages.map((img, idx) => (
             <div 
               key={img.id} 
               onClick={() => setLightboxIndex(idx)}
-              className="group relative aspect-square rounded-lg overflow-hidden bg-slate-100 border border-slate-200 cursor-pointer hover:opacity-95 transition-opacity"
+              className="group relative aspect-square rounded-xl overflow-hidden bg-slate-100 border border-slate-200 cursor-pointer hover:opacity-95 transition-all shadow-sm"
             >
-              <img src={img.imageUrl} alt="Gallery" className="w-full h-full object-cover transition-transform group-hover:scale-105" />
-              {isOwnerOrMod && (
+              <img src={img.imageUrl} alt={img.title} className="w-full h-full object-cover transition-transform group-hover:scale-105" />
+              
+              {/* Badge label for Logo/Banner */}
+              {img.isSystem && (
+                <span className="absolute top-2 left-2 px-2.5 py-1 rounded-md text-[10px] font-bold bg-slate-900/80 text-white backdrop-blur-md shadow-sm">
+                  {img.title}
+                </span>
+              )}
+
+              {!img.isSystem && isOwnerOrMod && (
                 <button 
                   onClick={(e) => handleDelete(img.id, e)}
-                  className="absolute top-2 right-2 p-2 bg-white/80 hover:bg-rose-50 text-rose-500 rounded-full opacity-0 group-hover:opacity-100 transition-all shadow-sm z-10"
+                  className="absolute top-2 right-2 p-2 bg-white/90 hover:bg-rose-50 text-rose-600 rounded-full opacity-0 group-hover:opacity-100 transition-all shadow-sm z-10"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -125,7 +148,7 @@ export default function GalleryTab({ communityId, isOwnerOrMod }: { communityId:
       )}
 
       {/* Lightbox / Fullscreen Slide Modal */}
-      {lightboxIndex !== null && images.length > 0 && (
+      {lightboxIndex !== null && displayImages.length > 0 && (
         <div 
           className="fixed inset-0 bg-black/95 z-[9999] flex flex-col items-center justify-center select-none animate-in fade-in duration-200"
           onClick={() => setLightboxIndex(null)}
@@ -142,7 +165,7 @@ export default function GalleryTab({ communityId, isOwnerOrMod }: { communityId:
           <button 
             onClick={(e) => {
               e.stopPropagation();
-              setLightboxIndex(prev => (prev === 0 ? images.length - 1 : prev! - 1));
+              setLightboxIndex(prev => (prev === 0 ? displayImages.length - 1 : prev! - 1));
             }}
             className="absolute left-6 top-1/2 -translate-y-1/2 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 p-3 rounded-full backdrop-blur-md transition-all z-[10000] active:scale-95"
           >
@@ -153,7 +176,7 @@ export default function GalleryTab({ communityId, isOwnerOrMod }: { communityId:
           <button 
             onClick={(e) => {
               e.stopPropagation();
-              setLightboxIndex(prev => (prev === images.length - 1 ? 0 : prev! + 1));
+              setLightboxIndex(prev => (prev === displayImages.length - 1 ? 0 : prev! + 1));
             }}
             className="absolute right-6 top-1/2 -translate-y-1/2 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 p-3 rounded-full backdrop-blur-md transition-all z-[10000] active:scale-95"
           >
@@ -163,15 +186,17 @@ export default function GalleryTab({ communityId, isOwnerOrMod }: { communityId:
           {/* Image slide */}
           <div className="relative w-full max-w-5xl h-[80vh] px-4 flex items-center justify-center">
             <img 
-              src={images[lightboxIndex].imageUrl} 
-              alt={`Gallery detail ${lightboxIndex}`}
+              src={displayImages[lightboxIndex].imageUrl} 
+              alt={displayImages[lightboxIndex].title}
               className="max-w-full max-h-full object-contain rounded-lg shadow-2xl select-none"
             />
           </div>
 
           {/* Bottom Index indicator */}
-          <div className="text-white/60 text-xs font-bold mt-4 uppercase tracking-widest bg-white/5 px-4 py-1.5 rounded-full backdrop-blur-sm">
-            Hình ảnh {lightboxIndex + 1} / {images.length}
+          <div className="text-white/80 text-xs font-bold mt-4 uppercase tracking-widest bg-white/10 px-4 py-1.5 rounded-full backdrop-blur-sm flex items-center gap-2">
+            <span>{displayImages[lightboxIndex].title}</span>
+            <span>•</span>
+            <span>{lightboxIndex + 1} / {displayImages.length}</span>
           </div>
         </div>
       )}

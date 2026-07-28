@@ -454,7 +454,7 @@ export default function CommunityDetailPage() {
                 }} 
               />
             )}
-            {activeTab === 'gallery' && <GalleryTab communityId={id} isOwnerOrMod={isOwnerOrMod} />}
+            {activeTab === 'gallery' && <GalleryTab communityId={id} community={community} isOwnerOrMod={isOwnerOrMod} />}
             {activeTab === 'rankings' && <RankingsTab communityId={id} categories={community?.categories || []} />}
             {activeTab === 'moderation' && isOwnerOrMod && (
               <ModerationTab communityId={id} isOwner={isOwner} />

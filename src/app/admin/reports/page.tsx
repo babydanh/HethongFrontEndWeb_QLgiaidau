@@ -85,7 +85,7 @@ export default function ReportsPage() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {reports.map((report) => (
-                  <tr key={report.id} className="hover:bg-slate-50/70">
+                  <tr key={report.id} onClick={() => setSelectedReport(report)} className="hover:bg-slate-50/70 cursor-pointer transition-colors">
                     <td className="p-4">
                       <p className="font-semibold text-slate-900">{report.reporter?.fullName ?? 'Không xác định'}</p>
                       <p className="text-xs text-slate-500">{report.reporter?.email}</p>
@@ -94,7 +94,7 @@ export default function ReportsPage() {
                     <td className="p-4"><p className="font-semibold text-slate-900">{report.target?.name ?? report.targetUser?.fullName ?? report.targetTournament?.name ?? report.targetId?.slice(0, 8) ?? 'N/A'}</p><p className="text-xs text-slate-500">{REPORT_TARGET_LABELS[report.targetType]}</p></td>
                     <td className="p-4"><p className="font-semibold text-slate-800">{REPORT_CATEGORY_LABELS[report.category]}</p></td>
                     <td className="p-4"><ReportStatusBadge status={report.status} /><p className="mt-2 text-xs text-slate-400">{new Date(report.createdAt).toLocaleString('vi-VN')}</p></td>
-                    <td className="p-4 text-right"><Button size="sm" variant="outline" onClick={() => setSelectedReport(report)}><Eye className="mr-2 h-4 w-4" />Mở hồ sơ</Button></td>
+                    <td className="p-4 text-right"><Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); setSelectedReport(report); }}><Eye className="mr-2 h-4 w-4" />Xử lý</Button></td>
                   </tr>
                 ))}
               </tbody>

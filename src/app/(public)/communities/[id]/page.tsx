@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { communitiesApi, Community } from '@/features/communities/api';
 import { Button } from '@/components/ui/Button';
-import { ChevronLeft, MapPin, Users, Trophy, Share2, MoreHorizontal, ShieldCheck, Settings as SettingsIcon, Loader2 } from 'lucide-react';
+import { ChevronLeft, MapPin, Users, Trophy, Share2, MoreHorizontal, ShieldCheck, ShieldAlert, Settings as SettingsIcon, Loader2 } from 'lucide-react';
 import { formatDate } from '@/utils/format';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { JoinCommunityModal } from '@/components/shared/JoinCommunityModal';
@@ -35,6 +35,7 @@ export default function CommunityDetailPage() {
 
   const [community, setCommunity] = useState<Community | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'about' | 'tournaments' | 'members' | 'gallery' | 'rankings' | 'moderation' | 'settings'>('about');
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
 
@@ -86,11 +87,17 @@ export default function CommunityDetailPage() {
       if (!isLoading) {
         setIsLoading(true);
       }
+      setFetchError(null);
       const res = await communitiesApi.getCommunityById(id);
       const data = (res as { data?: Community })?.data ?? (res as unknown as Community);
       setCommunity(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to fetch community details', error);
+      if (error?.response?.status === 403) {
+        setFetchError('Cộng đồng này đã bị vô hiệu hoá bởi quản trị viên.');
+      } else {
+        setFetchError('Không thể tải thông tin câu lạc bộ.');
+      }
     } finally {
       setIsLoading(false);
     }

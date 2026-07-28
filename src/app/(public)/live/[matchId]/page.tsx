@@ -301,10 +301,11 @@ export default function LiveMatchPage({ params }: Props) {
 
   const isUserReferee = user?.roles?.includes('REFEREE') ?? false;
   const isAssignedReferee = isUserReferee && (match.refereeId == null || match.refereeId === user?.id);
-  const canControlLiveMatch =
+  const canControlLiveMatch = Boolean(
     hasAdminRole ||
-    match.tournament?.createdBy === user?.id ||
-    isAssignedReferee;
+      match.tournament?.createdBy === user?.id ||
+      isAssignedReferee,
+  );
 
   // Cho phép bình luận tự do thoải mái
   const isCommentDisabled = () => false;

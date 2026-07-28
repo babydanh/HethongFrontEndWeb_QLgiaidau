@@ -330,7 +330,7 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
                   <Button
                     size="sm"
                     onClick={step.onClick}
-                    disabled={isLoading || (idx === 1 && !phase2MandatoryPass)}
+                    disabled={isLoading || isOpening || (idx === 1 && !phase2MandatoryPass)}
                     className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5 h-8 px-4 rounded-full shadow-md shadow-blue-500/20"
                   >
                     {step.actionText} <ChevronRight className="w-3.5 h-3.5" />

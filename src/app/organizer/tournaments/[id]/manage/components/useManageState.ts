@@ -154,6 +154,17 @@ export function useManageState(id: string) {
   const [isOpenModalOpen, setIsOpenModalOpen] = useState(false);
   const [isOpening, setIsOpening] = useState(false);
 
+  // ── Phase 3 End modal ──
+  const [isEndModalOpen, setIsEndModalOpen] = useState(false);
+  const [isEnding, setIsEnding] = useState(false);
+  const [endChecklist, setEndChecklist] = useState<{
+    totalMatches: number;
+    completedMatches: number;
+    liveMatches: number;
+    hasLiveMatches: boolean;
+    allCompleted: boolean;
+  } | null>(null);
+
   // ── Match schedule modal ──
   const [selectedMatch, setSelectedMatch] = useState<BracketMatch|null>(null);
   const [matchCourtId, setMatchCourtId] = useState('');
@@ -732,6 +743,7 @@ export function useManageState(id: string) {
   const handleTournamentStepTransition = async (nextStatus: Tournament['status']) => {
     if (nextStatus === 'UPCOMING') { handleOpenLockModal(); return; }
     if (nextStatus === 'IN_PROGRESS') { setIsOpenModalOpen(true); return; }
+    if (nextStatus === 'COMPLETED') { handleOpenEndModal(); return; }
     try { setIsLoading(true); await tournamentsApi.updateTournament(id, { status: nextStatus }); toast.success('Đã cập nhật trạng thái!'); await fetchTournamentData(); }
     catch (err) { toast.error(getErrorMessage(err)); }
     finally { setIsLoading(false); }
@@ -759,6 +771,35 @@ export function useManageState(id: string) {
     try { await tournamentsApi.updateTournament(id, { status: 'IN_PROGRESS' }); toast.success('Giải đấu đã khai mạc!'); setIsOpenModalOpen(false); await fetchTournamentData(); }
     catch (err) { toast.error(getErrorMessage(err)); }
     finally { setIsOpening(false); }
+  };
+
+  const handleOpenEndModal = () => {
+    if (!bracket) {
+      setEndChecklist({ totalMatches: 0, completedMatches: 0, liveMatches: 0, hasLiveMatches: false, allCompleted: true });
+      setIsEndModalOpen(true);
+      return;
+    }
+    const allMatches = bracket.stages?.flatMap(stage =>
+      stage.groups?.flatMap(group => group.matches || [])
+    ) || [];
+    const totalMatches = allMatches.length;
+    const completedMatches = allMatches.filter(m => m.status === 'COMPLETED').length;
+    const liveMatches = allMatches.filter(m => m.status === 'LIVE').length;
+    setEndChecklist({
+      totalMatches,
+      completedMatches,
+      liveMatches,
+      hasLiveMatches: liveMatches > 0,
+      allCompleted: totalMatches > 0 && completedMatches === totalMatches && liveMatches === 0,
+    });
+    setIsEndModalOpen(true);
+  };
+
+  const handleConfirmEnd = async () => {
+    setIsEnding(true);
+    try { await tournamentsApi.updateTournament(id, { status: 'COMPLETED' }); toast.success('Giải đấu đã kết thúc!'); setIsEndModalOpen(false); await fetchTournamentData(); }
+    catch (err) { toast.error(getErrorMessage(err)); }
+    finally { setIsEnding(false); }
   };
 
   const handleSeedMockData = async () => {
@@ -1173,6 +1214,7 @@ export function useManageState(id: string) {
     stageSuperTiebreakPoints, setStageSuperTiebreakPoints,
     isLockModalOpen, setIsLockModalOpen, isLocking, setIsLocking, lockSummary, setLockSummary,
     isOpenModalOpen, setIsOpenModalOpen, isOpening, setIsOpening,
+    isEndModalOpen, setIsEndModalOpen, isEnding, setIsEnding, endChecklist, setEndChecklist,
     selectedCategory,
     selectedMatch, setSelectedMatch, matchCourtId, setMatchCourtId, matchCourtName, setMatchCourtName,
     matchCourtAddress, setMatchCourtAddress, matchScheduledAt, setMatchScheduledAt,
@@ -1197,6 +1239,7 @@ export function useManageState(id: string) {
     handlePublish, handlePayPublishFee, handleDeleteTournament, handlePayPlatformFee,
     handleTournamentStepTransition, handleOpenLockModal, handleConfirmLock,
     handleConfirmOpen,
+    handleOpenEndModal, handleConfirmEnd,
     handleSeedMockData, handleClearMockData, handleAssignWildcard, handleAutoSeed, handleSwapSeeds, handleApproveParticipant, handleRejectParticipant,
     handleOpenRoundModal, handleSaveStageDetails,
     handleOpenScheduling, handleSaveSchedule,

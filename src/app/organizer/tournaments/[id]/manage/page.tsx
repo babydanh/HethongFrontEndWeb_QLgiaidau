@@ -147,6 +147,8 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
           onNextStep={s.handleTournamentStepTransition} publishFeeAmount={s.publishFeeAmount} isLoading={s.isLoading || s.isPayingPublishFee}
           isOpenModalOpen={s.isOpenModalOpen} setIsOpenModalOpen={s.setIsOpenModalOpen}
           handleConfirmOpen={s.handleConfirmOpen} isOpening={s.isOpening}
+          isEndModalOpen={s.isEndModalOpen} setIsEndModalOpen={s.setIsEndModalOpen}
+          handleConfirmEnd={s.handleConfirmEnd} isEnding={s.isEnding} endChecklist={s.endChecklist}
           participants={s.participants} divisions={s.divisions} />
 
         {/* Divisions Selector */}

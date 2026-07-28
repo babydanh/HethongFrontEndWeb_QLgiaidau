@@ -26,12 +26,26 @@ interface TournamentStepperProps {
   setIsOpenModalOpen?: (open: boolean) => void;
   handleConfirmOpen?: () => void;
   isOpening?: boolean;
+  // Phase 3 end modal
+  isEndModalOpen?: boolean;
+  setIsEndModalOpen?: (open: boolean) => void;
+  handleConfirmEnd?: () => void;
+  isEnding?: boolean;
+  endChecklist?: {
+    totalMatches: number;
+    completedMatches: number;
+    liveMatches: number;
+    hasLiveMatches: boolean;
+    allCompleted: boolean;
+  } | null;
   participants?: { isPaid: boolean; teamStatus?: string }[];
   divisions?: { id: string; roundConfig?: unknown }[];
 }
 
 export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlatformFee, publishFeeAmount = 0, isLoading,
-  isOpenModalOpen, setIsOpenModalOpen, handleConfirmOpen, isOpening = false, participants = [], divisions = [],
+  isOpenModalOpen, setIsOpenModalOpen, handleConfirmOpen, isOpening = false,
+  isEndModalOpen, setIsEndModalOpen, handleConfirmEnd, isEnding = false, endChecklist = null,
+  participants = [], divisions = [],
 }: TournamentStepperProps) {
   const getStepIndex = () => {
     if (isTournamentDraft(tournament.status)) return -1;
@@ -104,23 +118,25 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
             </span>
             <p className="mb-2 font-medium">Thông tin cơ bản phải được điền đầy đủ và chính xác. Vui lòng kiểm tra kỹ các trường sau trước khi công bố:</p>
             {(() => {
-              // Tự động kiểm tra tiến trình đã điền thông tin của giải đấu theo luật backend mới
-              const hasDescription = tournament.description != null && tournament.description.trim() !== '';
-              const hasDivisions = tournament.divisions && tournament.divisions.length > 0;
-              const hasVenue = (tournament.venueId != null) || (tournament.locationAddress && tournament.locationAddress.trim() !== '');
+                // Tự động kiểm tra tiến trình đã điền thông tin của giải đấu theo luật backend mới
+                const hasDescription = tournament.description != null && tournament.description.trim() !== '';
+                const hasDivisions = tournament.divisions && tournament.divisions.length > 0;
+                const hasVenue = (tournament.venueId != null) || (tournament.locationAddress && tournament.locationAddress.trim() !== '');
               
-              // Validate ngày hợp lệ
-              const hasValidDates = tournament.registrationStartDate && 
-                                    tournament.registrationEndDate && 
-                                    tournament.startDate && 
-                                    (new Date(tournament.registrationStartDate) < new Date(tournament.registrationEndDate)) &&
-                                    (new Date(tournament.registrationEndDate) < new Date(tournament.startDate));
+                // Validate ngày hợp lệ
+                const hasValidDates = tournament.registrationStartDate && 
+                                      tournament.registrationEndDate && 
+                                      tournament.startDate && 
+                                      (new Date(tournament.registrationStartDate) < new Date(tournament.registrationEndDate)) &&
+                                      (new Date(tournament.registrationEndDate) < new Date(tournament.startDate));
 
-              const hasContact = tournament.contactInfo && 
-                                 (typeof tournament.contactInfo === 'object') && 
-                                 ((tournament.contactInfo as Record<string, string>).email || (tournament.contactInfo as Record<string, string>).phone);
+                const hasContact = tournament.contactInfo && 
+                                   (typeof tournament.contactInfo === 'object') && 
+                                   ((tournament.contactInfo as Record<string, string>).email || (tournament.contactInfo as Record<string, string>).phone);
 
-              return (
+                const canPublish = hasDescription && hasDivisions && hasVenue && hasValidDates && hasContact;
+
+                return (
                 <div className="space-y-3 mt-3">
                   {/* Mô tả giải đấu */}
                   <div className="flex items-center justify-between text-xs font-bold bg-white/40 p-2 rounded-lg border border-slate-100">
@@ -379,6 +395,76 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
                   return !(isRegistrationLocked && paidCheck && bracketCheck && hasMinTeams);
                 })()} className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg">
                   {isOpening ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />} Khai mạc giải đấu
+                </Button>
+              </div>
+            </div>
+          </ModalContent>
+        </Modal>
+      )}
+
+      {/* Phase 3 — Kết thúc giải đấu (Checklist Modal) */}
+      {isEndModalOpen && (
+        <Modal open={isEndModalOpen} onOpenChange={(open) => { if (!open) setIsEndModalOpen?.(false); }}>
+          <ModalContent className="bg-white rounded-lg p-6 max-w-xl">
+            <ModalHeader><ModalTitle className="text-xl font-bold text-slate-900">Kết thúc giải đấu</ModalTitle></ModalHeader>
+            <div className="space-y-4 mt-4">
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800 font-semibold">
+                ⚠️ Sau khi kết thúc, giải đấu sẽ chuyển sang trạng thái hoàn tất. Các trận đấu chưa kết thúc sẽ không thể cập nhật điểm.
+              </div>
+              {(() => {
+                const hasMatches = endChecklist && endChecklist.totalMatches > 0;
+                const allDone = endChecklist?.allCompleted ?? true;
+                const total = endChecklist?.totalMatches ?? 0;
+                const completed = endChecklist?.completedMatches ?? 0;
+                const live = endChecklist?.liveMatches ?? 0;
+
+                const checks = [
+                  { key: 'matchesComplete', label: `Tất cả trận đấu đã kết thúc (${completed}/${total})`, pass: !hasMatches || allDone },
+                  { key: 'noLiveMatches', label: `Không còn trận đấu LIVE (${live} trận đang thi đấu)`, pass: !hasMatches || !endChecklist?.hasLiveMatches },
+                ];
+
+                return (
+                  <div className="space-y-3">
+                    {checks.map((check) => (
+                      <div key={check.key} className={`flex items-center justify-between text-xs font-bold bg-white/40 p-2.5 rounded-lg border transition-all ${
+                        check.pass ? 'border-emerald-100' : 'border-rose-100'
+                      }`}>
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <span className={`w-5 h-5 rounded-md flex items-center justify-center border shrink-0 transition-all ${
+                            check.pass
+                              ? 'bg-emerald-500 border-emerald-500 text-white shadow-sm shadow-emerald-500/10'
+                              : 'border-rose-300 bg-rose-50 text-rose-600'
+                          }`}>
+                            {check.pass
+                              ? <Check className="w-3.5 h-3.5 stroke-[3]" />
+                              : <span className="font-bold text-[10px]">✕</span>
+                            }
+                          </span>
+                          <span className={`truncate ${check.pass ? 'text-slate-400 line-through' : 'text-slate-700'}`}>
+                            {check.label}
+                          </span>
+                        </div>
+                        {!check.pass && (
+                          <span className="text-[9px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-150 shrink-0 ml-2">
+                            Chưa đạt
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                    {!hasMatches && (
+                      <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs text-slate-600 font-semibold text-center">
+                        Giải đấu chưa có trận đấu nào. Bạn có thể kết thúc ngay.
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+              <div className="flex justify-end gap-3 pt-2">
+                <Button variant="outline" onClick={() => setIsEndModalOpen?.(false)} disabled={isEnding}>
+                  Hủy
+                </Button>
+                <Button onClick={handleConfirmEnd} disabled={isEnding || !!endChecklist?.hasLiveMatches} className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg">
+                  {isEnding ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trophy className="w-4 h-4" />} Kết thúc giải đấu
                 </Button>
               </div>
             </div>

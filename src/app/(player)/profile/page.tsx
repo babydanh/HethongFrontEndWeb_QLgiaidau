@@ -206,7 +206,8 @@ const deriveTournamentPlacement = (
 export default function ProfilePage() {
   const { user } = useAuthStore();
   const [profileData, setProfileData] = useState<UserProfile | null>(null);
-  const [myCommunities, setMyCommunities] = useState<Community[]>([]);
+  const [createdCommunities, setCreatedCommunities] = useState<Community[]>([]);
+  const [joinedCommunities, setJoinedCommunities] = useState<Community[]>([]);
   const [participatingTournaments, setParticipatingTournaments] = useState<Tournament[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'tournaments' | 'achievements' | 'matches' | 'elo'>(() => {
@@ -297,7 +298,8 @@ export default function ProfilePage() {
         ]);
         if (isMounted) {
           setProfileData(data);
-          setMyCommunities(communitiesRes.data || []);
+          setCreatedCommunities(communitiesRes.data?.created || []);
+          setJoinedCommunities(communitiesRes.data?.joined || []);
           setParticipatingTournaments(workspaceRes.data?.participatingTournaments || []);
 
           // Sync roles/details with useAuthStore so header displays updated roles immediately
@@ -840,24 +842,60 @@ export default function ProfilePage() {
                       <div className="h-3 bg-slate-200 rounded w-1/2"></div>
                     </div>
                   </div>
-                ) : myCommunities.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {myCommunities.map(community => (
+                ) : createdCommunities.length > 0 || joinedCommunities.length > 0 ? (
+                  <div className="space-y-6">
+                    {createdCommunities.length > 0 && (
+                      <div>
+                        <div className="flex items-center gap-2 mb-3">
+                          <ShieldCheck className="w-4 h-4 text-blue-600" />
+                          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600">CLB đã tạo / quản lý</h4>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {createdCommunities.map(community => (
+                            <Link href={`/communities/${community.id}`} key={community.id}>
+                              <div className="flex items-center gap-4 p-4 rounded-lg border border-slate-100 hover:border-blue-500 hover:shadow-md transition-all group bg-slate-50 cursor-pointer">
+                                <div className="w-14 h-14 rounded-full overflow-hidden border border-slate-200 relative shrink-0">
+                                  <Image src={community.logoUrl || "https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=150&auto=format&fit=crop"} alt={community.name} fill className="object-cover" />
+                                </div>
+                                <div className="min-w-0">
+                                  <h4 className="font-semibold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1">{community.name}</h4>
+                                  <p className={`text-xs mt-1 flex items-center gap-1 ${community.status === 'ACTIVE' ? 'text-emerald-600' : 'text-amber-700'}`}>
+                                    <span className={`w-2 h-2 rounded-full inline-block ${community.status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
+                                    {community.status === 'ACTIVE' ? 'Đang hoạt động' : 'Đã vô hiệu hoá'}
+                                  </p>
+                                </div>
+                              </div>
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {joinedCommunities.length > 0 && (
+                      <div>
+                        <div className="flex items-center gap-2 mb-3">
+                          <Users className="w-4 h-4 text-emerald-600" />
+                          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600">CLB đã tham gia</h4>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {joinedCommunities.map(community => (
                       <Link href={`/communities/${community.id}`} key={community.id}>
                         <div className="flex items-center gap-4 p-4 rounded-lg border border-slate-100 hover:border-emerald-500 hover:shadow-md transition-all group bg-slate-50 cursor-pointer">
                           <div className="w-14 h-14 rounded-full overflow-hidden border border-slate-200 relative shrink-0">
                             <Image src={community.logoUrl || "https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=150&auto=format&fit=crop"} alt={community.name} fill className="object-cover" />
                           </div>
-                          <div>
+                          <div className="min-w-0">
                             <h4 className="font-semibold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1">{community.name}</h4>
-                            <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
-                              <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
-                              Đang hoạt động
+                            <p className={`text-xs mt-1 flex items-center gap-1 ${community.status === 'ACTIVE' ? 'text-emerald-600' : 'text-amber-700'}`}>
+                              <span className={`w-2 h-2 rounded-full inline-block ${community.status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
+                              {community.status === 'ACTIVE' ? 'Đang hoạt động' : 'Đã vô hiệu hoá'}
                             </p>
                           </div>
                         </div>
                       </Link>
-                    ))}
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="text-center py-8 border-2 border-dashed border-slate-100 rounded-lg">
@@ -1462,4 +1500,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-

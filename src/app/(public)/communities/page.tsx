@@ -59,8 +59,8 @@ export default function CommunitiesPage() {
     if (user) {
       try {
         const res = await communitiesApi.getMyCommunities();
-        const list = res.data || [];
-        setMyCommunityIds(new Set(list.map((c: Community) => c.id)));
+        const list = [...(res.data?.created || []), ...(res.data?.joined || [])];
+        setMyCommunityIds(new Set(list.map((community) => community.id)));
       } catch (err) {
         console.error("Failed to load my communities", err);
       }

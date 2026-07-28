@@ -6,6 +6,11 @@ import { Tournament } from '@/features/tournaments/api';
 
 export type { Category, Community, PaginatedResponse, ApiResponse };
 
+export interface MyCommunitiesResponse {
+  created: Community[];
+  joined: Community[];
+}
+
 export interface GalleryImage {
   id: string;
   communityId: string;
@@ -68,7 +73,7 @@ export const communitiesApi = {
     api.get<ApiResponse<Community[]>>('/communities', { params }),
 
   getMyCommunities: () =>
-    api.get<ApiResponse<Community[]>>('/communities/my'),
+    api.get<ApiResponse<MyCommunitiesResponse>>('/communities/my'),
 
   getPendingCommunities: () =>
     api.get<ApiResponse<Community[]>>('/communities/pending'),

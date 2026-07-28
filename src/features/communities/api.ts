@@ -64,14 +64,17 @@ export interface CommunityRankingRecord {
 }
 
 export const communitiesApi = {
-  getCommunities: (params?: Record<string, unknown>) => 
+  getCommunities: (params?: Record<string, unknown>) =>
     api.get<ApiResponse<Community[]>>('/communities', { params }),
-  
-  getMyCommunities: () => 
+
+  getMyCommunities: () =>
     api.get<ApiResponse<Community[]>>('/communities/my'),
-  
-  getPendingCommunities: () => 
+
+  getPendingCommunities: () =>
     api.get<ApiResponse<Community[]>>('/communities/pending'),
+
+  getAllCommunitiesAdmin: () =>
+    api.get<ApiResponse<Community[]>>('/communities/admin'),
   
   getFavorites: () => 
     api.get<ApiResponse<{ community: Community }[]>>('/communities/favorites'),

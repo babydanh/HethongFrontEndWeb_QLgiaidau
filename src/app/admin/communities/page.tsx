@@ -41,23 +41,16 @@ export default function AdminCommunitiesReview() {
   const fetchAllCommunities = useCallback(async () => {
     setLoading(true);
     try {
-      const [activeRes, pendingRes] = await Promise.all([
-        communitiesApi.getCommunities(),
-        communitiesApi.getPendingCommunities(),
-      ]);
+      const res = await communitiesApi.getAllCommunitiesAdmin();
+      const all = Array.isArray(res.data) ? res.data : [];
 
-      const active = Array.isArray(activeRes.data) ? activeRes.data : [];
-      const pending = Array.isArray(pendingRes.data) ? pendingRes.data : [];
-
-      const merged: ReviewCommunity[] = [
-        ...active.map((community) => ({ ...community, status: 'ACTIVE' as const })),
-        ...pending
-          .filter(
-            (community): community is Community & { status: 'PENDING' | 'REJECTED' } =>
-              community.status === 'PENDING' || community.status === 'REJECTED'
-          )
-          .map((community) => ({ ...community, status: community.status })),
-      ];
+      const merged: ReviewCommunity[] = all.map((community) => ({
+        ...community,
+        status: (community.status === 'ACTIVE' ? 'ACTIVE' :
+                 community.status === 'PENDING' ? 'PENDING' :
+                 community.status === 'REJECTED' ? 'REJECTED' :
+                 'PENDING') as ReviewCommunityStatus,
+      }));
       setCommunities(merged);
       setError(null);
     } catch (err: unknown) {
@@ -203,16 +196,33 @@ export default function AdminCommunitiesReview() {
             className="w-full bg-gray-50 border border-gray-200 rounded-lg pl-10 pr-4 py-2.5 text-xs text-gray-700 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
           />
         </div>
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-          className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 text-xs text-gray-600 focus:outline-none focus:border-blue-500"
-        >
-          <option value="ALL">Tất cả</option>
-          <option value="ACTIVE">Hoạt động</option>
-          <option value="PENDING">Chờ duyệt</option>
-          <option value="REJECTED">Đã khoá</option>
-        </select>
+        <div className="flex flex-wrap gap-1.5">
+          {([
+            { value: 'ALL', label: 'Tất cả', count: stats.total, color: 'text-gray-700' },
+            { value: 'ACTIVE', label: 'Hoạt động', count: stats.active, color: 'text-blue-600' },
+            { value: 'PENDING', label: 'Chờ duyệt', count: stats.pending, color: 'text-amber-600' },
+            { value: 'REJECTED', label: 'Đã khoá', count: stats.rejected, color: 'text-rose-600' },
+          ] as const).map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => setStatusFilter(opt.value as StatusFilter)}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-all ${
+                statusFilter === opt.value
+                  ? 'bg-gray-900 text-white shadow-sm'
+                  : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200'
+              }`}
+            >
+              {opt.label}
+              <span className={`text-[10px] leading-none ${
+                statusFilter === opt.value
+                  ? 'text-white/70'
+                  : opt.color
+              }`}>
+                ({opt.count})
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* List */}

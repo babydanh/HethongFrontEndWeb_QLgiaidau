@@ -314,20 +314,6 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
             </div>
           </div>
 
-          {/* Invite code row */}
-          {tournament.inviteCode && (
-            <div className="flex items-center gap-2 bg-slate-50 rounded-lg px-3 py-2 border border-slate-200 text-sm">
-              <LinkIcon className="w-4 h-4 text-slate-400 shrink-0" />
-              <span className="text-slate-500 font-medium">Link mời:</span>
-              <code className="text-blue-700 bg-blue-50 px-2 py-0.5 rounded text-xs font-mono break-all flex-1 min-w-0">
-                {inviteUrl}
-              </code>
-              <Button variant="ghost" size="sm" className="shrink-0" onClick={handleCopyInvite}>
-                <Copy className="w-3.5 h-3.5" />
-              </Button>
-            </div>
-          )}
-
           {inviteUrl && (
             <LiteInviteQr
               inviteUrl={inviteUrl}

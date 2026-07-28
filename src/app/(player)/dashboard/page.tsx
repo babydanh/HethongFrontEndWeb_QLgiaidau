@@ -1,24 +1,25 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Activity,
-  Award,
   Calendar,
   CheckCircle2,
   Clock3,
   Loader2,
-  MapPin,
   Plus,
   Settings,
   ShieldCheck,
   Trophy,
   UserCheck,
   XCircle,
-  Zap,
   Bookmark,
 } from 'lucide-react';
+
+import EloSidebarCard from '@/components/dashboard/EloSidebarCard';
+import RoleSummaryCard from '@/components/dashboard/RoleSummaryCard';
+import TournamentListSection from '@/components/dashboard/TournamentListSection';
 
 import { Button } from '@/components/ui/Button';
 import { useAuthStore } from '@/lib/zustand/authStore';
@@ -70,85 +71,6 @@ function getMatchStatusLabel(status: string) {
   if (status === 'COMPLETED') return 'Đã xong';
   if (status === 'SCHEDULED') return 'Đã xếp lịch';
   return status;
-}
-
-function TournamentListSection({
-  title,
-  actionHref,
-  actionLabel,
-  tournaments,
-  emptyLabel,
-  icon,
-  accentClass,
-  roleLabel,
-}: {
-  title: string;
-  actionHref: string;
-  actionLabel: string;
-  tournaments: Tournament[];
-  emptyLabel: string;
-  icon: ReactNode;
-  accentClass: string;
-  roleLabel: string;
-}) {
-  return (
-    <section className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
-      <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
-        <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-          <span className={accentClass}>{icon}</span>
-          {title}
-        </h2>
-        <Link href={actionHref} className="text-sm font-semibold text-blue-600 hover:underline">
-          {actionLabel}
-        </Link>
-      </div>
-      <div className="p-6">
-        {tournaments.length > 0 ? (
-          <div className="flex flex-col gap-4">
-            {tournaments.slice(0, 4).map((tournament) => (
-              <div
-                key={`${roleLabel}-${tournament.id}`}
-                className="rounded-lg border border-slate-200 p-4 bg-gradient-to-br from-white to-slate-50"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="font-bold text-slate-900 line-clamp-1">{tournament.name}</h3>
-                      <span className="px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wide uppercase bg-blue-50 text-blue-700">
-                                              {roleLabel}
-                      </span>
-                    </div>
-                    <div className="mt-2 flex flex-wrap gap-3 text-xs text-slate-500">
-                      <span>{tournament.category?.name || 'Chưa rõ môn'}</span>
-                      <span className="flex items-center gap-1">
-                        <MapPin className="w-3.5 h-3.5" />
-                        {tournament.locationAddress || 'Chưa cập nhật địa điểm'}
-                      </span>
-                      <span>Khai mạc: {formatDate(tournament.startDate)}</span>
-                    </div>
-                  </div>
-                  <span className={`shrink-0 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide border ${getTournamentStatusClassName(tournament.status)}`}>
-                    {getTournamentStatusLabel(tournament.status)}
-                  </span>
-                </div>
-                <div className="mt-4 flex justify-end">
-                  <Link href={`/tournaments/${tournament.id}`}>
-                    <Button size="sm" variant="outline" className="h-8 border-slate-200 font-bold text-slate-700">
-                      Xem chi tiết
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-8 border border-dashed border-slate-200 rounded-lg text-sm text-slate-500">
-            {emptyLabel}
-          </div>
-        )}
-      </div>
-    </section>
-  );
 }
 
 export default function DashboardPage() {
@@ -331,20 +253,17 @@ export default function DashboardPage() {
             actionLabel="Xem hồ sơ"
             tournaments={workspace?.participatingTournaments || []}
             emptyLabel="Bạn chưa đăng ký giải đấu nào."
-            icon={<Trophy className="w-5 h-5 text-blue-600" />}
-            accentClass="inline-flex"
-            roleLabel="VĐV"
+            icon={<Trophy className="w-4 h-4 text-sky-600" />}
           />
 
           <TournamentListSection
+            id="section-btc"
             title="Giải tôi đang tổ chức hoặc hỗ trợ"
             actionHref="/organizer/tournaments"
             actionLabel="Vào quản lý"
             tournaments={[...(workspace?.organizedTournaments || []), ...(workspace?.coOrganizerTournaments || [])]}
             emptyLabel="Bạn chưa có vai trò ban tổ chức nào."
-            icon={<UserCheck className="w-5 h-5 text-blue-600" />}
-            accentClass="inline-flex"
-            roleLabel="BTC"
+            icon={<UserCheck className="w-4 h-4 text-violet-600" />}
           />
 
           <section className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
@@ -508,71 +427,23 @@ export default function DashboardPage() {
           </section>
         </div>
 
-        <div className="xl:col-span-1 flex flex-col gap-6">
-          <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6 relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-4 opacity-5">
-              <Trophy className="w-24 h-24" />
-            </div>
-            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Chỉ số ELO</h3>
-            {isLoading ? (
-              <div className="flex items-center gap-2 py-4">
-                <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
-              </div>
-            ) : (
-              <>
-                <div className="flex items-end gap-2 mb-6">
-                  <span className="text-4xl font-bold text-blue-600">{eloPoints}</span>
-                  {activeRank && activeRank.winStreak > 0 ? (
-                    <span className="text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded flex items-center gap-0.5 mb-1.5">
-                      <Zap className="w-3 h-3 fill-emerald-600" /> {activeRank.winStreak}
-                    </span>
-                  ) : null}
-                </div>
+        <div className="xl:col-span-1 flex flex-col gap-5">
+          <EloSidebarCard
+            eloPoints={eloPoints}
+            matchesWon={matchesWon}
+            matchesPlayed={matchesPlayed}
+            winRate={winRate}
+            tierName={tierName}
+            activeRank={activeRank}
+            sportLabel={activeRank?.categoryName ? [activeRank.categoryName, activeRank.matchType === 'SINGLES' ? 'Đơn' : activeRank.matchType === 'DOUBLES' ? 'Đôi' : ''].filter(Boolean).join(' - ') : undefined}
+          />
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="bg-slate-50 rounded-lg p-3 border border-slate-100">
-                    <span className="text-[10px] text-slate-500 font-semibold block mb-1">Trận thắng</span>
-                    <span className="text-lg font-bold text-slate-800">{matchesWon} / {matchesPlayed}</span>
-                  </div>
-                  <div className="bg-slate-50 rounded-lg p-3 border border-slate-100">
-                    <span className="text-[10px] text-slate-500 font-semibold block mb-1">Tỉ lệ thắng</span>
-                    <span className="text-lg font-bold text-slate-800">{winRate}%</span>
-                  </div>
-                  <div className="bg-slate-50 rounded-lg p-3 border border-slate-100 col-span-2 flex justify-between items-center">
-                    <div>
-                      <span className="text-[10px] text-slate-500 font-semibold block mb-1">Xếp hạng hiện tại</span>
-                      <span className="text-xs font-bold text-slate-900">{tierName}</span>
-                    </div>
-                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 shrink-0">
-                      <Award className="w-4 h-4" />
-                    </div>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-
-          <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
-            <h3 className="text-sm font-bold text-slate-900 mb-4">Vai trò của tôi</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                <div className="text-[11px] font-semibold text-slate-500">Giải đã đăng ký</div>
-                <div className="mt-1 text-2xl font-bold text-slate-900">{workspace?.participatingTournaments.length || 0}</div>
-              </div>
-              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                <div className="text-[11px] font-semibold text-slate-500">Lời mời chờ phản hồi</div>
-                <div className="mt-1 text-2xl font-bold text-blue-600">{inviteCount}</div>
-              </div>
-              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                <div className="text-[11px] font-semibold text-slate-500">Vai trò BTC</div>
-                <div className="mt-1 text-2xl font-bold text-blue-600">{organizedCount + coOrganizerCount}</div>
-              </div>
-              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                <div className="text-[11px] font-semibold text-slate-500">Giải làm trọng tài</div>
-                <div className="mt-1 text-2xl font-bold text-rose-600">{refereeCount}</div>
-              </div>
-            </div>
-          </div>
+          <RoleSummaryCard
+            registeredCount={workspace?.participatingTournaments.length || 0}
+            organizerCount={(workspace?.organizedTournaments.length || 0) + (workspace?.coOrganizerTournaments.length || 0)}
+            refereeCount={workspace?.refereeTournaments.length || 0}
+            inviteCount={inviteCount}
+          />
 
           <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
             <h3 className="text-sm font-bold text-slate-900 mb-4">Lối tắt nhanh</h3>

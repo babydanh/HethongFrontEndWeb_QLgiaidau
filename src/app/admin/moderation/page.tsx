@@ -68,17 +68,6 @@ export default function ModerationPage() {
     const d = parseInt(p[0], 10), m = parseInt(p[1], 10) - 1, y = parseInt(p[2], 10);
     return isNaN(d) || isNaN(m) || isNaN(y) ? null : new Date(y, m, d);
   };
-
-  const filteredUsers = users.filter(u => {
-    const fromDate = dateFrom ? parseDate(dateFrom) : null;
-    const toDate = dateTo ? parseDate(dateTo) : null;
-    if (!fromDate && !toDate) return true;
-    const itemDate = new Date(u.createdAt);
-    if (fromDate && itemDate < fromDate) return false;
-    if (toDate) { const end = new Date(toDate); end.setHours(23, 59, 59, 999); if (itemDate > end) return false; }
-    return true;
-  });
-
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     fetchUsers(search);

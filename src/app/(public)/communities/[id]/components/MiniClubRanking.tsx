@@ -63,7 +63,26 @@ export default function MiniClubRanking({
   }
 
   if (rankings.length === 0) {
-    return null;
+    return (
+      <div className={cn('bg-white rounded-lg border border-slate-200 shadow-sm p-4', className)}>
+        <div className="flex items-center gap-2 mb-3">
+          <Trophy className="w-4 h-4 text-slate-300" />
+          <span className="text-sm font-bold text-slate-500">Xếp hạng CLB</span>
+        </div>
+        <div className="flex items-center justify-center gap-6 py-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="flex flex-col items-center gap-1 flex-1">
+              <div className={`w-10 h-10 rounded-full border-2 border-dashed border-slate-200 flex items-center justify-center ${i === 2 ? 'w-12 h-12' : ''}`}>
+                <span className="text-slate-300 text-xs font-bold">#{i}</span>
+              </div>
+              <div className="h-3 w-14 bg-slate-100 rounded" />
+              <div className="h-3 w-10 bg-slate-100 rounded" />
+            </div>
+          ))}
+        </div>
+        <p className="text-center text-[11px] text-slate-400 mt-2">Chưa có dữ liệu — tham gia thi đấu để có ELO</p>
+      </div>
+    );
   }
 
   const topThree = rankings.slice(0, 3);

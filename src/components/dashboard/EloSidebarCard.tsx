@@ -1,7 +1,9 @@
 'use client';
 
-import { Award, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import type { PlayerRanking } from '@/features/rankings/api';
+
+const ELO_PER_STREAK_WIN = 15;
 
 interface Props {
   eloPoints: number;
@@ -14,7 +16,7 @@ interface Props {
 }
 
 function getTierColor(name: string): string {
-  const n = name.toLowerCase();
+  const n = name.trim().toLowerCase();
   if (n.includes('bán chuyên') || n.includes('pro')) return 'text-blue-600 border-blue-200 bg-blue-50';
   if (n.includes('vàng') || n.includes('gold')) return 'text-yellow-700 border-yellow-200 bg-yellow-50';
   if (n.includes('bạc') || n.includes('silver')) return 'text-slate-600 border-slate-300 bg-slate-100';
@@ -22,33 +24,12 @@ function getTierColor(name: string): string {
   return 'text-slate-500 border-slate-200 bg-slate-50';
 }
 
-function SparkLine({ points, className }: { points: number[]; className?: string }) {
-  if (points.length < 2) return null;
-  const min = Math.min(...points);
-  const max = Math.max(...points);
-  const range = max - min || 1;
-  const w = 120;
-  const h = 28;
-  const step = w / (points.length - 1);
-  const coords = points.map((p, i) => `${(i * step).toFixed(1)},${(h - ((p - min) / range) * h).toFixed(1)}`).join(' ');
-
-  return (
-    <svg viewBox={`0 0 ${w} ${h}`} className={`w-full ${className || ''}`} preserveAspectRatio="none">
-      <polyline fill="none" stroke="#2563eb" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" points={coords} />
-    </svg>
-  );
-}
-
 export default function EloSidebarCard({ eloPoints, matchesWon, matchesPlayed, winRate, tierName, activeRank, sportLabel }: Props) {
-  const recentDelta = activeRank?.winStreak
-    ? activeRank.winStreak > 0
-      ? activeRank.winStreak * 15
-      : -Math.abs(activeRank.winStreak) * 15
-    : 0;
+  const streak = activeRank?.winStreak ?? 0;
+  const recentDelta = streak * ELO_PER_STREAK_WIN;
   const TrendIcon = recentDelta > 0 ? TrendingUp : recentDelta < 0 ? TrendingDown : Minus;
   const trendColor = recentDelta > 0 ? 'text-emerald-600' : recentDelta < 0 ? 'text-rose-500' : 'text-slate-400';
   const tierColor = getTierColor(tierName);
-  const sparkData: number[] = [];
 
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
@@ -70,8 +51,6 @@ export default function EloSidebarCard({ eloPoints, matchesWon, matchesPlayed, w
       <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold border ${tierColor} mb-3`}>
         {tierName}
       </span>
-
-      {sparkData.length >= 2 && <SparkLine points={sparkData} className="mb-3" />}
 
       <div className="grid grid-cols-3 gap-2 pt-3 border-t border-slate-100">
         <div>

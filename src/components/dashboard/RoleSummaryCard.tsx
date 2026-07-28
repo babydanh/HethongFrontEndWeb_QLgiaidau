@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Trophy, UserCheck, Shield, Bell } from 'lucide-react';
+import { Trophy, UserCheck, Shield, Bell, type LucideIcon } from 'lucide-react';
 
 interface Props {
   registeredCount: number;
@@ -10,48 +10,21 @@ interface Props {
   inviteCount: number;
 }
 
-const ROLES: Array<{
+interface RoleDef {
   key: string;
   label: string;
   href: string;
-  icon: any;
+  icon: LucideIcon;
   color: string;
   iconColor: string;
   urgent?: boolean;
-}> = [
-  {
-    key: 'player',
-    label: 'Giải đã đăng ký',
-    href: '/profile',
-    icon: Trophy,
-    color: 'bg-sky-50 text-sky-700 border-sky-200 hover:border-sky-300',
-    iconColor: 'text-sky-600',
-  },
-  {
-    key: 'btc',
-    label: 'Vai trò BTC',
-    href: '#section-btc',
-    icon: UserCheck,
-    color: 'bg-violet-50 text-violet-700 border-violet-200 hover:border-violet-300',
-    iconColor: 'text-violet-600',
-  },
-  {
-    key: 'referee',
-    label: 'Giải làm TT',
-    href: '#section-referee',
-    icon: Shield,
-    color: 'bg-amber-50 text-amber-700 border-amber-200 hover:border-amber-300',
-    iconColor: 'text-amber-600',
-  },
-  {
-    key: 'invite',
-    label: 'Lời mời chờ',
-    href: '#section-invites',
-    icon: Bell,
-    color: 'bg-rose-50 text-rose-700 border-rose-200 hover:border-rose-300',
-    iconColor: 'text-rose-600',
-    urgent: true,
-  },
+}
+
+const ROLES: RoleDef[] = [
+  { key: 'player', label: 'Giải đã đăng ký', href: '/profile', icon: Trophy, color: 'bg-sky-50 text-sky-700 border-sky-200 hover:border-sky-300', iconColor: 'text-sky-600' },
+  { key: 'btc', label: 'Vai trò BTC', href: '#section-btc', icon: UserCheck, color: 'bg-violet-50 text-violet-700 border-violet-200 hover:border-violet-300', iconColor: 'text-violet-600' },
+  { key: 'referee', label: 'Giải làm TT', href: '#section-referee', icon: Shield, color: 'bg-amber-50 text-amber-700 border-amber-200 hover:border-amber-300', iconColor: 'text-amber-600' },
+  { key: 'invite', label: 'Lời mời chờ', href: '#section-invites', icon: Bell, color: 'bg-rose-50 text-rose-700 border-rose-200 hover:border-rose-300', iconColor: 'text-rose-600', urgent: true },
 ];
 
 export default function RoleSummaryCard(props: Props) {
@@ -72,17 +45,21 @@ export default function RoleSummaryCard(props: Props) {
         {ROLES.map(role => {
           const count = getValue(role.key);
           const Icon = role.icon;
+          const ariaLabel = role.urgent && count > 0
+            ? `${count} ${role.label} — cần phản hồi`
+            : undefined;
           return (
             <Link
               key={role.key}
               href={role.href}
+              aria-label={ariaLabel}
               className={`rounded-lg border p-3 flex flex-col gap-1.5 transition-all ${role.color}`}
             >
-              <Icon className={`w-4 h-4 ${role.iconColor}`} strokeWidth={2} />
+              <Icon className={`w-4 h-4 ${role.iconColor}`} strokeWidth={2} aria-hidden="true" />
               <span className="text-[22px] font-bold tabular-nums leading-none text-inherit">{count}</span>
               <span className="text-[10px] font-medium opacity-80 leading-tight">{role.label}</span>
               {role.urgent && count > 0 && (
-                <span className="inline-block w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+                <span className="inline-block w-2 h-2 rounded-full bg-rose-500 animate-pulse" aria-hidden="true" />
               )}
             </Link>
           );

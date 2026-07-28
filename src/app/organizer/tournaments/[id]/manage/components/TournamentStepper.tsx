@@ -59,6 +59,19 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
   const currentStep = getStepIndex();
   const isRegistrationClosed = isTournamentRegistrationClosed(tournament.status);
 
+  // Publish validation checks
+  const publishChecks = {
+    hasDescription: tournament.description != null && tournament.description.trim() !== '',
+    hasDivisions: tournament.divisions && tournament.divisions.length > 0,
+    hasVenue: (tournament.venueId != null) || (tournament.locationAddress && tournament.locationAddress.trim() !== ''),
+    hasValidDates: tournament.registrationStartDate && tournament.registrationEndDate && tournament.startDate && 
+      (new Date(tournament.registrationStartDate) < new Date(tournament.registrationEndDate)) &&
+      (new Date(tournament.registrationEndDate) < new Date(tournament.startDate)),
+    hasContact: tournament.contactInfo && typeof tournament.contactInfo === 'object' && 
+      ((tournament.contactInfo as Record<string, string>).email || (tournament.contactInfo as Record<string, string>).phone),
+  };
+  const canPublish = publishChecks.hasDescription && publishChecks.hasDivisions && publishChecks.hasVenue && publishChecks.hasValidDates && publishChecks.hasContact;
+
   const steps = [
     {
       title: 'Nhận Đăng ký',
@@ -249,8 +262,10 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
           </div>
           <Button
             onClick={onPublish}
-            disabled={isLoading}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 shadow-md shadow-blue-500/20"
+            disabled={isLoading || !canPublish}
+            className={`bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2 rounded-lg shadow-md shadow-blue-500/20 transition-all ${
+              !canPublish ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
           >
             {publishFeeAmount > 0 ? 'Thanh toán phí & công bố giải đấu' : 'Công bố giải đấu'} <ChevronRight className="w-4 h-4 ml-1" />
           </Button>

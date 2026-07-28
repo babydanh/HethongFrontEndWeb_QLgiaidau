@@ -718,7 +718,7 @@ export function useManageState(id: string) {
       const totalPlayers = participants.reduce((s,p) => s + (p.members?.length||0), 0);
       const pf = getPlatformFeeBreakdown(entryFee, tournament?.platformFeePercentage);
       const amount = totalPlayers * pf.feePerPlayer;
-      const res = await paymentsApi.createPaymentLink({ tournamentId: id, amount });
+      const res = await paymentsApi.createPaymentLink({ tournamentId: id, amount, purpose: 'PLATFORM_FEE' });
       if (res.data?.paymentUrl) { window.open(res.data.paymentUrl, '_blank'); toast.success('Đã mở liên kết thanh toán.'); }
       else toast.error('Không có liên kết thanh toán.');
     } catch (err) { toast.error(getErrorMessage(err)); }

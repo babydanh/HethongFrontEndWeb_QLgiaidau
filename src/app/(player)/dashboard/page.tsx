@@ -243,7 +243,7 @@ export default function DashboardPage() {
               <Calendar className="w-4 h-4 mr-2" /> Tìm giải đấu
             </Button>
           </Link>
-          {(user?.roles?.includes('ORGANIZER') || user?.roles?.includes('ADMIN')) ? (
+          {user ? (
             <Link href="/organizer/tournaments/create">
               <Button className="font-bold">
                 <Plus className="w-4 h-4 mr-2" /> Tạo giải đấu

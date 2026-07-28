@@ -621,7 +621,7 @@ export function Header() {
                     </div>
 
                     {/* Nhóm 3: Quản lý (chỉ đối với BTC / Admin) */}
-                    {(user?.roles?.includes('ORGANIZER') || user?.roles?.includes('ADMIN')) && (
+                    {user && (
                       <div className="border-b border-slate-100/60 pb-2 mb-2">
                         <div className="px-4 py-1 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Tổ chức giải</div>
                         <Link href="/organizer/tournaments">
@@ -630,12 +630,14 @@ export function Header() {
                             Quản lý giải đấu
                           </div>
                         </Link>
-                        <Link href="/organizer/series">
+                        {(user?.roles?.includes('ORGANIZER') || user?.roles?.includes('ADMIN')) && (
+                          <Link href="/organizer/series">
                           <div className="flex cursor-pointer items-center gap-3 px-4 py-2 text-sm text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900">
                             <Trophy className="h-4 w-4 text-slate-400" />
                             Quản lý chuỗi giải
                           </div>
-                        </Link>
+                          </Link>
+                        )}
                       </div>
                     )}
 

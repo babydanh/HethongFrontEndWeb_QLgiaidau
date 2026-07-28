@@ -8,6 +8,7 @@ import { EloTierBadge } from '@/components/ui/EloTierBadge';
 import { getEloMatchTypeLabel } from '@/features/rankings/elo-display';
 import MiniClubRanking from './MiniClubRanking';
 import toast from 'react-hot-toast';
+import { useAuthStore } from '@/lib/zustand/authStore';
 
 interface RankingsTabProps {
   communityId: string;
@@ -25,6 +26,8 @@ export default function RankingsTab({ communityId, categories }: RankingsTabProp
   const [rankings, setRankings] = useState<PlayerRanking[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [myRanking, setMyRanking] = useState<PlayerRanking | null>(null);
+  const { user } = useAuthStore();
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchRankings = useCallback(async () => {
@@ -36,15 +39,27 @@ export default function RankingsTab({ communityId, categories }: RankingsTabProp
         categoryId: selectedCategoryId,
         matchType: selectedMatchType,
         genderRestriction: selectedGender,
-        limit: 10,
+        limit: 20,
       });
       if (res.data) {
         setRankings(res.data);
       }
+      if (user?.id) {
+        const userRes = await rankingsApi.getUserRankings(user.id);
+        const own = userRes.communityRanks?.find((rank) =>
+          rank.communityId === communityId &&
+          rank.categoryId === selectedCategoryId &&
+          rank.matchType === selectedMatchType &&
+          (selectedMatchType === 'MIXED_DOUBLES' || rank.genderRestriction === selectedGender),
+        );
+        setMyRanking(own || null);
+      } else {
+        setMyRanking(null);
+      }
     } catch (err) {
       console.error('Failed to fetch community rankings:', err);
     }
-  }, [communityId, selectedCategoryId, selectedMatchType, selectedGender]);
+  }, [communityId, selectedCategoryId, selectedMatchType, selectedGender, user?.id]);
 
   useEffect(() => {
     fetchRankings();
@@ -75,8 +90,9 @@ export default function RankingsTab({ communityId, categories }: RankingsTabProp
       )
     : rankings;
 
-  const topThree = filtered.slice(0, 3);
-  const restRankings = filtered.slice(3, 10);
+  const isSearching = searchQuery.trim().length > 0;
+  const topThree = isSearching ? [] : filtered.slice(0, 3);
+  const restRankings = isSearching ? filtered : filtered.slice(3, 20);
 
   const podiumOrder: (PlayerRanking | null)[] = [null, null, null];
   if (topThree[1]) podiumOrder[0] = topThree[1];
@@ -121,7 +137,7 @@ export default function RankingsTab({ communityId, categories }: RankingsTabProp
             <Trophy className="w-5 h-5 text-amber-500" /> Bảng xếp hạng ELO
           </h3>
           <p className="text-xs text-slate-450 mt-0.5">
-            Top 10 thành viên xuất sắc nhất •{' '}
+            Top 20 thành viên xuất sắc nhất •{' '}
             {activeCategory?.name || ''} {getEloMatchTypeLabel(selectedMatchType)}
           </p>
         </div>
@@ -198,6 +214,21 @@ export default function RankingsTab({ communityId, categories }: RankingsTabProp
         />
       </div>
 
+      {myRanking && (
+        <div className="rounded-xl border border-blue-200 bg-blue-50/70 px-4 py-3 flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-black text-xs">
+            {rankings.findIndex((rank) => rank.id === myRanking.id) >= 0
+              ? `#${rankings.findIndex((rank) => rank.id === myRanking.id) + 1}`
+              : 'Ngoài top 20'}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-black text-blue-900">Xếp hạng của bạn</p>
+            <p className="text-sm font-bold text-slate-800 truncate">{myRanking.user?.fullName || 'Bạn'}</p>
+          </div>
+          <span className="text-sm font-black text-blue-700">{myRanking.eloPoints} ELO</span>
+        </div>
+      )}
+
       {isLoading ? (
         <div className="py-24 flex flex-col items-center justify-center bg-white rounded-lg border border-slate-200/80 shadow-sm">
           <Loader2 className="w-10 h-10 animate-spin text-blue-600 mb-3" />
@@ -264,11 +295,11 @@ export default function RankingsTab({ communityId, categories }: RankingsTabProp
             </div>
           )}
 
-          {/* ─── Ranks 4-10 List ─── */}
+          {/* ─── Ranks 4-20 List ─── */}
           {restRankings.length > 0 && (
             <div className="space-y-1.5 mt-4">
               {restRankings.map((player, index) => {
-                const rank = index + 4;
+                const rank = rankings.findIndex((item) => item.id === player.id) + 1;
                 const winRate = getWinRate(player);
                 return (
                   <div

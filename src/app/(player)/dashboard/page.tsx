@@ -143,9 +143,9 @@ export default function DashboardPage() {
 
   // Extract unique sport categories for filter
   const allTournaments = [
-    ...[...(workspace?.participatingTournaments || [])],
-    ...[...(workspace?.organizedTournaments || [])],
-    ...[...(workspace?.coOrganizerTournaments || [])],
+    ...(workspace?.participatingTournaments ?? []),
+    ...(workspace?.organizedTournaments ?? []),
+    ...(workspace?.coOrganizerTournaments ?? []),
   ];
   const sportSet = new Set<string>();
   allTournaments.forEach(t => {
@@ -160,12 +160,12 @@ export default function DashboardPage() {
       ? list
       : list.filter(t => t.category?.name === sportFilter);
 
-  // Build format map (placeholder — real data would come from API)
-  const formatMap: Record<string, string> = {};
+  // Build matchType map (DOUBLES/SINGLES heuristic from name)
+  const matchTypeMap: Record<string, string> = {};
   const partnerMap: Record<string, string> = {};
   allTournaments.forEach(t => {
     if (t.name.toLowerCase().includes('đôi') || t.name.toLowerCase().includes('doubles')) {
-      formatMap[t.id] = 'DOUBLES';
+      matchTypeMap[t.id] = 'DOUBLES';
     }
   });
 
@@ -311,7 +311,7 @@ export default function DashboardPage() {
             tournaments={filterBySport(workspace?.participatingTournaments || [])}
             emptyLabel="Bạn chưa đăng ký giải đấu nào."
             icon={<Trophy className="w-4 h-4 text-sky-600" />}
-            formatMap={formatMap}
+            matchTypeMap={matchTypeMap}
             partners={partnerMap}
           />
 

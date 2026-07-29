@@ -18,7 +18,7 @@ interface Props {
   icon: ReactNode;
   count?: number;
   partners?: Record<string, string>; // tournamentId → partner name
-  formatMap?: Record<string, string>; // tournamentId → 'DOUBLES' | 'SINGLES'
+  matchTypeMap?: Record<string, string>; // tournamentId → 'DOUBLES' | 'SINGLES'
 }
 
 function AvatarCircle({ src, name, size = 32 }: { src?: string | null; name: string; size?: number }) {
@@ -45,7 +45,7 @@ function AvatarCircle({ src, name, size = 32 }: { src?: string | null; name: str
 
 export default function TournamentListSection({
   id, title, actionHref, actionLabel, tournaments, emptyLabel,
-  emptyActionHref, emptyActionLabel, icon, count, partners, formatMap,
+  emptyActionHref, emptyActionLabel, icon, count, partners, matchTypeMap,
 }: Props) {
   const [showAll, setShowAll] = useState(false);
   const initialShow = 5;
@@ -73,7 +73,7 @@ export default function TournamentListSection({
                   key={t.id}
                   tournament={t}
                   partnerName={partners?.[t.id]}
-                  format={formatMap?.[t.id]}
+                  matchType={matchTypeMap?.[t.id]}
                 />
               ))}
             </div>
@@ -103,8 +103,8 @@ export default function TournamentListSection({
   );
 }
 
-function TournamentRow({ tournament, partnerName, format }: { tournament: Tournament; partnerName?: string; format?: string }) {
-  const isDoubles = format === 'DOUBLES' || format === 'MIXED_DOUBLES';
+function TournamentRow({ tournament, partnerName, matchType }: { tournament: Tournament; partnerName?: string; matchType?: string }) {
+  const isDoubles = matchType === 'DOUBLES' || matchType === 'MIXED_DOUBLES';
   const sport = tournament.category?.name;
   return (
     <div className="py-3 first:pt-0 last:pb-0">

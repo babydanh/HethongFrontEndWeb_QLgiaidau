@@ -64,6 +64,20 @@ api.interceptors.request.use(
   (error) => Promise.reject(error),
 );
 
+let isRefreshing = false;
+let failedQueue: Array<{ resolve: (value?: unknown) => void; reject: (reason?: unknown) => void }> = [];
+
+const processQueue = (error: unknown = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve();
+    }
+  });
+  failedQueue = [];
+};
+
 api.interceptors.response.use(
   (response) => response.data,
   async (error) => {
@@ -86,34 +100,26 @@ api.interceptors.response.use(
         return Promise.reject(error);
       }
 
-      originalRequest._retry = true;
-
-      // Prevent infinite loop if refresh itself fails
-      if (originalRequest.url === '/auth/refresh') {
-        useAuthStore.getState().logout();
-        try {
-          await axios.post(`${api.defaults.baseURL}/auth/logout`, {}, { withCredentials: true });
-        } catch (e) {
-          console.error('Failed to clear cookies:', e);
-        }
-        if (typeof window !== 'undefined') {
-          const isProtectedRoute = ['/organizer', '/admin', '/profile', '/dashboard'].some(
-            (route) => window.location.pathname.startsWith(route)
-          );
-          if (isProtectedRoute && window.location.pathname !== '/login') {
-            window.location.assign('/login');
-          }
-        }
-        return Promise.reject(error);
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then(() => api(originalRequest))
+          .catch((err) => Promise.reject(err));
       }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
 
       try {
         // Because of withCredentials: true, the browser will automatically send the refreshToken cookie
         await axios.post(`${api.defaults.baseURL}/auth/refresh`, {}, { withCredentials: true });
- 
+        processQueue(null);
+
         // Retry the original request. Browser will now send the newly set accessToken cookie
         return api(originalRequest);
       } catch (refreshError) {
+        processQueue(refreshError);
         // Refresh token failed -> Session is completely dead. Clear auth store state immediately.
         useAuthStore.getState().logout();
         try {
@@ -130,6 +136,8 @@ api.interceptors.response.use(
           }
         }
         return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
       }
     }
 

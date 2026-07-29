@@ -164,7 +164,9 @@ export default function DashboardPage() {
   const matchTypeMap: Record<string, string> = {};
   const partnerMap: Record<string, string> = {};
   allTournaments.forEach(t => {
-    if (t.name.toLowerCase().includes('đôi') || t.name.toLowerCase().includes('doubles')) {
+    if (t.name.toLowerCase().includes('đôi nam nữ') || t.name.toLowerCase().includes('mixed')) {
+      matchTypeMap[t.id] = 'MIXED_DOUBLES';
+    } else if (t.name.toLowerCase().includes('đôi') || t.name.toLowerCase().includes('doubles')) {
       matchTypeMap[t.id] = 'DOUBLES';
     }
   });

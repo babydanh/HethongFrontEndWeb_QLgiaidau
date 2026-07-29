@@ -141,6 +141,34 @@ export default function DashboardPage() {
   const refereeCount = workspace?.refereeTournaments.length || 0;
   const inviteCount = workspace?.refereeInvites.length || 0;
 
+  // Extract unique sport categories for filter
+  const allTournaments = [
+    ...[...(workspace?.participatingTournaments || [])],
+    ...[...(workspace?.organizedTournaments || [])],
+    ...[...(workspace?.coOrganizerTournaments || [])],
+  ];
+  const sportSet = new Set<string>();
+  allTournaments.forEach(t => {
+    const s = t.category?.name;
+    if (s) sportSet.add(s);
+  });
+  const sportOptions = Array.from(sportSet).sort();
+  const [sportFilter, setSportFilter] = useState<string>('');
+
+  const filterBySport = (list: Tournament[]) =>
+    !sportFilter
+      ? list
+      : list.filter(t => t.category?.name === sportFilter);
+
+  // Build format map (placeholder — real data would come from API)
+  const formatMap: Record<string, string> = {};
+  const partnerMap: Record<string, string> = {};
+  allTournaments.forEach(t => {
+    if (t.name.toLowerCase().includes('đôi') || t.name.toLowerCase().includes('doubles')) {
+      formatMap[t.id] = 'DOUBLES';
+    }
+  });
+
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-8 py-8 flex flex-col gap-8">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
@@ -247,13 +275,44 @@ export default function DashboardPage() {
             </div>
           </section>
 
+          {/* Sport filter */}
+          {sportOptions.length > 1 && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                onClick={() => setSportFilter('')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                  !sportFilter
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-white text-slate-600 border border-slate-200 hover:border-blue-300'
+                }`}
+              >
+                Tất cả
+              </button>
+              {sportOptions.map(s => (
+                <button
+                  key={s}
+                  onClick={() => setSportFilter(s)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                    sportFilter === s
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-white text-slate-600 border border-slate-200 hover:border-blue-300'
+                  }`}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          )}
+
           <TournamentListSection
             title="Giải tôi đã đăng ký"
             actionHref="/profile"
             actionLabel="Xem hồ sơ"
-            tournaments={workspace?.participatingTournaments || []}
+            tournaments={filterBySport(workspace?.participatingTournaments || [])}
             emptyLabel="Bạn chưa đăng ký giải đấu nào."
             icon={<Trophy className="w-4 h-4 text-sky-600" />}
+            formatMap={formatMap}
+            partners={partnerMap}
           />
 
           <TournamentListSection
@@ -261,7 +320,7 @@ export default function DashboardPage() {
             title="Giải tôi đang tổ chức hoặc hỗ trợ"
             actionHref="/organizer/tournaments"
             actionLabel="Vào quản lý"
-            tournaments={[...(workspace?.organizedTournaments || []), ...(workspace?.coOrganizerTournaments || [])]}
+            tournaments={filterBySport([...(workspace?.organizedTournaments || []), ...(workspace?.coOrganizerTournaments || [])])}
             emptyLabel="Bạn chưa có vai trò ban tổ chức nào."
             icon={<UserCheck className="w-4 h-4 text-violet-600" />}
           />

@@ -2,7 +2,7 @@
 
 import { useState, type ReactNode } from 'react';
 import Link from 'next/link';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, Users } from 'lucide-react';
 import type { Tournament } from '@/features/tournaments/api';
 import { getTournamentStatusClassName, getTournamentStatusLabel } from '@/utils/tournament-status';
 
@@ -17,11 +17,35 @@ interface Props {
   emptyActionLabel?: string;
   icon: ReactNode;
   count?: number;
+  partners?: Record<string, string>; // tournamentId → partner name
+  formatMap?: Record<string, string>; // tournamentId → 'DOUBLES' | 'SINGLES'
+}
+
+function AvatarCircle({ src, name, size = 32 }: { src?: string | null; name: string; size?: number }) {
+  if (src) {
+    return (
+      <img
+        src={src}
+        alt=""
+        referrerPolicy="no-referrer"
+        className="rounded-full object-cover shrink-0"
+        style={{ width: size, height: size }}
+      />
+    );
+  }
+  return (
+    <div
+      className="rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold shrink-0"
+      style={{ width: size, height: size, fontSize: size * 0.4 }}
+    >
+      {name.charAt(0).toUpperCase()}
+    </div>
+  );
 }
 
 export default function TournamentListSection({
   id, title, actionHref, actionLabel, tournaments, emptyLabel,
-  emptyActionHref, emptyActionLabel, icon, count,
+  emptyActionHref, emptyActionLabel, icon, count, partners, formatMap,
 }: Props) {
   const [showAll, setShowAll] = useState(false);
   const initialShow = 5;
@@ -45,7 +69,12 @@ export default function TournamentListSection({
           <>
             <div className="flex flex-col divide-y divide-slate-100">
               {visible.map(t => (
-                <TournamentRow key={t.id} tournament={t} />
+                <TournamentRow
+                  key={t.id}
+                  tournament={t}
+                  partnerName={partners?.[t.id]}
+                  format={formatMap?.[t.id]}
+                />
               ))}
             </div>
             {hasMore && (
@@ -74,21 +103,33 @@ export default function TournamentListSection({
   );
 }
 
-function TournamentRow({ tournament }: { tournament: Tournament }) {
+function TournamentRow({ tournament, partnerName, format }: { tournament: Tournament; partnerName?: string; format?: string }) {
+  const isDoubles = format === 'DOUBLES' || format === 'MIXED_DOUBLES';
+  const sport = tournament.category?.name;
   return (
     <div className="py-3 first:pt-0 last:pb-0">
       <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <Link
-            href={`/tournaments/${tournament.id}`}
-            className="text-sm font-semibold text-slate-900 hover:text-blue-600 line-clamp-1 transition-colors"
-          >
-            {tournament.name}
-          </Link>
-          <p className="mt-0.5 text-[11px] text-slate-400 line-clamp-1">
-            {[tournament.category?.name, tournament.locationAddress].filter(Boolean).join(' · ')}
-            {tournament.startDate && ` · ${new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(tournament.startDate))}`}
-          </p>
+        <div className="flex items-start gap-3 min-w-0 flex-1">
+          <AvatarCircle src={tournament.bannerUrl} name={tournament.name} size={36} />
+          <div className="min-w-0 flex-1">
+            <Link
+              href={`/tournaments/${tournament.id}`}
+              className="text-sm font-semibold text-slate-900 hover:text-blue-600 line-clamp-1 transition-colors"
+            >
+              {tournament.name}
+            </Link>
+            <p className="mt-0.5 text-[11px] text-slate-400 line-clamp-1">
+              {sport}
+              {tournament.locationAddress && ` · ${tournament.locationAddress}`}
+              {tournament.startDate && ` · ${new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(tournament.startDate))}`}
+            </p>
+            {(isDoubles && partnerName) && (
+              <p className="mt-0.5 text-[11px] text-slate-500 flex items-center gap-1">
+                <Users className="w-3 h-3" />
+                Đồng đội: <span className="font-semibold text-slate-700">{partnerName}</span>
+              </p>
+            )}
+          </div>
         </div>
         <span className={`shrink-0 px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wide border ${getTournamentStatusClassName(tournament.status)}`}>
           {getTournamentStatusLabel(tournament.status)}

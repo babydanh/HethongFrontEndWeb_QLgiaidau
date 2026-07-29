@@ -99,6 +99,20 @@ const config: Config = {
           DEFAULT: "var(--color-card)",
           foreground: "var(--color-card-foreground)",
         },
+
+        /* ── Dashboard design-system tokens ── */
+        ds: {
+          surface: "var(--ds-surface)",
+          "surface-hover": "var(--ds-surface-hover)",
+          "surface-subtle": "var(--ds-surface-subtle)",
+          "surface-elevated": "var(--ds-surface-elevated)",
+          "text-primary": "var(--ds-text-primary)",
+          "text-secondary": "var(--ds-text-secondary)",
+          "text-muted": "var(--ds-text-muted)",
+          border: "var(--ds-border)",
+          "border-subtle": "var(--ds-border-subtle)",
+          ring: "var(--ds-ring)",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

@@ -42,7 +42,7 @@ export default function RankingsTab({ communityId, categories }: RankingsTabProp
         limit: 20,
       });
       let nextRankings = res.data || [];
-      if (nextRankings.length === 0) {
+      if (nextRankings.length === 0 && selectedMatchType === 'SINGLES') {
         const membersResponse = await communitiesApi.getMembers(communityId);
         const members = membersResponse.data || [];
         nextRankings = members
@@ -53,7 +53,7 @@ export default function RankingsTab({ communityId, categories }: RankingsTabProp
             categoryId: selectedCategoryId,
             categoryName: undefined,
             matchType: selectedMatchType,
-            genderRestriction: selectedMatchType === 'MIXED_DOUBLES' ? 'MIXED' : selectedGender,
+            genderRestriction: selectedGender,
             eloPoints: 0,
             matchesPlayed: 0,
             matchesWon: 0,
@@ -110,9 +110,12 @@ export default function RankingsTab({ communityId, categories }: RankingsTabProp
   const matchTypes: MatchType[] = ['SINGLES', 'DOUBLES', 'MIXED_DOUBLES'];
 
   const filtered = searchQuery.trim()
-    ? rankings.filter(p =>
-        p.user?.fullName?.toLowerCase().includes(searchQuery.toLowerCase())
-      )
+    ? rankings.filter(p => {
+        const query = searchQuery.toLowerCase();
+        return p.user?.fullName?.toLowerCase().includes(query) ||
+          p.user1?.fullName?.toLowerCase().includes(query) ||
+          p.user2?.fullName?.toLowerCase().includes(query);
+      })
     : rankings;
 
   const isSearching = searchQuery.trim().length > 0;
@@ -134,6 +137,33 @@ export default function RankingsTab({ communityId, categories }: RankingsTabProp
 
   const getWinRate = (p: PlayerRanking) =>
     p.matchesPlayed > 0 ? Math.round((p.matchesWon / p.matchesPlayed) * 100) : 0;
+
+  const rankingName = (p: PlayerRanking) =>
+    p.user1 && p.user2
+      ? `${p.user1.fullName} / ${p.user2.fullName}`
+      : p.user?.fullName || '---';
+
+  const rankingAvatars = (p: PlayerRanking, sizeClass: string) => {
+    const members = p.user1 && p.user2 ? [p.user1, p.user2] : p.user ? [p.user] : [];
+    return (
+      <div className="flex items-center shrink-0">
+        {members.map((member, index) => (
+          <div
+            key={member.id}
+            className={`${sizeClass} rounded-full overflow-hidden bg-slate-100 border-2 border-white relative flex items-center justify-center ${index > 0 ? '-ml-2' : ''}`}
+          >
+            {member.avatarUrl ? (
+              <img src={member.avatarUrl} alt={member.fullName} className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-[10px] font-bold text-slate-500">
+                {member.fullName?.charAt(0) || '?'}
+              </span>
+            )}
+          </div>
+        ))}
+      </div>
+    );
+  };
 
   if (categories.length === 0) {
     return (
@@ -289,17 +319,11 @@ export default function RankingsTab({ communityId, categories }: RankingsTabProp
                           <Crown className="w-3.5 h-3.5 text-white" />
                         </div>
                       )}
-                      <div className={`w-11 h-11 rounded-full overflow-hidden ${mc.bg} border-2 ${mc.border} relative ${isCenter ? 'w-14 h-14 border-[3px] shadow-md' : ''}`}>
-                        {p.user?.avatarUrl ? (
-                          <img src={p.user.avatarUrl} alt={p.user.fullName} className="w-full h-full object-cover" />
-                        ) : (
-                          <span className={`w-full h-full flex items-center justify-center font-bold ${mc.color} ${isCenter ? 'text-sm' : 'text-xs'}`}>
-                            {p.user?.fullName?.charAt(0) || '?'}
-                          </span>
-                        )}
+                      <div className={`rounded-full ${mc.bg} border-2 ${mc.border} relative ${isCenter ? 'w-14 h-14 border-[3px] shadow-md' : 'w-11 h-11'}`}>
+                        {rankingAvatars(p, isCenter ? 'w-14 h-14' : 'w-11 h-11')}
                       </div>
                       <p className={`${isCenter ? 'text-sm' : 'text-[11px]'} font-bold text-slate-700 mt-1.5 truncate max-w-full text-center leading-tight`}>
-                        {p.user?.fullName || '---'}
+                        {rankingName(p)}
                       </p>
                       <span className={`${isCenter ? 'text-sm' : 'text-xs'} font-bold ${mc.color}`}>
                         {p.eloPoints} ELO
@@ -327,17 +351,9 @@ export default function RankingsTab({ communityId, categories }: RankingsTabProp
                     className="flex items-center gap-3 bg-white rounded-lg border border-slate-200/80 px-4 py-2.5 hover:bg-slate-50/50 transition-colors shadow-sm"
                   >
                     <span className="w-6 text-center text-xs font-bold text-slate-400">#{rank}</span>
-                    <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-100 border border-slate-200 shrink-0 relative">
-                      {player.user?.avatarUrl ? (
-                        <img src={player.user.avatarUrl} alt={player.user.fullName} className="w-full h-full object-cover" />
-                      ) : (
-                        <span className="w-full h-full flex items-center justify-center font-bold text-slate-400 bg-slate-100 text-[10px]">
-                          {player.user?.fullName?.charAt(0) || '?'}
-                        </span>
-                      )}
-                    </div>
+                    {rankingAvatars(player, 'w-8 h-8')}
                     <div className="flex-1 min-w-0 flex items-center gap-2">
-                      <span className="text-sm font-bold text-slate-800 truncate">{player.user?.fullName || 'VĐV'}</span>
+                      <span className="text-sm font-bold text-slate-800 truncate">{rankingName(player)}</span>
                       <EloTierBadge elo={player.eloPoints} tierName={player.tier?.name} size="sm" className="shrink-0 scale-[0.85] origin-left" />
                     </div>
                     <span className="text-[10px] font-semibold text-slate-400 w-10 text-right shrink-0">{winRate}%</span>

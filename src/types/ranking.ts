@@ -24,6 +24,16 @@ export interface PlayerRanking {
     fullName: string;
     avatarUrl?: string;
   };
+  user1?: {
+    id: string;
+    fullName: string;
+    avatarUrl?: string;
+  };
+  user2?: {
+    id: string;
+    fullName: string;
+    avatarUrl?: string;
+  };
 }
 
 export interface EloHistoryLog {

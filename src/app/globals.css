@@ -29,6 +29,21 @@
     --color-danger: #dc2626; /* red-600 */
 
     --radius: 0.375rem; /* rounded-md */
+
+    /* ── Dashboard design-system tokens ── */
+    --ds-surface: #ffffff;
+    --ds-surface-hover: #f8fafc;
+    --ds-surface-subtle: #f1f5f9;
+    --ds-surface-elevated: #ffffff;
+    --ds-text-primary: #0f172a;
+    --ds-text-secondary: #475569;
+    --ds-text-muted: #94a3b8;
+    --ds-border: #e2e8f0;
+    --ds-border-subtle: #f1f5f9;
+    --ds-ring: #2563eb;
+    --ds-radius: 0.5rem;
+    --ds-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.04);
+    --ds-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.04), 0 2px 4px -2px rgb(0 0 0 / 0.04);
 }
 
 body {

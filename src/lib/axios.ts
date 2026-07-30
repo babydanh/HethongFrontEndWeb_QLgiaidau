@@ -46,7 +46,9 @@ export const api = axios.create({
     'Content-Type': 'application/json',
   },
   withCredentials: true,
-  timeout: 5000,
+  // Match feeds can involve several joins and Redis fallback under load.
+  // Do not treat a normal slow response as an empty feed.
+  timeout: 15000,
 });
 
 // Request interceptor — gắn CSRF token cho state-changing requests

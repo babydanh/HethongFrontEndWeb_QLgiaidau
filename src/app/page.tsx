@@ -351,17 +351,31 @@ export default function HomePage() {
         }
         const communitiesPromise = communitiesApi.getCommunities(cParams);
 
-        const [tRes, cRes] = await Promise.allSettled([
+        // Start independent requests together to avoid serial network latency.
+        const allMatchesPromise = matchesApi.getMatches({
+          status: 'ONGOING,SCHEDULED,COMPLETED',
+          limit: 50,
+          publicOnly: true,
+        });
+        const userRankingsPromise = isAuthenticated && user?.id
+          ? rankingsApi.getUserRankings(user.id)
+          : Promise.resolve(null);
+
+        const [tRes, cRes, allMatchesRes, userRankRes] = await Promise.allSettled([
           tournamentsPromise,
           communitiesPromise,
+          allMatchesPromise,
+          userRankingsPromise,
         ] as const);
 
         const fetchedTournaments = tRes.status === 'fulfilled' ? tRes.value.data || [] : [];
-        // Lọc bỏ DRAFT/CANCELLED cho tất cả (giải nổi bật + valid IDs)
+        // Keep the last good list when a transient request fails.
         const activeTournaments = fetchedTournaments.filter(
           (t: Tournament) => t.status !== 'DRAFT' && t.status !== 'CANCELLED'
         );
-        setTournaments(activeTournaments);
+        if (tRes.status === 'fulfilled') {
+          setTournaments(activeTournaments);
+        }
 
         // Build set of valid tournament IDs
         const validTournamentIds = new Set(activeTournaments.map((t: Tournament) => t.id));
@@ -371,15 +385,6 @@ export default function HomePage() {
         setCommunities(cRes.status === 'fulfilled' ? cRes.value.data || [] : []);
 
         // ── ĐỢT 2 (sau 300ms): matches — gộp 1 call multi-status, limit 50 ──
-        await new Promise(resolve => setTimeout(resolve, 300));
-
-        const allMatchesPromise = matchesApi.getMatches({
-          status: 'ONGOING,SCHEDULED,COMPLETED',
-          limit: 50,
-          publicOnly: true,
-        });
-        const [allMatchesRes] = await Promise.allSettled([allMatchesPromise] as const);
-
         if (allMatchesRes.status === 'fulfilled') {
           const rawData = (allMatchesRes.value as Record<string, unknown>).data;
           const allMatchesData = (rawData as Record<string, unknown>)?.data || rawData || [];
@@ -414,20 +419,9 @@ export default function HomePage() {
 
           const fetchedCompleted = allMatches.filter(m => m.status === 'COMPLETED');
           setCompletedMatches(fetchedCompleted.filter(m => (!shouldFilterByTournament || validTournamentIds.has(m.tournamentId ?? '')) && !m.isBye));
-        } else {
-          setLiveMatches([]);
-          setUpcomingMatches([]);
-          setCompletedMatches([]);
         }
 
         // ── ĐỢT 3 (sau 600ms): rankings (1 call) ──
-        await new Promise(resolve => setTimeout(resolve, 300));
-
-        const userRankingsPromise = isAuthenticated && user?.id
-          ? rankingsApi.getUserRankings(user.id)
-          : Promise.resolve(null);
-        const [userRankRes] = await Promise.allSettled([userRankingsPromise] as const);
-
         if (userRankRes.status === 'fulfilled' && userRankRes.value) {
           setUserRankings(userRankRes.value);
         } else {
@@ -435,6 +429,9 @@ export default function HomePage() {
         }
 
         // ── ĐỢT 4 (sau 900ms): ranked tournament matches (chỉ fetch nếu tìm thấy) ──
+        // Core home content is ready; ranked details must not block first paint.
+        setIsLoading(false);
+
         const foundRanked = fetchedTournaments.find(t => {
           if (!t.isRanked) return false;
           if (t.status === 'DRAFT' || isTournamentCancelled(t.status)) return false;

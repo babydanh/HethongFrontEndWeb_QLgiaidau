@@ -11,6 +11,7 @@ import toast from 'react-hot-toast';
 import { supportApi, type SupportMessage } from '@/features/support/api';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { getErrorMessage } from '@/utils/error';
+import { socketClient } from '@/lib/socket';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -82,18 +83,47 @@ export default function AiChatAssistant() {
   useEffect(() => {
     if (!isOpen || mode !== 'support' || !isAuthenticated) return;
 
+    const socket = socketClient.getChatSocket();
+    let activeRoomId: string | null = null;
+    let disposed = false;
+
+    const appendMessage = (message: SupportMessage) => {
+      setSupportMessages((current) =>
+        current.some((item) => item.id === message.id)
+          ? current
+          : [...current, message],
+      );
+    };
+
     const loadSupportMessages = async () => {
       try {
         const conversation = await supportApi.getMine();
+        if (disposed) return;
         setSupportMessages(conversation?.messages ?? []);
+        if (conversation?.id && activeRoomId !== conversation.id) {
+          if (activeRoomId) socket.emit('leaveChatRoom', activeRoomId);
+          activeRoomId = conversation.id;
+          socket.emit('subscribeMySupport');
+        }
       } catch {
-        // Polling errors are intentionally silent; the next cycle can recover.
+        // The low-frequency fallback can recover after a transient failure.
       }
     };
 
+    const subscribe = () => socket.emit('subscribeMySupport');
+    socket.on('connect', subscribe);
+    socket.on('chat:message', appendMessage);
+    if (!socket.connected) socket.connect();
+    else subscribe();
     void loadSupportMessages();
-    const timer = window.setInterval(loadSupportMessages, 5000);
-    return () => window.clearInterval(timer);
+    const timer = window.setInterval(loadSupportMessages, 30000);
+    return () => {
+      disposed = true;
+      window.clearInterval(timer);
+      socket.off('connect', subscribe);
+      socket.off('chat:message', appendMessage);
+      if (activeRoomId) socket.emit('leaveChatRoom', activeRoomId);
+    };
   }, [isAuthenticated, isOpen, mode]);
 
   const handleOpenSupport = async () => {
@@ -311,7 +341,23 @@ export default function AiChatAssistant() {
                         : 'bg-slate-800 text-white'
                     }`}
                   >
-                    {msg.role === 'user' ? 'U' : <Bot className="w-3.5 h-3.5" />}
+                    {msg.role === 'user' ? (
+                      user?.avatarUrl ? (
+                        <img
+                          src={user.avatarUrl}
+                          alt={user.fullName || 'Bạn'}
+                          className="h-full w-full rounded-full object-cover"
+                        />
+                      ) : (
+                        (user?.fullName || user?.email || 'B').charAt(0).toUpperCase()
+                      )
+                    ) : (
+                      <img
+                        src="/vndcsport.svg"
+                        alt="VNDC Sport"
+                        className="h-5 w-5 object-contain"
+                      />
+                    )}
                   </div>
                   <div
                     className={`max-w-[78%] px-3.5 py-2.5 rounded-lg text-[12.5px] leading-relaxed shadow-sm border ${
@@ -353,16 +399,39 @@ export default function AiChatAssistant() {
                           : 'bg-blue-600 text-white'
                       }`}
                     >
-                      {mine ? 'U' : <Headset className="w-3.5 h-3.5" />}
+                      {mine ? (
+                        user?.avatarUrl ? (
+                          <img
+                            src={user.avatarUrl}
+                            alt={user.fullName || 'Bạn'}
+                            className="h-full w-full rounded-full object-cover"
+                          />
+                        ) : (
+                          (user?.fullName || user?.email || 'B').charAt(0).toUpperCase()
+                        )
+                      ) : msg.senderAvatar ? (
+                        <img
+                          src={msg.senderAvatar}
+                          alt={msg.senderName || 'Hỗ trợ'}
+                          className="h-full w-full rounded-full object-cover"
+                        />
+                      ) : (
+                        <Headset className="w-3.5 h-3.5" />
+                      )}
                     </div>
-                    <div
-                      className={`max-w-[78%] px-3.5 py-2.5 rounded-lg text-[12.5px] leading-relaxed shadow-sm border whitespace-pre-wrap break-words ${
-                        mine
-                          ? 'bg-white border-slate-200 text-slate-800 rounded-tr-sm'
-                          : 'bg-blue-50 border-blue-100 text-slate-800 rounded-tl-sm'
-                      }`}
-                    >
-                      {msg.messageText}
+                    <div className={`max-w-[78%] ${mine ? 'text-right' : 'text-left'}`}>
+                      <p className="mb-1 truncate text-[10px] font-semibold text-slate-500">
+                        {mine ? user?.fullName || 'Bạn' : msg.senderName || 'Hỗ trợ VNDC Sport'}
+                      </p>
+                      <div
+                        className={`px-3.5 py-2.5 rounded-lg text-[12.5px] leading-relaxed shadow-sm border whitespace-pre-wrap break-words ${
+                          mine
+                            ? 'bg-white border-slate-200 text-slate-800 rounded-tr-sm'
+                            : 'bg-blue-50 border-blue-100 text-slate-800 rounded-tl-sm'
+                        }`}
+                      >
+                        {msg.messageText}
+                      </div>
                     </div>
                   </div>
                 );

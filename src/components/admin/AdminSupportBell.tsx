@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { Bell, MessageSquareText } from 'lucide-react';
+import { Bell, CircleUserRound, MessageSquareText } from 'lucide-react';
 import { supportApi, type AdminSupportRoom } from '@/features/support/api';
 import { socketClient } from '@/lib/socket';
 
@@ -53,7 +53,7 @@ export function AdminSupportBell() {
   );
 
   return (
-    <div ref={rootRef} className="relative">
+    <div ref={rootRef} className="relative z-[100]">
       <button
         type="button"
         aria-label="Thông báo hỗ trợ"
@@ -69,7 +69,7 @@ export function AdminSupportBell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-12 z-50 w-[min(360px,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+        <div className="absolute right-0 top-12 z-[110] w-[min(360px,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
           <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
             <div>
               <p className="font-bold text-slate-950">Hỗ trợ mới</p>
@@ -92,7 +92,20 @@ export function AdminSupportBell() {
                     onClick={() => setOpen(false)}
                     className="flex items-start gap-3 rounded-xl px-3 py-3 transition hover:bg-slate-50"
                   >
-                    <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-blue-500" />
+                    <span className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full bg-slate-100">
+                      {customer?.avatarUrl ? (
+                        <img
+                          src={customer.avatarUrl}
+                          alt={customer.fullName || customer.email || 'Người dùng'}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <CircleUserRound className="h-full w-full p-1.5 text-slate-400" />
+                      )}
+                      {(room.unreadCount ?? 0) > 0 && (
+                        <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-blue-500 ring-2 ring-white" />
+                      )}
+                    </span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-bold text-slate-900">
                         {customer?.fullName || customer?.email || 'Người dùng'}

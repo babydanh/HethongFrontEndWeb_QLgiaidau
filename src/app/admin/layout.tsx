@@ -140,7 +140,7 @@ export default function AdminLayout({
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
         {/* Top Navbar */}
-        <header className="h-16 border-b border-slate-200 bg-white/80 backdrop-blur-md flex items-center justify-between px-6 md:px-8">
+        <header className="relative z-[80] h-16 overflow-visible border-b border-slate-200 bg-white/80 backdrop-blur-md flex items-center justify-between px-6 md:px-8">
           <div className="flex items-center gap-4">
             <button 
               className="md:hidden text-slate-500 hover:text-slate-950"
@@ -167,7 +167,7 @@ export default function AdminLayout({
         </header>
 
         {/* Content Body */}
-        <main className="flex-1 overflow-y-auto p-6 md:p-8 bg-slate-50">
+        <main className="relative z-0 flex-1 overflow-y-auto p-6 md:p-8 bg-slate-50">
           <div className="max-w-7xl mx-auto space-y-6">
             {children}
           </div>

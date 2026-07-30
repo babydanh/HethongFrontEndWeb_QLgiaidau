@@ -337,36 +337,13 @@ export default function HomePage() {
         setIsLoading(true);
         setIsLoadingRanked(true);
 
-        // ── Cache tournaments: kiểm tra sessionStorage trước khi gọi API ──
-        const CACHE_KEY_TOUR = 'homepage_tournaments';
-        const CACHE_TTL = 5 * 60 * 1000; // 5 phút
-        let cachedTournaments: Tournament[] | null = null;
-        if (typeof window !== 'undefined' && !selectedCategoryId) {
-          const cached = sessionStorage.getItem(CACHE_KEY_TOUR);
-          if (cached) {
-            try {
-              const parsed = JSON.parse(cached);
-              if (Date.now() - parsed.timestamp < CACHE_TTL && Array.isArray(parsed.data)) {
-                cachedTournaments = parsed.data || [];
-              } else {
-                // Cache hết hạn hoặc corrupt → xoá để fetch mới
-                sessionStorage.removeItem(CACHE_KEY_TOUR);
-              }
-            } catch {
-              sessionStorage.removeItem(CACHE_KEY_TOUR);
-            }
-          }
-        }
-
         const tParams: Record<string, unknown> = { limit: 20 };
         if (selectedCategoryId) {
           tParams.categoryId = selectedCategoryId;
         }
 
-        // ── ĐỢT 1 (ngay lập tức): tournaments + communities (2 calls) ──
-        const tournamentsPromise = cachedTournaments
-          ? Promise.resolve({ data: cachedTournaments })
-          : tournamentsApi.getPublicTournaments(tParams);
+        // Fetch fresh tournaments and communities
+        const tournamentsPromise = tournamentsApi.getPublicTournaments(tParams);
         const cParams: Record<string, unknown> = { limit: 6 };
         if (selectedCategoryId) {
           cParams.categoryId = selectedCategoryId;
@@ -384,12 +361,6 @@ export default function HomePage() {
           (t: Tournament) => t.status !== 'DRAFT' && t.status !== 'CANCELLED'
         );
         setTournaments(activeTournaments);
-
-        // Cache tournaments trong sessionStorage (5 phút) - chỉ cache khi có dữ liệu
-        if (typeof window !== 'undefined' && !selectedCategoryId && activeTournaments.length > 0) {
-          const CACHE_KEY_TOUR = 'homepage_tournaments';
-          sessionStorage.setItem(CACHE_KEY_TOUR, JSON.stringify({ timestamp: Date.now(), data: activeTournaments }));
-        }
 
         // Build set of valid tournament IDs
         const validTournamentIds = new Set(activeTournaments.map((t: Tournament) => t.id));

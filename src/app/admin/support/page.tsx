@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
 import {
   CircleUserRound,
   Inbox,
@@ -26,7 +25,6 @@ const formatTime = (value: string) =>
 
 export default function AdminSupportPage() {
   const { user } = useAuthStore();
-  const searchParams = useSearchParams();
   const [rooms, setRooms] = useState<AdminSupportRoom[]>([]);
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
   const [messages, setMessages] = useState<SupportMessage[]>([]);
@@ -44,7 +42,10 @@ export default function AdminSupportPage() {
       setRooms(data);
       setSelectedRoomId((current) => {
         if (current && data.some((room) => room.id === current)) return current;
-        const requestedRoomId = searchParams.get('room');
+        const requestedRoomId =
+          typeof window === 'undefined'
+            ? null
+            : new URLSearchParams(window.location.search).get('room');
         if (requestedRoomId && data.some((room) => room.id === requestedRoomId)) {
           return requestedRoomId;
         }
@@ -55,7 +56,7 @@ export default function AdminSupportPage() {
     } finally {
       if (!quiet) setLoadingRooms(false);
     }
-  }, [searchParams]);
+  }, []);
 
   const loadMessages = useCallback(async (roomId: string, quiet = false) => {
     if (!quiet) setLoadingMessages(true);
@@ -242,8 +243,16 @@ export default function AdminSupportPage() {
           ) : (
             <>
               <header className="flex items-center gap-3 border-b border-slate-200 px-5 py-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-blue-700">
-                  <CircleUserRound className="h-6 w-6" />
+                <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-blue-100 text-blue-700">
+                  {customer?.avatarUrl ? (
+                    <img
+                      src={customer.avatarUrl}
+                      alt={customer.fullName || 'Người dùng'}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <CircleUserRound className="h-6 w-6" />
+                  )}
                 </div>
                 <div className="min-w-0">
                   <p className="truncate font-bold text-slate-950">
@@ -264,7 +273,23 @@ export default function AdminSupportPage() {
                   messages.map((message) => {
                     const mine = message.senderId === user?.id;
                     return (
-                      <div key={message.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
+                      <div
+                        key={message.id}
+                        className={`flex items-end gap-2.5 ${mine ? 'justify-end' : 'justify-start'}`}
+                      >
+                        {!mine && (
+                          <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full bg-slate-200">
+                            {message.senderAvatar || customer?.avatarUrl ? (
+                              <img
+                                src={message.senderAvatar || customer?.avatarUrl || ''}
+                                alt={message.senderName || customer?.fullName || 'Người dùng'}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <CircleUserRound className="h-full w-full p-1.5 text-slate-500" />
+                            )}
+                          </div>
+                        )}
                         <div
                           className={`max-w-[78%] rounded-2xl px-4 py-3 text-sm shadow-sm ${
                             mine
@@ -272,11 +297,29 @@ export default function AdminSupportPage() {
                               : 'rounded-bl-md border border-slate-200 bg-white text-slate-800'
                           }`}
                         >
+                          <p className={`mb-1 text-[10px] font-bold ${mine ? 'text-blue-100' : 'text-slate-500'}`}>
+                            {mine
+                              ? user?.fullName || 'Quản trị viên'
+                              : message.senderName || customer?.fullName || 'Người dùng'}
+                          </p>
                           <p className="whitespace-pre-wrap break-words">{message.messageText}</p>
                           <p className={`mt-1.5 text-[10px] ${mine ? 'text-blue-100' : 'text-slate-400'}`}>
                             {formatTime(message.createdAt)}
                           </p>
                         </div>
+                        {mine && (
+                          <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full bg-blue-100">
+                            {user?.avatarUrl ? (
+                              <img
+                                src={user.avatarUrl}
+                                alt={user.fullName || 'Quản trị viên'}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <CircleUserRound className="h-full w-full p-1.5 text-blue-600" />
+                            )}
+                          </div>
+                        )}
                       </div>
                     );
                   })

@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
   CircleUserRound,
   Inbox,
@@ -13,6 +14,7 @@ import toast from 'react-hot-toast';
 import { supportApi, type AdminSupportRoom, type SupportMessage } from '@/features/support/api';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { getErrorMessage } from '@/utils/error';
+import { socketClient } from '@/lib/socket';
 
 const formatTime = (value: string) =>
   new Intl.DateTimeFormat('vi-VN', {
@@ -24,6 +26,7 @@ const formatTime = (value: string) =>
 
 export default function AdminSupportPage() {
   const { user } = useAuthStore();
+  const searchParams = useSearchParams();
   const [rooms, setRooms] = useState<AdminSupportRoom[]>([]);
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
   const [messages, setMessages] = useState<SupportMessage[]>([]);
@@ -32,19 +35,27 @@ export default function AdminSupportPage() {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [sending, setSending] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
+  const selectedRoomIdRef = useRef<string | null>(null);
 
   const loadRooms = useCallback(async (quiet = false) => {
     if (!quiet) setLoadingRooms(true);
     try {
       const data = await supportApi.getAdminRooms();
       setRooms(data);
-      setSelectedRoomId((current) => current ?? data[0]?.id ?? null);
+      setSelectedRoomId((current) => {
+        if (current && data.some((room) => room.id === current)) return current;
+        const requestedRoomId = searchParams.get('room');
+        if (requestedRoomId && data.some((room) => room.id === requestedRoomId)) {
+          return requestedRoomId;
+        }
+        return data[0]?.id ?? null;
+      });
     } catch (error) {
       if (!quiet) toast.error(getErrorMessage(error, 'Không tải được hộp thư hỗ trợ.'));
     } finally {
       if (!quiet) setLoadingRooms(false);
     }
-  }, []);
+  }, [searchParams]);
 
   const loadMessages = useCallback(async (roomId: string, quiet = false) => {
     if (!quiet) setLoadingMessages(true);
@@ -59,22 +70,58 @@ export default function AdminSupportPage() {
 
   useEffect(() => {
     void loadRooms();
-    const timer = window.setInterval(() => void loadRooms(true), 7000);
+    const timer = window.setInterval(() => void loadRooms(true), 30000);
     return () => window.clearInterval(timer);
   }, [loadRooms]);
 
   useEffect(() => {
+    selectedRoomIdRef.current = selectedRoomId;
     if (!selectedRoomId) {
       setMessages([]);
       return;
     }
     void loadMessages(selectedRoomId);
-    const timer = window.setInterval(
-      () => void loadMessages(selectedRoomId, true),
-      4000,
-    );
-    return () => window.clearInterval(timer);
-  }, [loadMessages, selectedRoomId]);
+    void supportApi.markAdminRoomRead(selectedRoomId).then(() => loadRooms(true));
+
+    const socket = socketClient.getChatSocket();
+    socket.emit('joinChatRoom', selectedRoomId);
+    return () => {
+      socket.emit('leaveChatRoom', selectedRoomId);
+    };
+  }, [loadMessages, loadRooms, selectedRoomId]);
+
+  useEffect(() => {
+    const socket = socketClient.getChatSocket();
+    const subscribe = () => socket.emit('subscribeSupportInbox');
+    const handleSupportMessage = (payload: {
+      roomId: string;
+      message: SupportMessage;
+    }) => {
+      void loadRooms(true);
+      if (payload.roomId !== selectedRoomIdRef.current) return;
+
+      setMessages((current) =>
+        current.some((message) => message.id === payload.message.id)
+          ? current
+          : [...current, payload.message],
+      );
+      void supportApi.markAdminRoomRead(payload.roomId);
+    };
+    const handleSupportRead = () => void loadRooms(true);
+
+    socket.on('connect', subscribe);
+    socket.on('support:message', handleSupportMessage);
+    socket.on('support:read', handleSupportRead);
+
+    if (!socket.connected) socket.connect();
+    else subscribe();
+
+    return () => {
+      socket.off('connect', subscribe);
+      socket.off('support:message', handleSupportMessage);
+      socket.off('support:read', handleSupportRead);
+    };
+  }, [loadRooms]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -89,7 +136,11 @@ export default function AdminSupportPage() {
     setSending(true);
     try {
       const message = await supportApi.replyAsAdmin(selectedRoomId, content);
-      setMessages((current) => [...current, message]);
+      setMessages((current) =>
+        current.some((item) => item.id === message.id)
+          ? current
+          : [...current, message],
+      );
       setDraft('');
       void loadRooms(true);
     } catch (error) {

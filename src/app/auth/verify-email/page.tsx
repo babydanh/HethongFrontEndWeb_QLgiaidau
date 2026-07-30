@@ -8,7 +8,7 @@ import { usersApi } from '@/features/users/api';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { getErrorMessage } from '@/utils/error';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { Trophy, CheckCircle, XCircle } from 'lucide-react';
+import { Trophy, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 function VerifyEmailContent() {
@@ -128,7 +128,7 @@ export default function VerifyEmailPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+        <LoadingSpinner className="w-12 h-12" />
       </div>
     }>
       <VerifyEmailContent />

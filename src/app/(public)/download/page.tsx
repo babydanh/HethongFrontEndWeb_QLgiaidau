@@ -1,7 +1,6 @@
 'use client';
 
-// Reading this as: App Download Landing Page for VNSPORT users, with a clean light theme (nền trắng) matching the header, crisp store badges, and clear version indicator.
-
+import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Download, CheckCircle2, ShieldCheck, Zap, Sparkles, Smartphone, Info } from 'lucide-react';

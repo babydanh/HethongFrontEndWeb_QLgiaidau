@@ -1,16 +1,28 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  useCallback,
+  useDeferredValue,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import {
   CircleUserRound,
   Inbox,
   Loader2,
   MessageSquareText,
   RefreshCw,
+  Search,
   Send,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { supportApi, type AdminSupportRoom, type SupportMessage } from '@/features/support/api';
+import {
+  supportApi,
+  type AdminSupportRoom,
+  type SupportMessage,
+  type SupportTypingEvent,
+} from '@/features/support/api';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { getErrorMessage } from '@/utils/error';
 import { socketClient } from '@/lib/socket';
@@ -23,6 +35,27 @@ const formatTime = (value: string) =>
     month: '2-digit',
   }).format(new Date(value));
 
+const normalizeSearchText = (value: string | null | undefined) =>
+  (value ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLocaleLowerCase('vi-VN')
+    .trim();
+
+const mergeMessages = (
+  current: SupportMessage[],
+  incoming: SupportMessage[],
+) => {
+  const messagesById = new Map(
+    current.map((message) => [message.id, message]),
+  );
+  incoming.forEach((message) => messagesById.set(message.id, message));
+  return Array.from(messagesById.values()).sort(
+    (left, right) =>
+      new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime(),
+  );
+};
+
 export default function AdminSupportPage() {
   const { user } = useAuthStore();
   const [rooms, setRooms] = useState<AdminSupportRoom[]>([]);
@@ -32,8 +65,12 @@ export default function AdminSupportPage() {
   const [loadingRooms, setLoadingRooms] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [sending, setSending] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isCustomerTyping, setIsCustomerTyping] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
   const selectedRoomIdRef = useRef<string | null>(null);
+  const typingTimerRef = useRef<number | null>(null);
+  const deferredSearchQuery = useDeferredValue(searchQuery);
 
   const loadRooms = useCallback(async (quiet = false) => {
     try {
@@ -60,7 +97,8 @@ export default function AdminSupportPage() {
   const loadMessages = useCallback(async (roomId: string, quiet = false) => {
     try {
       const data = await supportApi.getAdminMessages(roomId);
-      setMessages(data);
+      if (selectedRoomIdRef.current !== roomId) return;
+      setMessages((current) => mergeMessages(current, data));
     } catch (error) {
       if (!quiet) toast.error(getErrorMessage(error, 'Không tải được cuộc hội thoại.'));
     } finally {
@@ -120,7 +158,7 @@ export default function AdminSupportPage() {
     let active = true;
     void supportApi.getAdminMessages(selectedRoomId).then((data) => {
       if (!active) return;
-      setMessages(data);
+      setMessages((current) => mergeMessages(current, data));
       setLoadingMessages(false);
     }).catch((error) => {
       if (!active) return;
@@ -200,10 +238,21 @@ export default function AdminSupportPage() {
       void loadRooms(true);
     };
     const handleSupportRead = () => void loadRooms(true);
+    const handleSupportTyping = (event: SupportTypingEvent) => {
+      if (
+        event.roomId !== selectedRoomIdRef.current ||
+        event.userId === user?.id ||
+        event.isSupportStaff
+      ) {
+        return;
+      }
+      setIsCustomerTyping(event.isTyping);
+    };
 
     socket.on('connect', subscribe);
     socket.on('support:message', handleSupportMessage);
     socket.on('chat:message', handleChatMessage);
+    socket.on('support:typing', handleSupportTyping);
     socket.on('support:read', handleSupportRead);
     socket.on('support:error', handleSupportRead);
 
@@ -214,22 +263,61 @@ export default function AdminSupportPage() {
       socket.off('connect', subscribe);
       socket.off('support:message', handleSupportMessage);
       socket.off('chat:message', handleChatMessage);
+      socket.off('support:typing', handleSupportTyping);
       socket.off('support:read', handleSupportRead);
       socket.off('support:error', handleSupportRead);
     };
-  }, [loadMessages, loadRooms]);
+  }, [loadMessages, loadRooms, user?.id]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  useEffect(() => () => {
+    if (typingTimerRef.current) {
+      window.clearTimeout(typingTimerRef.current);
+    }
+  }, []);
+
   const selectedRoom = rooms.find((room) => room.id === selectedRoomId);
   const customer = selectedRoom?.participants.find((item) => item.id !== user?.id);
+  const normalizedQuery = normalizeSearchText(deferredSearchQuery);
+  const filteredRooms = normalizedQuery
+    ? rooms.filter((room) => {
+        const participant = room.participants.find((item) => item.id !== user?.id);
+        return normalizeSearchText([
+          participant?.fullName,
+          participant?.email,
+          room.lastMessage?.content,
+        ].filter(Boolean).join(' ')).includes(normalizedQuery);
+      })
+    : rooms;
+
+  const emitAdminTyping = (isTyping: boolean) => {
+    if (!selectedRoomId) return;
+    socketClient.getChatSocket().emit('supportTyping', {
+      roomId: selectedRoomId,
+      isTyping,
+    });
+  };
+
+  const handleDraftChange = (value: string) => {
+    setDraft(value);
+    emitAdminTyping(value.trim().length > 0);
+    if (typingTimerRef.current) {
+      window.clearTimeout(typingTimerRef.current);
+    }
+    typingTimerRef.current = window.setTimeout(
+      () => emitAdminTyping(false),
+      1200,
+    );
+  };
 
   const handleSend = async () => {
     const content = draft.trim();
     if (!selectedRoomId || !content || sending) return;
     setSending(true);
+    emitAdminTyping(false);
     try {
       const message = await supportApi.replyAsAdmin(selectedRoomId, content);
       setMessages((current) =>

@@ -11,6 +11,13 @@ export interface SupportMessage {
   senderAvatar: string | null;
 }
 
+export interface SupportTypingEvent {
+  roomId: string;
+  userId: string;
+  isTyping: boolean;
+  isSupportStaff: boolean;
+}
+
 export interface SupportConversation {
   id: string;
   name: string | null;

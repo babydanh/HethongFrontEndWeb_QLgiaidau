@@ -8,7 +8,11 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
-import { supportApi, type SupportMessage } from '@/features/support/api';
+import {
+  supportApi,
+  type SupportMessage,
+  type SupportTypingEvent,
+} from '@/features/support/api';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { getErrorMessage } from '@/utils/error';
 import { socketClient } from '@/lib/socket';
@@ -16,6 +20,20 @@ import { socketClient } from '@/lib/socket';
 interface Message {
   role: 'user' | 'assistant';
   content: string;
+}
+
+function mergeSupportMessages(
+  current: SupportMessage[],
+  incoming: SupportMessage[],
+): SupportMessage[] {
+  const messagesById = new Map(
+    current.map((message) => [message.id, message]),
+  );
+  incoming.forEach((message) => messagesById.set(message.id, message));
+  return Array.from(messagesById.values()).sort(
+    (left, right) =>
+      new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime(),
+  );
 }
 
 function mergeStreamContent(previous: string, incoming: string): string {
@@ -115,9 +133,13 @@ export default function AiChatAssistant() {
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isSendingSupport, setIsSendingSupport] = useState(false);
+  const [supportRoomId, setSupportRoomId] = useState<string | null>(null);
+  const [isSupportAgentTyping, setIsSupportAgentTyping] = useState(false);
   const [supportMessages, setSupportMessages] = useState<SupportMessage[]>([]);
   const pathname = usePathname();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const supportTypingTimerRef = useRef<number | null>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -132,48 +154,100 @@ export default function AiChatAssistant() {
   useEffect(() => {
     if (!isOpen || mode !== 'support' || !isAuthenticated) return;
 
-    const socket = socketClient.getChatSocket();
+    const socket = socketClient.refreshChatAuthentication();
     let activeRoomId: string | null = null;
     let disposed = false;
+    let syncInFlight = false;
 
     const appendMessage = (message: SupportMessage) => {
-      setSupportMessages((current) =>
-        current.some((item) => item.id === message.id)
-          ? current
-          : [...current, message],
-      );
+      if (!activeRoomId || message.roomId !== activeRoomId) return;
+      setSupportMessages((current) => mergeSupportMessages(current, [message]));
+    };
+
+    const handleTyping = (event: SupportTypingEvent) => {
+      if (
+        event.roomId !== activeRoomId ||
+        event.userId === user?.id ||
+        !event.isSupportStaff
+      ) {
+        return;
+      }
+      setIsSupportAgentTyping(event.isTyping);
     };
 
     const loadSupportMessages = async () => {
+      if (syncInFlight || document.hidden) return;
+      syncInFlight = true;
       try {
         const conversation = await supportApi.getMine();
         if (disposed) return;
-        setSupportMessages(conversation?.messages ?? []);
+        setSupportMessages((current) =>
+          mergeSupportMessages(current, conversation?.messages ?? []),
+        );
         if (conversation?.id && activeRoomId !== conversation.id) {
           if (activeRoomId) socket.emit('leaveChatRoom', activeRoomId);
           activeRoomId = conversation.id;
+          setSupportRoomId(conversation.id);
           socket.emit('subscribeMySupport');
         }
       } catch {
-        // The low-frequency fallback can recover after a transient failure.
+        // Socket remains primary; polling recovers from proxy/network gaps.
+      } finally {
+        syncInFlight = false;
       }
     };
 
     const subscribe = () => socket.emit('subscribeMySupport');
     socket.on('connect', subscribe);
     socket.on('chat:message', appendMessage);
+    socket.on('support:typing', handleTyping);
     if (!socket.connected) socket.connect();
     else subscribe();
     void loadSupportMessages();
-    const timer = window.setInterval(loadSupportMessages, 30000);
+    const handleFocus = () => void loadSupportMessages();
+    const timer = window.setInterval(() => void loadSupportMessages(), 2000);
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleFocus);
     return () => {
       disposed = true;
       window.clearInterval(timer);
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleFocus);
       socket.off('connect', subscribe);
       socket.off('chat:message', appendMessage);
+      socket.off('support:typing', handleTyping);
       if (activeRoomId) socket.emit('leaveChatRoom', activeRoomId);
+      setIsSupportAgentTyping(false);
     };
-  }, [isAuthenticated, isOpen, mode]);
+  }, [isAuthenticated, isOpen, mode, user?.id]);
+
+  useEffect(() => () => {
+    if (supportTypingTimerRef.current) {
+      window.clearTimeout(supportTypingTimerRef.current);
+    }
+  }, []);
+
+  const emitSupportTyping = (isTyping: boolean) => {
+    if (!supportRoomId) return;
+    socketClient.getChatSocket().emit('supportTyping', {
+      roomId: supportRoomId,
+      isTyping,
+    });
+  };
+
+  const handleInputChange = (value: string) => {
+    setInput(value);
+    if (mode !== 'support' || !supportRoomId) return;
+
+    emitSupportTyping(value.trim().length > 0);
+    if (supportTypingTimerRef.current) {
+      window.clearTimeout(supportTypingTimerRef.current);
+    }
+    supportTypingTimerRef.current = window.setTimeout(
+      () => emitSupportTyping(false),
+      1200,
+    );
+  };
 
   const handleOpenSupport = async () => {
     if (!isAuthenticated || !user) {
@@ -188,6 +262,7 @@ export default function AiChatAssistant() {
         input.trim() || `Tôi cần admin hỗ trợ tại trang ${pathname || '/'}.`;
       const conversation = await supportApi.send(initialMessage);
       setSupportMessages(conversation.messages);
+      setSupportRoomId(conversation.id);
       setInput('');
       setMode('support');
     } catch (error) {
@@ -199,16 +274,21 @@ export default function AiChatAssistant() {
 
   const handleSendSupportMessage = async (text: string) => {
     const content = text.trim();
-    if (!content || isLoading) return;
-    setIsLoading(true);
+    if (!content || isSendingSupport) return;
+    setIsSendingSupport(true);
+    setInput('');
+    emitSupportTyping(false);
     try {
       const conversation = await supportApi.send(content);
-      setSupportMessages(conversation.messages);
-      setInput('');
+      setSupportRoomId(conversation.id);
+      setSupportMessages((current) =>
+        mergeSupportMessages(current, conversation.messages),
+      );
     } catch (error) {
+      setInput((current) => current || content);
       toast.error(getErrorMessage(error, 'Không gửi được tin nhắn hỗ trợ.'));
     } finally {
-      setIsLoading(false);
+      setIsSendingSupport(false);
     }
   };
 
@@ -489,7 +569,7 @@ export default function AiChatAssistant() {
                 );
               })}
 
-              {isLoading && (
+              {isLoading && mode === 'ai' && (
                 <div className="flex gap-2.5 items-start">
                   <div className="w-7 h-7 rounded-full bg-slate-800 text-white flex items-center justify-center shrink-0">
                     {mode === 'support' ? <Headset className="w-3.5 h-3.5" /> : <Bot className="w-3.5 h-3.5" />}
@@ -498,6 +578,23 @@ export default function AiChatAssistant() {
                     <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                     <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                     <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                  </div>
+                </div>
+              )}
+              {mode === 'support' && isSupportAgentTyping && (
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white">
+                    <Headset className="h-3.5 w-3.5" />
+                  </div>
+                  <div className="rounded-lg rounded-tl-sm border border-blue-100 bg-blue-50 px-3 py-2">
+                    <p className="mb-1 text-[10px] font-semibold text-blue-700">
+                      Admin đang nhập
+                    </p>
+                    <div className="flex items-center gap-1">
+                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-blue-500" />
+                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-blue-500 [animation-delay:150ms]" />
+                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-blue-500 [animation-delay:300ms]" />
+                    </div>
                   </div>
                 </div>
               )}
@@ -540,7 +637,7 @@ export default function AiChatAssistant() {
             <div className="p-3 bg-white border-t border-slate-100 flex items-center gap-2 shrink-0">
               <textarea
                 value={input}
-                onChange={(e) => setInput(e.target.value)}
+                onChange={(e) => handleInputChange(e.target.value)}
                 onKeyDown={handleKeyPress}
                 placeholder={mode === 'support' ? 'Nhắn nội dung cần admin hỗ trợ...' : 'Hỏi trợ lý ảo về giải đấu...'}
                 rows={1}
@@ -552,7 +649,7 @@ export default function AiChatAssistant() {
                     ? void handleSendSupportMessage(input)
                     : void handleSendMessage(input)
                 }
-                disabled={!input.trim() || isLoading}
+                disabled={!input.trim() || isLoading || isSendingSupport}
                 className="w-9 h-9 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white flex items-center justify-center transition-all active:scale-95 cursor-pointer shrink-0"
               >
                 <Send className="w-3.5 h-3.5" />

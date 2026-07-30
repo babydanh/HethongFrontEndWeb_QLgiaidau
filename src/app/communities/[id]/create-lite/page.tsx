@@ -12,6 +12,7 @@ import toast from 'react-hot-toast';
 import { getErrorMessage } from '@/utils/error';
 import { LiteInviteQr } from '@/components/tournaments/LiteInviteQr';
 import { buildLiteJoinUrl } from '@/features/tournaments/lite-qr';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
 type CreatedLiteTournament = {
   id: string;
@@ -97,8 +98,6 @@ export default function CreateLiteTournamentPage({
       setIsSubmitting(false);
     }
   };
-
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
   if (isLoadingCommunity) {
     return (

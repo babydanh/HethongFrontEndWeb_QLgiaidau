@@ -70,7 +70,8 @@ interface Match {
 }
 
 function getTierRingClass(rank?: UserRank) {
-  if (!rank || rank.matchesPlayed <= 0) return 'ring-slate-200';
+  // Unranked is intentionally neutral but visible; it must not look like a tier.
+  if (!rank || rank.matchesPlayed <= 0) return 'ring-slate-400';
   const name = (rank.tierName || '').toLowerCase();
   if (name.includes('tier s') || rank.eloPoints >= 1800) return 'ring-amber-400';
   if (name.includes('high tier a') || rank.eloPoints >= 1700) return 'ring-rose-500';

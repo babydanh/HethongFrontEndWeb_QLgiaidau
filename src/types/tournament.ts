@@ -178,6 +178,8 @@ export interface Tournament {
     registrationMode?: 'OPEN' | 'APPROVAL' | 'INVITE_ONLY';
     hideFeaturedCardText?: boolean;
   } | null;
+  /** Normalized by GET /tournaments/public for banner rendering. */
+  hideFeaturedCardText?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }

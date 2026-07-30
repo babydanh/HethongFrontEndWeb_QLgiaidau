@@ -72,9 +72,12 @@ export const getBestRankForCategory = (
     : ranks;
   if (candidates.length === 0) return null;
 
-  return [...candidates].sort((a, b) => {
-    if (b.matchesPlayed !== a.matchesPlayed) return b.matchesPlayed - a.matchesPlayed;
+  const active = candidates.filter((rank) => rank.matchesPlayed > 0);
+  if (active.length === 0) return null;
+
+  return [...active].sort((a, b) => {
     if (b.eloPoints !== a.eloPoints) return b.eloPoints - a.eloPoints;
+    if (b.matchesPlayed !== a.matchesPlayed) return b.matchesPlayed - a.matchesPlayed;
     return (b.updatedAt || '').localeCompare(a.updatedAt || '');
   })[0];
 };

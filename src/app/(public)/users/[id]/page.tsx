@@ -23,6 +23,8 @@ interface UserRank {
   matchesPlayed: number;
   matchesWon: number;
   winStreak: number;
+  tierName?: string | null;
+  partnerName?: string | null;
 }
 
 interface PublicProfile {
@@ -38,6 +40,7 @@ interface PublicProfile {
   role?: string;
   roles?: string[];
   ranks: UserRank[];
+  pairRanks?: UserRank[];
   achievements?: {
     tournamentId: string;
     tournamentName: string;
@@ -64,6 +67,20 @@ interface Match {
       name: string;
     };
   } | null;
+}
+
+function getTierRingClass(rank?: UserRank) {
+  if (!rank || rank.matchesPlayed <= 0) return 'ring-slate-200';
+  const name = (rank.tierName || '').toLowerCase();
+  if (name.includes('tier s') || rank.eloPoints >= 1800) return 'ring-amber-400';
+  if (name.includes('high tier a') || rank.eloPoints >= 1700) return 'ring-rose-500';
+  if (name.includes('low tier a') || rank.eloPoints >= 1600) return 'ring-rose-300';
+  if (name.includes('high tier b') || rank.eloPoints >= 1500) return 'ring-blue-500';
+  if (name.includes('low tier b') || rank.eloPoints >= 1400) return 'ring-blue-300';
+  if (name.includes('high tier c') || rank.eloPoints >= 1300) return 'ring-emerald-500';
+  if (name.includes('low tier c') || rank.eloPoints >= 1200) return 'ring-emerald-300';
+  if (name.includes('high tier d') || rank.eloPoints >= 1100) return 'ring-slate-500';
+  return 'ring-slate-300';
 }
 
 export default function PublicUserProfilePage({ params }: { params: Promise<{ id: string }> }) {
@@ -161,6 +178,8 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
     return gender === 'MALE' ? 'Nam' : gender === 'FEMALE' ? 'Nữ' : 'Khác';
   };
 
+  const displayedRanks = [...(profile.ranks || []), ...(profile.pairRanks || [])];
+
   return (
     <div className="max-w-5xl mx-auto px-4 md:px-8 py-8 flex flex-col gap-6">
       {/* Navigation */}
@@ -198,7 +217,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
         <div className="px-6 md:px-10 pb-8 relative">
           {/* Avatar & Info */}
           <div className="flex flex-col md:flex-row justify-between items-end md:items-center gap-4 -mt-16 mb-5 relative z-10">
-            <div className="w-32 h-32 rounded-full bg-slate-100 border-4 border-white shadow-xl flex items-center justify-center overflow-hidden transition-transform duration-300 hover:scale-[1.03]">
+            <div className={`w-32 h-32 rounded-full bg-slate-100 border-4 border-white shadow-xl ring-4 ${getTierRingClass(displayedRanks.filter(r => r.matchesPlayed > 0).sort((a, b) => b.eloPoints - a.eloPoints)[0])} flex items-center justify-center overflow-hidden transition-transform duration-300 hover:scale-[1.03]`} title="Viền theo rank ELO nổi bật nhất">
               {profile.avatarUrl ? (
                 <img src={profile.avatarUrl} alt="Avatar" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
               ) : (
@@ -243,12 +262,12 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                 </span>
               )}
               {!hideEloSection && (() => {
-                const activeRanks = profile.ranks?.filter(r => r.matchesPlayed > 0) || [];
+                const activeRanks = displayedRanks.filter(r => r.matchesPlayed > 0);
                 if (activeRanks.length > 0) {
                   return activeRanks.map((rank) => (
                     <div key={`${rank.categoryId}-${rank.matchType}`} className="flex items-center gap-1 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-md text-xs font-bold shrink-0">
                       <span className="text-[10px] font-bold text-slate-550 uppercase mr-1">{rank.categoryName}:</span>
-                      <EloTierBadge elo={rank.eloPoints} tierName={rank.categoryName} size="sm" className="scale-90 origin-left" />
+                      <EloTierBadge elo={rank.eloPoints} tierName={rank.tierName || undefined} size="sm" className="scale-90 origin-left" />
                     </div>
                   ));
                 }
@@ -474,9 +493,9 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                   <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Hạng Trình Độ ELO</h3>
                 </div>
 
-                {profile.ranks && profile.ranks.length > 0 ? (
+                {displayedRanks.length > 0 ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {profile.ranks.map((rank) => (
+                    {displayedRanks.map((rank) => (
                       <div key={`${rank.categoryId}-${rank.matchType}`} className="bg-white rounded-lg border border-slate-200 p-5 shadow-sm hover:shadow-md transition-all flex items-center justify-between group">
                         <div className="space-y-1.5 flex-1">
                           <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-slate-100 text-slate-500 border border-slate-200">
@@ -484,8 +503,8 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                           </span>
                           <div className="flex items-center gap-2">
                             <Award className="w-5 h-5 text-blue-500 group-hover:scale-110 transition-transform" />
-                            <h4 className="font-bold text-slate-900 text-base">{rank.eloPoints} ELO</h4>
-                            <EloTierBadge elo={rank.eloPoints} tierName={rank.categoryName} size="sm" />
+                            <h4 className="font-bold text-slate-900 text-base">{rank.eloPoints} ELO {rank.partnerName ? `• Đôi với ${rank.partnerName}` : ''}</h4>
+                            <EloTierBadge elo={rank.eloPoints} tierName={rank.tierName || undefined} size="sm" />
                           </div>
                           <div className="grid grid-cols-3 gap-2 pt-2 text-center text-xs">
                             <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">

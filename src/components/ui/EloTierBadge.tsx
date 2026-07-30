@@ -8,66 +8,76 @@ export interface EloTierBadgeProps extends React.HTMLAttributes<HTMLDivElement> 
 }
 
 export function getEloTier(elo: number, tierName?: string) {
-  // Determine tier based on ELO points (source of truth)
-  if (elo >= 1800) {
+  // The API tier wins; numeric thresholds remain a fallback for old records.
+  const name = tierName?.toLowerCase() || '';
+  const resolvedElo = name.includes('tier s') ? 1800
+    : name.includes('high tier a') ? 1700
+    : name.includes('low tier a') ? 1600
+    : name.includes('high tier b') ? 1500
+    : name.includes('low tier b') ? 1400
+    : name.includes('high tier c') ? 1300
+    : name.includes('low tier c') ? 1200
+    : name.includes('high tier d') ? 1100
+    : elo;
+  if (resolvedElo >= 1800) {
     return {
       name: 'Tier S',
-      color: 'bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 text-amber-950 border-amber-400 font-bold shadow-sm animate-pulse',
+      color: 'bg-[#fff1bf] text-[#9a4d00] border-[#f59e0b] font-bold shadow-sm',
       icon: '👑',
     };
   }
-  if (elo >= 1700) {
+  if (resolvedElo >= 1700) {
     return {
       name: 'High Tier A',
-      color: 'bg-rose-500/15 text-rose-600 border-rose-500/30 font-semibold',
+      color: 'bg-[#f7b5b1] text-[#a51d1d] border-[#ef7770] font-semibold',
       icon: '🔥',
     };
   }
-  if (elo >= 1600) {
+  if (resolvedElo >= 1600) {
     return {
       name: 'Low Tier A',
-      color: 'bg-rose-500/10 text-rose-500/90 border-rose-500/20',
+      color: 'bg-[#ffd6d2] text-[#c52222] border-[#ffaaa3]',
       icon: '🏆',
     };
   }
-  if (elo >= 1500) {
+  if (resolvedElo >= 1500) {
     return {
       name: 'High Tier B',
-      color: 'bg-blue-500/15 text-blue-650 border-blue-550/30 font-semibold',
+      color: 'bg-[#bdd8ff] text-[#2853a6] border-[#7dafff] font-semibold',
       icon: '⚡',
     };
   }
-  if (elo >= 1400) {
+  if (resolvedElo >= 1400) {
     return {
       name: 'Low Tier B',
-      color: 'bg-blue-500/10 text-blue-550 border-blue-500/20',
+      color: 'bg-[#e8f1ff] text-[#2563eb] border-[#b9d4ff]',
       icon: '🥇',
     };
   }
-  if (elo >= 1300) {
+  if (resolvedElo >= 1300) {
     return {
       name: 'High Tier C',
-      color: 'bg-emerald-500/15 text-emerald-650 border-emerald-500/30 font-semibold',
+      color: 'bg-[#9cefc8] text-[#08734f] border-[#48d69d] font-semibold',
       icon: '💎',
     };
   }
-  if (elo >= 1200) {
+  if (resolvedElo >= 1200) {
     return {
       name: 'Low Tier C',
-      color: 'bg-blue-500/10 text-blue-650 border-blue-500/20',
+      color: 'bg-[#dcfced] text-[#07845c] border-[#96e9c6]',
       icon: '💠',
     };
   }
-  if (elo >= 1100) {
+  if (resolvedElo >= 1100) {
     return {
       name: 'High Tier D',
-      color: 'bg-slate-500/15 text-slate-700 border-slate-550/25 font-semibold',
+      color: 'bg-[#dbe4f0] text-[#334155] border-[#aebdce] font-semibold',
       icon: '🥈',
     };
   }
   return {
     name: 'Low Tier D',
-    color: 'bg-amber-700/10 text-amber-650 border-amber-700/20',
+    color: 'bg-[#f1f1f1] text-[#57534e] border-[#d1d1d1]',
     icon: '🥉',
   };
 }

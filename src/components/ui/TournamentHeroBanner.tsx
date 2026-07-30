@@ -5,6 +5,7 @@ import { Tournament } from '@/features/tournaments/api';
 import Link from 'next/link';
 import { Calendar, MapPin, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getSportLogo } from '@/constants/sports';
+import { shouldHideFeaturedCardText } from '@/features/tournaments/featured-banner';
 
 interface Props {
   tournaments: Tournament[];
@@ -249,7 +250,7 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[25
       >
         {tournaments.map((tournament, idx) => {
           const isActive = idx === currentIndex;
-          const hideFeaturedCardText = tournament.tournamentConfig?.hideFeaturedCardText === true;
+          const hideFeaturedCardText = shouldHideFeaturedCardText(tournament);
           return (
             <div 
               key={tournament.id} 

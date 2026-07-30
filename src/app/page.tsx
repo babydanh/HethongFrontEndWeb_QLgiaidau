@@ -34,6 +34,7 @@ import { getMatchRoundLabel } from '@/utils/match-round-label';
 import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
 import ShareModal from '@/components/common/ShareModal';
+import { shouldHideFeaturedCardText } from '@/features/tournaments/featured-banner';
 
 interface EnrichedTournament {
   id: string;
@@ -199,7 +200,7 @@ function HomepageTournamentCard({ tournament }: { tournament: Tournament }) {
   const [imgError, setImgError] = useState(false);
   const fallbackSrc = '/vndcsport.svg';
   const imageSrc = (!imgError && tournament.bannerUrl?.trim()) ? tournament.bannerUrl.split(',')[0] : fallbackSrc;
-  const hideFeaturedCardText = tournament.tournamentConfig?.hideFeaturedCardText === true;
+  const hideFeaturedCardText = shouldHideFeaturedCardText(tournament);
 
   const dateRange = useMemo(() => {
     if (!tournament.startDate || !tournament.endDate) return '';
@@ -1431,7 +1432,7 @@ export default function HomePage() {
                  <div className="absolute top-0 left-0 w-full h-16 bg-blue-600" />
 
                  {/* Avatar */}
-                 <div className="w-16 h-16 rounded-full border-4 border-white shadow-sm z-10 mt-5 relative bg-blue-100 flex items-center justify-center overflow-hidden shrink-0">
+                 <div className={`w-16 h-16 rounded-full border-4 border-white shadow-sm z-10 mt-5 relative bg-blue-100 flex items-center justify-center overflow-hidden shrink-0 ${activeRankInfo ? 'ring-4 ' + (activeRankInfo.eloPoints >= 1800 ? 'ring-amber-400' : activeRankInfo.eloPoints >= 1700 ? 'ring-rose-500' : activeRankInfo.eloPoints >= 1600 ? 'ring-rose-300' : activeRankInfo.eloPoints >= 1500 ? 'ring-blue-500' : activeRankInfo.eloPoints >= 1400 ? 'ring-blue-300' : activeRankInfo.eloPoints >= 1300 ? 'ring-emerald-500' : activeRankInfo.eloPoints >= 1200 ? 'ring-emerald-300' : activeRankInfo.eloPoints >= 1100 ? 'ring-slate-500' : 'ring-slate-300') : 'ring-slate-200'}`} title={activeRankInfo ? `Rank ${displayTier} • ${eloPoints} ELO` : 'Chưa xếp hạng'}>
                    {user?.avatarUrl ? (
                      <img src={user.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
                    ) : (

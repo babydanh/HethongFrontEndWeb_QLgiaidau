@@ -20,6 +20,7 @@ import {
   Settings,
   Trophy,
   HandCoins,
+  MessagesSquare,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { Button } from '@/components/ui/Button';
@@ -42,6 +43,7 @@ export default function AdminLayout({
     { name: 'Quản lý cộng đồng', path: '/admin/communities', icon: Building },
     { name: 'Quản lý rút tiền', path: '/admin/payouts', icon: CreditCard },
     { name: 'Giao dịch hệ thống', path: '/admin/transactions', icon: HandCoins },
+    { name: 'Hỗ trợ người dùng', path: '/admin/support', icon: MessagesSquare },
     { name: 'Quản lý đổi thông tin', path: '/admin/change-requests', icon: ShieldAlert },
     { name: 'Cấu hình hệ thống', path: '/admin/configs', icon: Settings },
   ];

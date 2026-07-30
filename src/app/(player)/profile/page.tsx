@@ -96,6 +96,21 @@ const hasUserInParticipant = (
   userId: string,
 ) => Boolean(participant?.members?.some((member) => member.userId === userId));
 
+const getProfileTierRingClass = (rank: PlayerRanking | null) => {
+  if (!rank || rank.matchesPlayed <= 0) return 'ring-slate-300';
+  const name = (rank.tier?.name || rank.tierName || '').toLowerCase();
+  const elo = rank.eloPoints;
+  if (name.includes('tier s') || elo >= 1800) return 'ring-amber-400';
+  if (name.includes('high tier a') || elo >= 1700) return 'ring-rose-500';
+  if (name.includes('low tier a') || elo >= 1600) return 'ring-rose-300';
+  if (name.includes('high tier b') || elo >= 1500) return 'ring-blue-500';
+  if (name.includes('low tier b') || elo >= 1400) return 'ring-blue-300';
+  if (name.includes('high tier c') || elo >= 1300) return 'ring-emerald-500';
+  if (name.includes('low tier c') || elo >= 1200) return 'ring-emerald-300';
+  if (name.includes('high tier d') || elo >= 1100) return 'ring-slate-500';
+  return 'ring-slate-300';
+};
+
 const deriveTournamentPlacement = (
   tournament: Tournament,
   stages: BracketStage[],
@@ -108,7 +123,7 @@ const deriveTournamentPlacement = (
         stageOrder: stage.order,
       })),
     ),
-  );
+);
 
   const userMatches = allMatches.filter(
     (match) =>
@@ -397,6 +412,9 @@ export default function ProfilePage() {
   const [isLoadingTab, setIsLoadingTab] = useState(false);
   const [matchesPage, setMatchesPage] = useState(1);
   const [matchesTotalPages, setMatchesTotalPages] = useState(1);
+  const featuredRank = (userRankings?.publicRanks || [])
+    .filter((rank) => rank.matchesPlayed > 0)
+    .sort((a, b) => b.eloPoints - a.eloPoints)[0] || null;
 
   useEffect(() => {
     if (!displayUser?.id) return;
@@ -526,7 +544,7 @@ export default function ProfilePage() {
         <div className="px-6 md:px-10 pb-8 relative">
           {/* Avatar & Actions */}
           <div className="flex flex-col md:flex-row justify-between items-end md:items-center gap-4 -mt-16 mb-5 relative z-10">
-            <div className="w-32 h-32 rounded-full bg-slate-100 border-4 border-white shadow-xl flex items-center justify-center overflow-hidden transition-transform duration-300 hover:scale-[1.03]">
+            <div className={`w-32 h-32 rounded-full bg-slate-100 border-4 border-white ring-4 ${getProfileTierRingClass(featuredRank)} shadow-xl flex items-center justify-center overflow-hidden transition-transform duration-300 hover:scale-[1.03]`} title={featuredRank ? `${featuredRank.tier?.name || featuredRank.tierName || 'Chưa xếp hạng'} • ${featuredRank.eloPoints} ELO` : 'Chưa xếp hạng'}>
               {displayUser?.avatarUrl ? (
                 <img src={displayUser.avatarUrl} alt="Avatar" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
               ) : (

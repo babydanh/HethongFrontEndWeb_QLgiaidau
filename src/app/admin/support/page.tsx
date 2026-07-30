@@ -70,6 +70,7 @@ export default function AdminSupportPage() {
   const endRef = useRef<HTMLDivElement>(null);
   const selectedRoomIdRef = useRef<string | null>(null);
   const typingTimerRef = useRef<number | null>(null);
+  const customerTypingTimerRef = useRef<number | null>(null);
   const deferredSearchQuery = useDeferredValue(searchQuery);
 
   const loadRooms = useCallback(async (quiet = false) => {
@@ -199,7 +200,7 @@ export default function AdminSupportPage() {
   }, [loadMessages, loadRooms, selectedRoomId]);
 
   useEffect(() => {
-    const socket = socketClient.getChatSocket();
+    const socket = socketClient.refreshChatAuthentication();
     const subscribe = () => socket.emit('subscribeSupportInbox');
     const handleSupportMessage = (payload: {
       roomId: string;
@@ -253,7 +254,17 @@ export default function AdminSupportPage() {
         return;
       }
       setIsCustomerTyping(event.isTyping);
+      if (customerTypingTimerRef.current) {
+        window.clearTimeout(customerTypingTimerRef.current);
+      }
+      if (event.isTyping) {
+        customerTypingTimerRef.current = window.setTimeout(
+          () => setIsCustomerTyping(false),
+          3000,
+        );
+      }
     };
+    const handleDisconnect = () => setIsCustomerTyping(false);
 
     socket.on('connect', subscribe);
     socket.on('support:message', handleSupportMessage);
@@ -261,6 +272,7 @@ export default function AdminSupportPage() {
     socket.on('support:typing', handleSupportTyping);
     socket.on('support:read', handleSupportRead);
     socket.on('support:error', handleSupportRead);
+    socket.on('disconnect', handleDisconnect);
 
     if (!socket.connected) socket.connect();
     else subscribe();
@@ -272,6 +284,10 @@ export default function AdminSupportPage() {
       socket.off('support:typing', handleSupportTyping);
       socket.off('support:read', handleSupportRead);
       socket.off('support:error', handleSupportRead);
+      socket.off('disconnect', handleDisconnect);
+      if (customerTypingTimerRef.current) {
+        window.clearTimeout(customerTypingTimerRef.current);
+      }
     };
   }, [loadMessages, loadRooms, user?.id]);
 
@@ -282,6 +298,9 @@ export default function AdminSupportPage() {
   useEffect(() => () => {
     if (typingTimerRef.current) {
       window.clearTimeout(typingTimerRef.current);
+    }
+    if (customerTypingTimerRef.current) {
+      window.clearTimeout(customerTypingTimerRef.current);
     }
   }, []);
 

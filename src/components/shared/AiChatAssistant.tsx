@@ -140,6 +140,7 @@ export default function AiChatAssistant() {
   const pathname = usePathname();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const supportTypingTimerRef = useRef<number | null>(null);
+  const supportAgentTypingTimerRef = useRef<number | null>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -176,7 +177,17 @@ export default function AiChatAssistant() {
         return;
       }
       setIsSupportAgentTyping(event.isTyping);
+      if (supportAgentTypingTimerRef.current) {
+        window.clearTimeout(supportAgentTypingTimerRef.current);
+      }
+      if (event.isTyping) {
+        supportAgentTypingTimerRef.current = window.setTimeout(
+          () => setIsSupportAgentTyping(false),
+          3000,
+        );
+      }
     };
+    const handleDisconnect = () => setIsSupportAgentTyping(false);
 
     const loadSupportMessages = async () => {
       if (syncInFlight || document.hidden) return;
@@ -204,6 +215,7 @@ export default function AiChatAssistant() {
     socket.on('connect', subscribe);
     socket.on('chat:message', appendMessage);
     socket.on('support:typing', handleTyping);
+    socket.on('disconnect', handleDisconnect);
     if (!socket.connected) socket.connect();
     else subscribe();
     void loadSupportMessages();
@@ -219,7 +231,11 @@ export default function AiChatAssistant() {
       socket.off('connect', subscribe);
       socket.off('chat:message', appendMessage);
       socket.off('support:typing', handleTyping);
+      socket.off('disconnect', handleDisconnect);
       if (activeRoomId) socket.emit('leaveChatRoom', activeRoomId);
+      if (supportAgentTypingTimerRef.current) {
+        window.clearTimeout(supportAgentTypingTimerRef.current);
+      }
       setIsSupportAgentTyping(false);
     };
   }, [isAuthenticated, isOpen, mode, user?.id]);
@@ -227,6 +243,9 @@ export default function AiChatAssistant() {
   useEffect(() => () => {
     if (supportTypingTimerRef.current) {
       window.clearTimeout(supportTypingTimerRef.current);
+    }
+    if (supportAgentTypingTimerRef.current) {
+      window.clearTimeout(supportAgentTypingTimerRef.current);
     }
   }, []);
 

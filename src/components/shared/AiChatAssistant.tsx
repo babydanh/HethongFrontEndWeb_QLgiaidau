@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { getBaseUrl } from '@/lib/axios';
 import { MessageSquare, Send, X, Bot, Sparkles, ArrowRight, Headset, ChevronLeft } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
@@ -102,7 +102,7 @@ function getPageTitle(pathname: string): string {
 
 export default function AiChatAssistant() {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const getSearchParamsString = () => (typeof window !== 'undefined' ? window.location.search : '');
   const { isAuthenticated, user } = useAuthStore();
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<'ai' | 'support'>('ai');
@@ -234,7 +234,7 @@ export default function AiChatAssistant() {
           currentUrl: pathname,
           pageTitle: getPageTitle(pathname),
           isMobile: typeof navigator !== 'undefined' && /Mobile|Android|iPhone/.test(navigator.userAgent),
-          searchParams: searchParams?.toString() || '',
+          searchParams: getSearchParamsString(),
         }),
         credentials: 'include',
       });

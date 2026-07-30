@@ -130,6 +130,13 @@ export default function CheckoutClient() {
   const handlePayment = async () => {
     if (!tournament || !tournamentId || !participantId) return;
 
+    const payableAmount = Number(division?.entryFee ?? tournament.entryFee) || 0;
+    if (payableAmount <= 0) {
+      toast.success('Đăng ký miễn phí đã được xác nhận, không cần thanh toán.');
+      router.replace(`/tournaments/${tournamentId}`);
+      return;
+    }
+
     try {
       setSubmitting(true);
       const res = await paymentsApi.createPaymentLink({

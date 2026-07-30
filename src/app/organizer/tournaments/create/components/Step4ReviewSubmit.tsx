@@ -226,7 +226,7 @@ export default function Step4ReviewSubmit() {
           <div className="flex flex-col gap-1">
             <span className="text-slate-400 font-medium">Lệ phí tham gia / người</span>
             <span className="font-semibold text-slate-900">
-              {formatCurrency(formData.entryFee || 0)}
+              {formatCurrency(feesConfig.allowEntryFees ? formData.entryFee || 0 : 0)}
             </span>
           </div>
 

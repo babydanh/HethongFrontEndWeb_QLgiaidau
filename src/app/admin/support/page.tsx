@@ -36,7 +36,6 @@ export default function AdminSupportPage() {
   const selectedRoomIdRef = useRef<string | null>(null);
 
   const loadRooms = useCallback(async (quiet = false) => {
-    if (!quiet) setLoadingRooms(true);
     try {
       const data = await supportApi.getAdminRooms();
       setRooms(data);
@@ -54,14 +53,14 @@ export default function AdminSupportPage() {
     } catch (error) {
       if (!quiet) toast.error(getErrorMessage(error, 'Không tải được hộp thư hỗ trợ.'));
     } finally {
-      if (!quiet) setLoadingRooms(false);
+      setLoadingRooms(false);
     }
   }, []);
 
   const loadMessages = useCallback(async (roomId: string, quiet = false) => {
-    if (!quiet) setLoadingMessages(true);
     try {
-      setMessages(await supportApi.getAdminMessages(roomId));
+      const data = await supportApi.getAdminMessages(roomId);
+      setMessages(data);
     } catch (error) {
       if (!quiet) toast.error(getErrorMessage(error, 'Không tải được cuộc hội thoại.'));
     } finally {
@@ -70,17 +69,40 @@ export default function AdminSupportPage() {
   }, []);
 
   useEffect(() => {
-    void loadRooms();
+    let active = true;
+    void supportApi.getAdminRooms().then((data) => {
+      if (!active) return;
+      setRooms(data);
+      setSelectedRoomId((current) => {
+        if (current && data.some((room) => room.id === current)) return current;
+        const requestedRoomId =
+          typeof window === 'undefined'
+            ? null
+            : new URLSearchParams(window.location.search).get('room');
+        if (requestedRoomId && data.some((room) => room.id === requestedRoomId)) {
+          return requestedRoomId;
+        }
+        return data[0]?.id ?? null;
+      });
+      setLoadingRooms(false);
+    }).catch((error) => {
+      if (!active) return;
+      toast.error(getErrorMessage(error, 'Không tải được hộp thư hỗ trợ.'));
+      setLoadingRooms(false);
+    });
+
     const timer = window.setInterval(() => void loadRooms(true), 30000);
-    return () => window.clearInterval(timer);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
   }, [loadRooms]);
 
   useEffect(() => {
     selectedRoomIdRef.current = selectedRoomId;
-    if (!selectedRoomId) {
-      setMessages([]);
-      return;
-    }
+    if (!selectedRoomId) return;
+
+    setLoadingMessages(true);
     void loadMessages(selectedRoomId);
     void supportApi.markAdminRoomRead(selectedRoomId).then(() => loadRooms(true));
 

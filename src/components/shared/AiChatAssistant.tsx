@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { getBaseUrl } from '@/lib/axios';
 import { MessageSquare, Send, X, Bot, Sparkles, ArrowRight, Headset, ChevronLeft } from 'lucide-react';
@@ -161,6 +161,9 @@ export default function AiChatAssistant() {
 
     const appendMessage = (message: SupportMessage) => {
       if (!activeRoomId || message.roomId !== activeRoomId) return;
+      if (message.senderId !== user?.id) {
+        setIsSupportAgentTyping(false);
+      }
       setSupportMessages((current) => mergeSupportMessages(current, [message]));
     };
 
@@ -572,7 +575,7 @@ export default function AiChatAssistant() {
               {isLoading && mode === 'ai' && (
                 <div className="flex gap-2.5 items-start">
                   <div className="w-7 h-7 rounded-full bg-slate-800 text-white flex items-center justify-center shrink-0">
-                    {mode === 'support' ? <Headset className="w-3.5 h-3.5" /> : <Bot className="w-3.5 h-3.5" />}
+                    <Bot className="w-3.5 h-3.5" />
                   </div>
                   <div className="bg-slate-50 border border-slate-100 px-4 py-3 rounded-lg rounded-tl-sm flex items-center gap-1.5 shadow-sm">
                     <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />

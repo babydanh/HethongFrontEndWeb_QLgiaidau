@@ -212,6 +212,9 @@ export default function AdminSupportPage() {
         incomingMessage?.roomId ||
         selectedRoomIdRef.current;
       if (targetRoomId !== selectedRoomIdRef.current) return;
+      if (incomingMessage?.senderId !== user?.id) {
+        setIsCustomerTyping(false);
+      }
 
       setMessages((current) =>
         incomingMessage?.id && current.some((message) => message.id === incomingMessage.id)
@@ -229,6 +232,9 @@ export default function AdminSupportPage() {
         (msg.roomId && msg.roomId !== selectedRoomIdRef.current)
       ) {
         return;
+      }
+      if (msg.senderId !== user?.id) {
+        setIsCustomerTyping(false);
       }
       setMessages((current) =>
         msg?.id && current.some((message) => message.id === msg.id)
@@ -355,12 +361,24 @@ export default function AdminSupportPage() {
 
       <div className="grid h-[calc(100vh-170px)] min-h-[500px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:grid-cols-[340px_1fr]">
         <aside className="flex h-full flex-col overflow-hidden border-b border-slate-200 bg-slate-50/70 lg:border-b-0 lg:border-r">
-          <div className="flex shrink-0 items-center gap-2 border-b border-slate-200 px-5 py-4 font-bold text-slate-900">
-            <Inbox className="h-5 w-5 text-blue-600" />
-            Hộp thư
-            <span className="ml-auto rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700">
-              {rooms.length}
-            </span>
+          <div className="shrink-0 space-y-3 border-b border-slate-200 px-4 py-4">
+            <div className="flex items-center gap-2 font-bold text-slate-900">
+              <Inbox className="h-5 w-5 text-blue-600" />
+              Hộp thư
+              <span className="ml-auto rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700">
+                {filteredRooms.length}/{rooms.length}
+              </span>
+            </div>
+            <label className="relative block">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="Tìm tên, email hoặc nội dung..."
+                className="h-10 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-sm text-slate-800 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+              />
+            </label>
           </div>
           <div className="flex-1 overflow-y-auto p-3">
             {loadingRooms ? (
@@ -372,15 +390,26 @@ export default function AdminSupportPage() {
                 <MessageSquareText className="mx-auto mb-3 h-10 w-10 text-slate-300" />
                 Chưa có yêu cầu hỗ trợ.
               </div>
+            ) : filteredRooms.length === 0 ? (
+              <div className="px-5 py-16 text-center text-sm text-slate-500">
+                <Search className="mx-auto mb-3 h-9 w-9 text-slate-300" />
+                Không tìm thấy cuộc hội thoại phù hợp.
+              </div>
             ) : (
-              rooms.map((room) => {
+              filteredRooms.map((room) => {
                 const participant = room.participants.find((item) => item.id !== user?.id);
                 const active = room.id === selectedRoomId;
                 return (
                   <button
                     key={room.id}
                     type="button"
-                    onClick={() => setSelectedRoomId(room.id)}
+                    onClick={() => {
+                      emitAdminTyping(false);
+                      setMessages([]);
+                      setLoadingMessages(true);
+                      setIsCustomerTyping(false);
+                      setSelectedRoomId(room.id);
+                    }}
                     className={`mb-2 w-full rounded-xl border p-3 text-left transition ${
                       active
                         ? 'border-blue-300 bg-blue-50 shadow-sm'
@@ -507,6 +536,31 @@ export default function AdminSupportPage() {
                     );
                   })
                 )}
+                {isCustomerTyping && (
+                  <div className="flex items-end gap-2.5">
+                    <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full bg-slate-200">
+                      {customer?.avatarUrl ? (
+                        <img
+                          src={customer.avatarUrl}
+                          alt={customer.fullName || 'Người dùng'}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <CircleUserRound className="h-full w-full p-1.5 text-slate-500" />
+                      )}
+                    </div>
+                    <div className="rounded-2xl rounded-bl-md border border-slate-200 bg-white px-4 py-2.5 shadow-sm">
+                      <p className="mb-1 text-[10px] font-semibold text-slate-500">
+                        {customer?.fullName || 'Người dùng'} đang nhập
+                      </p>
+                      <div className="flex items-center gap-1">
+                        <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-blue-500" />
+                        <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-blue-500 [animation-delay:150ms]" />
+                        <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-blue-500 [animation-delay:300ms]" />
+                      </div>
+                    </div>
+                  </div>
+                )}
                 <div ref={endRef} />
               </div>
 
@@ -514,7 +568,7 @@ export default function AdminSupportPage() {
                 <div className="flex items-end gap-3">
                   <textarea
                     value={draft}
-                    onChange={(event) => setDraft(event.target.value)}
+                    onChange={(event) => handleDraftChange(event.target.value)}
                     onKeyDown={(event) => {
                       if (event.key === 'Enter' && !event.shiftKey) {
                         event.preventDefault();

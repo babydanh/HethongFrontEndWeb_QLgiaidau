@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { useState, useRef, useEffect, useMemo } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { getBaseUrl } from '@/lib/axios';
 import { MessageSquare, Send, X, Bot, Sparkles, ArrowRight, Headset, ChevronLeft } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
@@ -52,8 +52,57 @@ const QUICK_PROMPTS = [
   'Hệ thống tính điểm ELO như thế nào?',
 ];
 
+const PAGE_TITLES: Record<string, string> = {
+  '/dashboard': 'Dashboard cá nhân',
+  '/organizer/tournaments/create': 'Tạo giải đấu',
+  '/organizer/tournaments/': 'Quản lý giải đấu',
+  '/tournaments/': 'Chi tiết giải đấu',
+  '/profile': 'Hồ sơ cá nhân',
+  '/profile/edit': 'Chỉnh sửa hồ sơ',
+  '/notifications': 'Thông báo',
+  '/payments': 'Lịch sử thanh toán',
+  '/matches': 'Danh sách trận đấu',
+  '/leaderboard': 'Bảng xếp hạng',
+  '/communities': 'Cộng đồng / CLB',
+  '/communities/create': 'Tạo cộng đồng',
+  '/admin': 'Admin Dashboard',
+  '/admin/tournaments': 'Admin - Quản lý giải',
+  '/admin/communities': 'Admin - Quản lý CLB',
+  '/admin/verification': 'Admin - Xác minh',
+  '/admin/disputes': 'Admin - Khiếu nại',
+  '/admin/reports': 'Admin - Báo cáo',
+  '/admin/transactions': 'Admin - Giao dịch',
+  '/admin/payouts': 'Admin - Payout',
+  '/admin/configs': 'Admin - Cấu hình',
+  '/admin/support': 'Admin - Hỗ trợ',
+  '/admin/moderation': 'Admin - Kiểm duyệt',
+  '/moderation': 'Kiểm duyệt',
+  '/series': 'Chuỗi giải đấu',
+  '/live/': 'Trận đấu trực tiếp',
+  '/chat': 'Tin nhắn',
+  '/download': 'Tải ứng dụng',
+  '/terms': 'Điều khoản dịch vụ',
+  '/privacy': 'Chính sách bảo mật',
+  '/login': 'Đăng nhập',
+  '/register': 'Đăng ký',
+  '/forgot-password': 'Quên mật khẩu',
+};
+
+function getPageTitle(pathname: string): string {
+  for (const [prefix, title] of Object.entries(PAGE_TITLES)) {
+    if (pathname.startsWith(prefix)) return title;
+  }
+  // Patterns with dynamic segments: /tournaments/[id], /organizer/tournaments/[id]/manage, etc.
+  if (pathname.startsWith('/tournaments/') && pathname.split('/').length === 3) return 'Chi tiết giải đấu';
+  if (pathname.includes('/manage')) return 'Quản lý giải đấu';
+  if (pathname.includes('/ops')) return 'Vận hành giải đấu';
+  if (pathname.startsWith('/users/')) return 'Hồ sơ người dùng';
+  return 'Trang chủ';
+}
+
 export default function AiChatAssistant() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { isAuthenticated, user } = useAuthStore();
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<'ai' | 'support'>('ai');
@@ -183,6 +232,9 @@ export default function AiChatAssistant() {
         body: JSON.stringify({
           messages: updatedMessages,
           currentUrl: pathname,
+          pageTitle: getPageTitle(pathname),
+          isMobile: typeof navigator !== 'undefined' && /Mobile|Android|iPhone/.test(navigator.userAgent),
+          searchParams: searchParams?.toString() || '',
         }),
         credentials: 'include',
       });

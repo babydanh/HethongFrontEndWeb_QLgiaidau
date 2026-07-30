@@ -99,19 +99,31 @@ export default function AdminSupportPage() {
       message: SupportMessage;
     }) => {
       void loadRooms(true);
-      if (payload.roomId !== selectedRoomIdRef.current) return;
+      const incomingMessage = payload?.message || payload;
+      const targetRoomId = payload?.roomId || selectedRoomIdRef.current;
+      if (targetRoomId !== selectedRoomIdRef.current) return;
 
       setMessages((current) =>
-        current.some((message) => message.id === payload.message.id)
+        incomingMessage?.id && current.some((message) => message.id === incomingMessage.id)
           ? current
-          : [...current, payload.message],
+          : [...current, incomingMessage],
       );
-      void supportApi.markAdminRoomRead(payload.roomId);
+      if (targetRoomId) void supportApi.markAdminRoomRead(targetRoomId);
+    };
+    const handleChatMessage = (msg: SupportMessage) => {
+      if (!selectedRoomIdRef.current) return;
+      setMessages((current) =>
+        msg?.id && current.some((message) => message.id === msg.id)
+          ? current
+          : [...current, msg],
+      );
+      void loadRooms(true);
     };
     const handleSupportRead = () => void loadRooms(true);
 
     socket.on('connect', subscribe);
     socket.on('support:message', handleSupportMessage);
+    socket.on('chat:message', handleChatMessage);
     socket.on('support:read', handleSupportRead);
 
     if (!socket.connected) socket.connect();
@@ -120,6 +132,7 @@ export default function AdminSupportPage() {
     return () => {
       socket.off('connect', subscribe);
       socket.off('support:message', handleSupportMessage);
+      socket.off('chat:message', handleChatMessage);
       socket.off('support:read', handleSupportRead);
     };
   }, [loadRooms]);
@@ -152,7 +165,7 @@ export default function AdminSupportPage() {
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-slate-950">Hỗ trợ người dùng</h2>
@@ -170,16 +183,16 @@ export default function AdminSupportPage() {
         </button>
       </div>
 
-      <div className="grid min-h-[640px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:grid-cols-[340px_1fr]">
-        <aside className="border-b border-slate-200 bg-slate-50/70 lg:border-b-0 lg:border-r">
-          <div className="flex items-center gap-2 border-b border-slate-200 px-5 py-4 font-bold text-slate-900">
+      <div className="grid h-[calc(100vh-170px)] min-h-[500px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:grid-cols-[340px_1fr]">
+        <aside className="flex h-full flex-col overflow-hidden border-b border-slate-200 bg-slate-50/70 lg:border-b-0 lg:border-r">
+          <div className="flex shrink-0 items-center gap-2 border-b border-slate-200 px-5 py-4 font-bold text-slate-900">
             <Inbox className="h-5 w-5 text-blue-600" />
             Hộp thư
             <span className="ml-auto rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700">
               {rooms.length}
             </span>
           </div>
-          <div className="max-h-[585px] overflow-y-auto p-3">
+          <div className="flex-1 overflow-y-auto p-3">
             {loadingRooms ? (
               <div className="flex justify-center py-16">
                 <Loader2 className="h-7 w-7 animate-spin text-blue-600" />
@@ -233,7 +246,7 @@ export default function AdminSupportPage() {
           </div>
         </aside>
 
-        <section className="flex min-h-[640px] min-w-0 flex-col">
+        <section className="flex h-full min-w-0 flex-col overflow-hidden">
           {!selectedRoomId ? (
             <div className="flex flex-1 flex-col items-center justify-center text-center text-slate-500">
               <MessageSquareText className="mb-4 h-14 w-14 text-slate-300" />

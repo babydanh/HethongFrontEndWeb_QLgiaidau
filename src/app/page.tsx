@@ -1,7 +1,7 @@
 'use client';
 
 // Reading this as: Sports platform homepage with live matches feed, featured tournaments, and community bento grid.
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { buildMatchScoreSummary, getMatchScorePresentation, resolveMatchSportRules, extractMatchScores } from '@/features/matches/score-display';
 import Image from 'next/image';
@@ -272,6 +272,7 @@ export default function HomePage() {
   const [upcomingMatches, setUpcomingMatches] = useState<BracketMatch[]>([]);
   const [completedMatches, setCompletedMatches] = useState<BracketMatch[]>([]);
   const [highFives, setHighFives] = useState<Record<string, number>>({});
+  const hasLoadedFeedRef = useRef(false);
 
   const [tournamentPages, setTournamentPages] = useState<Record<string, number>>({});
 
@@ -288,7 +289,7 @@ export default function HomePage() {
     const timer = setTimeout(() => setIsClient(true), 0);
     const loadCategories = async () => {
       // Cache categories trong sessionStorage (5 phút)
-      const CACHE_KEY = 'homepage_categories_v2';
+      const CACHE_KEY = 'homepage_categories_v3';
       const CACHE_TTL = 5 * 60 * 1000; // 5 phút
       try {
         if (typeof window !== 'undefined') {
@@ -335,8 +336,17 @@ export default function HomePage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setIsLoading(true);
+        // Keep loaded cards visible during background refreshes.
+        setIsLoading(!hasLoadedFeedRef.current || Boolean(selectedCategoryId));
         setIsLoadingRanked(true);
+        // Never show results from the previous sport while a filtered request is pending.
+        if (selectedCategoryId) {
+          setTournaments([]);
+          setCommunities([]);
+          setLiveMatches([]);
+          setUpcomingMatches([]);
+          setCompletedMatches([]);
+        }
 
         const tParams: Record<string, unknown> = { limit: 20 };
         if (selectedCategoryId) {
@@ -373,16 +383,25 @@ export default function HomePage() {
         const activeTournaments = fetchedTournaments.filter(
           (t: Tournament) => t.status !== 'DRAFT' && t.status !== 'CANCELLED'
         );
+        const visibleTournaments = selectedCategoryId
+          ? activeTournaments.filter(t => t.categoryId === selectedCategoryId)
+          : activeTournaments;
         if (tRes.status === 'fulfilled') {
-          setTournaments(activeTournaments);
+          setTournaments(visibleTournaments);
+        } else if (selectedCategoryId) {
+          // A failed filtered request must not leave a different sport on screen.
+          setTournaments([]);
         }
 
         // Build set of valid tournament IDs
-        const validTournamentIds = new Set(activeTournaments.map((t: Tournament) => t.id));
+        const validTournamentIds = new Set(visibleTournaments.map((t: Tournament) => t.id));
         // Nếu tournaments API trả về rỗng, có thể cache cũ hoặc API lỗi.
         // Vẫn hiển thị matches mà không filter theo tournament ID.
         const shouldFilterByTournament = validTournamentIds.size > 0;
-        setCommunities(cRes.status === 'fulfilled' ? cRes.value.data || [] : []);
+        const fetchedCommunities = cRes.status === 'fulfilled' ? cRes.value.data || [] : [];
+        setCommunities(selectedCategoryId
+          ? fetchedCommunities.filter(c => c.categories?.some(cat => cat.id === selectedCategoryId))
+          : fetchedCommunities);
 
         // ── ĐỢT 2 (sau 300ms): matches — gộp 1 call multi-status, limit 50 ──
         if (allMatchesRes.status === 'fulfilled') {
@@ -430,6 +449,7 @@ export default function HomePage() {
 
         // ── ĐỢT 4 (sau 900ms): ranked tournament matches (chỉ fetch nếu tìm thấy) ──
         // Core home content is ready; ranked details must not block first paint.
+        hasLoadedFeedRef.current = true;
         setIsLoading(false);
 
         const foundRanked = fetchedTournaments.find(t => {

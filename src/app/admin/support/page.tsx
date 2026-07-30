@@ -102,16 +102,26 @@ export default function AdminSupportPage() {
     selectedRoomIdRef.current = selectedRoomId;
     if (!selectedRoomId) return;
 
-    setLoadingMessages(true);
-    void loadMessages(selectedRoomId);
+    let active = true;
+    void supportApi.getAdminMessages(selectedRoomId).then((data) => {
+      if (!active) return;
+      setMessages(data);
+      setLoadingMessages(false);
+    }).catch((error) => {
+      if (!active) return;
+      toast.error(getErrorMessage(error, 'Không tải được cuộc hội thoại.'));
+      setLoadingMessages(false);
+    });
+
     void supportApi.markAdminRoomRead(selectedRoomId).then(() => loadRooms(true));
 
     const socket = socketClient.getChatSocket();
     socket.emit('joinChatRoom', selectedRoomId);
     return () => {
+      active = false;
       socket.emit('leaveChatRoom', selectedRoomId);
     };
-  }, [loadMessages, loadRooms, selectedRoomId]);
+  }, [loadRooms, selectedRoomId]);
 
   useEffect(() => {
     const socket = socketClient.getChatSocket();

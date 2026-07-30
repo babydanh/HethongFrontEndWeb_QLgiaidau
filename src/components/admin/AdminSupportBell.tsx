@@ -5,8 +5,10 @@ import Link from 'next/link';
 import { Bell, CircleUserRound, MessageSquareText } from 'lucide-react';
 import { supportApi, type AdminSupportRoom } from '@/features/support/api';
 import { socketClient } from '@/lib/socket';
+import { useAuthStore } from '@/lib/zustand/authStore';
 
 export function AdminSupportBell() {
+  const userId = useAuthStore((state) => state.user?.id);
   const [rooms, setRooms] = useState<AdminSupportRoom[]>([]);
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -17,9 +19,11 @@ export function AdminSupportBell() {
   }, []);
 
   useEffect(() => {
-    void refresh();
+    if (!userId) return;
 
-    const socket = socketClient.getChatSocket();
+    const initialRefresh = window.setTimeout(() => void refresh(), 0);
+
+    const socket = socketClient.refreshChatAuthentication();
     const subscribe = () => socket.emit('subscribeSupportInbox');
     const handleChange = () => void refresh();
 
@@ -30,14 +34,30 @@ export function AdminSupportBell() {
     if (!socket.connected) socket.connect();
     else subscribe();
 
-    const fallback = window.setInterval(() => void refresh(), 30000);
+    let refreshInFlight = false;
+    const refreshQuietly = async () => {
+      if (refreshInFlight || document.hidden) return;
+      refreshInFlight = true;
+      try {
+        await refresh();
+      } finally {
+        refreshInFlight = false;
+      }
+    };
+    const handleFocus = () => void refreshQuietly();
+    const fallback = window.setInterval(() => void refreshQuietly(), 10000);
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleFocus);
     return () => {
+      window.clearTimeout(initialRefresh);
       window.clearInterval(fallback);
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleFocus);
       socket.off('connect', subscribe);
       socket.off('support:message', handleChange);
       socket.off('support:read', handleChange);
     };
-  }, [refresh]);
+  }, [refresh, userId]);
 
   useEffect(() => {
     const close = (event: MouseEvent) => {

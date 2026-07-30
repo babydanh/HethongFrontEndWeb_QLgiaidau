@@ -91,10 +91,25 @@ export default function AdminSupportPage() {
       setLoadingRooms(false);
     });
 
-    const timer = window.setInterval(() => void loadRooms(true), 30000);
+    let syncInFlight = false;
+    const syncRooms = async () => {
+      if (syncInFlight || document.hidden) return;
+      syncInFlight = true;
+      try {
+        await loadRooms(true);
+      } finally {
+        syncInFlight = false;
+      }
+    };
+    const handleFocus = () => void syncRooms();
+    const timer = window.setInterval(() => void syncRooms(), 2000);
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleFocus);
     return () => {
       active = false;
       window.clearInterval(timer);
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleFocus);
     };
   }, [loadRooms]);
 
@@ -116,12 +131,34 @@ export default function AdminSupportPage() {
     void supportApi.markAdminRoomRead(selectedRoomId).then(() => loadRooms(true));
 
     const socket = socketClient.getChatSocket();
-    socket.emit('joinChatRoom', selectedRoomId);
+    const joinSelectedRoom = () => socket.emit('joinChatRoom', selectedRoomId);
+    socket.on('connect', joinSelectedRoom);
+    if (socket.connected) joinSelectedRoom();
+
+    let syncInFlight = false;
+    const syncMessages = async () => {
+      if (syncInFlight || document.hidden) return;
+      syncInFlight = true;
+      try {
+        await loadMessages(selectedRoomId, true);
+      } finally {
+        syncInFlight = false;
+      }
+    };
+    const handleFocus = () => void syncMessages();
+    const messageSyncTimer = window.setInterval(() => void syncMessages(), 2000);
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleFocus);
+
     return () => {
       active = false;
+      window.clearInterval(messageSyncTimer);
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleFocus);
+      socket.off('connect', joinSelectedRoom);
       socket.emit('leaveChatRoom', selectedRoomId);
     };
-  }, [loadRooms, selectedRoomId]);
+  }, [loadMessages, loadRooms, selectedRoomId]);
 
   useEffect(() => {
     const socket = socketClient.getChatSocket();
@@ -132,7 +169,10 @@ export default function AdminSupportPage() {
     }) => {
       void loadRooms(true);
       const incomingMessage = payload?.message || payload;
-      const targetRoomId = payload?.roomId || selectedRoomIdRef.current;
+      const targetRoomId =
+        payload?.roomId ||
+        incomingMessage?.roomId ||
+        selectedRoomIdRef.current;
       if (targetRoomId !== selectedRoomIdRef.current) return;
 
       setMessages((current) =>
@@ -140,10 +180,18 @@ export default function AdminSupportPage() {
           ? current
           : [...current, incomingMessage],
       );
-      if (targetRoomId) void supportApi.markAdminRoomRead(targetRoomId);
+      if (targetRoomId) {
+        void loadMessages(targetRoomId, true);
+        void supportApi.markAdminRoomRead(targetRoomId);
+      }
     };
     const handleChatMessage = (msg: SupportMessage) => {
-      if (!selectedRoomIdRef.current) return;
+      if (
+        !selectedRoomIdRef.current ||
+        (msg.roomId && msg.roomId !== selectedRoomIdRef.current)
+      ) {
+        return;
+      }
       setMessages((current) =>
         msg?.id && current.some((message) => message.id === msg.id)
           ? current
@@ -157,6 +205,7 @@ export default function AdminSupportPage() {
     socket.on('support:message', handleSupportMessage);
     socket.on('chat:message', handleChatMessage);
     socket.on('support:read', handleSupportRead);
+    socket.on('support:error', handleSupportRead);
 
     if (!socket.connected) socket.connect();
     else subscribe();
@@ -166,8 +215,9 @@ export default function AdminSupportPage() {
       socket.off('support:message', handleSupportMessage);
       socket.off('chat:message', handleChatMessage);
       socket.off('support:read', handleSupportRead);
+      socket.off('support:error', handleSupportRead);
     };
-  }, [loadRooms]);
+  }, [loadMessages, loadRooms]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });

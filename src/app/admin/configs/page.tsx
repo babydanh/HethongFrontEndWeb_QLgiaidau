@@ -5,6 +5,7 @@ import { api } from '@/lib/axios';
 import { toast } from 'react-hot-toast';
 import { Settings, Save, Edit, RefreshCw, X, BadgeDollarSign } from 'lucide-react';
 import type { ApiResponse } from '@/types/api';
+import { tournamentsApi } from '@/features/tournaments/api';
 
 interface SystemConfig {
   key: string;
@@ -12,6 +13,13 @@ interface SystemConfig {
   description: string;
   updatedAt: string;
 }
+
+const DEFAULT_ENTRY_FEE_POLICY: SystemConfig = {
+  key: 'ALLOW_TOURNAMENT_ENTRY_FEES',
+  value: 'true',
+  description: 'Cho phép ban tổ chức đặt lệ phí đăng ký cho giải đấu mới hoặc khi chỉnh sửa giải.',
+  updatedAt: '',
+};
 
 export default function ConfigsPage() {
   const [configs, setConfigs] = useState<SystemConfig[]>([]);
@@ -21,13 +29,28 @@ export default function ConfigsPage() {
   const [editDesc, setEditDesc] = useState('');
   const [showEditModal, setShowEditModal] = useState(false);
   const [processing, setProcessing] = useState(false);
-  const entryFeePolicy = configs.find((config) => config.key === 'ALLOW_TOURNAMENT_ENTRY_FEES');
+  const entryFeePolicy =
+    configs.find((config) => config.key === 'ALLOW_TOURNAMENT_ENTRY_FEES') ??
+    DEFAULT_ENTRY_FEE_POLICY;
 
   async function fetchConfigs() {
     setLoading(true);
     try {
       const response = await api.get<ApiResponse<SystemConfig[]>>('/admin/configs');
-      setConfigs(response.data || []);
+      const loadedConfigs = response.data || [];
+
+      if (loadedConfigs.some((config) => config.key === DEFAULT_ENTRY_FEE_POLICY.key)) {
+        setConfigs(loadedConfigs);
+      } else {
+        const feesResponse = await tournamentsApi.getFeesConfig().catch(() => null);
+        setConfigs([
+          ...loadedConfigs,
+          {
+            ...DEFAULT_ENTRY_FEE_POLICY,
+            value: feesResponse?.data?.allowEntryFees === false ? 'false' : 'true',
+          },
+        ]);
+      }
     } catch (error: unknown) {
       console.error(error);
       toast.error('Lỗi khi tải danh sách cấu hình');
@@ -72,7 +95,7 @@ export default function ConfigsPage() {
   };
 
   const handleToggleEntryFees = async () => {
-    if (!entryFeePolicy || processing) return;
+    if (processing) return;
     setProcessing(true);
     try {
       const nextValue = entryFeePolicy.value.toLowerCase() === 'true' ? 'false' : 'true';
@@ -113,8 +136,7 @@ export default function ConfigsPage() {
         </button>
       </div>
 
-      {entryFeePolicy && (
-        <section className="overflow-hidden rounded-xl border border-blue-200 bg-white shadow-sm">
+      <section className="overflow-hidden rounded-xl border border-blue-200 bg-white shadow-sm">
           <div className="flex flex-col gap-5 bg-gradient-to-r from-blue-50 via-white to-emerald-50 p-6 md:flex-row md:items-center md:justify-between">
             <div className="flex items-start gap-4">
               <div className="rounded-xl bg-blue-600 p-3 text-white shadow-sm">
@@ -150,8 +172,7 @@ export default function ConfigsPage() {
               />
             </button>
           </div>
-        </section>
-      )}
+      </section>
 
       {/* Main configurations card */}
       {loading ? (

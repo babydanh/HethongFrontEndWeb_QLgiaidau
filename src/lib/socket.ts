@@ -5,7 +5,9 @@ interface SocketAuthPayload {
 }
 
 const getSocketUrl = () => {
-  if (process.env.NEXT_PUBLIC_SOCKET_URL) return process.env.NEXT_PUBLIC_SOCKET_URL;
+  const configuredUrl =
+    process.env.NEXT_PUBLIC_SOCKET_URL || process.env.NEXT_PUBLIC_WS_URL;
+  if (configuredUrl) return configuredUrl.replace(/\/+$/, '');
   if (typeof window !== 'undefined') {
     const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
     if (isLocalhost) {
@@ -103,6 +105,20 @@ class SocketClient {
     if (this.notificationSocket) {
       this.notificationSocket.auth = this.getNotificationAuthPayload();
     }
+  }
+
+  public refreshChatAuthentication(): Socket {
+    const socket = this.getChatSocket();
+    socket.auth = this.getNotificationAuthPayload();
+
+    // A socket opened before login keeps the old handshake cookies until it
+    // reconnects. Reconnect once when entering an authenticated chat surface.
+    if (socket.connected) {
+      socket.disconnect();
+    }
+    socket.connect();
+
+    return socket;
   }
 
   public connectAll() {

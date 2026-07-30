@@ -98,10 +98,12 @@ export default function CreateLiteTournamentPage({
     }
   };
 
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+
   if (isLoadingCommunity) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+        <LoadingSpinner className="w-12 h-12" />
       </div>
     );
   }

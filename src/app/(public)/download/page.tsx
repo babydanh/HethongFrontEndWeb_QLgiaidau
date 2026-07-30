@@ -45,6 +45,8 @@ function AppleSvg({ className = "w-8 h-8" }: { className?: string }) {
 }
 
 export default function DownloadPage() {
+  const [showVersionModal, setShowVersionModal] = useState(false);
+
   return (
     <div className="min-h-[100dvh] bg-slate-50 text-slate-900 relative overflow-hidden selection:bg-blue-500 selection:text-white">
       {/* Soft Light Background Glows */}
@@ -59,12 +61,6 @@ export default function DownloadPage() {
           transition={{ duration: 0.5 }}
           className="text-center mb-12"
         >
-          {/* Prominent Version Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-50 border border-emerald-200 text-xs font-bold text-emerald-800 mb-6 shadow-sm">
-            <Sparkles className="w-4 h-4 text-emerald-600 animate-pulse" />
-            <span>Phiên bản App v1.0.2 (Build 3) &bull; Mới nhất 2026</span>
-          </div>
-
           {/* Clean Single VNSPORT Logo */}
           <div className="flex justify-center mb-4">
             <Image 
@@ -193,41 +189,8 @@ export default function DownloadPage() {
 
         </div>
 
-        {/* Features Highlight */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
-          <div className="p-4 rounded-xl bg-white border border-slate-200/80 shadow-sm flex items-center gap-3.5">
-            <div className="w-10 h-10 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0 text-blue-600">
-              <Zap className="w-5 h-5" />
-            </div>
-            <div>
-              <h4 className="text-xs font-bold text-slate-900">Tỷ số Real-time</h4>
-              <p className="text-[11px] text-slate-500">Cập nhật trực tiếp từng điểm số</p>
-            </div>
-          </div>
-
-          <div className="p-4 rounded-xl bg-white border border-slate-200/80 shadow-sm flex items-center gap-3.5">
-            <div className="w-10 h-10 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center shrink-0 text-emerald-600">
-              <ShieldCheck className="w-5 h-5" />
-            </div>
-            <div>
-              <h4 className="text-xs font-bold text-slate-900">Xếp hạng ELO chuẩn</h4>
-              <p className="text-[11px] text-slate-500">Tự động cộng trừ điểm ELO</p>
-            </div>
-          </div>
-
-          <div className="p-4 rounded-xl bg-white border border-slate-200/80 shadow-sm flex items-center gap-3.5">
-            <div className="w-10 h-10 rounded-lg bg-purple-50 border border-purple-100 flex items-center justify-center shrink-0 text-purple-600">
-              <CheckCircle2 className="w-5 h-5" />
-            </div>
-            <div>
-              <h4 className="text-xs font-bold text-slate-900">Quản lý Giải đấu</h4>
-              <p className="text-[11px] text-slate-500">Sơ đồ nhánh đấu tự động</p>
-            </div>
-          </div>
-        </div>
-
         {/* Hướng dẫn cài đặt APK */}
-        <div className="p-6 md:p-8 bg-white border border-slate-200 rounded-2xl shadow-sm">
+        <div className="p-6 md:p-8 bg-white border border-slate-200 rounded-2xl shadow-sm mb-8">
           <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-6 flex items-center gap-2">
             <Info className="w-4 h-4 text-emerald-600" />
             <span>Hướng dẫn cài đặt APK trên Android</span>
@@ -258,6 +221,65 @@ export default function DownloadPage() {
             </div>
           </div>
         </div>
+
+        {/* Small Version Trigger at Bottom */}
+        <div className="text-center pt-2">
+          <button 
+            onClick={() => setShowVersionModal(true)}
+            className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-600 transition-colors font-medium cursor-pointer"
+          >
+            <Info className="w-3.5 h-3.5" />
+            <span>Thông tin phiên bản v1.0.2 (Build 3)</span>
+          </button>
+        </div>
+
+        {/* Version Modal */}
+        {showVersionModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+            <div className="bg-white rounded-2xl p-6 max-w-sm w-full border border-slate-200 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200">
+              <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                <h4 className="font-bold text-sm text-slate-900 flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-emerald-600" />
+                  <span>Chi tiết phiên bản App</span>
+                </h4>
+                <button 
+                  onClick={() => setShowVersionModal(false)}
+                  className="text-slate-400 hover:text-slate-700 text-sm font-bold w-6 h-6 rounded-full hover:bg-slate-100 flex items-center justify-center"
+                >
+                  &times;
+                </button>
+              </div>
+              <div className="space-y-2.5 text-xs text-slate-600 mb-6">
+                <div className="flex justify-between py-1 border-b border-slate-50">
+                  <span className="text-slate-400">Phiên bản:</span>
+                  <span className="font-bold text-slate-900">v1.0.2</span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-slate-50">
+                  <span className="text-slate-400">Build Number:</span>
+                  <span className="font-bold text-slate-900">Build 3</span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-slate-50">
+                  <span className="text-slate-400">Dung lượng APK:</span>
+                  <span className="font-bold text-slate-900">65.4 MB</span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-slate-50">
+                  <span className="text-slate-400">Trạng thái CH Play:</span>
+                  <span className="font-bold text-emerald-600">Đã phát hành</span>
+                </div>
+                <div className="flex justify-between py-1">
+                  <span className="text-slate-400">Trạng thái App Store:</span>
+                  <span className="font-bold text-blue-600">Đang duyệt (Pending)</span>
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowVersionModal(false)}
+                className="w-full py-2.5 rounded-xl bg-slate-900 text-white font-bold text-xs hover:bg-slate-800 transition-colors"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>

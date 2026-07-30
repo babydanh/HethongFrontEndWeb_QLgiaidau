@@ -7,8 +7,7 @@ import { authApi } from '@/features/auth/api';
 import { usersApi } from '@/features/users/api';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { getErrorMessage } from '@/utils/error';
-import { Trophy, CheckCircle, XCircle, Loader2 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
 function VerifyEmailContent() {
   const searchParams = useSearchParams();
@@ -73,7 +72,7 @@ function VerifyEmailContent() {
 
         {status === 'loading' && (
           <div className="flex flex-col items-center py-6">
-            <Loader2 className="w-10 h-10 text-blue-600 animate-spin mb-4" />
+            <LoadingSpinner className="w-12 h-12 mb-4" />
             <h2 className="text-lg font-bold text-slate-800">Đang xác minh Email</h2>
             <p className="text-xs text-slate-500 mt-2">Vui lòng chờ trong giây lát...</p>
           </div>

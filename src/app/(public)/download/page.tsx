@@ -1,10 +1,10 @@
 'use client';
 
-// Reading this as: App Download Landing Page for VNSPORT users, with a modern, high-contrast dark-tech language, leaning toward dark mesh + glassy backdrop + vibrant emerald & neon accents.
+// Reading this as: App Download Landing Page for VNSPORT users, with a clean light theme (nền trắng) matching the header, crisp store badges, and clear version indicator.
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Download, CheckCircle2, ShieldCheck, Zap, Sparkles, ArrowRight, Smartphone } from 'lucide-react';
+import { Download, CheckCircle2, ShieldCheck, Zap, Sparkles, Smartphone, Info } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 function GooglePlaySvg({ className = "w-8 h-8" }: { className?: string }) {
@@ -46,71 +46,67 @@ function AppleSvg({ className = "w-8 h-8" }: { className?: string }) {
 
 export default function DownloadPage() {
   return (
-    <div className="min-h-[100dvh] bg-[#0A0E1A] text-slate-100 relative overflow-hidden selection:bg-emerald-500 selection:text-white">
-      {/* Ambient background glow effects */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-gradient-to-b from-blue-600/15 via-emerald-500/10 to-transparent blur-[120px] pointer-events-none" />
-      <div className="absolute top-1/3 left-0 w-[400px] h-[400px] bg-emerald-600/10 blur-[140px] pointer-events-none" />
-      <div className="absolute bottom-10 right-0 w-[500px] h-[500px] bg-blue-600/10 blur-[160px] pointer-events-none" />
+    <div className="min-h-[100dvh] bg-slate-50 text-slate-900 relative overflow-hidden selection:bg-blue-500 selection:text-white">
+      {/* Soft Light Background Glows */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[400px] bg-gradient-to-b from-blue-100/60 via-emerald-100/30 to-transparent blur-3xl pointer-events-none" />
 
-      <div className="max-w-4xl mx-auto px-4 py-12 md:py-20 relative z-10">
+      <div className="max-w-4xl mx-auto px-4 py-10 md:py-16 relative z-10">
         
         {/* Hero Section */}
         <motion.div 
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-14"
+          transition={{ duration: 0.5 }}
+          className="text-center mb-12"
         >
-          {/* Version Pill */}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900/80 border border-slate-800 text-xs font-semibold text-emerald-400 mb-6 shadow-inner">
-            <Sparkles className="w-3.5 h-3.5 animate-pulse" />
-            <span>Phiên bản v1.0.2 (Build 3) &bull; Mới nhất 2026</span>
+          {/* Prominent Version Badge */}
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-50 border border-emerald-200 text-xs font-bold text-emerald-800 mb-6 shadow-sm">
+            <Sparkles className="w-4 h-4 text-emerald-600 animate-pulse" />
+            <span>Phiên bản App v1.0.2 (Build 3) &bull; Mới nhất 2026</span>
           </div>
 
-          {/* Large prominent VNSPORT Logo */}
-          <div className="relative inline-block mb-6 group">
-            <div className="absolute -inset-4 bg-gradient-to-r from-blue-600/30 to-emerald-500/30 rounded-2xl blur-xl opacity-70 group-hover:opacity-100 transition duration-500" />
-            <div className="relative bg-slate-900/90 border border-slate-800 p-6 md:p-8 rounded-2xl shadow-2xl backdrop-blur-xl flex items-center justify-center">
-              <Image 
-                src="/vndcsport.svg" 
-                alt="VNSPORT Logo" 
-                width={280} 
-                height={80} 
-                className="w-56 md:w-72 h-auto object-contain drop-shadow-[0_0_20px_rgba(59,130,246,0.4)]"
-                priority
-              />
-            </div>
+          {/* Clean Single VNSPORT Logo */}
+          <div className="flex justify-center mb-4">
+            <Image 
+              src="/vndcsport.svg" 
+              alt="VNSPORT Logo" 
+              width={260} 
+              height={70} 
+              className="w-56 md:w-64 h-auto object-contain drop-shadow-sm"
+              priority
+            />
           </div>
 
-          <h1 className="text-3xl md:text-5xl font-black tracking-tight text-white mb-4">
-            Tải Ứng Dụng <span className="bg-gradient-to-r from-blue-400 via-emerald-400 to-teal-300 bg-clip-text text-transparent">VNSPORT</span>
+          {/* Clean Headline without duplicate VNSPORT name */}
+          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900 mb-3">
+            Tải Ứng Dụng Di Động
           </h1>
-          <p className="text-slate-400 text-base md:text-lg max-w-xl mx-auto leading-relaxed font-normal">
-            Quản lý giải đấu chuyên nghiệp, cập nhật tỷ số trực tiếp và theo dõi xếp hạng ELO tiện lợi trên thiết bị di động.
+          <p className="text-slate-600 text-base md:text-lg max-w-xl mx-auto leading-relaxed font-normal">
+            Quản lý giải đấu chuyên nghiệp, cập nhật tỷ số trực tiếp và theo dõi xếp hạng ELO tiện lợi trên điện thoại của bạn.
           </p>
         </motion.div>
 
         {/* Store & Download Options Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-14">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
           
           {/* Google Play Card */}
           <motion.div 
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="bg-slate-900/70 border border-slate-800/80 hover:border-slate-700 p-6 rounded-2xl backdrop-blur-xl flex flex-col justify-between shadow-xl transition-all duration-300 hover:-translate-y-1"
+            transition={{ duration: 0.4, delay: 0.1 }}
+            className="bg-white border border-slate-200 hover:border-slate-300 p-6 rounded-2xl flex flex-col justify-between shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
           >
             <div>
               <div className="flex items-center justify-between mb-5">
-                <div className="w-14 h-14 bg-slate-800/80 rounded-xl flex items-center justify-center p-3 border border-slate-700/50 shadow-md">
+                <div className="w-14 h-14 bg-slate-50 rounded-xl flex items-center justify-center p-3 border border-slate-100 shadow-inner">
                   <GooglePlaySvg className="w-9 h-9" />
                 </div>
-                <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
                   Android
                 </span>
               </div>
-              <h3 className="text-lg font-bold text-white mb-1">Google Play</h3>
-              <p className="text-xs text-slate-400 mb-6 leading-relaxed">
+              <h3 className="text-lg font-bold text-slate-900 mb-1">Google Play</h3>
+              <p className="text-xs text-slate-500 mb-6 leading-relaxed">
                 Tải trực tiếp từ cửa hàng Google Play Store chính thức.
               </p>
             </div>
@@ -119,7 +115,7 @@ export default function DownloadPage() {
               href="https://play.google.com/store/apps/details?id=vn.vnsport.quanlygiaidau&pcampaignid=web_share" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="w-full py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-semibold text-xs flex items-center justify-center gap-2.5 transition-all shadow-md active:scale-[0.98]"
+              className="w-full py-3 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs flex items-center justify-center gap-2.5 transition-all shadow-sm active:scale-[0.98]"
             >
               <GooglePlaySvg className="w-4 h-4" />
               <span>Mở Google Play</span>
@@ -128,29 +124,29 @@ export default function DownloadPage() {
 
           {/* App Store Card */}
           <motion.div 
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="bg-slate-900/70 border border-slate-800/80 hover:border-slate-700 p-6 rounded-2xl backdrop-blur-xl flex flex-col justify-between shadow-xl transition-all duration-300 hover:-translate-y-1"
+            transition={{ duration: 0.4, delay: 0.2 }}
+            className="bg-white border border-slate-200 hover:border-slate-300 p-6 rounded-2xl flex flex-col justify-between shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
           >
             <div>
               <div className="flex items-center justify-between mb-5">
-                <div className="w-14 h-14 bg-slate-800/80 rounded-xl flex items-center justify-center p-3 border border-slate-700/50 shadow-md">
-                  <AppleSvg className="w-8 h-8 text-white" />
+                <div className="w-14 h-14 bg-slate-50 rounded-xl flex items-center justify-center p-3 border border-slate-100 shadow-inner">
+                  <AppleSvg className="w-8 h-8 text-slate-900" />
                 </div>
-                <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md bg-blue-50 text-blue-700 border border-blue-200">
                   iOS App
                 </span>
               </div>
-              <h3 className="text-lg font-bold text-white mb-1">App Store</h3>
-              <p className="text-xs text-slate-400 mb-6 leading-relaxed">
+              <h3 className="text-lg font-bold text-slate-900 mb-1">App Store</h3>
+              <p className="text-xs text-slate-500 mb-6 leading-relaxed">
                 Dành cho iPhone &amp; iPad trải nghiệm iOS mượt mà.
               </p>
             </div>
             
             <button 
               disabled
-              className="w-full py-3 px-4 rounded-xl bg-slate-800/50 border border-slate-800 text-slate-500 font-semibold text-xs flex items-center justify-center gap-2 cursor-not-allowed"
+              className="w-full py-3 px-4 rounded-xl bg-slate-100 border border-slate-200 text-slate-400 font-semibold text-xs flex items-center justify-center gap-2 cursor-not-allowed"
             >
               <Smartphone className="w-4 h-4 opacity-60" />
               <span>Đang cập nhật iOS</span>
@@ -159,28 +155,28 @@ export default function DownloadPage() {
 
           {/* Direct APK Card (Featured) */}
           <motion.div 
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-            className="bg-gradient-to-b from-emerald-950/40 to-slate-900/80 border-2 border-emerald-500/40 hover:border-emerald-500 p-6 rounded-2xl backdrop-blur-xl flex flex-col justify-between shadow-2xl relative overflow-hidden transition-all duration-300 hover:-translate-y-1 group"
+            transition={{ duration: 0.4, delay: 0.3 }}
+            className="bg-gradient-to-b from-emerald-50/70 to-white border-2 border-emerald-500 p-6 rounded-2xl flex flex-col justify-between shadow-md hover:shadow-lg relative overflow-hidden transition-all duration-200 hover:-translate-y-0.5"
           >
-            <div className="absolute top-0 right-0 bg-emerald-500 text-slate-950 text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-bl-xl shadow-md">
+            <div className="absolute top-0 right-0 bg-emerald-600 text-white text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-bl-xl shadow-sm">
               Nhanh nhất
             </div>
 
             <div>
               <div className="flex items-center justify-between mb-5">
-                <div className="w-14 h-14 bg-emerald-500/20 rounded-xl flex items-center justify-center border border-emerald-500/30 text-emerald-400 shadow-md">
+                <div className="w-14 h-14 bg-emerald-100/80 rounded-xl flex items-center justify-center border border-emerald-200 text-emerald-700 shadow-inner">
                   <Download className="w-7 h-7 animate-bounce" />
                 </div>
-                <span className="text-[11px] font-bold tracking-wider px-2.5 py-1 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                <span className="text-[11px] font-bold tracking-wider px-2.5 py-1 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-300">
                   65.4 MB
                 </span>
               </div>
-              <h3 className="text-lg font-bold text-white mb-1 flex items-center gap-2">
+              <h3 className="text-lg font-bold text-slate-900 mb-1 flex items-center gap-2">
                 <span>File APK Trực Tiếp</span>
               </h3>
-              <p className="text-xs text-slate-300 mb-6 leading-relaxed">
+              <p className="text-xs text-slate-600 mb-6 leading-relaxed">
                 Tải gói cài đặt APK chính thức trực tiếp về máy Android và cài ngay trong 30 giây.
               </p>
             </div>
@@ -188,7 +184,7 @@ export default function DownloadPage() {
             <Link 
               href="/downloads/app.apk" 
               download
-              className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-extrabold text-xs flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-500/20 active:scale-[0.98]"
+              className="w-full py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs flex items-center justify-center gap-2 transition-all shadow-md active:scale-[0.98]"
             >
               <Download className="w-4 h-4" />
               <span>TẢI FILE APK NGAY</span>
@@ -198,66 +194,66 @@ export default function DownloadPage() {
         </div>
 
         {/* Features Highlight */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
-          <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800/60 flex items-center gap-3.5">
-            <div className="w-10 h-10 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0 text-blue-400">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
+          <div className="p-4 rounded-xl bg-white border border-slate-200/80 shadow-sm flex items-center gap-3.5">
+            <div className="w-10 h-10 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0 text-blue-600">
               <Zap className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="text-xs font-bold text-white">Tỷ số Real-time</h4>
-              <p className="text-[11px] text-slate-400">Cập nhật trực tiếp từng điểm số</p>
+              <h4 className="text-xs font-bold text-slate-900">Tỷ số Real-time</h4>
+              <p className="text-[11px] text-slate-500">Cập nhật trực tiếp từng điểm số</p>
             </div>
           </div>
 
-          <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800/60 flex items-center gap-3.5">
-            <div className="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0 text-emerald-400">
+          <div className="p-4 rounded-xl bg-white border border-slate-200/80 shadow-sm flex items-center gap-3.5">
+            <div className="w-10 h-10 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center shrink-0 text-emerald-600">
               <ShieldCheck className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="text-xs font-bold text-white">Xếp hạng ELO chuẩn</h4>
-              <p className="text-[11px] text-slate-400">Tự động cộng trừ điểm ELO</p>
+              <h4 className="text-xs font-bold text-slate-900">Xếp hạng ELO chuẩn</h4>
+              <p className="text-[11px] text-slate-500">Tự động cộng trừ điểm ELO</p>
             </div>
           </div>
 
-          <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800/60 flex items-center gap-3.5">
-            <div className="w-10 h-10 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0 text-purple-400">
+          <div className="p-4 rounded-xl bg-white border border-slate-200/80 shadow-sm flex items-center gap-3.5">
+            <div className="w-10 h-10 rounded-lg bg-purple-50 border border-purple-100 flex items-center justify-center shrink-0 text-purple-600">
               <CheckCircle2 className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="text-xs font-bold text-white">Quản lý Giải đấu</h4>
-              <p className="text-[11px] text-slate-400">Sơ đồ nhánh đấu tự động</p>
+              <h4 className="text-xs font-bold text-slate-900">Quản lý Giải đấu</h4>
+              <p className="text-[11px] text-slate-500">Sơ đồ nhánh đấu tự động</p>
             </div>
           </div>
         </div>
 
         {/* Hướng dẫn cài đặt APK */}
-        <div className="p-6 md:p-8 bg-slate-900/60 border border-slate-800 rounded-2xl backdrop-blur-xl">
-          <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-6 flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-400" />
+        <div className="p-6 md:p-8 bg-white border border-slate-200 rounded-2xl shadow-sm">
+          <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-6 flex items-center gap-2">
+            <Info className="w-4 h-4 text-emerald-600" />
             <span>Hướng dẫn cài đặt APK trên Android</span>
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs text-slate-300">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs text-slate-600">
             <div className="flex items-start gap-3">
-              <span className="w-6 h-6 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0 font-bold text-emerald-400 text-xs">1</span>
+              <span className="w-6 h-6 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center shrink-0 font-bold text-emerald-700 text-xs">1</span>
               <div>
-                <p className="font-bold text-white mb-1">Tải file APK</p>
-                <p className="text-slate-400 leading-relaxed">Nhấn nút <strong>TẢI FILE APK NGAY</strong> ở trên để tải gói cài đặt về điện thoại.</p>
+                <p className="font-bold text-slate-900 mb-1">Tải file APK</p>
+                <p className="text-slate-500 leading-relaxed">Nhấn nút <strong>TẢI FILE APK NGAY</strong> ở trên để tải gói cài đặt về điện thoại.</p>
               </div>
             </div>
 
             <div className="flex items-start gap-3">
-              <span className="w-6 h-6 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0 font-bold text-emerald-400 text-xs">2</span>
+              <span className="w-6 h-6 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center shrink-0 font-bold text-emerald-700 text-xs">2</span>
               <div>
-                <p className="font-bold text-white mb-1">Cấp quyền cài đặt</p>
-                <p className="text-slate-400 leading-relaxed">Vào <strong>Cài đặt &gt; Bảo mật</strong> và bật <strong>Cho phép cài đặt từ nguồn ngoài</strong>.</p>
+                <p className="font-bold text-slate-900 mb-1">Cấp quyền cài đặt</p>
+                <p className="text-slate-500 leading-relaxed">Vào <strong>Cài đặt &gt; Bảo mật</strong> và bật <strong>Cho phép cài đặt từ nguồn ngoài</strong>.</p>
               </div>
             </div>
 
             <div className="flex items-start gap-3">
-              <span className="w-6 h-6 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0 font-bold text-emerald-400 text-xs">3</span>
+              <span className="w-6 h-6 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center shrink-0 font-bold text-emerald-700 text-xs">3</span>
               <div>
-                <p className="font-bold text-white mb-1">Mở file &amp; Trải nghiệm</p>
-                <p className="text-slate-400 leading-relaxed">Nhấn mở file APK đã tải và chọn <strong>Cài đặt</strong> để hoàn tất.</p>
+                <p className="font-bold text-slate-900 mb-1">Mở file &amp; Trải nghiệm</p>
+                <p className="text-slate-500 leading-relaxed">Nhấn mở file APK đã tải và chọn <strong>Cài đặt</strong> để hoàn tất.</p>
               </div>
             </div>
           </div>
@@ -267,4 +263,5 @@ export default function DownloadPage() {
     </div>
   );
 }
+
 

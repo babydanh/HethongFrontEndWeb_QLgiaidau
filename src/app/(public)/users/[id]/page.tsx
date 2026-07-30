@@ -218,7 +218,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
         <div className="px-6 md:px-10 pb-8 relative">
           {/* Avatar & Info */}
           <div className="flex flex-col md:flex-row justify-between items-end md:items-center gap-4 -mt-16 mb-5 relative z-10">
-            <div className={`w-32 h-32 rounded-full bg-slate-100 border-4 border-white shadow-xl ring-4 ${getTierRingClass(displayedRanks.filter(r => r.matchesPlayed > 0).sort((a, b) => b.eloPoints - a.eloPoints)[0])} flex items-center justify-center overflow-hidden transition-transform duration-300 hover:scale-[1.03]`} title="Viền theo rank ELO nổi bật nhất">
+            <div className={`w-32 h-32 rounded-full bg-slate-100 shadow-xl ${displayedRanks.some(r => r.matchesPlayed > 0) ? `border-4 border-white ring-4 ${getTierRingClass(displayedRanks.filter(r => r.matchesPlayed > 0).sort((a, b) => b.eloPoints - a.eloPoints)[0])}` : 'border-4 border-slate-400'} flex items-center justify-center overflow-hidden transition-transform duration-300 hover:scale-[1.03]`} title="Viền theo rank ELO nổi bật nhất">
               {profile.avatarUrl ? (
                 <img src={profile.avatarUrl} alt="Avatar" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
               ) : (

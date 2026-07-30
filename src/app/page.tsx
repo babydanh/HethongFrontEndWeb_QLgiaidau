@@ -804,6 +804,8 @@ export default function HomePage() {
   const eloPoints = activeRankInfo?.eloPoints ?? 1000;
   const displayTier = getRankTierName(activeRankInfo);
   const matchesPlayed = activeRankInfo?.matchesPlayed ?? 0;
+  const hasPlayedRankedMatch = matchesPlayed > 0;
+  const activeElo = activeRankInfo?.eloPoints ?? 0;
   const matchesWon = activeRankInfo?.matchesWon ?? 0;
   const winRate = getRankWinRate(activeRankInfo);
   const peakElo = activeRankInfo?.peakElo || eloPoints;
@@ -1432,7 +1434,7 @@ export default function HomePage() {
                  <div className="absolute top-0 left-0 w-full h-16 bg-blue-600" />
 
                  {/* Avatar */}
-                 <div className={`w-16 h-16 rounded-full border-4 border-white shadow-sm z-10 mt-5 relative bg-blue-100 flex items-center justify-center overflow-hidden shrink-0 ${activeRankInfo ? 'ring-4 ' + (activeRankInfo.eloPoints >= 1800 ? 'ring-amber-400' : activeRankInfo.eloPoints >= 1700 ? 'ring-rose-500' : activeRankInfo.eloPoints >= 1600 ? 'ring-rose-300' : activeRankInfo.eloPoints >= 1500 ? 'ring-blue-500' : activeRankInfo.eloPoints >= 1400 ? 'ring-blue-300' : activeRankInfo.eloPoints >= 1300 ? 'ring-emerald-500' : activeRankInfo.eloPoints >= 1200 ? 'ring-emerald-300' : activeRankInfo.eloPoints >= 1100 ? 'ring-slate-500' : 'ring-slate-300') : 'ring-slate-400'}`} title={activeRankInfo ? `Rank ${displayTier} • ${eloPoints} ELO` : 'Chưa xếp hạng'}>
+                 <div className={`w-16 h-16 rounded-full shadow-sm z-10 mt-5 relative bg-blue-100 flex items-center justify-center overflow-hidden shrink-0 ${hasPlayedRankedMatch ? 'border-4 border-white ring-4 ' + (activeElo >= 1800 ? 'ring-amber-400' : activeElo >= 1700 ? 'ring-rose-500' : activeElo >= 1600 ? 'ring-rose-300' : activeElo >= 1500 ? 'ring-blue-500' : activeElo >= 1400 ? 'ring-blue-300' : activeElo >= 1300 ? 'ring-emerald-500' : activeElo >= 1200 ? 'ring-emerald-300' : activeElo >= 1100 ? 'ring-slate-500' : 'ring-slate-300') : 'border-4 border-slate-400'}`} title={hasPlayedRankedMatch ? `Rank ${displayTier} • ${eloPoints} ELO` : 'Chưa xếp hạng'}>
                    {user?.avatarUrl ? (
                      <img src={user.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
                    ) : (

@@ -133,8 +133,24 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
     const loadTournament = async () => {
       setIsInitialLoading(true);
       setInitialLoadError(null);
+      const delays = [0, 500, 1500];
       try {
-        const response = await tournamentsApi.getTournamentById(tournamentId);
+        let response: Awaited<ReturnType<typeof tournamentsApi.getTournamentById>> | null = null;
+        let lastError: unknown;
+        for (let attempt = 0; attempt < delays.length; attempt += 1) {
+          if (delays[attempt] > 0) {
+            await new Promise((resolve) => setTimeout(resolve, delays[attempt]));
+          }
+          try {
+            response = await tournamentsApi.getTournamentById(tournamentId);
+            break;
+          } catch (error: unknown) {
+            lastError = error;
+            const status = (error as { response?: { status?: number } })?.response?.status;
+            if (status && status !== 429 && status < 500) throw error;
+          }
+        }
+        if (!response) throw lastError ?? new Error('Không thể tải dữ liệu giải đấu');
         if (!isMounted) {
           return;
         }

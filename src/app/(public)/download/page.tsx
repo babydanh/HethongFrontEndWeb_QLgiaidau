@@ -116,7 +116,7 @@ export default function DownloadPage() {
             </div>
             
             <a 
-              href="https://play.google.com/store/apps/details?id=vn.vnsport.quanlygiaidau" 
+              href="https://play.google.com/store/apps/details?id=vn.vnsport.quanlygiaidau&pcampaignid=web_share" 
               target="_blank" 
               rel="noopener noreferrer"
               className="w-full py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-semibold text-xs flex items-center justify-center gap-2.5 transition-all shadow-md active:scale-[0.98]"

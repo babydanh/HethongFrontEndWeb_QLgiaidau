@@ -287,7 +287,7 @@ export default function HomePage() {
     const timer = setTimeout(() => setIsClient(true), 0);
     const loadCategories = async () => {
       // Cache categories trong sessionStorage (5 phút)
-      const CACHE_KEY = 'homepage_categories';
+      const CACHE_KEY = 'homepage_categories_v2';
       const CACHE_TTL = 5 * 60 * 1000; // 5 phút
       try {
         if (typeof window !== 'undefined') {

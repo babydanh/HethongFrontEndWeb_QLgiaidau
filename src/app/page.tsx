@@ -1428,7 +1428,7 @@ export default function HomePage() {
                {/* Card 1: User Profile Card */}
                <div className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.02)] p-4 flex flex-col items-center text-center relative overflow-hidden">
                  {/* Sports cover banner background */}
-                 <div className="absolute top-0 left-0 w-full h-16 bg-blue-50/80 border-b border-blue-100/50" />
+                 <div className="absolute top-0 left-0 w-full h-16 bg-blue-600" />
 
                  {/* Avatar */}
                  <div className="w-16 h-16 rounded-full border-4 border-white shadow-sm z-10 mt-5 relative bg-blue-100 flex items-center justify-center overflow-hidden shrink-0">

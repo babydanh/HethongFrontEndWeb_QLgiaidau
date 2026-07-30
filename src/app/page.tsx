@@ -1428,12 +1428,10 @@ export default function HomePage() {
                {/* Card 1: User Profile Card */}
                <div className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.02)] p-4 flex flex-col items-center text-center relative overflow-hidden">
                  {/* Sports cover banner background */}
-                 <div className="absolute top-0 left-0 w-full h-16 bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700">
-                   <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.2)_0%,transparent_70%)]" />
-                 </div>
+                 <div className="absolute top-0 left-0 w-full h-16 bg-blue-50/80 border-b border-blue-100/50" />
 
                  {/* Avatar */}
-                 <div className="w-16 h-16 rounded-full border-4 border-white shadow-md z-10 mt-5 relative bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center overflow-hidden shrink-0">
+                 <div className="w-16 h-16 rounded-full border-4 border-white shadow-sm z-10 mt-5 relative bg-blue-100 flex items-center justify-center overflow-hidden shrink-0">
                    {user?.avatarUrl ? (
                      <img src={user.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
                    ) : (

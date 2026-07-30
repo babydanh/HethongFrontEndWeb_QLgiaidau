@@ -38,11 +38,12 @@ export default function RegisterModal({ tournamentId, tournamentName, entryFee, 
       const teamName = user?.fullName || 'Người chơi';
       const res = await tournamentsApi.register(tournamentId, { teamName });
       const participantId = res?.data?.participant?.id;
+      const payableEntryFee = Number(res?.data?.entryFee ?? entryFee);
       
       toast.success('Đăng ký thành công!');
       onClose();
       
-      if (entryFee > 0 && participantId) {
+      if (payableEntryFee > 0 && participantId) {
         router.push(`/payments/checkout?participantId=${participantId}&tournamentId=${tournamentId}`);
       } else {
         router.refresh();

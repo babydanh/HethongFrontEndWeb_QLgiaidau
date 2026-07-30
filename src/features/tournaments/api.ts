@@ -124,6 +124,7 @@ export interface TournamentFeesConfig {
   pctPublicRanked: number;
   pctPublicUnranked: number;
   pctClub: number;
+  allowEntryFees: boolean;
 }
 
 export interface RoundConfigPayload {
@@ -152,6 +153,7 @@ export interface RegisterTournamentPayload {
 
 export interface RegisterTournamentResponse {
   participant: TournamentParticipant;
+  entryFee: number;
   paymentUrl?: string;
   teamInviteLink?: string;
 }

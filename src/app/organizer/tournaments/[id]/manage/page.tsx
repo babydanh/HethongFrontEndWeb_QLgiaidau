@@ -336,6 +336,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
 
         {s.activeTab === 'finance' && <FinanceTab tournament={s.tournament} participants={s.participants}
           entryFee={s.entryFee} setEntryFee={s.setEntryFee}
+          allowEntryFees={s.feesConfig?.allowEntryFees !== false}
           isSavingConfig={s.isSavingConfig} handleSaveFinanceConfig={s.handleSaveFinanceConfig}
           handlePayPlatformFee={s.handlePayPlatformFee} isPayingPlatformFee={s.isPayingPlatformFee}
           handleRequestPayout={s.handleRequestPayout} />}

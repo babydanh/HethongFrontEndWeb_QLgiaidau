@@ -25,6 +25,7 @@ interface FinanceTabProps {
   handleSaveFinanceConfig: () => void;
   handlePayPlatformFee: () => void;
   isPayingPlatformFee: boolean;
+  allowEntryFees?: boolean;
   handleRequestPayout?: (data: { bankName: string; bankAccountNumber: string; bankAccountName: string; amountRequested: number }) => Promise<void>;
 }
 
@@ -37,6 +38,7 @@ export function FinanceTab({
   handleSaveFinanceConfig,
   handlePayPlatformFee,
   isPayingPlatformFee,
+  allowEntryFees = true,
   handleRequestPayout,
 }: FinanceTabProps) {
   const totalPlayers = participants.reduce((sum, p) => sum + (p.members?.length || 0), 0);
@@ -49,6 +51,7 @@ export function FinanceTab({
     isTournamentRegistrationClosed(tournament.status) ||
     isTournamentInProgress(tournament.status) ||
     isTournamentCompleted(tournament.status);
+  const isEntryFeeInputDisabled = isRegistrationLockedForFinance || !allowEntryFees;
 
   // Payout form state
   const [bankName, setBankName] = useState('');
@@ -86,6 +89,15 @@ export function FinanceTab({
     <div className="bg-white rounded-lg border border-slate-200 p-6 md:p-8 shadow-sm space-y-6 animate-in fade-in duration-200">
       <h2 className="text-xl font-bold text-slate-900 border-b pb-2 mb-4">Quản lý Tài chính</h2>
 
+      {!allowEntryFees && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+          <p className="text-sm font-bold text-amber-900">Đang khóa thiết lập lệ phí mới</p>
+          <p className="mt-1 text-xs font-medium text-amber-700">
+            Cấu hình hệ thống hiện không cho phép đặt lệ phí đăng ký. Lệ phí đã có của giải vẫn được giữ nguyên.
+          </p>
+        </div>
+      )}
+
       {false && tournament?.status === 'REGISTRATION_CLOSED' ? (
         <div className="text-center py-16 px-4 bg-slate-50 rounded-lg border border-dashed flex flex-col items-center">
           <Lock className="w-12 h-12 text-blue-500 mb-3" />
@@ -109,7 +121,7 @@ export function FinanceTab({
               type="number"
               value={entryFee}
               onChange={(e) => setEntryFee(Number(e.target.value))}
-              disabled={isRegistrationLockedForFinance}
+              disabled={isEntryFeeInputDisabled}
             />
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-semibold text-slate-700">Lệ phí sàn / VĐV</label>
@@ -122,7 +134,7 @@ export function FinanceTab({
             </div>
           </div>
 
-          {!isRegistrationLockedForFinance && (
+          {!isEntryFeeInputDisabled && (
             <div className="flex justify-end pt-4 border-t">
               <Button
                 onClick={handleSaveFinanceConfig}

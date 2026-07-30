@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -7,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { Input, DateTimePicker } from '@/components/ui/Input';
 import { useCreateTournamentStore } from '@/lib/zustand/createTournamentStore';
 import { ChevronRight, ChevronLeft, Calendar, DollarSign } from 'lucide-react';
+import { tournamentsApi } from '@/features/tournaments/api';
 
 const step3Schema = z.object({
   startDate: z.string().optional(),
@@ -60,8 +62,9 @@ type Step3Values = z.infer<typeof step3Schema>;
 export default function Step3ScheduleFees() {
   const { formData, updateFormData, nextStep, prevStep } = useCreateTournamentStore();
   const isClubTournament = formData.tournamentType === 'CLUB' || Boolean(formData.communityId);
+  const [allowEntryFees, setAllowEntryFees] = useState(true);
 
-  const { register, handleSubmit, control, formState: { errors } } = useForm<Step3Values>({
+  const { register, handleSubmit, control, setValue, formState: { errors } } = useForm<Step3Values>({
     resolver: zodResolver(step3Schema),
     defaultValues: {
       startDate: formData.startDate || undefined,
@@ -72,13 +75,30 @@ export default function Step3ScheduleFees() {
     },
   });
 
+  useEffect(() => {
+    const loadFeePolicy = async () => {
+      try {
+        const response = await tournamentsApi.getFeesConfig();
+        const isAllowed = response.data?.allowEntryFees !== false;
+        setAllowEntryFees(isAllowed);
+        if (!isAllowed) {
+          setValue('entryFee', '0');
+          updateFormData({ entryFee: 0 });
+        }
+      } catch {
+        // Backend remains the final policy enforcement layer.
+      }
+    };
+    void loadFeePolicy();
+  }, [setValue, updateFormData]);
+
   const onSubmit = (data: Step3Values) => {
     updateFormData({
       startDate: data.startDate,
       endDate: data.endDate,
       registrationStartDate: data.registrationStartDate,
       registrationEndDate: data.registrationEndDate,
-      entryFee: isClubTournament ? 0 : Number(data.entryFee),
+      entryFee: isClubTournament || !allowEntryFees ? 0 : Number(data.entryFee),
     });
     nextStep();
   };
@@ -179,12 +199,22 @@ export default function Step3ScheduleFees() {
             </div>
           )}
 
+          {!isClubTournament && !allowEntryFees && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+              <p className="text-sm font-bold text-amber-900">Hệ thống đang tắt lệ phí đăng ký</p>
+              <p className="mt-1 text-xs font-semibold leading-relaxed text-amber-700">
+                Giải mới phải để miễn phí. Quản trị viên có thể bật lại chính sách này trong Cấu hình hệ thống.
+              </p>
+            </div>
+          )}
+
           <div className={isClubTournament ? 'hidden' : ''}>
           <Input
             label="Lệ phí tham gia mỗi đội (VNĐ)"
             type="number"
             placeholder="0"
             min="0"
+            disabled={!allowEntryFees}
             {...register('entryFee')}
             error={errors.entryFee?.message}
           />

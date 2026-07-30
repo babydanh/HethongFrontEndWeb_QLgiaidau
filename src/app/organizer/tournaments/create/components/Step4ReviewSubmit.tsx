@@ -24,6 +24,7 @@ export default function Step4ReviewSubmit() {
     pctPublicRanked: 5,
     pctPublicUnranked: 5,
     pctClub: 0,
+    allowEntryFees: true,
   });
   const submittingRef = useRef(false);
   const router = useRouter();
@@ -96,6 +97,9 @@ export default function Step4ReviewSubmit() {
 
       // 1. Create one tournament. Match formats are stored as tournament_divisions.
       const isClubTournament = formData.tournamentType === 'CLUB' || Boolean(formData.communityId);
+      const effectiveEntryFee = isClubTournament || !feesConfig.allowEntryFees
+        ? 0
+        : formData.entryFee || 0;
       const finalTournamentData: Record<string, unknown> = {
         name: formData.name,
         categoryId: formData.categoryId,
@@ -106,7 +110,7 @@ export default function Step4ReviewSubmit() {
         genderRestriction: primaryDivision.genderRestriction,
         isRanked: formData.isRanked,
         maxParticipants: formData.maxParticipants || 16,
-        entryFee: isClubTournament ? 0 : formData.entryFee || 0,
+        entryFee: effectiveEntryFee,
         startDate: formData.startDate,
         endDate: formData.endDate,
         registrationStartDate: formData.registrationStartDate,
@@ -148,7 +152,7 @@ export default function Step4ReviewSubmit() {
           matchType: div.matchType,
           genderRestriction: div.genderRestriction as GenderRestriction,
           maxParticipants: formData.maxParticipants,
-          entryFee: formData.entryFee || 0,
+          entryFee: effectiveEntryFee,
           bracketType: formData.format as 'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION' | 'ROUND_ROBIN',
         };
         return divisionsApi.createDivision(tournamentId, divisionInput);

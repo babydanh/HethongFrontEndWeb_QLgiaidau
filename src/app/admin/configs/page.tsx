@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '@/lib/axios';
 import { toast } from 'react-hot-toast';
-import { Settings, Save, Edit, RefreshCw, X } from 'lucide-react';
+import { Settings, Save, Edit, RefreshCw, X, BadgeDollarSign } from 'lucide-react';
 import type { ApiResponse } from '@/types/api';
 
 interface SystemConfig {
@@ -21,6 +21,7 @@ export default function ConfigsPage() {
   const [editDesc, setEditDesc] = useState('');
   const [showEditModal, setShowEditModal] = useState(false);
   const [processing, setProcessing] = useState(false);
+  const entryFeePolicy = configs.find((config) => config.key === 'ALLOW_TOURNAMENT_ENTRY_FEES');
 
   async function fetchConfigs() {
     setLoading(true);
@@ -70,6 +71,29 @@ export default function ConfigsPage() {
     }
   };
 
+  const handleToggleEntryFees = async () => {
+    if (!entryFeePolicy || processing) return;
+    setProcessing(true);
+    try {
+      const nextValue = entryFeePolicy.value.toLowerCase() === 'true' ? 'false' : 'true';
+      await api.put<ApiResponse<SystemConfig>>(`/admin/configs/${entryFeePolicy.key}`, {
+        value: nextValue,
+        description: entryFeePolicy.description,
+      });
+      toast.success(
+        nextValue === 'true'
+          ? 'Đã cho phép ban tổ chức đặt lệ phí đăng ký'
+          : 'Đã khóa việc đặt lệ phí đăng ký mới',
+      );
+      await fetchConfigs();
+    } catch (error: unknown) {
+      console.error(error);
+      toast.error('Không thể cập nhật chính sách lệ phí');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header Section */}
@@ -88,6 +112,46 @@ export default function ConfigsPage() {
           <RefreshCw className="w-4 h-4" />
         </button>
       </div>
+
+      {entryFeePolicy && (
+        <section className="overflow-hidden rounded-xl border border-blue-200 bg-white shadow-sm">
+          <div className="flex flex-col gap-5 bg-gradient-to-r from-blue-50 via-white to-emerald-50 p-6 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-start gap-4">
+              <div className="rounded-xl bg-blue-600 p-3 text-white shadow-sm">
+                <BadgeDollarSign className="h-6 w-6" />
+              </div>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider text-blue-600">Chính sách lệ phí đăng ký</p>
+                <h3 className="mt-1 text-lg font-bold text-slate-900">
+                  Cho phép ban tổ chức gắn lệ phí vào giải đấu
+                </h3>
+                <p className="mt-1 max-w-2xl text-sm leading-relaxed text-slate-600">
+                  Khi tắt, giải mới và nội dung thi đấu mới chỉ được để 0đ. Các giải đã có lệ phí vẫn tiếp tục thu và đối soát bình thường.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={entryFeePolicy.value.toLowerCase() === 'true'}
+              onClick={handleToggleEntryFees}
+              disabled={processing}
+              className={`flex min-w-40 items-center justify-between gap-4 rounded-full px-4 py-3 text-sm font-bold transition-colors disabled:cursor-wait disabled:opacity-60 ${
+                entryFeePolicy.value.toLowerCase() === 'true'
+                  ? 'bg-emerald-600 text-white'
+                  : 'bg-slate-200 text-slate-700'
+              }`}
+            >
+              <span>{entryFeePolicy.value.toLowerCase() === 'true' ? 'Đang bật' : 'Đang tắt'}</span>
+              <span
+                className={`h-6 w-6 rounded-full bg-white shadow-sm transition-transform ${
+                  entryFeePolicy.value.toLowerCase() === 'true' ? 'translate-x-1' : '-translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+        </section>
+      )}
 
       {/* Main configurations card */}
       {loading ? (
@@ -112,7 +176,7 @@ export default function ConfigsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-600 text-sm">
-                {configs.map((config) => (
+                {configs.filter((config) => config.key !== 'ALLOW_TOURNAMENT_ENTRY_FEES').map((config) => (
                   <tr key={config.key} className="hover:bg-slate-50 transition-all duration-150">
                     <td className="p-4 pl-6 font-mono text-blue-600 font-semibold">{config.key}</td>
                     <td className="p-4 font-semibold text-slate-800">{config.value}</td>

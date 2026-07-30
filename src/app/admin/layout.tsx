@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { Button } from '@/components/ui/Button';
+import { AdminSupportBell } from '@/components/admin/AdminSupportBell';
 
 export default function AdminLayout({
   children,
@@ -33,8 +34,10 @@ export default function AdminLayout({
   const { user, logout } = useAuthStore();
   const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const isModeratorOnly =
+    Boolean(user?.roles?.includes('MODERATOR')) && !user?.roles?.includes('ADMIN');
 
-  const menuItems = [
+  const allMenuItems = [
     { name: 'Tổng quan', path: '/admin', icon: LayoutDashboard },
     { name: 'Quản lý sao uy tín', path: '/admin/verification', icon: ShieldCheck },
     { name: 'Khóa / xử phạt user', path: '/admin/moderation', icon: Users },
@@ -47,6 +50,11 @@ export default function AdminLayout({
     { name: 'Quản lý đổi thông tin', path: '/admin/change-requests', icon: ShieldAlert },
     { name: 'Cấu hình hệ thống', path: '/admin/configs', icon: Settings },
   ];
+  const menuItems = isModeratorOnly
+    ? allMenuItems.filter((item) =>
+        ['/admin', '/admin/verification', '/admin/reports', '/admin/tournaments', '/admin/support', '/admin/change-requests'].includes(item.path),
+      )
+    : allMenuItems;
 
   const handleLogout = async () => {
     try {
@@ -59,7 +67,7 @@ export default function AdminLayout({
   };
 
   return (
-    <RouteGuard allowedRoles={['ADMIN']}>
+    <RouteGuard allowedRoles={['ADMIN', 'MODERATOR']}>
     <div className="min-h-screen bg-slate-50 text-slate-800 flex font-sans">
       {/* Sidebar - Desktop */}
       <aside className={cn(
@@ -147,6 +155,7 @@ export default function AdminLayout({
 
           {/* User Profile Info */}
           <div className="flex items-center gap-3">
+            <AdminSupportBell />
             <div className="text-right hidden sm:block">
               <p className="text-xs font-bold text-slate-800">{user?.fullName}</p>
               <p className="text-[10px] text-slate-500">{user?.email}</p>

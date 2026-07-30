@@ -8,6 +8,8 @@ import { usersApi } from '@/features/users/api';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { getErrorMessage } from '@/utils/error';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { Trophy, CheckCircle, XCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 function VerifyEmailContent() {
   const searchParams = useSearchParams();

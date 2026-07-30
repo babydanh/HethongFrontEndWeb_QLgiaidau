@@ -32,6 +32,7 @@ export interface AdminSupportRoom {
   type: 'SUPPORT';
   createdAt: string;
   updatedAt: string;
+  unreadCount: number;
   participants: SupportParticipant[];
   lastMessage: {
     id: string;
@@ -59,6 +60,13 @@ export const supportApi = {
     api
       .get<ApiResponse<SupportMessage[]>>(
         `/chat/admin/support/rooms/${roomId}/messages`,
+      )
+      .then((response) => response.data),
+  markAdminRoomRead: (roomId: string) =>
+    api
+      .post<ApiResponse<{ success: boolean }>>(
+        `/chat/admin/support/rooms/${roomId}/read`,
+        {},
       )
       .then((response) => response.data),
   replyAsAdmin: (roomId: string, messageText: string) =>

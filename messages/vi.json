@@ -1,0 +1,42 @@
+{
+  "LocaleSwitcher": {
+    "language": "Ngôn ngữ",
+    "vietnamese": "Tiếng Việt",
+    "english": "English",
+    "switchTo": "Chuyển sang {language}"
+  },
+  "Common": {
+    "appName": "VNSport",
+    "loading": "Đang tải...",
+    "save": "Lưu",
+    "cancel": "Hủy",
+    "confirm": "Xác nhận",
+    "retry": "Thử lại",
+    "search": "Tìm kiếm",
+    "free": "Miễn phí",
+    "back": "Quay lại",
+    "next": "Tiếp tục",
+    "viewMore": "Xem thêm",
+    "noData": "Chưa có dữ liệu"
+  },
+  "Navigation": {
+    "home": "Trang chủ",
+    "tournaments": "Giải đấu",
+    "matches": "Trận đấu",
+    "communities": "Cộng đồng",
+    "rankings": "Xếp hạng",
+    "downloadApp": "Tải App",
+    "login": "Đăng nhập",
+    "register": "Đăng ký",
+    "profile": "Hồ sơ",
+    "notifications": "Thông báo",
+    "administration": "Quản trị"
+  },
+  "Errors": {
+    "generic": "Đã xảy ra lỗi. Vui lòng thử lại.",
+    "network": "Không thể kết nối máy chủ. Vui lòng kiểm tra mạng.",
+    "unauthorized": "Vui lòng đăng nhập để tiếp tục.",
+    "forbidden": "Bạn không có quyền thực hiện thao tác này.",
+    "notFound": "Không tìm thấy dữ liệu."
+  }
+}

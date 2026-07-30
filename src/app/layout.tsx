@@ -4,6 +4,8 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/Toaster";
 import RootLayoutClient from "@/components/layout/RootLayoutClient";
 import LiveMetricsWidget from "@/components/common/LiveMetricsWidget";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getMessages } from "next-intl/server";
 
 const inter = Inter({
   variable: "--font-sans",
@@ -29,17 +31,21 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const [locale, messages] = await Promise.all([getLocale(), getMessages()]);
+
   return (
-    <html lang="vi" className={`${inter.variable} h-full antialiased`} suppressHydrationWarning>
+    <html lang={locale} className={`${inter.variable} h-full antialiased`} suppressHydrationWarning>
       <body className="min-h-full flex flex-col">
-        <RootLayoutClient>{children}</RootLayoutClient>
-        <Toaster />
-        <LiveMetricsWidget />
+        <NextIntlClientProvider locale={locale} messages={messages}>
+          <RootLayoutClient>{children}</RootLayoutClient>
+          <Toaster />
+          <LiveMetricsWidget />
+        </NextIntlClientProvider>
       </body>
     </html>
   );

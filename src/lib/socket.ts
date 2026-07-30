@@ -48,6 +48,7 @@ class SocketClient {
     if (!this.chatSocket) {
       this.chatSocket = io(`${SOCKET_URL}/chat`, {
         autoConnect: false,
+        auth: (cb) => cb(this.getNotificationAuthPayload()),
         withCredentials: true,
         transports: ['websocket', 'polling'],
       });
@@ -78,7 +79,7 @@ class SocketClient {
     if (!this.notificationSocket) {
       this.notificationSocket = io(`${SOCKET_URL}/notifications`, {
         autoConnect: false,
-        auth: this.getNotificationAuthPayload(),
+        auth: (cb) => cb(this.getNotificationAuthPayload()),
         withCredentials: true,
         transports: ['websocket', 'polling'],
         reconnectionAttempts: 2,
@@ -95,8 +96,18 @@ class SocketClient {
   public setNotificationAuthToken(token?: string | null) {
     this.notificationAuthToken = token ?? null;
 
+    if (this.chatSocket) {
+      this.chatSocket.auth = this.getNotificationAuthPayload();
+      if (this.chatSocket.connected) {
+        this.chatSocket.disconnect().connect();
+      }
+    }
+
     if (this.notificationSocket) {
       this.notificationSocket.auth = this.getNotificationAuthPayload();
+      if (this.notificationSocket.connected) {
+        this.notificationSocket.disconnect().connect();
+      }
     }
   }
 

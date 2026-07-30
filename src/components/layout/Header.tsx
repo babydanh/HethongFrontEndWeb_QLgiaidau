@@ -36,10 +36,13 @@ import { usersApi } from '@/features/users/api';
 import { cn } from '@/utils/cn';
 import { getErrorMessage, isHttpStatusError } from '@/utils/error';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslations } from 'next-intl';
+import { LanguageSwitcher } from '@/components/i18n/LanguageSwitcher';
 
 const GUEST_ROUTES = ['/login', '/register'];
 
 export function Header() {
+  const t = useTranslations('Navigation');
   const { isAuthenticated, user, logout, setUser } = useAuthStore();
   const pathname = usePathname();
   const router = useRouter();
@@ -266,11 +269,11 @@ export function Header() {
   }, [isAuthenticated, isClient, logout, pathname, setUser, user]);
 
   const navLinks = [
-    { name: 'Trang chủ', path: '/' },
-    { name: 'Giải đấu', path: '/tournaments' },
-    { name: 'Trận đấu', path: '/matches' },
-    { name: 'Cộng đồng', path: '/communities' },
-    { name: 'Xếp hạng', path: '/leaderboard' },
+    { name: t('home'), path: '/' },
+    { name: t('tournaments'), path: '/tournaments' },
+    { name: t('matches'), path: '/matches' },
+    { name: t('communities'), path: '/communities' },
+    { name: t('rankings'), path: '/leaderboard' },
   ];
 
   return (
@@ -315,13 +318,14 @@ export function Header() {
         </div>
 
         <div className="flex items-center gap-3">
+          <LanguageSwitcher className="hidden sm:inline-flex" />
           {/* Nút Tải App */}
           <Link
             href="/download"
             className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition-all active:scale-95"
           >
             <Smartphone className="w-4 h-4" />
-            Tải App
+            {t('downloadApp')}
           </Link>
 
           {isAuthenticated ? (
@@ -736,6 +740,7 @@ export function Header() {
       {isMobileMenuOpen ? (
         <div className="animate-in fade-in slide-in-from-top-5 border-t border-slate-100 bg-white/95 py-2 shadow-lg backdrop-blur-md duration-200 md:hidden">
           <nav className="flex flex-col gap-1 px-4 py-2">
+            <LanguageSwitcher expanded className="mb-1 sm:hidden" />
             {navLinks.map((link) => (
               <Link
                 key={link.path}
@@ -756,7 +761,7 @@ export function Header() {
               onClick={() => setIsMobileMenuOpen(false)}
             >
               <Smartphone className="w-4 h-4" />
-              Tải App
+              {t('downloadApp')}
             </Link>
           </nav>
         </div>

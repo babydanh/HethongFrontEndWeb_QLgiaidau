@@ -71,7 +71,7 @@ export default function AdminSupportPage() {
 
   useEffect(() => {
     void loadRooms();
-    const timer = window.setInterval(() => void loadRooms(true), 30000);
+    const timer = window.setInterval(() => void loadRooms(true), 4000);
     return () => window.clearInterval(timer);
   }, [loadRooms]);
 
@@ -84,9 +84,14 @@ export default function AdminSupportPage() {
     void loadMessages(selectedRoomId);
     void supportApi.markAdminRoomRead(selectedRoomId).then(() => loadRooms(true));
 
+    const msgTimer = window.setInterval(() => {
+      void loadMessages(selectedRoomId);
+    }, 3000);
+
     const socket = socketClient.getChatSocket();
     socket.emit('joinChatRoom', selectedRoomId);
     return () => {
+      window.clearInterval(msgTimer);
       socket.emit('leaveChatRoom', selectedRoomId);
     };
   }, [loadMessages, loadRooms, selectedRoomId]);

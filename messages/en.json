@@ -1,0 +1,42 @@
+{
+  "LocaleSwitcher": {
+    "language": "Language",
+    "vietnamese": "Tiếng Việt",
+    "english": "English",
+    "switchTo": "Switch to {language}"
+  },
+  "Common": {
+    "appName": "VNSport",
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "retry": "Try again",
+    "search": "Search",
+    "free": "Free",
+    "back": "Back",
+    "next": "Continue",
+    "viewMore": "View more",
+    "noData": "No data available"
+  },
+  "Navigation": {
+    "home": "Home",
+    "tournaments": "Tournaments",
+    "matches": "Matches",
+    "communities": "Communities",
+    "rankings": "Rankings",
+    "downloadApp": "Get the App",
+    "login": "Sign in",
+    "register": "Sign up",
+    "profile": "Profile",
+    "notifications": "Notifications",
+    "administration": "Administration"
+  },
+  "Errors": {
+    "generic": "Something went wrong. Please try again.",
+    "network": "Unable to connect to the server. Check your connection.",
+    "unauthorized": "Please sign in to continue.",
+    "forbidden": "You do not have permission to perform this action.",
+    "notFound": "The requested data could not be found."
+  }
+}

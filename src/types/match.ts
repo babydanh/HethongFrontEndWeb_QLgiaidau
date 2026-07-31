@@ -97,6 +97,7 @@ export interface Match {
     categoryName?: string | null;
     categorySlug?: string | null;
     categoryConfig?: Record<string, unknown> | null;
+    tournamentConfig?: { mode?: 'LITE' | 'ADVANCED' } | null;
   } | null;
   stage?: {
     type?: string;

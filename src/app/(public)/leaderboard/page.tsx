@@ -556,7 +556,9 @@ export default function LeaderboardPage() {
 
                                         <div className="bg-rose-50/70 p-3 rounded-lg border border-rose-100">
                                             <h4 className="font-bold text-rose-900 mb-1">⏳ 4. Quy định không thi đấu (ELO Decay)</h4>
-                                            <p className="text-slate-600">• Người chơi không tham gia trận đấu chính thức nào trong **30 ngày liên tục** sẽ bắt đầu bị trừ dần điểm ELO ngầm (Inactive Decay) để đảm bảo tính công bằng của Bảng xếp hạng.</p>
+                                            <p className="text-slate-600">• Không thi đấu trận chính thức trong **1 tháng liên tục**: ELO dưới 1400 được giữ nguyên; từ 1400 trở lên sẽ giảm theo tier mỗi tháng: 1400–1499 giảm 2%, 1500–1599 giảm 3%, 1600–1699 giảm 4%, từ 1700 giảm 5%.</p>
+                                            <p className="text-slate-600">• Khiên ELO được áp dụng cả khi decay làm rơi qua mốc đang bảo vệ: giữ lại đúng mốc một lần, sau đó khiên hết hiệu lực.</p>
+                                            <p className="text-slate-600">• Đánh đôi có rank riêng cho từng cặp, khởi tạo 1000 ELO; không lấy trung bình ELO cá nhân làm rank cặp.</p>
                                         </div>
                                     </div>
 

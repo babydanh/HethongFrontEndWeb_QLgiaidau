@@ -436,6 +436,16 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
               tournament: { sportRules: tournament.sportRules ?? null },
             });
             const scorePresentation = getMatchScorePresentation(resolvedRules.kind);
+            // Keep the score grid stable from the configured format, not from
+            // the number of scores already submitted. A BO5 match must show
+            // S1-S5 even before S4/S5 has been played.
+            const maxSets = Math.max(1, resolvedRules.bestOf);
+            // Once a match is complete, hide unused BO5 columns. A 3-0 result
+            // therefore shows S1-S3; an unfinished match still shows the full
+            // configured format so users know how many sets are possible.
+            const visibleSets = isCompleted
+              ? Math.max(1, Math.min(maxSets, sets.length || 1))
+              : maxSets;
 
             return (
               <div
@@ -470,6 +480,11 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
 
                 {/* Score / Participants Panel */}
                 <div className="p-4 flex flex-col gap-3.5">
+                  <div className="flex justify-end gap-1 pr-0.5 font-mono text-[9px] font-bold text-slate-400">
+                    {Array.from({ length: visibleSets }, (_, index) => (
+                      <span key={index} className="w-7 text-center">S{index + 1}</span>
+                    ))}
+                  </div>
                   {/* Participant 1 */}
                   <div className="flex justify-between items-center gap-2">
                     <div className="flex items-center gap-2 min-w-0 max-w-[70%]">
@@ -493,7 +508,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
  
                     {/* Scores set Display */}
                     <div className="flex items-center gap-1 shrink-0 font-mono">
-                      {sets.map((set, idx) => (
+                      {Array.from({ length: visibleSets }, (_, idx) => (
                         <span
                           key={idx}
                           className={`w-7 h-7 flex items-center justify-center text-xs font-bold rounded ${
@@ -502,14 +517,9 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                               : 'bg-slate-50 text-slate-600 border border-slate-150'
                           }`}
                         >
-                          {set.team1Score}
+                          {sets[idx]?.team1Score ?? '-'}
                         </span>
                       ))}
-                      {sets.length === 0 && (
-                        <span className="text-sm font-bold text-slate-700 px-2">
-                          {match.p1SetsWon}
-                        </span>
-                      )}
                     </div>
                   </div>
  
@@ -536,7 +546,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
 
                     {/* Scores set Display */}
                     <div className="flex items-center gap-1 shrink-0 font-mono">
-                      {sets.map((set, idx) => (
+                      {Array.from({ length: visibleSets }, (_, idx) => (
                         <span
                           key={idx}
                           className={`w-7 h-7 flex items-center justify-center text-xs font-bold rounded ${
@@ -545,14 +555,9 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                               : 'bg-slate-50 text-slate-600 border border-slate-150'
                           }`}
                         >
-                          {set.team2Score}
+                          {sets[idx]?.team2Score ?? '-'}
                         </span>
                       ))}
-                      {sets.length === 0 && (
-                        <span className="text-sm font-bold text-slate-700 px-2">
-                          {match.p2SetsWon}
-                        </span>
-                      )}
                     </div>
                   </div>
                 </div>

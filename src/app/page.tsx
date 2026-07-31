@@ -1083,7 +1083,6 @@ export default function HomePage() {
           <section className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_2px_12px_rgba(15,23,42,0.06)] overflow-hidden">
             <div className="px-5 py-4 border-b border-slate-100 flex justify-between items-center">
               <h2 className="text-sm font-semibold text-slate-900 tracking-tight">Kết quả trận đấu vừa qua</h2>
-              <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded uppercase tracking-wider">Kết quả</span>
             </div>
             <div className="p-4 flex flex-col gap-4">
 
@@ -1171,7 +1170,6 @@ export default function HomePage() {
           <section className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_2px_12px_rgba(15,23,42,0.06)] overflow-hidden">
             <div className="px-5 py-4 border-b border-slate-100 flex justify-between items-center">
               <h2 className="text-sm font-semibold text-slate-900 tracking-tight">Lịch thi đấu sắp diễn ra</h2>
-              <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded uppercase tracking-wider">Lịch thi đấu</span>
             </div>
             <div className="p-4 flex flex-col gap-4">
 

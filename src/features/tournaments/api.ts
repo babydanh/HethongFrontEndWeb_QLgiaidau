@@ -397,6 +397,8 @@ export const tournamentsApi = {
 
   generateLiteBracket: (id: string) =>
     api.post<ApiResponse<{ bracketId: string; totalMatches: number }>>(`/tournaments/lite/${id}/bracket`),
+  resetLiteBracket: (id: string) =>
+    api.post<ApiResponse<{ bracketId: string; totalMatches: number }>>(`/tournaments/lite/${id}/bracket/reset`),
 };
 
 

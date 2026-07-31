@@ -69,6 +69,8 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
         setIsLoading(true);
         const res = await tournamentsApi.getTournamentById(id);
         setTournament(res.data ?? null);
+        const bracket = await tournamentsApi.getTournamentBracket(id);
+        setHasBracket(Boolean(bracket.data?.stages?.length));
       } catch {
         setTournament(null);
       } finally {
@@ -87,6 +89,7 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
   const [generatingStrategy, setGeneratingStrategy] = useState<'RANDOM' | 'ELO_BALANCED' | null>(null);
   const [unpairingId, setUnpairingId] = useState<string | null>(null);
   const [bracketLoading, setBracketLoading] = useState(false);
+  const [hasBracket, setHasBracket] = useState(false);
   const [mockLoading, setMockLoading] = useState(false);
 
   const fetchParticipants = useCallback(async () => {
@@ -211,7 +214,24 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
     setBracketLoading(true);
     try {
       await tournamentsApi.generateLiteBracket(id);
+      const bracket = await tournamentsApi.getTournamentBracket(id);
+      setHasBracket(Boolean(bracket.data?.stages?.length));
       toast.success('Đã tạo bracket thành công!');
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setBracketLoading(false);
+    }
+  };
+
+  const handleResetBracket = async () => {
+    if (!confirm('Reset sẽ tạo lại toàn bộ nhánh và lịch trận. Chỉ dùng trước khi bất kỳ trận nào bắt đầu. Tiếp tục?')) return;
+    setBracketLoading(true);
+    try {
+      await tournamentsApi.resetLiteBracket(id);
+      const bracket = await tournamentsApi.getTournamentBracket(id);
+      setHasBracket(Boolean(bracket.data?.stages?.length));
+      toast.success('Đã reset và lưu lại bracket mới.');
     } catch (err) {
       toast.error(getErrorMessage(err));
     } finally {
@@ -647,7 +667,7 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                   {/* Tạo bracket */}
                   {(tournament?.matchType === 'DOUBLES' ? pairedParticipants.length > 0 : participants.length > 0) && (
                     <div className="pt-4 border-t border-slate-100">
-                      <Button
+                      {!hasBracket && <Button
                         onClick={handleGenerateBracket}
                         disabled={bracketLoading}
                         className="w-full gap-2"
@@ -658,7 +678,7 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                           <Swords className="w-4 h-4" />
                         )}
                         {bracketLoading ? 'Đang tạo...' : 'Tạo bracket'}
-                      </Button>
+                      </Button>}
                     </div>
                   )}
                 </>
@@ -670,8 +690,18 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
             <div className="space-y-4">
               <h3 className="text-base font-bold text-slate-900">Bracket</h3>
               <p className="text-sm text-slate-500">
-                Sơ đồ thi đấu sẽ được hiển thị sau khi tạo bracket.
+                {hasBracket ? 'Bracket đã được lưu trên hệ thống và sẽ được dùng để tạo các trận đấu.' : 'Chưa có bracket được lưu.'}
               </p>
+              {hasBracket && (
+                <div className="flex flex-wrap gap-2">
+                  <Link href={`/tournaments/${id}?tab=bracket`} target="_blank">
+                    <Button variant="outline" className="gap-2"><ExternalLink className="w-4 h-4" /> Xem sơ đồ</Button>
+                  </Link>
+                  <Button variant="outline" onClick={handleResetBracket} disabled={bracketLoading} className="gap-2 border-amber-200 text-amber-700 hover:bg-amber-50">
+                    <RefreshCw className="w-4 h-4" /> Reset bracket
+                  </Button>
+                </div>
+              )}
               {(participants.length > 0 || (!tournament?.matchType || tournament.matchType !== 'DOUBLES')) && (
                 <div className="bg-slate-50 rounded-lg p-6 text-center">
                   <Swords className="w-10 h-10 mx-auto mb-3 text-slate-300" />
@@ -680,7 +710,7 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                       ? 'Đã ghép cặp xong? Hãy tạo bracket để bắt đầu giải đấu.'
                       : 'Đã có người tham gia? Hãy tạo bracket để bắt đầu giải đấu.'}
                   </p>
-                  <Button
+                  {!hasBracket && <Button
                     onClick={handleGenerateBracket}
                     disabled={bracketLoading}
                     className="gap-2"
@@ -691,7 +721,7 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                       <Swords className="w-4 h-4" />
                     )}
                     {bracketLoading ? 'Đang tạo...' : 'Tạo bracket'}
-                  </Button>
+                  </Button>}
                 </div>
               )}
               {participants.length === 0 && (

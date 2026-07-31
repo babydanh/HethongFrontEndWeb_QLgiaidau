@@ -54,7 +54,7 @@ export default function RankingsTab({ communityId, categories }: RankingsTabProp
             categoryName: undefined,
             matchType: selectedMatchType,
             genderRestriction: selectedGender,
-            eloPoints: 0,
+            eloPoints: 1000,
             matchesPlayed: 0,
             matchesWon: 0,
             winStreak: 0,

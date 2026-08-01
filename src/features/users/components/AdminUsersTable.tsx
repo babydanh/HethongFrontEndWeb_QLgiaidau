@@ -101,22 +101,32 @@ export function AdminUsersTable({
                     </div>
                   </td>
                   <td className="p-4">
-                    <span
-                      className={cn(
-                        'inline-flex rounded-full border px-2.5 py-1 text-xs font-bold',
-                        getBanBadgeClassName(user),
-                      )}
-                    >
-                      {user.activeBan
-                        ? translate(
-                            user.activeBan.banType === 'WARN'
-                              ? 'warnShort'
-                              : user.activeBan.banType === 'SOFT_BAN'
-                                ? 'softBanShort'
-                                : 'hardBanShort',
-                          )
-                        : translate('active')}
-                    </span>
+                    {user.activeBan ? (
+                      <span
+                        className={cn(
+                          'inline-flex rounded-full border px-2.5 py-1 text-xs font-bold',
+                          getBanBadgeClassName(user),
+                        )}
+                      >
+                        {translate(
+                          user.activeBan.banType === 'WARN'
+                            ? 'warnShort'
+                            : user.activeBan.banType === 'SOFT_BAN'
+                              ? 'softBanShort'
+                              : 'hardBanShort',
+                        )}
+                      </span>
+                    ) : user.isOnline ? (
+                      <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700 shadow-2xs">
+                        <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                        {translate('onlineStatus')}
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-500">
+                        <span className="h-2 w-2 rounded-full bg-slate-400" />
+                        {translate('offlineStatus')}
+                      </span>
+                    )}
                   </td>
                   <td className="p-4">
                     <div className="flex max-w-[230px] flex-wrap gap-1.5">

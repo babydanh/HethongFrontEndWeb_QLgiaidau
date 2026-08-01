@@ -6481,6 +6481,8 @@
     "verifiedHeader": "Xác minh",
     "actionsHeader": "Hành động",
     "active": "Hoạt động",
+    "onlineStatus": "Đang Online",
+    "offlineStatus": "Ngoại tuyến",
     "unassigned": "Chưa gán",
     "verified": "Đã xác minh",
     "unverified": "Chưa xác minh",

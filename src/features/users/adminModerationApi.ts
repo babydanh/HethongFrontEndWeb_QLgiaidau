@@ -18,6 +18,7 @@ export interface AdminUser {
   email: string;
   isEmailVerified: boolean;
   createdAt: string;
+  isOnline?: boolean;
   roles?: SystemRole[];
   profile?: {
     fullName?: string;

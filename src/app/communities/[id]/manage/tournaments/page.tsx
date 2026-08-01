@@ -17,6 +17,7 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { getErrorMessage } from '@/utils/error';
+import { useAuthStore } from '@/lib/zustand/authStore';
 
 type LiteSport = 'badminton' | 'tennis' | 'pickleball' | 'table_tennis' | 'football';
 
@@ -60,6 +61,18 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isLiteModalOpen, setIsLiteModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const currentUser = useAuthStore((state) => state.user);
+  const hasSystemAdmin = currentUser?.roles?.some((role) =>
+    role.toUpperCase() === 'ADMIN',
+  ) === true;
+  const hasSystemOrganizer = currentUser?.roles?.some((role) =>
+    ['ORGANIZER', 'ADMIN'].includes(role.toUpperCase()),
+  ) === true;
+  const isJoinedClubManager =
+    ['OWNER', 'MODERATOR'].includes((community?.myRole ?? '').toUpperCase());
+  const canCreateClubLite = hasSystemAdmin || isJoinedClubManager;
+  const canCreateClubAdvanced =
+    hasSystemOrganizer && (hasSystemAdmin || isJoinedClubManager);
 
   // Form states for normal creation
   const [newTourneyName, setNewTourneyName] = useState('');
@@ -341,18 +354,22 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
             </p>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
-            <Button
-              onClick={() => router.push(`/communities/${community.id}/create-lite`)}
-              className="font-bold flex items-center gap-2 shadow-sm"
-            >
-              <Plus className="w-4 h-4" /> {translate('communityTournamentQuickButton')}
-            </Button>
-            <Button
-              onClick={handleOpenAdvancedTournamentCreate}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center gap-2 shadow-sm"
-            >
-              <Plus className="w-4 h-4" /> {translate('communityTournamentAdvancedButton')}
-            </Button>
+            {canCreateClubLite && (
+              <Button
+                onClick={() => router.push(`/communities/${community.id}/create-lite`)}
+                className="font-bold flex items-center gap-2 shadow-sm"
+              >
+                <Plus className="w-4 h-4" /> {translate('communityTournamentQuickButton')}
+              </Button>
+            )}
+            {canCreateClubAdvanced && (
+              <Button
+                onClick={handleOpenAdvancedTournamentCreate}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center gap-2 shadow-sm"
+              >
+                <Plus className="w-4 h-4" /> {translate('communityTournamentAdvancedButton')}
+              </Button>
+            )}
           </div>
         </div>
 
@@ -377,12 +394,14 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
             <p className="text-slate-500 mt-2 font-medium max-w-sm mx-auto">
               {translate('communityTournamentEmptyDescription')}
             </p>
-            <Button
-              onClick={handleOpenAdvancedTournamentCreate}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white mt-6"
-            >
-              {translate('communityTournamentCreateInternal')}
-            </Button>
+            {canCreateClubLite && (
+              <Button
+                onClick={() => router.push(`/communities/${community.id}/create-lite`)}
+                className="mt-6"
+              >
+                {translate('communityTournamentQuickButton')}
+              </Button>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -141,7 +141,7 @@ function CommunityLogoAvatar({ src, alt }: { src?: string | null; alt: string })
   );
 }
 
-function LiveMatchSportLabel({ match, tournament, tournamentName }: { match?: BracketMatch | null; tournament?: Tournament | null; tournamentName?: string }) {
+function LiveMatchSportLabel({ match, tournament, tournamentName, translate }: { match?: BracketMatch | null; tournament?: Tournament | null; tournamentName?: string; translate?: (key: string) => string }) {
   const matchTourn = match?.tournament as Record<string, unknown> | undefined;
   const tourn = tournament as Record<string, unknown> | undefined;
   const matchCategory = matchTourn?.category as Record<string, unknown> | undefined;
@@ -160,11 +160,26 @@ function LiveMatchSportLabel({ match, tournament, tournamentName }: { match?: Br
     },
   };
   const resolvedRules = resolveMatchSportRules(context);
-  const presentation = getMatchScorePresentation(resolvedRules.kind);
+  const kind = resolvedRules.kind;
+
+  let sportText = 'Cầu lông';
+  if (kind === 'BADMINTON') {
+    sportText = translate?.('badminton') ?? 'Cầu lông';
+  } else if (kind === 'PICKLEBALL_RALLY' || kind === 'PICKLEBALL_SIDE_OUT') {
+    sportText = translate?.('pickleball') ?? 'Pickleball';
+  } else if (kind === 'TENNIS') {
+    sportText = translate?.('tennis') ?? 'Quần vợt';
+  } else if (kind === 'TABLE_TENNIS') {
+    sportText = translate?.('tableTennis') ?? 'Bóng bàn';
+  } else if (kind === 'FOOTBALL') {
+    sportText = translate?.('football') ?? 'Bóng đá';
+  } else {
+    sportText = translate?.('badminton') ?? 'Cầu lông';
+  }
 
   return (
-    <span className="inline-flex items-center gap-1 align-middle">
-      <span>{presentation.sportLabel}</span>
+    <span className="inline-flex items-center gap-1 align-middle uppercase tracking-wider font-bold">
+      <span>{sportText}</span>
     </span>
   );
 }
@@ -1240,7 +1255,7 @@ export default function HomePage() {
                                       {isRanked ? translate('rankedBadge') : translate('communityBadge')}
                                     </span>
                                     <span className="text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md text-violet-700 bg-violet-50">
-                                      <LiveMatchSportLabel match={group.matches[0]} tournament={matchedTournament} tournamentName={group.name} />
+                                      <LiveMatchSportLabel match={group.matches[0]} tournament={matchedTournament} tournamentName={group.name} translate={translate} />
                                     </span>
                                   </div>
                                   <h3 className="text-sm font-bold text-slate-900 group-hover/header:text-blue-600 transition-colors block leading-tight truncate">
@@ -1362,7 +1377,7 @@ export default function HomePage() {
                                     {isRanked ? translate('rankedBadge') : translate('communityBadge')}
                                   </span>
                                   <span className="text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md text-violet-700 bg-violet-50">
-                                    <LiveMatchSportLabel match={group.matches[0]} tournament={matchedTournament} tournamentName={group.name} />
+                                    <LiveMatchSportLabel match={group.matches[0]} tournament={matchedTournament} tournamentName={group.name} translate={translate} />
                                   </span>
                                 </div>
                                 <h3 className="text-sm font-bold text-slate-900 group-hover/header:text-blue-600 transition-colors block leading-tight truncate">
@@ -1448,7 +1463,7 @@ export default function HomePage() {
                                     {isRanked ? translate('rankedBadge') : translate('communityBadge')}
                                   </span>
                                   <span className="text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md text-violet-700 bg-violet-50">
-                                    <LiveMatchSportLabel match={group.matches[0]} tournament={matchedTournament} tournamentName={group.name} />
+                                    <LiveMatchSportLabel match={group.matches[0]} tournament={matchedTournament} tournamentName={group.name} translate={translate} />
                                   </span>
                                 </div>
                                 <h3 className="text-sm font-bold text-slate-900 group-hover/header:text-blue-600 transition-colors block leading-tight truncate">

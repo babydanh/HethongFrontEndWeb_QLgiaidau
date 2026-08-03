@@ -18,7 +18,6 @@ import { cn } from '@/utils/cn';
 import { getSportLogo } from '@/constants/sports';
 import { getMatchRoundLabel } from '@/utils/match-round-label';
 import type { BracketMatch } from '@/types/tournament';
-import type { MatchScoreInput } from '@/features/organizer/ops/types';
 
 export default function OrganizerTournamentOpsPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -38,9 +37,7 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
     activeParticipantActionId,
     activeMatchActionId,
     kickParticipant,
-    updateMatchStatus,
     updateMatchSchedule,
-    updateMatchScore,
     applyMatchOperation,
     activityLog,
     summary,
@@ -132,14 +129,6 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
     });
   };
 
-  const handleOpsUpdateMatchStatus = async (
-    match: typeof matches[number],
-    status: typeof matches[number]['status'],
-  ) => {
-    await updateMatchStatus(match, status);
-    await syncBracketAndOps();
-  };
-
   const handleOpsUpdateMatchSchedule = async (
     match: typeof matches[number],
     payload: {
@@ -150,14 +139,6 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
     },
   ) => {
     await updateMatchSchedule(match, payload);
-    await syncBracketAndOps();
-  };
-
-  const handleOpsUpdateMatchScore = async (
-    match: typeof matches[number],
-    payload: MatchScoreInput,
-  ) => {
-    await updateMatchScore(match, payload);
     await syncBracketAndOps();
   };
 
@@ -734,9 +715,7 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
         error={error}
         summary={summary}
         onKickParticipant={kickParticipant}
-        onUpdateMatchStatus={handleOpsUpdateMatchStatus}
         onUpdateMatchSchedule={handleOpsUpdateMatchSchedule}
-        onUpdateMatchScore={handleOpsUpdateMatchScore}
         tournamentSportRules={tournament.sportRules ?? null}
         tournamentStatus={tournament.status}
         onApplyMatchOperation={handleOpsApplyMatchOperation}

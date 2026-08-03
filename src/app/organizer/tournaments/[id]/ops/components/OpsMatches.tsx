@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { AlertOctagon, CalendarClock, ClipboardPenLine, Play, TimerReset, Trophy } from 'lucide-react';
+import { AlertOctagon, CalendarClock, TimerReset } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { DateTimePicker } from '@/components/ui/Input';
 import { extractMatchScores, getMatchScorePresentation, resolveMatchSportRules } from '@/features/matches/score-display';
@@ -20,8 +20,7 @@ import type { Match, MatchPenaltyRecord } from '@/types/match';
 import { formatDateTime } from '@/utils/format';
 import { cn } from '@/utils/cn';
 import { getMatchRoundLabel } from '@/utils/match-round-label';
-import type { MatchOperationAction, MatchOperationInput, MatchScheduleInput, MatchScoreInput, OpsReferee } from '@/features/organizer/ops/types';
-import { buildScoreDraft, ScoringPanel, type ScoreDraft } from './scoring/ScoringPanel';
+import type { MatchOperationAction, MatchOperationInput, MatchScheduleInput, OpsReferee } from '@/features/organizer/ops/types';
 
 interface OpsMatchesProps {
   matches: Match[];
@@ -36,9 +35,7 @@ interface OpsMatchesProps {
     dependencyBlocked: boolean;
     dependencySummary: string[];
   }>;
-  onUpdateMatchStatus: (match: Match, status: Match['status']) => Promise<void>;
   onUpdateMatchSchedule: (match: Match, payload: MatchScheduleInput) => Promise<void>;
-  onUpdateMatchScore: (match: Match, payload: MatchScoreInput) => Promise<void>;
   onApplyMatchOperation: (match: Match, payload: MatchOperationInput) => Promise<void>;
 }
 
@@ -70,13 +67,6 @@ const STATUS_FILTERS: Array<{ value: Match['status'] | 'ALL'; label: string }> =
   { value: 'DISPUTED', label: 'Cần xử lý' },
 ];
 
-const STATUS_OPTIONS: Array<{ value: Match['status']; label: string }> = [
-  { value: 'SCHEDULED', label: 'Sắp đấu' },
-  { value: 'ONGOING', label: 'Đang đấu' },
-  { value: 'COMPLETED', label: 'Hoàn tất' },
-  { value: 'DISPUTED', label: 'Cần xử lý' },
-];
-
 const OPERATION_OPTIONS: Array<{ value: MatchOperationAction; label: string; description: string }> = [
   { value: 'WALKOVER', label: 'Thắng trắng', description: 'Đối thủ không ra sân hoặc không đủ điều kiện thi đấu.' },
   { value: 'RETIREMENT', label: 'Chấn thương / bỏ cuộc', description: 'Trận kết thúc sớm do một bên xin dừng.' },
@@ -92,22 +82,16 @@ export function OpsMatches({
   onFocusMatch,
   tournamentSportRules,
   matchInsights,
-  onUpdateMatchStatus,
   onUpdateMatchSchedule,
-  onUpdateMatchScore,
   onApplyMatchOperation,
 }: OpsMatchesProps) {
   const [statusFilter, setStatusFilter] = useState<Match['status'] | 'ALL'>('ALL');
   const [selectedScheduleMatch, setSelectedScheduleMatch] = useState<Match | null>(null);
-  const [selectedScoreMatch, setSelectedScoreMatch] = useState<Match | null>(null);
   const [scheduleDraft, setScheduleDraft] = useState<ScheduleDraft>({
     courtName: '',
     courtAddress: '',
     refereeId: '',
     scheduledAt: '',
-  });
-  const [scoreDraft, setScoreDraft] = useState<ScoreDraft>({
-    sets: [],
   });
   const [selectedOperationMatch, setSelectedOperationMatch] = useState<Match | null>(null);
   const [operationDraft, setOperationDraft] = useState<OperationDraft>({
@@ -206,11 +190,6 @@ export function OpsMatches({
     });
   };
 
-  const openScoreModal = (match: Match) => {
-    setSelectedScoreMatch(match);
-    setScoreDraft(buildScoreDraft(match, tournamentSportRules));
-  };
-
   const handleSubmitSchedule = async () => {
     if (!selectedScheduleMatch) {
       return;
@@ -223,35 +202,6 @@ export function OpsMatches({
       scheduledAt: scheduleDraft.scheduledAt ? new Date(scheduleDraft.scheduledAt).toISOString() : null,
     });
     setSelectedScheduleMatch(null);
-  };
-
-  const handleSubmitScore = async () => {
-    if (!selectedScoreMatch) {
-      return;
-    }
-
-    const activeSetIndex = scoreDraft.sets.findIndex((set) => !set.isFinished);
-    const normalizedSets = scoreDraft.sets.map((set) => ({ ...set }));
-    const currentSetIndex = activeSetIndex !== -1 ? activeSetIndex : normalizedSets.length - 1;
-    if (currentSetIndex >= 0 && normalizedSets[currentSetIndex]) {
-      normalizedSets[currentSetIndex] = {
-        ...normalizedSets[currentSetIndex],
-        isFinished: true,
-      };
-    }
-
-    const completedSets = normalizedSets.filter((set) => set.isFinished);
-    const p1SetsWon = completedSets.filter((set) => set.team1Score > set.team2Score).length;
-    const p2SetsWon = completedSets.filter((set) => set.team2Score > set.team1Score).length;
-
-    await onUpdateMatchScore(selectedScoreMatch, {
-      p1SetsWon,
-      p2SetsWon,
-      sets: normalizedSets,
-      sideOutState: scoreDraft.sideOutState,
-      overrideReason: scoreDraft.overrideEnabled ? scoreDraft.overrideReason?.trim() || undefined : undefined,
-    });
-    setSelectedScoreMatch(null);
   };
 
   const openOperationModal = (match: Match) => {
@@ -474,21 +424,6 @@ export function OpsMatches({
           </div>
 
           <div className="flex flex-wrap items-center justify-end gap-2">
-            <select
-              value={match.status}
-              onChange={(event) => {
-                void onUpdateMatchStatus(match, event.target.value as Match['status']);
-              }}
-              disabled={isBusy || isDirectAdvance}
-              className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm font-bold text-slate-700"
-            >
-              {STATUS_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-
             <Button
               variant="outline"
               className="border-slate-200 text-slate-700"
@@ -504,27 +439,6 @@ export function OpsMatches({
               onClick={() => onFocusMatch?.(match.id)}
             >
               Xem trên bracket
-            </Button>
-            <Button
-              variant="outline"
-              className="border-slate-200 text-slate-700"
-              onClick={() => openScoreModal(match)}
-              disabled={isBusy || isDirectAdvance || isBlocked}
-            >
-              <ClipboardPenLine className="mr-2 h-4 w-4" />
-              Tỷ số
-            </Button>
-            <Button
-              variant="outline"
-              className="border-slate-200 text-slate-700"
-              onClick={() => {
-                const nextStatus = match.status === 'ONGOING' ? 'COMPLETED' : 'ONGOING';
-                void onUpdateMatchStatus(match, nextStatus);
-              }}
-              disabled={isBusy || isDirectAdvance || isBlocked}
-            >
-              {match.status === 'ONGOING' ? <Trophy className="mr-2 h-4 w-4" /> : <Play className="mr-2 h-4 w-4" />}
-              {match.status === 'ONGOING' ? 'Kết thúc' : 'Bắt đầu'}
             </Button>
             <Button asChild variant="outline" className="border-slate-200 font-bold text-slate-700">
               <Link href={`/live/${match.id}`}>
@@ -720,26 +634,6 @@ export function OpsMatches({
               Lưu lịch thi đấu
             </Button>
           </ModalFooter>
-        </ModalContent>
-      </Modal>
-
-      <Modal open={Boolean(selectedScoreMatch)} onOpenChange={(open) => !open && setSelectedScoreMatch(null)}>
-        <ModalContent className="sm:max-w-2xl">
-          <ModalHeader>
-            <ModalTitle>Cập nhật tỷ số trận</ModalTitle>
-            <ModalDescription>
-              Nhập tỉ số từng set/game đã chốt. Nếu cần chấm điểm từng pha đang diễn ra, hãy mở bảng điểm trực tiếp của trận.
-            </ModalDescription>
-          </ModalHeader>
-          <ScoringPanel
-            match={selectedScoreMatch}
-            scoreDraft={scoreDraft}
-            setScoreDraft={setScoreDraft}
-            tournamentSportRules={tournamentSportRules}
-            isSubmitting={activeMatchActionId === selectedScoreMatch?.id}
-            onCancel={() => setSelectedScoreMatch(null)}
-            onSubmit={() => void handleSubmitScore()}
-          />
         </ModalContent>
       </Modal>
 

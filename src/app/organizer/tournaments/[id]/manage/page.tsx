@@ -148,7 +148,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
           onOpenTournament={s.handleConfirmOpen} isOpening={s.isOpening}
           isEndModalOpen={s.isEndModalOpen} setIsEndModalOpen={s.setIsEndModalOpen}
           handleConfirmEnd={s.handleConfirmEnd} isEnding={s.isEnding} endChecklist={s.endChecklist}
-          participants={s.participants} divisions={s.divisions} />
+                    participants={s.participants} divisions={s.divisions} matches={s.matches} />
 
         {/* Divisions Selector */}
         <div className="bg-white rounded-lg border border-slate-200 p-4 mb-4 shadow-sm">

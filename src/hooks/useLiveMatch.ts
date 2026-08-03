@@ -82,14 +82,37 @@ export function useLiveMatch(matchId: string) {
   }, [matchId]);
 
   useEffect(() => {
+    let isMounted = true;
     const socket = socketClient.getMatchSocket();
-    
+
+    const refreshMatchSnapshot = async () => {
+      try {
+        const data = await matchesApi.getMatchById(matchId);
+        if (!isMounted) {
+          return;
+        }
+
+        setMatch((previous) => (
+          previous && hasSameLiveSnapshot(previous, data) ? previous : data
+        ));
+        const nextScores = extractMatchScores(data.scoreDetails);
+        setScores((previous) => (
+          areScoresEqual(previous, nextScores) ? previous : nextScores
+        ));
+        setCheerCount(data.cheerCount ?? 0);
+      } catch (err: unknown) {
+        // A reconnect can race with the server becoming ready; keep the last snapshot.
+        console.warn('Failed to refresh live match snapshot after socket connection:', err);
+      }
+    };
+
     if (!socket.connected) {
       socket.connect();
     }
 
     const joinRoom = () => {
       socket.emit('joinMatch', matchId);
+      void refreshMatchSnapshot();
     };
 
     const handleScoreUpdate = (rawMatch: Match | string) => {
@@ -152,6 +175,7 @@ export function useLiveMatch(matchId: string) {
     socket.on('cheer:update', handleCheerUpdate);
 
     return () => {
+      isMounted = false;
       socket.emit('leaveMatch', matchId);
       socket.off('connect', joinRoom);
       socket.off('score:update', handleScoreUpdate);

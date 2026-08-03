@@ -1,18 +1,19 @@
 import React from 'react';
-import { Check, ChevronRight, Users, GitMerge, Play, Trophy, FileText, Loader2 } from 'lucide-react';
+import { Check, ChevronRight, Users, GitMerge, Play, Trophy, FileText, Loader2, Download } from 'lucide-react';
 import { Tournament } from '@/features/tournaments/api';
 import { Button } from '@/components/ui/Button';
 import {
   Modal, ModalContent, ModalHeader, ModalTitle,
 } from '@/components/ui/Modal';
-import {
-  isTournamentCompleted,
+import { isTournamentCompleted,
   isTournamentDraft,
   isTournamentInProgress,
   isTournamentOpenForRegistration,
   isTournamentRegistrationClosed,
   isTournamentUpcoming,
 } from '@/utils/tournament-status';
+import type { Match } from '@/types/match';
+import { exportTournamentResultsExcel } from '@/utils/exportTournament';
 
 interface TournamentStepperProps {
   tournament: Tournament;
@@ -36,14 +37,15 @@ interface TournamentStepperProps {
     allCompleted: boolean;
   } | null;
   participants?: { isPaid: boolean; teamStatus?: string }[];
-  divisions?: { id: string; roundConfig?: unknown }[];
-}
+    divisions?: { id: string; roundConfig?: unknown }[];
+    matches?: Match[];
+  }
 
 export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlatformFee, publishFeeAmount = 0, isLoading,
   onOpenTournament, isOpening = false,
   isEndModalOpen, setIsEndModalOpen, handleConfirmEnd, isEnding = false, endChecklist = null,
-  participants = [], divisions = [],
-}: TournamentStepperProps) {
+  participants = [], divisions = [], matches = [],
+  }: TournamentStepperProps) {
   const getStepIndex = () => {
     if (isTournamentDraft(tournament.status)) return -1;
     if (isTournamentUpcoming(tournament.status) || isTournamentRegistrationClosed(tournament.status)) return 1;
@@ -342,7 +344,28 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
         })}
       </div>
 
-      {/* Phase 2 — Khai mạc giải đấu (inline checklist, giống Phase 1) */}
+            {/* Step 4 — Giải đấu hoàn thành: chỉ hiện nút Export */}
+            {isTournamentCompleted(tournament.status) && (
+              <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-emerald-200 bg-emerald-50/70 p-4">
+                <div>
+                  <p className="text-sm font-bold text-emerald-900">Giải đấu đã hoàn thành 🏆</p>
+                  <p className="mt-0.5 text-xs font-medium text-emerald-700">
+                    Tải về bảng tổng kết kết quả toàn giải (Excel) để lưu trữ hoặc công bố.
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  onClick={() => exportTournamentResultsExcel(tournament.name, matches)}
+                  disabled={matches.length === 0}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 h-8 px-4 rounded-full shadow-sm"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  {matches.length === 0 ? 'Chưa có trận đấu' : `Export kết quả (${matches.length} trận)`}
+                </Button>
+              </div>
+            )}
+
+            {/* Phase 2 — Khai mạc giải đấu (inline checklist, giống Phase 1) */}
       {currentStep === 1 && !isTournamentDraft(tournament.status) && isRegistrationClosed && (
         <div className="bg-amber-50/70 border border-amber-200 rounded-lg p-4 mt-4 mb-2 text-xs">
           <h4 className="font-bold text-slate-700 mb-3 flex items-center gap-2">

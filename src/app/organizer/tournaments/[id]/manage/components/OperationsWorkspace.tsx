@@ -8,7 +8,6 @@ import type { SportRulesEnvelope } from '@/types/tournament';
 import type {
   MatchOperationInput,
   MatchScheduleInput,
-  MatchScoreInput,
   OpsActivityItem,
   OpsReferee,
 } from '@/features/organizer/ops/types';
@@ -45,12 +44,10 @@ interface OperationsWorkspaceProps {
     completedMatches: number;
   };
   onKickParticipant: (participantId: string, reason: string) => Promise<void>;
-  onUpdateMatchStatus: (match: Match, status: Match['status']) => Promise<void>;
   onUpdateMatchSchedule: (
     match: Match,
     payload: MatchScheduleInput,
   ) => Promise<void>;
-  onUpdateMatchScore: (match: Match, payload: MatchScoreInput) => Promise<void>;
   onApplyMatchOperation: (match: Match, payload: MatchOperationInput) => Promise<void>;
 }
 
@@ -69,9 +66,7 @@ export function OperationsWorkspace({
   error,
   summary,
   onKickParticipant,
-  onUpdateMatchStatus,
   onUpdateMatchSchedule,
-  onUpdateMatchScore,
   onApplyMatchOperation,
 }: OperationsWorkspaceProps) {
   const [activeTab, setActiveTab] = useState<'MATCHES' | 'PARTICIPANTS' | 'ACTIVITY'>('MATCHES');
@@ -232,9 +227,7 @@ export function OperationsWorkspace({
           onFocusMatch={onFocusMatch}
           tournamentSportRules={tournamentSportRules}
           matchInsights={matchInsights}
-          onUpdateMatchStatus={onUpdateMatchStatus}
           onUpdateMatchSchedule={onUpdateMatchSchedule}
-          onUpdateMatchScore={onUpdateMatchScore}
           onApplyMatchOperation={onApplyMatchOperation}
         />
       ) : null}

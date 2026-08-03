@@ -39,7 +39,6 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/Button';
 import { OfficialScoreModal } from './components/OfficialScoreModal';
-import { LiteScoreModal } from './components/LiteScoreModal';
 import type { TournamentParticipant } from '@/types/tournament';
 import { ReportViolationButton } from '@/features/reports/components/ReportViolationButton';
 import ShareModal from '@/components/common/ShareModal';
@@ -59,12 +58,8 @@ export default function LiveMatchPage({ params }: Props) {
   const [overrideEnabled, setOverrideEnabled] = useState(false);
   const [overrideReason, setOverrideReason] = useState('');
   const [isOfficialScoreModalOpen, setIsOfficialScoreModalOpen] = useState(false);
-  const [isLiteScoreModalOpen, setIsLiteScoreModalOpen] = useState(false);
   const [optimisticTennisPointState, setOptimisticTennisPointState] = useState<TennisLivePointState | null>(null);
   const lastSyncedTennisServerKeyRef = useRef<string>('init');
-
-  const isLiteMatch =
-    match?.tournament?.tournamentConfig?.mode === 'LITE';
 
   const [comments, setComments] = useState<MatchComment[]>([]);
   const [commentText, setCommentText] = useState('');
@@ -1315,8 +1310,7 @@ export default function LiveMatchPage({ params }: Props) {
                   <Button
                     size="lg"
                     onClick={() => {
-                      if (isLiteMatch) setIsLiteScoreModalOpen(true);
-                      else setIsOfficialScoreModalOpen(true);
+                      setIsOfficialScoreModalOpen(true);
                     }}
                     className="h-auto rounded-lg px-5 py-3 text-left text-sm font-bold shadow-md"
                   >
@@ -1474,14 +1468,6 @@ export default function LiveMatchPage({ params }: Props) {
           onSetServingTeam={(team) => void handleSetServingTeam(team)}
           onSideOut={() => void handleSideOut()}
           onAddPenalty={(team, kind, label, note) => void handleAddPenalty(team, kind, label, note)}
-        />
-
-        <LiteScoreModal
-          open={isLiteScoreModalOpen}
-          onOpenChange={setIsLiteScoreModalOpen}
-          team1Name={team1Name}
-          team2Name={team2Name}
-          sportLabel={scorePresentation.sportLabel}
         />
 
         <ShareModal

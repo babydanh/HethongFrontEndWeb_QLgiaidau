@@ -7,6 +7,8 @@ import {
   BracketStage, BracketMatch, MatchTypeUI, MatchTypeDB, GenderRestriction, Division,
 } from '@/features/tournaments/api';
 import { venuesApi } from '@/features/venues/api';
+import { matchesApi } from '@/features/matches/api';
+import type { Match } from '@/types/match';
 import { paymentsApi } from '@/features/payments/api';
 import { categoriesApi, Category } from '@/features/categories/api';
 import { regionsApi, Region } from '@/features/regions/api';
@@ -42,6 +44,7 @@ export function useManageState(id: string) {
   // ── Data ──
   const [tournament, setTournament] = useState<Tournament | null>(null);
   const [participants, setParticipants] = useState<TournamentParticipant[]>([]);
+  const [matches, setMatches] = useState<Match[]>([]);
   const [bracket, setBracket] = useState<{ stages: BracketStage[] } | null>(null);
   const [venues, setVenues] = useState<Venue[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -1056,6 +1059,11 @@ export function useManageState(id: string) {
         applyResolvedRuleState(resolvedRules);
         if (t.parentId) await fetchDivisions(t.parentId); else await fetchDivisions(id);
         if (t.venueId) await fetchVenueCourts(t.venueId);
+        // Nạp danh sách trận đấu (dùng cho export kết quả toàn giải ở bước kết thúc)
+        try {
+          const mRes = await matchesApi.getMatches({ tournamentId: id, limit: 100 });
+          if (mRes.data) setMatches(mRes.data);
+        } catch { /* không chặn luồng chính */ }
       }
       return tRes.data;
     } catch { toast.error('Không thể tải thông tin giải đấu'); return null; }
@@ -1197,7 +1205,7 @@ export function useManageState(id: string) {
     : `${window.location.origin}/tournaments/${id}`;
 
   return {
-    tournament, setTournament, participants, setParticipants, bracket, setBracket,
+    tournament, setTournament, participants, setParticipants, matches, setMatches, bracket, setBracket,
     venues, setVenues, categories, setCategories, feesConfig, setFeesConfig, courts, setCourts,
     isLoading, setIsLoading, activeTab, setActiveTab, basicSubTab, setBasicSubTab,
     referees, setReferees, refereeEmail, setRefereeEmail, isAddingReferee, setIsAddingReferee,

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import {
   X,
   Image as ImageIcon,
@@ -135,6 +136,12 @@ export const BannerFormModal: React.FC<BannerFormModalProps> = ({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   useEffect(() => {
     if (initialData) {
       setTitle(initialData.title || '');
@@ -165,7 +172,7 @@ export const BannerFormModal: React.FC<BannerFormModalProps> = ({
     }
   }, [initialData, isOpen]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
   const currentSlotMeta = PLACEMENT_OPTIONS.find((s) => s.value === placementSlot) || PLACEMENT_OPTIONS[0];
 
@@ -258,9 +265,9 @@ export const BannerFormModal: React.FC<BannerFormModalProps> = ({
     await onSubmit(payload);
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-3 sm:p-6 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="relative flex max-h-[92vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+  return createPortal(
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center overflow-y-auto bg-black/65 p-4 sm:p-6 backdrop-blur-xs animate-in fade-in duration-200">
+      <div className="relative flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
         {/* Header */}
         <div className="flex shrink-0 items-center justify-between border-b border-slate-100 bg-slate-50/90 px-6 py-4">
           <div className="flex items-center gap-3">
@@ -594,6 +601,7 @@ export const BannerFormModal: React.FC<BannerFormModalProps> = ({
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

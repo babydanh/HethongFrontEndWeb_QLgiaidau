@@ -35,6 +35,45 @@ interface AdminHeaderProps {
   onOpenSidebar: () => void;
 }
 
+interface AdminAvatarProps {
+  fullName?: string | null;
+  avatarUrl?: string | null;
+  avatarAriaLabel: string;
+  sizeClassName: string;
+}
+
+function AdminAvatar({ fullName, avatarUrl, avatarAriaLabel, sizeClassName }: AdminAvatarProps) {
+  const [imageFailed, setImageFailed] = useState(false);
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [avatarUrl]);
+
+  const initials = fullName?.trim().charAt(0) || 'A';
+  const shouldShowImage = Boolean(avatarUrl) && !imageFailed;
+
+  return (
+    <span
+      role="img"
+      aria-label={avatarAriaLabel}
+      className={cn('relative flex shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-blue-100 text-sm font-bold uppercase text-blue-700', sizeClassName)}
+    >
+      {shouldShowImage ? (
+        // Dynamic user media URLs cannot be guaranteed to match next/image remotePatterns.
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={avatarUrl || undefined}
+          alt=""
+          className="h-full w-full object-cover"
+          onError={() => setImageFailed(true)}
+        />
+      ) : (
+        initials
+      )}
+    </span>
+  );
+}
+
 export function AdminHeader({ title, onOpenSidebar }: AdminHeaderProps) {
   const navigationTranslate = useTranslations('Navigation');
   const layoutTranslate = useTranslations('AdminLayout');
@@ -61,6 +100,7 @@ export function AdminHeader({ title, onOpenSidebar }: AdminHeaderProps) {
 
   const notificationPreviewItems = notifications.slice(0, 5);
   const isAdmin = Boolean(user?.roles?.includes('ADMIN'));
+  const canManageSupport = isAdmin || Boolean(user?.roles?.includes('MODERATOR'));
   const roleLabel = isAdmin
     ? layoutTranslate('adminRole')
     : layoutTranslate('moderatorRole');
@@ -311,7 +351,7 @@ export function AdminHeader({ title, onOpenSidebar }: AdminHeaderProps) {
           </AnimatePresence>
         </div>
 
-        {isAdmin ? <AdminSupportBell /> : null}
+        {canManageSupport ? <AdminSupportBell /> : null}
 
         <div className="relative" ref={profileMenuRef}>
           <button
@@ -325,14 +365,12 @@ export function AdminHeader({ title, onOpenSidebar }: AdminHeaderProps) {
             aria-expanded={isProfileOpen}
             aria-haspopup="menu"
           >
-            <span
-              role="img"
-              aria-label={navigationTranslate('avatarAria')}
-              className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-blue-100 text-sm font-bold uppercase text-blue-700"
-              style={user?.avatarUrl ? { backgroundImage: `url("${user.avatarUrl}")`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
-            >
-              {user?.avatarUrl ? null : user?.fullName?.charAt(0) || 'A'}
-            </span>
+            <AdminAvatar
+              fullName={user?.fullName}
+              avatarUrl={user?.avatarUrl}
+              avatarAriaLabel={navigationTranslate('avatarAria')}
+              sizeClassName="h-10 w-10"
+            />
             <span className="hidden max-w-44 text-left sm:block">
               <span className="block truncate text-xs font-bold text-slate-900">{user?.fullName || 'Admin'}</span>
               <span className="block truncate text-[10px] text-slate-500">{user?.email || ''}</span>
@@ -352,12 +390,12 @@ export function AdminHeader({ title, onOpenSidebar }: AdminHeaderProps) {
               >
                 <div className="border-b border-slate-100 px-4 py-3">
                   <div className="flex items-center gap-3">
-                    <span
-                      className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-blue-100 text-sm font-bold uppercase text-blue-700"
-                      style={user?.avatarUrl ? { backgroundImage: `url("${user.avatarUrl}")`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
-                    >
-                      {user?.avatarUrl ? null : user?.fullName?.charAt(0) || 'A'}
-                    </span>
+                    <AdminAvatar
+                      fullName={user?.fullName}
+                      avatarUrl={user?.avatarUrl}
+                      avatarAriaLabel={navigationTranslate('avatarAria')}
+                      sizeClassName="h-11 w-11"
+                    />
                     <div className="min-w-0">
                       <p className="truncate text-sm font-bold text-slate-950">{user?.fullName || 'Admin'}</p>
                       <p className="truncate text-xs text-slate-500">{user?.email || ''}</p>

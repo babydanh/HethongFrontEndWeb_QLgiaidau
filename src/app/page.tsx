@@ -1640,8 +1640,9 @@ export default function HomePage() {
              </div>
            )}
 
-           {/* Widget 2 — Banner Ads 4:3 */}
+           {/* Widget 2 — Banner Ads (Chuẩn IAB 300x250 Medium Rectangle) */}
            <AdBannerCard
+             slot="HOMEPAGE_SIDEBAR"
              variant="sidebar"
              sponsor={translate('promoStore')}
              title={translate('promoProduct')}

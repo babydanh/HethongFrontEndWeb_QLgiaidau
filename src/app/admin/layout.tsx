@@ -23,6 +23,7 @@ import {
   Layers,
   HandCoins,
   MessagesSquare,
+  Megaphone,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { Button } from '@/components/ui/Button';
@@ -49,6 +50,7 @@ export default function AdminLayout({
     { labelKey: 'tournaments', path: '/admin/tournaments', icon: Trophy },
     { labelKey: 'categories', path: '/admin/categories', icon: Layers },
     { labelKey: 'communities', path: '/admin/communities', icon: Building },
+    { labelKey: 'banners', path: '/admin/banners', icon: Megaphone },
     { labelKey: 'payouts', path: '/admin/payouts', icon: CreditCard },
     { labelKey: 'transactions', path: '/admin/transactions', icon: HandCoins },
     { labelKey: 'support', path: '/admin/support', icon: MessagesSquare },

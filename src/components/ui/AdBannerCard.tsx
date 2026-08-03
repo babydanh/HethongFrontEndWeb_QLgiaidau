@@ -1,29 +1,39 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowRight, ExternalLink, Sparkles } from 'lucide-react';
+import {
+  advertisementsApi,
+  type AdPlacementSlot,
+  type Advertisement,
+} from '@/features/advertisements/api';
 
 export interface AdBannerProps {
-  /** 
+  /**
+   * Vị trí hiển thị (Nếu truyền vào, component sẽ tự động gọi API lấy banner từ backend)
+   */
+  slot?: AdPlacementSlot;
+
+  /**
    * Kiểu hiển thị banner:
    * - 'sidebar': Card tỉ lệ 4:3 cho cột bên phải (Trang chủ, chi tiết trận đấu)
    * - 'horizontal': Banner ngang rộng đặt dưới phân trang, chân danh sách (Tournaments, Matches)
    * - 'inline': Card gọn nhẹ để chèn xen kẽ giữa các card trong danh sách
    */
   variant?: 'sidebar' | 'horizontal' | 'inline';
-  
-  /** Tên nhãn hàng / nhà tài trợ (VD: "CỬA HÀNG TOURNA", "SPORTO PARTNER") */
+
+  /** Tên nhãn hàng / nhà tài trợ (VD: "CỬA HÀNG SPORTO", "SPORTO PARTNER") */
   sponsor?: string;
 
-  /** Tiêu đề chính của sản phẩm/dịch vụ */
+  /** Tiêu đề chính (Fallback khi chưa có banner động) */
   title: string;
 
-  /** Mô tả ngắn / ưu đãi */
+  /** Mô tả ngắn / ưu đãi (Fallback khi chưa có banner động) */
   description?: string;
 
-  /** Đường dẫn khi click vào banner */
+  /** Đường dẫn khi click vào banner (Fallback khi chưa có banner động) */
   href?: string;
 
   /** Chữ hiển thị trên nút kêu gọi hành động (CTA) */
@@ -46,24 +56,58 @@ export interface AdBannerProps {
 }
 
 export function AdBannerCard({
+  slot,
   variant = 'sidebar',
   sponsor = 'SPORTO PARTNER',
-  title,
-  description,
-  href = '#',
-  ctaText = 'Xem chi tiết',
-  imageUrl,
+  title: fallbackTitle,
+  description: fallbackDescription,
+  href: fallbackHref = '#',
+  ctaText: fallbackCtaText = 'Xem chi tiết',
+  imageUrl: fallbackImageUrl,
   badgeLabel = 'Quảng cáo',
   className = '',
-  customHtml,
+  customHtml: fallbackCustomHtml,
   onClick,
 }: AdBannerProps) {
+  const [activeBanner, setActiveBanner] = useState<Advertisement | null>(null);
+
+  useEffect(() => {
+    if (!slot) return;
+    let isMounted = true;
+    advertisementsApi.getActiveBySlot(slot).then((banners) => {
+      if (isMounted && banners && banners.length > 0) {
+        const topBanner = banners[0];
+        setActiveBanner(topBanner);
+        // Ghi nhận 1 lượt view
+        advertisementsApi.recordView(topBanner.id);
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [slot]);
+
+  // Derived fields (Ưu tiên banner động từ Backend nếu có)
+  const title = activeBanner ? activeBanner.title : fallbackTitle;
+  const description = activeBanner ? (activeBanner.description || undefined) : fallbackDescription;
+  const href = activeBanner ? (activeBanner.targetUrl || '#') : fallbackHref;
+  const ctaText = activeBanner ? (activeBanner.ctaText || 'Xem chi tiết') : fallbackCtaText;
+  const imageUrl = activeBanner ? (activeBanner.imageUrl || undefined) : fallbackImageUrl;
+  const customHtml = activeBanner?.bannerType === 'CUSTOM_HTML' ? activeBanner.customHtml : fallbackCustomHtml;
+
+  const handleClick = () => {
+    if (activeBanner) {
+      advertisementsApi.recordClick(activeBanner.id);
+    }
+    onClick?.();
+  };
+
   // Nếu có customHtml từ mạng quảng cáo thứ 3 (như Google AdSense / Widget)
   if (customHtml) {
     return (
-      <div 
-        className={`w-full overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 ${className}`}
-        dangerouslySetInnerHTML={{ __html: customHtml }} 
+      <div
+        className={`w-full overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-xs ${className}`}
+        dangerouslySetInnerHTML={{ __html: customHtml }}
       />
     );
   }
@@ -74,22 +118,23 @@ export function AdBannerCard({
   if (variant === 'horizontal') {
     const content = (
       <div
-        onClick={onClick}
+        onClick={handleClick}
         className={`group relative w-full overflow-hidden rounded-2xl border border-slate-800 bg-gradient-to-r from-slate-950 via-slate-900 to-blue-950 p-5 md:p-6 shadow-[0_4px_24px_rgba(15,23,42,0.12)] transition-all duration-300 hover:border-blue-500/50 hover:shadow-[0_8px_32px_rgba(37,99,235,0.18)] ${className}`}
       >
         {/* Glow & Abstract Background Accents */}
         <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-blue-600/15 blur-3xl transition-all duration-500 group-hover:bg-blue-600/25" />
         <div className="pointer-events-none absolute -left-16 -bottom-16 h-64 w-64 rounded-full bg-indigo-600/10 blur-3xl" />
-        
+
         {/* Custom Image background if provided */}
         {imageUrl && (
-          <div className="absolute inset-0 z-0 opacity-20 transition-opacity duration-300 group-hover:opacity-30">
+          <div className="absolute inset-0 z-0 opacity-25 transition-opacity duration-300 group-hover:opacity-35">
             <Image
               src={imageUrl}
               alt={title}
               fill
               className="object-cover"
               sizes="(max-width: 768px) 100vw, 1200px"
+              unoptimized
             />
             <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/80 to-transparent" />
           </div>
@@ -148,7 +193,7 @@ export function AdBannerCard({
   // Variant 2 & 3: Sidebar Card (4:3) & Inline
   const cardContent = (
     <div
-      onClick={onClick}
+      onClick={handleClick}
       className={`group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_2px_12px_rgba(15,23,42,0.06)] transition-all duration-300 hover:border-blue-400/60 hover:shadow-[0_8px_24px_rgba(37,99,235,0.12)] cursor-pointer flex flex-col ${className}`}
     >
       <div className="aspect-[4/3] bg-slate-900 relative p-5 flex flex-col justify-end overflow-hidden">
@@ -160,6 +205,7 @@ export function AdBannerCard({
             fill
             className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
             sizes="(max-width: 768px) 100vw, 400px"
+            unoptimized
           />
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950" />

@@ -1514,6 +1514,7 @@ export default function MatchesListPage() {
       {/* Banner Quảng cáo / Đối tác dưới phân trang */}
       <div className="mt-10 pt-4 border-t border-slate-100">
         <AdBannerCard
+          slot="MATCHES_BOTTOM"
           variant="horizontal"
           sponsor="SPORTO STORE & ĐỐI TÁC"
           title="Trang thiết bị & Dụng cụ Thể thao chính hãng"

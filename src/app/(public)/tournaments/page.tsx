@@ -898,6 +898,7 @@ export default function TournamentsListPage() {
       {/* Banner Quảng cáo / Đối tác dưới phân trang */}
       <div className="mt-10 pt-4 border-t border-slate-100">
         <AdBannerCard
+          slot="TOURNAMENTS_BOTTOM"
           variant="horizontal"
           sponsor={translate('promoStoreTitle')}
           title={translate('promoStoreHeadline')}

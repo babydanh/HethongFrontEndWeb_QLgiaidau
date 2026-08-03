@@ -7,6 +7,14 @@ import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'react-hot-toast';
 import { Button } from '@/components/ui/Button';
 import {
+  Modal,
+  ModalContent,
+  ModalDescription,
+  ModalFooter,
+  ModalHeader,
+  ModalTitle,
+} from '@/components/ui/Modal';
+import {
   rankingsApi,
   type AdminEloOperation,
   type AdminEloOperationHistoryItem,
@@ -126,11 +134,12 @@ export default function AdminEloPage() {
         cursor: cursor || undefined,
       });
       if (requestId !== requestSequence.current) return;
+      const page = result.data;
       setContexts((current) => append
-        ? [...current, ...result.data.filter((item) => !current.some((existing) => existing.contextId === item.contextId))]
-        : result.data);
-      setNextCursor(result.meta.nextCursor);
-      setHasMore(result.meta.hasMore);
+        ? [...current, ...page.data.filter((item) => !current.some((existing) => existing.contextId === item.contextId))]
+        : page.data);
+      setNextCursor(page.meta.nextCursor);
+      setHasMore(page.meta.hasMore);
     } catch (error: unknown) {
       if (requestId === requestSequence.current) toast.error(getErrorMessage(error, translate('loadFailed')));
     } finally {
@@ -228,7 +237,7 @@ export default function AdminEloPage() {
     setHistoryLoading(true);
     try {
       const result = await rankingsApi.getAdminHistory(context.contextId);
-      setHistory(result.data);
+      setHistory(result.data.data);
     } catch (error: unknown) {
       toast.error(getErrorMessage(error, translate('loadFailed')));
       setHistory([]);
@@ -284,9 +293,35 @@ export default function AdminEloPage() {
 
       {!loading && hasMore && <div className="flex justify-center"><Button type="button" variant="outline" disabled={loadingMore || !nextCursor} onClick={() => void loadContexts({ nextQuery: query, cursor: nextCursor, append: true })}>{loadingMore && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}{translate('loadMoreUsers')}</Button></div>}
 
-      {selected && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true" aria-labelledby="admin-elo-operation-title"><div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl bg-white p-6 shadow-xl"><h2 id="admin-elo-operation-title" className="text-lg font-bold text-slate-900">{translate('preview')}</h2><p className="mt-1 text-sm text-slate-600">{selected.fullName} · {selected.eloPoints} Elo</p><div className="mt-5 space-y-4"><label className="block"><span className="mb-1 block text-xs font-semibold text-slate-600">{translate('operation')}</span><select value={operation} onChange={(event) => { setOperation(event.target.value as AdminEloOperation); setExpiresAt(''); }} className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm"><option value="ADD">{translate('add')}</option><option value="SUBTRACT">{translate('subtract')}</option><option value="SET">{translate('set')}</option><option value="RESET">{translate('reset')}</option><option value="HIDE">{translate('hide')}</option><option value="BAN">{translate('ban')}</option><option value="RESTORE">{translate('restore')}</option></select></label>{isRatingOperation(operation) && operation !== 'RESET' && <label className="block"><span className="mb-1 block text-xs font-semibold text-slate-600">{translate('value')}</span><input type="number" min={1} max={10000} step={1} value={value} onChange={(event) => setValue(event.target.value)} className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm" /></label>}{['HIDE', 'BAN'].includes(operation) && <label className="block"><span className="mb-1 block text-xs font-semibold text-slate-600">{translate('expiry')}</span><input type="datetime-local" value={expiresAt} onChange={(event) => setExpiresAt(event.target.value)} className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm" /></label>}<div className="rounded-lg bg-slate-50 p-3 text-sm"><div className="flex justify-between"><span>{translate('currentElo')}</span><strong>{selected.eloPoints}</strong></div><div className="mt-1 flex justify-between"><span>{translate('newElo')}</span><strong>{previewElo(selected, operation, Number(value) || 0)}</strong></div>{['HIDE', 'BAN'].includes(operation) && <p className="mt-2 flex gap-2 text-xs text-amber-800"><ShieldAlert className="h-4 w-4 shrink-0" />{translate('excludeWarning')}</p>}{operation === 'RESET' && <p className="mt-2 text-xs text-amber-800">{translate('resetWarning')}</p>}</div><label className="block"><span className="mb-1 block text-xs font-semibold text-slate-600">{translate('reason')}</span><textarea value={reason} onChange={(event) => setReason(event.target.value)} placeholder={translate('reasonPlaceholder')} rows={4} maxLength={500} className="w-full resize-y rounded-lg border border-slate-300 px-3 py-2 text-sm" /></label><div className="flex justify-end gap-2"><Button type="button" variant="outline" onClick={closeOperation} disabled={processing}>{translate('cancel')}</Button><Button type="button" onClick={() => void submitOperation()} disabled={processing}>{processing && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}{processing ? translate('processing') : translate('confirm')}</Button></div></div></div></div>}
+      <Modal open={selected !== null} onOpenChange={(open) => { if (!open) closeOperation(); }}>
+        <ModalContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+          <ModalHeader>
+            <ModalTitle>{translate('preview')}</ModalTitle>
+            <ModalDescription>{selected ? `${selected.fullName} · ${selected.eloPoints} Elo` : ''}</ModalDescription>
+          </ModalHeader>
+          {selected && <div className="space-y-4">
+            <label className="block"><span className="mb-1 block text-xs font-semibold text-slate-600">{translate('operation')}</span><select value={operation} onChange={(event) => { setOperation(event.target.value as AdminEloOperation); setExpiresAt(''); }} className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm"><option value="ADD">{translate('add')}</option><option value="SUBTRACT">{translate('subtract')}</option><option value="SET">{translate('set')}</option><option value="RESET">{translate('reset')}</option><option value="HIDE">{translate('hide')}</option><option value="BAN">{translate('ban')}</option><option value="RESTORE">{translate('restore')}</option></select></label>
+            {isRatingOperation(operation) && operation !== 'RESET' && <label className="block"><span className="mb-1 block text-xs font-semibold text-slate-600">{translate('value')}</span><input type="number" min={1} max={10000} step={1} value={value} onChange={(event) => setValue(event.target.value)} className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm" /></label>}
+            {['HIDE', 'BAN'].includes(operation) && <label className="block"><span className="mb-1 block text-xs font-semibold text-slate-600">{translate('expiry')}</span><input type="datetime-local" value={expiresAt} onChange={(event) => setExpiresAt(event.target.value)} className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm" /></label>}
+            <div className="rounded-lg bg-slate-50 p-3 text-sm"><div className="flex justify-between"><span>{translate('currentElo')}</span><strong>{selected.eloPoints}</strong></div><div className="mt-1 flex justify-between"><span>{translate('newElo')}</span><strong>{previewElo(selected, operation, Number(value) || 0)}</strong></div>{['HIDE', 'BAN'].includes(operation) && <p className="mt-2 flex gap-2 text-xs text-amber-800"><ShieldAlert className="h-4 w-4 shrink-0" />{translate('excludeWarning')}</p>}{operation === 'RESET' && <p className="mt-2 text-xs text-amber-800">{translate('resetWarning')}</p>}</div>
+            <label className="block"><span className="mb-1 block text-xs font-semibold text-slate-600">{translate('reason')}</span><textarea value={reason} onChange={(event) => setReason(event.target.value)} placeholder={translate('reasonPlaceholder')} rows={4} maxLength={500} className="w-full resize-y rounded-lg border border-slate-300 px-3 py-2 text-sm" /></label>
+            <ModalFooter><Button type="button" variant="outline" onClick={closeOperation} disabled={processing}>{translate('cancel')}</Button><Button type="button" onClick={() => void submitOperation()} disabled={processing}>{processing && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}{processing ? translate('processing') : translate('confirm')}</Button></ModalFooter>
+          </div>}
+        </ModalContent>
+      </Modal>
 
-      {historyContext && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true" aria-labelledby="admin-elo-history-title"><div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl bg-white p-6 shadow-xl"><div className="flex items-center justify-between gap-3"><h2 id="admin-elo-history-title" className="text-lg font-bold text-slate-900">{translate('historyTitle')}</h2><Button type="button" variant="outline" onClick={() => setHistoryContext(null)}>{translate('close')}</Button></div>{historyLoading && <div className="py-10 text-center"><Loader2 className="mx-auto h-5 w-5 animate-spin" /></div>}{!historyLoading && history.length === 0 && <p className="py-10 text-center text-sm text-slate-500">{translate('noHistory')}</p>}{!historyLoading && history.length > 0 && <div className="mt-4 space-y-3">{history.map((item) => <article key={item.id} className="rounded-lg border border-slate-200 p-3 text-sm"><div className="flex flex-wrap justify-between gap-2"><strong>{translate(getOperationLabelKey(item.operation))}</strong><time className="text-xs text-slate-500">{new Date(item.createdAt).toLocaleString(locale)}</time></div><div className="mt-1 text-slate-700">{item.previousElo ?? '—'} → {item.newElo ?? '—'}{item.changedPoints !== null ? ` (${item.changedPoints > 0 ? '+' : ''}${item.changedPoints})` : ''}</div><p className="mt-2 whitespace-pre-wrap text-slate-600">{item.reason}</p></article>)}</div>}</div></div>}
+      <Modal open={historyContext !== null} onOpenChange={(open) => { if (!open) setHistoryContext(null); }}>
+        <ModalContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+          <ModalHeader>
+            <ModalTitle>{translate('historyTitle')}</ModalTitle>
+            <ModalDescription>{historyContext ? historyContext.fullName : ''}</ModalDescription>
+          </ModalHeader>
+          {historyLoading && <div className="py-10 text-center"><Loader2 className="mx-auto h-5 w-5 animate-spin" /></div>}
+          {!historyLoading && history.length === 0 && <p className="py-10 text-center text-sm text-slate-500">{translate('noHistory')}</p>}
+          {!historyLoading && history.length > 0 && <div className="space-y-3">{history.map((item) => <article key={item.id} className="rounded-lg border border-slate-200 p-3 text-sm"><div className="flex flex-wrap justify-between gap-2"><strong>{translate(getOperationLabelKey(item.operation))}</strong><time className="text-xs text-slate-500">{new Date(item.createdAt).toLocaleString(locale)}</time></div><div className="mt-1 text-slate-700">{item.previousElo ?? '—'} → {item.newElo ?? '—'}{item.changedPoints !== null ? ` (${item.changedPoints > 0 ? '+' : ''}${item.changedPoints})` : ''}</div><p className="mt-2 whitespace-pre-wrap text-slate-600">{item.reason}</p></article>)}</div>}
+          <ModalFooter><Button type="button" variant="outline" onClick={() => setHistoryContext(null)}>{translate('close')}</Button></ModalFooter>
+        </ModalContent>
+      </Modal>
     </div>
   );
 }

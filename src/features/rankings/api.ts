@@ -95,6 +95,13 @@ export interface AdminRankingContextQuery {
   cursor?: string | null;
 }
 
+export interface ApiEnvelope<T> {
+  statusCode: number;
+  message: string;
+  data: T;
+  meta?: Record<string, unknown>;
+}
+
 export interface AdminRankingContextPage {
   data: AdminRankingContext[];
   meta: { limit: number; hasMore: boolean; nextCursor: string | null };
@@ -102,7 +109,7 @@ export interface AdminRankingContextPage {
 
 export interface AdminEloHistoryPage {
   data: AdminEloOperationHistoryItem[];
-  meta: { limit: number; hasMore: boolean };
+  meta: { limit: number; hasMore: boolean; nextCursor: string | null };
 }
 
 interface UserRankResponse {
@@ -120,10 +127,10 @@ export const rankingsApi = {
   getFootballTeamRankings: (params: { categoryId: string; communityId?: string; limit?: number; cursor?: string }) =>
     api.get<{ data: FootballTeamRanking[]; meta: { nextCursor?: string | null; hasMore?: boolean } }>('/rankings/football-teams', { params }),
   listAdminContexts: (params: AdminRankingContextQuery = {}) =>
-    api.get<AdminRankingContextPage>('/rankings/admin/contexts', { params }),
+    api.get<ApiEnvelope<AdminRankingContextPage>>('/rankings/admin/contexts', { params }),
   applyAdminOperation: (payload: AdminEloOperationPayload) =>
-    api.post<AdminEloOperationResult>('/rankings/admin/operations', payload),
-  getAdminHistory: (contextId: string, limit = 50) =>
-    api.get<AdminEloHistoryPage>(`/rankings/admin/contexts/${contextId}/history`, { params: { limit } }),
+    api.post<ApiEnvelope<AdminEloOperationResult>>('/rankings/admin/operations', payload),
+  getAdminHistory: (contextId: string, limit = 50, cursor?: string | null) =>
+    api.get<ApiEnvelope<AdminEloHistoryPage>>(`/rankings/admin/contexts/${contextId}/history`, { params: { limit, cursor: cursor || undefined } }),
 };
 

@@ -91,34 +91,31 @@ export function OfficialScoreModal({
           </div>
 
           <div className="flex min-h-0 flex-col">
-            <ModalHeader className="border-b border-slate-200 px-6 py-5 text-left">
-              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <ModalTitle className="text-2xl font-bold text-slate-900">
-                    Điều khiển điểm số trận
+            <ModalHeader className="border-b border-slate-200 px-5 py-3.5 text-left">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <ModalTitle className="text-xl font-bold text-slate-900">
+                    Điều khiển điểm số
                   </ModalTitle>
-                  <ModalDescription className="mt-2 text-sm font-medium text-slate-500">
-                    Cập nhật tỷ số, xử phạt, ngoại lệ và quyết định đặc biệt theo đúng preset của từng môn.
-                  </ModalDescription>
-                  <div className="mt-3 inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-700">
-                    Môn: {scorePresentation.sportLabel}
+                  <div className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-bold uppercase text-blue-700">
+                    {scorePresentation.sportLabel}
                   </div>
                 </div>
                 <div
                   className={cn(
-                    'inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-bold',
+                    'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold',
                     isSubmitting
                       ? 'bg-amber-50 text-amber-800'
-                      : 'bg-blue-50 text-blue-700',
+                      : 'bg-emerald-50 text-emerald-700',
                   )}
                 >
                   <TimerReset className="h-3.5 w-3.5" />
-                  {isSubmitting ? 'Đang đồng bộ dữ liệu' : 'Sẵn sàng thao tác'}
+                  {isSubmitting ? 'Đang đồng bộ' : 'Sẵn sàng'}
                 </div>
               </div>
             </ModalHeader>
 
-            <div className="min-h-0 flex-1 overflow-y-auto bg-slate-50 px-6 py-6">
+            <div className="min-h-0 flex-1 overflow-y-auto bg-slate-50 px-4 py-4">
               <LiveMatchControlPanel
                 match={match}
                 team1Name={team1Name}

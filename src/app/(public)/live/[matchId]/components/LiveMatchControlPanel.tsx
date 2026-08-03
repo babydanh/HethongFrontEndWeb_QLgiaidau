@@ -124,7 +124,7 @@ export function LiveMatchControlPanel({
             )}
           >
             <Activity className="h-4 w-4" />
-            TÃ­nh Ä‘iá»ƒm
+            Tính điểm
           </button>
           <button
             type="button"
@@ -135,7 +135,7 @@ export function LiveMatchControlPanel({
             )}
           >
             <Gavel className="h-4 w-4" />
-            Pháº¡m lá»—i
+            Phạt / Lỗi
           </button>
         </div>
       </div>
@@ -163,17 +163,20 @@ export function LiveMatchControlPanel({
           onSideOut={onSideOut}
         />
       ) : null}
-
-      <div className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2.5 text-sm font-semibold text-blue-900">
-        {scoreGuidance.targetSummary}
-        <div className="mt-1 text-xs font-semibold text-blue-700">
-          Ví dụ hợp lệ: {scoreGuidance.examples.join(' • ')}. {scoreGuidance.operatorHint}
-        </div>
-        {isTennis ? (
-          <div className="mt-2 text-xs font-semibold text-blue-700">
-            Tennis live sẽ lên theo pha bóng `0 - 15 - 30 - 40 - A`; đủ điều kiện thì hệ thống tự chốt game và nhảy sang loạt phụ khi set đang là `6 - 6`.
+         {scoreWarnings.length > 0 ? (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900">
+          <span className="font-bold">⚠️ Cảnh báo bám luật:</span>
+          <div className="mt-1 space-y-0.5">
+            {scoreWarnings.map((warning) => (
+              <p key={warning.id}>• {warning.message}</p>
+            ))}
           </div>
-        ) : null}
+        </div>
+      ) : null}
+
+      <div className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-900">
+        {scoreGuidance.targetSummary}
+        <span className="ml-1 opacity-75">| {scoreGuidance.examples.join(', ')}</span>
       </div>
 
       <div className="rounded-lg border border-slate-200 bg-white p-3">
@@ -267,29 +270,6 @@ export function LiveMatchControlPanel({
               Hệ thống sẽ lưu người quyết định, thời điểm và lý do vào audit log của trận.
             </p>
           </div>
-        ) : null}
-      </div>
-
-      <div className={cn(
-        "rounded-lg border px-3 py-2.5 text-sm font-semibold transition-all duration-200",
-        scoreWarnings.length > 0
-          ? "border-amber-200 bg-amber-50 text-amber-900"
-          : "border-emerald-100 bg-emerald-50/50 text-emerald-900"
-      )}>
-        <p className="font-bold">Cảnh báo bám luật mặc định</p>
-        <div className="mt-2 space-y-1 text-xs font-semibold">
-          {scoreWarnings.length > 0 ? (
-            scoreWarnings.map((warning) => (
-              <p className="text-amber-850" key={warning.id}>- {warning.message}</p>
-            ))
-          ) : (
-            <p className="text-emerald-700 font-medium">✓ Điểm số hiện tại hợp lệ, bám sát luật thi đấu chuẩn.</p>
-          )}
-        </div>
-        {!overrideEnabled && scoreWarnings.length > 0 ? (
-          <p className="mt-2 text-xs font-semibold text-amber-800">
-            Nếu trọng tài xác nhận đây là kết quả đặc biệt nhưng hợp lệ, hãy bật chế độ ngoại lệ rồi ghi rõ lý do.
-          </p>
         ) : null}
       </div>
 

@@ -847,6 +847,7 @@ export default function ProfilePage() {
             </div>
             <div className="md:col-span-2 space-y-6">
               {/* Câu lạc bộ của tôi */}
+              {/* Câu lạc bộ của tôi */}
               <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
                 <div className="flex justify-between items-center mb-6">
                   <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Câu lạc bộ của tôi</h3>
@@ -875,22 +876,35 @@ export default function ProfilePage() {
                           <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600">CLB đã tạo / quản lý</h4>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          {createdCommunities.map(community => (
-                            <Link href={`/communities/${community.id}`} key={community.id}>
-                              <div className="flex items-center gap-4 p-4 rounded-lg border border-slate-100 hover:border-blue-500 hover:shadow-md transition-all group bg-slate-50 cursor-pointer">
-                                <div className="w-14 h-14 rounded-full overflow-hidden border border-slate-200 relative shrink-0">
-                                  <Image src={community.logoUrl || "https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=150&auto=format&fit=crop"} alt={community.name} fill className="object-cover" />
+                          {createdCommunities.map(community => {
+                            const isOwner = community.creatorId === displayUser?.id || community.myRole === 'OWNER';
+                            const roleBadgeLabel = isOwner ? 'Người tạo / Chủ sở hữu' : community.myRole === 'MODERATOR' ? 'Quản trị viên' : 'Thành viên';
+                            const roleBadgeStyle = isOwner ? 'bg-blue-50 text-blue-700 border-blue-200' : community.myRole === 'MODERATOR' ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-slate-100 text-slate-700 border-slate-200';
+                            
+                            return (
+                              <Link href={`/communities/${community.id}`} key={community.id}>
+                                <div className="flex items-center gap-4 p-4 rounded-lg border border-slate-100 hover:border-blue-500 hover:shadow-md transition-all group bg-slate-50 cursor-pointer">
+                                  <div className="w-14 h-14 rounded-full overflow-hidden border border-slate-200 relative shrink-0">
+                                    <Image src={community.logoUrl || "https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=150&auto=format&fit=crop"} alt={community.name} fill className="object-cover" />
+                                  </div>
+                                  <div className="min-w-0 flex-grow">
+                                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                                      <h4 className="font-semibold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1">{community.name}</h4>
+                                    </div>
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${roleBadgeStyle}`}>
+                                        {roleBadgeLabel}
+                                      </span>
+                                      <p className={`text-xs flex items-center gap-1 ${community.status === 'ACTIVE' ? 'text-emerald-600' : 'text-amber-700'}`}>
+                                        <span className={`w-2 h-2 rounded-full inline-block ${community.status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
+                                        {community.status === 'ACTIVE' ? 'Đang hoạt động' : 'Đã vô hiệu hoá'}
+                                      </p>
+                                    </div>
+                                  </div>
                                 </div>
-                                <div className="min-w-0">
-                                  <h4 className="font-semibold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1">{community.name}</h4>
-                                  <p className={`text-xs mt-1 flex items-center gap-1 ${community.status === 'ACTIVE' ? 'text-emerald-600' : 'text-amber-700'}`}>
-                                    <span className={`w-2 h-2 rounded-full inline-block ${community.status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
-                                    {community.status === 'ACTIVE' ? 'Đang hoạt động' : 'Đã vô hiệu hoá'}
-                                  </p>
-                                </div>
-                              </div>
-                            </Link>
-                          ))}
+                              </Link>
+                            );
+                          })}
                         </div>
                       </div>
                     )}
@@ -901,22 +915,35 @@ export default function ProfilePage() {
                           <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600">CLB đã tham gia</h4>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          {joinedCommunities.map(community => (
-                      <Link href={`/communities/${community.id}`} key={community.id}>
-                        <div className="flex items-center gap-4 p-4 rounded-lg border border-slate-100 hover:border-emerald-500 hover:shadow-md transition-all group bg-slate-50 cursor-pointer">
-                          <div className="w-14 h-14 rounded-full overflow-hidden border border-slate-200 relative shrink-0">
-                            <Image src={community.logoUrl || "https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=150&auto=format&fit=crop"} alt={community.name} fill className="object-cover" />
-                          </div>
-                          <div className="min-w-0">
-                            <h4 className="font-semibold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1">{community.name}</h4>
-                            <p className={`text-xs mt-1 flex items-center gap-1 ${community.status === 'ACTIVE' ? 'text-emerald-600' : 'text-amber-700'}`}>
-                              <span className={`w-2 h-2 rounded-full inline-block ${community.status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
-                              {community.status === 'ACTIVE' ? 'Đang hoạt động' : 'Đã vô hiệu hoá'}
-                            </p>
-                          </div>
-                        </div>
-                      </Link>
-                          ))}
+                          {joinedCommunities.map(community => {
+                            const isOwner = community.creatorId === displayUser?.id || community.myRole === 'OWNER';
+                            const roleBadgeLabel = isOwner ? 'Người tạo / Chủ sở hữu' : community.myRole === 'MODERATOR' ? 'Quản trị viên' : 'Thành viên';
+                            const roleBadgeStyle = isOwner ? 'bg-blue-50 text-blue-700 border-blue-200' : community.myRole === 'MODERATOR' ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200';
+
+                            return (
+                              <Link href={`/communities/${community.id}`} key={community.id}>
+                                <div className="flex items-center gap-4 p-4 rounded-lg border border-slate-100 hover:border-emerald-500 hover:shadow-md transition-all group bg-slate-50 cursor-pointer">
+                                  <div className="w-14 h-14 rounded-full overflow-hidden border border-slate-200 relative shrink-0">
+                                    <Image src={community.logoUrl || "https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=150&auto=format&fit=crop"} alt={community.name} fill className="object-cover" />
+                                  </div>
+                                  <div className="min-w-0 flex-grow">
+                                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                                      <h4 className="font-semibold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1">{community.name}</h4>
+                                    </div>
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${roleBadgeStyle}`}>
+                                        {roleBadgeLabel}
+                                      </span>
+                                      <p className={`text-xs flex items-center gap-1 ${community.status === 'ACTIVE' ? 'text-emerald-600' : 'text-amber-700'}`}>
+                                        <span className={`w-2 h-2 rounded-full inline-block ${community.status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
+                                        {community.status === 'ACTIVE' ? 'Đang hoạt động' : 'Đã vô hiệu hoá'}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                              </Link>
+                            );
+                          })}
                         </div>
                       </div>
                     )}
@@ -933,62 +960,6 @@ export default function ProfilePage() {
                     </Link>
                   </div>
                 )}
-              </div>
-
-              <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6 space-y-5">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Vai trò giải đấu</h3>
-                    <p className="text-xs text-slate-500 mt-1">Tách rõ giải bạn sở hữu, tham gia và làm trọng tài.</p>
-                  </div>
-                  <Link href="/profile?tab=tournaments" className="text-xs font-bold text-blue-600 hover:text-blue-700">Xem chi tiết</Link>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
-                  <div className="rounded-xl border border-violet-100 bg-violet-50/60 p-3">
-                    <p className="text-[11px] font-bold uppercase tracking-wide text-violet-700">Chủ giải</p>
-                    <p className="text-2xl font-black text-violet-900 mt-1">{organizedTournaments.length}</p>
-                    <div className="mt-2 space-y-1.5">
-                      {organizedTournaments.slice(0, 2).map((tournament) => (
-                        <Link key={tournament.id} href={`/tournaments/${tournament.id}`} className="block truncate text-xs font-semibold text-slate-700 hover:text-violet-700">{tournament.name}</Link>
-                      ))}
-                      {organizedTournaments.length === 0 && <p className="text-xs text-slate-500">Chưa tạo giải</p>}
-                    </div>
-                  </div>
-
-                  <div className="rounded-xl border border-purple-100 bg-purple-50/60 p-3">
-                    <p className="text-[11px] font-bold uppercase tracking-wide text-purple-700">Quản trị giải</p>
-                    <p className="text-2xl font-black text-purple-900 mt-1">{coOrganizerTournaments.length}</p>
-                    <div className="mt-2 space-y-1.5">
-                      {coOrganizerTournaments.slice(0, 2).map((tournament) => (
-                        <Link key={tournament.id} href={`/tournaments/${tournament.id}`} className="block truncate text-xs font-semibold text-slate-700 hover:text-purple-700">{tournament.name}</Link>
-                      ))}
-                      {coOrganizerTournaments.length === 0 && <p className="text-xs text-slate-500">Chưa được phân quyền</p>}
-                    </div>
-                  </div>
-
-                  <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-3">
-                    <p className="text-[11px] font-bold uppercase tracking-wide text-blue-700">Đã tham gia</p>
-                    <p className="text-2xl font-black text-blue-900 mt-1">{participatingTournaments.length}</p>
-                    <div className="mt-2 space-y-1.5">
-                      {participatingTournaments.slice(0, 2).map((tournament) => (
-                        <Link key={tournament.id} href={`/tournaments/${tournament.id}`} className="block truncate text-xs font-semibold text-slate-700 hover:text-blue-700">{tournament.name}</Link>
-                      ))}
-                      {participatingTournaments.length === 0 && <p className="text-xs text-slate-500">Chưa tham gia giải nào</p>}
-                    </div>
-                  </div>
-
-                  <div className="rounded-xl border border-amber-100 bg-amber-50/60 p-3">
-                    <p className="text-[11px] font-bold uppercase tracking-wide text-amber-700">Trọng tài</p>
-                    <p className="text-2xl font-black text-amber-900 mt-1">{refereeTournaments.length}</p>
-                    <div className="mt-2 space-y-1.5">
-                      {refereeTournaments.slice(0, 2).map((tournament) => (
-                        <Link key={tournament.tournamentId} href={`/tournaments/${tournament.tournamentId}`} className="block truncate text-xs font-semibold text-slate-700 hover:text-amber-700">{tournament.tournamentName}</Link>
-                      ))}
-                      {refereeTournaments.length === 0 && <p className="text-xs text-slate-500">Chưa được phân công</p>}
-                    </div>
-                  </div>
-                </div>
               </div>
 
               <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6 text-center py-12 border-dashed">

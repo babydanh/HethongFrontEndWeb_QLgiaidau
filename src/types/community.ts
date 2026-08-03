@@ -20,6 +20,7 @@ export interface Community {
   status: 'ACTIVE' | 'PENDING' | 'APPROVED' | 'REJECTED';
   ownerId?: string;
   creatorId?: string;
+  myRole?: 'OWNER' | 'MODERATOR' | 'MEMBER';
   createdAt: string;
   updatedAt: string;
   socialLinks?: Record<string, string>;

@@ -600,7 +600,7 @@ export default function ProfilePage() {
             </div>
             
             <div className="flex flex-wrap items-center gap-2">
-              {Array.from(new Set((user as unknown as Record<string, unknown>)?.roles as string[] | undefined || [])).map((role: string) => {
+              {Array.from(new Set((displayUser as unknown as Record<string, unknown>)?.roles as string[] | undefined || user?.roles || [])).map((role: string) => {
                 let roleLabel = role;
                 let roleColor = 'bg-[#e0f2fe] text-[#1e3a8a]';
                 if (role === 'PLAYER') {
@@ -635,9 +635,9 @@ export default function ProfilePage() {
                   </span>
                 );
               })()}
-              {profileData?.createdAt && (
+              {displayUser?.createdAt && (
                 <span className="bg-[#f3f4f6] text-[#4b5563] px-3.5 py-1.5 rounded-md text-xs font-bold flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5 text-slate-400" /> Tham gia từ {formatDate(profileData.createdAt, 'MM/yyyy')}
+                  <Calendar className="w-3.5 h-3.5 text-slate-400" /> Tham gia từ {formatDate(displayUser.createdAt, 'MM/yyyy')}
                 </span>
               )}
             </div>

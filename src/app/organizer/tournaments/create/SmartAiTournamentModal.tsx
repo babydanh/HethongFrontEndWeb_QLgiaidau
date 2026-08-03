@@ -48,6 +48,9 @@ interface ParsedFormat {
   maxParticipants?: number | null;
   minElo?: number | null;
   maxElo?: number | null;
+  prizeDescription?: string | null;
+  startDate?: string | null;
+  registrationEndDate?: string | null;
 }
 
 interface ParsedTournament {
@@ -62,9 +65,38 @@ interface ParsedTournament {
   ward?: string | null;
   description?: string | null;
   bannerUrl?: string | null;
+  logoUrl?: string | null;
+  prizeDescription?: string | null;
+  contactInfo?: { phone?: string | null; email?: string | null } | null;
+  registrationMode?: 'OPEN' | 'APPROVAL' | 'INVITE_ONLY' | null;
+  isRanked?: boolean | null;
+  startTime?: string | null;
+  registrationStartDate?: string | null;
+  registrationEndDate?: string | null;
+  teamSize?: 5 | 7 | 11 | null;
+  maxReserve?: number | null;
+  setsToWin?: number | null;
+  pointsPerSet?: number | null;
+  winByTwo?: boolean | null;
+  maxPoints?: number | null;
+  footballHalvesCount?: number | null;
+  footballHalfDuration?: number | null;
+  footballAllowDraw?: boolean | null;
+  isRecurring?: boolean | null;
+  recurringFrequency?: 'DAILY' | 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY' | null;
+  recurringDayOfWeek?: number | null;
+  recurringDaysOfWeek?: number[] | null;
+  recurringTimeOfDay?: string | null;
+  recurringAdvanceDays?: number | null;
   formats: ParsedFormat[];
   registrationFormFields?: RegistrationField[];
 }
+
+type CreationSettings = {
+  visibility: 'PRIVATE' | 'PUBLIC';
+  registrationMode: 'OPEN' | 'APPROVAL' | 'INVITE_ONLY';
+  isRanked: boolean;
+};
 
 export default function SmartAiTournamentModal({
   isOpen,
@@ -131,6 +163,11 @@ export default function SmartAiTournamentModal({
 
   // Parsed AI data
   const [parsedData, setParsedData] = useState<ParsedTournament | null>(null);
+  const [creationSettings, setCreationSettings] = useState<CreationSettings>({
+    visibility: 'PUBLIC',
+    registrationMode: 'OPEN',
+    isRanked: true,
+  });
 
   // Excel parsed data
   const [excelResult, setExcelResult] = useState<ParsedExcelResult | null>(null);
@@ -172,6 +209,11 @@ export default function SmartAiTournamentModal({
       const parsed = res.data;
       if (parsed && parsed.name) {
         setParsedData(parsed);
+        setCreationSettings({
+          visibility: 'PUBLIC',
+          registrationMode: parsed.registrationMode ?? 'OPEN',
+          isRanked: parsed.isRanked ?? true,
+        });
         setStep(2);
         toast.success(translate('analysisSuccess'));
       } else {
@@ -220,20 +262,27 @@ export default function SmartAiTournamentModal({
         genderRestriction: getGenderRestriction(fmt.formatKey) as GenderRestriction | undefined,
         bracketType: fmt.bracketType || 'SINGLE_ELIMINATION',
         maxParticipants: fmt.maxParticipants || primaryFormat.maxParticipants || 16,
+        startDate: fmt.startDate || parsedData.startDate || undefined,
+        registrationEndDate: fmt.registrationEndDate || parsedData.registrationEndDate || undefined,
         minElo: fmt.minElo ?? null,
         maxElo: fmt.maxElo ?? null,
+        prizeDescription: fmt.prizeDescription || undefined,
       }));
 
       const createRes = await tournamentsApi.createLiteTournament({
         name: parsedData.name.trim() || translate('defaultTournamentName'),
         sport: parsedData.sport,
+        tournamentType: 'PUBLIC',
         format: matchType,
         genderRestriction,
-        visibility: 'PUBLIC',
-        registrationMode: 'OPEN',
-        isRanked: true,
+        visibility: creationSettings.visibility,
+        registrationMode: creationSettings.registrationMode,
+        isRanked: creationSettings.isRanked,
         startDate: parsedData.startDate ? new Date(parsedData.startDate).toISOString() : undefined,
         endDate: parsedData.endDate ? new Date(parsedData.endDate).toISOString() : undefined,
+        startTime: parsedData.startTime || undefined,
+        registrationStartDate: parsedData.registrationStartDate ? new Date(parsedData.registrationStartDate).toISOString() : undefined,
+        registrationEndDate: parsedData.registrationEndDate ? new Date(parsedData.registrationEndDate).toISOString() : undefined,
         venueName: parsedData.venueName || undefined,
         locationAddress: parsedData.locationAddress || undefined,
         province: parsedData.province || undefined,
@@ -241,6 +290,27 @@ export default function SmartAiTournamentModal({
         ward: parsedData.ward || undefined,
         description: parsedData.description || undefined,
         bannerUrl: parsedData.bannerUrl || undefined,
+        logoUrl: parsedData.logoUrl || undefined,
+        prizeDescription: parsedData.prizeDescription || undefined,
+        contactInfo: parsedData.contactInfo ? {
+          phone: parsedData.contactInfo.phone || undefined,
+          email: parsedData.contactInfo.email || undefined,
+        } : undefined,
+        teamSize: parsedData.sport === 'football' && parsedData.teamSize ? parsedData.teamSize : undefined,
+        maxReserve: parsedData.sport === 'football' && parsedData.maxReserve !== null ? parsedData.maxReserve ?? undefined : undefined,
+        setsToWin: parsedData.sport !== 'football' ? parsedData.setsToWin ?? undefined : undefined,
+        pointsPerSet: parsedData.sport !== 'football' ? parsedData.pointsPerSet ?? undefined : undefined,
+        winByTwo: parsedData.sport !== 'football' && parsedData.winByTwo !== null ? parsedData.winByTwo ?? undefined : undefined,
+        maxPoints: parsedData.sport !== 'football' ? parsedData.maxPoints ?? undefined : undefined,
+        footballHalvesCount: parsedData.sport === 'football' ? parsedData.footballHalvesCount ?? undefined : undefined,
+        footballHalfDuration: parsedData.sport === 'football' ? parsedData.footballHalfDuration ?? undefined : undefined,
+        footballAllowDraw: parsedData.sport === 'football' && parsedData.footballAllowDraw !== null ? parsedData.footballAllowDraw ?? undefined : undefined,
+        isRecurring: parsedData.isRecurring === true ? true : undefined,
+        recurringFrequency: parsedData.isRecurring ? parsedData.recurringFrequency ?? undefined : undefined,
+        recurringDayOfWeek: parsedData.isRecurring ? parsedData.recurringDayOfWeek ?? undefined : undefined,
+        recurringDaysOfWeek: parsedData.isRecurring ? parsedData.recurringDaysOfWeek ?? undefined : undefined,
+        recurringTimeOfDay: parsedData.isRecurring ? parsedData.recurringTimeOfDay ?? undefined : undefined,
+        recurringAdvanceDays: parsedData.isRecurring ? parsedData.recurringAdvanceDays ?? undefined : undefined,
         bracketType: (primaryFormat.bracketType?.toLowerCase() as 'single_elimination' | 'double_elimination' | 'round_robin' | 'group_stage_knockout') || 'single_elimination',
         maxTeams: primaryFormat.maxParticipants || 16,
         divisions: divisionInputs,
@@ -584,6 +654,65 @@ export default function SmartAiTournamentModal({
                     <span className="truncate">{parsedData.venueName || parsedData.province || translate('unknownVenue')}</span>
                   </div>
                 </div>
+              </div>
+
+              {/* Explicit creation policy — these values are organizer decisions, not AI guesses. */}
+              <div className="space-y-3 rounded-xl border border-blue-200 bg-blue-50/60 p-4">
+                <div>
+                  <h4 className="text-sm font-bold text-slate-900">{translate('creationPolicyTitle')}</h4>
+                  <p className="mt-1 text-xs text-slate-600">{translate('creationPolicyDescription')}</p>
+                </div>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <label className="space-y-1.5 text-xs font-semibold text-slate-700">
+                    <span>{translate('visibilityLabel')}</span>
+                    <select
+                      value={creationSettings.visibility}
+                      onChange={(event) => setCreationSettings((current) => ({
+                        ...current,
+                        visibility: event.target.value as CreationSettings['visibility'],
+                      }))}
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-800 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                    >
+                      <option value="PUBLIC">{translate('publicVisibility')}</option>
+                      <option value="PRIVATE">{translate('privateVisibility')}</option>
+                    </select>
+                  </label>
+                  <label className="space-y-1.5 text-xs font-semibold text-slate-700">
+                    <span>{translate('registrationModeLabel')}</span>
+                    <select
+                      value={creationSettings.registrationMode}
+                      onChange={(event) => setCreationSettings((current) => ({
+                        ...current,
+                        registrationMode: event.target.value as CreationSettings['registrationMode'],
+                      }))}
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-800 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                    >
+                      <option value="OPEN">{translate('registrationOpen')}</option>
+                      <option value="APPROVAL">{translate('registrationApproval')}</option>
+                      <option value="INVITE_ONLY">{translate('registrationInviteOnly')}</option>
+                    </select>
+                  </label>
+                </div>
+                <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700">
+                  <input
+                    type="checkbox"
+                    checked={creationSettings.isRanked}
+                    onChange={(event) => setCreationSettings((current) => ({
+                      ...current,
+                      isRanked: event.target.checked,
+                    }))}
+                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span>
+                    {creationSettings.isRanked ? translate('rankedOption') : translate('unrankedOption')}
+                    <span className="ml-1 font-normal text-slate-500">{translate('rankingSettingHint')}</span>
+                  </span>
+                </label>
+                {creationSettings.visibility === 'PUBLIC' && (
+                  <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                    {translate('publicCreationNotice')}
+                  </p>
+                )}
               </div>
 
               {/* Formats Extracted */}

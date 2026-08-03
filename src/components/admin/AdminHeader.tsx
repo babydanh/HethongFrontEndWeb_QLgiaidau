@@ -43,14 +43,9 @@ interface AdminAvatarProps {
 }
 
 function AdminAvatar({ fullName, avatarUrl, avatarAriaLabel, sizeClassName }: AdminAvatarProps) {
-  const [imageFailed, setImageFailed] = useState(false);
-
-  useEffect(() => {
-    setImageFailed(false);
-  }, [avatarUrl]);
-
+  const [failedAvatarUrl, setFailedAvatarUrl] = useState<string | null>(null);
   const initials = fullName?.trim().charAt(0) || 'A';
-  const shouldShowImage = Boolean(avatarUrl) && !imageFailed;
+  const shouldShowImage = Boolean(avatarUrl) && avatarUrl !== failedAvatarUrl;
 
   return (
     <span
@@ -65,7 +60,7 @@ function AdminAvatar({ fullName, avatarUrl, avatarAriaLabel, sizeClassName }: Ad
           src={avatarUrl || undefined}
           alt=""
           className="h-full w-full object-cover"
-          onError={() => setImageFailed(true)}
+          onError={() => setFailedAvatarUrl(avatarUrl || null)}
         />
       ) : (
         initials
@@ -249,6 +244,7 @@ export function AdminHeader({ title, onOpenSidebar }: AdminHeaderProps) {
                   {unreadCount > 0 ? (
                     <button
                       type="button"
+                      role="menuitem"
                       onClick={() => void handleMarkAllAsRead()}
                       className="text-xs font-semibold text-blue-700 hover:text-blue-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                     >
@@ -320,9 +316,10 @@ export function AdminHeader({ title, onOpenSidebar }: AdminHeaderProps) {
                   ) : notificationError ? (
                     <div className="px-5 py-10 text-center">
                       <p className="text-sm font-semibold text-slate-700">{layoutTranslate('notificationsLoadFailed')}</p>
-                      <p className="mt-1 text-xs text-slate-500">{notificationError}</p>
+                      <p className="mt-1 text-xs text-slate-500">{layoutTranslate('notificationsStale')}</p>
                       <button
                         type="button"
+                        role="menuitem"
                         disabled={isNotificationsLoading}
                         onClick={() => void refreshNotifications()}
                         className="mt-4 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
@@ -341,6 +338,7 @@ export function AdminHeader({ title, onOpenSidebar }: AdminHeaderProps) {
 
                 <Link
                   href="/notifications"
+                  role="menuitem"
                   onClick={() => setIsNotificationOpen(false)}
                   className="block border-t border-slate-100 bg-slate-50/70 px-4 py-3 text-center text-sm font-semibold text-blue-700 hover:bg-blue-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500"
                 >
@@ -351,7 +349,7 @@ export function AdminHeader({ title, onOpenSidebar }: AdminHeaderProps) {
           </AnimatePresence>
         </div>
 
-        {canManageSupport ? <AdminSupportBell /> : null}
+        {canManageSupport ? <AdminSupportBell key={user?.id || 'support-user'} /> : null}
 
         <div className="relative" ref={profileMenuRef}>
           <button
@@ -372,7 +370,7 @@ export function AdminHeader({ title, onOpenSidebar }: AdminHeaderProps) {
               sizeClassName="h-10 w-10"
             />
             <span className="hidden max-w-44 text-left sm:block">
-              <span className="block truncate text-xs font-bold text-slate-900">{user?.fullName || 'Admin'}</span>
+              <span className="block truncate text-xs font-bold text-slate-900">{user?.fullName || roleLabel}</span>
               <span className="block truncate text-[10px] text-slate-500">{user?.email || ''}</span>
             </span>
           </button>
@@ -397,7 +395,7 @@ export function AdminHeader({ title, onOpenSidebar }: AdminHeaderProps) {
                       sizeClassName="h-11 w-11"
                     />
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-bold text-slate-950">{user?.fullName || 'Admin'}</p>
+                      <p className="truncate text-sm font-bold text-slate-950">{user?.fullName || roleLabel}</p>
                       <p className="truncate text-xs text-slate-500">{user?.email || ''}</p>
                       <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-blue-700">{roleLabel}</p>
                     </div>

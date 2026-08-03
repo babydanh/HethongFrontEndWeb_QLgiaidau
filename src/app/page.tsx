@@ -27,6 +27,7 @@ import TournamentHeroBanner from '@/components/ui/TournamentHeroBanner';
 import HomepageEloProgressCard from '@/components/rankings/HomepageEloProgressCard';
 import {
   getBestRankForCategory,
+  getMostProminentRank,
   getRanksForCategory,
   getRankTierName,
   getRankWinRate,
@@ -1041,10 +1042,15 @@ export default function HomePage() {
     : communities;
 
   const publicRanks = userRankings?.publicRanks || [];
-  const categoryRanks = getRanksForCategory(publicRanks, selectedCategoryId || undefined);
-  const activeRankInfo = getBestRankForCategory(publicRanks, selectedCategoryId || undefined);
+  // The homepage card is a compact personal summary. It must not change to
+  // "all sports" when the tournament explorer filter changes; use one
+  // representative sport from the user's own ranking data instead.
+  const prominentRank = getMostProminentRank(publicRanks);
+  const prominentCategoryId = prominentRank?.categoryId;
+  const categoryRanks = getRanksForCategory(publicRanks, prominentCategoryId);
+  const activeRankInfo = getBestRankForCategory(categoryRanks, prominentCategoryId);
 
-  const eloPoints = activeRankInfo?.eloPoints ?? 1000;
+  const eloPoints = activeRankInfo?.eloPoints ?? prominentRank?.eloPoints ?? 1000;
   const displayTier = getRankTierName(activeRankInfo);
   const matchesPlayed = activeRankInfo?.matchesPlayed ?? 0;
   const hasPlayedRankedMatch = matchesPlayed > 0;
@@ -1052,10 +1058,9 @@ export default function HomePage() {
   const matchesWon = activeRankInfo?.matchesWon ?? 0;
   const winRate = getRankWinRate(activeRankInfo);
   const peakElo = activeRankInfo?.peakElo || eloPoints;
-  const sportName = activeRankInfo?.categoryName
-    || categories.find((c) => c.id === activeRankInfo?.categoryId)?.name
-    || (selectedCategoryId ? categories.find((c) => c.id === selectedCategoryId)?.name : translate('allSports'))
-    || translate('allSports');
+  const sportName = prominentRank?.categoryName
+    || categories.find((c) => c.id === prominentCategoryId)?.name
+    || '';
 
   const [now] = useState(() => Date.now());
 

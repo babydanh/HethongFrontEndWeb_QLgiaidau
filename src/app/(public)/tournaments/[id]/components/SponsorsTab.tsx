@@ -2,7 +2,10 @@
 
 import { ExternalLink, Handshake } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import SponsorLogo from '@/components/tournaments/SponsorLogo';
+import { cn } from '@/utils/cn';
 import type { TournamentSponsor } from '@/features/tournaments/api';
+import { getSponsorTierStyle } from '@/features/tournaments/sponsor-tier-style';
 
 interface SponsorsTabProps {
   sponsors: TournamentSponsor[];
@@ -41,45 +44,48 @@ export default function SponsorsTab({ sponsors }: SponsorsTabProps) {
       </div>
 
       <div className="space-y-8">
-        {grouped.map((group) => (
-          <section key={group.tier} aria-labelledby={`sponsor-tier-${group.tier}`}>
-            <h3
-              id={`sponsor-tier-${group.tier}`}
-              className="mb-3 flex items-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-slate-400"
-            >
-              <span className="h-px flex-1 bg-slate-200" />
-              <span>{translate(`sponsors.tiers.${group.tier}`)}</span>
-              <span className="h-px flex-1 bg-slate-200" />
-            </h3>
-            <div className="grid gap-4 sm:grid-cols-2">
+        {grouped.map((group) => {
+          const groupTierStyle = getSponsorTierStyle(group.tier);
+          return (
+            <section key={group.tier} aria-labelledby={`sponsor-tier-${group.tier}`}>
+              <h3
+                id={`sponsor-tier-${group.tier}`}
+                className={cn('mb-3 flex items-center gap-2 text-xs font-black uppercase tracking-[0.16em]', groupTierStyle.accentClassName)}
+              >
+                <span className="h-px flex-1 bg-slate-200" />
+                <span>{translate(`sponsors.tiers.${group.tier}`)}</span>
+                <span className="h-px flex-1 bg-slate-200" />
+              </h3>
+              <div className="grid gap-4 sm:grid-cols-2">
               {group.sponsors.map((sponsor) => {
+                const tierStyle = getSponsorTierStyle(sponsor.tier);
+                const initials = sponsor.displayName.trim().split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'SP';
                 const card = (
-                  <div className="flex h-full items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-colors hover:border-amber-300">
-                    <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-100 bg-slate-50 p-2">
-                      <img
-                        src={sponsor.logoUrl}
+                  <div className={cn('flex h-full flex-col border border-t-4 bg-white p-4 shadow-sm transition-shadow hover:shadow-md', tierStyle.surfaceClassName, tierStyle.accentBorderClassName)}>
+                    <div className="flex flex-col items-center text-center">
+                      <SponsorLogo
+                        logoUrl={sponsor.logoUrl}
                         alt={sponsor.displayName}
-                        className="max-h-full max-w-full object-contain"
-                        loading="lazy"
-                        onError={(event) => {
-                          event.currentTarget.style.display = 'none';
-                        }}
+                        initials={initials}
+                        className={cn('h-28 w-full max-w-[280px] border-b p-3', tierStyle.logoFrameClassName)}
+                        imageClassName="h-full w-full"
                       />
+                      <p className="mt-3 w-full truncate font-black text-slate-900">{sponsor.displayName}</p>
+                      <span className={cn('mt-1 rounded-md border px-2 py-0.5 text-[10px] font-black uppercase tracking-wide', tierStyle.badgeClassName)}>
+                        {translate(`sponsors.tiers.${sponsor.tier}`)}
+                      </span>
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="font-black text-slate-900">{sponsor.displayName}</p>
-                      {sponsor.shortDescription && (
-                        <p className="mt-1 line-clamp-2 text-sm font-medium leading-5 text-slate-500">
-                          {sponsor.shortDescription}
-                        </p>
-                      )}
-                      {sponsor.websiteUrl && (
-                        <span className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-blue-600">
-                          {translate('sponsors.visitWebsite')}
-                          <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
-                        </span>
-                      )}
-                    </div>
+                    {sponsor.shortDescription && (
+                      <p className="mt-4 line-clamp-2 text-center text-sm font-medium leading-5 text-slate-500">
+                        {sponsor.shortDescription}
+                      </p>
+                    )}
+                    {sponsor.websiteUrl && (
+                      <span className="mt-4 inline-flex items-center justify-center gap-1 text-xs font-bold text-blue-600">
+                        {translate('sponsors.visitWebsite')}
+                        <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+                      </span>
+                    )}
                   </div>
                 );
 
@@ -97,9 +103,10 @@ export default function SponsorsTab({ sponsors }: SponsorsTabProps) {
                   <div key={sponsor.id}>{card}</div>
                 );
               })}
-            </div>
-          </section>
-        ))}
+              </div>
+            </section>
+          );
+        })}
       </div>
     </section>
   );

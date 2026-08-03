@@ -7,7 +7,6 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { api } from '@/lib/axios';
-import { usersApi } from '@/features/users/api';
 import { RouteGuard } from '@/components/shared/RouteGuard';
 import { AdminHeader } from '@/components/admin/AdminHeader';
 import {
@@ -40,12 +39,17 @@ const MODERATOR_ALLOWED_PATHS = [
   '/admin/support',
 ] as const;
 
+const isPathAllowed = (pathname: string, allowedPath: string) =>
+  allowedPath === '/admin'
+    ? pathname === '/admin'
+    : pathname === allowedPath || pathname.startsWith(`${allowedPath}/`);
+
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { user, setUser, logout } = useAuthStore();
+  const { user, logout } = useAuthStore();
   const layoutTranslate = useTranslations('AdminLayout');
   const pathname = usePathname();
   const router = useRouter();
@@ -80,39 +84,14 @@ export default function AdminLayout({
     .sort((left, right) => right.path.length - left.path.length)
     .find((item) => pathname === item.path || pathname.startsWith(`${item.path}/`));
   const pageTitle = activeItem ? layoutTranslate(activeItem.labelKey) : layoutTranslate('defaultTitle');
-  const canRenderCurrentRoute = isAdmin || MODERATOR_ALLOWED_PATHS.some(
-    (allowedPath) => pathname === allowedPath || pathname.startsWith(`${allowedPath}/`),
+  const canRenderCurrentRoute = isAdmin || MODERATOR_ALLOWED_PATHS.some((allowedPath) =>
+    isPathAllowed(pathname, allowedPath),
   );
-
-  const userId = user?.id;
-
-  useEffect(() => {
-    if (!userId) return;
-
-    let cancelled = false;
-    void usersApi
-      .getProfile()
-      .then((profile) => {
-        if (cancelled) return;
-        const currentUser = useAuthStore.getState().user;
-        if (!currentUser || currentUser.id !== userId) return;
-        setUser({ ...currentUser, ...profile, roles: currentUser.roles });
-      })
-      .catch((error: unknown) => {
-        if (!cancelled) {
-          console.error('Admin profile refresh failed:', getErrorMessage(error, 'profile refresh failed'));
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [setUser, userId]);
 
   useEffect(() => {
     if (isAdmin) return;
-    const isAllowedPath = MODERATOR_ALLOWED_PATHS.some(
-      (allowedPath) => pathname === allowedPath || pathname.startsWith(`${allowedPath}/`),
+    const isAllowedPath = MODERATOR_ALLOWED_PATHS.some((allowedPath) =>
+      isPathAllowed(pathname, allowedPath),
     );
     if (!isAllowedPath) router.replace('/admin');
   }, [isAdmin, pathname, router]);

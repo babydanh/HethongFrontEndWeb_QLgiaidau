@@ -98,6 +98,21 @@ export const getBestRankForCategory = (
 };
 
 /**
+ * Choose one representative sport for compact summaries.
+ * Prefer the sport with the most played matches, then highest ELO, then newest update.
+ * Unlike getBestRankForCategory, this also returns an onboarding rank with zero matches.
+ */
+export const getMostProminentRank = (ranks: PlayerRanking[]): PlayerRanking | null => {
+  if (ranks.length === 0) return null;
+
+  return [...ranks].sort((a, b) => {
+    if (b.matchesPlayed !== a.matchesPlayed) return b.matchesPlayed - a.matchesPlayed;
+    if (b.eloPoints !== a.eloPoints) return b.eloPoints - a.eloPoints;
+    return (b.updatedAt || '').localeCompare(a.updatedAt || '');
+  })[0] ?? null;
+};
+
+/**
  * Get all ranks for a category (or all ranks if no categoryId),
  * sorted by match type order (SINGLES → DOUBLES → MIXED_DOUBLES → rest)
  * then by eloPoints descending.

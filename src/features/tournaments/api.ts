@@ -190,8 +190,10 @@ export type LiteDivisionConfigInput = Pick<
   | "maxParticipants"
   | "bracketType"
   | "startDate"
+
   | "registrationEndDate"
   | "minElo"
+  | "prizeDescription"
   | "maxElo"
 >;
 
@@ -1164,6 +1166,7 @@ export const tournamentsApi = {
     name: string;
     sport: "badminton" | "tennis" | "pickleball" | "table_tennis" | "football";
     communityId?: string;
+    tournamentType?: "CLUB" | "PUBLIC";
     visibility?: "PRIVATE" | "PUBLIC";
     bannerUrl?: string;
     logoUrl?: string;

@@ -5,6 +5,8 @@ import { ExternalLink, Handshake, Loader2, Plus, Save, Trash2, Upload } from 'lu
 import { useTranslations } from 'next-intl';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/Button';
+import SponsorLogo from '@/components/tournaments/SponsorLogo';
+import { cn } from '@/utils/cn';
 import { getErrorMessage } from '@/utils/error';
 import { uploadApi } from '@/features/upload/api';
 import {
@@ -14,6 +16,7 @@ import {
   type TournamentSponsor,
   tournamentsApi,
 } from '@/features/tournaments/api';
+import { getSponsorTierStyle } from '@/features/tournaments/sponsor-tier-style';
 
 interface SponsorSettingsPanelProps {
   tournamentId: string;
@@ -107,7 +110,8 @@ export default function SponsorSettingsPanel({ tournamentId }: SponsorSettingsPa
   }, [tournamentId]);
 
   React.useEffect(() => {
-    void loadSponsors();
+    const timer = window.setTimeout(() => void loadSponsors(), 0);
+    return () => window.clearTimeout(timer);
   }, [loadSponsors]);
 
   const updateDraft = (id: string, patch: Partial<SponsorDraft>) => {
@@ -216,30 +220,63 @@ export default function SponsorSettingsPanel({ tournamentId }: SponsorSettingsPa
 
   const renderPreview = (draft: SponsorDraft) => {
     const isPubliclyReady = draft.status === 'PUBLISHED' && draft.isPublic;
+    const tierStyle = getSponsorTierStyle(draft.tier);
+    const tierLabel = translate(`sponsors.tiers.${draft.tier}`);
+    const displayName = draft.displayName.trim() || translate('sponsors.previewPlaceholder');
+
     return (
-      <aside className="rounded-2xl border border-blue-200 bg-blue-50/50 p-3" aria-label={translate('sponsors.previewTitle')}>
-        <div className="mb-3 flex items-center justify-between gap-2">
+      <aside
+        className={cn('rounded-lg border p-3', tierStyle.surfaceClassName)}
+        aria-label={translate('sponsors.previewTitle')}
+      >
+        <div className="mb-3 flex items-start justify-between gap-2">
           <div>
-            <p className="text-xs font-black uppercase tracking-wide text-blue-700">{translate('sponsors.previewTitle')}</p>
-            <p className="mt-0.5 text-[11px] font-medium text-slate-500">{translate('sponsors.previewDescription')}</p>
+            <p className={cn('text-xs font-black uppercase tracking-wide', tierStyle.accentClassName)}>
+              {translate('sponsors.previewTitle')}
+            </p>
+            <p className="mt-0.5 text-[11px] font-medium text-slate-500">
+              {translate('sponsors.previewDescription')}
+            </p>
           </div>
-          <span className="rounded-full bg-white px-2 py-1 text-[10px] font-black uppercase tracking-wide text-blue-600">{translate('sponsors.previewBadge')}</span>
+          <span className={cn('shrink-0 rounded-md border px-2 py-1 text-[10px] font-black uppercase tracking-wide', tierStyle.badgeClassName)}>
+            {tierLabel}
+          </span>
         </div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-100 bg-slate-50 text-sm font-black text-amber-700">
-              {getInitials(draft.displayName)}
-              {draft.logoUrl && <img src={draft.logoUrl} alt="" className="absolute inset-0 h-full w-full bg-white object-contain p-2" onError={(event) => event.currentTarget.classList.add('hidden')} />}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-black text-slate-900">{draft.displayName.trim() || translate('sponsors.previewPlaceholder')}</p>
-              <p className="mt-1 text-[10px] font-black uppercase tracking-wide text-amber-600">{translate(`sponsors.tiers.${draft.tier}`)}</p>
-            </div>
+
+        <div className={cn('border border-t-4 bg-white p-4 shadow-sm', tierStyle.accentBorderClassName)}>
+          <div className="flex flex-col items-center text-center">
+            <SponsorLogo
+              logoUrl={draft.logoUrl}
+              alt={displayName}
+              initials={getInitials(displayName)}
+              className={cn('h-24 w-full max-w-[220px] border-b p-3', tierStyle.logoFrameClassName)}
+              imageClassName="h-full w-full"
+            />
+            <p className="mt-3 w-full truncate text-sm font-black text-slate-900">{displayName}</p>
+            <p className={cn('mt-1 text-[10px] font-black uppercase tracking-wide', tierStyle.accentClassName)}>
+              {tierLabel}
+            </p>
           </div>
-          {draft.shortDescription.trim() && <p className="mt-3 line-clamp-3 text-xs font-medium leading-5 text-slate-500">{draft.shortDescription.trim()}</p>}
-          <div className="mt-3 flex items-center justify-between gap-2 border-t border-slate-100 pt-3 text-[10px] font-bold">
-            <span className={isPubliclyReady ? 'text-emerald-600' : 'text-slate-400'}>{isPubliclyReady ? (draft.advancedScheduling ? translate('sponsors.previewScheduled') : translate('sponsors.previewAlwaysVisible')) : translate('sponsors.previewNotPublic')}</span>
-            {draft.websiteUrl.trim() && <span className="inline-flex items-center gap-1 text-blue-600"><ExternalLink className="h-3 w-3" />{translate('sponsors.preview')}</span>}
+
+          {draft.shortDescription.trim() ? (
+            <p className="mt-4 line-clamp-3 text-center text-xs font-medium leading-5 text-slate-500">
+              {draft.shortDescription.trim()}
+            </p>
+          ) : null}
+          <div className="mt-4 flex items-center justify-between gap-2 border-t border-slate-100 pt-3 text-[10px] font-bold">
+            <span className={isPubliclyReady ? 'text-emerald-600' : 'text-slate-400'}>
+              {isPubliclyReady
+                ? draft.advancedScheduling
+                  ? translate('sponsors.previewScheduled')
+                  : translate('sponsors.previewAlwaysVisible')
+                : translate('sponsors.previewNotPublic')}
+            </span>
+            {draft.websiteUrl.trim() ? (
+              <span className="inline-flex items-center gap-1 text-blue-600">
+                <ExternalLink className="h-3 w-3" />
+                {translate('sponsors.preview')}
+              </span>
+            ) : null}
           </div>
         </div>
       </aside>
@@ -333,6 +370,8 @@ export default function SponsorSettingsPanel({ tournamentId }: SponsorSettingsPa
       <div className="space-y-4">
         {sponsors.map((sponsor) => {
           const draft = drafts[sponsor.id] || toDraft(sponsor);
+          const tierStyle = getSponsorTierStyle(sponsor.tier);
+          const sponsorInitials = getInitials(sponsor.displayName);
           if (sponsor.status === 'ARCHIVED') {
             return (
               <div key={sponsor.id} className="rounded-xl border border-slate-200 bg-slate-100 p-4 opacity-75" aria-label={translate('sponsors.archived')}>
@@ -350,13 +389,17 @@ export default function SponsorSettingsPanel({ tournamentId }: SponsorSettingsPa
             return (
               <div key={sponsor.id} className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
                 <div className="flex flex-wrap items-center gap-3">
-                  <div className="flex h-12 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
-                    <img src={sponsor.logoUrl} alt="" className="max-h-full max-w-full object-contain" onError={(event) => event.currentTarget.classList.add('hidden')} />
-                  </div>
+                  <SponsorLogo
+                    logoUrl={sponsor.logoUrl}
+                    alt={sponsor.displayName}
+                    initials={sponsorInitials}
+                    className={cn('h-12 w-16 shrink-0 rounded-lg border p-1', tierStyle.logoFrameClassName)}
+                    imageClassName="h-full w-full"
+                  />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-black text-slate-800">{sponsor.displayName}</p>
                     <div className="mt-1 flex flex-wrap items-center gap-2 text-[10px] font-black uppercase tracking-wide text-slate-500">
-                      <span>{translate(`sponsors.tiers.${sponsor.tier}`)}</span>
+                      <span className={cn('rounded-md border px-2 py-0.5', tierStyle.badgeClassName)}>{translate(`sponsors.tiers.${sponsor.tier}`)}</span>
                       <span className="h-1 w-1 rounded-full bg-slate-300" />
                       <span>{translate(`sponsors.statuses.${sponsor.status}`)}</span>
                     </div>

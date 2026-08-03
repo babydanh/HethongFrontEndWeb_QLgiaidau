@@ -3,7 +3,6 @@
 import { usePathname } from 'next/navigation';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
-import { PageTransition } from '@/components/layout/PageTransition';
 import { useEffect, useRef } from 'react';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { usersApi } from '@/features/users/api';
@@ -20,19 +19,22 @@ export default function RootLayoutClient({
   const pathname = usePathname();
   const { user, isAuthenticated, setUser, logout } = useAuthStore();
   const hasFetchedRef = useRef(false);
+  const fetchedUserIdRef = useRef<string | null>(null);
 
-  // Sync user profile only ONCE on mount, not on every route change
+  // Sync user profile once per authenticated user, not on every route change
   useEffect(() => {
     const isGuestRoute = ['/login', '/register', '/auth'].some((route) => pathname.startsWith(route));
-    if (isGuestRoute || !isAuthenticated) return;
+    if (isGuestRoute || !isAuthenticated || !user?.id) {
+      hasFetchedRef.current = false;
+      fetchedUserIdRef.current = null;
+      return;
+    }
 
-    // Skip chỉ khi user trong store đã ĐẦY ĐỦ (có trạng thái xác minh email).
-    // Bản persist cũ từ login chỉ có {id, email, roles} thiếu isEmailVerified → vẫn fetch để chữa.
-    if (user?.id && user?.email && user.isEmailVerified !== undefined) return;
-
-    // Only fetch once
-    if (hasFetchedRef.current) return;
+    // Rehydrate once per authenticated user so avatar/name/email are not stale
+    // after a profile edit while route changes do not duplicate the request.
+    if (hasFetchedRef.current && fetchedUserIdRef.current === user.id) return;
     hasFetchedRef.current = true;
+    fetchedUserIdRef.current = user.id;
 
     usersApi.getProfile()
       .then((data) => {
@@ -67,7 +69,7 @@ export default function RootLayoutClient({
           console.error('Failed to sync user profile globally', error);
         }
       });
-  }, [pathname, isAuthenticated, setUser, logout, user?.id, user?.email, user?.isEmailVerified]);
+  }, [pathname, isAuthenticated, setUser, logout, user?.id]);
   
   // Exclude admin, moderation & auth paths from header/footer
   const hideHeaderFooter = pathname.startsWith('/admin') || pathname.startsWith('/moderation');

@@ -337,44 +337,42 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
 
       {/* Tab Content */}
       <div className="w-full min-w-0 min-h-[400px]">
-        {activeTab === 'overview' && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="md:col-span-1 flex flex-col gap-6">
-              {/* {translate('about')} */}
-              <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
-                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">{translate('about')}</h3>
-                {profile.bio ? (
-                  <p className="text-slate-650 text-sm leading-relaxed whitespace-pre-wrap font-medium">
-                    {profile.bio}
-                  </p>
-                ) : (
-                  <p className="text-slate-400 text-sm italic font-medium">
-                    {translate('bioEmpty')}
-                  </p>
-                )}
-              </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+          <div className="md:col-span-1 flex flex-col gap-6">
+            {/* {translate('about')} */}
+            <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
+              <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">{translate('about')}</h3>
+              {profile.bio ? (
+                <p className="text-slate-650 text-sm leading-relaxed whitespace-pre-wrap font-medium">
+                  {profile.bio}
+                </p>
+              ) : (
+                <p className="text-slate-400 text-sm italic font-medium">
+                  {translate('bioEmpty')}
+                </p>
+              )}
+            </div>
 
-              {/* {translate('detailsHeading')} */}
-              <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
-                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">{translate('detailsHeading')}</h3>
-                <div className="flex flex-col gap-4 text-sm">
-                  <div className="flex flex-col gap-1 border-b border-slate-100 pb-3">
-                    <span className="text-slate-500 font-medium">{translate('gender')}</span>
-                    <span className="text-slate-900 font-semibold">{getGenderLabel(profile.gender)}</span>
-                  </div>
+            {/* {translate('detailsHeading')} */}
+            <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
+              <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">{translate('detailsHeading')}</h3>
+              <div className="flex flex-col gap-4 text-sm">
+                <div className="flex flex-col gap-1 border-b border-slate-100 pb-3">
+                  <span className="text-slate-500 font-medium">{translate('gender')}</span>
+                  <span className="text-slate-900 font-semibold">{getGenderLabel(profile.gender)}</span>
                 </div>
               </div>
             </div>
+          </div>
 
-            <div className="md:col-span-2 w-full min-w-0 space-y-6">
+          <div className="md:col-span-2 w-full min-w-0 space-y-6">
+            {activeTab === 'overview' && (
               <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6 text-center py-12 border-dashed">
                 <Activity className="w-12 h-12 text-slate-350 mx-auto mb-3" />
                 <p className="text-slate-550 font-semibold text-lg">{translate('noActivity')}</p>
                 <p className="text-slate-450 text-xs font-medium mt-1">{translate('activityEmptyHint')}</p>
               </div>
-            </div>
-          </div>
-        )}
+            )}
 
         {activeTab === 'matches' && (
           <div className="w-full min-w-0 space-y-6">
@@ -688,6 +686,8 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
             </div>
           </div>
         )}
+          </div>
+        </div>
       </div>
     </div>
   );

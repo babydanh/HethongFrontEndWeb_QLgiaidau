@@ -7418,6 +7418,8 @@
     "previewAdLabel": "Advertisement",
     "previewNoImage": "No banner image yet",
     "previewNoImageHelp": "Enter an image URL above to preview the banner at the correct ratio.",
+    "previewImageError": "Banner image could not be loaded",
+    "previewImageErrorHelp": "Check the image URL or use a publicly accessible image.",
     "previewScriptTitle": "Google Ads / Custom Script",
     "previewScriptHelp": "This preview only simulates the display area. Real HTML/Script is never executed inside the admin screen.",
     "previewScriptNotExecuted": "Script is not executed in preview",

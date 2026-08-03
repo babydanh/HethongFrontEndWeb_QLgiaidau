@@ -19,13 +19,6 @@ interface BannerPreviewCardProps {
 type PreviewMode = 'placement' | 'page';
 type PreviewViewport = 'desktop' | 'mobile';
 
-const WEB_SLOTS: AdPlacementSlot[] = [
-  'HOMEPAGE_SIDEBAR',
-  'TOURNAMENTS_BOTTOM',
-  'MATCHES_BOTTOM',
-  'GLOBAL_HEADER',
-];
-
 const APP_SLOTS: AdPlacementSlot[] = [
   'APP_HOME_FEED',
   'APP_MATCHES_BOTTOM',
@@ -52,10 +45,15 @@ export const BannerPreviewCard: React.FC<BannerPreviewCardProps> = ({
 
   const [previewMode, setPreviewMode] = useState<PreviewMode>('placement');
   const [viewport, setViewport] = useState<PreviewViewport>(isApp ? 'mobile' : 'desktop');
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     setViewport(isApp ? 'mobile' : 'desktop');
   }, [isApp]);
+
+  useEffect(() => {
+    setImageError(false);
+  }, [imageUrl]);
 
   const slotBadge = isSidebar
     ? '300 × 250 · 4:3'
@@ -81,7 +79,7 @@ export const BannerPreviewCard: React.FC<BannerPreviewCardProps> = ({
   const renderAd = (compact = false) => {
     if (bannerType === 'CUSTOM_HTML') {
       return (
-        <div className={`w-full ${compact ? 'min-h-[70px]' : 'min-h-[110px]'} rounded-xl border border-dashed border-violet-300 bg-violet-50 px-4 py-3 text-violet-800`}>
+        <div className={`w-full ${getAspectClass(compact)} rounded-xl border border-dashed border-violet-300 bg-violet-50 px-4 py-3 text-violet-800 flex flex-col justify-center`}>
           <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider">
             <Code className="h-3.5 w-3.5" />
             {translate('previewScriptTitle')}
@@ -94,19 +92,24 @@ export const BannerPreviewCard: React.FC<BannerPreviewCardProps> = ({
       );
     }
 
-    if (!imageUrl) {
+    if (!imageUrl || imageError) {
       return (
         <div className={`w-full ${getAspectClass(compact)} rounded-xl border-2 border-dashed border-slate-300 bg-slate-50/90 flex flex-col items-center justify-center p-5 text-center text-slate-400 gap-1.5`}>
           <ImageIcon className="h-7 w-7 text-slate-300" />
-          <p className="text-[11px] font-semibold text-slate-500">{translate('previewNoImage')}</p>
-          <p className="max-w-[240px] text-[10px] text-slate-400">{translate('previewNoImageHelp')}</p>
+          <p className="text-[11px] font-semibold text-slate-500">{imageError ? translate('previewImageError') : translate('previewNoImage')}</p>
+          <p className="max-w-[240px] text-[10px] text-slate-400">{imageError ? translate('previewImageErrorHelp') : translate('previewNoImageHelp')}</p>
         </div>
       );
     }
 
     return (
       <div className={`relative w-full ${getAspectClass(compact)} overflow-hidden rounded-xl border border-slate-200 bg-slate-100 shadow-sm`}>
-        <img src={imageUrl} alt={title || translate('previewAdLabel')} className="h-full w-full object-cover" />
+              <img
+                src={imageUrl}
+                alt={title || translate('previewAdLabel')}
+                onError={() => setImageError(true)}
+                className="h-full w-full object-cover"
+              />
         <span className="absolute right-2 top-2 rounded bg-black/50 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-white">
           {translate('previewAdLabel')}
         </span>
@@ -185,16 +188,16 @@ export const BannerPreviewCard: React.FC<BannerPreviewCardProps> = ({
 
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white p-1.5">
         <div className="flex items-center gap-1">
-          <button type="button" onClick={() => setPreviewMode('placement')} className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[10px] font-bold transition-colors ${previewMode === 'placement' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:bg-slate-50'}`}>
+          <button type="button" aria-pressed={previewMode === 'placement'} onClick={() => setPreviewMode('placement')} className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[10px] font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 ${previewMode === 'placement' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:bg-slate-50'}`}>
             <Eye className="h-3.5 w-3.5" />{translate('previewModePlacement')}
           </button>
-          <button type="button" onClick={() => setPreviewMode('page')} className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[10px] font-bold transition-colors ${previewMode === 'page' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:bg-slate-50'}`}>
+          <button type="button" aria-pressed={previewMode === 'page'} onClick={() => setPreviewMode('page')} className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[10px] font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 ${previewMode === 'page' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:bg-slate-50'}`}>
             <Sparkles className="h-3.5 w-3.5" />{translate('previewModePage')}
           </button>
         </div>
         <div className="flex items-center gap-1 rounded-lg bg-slate-100 p-0.5">
-          <button type="button" onClick={() => setViewport('desktop')} className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-semibold ${viewport === 'desktop' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-400'}`}><Monitor className="h-3 w-3" />{translate('previewDesktop')}</button>
-          <button type="button" onClick={() => setViewport('mobile')} className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-semibold ${viewport === 'mobile' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-400'}`}><Smartphone className="h-3 w-3" />{translate('previewMobile')}</button>
+          <button type="button" disabled={isApp} aria-pressed={viewport === 'desktop'} onClick={() => setViewport('desktop')} className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-semibold ${isApp ? 'cursor-not-allowed text-slate-300' : viewport === 'desktop' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-400'}`}><Monitor className="h-3 w-3" />{translate('previewDesktop')}</button>
+          <button type="button" aria-pressed={viewport === 'mobile'} onClick={() => setViewport('mobile')} className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-semibold ${viewport === 'mobile' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-400'}`}><Smartphone className="h-3 w-3" />{translate('previewMobile')}</button>
         </div>
       </div>
 

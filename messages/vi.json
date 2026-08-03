@@ -7410,6 +7410,8 @@
     "previewAdLabel": "Quảng cáo",
     "previewNoImage": "Chưa có ảnh banner",
     "previewNoImageHelp": "Nhập URL ảnh ở phía trên để xem banner trong đúng tỷ lệ.",
+    "previewImageError": "Không tải được ảnh banner",
+    "previewImageErrorHelp": "Kiểm tra lại URL ảnh hoặc dùng một ảnh công khai có thể truy cập.",
     "previewScriptTitle": "Google Ads / Custom Script",
     "previewScriptHelp": "Preview chỉ mô phỏng khu vực hiển thị. Mã HTML/Script thật không được chạy trong màn hình quản trị.",
     "previewScriptNotExecuted": "Không chạy script trong preview",

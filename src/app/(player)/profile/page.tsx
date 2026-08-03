@@ -700,9 +700,8 @@ export default function ProfilePage() {
       )}
 
       <div className="min-h-[400px]">
-        {activeTab === 'overview' && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="md:col-span-1 flex flex-col gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+          <div className="md:col-span-1 flex flex-col gap-6">
               {/* Giới thiệu */}
               <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
                 <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">{translate("about")}</h3>
@@ -860,7 +859,9 @@ export default function ProfilePage() {
               )}
             </div>
             <div className="md:col-span-2 space-y-6">
-              {/* Câu lạc bộ của tôi */}
+              {activeTab === 'overview' && (
+                <>
+                  {/* Câu lạc bộ của tôi */}
               {/* Câu lạc bộ của tôi */}
               <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
                 <div className="flex justify-between items-center mb-6">
@@ -981,9 +982,8 @@ export default function ProfilePage() {
                 <p className="text-slate-500 font-medium text-lg">{translate("activityEmpty")}</p>
                 <p className="text-slate-400 text-sm mt-1">{translate("activityHint")}</p>
               </div>
-            </div>
-          </div>
-        )}
+            </>
+          )}
 
         {activeTab === 'tournaments' && (
           <div className="space-y-6">
@@ -1476,7 +1476,8 @@ export default function ProfilePage() {
             )}
           </div>
         )}
-
+          </div>
+        </div>
       </div>
 
       {/* Modal gửi yêu cầu xác minh */}

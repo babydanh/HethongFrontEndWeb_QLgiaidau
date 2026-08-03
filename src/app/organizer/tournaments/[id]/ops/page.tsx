@@ -19,6 +19,15 @@ import { getSportLogo } from '@/constants/sports';
 import { getMatchRoundLabel } from '@/utils/match-round-label';
 import type { BracketMatch } from '@/types/tournament';
 
+const TOURNAMENT_STATUS_LABELS: Record<string, string> = {
+  DRAFT: 'Bản nháp',
+  REGISTRATION_OPEN: 'Đang mở đăng ký',
+  IN_PROGRESS: 'Đang diễn ra',
+  ONGOING: 'Đang diễn ra',
+  COMPLETED: 'Đã kết thúc',
+  CANCELLED: 'Đã hủy',
+};
+
 export default function OrganizerTournamentOpsPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const bracketManager = useManageState(resolvedParams.id);
@@ -40,7 +49,6 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
     updateMatchSchedule,
     applyMatchOperation,
     activityLog,
-    summary,
   } = useOrganizerOps(resolvedParams.id);
   const [bracketViewVersion, setBracketViewVersion] = useState(0);
   const [focusedMatchId, setFocusedMatchId] = useState<string | null>(null);
@@ -414,7 +422,7 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
                   ? 'bg-blue-50 text-blue-700 border-blue-200 animate-pulse'
                   : 'bg-slate-100 text-slate-655 border-slate-200'
               }`}>
-                {tournament.status}
+                {TOURNAMENT_STATUS_LABELS[tournament.status] || tournament.status}
               </span>
             </div>
             <div>
@@ -425,7 +433,7 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
               </p>
             </div>
             <p className="max-w-3xl text-xs font-semibold leading-relaxed text-slate-455">
-              Đây là màn hình điều phối vận hành ngày thi đấu. Sử dụng tab <code className="text-blue-600 bg-blue-50/50 px-1.5 py-0.5 rounded font-mono">Manage</code> để thiết lập cấu hình đăng ký, và tab <code className="text-blue-650 bg-blue-50/50 px-1.5 py-0.5 rounded font-mono">Ops</code> này để kiểm soát lịch đấu, nhập tỉ số, điều hành trọng tài và giải quyết xung đột trực tiếp trên sân.
+              Theo dõi lịch đấu, tỉ số, trọng tài và các tình huống cần xử lý trong ngày thi đấu.
             </p>
           </div>
 
@@ -444,7 +452,7 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
               onClick={() => window.open(buildPublicTournamentUrl('bracket'), '_blank')}
             >
               <Trophy className="mr-2 h-4 w-4 text-blue-500" />
-              Mở bracket public
+              Mở sơ đồ công khai
             </Button>
             <Button
               variant="outline"
@@ -461,7 +469,7 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
       {/* Division Selector Section */}
       <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
         <div>
-          <p className="text-xs font-bold uppercase tracking-wider text-slate-450">Hình thức thi đấu (Division)</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-slate-450">Nội dung thi đấu</p>
           <p className="text-xs text-slate-400 mt-1 font-semibold">Chọn division để xem chi tiết hàng chờ vận hành, danh sách đấu thủ, lịch thi đấu và giải quyết xung đột theo ngữ cảnh.</p>
         </div>
         {divisions.length > 0 ? (
@@ -502,9 +510,9 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
         <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
           {([
             { id: 'OVERVIEW', label: 'Tổng quan', icon: BarChart3 },
-            { id: 'BRACKET', label: 'Sơ đồ & cấu hình', icon: Network },
+            { id: 'BRACKET', label: 'Sơ đồ', icon: Network },
             { id: 'OPERATIONS', label: 'Điều hành', icon: Activity },
-            { id: 'CAMERA', label: 'Camera & live', icon: Video },
+            { id: 'CAMERA', label: 'Phát trực tiếp', icon: Video },
           ] as const).map((tab) => {
             const Icon = tab.icon;
             const isActive = activePageTab === tab.id;
@@ -514,7 +522,7 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
                 type="button"
                 onClick={() => setActivePageTab(tab.id)}
                 className={cn(
-                  'flex min-w-0 items-center justify-center gap-2 rounded-lg px-3 py-3 text-xs font-bold transition-colors sm:text-sm',
+                  'flex min-w-0 items-center justify-center gap-2 rounded-lg px-2 py-2.5 text-xs font-bold transition-colors sm:px-3 sm:py-3 sm:text-sm',
                   isActive
                     ? 'bg-blue-600 text-white shadow-sm'
                     : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950',
@@ -713,7 +721,6 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
         matchInsights={matchInsights}
         activityLog={activityLog}
         error={error}
-        summary={summary}
         onKickParticipant={kickParticipant}
         onUpdateMatchSchedule={handleOpsUpdateMatchSchedule}
         tournamentSportRules={tournament.sportRules ?? null}
@@ -727,7 +734,7 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
           <div className="mb-5 flex flex-col gap-1.5">
             <h2 className="text-xl font-bold text-slate-900">Gán camera theo trận đấu</h2>
             <p className="text-sm font-semibold text-slate-500">
-              Dùng tại OP để BTC chọn camera cho từng trận theo đúng vòng/nhánh. Sau khi gán, trọng tài được phân công trận đó mới start/dừng livestream.
+              BTC chọn camera theo từng trận. Trọng tài được phân công mới có thể bắt đầu hoặc dừng phát trực tiếp.
             </p>
           </div>
           <LivestreamTab tournament={bracketManager.tournament ?? tournament} bracket={bracketManager.bracket} />

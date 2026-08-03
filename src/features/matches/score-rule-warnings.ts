@@ -9,6 +9,28 @@ export interface ScoreRuleWarning {
 const buildSequenceLabel = (rules: ResolvedSportRuleView, index: number) =>
   `${rules.kind === 'PICKLEBALL_SIDE_OUT' ? 'Ván' : 'Set'} ${index + 1}`;
 
+/** Keep the operator warning aligned with backend validate-tennis-score. */
+export function isValidTennisSetScore(
+  winnerScore: number,
+  loserScore: number,
+  rules: Pick<ResolvedSportRuleView, 'pointsPerSet' | 'maxPoints'>,
+): boolean {
+  const maxScore = Math.max(winnerScore, loserScore);
+  const minScore = Math.min(winnerScore, loserScore);
+  const difference = maxScore - minScore;
+
+  if (maxScore < rules.pointsPerSet || maxScore > rules.maxPoints) {
+    return false;
+  }
+  if (maxScore === rules.pointsPerSet) {
+    return difference >= 2 && minScore <= rules.pointsPerSet - 2;
+  }
+  if (maxScore === rules.maxPoints) {
+    return minScore === rules.maxPoints - 2 || minScore === rules.maxPoints - 1;
+  }
+  return false;
+}
+
 export function getScoreRuleWarnings(
   sets: MatchScore[],
   rules: ResolvedSportRuleView,
@@ -53,14 +75,10 @@ export function getScoreRuleWarnings(
     }
 
     if (rules.kind === 'TENNIS') {
-      const isValidStandardTennisSet =
-        (winnerScore === 6 && loserScore <= 4) ||
-        (winnerScore === 7 && (loserScore === 5 || loserScore === 6));
-
-      if (!isValidStandardTennisSet) {
+      if (!isValidTennisSetScore(winnerScore, loserScore, rules)) {
         warnings.push({
           id: `tennis-${index}`,
-          message: `${label} có tỷ số ${team1Score}-${team2Score}, lệch khỏi mẫu tennis chuẩn 6-x hoặc 7-5/7-6.`,
+          message: `${label} có tỷ số ${team1Score}-${team2Score}, không hợp lệ theo mốc ${rules.pointsPerSet} game và giới hạn ${rules.maxPoints} game của preset.`,
         });
       }
       return;

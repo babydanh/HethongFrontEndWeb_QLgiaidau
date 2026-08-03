@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { MatchPenaltyRecord } from '@/types/match';
 import { cn } from '@/utils/cn';
 import { getPenaltySchema } from '@/features/matches/penalty-schema';
@@ -30,14 +30,15 @@ export function PenaltyPanel({
   const [selectedPenaltyKind, setSelectedPenaltyKind] = useState<string>(schema.groups[0]?.items[0]?.kind ?? '');
   const [penaltyNote, setPenaltyNote] = useState('');
 
-  useEffect(() => {
-    const firstKind = schema.groups[0]?.items[0]?.kind ?? '';
-    setSelectedPenaltyKind((current) => (schema.groups.flatMap((group) => group.items).some((item) => item.kind === current) ? current : firstKind));
-  }, [schema]);
+  const availablePenaltyKinds = useMemo(
+    () => schema.groups.flatMap((group) => group.items),
+    [schema],
+  );
+  const effectivePenaltyKind = availablePenaltyKinds.some((item) => item.kind === selectedPenaltyKind)
+    ? selectedPenaltyKind
+    : availablePenaltyKinds[0]?.kind ?? '';
 
-  const selectedPenalty = schema.groups
-    .flatMap((group) => group.items)
-    .find((item) => item.kind === selectedPenaltyKind) ?? schema.groups[0]?.items[0];
+  const selectedPenalty = availablePenaltyKinds.find((item) => item.kind === effectivePenaltyKind);
 
   const resolvePenaltyTeam = (): 1 | 2 | null => {
     if (selectedPenaltyTeam === 'team1') {
@@ -52,12 +53,12 @@ export function PenaltyPanel({
   };
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4">
+    <div className="rounded-lg border border-slate-200 bg-white p-3">
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Nhật ký hình phạt</p>
           <p className="mt-2 text-sm font-bold text-slate-900">{schema.title}</p>
-          <p className="mt-1 text-xs font-medium text-slate-500">{schema.description}</p>
+          <p className="mt-1 hidden text-xs font-medium text-slate-500 sm:block">{schema.description}</p>
         </div>
         <div className="flex items-center gap-2">
           <div
@@ -76,23 +77,23 @@ export function PenaltyPanel({
         </div>
       </div>
 
-      <div className="mt-4 space-y-4">
+      <div className="mt-3 space-y-3">
         {schema.groups.map((group) => (
-          <div key={group.id} className="rounded-lg border border-slate-100 bg-slate-50 p-4">
+          <div key={group.id} className="rounded-lg border border-slate-100 bg-slate-50 p-3">
             <div className="flex items-center justify-between gap-3">
               <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">{group.label}</p>
               <span className="text-[11px] font-semibold text-slate-500">{group.items.length} lựa chọn</span>
             </div>
-            <div className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+            <div className="mt-2 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
               {group.items.map((item) => {
-                const isSelected = selectedPenaltyKind === item.kind;
+                const isSelected = effectivePenaltyKind === item.kind;
                 return (
                   <button
                     key={item.kind}
                     type="button"
                     onClick={() => setSelectedPenaltyKind(item.kind)}
                     className={cn(
-                      'rounded-lg border p-3 text-left transition-colors',
+                      'rounded-lg border p-2.5 text-left transition-colors',
                       isSelected
                         ? 'border-blue-500 bg-blue-50'
                         : 'border-slate-200 bg-white hover:border-slate-300',
@@ -109,8 +110,8 @@ export function PenaltyPanel({
                         </span>
                       ) : null}
                     </div>
-                    <p className="mt-2 text-xs font-medium leading-relaxed text-slate-500">{item.description}</p>
-                    <div className="mt-3 inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-600">
+                    <p className="mt-1 hidden line-clamp-2 text-xs font-medium leading-relaxed text-slate-500 xl:block">{item.description}</p>
+                    <div className="mt-2 inline-flex rounded-full bg-slate-100 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-600">
                       {item.impact === 'point'
                         ? 'Ảnh hưởng điểm'
                         : item.impact === 'game'
@@ -127,22 +128,22 @@ export function PenaltyPanel({
         ))}
       </div>
 
-      <div className="mt-4 grid gap-3 md:grid-cols-[1fr_1fr_1.2fr_auto]">
+      <div className="mt-3 grid gap-2 md:grid-cols-[1fr_1fr_1.2fr_auto]">
         <select
           value={selectedPenaltyTeam}
           onChange={(event) => setSelectedPenaltyTeam(event.target.value as PenaltyTeamSelection)}
-          className="h-11 rounded-lg border border-slate-200 px-3 text-sm text-slate-800"
+          className="h-10 rounded-lg border border-slate-200 px-3 text-sm text-slate-800"
         >
           <option value="neutral">Cả trận / chung</option>
           <option value="team1">{team1Name}</option>
           <option value="team2">{team2Name}</option>
         </select>
         <select
-          value={selectedPenaltyKind}
+          value={effectivePenaltyKind}
           onChange={(event) => setSelectedPenaltyKind(event.target.value)}
-          className="h-11 rounded-lg border border-slate-200 px-3 text-sm text-slate-800"
+          className="h-10 rounded-lg border border-slate-200 px-3 text-sm text-slate-800"
         >
-          {schema.groups.flatMap((group) => group.items).map((item) => (
+          {availablePenaltyKinds.map((item) => (
             <option key={item.kind} value={item.kind}>
               {item.label}
             </option>
@@ -153,7 +154,7 @@ export function PenaltyPanel({
           value={penaltyNote}
           onChange={(event) => setPenaltyNote(event.target.value)}
           placeholder="Ghi chú thêm nếu cần"
-          className="h-11 rounded-lg border border-slate-200 px-3 text-sm text-slate-800"
+          className="h-10 rounded-lg border border-slate-200 px-3 text-sm text-slate-800"
         />
         <button
           type="button"
@@ -178,19 +179,19 @@ export function PenaltyPanel({
       </div>
 
       {schema.cardStyle === 'yellow-red' ? (
-        <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold text-slate-800">
+        <div className="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700">
           Môn này có lớp hiển thị thẻ riêng. UI sẽ cho thấy thẻ vàng/thẻ đỏ rõ ràng, nhưng quyết định cuối vẫn thuộc trọng tài/BTC.
         </div>
       ) : (
-        <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold text-slate-600">
+        <div className="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-600">
           Môn này không dùng thẻ riêng. Hình phạt chỉ được ghi như cảnh báo, lỗi kỹ thuật hoặc phạt trực tiếp theo schema của môn.
         </div>
       )}
 
       {penalties.length > 0 ? (
-        <div className="mt-4 space-y-2">
+        <div className="mt-3 space-y-2">
           {penalties.slice(0, 6).map((item) => (
-            <div key={item.id} className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold text-slate-700">
+            <div key={item.id} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700">
               <div className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
                 <div className="font-bold text-slate-900">
                   {item.label}
@@ -203,7 +204,7 @@ export function PenaltyPanel({
           ))}
         </div>
       ) : (
-        <div className="mt-4 rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-4 text-xs font-semibold text-slate-500">
+        <div className="mt-3 rounded-lg border border-dashed border-slate-200 bg-slate-50 px-3 py-3 text-xs font-semibold text-slate-500">
           Chưa có hình phạt nào được ghi cho trận này.
         </div>
       )}

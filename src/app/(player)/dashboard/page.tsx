@@ -19,7 +19,7 @@ import {
 
 import EloSidebarCard from '@/components/dashboard/EloSidebarCard';
 import RoleSummaryCard from '@/components/dashboard/RoleSummaryCard';
-import TournamentListSection from '@/components/dashboard/TournamentListSection';
+import TournamentListSection, { AvatarCircle } from '@/components/dashboard/TournamentListSection';
 
 import { Button } from '@/components/ui/Button';
 import { useAuthStore } from '@/lib/zustand/authStore';
@@ -160,6 +160,19 @@ export default function DashboardPage() {
       ? list
       : list.filter(t => t.category?.name === sportFilter);
 
+  const participantRoleLabels: Record<string, string> = {};
+  (workspace?.participatingTournaments ?? []).forEach((tournament) => {
+    participantRoleLabels[tournament.id] = 'VĐV';
+  });
+
+  const organizerRoleLabels: Record<string, string> = {};
+  (workspace?.organizedTournaments ?? []).forEach((tournament) => {
+    organizerRoleLabels[tournament.id] = 'BTC';
+  });
+  (workspace?.coOrganizerTournaments ?? []).forEach((tournament) => {
+    organizerRoleLabels[tournament.id] = 'Hỗ trợ BTC';
+  });
+
   // Build matchType map (DOUBLES/SINGLES heuristic from name)
   const matchTypeMap: Record<string, string> = {};
   const partnerMap: Record<string, string> = {};
@@ -231,7 +244,9 @@ export default function DashboardPage() {
                     return (
                       <div key={invite.refereeId} className="rounded-lg border border-slate-200 bg-slate-50/70 p-4">
                         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                          <div>
+                          <div className="flex items-start gap-3">
+                            <AvatarCircle src={invite.logoUrl} name={invite.tournamentName} size={40} />
+                            <div className="min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
                               <h3 className="font-bold text-slate-900">{invite.tournamentName}</h3>
                               <span className="px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wide uppercase bg-white text-amber-700 border border-amber-200">
@@ -241,6 +256,7 @@ export default function DashboardPage() {
                             <p className="text-sm text-slate-600 mt-1">
                               {invite.categoryName || 'Nội dung chưa rõ'} • gửi lúc {formatDate(invite.assignedAt, true)}
                             </p>
+                          </div>
                           </div>
                           <div className="flex gap-2 shrink-0">
                             <Button
@@ -311,6 +327,7 @@ export default function DashboardPage() {
             actionHref="/profile"
             actionLabel="Xem hồ sơ"
             tournaments={filterBySport(workspace?.participatingTournaments || [])}
+            roleLabels={participantRoleLabels}
             emptyLabel="Bạn chưa đăng ký giải đấu nào."
             icon={<Trophy className="w-4 h-4 text-sky-600" />}
             matchTypeMap={matchTypeMap}
@@ -325,6 +342,7 @@ export default function DashboardPage() {
             tournaments={filterBySport([...(workspace?.organizedTournaments || []), ...(workspace?.coOrganizerTournaments || [])])}
             emptyLabel="Bạn chưa có vai trò ban tổ chức nào."
             icon={<UserCheck className="w-4 h-4 text-violet-600" />}
+            roleLabels={organizerRoleLabels}
           />
 
           <section className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
@@ -345,7 +363,15 @@ export default function DashboardPage() {
                     <div key={match.id} className="rounded-lg border border-slate-200 p-4 bg-white">
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
-                          <h3 className="font-bold text-slate-900 line-clamp-1">{match.tournamentName}</h3>
+                          <div className="mb-2 flex items-center gap-3">
+                            <AvatarCircle src={match.logoUrl} name={match.tournamentName} size={40} />
+                            <div className="min-w-0">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <h3 className="font-bold text-slate-900 line-clamp-1">{match.tournamentName}</h3>
+                                <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-amber-700">Trọng tài</span>
+                              </div>
+                            </div>
+                          </div>
                           <p className="text-sm text-slate-600 mt-1 line-clamp-2">
                             {match.participant1Name || 'Chưa xác định'} vs {match.participant2Name || 'Chưa xác định'}
                           </p>

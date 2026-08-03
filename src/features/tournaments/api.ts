@@ -30,6 +30,7 @@ export interface WorkspaceRefereeInvite {
   refereeId: string;
   tournamentId: string;
   tournamentName: string;
+  logoUrl?: string | null;
   tournamentStatus: string;
   categoryName: string | null;
   assignedAt: string;
@@ -49,6 +50,7 @@ export interface WorkspaceRefereeMatch {
   id: string;
   tournamentId: string;
   tournamentName: string;
+  logoUrl?: string | null;
   categoryName: string | null;
   stageName: string;
   groupName: string;

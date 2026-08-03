@@ -67,6 +67,16 @@ const STATUS_FILTERS: Array<{ value: Match['status'] | 'ALL'; label: string }> =
   { value: 'DISPUTED', label: 'Cần xử lý' },
 ];
 
+const BRANCH_LABELS: Record<string, string> = {
+  MAIN: 'Nhánh chính',
+  WINNERS: 'Nhánh thắng',
+  LOSERS: 'Nhánh thua',
+  GRAND_FINALS: 'Chung kết tổng',
+};
+
+const getBranchLabel = (branch: string | null | undefined) =>
+  (branch && BRANCH_LABELS[branch]) || branch || 'Nhánh chính';
+
 const OPERATION_OPTIONS: Array<{ value: MatchOperationAction; label: string; description: string }> = [
   { value: 'WALKOVER', label: 'Thắng trắng', description: 'Đối thủ không ra sân hoặc không đủ điều kiện thi đấu.' },
   { value: 'RETIREMENT', label: 'Chấn thương / bỏ cuộc', description: 'Trận kết thúc sớm do một bên xin dừng.' },
@@ -297,7 +307,7 @@ export function OpsMatches({
         <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div className="space-y-2">
             <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
-              {match.bracketBranch || 'Nhánh chính'} • {roundLabel} • Trận {match.matchOrder}
+              {getBranchLabel(match.bracketBranch)} • {roundLabel} • Trận {match.matchOrder}
             </p>
             <p className="text-sm font-bold text-slate-900">
               {match.participant1?.teamName || 'Chờ xác định'} gặp {match.participant2?.teamName || 'Chờ xác định'}
@@ -348,6 +358,14 @@ export function OpsMatches({
                 ))}
               </div>
             ) : null}
+            <details
+              className="rounded-lg border border-slate-200 bg-white/70 px-3 py-2 text-xs"
+              open={attentionCount > 0 || isBlocked || isDirectAdvance}
+            >
+              <summary className="cursor-pointer list-none font-bold text-slate-700 [&::-webkit-details-marker]:hidden">
+                Xem chi tiết điều phối
+              </summary>
+              <div className="mt-3 space-y-2">
             {isDirectAdvance ? (
               <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-800">
                 Đi thẳng / miễn đấu: trận này không cần điều phối sân vì nhánh đã tự xác định đội đi tiếp.
@@ -421,9 +439,11 @@ export function OpsMatches({
                 Chưa đủ hai đối thủ. Chỉ nên điều phối sau khi nhánh trước chốt xong.
               </div>
             ) : null}
+              </div>
+            </details>
           </div>
 
-          <div className="flex flex-wrap items-center justify-end gap-2">
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:justify-end">
             <Button
               variant="outline"
               className="border-slate-200 text-slate-700"
@@ -438,12 +458,12 @@ export function OpsMatches({
               className="border-amber-200 text-amber-700 hover:bg-amber-50"
               onClick={() => onFocusMatch?.(match.id)}
             >
-              Xem trên bracket
+              Xem sơ đồ
             </Button>
             <Button asChild variant="outline" className="border-slate-200 font-bold text-slate-700">
               <Link href={`/live/${match.id}`}>
                 <TimerReset className="mr-2 h-4 w-4" />
-                Mở bảng điểm trực tiếp
+                Mở bảng điểm
               </Link>
             </Button>
             <Button
@@ -453,7 +473,7 @@ export function OpsMatches({
               disabled={isBusy || isDirectAdvance || !match.participant1Id || !match.participant2Id}
             >
               <AlertOctagon className="mr-2 h-4 w-4" />
-              Quyết định
+              Xử lý đặc biệt
             </Button>
           </div>
         </div>
@@ -641,7 +661,7 @@ export function OpsMatches({
         <ModalContent className="sm:max-w-2xl">
           <ModalHeader>
             <ModalTitle>Quyết định nghiệp vụ đặc biệt</ModalTitle>
-            <ModalDescription>Áp dụng thắng trắng, chấn thương, truất quyền hoặc override kết quả và lưu vết đầy đủ cho BTC.</ModalDescription>
+          <ModalDescription>Chọn tình huống, đội được xử thắng và ghi lý do để lưu vào nhật ký giải.</ModalDescription>
           </ModalHeader>
 
           <div className="space-y-4">

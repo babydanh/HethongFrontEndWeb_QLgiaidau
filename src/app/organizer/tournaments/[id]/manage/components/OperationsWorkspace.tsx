@@ -13,7 +13,6 @@ import type {
 } from '@/features/organizer/ops/types';
 import { OpsActivity } from '../../ops/components/OpsActivity';
 import { OpsMatches } from '../../ops/components/OpsMatches';
-import { OpsOverview } from '../../ops/components/OpsOverview';
 import { OpsParticipants } from '../../ops/components/OpsParticipants';
 import { cn } from '@/utils/cn';
 
@@ -35,14 +34,6 @@ interface OperationsWorkspaceProps {
   }>;
   activityLog: OpsActivityItem[];
   error: string | null;
-  summary: {
-    totalParticipants: number;
-    kickedParticipants: number;
-    unpaidParticipants: number;
-    scheduledMatches: number;
-    ongoingMatches: number;
-    completedMatches: number;
-  };
   onKickParticipant: (participantId: string, reason: string) => Promise<void>;
   onUpdateMatchSchedule: (
     match: Match,
@@ -64,7 +55,6 @@ export function OperationsWorkspace({
   matchInsights,
   activityLog,
   error,
-  summary,
   onKickParticipant,
   onUpdateMatchSchedule,
   onApplyMatchOperation,
@@ -161,25 +151,23 @@ export function OperationsWorkspace({
         </div>
       ) : null}
 
-      <OpsOverview summary={summary} />
-
-      <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+      <section className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
           <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-600">Sẵn sàng gọi vào sân</p>
           <p className="mt-2 text-2xl font-bold text-amber-900">{readyToCall}</p>
           <p className="mt-1 text-xs font-medium text-amber-800">Trận đã có sân và trọng tài, có thể chuyển sang trạng thái thi đấu ngay.</p>
         </div>
-        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
           <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-600">Thiếu điều phối</p>
           <p className="mt-2 text-2xl font-bold text-blue-900">{pendingAssignments}</p>
           <p className="mt-1 text-xs font-medium text-blue-800">Trận chưa gán đủ sân hoặc trọng tài.</p>
         </div>
-        <div className="rounded-lg border border-slate-200 bg-slate-100 p-4">
+        <div className="rounded-lg border border-slate-200 bg-slate-100 p-3">
           <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">Quá giờ chưa start</p>
           <p className="mt-2 text-2xl font-bold text-slate-900">{overdueStarts}</p>
           <p className="mt-1 text-xs font-medium text-slate-600">Trận đã qua giờ dự kiến nhưng vẫn chưa bắt đầu.</p>
         </div>
-        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
           <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-700">Ngoại lệ & kỷ luật</p>
           <p className="mt-2 text-2xl font-bold text-blue-950">{exceptionalMatchCount + penaltyCount}</p>
           <p className="mt-1 text-xs font-medium text-blue-800">

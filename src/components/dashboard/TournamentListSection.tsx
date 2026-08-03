@@ -17,11 +17,12 @@ interface Props {
   emptyActionLabel?: string;
   icon: ReactNode;
   count?: number;
+  roleLabels?: Record<string, string>;
   partners?: Record<string, string>; // tournamentId → partner name
   matchTypeMap?: Record<string, string>; // tournamentId → 'DOUBLES' | 'SINGLES'
 }
 
-function AvatarCircle({ src, name, size = 32 }: { src?: string | null; name: string; size?: number }) {
+export function AvatarCircle({ src, name, size = 32 }: { src?: string | null; name: string; size?: number }) {
   if (src) {
     return (
       <img
@@ -45,7 +46,7 @@ function AvatarCircle({ src, name, size = 32 }: { src?: string | null; name: str
 
 export default function TournamentListSection({
   id, title, actionHref, actionLabel, tournaments, emptyLabel,
-  emptyActionHref, emptyActionLabel, icon, count, partners, matchTypeMap,
+  emptyActionHref, emptyActionLabel, icon, count, partners, matchTypeMap, roleLabels,
 }: Props) {
   const [showAll, setShowAll] = useState(false);
   const initialShow = 5;
@@ -74,6 +75,7 @@ export default function TournamentListSection({
                   tournament={t}
                   partnerName={partners?.[t.id]}
                   matchType={matchTypeMap?.[t.id]}
+                  roleLabel={roleLabels?.[t.id]}
                 />
               ))}
             </div>
@@ -103,21 +105,28 @@ export default function TournamentListSection({
   );
 }
 
-function TournamentRow({ tournament, partnerName, matchType }: { tournament: Tournament; partnerName?: string; matchType?: string }) {
+function TournamentRow({ tournament, partnerName, matchType, roleLabel }: { tournament: Tournament; partnerName?: string; matchType?: string; roleLabel?: string }) {
   const isDoubles = matchType === 'DOUBLES' || matchType === 'MIXED_DOUBLES';
   const sport = tournament.category?.name;
   return (
     <div className="py-3 first:pt-0 last:pb-0">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3 min-w-0 flex-1">
-          <AvatarCircle src={tournament.bannerUrl} name={tournament.name} size={36} />
+          <AvatarCircle src={tournament.logoUrl || tournament.bannerUrl} name={tournament.name} size={40} />
           <div className="min-w-0 flex-1">
-            <Link
-              href={`/tournaments/${tournament.id}`}
-              className="text-sm font-semibold text-slate-900 hover:text-blue-600 line-clamp-1 transition-colors"
-            >
-              {tournament.name}
-            </Link>
+            <div className="flex flex-wrap items-center gap-2">
+              <Link
+                href={`/tournaments/${tournament.id}`}
+                className="text-sm font-semibold text-slate-900 hover:text-blue-600 line-clamp-1 transition-colors"
+              >
+                {tournament.name}
+              </Link>
+              {roleLabel ? (
+                <span className="shrink-0 rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-violet-700">
+                  {roleLabel}
+                </span>
+              ) : null}
+            </div>
             <p className="mt-0.5 text-[11px] text-slate-400 line-clamp-1">
               {sport}
               {tournament.locationAddress && ` · ${tournament.locationAddress}`}

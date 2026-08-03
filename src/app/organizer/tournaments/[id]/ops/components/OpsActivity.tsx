@@ -27,16 +27,19 @@ export function OpsActivity({ activityLog }: OpsActivityProps) {
           </div>
         ) : (
           activityLog.slice(0, 12).map((item) => (
-            <div key={item.id} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="text-sm font-bold text-slate-900">{item.title}</p>
-                <span className="text-xs font-bold text-slate-500">{formatDateTime(item.createdAt)}</span>
+            <details key={item.id} className="group rounded-lg border border-slate-200 bg-slate-50">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4 [&::-webkit-details-marker]:hidden">
+                <span className="min-w-0 truncate text-sm font-bold text-slate-900">{item.title}</span>
+                <span className="shrink-0 text-xs font-bold text-slate-500">{formatDateTime(item.createdAt)}</span>
+              </summary>
+              <div className="border-t border-slate-200 px-4 pb-4 pt-3">
+                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
+                  {item.entityType} • {item.action}
+                </p>
+                <p className="mt-2 text-sm font-medium leading-6 text-slate-600">{item.detail}</p>
+                <p className="mt-3 text-xs font-bold text-blue-600">Đã ghi nhận trong nhật ký hệ thống</p>
               </div>
-              <p className="mt-2 text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
-                {item.entityType} • {item.action}
-              </p>
-              <p className="mt-2 text-sm font-medium text-slate-600">{item.detail}</p>
-            </div>
+            </details>
           ))
         )}
       </div>

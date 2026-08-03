@@ -31,9 +31,9 @@ export function OfficialScoreModal({
 }: OfficialScoreModalProps) {
   return (
     <Modal open={open} onOpenChange={onOpenChange}>
-      <ModalContent className="h-[92dvh] max-h-[92dvh] w-[calc(100vw-1rem)] max-w-7xl overflow-hidden rounded-2xl border border-slate-200 bg-white p-0 shadow-2xl sm:w-[95vw] sm:rounded-[28px]">
-        <div className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] overflow-hidden lg:grid-cols-[340px_minmax(0,1fr)] lg:grid-rows-1">
-          <div className="flex max-h-[24dvh] flex-col overflow-y-auto border-b border-slate-800 bg-slate-950 p-3 text-white lg:max-h-none lg:overflow-visible lg:border-b-0 lg:border-r lg:border-slate-850 lg:p-6">
+      <ModalContent className="h-[96dvh] max-h-[96dvh] w-[calc(100vw-0.5rem)] max-w-[calc(100vw-0.5rem)] min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white p-0 shadow-2xl sm:h-[92dvh] sm:max-h-[92dvh] sm:w-[95vw] sm:max-w-7xl sm:rounded-[28px]">
+        <div className="grid h-full min-h-0 min-w-0 max-w-full grid-rows-[auto_minmax(0,1fr)] overflow-hidden lg:grid-cols-[340px_minmax(0,1fr)] lg:grid-rows-1">
+          <div className="flex max-h-[18dvh] min-w-0 max-w-full flex-col overflow-y-auto overflow-x-hidden border-b border-slate-800 bg-slate-950 p-2.5 text-white sm:max-h-[24dvh] sm:p-3 lg:max-h-none lg:overflow-visible lg:border-b-0 lg:border-r lg:border-slate-850 lg:p-6">
             <div className="flex items-center gap-3">
                 <div className="hidden h-12 w-12 items-center justify-center rounded-lg bg-blue-600/20 text-blue-400 sm:flex">
                 <Shield className="h-6 w-6" />
@@ -90,7 +90,7 @@ export function OfficialScoreModal({
             </div>
           </div>
 
-          <div className="flex min-h-0 flex-col">
+          <div className="flex min-h-0 min-w-0 max-w-full flex-col overflow-hidden">
               <ModalHeader className="border-b border-slate-200 px-3 py-2.5 text-left sm:px-5 sm:py-3.5">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
@@ -115,7 +115,7 @@ export function OfficialScoreModal({
               </div>
             </ModalHeader>
 
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-slate-50 px-2 py-2 sm:px-4 sm:py-4">
+            <div className="min-h-0 min-w-0 max-w-full flex-1 overflow-x-hidden overflow-y-auto overscroll-contain bg-slate-50 px-1.5 py-1.5 sm:px-4 sm:py-4">
               <LiveMatchControlPanel
                 match={match}
                 team1Name={team1Name}

@@ -10,6 +10,7 @@ import {
   resolveMatchSportRules,
 } from '@/features/matches/score-display';
 import { getScoreRuleWarnings } from '@/features/matches/score-rule-warnings';
+import { getPenaltySchema } from '@/features/matches/penalty-schema';
 import { getScoreEntryGuidance } from '@/features/tournaments/sport-rules/ui-guidance';
 import {
   computeNextSideOutState,
@@ -28,7 +29,7 @@ import {
 import { useLiveMatch } from '@/hooks/useLiveMatch';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { socketClient } from '@/lib/socket';
-import type { MatchPenaltyRecord, PickleballSideOutState, TennisLivePointState } from '@/types/match';
+import type { MatchPenaltyRecord, MatchScore, PickleballSideOutState, TennisLivePointState } from '@/types/match';
 import { getErrorMessage } from '@/utils/error';
 import { cn } from '@/utils/cn';
 import { trimAndNormalizeSpaces } from '@/utils/string';
@@ -39,6 +40,8 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/Button';
 import { OfficialScoreModal } from './components/OfficialScoreModal';
+
+type ScoreUpdatePayload = Parameters<typeof matchesApi.updateScore>[1];
 import type { TournamentParticipant } from '@/types/tournament';
 import { ReportViolationButton } from '@/features/reports/components/ReportViolationButton';
 import ShareModal from '@/components/common/ShareModal';
@@ -60,6 +63,22 @@ export default function LiveMatchPage({ params }: Props) {
   const [isOfficialScoreModalOpen, setIsOfficialScoreModalOpen] = useState(false);
   const [optimisticTennisPointState, setOptimisticTennisPointState] = useState<TennisLivePointState | null>(null);
   const lastSyncedTennisServerKeyRef = useRef<string>('init');
+  const optimisticScoresRef = useRef<MatchScore[]>(scores);
+  const scoreSyncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingScorePayloadRef = useRef<ScoreUpdatePayload | null>(null);
+  const scoreSyncInFlightRef = useRef(false);
+
+  useEffect(() => {
+    optimisticScoresRef.current = scores;
+  }, [scores]);
+
+  useEffect(() => {
+    return () => {
+      if (scoreSyncTimerRef.current) {
+        clearTimeout(scoreSyncTimerRef.current);
+      }
+    };
+  }, []);
 
   const [comments, setComments] = useState<MatchComment[]>([]);
   const [commentText, setCommentText] = useState('');
@@ -315,6 +334,7 @@ export default function LiveMatchPage({ params }: Props) {
   const currentSet = scores[activeSetIdx] || { team1Score: 0, team2Score: 0, isFinished: false };
   const normalizedCommentText = trimAndNormalizeSpaces(commentText);
   const resolvedRules = resolveMatchSportRules(match);
+  const isLiteMatch = match?.tournament?.tournamentConfig?.mode === 'LITE';
   const scorePresentation = getMatchScorePresentation(resolvedRules.kind);
   const scoreGuidance = getScoreEntryGuidance(resolvedRules.kind);
   const sequenceLabelTitle = scorePresentation.sequenceLabel.charAt(0).toUpperCase() + scorePresentation.sequenceLabel.slice(1);
@@ -323,6 +343,7 @@ export default function LiveMatchPage({ params }: Props) {
   const isTennis = resolvedRules.kind === 'TENNIS';
   const tennisPointState = isTennis ? optimisticTennisPointState ?? resolvedTennisPointState : null;
   const penalties = readPenaltyLog(match);
+  const penaltySchema = getPenaltySchema(resolvedRules.kind);
   const scoreWarnings = getScoreRuleWarnings(scores, resolvedRules);
   const scoreOverride =
     match.scoreDetails &&
@@ -358,6 +379,9 @@ export default function LiveMatchPage({ params }: Props) {
   };
 
   const validateSetCanFinish = (setItem: { team1Score: number; team2Score: number }, setIndex: number) => {
+    if (isLiteMatch) {
+      return { ok: true as const };
+    }
     const team1Score = Number(setItem.team1Score);
     const team2Score = Number(setItem.team2Score);
     const maxScore = Math.max(team1Score, team2Score);
@@ -485,6 +509,44 @@ export default function LiveMatchPage({ params }: Props) {
     });
   };
 
+  const flushScoreSync = async () => {
+    if (scoreSyncInFlightRef.current || !pendingScorePayloadRef.current) return;
+
+    const payload = pendingScorePayloadRef.current;
+    pendingScorePayloadRef.current = null;
+    scoreSyncInFlightRef.current = true;
+    setIsSubmitting(true);
+
+    try {
+      const response = await matchesApi.updateScore(matchId, payload);
+      // Do not overwrite a newer local tap with an older server response.
+      if (!pendingScorePayloadRef.current) {
+        applyServerSnapshot(response);
+      }
+      toast.success('Đã đồng bộ điểm live.', { id: `score-sync-${matchId}` });
+    } catch (err: unknown) {
+      console.error(err);
+      toast.error(getErrorMessage(err, 'Không thể đồng bộ điểm live.'), { id: `score-sync-${matchId}` });
+    } finally {
+      scoreSyncInFlightRef.current = false;
+      setIsSubmitting(false);
+      if (pendingScorePayloadRef.current) {
+        void flushScoreSync();
+      }
+    }
+  };
+
+  const enqueueScoreSync = (payload: ScoreUpdatePayload) => {
+    pendingScorePayloadRef.current = payload;
+    if (scoreSyncTimerRef.current) {
+      clearTimeout(scoreSyncTimerRef.current);
+    }
+    scoreSyncTimerRef.current = setTimeout(() => {
+      scoreSyncTimerRef.current = null;
+      void flushScoreSync();
+    }, 140);
+  };
+
   // Handle Score Updates
   const handleUpdatePoints = async (team: 1 | 2, action: 'inc' | 'dec') => {
     if (!ensureCanControlLiveMatch()) {
@@ -498,11 +560,8 @@ export default function LiveMatchPage({ params }: Props) {
     if (overrideEnabled && !appliedOverrideReason) {
       return;
     }
-    if (isSubmitting) return;
-    setIsSubmitting(true);
-
+    const newScores = [...optimisticScoresRef.current];
     try {
-      const newScores = [...scores];
       if (newScores.length === 0) {
         newScores.push({ team1Score: 0, team2Score: 0, isFinished: false });
       }
@@ -545,38 +604,29 @@ export default function LiveMatchPage({ params }: Props) {
       }
 
       // KhÃ´ng cho nÃºt cÃ´ng vÆ°á»£t tráº§n preset. Ngoáº¡i lá»‡ pháº£i Ä‘Æ°á»£c báº­t vÃ  cÃ³ lÃ½ do trÆ°á»›c Ä‘Ã³.
-      if (!overrideEnabled && Math.max(newScores[activeIdx].team1Score, newScores[activeIdx].team2Score) > resolvedRules.maxPoints) {
+      if (!isLiteMatch && !overrideEnabled && Math.max(newScores[activeIdx].team1Score, newScores[activeIdx].team2Score) > resolvedRules.maxPoints) {
         toast.error(`Äiá»ƒm set khÃ´ng Ä‘Æ°á»£c vÆ°á»£t ${resolvedRules.maxPoints}. Báº­t ngoáº¡i lá»‡ náº¿u BTC/trá»ng tÃ i Ä‘Ã£ xÃ¡c nháº­n.`);
         return;
       }
 
       // Optimistic Update
+      optimisticScoresRef.current = newScores;
       setScores(newScores);
       if (isTennis) {
         setOptimisticTennisPointState(nextTennisPointState);
       }
       const nextSetsWon = deriveSetsWon(newScores);
 
-      const res = await matchesApi.updateScore(matchId, {
+      enqueueScoreSync({
         p1SetsWon: nextSetsWon.p1SetsWon,
         p2SetsWon: nextSetsWon.p2SetsWon,
         scoreDetails: buildScoreDetailsPayload(newScores, sideOutState, nextTennisPointState),
         winnerId: match.winnerId,
         ...(appliedOverrideReason ? { overrideReason: appliedOverrideReason } : {}),
       });
-
-      applyServerSnapshot(res);
-      toast.success(
-        isTennis
-          ? `${team === 1 ? team1Name : team2Name} ${action === 'inc' ? 'thắng thêm 1 pha bóng' : 'được lùi lại 1 mức điểm'} trong game hiện tại.`
-          : `${team === 1 ? team1Name : team2Name} ${action === 'inc' ? 'được cộng' : 'bị trừ'} 1 ${scorePresentation.scoreUnit} ở ${scorePresentation.sequenceLabel} ${activeIdx + 1}.`,
-        { id: `score-${matchId}` },
-      );
     } catch (err: unknown) {
       console.error(err);
       toast.error(getErrorMessage(err, 'Không thể cập nhật điểm số của set đang diễn ra.'));
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -718,12 +768,12 @@ export default function LiveMatchPage({ params }: Props) {
     if (!ensureCanControlLiveMatch()) {
       return;
     }
-    if (!overrideEnabled) {
+    if (!isLiteMatch && !overrideEnabled) {
       toast.error('Chốt một đội thắng thẳng là nghiệp vụ ngoại lệ. Hãy bật ngoại lệ và nhập lý do trước.');
       return;
     }
-    const appliedOverrideReason = resolveOverrideReason();
-    if (!appliedOverrideReason) {
+    const appliedOverrideReason = isLiteMatch ? null : resolveOverrideReason();
+    if (!isLiteMatch && !appliedOverrideReason) {
       return;
     }
     if (isSubmitting) return;
@@ -747,6 +797,7 @@ export default function LiveMatchPage({ params }: Props) {
       }
 
       const nextSetsWon = deriveSetsWon(newScores);
+      optimisticScoresRef.current = newScores;
       setScores(newScores);
       if (isTennis) {
         setOptimisticTennisPointState(null);
@@ -1301,6 +1352,88 @@ export default function LiveMatchPage({ params }: Props) {
                     </div>
                   );
                 })()}
+
+                {penalties.length > 0 ? (
+                  <section className="mt-8 border-t border-slate-100 pt-6" aria-label="Phạt và thẻ trong trận">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <h4 className="text-sm font-black uppercase tracking-[0.16em] text-slate-500">
+                          Phạt và thẻ
+                        </h4>
+                        <p className="mt-1 text-xs font-medium text-slate-400">
+                          Các quyết định đã được trọng tài/BTC ghi nhận theo luật môn.
+                        </p>
+                      </div>
+                      <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-500">
+                        {penalties.length} mục
+                      </span>
+                    </div>
+
+                    <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                      {penalties.slice(-6).reverse().map((penalty) => {
+                        const action = penaltySchema.groups
+                          .flatMap((group) => group.items)
+                          .find((item) => item.kind === penalty.kind);
+                        const normalizedKind = penalty.kind.toUpperCase();
+                        const isRed = normalizedKind.includes('RED') || normalizedKind.includes('EJECT');
+                        const isYellow = normalizedKind.includes('YELLOW') || normalizedKind.includes('WARNING');
+                        const tone = isRed
+                          ? {
+                              box: 'border-red-200 bg-red-50',
+                              mark: 'bg-red-500',
+                              label: 'text-red-800',
+                              badge: 'bg-red-100 text-red-700',
+                            }
+                          : isYellow
+                            ? {
+                                box: 'border-amber-200 bg-amber-50',
+                                mark: 'bg-amber-400',
+                                label: 'text-amber-900',
+                                badge: 'bg-amber-100 text-amber-800',
+                              }
+                            : {
+                                box: 'border-slate-200 bg-slate-50',
+                                mark: 'bg-blue-500',
+                                label: 'text-slate-800',
+                                badge: 'bg-blue-50 text-blue-700',
+                              };
+                        const teamLabel = penalty.team === 1
+                          ? team1Name
+                          : penalty.team === 2
+                            ? team2Name
+                            : 'Trận đấu';
+
+                        return (
+                          <div key={penalty.id} className={`flex min-w-0 items-start gap-3 rounded-xl border px-3 py-3 ${tone.box}`}>
+                            <span className={`mt-1 h-3 w-3 shrink-0 rounded-sm ${tone.mark}`} aria-hidden="true" />
+                            <div className="min-w-0 flex-1">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <p className={`truncate text-sm font-bold ${tone.label}`}>{penalty.label}</p>
+                                {action?.cardLabel ? (
+                                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${tone.badge}`}>
+                                    {action.cardLabel}
+                                  </span>
+                                ) : null}
+                              </div>
+                              <p className="mt-1 truncate text-xs font-semibold text-slate-500">{teamLabel}</p>
+                              {penalty.note ? (
+                                <p className="mt-1 line-clamp-2 text-xs font-medium text-slate-500">{penalty.note}</p>
+                              ) : null}
+                              <p className="mt-1 text-[11px] font-medium text-slate-400">
+                                {new Date(penalty.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {penalties.length > 6 ? (
+                      <p className="mt-3 text-center text-xs font-semibold text-slate-400">
+                        Đang hiển thị 6 quyết định mới nhất trong tổng số {penalties.length} mục.
+                      </p>
+                    ) : null}
+                  </section>
+                ) : null}
               </div>
 
               {/* Footer Info */}
@@ -1483,6 +1616,7 @@ export default function LiveMatchPage({ params }: Props) {
           tennisPointState={tennisPointState}
           penalties={penalties}
           scoreWarnings={scoreWarnings}
+          isLiteMatch={isLiteMatch}
           overrideEnabled={overrideEnabled}
           overrideReason={overrideReason}
           onOverrideEnabledChange={setOverrideEnabled}

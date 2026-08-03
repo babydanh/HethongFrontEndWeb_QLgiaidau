@@ -47,6 +47,7 @@ export interface LiveMatchControlPanelProps {
   tennisPointState: TennisLivePointState | null;
   penalties: MatchPenaltyRecord[];
   scoreWarnings: ScoreRuleWarning[];
+  isLiteMatch: boolean;
   overrideEnabled: boolean;
   overrideReason: string;
   onOverrideEnabledChange: (enabled: boolean) => void;
@@ -78,6 +79,7 @@ export function LiveMatchControlPanel({
   tennisPointState,
   penalties,
   scoreWarnings,
+  isLiteMatch,
   overrideEnabled,
   overrideReason,
   onOverrideEnabledChange,
@@ -113,7 +115,7 @@ export function LiveMatchControlPanel({
   const isTableTennis = sportKind === 'TABLE_TENNIS';
   return (
     <>
-      <div className="sticky top-0 z-20 -mx-1 border-b border-slate-200 bg-white/95 px-1 py-2 backdrop-blur">
+      <div className="sticky top-0 z-20 -mx-1 min-w-0 border-b border-slate-200 bg-white/95 px-1 py-2 backdrop-blur">
         <div className="grid grid-cols-2 gap-2 rounded-lg bg-slate-100 p-1">
           <button
             type="button"
@@ -228,7 +230,7 @@ export function LiveMatchControlPanel({
         </div>
       </div>
 
-      <div className="rounded-lg border border-slate-200 bg-white p-3">
+      {!isLiteMatch ? <div className="rounded-lg border border-slate-200 bg-white p-3">
         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Chế độ trọng tài</p>
@@ -246,7 +248,7 @@ export function LiveMatchControlPanel({
               'rounded-lg border px-4 py-2 text-xs font-bold transition-colors',
               overrideEnabled
                 ? 'border-amber-500 bg-amber-500 text-white'
-                : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100',
+                : 'border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100',
             )}
           >
             {overrideEnabled ? 'Tắt ngoại lệ' : 'Bật ngoại lệ'}
@@ -269,9 +271,9 @@ export function LiveMatchControlPanel({
             </p>
           </div>
         ) : null}
-      </div>
+      </div> : null}
 
-      <div className="rounded-xl border border-slate-100 bg-white p-4 shadow-lg md:p-5">
+      <div className="min-w-0 rounded-xl border border-slate-100 bg-white p-3 shadow-lg sm:p-4 md:p-5">
         <div className="mb-4 flex items-center gap-3 border-b border-slate-100 pb-3">
           <div className="rounded-lg bg-blue-50 p-2 text-blue-600">
             <Activity className="h-5 w-5" />
@@ -326,7 +328,7 @@ export function LiveMatchControlPanel({
                 currentPointTeam1={currentPointTeam1}
                 currentPointTeam2={currentPointTeam2}
                 tennisPointState={tennisPointState}
-                isSubmitting={isSubmitting}
+                isSubmitting={false}
                 onUpdatePoints={onUpdatePoints}
               />
             ) : isBadminton ? (
@@ -335,7 +337,7 @@ export function LiveMatchControlPanel({
                 team2Name={team2Name}
                 currentPointTeam1={currentPointTeam1}
                 currentPointTeam2={currentPointTeam2}
-                isSubmitting={isSubmitting}
+                isSubmitting={false}
                 onUpdatePoints={onUpdatePoints}
               />
             ) : isTableTennis ? (
@@ -344,7 +346,7 @@ export function LiveMatchControlPanel({
                 team2Name={team2Name}
                 currentPointTeam1={currentPointTeam1}
                 currentPointTeam2={currentPointTeam2}
-                isSubmitting={isSubmitting}
+                isSubmitting={false}
                 onUpdatePoints={onUpdatePoints}
               />
             ) : (
@@ -353,12 +355,12 @@ export function LiveMatchControlPanel({
                 team2Name={team2Name}
                 currentPointTeam1={currentPointTeam1}
                 currentPointTeam2={currentPointTeam2}
-                isSubmitting={isSubmitting}
+                isSubmitting={false}
                 onUpdatePoints={onUpdatePoints}
               />
             )}
 
-            <div className="sticky bottom-0 z-10 -mx-4 flex flex-col justify-between gap-3 border-t border-slate-100 bg-white/95 px-4 pb-1 pt-4 backdrop-blur sm:flex-row md:-mx-5 md:px-5">
+            <div className="sticky bottom-0 z-10 -mx-3 flex min-w-0 flex-col justify-between gap-3 border-t border-slate-100 bg-white/95 px-3 pb-1 pt-3 backdrop-blur sm:-mx-4 sm:flex-row sm:px-4 md:-mx-5 md:px-5">
               <button
                 onClick={onFinishSet}
                 disabled={isSubmitting || !match.participant1Id || !match.participant2Id}
@@ -369,22 +371,22 @@ export function LiveMatchControlPanel({
 
               <div className="flex flex-grow flex-col items-end gap-2">
                 <p className="text-right text-[11px] font-semibold text-slate-500">
-                  Chốt thắng thẳng chỉ dùng khi đã bật ngoại lệ và nhập lý do.
+                  {isLiteMatch ? 'Giải Lite cho phép BTC chốt nhanh theo thực tế trận đấu.' : 'Chốt thắng thẳng chỉ dùng khi đã bật ngoại lệ và nhập lý do.'}
                 </p>
                 <div className="flex flex-wrap justify-end gap-2">
                 <button
                   onClick={() => handleCompleteMatch(1)}
-                  disabled={isSubmitting || !match.participant1Id || !match.participant2Id || !overrideEnabled || !overrideReason.trim()}
-                  className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-amber-600 px-3 py-2 text-[11px] font-bold text-white shadow-sm transition-colors hover:bg-amber-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
+                  disabled={isSubmitting || !match.participant1Id || !match.participant2Id || (!isLiteMatch && (!overrideEnabled || !overrideReason.trim()))}
+                  className={cn('inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-[11px] font-bold text-white shadow-sm transition-colors disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none', isLiteMatch ? 'bg-blue-600 hover:bg-blue-700' : 'bg-amber-600 hover:bg-amber-700')}
                 >
-                  <Trophy className="h-3.5 w-3.5" /> Đội 1 thắng ngoại lệ
+                  <Trophy className="h-3.5 w-3.5" /> {isLiteMatch ? 'Đội 1 thắng' : 'Đội 1 thắng ngoại lệ'}
                 </button>
                 <button
                   onClick={() => handleCompleteMatch(2)}
-                  disabled={isSubmitting || !match.participant1Id || !match.participant2Id || !overrideEnabled || !overrideReason.trim()}
-                  className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-amber-600 px-3 py-2 text-[11px] font-bold text-white shadow-sm transition-colors hover:bg-amber-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
+                  disabled={isSubmitting || !match.participant1Id || !match.participant2Id || (!isLiteMatch && (!overrideEnabled || !overrideReason.trim()))}
+                  className={cn('inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-[11px] font-bold text-white shadow-sm transition-colors disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none', isLiteMatch ? 'bg-blue-600 hover:bg-blue-700' : 'bg-amber-600 hover:bg-amber-700')}
                 >
-                  <Trophy className="h-3.5 w-3.5" /> Đội 2 thắng ngoại lệ
+                  <Trophy className="h-3.5 w-3.5" /> {isLiteMatch ? 'Đội 2 thắng' : 'Đội 2 thắng ngoại lệ'}
                 </button>
                 </div>
               </div>

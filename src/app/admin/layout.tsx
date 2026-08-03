@@ -11,6 +11,7 @@ import { RouteGuard } from '@/components/shared/RouteGuard';
 import { AdminHeader } from '@/components/admin/AdminHeader';
 import {
   ArrowLeft,
+  Bell,
   Building,
   CreditCard,
   HandCoins,
@@ -33,6 +34,7 @@ import { getErrorMessage } from '@/utils/error';
 
 const MODERATOR_ALLOWED_PATHS = [
   '/admin',
+  '/admin/notifications',
   '/admin/verification',
   '/admin/reports',
   '/admin/tournaments',
@@ -58,6 +60,7 @@ export default function AdminLayout({
   const allMenuItems = useMemo(
     () => [
       { labelKey: 'overview', path: '/admin', icon: LayoutDashboard },
+      { labelKey: 'notifications', path: '/admin/notifications', icon: Bell },
       { labelKey: 'verification', path: '/admin/verification', icon: ShieldCheck },
       { labelKey: 'moderation', path: '/admin/moderation', icon: Users },
       { labelKey: 'reports', path: '/admin/reports', icon: ShieldAlert },

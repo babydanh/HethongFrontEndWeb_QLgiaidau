@@ -5999,6 +5999,12 @@
   "Notifications": {
     "title": "Notifications",
     "centerLabel": "Notification Center",
+    "managementTitle": "Management notifications",
+    "managementCenterLabel": "Management center",
+    "managementDescription": "Track actions requiring attention across tournaments, approvals, finance, and permissions.",
+    "managementEmptyTitle": "No management notifications",
+    "managementEmptyDescription": "Updates for administrators, moderators, and tournament staff will appear here.",
+    "viewManagementNotifications": "View management notifications",
     "description": "Follow updates on tournaments, clubs, and your activities.",
     "all": "All",
     "unread": "Unread",
@@ -6856,6 +6862,7 @@
   },
   "AdminLayout": {
     "overview": "Overview",
+    "notifications": "Management notifications",
     "verification": "Trust management",
     "moderation": "Users & permissions",
     "reports": "Violation reports",

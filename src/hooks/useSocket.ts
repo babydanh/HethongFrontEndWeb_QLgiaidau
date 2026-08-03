@@ -8,8 +8,10 @@ import type {
 } from '@/features/notifications/types';
 import {
   getUnreadNotificationsCount,
+  isManagementNotification,
   mergeNotifications,
   sortNotificationsByDate,
+  type NotificationScope,
 } from '@/features/notifications/utils';
 import { socketClient } from '@/lib/socket';
 import { useAuthStore } from '@/lib/zustand/authStore';
@@ -26,46 +28,56 @@ const DEFAULT_NOTIFICATION_STATE: NotificationListState = {
   errorMessage: null,
 };
 
-let notificationState: NotificationListState = DEFAULT_NOTIFICATION_STATE;
-const notificationStoreListeners = new Set<NotificationStoreListener>();
+const notificationStates: Record<NotificationScope, NotificationListState> = {
+  player: { ...DEFAULT_NOTIFICATION_STATE },
+  management: { ...DEFAULT_NOTIFICATION_STATE },
+};
+const notificationStoreListeners = new Map<NotificationScope, Set<NotificationStoreListener>>([
+  ['player', new Set<NotificationStoreListener>()],
+  ['management', new Set<NotificationStoreListener>()],
+]);
 
-let notificationsFetchPromise: Promise<void> | null = null;
+const notificationsFetchPromises: Record<NotificationScope, Promise<void> | null> = {
+  player: null,
+  management: null,
+};
 let socketConsumerCount = 0;
 let activeSocketUserId: string | null = null;
 let isNotificationSocketBound = false;
 
-const emitNotificationStore = () => {
-  for (const listener of notificationStoreListeners) {
+const emitNotificationStore = (scope: NotificationScope) => {
+  for (const listener of notificationStoreListeners.get(scope) ?? []) {
     listener();
   }
 };
 
-const getNotificationSnapshot = (): NotificationListState => notificationState;
+const getNotificationSnapshot = (scope: NotificationScope): NotificationListState =>
+  notificationStates[scope];
 
-const subscribeToNotificationStore = (listener: NotificationStoreListener) => {
-  notificationStoreListeners.add(listener);
+const subscribeToNotificationStore = (scope: NotificationScope, listener: NotificationStoreListener) => {
+  const listeners = notificationStoreListeners.get(scope);
+  listeners?.add(listener);
 
   return () => {
-    notificationStoreListeners.delete(listener);
+    listeners?.delete(listener);
   };
 };
 
 const updateNotificationState = (
+  scope: NotificationScope,
   updater: NotificationListState | ((current: NotificationListState) => NotificationListState),
 ) => {
-  const nextState =
-    typeof updater === 'function'
-      ? updater(notificationState)
-      : updater;
+  const current = notificationStates[scope];
+  const nextState = typeof updater === 'function' ? updater(current) : updater;
 
-  notificationState = nextState;
-  emitNotificationStore();
+  notificationStates[scope] = nextState;
+  emitNotificationStore(scope);
 };
 
-const replaceNotifications = (items: NotificationItem[]) => {
+const replaceNotifications = (scope: NotificationScope, items: NotificationItem[]) => {
   const nextItems = sortNotificationsByDate(items);
 
-  updateNotificationState((current) => ({
+  updateNotificationState(scope, (current) => ({
     ...current,
     items: nextItems,
     unreadCount: getUnreadNotificationsCount(nextItems),
@@ -76,7 +88,9 @@ const replaceNotifications = (items: NotificationItem[]) => {
 };
 
 const upsertNotification = (item: NotificationItem) => {
-  updateNotificationState((current) => {
+  const scope: NotificationScope = isManagementNotification(item) ? 'management' : 'player';
+
+  updateNotificationState(scope, (current) => {
     const nextItems = mergeNotifications(current.items, [item]);
 
     return {
@@ -90,21 +104,23 @@ const upsertNotification = (item: NotificationItem) => {
 };
 
 const markNotificationReadInState = (notificationId: string) => {
-  updateNotificationState((current) => {
-    const nextItems = current.items.map((item) =>
-      item.id === notificationId ? { ...item, isRead: true } : item,
-    );
+  for (const scope of ['player', 'management'] as const) {
+    updateNotificationState(scope, (current) => {
+      const nextItems = current.items.map((item) =>
+        item.id === notificationId ? { ...item, isRead: true } : item,
+      );
 
-    return {
-      ...current,
-      items: nextItems,
-      unreadCount: getUnreadNotificationsCount(nextItems),
-    };
-  });
+      return {
+        ...current,
+        items: nextItems,
+        unreadCount: getUnreadNotificationsCount(nextItems),
+      };
+    });
+  }
 };
 
-const markAllNotificationsReadInState = () => {
-  updateNotificationState((current) => ({
+const markAllNotificationsReadInState = (scope: NotificationScope) => {
+  updateNotificationState(scope, (current) => ({
     ...current,
     items: current.items.map((item) => ({ ...item, isRead: true })),
     unreadCount: 0,
@@ -112,8 +128,10 @@ const markAllNotificationsReadInState = () => {
 };
 
 const resetNotificationsState = () => {
-  notificationsFetchPromise = null;
-  updateNotificationState(DEFAULT_NOTIFICATION_STATE);
+  notificationsFetchPromises.player = null;
+  notificationsFetchPromises.management = null;
+  updateNotificationState('player', { ...DEFAULT_NOTIFICATION_STATE });
+  updateNotificationState('management', { ...DEFAULT_NOTIFICATION_STATE });
 };
 
 const getSocketAccessToken = (): string | null => {
@@ -200,26 +218,26 @@ const disconnectNotificationSocketImmediately = () => {
   isNotificationSocketBound = false;
 };
 
-const fetchNotifications = async () => {
-  if (notificationsFetchPromise) {
-    return notificationsFetchPromise;
+const fetchNotifications = async (scope: NotificationScope) => {
+  if (notificationsFetchPromises[scope]) {
+    return notificationsFetchPromises[scope];
   }
 
-  updateNotificationState((current) => ({
+  updateNotificationState(scope, (current) => ({
     ...current,
     isLoading: true,
     errorMessage: null,
   }));
 
-  notificationsFetchPromise = notificationsApi
-    .getMyNotifications({ limit: NOTIFICATIONS_PAGE_LIMIT })
+  notificationsFetchPromises[scope] = notificationsApi
+    .getMyNotifications({ limit: NOTIFICATIONS_PAGE_LIMIT, scope })
     .then(async ({ items }) => {
-      replaceNotifications(items);
-      const unreadCount = await notificationsApi.getUnreadCount().catch(() =>
+      replaceNotifications(scope, items);
+      const unreadCount = await notificationsApi.getUnreadCount(scope).catch(() =>
         getUnreadNotificationsCount(items),
       );
 
-      updateNotificationState((current) => ({
+      updateNotificationState(scope, (current) => ({
         ...current,
         unreadCount,
       }));
@@ -229,7 +247,7 @@ const fetchNotifications = async () => {
         console.error('Failed to fetch notifications:', error);
       }
 
-      updateNotificationState((current) => ({
+      updateNotificationState(scope, (current) => ({
         ...current,
         isLoading: false,
         isInitialized: true,
@@ -239,13 +257,13 @@ const fetchNotifications = async () => {
       }));
     })
     .finally(() => {
-      notificationsFetchPromise = null;
+      notificationsFetchPromises[scope] = null;
     });
 
-  return notificationsFetchPromise;
+  return notificationsFetchPromises[scope];
 };
 
-const markNotificationAsRead = async (notificationId: string) => {
+const markNotificationAsRead = async (notificationId: string, scope: NotificationScope) => {
   markNotificationReadInState(notificationId);
 
   try {
@@ -253,30 +271,30 @@ const markNotificationAsRead = async (notificationId: string) => {
     upsertNotification(updatedNotification);
     return updatedNotification;
   } catch (error) {
-    await fetchNotifications();
+    await fetchNotifications(scope);
     throw error;
   }
 };
 
-const markAllNotificationsAsRead = async () => {
-  markAllNotificationsReadInState();
+const markAllNotificationsAsRead = async (scope: NotificationScope) => {
+  markAllNotificationsReadInState(scope);
 
   try {
-    const updatedNotifications = await notificationsApi.markAllAsRead();
-    replaceNotifications(updatedNotifications);
+    const updatedNotifications = await notificationsApi.markAllAsRead(scope);
+    replaceNotifications(scope, updatedNotifications);
     return updatedNotifications;
   } catch (error) {
-    await fetchNotifications();
+    await fetchNotifications(scope);
     throw error;
   }
 };
 
-export function useSocket() {
+export function useSocket(scope: NotificationScope = 'player') {
   const { isAuthenticated, user } = useAuthStore();
   const state = useSyncExternalStore(
-    subscribeToNotificationStore,
-    getNotificationSnapshot,
-    getNotificationSnapshot,
+    (listener) => subscribeToNotificationStore(scope, listener),
+    () => getNotificationSnapshot(scope),
+    () => getNotificationSnapshot(scope),
   );
 
   useEffect(() => {
@@ -298,10 +316,10 @@ export function useSocket() {
     }
 
     Promise.resolve().then(() => {
-      void fetchNotifications();
+      void fetchNotifications(scope);
       bindNotificationSocket(user.id);
     });
-  }, [isAuthenticated, user?.id]);
+  }, [isAuthenticated, user?.id, scope]);
 
   return {
     notifications: state.items,
@@ -309,9 +327,10 @@ export function useSocket() {
     isLoading: state.isLoading,
     isInitialized: state.isInitialized,
     errorMessage: state.errorMessage,
-    refreshNotifications: fetchNotifications,
-    markNotificationAsRead,
-    markAllNotificationsAsRead,
+    refreshNotifications: () => fetchNotifications(scope),
+    markNotificationAsRead: (notificationId: string) =>
+      markNotificationAsRead(notificationId, scope),
+    markAllNotificationsAsRead: () => markAllNotificationsAsRead(scope),
   };
 }
 

@@ -91,7 +91,7 @@ export function AdminHeader({ title, onOpenSidebar }: AdminHeaderProps) {
     refreshNotifications,
     markAllNotificationsAsRead,
     markNotificationAsRead,
-  } = useSocket();
+  } = useSocket('management');
 
   const notificationPreviewItems = notifications.slice(0, 5);
   const isAdmin = Boolean(user?.roles?.includes('ADMIN'));
@@ -233,7 +233,7 @@ export function AdminHeader({ title, onOpenSidebar }: AdminHeaderProps) {
                 <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
                   <div>
                     <p className="text-sm font-bold text-slate-950">
-                      {navigationTranslate('notificationsTitle')}
+                      {notificationTranslate('managementTitle')}
                     </p>
                     <p className="text-xs text-slate-500">
                       {unreadCount > 0
@@ -337,12 +337,12 @@ export function AdminHeader({ title, onOpenSidebar }: AdminHeaderProps) {
                 </div>
 
                 <Link
-                  href="/notifications"
+                  href="/admin/notifications"
                   role="menuitem"
                   onClick={() => setIsNotificationOpen(false)}
                   className="block border-t border-slate-100 bg-slate-50/70 px-4 py-3 text-center text-sm font-semibold text-blue-700 hover:bg-blue-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500"
                 >
-                  {navigationTranslate('viewAllNotifications')}
+                  {notificationTranslate('viewManagementNotifications')}
                 </Link>
               </motion.div>
             ) : null}

@@ -7,11 +7,12 @@ import type {
   NotificationQueryParams,
   NotificationUnreadCountResponse,
 } from '@/features/notifications/types';
+import type { NotificationScope } from '@/features/notifications/utils';
 
 export type { NotificationItem };
 
 export const notificationsApi = {
-  getMyNotifications: (params?: NotificationQueryParams) =>
+  getMyNotifications: (params?: NotificationQueryParams & { scope?: NotificationScope }) =>
     api
       .get<NotificationListResponse>('/notifications', { params })
       .then(
@@ -20,9 +21,9 @@ export const notificationsApi = {
           meta: response.meta,
         }),
       ),
-  getUnreadCount: () =>
+  getUnreadCount: (scope: NotificationScope = 'player') =>
     api
-      .get<NotificationUnreadCountResponse>('/notifications/unread-count')
+      .get<NotificationUnreadCountResponse>('/notifications/unread-count', { params: { scope } })
       .then((response) => {
         if (typeof response.data === 'number') {
           return response.data;
@@ -34,9 +35,9 @@ export const notificationsApi = {
     api
       .patch<NotificationMutationResponse>(`/notifications/${id}/read`, {})
       .then((response) => response.data),
-  markAllAsRead: () =>
+  markAllAsRead: (scope: NotificationScope = 'player') =>
     api
-      .patch<NotificationListResponse>('/notifications/read-all', {})
+      .patch<NotificationListResponse>('/notifications/read-all', { scope })
       .then((response) => response.data),
 };
 

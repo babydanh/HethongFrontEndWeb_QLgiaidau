@@ -9,6 +9,25 @@ import {
   type NotificationTypeMeta,
 } from '@/features/notifications/constants';
 
+export type NotificationScope = 'player' | 'management';
+
+const MANAGEMENT_NOTIFICATION_TYPES = new Set([
+  'TOURNAMENT_PARTICIPANT_NEW',
+  'TOURNAMENT_TEAM_COMPLETED',
+  'TOURNAMENT_WITHDRAWN',
+  'TOURNAMENT_PUBLISH_APPROVED',
+  'TOURNAMENT_PUBLISH_REJECTED',
+  'TOURNAMENT_SUSPENDED',
+  'TOURNAMENT_UNSUSPENDED',
+  'TOURNAMENT_DELETE_APPROVED',
+  'TOURNAMENT_DELETE_REJECTED',
+  'STAFF_ADDED',
+  'REFEREE_INVITE_ACCEPTED',
+  'REFEREE_INVITE_DECLINED',
+  'PAYOUT_APPROVED',
+  'PAYOUT_REJECTED',
+]);
+
 export interface NotificationActionConfig {
   kind: 'community-invite' | 'referee-invite' | 'partner-invite' | 'football-team-invite';
   communityId?: string;
@@ -17,6 +36,26 @@ export interface NotificationActionConfig {
   refereeId?: string;
   participantId?: string;
 }
+
+export const isManagementNotification = (
+  notification: Pick<NotificationItem, 'type' | 'redirectUrl'>,
+): boolean => {
+  const normalizedType = notification.type.trim().toUpperCase();
+
+  if (normalizedType === 'TOURNAMENT_PAYMENT_COMPLETED') {
+    return notification.redirectUrl?.startsWith('/organizer/') ?? false;
+  }
+
+  return MANAGEMENT_NOTIFICATION_TYPES.has(normalizedType);
+};
+
+export const filterNotificationsByScope = (
+  notifications: NotificationItem[],
+  scope: NotificationScope,
+): NotificationItem[] =>
+  scope === 'management'
+    ? notifications.filter(isManagementNotification)
+    : notifications.filter((notification) => !isManagementNotification(notification));
 
 type NotificationTranslator = (key: any, values?: any) => string;
 

@@ -5991,6 +5991,12 @@
   "Notifications": {
     "title": "Thông báo",
     "centerLabel": "Trung tâm thông báo",
+    "managementTitle": "Thông báo quản lý",
+    "managementCenterLabel": "Trung tâm quản lý",
+    "managementDescription": "Theo dõi các việc cần xử lý trong giải đấu, phê duyệt, tài chính và phân quyền.",
+    "managementEmptyTitle": "Chưa có thông báo quản lý",
+    "managementEmptyDescription": "Các cập nhật dành cho quản trị viên, điều hành viên và ban tổ chức sẽ xuất hiện tại đây.",
+    "viewManagementNotifications": "Xem thông báo quản lý",
     "description": "Theo dõi cập nhật về giải đấu, câu lạc bộ và các hoạt động của bạn.",
     "all": "Tất cả",
     "unread": "Chưa đọc",
@@ -6848,6 +6854,7 @@
   },
   "AdminLayout": {
     "overview": "Tổng quan",
+    "notifications": "Thông báo quản lý",
     "verification": "Quản lý sao uy tín",
     "moderation": "Người dùng & phân quyền",
     "reports": "Báo cáo vi phạm",

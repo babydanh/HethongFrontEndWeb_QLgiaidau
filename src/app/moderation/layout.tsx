@@ -12,7 +12,7 @@ import { BRAND } from '@/constants/brand';
 import {
   ArrowLeft,
   Building,
-  FileWarning,
+  
   LayoutDashboard,
   LogOut,
   Menu,

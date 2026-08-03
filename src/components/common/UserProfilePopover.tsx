@@ -113,8 +113,8 @@ export default function UserProfilePopover({
           roles: publicData.roles || prev?.roles,
           isVerified: publicData.isVerified ?? prev?.isVerified ?? user.isVerified,
           allowStrangerMessages: publicData.allowStrangerMessages ?? prev?.allowStrangerMessages ?? user.allowStrangerMessages,
-          ranks: Array.isArray(publicData.ranks) ? publicData.ranks : prev?.ranks,
-          highlightRank: publicData.highlightRank ?? prev?.highlightRank ?? user.highlightRank,
+          ranks: Array.isArray(publicData.ranks) ? (publicData.ranks as unknown as PublicProfileRank[]) : prev?.ranks,
+          highlightRank: (publicData.highlightRank as PopoverUserProfile['highlightRank']) ?? prev?.highlightRank ?? user.highlightRank,
           joinedAt: publicData.createdAt || prev?.joinedAt || user.joinedAt,
         }));
       })

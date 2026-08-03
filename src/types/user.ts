@@ -42,6 +42,7 @@ export interface UpdateProfileDto {
 export interface UserChangeRequest {
   id: string;
   userId: string;
+  /** EMAIL is retained only for legacy queue rows and can be rejected, never newly created or approved. */
   requestType: 'GENDER' | 'EMAIL';
   oldValue: string;
   newValue: string;

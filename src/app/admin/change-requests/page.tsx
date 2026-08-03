@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { usersApi } from '@/features/users/api';
 
@@ -25,7 +25,7 @@ export default function AdminChangeRequestsPage() {
   const [actionType, setActionType] = useState<'APPROVE' | 'REJECT'>('APPROVE');
   const [processing, setProcessing] = useState(false);
 
-  const fetchRequests = async (status = filterStatus) => {
+  const fetchRequests = useCallback(async (status = filterStatus) => {
     try {
       const res = await usersApi.getAdminChangeRequests({ status });
       setRequests(res || []);
@@ -35,11 +35,14 @@ export default function AdminChangeRequestsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filterStatus, translate]);
 
   useEffect(() => {
-    fetchRequests(filterStatus);
-  }, [filterStatus]);
+    const timer = window.setTimeout(() => {
+      void fetchRequests(filterStatus);
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [fetchRequests, filterStatus]);
 
   const parseDate = (str: string): Date | null => {
     const p = str.split('/');

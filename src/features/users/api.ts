@@ -5,6 +5,22 @@ export type { UserChangeRequest, UserProfile };
 
 export type SystemRole = 'PLAYER' | 'REFEREE' | 'ORGANIZER' | 'MODERATOR' | 'ADMIN';
 
+interface PublicProfileResponse {
+  id?: string;
+  bio?: string | null;
+  avatarUrl?: string;
+  coverUrl?: string;
+  fullName?: string;
+  role?: string;
+  roles?: string[];
+  isVerified?: boolean;
+  allowStrangerMessages?: boolean;
+  ranks?: unknown[];
+  highlightRank?: unknown;
+  createdAt?: string;
+  data?: PublicProfileResponse;
+}
+
 interface RawUserProfileResponse {
   id?: string;
   email?: string;
@@ -84,7 +100,7 @@ export const usersApi = {
     return mapped;
   }),
   getUserById: (id: string) => api.get<ApiResponse<UserProfile>>(`/users/${id}`).then(res => res.data),
-  getPublicProfile: (id: string) => api.get<ApiResponse<any>>(`/users/${id}/public`).then(res => res.data?.data || res.data),
+  getPublicProfile: (id: string) => api.get<ApiResponse<PublicProfileResponse>>(`/users/${id}/public`).then(res => res.data.data || res.data),
   updateSystemRoles: (id: string, roles: SystemRole[]) =>
     api.patch<ApiResponse<{ userId: string; roles: SystemRole[] }>>(`/users/${id}/system-roles`, { roles }).then(res => res.data),
   updateProfile: <T>(data: T) => api.patch<ApiResponse<RawUserProfileResponse>>('/users/profile', data).then(res => mapUserProfile(res.data)),

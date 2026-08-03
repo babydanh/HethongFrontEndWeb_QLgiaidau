@@ -149,11 +149,15 @@ api.interceptors.response.use(
     }
 
     // Retry on 429 — max 1 lần, delay 1.5s (fail fast)
-    if (error.response?.status === 429) {
+    if (error.response?.status === 429 && ['GET', 'HEAD', 'OPTIONS'].includes(originalRequest.method?.toUpperCase())) {
       if (!originalRequest._retry429) {
         originalRequest._retry429 = true;
-        console.warn('[429] Retrying in 1.5s...');
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        const retryAfter = Number(error.response.headers?.['retry-after']);
+        const delayMs = Number.isFinite(retryAfter)
+          ? Math.min(Math.max(retryAfter * 1000, 500), 10000)
+          : 1500;
+        console.warn(`[429] Retrying in ${delayMs}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delayMs));
         return api(originalRequest);
       }
     }

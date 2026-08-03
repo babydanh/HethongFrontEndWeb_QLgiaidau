@@ -13,6 +13,7 @@ export interface User {
   gender?: string | null;
   address?: string | null;
   bio?: string | null;
+  createdAt?: string | null;
   provinceCode?: string | null;
   isEmailVerified?: boolean;
   isPhoneVerified?: boolean;

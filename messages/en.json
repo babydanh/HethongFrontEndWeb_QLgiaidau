@@ -4147,7 +4147,7 @@
     "bracketSavedDescriptionShort": "The bracket is saved and will be used to create matches.",
     "noBracketSavedShort": "No bracket saved yet.",
     "viewBracket": "View bracket",
-    "resetBracketAction": "Reset bracket",
+    "resetBracketAction": "Regenerate bracket",
     "matchTypeLabel": "Match type"
   },
   "OrganizerOps": {
@@ -7428,7 +7428,25 @@
     "previewTournaments": "Tournaments",
     "previewMatches": "Matches",
     "previewRanking": "Rankings",
-    "previewPagePosition": "Advertisement position in the selected page"
+    "previewPagePosition": "Advertisement position in the selected page",
+    "previewFeatured": "Featured",
+    "previewTournamentTitle": "SB Club Badminton Tournament · August",
+    "previewTournamentDate": "22 Aug – 05 Sep",
+    "previewTournamentPlayers": "32 players",
+    "previewPlayerOne": "Minh Anh",
+    "previewPlayerTwo": "Hoang Nam",
+    "previewCourt": "Court 01",
+    "previewGreeting": "Good morning, Danh",
+    "previewDiscover": "Discover sport today",
+    "previewTournamentLabel": "Tournament",
+    "previewLiveMatches": "Live matches",
+    "previewFeaturedTournaments": "Featured tournaments",
+    "previewSeeAll": "See all",
+    "previewClubActivity": "Club activity",
+    "previewClubActivityMeta": "Your club posted a new update",
+    "previewToday": "Today",
+    "previewLatestActivity": "Latest activity",
+    "previewLocation": "Ho Chi Minh City"
   }
 }
 

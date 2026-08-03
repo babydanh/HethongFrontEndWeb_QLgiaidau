@@ -32,58 +32,58 @@ const PLACEMENT_OPTIONS: Array<{
   {
     value: 'HOMEPAGE_SIDEBAR',
     platform: 'WEB',
-    label: '🌐 [Web] Sidebar Cột Phải Trang Chủ',
-    desc: 'Cố định bên phải bảng tin và danh sách trận đấu trang chủ web',
+    label: 'ðŸŒ [Web] Sidebar Cá»™t Pháº£i Trang Chá»§',
+    desc: 'Cá»‘ Ä‘á»‹nh bÃªn pháº£i báº£ng tin vÃ  danh sÃ¡ch tráº­n Ä‘áº¥u trang chá»§ web',
     size: '300 x 250 (Medium Rectangle) / 4:3',
   },
   {
     value: 'TOURNAMENTS_BOTTOM',
     platform: 'WEB',
-    label: '🌐 [Web] Chân Trang Danh Sách Giải Đấu',
-    desc: 'Ngang dưới danh sách giải đấu và bảng phân trang web',
+    label: 'ðŸŒ [Web] ChÃ¢n Trang Danh SÃ¡ch Giáº£i Äáº¥u',
+    desc: 'Ngang dÆ°á»›i danh sÃ¡ch giáº£i Ä‘áº¥u vÃ  báº£ng phÃ¢n trang web',
     size: '728 x 90 (Leaderboard) / 970 x 250 (4:1 ~ 5:1)',
   },
   {
     value: 'MATCHES_BOTTOM',
     platform: 'WEB',
-    label: '🌐 [Web] Chân Trang Danh Sách Trận Đấu',
-    desc: 'Ngang dưới danh sách lịch thi đấu & kết quả trận đấu web',
+    label: 'ðŸŒ [Web] ChÃ¢n Trang Danh SÃ¡ch Tráº­n Äáº¥u',
+    desc: 'Ngang dÆ°á»›i danh sÃ¡ch lá»‹ch thi Ä‘áº¥u & káº¿t quáº£ tráº­n Ä‘áº¥u web',
     size: '728 x 90 (Leaderboard) / 970 x 250 (4:1 ~ 5:1)',
   },
   {
     value: 'GLOBAL_HEADER',
     platform: 'WEB',
-    label: '🌐 [Web] Thanh Banner Header Toàn Trang',
-    desc: 'Thanh thông báo nổi bật trên cùng cho sự kiện đặc biệt web',
+    label: 'ðŸŒ [Web] Thanh Banner Header ToÃ n Trang',
+    desc: 'Thanh thÃ´ng bÃ¡o ná»•i báº­t trÃªn cÃ¹ng cho sá»± kiá»‡n Ä‘áº·c biá»‡t web',
     size: '970 x 90 (Top Bar 8:1)',
   },
   // MOBILE APP PLACEMENTS
   {
     value: 'APP_HOME_FEED',
     platform: 'APP',
-    label: '📱 [App] Giữa Dòng Tin Trang Chủ App',
-    desc: 'Xen kẽ giữa danh sách giải đấu nổi bật & CLB trên Mobile App',
-    size: '16:9 hoặc 3:1 (Card Mobile)',
+    label: 'ðŸ“± [App] Giá»¯a DÃ²ng Tin Trang Chá»§ App',
+    desc: 'Xen káº½ giá»¯a danh sÃ¡ch giáº£i Ä‘áº¥u ná»•i báº­t & CLB trÃªn Mobile App',
+    size: '16:9 hoáº·c 3:1 (Card Mobile)',
   },
   {
     value: 'APP_MATCHES_BOTTOM',
     platform: 'APP',
-    label: '📱 [App] Chân Danh Sách Tab Trận Đấu',
-    desc: 'Cố định chân danh sách trận đấu trên Mobile App',
+    label: 'ðŸ“± [App] ChÃ¢n Danh SÃ¡ch Tab Tráº­n Äáº¥u',
+    desc: 'Cá»‘ Ä‘á»‹nh chÃ¢n danh sÃ¡ch tráº­n Ä‘áº¥u trÃªn Mobile App',
     size: '320 x 50 / 320 x 100 (Mobile Banner)',
   },
   {
     value: 'APP_COMMUNITY_FEED',
     platform: 'APP',
-    label: '📱 [App] Dòng Tin Hoạt Động Câu Lạc Bộ',
-    desc: 'Trong dòng tin hoạt động CLB trên Mobile App',
+    label: 'ðŸ“± [App] DÃ²ng Tin Hoáº¡t Äá»™ng CÃ¢u Láº¡c Bá»™',
+    desc: 'Trong dÃ²ng tin hoáº¡t Ä‘á»™ng CLB trÃªn Mobile App',
     size: '16:9 (Card Mobile)',
   },
   {
     value: 'APP_TOURNAMENT_DETAIL',
     platform: 'APP',
-    label: '📱 [App] Chi Tiết Giải Đấu App',
-    desc: 'Dưới sơ đồ thi đấu / danh sách VĐV của giải đấu trên App',
+    label: 'ðŸ“± [App] Chi Tiáº¿t Giáº£i Äáº¥u App',
+    desc: 'DÆ°á»›i sÆ¡ Ä‘á»“ thi Ä‘áº¥u / danh sÃ¡ch VÄV cá»§a giáº£i Ä‘áº¥u trÃªn App',
     size: '3:1 (Full-width Mobile)',
   },
 ];
@@ -146,28 +146,28 @@ export const BannerFormModal: React.FC<BannerFormModalProps> = ({
     e.preventDefault();
 
     if (!title.trim()) {
-      toast.error('Vui lòng nhập tên/tiêu đề banner quảng cáo');
+      toast.error('Vui lÃ²ng nháº­p tÃªn/tiÃªu Ä‘á» banner quáº£ng cÃ¡o');
       return;
     }
 
     if (bannerType === 'IMAGE_LINK') {
       if (!imageUrl.trim()) {
-        toast.error('Vui lòng nhập đường dẫn ảnh banner');
+        toast.error('Vui lÃ²ng nháº­p Ä‘Æ°á»ng dáº«n áº£nh banner');
         return;
       }
       if (!targetUrl.trim()) {
-        toast.error('Vui lòng nhập liên kết chuyển hướng');
+        toast.error('Vui lÃ²ng nháº­p liÃªn káº¿t chuyá»ƒn hÆ°á»›ng');
         return;
       }
     } else {
       if (!customHtml.trim()) {
-        toast.error('Vui lòng dán mã HTML/Script quảng cáo');
+        toast.error('Vui lÃ²ng dÃ¡n mÃ£ HTML/Script quáº£ng cÃ¡o');
         return;
       }
     }
 
     if (startDate && endDate && new Date(startDate) >= new Date(endDate)) {
-      toast.error('Ngày bắt đầu phải trước ngày kết thúc');
+      toast.error('NgÃ y báº¯t Ä‘áº§u pháº£i trÆ°á»›c ngÃ y káº¿t thÃºc');
       return;
     }
 
@@ -191,15 +191,15 @@ export const BannerFormModal: React.FC<BannerFormModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200 overflow-y-auto">
-      <div className="bg-white rounded-2xl w-full max-w-4xl shadow-2xl border border-slate-200 overflow-hidden my-8 flex flex-col max-h-[90vh]">
+      <div className="bg-white rounded-2xl w-full max-w-7xl shadow-2xl border border-slate-200 overflow-hidden my-8 flex flex-col max-h-[92vh]">
         {/* Header */}
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/80 shrink-0">
           <div>
             <h3 className="text-base font-bold text-slate-900">
-              {isEditing ? 'Chỉnh sửa banner quảng cáo' : 'Tạo mới banner quảng cáo'}
+              {isEditing ? 'Chá»‰nh sá»­a banner quáº£ng cÃ¡o' : 'Táº¡o má»›i banner quáº£ng cÃ¡o'}
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
-              Cấu hình vị trí, kích thước chuẩn IAB và tích hợp liên kết ngoài
+              Cáº¥u hÃ¬nh vá»‹ trÃ­, kÃ­ch thÆ°á»›c chuáº©n IAB vÃ  tÃ­ch há»£p liÃªn káº¿t ngoÃ i
             </p>
           </div>
           <button
@@ -211,11 +211,14 @@ export const BannerFormModal: React.FC<BannerFormModalProps> = ({
         </div>
 
         {/* Content Body */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+          <div className="grid min-h-0 flex-1 overflow-y-auto lg:grid-cols-[minmax(0,1.12fr)_minmax(360px,0.88fr)] lg:overflow-hidden">
+            <div className="min-h-0 overflow-y-auto p-5 sm:p-7">
+              <div className="mx-auto max-w-3xl space-y-6">
           {/* 1. Placement Slot Selector */}
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-              1. Vị trí hiển thị (Placement Slot - Chuẩn IAB) *
+              1. Vá»‹ trÃ­ hiá»ƒn thá»‹ (Placement Slot - Chuáº©n IAB) *
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {PLACEMENT_OPTIONS.map((slot) => {
@@ -243,7 +246,7 @@ export const BannerFormModal: React.FC<BannerFormModalProps> = ({
                       <p className="text-[11px] text-slate-500 leading-snug">{slot.desc}</p>
                     </div>
                     <span className="text-[10px] text-blue-600 font-mono font-medium mt-2">
-                      📐 Kích thước đề xuất: {slot.size}
+                      ðŸ“ KÃ­ch thÆ°á»›c Ä‘á» xuáº¥t: {slot.size}
                     </span>
                   </button>
                 );
@@ -254,7 +257,7 @@ export const BannerFormModal: React.FC<BannerFormModalProps> = ({
           {/* 2. Banner Type Tabs */}
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-              2. Loại hình quảng cáo *
+              2. Loáº¡i hÃ¬nh quáº£ng cÃ¡o *
             </label>
             <div className="flex rounded-xl bg-slate-100 p-1 max-w-md">
               <button
@@ -267,7 +270,7 @@ export const BannerFormModal: React.FC<BannerFormModalProps> = ({
                 }`}
               >
                 <ImageIcon className="w-3.5 h-3.5" />
-                Ảnh + Liên kết trực tiếp
+                áº¢nh + LiÃªn káº¿t trá»±c tiáº¿p
               </button>
               <button
                 type="button"
@@ -288,13 +291,13 @@ export const BannerFormModal: React.FC<BannerFormModalProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
               <label className="block text-xs font-bold text-slate-700 mb-1">
-                Tên chiến dịch / Tiêu đề banner *
+                TÃªn chiáº¿n dá»‹ch / TiÃªu Ä‘á» banner *
               </label>
               <input
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="Ví dụ: Giảm giá 20% phụ kiện Pickleball hè 2026"
+                placeholder="VÃ­ dá»¥: Giáº£m giÃ¡ 20% phá»¥ kiá»‡n Pickleball hÃ¨ 2026"
                 className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-hidden focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all"
                 required
               />
@@ -304,7 +307,7 @@ export const BannerFormModal: React.FC<BannerFormModalProps> = ({
               <>
                 <div className="md:col-span-2">
                   <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Đường dẫn ảnh banner (Image URL) *
+                    ÄÆ°á»ng dáº«n áº£nh banner (Image URL) *
                   </label>
                   <div className="relative">
                     <input
@@ -318,13 +321,13 @@ export const BannerFormModal: React.FC<BannerFormModalProps> = ({
                     <ImageIcon className="absolute right-3.5 top-3 w-4 h-4 text-slate-400 pointer-events-none" />
                   </div>
                   <p className="text-[11px] text-slate-400 mt-1">
-                    Hỗ trợ ảnh WebP, PNG, JPG sắc nét theo đúng tỷ lệ IAB của vị trí đã chọn.
+                    Há»— trá»£ áº£nh WebP, PNG, JPG sáº¯c nÃ©t theo Ä‘Ãºng tá»· lá»‡ IAB cá»§a vá»‹ trÃ­ Ä‘Ã£ chá»n.
                   </p>
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Liên kết đích khi click (Target URL) *
+                    LiÃªn káº¿t Ä‘Ã­ch khi click (Target URL) *
                   </label>
                   <div className="relative">
                     <input
@@ -341,26 +344,26 @@ export const BannerFormModal: React.FC<BannerFormModalProps> = ({
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Chữ trên nút kêu gọi (CTA Text)
+                    Chá»¯ trÃªn nÃºt kÃªu gá»i (CTA Text)
                   </label>
                   <input
                     type="text"
                     value={ctaText}
                     onChange={(e) => setCtaText(e.target.value)}
-                    placeholder="Xem ngay / Đăng ký ngay / Mua ngay"
+                    placeholder="Xem ngay / ÄÄƒng kÃ½ ngay / Mua ngay"
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-hidden focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all"
                   />
                 </div>
 
                 <div className="md:col-span-2">
                   <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Nội dung mô tả / Thông điệp khuyến mãi (Tùy chọn)
+                    Ná»™i dung mÃ´ táº£ / ThÃ´ng Ä‘iá»‡p khuyáº¿n mÃ£i (TÃ¹y chá»n)
                   </label>
                   <textarea
                     rows={2}
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Mô tả quyền lợi hoặc mã giảm giá cho thành viên..."
+                    placeholder="MÃ´ táº£ quyá»n lá»£i hoáº·c mÃ£ giáº£m giÃ¡ cho thÃ nh viÃªn..."
                     className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-hidden focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all resize-none"
                   />
                 </div>
@@ -368,7 +371,7 @@ export const BannerFormModal: React.FC<BannerFormModalProps> = ({
             ) : (
               <div className="md:col-span-2">
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Mã nhúng HTML / Google AdSense Script *
+                  MÃ£ nhÃºng HTML / Google AdSense Script *
                 </label>
                 <textarea
                   rows={5}
@@ -384,7 +387,7 @@ export const BannerFormModal: React.FC<BannerFormModalProps> = ({
             {/* Scheduling & Priority */}
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">
-                Ngày bắt đầu (Để trống = Chạy ngay)
+                NgÃ y báº¯t Ä‘áº§u (Äá»ƒ trá»‘ng = Cháº¡y ngay)
               </label>
               <DateTimePicker
                 value={startDate}
@@ -395,7 +398,7 @@ export const BannerFormModal: React.FC<BannerFormModalProps> = ({
 
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">
-                Ngày kết thúc (Để trống = Vô thời hạn)
+                NgÃ y káº¿t thÃºc (Äá»ƒ trá»‘ng = VÃ´ thá»i háº¡n)
               </label>
               <DateTimePicker
                 value={endDate}
@@ -406,7 +409,7 @@ export const BannerFormModal: React.FC<BannerFormModalProps> = ({
 
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">
-                Thứ tự ưu tiên (Display Order - Số nhỏ ưu tiên trước)
+                Thá»© tá»± Æ°u tiÃªn (Display Order - Sá»‘ nhá» Æ°u tiÃªn trÆ°á»›c)
               </label>
               <input
                 type="number"
@@ -420,8 +423,8 @@ export const BannerFormModal: React.FC<BannerFormModalProps> = ({
 
             <div className="flex items-center justify-between p-3.5 rounded-xl border border-slate-200 bg-slate-50">
               <div>
-                <span className="text-xs font-bold text-slate-900 block">Kích hoạt hiển thị</span>
-                <span className="text-[11px] text-slate-500">Bật/Tắt banner ngay lập tức</span>
+                <span className="text-xs font-bold text-slate-900 block">KÃ­ch hoáº¡t hiá»ƒn thá»‹</span>
+                <span className="text-[11px] text-slate-500">Báº­t/Táº¯t banner ngay láº­p tá»©c</span>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input
@@ -435,12 +438,16 @@ export const BannerFormModal: React.FC<BannerFormModalProps> = ({
             </div>
           </div>
 
+              </div>
+            </div>
+            <aside className="border-t border-slate-100 bg-slate-50/60 p-5 sm:p-7 lg:border-l lg:border-t-0 lg:overflow-y-auto">
+              <div className="lg:sticky lg:top-0">
           {/* 4. Live Preview Section */}
-          <div className="pt-4 border-t border-slate-100">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
             <div className="flex items-center gap-2 mb-3">
               <Eye className="w-4 h-4 text-blue-600" />
               <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                Xem trước thực tế (Live Preview)
+                Xem trÆ°á»›c thá»±c táº¿ (Live Preview)
               </span>
             </div>
             <div className="p-4 rounded-2xl bg-slate-100/80 border border-slate-200/80">
@@ -457,21 +464,25 @@ export const BannerFormModal: React.FC<BannerFormModalProps> = ({
             </div>
           </div>
 
+              </div>
+            </aside>
+          </div>
+
           {/* Footer Buttons */}
-          <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-3 shrink-0">
+          <div className="flex shrink-0 items-center justify-end gap-3 border-t border-slate-100 bg-white px-5 py-4 sm:px-7">
             <button
               type="button"
               onClick={onClose}
               className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer"
             >
-              Hủy bỏ
+              Há»§y bá»
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
               className="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-md transition-all disabled:opacity-50 cursor-pointer"
             >
-              {isSubmitting ? 'Đang lưu...' : isEditing ? 'Cập nhật banner' : 'Tạo mới banner'}
+              {isSubmitting ? 'Äang lÆ°u...' : isEditing ? 'Cáº­p nháº­t banner' : 'Táº¡o má»›i banner'}
             </button>
           </div>
         </form>

@@ -1255,13 +1255,15 @@ export const tournamentsApi = {
       `/tournaments/lite/${id}/pairs/${participantId}/unpair`,
     ),
 
-  generateLiteBracket: (id: string) =>
+  generateLiteBracket: (id: string, divisionId?: string) =>
     api.post<ApiResponse<{ bracketId: string; totalMatches: number }>>(
       `/tournaments/lite/${id}/bracket`,
+      divisionId ? { divisionId } : undefined,
     ),
-  resetLiteBracket: (id: string) =>
+  resetLiteBracket: (id: string, divisionId?: string) =>
     api.post<ApiResponse<{ bracketId: string; totalMatches: number }>>(
       `/tournaments/lite/${id}/bracket/reset`,
+      divisionId ? { divisionId } : undefined,
     ),
 };
 

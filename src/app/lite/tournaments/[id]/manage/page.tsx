@@ -479,10 +479,9 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
       toast.error(translate('bracketMinimumParticipants', { count: 2 }));
       return;
     }
-    if (!confirm(translate('createBracketConfirm'))) return;
     setBracketLoading(true);
     try {
-      await tournamentsApi.generateLiteBracket(id);
+      await tournamentsApi.generateLiteBracket(id, liteDivisionId);
       await fetchBracket(liteDivisionId);
       setParticipantOverrides({});
       setBracketRefreshKey((current) => current + 1);
@@ -510,10 +509,9 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
   };
 
   const handleResetBracket = async () => {
-    if (!confirm(translate('resetBracketConfirm'))) return;
     setBracketLoading(true);
     try {
-      await tournamentsApi.resetLiteBracket(id);
+      await tournamentsApi.resetLiteBracket(id, liteDivisionId);
       await fetchBracket(liteDivisionId);
       setParticipantOverrides({});
       setBracketRefreshKey((current) => current + 1);
@@ -1104,7 +1102,8 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                     <Button variant="outline" className="gap-2"><ExternalLink className="w-4 h-4" /> {translate('viewBracket')}</Button>
                   </Link>
                   <Button variant="outline" onClick={handleResetBracket} disabled={bracketLoading || tournamentDragLocked} className="gap-2 border-amber-200 text-amber-700 hover:bg-amber-50">
-                    <RefreshCw className="w-4 h-4" /> {translate('resetBracketAction')}
+                    {bracketLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                    {bracketLoading ? translate('creatingBracket') : translate('resetBracketAction')}
                   </Button>
                 </div>
               )}

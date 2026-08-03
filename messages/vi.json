@@ -4139,7 +4139,7 @@
     "bracketSavedDescriptionShort": "Bracket đã được lưu trên hệ thống và sẽ được dùng để tạo các trận đấu.",
     "noBracketSavedShort": "Chưa có bracket được lưu.",
     "viewBracket": "Xem sơ đồ",
-    "resetBracketAction": "Reset bracket",
+    "resetBracketAction": "Tạo lại bracket",
     "matchTypeLabel": "Hình thức"
   },
   "OrganizerOps": {
@@ -7420,7 +7420,25 @@
     "previewTournaments": "Giải đấu",
     "previewMatches": "Trận đấu",
     "previewRanking": "Xếp hạng",
-    "previewPagePosition": "Vị trí quảng cáo trong trang đang chọn"
+    "previewPagePosition": "Vị trí quảng cáo trong trang đang chọn",
+    "previewFeatured": "Nổi bật",
+    "previewTournamentTitle": "Giải cầu lông SB Club tháng 8",
+    "previewTournamentDate": "22/08 – 05/09",
+    "previewTournamentPlayers": "32 vận động viên",
+    "previewPlayerOne": "Minh Anh",
+    "previewPlayerTwo": "Hoàng Nam",
+    "previewCourt": "Sân 01",
+    "previewGreeting": "Xin chào, Danh",
+    "previewDiscover": "Khám phá thể thao hôm nay",
+    "previewTournamentLabel": "Giải đấu",
+    "previewLiveMatches": "Trận đấu trực tiếp",
+    "previewFeaturedTournaments": "Giải đấu nổi bật",
+    "previewSeeAll": "Xem tất cả",
+    "previewClubActivity": "Hoạt động câu lạc bộ",
+    "previewClubActivityMeta": "CLB vừa cập nhật bài viết mới",
+    "previewToday": "Hôm nay",
+    "previewLatestActivity": "Hoạt động mới nhất",
+    "previewLocation": "TP. Hồ Chí Minh"
   }
 }
 

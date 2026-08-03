@@ -6855,7 +6855,10 @@
     "moderatorRole": "Moderator",
     "openNavigation": "Open admin navigation",
     "closeNavigation": "Close admin navigation",
-    "adminNavigation": "Admin navigation"
+    "adminNavigation": "Admin navigation",
+    "notificationsStale": "Notification data may be out of date.",
+    "notificationsLoadFailed": "Unable to load notifications right now.",
+    "retryNotifications": "Try again"
   },
   "SeriesRules": {
     "rankChampion": "Champion (1st place)",

@@ -6852,7 +6852,10 @@
     "moderatorRole": "Điều hành viên",
     "openNavigation": "Mở điều hướng quản trị",
     "closeNavigation": "Đóng điều hướng quản trị",
-    "adminNavigation": "Điều hướng quản trị"
+    "adminNavigation": "Điều hướng quản trị",
+    "notificationsStale": "Dữ liệu thông báo có thể chưa mới nhất.",
+    "notificationsLoadFailed": "Không thể tải thông báo lúc này.",
+    "retryNotifications": "Thử tải lại"
   },
   "SeriesRules": {
     "rankChampion": "Quán quân (Hạng 1)",

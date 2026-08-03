@@ -53,6 +53,8 @@ export function AdminHeader({ title, onOpenSidebar }: AdminHeaderProps) {
     unreadCount,
     isLoading: isNotificationsLoading,
     isInitialized: isNotificationsInitialized,
+    errorMessage: notificationError,
+    refreshNotifications,
     markAllNotificationsAsRead,
     markNotificationAsRead,
   } = useSocket();
@@ -227,7 +229,13 @@ export function AdminHeader({ title, onOpenSidebar }: AdminHeaderProps) {
                       ))}
                     </div>
                   ) : notificationPreviewItems.length > 0 ? (
-                    notificationPreviewItems.map((notification) => (
+                    <div>
+                      {notificationError ? (
+                        <div className="mb-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                          {layoutTranslate('notificationsStale')}
+                        </div>
+                      ) : null}
+                      {notificationPreviewItems.map((notification) => (
                       <button
                         key={notification.id}
                         type="button"
@@ -267,7 +275,21 @@ export function AdminHeader({ title, onOpenSidebar }: AdminHeaderProps) {
                           {formatNotificationTimestamp(notification.createdAt, notificationTranslate, locale)}
                         </p>
                       </button>
-                    ))
+                      ))}
+                    </div>
+                  ) : notificationError ? (
+                    <div className="px-5 py-10 text-center">
+                      <p className="text-sm font-semibold text-slate-700">{layoutTranslate('notificationsLoadFailed')}</p>
+                      <p className="mt-1 text-xs text-slate-500">{notificationError}</p>
+                      <button
+                        type="button"
+                        disabled={isNotificationsLoading}
+                        onClick={() => void refreshNotifications()}
+                        className="mt-4 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                      >
+                        {layoutTranslate('retryNotifications')}
+                      </button>
+                    </div>
                   ) : (
                     <div className="px-5 py-10 text-center">
                       <Check className="mx-auto h-7 w-7 text-emerald-500" />

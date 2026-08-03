@@ -19,7 +19,7 @@ import {
   ShieldAlert,
   ShieldCheck,
   Trophy,
-  UserCog,
+  
   X,
 } from 'lucide-react';
 
@@ -27,7 +27,6 @@ const menuItems = [
   { key: 'menuOverview', path: '/moderation', icon: LayoutDashboard },
   { key: 'menuVerification', path: '/moderation/verification', icon: ShieldCheck },
   { key: 'menuCommunities', path: '/moderation/communities', icon: Building },
-  { key: 'menuChangeRequests', path: '/moderation/change-requests', icon: UserCog },
   { key: 'menuReports', path: '/moderation/reports', icon: ShieldAlert },
   { key: 'menuTournaments', path: '/moderation/tournaments', icon: Trophy },
 ] as const;

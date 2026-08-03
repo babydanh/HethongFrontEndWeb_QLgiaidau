@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Image as ImageIcon, Code, Sparkles, Calendar, Layers, Link as LinkIcon, Eye } from 'lucide-react';
 import { BannerPreviewCard } from './BannerPreviewCard';
+import { DateTimePicker } from '@/components/ui/Input';
 import type {
   Advertisement,
   AdPlacementSlot,
@@ -350,11 +351,10 @@ export const BannerFormModal: React.FC<BannerFormModalProps> = ({
               <label className="block text-xs font-bold text-slate-700 mb-1">
                 Ngày bắt đầu (Để trống = Chạy ngay)
               </label>
-              <input
-                type="datetime-local"
+              <DateTimePicker
                 value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs focus:outline-hidden focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all"
+                onChange={(val) => setStartDate(val)}
+                className="h-10 text-xs rounded-xl"
               />
             </div>
 
@@ -362,11 +362,10 @@ export const BannerFormModal: React.FC<BannerFormModalProps> = ({
               <label className="block text-xs font-bold text-slate-700 mb-1">
                 Ngày kết thúc (Để trống = Vô thời hạn)
               </label>
-              <input
-                type="datetime-local"
+              <DateTimePicker
                 value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs focus:outline-hidden focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all"
+                onChange={(val) => setEndDate(val)}
+                className="h-10 text-xs rounded-xl"
               />
             </div>
 

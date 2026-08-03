@@ -108,7 +108,7 @@ export const usersApi = {
   },
   changePassword: <T>(data: T) => api.patch<ApiResponse<{ message: string }>>('/users/change-password', data).then(res => res.data),
   deleteUser: (id: string) => api.delete<ApiResponse<{ message: string }>>(`/users/${id}`).then(res => res.data),
-  createChangeRequest: (data: { requestType: 'GENDER' | 'EMAIL'; newValue: string }) =>
+  createChangeRequest: (data: { requestType: 'GENDER'; newValue: string }) =>
     api.post<ApiResponse<UserChangeRequest>>('/users/change-requests', data).then(res => res.data),
   deleteAccount: (data: { password?: string }) => api.post<ApiResponse<{ message: string }>>('/users/delete-account', data).then(res => res.data),
   getAdminChangeRequests: (params?: { status?: string }) =>

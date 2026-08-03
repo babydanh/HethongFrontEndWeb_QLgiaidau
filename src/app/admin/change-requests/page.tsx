@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { usersApi } from '@/features/users/api';
-import { useAuthStore } from '@/lib/zustand/authStore';
+
 import { Button } from '@/components/ui/Button';
 import { toast } from 'react-hot-toast';
 import { Check, X, Calendar, Mail, User, ClipboardList, Loader2 } from 'lucide-react';
@@ -13,9 +13,7 @@ import { getErrorMessage } from '@/utils/error';
 export default function AdminChangeRequestsPage() {
   const translate = useTranslations('AdminChangeRequests');
   const locale = useLocale();
-  const { user } = useAuthStore();
-  const isModeratorOnly =
-    Boolean(user?.roles?.includes('MODERATOR')) && !user?.roles?.includes('ADMIN');
+  
   const [requests, setRequests] = useState<UserChangeRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string>('PENDING');
@@ -101,7 +99,9 @@ export default function AdminChangeRequestsPage() {
         <div>
           <h2 className="text-2xl font-bold text-slate-900">{translate('title')}</h2>
           <p className="text-slate-500 text-sm">
-            {isModeratorOnly ? translate('moderatorDescription') : translate('adminDescription')}
+            {translate('adminDescription')}
+            <br />
+            <span className="text-xs text-slate-400">{translate('scopeDescription')}</span>
           </p>
         </div>
         <div className="flex gap-2 bg-white p-1 rounded-lg border border-slate-200 self-start">
@@ -176,7 +176,7 @@ export default function AdminChangeRequestsPage() {
                   <th className="p-4">{translate('newValue')}</th>
                   <th className="p-4">{translate('submittedDate')}</th>
                   {filterStatus !== 'PENDING' && (
-                    <th className="p-4">{isModeratorOnly ? translate('processingNote') : translate('adminNote')}</th>
+                    <th className="p-4">{translate('adminNote')}</th>
                   )}
                   {filterStatus === 'PENDING' && <th className="p-4 pr-6 text-right">{translate('actions')}</th>}
                 </tr>
@@ -227,15 +227,21 @@ export default function AdminChangeRequestsPage() {
                     {filterStatus === 'PENDING' && (
                       <td className="p-4 pr-6 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <Button
-                            onClick={() => handleOpenActionModal(req, 'APPROVE')}
-                            variant="success"
-                            size="sm"
-                            className="text-xs"
-                          >
-                            <Check className="w-3.5 h-3.5" />
-                            {translate('approve')}
-                          </Button>
+                          {req.requestType === 'GENDER' ? (
+                            <Button
+                              onClick={() => handleOpenActionModal(req, 'APPROVE')}
+                              variant="success"
+                              size="sm"
+                              className="text-xs"
+                            >
+                              <Check className="w-3.5 h-3.5" />
+                              {translate('approve')}
+                            </Button>
+                          ) : (
+                            <span className="max-w-[180px] text-left text-[11px] leading-4 text-amber-700">
+                              {translate('emailApprovalDisabled')}
+                            </span>
+                          )}
                           <Button
                             onClick={() => handleOpenActionModal(req, 'REJECT')}
                             variant="destructive"
@@ -279,20 +285,25 @@ export default function AdminChangeRequestsPage() {
               <div className="bg-slate-50 p-4 rounded-lg border border-slate-100 text-sm text-slate-600 space-y-1">
                 <p><strong>{translate('senderLabel')}</strong> {selectedRequest.user?.profile?.fullName || translate('playerFallback')} ({selectedRequest.user?.email})</p>
                 <p><strong>{translate('typeLabel')}</strong> {selectedRequest.requestType === 'GENDER' ? translate('genderChange') : translate('emailChange')}</p>
+                {selectedRequest.requestType === 'EMAIL' && (
+                  <p className="font-semibold text-amber-700">{translate('emailApprovalDisabled')}</p>
+                )}
                 <p><strong>{translate('oldValue')}:</strong> {selectedRequest.oldValue}</p>
                 <p><strong>{translate('newValue')}:</strong> {selectedRequest.newValue}</p>
               </div>
 
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-slate-700">
-                  {isModeratorOnly ? translate('optionalProcessingNote') : translate('optionalAdminNote')}
+                                    {translate('optionalAdminNote')}
+
                 </label>
                 <textarea
                   rows={3}
                   value={adminNote}
                   onChange={(e) => setAdminNote(e.target.value)}
                   placeholder={
-                    isModeratorOnly ? translate('processingPlaceholder') : translate('adminPlaceholder')
+                                        translate('adminPlaceholder')
+
                   }
                   className="w-full bg-slate-50 border border-slate-200 focus:border-blue-500 rounded-lg px-4 py-3 text-sm text-slate-800 placeholder-slate-400 outline-none transition-colors resize-none"
                 />

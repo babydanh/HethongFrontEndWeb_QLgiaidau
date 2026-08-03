@@ -60,8 +60,12 @@ const getResponseItems = <T,>(response: ApiResponse<T[]> | undefined): T[] =>
 
 export default function ModerationDashboardPage() {
   const translate = useTranslations('ModerationDashboard');
-  const [pendingCounts, setPendingCounts] = useState({
-
+  const [pendingCounts, setPendingCounts] = useState<{
+    verifications: number;
+    communities: number;
+    changeRequests: number;
+    tournaments: number;
+  }>({
     verifications: 0,
     communities: 0,
     changeRequests: 0,

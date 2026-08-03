@@ -92,6 +92,8 @@ export interface Match {
   tournament?: {
     id: string;
     name: string;
+    logoUrl?: string | null;
+    bannerUrl?: string | null;
     createdBy?: string;
     sportRules?: SportRulesEnvelope | null;
     categoryName?: string | null;

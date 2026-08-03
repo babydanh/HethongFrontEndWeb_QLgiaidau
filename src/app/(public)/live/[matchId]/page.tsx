@@ -946,6 +946,26 @@ export default function LiveMatchPage({ params }: Props) {
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
           <div className="flex flex-wrap items-center gap-3">
+            {/* Tournament Logo & Name */}
+            <Link href={`/tournaments/${match.tournamentId}`} className="flex items-center gap-2 bg-white border border-slate-200 hover:border-blue-300 px-3 py-1 rounded-full shadow-2xs transition-all group">
+              {match.tournament?.logoUrl ? (
+                <img src={match.tournament.logoUrl} alt={match.tournament.name} className="w-5 h-5 object-cover rounded-full" />
+              ) : (
+                <div className="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center">
+                  <Trophy className="w-3 h-3 text-amber-300" />
+                </div>
+              )}
+              <span className="text-xs font-bold text-slate-800 group-hover:text-blue-600 transition-colors max-w-[180px] truncate">
+                {match.tournament?.name || 'Giải đấu'}
+              </span>
+            </Link>
+
+            {match.tournament?.categoryName && (
+              <span className="text-xs font-bold text-amber-800 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full">
+                {match.tournament.categoryName}
+              </span>
+            )}
+
             <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
               match.status === 'ONGOING' 
                 ? 'bg-rose-50 text-rose-600 border border-rose-100' 

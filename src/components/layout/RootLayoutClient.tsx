@@ -69,8 +69,8 @@ export default function RootLayoutClient({
       });
   }, [pathname, isAuthenticated, setUser, logout, user?.id, user?.email, user?.isEmailVerified]);
   
-  // Exclude admin & auth paths from header/footer
-  const hideHeaderFooter = pathname.startsWith('/admin');
+  // Exclude admin, moderation & auth paths from header/footer
+  const hideHeaderFooter = pathname.startsWith('/admin') || pathname.startsWith('/moderation');
   const isGuestRoute = ['/login', '/register'].some((route) => pathname.startsWith(route));
 
   return (

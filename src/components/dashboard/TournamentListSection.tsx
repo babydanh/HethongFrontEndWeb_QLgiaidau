@@ -23,23 +23,21 @@ interface Props {
 }
 
 export function AvatarCircle({ src, name, size = 32 }: { src?: string | null; name: string; size?: number }) {
-  if (src) {
-    return (
-      <img
-        src={src}
-        alt=""
-        referrerPolicy="no-referrer"
-        className="rounded-full object-cover shrink-0"
-        style={{ width: size, height: size }}
-      />
-    );
-  }
+  const [imgError, setImgError] = useState(false);
+  const logoSrc = (!imgError && src) ? src : '/vndcsport.svg';
+
   return (
-    <div
-      className="rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold shrink-0"
-      style={{ width: size, height: size, fontSize: size * 0.4 }}
+    <div 
+      className="rounded-full bg-slate-50 border border-slate-200 overflow-hidden flex items-center justify-center shrink-0 p-0.5"
+      style={{ width: size, height: size }}
     >
-      {name.charAt(0).toUpperCase()}
+      <img
+        src={logoSrc}
+        alt={name}
+        referrerPolicy="no-referrer"
+        onError={() => setImgError(true)}
+        className="w-full h-full object-contain rounded-full"
+      />
     </div>
   );
 }

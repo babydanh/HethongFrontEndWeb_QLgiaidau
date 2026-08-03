@@ -63,6 +63,7 @@ export default function AdminLayout({
       { labelKey: 'notifications', path: '/admin/notifications', icon: Bell },
       { labelKey: 'verification', path: '/admin/verification', icon: ShieldCheck },
       { labelKey: 'moderation', path: '/admin/moderation', icon: Users },
+      { labelKey: 'eloManagement', path: '/admin/rankings/elo', icon: Trophy },
       { labelKey: 'reports', path: '/admin/reports', icon: ShieldAlert },
       { labelKey: 'tournaments', path: '/admin/tournaments', icon: Trophy },
       { labelKey: 'categories', path: '/admin/categories', icon: Layers },

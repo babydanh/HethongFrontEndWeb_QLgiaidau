@@ -65,7 +65,7 @@ export default function AdminNotificationsPage() {
     }
 
     return sections.filter((section) => section.items.length > 0);
-  }, [filteredNotifications, notifications, translate]);
+  }, [filteredNotifications, translate]);
 
   const openNotification = async (notificationId: string, redirectUrl: string | null | undefined, isRead: boolean) => {
     try {
@@ -194,11 +194,12 @@ export default function AdminNotificationsPage() {
                         )}
                       >
                         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                          <button
-                            type="button"
-                            onClick={() => void openNotification(notification.id, notification.redirectUrl, notification.isRead)}
-                            className="min-w-0 flex-1 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-                          >
+                          <div className="min-w-0 flex-1">
+                            <button
+                              type="button"
+                              onClick={() => void openNotification(notification.id, notification.redirectUrl, notification.isRead)}
+                              className="w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                            >
                             <div className="mb-3 flex flex-wrap items-center gap-2">
                               <span className={cn('rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em]', getNotificationTypeMeta(notification.type).badgeClassName)}>
                                 {getNotificationTypeLabel(notification.type, translate)}
@@ -210,7 +211,8 @@ export default function AdminNotificationsPage() {
                             </div>
                             <h3 className="text-lg font-semibold text-slate-950">{notification.title}</h3>
                             <p className="mt-2 text-sm leading-6 text-slate-600">{notification.content}</p>
-                          </button>
+                            </button>
+                          </div>
                           <div className="flex shrink-0 items-center gap-2 sm:pt-1">
                             <span className="hidden text-xs font-medium text-slate-500 md:inline">{getNotificationSummary(notification.type, translate)}</span>
                             <button

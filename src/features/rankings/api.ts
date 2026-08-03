@@ -17,6 +17,94 @@ export interface FootballTeamRanking {
   tierName?: string | null;
 }
 
+export type AdminRankingScope = 'PUBLIC' | 'COMMUNITY';
+export type AdminRankingStatus = 'VISIBLE' | 'HIDDEN' | 'BANNED';
+export type AdminEloOperation = 'ADD' | 'SUBTRACT' | 'SET' | 'RESET' | 'HIDE' | 'BAN' | 'RESTORE';
+
+export interface AdminRankingContext {
+  contextId: string;
+  userId: string;
+  email: string;
+  fullName: string;
+  avatarUrl: string | null;
+  categoryId: string;
+  scope: AdminRankingScope;
+  communityId: string | null;
+  matchType: string;
+  genderRestriction: string | null;
+  eloPoints: number;
+  matchesPlayed: number;
+  matchesWon: number;
+  winStreak: number;
+  peakElo: number;
+  updatedAt: string;
+  status: AdminRankingStatus;
+  statusExpiresAt: string | null;
+}
+
+export interface AdminEloOperationPayload {
+  operationKey: string;
+  userId: string;
+  categoryId: string;
+  scope: AdminRankingScope;
+  communityId?: string;
+  matchType: string;
+  genderRestriction?: string;
+  operation: AdminEloOperation;
+  requestedValue?: number;
+  reason: string;
+  expiresAt?: string;
+}
+
+export interface AdminEloOperationResult {
+  operationId: string;
+  operation: AdminEloOperation;
+  previousElo: number | null;
+  newElo: number | null;
+  changedPoints: number | null;
+  status: AdminRankingStatus;
+}
+
+export interface AdminEloOperationHistoryItem {
+  id: string;
+  operationKey: string;
+  operation: AdminEloOperation;
+  requestedValue: number | null;
+  previousElo: number | null;
+  newElo: number | null;
+  changedPoints: number | null;
+  previousStatus: AdminRankingStatus | null;
+  newStatus: AdminRankingStatus | null;
+  reason: string;
+  expiresAt: string | null;
+  adminUserId: string;
+  createdAt: string;
+}
+
+export interface AdminRankingContextQuery {
+  limit?: number;
+  search?: string;
+  categoryId?: string;
+  scope?: AdminRankingScope;
+  communityId?: string;
+  matchType?: string;
+  genderRestriction?: string;
+  status?: AdminRankingStatus;
+  minElo?: number;
+  maxElo?: number;
+  cursor?: string | null;
+}
+
+export interface AdminRankingContextPage {
+  data: AdminRankingContext[];
+  meta: { limit: number; hasMore: boolean; nextCursor: string | null };
+}
+
+export interface AdminEloHistoryPage {
+  data: AdminEloOperationHistoryItem[];
+  meta: { limit: number; hasMore: boolean };
+}
+
 interface UserRankResponse {
   eloPoints?: number;
   tierName?: string;
@@ -31,5 +119,11 @@ export const rankingsApi = {
   getUserRank: (userId: string, categoryId: string) => api.get<UserRankResponse>(`/rankings/user/${userId}/rank/${categoryId}`),
   getFootballTeamRankings: (params: { categoryId: string; communityId?: string; limit?: number; cursor?: string }) =>
     api.get<{ data: FootballTeamRanking[]; meta: { nextCursor?: string | null; hasMore?: boolean } }>('/rankings/football-teams', { params }),
+  listAdminContexts: (params: AdminRankingContextQuery = {}) =>
+    api.get<AdminRankingContextPage>('/rankings/admin/contexts', { params }),
+  applyAdminOperation: (payload: AdminEloOperationPayload) =>
+    api.post<AdminEloOperationResult>('/rankings/admin/operations', payload),
+  getAdminHistory: (contextId: string, limit = 50) =>
+    api.get<AdminEloHistoryPage>(`/rankings/admin/contexts/${contextId}/history`, { params: { limit } }),
 };
 

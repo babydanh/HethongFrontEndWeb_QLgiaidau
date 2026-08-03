@@ -75,7 +75,7 @@ export default function NotificationsPage() {
     markAllNotificationsAsRead,
     markNotificationAsRead,
     refreshNotifications,
-  } = useSocket();
+  } = useSocket('player');
 
   const filteredNotifications = useMemo(() => {
     if (filter === 'unread') {

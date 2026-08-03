@@ -67,7 +67,7 @@ export function Header() {
     isInitialized: isNotificationsInitialized,
     markAllNotificationsAsRead,
     markNotificationAsRead,
-  } = useSocket();
+  } = useSocket('player');
 
   const profileMenuRef = useRef<HTMLDivElement | null>(null);
   const notificationMenuRef = useRef<HTMLDivElement | null>(null);

@@ -145,6 +145,7 @@ export function AdminHeader({ title, onOpenSidebar }: AdminHeaderProps) {
       }
     } catch (error: unknown) {
       toast.error(getErrorMessage(error, navigationTranslate('notificationStatusUpdateError')));
+      return;
     }
 
     setIsNotificationOpen(false);

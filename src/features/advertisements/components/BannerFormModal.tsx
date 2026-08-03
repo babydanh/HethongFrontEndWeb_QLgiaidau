@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Image as ImageIcon, Code, Sparkles, Calendar, Layers, Link as LinkIcon, Eye } from 'lucide-react';
+import { X, Image as ImageIcon, Code, Layers, Link as LinkIcon, Eye } from 'lucide-react';
 import { BannerPreviewCard } from './BannerPreviewCard';
 import { DateTimePicker } from '@/components/ui/Input';
 import type {
@@ -190,8 +190,8 @@ export const BannerFormModal: React.FC<BannerFormModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200 overflow-y-auto">
-      <div className="bg-white rounded-2xl w-full max-w-7xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col h-[90vh] max-h-[860px] my-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-black/60 p-2 backdrop-blur-xs animate-in fade-in duration-200 sm:p-4">
+      <div className="flex h-[min(90dvh,860px)] max-h-[calc(100dvh-1rem)] w-full max-w-7xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl sm:max-h-[calc(100dvh-2rem)]">
         {/* Header */}
         <div className="px-6 py-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/80 shrink-0">
           <div>
@@ -213,8 +213,8 @@ export const BannerFormModal: React.FC<BannerFormModalProps> = ({
 
         {/* Content Body */}
         <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          <div className="grid min-h-0 flex-1 overflow-y-auto lg:grid-cols-[minmax(0,1.15fr)_minmax(400px,0.85fr)] lg:overflow-hidden">
-            <div className="min-h-0 overflow-y-auto p-5 sm:p-6">
+          <div className="grid min-h-0 flex-1 grid-cols-1 overflow-y-auto overscroll-contain lg:grid-cols-[minmax(0,1.15fr)_minmax(400px,0.85fr)] lg:overflow-hidden">
+            <div className="min-h-0 overflow-visible p-5 sm:p-6 lg:overflow-y-auto lg:overscroll-contain">
               <div className="mx-auto max-w-3xl space-y-6">
           {/* 1. Placement Slot Selector */}
           <div>
@@ -441,7 +441,7 @@ export const BannerFormModal: React.FC<BannerFormModalProps> = ({
 
               </div>
             </div>
-            <aside className="min-h-0 overflow-y-auto border-t border-slate-100 bg-slate-50/70 p-4 sm:p-5 lg:border-l lg:border-t-0">
+            <aside className="min-h-0 overflow-visible border-t border-slate-100 bg-slate-50/70 p-4 sm:p-5 lg:overflow-y-auto lg:overscroll-contain lg:border-l lg:border-t-0">
               <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
                 <BannerPreviewCard
                   bannerType={bannerType}
@@ -458,7 +458,7 @@ export const BannerFormModal: React.FC<BannerFormModalProps> = ({
           </div>
 
           {/* Footer Buttons */}
-          <div className="flex shrink-0 items-center justify-end gap-3 border-t border-slate-100 bg-white px-5 py-3.5 sm:px-7">
+          <div className="relative z-10 flex shrink-0 items-center justify-end gap-3 border-t border-slate-100 bg-white px-5 py-3.5 sm:px-7">
             <button
               type="button"
               onClick={onClose}

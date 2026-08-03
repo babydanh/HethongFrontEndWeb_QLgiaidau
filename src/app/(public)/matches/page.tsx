@@ -128,6 +128,9 @@ const getShortName = (fullName: string | null | undefined): string => {
 
 const getTeamShortName = (teamName: string | null | undefined, unknownLabel: string): string => {
   if (!teamName) return unknownLabel;
+  if (teamName.includes(' / ')) {
+    return teamName.split(' / ').map(name => getShortName(name)).join(' / ');
+  }
   if (teamName.includes(' - ')) {
     return teamName.split(' - ').map(name => getShortName(name)).join(' - ');
   }

@@ -76,6 +76,9 @@ const getShortName = (fullName: string | null | undefined): string => {
 
 const getTeamShortName = (teamName: string | null | undefined, fallback = 'TBD'): string => {
   if (!teamName) return fallback;
+  if (teamName.includes(' / ')) {
+    return teamName.split(' / ').map(name => getShortName(name)).join(' / ');
+  }
   if (teamName.includes(' - ')) {
     return teamName.split(' - ').map(name => getShortName(name)).join(' - ');
   }

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
-import { Bell, CircleUserRound, MessageSquareText } from 'lucide-react';
+import { CircleUserRound, MessageSquareText } from 'lucide-react';
 import { supportApi, type AdminSupportRoom } from '@/features/support/api';
 import { socketClient } from '@/lib/socket';
 import { useAuthStore } from '@/lib/zustand/authStore';
@@ -82,7 +82,7 @@ export function AdminSupportBell() {
         onClick={() => setOpen((current) => !current)}
         className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:border-blue-300 hover:text-blue-700"
       >
-        <Bell className="h-5 w-5" />
+        <MessageSquareText className="h-5 w-5" />
         {unreadCount > 0 && (
           <span className="absolute -right-1.5 -top-1.5 min-w-5 rounded-full bg-rose-500 px-1.5 py-0.5 text-center text-[10px] font-black text-white ring-2 ring-white">
             {unreadCount > 99 ? '99+' : unreadCount}

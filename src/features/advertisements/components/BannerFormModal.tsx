@@ -190,10 +190,10 @@ export const BannerFormModal: React.FC<BannerFormModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200 overflow-y-auto">
-      <div className="bg-white rounded-2xl w-full max-w-7xl shadow-2xl border border-slate-200 overflow-hidden my-8 flex flex-col max-h-[92vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200 overflow-y-auto">
+      <div className="bg-white rounded-2xl w-full max-w-7xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col h-[90vh] max-h-[860px] my-auto">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/80 shrink-0">
+        <div className="px-6 py-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/80 shrink-0">
           <div>
             <h3 className="text-base font-bold text-slate-900">
               {isEditing ? 'Chỉnh sửa banner quảng cáo' : 'Tạo mới banner quảng cáo'}
@@ -203,6 +203,7 @@ export const BannerFormModal: React.FC<BannerFormModalProps> = ({
             </p>
           </div>
           <button
+            type="button"
             onClick={onClose}
             className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors"
           >
@@ -211,9 +212,9 @@ export const BannerFormModal: React.FC<BannerFormModalProps> = ({
         </div>
 
         {/* Content Body */}
-        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
-          <div className="grid min-h-0 flex-1 overflow-y-auto lg:grid-cols-[minmax(0,1.12fr)_minmax(360px,0.88fr)] lg:overflow-hidden">
-            <div className="min-h-0 overflow-y-auto p-5 sm:p-7">
+        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          <div className="grid min-h-0 flex-1 overflow-y-auto lg:grid-cols-[minmax(0,1.15fr)_minmax(400px,0.85fr)] lg:overflow-hidden">
+            <div className="min-h-0 overflow-y-auto p-5 sm:p-6">
               <div className="mx-auto max-w-3xl space-y-6">
           {/* 1. Placement Slot Selector */}
           <div>
@@ -440,47 +441,35 @@ export const BannerFormModal: React.FC<BannerFormModalProps> = ({
 
               </div>
             </div>
-            <aside className="border-t border-slate-100 bg-slate-50/60 p-5 sm:p-7 lg:border-l lg:border-t-0 lg:overflow-y-auto">
-              <div className="lg:sticky lg:top-0">
-          {/* 4. Live Preview Section */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-            <div className="flex items-center gap-2 mb-3">
-              <Eye className="w-4 h-4 text-blue-600" />
-              <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                Xem trước thực tế (Live Preview)
-              </span>
-            </div>
-            <div className="p-4 rounded-2xl bg-slate-100/80 border border-slate-200/80">
-              <BannerPreviewCard
-                bannerType={bannerType}
-                placementSlot={placementSlot}
-                title={title}
-                description={description}
-                imageUrl={imageUrl}
-                targetUrl={targetUrl}
-                ctaText={ctaText}
-                customHtml={customHtml}
-              />
-            </div>
-          </div>
-
+            <aside className="min-h-0 overflow-y-auto border-t border-slate-100 bg-slate-50/70 p-4 sm:p-5 lg:border-l lg:border-t-0">
+              <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+                <BannerPreviewCard
+                  bannerType={bannerType}
+                  placementSlot={placementSlot}
+                  title={title}
+                  description={description}
+                  imageUrl={imageUrl}
+                  targetUrl={targetUrl}
+                  ctaText={ctaText}
+                  customHtml={customHtml}
+                />
               </div>
             </aside>
           </div>
 
           {/* Footer Buttons */}
-          <div className="flex shrink-0 items-center justify-end gap-3 border-t border-slate-100 bg-white px-5 py-4 sm:px-7">
+          <div className="flex shrink-0 items-center justify-end gap-3 border-t border-slate-100 bg-white px-5 py-3.5 sm:px-7">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer"
+              className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer"
             >
               Hủy bỏ
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-md transition-all disabled:opacity-50 cursor-pointer"
+              className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-md transition-all disabled:opacity-50 cursor-pointer"
             >
               {isSubmitting ? 'Đang lưu...' : isEditing ? 'Cập nhật banner' : 'Tạo mới banner'}
             </button>

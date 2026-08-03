@@ -8,6 +8,7 @@ import {
   Code,
   Eye,
   Image as ImageIcon,
+  Lock,
   MapPin,
   Monitor,
   Search,
@@ -15,6 +16,8 @@ import {
   Sparkles,
   Trophy,
   Users,
+  Wifi,
+  Battery,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { AdBannerType, AdPlacementSlot } from '../api';
@@ -57,7 +60,7 @@ export const BannerPreviewCard: React.FC<BannerPreviewCardProps> = ({
   const isAppMatches = placementSlot === 'APP_MATCHES_BOTTOM';
   const isAppDetail = placementSlot === 'APP_TOURNAMENT_DETAIL';
 
-  const [previewMode, setPreviewMode] = useState<PreviewMode>('placement');
+  const [previewMode, setPreviewMode] = useState<PreviewMode>('page');
   const [viewport, setViewport] = useState<PreviewViewport>(isApp ? 'mobile' : 'desktop');
   const [imageError, setImageError] = useState(false);
 
@@ -93,13 +96,17 @@ export const BannerPreviewCard: React.FC<BannerPreviewCardProps> = ({
   const renderAd = (compact = false) => {
     if (bannerType === 'CUSTOM_HTML') {
       return (
-        <div className={`flex w-full ${getAspectClass(compact)} flex-col justify-center rounded-xl border border-dashed border-violet-300 bg-violet-50 px-4 py-3 text-violet-800`}>
-          <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider">
-            <Code className="h-3.5 w-3.5" />
+        <div
+          className={`flex w-full ${getAspectClass(compact)} flex-col justify-center rounded-xl border border-dashed border-violet-300 bg-violet-50/90 px-3 py-2 text-violet-800 shadow-xs`}
+        >
+          <div className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wider">
+            <Code className="h-3 w-3 text-violet-600" />
             {translate('previewScriptTitle')}
           </div>
-          <p className="mt-1.5 text-[10px] leading-relaxed">{translate('previewScriptHelp')}</p>
-          <span className="mt-1.5 inline-flex w-fit rounded bg-violet-100 px-2 py-0.5 text-[9px] font-semibold text-violet-700">
+          <p className="mt-1 line-clamp-1 text-[8.5px] leading-tight text-violet-600">
+            {translate('previewScriptHelp')}
+          </p>
+          <span className="mt-1 inline-flex w-fit rounded bg-violet-100 px-1.5 py-0.5 text-[8px] font-semibold text-violet-700">
             {translate('previewScriptNotExecuted')}
           </span>
         </div>
@@ -108,73 +115,214 @@ export const BannerPreviewCard: React.FC<BannerPreviewCardProps> = ({
 
     if (!imageUrl || imageError) {
       return (
-        <div className={`flex w-full ${getAspectClass(compact)} flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-slate-300 bg-slate-50/90 p-5 text-center text-slate-400`}>
-          <ImageIcon className="h-7 w-7 text-slate-300" />
-          <p className="text-[11px] font-semibold text-slate-500">{imageError ? translate('previewImageError') : translate('previewNoImage')}</p>
-          <p className="max-w-[240px] text-[10px] text-slate-400">{imageError ? translate('previewImageErrorHelp') : translate('previewNoImageHelp')}</p>
+        <div
+          className={`flex w-full ${getAspectClass(compact)} flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-blue-200 bg-blue-50/40 p-2.5 text-center transition-all`}
+        >
+          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-100/70 text-blue-600">
+            <ImageIcon className="h-3.5 w-3.5" />
+          </div>
+          <p className="text-[10px] font-bold text-blue-900">
+            {imageError ? translate('previewImageError') : translate('previewNoImage')}
+          </p>
+          <span className="rounded bg-blue-100/60 px-1.5 py-0.5 font-mono text-[8px] font-bold text-blue-700">
+            {slotBadge}
+          </span>
         </div>
       );
     }
 
     return (
-      <div className={`relative w-full ${getAspectClass(compact)} overflow-hidden rounded-xl border border-slate-200 bg-slate-100 shadow-sm`}>
+      <div
+        className={`group relative w-full ${getAspectClass(compact)} overflow-hidden rounded-xl border border-slate-200 bg-slate-900 shadow-xs`}
+      >
         <img
           src={imageUrl}
           alt={title || translate('previewAdLabel')}
           onError={() => setImageError(true)}
-          className="h-full w-full object-cover"
+          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
         />
-        <span className="absolute right-2 top-2 rounded bg-black/50 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-white">
+        <span className="absolute right-1.5 top-1.5 rounded-md bg-black/60 px-1.5 py-0.5 text-[7.5px] font-bold uppercase tracking-wider text-white backdrop-blur-xs">
           {translate('previewAdLabel')}
         </span>
       </div>
     );
   };
 
+  const renderBrowserBar = () => (
+    <div className="flex items-center justify-between border-b border-slate-200/80 bg-slate-100/90 px-3 py-1.5">
+      <div className="flex items-center gap-1.5">
+        <span className="h-2.5 w-2.5 rounded-full bg-rose-400" />
+        <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
+        <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
+      </div>
+      <div className="flex items-center gap-1 rounded-md bg-white px-2.5 py-0.5 text-[9px] font-medium text-slate-500 shadow-2xs">
+        <Lock className="h-2.5 w-2.5 text-emerald-600" />
+        <span>sporto.asia</span>
+      </div>
+      <div className="w-8" />
+    </div>
+  );
+
   const renderWebHeader = () => (
-    <div className="flex items-center justify-between border-b border-slate-100 bg-white px-4 py-2.5">
-      <div className="flex items-center gap-5">
-        <span className="text-sm font-black italic tracking-tight text-blue-600">SportO</span>
-        <div className="hidden items-center gap-4 text-[9px] font-semibold text-slate-500 sm:flex">
-          <span className="text-blue-600">{translate('previewHome')}</span>
-          <span>{translate('previewTournaments')}</span>
-          <span>{translate('previewMatches')}</span>
-          <span>{translate('previewRanking')}</span>
+    <div className="flex items-center justify-between border-b border-slate-100 bg-white px-4 py-2">
+      <div className="flex items-center gap-4">
+        <span className="text-xs font-black italic tracking-tight text-blue-600">SportO</span>
+        <div className="hidden items-center gap-3 text-[9px] font-bold text-slate-500 sm:flex">
+          <span className="text-blue-600 underline underline-offset-4">{translate('previewHome')}</span>
+          <span className="hover:text-slate-900">{translate('previewTournaments')}</span>
+          <span className="hover:text-slate-900">{translate('previewMatches')}</span>
+          <span className="hover:text-slate-900">{translate('previewRanking')}</span>
         </div>
       </div>
-      <div className="flex items-center gap-2 text-slate-400"><Search className="h-3.5 w-3.5" /><Bell className="h-3.5 w-3.5" /><span className="h-5 w-5 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500" /></div>
+      <div className="flex items-center gap-2 text-slate-400">
+        <Search className="h-3 w-3" />
+        <Bell className="h-3 w-3" />
+        <span className="h-4.5 w-4.5 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 ring-1 ring-blue-200" />
+      </div>
     </div>
   );
 
   const renderTournamentCard = (compact = false) => (
-    <div className={`overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm ${compact ? '' : 'min-h-[118px]'}`}>
-      <div className="relative h-14 bg-gradient-to-br from-sky-400 via-blue-500 to-indigo-600 px-3 py-2">
-        <span className="rounded bg-white/90 px-1.5 py-0.5 text-[8px] font-bold uppercase text-blue-700">{translate('previewFeatured')}</span>
-        <Trophy className="absolute bottom-2 right-3 h-7 w-7 text-white/70" />
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xs">
+      <div className="relative h-12 bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 px-3 py-1.5 text-white">
+        <span className="rounded bg-white/90 px-1 py-0.5 text-[7.5px] font-extrabold uppercase text-blue-700">
+          {translate('previewFeatured')}
+        </span>
+        <Trophy className="absolute bottom-1.5 right-2.5 h-6 w-6 text-white/50" />
       </div>
-      <div className="space-y-1.5 p-3">
-        <p className="truncate text-[11px] font-bold text-slate-800">{translate('previewTournamentTitle')}</p>
-        <div className="flex flex-wrap gap-x-3 gap-y-1 text-[9px] text-slate-500"><span className="inline-flex items-center gap-1"><CalendarDays className="h-3 w-3" />{translate('previewTournamentDate')}</span><span className="inline-flex items-center gap-1"><Users className="h-3 w-3" />{translate('previewTournamentPlayers')}</span></div>
+      <div className="space-y-1 p-2.5">
+        <p className="truncate text-[10px] font-bold text-slate-800">{translate('previewTournamentTitle')}</p>
+        <div className="flex flex-wrap gap-x-2 text-[8px] text-slate-400">
+          <span className="inline-flex items-center gap-0.5">
+            <CalendarDays className="h-2.5 w-2.5" />
+            {translate('previewTournamentDate')}
+          </span>
+          <span className="inline-flex items-center gap-0.5">
+            <Users className="h-2.5 w-2.5" />
+            {translate('previewTournamentPlayers')}
+          </span>
+        </div>
       </div>
     </div>
   );
 
   const renderMatchRow = (index: number) => (
-    <div key={index} className="flex items-center justify-between rounded-lg border border-slate-100 bg-white px-3 py-2 shadow-sm">
-      <div className="flex items-center gap-2"><span className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-50 text-[9px] font-bold text-sky-600">{index + 1}</span><div><p className="text-[10px] font-semibold text-slate-700">{translate('previewPlayerOne')} <span className="text-slate-400">vs</span> {translate('previewPlayerTwo')}</p><p className="inline-flex items-center gap-1 text-[8px] text-slate-400"><MapPin className="h-2.5 w-2.5" />{translate('previewCourt')}</p></div></div><span className="text-[10px] font-bold text-slate-500">{index === 0 ? '21 – 18' : '13:30'}</span>
+    <div
+      key={index}
+      className="flex items-center justify-between rounded-lg border border-slate-100 bg-white px-2.5 py-1.5 shadow-2xs"
+    >
+      <div className="flex items-center gap-2">
+        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-50 text-[8.5px] font-bold text-blue-600">
+          {index + 1}
+        </span>
+        <div>
+          <p className="text-[9px] font-bold text-slate-700">
+            {translate('previewPlayerOne')} <span className="text-slate-400">vs</span> {translate('previewPlayerTwo')}
+          </p>
+          <p className="inline-flex items-center gap-0.5 text-[7.5px] text-slate-400">
+            <MapPin className="h-2 w-2" />
+            {translate('previewCourt')}
+          </p>
+        </div>
+      </div>
+      <span className="text-[9px] font-extrabold text-slate-600">{index === 0 ? '21 – 18' : '13:30'}</span>
+    </div>
+  );
+
+  const renderSidebarWidget = () => (
+    <div className="rounded-xl border border-slate-100 bg-white p-2.5 shadow-2xs">
+      <div className="mb-2 flex items-center justify-between">
+        <span className="text-[8.5px] font-bold uppercase tracking-wider text-slate-400">Top VĐV ELO</span>
+        <span className="text-[8px] font-semibold text-blue-600">Tuần này</span>
+      </div>
+      <div className="space-y-1">
+        <div className="flex items-center justify-between text-[8px] text-slate-600">
+          <span>🥇 Nguyễn Minh Danh</span>
+          <span className="font-bold text-blue-600">1,450</span>
+        </div>
+        <div className="flex items-center justify-between text-[8px] text-slate-600">
+          <span>🥈 Trần Ngọc Trâm</span>
+          <span className="font-bold text-slate-700">1,380</span>
+        </div>
+      </div>
     </div>
   );
 
   const renderPageMockup = () => {
     if (isApp || viewport === 'mobile') {
       return (
-        <div className="mx-auto w-full max-w-[360px] rounded-[26px] border-[6px] border-slate-800 bg-slate-50 p-1.5 shadow-xl">
-          <div className="overflow-hidden rounded-[18px] bg-slate-50">
-            <div className="flex items-center justify-between bg-blue-600 px-4 py-3 text-[10px] font-bold text-white"><span className="italic">SportO</span><span>{translate('previewApp')}</span></div>
-            <div className="space-y-3 p-3">
-              <div className="flex items-center justify-between"><div><p className="text-[9px] font-semibold text-slate-400">{translate('previewGreeting')}</p><p className="text-xs font-bold text-slate-800">{translate('previewDiscover')}</p></div><span className="flex h-7 w-7 items-center justify-center rounded-full bg-white shadow-sm"><Bell className="h-3.5 w-3.5 text-slate-500" /></span></div>
-              {isAppDetail && <div className="rounded-xl bg-gradient-to-r from-indigo-500 to-blue-500 p-3 text-white"><p className="text-[8px] uppercase tracking-wider text-white/70">{translate('previewTournamentLabel')}</p><p className="mt-1 text-xs font-bold">{translate('previewTournamentTitle')}</p></div>}
-              {isAppMatches ? <div className="space-y-2"><div className="flex items-center justify-between"><p className="text-[11px] font-bold text-slate-800">{translate('previewLiveMatches')}</p><ChevronRight className="h-3 w-3 text-slate-400" /></div>{renderMatchRow(0)}{renderMatchRow(1)}{renderAd(true)}</div> : <><div className="flex items-center justify-between"><p className="text-[11px] font-bold text-slate-800">{isAppFeed ? translate('previewFeaturedTournaments') : translate('previewTournamentLabel')}</p><span className="text-[9px] font-semibold text-blue-600">{translate('previewSeeAll')}</span></div>{renderAd(true)}{renderTournamentCard(true)}<div className="flex items-center gap-2 rounded-lg bg-white p-2 shadow-sm"><span className="flex h-7 w-7 items-center justify-center rounded-full bg-rose-50 text-rose-500"><Users className="h-3.5 w-3.5" /></span><div><p className="text-[9px] font-bold text-slate-700">{translate('previewClubActivity')}</p><p className="text-[8px] text-slate-400">{translate('previewClubActivityMeta')}</p></div></div></>}
+        <div className="mx-auto w-full max-w-[320px] rounded-[32px] border-[5px] border-slate-800 bg-slate-900 p-1 shadow-xl">
+          <div className="overflow-hidden rounded-[26px] bg-slate-50">
+            {/* Phone Status Bar */}
+            <div className="flex items-center justify-between bg-slate-900 px-4 py-1.5 text-[8.5px] font-semibold text-white">
+              <span>9:41</span>
+              <div className="h-2.5 w-14 rounded-full bg-slate-800" />
+              <div className="flex items-center gap-1">
+                <Wifi className="h-2.5 w-2.5" />
+                <Battery className="h-2.5 w-2.5" />
+              </div>
+            </div>
+
+            {/* Mobile App Bar */}
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-3.5 py-2.5 text-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-[8px] font-semibold text-blue-100">{translate('previewGreeting')}</p>
+                  <p className="text-[11px] font-black tracking-tight">{translate('previewDiscover')}</p>
+                </div>
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/20">
+                  <Bell className="h-3 w-3 text-white" />
+                </span>
+              </div>
+            </div>
+
+            {/* App Body Content */}
+            <div className="space-y-2.5 p-3">
+              {isAppDetail && (
+                <div className="rounded-xl bg-gradient-to-r from-indigo-500 to-blue-500 p-2.5 text-white">
+                  <p className="text-[7.5px] uppercase tracking-wider text-white/70">
+                    {translate('previewTournamentLabel')}
+                  </p>
+                  <p className="mt-0.5 text-[10px] font-bold">{translate('previewTournamentTitle')}</p>
+                </div>
+              )}
+
+              {isAppMatches ? (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[10px] font-bold text-slate-800">{translate('previewLiveMatches')}</p>
+                    <ChevronRight className="h-3 w-3 text-slate-400" />
+                  </div>
+                  {renderMatchRow(0)}
+                  {renderMatchRow(1)}
+                  <div className="pt-1">{renderAd(true)}</div>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between">
+                    <p className="text-[10px] font-bold text-slate-800">
+                      {isAppFeed ? translate('previewFeaturedTournaments') : translate('previewTournamentLabel')}
+                    </p>
+                    <span className="text-[8.5px] font-semibold text-blue-600">{translate('previewSeeAll')}</span>
+                  </div>
+                  {renderAd(true)}
+                  {renderTournamentCard(true)}
+                  <div className="flex items-center gap-2 rounded-lg bg-white p-2 shadow-2xs">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-rose-50 text-rose-500">
+                      <Users className="h-3 w-3" />
+                    </span>
+                    <div>
+                      <p className="text-[8.5px] font-bold text-slate-700">{translate('previewClubActivity')}</p>
+                      <p className="text-[7.5px] text-slate-400">{translate('previewClubActivityMeta')}</p>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Home Indicator */}
+            <div className="flex justify-center pb-1.5 pt-1">
+              <div className="h-1 w-20 rounded-full bg-slate-300" />
             </div>
           </div>
         </div>
@@ -182,12 +330,71 @@ export const BannerPreviewCard: React.FC<BannerPreviewCardProps> = ({
     }
 
     return (
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50 shadow-lg">
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 shadow-md">
+        {renderBrowserBar()}
         {renderWebHeader()}
-        <div className="space-y-4 p-4">
-          {isHeader && renderAd(true)}
-          <div className="flex items-end justify-between"><div><p className="text-[9px] font-semibold uppercase tracking-wider text-blue-600">{translate('previewGreeting')}</p><h3 className="text-base font-extrabold tracking-tight text-slate-900">{translate('previewDiscover')}</h3></div><span className="inline-flex items-center gap-1 text-[9px] font-semibold text-slate-500"><MapPin className="h-3 w-3" />{translate('previewLocation')}</span></div>
-          {isSidebar ? <div className="grid grid-cols-[minmax(0,1fr)_180px] gap-4"><div className="space-y-3"><div className="flex items-center justify-between"><h4 className="text-[11px] font-bold text-slate-800">{translate('previewFeaturedTournaments')}</h4><span className="text-[9px] font-semibold text-blue-600">{translate('previewSeeAll')}</span></div>{renderTournamentCard()}<div className="flex items-center justify-between"><h4 className="text-[11px] font-bold text-slate-800">{translate('previewLiveMatches')}</h4><span className="text-[9px] text-slate-400">{translate('previewToday')}</span></div>{renderMatchRow(0)}</div><div>{renderAd(true)}</div></div> : <><div className="grid grid-cols-2 gap-3">{renderTournamentCard(true)}{renderTournamentCard(true)}</div><div className="flex items-center justify-between"><h4 className="text-[11px] font-bold text-slate-800">{isHorizontal ? translate('previewLiveMatches') : translate('previewLatestActivity')}</h4><span className="text-[9px] font-semibold text-blue-600">{translate('previewSeeAll')}</span></div><div className="space-y-2">{renderMatchRow(0)}{renderMatchRow(1)}</div>{renderAd(true)}</>}
+
+        <div className="space-y-3 p-3.5">
+          {isHeader && (
+            <div className="mb-2">
+              {renderAd(true)}
+            </div>
+          )}
+
+          <div className="flex items-end justify-between border-b border-slate-100 pb-2">
+            <div>
+              <p className="text-[8px] font-bold uppercase tracking-wider text-blue-600">
+                {translate('previewGreeting')}
+              </p>
+              <h3 className="text-sm font-extrabold tracking-tight text-slate-900">
+                {translate('previewDiscover')}
+              </h3>
+            </div>
+            <span className="inline-flex items-center gap-1 text-[8.5px] font-semibold text-slate-400">
+              <MapPin className="h-2.5 w-2.5" />
+              {translate('previewLocation')}
+            </span>
+          </div>
+
+          {isSidebar ? (
+            <div className="grid grid-cols-[minmax(0,1fr)_165px] gap-3 items-start">
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-[10px] font-bold text-slate-800">{translate('previewFeaturedTournaments')}</h4>
+                  <span className="text-[8.5px] font-semibold text-blue-600">{translate('previewSeeAll')}</span>
+                </div>
+                {renderTournamentCard()}
+                <div className="flex items-center justify-between">
+                  <h4 className="text-[10px] font-bold text-slate-800">{translate('previewLiveMatches')}</h4>
+                  <span className="text-[8.5px] text-slate-400">{translate('previewToday')}</span>
+                </div>
+                {renderMatchRow(0)}
+              </div>
+
+              <div className="space-y-2.5">
+                {renderAd(true)}
+                {renderSidebarWidget()}
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 gap-2.5">
+                {renderTournamentCard(true)}
+                {renderTournamentCard(true)}
+              </div>
+              <div className="flex items-center justify-between">
+                <h4 className="text-[10px] font-bold text-slate-800">
+                  {isHorizontal ? translate('previewLiveMatches') : translate('previewLatestActivity')}
+                </h4>
+                <span className="text-[8.5px] font-semibold text-blue-600">{translate('previewSeeAll')}</span>
+              </div>
+              <div className="space-y-1.5">
+                {renderMatchRow(0)}
+                {renderMatchRow(1)}
+              </div>
+              {renderAd(true)}
+            </>
+          )}
         </div>
       </div>
     );
@@ -195,11 +402,118 @@ export const BannerPreviewCard: React.FC<BannerPreviewCardProps> = ({
 
   return (
     <div className="w-full space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-2"><span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-blue-600"><Sparkles className="h-3.5 w-3.5" />{translate('previewTitle')}</span><span className="rounded-full border border-slate-200 bg-slate-100 px-2.5 py-0.5 font-mono text-[10px] text-slate-500">{slotBadge}</span></div>
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white p-1.5"><div className="flex items-center gap-1"><button type="button" aria-pressed={previewMode === 'placement'} onClick={() => setPreviewMode('placement')} className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[10px] font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 ${previewMode === 'placement' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:bg-slate-50'}`}><Eye className="h-3.5 w-3.5" />{translate('previewModePlacement')}</button><button type="button" aria-pressed={previewMode === 'page'} onClick={() => setPreviewMode('page')} className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[10px] font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 ${previewMode === 'page' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:bg-slate-50'}`}><Sparkles className="h-3.5 w-3.5" />{translate('previewModePage')}</button></div><div className="flex items-center gap-1 rounded-lg bg-slate-100 p-0.5"><button type="button" disabled={isApp} aria-pressed={viewport === 'desktop'} onClick={() => setViewport('desktop')} className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-semibold ${isApp ? 'cursor-not-allowed text-slate-300' : viewport === 'desktop' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-400'}`}><Monitor className="h-3 w-3" />{translate('previewDesktop')}</button><button type="button" aria-pressed={viewport === 'mobile'} onClick={() => setViewport('mobile')} className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-semibold ${viewport === 'mobile' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-400'}`}><Smartphone className="h-3 w-3" />{translate('previewMobile')}</button></div></div>
-      {previewMode === 'page' ? renderPageMockup() : <div className="flex justify-center rounded-xl border border-slate-200/80 bg-slate-100/80 p-4">{renderAd()}</div>}
-      <div className="grid grid-cols-2 gap-2 text-[10px] text-slate-500"><div className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2"><span className="block text-[9px] uppercase tracking-wider text-slate-400">{translate('previewPosition')}</span><span className="font-semibold text-slate-700">{slotBadge}</span></div><div className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2"><span className="block text-[9px] uppercase tracking-wider text-slate-400">{translate('previewDevice')}</span><span className="font-semibold text-slate-700">{viewport === 'mobile' ? translate('previewMobile') : translate('previewDesktop')}</span></div></div>
-      {targetUrl && <div className="flex items-center justify-between gap-2 rounded-lg border border-slate-100 bg-slate-50 px-3 py-1.5 text-[11px] text-slate-500"><span className="text-[10px] text-slate-400">{translate('previewTarget')}</span><span className="inline-flex max-w-[280px] items-center gap-1 truncate font-medium text-blue-600">{targetUrl}</span></div>}
+      {/* Top Preview Controls Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-800">
+          <Sparkles className="h-3.5 w-3.5 text-blue-600" />
+          {translate('previewTitle')}
+        </span>
+        <span className="rounded-full border border-slate-200 bg-white px-2.5 py-0.5 font-mono text-[9.5px] font-bold text-slate-600 shadow-2xs">
+          {slotBadge}
+        </span>
+      </div>
+
+      {/* Mode & Device Toggle */}
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200/80 bg-slate-50 p-1">
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            aria-pressed={previewMode === 'page'}
+            onClick={() => setPreviewMode('page')}
+            className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[10px] font-bold transition-all cursor-pointer ${
+              previewMode === 'page'
+                ? 'bg-blue-600 text-white shadow-2xs'
+                : 'text-slate-600 hover:bg-slate-200/60'
+            }`}
+          >
+            <Sparkles className="h-3 w-3" />
+            {translate('previewModePage')}
+          </button>
+          <button
+            type="button"
+            aria-pressed={previewMode === 'placement'}
+            onClick={() => setPreviewMode('placement')}
+            className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[10px] font-bold transition-all cursor-pointer ${
+              previewMode === 'placement'
+                ? 'bg-blue-600 text-white shadow-2xs'
+                : 'text-slate-600 hover:bg-slate-200/60'
+            }`}
+          >
+            <Eye className="h-3 w-3" />
+            {translate('previewModePlacement')}
+          </button>
+        </div>
+
+        <div className="flex items-center gap-0.5 rounded-lg bg-slate-200/60 p-0.5">
+          <button
+            type="button"
+            disabled={isApp}
+            aria-pressed={viewport === 'desktop'}
+            onClick={() => setViewport('desktop')}
+            className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-[9.5px] font-bold transition-all ${
+              isApp
+                ? 'cursor-not-allowed text-slate-300'
+                : viewport === 'desktop'
+                  ? 'bg-white text-slate-800 shadow-2xs cursor-default'
+                  : 'text-slate-500 hover:text-slate-800 cursor-pointer'
+            }`}
+          >
+            <Monitor className="h-3 w-3" />
+            {translate('previewDesktop')}
+          </button>
+          <button
+            type="button"
+            aria-pressed={viewport === 'mobile'}
+            onClick={() => setViewport('mobile')}
+            className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-[9.5px] font-bold transition-all ${
+              viewport === 'mobile'
+                ? 'bg-white text-slate-800 shadow-2xs cursor-default'
+                : 'text-slate-500 hover:text-slate-800 cursor-pointer'
+            }`}
+          >
+            <Smartphone className="h-3 w-3" />
+            {translate('previewMobile')}
+          </button>
+        </div>
+      </div>
+
+      {/* Main Preview Container */}
+      <div className="transition-all duration-300">
+        {previewMode === 'page' ? (
+          renderPageMockup()
+        ) : (
+          <div className="flex justify-center rounded-2xl border border-slate-200/80 bg-slate-50/80 p-5 shadow-2xs">
+            {renderAd()}
+          </div>
+        )}
+      </div>
+
+      {/* Meta Info */}
+      <div className="grid grid-cols-2 gap-2 text-[10px]">
+        <div className="rounded-xl border border-slate-100 bg-slate-50/80 px-3 py-1.5">
+          <span className="block text-[8.5px] font-bold uppercase tracking-wider text-slate-400">
+            {translate('previewPosition')}
+          </span>
+          <span className="font-bold text-slate-700">{slotBadge}</span>
+        </div>
+        <div className="rounded-xl border border-slate-100 bg-slate-50/80 px-3 py-1.5">
+          <span className="block text-[8.5px] font-bold uppercase tracking-wider text-slate-400">
+            {translate('previewDevice')}
+          </span>
+          <span className="font-bold text-slate-700">
+            {viewport === 'mobile' ? translate('previewMobile') : translate('previewDesktop')}
+          </span>
+        </div>
+      </div>
+
+      {targetUrl && (
+        <div className="flex items-center justify-between gap-2 rounded-xl border border-slate-100 bg-slate-50/80 px-3 py-1.5 text-[10px]">
+          <span className="text-[9px] font-bold text-slate-400">{translate('previewTarget')}</span>
+          <span className="inline-flex max-w-[260px] items-center gap-1 truncate font-semibold text-blue-600">
+            {targetUrl}
+          </span>
+        </div>
+      )}
     </div>
   );
 };

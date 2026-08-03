@@ -26,6 +26,9 @@ export const BannerPreviewCard: React.FC<BannerPreviewCardProps> = ({
   const isSidebar = placementSlot === 'HOMEPAGE_SIDEBAR';
   const isHorizontal = placementSlot === 'TOURNAMENTS_BOTTOM' || placementSlot === 'MATCHES_BOTTOM';
   const isHeader = placementSlot === 'GLOBAL_HEADER';
+  const isAppFeed = placementSlot === 'APP_HOME_FEED' || placementSlot === 'APP_COMMUNITY_FEED';
+  const isAppMatches = placementSlot === 'APP_MATCHES_BOTTOM';
+  const isAppDetail = placementSlot === 'APP_TOURNAMENT_DETAIL';
 
   if (bannerType === 'CUSTOM_HTML' && customHtml) {
     return (
@@ -43,26 +46,37 @@ export const BannerPreviewCard: React.FC<BannerPreviewCardProps> = ({
   }
 
   // Pure Edge-to-Edge (Tràn Viền) Preview
-  const slotBadge = isSidebar
-    ? 'Sidebar 4:3 (300x250 Medium Rectangle)'
-    : isHeader
-    ? 'Top Bar (970x90)'
-    : 'Leaderboard 728x90 / 970x250';
+  let slotBadge = 'Leaderboard 728x90 / 970x250';
+  let aspectClass = 'aspect-[3.5/1] sm:aspect-[5/1]';
 
-  const aspectClass = isSidebar
-    ? 'aspect-[4/3] max-w-[320px]'
-    : isHeader
-    ? 'aspect-[6/1] sm:aspect-[8/1]'
-    : 'aspect-[3.5/1] sm:aspect-[5/1]';
+  if (isSidebar) {
+    slotBadge = '🌐 [Web] Sidebar 4:3 (300x250 Medium Rectangle)';
+    aspectClass = 'aspect-[4/3] max-w-[320px]';
+  } else if (isHeader) {
+    slotBadge = '🌐 [Web] Top Bar (970x90)';
+    aspectClass = 'aspect-[6/1] sm:aspect-[8/1]';
+  } else if (isAppFeed) {
+    slotBadge = '📱 [App] Dòng tin Card (16:9)';
+    aspectClass = 'aspect-[16/9] max-w-[340px]';
+  } else if (isAppMatches) {
+    slotBadge = '📱 [App] Chân màn hình (320x50)';
+    aspectClass = 'aspect-[320/60] max-w-[340px]';
+  } else if (isAppDetail) {
+    slotBadge = '📱 [App] Chi tiết giải đấu (3:1)';
+    aspectClass = 'aspect-[3/1] max-w-[360px]';
+  } else if (isHorizontal) {
+    slotBadge = '🌐 [Web] Leaderboard (728x90 / 970x250)';
+    aspectClass = 'aspect-[3.5/1] sm:aspect-[5/1]';
+  }
 
   return (
     <div className="w-full space-y-2">
       <div className="flex items-center justify-between text-[11px] text-slate-500 font-medium px-1">
         <span className="inline-flex items-center gap-1.5 text-blue-600 font-semibold">
           <Sparkles className="w-3.5 h-3.5" />
-          Mô phỏng hiển thị trên Website
+          Mô phỏng hiển thị thực tế
         </span>
-        <span className="font-mono text-[10px] text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200">
+        <span className="font-mono text-[10px] text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full border border-slate-200">
           {slotBadge}
         </span>
       </div>

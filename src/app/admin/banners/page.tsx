@@ -130,28 +130,59 @@ export default function AdminBannersPage() {
 
   const getSlotBadge = (slot: string) => {
     switch (slot) {
+      // WEB
       case 'HOMEPAGE_SIDEBAR':
         return {
-          label: 'Sidebar Trang Chủ (300x250)',
+          platform: 'WEB',
+          label: '🌐 [Web] Sidebar Trang Chủ (300x250 / 4:3)',
           color: 'bg-indigo-50 text-indigo-700 border-indigo-200',
         };
       case 'TOURNAMENTS_BOTTOM':
         return {
-          label: 'Ngang Giải Đấu (728x90)',
+          platform: 'WEB',
+          label: '🌐 [Web] Chân Trang Giải Đấu (728x90)',
           color: 'bg-emerald-50 text-emerald-700 border-emerald-200',
         };
       case 'MATCHES_BOTTOM':
         return {
-          label: 'Ngang Trận Đấu (728x90)',
+          platform: 'WEB',
+          label: '🌐 [Web] Chân Trang Trận Đấu (728x90)',
           color: 'bg-amber-50 text-amber-700 border-amber-200',
         };
       case 'GLOBAL_HEADER':
         return {
-          label: 'Header Toàn Trang (970x90)',
+          platform: 'WEB',
+          label: '🌐 [Web] Header Toàn Trang (970x90)',
+          color: 'bg-purple-50 text-purple-700 border-purple-200',
+        };
+      // APP
+      case 'APP_HOME_FEED':
+        return {
+          platform: 'APP',
+          label: '📱 [App] Dòng Tin Trang Chủ App (16:9)',
+          color: 'bg-sky-50 text-sky-700 border-sky-200',
+        };
+      case 'APP_MATCHES_BOTTOM':
+        return {
+          platform: 'APP',
+          label: '📱 [App] Chân Tab Trận Đấu (320x50)',
+          color: 'bg-teal-50 text-teal-700 border-teal-200',
+        };
+      case 'APP_COMMUNITY_FEED':
+        return {
+          platform: 'APP',
+          label: '📱 [App] Hoạt Động Câu Lạc Bộ (16:9)',
           color: 'bg-rose-50 text-rose-700 border-rose-200',
+        };
+      case 'APP_TOURNAMENT_DETAIL':
+        return {
+          platform: 'APP',
+          label: '📱 [App] Chi Tiết Giải Đấu App (3:1)',
+          color: 'bg-orange-50 text-orange-700 border-orange-200',
         };
       default:
         return {
+          platform: 'OTHER',
           label: slot,
           color: 'bg-slate-50 text-slate-700 border-slate-200',
         };
@@ -169,7 +200,7 @@ export default function AdminBannersPage() {
           <div>
             <h1 className="text-xl font-bold text-slate-900">Quản lý quảng cáo & Banner</h1>
             <p className="text-xs text-slate-500 mt-0.5">
-              Cấu hình các vị trí quảng cáo chuẩn IAB, Google AdSense và theo dõi hiệu suất nhấp chuột (CTR)
+              Cấu hình các vị trí quảng cáo cho Website & Mobile App, Google AdSense và theo dõi hiệu suất nhấp chuột (CTR)
             </p>
           </div>
         </div>
@@ -180,20 +211,20 @@ export default function AdminBannersPage() {
             setEditingBanner(null);
             setIsModalOpen(true);
           }}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm hover:shadow-md transition-all cursor-pointer shrink-0"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-bold shadow-md shadow-blue-600/20 transition-all cursor-pointer shrink-0"
         >
           <Plus className="w-4 h-4" />
-          Tạo banner mới
+          Tạo banner quảng cáo
         </button>
       </div>
 
-      {/* KPI Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs flex items-center justify-between">
           <div>
             <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Tổng số banner</p>
             <h3 className="text-2xl font-extrabold text-slate-900 mt-1">{totalBanners}</h3>
-            <span className="text-[10px] text-emerald-600 font-medium">● {activeBanners} đang kích hoạt</span>
+            <span className="text-[10px] text-emerald-600 font-medium">{activeBanners} đang phát sóng</span>
           </div>
           <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
             <Layers className="w-5 h-5" />
@@ -253,11 +284,19 @@ export default function AdminBannersPage() {
             onChange={(e) => setSlotFilter(e.target.value)}
             className="px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium text-slate-700 bg-white focus:outline-hidden focus:border-blue-600"
           >
-            <option value="ALL">Tất cả vị trí hiển thị</option>
-            <option value="HOMEPAGE_SIDEBAR">Sidebar Trang Chủ (300x250)</option>
-            <option value="TOURNAMENTS_BOTTOM">Ngang Trang Giải Đấu (728x90)</option>
-            <option value="MATCHES_BOTTOM">Ngang Trang Trận Đấu (728x90)</option>
-            <option value="GLOBAL_HEADER">Header Toàn Trang (970x90)</option>
+            <option value="ALL">Tất cả vị trí (Web & App)</option>
+            <optgroup label="🌐 Vị trí trên Website">
+              <option value="HOMEPAGE_SIDEBAR">[Web] Sidebar Trang Chủ (300x250)</option>
+              <option value="TOURNAMENTS_BOTTOM">[Web] Chân Trang Giải Đấu (728x90)</option>
+              <option value="MATCHES_BOTTOM">[Web] Chân Trang Trận Đấu (728x90)</option>
+              <option value="GLOBAL_HEADER">[Web] Header Toàn Trang (970x90)</option>
+            </optgroup>
+            <optgroup label="📱 Vị trí trên Mobile App">
+              <option value="APP_HOME_FEED">[App] Dòng Tin Trang Chủ App (16:9)</option>
+              <option value="APP_MATCHES_BOTTOM">[App] Chân Tab Trận Đấu (320x50)</option>
+              <option value="APP_COMMUNITY_FEED">[App] Hoạt Động CLB (16:9)</option>
+              <option value="APP_TOURNAMENT_DETAIL">[App] Chi Tiết Giải Đấu (3:1)</option>
+            </optgroup>
           </select>
 
           <select

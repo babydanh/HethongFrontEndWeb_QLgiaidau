@@ -1,10 +1,16 @@
 import { api } from '@/lib/axios';
 
 export type AdPlacementSlot =
+  // Website Placements
   | 'HOMEPAGE_SIDEBAR'
   | 'TOURNAMENTS_BOTTOM'
   | 'MATCHES_BOTTOM'
-  | 'GLOBAL_HEADER';
+  | 'GLOBAL_HEADER'
+  // Mobile App Placements
+  | 'APP_HOME_FEED'
+  | 'APP_MATCHES_BOTTOM'
+  | 'APP_COMMUNITY_FEED'
+  | 'APP_TOURNAMENT_DETAIL';
 
 export type AdBannerType = 'IMAGE_LINK' | 'CUSTOM_HTML';
 

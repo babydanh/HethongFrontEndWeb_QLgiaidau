@@ -23,33 +23,68 @@ interface BannerFormModalProps {
 
 const PLACEMENT_OPTIONS: Array<{
   value: AdPlacementSlot;
+  platform: 'WEB' | 'APP';
   label: string;
   desc: string;
   size: string;
 }> = [
+  // WEB PLACEMENTS
   {
     value: 'HOMEPAGE_SIDEBAR',
-    label: 'Sidebar Cột Phải Trang Chủ',
-    desc: 'Cố định bên phải bảng tin và danh sách trận đấu trang chủ',
-    size: '300 x 250 (Medium Rectangle)',
+    platform: 'WEB',
+    label: '🌐 [Web] Sidebar Cột Phải Trang Chủ',
+    desc: 'Cố định bên phải bảng tin và danh sách trận đấu trang chủ web',
+    size: '300 x 250 (Medium Rectangle) / 4:3',
   },
   {
     value: 'TOURNAMENTS_BOTTOM',
-    label: 'Banner Ngang Trang Giải Đấu',
-    desc: 'Ngang dưới danh sách giải đấu và bảng phân trang',
-    size: '728 x 90 (Leaderboard) / 970 x 250',
+    platform: 'WEB',
+    label: '🌐 [Web] Chân Trang Danh Sách Giải Đấu',
+    desc: 'Ngang dưới danh sách giải đấu và bảng phân trang web',
+    size: '728 x 90 (Leaderboard) / 970 x 250 (4:1 ~ 5:1)',
   },
   {
     value: 'MATCHES_BOTTOM',
-    label: 'Banner Ngang Trang Trận Đấu',
-    desc: 'Ngang dưới danh sách trận đấu trực tiếp',
-    size: '728 x 90 (Leaderboard) / 970 x 250',
+    platform: 'WEB',
+    label: '🌐 [Web] Chân Trang Danh Sách Trận Đấu',
+    desc: 'Ngang dưới danh sách lịch thi đấu & kết quả trận đấu web',
+    size: '728 x 90 (Leaderboard) / 970 x 250 (4:1 ~ 5:1)',
   },
   {
     value: 'GLOBAL_HEADER',
-    label: 'Thanh Banner Header Toàn Trang',
-    desc: 'Thanh thông báo nổi bật trên cùng cho sự kiện đặc biệt',
-    size: '970 x 90 (Top Bar)',
+    platform: 'WEB',
+    label: '🌐 [Web] Thanh Banner Header Toàn Trang',
+    desc: 'Thanh thông báo nổi bật trên cùng cho sự kiện đặc biệt web',
+    size: '970 x 90 (Top Bar 8:1)',
+  },
+  // MOBILE APP PLACEMENTS
+  {
+    value: 'APP_HOME_FEED',
+    platform: 'APP',
+    label: '📱 [App] Giữa Dòng Tin Trang Chủ App',
+    desc: 'Xen kẽ giữa danh sách giải đấu nổi bật & CLB trên Mobile App',
+    size: '16:9 hoặc 3:1 (Card Mobile)',
+  },
+  {
+    value: 'APP_MATCHES_BOTTOM',
+    platform: 'APP',
+    label: '📱 [App] Chân Danh Sách Tab Trận Đấu',
+    desc: 'Cố định chân danh sách trận đấu trên Mobile App',
+    size: '320 x 50 / 320 x 100 (Mobile Banner)',
+  },
+  {
+    value: 'APP_COMMUNITY_FEED',
+    platform: 'APP',
+    label: '📱 [App] Dòng Tin Hoạt Động Câu Lạc Bộ',
+    desc: 'Trong dòng tin hoạt động CLB trên Mobile App',
+    size: '16:9 (Card Mobile)',
+  },
+  {
+    value: 'APP_TOURNAMENT_DETAIL',
+    platform: 'APP',
+    label: '📱 [App] Chi Tiết Giải Đấu App',
+    desc: 'Dưới sơ đồ thi đấu / danh sách VĐV của giải đấu trên App',
+    size: '3:1 (Full-width Mobile)',
   },
 ];
 

@@ -60,6 +60,13 @@ const makeOperationKey = () => {
   return `admin-elo-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 14)}`;
 };
 
+const getMatchTypeLabelKey = (matchType: string) => {
+  if (matchType === 'SINGLES') return 'singles';
+  if (matchType === 'DOUBLES') return 'doubles';
+  if (matchType === 'MIXED_DOUBLES') return 'mixedDoubles';
+  return 'matchTypeUnknown';
+};
+
 const getOperationLabelKey = (operation: AdminEloOperation) => {
   switch (operation) {
     case 'ADD': return 'add';
@@ -279,7 +286,7 @@ export default function AdminEloPage() {
               {!loading && contexts.map((context) => (
                 <tr key={context.contextId} className="align-top">
                   <td className="px-4 py-4"><div className="flex items-center gap-3"><div className="h-9 w-9 overflow-hidden rounded-full bg-slate-100">{context.avatarUrl && <Image src={context.avatarUrl} alt="" width={36} height={36} unoptimized className="h-full w-full object-cover" />}</div><div><div className="font-semibold text-slate-900">{context.fullName}</div><div className="text-xs text-slate-500">{context.email}</div></div></div></td>
-                  <td className="px-4 py-4 text-slate-600"><div>{context.scope === 'PUBLIC' ? translate('publicScope') : translate('communityScope')}</div><div className="text-xs">{context.matchType}{context.genderRestriction ? ` · ${context.genderRestriction}` : ''}</div></td>
+                  <td className="px-4 py-4 text-slate-600"><div>{context.scope === 'PUBLIC' ? translate('publicScope') : translate('communityScope')}</div><div className="text-xs">{translate(getMatchTypeLabelKey(context.matchType))}{context.genderRestriction ? ` · ${context.genderRestriction}` : ''}</div></td>
                   <td className="px-4 py-4"><div className="font-bold text-slate-900">{context.eloPoints}</div><div className="text-xs text-slate-500">{context.matchesWon}/{context.matchesPlayed}</div></td>
                   <td className="px-4 py-4 text-slate-600">{context.matchesPlayed}</td>
                   <td className="px-4 py-4"><span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${context.status === 'BANNED' ? 'bg-red-100 text-red-700' : context.status === 'HIDDEN' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>{context.status === 'BANNED' ? translate('banned') : context.status === 'HIDDEN' ? translate('hidden') : translate('visible')}</span></td>
@@ -297,7 +304,7 @@ export default function AdminEloPage() {
         <ModalContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
           <ModalHeader>
             <ModalTitle>{translate('preview')}</ModalTitle>
-            <ModalDescription>{selected ? `${selected.fullName} · ${selected.eloPoints} Elo` : ''}</ModalDescription>
+            <ModalDescription>{selected ? `${selected.fullName} · ${selected.eloPoints} ${translate('eloUnit')}` : ''}</ModalDescription>
           </ModalHeader>
           {selected && <div className="space-y-4">
             <label className="block"><span className="mb-1 block text-xs font-semibold text-slate-600">{translate('operation')}</span><select value={operation} onChange={(event) => { setOperation(event.target.value as AdminEloOperation); setExpiresAt(''); }} className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm"><option value="ADD">{translate('add')}</option><option value="SUBTRACT">{translate('subtract')}</option><option value="SET">{translate('set')}</option><option value="RESET">{translate('reset')}</option><option value="HIDE">{translate('hide')}</option><option value="BAN">{translate('ban')}</option><option value="RESTORE">{translate('restore')}</option></select></label>

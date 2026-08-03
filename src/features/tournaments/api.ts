@@ -997,6 +997,7 @@ export const tournamentsApi = {
         customResponses?: Record<string, unknown>;
       }>;
       sendInvitationEmail?: boolean;
+      notifyLinkedAccounts?: boolean;
     },
   ) =>
     api.post<

@@ -165,7 +165,7 @@ export default function SmartAiTournamentModal({
   const [parsedData, setParsedData] = useState<ParsedTournament | null>(null);
   const [creationSettings, setCreationSettings] = useState<CreationSettings>({
     visibility: 'PUBLIC',
-    registrationMode: 'OPEN',
+    registrationMode: 'APPROVAL',
     isRanked: true,
   });
 
@@ -211,7 +211,7 @@ export default function SmartAiTournamentModal({
         setParsedData(parsed);
         setCreationSettings({
           visibility: 'PUBLIC',
-          registrationMode: parsed.registrationMode ?? 'OPEN',
+          registrationMode: parsed.registrationMode ?? 'APPROVAL',
           isRanked: parsed.isRanked ?? true,
         });
         setStep(2);
@@ -475,6 +475,7 @@ export default function SmartAiTournamentModal({
             divisionId,
             participants,
             sendInvitationEmail: false,
+            notifyLinkedAccounts: true,
           });
         }
       }
@@ -720,6 +721,9 @@ export default function SmartAiTournamentModal({
                     {translate('publicCreationNotice')}
                   </p>
                 )}
+                <p className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs leading-5 text-slate-600">
+                  {translate('clonePolicyNotice')}
+                </p>
               </div>
 
               {/* Formats Extracted */}

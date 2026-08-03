@@ -4,7 +4,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/Toaster";
 import RootLayoutClient from "@/components/layout/RootLayoutClient";
 import LiveMetricsWidget from "@/components/common/LiveMetricsWidget";
-import { NextIntlClientProvider } from "next-intl";
+import IntlProviderWithFallback from "@/components/layout/IntlProviderWithFallback";
 import { getLocale, getMessages, getTranslations } from "next-intl/server";
 import { BRAND } from "@/constants/brand";
 
@@ -135,11 +135,11 @@ export default async function RootLayout({
         ))}
       </head>
       <body className={`min-h-full flex flex-col text-slate-900 font-sans ${inter.className}`}>
-        <NextIntlClientProvider locale={locale} messages={messages}>
+        <IntlProviderWithFallback locale={locale} messages={messages}>
           <RootLayoutClient>{children}</RootLayoutClient>
           <Toaster />
           <LiveMetricsWidget />
-        </NextIntlClientProvider>
+        </IntlProviderWithFallback>
       </body>
     </html>
   );

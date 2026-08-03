@@ -362,14 +362,14 @@ export default function SponsorSettingsPanel({ tournamentId }: SponsorSettingsPa
         <span className="rounded-full bg-amber-50 px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-amber-700">{translate('sponsors.mvpBadge')}</span>
       </div>
 
-      <div className="space-y-4">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {sponsors.map((sponsor) => {
           const draft = drafts[sponsor.id] || toDraft(sponsor);
           const tierStyle = getSponsorTierStyle(sponsor.tier);
           const sponsorInitials = getInitials(sponsor.displayName);
           if (sponsor.status === 'ARCHIVED') {
             return (
-              <div key={sponsor.id} className="rounded-xl border border-slate-200 bg-slate-100 p-4 opacity-75" aria-label={translate('sponsors.archived')}>
+              <div key={sponsor.id} className="rounded-xl border border-slate-200 bg-slate-100 p-3 opacity-75 sm:col-span-2 xl:col-span-3" aria-label={translate('sponsors.archived')}>
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <p className="text-sm font-black text-slate-700">{sponsor.displayName}</p>
@@ -382,31 +382,25 @@ export default function SponsorSettingsPanel({ tournamentId }: SponsorSettingsPa
           }
           if (expandedId !== sponsor.id) {
             return (
-              <div key={sponsor.id} className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-                <div className="flex flex-wrap items-center gap-3">
+              <div key={sponsor.id} className="rounded-xl border border-slate-200 bg-white p-2.5 shadow-sm">
+                <div className="flex flex-col items-center text-center">
                   <SponsorLogo
                     logoUrl={sponsor.logoUrl}
                     alt={sponsor.displayName}
                     initials={sponsorInitials}
-                    className={cn('h-12 w-16 shrink-0 rounded-lg border p-1', tierStyle.logoFrameClassName)}
+                    className={cn('h-20 w-full max-w-[170px] rounded-lg border p-2', tierStyle.logoFrameClassName)}
                     imageClassName="h-full w-full"
                   />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-black text-slate-800">{sponsor.displayName}</p>
-                    <div className="mt-1 flex flex-wrap items-center gap-2 text-[10px] font-black uppercase tracking-wide text-slate-500">
-                      <span className={cn('rounded-md border px-2 py-0.5', tierStyle.badgeClassName)}>{translate(`sponsors.tiers.${sponsor.tier}`)}</span>
-                      <span className="h-1 w-1 rounded-full bg-slate-300" />
-                      <span>{translate(`sponsors.statuses.${sponsor.status}`)}</span>
-                    </div>
-                  </div>
-                  <Button type="button" variant="outline" onClick={() => setExpandedId(sponsor.id)} className="shrink-0 text-xs font-bold">{translate('sponsors.edit')}</Button>
+                  <p className="mt-2 w-full truncate text-sm font-black text-slate-800" title={sponsor.displayName}>{sponsor.displayName}</p>
+                  <span className={cn('mt-1 max-w-full truncate rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-wide', tierStyle.badgeClassName)}>{translate(`sponsors.tiers.${sponsor.tier}`)}</span>
+                  <span className="mt-1 text-[9px] font-bold uppercase tracking-wide text-slate-400">{translate(`sponsors.statuses.${sponsor.status}`)}</span>
+                  <Button type="button" variant="outline" onClick={() => setExpandedId(sponsor.id)} className="mt-2 w-full text-[11px] font-bold">{translate('sponsors.edit')}</Button>
                 </div>
-                {sponsor.shortDescription && <p className="mt-3 line-clamp-2 text-xs font-medium text-slate-500">{sponsor.shortDescription}</p>}
               </div>
             );
           }
           return (
-            <div key={sponsor.id} className="rounded-xl border border-blue-200 bg-blue-50/30 p-4">
+              <div key={sponsor.id} className="rounded-xl border border-blue-200 bg-blue-50/30 p-4 sm:col-span-2 xl:col-span-3">
               <div className="mb-3 flex justify-end">
                 <button type="button" onClick={() => setExpandedId(null)} className="text-xs font-bold text-slate-500 hover:text-slate-800">{translate('sponsors.closeEditor')}</button>
               </div>
@@ -422,7 +416,7 @@ export default function SponsorSettingsPanel({ tournamentId }: SponsorSettingsPa
             </div>
           );
         })}
-        {sponsors.length === 0 && <p className="rounded-xl border border-dashed border-slate-300 px-4 py-6 text-center text-xs font-medium text-slate-500">{translate('sponsors.empty')}</p>}
+        {sponsors.length === 0 && <p className="rounded-xl border border-dashed border-slate-300 px-4 py-6 text-center text-xs font-medium text-slate-500 sm:col-span-2 xl:col-span-3">{translate('sponsors.empty')}</p>}
       </div>
 
       <div className="rounded-xl border border-amber-200 bg-amber-50/40 p-4">

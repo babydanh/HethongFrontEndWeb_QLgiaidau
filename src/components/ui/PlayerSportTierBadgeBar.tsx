@@ -107,10 +107,10 @@ export function PlayerSportTierBadgeBar({
         r.categoryName?.toLowerCase() === category.name?.toLowerCase(),
     );
     const activeSportRank = sportRanks
-      .filter((r) => r.matchesPlayed > 0 || r.adminLeaderboardEligible || r.eloPoints > 0)
+      .filter((r) => r.matchesPlayed > 0 || r.adminLeaderboardEligible === true)
       .sort((a, b) => b.eloPoints - a.eloPoints)[0] || null;
 
-    const isRanked = Boolean(activeSportRank && (activeSportRank.matchesPlayed > 0 || activeSportRank.adminLeaderboardEligible || activeSportRank.eloPoints > 0));
+    const isRanked = Boolean(activeSportRank && (activeSportRank.matchesPlayed > 0 || activeSportRank.adminLeaderboardEligible === true));
     const rankStyle = isRanked
       ? getRankStyle(activeSportRank?.eloPoints, activeSportRank?.tier?.name || activeSportRank?.tierName, category.name)
       : null;

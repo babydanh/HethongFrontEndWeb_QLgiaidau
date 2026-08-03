@@ -416,8 +416,9 @@ export default function ProfilePage() {
   const [matchesTotalPages, setMatchesTotalPages] = useState(1);
   const matchesCursorByPageRef = useRef<Record<number, string | null>>({ 1: null });
   const matchesCursorUserRef = useRef<string | null>(null);
-  const featuredRank = (userRankings?.publicRanks || [])
-    .filter((rank) => rank.matchesPlayed > 0)
+  const eligiblePublicRanks = (userRankings?.publicRanks || [])
+    .filter((rank) => rank.matchesPlayed > 0 || rank.adminLeaderboardEligible === true);
+  const featuredRank = eligiblePublicRanks
     .sort((a, b) => b.eloPoints - a.eloPoints)[0] || null;
 
   useEffect(() => {
@@ -652,7 +653,8 @@ export default function ProfilePage() {
                 );
               })}
               {(() => {
-                const activeRanks = userRankings?.publicRanks?.filter(r => r.matchesPlayed > 0 || r.adminLeaderboardEligible || r.eloPoints > 0) || [];
+                                const activeRanks = eligiblePublicRanks;
+
                 if (activeRanks.length > 0) {
                   return activeRanks.map((rank) => (
                     <div key={rank.id} className="flex items-center gap-1.5 shrink-0 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-md">
@@ -1369,9 +1371,11 @@ export default function ProfilePage() {
                     <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">{translate("eloRankTitle")}</h3>
                   </div>
 
-                  {userRankings?.publicRanks && userRankings.publicRanks.length > 0 ? (
+                                    {eligiblePublicRanks.length > 0 ? (
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {userRankings.publicRanks.map((rank) => (
+                                            {eligiblePublicRanks.map((rank) => (
+
                         <div key={rank.id} className="bg-white rounded-lg border border-slate-200 p-5 shadow-sm hover:shadow-md transition-all flex items-center justify-between group">
                           <div className="space-y-1.5 flex-1">
                             <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-slate-100 text-slate-550 border border-slate-200">

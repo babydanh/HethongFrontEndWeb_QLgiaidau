@@ -525,7 +525,18 @@ export default function DashboardPage() {
                     <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 py-2">
                       <div className="flex items-center justify-start min-w-0">
                         <ParticipantIdentity
-                          participant={upcomingMatch.participant1}
+                          participant={
+                            upcomingMatch.participant1
+                              ? {
+                                  ...upcomingMatch.participant1,
+                                  members: upcomingMatch.participant1.members?.map((m) => ({
+                                    userId: m.userId || '',
+                                    fullName: m.fullName ?? null,
+                                    avatarUrl: m.avatarUrl ?? null,
+                                  })),
+                                }
+                              : undefined
+                          }
                           fallback={translate("you")}
                         />
                       </div>
@@ -538,7 +549,18 @@ export default function DashboardPage() {
 
                       <div className="flex items-center justify-end min-w-0">
                         <ParticipantIdentity
-                          participant={upcomingMatch.participant2}
+                          participant={
+                            upcomingMatch.participant2
+                              ? {
+                                  ...upcomingMatch.participant2,
+                                  members: upcomingMatch.participant2.members?.map((m) => ({
+                                    userId: m.userId || '',
+                                    fullName: m.fullName ?? null,
+                                    avatarUrl: m.avatarUrl ?? null,
+                                  })),
+                                }
+                              : undefined
+                          }
                           fallback={translate("opponent")}
                           align="right"
                         />
@@ -565,7 +587,7 @@ export default function DashboardPage() {
                           const groupName = upcomingMatch.group?.name ? localizeTerm(upcomingMatch.group.name) : '';
                           const stageName = upcomingMatch.group?.stage?.name 
                             ? localizeTerm(upcomingMatch.group.stage.name)
-                            : (upcomingMatch.stage?.type ? localizeTerm(upcomingMatch.stage.type) : (upcomingMatch.stage?.name ? localizeTerm(upcomingMatch.stage.name) : ''));
+                            : (upcomingMatch.stage?.type ? localizeTerm(upcomingMatch.stage.type) : '');
 
                           if (groupName && stageName) {
                             return `${groupName} • ${stageName}`;

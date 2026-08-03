@@ -141,7 +141,7 @@ export function AdminHeader({ title, onOpenSidebar }: AdminHeaderProps) {
   };
 
   return (
-    <header className="relative z-[80] flex min-h-16 items-center justify-between gap-4 border-b border-slate-200 bg-white/95 px-4 backdrop-blur-md sm:px-6 md:px-8">
+    <header className="sticky top-0 z-30 shrink-0 flex h-16 items-center justify-between gap-4 border-b border-slate-200 bg-white/95 px-4 backdrop-blur-md sm:px-6 md:px-8">
       <div className="flex min-w-0 items-center gap-3">
         <button
           type="button"
@@ -289,7 +289,7 @@ export function AdminHeader({ title, onOpenSidebar }: AdminHeaderProps) {
           </AnimatePresence>
         </div>
 
-        <AdminSupportBell />
+        {isAdmin ? <AdminSupportBell /> : null}
 
         <div className="relative" ref={profileMenuRef}>
           <button

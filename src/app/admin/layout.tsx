@@ -80,6 +80,9 @@ export default function AdminLayout({
     .sort((left, right) => right.path.length - left.path.length)
     .find((item) => pathname === item.path || pathname.startsWith(`${item.path}/`));
   const pageTitle = activeItem ? layoutTranslate(activeItem.labelKey) : layoutTranslate('defaultTitle');
+  const canRenderCurrentRoute = isAdmin || MODERATOR_ALLOWED_PATHS.some(
+    (allowedPath) => pathname === allowedPath || pathname.startsWith(`${allowedPath}/`),
+  );
 
   const userId = user?.id;
 
@@ -217,7 +220,7 @@ export default function AdminLayout({
         <div className="flex h-screen min-w-0 flex-1 flex-col overflow-hidden">
           <AdminHeader title={pageTitle} onOpenSidebar={() => setIsSidebarOpen(true)} />
           <main className="relative z-0 flex-1 overflow-y-auto bg-slate-50 p-4 sm:p-6 md:p-8">
-            <div className="mx-auto max-w-7xl space-y-6">{children}</div>
+            <div className="mx-auto max-w-7xl space-y-6">{canRenderCurrentRoute ? children : null}</div>
           </main>
         </div>
       </div>

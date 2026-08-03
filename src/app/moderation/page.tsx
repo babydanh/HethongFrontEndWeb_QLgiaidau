@@ -78,7 +78,7 @@ export default function ModerationDashboardPage() {
         const [verifRes, commRes, changeRes, tourRes] = await Promise.allSettled([
           api.get<ApiResponse<any[]>>('/admin/verification-tickets?status=PENDING'),
           api.get<ApiResponse<any[]>>('/communities/pending'),
-          api.get<ApiResponse<any[]>>('/admin/change-requests?status=PENDING'),
+          api.get<ApiResponse<any[]>>('/users/admin/change-requests?status=PENDING'),
           api.get<ApiResponse<any[]>>('/admin/tournaments?status=PENDING_APPROVAL'),
         ]);
         setPendingCounts({

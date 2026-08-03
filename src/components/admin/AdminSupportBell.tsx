@@ -14,16 +14,26 @@ export function AdminSupportBell() {
   const [rooms, setRooms] = useState<AdminSupportRoom[]>([]);
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
+  const lastFetchRef = useRef<number>(0);
 
   const refresh = useCallback(async () => {
-    const nextRooms = await supportApi.getAdminRooms();
-    setRooms(nextRooms);
+    const now = Date.now();
+    // Throttle fetches to at most once every 5 seconds
+    if (now - lastFetchRef.current < 5000) return;
+    lastFetchRef.current = now;
+
+    try {
+      const nextRooms = await supportApi.getAdminRooms();
+      setRooms(nextRooms || []);
+    } catch {
+      // Silently ignore rate limit or temporary errors
+    }
   }, []);
 
   useEffect(() => {
     if (!userId) return;
 
-    const initialRefresh = window.setTimeout(() => void refresh(), 0);
+    const initialRefresh = window.setTimeout(() => void refresh(), 100);
 
     const socket = socketClient.refreshChatAuthentication();
     const subscribe = () => socket.emit('subscribeSupportInbox');
@@ -47,7 +57,8 @@ export function AdminSupportBell() {
       }
     };
     const handleFocus = () => void refreshQuietly();
-    const fallback = window.setInterval(() => void refreshQuietly(), 10000);
+    // Fallback interval: 60s is plenty since websocket pushes real-time events
+    const fallback = window.setInterval(() => void refreshQuietly(), 60000);
     window.addEventListener('focus', handleFocus);
     document.addEventListener('visibilitychange', handleFocus);
     return () => {
@@ -70,17 +81,18 @@ export function AdminSupportBell() {
   }, []);
 
   const unreadCount = useMemo(
-    () => rooms.reduce((total, room) => total + (room.unreadCount ?? 0), 0),
+    () => rooms.reduce((sum, room) => sum + (room.unreadCount || 0), 0),
     [rooms],
   );
 
   return (
-    <div ref={rootRef} className="relative z-[100]">
+    <div className="relative" ref={rootRef}>
       <button
         type="button"
-        aria-label={translate("supportNotifications")}
-        onClick={() => setOpen((current) => !current)}
-        className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:border-blue-300 hover:text-blue-700"
+        onClick={() => setOpen((prev) => !prev)}
+        className="relative inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-blue-500 cursor-pointer"
+        aria-label="Tin nhắn hỗ trợ từ người dùng"
+        title="Tin nhắn hỗ trợ từ người dùng"
       >
         <MessageSquareText className="h-5 w-5" />
         {unreadCount > 0 && (
@@ -91,71 +103,55 @@ export function AdminSupportBell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-12 z-[110] w-[min(360px,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
-          <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
-            <div>
-              <p className="font-bold text-slate-950">{translate('newSupportRequests')}</p>
-              <p className="text-xs text-slate-500">{translate('unreadSupportMessages', { count: unreadCount })}</p>
-            </div>
-            <MessageSquareText className="h-5 w-5 text-blue-600" />
+        <div className="absolute right-0 mt-2 w-80 rounded-2xl border border-slate-200 bg-white p-3 shadow-xl z-50">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+            <span className="text-xs font-bold text-slate-800">Tin nhắn hỗ trợ</span>
+            <Link
+              href="/admin/support"
+              onClick={() => setOpen(false)}
+              className="text-[11px] font-semibold text-blue-600 hover:underline"
+            >
+              Xem tất cả
+            </Link>
           </div>
-          <div className="max-h-80 overflow-y-auto p-2">
+
+          <div className="mt-2 max-h-72 space-y-1 overflow-y-auto">
             {rooms.length === 0 ? (
-              <p className="px-4 py-8 text-center text-sm text-slate-500">
-                {translate('noSupportRequests')}
-              </p>
+              <p className="py-6 text-center text-xs text-slate-400">Không có tin nhắn nào</p>
             ) : (
-              rooms.slice(0, 6).map((room) => {
-                const customer = room.participants[0];
-                return (
-                  <Link
-                    key={room.id}
-                    href={`/admin/support?room=${encodeURIComponent(room.id)}`}
-                    onClick={() => setOpen(false)}
-                    className="flex items-start gap-3 rounded-xl px-3 py-3 transition hover:bg-slate-50"
-                  >
-                    <span className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full bg-slate-100">
-                      {customer?.avatarUrl ? (
-                        <img
-                          src={customer.avatarUrl}
-                          alt={customer.fullName || customer.email || translate('user')}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <CircleUserRound className="h-full w-full p-1.5 text-slate-400" />
+              rooms.map((room) => (
+                <Link
+                  key={room.id}
+                  href={`/admin/support?roomId=${room.id}`}
+                  onClick={() => setOpen(false)}
+                  className={`flex items-start gap-2.5 rounded-xl p-2.5 transition ${
+                    room.unreadCount > 0 ? 'bg-blue-50/70 hover:bg-blue-100/70' : 'hover:bg-slate-50'
+                  }`}
+                >
+                  <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500">
+                    <CircleUserRound className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="truncate text-xs font-semibold text-slate-800">
+                        {room.participants?.[0]?.fullName || room.participants?.[0]?.email || room.name || 'Người dùng'}
+                      </span>
+                      {room.unreadCount > 0 && (
+                        <span className="rounded-full bg-rose-500 px-1.5 py-0.2 text-[9px] font-bold text-white">
+                          {room.unreadCount}
+                        </span>
                       )}
-                      {(room.unreadCount ?? 0) > 0 && (
-                        <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-blue-500 ring-2 ring-white" />
-                      )}
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-bold text-slate-900">
-                        {customer?.fullName || customer?.email || translate('user')}
-                      </span>
-                      <span className="mt-0.5 block truncate text-xs text-slate-500">
-                        {room.lastMessage?.content || translate('supportRequestOpened')}
-                      </span>
-                    </span>
-                    {(room.unreadCount ?? 0) > 0 && (
-                      <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-700">
-                        {room.unreadCount}
-                      </span>
-                    )}
-                  </Link>
-                );
-              })
+                    </div>
+                    <p className="mt-0.5 truncate text-[11px] text-slate-500">
+                      {room.lastMessage?.content || 'Bắt đầu cuộc trò chuyện'}
+                    </p>
+                  </div>
+                </Link>
+              ))
             )}
           </div>
-          <Link
-            href="/admin/support"
-            onClick={() => setOpen(false)}
-            className="block border-t border-slate-100 px-4 py-3 text-center text-sm font-bold text-blue-700 hover:bg-blue-50"
-          >
-            {translate('openSupportInbox')}
-          </Link>
         </div>
       )}
     </div>
   );
 }
-

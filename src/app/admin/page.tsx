@@ -86,7 +86,7 @@ export default function AdminDashboard() {
           api.get<ApiResponse<unknown[]>>('/communities/pending'),
           api.get<ApiResponse<unknown[]>>('/admin/verification-tickets?status=PENDING'),
           api.get<ApiResponse<PendingPayoutSummary[]>>('/payments/admin/payouts'),
-          api.get<ApiResponse<unknown[]>>('/admin/change-requests?status=PENDING'),
+          api.get<ApiResponse<unknown[]>>('/users/admin/change-requests?status=PENDING'),
         ]);
 
         const communities = commRes.status === 'fulfilled' ? getResponseItems(commRes.value).length : 0;

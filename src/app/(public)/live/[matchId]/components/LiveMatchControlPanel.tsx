@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Activity, AlertCircle, Check, Gavel, Play, Trophy } from 'lucide-react';
+import { Activity, AlertCircle, Check, Play, Trophy } from 'lucide-react';
 import { formatTennisPointDisplay } from '@/features/matches/live-score-state';
 import type {
   Match,
@@ -123,7 +123,6 @@ export function LiveMatchControlPanel({
               activeTab === 'score' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-500 hover:text-slate-800',
             )}
           >
-            <Activity className="h-4 w-4" />
             Tính điểm
           </button>
           <button
@@ -134,7 +133,6 @@ export function LiveMatchControlPanel({
               activeTab === 'penalty' ? 'bg-white text-amber-700 shadow-sm' : 'text-slate-500 hover:text-slate-800',
             )}
           >
-            <Gavel className="h-4 w-4" />
             Phạt / Lỗi
           </button>
         </div>
@@ -235,10 +233,10 @@ export function LiveMatchControlPanel({
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Chế độ trọng tài</p>
             <p className="mt-2 text-sm font-bold text-slate-900">
-              {overrideEnabled ? 'Chế độ ngoại lệ đang bật' : 'Bám luật mặc định'}
+              {overrideEnabled ? 'Ngoại lệ đang bật' : 'Theo luật mặc định'}
             </p>
             <p className="mt-1 text-xs font-medium text-slate-500">
-              Bật chế độ ngoại lệ khi trọng tài/BTC cần chốt điểm lệch preset chuẩn của môn, nhưng vẫn phải lưu lý do để audit.
+              Chỉ bật khi trọng tài/BTC cần chốt điểm khác luật mặc định và luôn phải ghi lý do.
             </p>
           </div>
           <button
@@ -267,7 +265,7 @@ export function LiveMatchControlPanel({
               placeholder="Ví dụ: trận chung kết áp dụng loạt phụ rút gọn theo thống nhất của trọng tài và BTC..."
             />
             <p className="text-xs font-medium text-amber-700">
-              Hệ thống sẽ lưu người quyết định, thời điểm và lý do vào audit log của trận.
+              Hệ thống sẽ lưu người quyết định, thời điểm và lý do của trận.
             </p>
           </div>
         ) : null}

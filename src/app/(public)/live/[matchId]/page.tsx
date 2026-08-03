@@ -544,6 +544,12 @@ export default function LiveMatchPage({ params }: Props) {
         newScores[activeIdx] = setObj;
       }
 
+      // KhÃ´ng cho nÃºt cÃ´ng vÆ°á»£t tráº§n preset. Ngoáº¡i lá»‡ pháº£i Ä‘Æ°á»£c báº­t vÃ  cÃ³ lÃ½ do trÆ°á»›c Ä‘Ã³.
+      if (!overrideEnabled && Math.max(newScores[activeIdx].team1Score, newScores[activeIdx].team2Score) > resolvedRules.maxPoints) {
+        toast.error(`Äiá»ƒm set khÃ´ng Ä‘Æ°á»£c vÆ°á»£t ${resolvedRules.maxPoints}. Báº­t ngoáº¡i lá»‡ náº¿u BTC/trá»ng tÃ i Ä‘Ã£ xÃ¡c nháº­n.`);
+        return;
+      }
+
       // Optimistic Update
       setScores(newScores);
       if (isTennis) {

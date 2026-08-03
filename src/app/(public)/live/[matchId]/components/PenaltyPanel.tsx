@@ -77,14 +77,14 @@ export function PenaltyPanel({
         </div>
       </div>
 
-      <div className="mt-3 space-y-3">
+      <div className="mt-3 space-y-2">
         {schema.groups.map((group) => (
           <div key={group.id} className="rounded-lg border border-slate-100 bg-slate-50 p-3">
             <div className="flex items-center justify-between gap-3">
               <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">{group.label}</p>
               <span className="text-[11px] font-semibold text-slate-500">{group.items.length} lựa chọn</span>
             </div>
-            <div className="mt-2 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+            <div className="mt-2 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
               {group.items.map((item) => {
                 const isSelected = effectivePenaltyKind === item.kind;
                 return (
@@ -110,15 +110,15 @@ export function PenaltyPanel({
                         </span>
                       ) : null}
                     </div>
-                    <p className="mt-1 hidden line-clamp-2 text-xs font-medium leading-relaxed text-slate-500 xl:block">{item.description}</p>
-                    <div className="mt-2 inline-flex rounded-full bg-slate-100 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-600">
+                    <p className="mt-1 hidden line-clamp-2 text-xs font-medium leading-relaxed text-slate-500 2xl:block">{item.description}</p>
+                    <div className="mt-2 inline-flex rounded-full bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-600">
                       {item.impact === 'point'
                         ? 'Ảnh hưởng điểm'
                         : item.impact === 'game'
                           ? 'Ảnh hưởng game'
                           : item.impact === 'set'
                             ? 'Ảnh hưởng set'
-                            : 'Ghi nhật ký'}
+                            : 'Chỉ lưu'}
                     </div>
                   </button>
                 );
@@ -128,7 +128,7 @@ export function PenaltyPanel({
         ))}
       </div>
 
-      <div className="mt-3 grid gap-2 md:grid-cols-[1fr_1fr_1.2fr_auto]">
+      <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1.2fr_auto]">
         <select
           value={selectedPenaltyTeam}
           onChange={(event) => setSelectedPenaltyTeam(event.target.value as PenaltyTeamSelection)}
@@ -174,7 +174,7 @@ export function PenaltyPanel({
           }}
           className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-bold text-white hover:bg-slate-800 disabled:opacity-50"
         >
-          Ghi hình phạt
+          Áp dụng
         </button>
       </div>
 

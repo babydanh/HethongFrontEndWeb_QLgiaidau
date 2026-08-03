@@ -27,7 +27,7 @@ import { Modal, ModalContent, ModalHeader, ModalTitle } from '@/components/ui/Mo
 import toast from 'react-hot-toast';
 import { ApiResponse } from '@/types/api';
 import { rankingsApi, PlayerRanking, EloHistoryLog } from '@/features/rankings/api';
-import { tournamentsApi, Tournament, BracketMatch, BracketStage } from '@/features/tournaments/api';
+import { tournamentsApi, Tournament, BracketMatch, BracketStage, WorkspaceRefereeInvite } from '@/features/tournaments/api';
 import { matchesApi, Match } from '@/features/matches/api';
 import { EloTierBadge } from '@/components/ui/EloTierBadge';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
@@ -224,6 +224,9 @@ export default function ProfilePage() {
   const [createdCommunities, setCreatedCommunities] = useState<Community[]>([]);
   const [joinedCommunities, setJoinedCommunities] = useState<Community[]>([]);
   const [participatingTournaments, setParticipatingTournaments] = useState<Tournament[]>([]);
+  const [organizedTournaments, setOrganizedTournaments] = useState<Tournament[]>([]);
+  const [coOrganizerTournaments, setCoOrganizerTournaments] = useState<Tournament[]>([]);
+  const [refereeTournaments, setRefereeTournaments] = useState<WorkspaceRefereeInvite[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'tournaments' | 'achievements' | 'matches' | 'elo'>(() => {
     if (typeof window !== 'undefined') {
@@ -316,6 +319,9 @@ export default function ProfilePage() {
           setCreatedCommunities(communitiesRes.data?.created || []);
           setJoinedCommunities(communitiesRes.data?.joined || []);
           setParticipatingTournaments(workspaceRes.data?.participatingTournaments || []);
+          setOrganizedTournaments(workspaceRes.data?.organizedTournaments || []);
+          setCoOrganizerTournaments(workspaceRes.data?.coOrganizerTournaments || []);
+          setRefereeTournaments(workspaceRes.data?.refereeTournaments || workspaceRes.data?.refereeInvites || []);
 
           // Sync roles/details with useAuthStore so header displays updated roles immediately
           if (data) {
@@ -927,6 +933,62 @@ export default function ProfilePage() {
                     </Link>
                   </div>
                 )}
+              </div>
+
+              <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6 space-y-5">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Vai trò giải đấu</h3>
+                    <p className="text-xs text-slate-500 mt-1">Tách rõ giải bạn sở hữu, tham gia và làm trọng tài.</p>
+                  </div>
+                  <Link href="/profile?tab=tournaments" className="text-xs font-bold text-blue-600 hover:text-blue-700">Xem chi tiết</Link>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+                  <div className="rounded-xl border border-violet-100 bg-violet-50/60 p-3">
+                    <p className="text-[11px] font-bold uppercase tracking-wide text-violet-700">Chủ giải</p>
+                    <p className="text-2xl font-black text-violet-900 mt-1">{organizedTournaments.length}</p>
+                    <div className="mt-2 space-y-1.5">
+                      {organizedTournaments.slice(0, 2).map((tournament) => (
+                        <Link key={tournament.id} href={`/tournaments/${tournament.id}`} className="block truncate text-xs font-semibold text-slate-700 hover:text-violet-700">{tournament.name}</Link>
+                      ))}
+                      {organizedTournaments.length === 0 && <p className="text-xs text-slate-500">Chưa tạo giải</p>}
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-purple-100 bg-purple-50/60 p-3">
+                    <p className="text-[11px] font-bold uppercase tracking-wide text-purple-700">Quản trị giải</p>
+                    <p className="text-2xl font-black text-purple-900 mt-1">{coOrganizerTournaments.length}</p>
+                    <div className="mt-2 space-y-1.5">
+                      {coOrganizerTournaments.slice(0, 2).map((tournament) => (
+                        <Link key={tournament.id} href={`/tournaments/${tournament.id}`} className="block truncate text-xs font-semibold text-slate-700 hover:text-purple-700">{tournament.name}</Link>
+                      ))}
+                      {coOrganizerTournaments.length === 0 && <p className="text-xs text-slate-500">Chưa được phân quyền</p>}
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-3">
+                    <p className="text-[11px] font-bold uppercase tracking-wide text-blue-700">Đã tham gia</p>
+                    <p className="text-2xl font-black text-blue-900 mt-1">{participatingTournaments.length}</p>
+                    <div className="mt-2 space-y-1.5">
+                      {participatingTournaments.slice(0, 2).map((tournament) => (
+                        <Link key={tournament.id} href={`/tournaments/${tournament.id}`} className="block truncate text-xs font-semibold text-slate-700 hover:text-blue-700">{tournament.name}</Link>
+                      ))}
+                      {participatingTournaments.length === 0 && <p className="text-xs text-slate-500">Chưa tham gia giải nào</p>}
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-amber-100 bg-amber-50/60 p-3">
+                    <p className="text-[11px] font-bold uppercase tracking-wide text-amber-700">Trọng tài</p>
+                    <p className="text-2xl font-black text-amber-900 mt-1">{refereeTournaments.length}</p>
+                    <div className="mt-2 space-y-1.5">
+                      {refereeTournaments.slice(0, 2).map((tournament) => (
+                        <Link key={tournament.tournamentId} href={`/tournaments/${tournament.tournamentId}`} className="block truncate text-xs font-semibold text-slate-700 hover:text-amber-700">{tournament.tournamentName}</Link>
+                      ))}
+                      {refereeTournaments.length === 0 && <p className="text-xs text-slate-500">Chưa được phân công</p>}
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6 text-center py-12 border-dashed">

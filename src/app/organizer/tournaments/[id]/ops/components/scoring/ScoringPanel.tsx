@@ -134,11 +134,15 @@ export function ScoringPanel({
   const p1Won = finishedSets.filter((set) => set.team1Score > set.team2Score).length;
   const p2Won = finishedSets.filter((set) => set.team2Score > set.team1Score).length;
   const hasEnteredScore = scoreDraft.sets.some((set) => set.team1Score !== 0 || set.team2Score !== 0);
-  const canSubmitScore = hasEnteredScore && !hasDrawnFinishedSet;
   const overrideEnabled = scoreDraft.overrideEnabled === true;
   const overrideReason = scoreDraft.overrideReason ?? '';
   const canSubmitWithOverride = !overrideEnabled || overrideReason.trim().length > 0;
+  const clampScore = (value: number) =>
+    overrideEnabled
+      ? Math.max(0, value)
+      : Math.min(resolvedRules.maxPoints, Math.max(0, value));
   const scoreWarnings = getScoreRuleWarnings(scoreDraft.sets, resolvedRules);
+  const canSubmitScore = hasEnteredScore && !hasDrawnFinishedSet && (overrideEnabled || scoreWarnings.length === 0);
   const activeSetSummary = activeSet
     ? `${scorePresentation.sequenceLabel.charAt(0).toUpperCase() + scorePresentation.sequenceLabel.slice(1)} hiện tại ${activeSet.team1Score} - ${activeSet.team2Score}${activeSet.isFinished ? ' (đã chốt)' : ' (đang mở)'}`
     : 'Chưa có ${scorePresentation.sequenceLabel} đang mở';
@@ -167,10 +171,10 @@ export function ScoringPanel({
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Chế độ trọng tài / BTC</p>
             <p className="mt-2 text-sm font-bold text-slate-900">
-              {overrideEnabled ? 'Chế độ ngoại lệ đang bật' : 'Đang bám cấu hình luật mặc định'}
+              {overrideEnabled ? 'Ngoại lệ đang bật' : 'Theo luật mặc định'}
             </p>
             <p className="mt-1 text-xs font-medium text-slate-500">
-              Chỉ bật khi cần chốt tỷ số khác preset chuẩn của môn. Hệ thống vẫn giữ ràng buộc cơ bản và lưu audit đầy đủ.
+              Chỉ bật khi cần chốt tỷ số khác luật mặc định. Hệ thống vẫn lưu đầy đủ người quyết định và lý do.
             </p>
           </div>
           <button
@@ -210,7 +214,7 @@ export function ScoringPanel({
               placeholder="Ví dụ: trận tranh hạng ba thống nhất chơi loạt phụ rút gọn theo quyết định trọng tài và BTC..."
             />
             <p className="text-xs font-medium text-amber-700">
-              Hệ thống sẽ ghi lại người quyết định, thời điểm và lý do ngoại lệ ngay trong scoreDetails/audit.
+              Hệ thống sẽ ghi lại người quyết định, thời điểm và lý do ngoại lệ của trận.
             </p>
           </div>
         ) : null}
@@ -354,7 +358,7 @@ export function ScoringPanel({
         {scoreDraft.sets.map((set, index) => (
           <div
             key={`score-row-${index}`}
-            className="grid grid-cols-[1fr_120px_120px] items-end gap-3 rounded-lg border border-slate-200 bg-white p-4"
+             className="grid gap-3 rounded-lg border border-slate-200 bg-white p-3 sm:grid-cols-[1fr_120px_120px] sm:p-4"
           >
             <div>
               <p className="text-sm font-bold text-slate-900">
@@ -443,6 +447,7 @@ export function ScoringPanel({
                 <input
                 type="number"
                 min={0}
+                max={overrideEnabled ? undefined : resolvedRules.maxPoints}
                 value={set.team1Score}
                 onChange={(event) =>
                   setScoreDraft((current) => ({
@@ -451,7 +456,7 @@ export function ScoringPanel({
                       itemIndex === index
                         ? {
                             ...item,
-                            team1Score: Number(event.target.value),
+                            team1Score: clampScore(Number(event.target.value)),
                           }
                         : item,
                     ),
@@ -466,6 +471,7 @@ export function ScoringPanel({
                 <input
                 type="number"
                 min={0}
+                max={overrideEnabled ? undefined : resolvedRules.maxPoints}
                 value={set.team2Score}
                 onChange={(event) =>
                   setScoreDraft((current) => ({
@@ -474,7 +480,7 @@ export function ScoringPanel({
                       itemIndex === index
                         ? {
                             ...item,
-                            team2Score: Number(event.target.value),
+                            team2Score: clampScore(Number(event.target.value)),
                           }
                         : item,
                     ),
@@ -507,7 +513,7 @@ export function ScoringPanel({
       ) : null}
       {overrideEnabled && !canSubmitWithOverride ? (
         <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-800">
-          Bật override thì bắt buộc phải nhập lý do để BTC và trọng tài tra cứu lại sau.
+          Đã bật ngoại lệ, cần nhập lý do để BTC và trọng tài tra cứu lại sau.
         </div>
       ) : null}
 

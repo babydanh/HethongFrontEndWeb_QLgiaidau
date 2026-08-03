@@ -106,6 +106,16 @@ export function useLiveMatch(matchId: string) {
       }
     };
 
+    // Socket.IO is the fast path. Reconcile every 12 seconds as a safety net
+    // for dropped events and reverse proxies that temporarily lose upgrades.
+    const reconciliationTimer = window.setInterval(() => {
+      void refreshMatchSnapshot();
+    }, 12000);
+
+    const handleReconnect = () => {
+      void refreshMatchSnapshot();
+    };
+
     if (!socket.connected) {
       socket.connect();
     }
@@ -162,6 +172,7 @@ export function useLiveMatch(matchId: string) {
     socket.on('score:update', handleScoreUpdate);
     socket.on('match:status', handleMatchStatus);
     socket.on('viewer:count', handleViewerCount);
+    socket.on('connect', handleReconnect);
 
     // Lắng nghe sự kiện cổ vũ real-time
     const handleCheerUpdate = (rawPayload: { matchId: string; cheerCount: number } | string) => {
@@ -181,7 +192,9 @@ export function useLiveMatch(matchId: string) {
       socket.off('score:update', handleScoreUpdate);
       socket.off('match:status', handleMatchStatus);
       socket.off('viewer:count', handleViewerCount);
+      socket.off('connect', handleReconnect);
       socket.off('cheer:update', handleCheerUpdate);
+      window.clearInterval(reconciliationTimer);
     };
   }, [matchId]);
 

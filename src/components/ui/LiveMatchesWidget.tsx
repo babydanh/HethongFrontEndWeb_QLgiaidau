@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { extractMatchScores } from '@/features/matches/score-display';
 import { BracketMatch } from '@/features/tournaments/api';
 import { matchesApi } from '@/features/matches/api';
+import { socketClient } from '@/lib/socket';
 import Link from 'next/link';
 import { isNetworkError } from '@/utils/error';
 import { getMatchRoundLabel, type TournamentFormatForRoundLabel } from '@/utils/match-round-label';
@@ -18,11 +19,20 @@ export default function LiveMatchesWidget({ limit = 5, showAllLink = true }: Pro
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    const socket = socketClient.getMatchSocket();
+    let latestItems: BracketMatch[] = [];
+    const joinVisibleMatches = (items: BracketMatch[]) => {
+      items.forEach((item) => socket.emit('joinMatch', item.id));
+    };
+
     const fetchLiveMatches = async () => {
       try {
         const res = await matchesApi.getMatches({ status: 'ONGOING', limit });
         if (res && res.data) {
-          setMatches(res.data as unknown as BracketMatch[]);
+          const items = res.data as unknown as BracketMatch[];
+          latestItems = items;
+          setMatches(items);
+          joinVisibleMatches(items);
         }
       } catch (error: unknown) {
         if (!isNetworkError(error)) {
@@ -35,9 +45,34 @@ export default function LiveMatchesWidget({ limit = 5, showAllLink = true }: Pro
     };
 
     fetchLiveMatches();
-    // Poll every 10 seconds for real-time live score updates
-    const timer = setInterval(fetchLiveMatches, 10000);
-    return () => clearInterval(timer);
+    if (!socket.connected) socket.connect();
+    const handleConnect = () => joinVisibleMatches(latestItems);
+
+    const handleMatchUpdate = (raw: BracketMatch | string) => {
+      const updated = typeof raw === 'string' ? JSON.parse(raw) as BracketMatch : raw;
+      if (!updated?.id) return;
+      setMatches((current) => {
+        if (updated.status && updated.status !== 'ONGOING') {
+          return current.filter((item) => item.id !== updated.id);
+        }
+        const exists = current.some((item) => item.id === updated.id);
+        return exists
+          ? current.map((item) => item.id === updated.id ? { ...item, ...updated } : item)
+          : [...current, updated];
+      });
+    };
+
+    socket.on('score:update', handleMatchUpdate);
+    socket.on('match:status', handleMatchUpdate);
+    socket.on('connect', handleConnect);
+    // Poll is only a reconciliation fallback; the socket is the fast path.
+    const timer = setInterval(fetchLiveMatches, 15000);
+    return () => {
+      clearInterval(timer);
+      socket.off('score:update', handleMatchUpdate);
+      socket.off('match:status', handleMatchUpdate);
+      socket.off('connect', handleConnect);
+    };
   }, [limit]);
 
   if (isLoading) {

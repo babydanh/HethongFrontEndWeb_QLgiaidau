@@ -522,6 +522,38 @@ export default function HomePage() {
     };
   }, []);
 
+  useEffect(() => {
+    const socket = socketClient.getMatchSocket();
+    const trackedMatches = [...liveMatches, ...upcomingMatches, ...completedMatches];
+    const joinTrackedMatches = () => {
+      trackedMatches.forEach((match) => socket.emit('joinMatch', match.id));
+    };
+    const applyMatchUpdate = (rawMatch: BracketMatch | string) => {
+      const updated = typeof rawMatch === 'string'
+        ? JSON.parse(rawMatch) as BracketMatch
+        : rawMatch;
+      if (!updated?.id) return;
+      const merge = (items: BracketMatch[]) => items.map((item) =>
+        item.id === updated.id ? { ...item, ...updated } : item,
+      );
+      setLiveMatches((items) => merge(items));
+      setUpcomingMatches((items) => merge(items));
+      setCompletedMatches((items) => merge(items));
+    };
+
+    socket.on('connect', joinTrackedMatches);
+    socket.on('score:update', applyMatchUpdate);
+    socket.on('match:status', applyMatchUpdate);
+    if (!socket.connected) socket.connect();
+    else joinTrackedMatches();
+
+    return () => {
+      socket.off('connect', joinTrackedMatches);
+      socket.off('score:update', applyMatchUpdate);
+      socket.off('match:status', applyMatchUpdate);
+    };
+  }, [liveMatches.length, upcomingMatches.length, completedMatches.length]);
+
   // High five / cheer handler — optimistic + persist qua API
   const handleHighFive = async (matchId: string) => {
     setHighFives(prev => ({

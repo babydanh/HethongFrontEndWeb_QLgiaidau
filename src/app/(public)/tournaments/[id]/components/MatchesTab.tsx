@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { extractMatchScores, getMatchScorePresentation, resolveMatchSportRules } from '@/features/matches/score-display';
 import { Tournament, BracketMatch } from '@/features/tournaments/api';
 import { matchesApi } from '@/features/matches/api';
+import { socketClient } from '@/lib/socket';
 import { Calendar, Play, Trophy, MapPin, Info, LayoutGrid, Search } from 'lucide-react';
 import Link from 'next/link';
 import { formatDateTime } from '@/utils/format';
@@ -91,6 +92,36 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
 
     fetchMatches();
   }, [divisionId, effectiveTournamentId, tournament.format, bracketSize]);
+
+  useEffect(() => {
+    const socket = socketClient.getMatchSocket();
+    const joinTournament = () => socket.emit('joinTournament', effectiveTournamentId);
+    const handleMatchUpdate = (rawMatch: BracketMatch | string) => {
+      const updated = typeof rawMatch === 'string'
+        ? JSON.parse(rawMatch) as BracketMatch
+        : rawMatch;
+      if (!updated?.id) return;
+
+      setMatches((current) => {
+        const index = current.findIndex((item) => item.id === updated.id);
+        if (index === -1) return current;
+        const next = [...current];
+        next[index] = { ...next[index], ...updated };
+        return next;
+      });
+    };
+
+    socket.on('connect', joinTournament);
+    socket.on('match:update', handleMatchUpdate);
+    if (!socket.connected) socket.connect();
+    else joinTournament();
+
+    return () => {
+      socket.off('connect', joinTournament);
+      socket.off('match:update', handleMatchUpdate);
+      socket.emit('leaveTournament', effectiveTournamentId);
+    };
+  }, [effectiveTournamentId]);
 
   // Extract unique rounds from current matches
   const roundOptions = useMemo(() => buildRoundFilterOptions(matches, tournament.format, bracketSize), [matches, tournament.format, bracketSize]);

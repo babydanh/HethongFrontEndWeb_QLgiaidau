@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Users, Search, UserPlus, MoreVertical, ShieldAlert, ShieldCheck, Trash2, Crown, Loader2, X, Ban } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { communitiesApi } from '@/features/communities/api';
@@ -45,6 +46,7 @@ export default function MembersTab({
   userId?: string;
   onMembershipChange?: () => void;
 }) {
+  const router = useRouter();
   const [members, setMembers] = useState<MemberData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -203,6 +205,17 @@ export default function MembersTab({
     return name.trim().charAt(0).toUpperCase();
   };
 
+  const openProfile = (targetUserId: string) => {
+    if (targetUserId) router.push(`/users/${targetUserId}`);
+  };
+
+  const handleProfileKeyDown = (event: React.KeyboardEvent, targetUserId: string) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      openProfile(targetUserId);
+    }
+  };
+
   const admins = members.filter(m => m.member?.role === 'OWNER' || m.member?.role === 'MODERATOR');
   const ordinaryMembers = members.filter(m => m.member?.role === 'MEMBER');
 
@@ -264,7 +277,12 @@ export default function MembersTab({
                   return (
                     <div 
                       key={item.member?.id} 
-                      className="flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100/70 border border-slate-200/60 rounded-lg transition-all relative"
+                      role="link"
+                      tabIndex={0}
+                      aria-label={`Xem hồ sơ ${item.user?.fullName}`}
+                      onClick={() => openProfile(item.user?.id)}
+                      onKeyDown={(event) => handleProfileKeyDown(event, item.user?.id)}
+                      className="flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100/70 border border-slate-200/60 rounded-lg transition-all relative cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
                     >
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 font-bold shrink-0 relative overflow-hidden">
@@ -283,7 +301,7 @@ export default function MembersTab({
                         </div>
                       </div>
                       
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2" onClick={(event) => event.stopPropagation()}>
                         {isOwnerRole ? (
                           <span className="px-2.5 py-1 bg-slate-50 text-slate-600 border border-slate-200 text-[11px] font-bold rounded-full flex items-center gap-1 shadow-sm">
                             <Crown className="w-3.5 h-3.5" /> Owner
@@ -367,7 +385,12 @@ export default function MembersTab({
                   return (
                     <div 
                       key={item.member?.id} 
-                      className="flex items-center justify-between p-3.5 bg-white border border-slate-200 rounded-lg hover:shadow-sm transition-all relative"
+                      role="link"
+                      tabIndex={0}
+                      aria-label={`Xem hồ sơ ${item.user?.fullName}`}
+                      onClick={() => openProfile(item.user?.id)}
+                      onKeyDown={(event) => handleProfileKeyDown(event, item.user?.id)}
+                      className="flex items-center justify-between p-3.5 bg-white border border-slate-200 rounded-lg hover:shadow-sm transition-all relative cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
                     >
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-bold shrink-0 relative overflow-hidden">
@@ -388,7 +411,7 @@ export default function MembersTab({
 
                       {/* Admin Controls for Mod/Owner on Ordinary Members */}
                       {isOwnerOrMod && !isUserTarget && (
-                        <div className="relative">
+                        <div className="relative" onClick={(event) => event.stopPropagation()}>
                           <button 
                             onClick={(e) => {
                               e.stopPropagation();

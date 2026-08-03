@@ -18,6 +18,7 @@ import type { OnScheduleMatch, OnSelectBracketMatch } from './types';
 import { CARD_W, CARD_H_PUBLIC, CARD_H_ORGANIZER, COL_GAP } from './types';
 import { buildMatchesByRound, isSlotBye } from './helpers';
 import { MatchCard } from './MatchCard';
+import { useBracketPanZoom } from './useBracketPanZoom';
 
 interface Props {
   upperMatches: BracketMatch[];
@@ -27,6 +28,7 @@ interface Props {
   selectedMatchId?: string | null;
   onSelectMatch?: OnSelectBracketMatch;
   fallbackSportRuleKind?: SportRuleKind;
+  panEnabled?: boolean;
 }
 
 export function DoubleElimView({
@@ -37,10 +39,14 @@ export function DoubleElimView({
   selectedMatchId,
   onSelectMatch,
   fallbackSportRuleKind,
+  panEnabled = false,
 }: Props) {
   const cardH = onScheduleMatch ? CARD_H_ORGANIZER : CARD_H_PUBLIC;
   const [zoom, setZoom] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const { pan, isDragging, resetPan, panHandlers } = useBracketPanZoom(panEnabled, (delta) => {
+    setZoom((current) => Math.min(1.5, Math.max(0.5, current + delta)));
+  });
 
   const ubByRound = buildMatchesByRound(upperMatches);
   const lbByRound = buildMatchesByRound(lowerMatches);
@@ -203,7 +209,10 @@ export function DoubleElimView({
           +
         </button>
         <button
-          onClick={() => setZoom(1)}
+          onClick={() => {
+            setZoom(1);
+            resetPan();
+          }}
           className="px-2.5 h-7 flex items-center justify-center hover:bg-slate-50 rounded-lg transition-colors cursor-pointer border border-slate-100"
           title="Đặt lại tỷ lệ"
         >
@@ -223,7 +232,9 @@ export function DoubleElimView({
       </div>
 
       <div
-        className={`overflow-x-auto overflow-y-auto pb-6 max-h-[80vh] no-scrollbar ${isFullscreen ? 'flex-1 max-h-none' : ''}`}
+        {...panHandlers}
+        className={`pb-6 max-h-[80vh] no-scrollbar ${isFullscreen ? 'flex-1 max-h-none' : ''} ${panEnabled ? (isDragging ? 'cursor-grabbing select-none' : 'cursor-grab') : 'overflow-x-auto overflow-y-auto'}`}
+        style={panEnabled ? { touchAction: 'none', overscrollBehavior: 'contain' } : undefined}
       >
         <div
           style={{
@@ -235,11 +246,11 @@ export function DoubleElimView({
         >
           <div
             style={{
-              transform: `scale(${zoom})`,
+              transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
               transformOrigin: 'top left',
               width: totalWidth,
               height: totalHeight,
-              transition: 'transform 0.15s ease-out',
+              transition: isDragging ? 'none' : 'transform 0.15s ease-out',
             }}
             className="absolute inset-0"
           >

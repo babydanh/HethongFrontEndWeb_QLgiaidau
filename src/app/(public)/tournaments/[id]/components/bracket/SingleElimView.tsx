@@ -15,6 +15,7 @@ import type { OnScheduleMatch, OnSelectBracketMatch } from './types';
 import { CARD_W, CARD_H_PUBLIC, CARD_H_ORGANIZER, COL_GAP } from './types';
 import { buildMatchesByRound, getRoundLabel, isSlotBye } from './helpers';
 import { MatchCard } from './MatchCard';
+import { useBracketPanZoom } from './useBracketPanZoom';
 
 interface Props {
   matches: BracketMatch[];
@@ -22,6 +23,7 @@ interface Props {
   selectedMatchId?: string | null;
   onSelectMatch?: OnSelectBracketMatch;
   fallbackSportRuleKind?: SportRuleKind;
+  panEnabled?: boolean;
 }
 
 export function SingleElimView({
@@ -30,10 +32,14 @@ export function SingleElimView({
   selectedMatchId,
   onSelectMatch,
   fallbackSportRuleKind,
+  panEnabled = false,
 }: Props) {
   const cardH = onScheduleMatch ? CARD_H_ORGANIZER : CARD_H_PUBLIC;
   const [zoom, setZoom] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const { pan, isDragging, resetPan, panHandlers } = useBracketPanZoom(panEnabled, (delta) => {
+    setZoom((current) => Math.min(1.5, Math.max(0.5, current + delta)));
+  });
 
   const byRound = buildMatchesByRound(matches);
   const rounds = Object.keys(byRound)
@@ -99,7 +105,10 @@ export function SingleElimView({
           +
         </button>
         <button
-          onClick={() => setZoom(1)}
+          onClick={() => {
+            setZoom(1);
+            resetPan();
+          }}
           className="px-2.5 h-9 flex items-center justify-center hover:bg-slate-50 rounded-lg transition-colors cursor-pointer border border-slate-100"
           title="Đặt lại tỷ lệ"
         >
@@ -119,7 +128,9 @@ export function SingleElimView({
       </div>
 
       <div
-        className={`overflow-x-auto overflow-y-auto pb-4 max-h-[80vh] no-scrollbar ${isFullscreen ? 'flex-1 max-h-none' : ''}`}
+        {...panHandlers}
+        className={`pb-4 max-h-[80vh] no-scrollbar ${isFullscreen ? 'flex-1 max-h-none' : ''} ${panEnabled ? (isDragging ? 'cursor-grabbing select-none' : 'cursor-grab') : 'overflow-x-auto overflow-y-auto'}`}
+        style={panEnabled ? { touchAction: 'none', overscrollBehavior: 'contain' } : undefined}
       >
         <div
           style={{
@@ -157,11 +168,11 @@ export function SingleElimView({
           {/* Interactive tree canvas */}
           <div
             style={{
-              transform: `scale(${zoom})`,
+              transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
               transformOrigin: 'top left',
               width: svgW,
               height: totalHeight,
-              transition: 'transform 0.15s ease-out',
+              transition: isDragging ? 'none' : 'transform 0.15s ease-out',
               marginTop: '44px',
             }}
             className="absolute"

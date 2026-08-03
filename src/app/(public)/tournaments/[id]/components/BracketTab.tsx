@@ -162,6 +162,7 @@ function GroupView({
           selectedMatchId={selectedMatchId}
           onSelectMatch={onSelectMatch}
           fallbackSportRuleKind={fallbackSportRuleKind}
+          panEnabled={viewMode === 'full'}
         />
       );
     }
@@ -182,6 +183,7 @@ function GroupView({
       selectedMatchId={selectedMatchId}
       onSelectMatch={onSelectMatch}
       fallbackSportRuleKind={fallbackSportRuleKind}
+      panEnabled={viewMode === 'full'}
     />
   );
 }
@@ -383,6 +385,7 @@ export default function BracketTab({
                     selectedMatchId={selectedMatchId}
                     onSelectMatch={onSelectMatch}
                     fallbackSportRuleKind={effectiveSportRuleKind}
+                    panEnabled={viewMode === 'full'}
                   />
                 );
               })()}

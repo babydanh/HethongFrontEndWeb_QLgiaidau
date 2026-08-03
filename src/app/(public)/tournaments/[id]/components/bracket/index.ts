@@ -42,3 +42,4 @@ export { PagedSingleElimView } from './PagedSingleElimView';
 export { PagedDoubleElimView } from './PagedDoubleElimView';
 export { PagedRoundRobinView } from './PagedRoundRobinView';
 export { tiebreakerSort } from './tiebreaker';
+export { useBracketPanZoom } from './useBracketPanZoom';

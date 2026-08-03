@@ -407,7 +407,7 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
   return (
     <div className="space-y-6">
       {/* Top Banner Card */}
-      <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-slate-50 via-white to-slate-50/50 p-6 md:p-8 shadow-sm">
+      <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-slate-50 via-white to-slate-50/50 p-4 shadow-sm sm:p-6 md:p-8">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-3.5">
             <div className="flex flex-wrap items-center gap-2">
@@ -467,7 +467,7 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
       </div>
 
       {/* Division Selector Section */}
-      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm space-y-4 sm:p-6">
         <div>
           <p className="text-xs font-bold uppercase tracking-wider text-slate-450">Nội dung thi đấu</p>
           <p className="text-xs text-slate-400 mt-1 font-semibold">Chọn division để xem chi tiết hàng chờ vận hành, danh sách đấu thủ, lịch thi đấu và giải quyết xung đột theo ngữ cảnh.</p>
@@ -506,7 +506,7 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
         )}
       </div>
 
-      <div className="sticky top-20 z-30 rounded-lg border border-slate-200 bg-white/95 p-2 shadow-sm backdrop-blur">
+      <div className="sticky top-16 z-30 rounded-lg border border-slate-200 bg-white/95 p-2 shadow-sm backdrop-blur lg:top-20">
         <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
           {([
             { id: 'OVERVIEW', label: 'Tổng quan', icon: BarChart3 },
@@ -537,7 +537,7 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
       </div>
 
       {activePageTab === 'BRACKET' ? (
-      <div ref={bracketSectionRef} className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div ref={bracketSectionRef} className="min-w-0 rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:p-6">
         <div className="mb-5 space-y-1">
           <h2 className="text-xl font-bold text-slate-900">Sơ đồ thi đấu điều phối trực tiếp</h2>
           <p className="text-sm font-medium text-slate-500">

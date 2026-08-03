@@ -134,12 +134,12 @@ export function PagedSingleElimView({
     <div
       className={
         isFullscreen
-          ? 'fixed inset-0 z-50 bg-slate-50 p-6 overflow-hidden flex flex-col gap-4'
-          : 'relative flex flex-col gap-4 w-full'
+          ? 'fixed inset-0 z-50 flex flex-col gap-3 overflow-hidden bg-slate-50 p-2 sm:gap-4 sm:p-6'
+          : 'relative flex min-w-0 w-full flex-col gap-4'
       }
     >
       {/* Top Navigation & Controls Bar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-50/90 border border-slate-200 rounded-xl px-4 py-3 shadow-sm">
+      <div className="flex min-w-0 flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50/90 px-3 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:px-4">
         <div className="flex items-center gap-2.5">
           <Trophy className="w-4 h-4 text-blue-600 shrink-0" />
           <div>
@@ -153,26 +153,28 @@ export function PagedSingleElimView({
         </div>
 
         {/* Navigation Arrows & Zoom */}
-        <div className="flex items-center justify-between sm:justify-end gap-2">
+        <div className="grid min-w-0 grid-cols-2 gap-2 sm:flex sm:items-center sm:justify-end">
           <button
             onClick={() => setActiveRoundIndex(Math.max(activeRoundIndex - 1, 0))}
             disabled={activeRoundIndex === 0}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 disabled:opacity-40 text-xs font-bold text-slate-700 transition-all shadow-sm cursor-pointer"
+            className="flex min-w-0 items-center justify-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-2 text-xs font-bold text-slate-700 shadow-sm transition-all hover:bg-slate-100 disabled:opacity-40 sm:px-3 sm:py-1.5"
           >
-            <ChevronLeft className="w-4 h-4" /> Vòng trước
+            <ChevronLeft className="h-4 w-4 shrink-0" />
+            <span className="sm:hidden">Trước</span><span className="hidden sm:inline">Vòng trước</span>
           </button>
           <button
             onClick={() => setActiveRoundIndex(Math.min(activeRoundIndex + 1, rounds.length - 1))}
             disabled={activeRoundIndex === rounds.length - 1}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-xs font-bold text-white transition-all shadow-sm cursor-pointer"
+            className="flex min-w-0 items-center justify-center gap-1 rounded-lg bg-blue-600 px-2 py-2 text-xs font-bold text-white shadow-sm transition-all hover:bg-blue-700 disabled:opacity-40 sm:px-3 sm:py-1.5"
           >
-            Vòng tiếp <ChevronRight className="w-4 h-4" />
+            <span className="sm:hidden">Sau</span><span className="hidden sm:inline">Vòng tiếp</span>
+            <ChevronRight className="h-4 w-4 shrink-0" />
           </button>
 
-          <div className="h-4 w-px bg-slate-200 mx-1" />
+          <div className="col-span-2 hidden h-px w-full bg-slate-200 sm:block sm:h-4 sm:w-px" />
 
           {/* Zoom controls */}
-          <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg p-0.5 text-xs font-bold text-slate-600 shadow-sm">
+          <div className="col-span-2 flex min-w-0 items-center justify-center gap-1 rounded-lg border border-slate-200 bg-white p-0.5 text-xs font-bold text-slate-600 shadow-sm sm:col-span-1">
             <button
               onClick={() => setZoom((z) => Math.max(z - 0.1, 0.6))}
               className="w-7 h-7 flex items-center justify-center hover:bg-slate-50 rounded text-slate-700"
@@ -203,7 +205,7 @@ export function PagedSingleElimView({
 
       {/* GPU-Accelerated Adaptive Tree Viewport */}
       <div
-        className={`overflow-x-auto overflow-y-auto border border-slate-200/80 bg-slate-50/40 rounded-xl p-4 shadow-inner no-scrollbar ${
+        className={`min-h-0 min-w-0 touch-pan-x touch-pan-y overflow-x-auto overflow-y-auto rounded-xl border border-slate-200/80 bg-slate-50/40 p-2 shadow-inner no-scrollbar sm:p-4 ${
           isFullscreen ? 'flex-1 max-h-none' : ''
         }`}
       >

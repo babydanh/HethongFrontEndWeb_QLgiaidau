@@ -296,26 +296,26 @@ export default function BracketTab({
         </div>
 
         {/* View Mode Switcher */}
-        <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200/80 shadow-inner self-end sm:self-auto">
+        <div className="grid w-full grid-cols-2 items-center gap-1.5 rounded-xl border border-slate-200/80 bg-slate-100 p-1 shadow-inner sm:w-auto">
           <button
             onClick={() => setViewMode('paged')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+            className={`flex min-w-0 items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-[11px] font-bold transition-all cursor-pointer sm:px-3 sm:py-1.5 sm:text-xs ${
               viewMode === 'paged'
                 ? 'bg-blue-600 text-white shadow-sm'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
             }`}
           >
-            <LayoutGrid className="w-3.5 h-3.5" /> Xem theo Vòng
+            <LayoutGrid className="h-3.5 w-3.5 shrink-0" /> <span className="truncate">Theo vòng</span>
           </button>
           <button
             onClick={() => setViewMode('full')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+            className={`flex min-w-0 items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-[11px] font-bold transition-all cursor-pointer sm:px-3 sm:py-1.5 sm:text-xs ${
               viewMode === 'full'
                 ? 'bg-blue-600 text-white shadow-sm'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
             }`}
           >
-            <Maximize2 className="w-3.5 h-3.5" /> Xem Full sơ đồ
+            <Maximize2 className="h-3.5 w-3.5 shrink-0" /> <span className="truncate">Full sơ đồ</span>
           </button>
         </div>
       </div>

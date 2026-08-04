@@ -83,9 +83,9 @@ function HlsVideoPlayer({ src }: { src: string }) {
       playsInline
       autoPlay
       muted
-    />
-  );
 }
+
+type ScoreUpdatePayload = Parameters<typeof matchesApi.updateScore>[1];
 
 interface Props {
   params: Promise<{ matchId: string }>;

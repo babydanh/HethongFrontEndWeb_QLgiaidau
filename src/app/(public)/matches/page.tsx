@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Search, ChevronDown, Play, Trophy, Heart, Share2, X, SlidersHorizontal, Eye, EyeOff } from 'lucide-react';
+import { motion } from 'framer-motion';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { matchesApi, type Match } from '@/features/matches/api';
@@ -203,6 +204,28 @@ export default function MatchesListPage() {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [activeShareUrl, setActiveShareUrl] = useState('');
   const [activeShareTitle, setActiveShareTitle] = useState('');
+  const [matchesRefreshTick, setMatchesRefreshTick] = useState(0);
+  const matchesRequestInFlightRef = useRef(false);
+
+  useEffect(() => {
+    const refreshWhenReady = () => {
+      if (document.visibilityState === 'visible') {
+        setMatchesRefreshTick((value) => value + 1);
+      }
+    };
+
+    const interval = window.setInterval(refreshWhenReady, 60000);
+    document.addEventListener('visibilitychange', refreshWhenReady);
+    window.addEventListener('focus', refreshWhenReady);
+    window.addEventListener('online', refreshWhenReady);
+
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener('visibilitychange', refreshWhenReady);
+      window.removeEventListener('focus', refreshWhenReady);
+      window.removeEventListener('online', refreshWhenReady);
+    };
+  }, []);
 
   // Load danh mục môn thể thao và tỉnh thành
   useEffect(() => {
@@ -273,8 +296,12 @@ export default function MatchesListPage() {
 
   // Fetch danh sách trận đấu dựa trên bộ lọc
   useEffect(() => {
+    if (matchesRequestInFlightRef.current) return;
+    matchesRequestInFlightRef.current = true;
+
     const fetchMatches = async () => {
-      setIsLoading(true);
+      // Keep the last successful feed visible during background refreshes.
+      setIsLoading(matches.length === 0);
       try {
         // Map lựa chọn nội dung đấu sang matchType + genderRestriction
         let matchType: string | undefined;
@@ -321,10 +348,11 @@ export default function MatchesListPage() {
         console.error('Failed to fetch matches', error);
       } finally {
         setIsLoading(false);
+        matchesRequestInFlightRef.current = false;
       }
     };
     fetchMatches();
-  }, [searchTerm, selectedCategoryId, selectedStatus, selectedContent, selectedBracketType, startDate, endDate, selectedProvince, selectedDistrict, isRanked]);
+  }, [searchTerm, selectedCategoryId, selectedStatus, selectedContent, selectedBracketType, startDate, endDate, selectedProvince, selectedDistrict, isRanked, matchesRefreshTick]);
 
   // Fetch cheer counts for all visible matches
   useEffect(() => {
@@ -1299,7 +1327,7 @@ export default function MatchesListPage() {
                             <span>Chia sẻ</span>
                           </button>
                         </div>
-                      </div>
+                      </motion.div>
                     );
                   })}
                 </div>

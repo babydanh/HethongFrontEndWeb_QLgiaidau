@@ -291,9 +291,9 @@ export function Header() {
             <Image
               src="/vndcsport.svg"
               alt="VNDC Sport Logo"
-              width={140}
-              height={40}
-              className="h-10 w-auto object-contain transition-transform duration-200 hover:scale-105"
+              width={160}
+              height={56}
+              className="h-12 md:h-14 w-auto object-contain transition-transform duration-200 hover:scale-105"
             />
           </Link>
 

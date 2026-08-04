@@ -894,23 +894,23 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
       ) : null}
 
       {activePageTab === 'OPERATIONS' ? (
-      <OperationsWorkspace
-        participants={participants}
-        matches={matches}
-        referees={referees}
-        activeParticipantActionId={activeParticipantActionId}
-        activeMatchActionId={activeMatchActionId}
-        focusedMatchId={focusedMatchId}
-        onFocusMatch={handleFocusMatchOnBracket}
-        matchInsights={matchInsights}
-        activityLog={activityLog}
-        error={error}
-        onKickParticipant={kickParticipant}
-        onUpdateMatchSchedule={handleOpsUpdateMatchSchedule}
-        tournamentSportRules={tournament.sportRules ?? null}
-        tournamentStatus={tournament.status}
-        onApplyMatchOperation={handleOpsApplyMatchOperation}
-      />
+        <OperationsWorkspace
+          participants={participants}
+          matches={matches}
+          referees={referees}
+          activeParticipantActionId={activeParticipantActionId}
+          activeMatchActionId={activeMatchActionId}
+          focusedMatchId={focusedMatchId}
+          onFocusMatch={handleFocusMatchOnBracket}
+          matchInsights={matchInsights}
+          activityLog={activityLog}
+          error={error}
+          onKickParticipant={kickParticipant}
+          onUpdateMatchSchedule={handleOpsUpdateMatchSchedule}
+          tournamentSportRules={tournament.sportRules ?? null}
+          tournamentStatus={tournament.status}
+          onApplyMatchOperation={handleOpsApplyMatchOperation}
+        />
       ) : null}
 
       {activePageTab === 'CAMERA' ? (
@@ -919,56 +919,11 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
             <h2 className="text-xl font-bold text-slate-900">Gán camera theo trận đấu</h2>
             <p className="text-sm font-semibold text-slate-500">
               BTC chọn camera theo từng trận. Trọng tài được phân công mới có thể bắt đầu hoặc dừng phát trực tiếp.
-                      className="w-full rounded-lg border p-2 text-sm"
-                    />
-                  </div>
-                )}
-                <div className="col-span-2 flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={bracketManager.stageSuperTiebreakEnabled}
-                    onChange={(e) => bracketManager.setStageSuperTiebreakEnabled(e.target.checked)}
-                  />
-                  <label className="text-xs font-bold text-slate-500">
-                    {supportsTiebreakInput ? `Bật ${sportPresentation.tiebreakLabel.toLowerCase()} cho vòng này` : 'Super tie-break cho vòng này'}
-                  </label>
-                </div>
-                {bracketManager.stageSuperTiebreakEnabled && (
-                  <div className="col-span-2">
-                    <label className="text-xs font-bold text-slate-500">{sportPresentation.tiebreakLabel}</label>
-                    <input
-                      type="number"
-                      value={bracketManager.stageSuperTiebreakPoints}
-                      onChange={(e) => bracketManager.setStageSuperTiebreakPoints(Number(e.target.value))}
-                      className="w-full rounded-lg border p-2 text-sm"
-                    />
-                  </div>
-                )}
-                <div className="col-span-2">
-                  <label className="text-xs font-bold text-slate-500">Ghi chú điều phối vòng này</label>
-                  <textarea
-                    value={bracketManager.stageNotificationNote}
-                    onChange={(e) => bracketManager.setStageNotificationNote(e.target.value)}
-                    className="min-h-20 w-full rounded-lg border p-2 text-sm"
-                    placeholder="Ví dụ: ưu tiên gọi đồng loạt ở sân trung tâm lúc 08:00"
-                  />
-                </div>
-                <div className="col-span-2 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-xs font-medium text-slate-600">
-                  {sportPresentation.roundConfigHint}
-                  {isPickleballSideOut ? ' Với side-out, cấu hình này mới áp vào kết quả game; chưa khóa theo lượt giao bóng.' : ''}
-                </div>
-              </div>
-              <Button
-                onClick={handleBracketSaveStageDetails}
-                disabled={bracketManager.isSavingStage}
-                className="rounded-lg bg-blue-600 px-4 py-2 font-bold text-white"
-              >
-                {bracketManager.isSavingStage ? 'Đang lưu...' : 'Lưu cấu hình'}
-              </Button>
-            </div>
-          </ModalContent>
-        </Modal>
-      )}
+            </p>
+          </div>
+          <LivestreamTab tournament={bracketManager.tournament ?? tournament} bracket={bracketManager.bracket} />
+        </section>
+      ) : null}
 
       {bracketManager.selectedMatch && (
         <Modal

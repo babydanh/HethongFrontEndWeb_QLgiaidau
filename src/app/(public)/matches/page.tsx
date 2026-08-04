@@ -1134,7 +1134,7 @@ export default function MatchesListPage() {
                                                     match.participant1?.members?.[0]?.elo?.eloPoints ?? 
                                                     1000;
                                         return (
-                                          <span className="text-[9px] font-bold text-blue-650 bg-blue-50/60 px-1.5 py-0.5 rounded-full border border-blue-100/55 block w-max mt-1">
+                                          <span className="text-[9px] font-bold text-slate-900 bg-slate-100/80 px-1.5 py-0.5 rounded-full border border-slate-200/70 block w-max mt-1">
                                             ELO: {elo}
                                           </span>
                                         );
@@ -1160,7 +1160,7 @@ export default function MatchesListPage() {
                                             ? Math.round(validMembers.reduce((acc: number, m) => acc + (m.elo?.eloPoints || 1000), 0) / validMembers.length)
                                             : null;
                                           return pairElo !== null ? (
-                                            <span className="text-[9px] font-bold text-blue-650 bg-blue-50/80 px-1.5 py-0.5 rounded-full border border-blue-150 block w-max mt-1">
+                                            <span className="text-[9px] font-bold text-slate-900 bg-slate-100/80 px-1.5 py-0.5 rounded-full border border-slate-200/70 block w-max mt-1">
                                               ELO Cặp: {pairElo}
                                             </span>
                                           ) : null;
@@ -1211,7 +1211,7 @@ export default function MatchesListPage() {
                                                     match.participant2?.members?.[0]?.elo?.eloPoints ?? 
                                                     1000;
                                         return (
-                                          <span className="text-[9px] font-bold text-blue-650 bg-blue-50/60 px-1.5 py-0.5 rounded-full border border-blue-100/55 block w-max mt-1">
+                                          <span className="text-[9px] font-bold text-slate-900 bg-slate-100/80 px-1.5 py-0.5 rounded-full border border-slate-200/70 block w-max mt-1">
                                             ELO: {elo}
                                           </span>
                                         );
@@ -1237,7 +1237,7 @@ export default function MatchesListPage() {
                                             ? Math.round(validMembers.reduce((acc: number, m) => acc + (m.elo?.eloPoints || 1000), 0) / validMembers.length)
                                             : null;
                                           return pairElo !== null ? (
-                                            <span className="text-[9px] font-bold text-blue-650 bg-blue-50/80 px-1.5 py-0.5 rounded-full border border-blue-150 block w-max mt-1">
+                                            <span className="text-[9px] font-bold text-slate-900 bg-slate-100/80 px-1.5 py-0.5 rounded-full border border-slate-200/70 block w-max mt-1">
                                               ELO Cặp: {pairElo}
                                             </span>
                                           ) : null;

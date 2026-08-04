@@ -89,6 +89,18 @@ function HlsVideoPlayer({ src }: { src: string }) {
 
 type ScoreUpdatePayload = Parameters<typeof matchesApi.updateScore>[1];
 
+/**
+ * Wrapper for PATCH /matches/:id/score that:
+ * - injects expectedRevision (optimistic lock, NOTE-7/D3) from the current
+ *   match snapshot so a stale device write cannot overwrite a newer one;
+ * - surfaces 409 (score changed from another device) with a refresh hint
+ *   instead of silently retrying.
+ */
+function isConflict409(err: unknown): boolean {
+  const status = (err as { response?: { status?: number } })?.response?.status;
+  return status === 409;
+}
+
 interface Props {
   params: Promise<{ matchId: string }>;
 }
@@ -99,6 +111,19 @@ export default function LiveMatchPage({ params }: Props) {
   const matchId = resolvedParams.matchId;
   const { match, scores, viewerCount, cheerCount, setCheerCount, setMatch, setScores, isLoading, error } = useLiveMatch(matchId);
   const { user } = useAuthStore();
+
+  /**
+   * Single choke point for PATCH /matches/:id/score (NOTE-7/D3): injects the
+   * current snapshot revision as expectedRevision so a stale device write is
+   * rejected server-side with 409 instead of silently overwriting newer data.
+   */
+  const updateScoreWithRevision = async (payload: ScoreUpdatePayload) => {
+    const revision = match?.revision;
+    return matchesApi.updateScore(matchId, {
+      ...payload,
+      ...(revision !== undefined ? { expectedRevision: revision } : {}),
+    });
+  };
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCommentSubmitting, setIsCommentSubmitting] = useState(false);
   const [overrideEnabled, setOverrideEnabled] = useState(false);
@@ -568,16 +593,29 @@ export default function LiveMatchPage({ params }: Props) {
     setIsSubmitting(true);
 
     try {
-      const response = await matchesApi.updateScore(matchId, payload);
-      // Do not overwrite a newer local tap with an older server response.
-      if (!pendingScorePayloadRef.current) {
-        applyServerSnapshot(response);
-      }
-      toast.success('Đã đồng bộ điểm live.', { id: `score-sync-${matchId}` });
-    } catch (err: unknown) {
-      console.error(err);
-      toast.error(getErrorMessage(err, 'Không thể đồng bộ điểm live.'), { id: `score-sync-${matchId}` });
-    } finally {
+          const response = await updateScoreWithRevision(payload);
+          // Do not overwrite a newer local tap with an older server response.
+          if (!pendingScorePayloadRef.current) {
+            applyServerSnapshot(response);
+          }
+          toast.success('Đã đồng bộ điểm live.', { id: `score-sync-${matchId}` });
+        } catch (err: unknown) {
+          console.error(err);
+          // 409 (NOTE-7/D3): another device changed the score first — do not blind
+          // retry; ask the user to refresh, then let the snapshot reconcile.
+          if (isConflict409(err)) {
+            // 409 (NOTE-7/D3): another device changed the score first — do not
+            // blind retry; refetch the server snapshot and let the user continue
+            // from the freshest state.
+            const fresh = await matchesApi.getMatchById(matchId);
+            toast('Điểm đã thay đổi từ thiết bị khác. Đã làm mới số liệu.', {
+              icon: '⚠️',
+              id: `score-sync-${matchId}`,
+            });
+          } else {
+            toast.error(getErrorMessage(err, 'Không thể đồng bộ điểm live.'), { id: `score-sync-${matchId}` });
+          }
+        } finally {
       scoreSyncInFlightRef.current = false;
       setIsSubmitting(false);
       if (pendingScorePayloadRef.current) {
@@ -711,7 +749,7 @@ export default function LiveMatchPage({ params }: Props) {
       }
 
       if (scoreUpdatePayload) {
-        await matchesApi.updateScore(matchId, scoreUpdatePayload);
+        await updateScoreWithRevision(scoreUpdatePayload);
       }
 
       const res = await matchesApi.updateStatus(matchId, { status: newStatus });
@@ -783,7 +821,7 @@ export default function LiveMatchPage({ params }: Props) {
         setOptimisticTennisPointState(nextTennisPointState);
       }
 
-      const res = await matchesApi.updateScore(matchId, {
+      const res = await updateScoreWithRevision({
         p1SetsWon: nextSetsWon.p1SetsWon,
         p2SetsWon: nextSetsWon.p2SetsWon,
         scoreDetails: buildScoreDetailsPayload(newScores, sideOutState, nextTennisPointState),
@@ -854,7 +892,7 @@ export default function LiveMatchPage({ params }: Props) {
       }
 
       // Update score and winner
-      const completedMatch = await matchesApi.updateScore(matchId, {
+      const completedMatch = await updateScoreWithRevision({
         p1SetsWon: nextSetsWon.p1SetsWon,
         p2SetsWon: nextSetsWon.p2SetsWon,
         scoreDetails: buildScoreDetailsPayload(newScores, sideOutState, null),
@@ -887,7 +925,7 @@ export default function LiveMatchPage({ params }: Props) {
     try {
       const nextState: PickleballSideOutState = setServingTeamSideOutState(team);
       const nextSetsWon = deriveSetsWon(scores);
-      const res = await matchesApi.updateScore(matchId, {
+      const res = await updateScoreWithRevision({
         p1SetsWon: nextSetsWon.p1SetsWon,
         p2SetsWon: nextSetsWon.p2SetsWon,
         scoreDetails: buildScoreDetailsPayload(scores, nextState),
@@ -923,7 +961,7 @@ export default function LiveMatchPage({ params }: Props) {
       const nextState: PickleballSideOutState = computeNextSideOutState(sideOutState);
       const nextSetsWon = deriveSetsWon(scores);
 
-      const res = await matchesApi.updateScore(matchId, {
+      const res = await updateScoreWithRevision({
         p1SetsWon: nextSetsWon.p1SetsWon,
         p2SetsWon: nextSetsWon.p2SetsWon,
         scoreDetails: buildScoreDetailsPayload(scores, nextState),
@@ -974,7 +1012,7 @@ export default function LiveMatchPage({ params }: Props) {
       ];
       const nextSetsWon = deriveSetsWon(scores);
 
-      const res = await matchesApi.updateScore(matchId, {
+      const res = await updateScoreWithRevision({
         p1SetsWon: nextSetsWon.p1SetsWon,
         p2SetsWon: nextSetsWon.p2SetsWon,
         scoreDetails: buildScoreDetailsPayload(scores, sideOutState, tennisPointState, nextPenalties),

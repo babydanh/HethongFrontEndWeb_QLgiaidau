@@ -814,9 +814,9 @@ export default function HomePage() {
           </div>
         </Link>
 
-        {/* Interactive Footer (Heart & Share only) */}
-        <div className="px-3 py-1.5 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between relative z-10">
-          {/* Cổ vũ icon-only */}
+        {/* Interactive Footer (Heart & Share aligned to the right with larger click area) */}
+        <div className="px-3 py-1 bg-slate-50/50 border-t border-slate-100 flex items-center justify-end gap-1.5 relative z-10">
+          {/* Cổ vũ icon-only (Larger click target) */}
           <button 
             onClick={(e) => {
               e.preventDefault();
@@ -824,13 +824,13 @@ export default function HomePage() {
               handleHighFive(match.id);
             }}
             title={`Cổ vũ (${currentHighFives})`}
-            className="flex items-center justify-center p-1.5 hover:bg-white rounded-lg text-slate-600 transition-all border border-transparent hover:border-slate-200 active:scale-95 duration-100 cursor-pointer shrink-0"
+            className="flex items-center justify-center px-2.5 py-1 hover:bg-white rounded-md text-slate-600 transition-all border border-transparent hover:border-slate-200 active:scale-95 duration-100 cursor-pointer shrink-0"
           >
             <Heart className="w-4 h-4 text-rose-500 fill-rose-500/10" />
             <span className="text-[11px] font-bold text-slate-600 ml-1">({currentHighFives})</span>
           </button>
 
-          {/* Chia sẻ icon-only */}
+          {/* Chia sẻ icon-only (Larger click target) */}
           <button
             onClick={(e) => {
               e.preventDefault();
@@ -842,7 +842,7 @@ export default function HomePage() {
               setIsShareModalOpen(true);
             }}
             title="Chia sẻ trận đấu"
-            className="flex items-center justify-center p-1.5 hover:bg-white rounded-lg text-slate-600 transition-all border border-transparent hover:border-slate-200 active:scale-95 duration-100 cursor-pointer shrink-0"
+            className="flex items-center justify-center px-2.5 py-1 hover:bg-white rounded-md text-slate-600 transition-all border border-transparent hover:border-slate-200 active:scale-95 duration-100 cursor-pointer shrink-0"
           >
             <Share2 className="w-4 h-4 text-blue-500" />
           </button>

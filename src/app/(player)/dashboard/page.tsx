@@ -84,7 +84,8 @@ export default function DashboardPage() {
     setIsLiteLoading(true);
     try {
       const commRes = await communitiesApi.getMyCommunities();
-      const allMine = [...(commRes?.created || []), ...(commRes?.joined || [])];
+      const myData = commRes?.data;
+      const allMine = [...(myData?.created || []), ...(myData?.joined || [])];
       if (allMine.length === 0) {
         setShowNoClubModal(true);
       } else {

@@ -210,7 +210,7 @@ export function ReportViolationButton({
               {form.formState.errors.evidenceText ? (
                 <p className="mt-1 text-xs font-semibold text-rose-600">{form.formState.errors.evidenceText.message}</p>
               ) : (
-                <p className="mt-1 text-xs text-slate-500">Bạn có thể dán link trực tiếp hoặc bấm "Tải ảnh / file lên" để chọn tệp từ máy.</p>
+                <p className="mt-1 text-xs text-slate-500">Bạn có thể dán link trực tiếp hoặc bấm &quot;Tải ảnh / file lên&quot; để chọn tệp từ máy.</p>
               )}
             </div>
 

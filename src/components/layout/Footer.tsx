@@ -9,11 +9,11 @@ export function Footer() {
       <div className="container mx-auto px-4 py-8 md:px-6 md:py-12">
         <div className="grid gap-6 sm:gap-8 md:grid-cols-2 lg:grid-cols-4">
           <div>
-            <Link href="/" className="flex items-center mb-3">
+            <Link href="/" className="inline-block mb-3">
               <img 
                 src="/vndcsport.svg" 
                 alt="VNSPORT Logo" 
-                className="h-10 w-auto object-contain"
+                className="h-16 md:h-20 w-auto object-contain"
               />
             </Link>
             <p className="text-sm text-slate-500">

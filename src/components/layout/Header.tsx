@@ -617,8 +617,8 @@ export function Header() {
                     {/* Nhóm 2: Giải đấu của tôi */}
                     <div className="border-b border-slate-100/60 pb-2 mb-2">
                       <Link href="/dashboard">
-                        <div className="flex cursor-pointer items-center gap-3 px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-blue-50/50 hover:text-blue-600">
-                          <Trophy className="h-4.5 w-4.5 text-blue-600" />
+                        <div className="flex cursor-pointer items-center gap-3 px-4 py-2 text-sm text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900">
+                          <Trophy className="h-4 w-4 text-slate-400" />
                           Giải đấu của tôi
                         </div>
                       </Link>
@@ -627,6 +627,13 @@ export function Header() {
                     {/* Nhóm 3: Cá nhân & Tương tác */}
                     <div className="border-b border-slate-100/60 pb-2 mb-2">
                       <div className="px-4 py-1 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Cá nhân</div>
+                      <Link href="/profile">
+                        <div className="flex cursor-pointer items-center gap-3 px-4 py-2 text-sm text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900">
+                          <User className="h-4 w-4 text-slate-400" />
+                          Hồ sơ cá nhân
+                        </div>
+                      </Link>
+
                       <Link href="/notifications">
                         <div className="flex cursor-pointer items-center gap-3 px-4 py-2 text-sm text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900">
                           <Bell className="h-4 w-4 text-slate-400" />
@@ -645,13 +652,6 @@ export function Header() {
                         <div className="flex cursor-pointer items-center gap-3 px-4 py-2 text-sm text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900">
                           <Trophy className="h-4 w-4 text-slate-400" />
                           Chuỗi giải đấu
-                        </div>
-                      </Link>
-
-                      <Link href="/profile">
-                        <div className="flex cursor-pointer items-center gap-3 px-4 py-2 text-sm text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900">
-                          <User className="h-4 w-4 text-slate-400" />
-                          Hồ sơ cá nhân
                         </div>
                       </Link>
 

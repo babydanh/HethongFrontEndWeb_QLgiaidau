@@ -3706,6 +3706,7 @@
     "eloRequirementSingles": "Singles ELO requirement",
     "unlimited": "Unlimited",
     "participantsCount": "Participant count",
+    "matchesLabel": "matches",
     "slotsFilled": "{percentage}% of available slots filled",
     "organizerDefault": "Organizer",
     "organizerTrusted": "Trusted organizer",

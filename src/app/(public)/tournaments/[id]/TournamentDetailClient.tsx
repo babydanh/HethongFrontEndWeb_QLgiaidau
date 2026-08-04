@@ -5,7 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { Division, Tournament, TournamentSponsor, divisionsApi, tournamentsApi } from '@/features/tournaments/api';
 import { isClubLiteTournament } from '@/features/tournaments/lite-qr';
 import { Button } from '@/components/ui/Button';
-import { Calendar, MapPin, Users, Trophy, Share2, AlertCircle, User, Phone, Mail, Globe, Bookmark } from 'lucide-react';
+import { Calendar, MapPin, Users, Trophy, Share2, AlertCircle, User, Phone, Mail, Globe, Bookmark, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import OverviewTab from './components/OverviewTab';
 import TeamsTab from './components/TeamsTab';
@@ -222,6 +222,13 @@ const commonTranslate = useTranslations('Common');
       socket.off('match:update', handleMatchUpdate);
     };
   }, [tournamentId, selectedDivisionId]);
+
+  const handleDivisionSelect = (divisionId: string) => {
+    setSelectedDivisionId(divisionId);
+    const nextParams = new URLSearchParams(searchParams.toString());
+    nextParams.set('divisionId', divisionId);
+    router.replace(`/tournaments/${tournamentId}?${nextParams.toString()}`, { scroll: false });
+  };
 
   const handleShareClick = async () => {
     if (!activeTournament) return;
@@ -726,26 +733,48 @@ const commonTranslate = useTranslations('Common');
 
             {/* Tab Content */}
             <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-3 sm:p-6 md:p-8 min-h-[500px] min-w-0 max-w-full overflow-hidden">
-              {/* Division selector inside tab card */}
+              {/* Compact one-content-at-a-time selector */}
               {divisionsList.length > 0 && (
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b pb-4 mb-6 gap-3">
-                  <div className="space-y-0.5">
-                    <h3 className="font-bold text-slate-900 text-sm">{translate('competitionContentTitle')}</h3>
-                    <p className="text-[11px] text-slate-400 font-bold">{translate('competitionContentDescription')}</p>
+                <section className="mb-5 border-b border-slate-100 pb-5" aria-labelledby="competition-content-title">
+                  <div className="flex flex-col gap-1">
+                    <h3 id="competition-content-title" className="text-sm font-bold text-slate-900">
+                      {translate('competitionContentTitle')}
+                    </h3>
+                    <p className="text-[11px] font-medium text-slate-400">
+                      {translate('competitionContentDescription')}
+                    </p>
                   </div>
-                  <select
-                    value={selectedDivisionId}
-                    onChange={(e) => setSelectedDivisionId(e.target.value)}
-                    disabled={false}
-                    className="border border-slate-200 rounded-lg px-3 py-2 bg-white text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500 text-xs h-10 w-full sm:w-60 shadow-sm cursor-pointer"
-                  >
-                    {divisionsList.map((div) => (
-                      <option key={div.id} value={div.id}>
-                        {div.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                    {divisionsList.map((division) => {
+                      const isActive = division.id === selectedDivisionId;
+                      const participantCount = division._count?.participants ?? 0;
+                      const matchCount = division._count?.matches ?? 0;
+                      return (
+                        <button
+                          key={division.id}
+                          type="button"
+                          aria-current={isActive ? 'true' : undefined}
+                          onClick={() => handleDivisionSelect(division.id)}
+                          className={`flex min-h-14 items-center justify-between gap-3 rounded-xl border px-3.5 py-3 text-left transition-colors ${
+                            isActive
+                              ? 'border-blue-300 bg-blue-50/70 text-slate-900 shadow-sm'
+                              : 'border-slate-200 bg-white text-slate-700 hover:border-blue-200 hover:bg-slate-50'
+                          }`}
+                        >
+                          <span className="min-w-0">
+                            <span className="block truncate text-xs font-bold">{division.name}</span>
+                            <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] font-semibold text-slate-400">
+                              <span>{translate('participantsCount')}: {participantCount}</span>
+                              <span aria-hidden="true">•</span>
+                              <span>{matchCount} {translate('matchesLabel')}</span>
+                            </span>
+                          </span>
+                          <ChevronRight className={`h-4 w-4 shrink-0 ${isActive ? 'text-blue-600' : 'text-slate-300'}`} aria-hidden="true" />
+                        </button>
+                      );
+                    })}
+                  </div>
+                </section>
               )}
 
               {selectedDivision ? (

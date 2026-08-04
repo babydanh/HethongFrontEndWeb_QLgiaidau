@@ -24,6 +24,8 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
   const [rosterStatus, setRosterStatus] = useState<FootballRosterStatus | null>(null);
   const [rosterAction, setRosterAction] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
 
   useEffect(() => {
     const fetchParticipants = async () => {
@@ -43,7 +45,8 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
     fetchParticipants();
   }, [divisionId, tournament.id, tournamentId]);
 
-  const filteredParticipants = useMemo(() => {
+    const filteredParticipants = useMemo(() => {
+
     if (!searchQuery.trim()) return participants;
     const query = searchQuery.toLowerCase().trim();
 
@@ -55,9 +58,17 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
       if (p.registeredBy?.fullName && p.registeredBy.fullName.toLowerCase().includes(query)) return true;
       return false;
     });
-  }, [participants, searchQuery]);
+    }, [participants, searchQuery]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredParticipants.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const visibleParticipants = filteredParticipants.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize,
+  );
 
   useEffect(() => {
+
     if (!participantId) {
       return;
     }
@@ -155,13 +166,21 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
           type="text"
           placeholder={translate("teamSearchPlaceholder")}
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={(e) => {
+            setSearchQuery(e.target.value);
+            setPage(1);
+          }}
+
           className="w-full pl-10 pr-10 py-2 border border-slate-200 rounded-lg bg-slate-50/50 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all text-slate-800 placeholder-slate-400 h-9.5 shadow-sm"
         />
         <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
         {searchQuery && (
           <button
-            onClick={() => setSearchQuery('')}
+                        onClick={() => {
+              setSearchQuery('');
+              setPage(1);
+            }}
+
             className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 hover:text-slate-600 cursor-pointer"
           >
             ✕
@@ -182,7 +201,8 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
                 </tr>
               </thead>
               <tbody>
-                {filteredParticipants.map((team, index) => {
+                                {visibleParticipants.map((team, index) => {
+
                   const isExpanded = expandedTeamId === team.id;
                   
                   const members = team.members && team.members.length > 0
@@ -208,7 +228,8 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
                         onClick={() => toggleExpand(team.id)}
                         className="bg-white border-b border-slate-100 hover:bg-slate-50/80 transition-colors cursor-pointer"
                       >
-                        <td className="px-3 py-3.5 sm:px-6 sm:py-4 font-medium text-slate-950 align-middle">{index + 1}</td>
+                                                <td className="px-3 py-3.5 sm:px-6 sm:py-4 font-medium text-slate-950 align-middle">{(currentPage - 1) * pageSize + index + 1}</td>
+
                         <td className="px-3 py-3.5 sm:px-6 sm:py-4 font-bold text-slate-950 align-middle">
                           <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 leading-normal">
                             <span>{team.teamName}</span>
@@ -331,7 +352,7 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
                 })}
               </tbody>
             </table>
-          </div>
+                    </div>
         ) : (
           <div className="text-center py-12 border border-dashed border-slate-200 rounded-lg text-slate-500">
             {translate("teamsSearchEmpty", { query: searchQuery })}
@@ -340,6 +361,30 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
       ) : (
         <div className="text-center py-12 border border-dashed border-slate-200 rounded-lg text-slate-500">
           {translate("teamsEmpty")}
+        </div>
+      )}
+
+      {filteredParticipants.length > pageSize && (
+        <div className="flex items-center justify-center gap-3 border-t border-slate-200 pt-4">
+          <button
+            type="button"
+            onClick={() => setPage((current) => Math.max(1, current - 1))}
+            disabled={currentPage <= 1}
+            className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {translate('previousPage')}
+          </button>
+          <span className="min-w-20 text-center text-xs font-bold text-slate-500">
+            {translate('reportPageCount', { page: currentPage })}
+          </span>
+          <button
+            type="button"
+            onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+            disabled={currentPage >= totalPages}
+            className="rounded-lg border border-blue-200 bg-blue-600 px-3 py-1.5 text-xs font-bold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {translate('nextPage')}
+          </button>
         </div>
       )}
     </div>

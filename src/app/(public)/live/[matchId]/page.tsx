@@ -41,10 +41,51 @@ import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/Button';
 import { OfficialScoreModal } from './components/OfficialScoreModal';
 
-type ScoreUpdatePayload = Parameters<typeof matchesApi.updateScore>[1];
 import type { TournamentParticipant } from '@/types/tournament';
 import { ReportViolationButton } from '@/features/reports/components/ReportViolationButton';
 import ShareModal from '@/components/common/ShareModal';
+import Hls from 'hls.js';
+
+function HlsVideoPlayer({ src }: { src: string }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !src) return;
+
+    if (Hls.isSupported()) {
+      const hls = new Hls({
+        enableWorker: true,
+        lowLatencyMode: true,
+      });
+      hls.loadSource(src);
+      hls.attachMedia(video);
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        video.play().catch(() => {});
+      });
+
+      return () => {
+        hls.destroy();
+      };
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = src;
+      video.addEventListener('loadedmetadata', () => {
+        video.play().catch(() => {});
+      });
+    }
+  }, [src]);
+
+  return (
+    <video
+      ref={videoRef}
+      className="absolute inset-0 h-full w-full object-cover"
+      controls
+      playsInline
+      autoPlay
+      muted
+    />
+  );
+}
 
 interface Props {
   params: Promise<{ matchId: string }>;
@@ -1100,16 +1141,11 @@ export default function LiveMatchPage({ params }: Props) {
               <div className="relative z-10 flex h-full w-full flex-col items-center justify-center gap-3.5 p-6 text-center">
                 {playback?.playbackUrl ? (
                   <>
-                    <video
-                      className="absolute inset-0 h-full w-full object-cover"
-                      controls
-                      playsInline
-                      src={playback.playbackUrl}
-                    />
-                    <div className="absolute left-4 top-4 rounded-full border border-rose-400/40 bg-rose-600/90 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
+                    <HlsVideoPlayer src={playback.playbackUrl} />
+                    <div className="absolute left-4 top-4 rounded-full border border-rose-400/40 bg-rose-600/90 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-white z-20">
                       {playback.streamStatus === 'LIVE' ? 'LIVE' : playback.streamStatus}
                     </div>
-                    <div className="absolute bottom-4 left-4 right-4 rounded-lg border border-white/10 bg-slate-950/70 px-4 py-3 text-left backdrop-blur">
+                    <div className="absolute bottom-4 left-4 right-4 rounded-lg border border-white/10 bg-slate-950/70 px-4 py-3 text-left backdrop-blur z-20">
                       <p className="text-sm font-bold text-white">{playback.cameraName || 'Camera trận đấu'}</p>
                       <p className="mt-1 text-xs font-semibold text-slate-300">Người xem chỉ có quyền xem luồng phát và bảng điểm realtime.</p>
                     </div>

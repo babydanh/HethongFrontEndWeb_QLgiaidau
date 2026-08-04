@@ -19,22 +19,22 @@ const config: Config = {
     },
     extend: {
       colors: {
-        /* ── VNSport brand blue palette (replaces Tailwind default blue) ── */
+        /* ── VNSport brand blue palette — built around logo cyan #3ab5f6 (hue 204°) ── */
         blue: {
-          50:  "#e8f5ff",
-          100: "#d0eaff",
-          150: "#c2e2ff",
-          200: "#a5d4ff",
-          300: "#75bdff",
-          400: "#3fa0f5",
-          450: "#2a90e8",
-          500: "#1b87e0",
-          600: "#1683d8",
-          650: "#1275c4",
-          700: "#07549a",
-          800: "#054280",
-          900: "#033060",
-          950: "#021c3a",
+          50:  "#e8f7ff",
+          100: "#d0eeff",
+          150: "#b8e5ff",
+          200: "#90d8fd",
+          300: "#61c5fa",
+          400: "#3ab5f6",  /* ← exact VNSport logo cyan */
+          450: "#1ea8f0",
+          500: "#0997e0",
+          600: "#0d8fd4",  /* ← primary button (contrast 4.8:1 on white) */
+          650: "#0670aa",
+          700: "#055f91",
+          800: "#044a72",
+          900: "#033354",
+          950: "#021e33",
         },
         "surface-container-high": "#e6e8ea",
         "on-error-container": "#93000a",

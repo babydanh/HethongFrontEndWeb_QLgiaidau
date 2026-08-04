@@ -26,12 +26,12 @@ const config: Config = {
           150: "#b8e5ff",
           200: "#90d8fd",
           300: "#61c5fa",
-          400: "#3ab5f6",  /* ← exact VNSport logo cyan */
-          450: "#1ea8f0",
-          500: "#0997e0",
-          600: "#0d8fd4",  /* ← primary button (contrast 4.8:1 on white) */
-          650: "#0670aa",
-          700: "#055f91",
+          400: "#3ab5f6",  /* ← VNSport logo cyan */
+          450: "#25abf0",
+          500: "#12a0e8",
+          600: "#3ab5f6",  /* ← primary button = exact logo color */
+          650: "#0d8fd4",
+          700: "#0d8fd4",  /* ← hover: darker logo cyan */
           800: "#044a72",
           900: "#033354",
           950: "#021e33",

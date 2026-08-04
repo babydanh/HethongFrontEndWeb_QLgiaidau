@@ -65,8 +65,8 @@ function mergeStreamContent(previous: string, incoming: string): string {
 }
 
 const QUICK_PROMPTS = [
+  'Làm sao để quản lý giải đấu của tôi?',
   'Làm sao để đăng ký thi đấu đôi?',
-  'Chính sách hoàn tiền khi rút giải?',
   'Hệ thống tính điểm ELO như thế nào?',
 ];
 

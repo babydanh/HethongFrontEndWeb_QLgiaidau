@@ -1305,6 +1305,68 @@ export default function HomePage() {
 
                         <div className="flex items-center gap-3 shrink-0">
                           {/* Mini Pagination controls */}
+                          {totalPages > 1 && (
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={() => setTournamentPages(prev => ({ ...prev, [tournamentId]: Math.max(1, currentPage - 1) }))}
+                                disabled={currentPage === 1}
+                                className="w-8 h-8 flex items-center justify-center p-1 text-slate-500 bg-white border border-slate-200 rounded-lg hover:border-slate-350 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                              >
+                                <ChevronLeft className="w-4 h-4" />
+                              </button>
+                              <span className="text-[11px] font-semibold text-slate-450 px-0.5">
+                                {currentPage}/{totalPages}
+                              </span>
+                              <button
+                                onClick={() => setTournamentPages(prev => ({ ...prev, [tournamentId]: Math.min(totalPages, currentPage + 1) }))}
+                                disabled={currentPage === totalPages}
+                                className="w-8 h-8 flex items-center justify-center p-1 text-slate-500 bg-white border border-slate-200 rounded-lg hover:border-slate-350 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                              >
+                                <ChevronRight className="w-4 h-4" />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      {/* Matches List Grid */}
+                      <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {displayMatches.map((match) => renderMatchCard(match, true, group.matches, matchedTournament ?? null))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            </div>
+          </section>
+
+
+
+          {/* Section 4: Giải vừa kết thúc */}
+          <section className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_2px_12px_rgba(15,23,42,0.06)] overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 flex justify-between items-center">
+              <div>
+                <h2 className="text-sm font-semibold text-slate-900 tracking-tight">Giải vừa kết thúc</h2>
+                <p className="text-[11px] font-medium text-slate-500 mt-0.5">14 ngày gần đây</p>
+              </div>
+              <Link href="/tournaments" className="text-xs font-semibold text-blue-600 hover:underline flex items-center gap-1">
+                Khám phá <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+            <div className="p-4">
+
+            {isLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-slate-200 animate-pulse h-72 rounded-xl" />
+                <div className="bg-slate-200 animate-pulse h-72 rounded-xl" />
+              </div>
+            ) : recentCompletedTournaments.length === 0 ? (
+              <div className="py-10 text-center text-slate-500 font-medium text-xs">
+                Hiện chưa có giải nào vừa kết thúc trong 14 ngày gần đây.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {recentCompletedTournaments.map((tournament) => (
                   <HomepageTournamentCard key={tournament.id} tournament={tournament} />
                 ))}
               </div>

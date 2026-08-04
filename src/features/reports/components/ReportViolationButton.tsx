@@ -171,7 +171,7 @@ export function ReportViolationButton({
                   )}
                   <input
                     type="file"
-                    accept="image/*,video/*"
+                    accept="image/*,video/*,.pdf"
                     disabled={isUploading}
                     className="hidden"
                     onChange={async (e) => {
@@ -192,7 +192,7 @@ export function ReportViolationButton({
                           toast.success('Đã tải minh chứng lên thành công!', { id: 'report-upload' });
                         }
                       } catch (err: unknown) {
-                        toast.error(getErrorMessage(err) || 'Tải tệp thất bại, vui lòng dán URL.', { id: 'report-upload' });
+                        toast.error(getErrorMessage(err) || 'Tải tệp thất bại, vui lòng thử lại.', { id: 'report-upload' });
                       } finally {
                         setIsUploading(false);
                         e.target.value = '';
@@ -201,16 +201,24 @@ export function ReportViolationButton({
                   />
                 </label>
               </div>
-              <Textarea
-                {...form.register('evidenceText')}
-                rows={3}
-                placeholder={'Mỗi dòng một liên kết ảnh hoặc video (hoặc dùng nút Tải ảnh ở trên)\nTối đa 5 liên kết'}
-                className="rounded-lg border-slate-300 bg-white text-slate-800 focus-visible:ring-blue-600 font-mono text-xs"
-              />
+              <input type="hidden" {...form.register('evidenceText')} />
+              {parseEvidenceUrls(form.watch('evidenceText')).length > 0 ? (
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  {parseEvidenceUrls(form.watch('evidenceText')).map((url, index) => {
+                    const isImage = /\.(png|jpe?g|webp)(\?|$)/i.test(url);
+                    return (
+                      <div key={`${url}-${index}`} className="relative overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
+                        {isImage ? <img src={url} alt={`Minh chứng ${index + 1}`} className="h-24 w-full object-cover" /> : <div className="flex h-24 items-center justify-center text-xs font-semibold text-slate-500">Tệp minh chứng</div>}
+                        <button type="button" className="absolute right-1 top-1 rounded-full bg-slate-900/70 px-2 py-1 text-xs text-white" onClick={() => form.setValue('evidenceText', parseEvidenceUrls(form.getValues('evidenceText')).filter((_, i) => i !== index).join('\n'))}>Xóa</button>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : <p className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">Chưa có tệp minh chứng. Bạn có thể tải ảnh, video hoặc PDF.</p>}
               {form.formState.errors.evidenceText ? (
                 <p className="mt-1 text-xs font-semibold text-rose-600">{form.formState.errors.evidenceText.message}</p>
               ) : (
-                <p className="mt-1 text-xs text-slate-500">Bạn có thể dán link trực tiếp hoặc bấm &quot;Tải ảnh / file lên&quot; để chọn tệp từ máy.</p>
+                <p className="mt-1 text-xs text-slate-500">Ảnh sẽ hiện xem trước; video và PDF được lưu để bộ phận xử lý mở khi cần.</p>
               )}
             </div>
 

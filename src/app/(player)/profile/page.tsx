@@ -30,6 +30,7 @@ import { rankingsApi, PlayerRanking, EloHistoryLog } from '@/features/rankings/a
 import { tournamentsApi, Tournament, BracketMatch, BracketStage, WorkspaceRefereeInvite } from '@/features/tournaments/api';
 import { matchesApi, Match } from '@/features/matches/api';
 import { EloTierBadge } from '@/components/ui/EloTierBadge';
+import { RankAvatar } from '@/components/ui/RankAvatar';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 
 
@@ -95,21 +96,6 @@ const hasUserInParticipant = (
   participant: BracketMatch['participant1'] | BracketMatch['participant2'],
   userId: string,
 ) => Boolean(participant?.members?.some((member) => member.userId === userId));
-
-const getProfileTierRingClass = (rank: PlayerRanking | null) => {
-  if (!rank || rank.matchesPlayed <= 0) return 'ring-slate-300';
-  const name = (rank.tier?.name || rank.tierName || '').toLowerCase();
-  const elo = rank.eloPoints;
-  if (name.includes('tier s') || elo >= 1800) return 'ring-amber-400';
-  if (name.includes('high tier a') || elo >= 1700) return 'ring-rose-500';
-  if (name.includes('low tier a') || elo >= 1600) return 'ring-rose-300';
-  if (name.includes('high tier b') || elo >= 1500) return 'ring-blue-500';
-  if (name.includes('low tier b') || elo >= 1400) return 'ring-blue-300';
-  if (name.includes('high tier c') || elo >= 1300) return 'ring-emerald-500';
-  if (name.includes('low tier c') || elo >= 1200) return 'ring-emerald-300';
-  if (name.includes('high tier d') || elo >= 1100) return 'ring-slate-500';
-  return 'ring-slate-300';
-};
 
 const deriveTournamentPlacement = (
   tournament: Tournament,
@@ -550,13 +536,15 @@ export default function ProfilePage() {
         <div className="px-6 md:px-10 pb-8 relative">
           {/* Avatar & Actions */}
           <div className="flex flex-col md:flex-row justify-between items-end md:items-center gap-4 -mt-16 mb-5 relative z-10">
-            <div className={`w-32 h-32 rounded-full bg-slate-100 border-4 border-white ring-4 ${getProfileTierRingClass(featuredRank)} shadow-xl flex items-center justify-center overflow-hidden transition-transform duration-300 hover:scale-[1.03]`} title={featuredRank ? `${featuredRank.tier?.name || featuredRank.tierName || 'Chưa xếp hạng'} • ${featuredRank.eloPoints} ELO` : 'Chưa xếp hạng'}>
-              {displayUser?.avatarUrl ? (
-                <img src={displayUser.avatarUrl} alt="Avatar" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-4xl font-bold text-slate-400 uppercase">{displayUser?.fullName?.charAt(0) || 'U'}</span>
-              )}
-            </div>
+            <RankAvatar
+              src={displayUser?.avatarUrl}
+              name={displayUser?.fullName}
+              elo={featuredRank?.eloPoints}
+              tierName={featuredRank?.tier?.name || featuredRank?.tierName}
+              matchesPlayed={featuredRank?.matchesPlayed || 0}
+              size="lg"
+              ringClassName="ring-4 shadow-xl transition-transform duration-300 hover:scale-[1.03]"
+            />
             <div className="flex gap-3 w-full md:w-auto mt-4 md:mt-0">
               <Link href="/profile/edit" className="w-full md:w-auto">
                 <Button variant="outline" className="w-full md:w-auto border-slate-200 text-slate-650 hover:bg-slate-50 hover:text-slate-900 rounded-lg font-bold transition-all shadow-sm">

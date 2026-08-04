@@ -2,6 +2,7 @@
 
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import type { PlayerRanking } from '@/features/rankings/api';
+import { getEloProgressInfo } from '@/features/rankings/elo-display';
 
 const ELO_PER_STREAK_WIN = 15;
 
@@ -30,9 +31,12 @@ export default function EloSidebarCard({ eloPoints, matchesWon, matchesPlayed, w
   const TrendIcon = recentDelta > 0 ? TrendingUp : recentDelta < 0 ? TrendingDown : Minus;
   const trendColor = recentDelta > 0 ? 'text-emerald-600' : recentDelta < 0 ? 'text-rose-500' : 'text-slate-400';
   const tierColor = getTierColor(tierName);
+  const tierBorder = tierColor.split(' ').find((token) => token.startsWith('border-')) || 'border-slate-200';
+  const hasRank = matchesPlayed > 0;
+  const progress = getEloProgressInfo(eloPoints);
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+    <div className={`bg-white rounded-xl border-2 ${tierBorder} p-5 shadow-sm`}>
       <div className="flex items-center justify-between mb-3">
         <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">ELO Xếp hạng</span>
         {sportLabel && <span className="text-[10px] text-slate-400">{sportLabel}</span>}
@@ -51,6 +55,22 @@ export default function EloSidebarCard({ eloPoints, matchesWon, matchesPlayed, w
       <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold border ${tierColor} mb-3`}>
         {tierName}
       </span>
+
+      <div className="mb-3 rounded-lg bg-slate-50 px-3 py-2.5">
+        <div className="mb-1.5 flex items-center justify-between gap-2 text-[10px] font-semibold text-slate-500">
+          <span>Tiến trình lên hạng</span>
+          <span className="tabular-nums text-slate-700">{hasRank ? `${Math.round(progress.percent)}%` : '0%'}</span>
+        </div>
+        <div className="h-2 overflow-hidden rounded-full bg-slate-200">
+          <div
+            className={`h-full rounded-full transition-all ${hasRank ? 'bg-gradient-to-r from-blue-500 to-cyan-400' : 'bg-slate-300'}`}
+            style={{ width: `${hasRank ? Math.round(progress.percent) : 0}%` }}
+          />
+        </div>
+        <p className="mt-1.5 text-[10px] text-slate-500">
+          {hasRank ? progress.label : 'Thi đấu một trận xếp hạng để bắt đầu tiến trình.'}
+        </p>
+      </div>
 
       <div className="grid grid-cols-3 gap-2 pt-3 border-t border-slate-100">
         <div>

@@ -6,6 +6,7 @@ import { Category } from '@/types/category';
 import { rankingsApi, PlayerRanking } from '@/features/rankings/api';
 import { communitiesApi } from '@/features/communities/api';
 import { EloTierBadge } from '@/components/ui/EloTierBadge';
+import { getRankRingClass } from '@/components/ui/RankAvatar';
 import { getEloMatchTypeLabel } from '@/features/rankings/elo-display';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '@/lib/zustand/authStore';
@@ -145,8 +146,9 @@ export default function RankingsTab({ communityId, categories }: RankingsTabProp
 
   const rankingAvatars = (p: PlayerRanking, sizeClass: string) => {
     const members = p.user1 && p.user2 ? [p.user1, p.user2] : p.user ? [p.user] : [];
+    const ringClass = getRankRingClass(p.eloPoints, p.tier?.name || p.tierName, p.matchesPlayed);
     return (
-      <div className="flex items-center shrink-0">
+      <div className={`flex items-center shrink-0 rounded-full ring-2 ${ringClass}`}>
         {members.map((member, index) => (
           <div
             key={member.id}

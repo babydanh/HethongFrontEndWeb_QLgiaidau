@@ -12,6 +12,7 @@ import { rankingsApi, PlayerRanking, EloHistoryLog } from '@/features/rankings/a
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import { getErrorMessage } from '@/utils/error';
 import { EloTierBadge } from '@/components/ui/EloTierBadge';
+import { RankAvatar } from '@/components/ui/RankAvatar';
 import { ReportViolationButton } from '@/features/reports/components/ReportViolationButton';
 import { useAuthStore } from '@/lib/zustand/authStore';
 
@@ -67,21 +68,6 @@ interface Match {
       name: string;
     };
   } | null;
-}
-
-function getTierRingClass(rank?: UserRank) {
-  // Unranked is intentionally neutral but visible; it must not look like a tier.
-  if (!rank || rank.matchesPlayed <= 0) return 'ring-slate-400';
-  const name = (rank.tierName || '').toLowerCase();
-  if (name.includes('tier s') || rank.eloPoints >= 1800) return 'ring-amber-400';
-  if (name.includes('high tier a') || rank.eloPoints >= 1700) return 'ring-rose-500';
-  if (name.includes('low tier a') || rank.eloPoints >= 1600) return 'ring-rose-300';
-  if (name.includes('high tier b') || rank.eloPoints >= 1500) return 'ring-blue-500';
-  if (name.includes('low tier b') || rank.eloPoints >= 1400) return 'ring-blue-300';
-  if (name.includes('high tier c') || rank.eloPoints >= 1300) return 'ring-emerald-500';
-  if (name.includes('low tier c') || rank.eloPoints >= 1200) return 'ring-emerald-300';
-  if (name.includes('high tier d') || rank.eloPoints >= 1100) return 'ring-slate-500';
-  return 'ring-slate-300';
 }
 
 export default function PublicUserProfilePage({ params }: { params: Promise<{ id: string }> }) {
@@ -218,13 +204,22 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
         <div className="px-6 md:px-10 pb-8 relative">
           {/* Avatar & Info */}
           <div className="flex flex-col md:flex-row justify-between items-end md:items-center gap-4 -mt-16 mb-5 relative z-10">
-            <div className={`w-32 h-32 rounded-full bg-slate-100 shadow-xl ${displayedRanks.some(r => r.matchesPlayed > 0) ? `border-4 border-white ring-4 ${getTierRingClass(displayedRanks.filter(r => r.matchesPlayed > 0).sort((a, b) => b.eloPoints - a.eloPoints)[0])}` : 'border-4 border-slate-400'} flex items-center justify-center overflow-hidden transition-transform duration-300 hover:scale-[1.03]`} title="Viền theo rank ELO nổi bật nhất">
-              {profile.avatarUrl ? (
-                <img src={profile.avatarUrl} alt="Avatar" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-4xl font-bold text-slate-400 uppercase">{profile.fullName?.charAt(0) || 'U'}</span>
-              )}
-            </div>
+            {(() => {
+              const featuredRank = displayedRanks
+                .filter((rank) => rank.matchesPlayed > 0)
+                .sort((a, b) => b.eloPoints - a.eloPoints)[0];
+              return (
+                <RankAvatar
+                  src={profile.avatarUrl}
+                  name={profile.fullName}
+                  elo={featuredRank?.eloPoints}
+                  tierName={featuredRank?.tierName}
+                  matchesPlayed={featuredRank?.matchesPlayed || 0}
+                  size="lg"
+                  ringClassName="ring-4 shadow-xl transition-transform duration-300 hover:scale-[1.03]"
+                />
+              );
+            })()}
           </div>
           
           {/* Info */}

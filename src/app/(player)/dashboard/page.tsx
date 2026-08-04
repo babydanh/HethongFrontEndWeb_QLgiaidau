@@ -156,7 +156,7 @@ export default function DashboardPage() {
     ...(workspace?.organizedTournaments ?? []),
     ...(workspace?.coOrganizerTournaments ?? []),
   ];
-  const sportSet = new Set<string>();
+  const sportSet = new Set<string>(['Cầu lông', 'Bóng bàn', 'Pickleball', 'Tennis']);
   allTournaments.forEach(t => {
     const s = t.category?.name;
     if (s) sportSet.add(s);
@@ -568,6 +568,12 @@ export default function DashboardPage() {
                 </Link>
               )}
 
+              <Link href="/communities" className="flex items-center gap-3 p-3 rounded-lg hover:bg-emerald-50 text-emerald-700 font-bold text-xs transition-all border border-transparent hover:border-emerald-200">
+                <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 shrink-0">
+                  <Plus className="w-4 h-4" />
+                </div>
+                Tạo giải nhanh (Lite)
+              </Link>
               <Link href="/profile" className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 text-slate-700 font-bold text-xs transition-all border border-transparent hover:border-slate-200">
                 <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 shrink-0">
                   <Settings className="w-4 h-4" />

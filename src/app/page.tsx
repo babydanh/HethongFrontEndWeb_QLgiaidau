@@ -35,6 +35,7 @@ import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
 import ShareModal from '@/components/common/ShareModal';
 import { shouldHideFeaturedCardText } from '@/features/tournaments/featured-banner';
+import { RankAvatar } from '@/components/ui/RankAvatar';
 
 interface EnrichedTournament {
   id: string;
@@ -290,6 +291,9 @@ export default function HomePage() {
   const [completedMatches, setCompletedMatches] = useState<BracketMatch[]>([]);
   const [highFives, setHighFives] = useState<Record<string, number>>({});
   const hasLoadedFeedRef = useRef(false);
+  const feedRequestInFlightRef = useRef(false);
+  const feedRefreshQueuedRef = useRef(false);
+  const [feedRefreshTick, setFeedRefreshTick] = useState(0);
 
   const [tournamentPages, setTournamentPages] = useState<Record<string, number>>({});
 
@@ -351,20 +355,39 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
+    if (typeof document === 'undefined') return;
+
+    const refreshWhenReady = () => {
+      if (document.visibilityState === 'visible') {
+        setFeedRefreshTick((value) => value + 1);
+      }
+    };
+
+    const interval = window.setInterval(refreshWhenReady, 60000);
+    document.addEventListener('visibilitychange', refreshWhenReady);
+    window.addEventListener('focus', refreshWhenReady);
+    window.addEventListener('online', refreshWhenReady);
+
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener('visibilitychange', refreshWhenReady);
+      window.removeEventListener('focus', refreshWhenReady);
+      window.removeEventListener('online', refreshWhenReady);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (feedRequestInFlightRef.current) {
+      feedRefreshQueuedRef.current = true;
+      return;
+    }
+    feedRequestInFlightRef.current = true;
+
     const fetchData = async () => {
       try {
         // Keep loaded cards visible during background refreshes.
         setIsLoading(!hasLoadedFeedRef.current || Boolean(selectedCategoryId));
         setIsLoadingRanked(true);
-        // Never show results from the previous sport while a filtered request is pending.
-        if (selectedCategoryId) {
-          setTournaments([]);
-          setCommunities([]);
-          setLiveMatches([]);
-          setUpcomingMatches([]);
-          setCompletedMatches([]);
-        }
-
         const tParams: Record<string, unknown> = { limit: 20 };
         if (selectedCategoryId) {
           tParams.categoryId = selectedCategoryId;
@@ -416,9 +439,11 @@ export default function HomePage() {
         // Vẫn hiển thị matches mà không filter theo tournament ID.
         const shouldFilterByTournament = validTournamentIds.size > 0;
         const fetchedCommunities = cRes.status === 'fulfilled' ? cRes.value.data || [] : [];
-        setCommunities(selectedCategoryId
-          ? fetchedCommunities.filter(c => c.categories?.some(cat => cat.id === selectedCategoryId))
-          : fetchedCommunities);
+        if (cRes.status === 'fulfilled') {
+          setCommunities(selectedCategoryId
+            ? fetchedCommunities.filter(c => c.categories?.some(cat => cat.id === selectedCategoryId))
+            : fetchedCommunities);
+        }
 
         // ── ĐỢT 2 (sau 300ms): matches — gộp 1 call multi-status, limit 50 ──
         if (allMatchesRes.status === 'fulfilled') {
@@ -502,7 +527,8 @@ export default function HomePage() {
             }
           } catch (err) {
             console.error('Failed to load ranked tournament matches', err);
-            setRankedTournamentMatches([]);
+            // Keep the last successful ranked list; a transient 5xx/429 must
+            // not make the homepage look like the tournament disappeared.
           }
         } else {
           setRankedTournament(null);
@@ -512,10 +538,15 @@ export default function HomePage() {
         setIsLoading(false);
         setIsLoadingRanked(false);
         setLiveMatchPage(1);
+        feedRequestInFlightRef.current = false;
+        if (feedRefreshQueuedRef.current) {
+          feedRefreshQueuedRef.current = false;
+          setFeedRefreshTick((value) => value + 1);
+        }
       }
     };
     fetchData();
-  }, [selectedCategoryId, isAuthenticated, user?.id]);
+  }, [selectedCategoryId, isAuthenticated, user?.id, feedRefreshTick]);
 
   useEffect(() => {
     const socket = socketClient.getMatchSocket();
@@ -1490,15 +1521,15 @@ export default function HomePage() {
                  <div className="absolute top-0 left-0 w-full h-16 bg-blue-600" />
 
                  {/* Avatar */}
-                 <div className={`w-16 h-16 rounded-full shadow-sm z-10 mt-5 relative bg-blue-100 flex items-center justify-center overflow-hidden shrink-0 ${hasPlayedRankedMatch ? 'border-4 border-white ring-4 ' + (activeElo >= 1800 ? 'ring-amber-400' : activeElo >= 1700 ? 'ring-rose-500' : activeElo >= 1600 ? 'ring-rose-300' : activeElo >= 1500 ? 'ring-blue-500' : activeElo >= 1400 ? 'ring-blue-300' : activeElo >= 1300 ? 'ring-emerald-500' : activeElo >= 1200 ? 'ring-emerald-300' : activeElo >= 1100 ? 'ring-slate-500' : 'ring-slate-300') : 'border-4 border-slate-400'}`} title={hasPlayedRankedMatch ? `Rank ${displayTier} • ${eloPoints} ELO` : 'Chưa xếp hạng'}>
-                   {user?.avatarUrl ? (
-                     <img src={user.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
-                   ) : (
-                     <span className="text-xl font-bold text-blue-600 uppercase">
-                       {user?.fullName?.charAt(0) || 'U'}
-                     </span>
-                   )}
-                 </div>
+                 <RankAvatar
+                   src={user?.avatarUrl}
+                   name={user?.fullName}
+                   elo={hasPlayedRankedMatch ? activeElo : null}
+                   tierName={displayTier}
+                   matchesPlayed={matchesPlayed}
+                   size="md"
+                   ringClassName="ring-4 z-10 mt-5 transition-transform duration-300 hover:scale-[1.03]"
+                 />
 
                  {/* Name & Email */}
                  <h3 className="text-base font-semibold text-slate-900 mt-2.5 line-clamp-1 leading-snug">

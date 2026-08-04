@@ -32,17 +32,8 @@ import {
   WorkspaceRefereeInvite,
   WorkspaceRefereeMatch,
 } from '@/features/tournaments/api';
-import { matchesApi, Match } from '@/features/matches/api';
-import {
-  getTournamentStatusClassName,
-  getTournamentStatusLabel,
-  isTournamentCompleted,
-  isTournamentInProgress,
-  isTournamentOpenForRegistration,
-  isTournamentUpcoming,
-} from '@/utils/tournament-status';
-import { isRecentlyCompletedTournament } from '@/utils/tournament-home';
-import { sortFollowedTournaments } from '@/utils/tournament-follow';
+import { useRouter } from 'next/navigation';
+import { communitiesApi } from '@/features/communities/api';
 
 const dateFormatter = new Intl.DateTimeFormat('vi-VN', {
   day: '2-digit',
@@ -75,6 +66,7 @@ function getMatchStatusLabel(status: string) {
 }
 
 export default function DashboardPage() {
+  const router = useRouter();
   const { user } = useAuthStore();
   const [userRankings, setUserRankings] = useState<{ publicRanks: PlayerRanking[]; communityRanks: PlayerRanking[] } | null>(null);
   const [workspace, setWorkspace] = useState<TournamentWorkspace | null>(null);
@@ -83,6 +75,25 @@ export default function DashboardPage() {
   const [respondingInviteId, setRespondingInviteId] = useState<string | null>(null);
   const [followedTournaments, setFollowedTournaments] = useState<Tournament[]>([]);
   const [sportFilter, setSportFilter] = useState<string>('');
+  const [isLiteLoading, setIsLiteLoading] = useState(false);
+  const [showNoClubModal, setShowNoClubModal] = useState(false);
+
+  const handleCreateLiteClick = async () => {
+    setIsLiteLoading(true);
+    try {
+      const commRes = await communitiesApi.getMyCommunities();
+      const allMine = [...(commRes?.created || []), ...(commRes?.joined || [])];
+      if (allMine.length === 0) {
+        setShowNoClubModal(true);
+      } else {
+        router.push(`/communities/${allMine[0].id}/create-lite`);
+      }
+    } catch {
+      setShowNoClubModal(true);
+    } finally {
+      setIsLiteLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!user?.id) return;
@@ -568,12 +579,20 @@ export default function DashboardPage() {
                 </Link>
               )}
 
-              <Link href="/communities" className="flex items-center gap-3 p-3 rounded-lg hover:bg-emerald-50 text-emerald-700 font-bold text-xs transition-all border border-transparent hover:border-emerald-200">
-                <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 shrink-0">
-                  <Plus className="w-4 h-4" />
+              <button
+                type="button"
+                onClick={() => void handleCreateLiteClick()}
+                disabled={isLiteLoading}
+                className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-emerald-50 text-slate-800 font-bold text-xs transition-all border border-slate-200/80 hover:border-emerald-200 cursor-pointer disabled:opacity-50"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
+                    {isLiteLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                  </div>
+                  <span>Tạo giải nhanh (Lite)</span>
                 </div>
-                Tạo giải nhanh (Lite)
-              </Link>
+                <span className="text-[10px] font-extrabold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">CLB</span>
+              </button>
               <Link href="/profile" className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 text-slate-700 font-bold text-xs transition-all border border-transparent hover:border-slate-200">
                 <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 shrink-0">
                   <Settings className="w-4 h-4" />
@@ -590,6 +609,41 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Modal Thông báo chưa có CLB */}
+      {showNoClubModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
+          <div className="w-full max-w-md bg-white rounded-2xl p-6 shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95 duration-200">
+            <div className="w-12 h-12 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center mb-4">
+              <ShieldCheck className="w-6 h-6" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 mb-2">Vui lòng tạo hoặc tham gia Câu lạc bộ</h3>
+            <p className="text-xs text-slate-600 leading-relaxed mb-6">
+              Giải đấu nhanh (Lite) dành riêng cho thành viên Câu lạc bộ. Bạn chưa tạo hoặc tham gia CLB nào. Hãy tạo Câu lạc bộ của riêng bạn để mở tính năng này!
+            </p>
+            <div className="flex gap-3 justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowNoClubModal(false)}
+                className="font-bold text-xs"
+              >
+                Hủy bỏ
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => {
+                  setShowNoClubModal(false);
+                  router.push('/communities/create');
+                }}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs"
+              >
+                Tạo Câu lạc bộ ngay
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

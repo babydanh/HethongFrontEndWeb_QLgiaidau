@@ -405,34 +405,6 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
   };
 
 
-
-  if (isLoading && !tournament) {
-    return (
-      <div className="flex min-h-[50vh] items-center justify-center">
-        <div className="flex flex-col items-center gap-3 text-center">
-          <LoadingSpinner className="h-10 w-10 animate-spin text-blue-600" />
-          <p className="text-sm font-medium text-slate-500">Đang tải panel vận hành giải...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!tournament) {
-    return (
-      <div className="rounded-lg border border-slate-200 bg-slate-50 p-6 text-slate-800">
-        <div className="flex items-start gap-3">
-          <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0" />
-          <div>
-            <h1 className="text-lg font-bold">Không tải được dữ liệu giải đấu</h1>
-            <p className="mt-1 text-sm font-medium">
-              Giải đấu không tồn tại hoặc bạn không có quyền truy cập panel vận hành.
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Top Banner Card */}

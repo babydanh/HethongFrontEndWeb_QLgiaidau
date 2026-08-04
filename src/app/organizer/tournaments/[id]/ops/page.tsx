@@ -404,8 +404,192 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
     return `/tournaments/${tournament.id}${query ? `?${query}` : ''}`;
   };
 
+  const conflictSummary = useMemo(() => {
+    const courtSlots = new Map<string, number>();
+    const refereeSlots = new Map<string, number>();
+    const participantSlots = new Map<string, number>();
+    const dependencyConflicts = new Set<string>();
+
+    const prerequisitesByMatchId = new Map<string, string[]>();
+    for (const bracketMatch of bracketMatches) {
+      const winnerNext = bracketMatch.nextMatchId;
+      const loserNext = bracketMatch.loserNextMatchId;
+
+      if (winnerNext) {
+        prerequisitesByMatchId.set(winnerNext, [
+          ...(prerequisitesByMatchId.get(winnerNext) ?? []),
+          bracketMatch.id,
+        ]);
+      }
+
+      if (loserNext) {
+        prerequisitesByMatchId.set(loserNext, [
+          ...(prerequisitesByMatchId.get(loserNext) ?? []),
+          bracketMatch.id,
+        ]);
+      }
+    }
+
+    for (const match of matches) {
+      if (!match.scheduledAt) {
+        const prerequisites = prerequisitesByMatchId.get(match.id) ?? [];
+        const blocked = prerequisites.some((prerequisiteId) => {
+          const prerequisite = bracketMatches.find((item) => item.id === prerequisiteId);
+          return prerequisite && prerequisite.status !== 'COMPLETED';
+        });
+        if (blocked) {
+          dependencyConflicts.add(match.id);
+        }
+      } else {
+        const slotTime = new Date(match.scheduledAt).toISOString();
+
+        if (match.courtName) {
+          const key = `${slotTime}::${match.courtName.trim().toLowerCase()}`;
+          courtSlots.set(key, (courtSlots.get(key) ?? 0) + 1);
+        }
+
+        if (match.refereeId) {
+          const key = `${slotTime}::${match.refereeId}`;
+          refereeSlots.set(key, (refereeSlots.get(key) ?? 0) + 1);
+        }
+
+        for (const participantId of [match.participant1Id, match.participant2Id]) {
+          if (!participantId) {
+            continue;
+          }
+          const key = `${slotTime}::${participantId}`;
+          participantSlots.set(key, (participantSlots.get(key) ?? 0) + 1);
+        }
+
+        const prerequisites = prerequisitesByMatchId.get(match.id) ?? [];
+        const blocked = prerequisites.some((prerequisiteId) => {
+          const prerequisite = bracketMatches.find((item) => item.id === prerequisiteId);
+          return prerequisite && prerequisite.status !== 'COMPLETED';
+        });
+        if (blocked) {
+          dependencyConflicts.add(match.id);
+        }
+      }
+    }
+
+    const countConflicts = (source: Map<string, number>) =>
+      Array.from(source.values()).filter((count) => count > 1).length;
+
+    return {
+      court: countConflicts(courtSlots),
+      referee: countConflicts(refereeSlots),
+      participant: countConflicts(participantSlots),
+      dependency: dependencyConflicts.size,
+    };
+  }, [bracketMatches, matches]);
+
+  const matchInsights = useMemo(() => {
+    const matchMap = new Map(bracketMatches.map((match) => [match.id, match]));
+    const prerequisitesByMatchId = new Map<string, string[]>();
+
+    for (const bracketMatch of bracketMatches) {
+      if (bracketMatch.nextMatchId) {
+        prerequisitesByMatchId.set(bracketMatch.nextMatchId, [
+          ...(prerequisitesByMatchId.get(bracketMatch.nextMatchId) ?? []),
+          bracketMatch.id,
+        ]);
+      }
+      if (bracketMatch.loserNextMatchId) {
+        prerequisitesByMatchId.set(bracketMatch.loserNextMatchId, [
+          ...(prerequisitesByMatchId.get(bracketMatch.loserNextMatchId) ?? []),
+          bracketMatch.id,
+        ]);
+      }
+    }
+
+    const nextInsights: Record<string, {
+      hasCustomConfig: boolean;
+      customConfigSummary: string[];
+      dependencyBlocked: boolean;
+      dependencySummary: string[];
+    }> = {};
+
+    for (const match of matches) {
+      const bracketMatch = matchMap.get(match.id);
+      const customConfigSummary: string[] = [];
+      const resolvedRules = resolveMatchSportRules({
+        matchConfig: bracketMatch?.matchConfig,
+        tournament: { sportRules: tournament?.sportRules ?? null },
+      });
+      const scorePresentation = getMatchScorePresentation(resolvedRules.kind);
+
+      if (bracketMatch?.matchConfig?.setsToWin) {
+        customConfigSummary.push(`BO${bracketMatch.matchConfig.setsToWin * 2 - 1}`);
+      }
+      if (bracketMatch?.matchConfig?.pointsPerSet) {
+        customConfigSummary.push(`${bracketMatch.matchConfig.pointsPerSet} ${scorePresentation.scoreUnit}/${scorePresentation.sequenceLabel}`);
+      }
+      if (bracketMatch?.matchConfig?.deuceEnabled === false) {
+        customConfigSummary.push('không yêu cầu cách 2');
+      }
+      if (bracketMatch?.matchConfig?.tiebreakAt) {
+        customConfigSummary.push(`ngưỡng chốt ${bracketMatch.matchConfig.tiebreakAt}`);
+      }
+
+      const prerequisiteNames = (prerequisitesByMatchId.get(match.id) ?? [])
+        .map((prerequisiteId) => matchMap.get(prerequisiteId))
+        .filter((item): item is NonNullable<typeof item> => !!item)
+        .filter((item) => item.status !== 'COMPLETED')
+        .map((item) => `Trận #${item.matchOrder} chưa xong`);
+
+      nextInsights[match.id] = {
+        hasCustomConfig: customConfigSummary.length > 0,
+        customConfigSummary,
+        dependencyBlocked: prerequisiteNames.length > 0,
+        dependencySummary: prerequisiteNames,
+      };
+    }
+
+    return nextInsights;
+  }, [bracketMatches, matches, tournament?.sportRules]);
+
+  const divisionHealth = useMemo(() => {
+    const operationalMatches = matches.filter((match) => !(match.isBye || (!!match.winnerId && (!match.participant1Id || !match.participant2Id))));
+
+    return {
+      stageCount: bracketManager.bracket?.stages.length ?? 0,
+      roundCount: new Set(matches.map((match) => match.roundNumber)).size,
+      unscheduledCount: operationalMatches.filter((match) => !match.scheduledAt).length,
+      customConfigCount: bracketMatches.filter((match) => !!match.matchConfig).length,
+      conflictCount:
+        conflictSummary.court + conflictSummary.referee + conflictSummary.participant + conflictSummary.dependency,
+    };
+  }, [bracketManager.bracket?.stages.length, bracketMatches, conflictSummary, matches]);
+
+  if (isLoading && !tournament) {
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <div className="flex flex-col items-center gap-3 text-center">
+          <LoadingSpinner className="h-10 w-10 animate-spin text-blue-600" />
+          <p className="text-sm font-medium text-slate-500">Đang tải panel vận hành giải...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!tournament) {
+    return (
+      <div className="rounded-lg border border-slate-200 bg-slate-50 p-6 text-slate-800">
+        <div className="flex items-start gap-3">
+          <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0" />
+          <div>
+            <h1 className="text-lg font-bold">Không tải được dữ liệu giải đấu</h1>
+            <p className="mt-1 text-sm font-medium">
+              Giải đấu không tồn tại hoặc bạn không có quyền truy cập panel vận hành.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-7xl mx-auto">
       {/* Top Banner Card */}
       <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-slate-50 via-white to-slate-50/50 p-4 shadow-sm sm:p-6 md:p-8">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
@@ -735,88 +919,6 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
             <h2 className="text-xl font-bold text-slate-900">Gán camera theo trận đấu</h2>
             <p className="text-sm font-semibold text-slate-500">
               BTC chọn camera theo từng trận. Trọng tài được phân công mới có thể bắt đầu hoặc dừng phát trực tiếp.
-            </p>
-          </div>
-          <LivestreamTab tournament={bracketManager.tournament ?? tournament} bracket={bracketManager.bracket} />
-        </section>
-      ) : null}
-
-      {bracketManager.selectedStage && bracketManager.selectedRoundNumber !== null && (
-        <Modal
-          open={!!bracketManager.selectedStage}
-          onOpenChange={(open) => {
-            if (!open) {
-              bracketManager.setSelectedStage(null);
-              bracketManager.setSelectedRoundNumber(null);
-            }
-          }}
-        >
-          <ModalContent className="rounded-lg bg-white p-6">
-            <ModalHeader>
-              <ModalTitle className="text-xl font-bold text-slate-900">Cấu hình vòng đấu</ModalTitle>
-            </ModalHeader>
-            <div className="mt-4 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-bold text-slate-500">Sân mặc định cho vòng này</label>
-                  <select
-                    value={bracketManager.stageVenueId}
-                    onChange={(e) => bracketManager.setStageVenueId(e.target.value)}
-                    className="w-full rounded-lg border p-2 text-sm"
-                  >
-                    <option value="">Chưa chọn sân mặc định</option>
-                    {bracketManager.venues.map((venue) => (
-                      <option key={venue.id} value={venue.id}>
-                        {venue.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-slate-500">Giờ mặc định cho vòng này</label>
-                  <DateTimePicker
-                    value={bracketManager.stageScheduledDate}
-                    onChange={bracketManager.setStageScheduledDate}
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-slate-500">Số {sportPresentation.setOptions[0]?.label.includes('game') ? 'game' : 'set'} tối đa</label>
-                  <select
-                    value={bracketManager.stageMaxSets}
-                    onChange={(e) => bracketManager.setStageMaxSets(Number(e.target.value))}
-                    className="w-full rounded-lg border p-2 text-sm"
-                  >
-                    {sportPresentation.setOptions.map((option) => (
-                      <option key={`stage-set-option-${option.value}`} value={option.value * 2 - 1}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-slate-500">{sportPresentation.setUnitLabel}</label>
-                  <input
-                    type="number"
-                    value={bracketManager.stagePointsPerSet}
-                    onChange={(e) => bracketManager.setStagePointsPerSet(Number(e.target.value))}
-                    className="w-full rounded-lg border p-2 text-sm"
-                  />
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={bracketManager.stageWinBy2Points}
-                    onChange={(e) => bracketManager.setStageWinBy2Points(e.target.checked)}
-                  />
-                  <label className="text-xs font-bold text-slate-500">{sportPresentation.winByTwoLabel}</label>
-                </div>
-                {bracketManager.stageWinBy2Points && (
-                  <div>
-                    <label className="text-xs font-bold text-slate-500">{sportPresentation.maxScoreLabel}</label>
-                    <input
-                      type="number"
-                      value={bracketManager.stageMaxDeucePoints}
-                      onChange={(e) => bracketManager.setStageMaxDeucePoints(Number(e.target.value))}
                       className="w-full rounded-lg border p-2 text-sm"
                     />
                   </div>

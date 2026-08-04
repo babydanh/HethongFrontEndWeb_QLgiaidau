@@ -1332,7 +1332,6 @@ export default function MatchesListPage() {
                             className="flex items-center justify-center gap-1 hover:text-slate-700 transition-colors py-1 min-h-[32px] cursor-pointer"
                           >
                             <Share2 className="w-3 h-3 text-slate-400" />
-                            <span>Chia sẻ</span>
                           </button>
                         </div>
                       </motion.div>

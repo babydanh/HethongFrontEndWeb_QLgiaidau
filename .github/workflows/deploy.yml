@@ -50,9 +50,8 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
+          no-cache: true
           tags: ghcr.io/babydanh/hethongfrontendweb_qlgiaidau:latest,ghcr.io/babydanh/hethongfrontendweb_qlgiaidau:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
 
   # Job 2: Chỉ kéo bản build sạch về chạy trên VPS (Mất 5s, không tốn tài nguyên build)
   deploy:

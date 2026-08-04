@@ -591,13 +591,6 @@ export default function MatchesListPage() {
   return (
     <div className="flex-grow w-full max-w-7xl mx-auto px-4 md:px-8 py-8 flex flex-col gap-6">
       
-      {/* Page Header */}
-      <div>
-        <h1 className="text-2xl md:text-3xl font-bold text-slate-900 mb-1 leading-tight tracking-tight">Lịch thi đấu & Kết quả</h1>
-        <p className="text-sm text-slate-500 max-w-2xl font-medium">
-          Cập nhật lịch thi đấu, tỉ số trực tiếp các giải đấu Cầu lông, Pickleball, Tennis đang diễn ra.
-        </p>
-      </div>
       <section className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="p-5 flex flex-col gap-4">
           {/* Row 1: Main Filters */}

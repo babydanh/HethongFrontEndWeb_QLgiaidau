@@ -283,13 +283,7 @@ export default function TournamentsListPage() {
   return (
     <div className="flex-grow w-full max-w-7xl mx-auto px-4 md:px-8 py-8 flex flex-col gap-6">
       
-      {/* Page Header */}
-      <div>
-        <h1 className="text-2xl md:text-3xl font-bold text-slate-900 mb-1 leading-tight tracking-tight">Khám phá Giải đấu</h1>
-        <p className="text-sm text-slate-500 max-w-2xl font-medium">
-          Tìm kiếm và tham gia các giải đấu thể thao chuyên nghiệp và phong trào phù hợp với trình độ của bạn.
-        </p>
-      </div>
+
 
       {/* Filter Bar */}
       <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-sm flex flex-col gap-4">

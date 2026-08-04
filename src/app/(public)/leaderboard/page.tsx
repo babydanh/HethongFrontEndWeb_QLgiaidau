@@ -140,16 +140,6 @@ export default function LeaderboardPage() {
 
     return (
         <div className="w-full max-w-7xl mx-auto px-4 md:px-8 py-8 flex flex-col gap-8">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b pb-4 border-slate-200">
-                <div>
-                    <h1 className="text-2xl md:text-3xl font-bold text-slate-900 mb-2">Bảng Xếp Hạng</h1>
-                    <p className="text-slate-500 text-xs font-semibold leading-relaxed">
-                        Hệ thống xếp hạng ELO chính thức dành cho các vận động viên.
-                    </p>
-                </div>
-            </div>
-
             {/* Sub-Filters: Sport Category & Province Selector */}
             <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex flex-wrap gap-2">

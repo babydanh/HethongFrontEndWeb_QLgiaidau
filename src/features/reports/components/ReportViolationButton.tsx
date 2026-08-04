@@ -1,7 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Flag, ShieldAlert } from 'lucide-react';
+import { Flag, ShieldAlert, UploadCloud, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/Modal';
 import { Textarea } from '@/components/ui/Textarea';
 import { useAuthStore } from '@/lib/zustand/authStore';
+import { uploadApi } from '@/features/upload/api';
 import { cn } from '@/utils/cn';
 import { getErrorMessage } from '@/utils/error';
 import { trimAndNormalizeSpaces, trimSpaces } from '@/utils/string';
@@ -58,6 +59,7 @@ export function ReportViolationButton({
 }: ReportViolationButtonProps) {
   const { isAuthenticated } = useAuthStore();
   const [open, setOpen] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const form = useForm<ReportFormValues>({
     resolver: zodResolver(reportSchema),
     defaultValues: { category: 'OTHER', reason: '', evidenceText: '' },
@@ -153,17 +155,62 @@ export function ReportViolationButton({
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-semibold text-slate-800">Liên kết minh chứng</label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-sm font-semibold text-slate-800">Liên kết minh chứng</label>
+                <label className="cursor-pointer inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-md transition-colors border border-blue-200/60">
+                  {isUploading ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Đang tải lên...</span>
+                    </>
+                  ) : (
+                    <>
+                      <UploadCloud className="w-3.5 h-3.5" />
+                      <span>Tải ảnh / file lên</span>
+                    </>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*,video/*"
+                    disabled={isUploading}
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      if (file.size > 15 * 1024 * 1024) {
+                        toast.error('Dung lượng tệp tối đa là 15MB');
+                        return;
+                      }
+                      try {
+                        setIsUploading(true);
+                        toast.loading('Đang tải tệp minh chứng lên Cloudinary...', { id: 'report-upload' });
+                        const res = await uploadApi.uploadImage(file);
+                        if (res?.url) {
+                          const currentVal = form.getValues('evidenceText') || '';
+                          const newVal = currentVal ? `${currentVal.trim()}\n${res.url}` : res.url;
+                          form.setValue('evidenceText', newVal, { shouldValidate: true });
+                          toast.success('Đã tải minh chứng lên thành công!', { id: 'report-upload' });
+                        }
+                      } catch (err: unknown) {
+                        toast.error(getErrorMessage(err) || 'Tải tệp thất bại, vui lòng dán URL.', { id: 'report-upload' });
+                      } finally {
+                        setIsUploading(false);
+                        e.target.value = '';
+                      }
+                    }}
+                  />
+                </label>
+              </div>
               <Textarea
                 {...form.register('evidenceText')}
                 rows={3}
-                placeholder={'Mỗi dòng một liên kết ảnh hoặc video\nTối đa 5 liên kết'}
-                className="rounded-lg border-slate-300 bg-white text-slate-800 focus-visible:ring-blue-600"
+                placeholder={'Mỗi dòng một liên kết ảnh hoặc video (hoặc dùng nút Tải ảnh ở trên)\nTối đa 5 liên kết'}
+                className="rounded-lg border-slate-300 bg-white text-slate-800 focus-visible:ring-blue-600 font-mono text-xs"
               />
               {form.formState.errors.evidenceText ? (
                 <p className="mt-1 text-xs font-semibold text-rose-600">{form.formState.errors.evidenceText.message}</p>
               ) : (
-                <p className="mt-1 text-xs text-slate-500">Không đăng thông tin riêng tư không liên quan đến vụ việc.</p>
+                <p className="mt-1 text-xs text-slate-500">Bạn có thể dán link trực tiếp hoặc bấm "Tải ảnh / file lên" để chọn tệp từ máy.</p>
               )}
             </div>
 

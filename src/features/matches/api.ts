@@ -22,6 +22,7 @@ export const matchesApi = {
       scoreDetails: Record<string, unknown>;
       winnerId?: string | null;
       overrideReason?: string;
+      expectedRevision?: number;
     },
   ) =>
     api

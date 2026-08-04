@@ -948,7 +948,6 @@ export default function MatchesListPage() {
               </div>
             </div>
           )}
-        </div>
       </div>
 
       <div className="flex items-end justify-between gap-4">

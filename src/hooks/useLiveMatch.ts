@@ -30,6 +30,19 @@ function hasSameLiveSnapshot(left: Match, right: Match) {
   );
 }
 
+/**
+ * Monotonic merge guard (NOTE-7): only apply an incoming match payload when its
+ * revision is NEWER than the current one. Payloads without revision (legacy
+ * server/client) keep the old behavior for backward compatibility.
+ */
+function isStaleRevision(previous: Match | null, incoming: Match): boolean {
+  if (!previous) return false;
+  if (previous.revision === undefined || incoming.revision === undefined) {
+    return false; // no revision info → keep legacy behavior
+  }
+  return incoming.revision <= previous.revision;
+}
+
 export function useLiveMatch(matchId: string) {
   const [match, setMatch] = useState<Match | null>(null);
   const [scores, setScores] = useState<MatchScore[]>([]);
@@ -93,7 +106,9 @@ export function useLiveMatch(matchId: string) {
         }
 
         setMatch((previous) => (
-          previous && hasSameLiveSnapshot(previous, data) ? previous : data
+          isStaleRevision(previous, data)
+            ? previous
+            : (previous && hasSameLiveSnapshot(previous, data) ? previous : data)
         ));
         const nextScores = extractMatchScores(data.scoreDetails);
         setScores((previous) => (
@@ -156,10 +171,12 @@ export function useLiveMatch(matchId: string) {
 
     const applyIncomingMatch = (updatedMatch: Match, includeScores: boolean) => {
       setMatch((previous) => {
+        if (isStaleRevision(previous, updatedMatch)) {
+          return previous; // drop stale out-of-order payload (NOTE-7)
+        }
         if (previous && hasSameLiveSnapshot(previous, updatedMatch)) {
           return previous;
         }
-
         return updatedMatch;
       });
 

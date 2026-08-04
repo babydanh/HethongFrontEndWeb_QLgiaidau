@@ -462,7 +462,16 @@ export default function HomePage() {
           if (Object.keys(matchCheerMap).length > 0) {
             setHighFives(prev => ({ ...prev, ...matchCheerMap }));
           }
-          const allLiveMatches = allMatches.filter(m => m.status === 'ONGOING');
+          const isCompletedMatch = (m: BracketMatch) => {
+            const status = String(m.status || '').toUpperCase();
+            return status === 'COMPLETED' ||
+              status === 'FINISHED' ||
+              status === 'DONE' ||
+              status === 'ENDED' ||
+              m.completedAt != null ||
+              m.winnerId != null;
+          };
+          const allLiveMatches = allMatches.filter(m => m.status === 'ONGOING' && !isCompletedMatch(m));
           setLiveMatches(allLiveMatches.filter(m => (!shouldFilterByTournament || validTournamentIds.has(m.tournamentId ?? '')) && !m.isBye));
 
           const fetchedUpcoming = allMatches.filter(m => m.status === 'SCHEDULED');
@@ -478,8 +487,15 @@ export default function HomePage() {
           );
           setUpcomingMatches(validUpcoming);
 
-          const fetchedCompleted = allMatches.filter(m => m.status === 'COMPLETED');
-          setCompletedMatches(fetchedCompleted.filter(m => (!shouldFilterByTournament || validTournamentIds.has(m.tournamentId ?? '')) && !m.isBye));
+          const fetchedCompleted = allMatches.filter(isCompletedMatch);
+          const nextCompleted = fetchedCompleted.filter(m =>
+            (!shouldFilterByTournament || validTournamentIds.has(m.tournamentId ?? '')) && !m.isBye
+          );
+          // A transient empty 200 response must not erase the last visible
+          // results. Category-filtered requests are safe to clear explicitly.
+          if (nextCompleted.length > 0 || selectedCategoryId) {
+            setCompletedMatches(nextCompleted);
+          }
         }
 
         // ── ĐỢT 3 (sau 600ms): rankings (1 call) ──

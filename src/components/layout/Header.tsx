@@ -37,7 +37,6 @@ import { cn } from '@/utils/cn';
 import { getErrorMessage, isHttpStatusError } from '@/utils/error';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
-import { LanguageSwitcher } from '@/components/i18n/LanguageSwitcher';
 
 const GUEST_ROUTES = ['/login', '/register'];
 
@@ -318,7 +317,6 @@ export function Header() {
         </div>
 
         <div className="flex items-center gap-3">
-          <LanguageSwitcher className="hidden sm:inline-flex" />
           {/* Nút Tải App */}
           <Link
             href="/download"
@@ -719,7 +717,6 @@ export function Header() {
       {isMobileMenuOpen ? (
         <div className="animate-in fade-in slide-in-from-top-5 border-t border-slate-100 bg-white/95 py-2 shadow-lg backdrop-blur-md duration-200 md:hidden">
           <nav className="flex flex-col gap-1 px-4 py-2">
-            <LanguageSwitcher expanded className="mb-1 sm:hidden" />
             {navLinks.map((link) => (
               <Link
                 key={link.path}

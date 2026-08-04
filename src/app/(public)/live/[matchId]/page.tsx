@@ -83,6 +83,8 @@ function HlsVideoPlayer({ src }: { src: string }) {
       playsInline
       autoPlay
       muted
+    />
+  );
 }
 
 type ScoreUpdatePayload = Parameters<typeof matchesApi.updateScore>[1];

@@ -5,11 +5,11 @@
     --color-background: #f8fafc; /* clean light background */
     --color-foreground: #0f172a; /* slate-900 */
 
-    --color-primary: #0284c7; /* sky-600 */
+    --color-primary: #1683d8; /* VNSport logo blue */
     --color-primary-foreground: #ffffff;
-    --color-primary-light: #e0f2fe; /* sky-100 */
+    --color-primary-light: #e8f5ff; /* brand blue tint */
 
-    --color-secondary: #38bdf8; /* sky-400 (VN Cyan) */
+    --color-secondary: #64b5e8; /* brand secondary blue */
 
     --color-card: #ffffff;
     --color-card-foreground: #0f172a;
@@ -18,11 +18,11 @@
     --color-muted-foreground: #94a3b8; /* slate-400 */
 
     --color-accent: #dbeafe; /* blue-100 */
-    --color-accent-foreground: #1e40af; /* blue-800 */
+    --color-accent-foreground: #07549a; /* brand deep blue */
 
     --color-border: #e2e8f0; /* slate-200 */
     --color-input: #e2e8f0; /* slate-200 */
-    --color-ring: #2563eb; /* blue-600 */
+    --color-ring: #1683d8; /* brand blue */
 
     --color-success: #16a34a; /* green-600 */
     --color-warning: #d97706; /* amber-600 */
@@ -40,7 +40,7 @@
     --ds-text-muted: #94a3b8;
     --ds-border: #e2e8f0;
     --ds-border-subtle: #f1f5f9;
-    --ds-ring: #2563eb;
+    --ds-ring: #1683d8;
     --ds-radius: 0.5rem;
     --ds-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.04);
     --ds-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.04), 0 2px 4px -2px rgb(0 0 0 / 0.04);
@@ -218,5 +218,4 @@ body {
     opacity: 0;
   }
 }
-
 

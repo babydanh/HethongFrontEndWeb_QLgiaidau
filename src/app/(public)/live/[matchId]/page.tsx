@@ -379,10 +379,17 @@ export default function LiveMatchPage({ params }: Props) {
   const resolvedRules = resolveMatchSportRules(match);
   const isLiteMatch = match?.tournament?.tournamentConfig?.mode === 'LITE';
   const scorePresentation = getMatchScorePresentation(resolvedRules.kind);
-  const scoreGuidance = getScoreEntryGuidance(resolvedRules.kind);
+  const scoreGuidance = isLiteMatch
+    ? {
+        targetSummary: 'Giải Lite: nhập điểm tự do theo diễn biến thực tế.',
+        examples: [],
+        operatorHint: 'BTC có thể chốt set hoặc chốt đội thắng theo kết quả thực tế.',
+      }
+    : getScoreEntryGuidance(resolvedRules.kind);
   const sequenceLabelTitle = scorePresentation.sequenceLabel.charAt(0).toUpperCase() + scorePresentation.sequenceLabel.slice(1);
   const sideOutState = readSideOutState(match);
-  const isPickleballSideOut = resolvedRules.kind === 'PICKLEBALL_SIDE_OUT';
+  // Lite uses the generic counter; side-out/server rules belong to advanced presets.
+  const isPickleballSideOut = !isLiteMatch && resolvedRules.kind === 'PICKLEBALL_SIDE_OUT';
   const isTennis = resolvedRules.kind === 'TENNIS';
   const tennisPointState = isTennis ? optimisticTennisPointState ?? resolvedTennisPointState : null;
   const penalties = readPenaltyLog(match);

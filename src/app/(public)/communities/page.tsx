@@ -1,6 +1,5 @@
 "use client";
 
-// Reading this as: Sport clubs and communities discovery grid, with a premium card design system.
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { communitiesApi, Community } from "@/features/communities/api";
@@ -79,7 +78,7 @@ export default function CommunitiesPage() {
   const [search, setSearch] = useState('');
   const [provinceCode, setProvinceCode] = useState('');
   const [categoryId, setCategoryId] = useState('');
-  const [sortBy, setSortBy] = useState('newest');
+  const [sortBy] = useState('newest');
 
   useEffect(() => {
     const fetchCommunities = async () => {
@@ -117,16 +116,8 @@ export default function CommunitiesPage() {
   }, []);
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 animate-in fade-in duration-200">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-in fade-in duration-200">
       
-      {/* Header Section (Removed Create Button per request) */}
-      <div className="mb-10 space-y-2">
-        <h1 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight">Cộng Đồng Câu Lạc Bộ</h1>
-        <p className="text-sm font-semibold text-slate-500 max-w-2xl leading-relaxed">
-          Tìm kiếm và tham gia giao lưu tại các câu lạc bộ thể thao hàng đầu tại Việt Nam.
-        </p>
-      </div>
-
       {/* Filter Bar */}
       <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-sm mb-8 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
         <div className="relative">

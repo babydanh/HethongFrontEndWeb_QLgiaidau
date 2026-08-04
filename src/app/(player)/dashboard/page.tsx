@@ -34,6 +34,7 @@ import {
 } from '@/features/tournaments/api';
 import { useRouter } from 'next/navigation';
 import { communitiesApi } from '@/features/communities/api';
+import { sortFollowedTournaments } from '@/utils/tournament-follow';
 
 const dateFormatter = new Intl.DateTimeFormat('vi-VN', {
   day: '2-digit',

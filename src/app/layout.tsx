@@ -40,7 +40,7 @@ export default async function RootLayout({
 
   return (
     <html lang={locale} className={`${inter.variable} h-full antialiased`} suppressHydrationWarning>
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col bg-[#EBF3FE] text-slate-900">
         <NextIntlClientProvider locale={locale} messages={messages}>
           <RootLayoutClient>{children}</RootLayoutClient>
           <Toaster />

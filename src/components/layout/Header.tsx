@@ -282,7 +282,7 @@ export function Header() {
         'sticky top-0 z-50 w-full transition-all duration-300',
         isScrolled
           ? 'border-b border-sky-200/80 bg-white/90 shadow-sm backdrop-blur-md'
-          : 'border-b border-sky-200/60 bg-[#F0F6FF]',
+          : 'border-b border-sky-200/60 bg-[#EBF3FE]',
       )}
     >
       <div className="flex h-16 w-full items-center justify-between px-6 md:px-16 lg:px-24 xl:px-32">

@@ -19,6 +19,23 @@ const config: Config = {
     },
     extend: {
       colors: {
+        /* ── VNSport brand blue palette (replaces Tailwind default blue) ── */
+        blue: {
+          50:  "#e8f5ff",
+          100: "#d0eaff",
+          150: "#c2e2ff",
+          200: "#a5d4ff",
+          300: "#75bdff",
+          400: "#3fa0f5",
+          450: "#2a90e8",
+          500: "#1b87e0",
+          600: "#1683d8",
+          650: "#1275c4",
+          700: "#07549a",
+          800: "#054280",
+          900: "#033060",
+          950: "#021c3a",
+        },
         "surface-container-high": "#e6e8ea",
         "on-error-container": "#93000a",
         "tertiary": "#46566c",
@@ -67,7 +84,7 @@ const config: Config = {
         border: "var(--color-border)",
         input: "var(--color-input)",
         ring: "var(--color-ring)",
-        background: "#f7f9fb", // "var(--color-background)"
+        background: "#ffffff",
         foreground: "var(--color-foreground)",
         primary: {
           DEFAULT: "var(--color-primary)",

@@ -2,7 +2,7 @@
 @config "../../tailwind.config.ts";
 
 :root {
-    --color-background: #f8fafc; /* clean light background */
+    --color-background: #ffffff; /* pure white background */
     --color-foreground: #0f172a; /* slate-900 */
 
     --color-primary: #1683d8; /* VNSport light logo blue */
@@ -218,3 +218,7 @@ body {
     opacity: 0;
   }
 }
+
+/* Keep legacy blue utilities aligned with the VNSport logo palette.
+   Note: The full blue scale is now overridden in tailwind.config.ts,
+   so these !important rules are no longer needed. */

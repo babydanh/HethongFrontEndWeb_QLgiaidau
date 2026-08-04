@@ -591,115 +591,112 @@ export default function MatchesListPage() {
   return (
     <div className="flex-grow w-full max-w-7xl mx-auto px-4 md:px-8 py-8 flex flex-col gap-6">
       
-      <section className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="p-5 flex flex-col gap-4">
-          {/* Row 1: Main Filters */}
-          <div className="flex flex-col md:flex-row items-end gap-2 sm:gap-4 w-full">
-            {/* Tìm kiếm */}
-            <div className="flex-grow w-full flex flex-col gap-1.5">
-              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tìm kiếm</label>
-              <div className="relative w-full">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => {
-                    setSearchTerm(e.target.value);
-                    setPage(1);
-                  }}
-                  className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-900 font-bold h-11"
-                  placeholder="Tên vận động viên, CLB..."
-                />
-              </div>
+      <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-sm flex flex-col gap-4">
+        {/* Hàng bộ lọc chính */}
+        <div className="flex flex-col sm:flex-row gap-4 items-end">
+          {/* Tìm kiếm */}
+          <div className="flex-grow w-full">
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Tìm kiếm</label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50/50 text-slate-900 font-semibold h-[42px]"
+                placeholder="Tên vận động viên, CLB..."
+              />
             </div>
+          </div>
 
-            {/* Môn thể thao */}
-            <div className="w-full md:w-44 shrink-0 flex flex-col gap-1.5">
-              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Môn thể thao</label>
-              <div className="relative w-full">
-                <select
-                  value={selectedCategoryId}
-                  onChange={(e) => {
-                    setSelectedCategoryId(e.target.value);
-                    setPage(1);
-                  }}
-                  className="w-full pl-3 pr-9 py-2 border border-slate-200 rounded-lg text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-900 font-bold h-11"
-                >
-                  <option value="">Tất cả</option>
-                  {categories.map(cat => (
-                    <option key={cat.id} value={cat.id}>{cat.name}</option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
-              </div>
+          {/* Môn thể thao */}
+          <div className="w-full sm:w-48 shrink-0">
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Môn thể thao</label>
+            <div className="relative">
+              <select
+                value={selectedCategoryId}
+                onChange={(e) => {
+                  setSelectedCategoryId(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full pl-3 pr-10 py-2 border border-slate-200 rounded-lg text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50/50 text-slate-900 font-bold h-[42px]"
+              >
+                <option value="">Tất cả</option>
+                {categories.map(cat => (
+                  <option key={cat.id} value={cat.id}>{cat.name}</option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 w-4.5 h-4.5 pointer-events-none" />
             </div>
+          </div>
 
-            {/* Trạng thái */}
-            <div className="w-full md:w-44 shrink-0 flex flex-col gap-1.5">
-              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Trạng thái</label>
-              <div className="relative w-full">
-                <select
-                  value={selectedStatus}
-                  onChange={(e) => {
-                    setSelectedStatus(e.target.value);
-                    setPage(1);
-                  }}
-                  className="w-full pl-3 pr-9 py-2 border border-slate-200 rounded-lg text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-900 font-bold h-11"
-                >
-                  <option value="">Tất cả</option>
-                  <option value="ONGOING">Đang diễn ra</option>
-                  <option value="SCHEDULED">Sắp diễn ra</option>
-                  <option value="COMPLETED">Vừa kết thúc</option>
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
-              </div>
+          {/* Trạng thái */}
+          <div className="w-full sm:w-48 shrink-0">
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Trạng thái</label>
+            <div className="relative">
+              <select
+                value={selectedStatus}
+                onChange={(e) => {
+                  setSelectedStatus(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full pl-3 pr-10 py-2 border border-slate-200 rounded-lg text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50/50 text-slate-900 font-bold h-[42px]"
+              >
+                <option value="">Tất cả</option>
+                <option value="ONGOING">Đang diễn ra</option>
+                <option value="SCHEDULED">Sắp diễn ra</option>
+                <option value="COMPLETED">Vừa kết thúc</option>
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 w-4.5 h-4.5 pointer-events-none" />
             </div>
+          </div>
 
-            {/* Lọc thêm button */}
-            <button
-              onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-              className={`h-11 flex items-center justify-center gap-2 px-4 py-2 border rounded-lg text-xs font-bold transition-all w-full md:w-auto shrink-0 cursor-pointer ${
-                showAdvancedFilters || selectedBracketType || selectedContent || isRanked || selectedProvince || selectedDistrict || startDate || endDate
-                  ? 'bg-blue-50 border-blue-200 text-blue-700 shadow-sm'
-                  : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
-              }`}
-            >
-              <SlidersHorizontal className="w-3.5 h-3.5" />
-              Lọc thêm
-              {activeFilterCount > 0 && (
-                <span className="ml-1 px-1.5 py-0.2 bg-blue-200 text-blue-800 text-[9px] rounded-full">
-                  {activeFilterCount}
-                </span>
-              )}
+          {/* Lọc thêm button */}
+          <button
+            onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+            className={`w-full sm:w-auto px-4 py-2.5 rounded-lg text-xs font-bold border transition-all flex items-center justify-center gap-2 h-[42px] cursor-pointer shrink-0 ${
+              showAdvancedFilters || selectedBracketType || selectedContent || isRanked || selectedProvince || selectedDistrict || startDate || endDate
+                ? 'bg-blue-50 border-blue-250 text-blue-700 shadow-sm'
+                : 'bg-slate-105 hover:bg-slate-200 text-slate-900 border-slate-200'
+            }`}
+          >
+            <SlidersHorizontal className="w-4 h-4" />
+            Lọc thêm
+            {activeFilterCount > 0 && (
+              <span className="ml-1 px-1.5 py-0.5 bg-blue-200 text-blue-800 text-[9px] rounded-full font-bold">{activeFilterCount}</span>
+            )}
+          </button>
+        </div>
+
+        {/* Status Chips — bên trong khung filter */}
+        <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-100 text-xs font-semibold">
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0">Lọc nhanh:</span>
+          {[
+            { label: 'Vừa kết thúc', value: 'COMPLETED', activeClass: 'bg-[#F3F4F1] text-[#4A4E4D] border-slate-400 font-bold shadow-xs', inactiveClass: 'bg-[#F3F4F1]/80 text-[#4A4E4D] border-transparent hover:border-slate-300' },
+            { label: 'Đang diễn ra', value: 'ONGOING', activeClass: 'bg-[#EBF5FF] text-[#1E56A0] border-blue-300 font-bold shadow-xs', inactiveClass: 'bg-[#EBF5FF]/80 text-[#1E56A0] border-transparent hover:border-blue-200' },
+            { label: 'Sắp diễn ra', value: 'SCHEDULED', activeClass: 'bg-[#FFF5E6] text-[#995C00] border-amber-300 font-bold shadow-xs', inactiveClass: 'bg-[#FFF5E6]/80 text-[#995C00] border-transparent hover:border-amber-200' },
+          ].map((chip) => {
+            const isActive = selectedStatus === chip.value;
+            return (
+              <button
+                key={chip.value}
+                onClick={() => { setSelectedStatus(isActive ? '' : chip.value); setPage(1); }}
+                className={`rounded-full px-3.5 py-1.5 border transition-all cursor-pointer ${isActive ? chip.activeClass : chip.inactiveClass}`}
+              >
+                {chip.label}
+              </button>
+            );
+          })}
+          {selectedStatus && (
+            <button onClick={() => { setSelectedStatus(''); setPage(1); }}
+              className="text-slate-400 font-bold text-xs hover:text-rose-500 transition-colors ml-1 cursor-pointer">
+              ✕ Bỏ lọc
             </button>
-          </div>
-
-          {/* Status Tab Chips - Chuẩn Hình 1 (Nền pastel soft + Không chấm tròn) */}
-          <div className="flex flex-wrap items-center gap-2.5 text-xs font-semibold">
-            {[
-              { label: 'Vừa kết thúc', value: 'COMPLETED', activeClass: 'bg-[#F3F4F1] text-[#4A4E4D] border-slate-400 font-bold shadow-xs', inactiveClass: 'bg-[#F3F4F1]/80 text-[#4A4E4D] border-transparent hover:border-slate-300' },
-              { label: 'Đang diễn ra', value: 'ONGOING', activeClass: 'bg-[#EBF5FF] text-[#1E56A0] border-blue-300 font-bold shadow-xs', inactiveClass: 'bg-[#EBF5FF]/80 text-[#1E56A0] border-transparent hover:border-blue-200' },
-              { label: 'Mở đăng ký', value: 'REGISTRATION_OPEN', activeClass: 'bg-[#EFF8E9] text-[#386629] border-emerald-300 font-bold shadow-xs', inactiveClass: 'bg-[#EFF8E9]/80 text-[#386629] border-transparent hover:border-emerald-200' },
-              { label: 'Sắp diễn ra', value: 'SCHEDULED', activeClass: 'bg-[#FFF5E6] text-[#995C00] border-amber-300 font-bold shadow-xs', inactiveClass: 'bg-[#FFF5E6]/80 text-[#995C00] border-transparent hover:border-amber-200' },
-              { label: 'Đã kết thúc', value: 'FINISHED', activeClass: 'bg-[#F1F5F9] text-[#64748B] border-slate-300 font-bold shadow-xs', inactiveClass: 'bg-[#F1F5F9]/80 text-[#64748B] border-transparent hover:border-slate-200' },
-            ].map((chip) => {
-              const isActive = selectedStatus === chip.value;
-              return (
-                <button
-                  key={chip.value}
-                  onClick={() => {
-                    setSelectedStatus(isActive ? '' : chip.value);
-                    setPage(1);
-                  }}
-                  className={`rounded-full px-4 py-2 border transition-all cursor-pointer ${
-                    isActive ? chip.activeClass : chip.inactiveClass
-                  }`}
-                >
-                  {chip.label}
-                </button>
-              );
-            })}
-          </div>
+          )}
+        </div>
 
           {/* Row 2: Advanced filters panel */}
           {showAdvancedFilters && (
@@ -952,7 +949,7 @@ export default function MatchesListPage() {
             </div>
           )}
         </div>
-      </section>
+      </div>
 
       <div className="flex items-end justify-between gap-4">
         <div>

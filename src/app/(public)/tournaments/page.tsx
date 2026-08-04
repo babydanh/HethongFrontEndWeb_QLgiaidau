@@ -612,69 +612,38 @@ export default function TournamentsListPage() {
             </div>
           </div>
         )}
+        {/* Status Chips — bên trong khung filter */}
+        <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-100 text-xs font-semibold">
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0">Lọc nhanh:</span>
+          <button onClick={() => { setSelectedStatus(selectedStatus === 'COMPLETED' ? '' : 'COMPLETED'); setPage(1); }}
+            className={`rounded-full px-3.5 py-1.5 border transition-all cursor-pointer ${selectedStatus === 'COMPLETED' ? 'bg-[#F3F4F1] text-[#4A4E4D] border-slate-400 font-bold shadow-xs' : 'bg-[#F3F4F1]/80 text-[#4A4E4D] border-transparent hover:border-slate-300'}`}>
+            Vừa kết thúc
+          </button>
+          <button onClick={() => { setSelectedStatus(selectedStatus === 'IN_PROGRESS' ? '' : 'IN_PROGRESS'); setPage(1); }}
+            className={`rounded-full px-3.5 py-1.5 border transition-all cursor-pointer ${selectedStatus === 'IN_PROGRESS' ? 'bg-[#EBF5FF] text-[#1E56A0] border-blue-300 font-bold shadow-xs' : 'bg-[#EBF5FF]/80 text-[#1E56A0] border-transparent hover:border-blue-200'}`}>
+            Đang diễn ra
+          </button>
+          <button onClick={() => { setSelectedStatus(selectedStatus === 'REGISTRATION_OPEN' ? '' : 'REGISTRATION_OPEN'); setPage(1); }}
+            className={`rounded-full px-3.5 py-1.5 border transition-all cursor-pointer ${selectedStatus === 'REGISTRATION_OPEN' ? 'bg-[#EFF8E9] text-[#386629] border-emerald-300 font-bold shadow-xs' : 'bg-[#EFF8E9]/80 text-[#386629] border-transparent hover:border-emerald-200'}`}>
+            Mở đăng ký
+          </button>
+          <button onClick={() => { setSelectedStatus(selectedStatus === 'UPCOMING' ? '' : 'UPCOMING'); setPage(1); }}
+            className={`rounded-full px-3.5 py-1.5 border transition-all cursor-pointer ${selectedStatus === 'UPCOMING' ? 'bg-[#FFF5E6] text-[#995C00] border-amber-300 font-bold shadow-xs' : 'bg-[#FFF5E6]/80 text-[#995C00] border-transparent hover:border-amber-200'}`}>
+            Sắp diễn ra
+          </button>
+          <button onClick={() => { setSelectedStatus(selectedStatus === 'FINISHED' ? '' : 'FINISHED'); setPage(1); }}
+            className={`rounded-full px-3.5 py-1.5 border transition-all cursor-pointer ${selectedStatus === 'FINISHED' ? 'bg-[#F1F5F9] text-[#64748B] border-slate-300 font-bold shadow-xs' : 'bg-[#F1F5F9]/80 text-[#64748B] border-transparent hover:border-slate-200'}`}>
+            Đã kết thúc
+          </button>
+          {selectedStatus && (
+            <button onClick={() => { setSelectedStatus(''); setPage(1); }}
+              className="text-slate-400 font-bold text-xs hover:text-rose-500 transition-colors ml-1 cursor-pointer">
+              ✕ Bỏ lọc
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Filter Status Pills - Chuẩn Hình 1 (Nền pastel soft + Không chấm tròn) */}
-      <div className="flex flex-wrap items-center gap-2.5 text-xs font-semibold">
-        <button 
-          onClick={() => { setSelectedStatus(selectedStatus === 'COMPLETED' ? '' : 'COMPLETED'); setPage(1); }}
-          className={`rounded-full px-4 py-2 border transition-all cursor-pointer ${
-            selectedStatus === 'COMPLETED'
-              ? 'bg-[#F3F4F1] text-[#4A4E4D] border-slate-400 font-bold shadow-xs'
-              : 'bg-[#F3F4F1]/80 text-[#4A4E4D] border-transparent hover:border-slate-300'
-          }`}
-        >
-          Vừa kết thúc
-        </button>
-        <button 
-          onClick={() => { setSelectedStatus(selectedStatus === 'IN_PROGRESS' ? '' : 'IN_PROGRESS'); setPage(1); }}
-          className={`rounded-full px-4 py-2 border transition-all cursor-pointer ${
-            selectedStatus === 'IN_PROGRESS'
-              ? 'bg-[#EBF5FF] text-[#1E56A0] border-blue-300 font-bold shadow-xs'
-              : 'bg-[#EBF5FF]/80 text-[#1E56A0] border-transparent hover:border-blue-200'
-          }`}
-        >
-          Đang diễn ra
-        </button>
-        <button 
-          onClick={() => { setSelectedStatus(selectedStatus === 'REGISTRATION_OPEN' ? '' : 'REGISTRATION_OPEN'); setPage(1); }}
-          className={`rounded-full px-4 py-2 border transition-all cursor-pointer ${
-            selectedStatus === 'REGISTRATION_OPEN'
-              ? 'bg-[#EFF8E9] text-[#386629] border-emerald-300 font-bold shadow-xs'
-              : 'bg-[#EFF8E9]/80 text-[#386629] border-transparent hover:border-emerald-200'
-          }`}
-        >
-          Mở đăng ký
-        </button>
-        <button 
-          onClick={() => { setSelectedStatus(selectedStatus === 'UPCOMING' ? '' : 'UPCOMING'); setPage(1); }}
-          className={`rounded-full px-4 py-2 border transition-all cursor-pointer ${
-            selectedStatus === 'UPCOMING'
-              ? 'bg-[#FFF5E6] text-[#995C00] border-amber-300 font-bold shadow-xs'
-              : 'bg-[#FFF5E6]/80 text-[#995C00] border-transparent hover:border-amber-200'
-          }`}
-        >
-          Sắp diễn ra
-        </button>
-        <button 
-          onClick={() => { setSelectedStatus(selectedStatus === 'FINISHED' ? '' : 'FINISHED'); setPage(1); }}
-          className={`rounded-full px-4 py-2 border transition-all cursor-pointer ${
-            selectedStatus === 'FINISHED'
-              ? 'bg-[#F1F5F9] text-[#64748B] border-slate-300 font-bold shadow-xs'
-              : 'bg-[#F1F5F9]/80 text-[#64748B] border-transparent hover:border-slate-200'
-          }`}
-        >
-          Đã kết thúc
-        </button>
-        {selectedStatus && (
-          <button 
-            onClick={() => { setSelectedStatus(''); setPage(1); }}
-            className="text-slate-500 font-bold text-xs hover:underline ml-1 cursor-pointer"
-          >
-            Bỏ lọc [x]
-          </button>
-        )}
-      </div>
 
       {isLoading ? (
         <div className="flex justify-center items-center h-64 text-slate-500 font-medium">Đang tải danh sách giải đấu...</div>

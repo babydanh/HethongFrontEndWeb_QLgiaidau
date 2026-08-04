@@ -81,7 +81,7 @@ export default function TeamsTab({ tournament, tournamentId, divisionId }: Props
                       const trimmed = name.trim();
                       const isCaptain = i === 0;
                       const regUser = team.registeredBy;
-                      const isRegMatch = regUser && (isCaptain || (regUser.fullName && regUser.fullName.trim().toLowerCase() === trimmed.toLowerCase()));
+                      const isRegMatch = regUser && regUser.fullName && regUser.fullName.trim().toLowerCase() === trimmed.toLowerCase();
                       return {
                         userId: isRegMatch ? regUser.id : '',
                         fullName: trimmed,
@@ -98,27 +98,29 @@ export default function TeamsTab({ tournament, tournamentId, divisionId }: Props
                       onClick={() => toggleExpand(team.id)}
                       className="bg-white border-b border-slate-100 hover:bg-slate-50/80 transition-colors cursor-pointer"
                     >
-                      <td className="px-3 py-3 sm:px-6 sm:py-4 font-medium text-slate-950">{index + 1}</td>
-                      <td className="px-3 py-3 sm:px-6 sm:py-4 font-bold text-slate-950 flex flex-wrap items-center gap-1.5 sm:gap-2">
-                        <span>{team.teamName}</span>
-                        {team.seed !== null && (
-                          <span className="bg-blue-50 text-blue-700 border border-blue-200 text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded">
-                            Seed {team.seed}
-                          </span>
-                        )}
+                      <td className="px-3 py-3.5 sm:px-6 sm:py-4 font-medium text-slate-950 align-middle">{index + 1}</td>
+                      <td className="px-3 py-3.5 sm:px-6 sm:py-4 font-bold text-slate-950 align-middle">
+                        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 leading-normal">
+                          <span>{team.teamName}</span>
+                          {team.seed !== null && (
+                            <span className="bg-blue-50 text-blue-700 border border-blue-200 text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded">
+                              Seed {team.seed}
+                            </span>
+                          )}
+                        </div>
                       </td>
-                      <td className="px-3 py-3 sm:px-6 sm:py-4">
+                      <td className="px-3 py-3.5 sm:px-6 sm:py-4 align-middle">
                         {team.isPaid ? (
-                          <span className="bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold whitespace-nowrap">
+                          <span className="bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold inline-block whitespace-nowrap">
                             Đã đóng phí
                           </span>
                         ) : (
-                          <span className="bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold whitespace-nowrap">
+                          <span className="bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold inline-block whitespace-nowrap">
                             Chờ thanh toán
                           </span>
                         )}
                       </td>
-                      <td className="px-3 py-3 sm:px-6 sm:py-4 text-right">
+                      <td className="px-3 py-3.5 sm:px-6 sm:py-4 text-right align-middle">
                         <button className="text-slate-400 hover:text-slate-700 p-1 sm:p-2 min-w-[36px]">
                           {isExpanded ? <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5" /> : <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5" />}
                         </button>
@@ -133,16 +135,20 @@ export default function TeamsTab({ tournament, tournamentId, divisionId }: Props
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               {members.map((member, mIdx) => {
-                                const targetUserId = member.userId || (mIdx === 0 && team.registeredBy?.id ? team.registeredBy.id : null);
-                                const avatarSrc = member.avatarUrl || (mIdx === 0 && team.registeredBy?.avatarUrl ? team.registeredBy.avatarUrl : null);
+                                const regUser = team.registeredBy;
+                                const isNameMatch = regUser && regUser.fullName && member.fullName && regUser.fullName.trim().toLowerCase() === member.fullName.trim().toLowerCase();
+                                const targetUserId = member.userId || (isNameMatch ? regUser.id : null);
+                                const avatarSrc = member.avatarUrl || (isNameMatch ? regUser.avatarUrl : null);
                                 const initial = (member.fullName || 'U').charAt(0).toUpperCase();
 
                                 const CardContent = (
                                   <div className="flex items-center gap-3 flex-1 min-w-0">
-                                    <div className={`w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center font-bold text-sm overflow-hidden shadow-sm ${
-                                      member.role === 'CAPTAIN'
-                                        ? 'bg-gradient-to-br from-blue-600 to-indigo-700 text-white'
-                                        : 'bg-gradient-to-br from-purple-600 to-pink-600 text-white'
+                                    <div className={`w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center font-bold text-sm overflow-hidden shadow-sm shrink-0 ${
+                                      avatarSrc 
+                                        ? 'bg-slate-100' 
+                                        : member.role === 'CAPTAIN'
+                                          ? 'bg-gradient-to-br from-blue-600 to-indigo-700 text-white'
+                                          : 'bg-gradient-to-br from-purple-600 to-pink-600 text-white'
                                     }`}>
                                       {avatarSrc ? (
                                         <img src={avatarSrc} alt={member.fullName || ''} className="w-full h-full object-cover" />

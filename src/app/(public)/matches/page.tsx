@@ -1031,226 +1031,233 @@ export default function MatchesListPage() {
                     const maxSetsCount = setsToWinSetting === 2 ? 3 : setsToWinSetting === 1 ? 1 : 5;
 
                     return (
-                      <div 
+                      <motion.div 
                         key={match.id}
-                        className="bg-white rounded-lg border border-slate-200 hover:border-slate-350 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col justify-between"
+                        whileHover={{ y: -3, scale: 1.005 }}
+                        transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                        className={`bg-white rounded-lg border ${
+                          isLive 
+                            ? 'border-rose-100 shadow-[0_4px_20px_rgba(244,63,94,0.03)]' 
+                            : 'border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.015)]'
+                        } overflow-hidden flex flex-col justify-between group relative`}
                       >
-                        {/* Header trận */}
-                        <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
-                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
-                          {isLive ? (
-                              <>
-                                <span className="inline-flex items-center gap-1 text-rose-600 animate-pulse">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-rose-600" />
-                                  Đang diễn ra
-                                </span>
-                                <span>• {friendlyRoundName}</span>
-                              </>
-                            ) : isFinished ? (
-                              <>
-                                <span className="text-slate-400">Đã kết thúc</span>
-                                <span>• {friendlyRoundName}</span>
-                              </>
-                            ) : (
-                              <>
-                                <span className="text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded font-bold border border-blue-100">Sắp đấu</span>
-                                {match.scheduledAt ? (
-                                  <span>• {new Date(match.scheduledAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} {new Date(match.scheduledAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })} • {friendlyRoundName}</span>
-                                ) : (
+                        {/* Whole Card Link */}
+                        <Link href={`/live/${match.id}`} className="block flex-1">
+                          {/* Header trận */}
+                          <div className={`px-4 py-2.5 ${isLive ? 'bg-rose-50/30' : 'bg-slate-50/50'} border-b border-slate-100 flex items-center justify-between`}>
+                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                            {isLive ? (
+                                <>
+                                  <span className="inline-flex items-center gap-1 text-rose-600 font-bold animate-pulse">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-rose-600" />
+                                    Đang diễn ra
+                                  </span>
                                   <span>• {friendlyRoundName}</span>
-                                )}
-                              </>
-                            )}
-                          </span>
-                          
-                          {isLive && typeof match.viewerCount === 'number' && match.viewerCount > 0 && (
-                            <span className="flex items-center gap-1 text-[9px] font-bold text-blue-700 bg-blue-50 border border-blue-100/60 px-2 py-0.5 rounded-full">
-                              <Eye className="w-3 h-3 text-blue-600 animate-pulse" />
-                              <span>{match.viewerCount} đang xem</span>
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Chi tiết đấu - Bố cục Dọc theo chuẩn giải đấu chuyên nghiệp */}
-                        <div className="p-4 flex flex-col gap-3 flex-grow justify-center">
-                          <div className="flex flex-col gap-2.5">
-                            {/* VĐV / Đội 1 */}
-                            <div className="flex items-center justify-between gap-3 p-2.5 rounded-lg border border-slate-100/70 bg-slate-50/50 transition-all">
-                              <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                                {renderTeamAvatars(match.participant1, 'bg-blue-50', 'text-blue-700')}
-                                <div className="min-w-0 flex-1">
-                                  <div className={`text-xs truncate ${p1Won ? 'text-emerald-700 font-extrabold' : 'text-slate-800 font-bold'}`}>
-                                    {getTeamShortName(match.participant1?.teamName)}
-                                  </div>
-                                  
-                                  {/* Hiển thị ELO / Thành viên thông minh */}
-                                  {match.tournament?.matchType === 'SINGLES' ? (
-                                    // Đấu đơn: Hiển thị ELO trực tiếp bên dưới tên
-                                    (() => {
-                                      const elo = match.participant1?.eloPoints ?? 
-                                                  match.participant1?.members?.[0]?.elo?.eloPoints ?? 
-                                                  1000;
-                                      return (
-                                        <span className="text-[9px] font-bold text-blue-650 bg-blue-50/60 px-1.5 py-0.5 rounded-full border border-blue-100/55 block w-max mt-1">
-                                          ELO: {elo}
-                                        </span>
-                                      );
-                                    })()
+                                </>
+                              ) : isFinished ? (
+                                <>
+                                  <span className="text-slate-400">Đã kết thúc</span>
+                                  <span>• {friendlyRoundName}</span>
+                                </>
+                              ) : (
+                                <>
+                                  <span className="text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded font-bold border border-blue-100">Sắp đấu</span>
+                                  {match.scheduledAt ? (
+                                    <span>• {new Date(match.scheduledAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} {new Date(match.scheduledAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })} • {friendlyRoundName}</span>
                                   ) : (
-                                    // Đấu đôi: Hiển thị tên thành viên và ELO cặp nằm dưới
-                                    <div className="flex flex-col mt-0.5">
-                                      <div className="flex flex-wrap gap-x-2 gap-y-0.5">
+                                    <span>• {friendlyRoundName}</span>
+                                  )}
+                                </>
+                              )}
+                            </span>
+                            
+                            {isLive && typeof match.viewerCount === 'number' && match.viewerCount > 0 && (
+                              <span className="flex items-center gap-1 text-[9px] font-bold text-blue-700 bg-blue-50 border border-blue-100/60 px-2 py-0.5 rounded-full">
+                                <Eye className="w-3 h-3 text-blue-600 animate-pulse" />
+                                <span>{match.viewerCount} đang xem</span>
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Chi tiết đấu */}
+                          <div className="p-4 flex flex-col gap-3 flex-grow justify-center group-hover:bg-slate-50/30 transition-colors">
+                            <div className="flex flex-col gap-2.5">
+                              {/* VĐV / Đội 1 */}
+                              <div className="flex items-center justify-between gap-3 p-2.5 rounded-lg border border-slate-100/70 bg-slate-50/50 transition-all">
+                                <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                                  {renderTeamAvatars(match.participant1, 'bg-blue-50', 'text-blue-700')}
+                                  <div className="min-w-0 flex-1">
+                                    <div className={`text-xs truncate group-hover:text-blue-600 transition-colors ${p1Won ? 'text-emerald-700 font-extrabold' : 'text-slate-800 font-bold'}`}>
+                                      {getTeamShortName(match.participant1?.teamName)}
+                                    </div>
+                                    
+                                    {/* Hiển thị ELO / Thành viên thông minh */}
+                                    {match.tournament?.matchType === 'SINGLES' ? (
+                                      (() => {
+                                        const elo = match.participant1?.eloPoints ?? 
+                                                    match.participant1?.members?.[0]?.elo?.eloPoints ?? 
+                                                    1000;
+                                        return (
+                                          <span className="text-[9px] font-bold text-blue-650 bg-blue-50/60 px-1.5 py-0.5 rounded-full border border-blue-100/55 block w-max mt-1">
+                                            ELO: {elo}
+                                          </span>
+                                        );
+                                      })()
+                                    ) : (
+                                      <div className="flex flex-col mt-0.5">
+                                        <div className="flex flex-wrap gap-x-2 gap-y-0.5">
+                                          {(() => {
+                                            const members = match.participant1?.members || [];
+                                            const memberEloList = members as Array<{ fullName?: string | null; isMock?: boolean; elo?: { eloPoints: number } }>;
+                                            return memberEloList.slice(0, 2).map((m, i) => (
+                                              <span key={i} className={`text-[9px] font-medium ${p1Won ? 'text-blue-600/80' : 'text-slate-400'}`}>
+                                                {getShortName(m.fullName) || (m.isMock ? 'VĐV ảo' : 'N/A')}
+                                              </span>
+                                            ));
+                                          })()}
+                                        </div>
                                         {(() => {
                                           const members = match.participant1?.members || [];
                                           const memberEloList = members as Array<{ fullName?: string | null; isMock?: boolean; elo?: { eloPoints: number } }>;
-                                          return memberEloList.slice(0, 2).map((m, i) => (
-                                            <span key={i} className={`text-[9px] font-medium ${p1Won ? 'text-blue-600/80' : 'text-slate-400'}`}>
-                                              {getShortName(m.fullName) || (m.isMock ? 'VĐV ảo' : 'N/A')}
+                                          const validMembers = memberEloList.filter(m => !m.isMock);
+                                          const pairElo = validMembers.length > 0
+                                            ? Math.round(validMembers.reduce((acc: number, m) => acc + (m.elo?.eloPoints || 1000), 0) / validMembers.length)
+                                            : null;
+                                          return pairElo !== null ? (
+                                            <span className="text-[9px] font-bold text-blue-650 bg-blue-50/80 px-1.5 py-0.5 rounded-full border border-blue-150 block w-max mt-1">
+                                              ELO Cặp: {pairElo}
                                             </span>
-                                          ));
+                                          ) : null;
                                         })()}
                                       </div>
-                                      {(() => {
-                                        const members = match.participant1?.members || [];
-                                        const memberEloList = members as Array<{ fullName?: string | null; isMock?: boolean; elo?: { eloPoints: number } }>;
-                                        const validMembers = memberEloList.filter(m => !m.isMock);
-                                        const pairElo = validMembers.length > 0
-                                          ? Math.round(validMembers.reduce((acc: number, m) => acc + (m.elo?.eloPoints || 1000), 0) / validMembers.length)
-                                          : null;
-                                        return pairElo !== null ? (
-                                          <span className="text-[9px] font-bold text-blue-650 bg-blue-50/80 px-1.5 py-0.5 rounded-full border border-blue-150 block w-max mt-1">
-                                            ELO Cặp: {pairElo}
-                                          </span>
-                                        ) : null;
-                                      })()}
-                                    </div>
-                                  )}
+                                    )}
+                                  </div>
                                 </div>
+
+                                {/* Tỉ số các set theo cột dọc */}
+                                {match.status !== 'SCHEDULED' && (
+                                  <div className="flex items-center gap-1 shrink-0">
+                                    {scoreSets.filter(set => set !== undefined && set.team1Score !== undefined && set.team2Score !== undefined).map((set, idx) => {
+                                      const isSetDone = set.isFinished;
+                                      const isWinner = isSetDone && (Number(set.team1Score) > Number(set.team2Score));
+                                      return (
+                                        <div 
+                                          key={idx} 
+                                          className={`w-6.5 h-6.5 rounded text-[10px] flex items-center justify-center border transition-all ${
+                                            isLive 
+                                              ? 'bg-rose-50 text-rose-600 border-rose-100 font-bold animate-pulse'
+                                              : isWinner
+                                              ? 'bg-blue-50 text-blue-700 border-emerald-250 font-extrabold shadow-xs scale-103'
+                                              : 'bg-slate-50/70 text-slate-400 border-slate-200/50 font-medium'
+                                          }`}
+                                        >
+                                          {set.team1Score}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                )}
                               </div>
 
-                              {/* Tỉ số các set theo cột dọc */}
-                              {match.status !== 'SCHEDULED' && (
-                                <div className="flex items-center gap-1 shrink-0">
-                                  {scoreSets.filter(set => set !== undefined && set.team1Score !== undefined && set.team2Score !== undefined).map((set, idx) => {
-                                    const isSetDone = set.isFinished;
-                                    const isWinner = isSetDone && (Number(set.team1Score) > Number(set.team2Score));
-                                    return (
-                                      <div 
-                                        key={idx} 
-                                        className={`w-6.5 h-6.5 rounded text-[10px] flex items-center justify-center border transition-all ${
-                                          isLive 
-                                            ? 'bg-rose-50 text-rose-600 border-rose-100 font-bold animate-pulse'
-                                            : isWinner
-                                            ? 'bg-blue-50 text-blue-700 border-emerald-250 font-extrabold shadow-xs scale-103'
-                                            : 'bg-slate-50/70 text-slate-400 border-slate-200/50 font-medium'
-                                        }`}
-                                      >
-                                        {set.team1Score}
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              )}
-                            </div>
-
-                            {/* VĐV / Đội 2 */}
-                            <div className="flex items-center justify-between gap-3 p-2.5 rounded-lg border border-slate-100/70 bg-slate-50/50 transition-all">
-                              <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                                {renderTeamAvatars(match.participant2, 'bg-blue-50', 'text-blue-700')}
-                                <div className="min-w-0 flex-1">
-                                  <div className={`text-xs truncate ${p2Won ? 'text-emerald-700 font-extrabold' : 'text-slate-800 font-bold'}`}>
-                                    {getTeamShortName(match.participant2?.teamName)}
-                                  </div>
-                                  
-                                  {/* Hiển thị ELO / Thành viên thông minh */}
-                                  {match.tournament?.matchType === 'SINGLES' ? (
-                                    // Đấu đơn: Hiển thị ELO trực tiếp bên dưới tên
-                                    (() => {
-                                      const elo = match.participant2?.eloPoints ?? 
-                                                  match.participant2?.members?.[0]?.elo?.eloPoints ?? 
-                                                  1000;
-                                      return (
-                                        <span className="text-[9px] font-bold text-blue-650 bg-blue-50/60 px-1.5 py-0.5 rounded-full border border-blue-100/55 block w-max mt-1">
-                                          ELO: {elo}
-                                        </span>
-                                      );
-                                    })()
-                                  ) : (
-                                    // Đấu đôi: Hiển thị tên thành viên và ELO cặp nằm dưới
-                                    <div className="flex flex-col mt-0.5">
-                                      <div className="flex flex-wrap gap-x-2 gap-y-0.5">
+                              {/* VĐV / Đội 2 */}
+                              <div className="flex items-center justify-between gap-3 p-2.5 rounded-lg border border-slate-100/70 bg-slate-50/50 transition-all">
+                                <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                                  {renderTeamAvatars(match.participant2, 'bg-blue-50', 'text-blue-700')}
+                                  <div className="min-w-0 flex-1">
+                                    <div className={`text-xs truncate group-hover:text-blue-600 transition-colors ${p2Won ? 'text-emerald-700 font-extrabold' : 'text-slate-800 font-bold'}`}>
+                                      {getTeamShortName(match.participant2?.teamName)}
+                                    </div>
+                                    
+                                    {/* Hiển thị ELO / Thành viên thông minh */}
+                                    {match.tournament?.matchType === 'SINGLES' ? (
+                                      (() => {
+                                        const elo = match.participant2?.eloPoints ?? 
+                                                    match.participant2?.members?.[0]?.elo?.eloPoints ?? 
+                                                    1000;
+                                        return (
+                                          <span className="text-[9px] font-bold text-blue-650 bg-blue-50/60 px-1.5 py-0.5 rounded-full border border-blue-100/55 block w-max mt-1">
+                                            ELO: {elo}
+                                          </span>
+                                        );
+                                      })()
+                                    ) : (
+                                      <div className="flex flex-col mt-0.5">
+                                        <div className="flex flex-wrap gap-x-2 gap-y-0.5">
+                                          {(() => {
+                                            const members = match.participant2?.members || [];
+                                            const memberEloList = members as Array<{ fullName?: string | null; isMock?: boolean; elo?: { eloPoints: number } }>;
+                                            return memberEloList.slice(0, 2).map((m, i) => (
+                                              <span key={i} className={`text-[9px] font-medium ${p2Won ? 'text-blue-600/80' : 'text-slate-400'}`}>
+                                                {getShortName(m.fullName) || (m.isMock ? 'VĐV ảo' : 'N/A')}
+                                              </span>
+                                            ));
+                                          })()}
+                                        </div>
                                         {(() => {
                                           const members = match.participant2?.members || [];
                                           const memberEloList = members as Array<{ fullName?: string | null; isMock?: boolean; elo?: { eloPoints: number } }>;
-                                          return memberEloList.slice(0, 2).map((m, i) => (
-                                            <span key={i} className={`text-[9px] font-medium ${p2Won ? 'text-blue-600/80' : 'text-slate-400'}`}>
-                                              {getShortName(m.fullName) || (m.isMock ? 'VĐV ảo' : 'N/A')}
+                                          const validMembers = memberEloList.filter(m => !m.isMock);
+                                          const pairElo = validMembers.length > 0
+                                            ? Math.round(validMembers.reduce((acc: number, m) => acc + (m.elo?.eloPoints || 1000), 0) / validMembers.length)
+                                            : null;
+                                          return pairElo !== null ? (
+                                            <span className="text-[9px] font-bold text-blue-650 bg-blue-50/80 px-1.5 py-0.5 rounded-full border border-blue-150 block w-max mt-1">
+                                              ELO Cặp: {pairElo}
                                             </span>
-                                          ));
+                                          ) : null;
                                         })()}
                                       </div>
-                                      {(() => {
-                                        const members = match.participant2?.members || [];
-                                        const memberEloList = members as Array<{ fullName?: string | null; isMock?: boolean; elo?: { eloPoints: number } }>;
-                                        const validMembers = memberEloList.filter(m => !m.isMock);
-                                        const pairElo = validMembers.length > 0
-                                          ? Math.round(validMembers.reduce((acc: number, m) => acc + (m.elo?.eloPoints || 1000), 0) / validMembers.length)
-                                          : null;
-                                        return pairElo !== null ? (
-                                          <span className="text-[9px] font-bold text-blue-650 bg-blue-50/80 px-1.5 py-0.5 rounded-full border border-blue-150 block w-max mt-1">
-                                            ELO Cặp: {pairElo}
-                                          </span>
-                                        ) : null;
-                                      })()}
-                                    </div>
-                                  )}
+                                    )}
+                                  </div>
                                 </div>
-                              </div>
 
-                              {/* Tỉ số các set theo cột dọc */}
-                              {match.status !== 'SCHEDULED' && (
-                                <div className="flex items-center gap-1 shrink-0">
-                                  {scoreSets.filter(set => set !== undefined && set.team1Score !== undefined && set.team2Score !== undefined).map((set, idx) => {
-                                    const isSetDone = set.isFinished;
-                                    const isWinner = isSetDone && (Number(set.team2Score) > Number(set.team1Score));
-                                    return (
-                                      <div 
-                                        key={idx} 
-                                        className={`w-6.5 h-6.5 rounded text-[10px] flex items-center justify-center border transition-all ${
-                                          isLive 
-                                            ? 'bg-rose-50 text-rose-600 border-rose-100 font-bold animate-pulse'
-                                            : isWinner
-                                            ? 'bg-blue-50 text-blue-700 border-emerald-250 font-extrabold shadow-xs scale-103'
-                                            : 'bg-slate-50/70 text-slate-400 border-slate-200/50 font-medium'
-                                        }`}
-                                      >
-                                        {set.team2Score}
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              )}
+                                {/* Tỉ số các set theo cột dọc */}
+                                {match.status !== 'SCHEDULED' && (
+                                  <div className="flex items-center gap-1 shrink-0">
+                                    {scoreSets.filter(set => set !== undefined && set.team1Score !== undefined && set.team2Score !== undefined).map((set, idx) => {
+                                      const isSetDone = set.isFinished;
+                                      const isWinner = isSetDone && (Number(set.team2Score) > Number(set.team1Score));
+                                      return (
+                                        <div 
+                                          key={idx} 
+                                          className={`w-6.5 h-6.5 rounded text-[10px] flex items-center justify-center border transition-all ${
+                                            isLive 
+                                              ? 'bg-rose-50 text-rose-600 border-rose-100 font-bold animate-pulse'
+                                              : isWinner
+                                              ? 'bg-blue-50 text-blue-700 border-emerald-250 font-extrabold shadow-xs scale-103'
+                                              : 'bg-slate-50/70 text-slate-400 border-slate-200/50 font-medium'
+                                          }`}
+                                        >
+                                          {set.team2Score}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Phân môn & Sân */}
+                            <div className="text-[10px] font-bold text-slate-400 flex items-center gap-2.5 justify-center border-t border-slate-100 pt-2.5">
+                              <span className="flex items-center gap-1 text-slate-500">
+                                <span className="font-bold text-slate-800 whitespace-nowrap">
+                                  {getFormatLabel(match.tournament?.matchType, match.tournament?.genderRestriction)}
+                                </span>
+                              </span>
+                              <span className="text-slate-200">|</span>
+                              <span>
+                                 {match.courtName ? `Sân: ${match.courtName}` : 'Chờ xếp sân'}
+                              </span>
                             </div>
                           </div>
+                        </Link>
 
-                          {/* Phân môn & Sân */}
-                          <div className="text-[10px] font-bold text-slate-400 flex items-center gap-2.5 justify-center border-t border-slate-100 pt-2.5">
-                            <span className="flex items-center gap-1 text-slate-500">
-                              <span className="font-bold text-slate-800 whitespace-nowrap">
-                                {getFormatLabel(match.tournament?.matchType, match.tournament?.genderRestriction)}
-                              </span>
-                            </span>
-                            <span className="text-slate-200">|</span>
-                            <span>
-                               {match.courtName ? `Sân: ${match.courtName}` : 'Chờ xếp sân'}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Actions */}
-                        <div className="px-3 py-1 bg-slate-50/50 border-t border-slate-100 grid grid-cols-3 gap-1 text-center text-[11px] font-bold text-slate-500">
+                        {/* Interactive Footer (Heart & Share aligned right) */}
+                        <div className="px-3 py-1 bg-slate-50/50 border-t border-slate-100 flex items-center justify-end gap-1.5 relative z-10">
                           <button 
-                            onClick={async () => {
+                            onClick={async (e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
                               setCheerCounts(prev => ({
                                 ...prev,
                                 [match.id]: (prev[match.id] ?? match.cheerCount ?? 0) + 1,
@@ -1269,22 +1276,19 @@ export default function MatchesListPage() {
                                 toast.error('Không thể gửi cổ vũ, vui lòng thử lại.');
                               }
                             }}
-                            className="flex items-center justify-center gap-1 hover:text-rose-600 transition-colors py-1 min-h-[32px] cursor-pointer"
+                            title={`Cổ vũ (${cheerCounts[match.id] || 0})`}
+                            className="flex items-center justify-center px-2.5 py-1 hover:bg-white rounded-md text-slate-600 transition-all border border-transparent hover:border-slate-200 active:scale-95 duration-100 cursor-pointer shrink-0"
                           >
-                            <Heart className="w-3 h-3 text-rose-500 fill-current" />
-                            <span>Cổ vũ ({cheerCounts[match.id] || 0})</span>
+                            <Heart className="w-4 h-4 text-rose-500 fill-rose-500/10" />
+                            <span className="text-[11px] font-bold text-slate-600 ml-1">({cheerCounts[match.id] || 0})</span>
                           </button>
-                          <Link 
-                            href={`/live/${match.id}`}
-                            className="flex items-center justify-center gap-1 hover:text-blue-600 transition-colors py-1 min-h-[32px] cursor-pointer"
-                          >
-                            <Play className="w-3 h-3 text-blue-600 fill-current" />
-                            <span>Chi tiết</span>
-                          </Link>
-                           <button 
-                            onClick={() => {
-                              const p1Name = match.participant1?.teamName || 'VĐV 1';
-                              const p2Name = match.participant2?.teamName || 'VĐV 2';
+
+                          <button 
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              const p1Name = getTeamShortName(match.participant1?.teamName);
+                              const p2Name = getTeamShortName(match.participant2?.teamName);
                               setActiveShareUrl(`${window.location.origin}/live/${match.id}`);
                               setActiveShareTitle(`Trận đấu: ${p1Name} vs ${p2Name}`);
                               setIsShareModalOpen(true);

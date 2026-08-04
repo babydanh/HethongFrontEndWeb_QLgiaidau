@@ -36,6 +36,15 @@ import { matchesApi, Match } from '@/features/matches/api';
 import { useRouter } from 'next/navigation';
 import { communitiesApi } from '@/features/communities/api';
 import { sortFollowedTournaments } from '@/utils/tournament-follow';
+import {
+  getTournamentStatusClassName,
+  getTournamentStatusLabel,
+  isTournamentCompleted,
+  isTournamentInProgress,
+  isTournamentOpenForRegistration,
+  isTournamentUpcoming,
+} from '@/utils/tournament-status';
+import { isRecentlyCompletedTournament } from '@/utils/tournament-home';
 
 const dateFormatter = new Intl.DateTimeFormat('vi-VN', {
   day: '2-digit',

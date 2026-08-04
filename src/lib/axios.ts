@@ -2,6 +2,9 @@ import axios, { AxiosRequestConfig } from 'axios';
 import { useAuthStore } from './zustand/authStore';
 import toast from 'react-hot-toast';
 
+let lastServerErrorToastAt = 0;
+const SERVER_ERROR_TOAST_COOLDOWN_MS = 10000;
+
 /**
  * Đọc giá trị cookie theo tên
  */
@@ -143,23 +146,21 @@ api.interceptors.response.use(
       }
     }
 
-    // Catch-all server errors (500)
+    // Do not turn a transient backend failure into a toast storm. Screens keep
+    // their last successful snapshot and decide when the next reconciliation
+    // is safe, instead of every caller retrying the same request here.
     if (error.response?.status >= 500) {
-      toast.error('Hệ thống đang gặp lỗi. Vui lòng thử lại sau.');
+      const now = Date.now();
+      if (now - lastServerErrorToastAt >= SERVER_ERROR_TOAST_COOLDOWN_MS) {
+        lastServerErrorToastAt = now;
+        toast.error('Hệ thống đang bận. Dữ liệu cũ vẫn được giữ lại, thử lại sau.');
+      }
     }
 
-    // Retry on 429 — max 1 lần, delay 1.5s (fail fast)
-    if (error.response?.status === 429 && ['GET', 'HEAD', 'OPTIONS'].includes(originalRequest.method?.toUpperCase())) {
-      if (!originalRequest._retry429) {
-        originalRequest._retry429 = true;
-        const retryAfter = Number(error.response.headers?.['retry-after']);
-        const delayMs = Number.isFinite(retryAfter)
-          ? Math.min(Math.max(retryAfter * 1000, 500), 10000)
-          : 1500;
-        console.warn(`[429] Retrying in ${delayMs}ms...`);
-        await new Promise(resolve => setTimeout(resolve, delayMs));
-        return api(originalRequest);
-      }
+    // A 429 is a back-pressure signal, not a missing resource. Reject once so
+    // polling callers can back off without multiplying requests.
+    if (error.response?.status === 429) {
+      console.warn('[429] Public API is rate-limited; skipping client retry.');
     }
 
     return Promise.reject(error);

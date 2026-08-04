@@ -52,7 +52,11 @@ class SocketClient {
         autoConnect: false,
         auth: this.getNotificationAuthPayload(),
         withCredentials: true,
-        transports: ['websocket', 'polling'],
+        // Polling first works behind the current reverse proxy; Socket.IO can
+        // upgrade later when websocket support is available.
+        transports: ['polling', 'websocket'],
+        reconnectionAttempts: 3,
+        reconnectionDelay: 3000,
       });
 
       this.chatSocket.on('connect_error', (err: Error) => {
@@ -67,7 +71,9 @@ class SocketClient {
       this.matchSocket = io(`${SOCKET_URL}/live`, {
         autoConnect: false,
         withCredentials: true,
-        transports: ['websocket', 'polling'],
+        transports: ['polling', 'websocket'],
+        reconnectionAttempts: 3,
+        reconnectionDelay: 3000,
       });
 
       this.matchSocket.on('connect_error', (err: Error) => {
@@ -83,7 +89,7 @@ class SocketClient {
         autoConnect: false,
         auth: this.getNotificationAuthPayload(),
         withCredentials: true,
-        transports: ['websocket', 'polling'],
+        transports: ['polling', 'websocket'],
         reconnectionAttempts: 2,
         timeout: 5000,
       });

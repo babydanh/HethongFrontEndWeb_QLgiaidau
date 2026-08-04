@@ -38,7 +38,7 @@ export default function LiveMatchesWidget({ limit = 5, showAllLink = true }: Pro
         if (!isNetworkError(error)) {
           console.error('Failed to fetch ongoing matches', error);
         }
-        setMatches([]);
+        // A failed reconciliation must not make live matches disappear.
       } finally {
         setIsLoading(false);
       }
@@ -66,7 +66,7 @@ export default function LiveMatchesWidget({ limit = 5, showAllLink = true }: Pro
     socket.on('match:status', handleMatchUpdate);
     socket.on('connect', handleConnect);
     // Poll is only a reconciliation fallback; the socket is the fast path.
-    const timer = setInterval(fetchLiveMatches, 15000);
+    const timer = setInterval(fetchLiveMatches, 30000);
     return () => {
       clearInterval(timer);
       socket.off('score:update', handleMatchUpdate);

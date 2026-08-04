@@ -58,7 +58,6 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
   });
 
   const loadCameras = async () => {
-    setIsLoading(true);
     try {
       const response = await livestreamApi.getCameras(tournament.id);
       setCameras(response.data ?? []);
@@ -70,7 +69,23 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
   };
 
   useEffect(() => {
-    void loadCameras();
+    let active = true;
+    livestreamApi.getCameras(tournament.id)
+      .then((response) => {
+        if (active) {
+          setCameras(response.data ?? []);
+          setIsLoading(false);
+        }
+      })
+      .catch((err) => {
+        if (active) {
+          toast.error(getErrorMessage(err));
+          setIsLoading(false);
+        }
+      });
+    return () => {
+      active = false;
+    };
   }, [tournament.id]);
 
   const copyText = async (value: string, label: string) => {

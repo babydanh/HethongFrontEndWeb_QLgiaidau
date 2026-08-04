@@ -713,109 +713,116 @@ export default function HomePage() {
           isLive 
             ? 'border-rose-100 shadow-[0_4px_20px_rgba(244,63,94,0.03)]' 
             : 'border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.015)]'
-        } overflow-hidden flex flex-col justify-between`}
+        } overflow-hidden flex flex-col justify-between group relative`}
       >
-        {/* Match Header */}
-        <div className={`px-4 py-2.5 ${isLive ? 'bg-rose-50/30' : 'bg-slate-50/50'} border-b border-slate-100 flex items-center justify-between text-[10px] font-semibold text-slate-500`}>
-          <div className="flex items-center gap-1.5 truncate max-w-[70%]">
-            {isLive && (
-              <span className="relative flex h-2 w-2 shrink-0">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-600"></span>
-              </span>
-            )}
-            <span className={`uppercase tracking-wider shrink-0 ${
-              isLive ? 'text-rose-600 font-bold animate-pulse' : isCompleted ? 'text-slate-500' : 'text-blue-600'
-            }`}>
-              {isLive ? 'Trực tiếp' : isCompleted ? 'Đã kết thúc' : 'Sắp diễn ra'}
-            </span>
-            <span className="text-slate-300">•</span>
-            <span className="shrink-0 text-slate-600 font-medium">{roundLabel}</span>
-            {match.courtName && (
-              <>
-                <span className="text-slate-300">•</span>
-                <span className="flex items-center gap-0.5 truncate max-w-[120px]">
-                  <MapPin className="w-2.5 h-2.5 text-slate-400" />
-                  {match.courtName}
+        {/* Whole Card Link */}
+        <Link href={`/live/${match.id}`} className="block flex-1">
+          {/* Match Header */}
+          <div className={`px-4 py-2.5 ${isLive ? 'bg-rose-50/30' : 'bg-slate-50/50'} border-b border-slate-100 flex items-center justify-between text-[10px] font-semibold text-slate-500`}>
+            <div className="flex items-center gap-1.5 truncate max-w-[70%]">
+              {isLive && (
+                <span className="relative flex h-2 w-2 shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-600"></span>
                 </span>
-              </>
-            )}
-          </div>
-          <span className="uppercase text-slate-650 bg-slate-100/80 px-2 py-0.5 rounded text-[8px] font-bold truncate max-w-[40%] md:max-w-[28%]">
-            {translateStageName(match.group?.stage?.name) || 'Vòng đấu'}
-          </span>
-        </div>
-
-        {/* Opponents Match Grid */}
-        <div className="p-4 flex items-center justify-between gap-3 relative">
-          {/* Player 1 */}
-          <div className="flex items-center gap-2.5 w-5/12 min-w-0">
-            <div className="min-w-0">
-              <div className="flex items-center gap-1 min-w-0">
-                <span className={`text-xs font-bold block leading-snug line-clamp-2 break-words ${isCompleted && match.winnerId === match.participant1?.id ? 'text-emerald-600' : 'text-slate-800'}`}>
-                  {getTeamShortName(match.participant1?.teamName)}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Score Display Panel */}
-          <div className="flex flex-col items-center justify-center shrink-0 min-w-[75px]">
-            {isScheduled ? (
-              <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-100/50">
-                {match.scheduledAt ? new Date(match.scheduledAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : 'VS'}
-              </span>
-            ) : (
-              <div className={`flex items-center justify-center px-2.5 py-1 rounded-full font-mono text-[10px] font-bold leading-none tracking-wider shadow-sm border ${
-                isLive 
-                  ? 'bg-blue-50 text-blue-700 border-blue-200' 
-                  : 'bg-slate-100 text-slate-700 border-slate-200'
+              )}
+              <span className={`uppercase tracking-wider shrink-0 ${
+                isLive ? 'text-rose-600 font-bold animate-pulse' : isCompleted ? 'text-slate-500' : 'text-blue-600'
               }`}>
-                {(() => {
-                  const scores = extractMatchScores(match.scoreDetails);
-                  const targetSet = scores.find((s: { isFinished: boolean }) => !s.isFinished) || scores[scores.length - 1] || { team1Score: 0, team2Score: 0 };
-                  return `${targetSet.team1Score} - ${targetSet.team2Score}`;
-                })()}
-              </div>
-            )}
-          </div>
-
-          {/* Player 2 */}
-          <div className="flex items-center gap-2.5 w-5/12 min-w-0 justify-end text-right">
-            <div className="min-w-0">
-              <div className="flex items-center justify-end gap-1 min-w-0">
-                <span className={`text-xs font-bold block leading-snug line-clamp-2 break-words ${isCompleted && match.winnerId === match.participant2?.id ? 'text-emerald-600' : 'text-slate-800'}`}>
-                  {getTeamShortName(match.participant2?.teamName)}
-                </span>
-              </div>
+                {isLive ? 'Trực tiếp' : isCompleted ? 'Đã kết thúc' : 'Sắp diễn ra'}
+              </span>
+              <span className="text-slate-300">•</span>
+              <span className="shrink-0 text-slate-600 font-medium">{roundLabel}</span>
+              {match.courtName && (
+                <>
+                  <span className="text-slate-300">•</span>
+                  <span className="flex items-center gap-0.5 truncate max-w-[120px]">
+                    <MapPin className="w-2.5 h-2.5 text-slate-400" />
+                    {match.courtName}
+                  </span>
+                </>
+              )}
             </div>
-          </div>
-        </div>
-
-        {/* Location & Sport Row */}
-        <div className="px-4 pb-2.5 pt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] text-slate-500 font-medium border-t border-slate-100 bg-slate-50/10">
-          <div className="shrink-0 text-slate-650 flex items-center gap-1">
-            <span className="font-semibold text-slate-700 text-[10px] whitespace-nowrap">
-              {getFormatLabel((match as EnrichedMatch).tournament?.matchType || ((match as unknown) as Record<string, unknown>).matchType as string | undefined, (match as EnrichedMatch).tournament?.genderRestriction || ((match as unknown) as Record<string, unknown>).genderRestriction as string | undefined)}
+            <span className="uppercase text-slate-650 bg-slate-100/80 px-2 py-0.5 rounded text-[8px] font-bold truncate max-w-[40%] md:max-w-[28%]">
+              {translateStageName(match.group?.stage?.name) || 'Vòng đấu'}
             </span>
           </div>
-          {match.courtName ? (
-            <div className="truncate max-w-[220px]" title={match.courtAddress ? `${match.courtName} - ${match.courtAddress}` : match.courtName}>
-              <span className="text-slate-400 font-semibold">Sân:</span>{' '}
-              <span className="font-semibold text-slate-750">
-                {match.courtName}{match.courtAddress ? ` (${match.courtAddress})` : ''}
+
+          {/* Opponents Match Grid */}
+          <div className="p-4 flex items-center justify-between gap-3 relative group-hover:bg-slate-50/30 transition-colors">
+            {/* Player 1 */}
+            <div className="flex items-center gap-2.5 w-5/12 min-w-0">
+              <div className="min-w-0">
+                <div className="flex items-center gap-1 min-w-0">
+                  <span className={`text-xs font-bold block leading-snug line-clamp-2 break-words group-hover:text-blue-600 transition-colors ${isCompleted && match.winnerId === match.participant1?.id ? 'text-emerald-600' : 'text-slate-800'}`}>
+                    {getTeamShortName(match.participant1?.teamName)}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Score Display Panel */}
+            <div className="flex flex-col items-center justify-center shrink-0 min-w-[75px]">
+              {isScheduled ? (
+                <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-100/50">
+                  {match.scheduledAt ? new Date(match.scheduledAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : 'VS'}
+                </span>
+              ) : (
+                <div className={`flex items-center justify-center px-2.5 py-1 rounded-full font-mono text-[10px] font-bold leading-none tracking-wider shadow-sm border ${
+                  isLive 
+                    ? 'bg-blue-50 text-blue-700 border-blue-200' 
+                    : 'bg-slate-100 text-slate-700 border-slate-200'
+                }`}>
+                  {(() => {
+                    const scores = extractMatchScores(match.scoreDetails);
+                    const targetSet = scores.find((s: { isFinished: boolean }) => !s.isFinished) || scores[scores.length - 1] || { team1Score: 0, team2Score: 0 };
+                    return `${targetSet.team1Score} - ${targetSet.team2Score}`;
+                  })()}
+                </div>
+              )}
+            </div>
+
+            {/* Player 2 */}
+            <div className="flex items-center gap-2.5 w-5/12 min-w-0 justify-end text-right">
+              <div className="min-w-0">
+                <div className="flex items-center justify-end gap-1 min-w-0">
+                  <span className={`text-xs font-bold block leading-snug line-clamp-2 break-words group-hover:text-blue-600 transition-colors ${isCompleted && match.winnerId === match.participant2?.id ? 'text-emerald-600' : 'text-slate-800'}`}>
+                    {getTeamShortName(match.participant2?.teamName)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Location & Sport Row */}
+          <div className="px-4 pb-2.5 pt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] text-slate-500 font-medium border-t border-slate-100 bg-slate-50/10">
+            <div className="shrink-0 text-slate-650 flex items-center gap-1">
+              <span className="font-semibold text-slate-700 text-[10px] whitespace-nowrap">
+                {getFormatLabel((match as EnrichedMatch).tournament?.matchType || ((match as unknown) as Record<string, unknown>).matchType as string | undefined, (match as EnrichedMatch).tournament?.genderRestriction || ((match as unknown) as Record<string, unknown>).genderRestriction as string | undefined)}
               </span>
             </div>
-          ) : (
-            <div className="text-slate-400 italic">Chưa xếp sân</div>
-          )}
-        </div>
+            {match.courtName ? (
+              <div className="truncate max-w-[220px]" title={match.courtAddress ? `${match.courtName} - ${match.courtAddress}` : match.courtName}>
+                <span className="text-slate-400 font-semibold">Sân:</span>{' '}
+                <span className="font-semibold text-slate-750">
+                  {match.courtName}{match.courtAddress ? ` (${match.courtAddress})` : ''}
+                </span>
+              </div>
+            ) : (
+              <div className="text-slate-400 italic">Chưa xếp sân</div>
+            )}
+          </div>
+        </Link>
 
-        {/* Interactive Footer (High five, Live/Detail link, Share) */}
-        <div className="px-3 py-1.5 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between gap-2">
+        {/* Interactive Footer (Heart & Share only) */}
+        <div className="px-3 py-1.5 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between relative z-10">
           {/* Cổ vũ icon-only */}
           <button 
-            onClick={() => handleHighFive(match.id)}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleHighFive(match.id);
+            }}
             title={`Cổ vũ (${currentHighFives})`}
             className="flex items-center justify-center p-1.5 hover:bg-white rounded-lg text-slate-600 transition-all border border-transparent hover:border-slate-200 active:scale-95 duration-100 cursor-pointer shrink-0"
           >
@@ -823,22 +830,11 @@ export default function HomePage() {
             <span className="text-[11px] font-bold text-slate-600 ml-1">({currentHighFives})</span>
           </button>
 
-          {/* Click to go directly to Live/Detail */}
-          <Link href={`/live/${match.id}`} className="flex-1 max-w-[140px]">
-            <div className="flex items-center justify-center py-1 px-3 hover:bg-white rounded-lg text-xs font-bold transition-all border border-transparent hover:border-slate-200 active:scale-95 duration-100 cursor-pointer w-full text-center">
-              {isLive ? (
-                <span className="text-emerald-600 font-extrabold flex items-center gap-1">
-                  <Play className="w-3.5 h-3.5 fill-emerald-600/20 animate-pulse" /> Live
-                </span>
-              ) : (
-                <span className="text-slate-700 font-bold hover:text-blue-600">Xem trận</span>
-              )}
-            </div>
-          </Link>
-
           {/* Chia sẻ icon-only */}
           <button
-            onClick={() => {
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
               const p1Name = getTeamShortName(match.participant1?.teamName);
               const p2Name = getTeamShortName(match.participant2?.teamName);
               setActiveShareUrl(`${window.location.origin}/live/${match.id}`);

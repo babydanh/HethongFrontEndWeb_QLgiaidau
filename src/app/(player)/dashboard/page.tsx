@@ -82,6 +82,7 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [respondingInviteId, setRespondingInviteId] = useState<string | null>(null);
   const [followedTournaments, setFollowedTournaments] = useState<Tournament[]>([]);
+  const [sportFilter, setSportFilter] = useState<string>('');
 
   useEffect(() => {
     if (!user?.id) return;
@@ -130,7 +131,14 @@ export default function DashboardPage() {
     }
   };
 
-  const activeRank = getBestRankForCategory(userRankings?.publicRanks || []);
+  const strongestSport = [...(userRankings?.publicRanks || [])]
+    .filter((rank) => rank.matchesPlayed > 0 && rank.categoryName)
+    .sort((a, b) => b.eloPoints - a.eloPoints || b.matchesPlayed - a.matchesPlayed)[0]?.categoryName || '';
+  const activeSport = sportFilter || strongestSport;
+  const activeSportRanks = activeSport
+    ? (userRankings?.publicRanks || []).filter((rank) => rank.categoryName === activeSport)
+    : (userRankings?.publicRanks || []);
+  const activeRank = getBestRankForCategory(activeSportRanks);
   const eloPoints = activeRank ? activeRank.eloPoints : 1000;
   const matchesPlayed = activeRank ? activeRank.matchesPlayed : 0;
   const matchesWon = activeRank ? activeRank.matchesWon : 0;
@@ -153,8 +161,10 @@ export default function DashboardPage() {
     const s = t.category?.name;
     if (s) sportSet.add(s);
   });
+  (userRankings?.publicRanks || []).forEach((rank) => {
+    if (rank.categoryName) sportSet.add(rank.categoryName);
+  });
   const sportOptions = Array.from(sportSet).sort();
-  const [sportFilter, setSportFilter] = useState<string>('');
 
   const filterBySport = (list: Tournament[]) =>
     !sportFilter
@@ -536,6 +546,28 @@ export default function DashboardPage() {
           <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
             <h3 className="text-sm font-bold text-slate-900 mb-4">Lối tắt nhanh</h3>
             <div className="flex flex-col gap-2">
+              <Link href="/organizer/tournaments" className="flex items-center justify-between p-3 rounded-lg hover:bg-blue-50/60 text-slate-800 font-bold text-xs transition-all border border-slate-200/80 hover:border-blue-200">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600 shrink-0">
+                    <Trophy className="w-4 h-4" />
+                  </div>
+                  <span>Quản lý giải đấu</span>
+                </div>
+                <span className="text-[10px] font-extrabold text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">BTC</span>
+              </Link>
+
+              {(user?.roles?.includes('ORGANIZER') || user?.roles?.includes('ADMIN')) && (
+                <Link href="/organizer/series" className="flex items-center justify-between p-3 rounded-lg hover:bg-indigo-50/60 text-slate-800 font-bold text-xs transition-all border border-slate-200/80 hover:border-indigo-200">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-600 shrink-0">
+                      <Trophy className="w-4 h-4" />
+                    </div>
+                    <span>Quản lý chuỗi giải</span>
+                  </div>
+                  <span className="text-[10px] font-extrabold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">Series</span>
+                </Link>
+              )}
+
               <Link href="/profile" className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 text-slate-700 font-bold text-xs transition-all border border-transparent hover:border-slate-200">
                 <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 shrink-0">
                   <Settings className="w-4 h-4" />
@@ -547,12 +579,6 @@ export default function DashboardPage() {
                   <ShieldCheck className="w-4 h-4" />
                 </div>
                 Xem thông báo và lời mời
-              </Link>
-              <Link href="/organizer/tournaments" className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 text-slate-700 font-bold text-xs transition-all border border-transparent hover:border-slate-200">
-                <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-500 shrink-0">
-                  <Trophy className="w-4 h-4" />
-                </div>
-                Quản lý giải đấu
               </Link>
             </div>
           </div>

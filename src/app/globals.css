@@ -2,7 +2,7 @@
 @config "../../tailwind.config.ts";
 
 :root {
-    --color-background: #f0f6ff; /* light blue background matching VNSPORT brand */
+    --color-background: #ebf3fe; /* standard light blue background matching VNSPORT brand */
     --color-foreground: #0f172a; /* slate-900 */
 
     --color-primary: #0284c7; /* sky-600 */

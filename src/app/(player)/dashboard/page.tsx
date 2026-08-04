@@ -24,6 +24,7 @@ import TournamentListSection, { AvatarCircle } from '@/components/dashboard/Tour
 import { Button } from '@/components/ui/Button';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { rankingsApi, PlayerRanking } from '@/features/rankings/api';
+import { getBestRankForCategory } from '@/features/rankings/elo-display';
 import {
   tournamentsApi,
   Tournament,
@@ -129,12 +130,12 @@ export default function DashboardPage() {
     }
   };
 
-  const activeRank = userRankings?.publicRanks?.[0];
+  const activeRank = getBestRankForCategory(userRankings?.publicRanks || []);
   const eloPoints = activeRank ? activeRank.eloPoints : 1000;
   const matchesPlayed = activeRank ? activeRank.matchesPlayed : 0;
   const matchesWon = activeRank ? activeRank.matchesWon : 0;
   const winRate = matchesPlayed > 0 ? Math.round((matchesWon / matchesPlayed) * 100) : 0;
-  const tierName = matchesPlayed > 0 ? (activeRank?.tier?.name || 'Chưa xếp hạng') : 'Chưa xếp hạng';
+  const tierName = matchesPlayed > 0 ? (activeRank?.tier?.name || activeRank?.tierName || 'Chưa xếp hạng') : 'Chưa xếp hạng';
 
   const organizedCount = workspace?.organizedTournaments.length || 0;
   const coOrganizerCount = workspace?.coOrganizerTournaments.length || 0;

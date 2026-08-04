@@ -206,6 +206,7 @@ export default function MatchesListPage() {
   const [activeShareTitle, setActiveShareTitle] = useState('');
   const [matchesRefreshTick, setMatchesRefreshTick] = useState(0);
   const matchesRequestInFlightRef = useRef(false);
+  const matchesRefreshQueuedRef = useRef(false);
 
   useEffect(() => {
     const refreshWhenReady = () => {
@@ -296,7 +297,10 @@ export default function MatchesListPage() {
 
   // Fetch danh sách trận đấu dựa trên bộ lọc
   useEffect(() => {
-    if (matchesRequestInFlightRef.current) return;
+    if (matchesRequestInFlightRef.current) {
+      matchesRefreshQueuedRef.current = true;
+      return;
+    }
     matchesRequestInFlightRef.current = true;
 
     const fetchMatches = async () => {
@@ -349,6 +353,10 @@ export default function MatchesListPage() {
       } finally {
         setIsLoading(false);
         matchesRequestInFlightRef.current = false;
+        if (matchesRefreshQueuedRef.current) {
+          matchesRefreshQueuedRef.current = false;
+          setMatchesRefreshTick((value) => value + 1);
+        }
       }
     };
     fetchMatches();

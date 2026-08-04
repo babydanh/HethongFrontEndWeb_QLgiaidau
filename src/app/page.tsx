@@ -58,6 +58,23 @@ interface EnrichedMatch extends Omit<BracketMatch, 'tournament'> {
   tournament?: EnrichedTournament | null;
 }
 
+const getShortName = (fullName: string | null | undefined): string => {
+  if (!fullName) return '';
+  const parts = fullName.trim().split(/\s+/);
+  if (parts.length > 2) {
+    return parts.slice(-2).join(' ');
+  }
+  return fullName;
+};
+
+const getTeamShortName = (teamName: string | null | undefined): string => {
+  if (!teamName) return 'Chờ xác định';
+  if (teamName.includes(' - ')) {
+    return teamName.split(' - ').map(name => getShortName(name)).join(' - ');
+  }
+  return getShortName(teamName);
+};
+
 interface GroupMatchesData {
   id?: string | null;
   name: string;
@@ -736,11 +753,9 @@ export default function HomePage() {
             <div className="min-w-0">
               <div className="flex items-center gap-1 min-w-0">
                 <span className={`text-xs font-bold block leading-snug line-clamp-2 break-words ${isCompleted && match.winnerId === match.participant1?.id ? 'text-emerald-600' : 'text-slate-800'}`}>
-                  {match.participant1?.teamName || 'Chờ xác định'}
+                  {getTeamShortName(match.participant1?.teamName)}
                 </span>
-
               </div>
-
             </div>
           </div>
 
@@ -769,12 +784,10 @@ export default function HomePage() {
           <div className="flex items-center gap-2.5 w-5/12 min-w-0 justify-end text-right">
             <div className="min-w-0">
               <div className="flex items-center justify-end gap-1 min-w-0">
-
                 <span className={`text-xs font-bold block leading-snug line-clamp-2 break-words ${isCompleted && match.winnerId === match.participant2?.id ? 'text-emerald-600' : 'text-slate-800'}`}>
-                  {match.participant2?.teamName || 'Chờ xác định'}
+                  {getTeamShortName(match.participant2?.teamName)}
                 </span>
               </div>
-
             </div>
           </div>
         </div>
@@ -798,44 +811,44 @@ export default function HomePage() {
           )}
         </div>
 
-        {/* Interactive Footer (High five, Replay, Share) */}
-        <div className="px-2 py-1 bg-slate-50/50 border-t border-slate-100 grid grid-cols-3 gap-1">
+        {/* Interactive Footer (High five, Live/Detail link, Share) */}
+        <div className="px-3 py-1.5 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between gap-2">
+          {/* Cổ vũ icon-only */}
           <button 
             onClick={() => handleHighFive(match.id)}
-            className="flex items-center justify-center gap-1 py-1 min-h-[32px] hover:bg-white rounded-lg text-[10px] font-bold text-slate-600 transition-all border border-transparent hover:border-slate-150 active:scale-95 duration-100 cursor-pointer"
+            title={`Cổ vũ (${currentHighFives})`}
+            className="flex items-center justify-center p-1.5 hover:bg-white rounded-lg text-slate-600 transition-all border border-transparent hover:border-slate-200 active:scale-95 duration-100 cursor-pointer shrink-0"
           >
-            <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500/10" />
-            <span>Cổ vũ ({currentHighFives})</span>
+            <Heart className="w-4 h-4 text-rose-500 fill-rose-500/10" />
+            <span className="text-[11px] font-bold text-slate-600 ml-1">({currentHighFives})</span>
           </button>
 
-          <Link href={`/live/${match.id}`} className="w-full">
-            <div className="flex items-center justify-center gap-1 py-1 min-h-[32px] hover:bg-white rounded-lg text-[10px] font-bold text-slate-650 transition-all border border-transparent hover:border-slate-150 active:scale-95 duration-100 cursor-pointer w-full">
+          {/* Click to go directly to Live/Detail */}
+          <Link href={`/live/${match.id}`} className="flex-1 max-w-[140px]">
+            <div className="flex items-center justify-center py-1 px-3 hover:bg-white rounded-lg text-xs font-bold transition-all border border-transparent hover:border-slate-200 active:scale-95 duration-100 cursor-pointer w-full text-center">
               {isLive ? (
-                <>
-                  <Play className="w-3.5 h-3.5 text-blue-600 fill-emerald-600/10 animate-pulse" />
-                  <span className="text-emerald-700 font-bold">Xem Live</span>
-                </>
+                <span className="text-emerald-600 font-extrabold flex items-center gap-1">
+                  <Play className="w-3.5 h-3.5 fill-emerald-600/20 animate-pulse" /> Live
+                </span>
               ) : (
-                <>
-                  <Play className="w-3.5 h-3.5 text-blue-600 fill-blue-600/10" />
-                  <span>Chi tiết</span>
-                </>
+                <span className="text-slate-700 font-bold hover:text-blue-600">Xem trận</span>
               )}
             </div>
           </Link>
 
+          {/* Chia sẻ icon-only */}
           <button
             onClick={() => {
-              const p1Name = match.participant1?.teamName || 'VĐV 1';
-              const p2Name = match.participant2?.teamName || 'VĐV 2';
+              const p1Name = getTeamShortName(match.participant1?.teamName);
+              const p2Name = getTeamShortName(match.participant2?.teamName);
               setActiveShareUrl(`${window.location.origin}/live/${match.id}`);
               setActiveShareTitle(`Trận đấu: ${p1Name} vs ${p2Name}`);
               setIsShareModalOpen(true);
             }}
-            className="flex items-center justify-center gap-1 py-1 min-h-[32px] hover:bg-white rounded-lg text-[10px] font-bold text-slate-600 transition-all border border-transparent hover:border-slate-150 active:scale-95 duration-100 cursor-pointer"
+            title="Chia sẻ trận đấu"
+            className="flex items-center justify-center p-1.5 hover:bg-white rounded-lg text-slate-600 transition-all border border-transparent hover:border-slate-200 active:scale-95 duration-100 cursor-pointer shrink-0"
           >
-            <Share2 className="w-3.5 h-3.5 text-blue-500" />
-            <span>Chia sẻ</span>
+            <Share2 className="w-4 h-4 text-blue-500" />
           </button>
         </div>
       </motion.div>

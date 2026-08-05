@@ -1099,6 +1099,7 @@ export function useManageState(id: string) {
           if (cRes.data) setCategories(cRes.data);
           if (fRes.data) setFeesConfig(fRes.data);
           setProvinces(pList);
+          await fetchCameras();
         } catch { /* silent */ }
       }
       setIsLoading(false);

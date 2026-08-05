@@ -206,6 +206,7 @@ export interface MatchLivestream {
   isFeatured: boolean;
   startedAt: string | null;
   endedAt: string | null;
+  cameraName?: string | null;
 }
 
 export interface StartMatchStreamResponse {
@@ -225,6 +226,8 @@ export interface MatchPlaybackResponse {
 export const livestreamApi = {
   getCameras: (tournamentId: string) =>
     api.get<ApiResponse<LivestreamCamera[]>>(`/livestream/tournaments/${tournamentId}/cameras`),
+  getMatchLivestreams: (tournamentId: string) =>
+    api.get<ApiResponse<MatchLivestream[]>>(`/livestream/tournaments/${tournamentId}/matches`),
   createCamera: (tournamentId: string, data: { name: string; protocol: 'RTMP' | 'SRT'; deviceLabel?: string }) =>
     api.post<ApiResponse<CreatedLivestreamCamera>>(`/livestream/tournaments/${tournamentId}/cameras`, data),
   deleteCamera: (cameraId: string) =>

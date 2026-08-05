@@ -1114,9 +1114,6 @@ export default function HomePage() {
                               <span className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded inline-block mb-0.5 ${isRanked ? 'text-sky-700 bg-sky-50' : 'text-slate-600 bg-slate-100'}`}>
                                 {isRanked ? 'TÍNH ELO' : 'KHÔNG TÍNH ELO'}
                               </span>
-                              <span className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded inline-block mb-0.5 ${isRanked ? 'text-sky-700 bg-sky-50' : 'text-slate-600 bg-slate-100'}`}>
-                                {isRanked ? 'TÍNH ELO' : 'KHÔNG TÍNH ELO'}
-                              </span>
                               <h3 className="text-sm font-bold text-slate-900 group-hover/header:text-blue-600 transition-colors block leading-tight truncate">
                                 {group.name}
                               </h3>

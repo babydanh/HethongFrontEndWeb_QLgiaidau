@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Camera, Copy, Loader2, Play, Radio, Trash2, Video } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/Button';
-import { livestreamApi, type CreatedLivestreamCamera, type LivestreamCamera } from '@/features/tournaments/api';
+import { livestreamApi, type CreatedLivestreamCamera, type LivestreamCamera, type MatchLivestream } from '@/features/tournaments/api';
 import type { BracketMatch, BracketStage, Tournament } from '@/types/tournament';
 import { getErrorMessage } from '@/utils/error';
 import { getMatchRoundLabel } from '@/utils/match-round-label';
@@ -40,6 +40,7 @@ const flattenMatches = (bracket: { stages: BracketStage[] } | null): BracketMatc
 
 export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
   const [cameras, setCameras] = useState<LivestreamCamera[]>([]);
+  const [matchStreams, setMatchStreams] = useState<Record<string, MatchLivestream>>({});
   const [cameraName, setCameraName] = useState('');
   const [protocol, setProtocol] = useState<'RTMP' | 'SRT'>('RTMP');
   const [selectedMatchId, setSelectedMatchId] = useState('');
@@ -57,10 +58,14 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
     tournamentFormat: tournament.format,
   });
 
-  const loadCameras = async () => {
+  const loadLivestreamData = async () => {
     try {
-      const response = await livestreamApi.getCameras(tournament.id);
-      setCameras(response.data ?? []);
+      const [cameraResponse, streamResponse] = await Promise.all([
+        livestreamApi.getCameras(tournament.id),
+        livestreamApi.getMatchLivestreams(tournament.id),
+      ]);
+      setCameras(cameraResponse.data ?? []);
+      setMatchStreams(Object.fromEntries((streamResponse.data ?? []).map((stream) => [stream.matchId, stream])));
     } catch (err) {
       toast.error(getErrorMessage(err));
     } finally {
@@ -70,19 +75,7 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
 
   useEffect(() => {
     let active = true;
-    livestreamApi.getCameras(tournament.id)
-      .then((response) => {
-        if (active) {
-          setCameras(response.data ?? []);
-          setIsLoading(false);
-        }
-      })
-      .catch((err) => {
-        if (active) {
-          toast.error(getErrorMessage(err));
-          setIsLoading(false);
-        }
-      });
+    void loadLivestreamData();
     return () => {
       active = false;
     };
@@ -109,7 +102,7 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
         setLastPublish(response.data.publish);
       }
       setCameraName('');
-      await loadCameras();
+      await loadLivestreamData();
       toast.success('Đã tạo camera livestream');
     } catch (err) {
       toast.error(getErrorMessage(err));
@@ -121,7 +114,7 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
   const handleDeleteCamera = async (cameraId: string) => {
     try {
       await livestreamApi.deleteCamera(cameraId);
-      await loadCameras();
+      await loadLivestreamData();
       toast.success('Đã xóa camera');
     } catch (err) {
       toast.error(getErrorMessage(err));
@@ -137,6 +130,7 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
     setActiveMatchId(selectedMatchId);
     try {
       await livestreamApi.assignCamera(selectedMatchId, selectedCameraId);
+      await loadLivestreamData();
       toast.success('Đã gán camera cho trận');
     } catch (err) {
       toast.error(getErrorMessage(err));
@@ -153,7 +147,7 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
         await copyText(response.data.publish.url, 'link publish');
       }
       toast.success('Đã tạo link start stream cho trận');
-      await loadCameras();
+      await loadLivestreamData();
     } catch (err) {
       toast.error(getErrorMessage(err));
     } finally {
@@ -166,7 +160,7 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
     try {
       await livestreamApi.stopMatchStream(matchId);
       toast.success('Đã đánh dấu stream đã dừng');
-      await loadCameras();
+      await loadLivestreamData();
     } catch (err) {
       toast.error(getErrorMessage(err));
     } finally {
@@ -349,6 +343,14 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
 
         <div className="mt-6 space-y-3">
           {readyMatches.slice(0, 12).map((match) => (
+            (() => {
+              const stream = matchStreams[match.id];
+              const hasCamera = Boolean(stream?.cameraId);
+              const isLive = stream?.streamStatus === 'LIVE';
+              const isEnded = stream?.streamStatus === 'ENDED';
+              const isBusy = activeMatchId === match.id;
+
+              return (
             <div key={match.id} className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 lg:flex-row lg:items-center lg:justify-between">
               <div>
                 <p className="text-sm font-bold text-slate-900">
@@ -357,14 +359,28 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
                 <p className="mt-1 text-xs font-semibold text-slate-500">
                   {match.participant1?.teamName || 'Đội 1'} vs {match.participant2?.teamName || 'Đội 2'} • Trọng tài: {match.refereeId ? 'đã phân công' : 'chưa phân công'}
                 </p>
+                <p className="mt-1 text-xs font-bold text-slate-500">
+                  {isEnded ? 'Livestream đã dừng' : isLive ? 'Livestream đang phát' : hasCamera ? `Đã gán camera${stream?.cameraName ? `: ${stream.cameraName}` : ''}` : 'Chưa gán camera'}
+                </p>
               </div>
               <div className="flex flex-wrap gap-2">
-                <Button variant="outline" className="border-emerald-200 text-emerald-700 font-bold hover:bg-emerald-50" onClick={() => void handleStart(match.id)} disabled={activeMatchId === match.id}>
-                  {activeMatchId === match.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4" />}
-                  Start
-                </Button>
-                <Button variant="outline" className="border-slate-200 text-slate-700 font-bold hover:bg-slate-100" onClick={() => void handleStop(match.id)} disabled={activeMatchId === match.id}>
-                  Dừng
+                <Button
+                  variant="outline"
+                  className={isLive ? 'border-rose-200 text-rose-700 font-bold hover:bg-rose-50' : 'border-emerald-200 text-emerald-700 font-bold hover:bg-emerald-50'}
+                  onClick={() => {
+                    if (!hasCamera) {
+                      setSelectedMatchId(match.id);
+                      toast('Hãy chọn camera ở mục “Gán camera vào trận” trước.');
+                    } else if (isLive) {
+                      void handleStop(match.id);
+                    } else if (!isEnded) {
+                      void handleStart(match.id);
+                    }
+                  }}
+                  disabled={isBusy || isEnded}
+                >
+                  {isBusy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4" />}
+                  {isEnded ? 'Đã dừng' : isLive ? 'Dừng phát' : hasCamera ? 'Bắt đầu' : 'Gán camera'}
                 </Button>
                 <Button variant="outline" className="font-bold border-blue-200 text-blue-600 hover:bg-blue-50" onClick={() => window.open(`/live/${match.id}`, '_blank')}>
                   <Video className="mr-2 h-4 w-4" />
@@ -372,6 +388,8 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
                 </Button>
               </div>
             </div>
+              );
+            })()
           ))}
         </div>
       </section>

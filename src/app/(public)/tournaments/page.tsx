@@ -408,7 +408,7 @@ export default function TournamentsListPage() {
               </div>
             </div>
 
-            {/* Ô Lọc Xếp hạng ELO / Phong trào */}
+            {/* Lọc theo việc giải có tính ELO hay không */}
             <div>
               <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Xếp hạng</label>
               <div className="relative">
@@ -421,8 +421,8 @@ export default function TournamentsListPage() {
                   className="w-full pl-3 pr-10 py-1.5 border border-slate-250 rounded-lg text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-950 font-bold h-10"
                 >
                   <option value="">Tất cả</option>
-                  <option value="true">Xếp hạng ELO</option>
-                  <option value="false">Phong trào</option>
+                  <option value="true">Tính ELO</option>
+                  <option value="false">Không tính ELO</option>
                 </select>
                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-455 w-4 h-4 pointer-events-none" />
               </div>

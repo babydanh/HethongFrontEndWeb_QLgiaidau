@@ -516,7 +516,7 @@ export default function LeaderboardPage() {
                             </div>
 
                             {/* Modal Quy tắc ELO */}
-                            <dialog id="eloRulesModal" className="rounded-2xl p-0 backdrop:bg-slate-900/40 border border-slate-200 shadow-2xl max-w-lg w-full">
+                            <dialog id="eloRulesModal" className="m-auto rounded-2xl p-0 backdrop:bg-slate-900/50 backdrop:backdrop-blur-sm border border-slate-200 shadow-2xl max-w-lg w-full outline-none fixed inset-0">
                                 <div className="bg-white p-6 space-y-4">
                                     <div className="flex items-center justify-between border-b pb-3 border-slate-100">
                                         <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">

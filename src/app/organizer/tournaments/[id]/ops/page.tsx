@@ -17,7 +17,7 @@ import { formatDate } from '@/utils/format';
 import { cn } from '@/utils/cn';
 import { getSportLogo } from '@/constants/sports';
 import { getMatchRoundLabel } from '@/utils/match-round-label';
-import type { BracketMatch } from '@/types/tournament';
+import type { BracketMatch, LivestreamCamera } from '@/features/tournaments/api';
 
 const TOURNAMENT_STATUS_LABELS: Record<string, string> = {
   DRAFT: 'Bản nháp',
@@ -758,7 +758,7 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
                   value={bracketManager.matchCourtName}
                   onChange={(e) => bracketManager.setMatchCourtName(e.target.value)}
                   placeholder="Tên sân"
-                  className="w-full rounded-lg border p-2 text-sm"
+                  className="w-full rounded-lg border p-2 text-sm text-slate-800"
                 />
               </div>
               <div>
@@ -767,6 +767,21 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
                   value={bracketManager.matchScheduledAt}
                   onChange={bracketManager.setMatchScheduledAt}
                 />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-slate-500">Camera / Livestream</label>
+                <select
+                  value={bracketManager.matchCameraId || ''}
+                  onChange={(e) => bracketManager.setMatchCameraId(e.target.value)}
+                  className="w-full rounded-lg border p-2 text-sm bg-white text-slate-800"
+                >
+                  <option value="">-- Chưa gán camera --</option>
+                  {bracketManager.cameras?.map((cam: LivestreamCamera) => (
+                    <option key={cam.id} value={cam.id}>
+                      📷 {cam.name} ({cam.protocol}) - [{cam.status}]
+                    </option>
+                  ))}
+                </select>
               </div>
               <label className="flex items-center gap-2 text-xs font-bold text-slate-500">
                 <input

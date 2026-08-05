@@ -528,6 +528,13 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                       <option key={ref.userId} value={ref.userId}>{ref.fullName}</option>
                     ))}
                   </select></div>
+                <div><label className="text-xs font-bold text-slate-500">Camera / Livestream</label>
+                  <select value={s.matchCameraId} onChange={e => s.setMatchCameraId(e.target.value)} className="w-full border rounded-lg p-2 text-sm bg-white text-slate-800">
+                    <option value="">-- Chưa gán camera --</option>
+                    {s.cameras?.map((cam) => (
+                      <option key={cam.id} value={cam.id}>📷 {cam.name} ({cam.protocol}) - [{cam.status}]</option>
+                    ))}
+                  </select></div>
                 <label className="flex items-center gap-2 text-xs font-bold text-slate-500">
                   <input type="checkbox" checked={s.isCustomMatchConfig} onChange={e => s.setIsCustomMatchConfig(e.target.checked)} />
                   Cấu hình riêng cho trận này

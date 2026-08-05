@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
-  tournamentsApi, divisionsApi, Tournament, TournamentFeesConfig, TournamentParticipant,
+  tournamentsApi, divisionsApi, livestreamApi, LivestreamCamera, Tournament, TournamentFeesConfig, TournamentParticipant,
   BracketStage, BracketMatch, MatchTypeUI, MatchTypeDB, GenderRestriction, Division,
 } from '@/features/tournaments/api';
 import { venuesApi } from '@/features/venues/api';
@@ -50,6 +50,16 @@ export function useManageState(id: string) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [feesConfig, setFeesConfig] = useState<TournamentFeesConfig | null>(null);
   const [courts, setCourts] = useState<Court[]>([]);
+  const [cameras, setCameras] = useState<LivestreamCamera[]>([]);
+  const [matchCameraId, setMatchCameraId] = useState<string>('');
+
+  const fetchCameras = useCallback(async () => {
+    if (!id) return;
+    try {
+      const res = await livestreamApi.getCameras(id);
+      if (res.data) setCameras(res.data);
+    } catch { /* silent */ }
+  }, [id]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'basic'|'schedule'|'registration'|'bracket'|'livestream'|'finance'|'permissions'>('basic');
   const [basicSubTab, setBasicSubTab] = useState<'general'|'branding'|'prizes'|'contact'>('general');
@@ -970,6 +980,13 @@ export function useManageState(id: string) {
     setSelectedMatch(match); setMatchCourtName(match.courtName||''); setMatchCourtAddress(match.courtAddress||'');
     setMatchScheduledAt(match.scheduledAt ? match.scheduledAt.substring(0,16) : '');
     setMatchRefereeId(match.refereeId || '');
+    setMatchCameraId('');
+    void livestreamApi.getMatchPlayback(match.id).then((res) => {
+      if (res.data?.cameraName) {
+        const foundCam = cameras.find((c) => c.name === res.data?.cameraName);
+        if (foundCam) setMatchCameraId(foundCam.id);
+      }
+    }).catch(() => {});
     if (match.matchConfig && Object.keys(match.matchConfig).length > 0) {
       const resolvedRules = resolveSportRuleView(match.matchConfig, sportRuleKind);
       setIsCustomMatchConfig(true);
@@ -1248,6 +1265,7 @@ export function useManageState(id: string) {
     selectedCategory,
     selectedMatch, setSelectedMatch, matchCourtId, setMatchCourtId, matchCourtName, setMatchCourtName,
     matchCourtAddress, setMatchCourtAddress, matchRefereeId, setMatchRefereeId, matchScheduledAt, setMatchScheduledAt,
+    cameras, setCameras, fetchCameras, matchCameraId, setMatchCameraId,
     isCustomMatchConfig, setIsCustomMatchConfig,
     matchSetsToWin, setMatchSetsToWin, matchPointsPerSet, setMatchPointsPerSet,
     matchDeuceEnabled, setMatchDeuceEnabled, matchMaxPoints, setMatchMaxPoints,

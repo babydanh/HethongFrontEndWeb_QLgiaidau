@@ -159,7 +159,7 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
     setActiveMatchId(matchId);
     try {
       await livestreamApi.stopMatchStream(matchId);
-      toast.success('Đã đánh dấu stream đã dừng');
+      toast.success('Đã tắt phát trực tiếp. Bạn có thể bật lại bất cứ lúc nào.');
       await loadLivestreamData();
     } catch (err) {
       toast.error(getErrorMessage(err));

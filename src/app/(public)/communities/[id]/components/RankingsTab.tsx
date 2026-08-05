@@ -183,7 +183,7 @@ export default function RankingsTab({ communityId, categories }: RankingsTabProp
   return (
     <div className="space-y-6">
       {/* Mini Preview — top 3 nổi bật */}
-      {/* Header + Filters */}
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
         <div>
           <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
@@ -194,86 +194,27 @@ export default function RankingsTab({ communityId, categories }: RankingsTabProp
             {activeCategory?.name || ''} {getEloMatchTypeLabel(selectedMatchType)}
           </p>
         </div>
-
-        <div className="flex items-center gap-2">
-          <button type="button" onClick={() => setIsFilterOpen(true)} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm hover:border-blue-300 hover:text-blue-700">
-            <SlidersHorizontal className="h-4 w-4" /> Bộ lọc
-          </button>
-          <div className="hidden">
-          {categories.length > 1 && (
-            <div className="flex gap-1.5 bg-slate-100 p-1 rounded-lg">
-              {categories.map((cat) => (
-                <button
-                  key={cat.id}
-                  onClick={() => setSelectedCategoryId(cat.id)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                    selectedCategoryId === cat.id
-                      ? 'bg-white text-emerald-700 shadow-sm'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  {cat.name}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Gender toggle */}
-          {selectedMatchType !== 'MIXED_DOUBLES' && (
-            <div className="flex gap-1.5 bg-slate-100 p-1 rounded-lg">
-              {(['MALE', 'FEMALE'] as const).map((g) => (
-                <button
-                  key={g}
-                  onClick={() => setSelectedGender(g)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                    selectedGender === g
-                      ? 'bg-white text-emerald-700 shadow-sm'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  {g === 'MALE' ? 'Nam' : 'Nữ'}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Match type dropdown */}
-          <div className="relative">
-            <select
-              value={selectedMatchType}
-              onChange={(e) => {
-                const mt = e.target.value as MatchType;
-                setSelectedMatchType(mt);
-                if (mt === 'MIXED_DOUBLES') setSelectedGender('MALE');
-              }}
-              className="appearance-none pl-3 pr-8 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
-            >
-              {matchTypes.map((mt) => (
-                <option key={mt} value={mt}>
-                  {getEloMatchTypeLabel(mt)}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
-          </div>
-          </div>
-        </div>
       </div>
 
-      {/* Search */}
-      <div className="flex w-full items-center gap-2">
+      {/* Search & Filter Bar */}
+      <div className="flex w-full items-center gap-2.5">
         <div className="relative min-w-0 flex-1 sm:max-w-sm">
-        <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-        <input
-          type="text"
-          placeholder="Tìm thành viên..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full bg-white border border-slate-200 rounded-lg pl-9 pr-3 py-2 text-xs text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            placeholder="Tìm thành viên..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-white border border-slate-200 rounded-lg pl-9 pr-3 py-2 text-xs text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
+          />
         </div>
-        <button type="button" onClick={() => setIsFilterOpen(true)} className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm hover:border-blue-300 hover:text-blue-700 sm:hidden" aria-label="Mở bộ lọc">
-          <SlidersHorizontal className="h-4 w-4" />
+        <button
+          type="button"
+          onClick={() => setIsFilterOpen(true)}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-sm hover:border-blue-300 hover:text-blue-700 hover:bg-slate-50 transition-all cursor-pointer shrink-0"
+        >
+          <SlidersHorizontal className="h-4 w-4 text-blue-600" />
+          <span>Bộ lọc</span>
         </button>
       </div>
 

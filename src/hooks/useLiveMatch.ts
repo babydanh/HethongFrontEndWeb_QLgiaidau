@@ -128,7 +128,7 @@ export function useLiveMatch(matchId: string) {
     }, 12000);
 
     const handleReconnect = () => {
-      void refreshMatchSnapshot();
+      socket.emit('joinMatch', matchId);
     };
 
     if (!socket.connected) {
@@ -137,7 +137,6 @@ export function useLiveMatch(matchId: string) {
 
     const joinRoom = () => {
       socket.emit('joinMatch', matchId);
-      void refreshMatchSnapshot();
     };
 
     const handleScoreUpdate = (rawMatch: Match | string) => {

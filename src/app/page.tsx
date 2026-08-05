@@ -684,7 +684,7 @@ export default function HomePage() {
   const paginatedLiveMatches = liveMatches.slice((liveMatchPage - 1) * 4, liveMatchPage * 4);
 
   // Group live matches by tournament name
-  const liveMatchesByTournament = paginatedLiveMatches.reduce<Record<string, { id?: string | null; name: string; logoUrl?: string | null; isRanked?: boolean; matches: BracketMatch[] }>>((acc, match) => {
+  const liveMatchesByTournament = liveMatches.reduce<Record<string, { id?: string | null; name: string; logoUrl?: string | null; isRanked?: boolean; matches: BracketMatch[] }>>((acc, match) => {
     const tournamentName = match.tournament?.name || 'Giải đấu khác';
     const tournament = match.tournament as { id?: string; logoUrl?: string | null; name?: string; isRanked?: boolean };
     if (!acc[tournamentName]) {
@@ -937,6 +937,9 @@ export default function HomePage() {
     return tournaments.filter(t => t.status !== 'COMPLETED');
   }, [tournaments]);
 
+  // Homepage display limits are per section. Detail/list pages keep their own pagination.
+  const featuredHomepageTournaments = activeTournaments.slice(0, 10);
+
   return (
     <div className="bg-slate-50 min-h-screen text-slate-900 font-sans selection:bg-blue-100 selection:text-blue-900 animate-in fade-in duration-200">
       
@@ -1055,7 +1058,7 @@ export default function HomePage() {
                 </div>
               </div>
             ) : (
-              <TournamentHeroBanner tournaments={activeTournaments} heightClass="h-[320px] md:h-[420px]" />
+              <TournamentHeroBanner tournaments={featuredHomepageTournaments} heightClass="h-[320px] md:h-[420px]" />
             )}
           </section>
 
@@ -1092,7 +1095,7 @@ export default function HomePage() {
                   transition={{ duration: 0.3, ease: 'easeOut' }}
                   className="space-y-4"
                 >
-                  {Object.entries(liveMatchesByTournament).map(([tournamentName, rawGroup]) => {
+                {Object.entries(liveMatchesByTournament).slice(0, 6).map(([tournamentName, rawGroup]) => {
                     const group = rawGroup as GroupMatchesData;
                     const matchedTournament = tournaments.find(t => t.id === group.id);
                     const isRanked = matchedTournament ? matchedTournament.isRanked : (group.isRanked || group.matches.some(m => (m as EnrichedMatch).tournament?.isRanked));
@@ -1184,7 +1187,7 @@ export default function HomePage() {
               </div>
             ) : (
               <div className="space-y-4">
-                {Object.entries(completedMatchesByTournament).slice(0, 5).map(([tournamentName, rawGroup]) => {
+                {Object.entries(completedMatchesByTournament).slice(0, 6).map(([tournamentName, rawGroup]) => {
                   const group = rawGroup as GroupMatchesData;
                   const tournamentId = group.id || tournamentName;
                   const currentPage = tournamentPages[tournamentId] || 1;
@@ -1271,7 +1274,7 @@ export default function HomePage() {
               </div>
             ) : (
               <div className="space-y-4">
-                {Object.entries(upcomingMatchesByTournament).map(([tournamentName, rawGroup]) => {
+                {Object.entries(upcomingMatchesByTournament).slice(0, 6).map(([tournamentName, rawGroup]) => {
                   const group = rawGroup as GroupMatchesData;
                   const tournamentId = group.id || tournamentName;
                   const currentPage = tournamentPages[tournamentId] || 1;
@@ -1366,7 +1369,7 @@ export default function HomePage() {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {recentCompletedTournaments.map((tournament) => (
+                {recentCompletedTournaments.slice(0, 6).map((tournament) => (
                   <HomepageTournamentCard key={tournament.id} tournament={tournament} />
                 ))}
               </div>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { paymentsApi } from '@/features/payments/api';
-import { AdminPayment } from '@/types/payment';
+import { AdminPayment, PaymentReceipt } from '@/types/payment';
 import { AlertCircle, Search, Filter, ShieldCheck, RefreshCw, X, FileText, Calendar } from 'lucide-react';
 import { getErrorMessage } from '@/utils/error';
 import toast from 'react-hot-toast';
@@ -20,6 +20,8 @@ export default function AdminTransactionsList() {
 
   // Invoice detail modal
   const [selectedPayment, setSelectedPayment] = useState<AdminPayment | null>(null);
+  const [selectedReceipt, setSelectedReceipt] = useState<PaymentReceipt | null>(null);
+  const [loadingReceipt, setLoadingReceipt] = useState(false);
 
   // Refund states
   const [selectedRefundPayment, setSelectedRefundPayment] = useState<AdminPayment | null>(null);
@@ -150,6 +152,19 @@ export default function AdminTransactionsList() {
   const formatDateTime = (dateStr: string) => {
     const d = new Date(dateStr);
     return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  };
+
+  const handleViewReceipt = async () => {
+    if (!selectedPayment || selectedPayment.status !== 'COMPLETED') return;
+    try {
+      setLoadingReceipt(true);
+      const response = await paymentsApi.getAdminPaymentReceipt(selectedPayment.id);
+      setSelectedReceipt(response.data);
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, 'Giao dịch này chưa có chứng từ đã phát hành.'));
+    } finally {
+      setLoadingReceipt(false);
+    }
   };
 
   return (
@@ -503,6 +518,15 @@ export default function AdminTransactionsList() {
               >
                 Đóng
               </button>
+              {selectedPayment.status === 'COMPLETED' && (
+                <button
+                  onClick={handleViewReceipt}
+                  disabled={loadingReceipt}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-bold rounded-lg transition-all"
+                >
+                  {loadingReceipt ? 'Dang tai...' : 'Xem chung tu'}
+                </button>
+              )}
               {selectedPayment.refundStatus === 'PENDING_REFUND' && (
                 <button
                   onClick={() => { const p = selectedPayment; setSelectedPayment(null); handleOpenRefundModal(p); }}
@@ -511,6 +535,39 @@ export default function AdminTransactionsList() {
                   Xử lý hoàn tiền
                 </button>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {selectedReceipt && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm" onClick={() => setSelectedReceipt(null)}>
+          <div className="w-full max-w-md bg-white rounded-xl border border-gray-200 shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="px-6 py-5 border-b border-gray-100 flex items-start justify-between">
+              <div>
+                <p className="text-[10px] uppercase tracking-widest text-blue-600 font-bold">VNSport</p>
+                <h3 className="text-lg font-bold text-gray-900 mt-1">Chung tu thanh toan</h3>
+                <p className="text-xs text-gray-500 mt-1">Ma chung tu: {selectedReceipt.receiptNumber}</p>
+              </div>
+              <button onClick={() => setSelectedReceipt(null)} className="text-gray-400 hover:text-gray-700"><X className="w-5 h-5" /></button>
+            </div>
+            <div className="p-6 space-y-4 text-sm">
+              <div className="rounded-lg bg-gray-50 p-4 space-y-2">
+                <div className="flex justify-between gap-4"><span className="text-gray-500">Dich vu</span><b className="text-right">{selectedReceipt.serviceName}</b></div>
+                <div className="flex justify-between gap-4"><span className="text-gray-500">Muc dich</span><b>{selectedReceipt.purpose === 'REGISTRATION_FEE' ? 'Le phi dang ky giai' : selectedReceipt.purpose || 'Thanh toan'}</b></div>
+                <div className="flex justify-between gap-4"><span className="text-gray-500">Phat hanh</span><b>{formatDateTime(selectedReceipt.issuedAt)}</b></div>
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between"><span className="text-gray-500">Tam tinh</span><b>{formatCurrency(selectedReceipt.subtotal)}</b></div>
+                <div className="flex justify-between"><span className="text-gray-500">Phi nen tang</span><b>{formatCurrency(selectedReceipt.platformFeeAmount)}</b></div>
+                <div className="flex justify-between"><span className="text-gray-500">Thue</span><b>{formatCurrency(selectedReceipt.taxAmount)}</b></div>
+                <div className="border-t border-gray-200 pt-3 flex justify-between text-base"><span className="font-bold">Tong thanh toan</span><b className="text-blue-600">{formatCurrency(selectedReceipt.totalAmount)}</b></div>
+              </div>
+              <p className="text-[11px] leading-5 text-gray-500">Day la chung tu dien tu ghi nhan giao dich tren VNSport, khong thay the hoa don VAT hoac hoa don dien tu neu giao dich thuoc truong hop phai xuat hoa don.</p>
+            </div>
+            <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex justify-end gap-2">
+              <button onClick={() => window.print()} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg">In chung tu</button>
+              <button onClick={() => setSelectedReceipt(null)} className="px-4 py-2 bg-white border border-gray-200 text-gray-600 text-xs font-bold rounded-lg">Dong</button>
             </div>
           </div>
         </div>

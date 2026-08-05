@@ -56,6 +56,23 @@ export interface AdminPayment extends Payment {
   };
 }
 
+export interface PaymentReceipt {
+  id: string;
+  paymentId: string;
+  receiptNumber: string;
+  serviceName: string;
+  purpose?: PaymentPurpose;
+  tournamentId?: string | null;
+  buyerUserId?: string | null;
+  subtotal: string;
+  platformFeeAmount: string;
+  taxAmount: string;
+  totalAmount: string;
+  currency: string;
+  issuedAt: string;
+  snapshot?: Record<string, unknown> | null;
+}
+
 export interface PayoutRequest {
   id: string;
   tournamentId: string;

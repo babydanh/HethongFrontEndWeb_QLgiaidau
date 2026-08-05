@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { Award, Trophy, ChevronDown, Loader2, Medal, Crown, Search } from 'lucide-react';
+import { Award, Trophy, ChevronDown, Loader2, Medal, Crown, Search, SlidersHorizontal, X } from 'lucide-react';
 import { Category } from '@/types/category';
 import { rankingsApi, PlayerRanking } from '@/features/rankings/api';
 import { communitiesApi } from '@/features/communities/api';
@@ -28,6 +28,7 @@ export default function RankingsTab({ communityId, categories }: RankingsTabProp
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [myRanking, setMyRanking] = useState<PlayerRanking | null>(null);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const { user } = useAuthStore();
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -194,7 +195,11 @@ export default function RankingsTab({ communityId, categories }: RankingsTabProp
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-2">
+          <button type="button" onClick={() => setIsFilterOpen(true)} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm hover:border-blue-300 hover:text-blue-700">
+            <SlidersHorizontal className="h-4 w-4" /> Bộ lọc
+          </button>
+          <div className="hidden">
           {categories.length > 1 && (
             <div className="flex gap-1.5 bg-slate-100 p-1 rounded-lg">
               {categories.map((cat) => (
@@ -251,20 +256,40 @@ export default function RankingsTab({ communityId, categories }: RankingsTabProp
             </select>
             <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
           </div>
+          </div>
         </div>
       </div>
 
       {/* Search */}
-      <div className="relative max-w-xs">
+      <div className="flex w-full items-center gap-2">
+        <div className="relative min-w-0 flex-1 sm:max-w-sm">
         <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
         <input
           type="text"
           placeholder="Tìm thành viên..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full bg-white border border-slate-200 rounded-lg pl-9 pr-4 py-2 text-xs text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full bg-white border border-slate-200 rounded-lg pl-9 pr-3 py-2 text-xs text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
+        </div>
+        <button type="button" onClick={() => setIsFilterOpen(true)} className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm hover:border-blue-300 hover:text-blue-700 sm:hidden" aria-label="Mở bộ lọc">
+          <SlidersHorizontal className="h-4 w-4" />
+        </button>
       </div>
+
+      {isFilterOpen && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/30 p-0 sm:items-center sm:p-4" onMouseDown={() => setIsFilterOpen(false)}>
+          <div className="max-h-[88vh] w-full max-w-md overflow-y-auto rounded-t-2xl bg-white p-5 shadow-2xl sm:rounded-2xl" onMouseDown={(event) => event.stopPropagation()}>
+            <div className="mb-5 flex items-center justify-between"><div><h4 className="text-base font-black text-slate-900">Bộ lọc xếp hạng</h4><p className="mt-0.5 text-xs text-slate-500">Chọn môn, giới tính và thể thức</p></div><button type="button" onClick={() => setIsFilterOpen(false)} className="rounded-full p-2 text-slate-400 hover:bg-slate-100" aria-label="Đóng bộ lọc"><X className="h-4 w-4" /></button></div>
+            <div className="space-y-4">
+              {categories.length > 1 && <div><p className="mb-2 text-xs font-bold text-slate-500">Môn thể thao</p><div className="flex flex-wrap gap-2">{categories.map((cat) => <button key={cat.id} type="button" onClick={() => setSelectedCategoryId(cat.id)} className={`rounded-lg border px-3 py-2 text-xs font-bold ${selectedCategoryId === cat.id ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-200 text-slate-700'}`}>{cat.name}</button>)}</div></div>}
+              <div><p className="mb-2 text-xs font-bold text-slate-500">Thể thức</p><div className="flex flex-wrap gap-2">{matchTypes.map((mt) => <button key={mt} type="button" onClick={() => { setSelectedMatchType(mt); if (mt === 'MIXED_DOUBLES') setSelectedGender('MALE'); }} className={`rounded-lg border px-3 py-2 text-xs font-bold ${selectedMatchType === mt ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-200 text-slate-700'}`}>{getEloMatchTypeLabel(mt)}</button>)}</div></div>
+              {selectedMatchType !== 'MIXED_DOUBLES' && <div><p className="mb-2 text-xs font-bold text-slate-500">Giới tính</p><div className="flex gap-2">{(['MALE', 'FEMALE'] as const).map((gender) => <button key={gender} type="button" onClick={() => setSelectedGender(gender)} className={`rounded-lg border px-4 py-2 text-xs font-bold ${selectedGender === gender ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-200 text-slate-700'}`}>{gender === 'MALE' ? 'Nam' : 'Nữ'}</button>)}</div></div>}
+            </div>
+            <button type="button" onClick={() => setIsFilterOpen(false)} className="mt-6 w-full rounded-lg bg-blue-600 py-2.5 text-sm font-black text-white hover:bg-blue-700">Áp dụng bộ lọc</button>
+          </div>
+        </div>
+      )}
 
       {myRanking && (
         <div className="rounded-xl border border-blue-200 bg-blue-50/70 px-4 py-3 flex items-center gap-3">

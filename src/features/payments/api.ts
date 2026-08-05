@@ -8,6 +8,7 @@ import {
   CreatePaymentLinkResponse,
   LegacyCreatePaymentDto,
   PayoutRequestDto,
+  PaymentReceipt,
 } from '@/types/payment';
 import { ApiResponse } from '@/types/api';
 
@@ -95,6 +96,9 @@ export const paymentsApi = {
     const response = await api.get<ApiResponse<AdminPaymentListRow[]>>('/payments/admin/transactions');
     return { ...response, data: response.data.map(flattenAdminPayment) };
   },
+
+  getAdminPaymentReceipt: (id: string) =>
+    api.get<ApiResponse<PaymentReceipt>>(`/payments/admin/payments/${id}/receipt`),
 
   confirmRefund: (id: string, data: { transactionProofUrl: string }) =>
     api.post<ApiResponse<Payment>>(`/payments/admin/payments/${id}/confirm-refund`, data),

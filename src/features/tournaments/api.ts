@@ -200,7 +200,7 @@ export interface MatchLivestream {
   id: string;
   matchId: string;
   cameraId: string | null;
-  streamStatus: 'IDLE' | 'LIVE' | 'OFFLINE' | 'ENDED' | 'ERROR';
+  streamStatus: 'IDLE' | 'LIVE' | 'OFFLINE' | 'ERROR';
   playbackUrl: string | null;
   recordingUrl: string | null;
   isFeatured: boolean;

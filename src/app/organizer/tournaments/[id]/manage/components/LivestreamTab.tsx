@@ -347,7 +347,6 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
               const stream = matchStreams[match.id];
               const hasCamera = Boolean(stream?.cameraId);
               const isLive = stream?.streamStatus === 'LIVE';
-              const isEnded = stream?.streamStatus === 'ENDED';
               const isBusy = activeMatchId === match.id;
 
               return (
@@ -360,7 +359,7 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
                   {match.participant1?.teamName || 'Đội 1'} vs {match.participant2?.teamName || 'Đội 2'} • Trọng tài: {match.refereeId ? 'đã phân công' : 'chưa phân công'}
                 </p>
                 <p className="mt-1 text-xs font-bold text-slate-500">
-                  {isEnded ? 'Livestream đã dừng' : isLive ? 'Livestream đang phát' : hasCamera ? `Đã gán camera${stream?.cameraName ? `: ${stream.cameraName}` : ''}` : 'Chưa gán camera'}
+                  {isLive ? 'Livestream đang phát' : hasCamera ? `Đã gán camera${stream?.cameraName ? `: ${stream.cameraName}` : ''}` : 'Chưa gán camera'}
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -373,14 +372,14 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
                       toast('Hãy chọn camera ở mục “Gán camera vào trận” trước.');
                     } else if (isLive) {
                       void handleStop(match.id);
-                    } else if (!isEnded) {
+                    } else {
                       void handleStart(match.id);
                     }
                   }}
-                  disabled={isBusy || isEnded}
+                  disabled={isBusy}
                 >
                   {isBusy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4" />}
-                  {isEnded ? 'Đã dừng' : isLive ? 'Dừng phát' : hasCamera ? 'Bắt đầu' : 'Gán camera'}
+                  {isLive ? 'Dừng phát' : hasCamera ? 'Bật phát' : 'Gán camera'}
                 </Button>
                 <Button variant="outline" className="font-bold border-blue-200 text-blue-600 hover:bg-blue-50" onClick={() => window.open(`/live/${match.id}`, '_blank')}>
                   <Video className="mr-2 h-4 w-4" />

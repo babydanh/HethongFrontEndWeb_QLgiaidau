@@ -157,10 +157,12 @@ api.interceptors.response.use(
       }
     }
 
-    // A 429 is a back-pressure signal, not a missing resource. Reject once so
-    // polling callers can back off without multiplying requests.
-    if (error.response?.status === 429) {
-      console.warn('[429] Public API is rate-limited; skipping client retry.');
+    // Tự động thử lại request sau 2 giây khi bị dính 429 Rate Limit
+    if (error.response?.status === 429 && !originalRequest._retry429) {
+      originalRequest._retry429 = true;
+      console.warn('[429] API bị Rate-limit. Tự động thử lại sau 2 giây...');
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      return api(originalRequest);
     }
 
     return Promise.reject(error);

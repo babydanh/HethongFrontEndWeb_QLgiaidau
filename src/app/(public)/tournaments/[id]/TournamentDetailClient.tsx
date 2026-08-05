@@ -356,11 +356,11 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
     <div className="bg-slate-50 min-h-screen pb-12">
       {/* Banner Carousel Showcase */}
       <div className="max-w-screen-2xl mx-auto px-4 md:px-8 pt-4 md:pt-6">
-        <div className="relative w-full h-44 sm:h-60 md:h-72 lg:h-[340px] rounded-lg md:rounded-2xl overflow-hidden shadow-xl">
+        <div className="relative w-full h-56 sm:h-72 md:h-[380px] lg:h-[460px] xl:h-[500px] rounded-lg md:rounded-2xl overflow-hidden shadow-xl">
           <GalleryCarousel 
             images={activeTournament.galleryImages && activeTournament.galleryImages.length > 0 ? activeTournament.galleryImages : []} 
             defaultBanner={activeTournament.bannerUrl || undefined}
-            className="w-full h-44 sm:h-60 md:h-72 lg:h-[340px]"
+            className="w-full h-56 sm:h-72 md:h-[380px] lg:h-[460px] xl:h-[500px]"
           />
           
           {!hidePublicBannerText && (

@@ -33,7 +33,7 @@ function CountdownTimer({ targetDate }: { targetDate: string }) {
   );
 }
 
-export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[250px] md:h-[350px]' }: Props) {
+export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[280px] md:h-[420px] lg:h-[460px]' }: Props) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [slideWidth, setSlideWidth] = useState(95);
   const [dragOffset, setDragOffset] = useState(0);

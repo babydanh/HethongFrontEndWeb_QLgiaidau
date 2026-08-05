@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { socketClient } from '@/lib/socket';
 import { matchesApi, Match, MatchScore } from '@/features/matches/api';
 import { extractMatchScores } from '@/features/matches/score-display';
@@ -50,6 +50,7 @@ export function useLiveMatch(matchId: string) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cheerCount, setCheerCount] = useState(0);
+  const matchRef = useRef<Match | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -58,6 +59,7 @@ export function useLiveMatch(matchId: string) {
       try {
         const data = await matchesApi.getMatchById(matchId);
         if (isMounted) {
+          matchRef.current = data;
           setMatch(data);
           setScores(extractMatchScores(data.scoreDetails));
           setCheerCount(data.cheerCount ?? 0);
@@ -105,11 +107,18 @@ export function useLiveMatch(matchId: string) {
           return;
         }
 
-        setMatch((previous) => (
-          isStaleRevision(previous, data)
-            ? previous
-            : (previous && hasSameLiveSnapshot(previous, data) ? previous : data)
-        ));
+        // NOTE-1: Check revision synchronously via ref BEFORE any state update.
+        // If incoming snapshot is stale, skip ALL updates to prevent an old
+        // HTTP response from overwriting a newer socket snapshot.
+        if (isStaleRevision(matchRef.current, data)) {
+          return;
+        }
+
+        setMatch((previous) => {
+          const next = previous && hasSameLiveSnapshot(previous, data) ? previous : data;
+          matchRef.current = next;
+          return next;
+        });
         const nextScores = extractMatchScores(data.scoreDetails);
         setScores((previous) => (
           areScoresEqual(previous, nextScores) ? previous : nextScores
@@ -169,13 +178,16 @@ export function useLiveMatch(matchId: string) {
     }
 
     const applyIncomingMatch = (updatedMatch: Match, includeScores: boolean) => {
+      // NOTE-1: Check revision synchronously via ref — if stale, skip ALL updates.
+      if (isStaleRevision(matchRef.current, updatedMatch)) {
+        return;
+      }
+
       setMatch((previous) => {
-        if (isStaleRevision(previous, updatedMatch)) {
-          return previous; // drop stale out-of-order payload (NOTE-7)
-        }
         if (previous && hasSameLiveSnapshot(previous, updatedMatch)) {
           return previous;
         }
+        matchRef.current = updatedMatch;
         return updatedMatch;
       });
 

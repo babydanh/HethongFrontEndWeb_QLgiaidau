@@ -32,6 +32,8 @@ export default function RankingsTab({ communityId, categories }: RankingsTabProp
   const { user } = useAuthStore();
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const userId = user?.id;
+
   const fetchRankings = useCallback(async () => {
     if (!selectedCategoryId) return;
     try {
@@ -71,8 +73,8 @@ export default function RankingsTab({ communityId, categories }: RankingsTabProp
           }));
       }
       setRankings(nextRankings);
-      if (user?.id) {
-        const userRes = await rankingsApi.getUserRankings(user.id);
+      if (userId) {
+        const userRes = await rankingsApi.getUserRankings(userId);
         const own = userRes.communityRanks?.find((rank) =>
           rank.communityId === communityId &&
           rank.categoryId === selectedCategoryId &&
@@ -86,28 +88,33 @@ export default function RankingsTab({ communityId, categories }: RankingsTabProp
     } catch (err) {
       console.error('Failed to fetch community rankings:', err);
     }
-  }, [communityId, selectedCategoryId, selectedMatchType, selectedGender, user?.id]);
+  }, [communityId, selectedCategoryId, selectedMatchType, selectedGender, userId]);
 
   useEffect(() => {
-    fetchRankings();
-    // Polling mỗi 30s
-    pollingRef.current = setInterval(fetchRankings, 30000);
-    return () => {
-      if (pollingRef.current) clearInterval(pollingRef.current);
-    };
-  }, [fetchRankings]);
-
-  // Loading chỉ hiện lần đầu
-  useEffect(() => {
+    let isMounted = true;
     if (!selectedCategoryId) return;
-    const load = async () => {
+
+    const loadData = async () => {
       setIsLoading(true);
       await fetchRankings();
-      setIsLoading(false);
+      if (isMounted) {
+        setIsLoading(false);
+      }
     };
-    load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+
+    loadData();
+
+    pollingRef.current = setInterval(() => {
+      if (isMounted) {
+        fetchRankings();
+      }
+    }, 30000);
+
+    return () => {
+      isMounted = false;
+      if (pollingRef.current) clearInterval(pollingRef.current);
+    };
+  }, [selectedCategoryId, fetchRankings]);
 
   const matchTypes: MatchType[] = ['SINGLES', 'DOUBLES', 'MIXED_DOUBLES'];
 

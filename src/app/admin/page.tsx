@@ -372,10 +372,10 @@ export default function AdminDashboard() {
                 {card.change !== undefined && (
                   <span className={`text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1 ${
                     card.change > 0
-                      ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                       : card.change < 0
                         ? 'bg-rose-50 text-rose-700 border border-rose-100'
-                        : 'bg-slate-100 text-slate-600'
+                        : 'bg-slate-100 text-slate-600 border border-slate-200'
                   }`}>
                     {card.change > 0 ? `+${card.change}` : `${card.change}`}{card.isPercent ? '%' : ''}
                   </span>

@@ -255,7 +255,7 @@ export default function MyTournamentsPage() {
                       <span className={`px-2 py-0.5 rounded text-[10px] font-bold text-white shadow-sm w-fit ${
                         firstDivision?.isRanked ? 'bg-amber-500/90' : 'bg-slate-600/90'
                       }`}>
-                        {firstDivision?.isRanked ? 'Xếp hạng ELO' : 'Phong trào'}
+                        {firstDivision?.isRanked ? 'Tính ELO' : 'Không tính ELO'}
                       </span>
                     </div>
                     

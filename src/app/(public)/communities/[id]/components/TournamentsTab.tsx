@@ -318,7 +318,7 @@ export default function TournamentsTab({
                             ? 'bg-amber-50 text-amber-700 border-amber-200'
                             : 'bg-slate-50 text-slate-600 border-slate-200'
                         }`}>
-                          {t.divisions[0]?.isRanked ? 'Xếp hạng ELO' : 'Phong trào'}
+                          {t.divisions[0]?.isRanked ? 'Tính ELO' : 'Không tính ELO'}
                         </span>
 
                         {/* Series / Parent Badge */}

@@ -157,12 +157,12 @@ api.interceptors.response.use(
       }
     }
 
-    // Tự động thử lại request ngầm sau 2 giây khi bị dính 429 Rate Limit (thử lại tối đa 10 lần)
+    // Tự động thử lại request ngầm sau 5 giây khi bị dính 429 Rate Limit (chống deadlock loop)
     const retryCount = (originalRequest._retry429Count || 0) + 1;
     if (error.response?.status === 429 && retryCount <= 10) {
       originalRequest._retry429Count = retryCount;
-      console.warn(`[429] API bị Rate-limit. Tự động thử lại lần ${retryCount} sau 2 giây...`);
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      console.warn(`[429] API bị Rate-limit. Tự động thử lại lần ${retryCount} sau 5 giây...`);
+      await new Promise((resolve) => setTimeout(resolve, 5000));
       return api(originalRequest);
     }
 

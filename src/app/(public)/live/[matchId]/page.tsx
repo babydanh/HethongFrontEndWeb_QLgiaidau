@@ -159,6 +159,8 @@ export default function LiveMatchPage({ params }: Props) {
 
   // Chat auto scroll ref
   const commentsEndRef = useRef<HTMLDivElement | null>(null);
+  // Ref tới khung chat (overflow-y-auto) — chỉ cuộn khung này, KHÔNG cuộn cả trang.
+  const commentsBoxRef = useRef<HTMLDivElement | null>(null);
 
 
 
@@ -206,9 +208,14 @@ export default function LiveMatchPage({ params }: Props) {
     } catch {}
   };
 
-  // Auto scroll chat to bottom when comments list changes
+  // Auto scroll chat to bottom when comments list changes.
+  // Chỉ cuộn KHUNG chat (commentsBoxRef), KHÔNG dùng scrollIntoView vì nó cuộn
+  // cả các scrollable ancestor (toàn trang) → làm trang nhảy xuống khi mở.
   useEffect(() => {
-    commentsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const box = commentsBoxRef.current;
+    if (box) {
+      box.scrollTo({ top: box.scrollHeight, behavior: 'smooth' });
+    }
   }, [comments]);
 
   useEffect(() => {
@@ -1616,7 +1623,7 @@ export default function LiveMatchPage({ params }: Props) {
               </div>
 
               {/* Comments list */}
-              <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
+              <div ref={commentsBoxRef} className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
                 {comments.map((comment) => {
                   const authorName = comment.user?.fullName || 'Người dùng';
                   const avatarUrl = comment.user?.avatarUrl || null;

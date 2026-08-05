@@ -1111,11 +1111,12 @@ export default function HomePage() {
                               <TournamentLogoAvatar src={group.logoUrl} alt={group.name} />
                             </div>
                             <div className="min-w-0">
-                              {isRanked && (
-                                <span className="text-[9px] uppercase tracking-wider font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded inline-block mb-0.5">
-                                  GIẢI ĐẤU HẠNG
-                                </span>
-                              )}
+                              <span className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded inline-block mb-0.5 ${isRanked ? 'text-sky-700 bg-sky-50' : 'text-slate-600 bg-slate-100'}`}>
+                                {isRanked ? 'TÍNH ELO' : 'KHÔNG TÍNH ELO'}
+                              </span>
+                              <span className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded inline-block mb-0.5 ${isRanked ? 'text-sky-700 bg-sky-50' : 'text-slate-600 bg-slate-100'}`}>
+                                {isRanked ? 'TÍNH ELO' : 'KHÔNG TÍNH ELO'}
+                              </span>
                               <span className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded inline-block mb-0.5 ${isRanked ? 'text-sky-700 bg-sky-50' : 'text-slate-600 bg-slate-100'}`}>
                                 {isRanked ? 'TÍNH ELO' : 'KHÔNG TÍNH ELO'}
                               </span>

@@ -213,8 +213,14 @@ export function useLiveMatch(matchId: string) {
     };
     socket.on('cheer:update', handleCheerUpdate);
 
+    const handleBeforeUnload = () => {
+      socket.emit('leaveMatch', matchId);
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
     return () => {
       isMounted = false;
+      window.removeEventListener('beforeunload', handleBeforeUnload);
       socket.emit('leaveMatch', matchId);
       socket.off('connect', joinRoom);
       socket.off('score:update', handleScoreUpdate);

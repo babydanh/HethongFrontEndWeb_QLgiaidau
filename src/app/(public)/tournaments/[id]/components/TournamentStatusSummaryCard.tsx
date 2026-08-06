@@ -203,22 +203,21 @@ export default function TournamentStatusSummaryCard({
                 href={`/live/${match.id}`}
                 className="block p-3.5 transition-colors hover:bg-sky-50/50 group"
               >
-                {/* Status & Court info */}
+                {/* Header: Status badge & Match Round/Court info from API */}
                 <div className="flex items-center justify-between text-[10px] mb-2.5">
                   <span className={`px-2 py-0.5 rounded font-extrabold uppercase tracking-wider ${
                     inProgress ? 'bg-rose-50 text-rose-600 border border-rose-200 animate-pulse' : 'bg-blue-50 text-blue-600 border border-blue-200'
                   }`}>
                     {inProgress ? '🔴 Trực tiếp' : 'Sắp đấu'}
                   </span>
-                  {match.courtName ? (
-                    <span className="text-slate-400 font-semibold truncate max-w-[120px]">
-                      Sân: {match.courtName}
-                    </span>
-                  ) : match.scheduledAt ? (
-                    <span className="text-slate-400 font-semibold">
-                      {formatDateTime(match.scheduledAt)}
-                    </span>
-                  ) : null}
+                  <div className="text-slate-400 font-bold truncate max-w-[170px] text-right">
+                    <span>Trận #{match.matchOrder ?? 1}</span>
+                    {match.courtName ? (
+                      <span className="text-slate-500"> • Sân {match.courtName}</span>
+                    ) : match.roundNumber ? (
+                      <span className="text-slate-400 font-semibold"> • Vòng {match.roundNumber}</span>
+                    ) : null}
+                  </div>
                 </div>
 
                 {/* Matchup row with Avatars & Sets Score */}
@@ -251,17 +250,25 @@ export default function TournamentStatusSummaryCard({
                   </div>
                 </div>
 
-                {/* Score details (Sets breakdown) */}
+                {/* Score details (Only set scores: 11-0, 0-11, 1-0) */}
                 {sets.length > 0 && (
                   <div className="mt-2.5 flex items-center justify-center gap-1.5 flex-wrap">
-                    {sets.map((s, idx) => (
-                      <span
-                        key={idx}
-                        className="px-2 py-0.5 rounded bg-slate-100 text-[10px] font-bold text-slate-600 border border-slate-200/80"
-                      >
-                        S{idx + 1}: {s.team1Score}-{s.team2Score}
-                      </span>
-                    ))}
+                    {sets.map((s, idx) => {
+                      const isCurrentActiveSet = idx === sets.length - 1 && inProgress;
+                      return (
+                        <span
+                          key={idx}
+                          className={`px-2.5 py-0.5 rounded-md text-[11px] font-black transition-all ${
+                            isCurrentActiveSet
+                              ? 'bg-rose-50 text-rose-700 border border-rose-200 shadow-2xs'
+                              : 'bg-slate-100 text-slate-700 border border-slate-200/80'
+                          }`}
+                          title={`Set ${idx + 1}`}
+                        >
+                          {s.team1Score} - {s.team2Score}
+                        </span>
+                      );
+                    })}
                   </div>
                 )}
               </Link>

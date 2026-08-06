@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { Tournament, BracketStage, BracketMatch } from '@/features/tournaments/api';
+import type { Tournament, BracketStage, BracketMatch, TournamentResult } from '@/features/tournaments/api';
 import { tournamentsApi } from '@/features/tournaments/api';
 import { getSportRuleKind } from '@/features/tournaments/sport-rules/normalize';
 import { LayoutGrid, Maximize2, Trophy, Info, Loader2 } from 'lucide-react';
@@ -209,6 +209,8 @@ export default function BracketTab({
   const [activeStageId, setActiveStageId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'paged' | 'full'>('paged');
+  const [result, setResult] = useState<TournamentResult | null>(null);
+  const [resultError, setResultError] = useState(false);
 
   useEffect(() => {
     const fetchBracket = async () => {
@@ -233,6 +235,35 @@ export default function BracketTab({
       }
     };
     fetchBracket();
+  }, [divisionId, effectiveTournamentId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+
+    const refreshResult = async () => {
+      try {
+        const response = await tournamentsApi.getTournamentResults(
+          effectiveTournamentId,
+          divisionId,
+        );
+        if (!cancelled && response.data) {
+          setResult(response.data);
+          setResultError(false);
+        }
+      } catch (error) {
+        // Keep the last valid snapshot visible during transient 429/5xx errors.
+        if (!cancelled) setResultError(true);
+      } finally {
+        if (!cancelled) timer = setTimeout(refreshResult, 15000);
+      }
+    };
+
+    void refreshResult();
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
   }, [divisionId, effectiveTournamentId]);
 
   const activeStage = stages.find((s) => s.id === activeStageId);
@@ -280,6 +311,30 @@ export default function BracketTab({
   // ── Main ──
   return (
     <div className="flex flex-col gap-5">
+      {result?.finalized && result.awards.length > 0 && (
+        <section className="rounded-2xl border border-amber-100 bg-gradient-to-br from-amber-50 via-white to-sky-50 p-4 sm:p-5">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-amber-600">Vinh danh</p>
+              <h3 className="text-base font-extrabold text-slate-900 sm:text-lg">Kết quả chính thức</h3>
+            </div>
+            {resultError && <span className="text-[11px] font-medium text-slate-400">Đang đồng bộ lại</span>}
+          </div>
+          <div className="grid gap-2 sm:grid-cols-3">
+            {result.awards.map((award) => (
+              <div key={`${award.rank}-${award.participant?.participantId ?? 'pending'}`} className="rounded-xl border border-white bg-white/80 px-3 py-3 shadow-sm">
+                <p className="text-xs font-bold text-slate-400">{award.shared ? `Hạng ${award.rank} đồng hạng` : `Hạng ${award.rank}`}</p>
+                <p className="mt-1 truncate text-sm font-bold text-slate-800">{award.participant?.teamName ?? 'Chưa xác định'}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+      {resultError && !result && (
+        <div className="rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          Chưa tải được kết quả giải. Hệ thống sẽ tự thử lại.
+        </div>
+      )}
       {/* Division info bar & View Mode Switcher */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
         <div className="flex items-center gap-2 text-xs text-slate-400 font-semibold">

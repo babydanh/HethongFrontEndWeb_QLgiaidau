@@ -129,6 +129,21 @@ export interface TournamentFeesConfig {
   allowEntryFees: boolean;
 }
 
+export interface TournamentResultAward {
+  rank: number;
+  shared: boolean;
+  participant: { participantId: string; teamName: string } | null;
+}
+
+export interface TournamentResult {
+  tournamentId: string;
+  status: string;
+  finalized: boolean;
+  awards: TournamentResultAward[];
+  standings: Record<string, unknown>[];
+  matches: Array<Record<string, unknown>>;
+}
+
 export interface RoundConfigPayload {
   roundNumber: number;
   format: 'BO1' | 'BO3' | 'BO5';
@@ -314,6 +329,10 @@ export const tournamentsApi = {
     api.post<ApiResponse<{ message: string }>>(`/tournaments/${tournamentId}/stages/${stageId}/finalize`),
   getTournamentBracket: (id: string, divisionId?: string) =>
     api.get<ApiResponse<{ stages: BracketStage[] }>>(`/tournaments/${id}/bracket`, {
+      params: divisionId ? { divisionId } : undefined,
+    }),
+  getTournamentResults: (id: string, divisionId?: string) =>
+    api.get<ApiResponse<TournamentResult>>(`/tournaments/${id}/results`, {
       params: divisionId ? { divisionId } : undefined,
     }),
   generateBracket: (id: string, divisionId?: string, seedingType?: 'SEEDED' | 'RANDOM') =>

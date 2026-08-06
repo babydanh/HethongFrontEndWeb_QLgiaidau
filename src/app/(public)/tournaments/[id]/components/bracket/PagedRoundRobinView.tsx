@@ -40,7 +40,7 @@ export function PagedRoundRobinView({
   roundConfig,
   tiebreakerMode,
 }: Props) {
-  const [subView, setSubView] = useState<'rounds' | 'table' | 'matrix'>('rounds');
+  const [subView, setSubView] = useState<'matrix' | 'table' | 'rounds'>('matrix');
   const byRound = useMemo(() => buildMatchesByRound(matches), [matches]);
   const rounds = useMemo(
     () =>

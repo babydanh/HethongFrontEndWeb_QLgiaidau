@@ -9,6 +9,7 @@ import OverviewTab from './components/OverviewTab';
 import TeamsTab from './components/TeamsTab';
 import BracketTab from './components/BracketTab';
 import MatchesTab from './components/MatchesTab';
+import TournamentStatusSummaryCard from './components/TournamentStatusSummaryCard';
 import RegisterModal from './components/RegisterModal';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import GalleryCarousel from '@/components/ui/GalleryCarousel';
@@ -859,6 +860,12 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                   })}
               </div>
             )}
+
+            <TournamentStatusSummaryCard
+              tournament={activeTournament}
+              tournamentId={tournament.id}
+              divisionId={selectedDivisionId || undefined}
+            />
           </div>
 
         </div>

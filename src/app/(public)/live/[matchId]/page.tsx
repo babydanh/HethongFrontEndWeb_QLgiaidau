@@ -852,7 +852,13 @@ export default function LiveMatchPage({ params }: Props) {
       );
     } catch (err: unknown) {
       console.error(err);
-      toast.error(getErrorMessage(err, 'Không thể chốt set hiện tại.'));
+      if (isConflict409(err)) {
+        const fresh = await matchesApi.getMatchById(matchId);
+        applyServerSnapshot(fresh);
+        toast('Set đã thay đổi từ thiết bị khác. Đã làm mới số liệu.');
+      } else {
+        toast.error(getErrorMessage(err, 'Không thể chốt set hiện tại.'));
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -913,7 +919,13 @@ export default function LiveMatchPage({ params }: Props) {
       );
     } catch (err: unknown) {
       console.error(err);
-      toast.error(getErrorMessage(err, 'Không thể hoàn tất trận đấu.'));
+      if (isConflict409(err)) {
+        const fresh = await matchesApi.getMatchById(matchId);
+        applyServerSnapshot(fresh);
+        toast('Trận đã thay đổi từ thiết bị khác. Đã làm mới số liệu.');
+      } else {
+        toast.error(getErrorMessage(err, 'Không thể hoàn tất trận đấu.'));
+      }
     } finally {
       setIsSubmitting(false);
     }

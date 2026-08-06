@@ -37,7 +37,7 @@ function sortBySchedule(first: Match, second: Match) {
 function ParticipantAvatars({ participant }: { participant: Match['participant1'] }) {
   if (!participant) {
     return (
-      <div className="w-7 h-7 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-[10px] font-bold text-slate-400 shrink-0">
+      <div className="w-9 h-9 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-xs font-bold text-slate-400 shrink-0 shadow-sm">
         ?
       </div>
     );
@@ -47,7 +47,7 @@ function ParticipantAvatars({ participant }: { participant: Match['participant1'
 
   if (members.length >= 2) {
     return (
-      <div className="flex items-center -space-x-2 shrink-0">
+      <div className="flex items-center -space-x-3 shrink-0">
         {members.slice(0, 2).map((m, idx) => {
           const fallbackInitials = encodeURIComponent(m.fullName || `VĐV ${idx + 1}`);
           return (
@@ -55,7 +55,7 @@ function ParticipantAvatars({ participant }: { participant: Match['participant1'
               key={m.userId || idx}
               src={m.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${fallbackInitials}`}
               alt={m.fullName || 'VĐV'}
-              className="w-7 h-7 rounded-full border-2 border-white object-cover shadow-xs bg-slate-100"
+              className="w-9 h-9 rounded-full border-2 border-white object-cover shadow-sm bg-slate-100"
               onError={(e) => {
                 (e.currentTarget as HTMLImageElement).src = `https://api.dicebear.com/7.x/initials/svg?seed=${fallbackInitials}`;
               }}
@@ -73,7 +73,7 @@ function ParticipantAvatars({ participant }: { participant: Match['participant1'
       <img
         src={m.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${fallbackInitials}`}
         alt={m.fullName || participant.teamName}
-        className="w-7 h-7 rounded-full border-2 border-white object-cover shadow-xs bg-slate-100 shrink-0"
+        className="w-9 h-9 rounded-full border-2 border-white object-cover shadow-sm bg-slate-100 shrink-0"
         onError={(e) => {
           (e.currentTarget as HTMLImageElement).src = `https://api.dicebear.com/7.x/initials/svg?seed=${fallbackInitials}`;
         }}
@@ -82,7 +82,7 @@ function ParticipantAvatars({ participant }: { participant: Match['participant1'
   }
 
   return (
-    <div className="w-7 h-7 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-xs font-bold text-blue-600 shrink-0">
+    <div className="w-9 h-9 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-sm font-bold text-blue-600 shrink-0 shadow-sm">
       {participant.teamName.charAt(0).toUpperCase()}
     </div>
   );
@@ -197,6 +197,11 @@ export default function TournamentStatusSummaryCard({
         <div className="divide-y divide-slate-100">
           {visibleMatches.map((match) => {
             const sets = extractMatchScores(match.scoreDetails);
+            const activeSet = sets.length > 0 ? sets[sets.length - 1] : null;
+            const activeSetScoreText = activeSet
+              ? `${activeSet.team1Score} - ${activeSet.team2Score}`
+              : (inProgress ? `${match.p1SetsWon ?? 0} - ${match.p2SetsWon ?? 0}` : 'VS');
+
             return (
               <Link
                 key={match.id}
@@ -204,73 +209,60 @@ export default function TournamentStatusSummaryCard({
                 className="block p-3.5 transition-colors hover:bg-sky-50/50 group"
               >
                 {/* Header: Status badge & Match Round/Court info from API */}
-                <div className="flex items-center justify-between text-[10px] mb-2.5">
-                  <span className={`px-2 py-0.5 rounded font-extrabold uppercase tracking-wider ${
+                <div className="flex items-center justify-between text-[11px] mb-3">
+                  <span className={`px-2 py-0.5 rounded-md font-extrabold uppercase tracking-wider ${
                     inProgress ? 'bg-rose-50 text-rose-600 border border-rose-200 animate-pulse' : 'bg-blue-50 text-blue-600 border border-blue-200'
                   }`}>
                     {inProgress ? '🔴 Trực tiếp' : 'Sắp đấu'}
                   </span>
-                  <div className="text-slate-400 font-bold truncate max-w-[170px] text-right">
+                  <div className="text-slate-600 font-bold truncate max-w-[190px] text-right">
                     <span>Trận #{match.matchOrder ?? 1}</span>
-                    {match.courtName ? (
-                      <span className="text-slate-500"> • Sân {match.courtName}</span>
+                    {match.stage?.type ? (
+                      <span className="text-slate-400 font-semibold"> • {match.stage.type === 'ROUND_ROBIN' ? 'Vòng bảng' : 'Vòng loại'}</span>
                     ) : match.roundNumber ? (
                       <span className="text-slate-400 font-semibold"> • Vòng {match.roundNumber}</span>
                     ) : null}
+                    {match.courtName && (
+                      <span className="text-slate-500 font-bold"> (Sân {match.courtName})</span>
+                    )}
                   </div>
                 </div>
 
-                {/* Matchup row with Avatars & Sets Score */}
-                <div className="flex items-center justify-between gap-2 bg-slate-50/80 p-2.5 rounded-xl border border-slate-100 group-hover:border-blue-100 transition-colors">
+                {/* Matchup row with Clear Large Avatars & Current Set Point Center */}
+                <div className="flex items-center justify-between gap-2 bg-slate-50/90 p-3 rounded-xl border border-slate-200/80 group-hover:border-blue-200 transition-colors shadow-2xs">
                   {/* Team 1 */}
-                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
                     <ParticipantAvatars participant={match.participant1} />
-                    <span className="text-xs font-bold text-slate-800 truncate">
+                    <span className="text-xs font-bold text-slate-900 truncate">
                       {match.participant1?.teamName ?? 'Chờ đối thủ'}
                     </span>
                   </div>
 
-                  {/* Score Center */}
-                  <div className="flex items-center justify-center px-2.5 py-1 bg-white border border-slate-200 rounded-lg shadow-2xs shrink-0">
-                    {inProgress ? (
-                      <span className="text-sm font-black text-rose-600 tracking-tight">
-                        {match.p1SetsWon ?? 0} - {match.p2SetsWon ?? 0}
+                  {/* Current Set Score Center */}
+                  <div className="flex flex-col items-center justify-center px-3 py-1 bg-white border border-slate-250 rounded-xl shadow-xs shrink-0 min-w-[64px]">
+                    {inProgress && sets.length > 0 && (
+                      <span className="text-[9px] font-bold uppercase text-slate-400 tracking-wider">
+                        Set {sets.length}
                       </span>
-                    ) : (
-                      <span className="text-xs font-bold text-slate-400">VS</span>
+                    )}
+                    <span className={`text-base font-black tracking-tight ${inProgress ? 'text-rose-600' : 'text-slate-400'}`}>
+                      {activeSetScoreText}
+                    </span>
+                    {inProgress && (
+                      <span className="text-[9px] font-bold text-slate-400">
+                        ({match.p1SetsWon ?? 0} - {match.p2SetsWon ?? 0} Set)
+                      </span>
                     )}
                   </div>
 
                   {/* Team 2 */}
-                  <div className="flex items-center justify-end gap-2 min-w-0 flex-1 text-right">
-                    <span className="text-xs font-bold text-slate-800 truncate">
+                  <div className="flex items-center justify-end gap-2.5 min-w-0 flex-1 text-right">
+                    <span className="text-xs font-bold text-slate-900 truncate">
                       {match.participant2?.teamName ?? 'Chờ đối thủ'}
                     </span>
                     <ParticipantAvatars participant={match.participant2} />
                   </div>
                 </div>
-
-                {/* Score details (Only set scores: 11-0, 0-11, 1-0) */}
-                {sets.length > 0 && (
-                  <div className="mt-2.5 flex items-center justify-center gap-1.5 flex-wrap">
-                    {sets.map((s, idx) => {
-                      const isCurrentActiveSet = idx === sets.length - 1 && inProgress;
-                      return (
-                        <span
-                          key={idx}
-                          className={`px-2.5 py-0.5 rounded-md text-[11px] font-black transition-all ${
-                            isCurrentActiveSet
-                              ? 'bg-rose-50 text-rose-700 border border-rose-200 shadow-2xs'
-                              : 'bg-slate-100 text-slate-700 border border-slate-200/80'
-                          }`}
-                          title={`Set ${idx + 1}`}
-                        >
-                          {s.team1Score} - {s.team2Score}
-                        </span>
-                      );
-                    })}
-                  </div>
-                )}
               </Link>
             );
           })}

@@ -18,7 +18,7 @@ interface TournamentStatusSummaryCardProps {
 type MatchListPayload = Match[] | { data: Match[] };
 type ResultPayload = TournamentResult | { data: TournamentResult };
 
-const MAX_VISIBLE_MATCHES = 3;
+const MAX_VISIBLE_MATCHES = 2;
 
 function readMatches(payload: MatchListPayload): Match[] {
   return Array.isArray(payload) ? payload : payload.data;
@@ -120,13 +120,10 @@ export default function TournamentStatusSummaryCard({
 
   return (
     <section className="mt-4 overflow-hidden rounded-lg border border-slate-250/80 bg-white shadow-sm">
-      <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
-        <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.13em] text-slate-400">Theo dõi giải</p>
-          <h2 className="mt-0.5 text-base font-extrabold text-slate-900">
+      <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3">
+        <h2 className="text-sm font-bold text-slate-900">
             {completed ? 'Kết quả giải đấu' : inProgress ? 'Đang diễn ra' : 'Sắp diễn ra'}
-          </h2>
-        </div>
+        </h2>
         <span className={`h-2.5 w-2.5 rounded-full ${completed ? 'bg-slate-300' : inProgress ? 'bg-rose-500 animate-pulse' : 'bg-sky-400'}`} />
       </div>
 

@@ -36,7 +36,7 @@ export default function CreateLiteTournamentPage({
 
   // Form fields
   const [name, setName] = useState('');
-  const [sport, setSport] = useState<'badminton' | 'tennis' | 'pickleball' | 'table_tennis'>('badminton');
+  const [sport, setSport] = useState<'' | 'badminton' | 'tennis' | 'pickleball' | 'table_tennis'>('');
   const [format, setFormat] = useState<'singles' | 'doubles'>('singles');
   const [bracketType, setBracketType] = useState<'single_elimination' | 'double_elimination' | 'round_robin' | 'group_stage_knockout'>('single_elimination');
   const [maxTeams, setMaxTeams] = useState(16);
@@ -61,6 +61,10 @@ export default function CreateLiteTournamentPage({
   const handleSubmit = async () => {
     if (!name.trim()) {
       toast.error('Vui lòng nhập tên giải đấu');
+      return;
+    }
+    if (!sport) {
+      toast.error('Vui lòng chọn môn thể thao');
       return;
     }
     if (maxTeams < 2 || maxTeams > 32) {
@@ -171,6 +175,7 @@ export default function CreateLiteTournamentPage({
               onChange={(e) => setSport(e.target.value as typeof sport)}
               className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
             >
+              <option value="">Chọn môn thể thao</option>
               <option value="badminton">Cầu lông (Badminton)</option>
               <option value="tennis">Quần vợt (Tennis)</option>
               <option value="pickleball">Pickleball</option>

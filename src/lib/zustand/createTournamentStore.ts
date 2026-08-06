@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { MatchTypeDB, GenderRestriction, type SportRulesEnvelope } from '@/types/tournament';
-import { buildDefaultSportRules } from '@/features/tournaments/sport-rules/defaults';
 
 // UI-level combined match format (matchType + gender in one pick)
 export type MatchFormat =
@@ -89,7 +88,8 @@ const defaultFormData: TournamentFormData = {
   maxTeammateGap: null,
   format: 'SINGLE_ELIMINATION',
   maxParticipants: null,
-  sportRules: buildDefaultSportRules('BADMINTON'),
+  // Rules are derived after a sport is selected; never seed a new draft as badminton.
+  sportRules: {},
   startDate: '',
   endDate: '',
   registrationStartDate: '',
@@ -107,10 +107,7 @@ type PersistedCreateTournamentState = Partial<Omit<CreateTournamentState, 'formD
 const normalizeFormData = (formData?: Partial<TournamentFormData>): TournamentFormData => ({
   ...defaultFormData,
   ...formData,
-  sportRules: {
-    ...defaultFormData.sportRules,
-    ...formData?.sportRules,
-  },
+  sportRules: formData?.sportRules ?? defaultFormData.sportRules,
   matchFormat: formData?.matchFormat ?? defaultFormData.matchFormat,
   selectedFormats: Array.isArray(formData?.selectedFormats) ? formData.selectedFormats : [],
   registrationMode: formData?.registrationMode ?? defaultFormData.registrationMode,

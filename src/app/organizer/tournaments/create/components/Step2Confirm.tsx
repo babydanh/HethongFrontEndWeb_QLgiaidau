@@ -10,7 +10,6 @@ import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { getErrorMessage } from '@/utils/error';
 import { GenderRestriction } from '@/types/tournament';
-import { buildDefaultSportRules } from '@/features/tournaments/sport-rules/defaults';
 
 export default function Step2Confirm() {
   const { formData, prevStep, reset } = useCreateTournamentStore();
@@ -22,6 +21,13 @@ export default function Step2Confirm() {
       setIsSubmitting(true);
       
       const rest = formData;
+
+      if (!rest.categoryId) {
+        throw new Error('Vui lòng chọn môn thể thao trước khi tạo giải.');
+      }
+      if (!rest.sportRules || typeof rest.sportRules !== 'object' || !('kind' in rest.sportRules)) {
+        throw new Error('Chưa xác định được bộ luật theo môn đã chọn. Vui lòng quay lại chọn môn.');
+      }
 
       // 1. Resolve backend matchType + genderRestriction + divisionName from the UI matchFormat
       const { matchType, genderRestriction, divisionName } = resolveMatchFormat(rest.matchFormat || 'MALE_DOUBLES');
@@ -38,7 +44,7 @@ export default function Step2Confirm() {
         isRanked: rest.isRanked,
         maxParticipants: rest.maxParticipants || 16,
         entryFee: 0,
-        sportRules: rest.sportRules ?? buildDefaultSportRules('BADMINTON'),
+        sportRules: rest.sportRules,
         tournamentConfig: {
           bracketType: 'SINGLE_ELIMINATION',
           maxTeams: rest.maxParticipants || 16,

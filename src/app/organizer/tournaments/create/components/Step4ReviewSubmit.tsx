@@ -12,7 +12,6 @@ import { getErrorMessage } from '@/utils/error';
 import { formatCurrency, formatDateTime } from '@/utils/format';
 import { GenderRestriction } from '@/types/tournament';
 import type { TournamentFeesConfig } from '@/features/tournaments/api';
-import { buildDefaultSportRules } from '@/features/tournaments/sport-rules/defaults';
 
 export default function Step4ReviewSubmit() {
   const { formData, getDivisionsFromFormats, prevStep, reset } = useCreateTournamentStore();
@@ -52,6 +51,9 @@ export default function Step4ReviewSubmit() {
   const validateTournamentDraft = () => {
     if (!formData.name.trim()) throw new Error('Thiếu tên giải đấu ở Bước 1.');
     if (!formData.categoryId) throw new Error('Thiếu bộ môn thi đấu ở Bước 1.');
+    if (!formData.sportRules || typeof formData.sportRules !== 'object' || !('kind' in formData.sportRules)) {
+      throw new Error('Chưa xác định được bộ luật theo môn đã chọn. Vui lòng quay lại chọn môn.');
+    }
     if (!primaryDivision || divisions.length === 0) throw new Error('Bạn chưa chọn hình thức thi đấu ở Bước 2.');
 
     if (formData.registrationStartDate && formData.registrationEndDate) {
@@ -115,7 +117,7 @@ export default function Step4ReviewSubmit() {
         endDate: formData.endDate,
         registrationStartDate: formData.registrationStartDate,
         registrationEndDate: formData.registrationEndDate,
-        sportRules: formData.sportRules ?? buildDefaultSportRules('BADMINTON'),
+        sportRules: formData.sportRules,
         tournamentConfig: {
           bracketType: formData.format as string,
           maxTeams: formData.maxParticipants || 16,

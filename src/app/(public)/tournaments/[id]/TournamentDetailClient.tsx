@@ -289,6 +289,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
   const isRegistrationLocked = activeTournament.isRegistrationLocked;
   const isRegistrationExpired = activeTournament.registrationEndDate ? new Date() > new Date(activeTournament.registrationEndDate) : false;
   const isRegistrationOpen = isTournamentOpenForRegistration(activeTournament.status);
+  const showRegistrationDetails = !isTournamentInProgress(activeTournament.status) && !isTournamentCompleted(activeTournament.status);
   const registrationModeUi = getRegistrationModeUi(activeTournament.tournamentConfig?.registrationMode);
   const hidePublicBannerText = activeTournament.tournamentConfig?.hideFeaturedCardText === true;
 
@@ -568,6 +569,8 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
           {/* Right Area - Registration & Info Card (takes 1 col) */}
           <div className="lg:col-span-1 lg:sticky lg:top-6">
             <div className="bg-white rounded-lg border border-slate-250/80 p-6 flex flex-col gap-6 shadow-sm">
+              {showRegistrationDetails && (
+                <>
               {/* Entry Fee */}
               <div>
                 <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Lệ phí tham gia</span>
@@ -597,6 +600,9 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                   );
                 })()}
               </div>
+
+                </>
+              )}
 
               {/* Organizer Info */}
               <div className="border-t border-slate-100 pt-4">
@@ -631,6 +637,8 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                 </div>
               </div>
 
+              {showRegistrationDetails && (
+                <>
               {/* Slots Progress Bar for all divisions */}
               {divisionsList.length > 0 ? (
                 <div className="border-t border-slate-100 pt-4 space-y-3">
@@ -789,6 +797,9 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                 </div>
               )}
 
+                </>
+              )}
+
               {isOwner && !isTournamentDraft(activeTournament.status) && (
                 <div className="bg-slate-50 border border-slate-100 rounded-lg p-3.5 mt-1 text-center">
                   <p className="text-xs text-slate-800 font-bold">
@@ -809,6 +820,12 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                 </div>
               )}
             </div>
+
+            <TournamentStatusSummaryCard
+              tournament={activeTournament}
+              tournamentId={tournament.id}
+              divisionId={selectedDivisionId || undefined}
+            />
 
             {/* Contact Info Card */}
             {activeTournament.contactInfo && (
@@ -860,12 +877,6 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                   })}
               </div>
             )}
-
-            <TournamentStatusSummaryCard
-              tournament={activeTournament}
-              tournamentId={tournament.id}
-              divisionId={selectedDivisionId || undefined}
-            />
           </div>
 
         </div>

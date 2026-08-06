@@ -1,117 +1,77 @@
-'use client';
+import React from 'react';
+import type { Metadata } from 'next';
 
-import { Shield, Eye, Lock } from 'lucide-react';
+export const metadata: Metadata = {
+  title: 'Chính Sách Bảo Mật (Privacy Policy) | VNVar Giaidau',
+  description: 'Chính sách bảo mật quyền riêng tư và thu thập dữ liệu bảng xếp hạng Leaderboard của ứng dụng Quản Lý Giải Đấu VNVar.',
+};
 
-export default function PrivacyPage() {
+export default function PrivacyPolicyPage() {
   return (
-    <div className="bg-slate-50 min-h-screen py-16 px-4 md:px-8">
-      <div className="max-w-3xl mx-auto bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        {/* Header Block */}
-        <div className="p-8 md:p-12 border-b border-slate-100 bg-slate-50/50">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center">
-              <Shield className="w-5 h-5" />
-            </div>
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-450">Bảo mật thông tin</span>
+    <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto bg-white rounded-2xl border border-slate-200 p-6 sm:p-10 shadow-sm leading-relaxed text-slate-700">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mb-6 pb-4 border-b border-slate-200">
+          CHÍNH SÁCH BẢO MẬT & QUYỀN RIÊNG TƯ (PRIVACY POLICY)
+        </h1>
+
+        <p className="text-xs text-slate-400 font-semibold mb-6">
+          Cập nhật lần cuối: Ngày 06 tháng 08 năm 2026
+        </p>
+
+        <section className="space-y-6 text-sm">
+          <div>
+            <h2 className="text-lg font-bold text-slate-900 mb-2">1. Giới thiệu</h2>
+            <p>
+              Chào mừng bạn đến với nền tảng **Quản Lý Giải Đấu (VNVar / giaidau.vnvar.com)**. Chúng tôi cam kết bảo vệ quyền riêng tư và thông tin cá nhân của người dùng khi sử dụng ứng dụng di động cũng như trang web của chúng tôi.
+            </p>
           </div>
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
-            Chính sách bảo mật VNSPORT
-          </h1>
-          <p className="text-slate-500 font-medium text-xs mt-2">
-            Cập nhật lần cuối: ngày 14 tháng 07 năm 2026
-          </p>
-        </div>
 
-        {/* Content Block */}
-        <div className="p-8 md:p-12 space-y-8 text-sm text-slate-650 leading-relaxed font-medium">
-          <section className="space-y-3">
-            <h2 className="text-base font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
-              1. Thông tin chúng tôi thu thập
-            </h2>
-            <p>
-              Để mang lại trải nghiệm quản lý giải đấu và thi đấu tốt nhất, chúng tôi thu thập các loại thông tin sau:
+          <div>
+            <h2 className="text-lg font-bold text-slate-900 mb-2">2. Thu thập dữ liệu & Bảng xếp hạng (Leaderboard & ELO Rating)</h2>
+            <p className="mb-2">
+              Khi bạn đăng ký tài khoản, tham gia thi đấu các giải thể thao (Pickleball, Cầu lông, Tennis, Bóng bàn) hoặc sử dụng các tính năng của ứng dụng:
             </p>
-            <ul className="list-disc pl-5 space-y-2">
-              <li>
-                <strong>Thông tin tài khoản:</strong> Tên đăng nhập, mật khẩu mã hóa, số điện thoại, địa chỉ email khi bạn đăng ký sử dụng.
-              </li>
-              <li>
-                <strong>Hồ sơ Vận động viên:</strong> Ảnh đại diện, ảnh bìa, giới tính, thông tin kỹ năng/ELO, lịch sử thi đấu và danh sách câu lạc bộ bạn tham gia.
-              </li>
-              <li>
-                <strong>Dữ liệu giao dịch:</strong> Lịch sử nộp lệ phí giải đấu, thanh toán hóa đơn nâng cấp Pro hoặc lịch sử yêu cầu rút tiền của ban tổ chức.
-              </li>
+            <ul className="list-disc pl-6 space-y-1 text-slate-600">
+              <li>Chúng tôi thu thập thông tin cơ bản như: Họ tên, Ảnh đại diện, Email, Số điện thoại và Thành tích thi đấu.</li>
+              <li>**Bảng xếp hạng toàn cầu (Global Leaderboard & ELO Rating)**: Điểm số, trận thắng/thua và thứ hạng ELO của bạn sẽ được hiển thị công khai trên Bảng xếp hạng chung để phục vụ mục đích xếp hạt giống và thi đấu giải.</li>
+              <li>Bằng việc đăng ký tài khoản và tham gia giải đấu, bạn đồng ý cho phép ứng dụng hiển thị điểm số và thứ hạng công khai trên Bảng xếp hạng.</li>
             </ul>
-          </section>
-
-          <section className="space-y-3">
-            <h2 className="text-base font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
-              2. Cách thức sử dụng thông tin
-            </h2>
-            <p>
-              Chúng tôi chỉ sử dụng thông tin thu thập được cho các mục đích cụ thể:
-            </p>
-            <ul className="list-disc pl-5 space-y-2">
-              <li>Vận hành, duy trì và nâng cấp các tính năng quản trị, ghép cặp thi đấu, tính toán ELO của VNSPORT.</li>
-              <li>Xử lý các giao dịch tài chính trực tuyến an toàn và hỗ trợ hoàn trả lệ phí khi có yêu cầu hợp lệ.</li>
-              <li>Gửi các thông báo quan trọng về giải đấu, sự thay đổi lịch trình, cập nhật kết quả trận đấu hoặc lời mời trọng tài.</li>
-              <li>Ngăn chặn các hành vi gian lận thông tin, vi phạm quy chế ứng xử thể thao hoặc phá hoại hệ thống.</li>
-            </ul>
-          </section>
-
-          <section className="space-y-3">
-            <h2 className="text-base font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
-              3. Chia sẻ thông tin với bên thứ ba
-            </h2>
-            <p>
-              VNSPORT cam kết không bán, trao đổi hoặc cho thuê thông tin cá nhân của bạn cho bên thứ ba vì mục đích tiếp thị. Thông tin của bạn chỉ được chia sẻ trong các trường hợp:
-            </p>
-            <ul className="list-disc pl-5 space-y-2">
-              <li>Hiển thị công khai trên hồ sơ VĐV (Tên, CLB, điểm ELO, lịch sử trận đấu) để phục vụ tính minh bạch của giải đấu.</li>
-              <li>Cung cấp cho các đối tác xử lý cổng thanh toán trực tuyến được cấp phép nhằm thực hiện giao dịch đóng phí/rút tiền.</li>
-              <li>Tuân thủ các yêu cầu pháp lý từ cơ quan nhà nước có thẩm quyền theo quy định của pháp luật Việt Nam.</li>
-            </ul>
-          </section>
-
-          <section className="space-y-3">
-            <h2 className="text-base font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
-              4. Bảo mật và lưu trữ dữ liệu
-            </h2>
-            <p>
-              Chúng tôi áp dụng các biện pháp bảo mật mã hóa tiêu chuẩn ngành (như SSL/TLS) nhằm bảo vệ thông tin cá nhân tránh khỏi mất mát, truy cập trái phép hoặc tiết lộ ngoài ý muốn. Tuy nhiên, không có phương thức truyền tải qua Internet hoặc lưu trữ điện tử nào là an toàn tuyệt đối, vì vậy chúng tôi không thể cam kết bảo mật tuyệt đối 100%.
-            </p>
-          </section>
-
-          <section className="space-y-3">
-            <h2 className="text-base font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
-              5. Quyền của người dùng
-            </h2>
-            <p>
-              Bạn có quyền truy cập, chỉnh sửa, cập nhật hoặc yêu cầu xóa bỏ thông tin cá nhân của mình bất kỳ lúc nào bằng cách đăng nhập vào phần Cài đặt hồ sơ cá nhân hoặc liên hệ trực tiếp với đội ngũ hỗ trợ kỹ thuật của VNSPORT.
-            </p>
-          </section>
-
-          <div className="bg-slate-50 rounded-lg border border-slate-200 p-5 flex gap-3 text-slate-800 mt-8">
-            <Lock className="w-5 h-5 shrink-0 mt-0.5" />
-            <div className="text-xs space-y-1">
-              <h4 className="font-bold">Cam kết bảo mật tuyệt đối:</h4>
-              <p className="leading-relaxed font-medium text-emerald-800">
-                Chúng tôi liên tục giám sát và kiểm tra định kỳ tính bảo mật của mã nguồn và cơ sở dữ liệu để phòng ngừa mọi nguy cơ rò rỉ dữ liệu của thành viên hệ thống.
-              </p>
-            </div>
           </div>
-        </div>
 
-        {/* Footer Link */}
-        <div className="p-6 md:p-8 border-t border-slate-100 bg-slate-50/50 flex justify-between items-center text-xs">
-          <span className="text-slate-450 font-bold">© 2026 VNDC Sport. Bảo lưu mọi quyền.</span>
-          <a
-            href="/"
-            className="text-blue-650 hover:text-blue-700 font-bold flex items-center gap-1"
-          >
-            Quay lại trang chủ
-          </a>
-        </div>
+          <div>
+            <h2 className="text-lg font-bold text-slate-900 mb-2">3. Mục đích sử dụng thông tin</h2>
+            <ul className="list-disc pl-6 space-y-1 text-slate-600">
+              <li>Xác thực tài khoản người dùng và quản lý danh sách vận động viên tham gia giải đấu.</li>
+              <li>Tính toán điểm ELO, bảng xếp hạng và tạo lịch thi đấu tự động.</li>
+              <li>Gửi thông báo lịch thi đấu, kết quả trận đấu và các thông tin liên quan từ Ban tổ chức.</li>
+            </ul>
+          </div>
+
+          <div>
+            <h2 className="text-lg font-bold text-slate-900 mb-2">4. Chia sẻ & Bảo mật dữ liệu</h2>
+            <p>
+              Chúng tôi cam kết **không bán, chia sẻ hoặc cho thuê** thông tin cá nhân của bạn cho bất kỳ bên thứ ba nào vì mục đích thương mại. Dữ liệu của bạn được lưu trữ an toàn trên hệ thống máy chủ được bảo mật cao.
+            </p>
+          </div>
+
+          <div>
+            <h2 className="text-lg font-bold text-slate-900 mb-2">5. Quyền của người dùng & Xóa tài khoản</h2>
+            <p>
+              Bạn có quyền yêu cầu cập nhật, chỉnh sửa thông tin cá nhân hoặc yêu cầu xóa toàn bộ dữ liệu tài khoản bất kỳ lúc nào bằng cách liên hệ với chúng tôi qua email hỗ trợ hoặc sử dụng tính năng Xóa tài khoản trong ứng dụng.
+            </p>
+          </div>
+
+          <div>
+            <h2 className="text-lg font-bold text-slate-900 mb-2">6. Liên hệ hỗ trợ</h2>
+            <p>
+              Nếu bạn có bất kỳ câu hỏi hoặc thắc mắc nào liên quan đến Chính sách bảo mật này, vui lòng liên hệ Ban quản trị qua:
+            </p>
+            <ul className="list-disc pl-6 space-y-1 text-slate-600 mt-2">
+              <li>**Email**: support@vnvar.com</li>
+              <li>**Website**: https://giaidau.vnvar.com</li>
+            </ul>
+          </div>
+        </section>
       </div>
     </div>
   );

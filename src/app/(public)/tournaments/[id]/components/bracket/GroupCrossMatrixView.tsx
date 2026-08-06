@@ -1,0 +1,122 @@
+'use client';
+
+import React from 'react';
+import type { BracketMatch } from '@/features/tournaments/api';
+import { calculateStandings } from './helpers';
+
+interface Props {
+  matches: BracketMatch[];
+  groupName?: string;
+}
+
+export function GroupCrossMatrixView({ matches, groupName = 'Group A' }: Props) {
+  const { standings } = calculateStandings(matches, { tiebreakerMode: 'split' });
+
+  // Map participant index (1-based)
+  const participantMap = new Map(
+    standings.map((team, idx) => [team.participantId, idx + 1])
+  );
+
+  // Quick lookup matrix: matchResult[p1Id][p2Id] = score string
+  const scoreMatrix: Record<string, Record<string, string>> = {};
+
+  matches.forEach((m) => {
+    if (m.isBye || !m.participant1 || !m.participant2) return;
+    const p1Id = m.participant1.id;
+    const p2Id = m.participant2.id;
+
+    if (!scoreMatrix[p1Id]) scoreMatrix[p1Id] = {};
+    if (!scoreMatrix[p2Id]) scoreMatrix[p2Id] = {};
+
+    const isCompleted = m.status === 'COMPLETED' || m.winnerId != null;
+    const isOngoing = m.status === 'ONGOING' || m.status === 'IN_PROGRESS';
+
+    if (isCompleted || isOngoing) {
+      // Best score representation for set/point
+      const p1Sets = m.p1SetsWon ?? 0;
+      const p2Sets = m.p2SetsWon ?? 0;
+      let displayScore1 = `${p1Sets}-${p2Sets}`;
+      let displayScore2 = `${p2Sets}-${p1Sets}`;
+
+      // If sets are 1-0 / 2-0 / 2-1 or point scores available
+      if (m.scoreDetails && Array.isArray(m.scoreDetails) && m.scoreDetails.length > 0) {
+        const lastSet = m.scoreDetails[m.scoreDetails.length - 1] as { team1Score?: number; team2Score?: number };
+        if (typeof lastSet?.team1Score === 'number' && typeof lastSet?.team2Score === 'number') {
+          displayScore1 = `${lastSet.team1Score}-${lastSet.team2Score}`;
+          displayScore2 = `${lastSet.team2Score}-${lastSet.team1Score}`;
+        }
+      }
+
+      scoreMatrix[p1Id][p2Id] = displayScore1;
+      scoreMatrix[p2Id][p1Id] = displayScore2;
+    }
+  });
+
+  return (
+    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+      <div className="bg-slate-50 border-b border-slate-200 px-4 py-3 text-center font-bold text-sm text-slate-800">
+        {groupName}
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full text-xs">
+          <thead className="bg-slate-50/80 border-b border-slate-200 font-bold text-slate-600">
+            <tr>
+              <th className="px-3 py-2.5 text-center w-10">No.</th>
+              <th className="px-4 py-2.5 text-left min-w-[180px]">Players</th>
+              {standings.map((_, idx) => (
+                <th key={idx} className="px-3 py-2.5 text-center w-14 border-l border-slate-100">
+                  {idx + 1}
+                </th>
+              ))}
+              <th className="px-3 py-2.5 text-center w-16 border-l border-slate-200 bg-slate-100/60 font-bold text-slate-700">
+                W / L
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {standings.map((row, idx) => {
+              const currentNum = idx + 1;
+              return (
+                <tr key={row.participantId} className="hover:bg-slate-50/50 transition-colors">
+                  <td className="px-3 py-3 text-center text-slate-400 font-medium">
+                    {currentNum}
+                  </td>
+                  <td className="px-4 py-3 font-semibold text-slate-800">
+                    {row.teamName}
+                  </td>
+                  {standings.map((otherRow, otherIdx) => {
+                    const isSelf = row.participantId === otherRow.participantId;
+                    const score = scoreMatrix[row.participantId]?.[otherRow.participantId];
+
+                    return (
+                      <td
+                        key={otherRow.participantId}
+                        className={`px-2 py-3 text-center font-semibold border-l border-slate-100 ${
+                          isSelf ? 'bg-slate-100/70' : ''
+                        }`}
+                      >
+                        {isSelf ? (
+                          ''
+                        ) : score ? (
+                          <span className="text-slate-800">{score}</span>
+                        ) : (
+                          <span className="text-slate-300">-</span>
+                        )}
+                      </td>
+                    );
+                  })}
+                  <td className="px-3 py-3 text-center font-bold border-l border-slate-200 bg-slate-50/40">
+                    <span className="text-emerald-600">{row.won}</span>
+                    <span className="text-slate-300 mx-1">/</span>
+                    <span className="text-rose-500">{row.lost}</span>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}

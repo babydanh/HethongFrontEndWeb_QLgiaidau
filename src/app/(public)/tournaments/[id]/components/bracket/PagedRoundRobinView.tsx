@@ -15,6 +15,8 @@ import { buildMatchesByRound } from './helpers';
 import { MatchCard } from './MatchCard';
 import { RoundRobinView } from './RoundRobinView';
 
+import { GroupCrossMatrixView } from './GroupCrossMatrixView';
+
 interface Props {
   matches: BracketMatch[];
   onScheduleMatch?: OnScheduleMatch;
@@ -38,7 +40,7 @@ export function PagedRoundRobinView({
   roundConfig,
   tiebreakerMode,
 }: Props) {
-  const [subView, setSubView] = useState<'rounds' | 'table'>('rounds');
+  const [subView, setSubView] = useState<'rounds' | 'table' | 'matrix'>('rounds');
   const byRound = useMemo(() => buildMatchesByRound(matches), [matches]);
   const rounds = useMemo(
     () =>
@@ -53,15 +55,43 @@ export function PagedRoundRobinView({
   const currentRound = rounds[activeRoundIndex] ?? rounds[0];
   const currentMatches = byRound[currentRound] ?? [];
 
-  if (subView === 'table') {
+  if (subView === 'matrix') {
     return (
       <div className="flex flex-col gap-4">
-        <div className="flex justify-end">
+        <div className="flex justify-end gap-2">
           <button
             onClick={() => setSubView('rounds')}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-700 shadow-sm cursor-pointer"
           >
             <LayoutGrid className="w-4 h-4 text-blue-600" /> Xem theo Lượt trận
+          </button>
+          <button
+            onClick={() => setSubView('table')}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-700 shadow-sm cursor-pointer"
+          >
+            <TableProperties className="w-4 h-4 text-emerald-600" /> Bảng xếp hạng
+          </button>
+        </div>
+        <GroupCrossMatrixView matches={matches} />
+      </div>
+    );
+  }
+
+  if (subView === 'table') {
+    return (
+      <div className="flex flex-col gap-4">
+        <div className="flex justify-end gap-2">
+          <button
+            onClick={() => setSubView('rounds')}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-700 shadow-sm cursor-pointer"
+          >
+            <LayoutGrid className="w-4 h-4 text-blue-600" /> Xem theo Lượt trận
+          </button>
+          <button
+            onClick={() => setSubView('matrix')}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-700 shadow-sm cursor-pointer"
+          >
+            <TableProperties className="w-4 h-4 text-purple-600" /> Bảng chéo Matrix
           </button>
         </div>
         <RoundRobinView
@@ -97,12 +127,18 @@ export function PagedRoundRobinView({
           </div>
         </div>
 
-        <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t border-slate-800 sm:border-t-0">
+        <div className="flex items-center justify-between sm:justify-end gap-2 pt-2 sm:pt-0 border-t border-slate-800 sm:border-t-0 flex-wrap">
           <button
             onClick={() => setSubView('table')}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 text-xs font-bold transition-all cursor-pointer mr-2"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 text-xs font-bold transition-all cursor-pointer"
           >
             <TableProperties className="w-4 h-4" /> Bảng xếp hạng
+          </button>
+          <button
+            onClick={() => setSubView('matrix')}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/30 text-xs font-bold transition-all cursor-pointer mr-2"
+          >
+            <TableProperties className="w-4 h-4" /> Bảng chéo Matrix
           </button>
 
           <div className="flex items-center gap-2">

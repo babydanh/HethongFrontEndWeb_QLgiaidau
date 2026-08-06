@@ -207,22 +207,16 @@ export default function Step3ScheduleFees() {
               </p>
             </div>
           )}
-
-          <div className={isClubTournament ? 'hidden' : ''}>
-          <Input
-            label="Lệ phí tham gia mỗi đội (VNĐ)"
-            type="number"
-            placeholder="0"
-            min="0"
-            disabled={!allowEntryFees}
-            {...register('entryFee')}
-            error={errors.entryFee?.message}
-          />
-          </div>
-        </div>
-
-        <div className="bg-blue-50/50 border border-blue-100 rounded-lg p-4 text-xs text-blue-700 leading-relaxed font-semibold">
-          <strong>💡 Lưu ý:</strong> Các thông tin về Lịch thi đấu và Lệ phí là <strong>KHÔNG BẮT BUỘC</strong> nhập ngay tại bước này. Bạn có thể bỏ trống và linh hoạt thiết lập/chỉnh sửa chi tiết trong trang quản lý giải đấu sau.
+          {!isClubTournament && allowEntryFees && (
+            <Input
+              label="Lệ phí tham gia mỗi đội (VNĐ)"
+              type="number"
+              placeholder="0"
+              min="0"
+              {...register('entryFee')}
+              error={errors.entryFee?.message}
+            />
+          )}
         </div>
 
         <div className="flex justify-between mt-4 pt-6 border-t border-slate-100">

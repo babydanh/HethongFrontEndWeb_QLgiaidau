@@ -704,46 +704,75 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                   </div>
                 </div>
 
-                {/* Countdown based on tournament status */}
-                {isTournamentUpcoming(activeTournament.status) && activeTournament.registrationStartDate && (
-                  <CountdownTimer
-                    targetDate={activeTournament.registrationStartDate}
-                    labels={{ active: 'Mở đăng ký sau', expired: 'Đã mở đăng ký' }}
-                    variant="info"
-                  />
-                )}
-                {isTournamentOpenForRegistration(activeTournament.status) && activeTournament.registrationEndDate && (
-                  <CountdownTimer
-                    targetDate={activeTournament.registrationEndDate}
-                    labels={{ active: 'Đóng đăng ký sau', expired: 'Đã đóng đăng ký' }}
-                    variant="warning"
-                  />
-                )}
-                {isTournamentRegistrationClosed(activeTournament.status) && activeTournament.startDate && (
-                  <CountdownTimer
-                    targetDate={activeTournament.startDate}
-                    labels={{ active: 'Khởi tranh sau', expired: 'Đã khởi tranh' }}
-                    variant="danger"
-                  />
-                )}
-                {isTournamentInProgress(activeTournament.status) && activeTournament.endDate && (
-                  <div>
-                    <CountdownTimer
-                      targetDate={activeTournament.endDate}
-                      labels={{ active: 'Kết thúc sau', expired: 'Đã kết thúc' }}
-                      variant="danger"
-                    />
-                    <p className="text-[10px] text-slate-400 mt-1 italic">Lịch có thể thay đổi</p>
-                  </div>
-                )}
-                {isTournamentCompleted(activeTournament.status) && (
-                  <div className="mt-2 p-2.5 border rounded-lg bg-slate-50 border-slate-200 text-slate-400">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-slate-400" />
-                      <span className="text-xs font-bold text-slate-400">Đã kết thúc</span>
-                    </div>
-                  </div>
-                )}
+                {/* Smart Sequential Countdown Timer (Chỉ hiện 1 đếm ngược duy nhất) */}
+                {(() => {
+                  const now = new Date();
+                  const regStart = activeTournament.registrationStartDate ? new Date(activeTournament.registrationStartDate) : null;
+                  const regEnd = activeTournament.registrationEndDate ? new Date(activeTournament.registrationEndDate) : null;
+                  const tourStart = activeTournament.startDate ? new Date(activeTournament.startDate) : null;
+                  const tourEnd = activeTournament.endDate ? new Date(activeTournament.endDate) : null;
+
+                  // 1. Chưa tới ngày mở đăng ký -> CHỈ ĐẾM NGƯỢC THỜI GIAN MỞ ĐĂNG KÝ
+                  if (regStart && now < regStart) {
+                    return (
+                      <CountdownTimer
+                        targetDate={activeTournament.registrationStartDate!}
+                        labels={{ active: 'Mở đăng ký sau', expired: 'Đã mở đăng ký' }}
+                        variant="info"
+                      />
+                    );
+                  }
+
+                  // 2. Đã mở đăng ký, chưa đóng -> CHỈ ĐẾM NGƯỢC HẠN ĐÓNG ĐĂNG KÝ
+                  if (regEnd && now < regEnd) {
+                    return (
+                      <CountdownTimer
+                        targetDate={activeTournament.registrationEndDate!}
+                        labels={{ active: 'Đóng đăng ký sau', expired: 'Đã đóng đăng ký' }}
+                        variant="warning"
+                      />
+                    );
+                  }
+
+                  // 3. Đã đóng đăng ký, chưa khởi tranh -> Đếm ngược ngày khởi tranh
+                  if (tourStart && now < tourStart) {
+                    return (
+                      <CountdownTimer
+                        targetDate={activeTournament.startDate!}
+                        labels={{ active: 'Khởi tranh sau', expired: 'Đã khởi tranh' }}
+                        variant="danger"
+                      />
+                    );
+                  }
+
+                  // 4. Giải đang diễn ra -> Đếm ngược ngày kết thúc
+                  if (isTournamentInProgress(activeTournament.status) && tourEnd && now < tourEnd) {
+                    return (
+                      <div>
+                        <CountdownTimer
+                          targetDate={activeTournament.endDate!}
+                          labels={{ active: 'Kết thúc sau', expired: 'Đã kết thúc' }}
+                          variant="danger"
+                        />
+                        <p className="text-[10px] text-slate-400 mt-1 italic">Lịch có thể thay đổi</p>
+                      </div>
+                    );
+                  }
+
+                  // 5. Đã kết thúc
+                  if (isTournamentCompleted(activeTournament.status) || (regEnd && now >= regEnd && !tourStart)) {
+                    return (
+                      <div className="mt-2 p-2.5 border rounded-lg bg-slate-50 border-slate-200 text-slate-400">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-slate-400" />
+                          <span className="text-xs font-bold text-slate-400">Đã kết thúc</span>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  return null;
+                })()}
 
               </div>
 

@@ -64,7 +64,11 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
         livestreamApi.getCameras(tournament.id),
         livestreamApi.getMatchLivestreams(tournament.id),
       ]);
-      setCameras(cameraResponse.data ?? []);
+      const activeCameras = cameraResponse.data ?? [];
+      setCameras(activeCameras);
+      setSelectedCameraId((current) =>
+        current && activeCameras.some((camera) => camera.id === current) ? current : '',
+      );
       setMatchStreams(Object.fromEntries((streamResponse.data ?? []).map((stream) => [stream.matchId, stream])));
     } catch (err) {
       toast.error(getErrorMessage(err));
@@ -113,6 +117,9 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
 
   const handleDeleteCamera = async (cameraId: string) => {
     try {
+      if (selectedCameraId === cameraId) {
+        setSelectedCameraId('');
+      }
       await livestreamApi.deleteCamera(cameraId);
       await loadLivestreamData();
       toast.success('Đã xóa camera');
@@ -345,7 +352,10 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
           {readyMatches.slice(0, 12).map((match) => (
             (() => {
               const stream = matchStreams[match.id];
-              const hasCamera = Boolean(stream?.cameraId);
+              // A match is assigned only when the API can resolve a live
+              // camera record. This prevents stale soft-deleted ids from
+              // keeping old controls visible.
+              const hasCamera = Boolean(stream?.cameraId && stream.cameraName);
               const isLive = stream?.streamStatus === 'LIVE';
               const isBusy = activeMatchId === match.id;
 

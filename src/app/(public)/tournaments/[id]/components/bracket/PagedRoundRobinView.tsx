@@ -112,50 +112,50 @@ export function PagedRoundRobinView({
   return (
     <div className="flex flex-col gap-6 w-full">
       {/* Header & Sub-view Switcher */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-slate-900 text-white rounded-xl p-4 sm:p-5 shadow-lg border border-slate-800">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-white rounded-xl p-4 sm:p-5 shadow-sm border border-slate-200">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-md shadow-emerald-500/20">
-            <LayoutGrid className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shadow-sm">
+            <LayoutGrid className="w-5 h-5 text-blue-600" />
           </div>
           <div>
-            <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wider">
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
               Vòng Tròn Tính Điểm
             </span>
-            <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
+            <h3 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
               Lượt trận thứ {currentRound}
             </h3>
           </div>
         </div>
 
-        <div className="flex items-center justify-between sm:justify-end gap-2 pt-2 sm:pt-0 border-t border-slate-800 sm:border-t-0 flex-wrap">
+        <div className="flex items-center justify-between sm:justify-end gap-2 pt-2 sm:pt-0 border-t border-slate-100 sm:border-t-0 flex-wrap">
           <button
             onClick={() => setSubView('table')}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 text-xs font-bold transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 text-xs font-bold transition-all cursor-pointer shadow-sm"
           >
-            <TableProperties className="w-4 h-4" /> Bảng xếp hạng
+            <TableProperties className="w-4 h-4 text-slate-500" /> Bảng xếp hạng
           </button>
           <button
             onClick={() => setSubView('matrix')}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/30 text-xs font-bold transition-all cursor-pointer mr-2"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 text-xs font-bold transition-all cursor-pointer mr-2 shadow-sm"
           >
-            <TableProperties className="w-4 h-4" /> Bảng chéo Matrix
+            <TableProperties className="w-4 h-4 text-blue-600" /> Bảng chéo Matrix
           </button>
 
           <div className="flex items-center gap-2">
             <button
               onClick={() => setActiveRoundIndex((p) => Math.max(p - 1, 0))}
               disabled={activeRoundIndex === 0}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-40 text-xs font-bold text-slate-200 transition-all border border-slate-700 cursor-pointer"
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white hover:bg-slate-50 disabled:opacity-40 text-xs font-bold text-slate-700 transition-all border border-slate-200 cursor-pointer shadow-sm"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <span className="text-xs font-medium text-slate-400 min-w-[60px] text-center">
+            <span className="text-xs font-semibold text-slate-600 min-w-[60px] text-center">
               {activeRoundIndex + 1} / {rounds.length}
             </span>
             <button
               onClick={() => setActiveRoundIndex((p) => Math.min(p + 1, rounds.length - 1))}
               disabled={activeRoundIndex === rounds.length - 1}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-xs font-bold text-white transition-all shadow-md cursor-pointer"
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-xs font-bold text-white transition-all shadow-sm cursor-pointer"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -173,7 +173,7 @@ export function PagedRoundRobinView({
               onClick={() => setActiveRoundIndex(idx)}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all border whitespace-nowrap cursor-pointer ${
                 isActive
-                  ? 'bg-emerald-600 text-white border-emerald-600 shadow-md scale-[1.02]'
+                  ? 'bg-blue-600 text-white border-blue-600 shadow-sm scale-[1.02]'
                   : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
               }`}
             >

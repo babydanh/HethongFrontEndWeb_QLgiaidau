@@ -219,9 +219,9 @@ body {
   }
 }
 
-/* Global Laptop DPI Scaling & Compact Responsive Optimization */
-@media (min-width: 1024px) and (max-width: 1536px) {
+/* Laptop màn nhỏ (13" - 14" Full HD với Windows DPI Scale 125%-150%) */
+@media (min-width: 1024px) and (max-width: 1440px) {
   body {
-    zoom: 0.9; /* Thu nhỏ toàn bộ giao diện Web về 90% vừa vặn như màn PC lớn */
+    zoom: 0.9; /* Thu nhỏ 90% vừa vặn cho Laptop màn nhỏ */
   }
 }

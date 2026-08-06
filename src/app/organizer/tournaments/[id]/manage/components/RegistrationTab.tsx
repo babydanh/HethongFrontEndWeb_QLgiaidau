@@ -249,7 +249,7 @@ export function RegistrationTab({
     void handleSwapSeeds(dragged.id, target.id);
   };
 
-  const canSeedMock = isTournamentDraft(tournament.status);
+  const canSeedMock = true;
 
   // ─── SortableSeedItem ─────────────────────────────────────────────
   function SortableSeedItem({ p }: { p: TournamentParticipant }) {
@@ -816,10 +816,8 @@ export function RegistrationTab({
             <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
               <RefreshCw className="w-4 h-4 text-blue-600 animate-none" /> Bảng thử nghiệm dữ liệu ảo
             </h3>
-            <p className="text-xs text-slate-455 mt-1 font-semibold">
-              {canSeedMock
-                ? 'Tạo danh sách vận động viên ảo để kiểm thử sơ đồ thi đấu trước khi mở đăng ký thật.'
-                : 'Giải đã rời Draft nên không thể tạo thêm dữ liệu ảo. Nút dọn dẹp vẫn khả dụng để xử lý dữ liệu thử còn sót.'}
+            <p className="text-xs text-slate-500 mt-1 font-semibold">
+              Tạo danh sách vận động viên ảo để thử nghiệm ghép cặp, bốc thăm và kiểm thử sơ đồ thi đấu bất kỳ lúc nào.
             </p>
           </div>
 

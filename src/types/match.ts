@@ -62,8 +62,8 @@ export interface Match {
   courtName?: string | null;
   participant1Id?: string | null;
   participant2Id?: string | null;
-  participant1?: { id: string; teamName: string } | null;
-  participant2?: { id: string; teamName: string } | null;
+  participant1?: { id: string; teamName: string; members?: { userId?: string; fullName?: string | null; avatarUrl?: string | null }[] } | null;
+  participant2?: { id: string; teamName: string; members?: { userId?: string; fullName?: string | null; avatarUrl?: string | null }[] } | null;
   winnerId?: string | null;
   matchConfig?: SportRuleScoringConfig | null;
   scoreDetails?: Record<string, unknown> & {

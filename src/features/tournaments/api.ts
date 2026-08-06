@@ -166,6 +166,7 @@ export interface RegisterTournamentPayload {
   divisionId?: string;
   tournamentDivisionId?: string;
   matchType?: 'SINGLES' | 'DOUBLES' | 'MIXED_DOUBLES';
+  rankingConsent?: boolean;
 }
 
 export interface RegisterTournamentResponse {

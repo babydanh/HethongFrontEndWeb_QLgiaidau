@@ -145,6 +145,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
   const [needInviteValidation, setNeedInviteValidation] = useState(false);
   const [inviteInput, setInviteInput] = useState('');
   const [isValidatingInvite, setIsValidatingInvite] = useState(false);
+  const [rankingConsent, setRankingConsent] = useState(false);
 
   const { register, handleSubmit } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -438,12 +439,18 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
       return;
     }
 
+    if (tournament?.isRanked && !rankingConsent) {
+      toast.error('Vui lòng đồng ý cho phép lưu và hiển thị kết quả, điểm ELO trên bảng xếp hạng.');
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       const cleanData = {
         teamName: trimAndNormalizeSpaces(data.teamName) || user?.fullName || 'Vận động viên',
         inviteCode: inviteCode || undefined,
         tournamentDivisionId: selectedDivisionId || undefined,
+        rankingConsent,
       };
 
       const res = await tournamentsApi.register(id, cleanData);
@@ -971,6 +978,22 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                   </div>
 
                   <form onSubmit={handleSubmit(onSubmitSingles)} className="space-y-5">
+                    {tournament?.isRanked && (
+                      <label className="flex items-start gap-3 rounded-xl border border-sky-200 bg-sky-50 p-3 text-sm text-slate-700">
+                        <input
+                          type="checkbox"
+                          checked={rankingConsent}
+                          onChange={(event) => setRankingConsent(event.target.checked)}
+                          className="mt-1 h-4 w-4 accent-sky-600"
+                        />
+                        <span>
+                          Tôi đồng ý cho phép hệ thống lưu và hiển thị tên, kết quả trận đấu và điểm ELO trên bảng xếp hạng.
+                          <span className="mt-1 block text-xs text-slate-500">
+                            Đây là điều kiện của nội dung giải có xếp hạng; giải không xếp hạng không cập nhật ELO.
+                          </span>
+                        </span>
+                      </label>
+                    )}
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                       <p className="text-xs text-blue-600 font-medium mb-1">Tên thi đấu</p>
                       <p className="text-sm font-bold text-slate-900">{user?.fullName || 'Chưa cập nhật'}</p>

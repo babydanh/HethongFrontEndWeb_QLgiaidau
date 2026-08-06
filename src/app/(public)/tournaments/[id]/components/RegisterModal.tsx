@@ -14,15 +14,17 @@ interface Props {
   tournamentName: string;
   entryFee: number;
   matchType?: string;
+  isRanked?: boolean;
   isOpen: boolean;
   onClose: () => void;
 }
 
-export default function RegisterModal({ tournamentId, tournamentName, entryFee, matchType, isOpen, onClose }: Props) {
+export default function RegisterModal({ tournamentId, tournamentName, entryFee, matchType, isRanked = false, isOpen, onClose }: Props) {
   const { user, isAuthenticated } = useAuthStore();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [partnerEmailOrPhone, setPartnerEmailOrPhone] = useState('');
+  const [rankingConsent, setRankingConsent] = useState(false);
 
   const isDoubles = matchType === 'DOUBLES' || matchType === 'MIXED_DOUBLES';
 
@@ -36,10 +38,15 @@ export default function RegisterModal({ tournamentId, tournamentName, entryFee, 
       return;
     }
 
+    if (isRanked && !rankingConsent) {
+      toast.error('Vui lòng đồng ý cho phép lưu và hiển thị kết quả, điểm ELO trên bảng xếp hạng.');
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       const teamName = user?.fullName || 'Người chơi';
-      const payload: { teamName: string; partnerEmailOrPhone?: string } = { teamName };
+      const payload: { teamName: string; partnerEmailOrPhone?: string; rankingConsent: boolean } = { teamName, rankingConsent };
       if (isDoubles && partnerEmailOrPhone.trim()) {
         payload.partnerEmailOrPhone = partnerEmailOrPhone.trim();
       }
@@ -114,6 +121,18 @@ export default function RegisterModal({ tournamentId, tournamentName, entryFee, 
                 * Lưu ý: Lệ phí tham gia sẽ được thông báo ở bước tiếp theo nếu có. Bằng việc đăng ký, bạn đồng ý với các điều khoản của Ban tổ chức.
               </p>
             </div>
+
+            {isRanked && (
+              <label className="flex items-start gap-3 rounded-xl border border-sky-200 bg-sky-50 p-3 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={rankingConsent}
+                  onChange={(event) => setRankingConsent(event.target.checked)}
+                  className="mt-1 h-4 w-4 accent-sky-600"
+                />
+                <span>Tôi đồng ý cho phép lưu và hiển thị tên, kết quả trận đấu và điểm ELO trên bảng xếp hạng.</span>
+              </label>
+            )}
 
             <div className="flex justify-end gap-3 mt-4">
               <Button type="button" variant="outline" onClick={onClose} className="border-slate-200 text-slate-600">

@@ -916,6 +916,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
         tournamentName={tournament.name} 
         entryFee={selectedDivision ? (Number(selectedDivision.entryFee) || 0) : 0}
         matchType={selectedDivision?.matchType || divisionsList[0]?.matchType}
+        isRanked={Boolean(activeTournament.isRanked)}
         isOpen={isRegisterModalOpen} 
         onClose={() => setIsRegisterModalOpen(false)} 
       />

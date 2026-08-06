@@ -66,6 +66,7 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
   const [isSearchingPartner, setIsSearchingPartner] = useState(false);
   const [partnerSearchError, setPartnerSearchError] = useState('');
   const [inviteLater, setInviteLater] = useState(false);
+  const [rankingConsent, setRankingConsent] = useState(false);
   const [timeLeft, setTimeLeft] = useState<string>('');
 
   useEffect(() => {
@@ -199,6 +200,11 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
       return;
     }
 
+    if (tournament?.isRanked && !rankingConsent) {
+      toast.error('Vui lòng đồng ý cho phép lưu và hiển thị kết quả, điểm ELO trên bảng xếp hạng.');
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       const partnerEmailOrPhone = inviteLater ? undefined : (searchedPartner?.email || searchedPartner?.phoneNumber || partnerQuery);
@@ -207,6 +213,7 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
         inviteCode,
         partnerEmailOrPhone,
         tournamentDivisionId: divisionId,
+        rankingConsent,
       });
 
       if (res.data) {
@@ -497,6 +504,21 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
                   </div>
                 )}
               </div>
+            )}
+
+            {tournament?.isRanked && (
+              <label className="flex items-start gap-3 rounded-xl border border-sky-200 bg-sky-50 p-3 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={rankingConsent}
+                  onChange={(event) => setRankingConsent(event.target.checked)}
+                  className="mt-1 h-4 w-4 accent-sky-600"
+                />
+                <span>
+                  Tôi đồng ý cho phép hệ thống lưu và hiển thị tên, kết quả trận đấu và điểm ELO trên bảng xếp hạng.
+                  <span className="mt-1 block text-xs text-slate-500">Giải không xếp hạng không cập nhật ELO.</span>
+                </span>
+              </label>
             )}
 
             {/* Fee summary block */}

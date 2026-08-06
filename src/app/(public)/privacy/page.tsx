@@ -67,7 +67,7 @@ export default function PrivacyPolicyPage() {
               Nếu bạn có bất kỳ câu hỏi hoặc thắc mắc nào liên quan đến Chính sách bảo mật này, vui lòng liên hệ Ban quản trị qua:
             </p>
             <ul className="list-disc pl-6 space-y-1 text-slate-600 mt-2">
-              <li>**Email**: support@vnvar.com</li>
+              <li>**Email**: vndcsport@gmail.com</li>
               <li>**Website**: https://giaidau.vnvar.com</li>
             </ul>
           </div>

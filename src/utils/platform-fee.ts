@@ -9,7 +9,18 @@ export function getPlatformFeeBreakdown(
   platformFeePercentage?: number | string | null,
 ): PlatformFeeBreakdown {
   const normalizedEntryFee = Number(entryFee || 0);
-  const normalizedPercentage = Number(platformFeePercentage || 5);
+  const rawPercentage = platformFeePercentage !== undefined && platformFeePercentage !== null
+    ? Number(platformFeePercentage)
+    : 0;
+  const normalizedPercentage = isNaN(rawPercentage) ? 0 : rawPercentage;
+
+  if (normalizedPercentage === 0) {
+    return {
+      feePerPlayer: 0,
+      percentage: 0,
+      ruleLabel: 'Miễn phí lệ phí dịch vụ (0đ / người)',
+    };
+  }
 
   if (normalizedEntryFee >= 100000) {
     return {

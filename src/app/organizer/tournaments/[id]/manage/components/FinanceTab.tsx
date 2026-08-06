@@ -129,7 +129,9 @@ export function FinanceTab({
                 {platformFee.feePerPlayer.toLocaleString('vi-VN')} VNĐ / Người chơi
               </Badge>
               <p className="text-xs text-slate-500 font-medium">
-                Logic áp dụng: dưới 100.000đ lấy 5.000đ/người, từ 100.000đ trở lên lấy {platformFee.percentage}% lệ phí/người.
+                {platformFee.percentage === 0
+                  ? 'Cấu hình hệ thống hiện tại đang miễn phí lệ phí dịch vụ (0đ / người).'
+                  : `Logic áp dụng: dưới 100.000đ lấy 5.000đ/người, từ 100.000đ trở lên lấy ${platformFee.percentage}% lệ phí/người.`}
               </p>
             </div>
           </div>

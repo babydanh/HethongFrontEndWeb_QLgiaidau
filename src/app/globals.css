@@ -219,6 +219,9 @@ body {
   }
 }
 
-/* Keep legacy blue utilities aligned with the VNSport logo palette.
-   Note: The full blue scale is now overridden in tailwind.config.ts,
-   so these !important rules are no longer needed. */
+/* Global Laptop DPI Scaling & Compact Responsive Optimization */
+@media (min-width: 1024px) and (max-width: 1536px) {
+  html {
+    font-size: 15px; /* Tự động tinh chỉnh tỉ lệ hiển thị cho Laptop Windows 125%-150% DPI Scale */
+  }
+}

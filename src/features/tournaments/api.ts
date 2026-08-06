@@ -370,6 +370,10 @@ export const tournamentsApi = {
     api.post<ApiResponse<Tournament>>(`/tournaments/${id}/validate-invite`, { inviteCode }),
   joinTeam: (id: string, data: { participantId: string; teamInviteToken: string }) =>
     api.post<ApiResponse<{ participant: TournamentParticipant; paymentUrl?: string }>>(`/tournaments/${id}/join-team`, data),
+  acceptPartnerInvite: (participantId: string) =>
+    api.post<ApiResponse<TournamentParticipant>>(`/tournaments/participants/${participantId}/accept-partner`),
+  rejectPartnerInvite: (participantId: string) =>
+    api.post<ApiResponse<TournamentParticipant>>(`/tournaments/participants/${participantId}/reject-partner`),
   seedMockParticipants: (id: string, names: string[], divisionId?: string) =>
     api.post<ApiResponse<void>>(`/tournaments/${id}/mock-participants`, { names, divisionId }),
   clearMockParticipants: (id: string, divisionId?: string) =>

@@ -18,10 +18,13 @@ interface Props {
   onClose: () => void;
 }
 
-export default function RegisterModal({ tournamentId, tournamentName, entryFee, isOpen, onClose }: Props) {
+export default function RegisterModal({ tournamentId, tournamentName, entryFee, matchType, isOpen, onClose }: Props) {
   const { user, isAuthenticated } = useAuthStore();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [partnerEmailOrPhone, setPartnerEmailOrPhone] = useState('');
+
+  const isDoubles = matchType === 'DOUBLES' || matchType === 'MIXED_DOUBLES';
 
   if (!isOpen) return null;
 
@@ -36,11 +39,20 @@ export default function RegisterModal({ tournamentId, tournamentName, entryFee, 
     try {
       setIsSubmitting(true);
       const teamName = user?.fullName || 'Người chơi';
-      const res = await tournamentsApi.register(tournamentId, { teamName });
+      const payload: { teamName: string; partnerEmailOrPhone?: string } = { teamName };
+      if (isDoubles && partnerEmailOrPhone.trim()) {
+        payload.partnerEmailOrPhone = partnerEmailOrPhone.trim();
+      }
+
+      const res = await tournamentsApi.register(tournamentId, payload);
       const participantId = res?.data?.participant?.id;
       const payableEntryFee = Number(res?.data?.entryFee ?? entryFee);
       
-      toast.success('Đăng ký thành công!');
+      if (isDoubles && partnerEmailOrPhone.trim()) {
+        toast.success('Đã gửi lời mời ghép đôi! Hệ thống sẽ giữ chỗ cho đội bạn trong 15 phút.', { duration: 5000 });
+      } else {
+        toast.success('Đăng ký thành công!');
+      }
       onClose();
       
       if (payableEntryFee > 0 && participantId) {
@@ -75,13 +87,29 @@ export default function RegisterModal({ tournamentId, tournamentName, entryFee, 
           <form onSubmit={handleRegisterSubmit} className="flex flex-col gap-4">
             <div className="bg-blue-50/70 border border-blue-200/80 rounded-lg p-4 flex items-center justify-between">
               <div>
-                <p className="text-xs text-blue-600 font-semibold mb-0.5">VĐV Đăng ký</p>
+                <p className="text-xs text-blue-600 font-semibold mb-0.5">VĐV Đăng ký (Trưởng đội)</p>
                 <p className="text-base font-bold text-slate-900">{user?.fullName || 'Chưa cập nhật'}</p>
                 <p className="text-xs text-slate-500 mt-0.5">Tự động sử dụng tên tài khoản cá nhân</p>
               </div>
             </div>
+
+            {isDoubles && (
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700">Email hoặc SĐT người bạn đấu (Đồng đội)</label>
+                <input
+                  type="text"
+                  placeholder="Ví dụ: partner@gmail.com hoặc 0987654321"
+                  value={partnerEmailOrPhone}
+                  onChange={(e) => setPartnerEmailOrPhone(e.target.value)}
+                  className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                />
+                <p className="text-[11px] text-amber-700 bg-amber-50 p-2.5 rounded-md border border-amber-200 leading-snug">
+                  ⏱️ <strong>Thời gian Giữ chỗ:</strong> Khi bạn mời đồng đội, hệ thống sẽ <strong>tạm giữ chỗ cho đội bạn trong 15 phút</strong>. Đồng đội cần xác nhận lời mời trước khi hết thời hạn 15 phút.
+                </p>
+              </div>
+            )}
             
-            <div className="bg-slate-50 border border-slate-200/80 p-4 rounded-lg mt-1">
+            <div className="bg-slate-50 border border-slate-200/80 p-4 rounded-lg">
               <p className="text-xs text-slate-600 font-medium leading-relaxed">
                 * Lưu ý: Lệ phí tham gia sẽ được thông báo ở bước tiếp theo nếu có. Bằng việc đăng ký, bạn đồng ý với các điều khoản của Ban tổ chức.
               </p>

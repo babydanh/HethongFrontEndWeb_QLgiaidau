@@ -353,9 +353,13 @@ export function useManageState(id: string) {
         };
         const normalizedMatchType = normalizeMatchFormatForCategory(matchType as MatchFormatOptionValue, selectedCategory);
         const mapped = pm[normalizedMatchType] || {mt:MatchTypeDB.DOUBLES, gr:null};
-        await divisionsApi.updateDivisionConfig(tournament.id, selectedDivisionId, {
-          matchType: mapped.mt, genderRestriction: mapped.gr,
-          maxParticipants: isLimitEnabled ? maxParticipants : null, isConfigOverride: true,
+
+        const currentDiv = divisions.find(d => d.id === selectedDivisionId);
+        const hasMatchTypeChanged = currentDiv && (currentDiv.matchType !== mapped.mt || currentDiv.genderRestriction !== mapped.gr);
+
+        const divUpdatePayload: Record<string, unknown> = {
+          maxParticipants: isLimitEnabled ? maxParticipants : null,
+          isConfigOverride: true,
           roundConfig: buildStageRoundConfigPayload({
             kind: normalizeSportRuleKindForCategory(sportRuleKind, selectedCategory),
             setsToWin,
@@ -363,7 +367,14 @@ export function useManageState(id: string) {
             winByTwo,
             maxPoints: winByTwo ? maxDeucePoints : null,
           }),
-        });
+        };
+
+        if (hasMatchTypeChanged) {
+          divUpdatePayload.matchType = mapped.mt;
+          divUpdatePayload.genderRestriction = mapped.gr;
+        }
+
+        await divisionsApi.updateDivisionConfig(tournament.id, selectedDivisionId, divUpdatePayload);
         await fetchDivisions(id);
       }
       toast.success('Lưu thông tin giải đấu thành công!');

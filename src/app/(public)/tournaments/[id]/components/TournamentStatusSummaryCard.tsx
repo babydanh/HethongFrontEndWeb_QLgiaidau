@@ -88,6 +88,20 @@ function ParticipantAvatars({ participant }: { participant: Match['participant1'
   );
 }
 
+function getParticipantDisplayName(participant: Match['participant1']) {
+  if (!participant) return 'Chờ đối thủ';
+  const members = participant.members && Array.isArray(participant.members) ? participant.members : [];
+  if (members.length >= 2) {
+    const name1 = members[0]?.fullName?.trim() || '';
+    const name2 = members[1]?.fullName?.trim() || '';
+    if (name1 && name2) return `${name1} / ${name2}`;
+  }
+  if (members.length === 1 && members[0]?.fullName) {
+    return members[0].fullName;
+  }
+  return participant.teamName || 'Chờ đối thủ';
+}
+
 export default function TournamentStatusSummaryCard({
   tournament,
   tournamentId,
@@ -171,7 +185,7 @@ export default function TournamentStatusSummaryCard({
   const visibleMatches = inProgress ? liveMatches : upcomingMatches;
 
   return (
-    <section className="mt-4 overflow-hidden rounded-lg border border-slate-250/80 bg-white shadow-sm">
+    <section className="mt-4 overflow-hidden rounded-xl border border-slate-250/80 bg-white shadow-sm">
       <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3">
         <h2 className="text-sm font-bold text-slate-900">
           {completed ? 'Kết quả giải đấu' : inProgress ? 'Đang diễn ra' : 'Sắp diễn ra'}
@@ -206,7 +220,7 @@ export default function TournamentStatusSummaryCard({
               <Link
                 key={match.id}
                 href={`/live/${match.id}`}
-                className="block p-3.5 transition-colors hover:bg-sky-50/50 group"
+                className="block p-3.5 transition-colors hover:bg-sky-50/40 group"
               >
                 {/* Header: Status badge & Match Round/Court info from API */}
                 <div className="flex items-center justify-between text-[11px] mb-3">
@@ -228,39 +242,45 @@ export default function TournamentStatusSummaryCard({
                   </div>
                 </div>
 
-                {/* Matchup row with Clear Large Avatars & Current Set Point Center */}
-                <div className="flex items-center justify-between gap-2 bg-slate-50/90 p-3 rounded-xl border border-slate-200/80 group-hover:border-blue-200 transition-colors shadow-2xs">
-                  {/* Team 1 */}
-                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                {/* Matchup Layout: 3 Columns (Participant 1 | Clean Score | Participant 2) */}
+                <div className="flex items-center justify-between gap-3 bg-slate-50/80 p-3.5 rounded-2xl border border-slate-200/70 group-hover:border-blue-200 transition-all">
+                  {/* Participant 1 (Left) */}
+                  <div className="flex flex-col items-center min-w-0 flex-1 text-center">
                     <ParticipantAvatars participant={match.participant1} />
-                    <span className="text-xs font-bold text-slate-900 truncate">
-                      {match.participant1?.teamName ?? 'Chờ đối thủ'}
+                    <span className="mt-1.5 text-xs font-bold text-slate-800 line-clamp-2 leading-tight">
+                      {getParticipantDisplayName(match.participant1)}
                     </span>
                   </div>
 
-                  {/* Current Set Score Center */}
-                  <div className="flex flex-col items-center justify-center px-3 py-1 bg-white border border-slate-250 rounded-xl shadow-xs shrink-0 min-w-[64px]">
-                    {inProgress && sets.length > 0 && (
-                      <span className="text-[9px] font-bold uppercase text-slate-400 tracking-wider">
-                        Set {sets.length}
-                      </span>
-                    )}
-                    <span className={`text-base font-black tracking-tight ${inProgress ? 'text-rose-600' : 'text-slate-400'}`}>
-                      {activeSetScoreText}
-                    </span>
-                    {inProgress && (
-                      <span className="text-[9px] font-bold text-slate-400">
-                        ({match.p1SetsWon ?? 0} - {match.p2SetsWon ?? 0} Set)
-                      </span>
+                  {/* Center Score */}
+                  <div className="flex flex-col items-center justify-center shrink-0 px-1">
+                    {inProgress ? (
+                      <>
+                        <span className="text-xl font-black text-rose-600 tracking-tight leading-none">
+                          {activeSetScoreText}
+                        </span>
+                        <div className="mt-1.5 flex items-center gap-1 justify-center">
+                          {sets.length > 0 && (
+                            <span className="text-[10px] font-bold text-slate-400 uppercase">
+                              Set {sets.length}
+                            </span>
+                          )}
+                          <span className="text-[10px] font-extrabold text-slate-500">
+                            ({match.p1SetsWon ?? 0} - {match.p2SetsWon ?? 0} Set)
+                          </span>
+                        </div>
+                      </>
+                    ) : (
+                      <span className="text-sm font-black text-slate-400 tracking-wider">VS</span>
                     )}
                   </div>
 
-                  {/* Team 2 */}
-                  <div className="flex items-center justify-end gap-2.5 min-w-0 flex-1 text-right">
-                    <span className="text-xs font-bold text-slate-900 truncate">
-                      {match.participant2?.teamName ?? 'Chờ đối thủ'}
-                    </span>
+                  {/* Participant 2 (Right) */}
+                  <div className="flex flex-col items-center min-w-0 flex-1 text-center">
                     <ParticipantAvatars participant={match.participant2} />
+                    <span className="mt-1.5 text-xs font-bold text-slate-800 line-clamp-2 leading-tight">
+                      {getParticipantDisplayName(match.participant2)}
+                    </span>
                   </div>
                 </div>
               </Link>

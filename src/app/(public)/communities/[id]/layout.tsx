@@ -7,10 +7,11 @@ interface CommunityPageProps {
 
 export async function generateMetadata({ params }: CommunityPageProps): Promise<Metadata> {
   const { id } = await params;
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
+  const canonical = `/communities/${id}`;
 
   try {
-    const response = await fetch(`${baseUrl}/communities/${id}`, { cache: 'no-store' });
+    const response = await fetch(`${apiBaseUrl}/communities/${id}`, { cache: 'no-store' });
     if (response.ok) {
       const payload = (await response.json()) as { data?: Community };
       const community = payload.data;
@@ -25,9 +26,11 @@ export async function generateMetadata({ params }: CommunityPageProps): Promise<
         return {
           title,
           description,
+          alternates: { canonical },
           openGraph: {
             title,
             description,
+            url: canonical,
             siteName: 'VNDC Sport',
             type: 'website',
             images: [{ url: imageUrl, alt: community.name }],
@@ -48,6 +51,7 @@ export async function generateMetadata({ params }: CommunityPageProps): Promise<
   return {
     title: 'Câu lạc bộ | VNDC Sport',
     description: 'Khám phá các câu lạc bộ thể thao trên VNDC Sport.',
+    alternates: { canonical },
   };
 }
 

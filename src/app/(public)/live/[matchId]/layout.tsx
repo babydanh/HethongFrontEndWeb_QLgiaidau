@@ -7,10 +7,11 @@ interface LayoutProps {
 
 export async function generateMetadata({ params }: LayoutProps): Promise<Metadata> {
   const resolvedParams = await params;
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
+  const canonical = `/live/${resolvedParams.matchId}`;
 
   try {
-    const response = await fetch(`${baseUrl}/matches/${resolvedParams.matchId}`, {
+    const response = await fetch(`${apiBaseUrl}/matches/${resolvedParams.matchId}`, {
       cache: 'no-store',
     });
 
@@ -20,19 +21,20 @@ export async function generateMetadata({ params }: LayoutProps): Promise<Metadat
       if (match) {
         const team1 = match.participant1?.teamName || 'Chưa xác định';
         const team2 = match.participant2?.teamName || 'Chưa xác định';
-        const tournamentName = match.tournament?.name || 'Giải đấu VNSPORT';
+        const tournamentName = match.tournament?.name || 'Giải đấu VNDC Sport';
         const sportName = match.tournament?.category?.name || 'Thể thao';
-
         const title = `Trực tiếp: ${team1} vs ${team2} | ${tournamentName}`;
-        const description = `Xem tỉ số trực tuyến và diễn biến trận đấu kịch tính giữa ${team1} vs ${team2} bộ môn ${sportName} trên hệ thống VNSPORT.`;
+        const description = `Xem tỷ số trực tuyến và diễn biến trận đấu giữa ${team1} vs ${team2}, bộ môn ${sportName} trên VNDC Sport.`;
         const imageUrl = match.tournament?.bannerUrl || 'https://giaidau.vnvar.com/vndcsport.svg';
 
         return {
           title,
           description,
+          alternates: { canonical },
           openGraph: {
             title,
             description,
+            url: canonical,
             images: [{ url: imageUrl }],
             type: 'video.other',
           },
@@ -50,8 +52,9 @@ export async function generateMetadata({ params }: LayoutProps): Promise<Metadat
   }
 
   return {
-    title: 'Livestream Trận đấu trực tuyến | VNSPORT',
-    description: 'Bảng điểm và tỉ số trực tiếp các trận đấu thể thao hấp dẫn trên hệ thống VNSPORT.',
+    title: 'Trực tiếp trận đấu | VNDC Sport',
+    description: 'Bảng điểm và tỷ số trực tiếp các trận đấu thể thao trên VNDC Sport.',
+    alternates: { canonical },
   };
 }
 

@@ -18,6 +18,12 @@ export default function robots(): MetadataRoute.Robots {
         '/privacy',
       ],
       disallow: [
+        '/admin',
+        '/organizer',
+        '/moderation',
+        '/profile',
+        '/lite',
+        '/auth',
         '/admin/*',
         '/organizer/*',
         '/moderation/*',

@@ -131,7 +131,7 @@ export default async function TournamentDetailPage({ params }: PageProps) {
     '@type': 'SportsEvent',
     name: tournament.name,
     description: tournament.description?.replace(/<[^>]*>?/gm, '').substring(0, 200) || tournament.name,
-    startDate: tournament.startDate || tournament.createdAt,
+    ...(tournament.startDate ? { startDate: tournament.startDate } : {}),
     // Không fallback về startDate khi thiếu endDate -> tránh phát sinh dữ liệu giả.
     ...(tournament.endDate ? { endDate: tournament.endDate } : {}),
     eventStatus: mapEventStatus(tournament.status),

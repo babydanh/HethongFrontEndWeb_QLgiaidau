@@ -1,5 +1,7 @@
 import { MetadataRoute } from 'next';
 
+export const revalidate = 3600;
+
 const baseUrl = 'https://giaidau.vnvar.com';
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://giaidau.vnvar.com/api/v1';
 
@@ -9,6 +11,7 @@ const PAGE_SIZE = 50;
 const MAX_URLS_PER_TYPE = 5000;
 // Safety cap số trang (đề phòng meta.totalPages thiếu hoặc sai).
 const MAX_PAGES = 200;
+const MAX_FETCH_ATTEMPTS = 2;
 
 interface ApiItem {
   id: string;
@@ -21,20 +24,29 @@ interface ListPage {
   meta?: { totalPages?: number };
 }
 
-async function fetchListPage(path: string, params: Record<string, string>): Promise<ListPage | null> {
+async function fetchListPage(path: string, params: Record<string, string>): Promise<ListPage> {
   const search = new URLSearchParams(params).toString();
-  try {
-    const res = await fetch(`${apiUrl}${path}?${search}`, {
-      next: { revalidate: 3600 },
-    });
-    if (!res.ok) return null;
-    const json = await res.json();
-    const data: ApiItem[] = Array.isArray(json?.data) ? json.data : [];
-    return { data, meta: json?.meta as ListPage['meta'] | undefined };
-  } catch (error) {
-    console.error(`Failed to fetch ${path} for sitemap:`, error);
-    return null;
+  let lastError: Error | undefined;
+
+  for (let attempt = 1; attempt <= MAX_FETCH_ATTEMPTS; attempt += 1) {
+    try {
+      const res = await fetch(`${apiUrl}${path}?${search}`, {
+        next: { revalidate },
+      });
+      if (res.ok) {
+        const json = await res.json();
+        const data: ApiItem[] = Array.isArray(json?.data) ? json.data : [];
+        return { data, meta: json?.meta as ListPage['meta'] | undefined };
+      }
+
+      lastError = new Error(`Sitemap request failed: ${path} returned ${res.status}`);
+      if (res.status !== 429 && res.status < 500) break;
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+    }
   }
+
+  throw lastError ?? new Error(`Sitemap request failed: ${path}`);
 }
 
 /**
@@ -49,7 +61,7 @@ async function fetchAllPages(path: string, params: Record<string, string>): Prom
 
   while (all.length < MAX_URLS_PER_TYPE && page <= MAX_PAGES) {
     const result = await fetchListPage(path, { ...params, limit: String(PAGE_SIZE), page: String(page) });
-    if (!result || result.data.length === 0) break;
+    if (result.data.length === 0) break;
 
     all.push(...result.data);
     totalPages = result.meta?.totalPages;
@@ -82,12 +94,12 @@ function toRouteUrl(
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // 1. Static Pages
   const staticRoutes: MetadataRoute.Sitemap = [
-    { url: baseUrl, lastModified: new Date(), changeFrequency: 'daily', priority: 1.0 },
-    { url: `${baseUrl}/tournaments`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
-    { url: `${baseUrl}/communities`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
-    { url: `${baseUrl}/matches`, lastModified: new Date(), changeFrequency: 'always', priority: 0.8 },
-    { url: `${baseUrl}/download`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.6 },
-    { url: `${baseUrl}/privacy`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
+    { url: baseUrl, changeFrequency: 'daily', priority: 1.0 },
+    { url: `${baseUrl}/tournaments`, changeFrequency: 'daily', priority: 0.9 },
+    { url: `${baseUrl}/communities`, changeFrequency: 'weekly', priority: 0.8 },
+    { url: `${baseUrl}/matches`, changeFrequency: 'always', priority: 0.8 },
+    { url: `${baseUrl}/download`, changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${baseUrl}/privacy`, changeFrequency: 'yearly', priority: 0.3 },
   ];
 
   // 2. Dynamic Tournament Routes

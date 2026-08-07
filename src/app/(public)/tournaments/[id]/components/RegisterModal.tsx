@@ -56,7 +56,7 @@ export default function RegisterModal({ tournamentId, tournamentName, entryFee, 
       const payableEntryFee = Number(res?.data?.entryFee ?? entryFee);
       
       if (isDoubles && partnerEmailOrPhone.trim()) {
-        toast.success('Đã gửi lời mời ghép đôi! Hệ thống sẽ giữ chỗ cho đội bạn trong 15 phút.', { duration: 5000 });
+        toast.success('Đã gửi lời mời ghép đôi! Hệ thống giữ chỗ tối đa 1 giờ hoặc đến khi đóng đăng ký.', { duration: 5000 });
       } else {
         toast.success('Đăng ký thành công!');
       }
@@ -111,7 +111,7 @@ export default function RegisterModal({ tournamentId, tournamentName, entryFee, 
                   className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                 />
                 <p className="text-[11px] text-amber-700 bg-amber-50 p-2.5 rounded-md border border-amber-200 leading-snug">
-                  ⏱️ <strong>Thời gian Giữ chỗ:</strong> Khi bạn mời đồng đội, hệ thống sẽ <strong>tạm giữ chỗ cho đội bạn trong 15 phút</strong>. Đồng đội cần xác nhận lời mời trước khi hết thời hạn 15 phút.
+                  ⏱️ <strong>Thời hạn ghép đôi:</strong> Hệ thống giữ chỗ tối đa <strong>1 giờ</strong> hoặc đến khi đóng đăng ký, tùy mốc nào đến trước. Đồng đội cần xác nhận trước thời hạn đó.
                 </p>
               </div>
             )}

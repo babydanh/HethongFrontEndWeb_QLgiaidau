@@ -229,6 +229,7 @@ export interface TournamentParticipant {
   isWildcard?: boolean;
   tournamentDivisionId?: string | null;
   registeredAt: string;
+  partnerInviteExpiresAt?: string | null;
   teamInviteToken?: string | null;
   teamStatus?:
     | 'PENDING'

@@ -70,35 +70,45 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
   const [timeLeft, setTimeLeft] = useState<string>('');
 
   useEffect(() => {
-    if (step !== 2 || !participant?.registeredAt) return;
+    if (step !== 2 || !participant?.partnerInviteExpiresAt) {
+      setTimeLeft('');
+      return;
+    }
 
-    const intervalId = setInterval(() => {
-      const regTime = new Date(participant.registeredAt).getTime();
-      const endTime = regTime + 2 * 60 * 60 * 1000; // 2 hours
-      const now = Date.now();
-      const diff = endTime - now;
+    const endTime = new Date(participant.partnerInviteExpiresAt).getTime();
+    if (!Number.isFinite(endTime)) {
+      setTimeLeft('');
+      return;
+    }
 
+    let handledExpiry = false;
+    const updateCountdown = () => {
+      const diff = endTime - Date.now();
       if (diff <= 0) {
-        setTimeLeft('Đã hết hạn 2 giờ');
-        clearInterval(intervalId);
+        if (handledExpiry) return;
+        handledExpiry = true;
+        setTimeLeft('Đã hết hạn');
         tournamentsApi.getMyRegistration(tournamentId, divisionId).then((res) => {
-          if (!res.data?.registered) {
+          if (!res.data?.registered || res.data.participant?.teamStatus === 'EXPIRED') {
             setParticipant(null);
             setStep(1);
-            toast.error('Đơn đăng ký của bạn đã bị hủy do quá hạn 2 giờ.');
           }
-        });
-      } else {
-        const hours = Math.floor(diff / (1000 * 60 * 60));
-        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-        const hStr = hours > 0 ? `${hours} giờ ` : '';
-        setTimeLeft(`${hStr}${minutes} phút ${seconds} giây`);
+          toast.error('Lời mời ghép đôi đã hết hạn hoặc giải đã đóng đăng ký.');
+        }).catch(() => undefined);
+        return;
       }
-    }, 1000);
 
+      const totalSeconds = Math.floor(diff / 1000);
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
+      setTimeLeft(`${hours > 0 ? `${hours} giờ ` : ''}${minutes} phút ${seconds.toString().padStart(2, '0')} giây`);
+    };
+
+    updateCountdown();
+    const intervalId = setInterval(updateCountdown, 1000);
     return () => clearInterval(intervalId);
-  }, [step, participant?.registeredAt, tournamentId, divisionId]);
+  }, [step, participant?.partnerInviteExpiresAt, tournamentId, divisionId]);
 
   // Check if user already has an active registration when component mounts
   useEffect(() => {
@@ -399,9 +409,9 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
           <div className="bg-slate-50 border border-slate-200 text-slate-800 rounded-lg p-4 flex gap-3 text-xs leading-relaxed font-semibold">
             <AlertTriangle className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
             <div>
-              <p className="font-bold text-amber-950">Lưu ý giới hạn thời gian (2 giờ)</p>
+              <p className="font-bold text-amber-950">Lưu ý thời hạn ghép đôi</p>
               <p className="mt-1">
-                Đồng đội của bạn cần xác nhận tham gia và hoàn tất thanh toán lệ phí trong vòng <strong>2 giờ</strong> kể từ lúc tạo đội, nếu không hệ thống sẽ tự động hủy đơn đăng ký của đội để nhường chỗ cho các đội khác.
+                Đồng đội cần xác nhận và hoàn tất thanh toán trong tối đa <strong>1 giờ</strong> hoặc trước khi đóng đăng ký, tùy mốc nào đến trước. Hệ thống sẽ tự động giải phóng chỗ khi hết hạn.
               </p>
             </div>
           </div>

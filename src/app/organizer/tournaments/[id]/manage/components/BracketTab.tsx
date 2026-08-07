@@ -1018,15 +1018,29 @@ export function BracketTab({
                     {stage.name && (
                       <h4 className="text-sm font-bold text-slate-700 mb-2">{stage.name}</h4>
                     )}
-                    <RoundRobinView
-                      matches={stage.groups?.flatMap(g => g.matches) ?? []}
-                      tiebreakerMode={tiebreakerMode}
-                      onScheduleMatch={handleOpenScheduling}
-                      selectedMatchId={selectedMatchId}
-                      onSelectMatch={onSelectMatch}
-                      tournamentId={tournament.id}
-                      stageId={stage.id}
-                    />
+                    <div className="space-y-4">
+                      {(stage.groups ?? []).map((group, groupIndex) => (
+                        <section key={group.id} className="rounded-xl border border-slate-200 bg-slate-50/60 p-3 sm:p-4">
+                          <div className="mb-3 flex items-center gap-2 border-l-4 border-blue-500 pl-3">
+                            <h5 className="text-sm font-bold text-slate-800">
+                              {group.name || `Bảng ${String.fromCharCode(65 + groupIndex)}`}
+                            </h5>
+                            <span className="text-xs text-slate-400">
+                              {(group.matches ?? []).length} trận
+                            </span>
+                          </div>
+                          <RoundRobinView
+                            matches={group.matches ?? []}
+                            tiebreakerMode={tiebreakerMode}
+                            onScheduleMatch={handleOpenScheduling}
+                            selectedMatchId={selectedMatchId}
+                            onSelectMatch={onSelectMatch}
+                            tournamentId={tournament.id}
+                            stageId={stage.id}
+                          />
+                        </section>
+                      ))}
+                    </div>
                   </div>
                 ))}
               {bracket.stages.filter(s => s.type === 'ROUND_ROBIN').length === 0 && (
@@ -1043,6 +1057,7 @@ export function BracketTab({
               tiebreakerMode={tiebreakerMode}
               selectedMatchId={selectedMatchId}
               onSelectMatch={onSelectMatch}
+              knockoutOnly
             />
           )}
         </div>

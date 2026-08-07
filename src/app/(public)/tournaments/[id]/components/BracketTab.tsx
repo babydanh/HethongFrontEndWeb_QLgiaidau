@@ -17,6 +17,11 @@ import { PagedSingleElimView, PagedDoubleElimView, PagedRoundRobinView } from '.
 interface Props extends BracketTabProps {
   tournament: Tournament;
   tiebreakerMode?: 'split' | 'playoff';
+  knockoutOnly?: boolean;
+}
+
+function isKnockoutStage(stage: BracketStage): boolean {
+  return stage.type === 'SINGLE_ELIMINATION' || stage.type === 'DOUBLE_ELIMINATION';
 }
 
 /**
@@ -201,6 +206,7 @@ export default function BracketTab({
   selectedMatchId,
   onSelectMatch,
   fallbackSportRuleKind,
+  knockoutOnly = false,
 }: Props) {
   const effectiveTournamentId = tournamentId ?? tournament.id;
   const effectiveSportRuleKind =
@@ -220,10 +226,12 @@ export default function BracketTab({
           effectiveTournamentId,
           divisionId,
         );
-        if (res.data?.stages) {
-          setStages(res.data.stages);
-          setActiveStageId(res.data.stages[0]?.id ?? null);
-        }
+        const fetchedStages = res.data?.stages ?? [];
+        const nextStages = knockoutOnly
+          ? fetchedStages.filter(isKnockoutStage)
+          : fetchedStages;
+        setStages(nextStages);
+        setActiveStageId(nextStages[0]?.id ?? null);
       } catch (err) {
         console.error(
           'Failed to fetch bracket:',
@@ -235,7 +243,7 @@ export default function BracketTab({
       }
     };
     fetchBracket();
-  }, [divisionId, effectiveTournamentId]);
+  }, [divisionId, effectiveTournamentId, knockoutOnly]);
 
   useEffect(() => {
     let cancelled = false;
@@ -267,6 +275,8 @@ export default function BracketTab({
   }, [divisionId, effectiveTournamentId]);
 
   const activeStage = stages.find((s) => s.id === activeStageId);
+  const activeStageSupportsFullView = Boolean(activeStage && isKnockoutStage(activeStage));
+  const effectiveViewMode = activeStageSupportsFullView ? viewMode : 'paged';
 
   // ── Loading ──
   if (isLoading) {
@@ -350,8 +360,8 @@ export default function BracketTab({
           )}
         </div>
 
-        {/* View Mode Switcher */}
-        <div className="grid w-full grid-cols-2 items-center gap-1.5 rounded-xl border border-slate-200/80 bg-slate-100 p-1 shadow-inner sm:w-auto">
+        {/* Full sơ đồ chỉ áp dụng cho vòng loại trực tiếp. */}
+        {activeStageSupportsFullView && <div className="grid w-full grid-cols-2 items-center gap-1.5 rounded-xl border border-slate-200/80 bg-slate-100 p-1 shadow-inner sm:w-auto">
           <button
             onClick={() => setViewMode('paged')}
             className={`flex min-w-0 items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-[11px] font-bold transition-all cursor-pointer sm:px-3 sm:py-1.5 sm:text-xs ${
@@ -372,7 +382,7 @@ export default function BracketTab({
           >
             <Maximize2 className="h-3.5 w-3.5 shrink-0" /> <span className="truncate">Full sơ đồ</span>
           </button>
-        </div>
+        </div>}
       </div>
 
       {/* Stage tabs */}
@@ -421,7 +431,7 @@ export default function BracketTab({
                 const gf = allMatches.filter(
                   (m) => m.bracketBranch === 'GRAND_FINALS',
                 );
-                return viewMode === 'paged' ? (
+                return effectiveViewMode === 'paged' ? (
                   <PagedDoubleElimView
                     upperMatches={upper}
                     lowerMatches={lower}
@@ -440,17 +450,17 @@ export default function BracketTab({
                     selectedMatchId={selectedMatchId}
                     onSelectMatch={onSelectMatch}
                     fallbackSportRuleKind={effectiveSportRuleKind}
-                    panEnabled={viewMode === 'full'}
+                    panEnabled={effectiveViewMode === 'full'}
                   />
                 );
               })()}
             </div>
           ) : (
-            activeStage.groups.map((group) => (
+            activeStage.groups.map((group, groupIndex) => (
               <div key={group.id}>
                 {activeStage.groups.length > 1 && (
                   <h4 className="font-bold text-slate-700 text-sm border-l-4 border-blue-500 pl-3 mb-4">
-                    {group.name}
+                    {group.name || `Bảng ${String.fromCharCode(65 + groupIndex)}`}
                   </h4>
                 )}
                 <GroupView
@@ -464,7 +474,7 @@ export default function BracketTab({
                   onSelectMatch={onSelectMatch}
                   fallbackSportRuleKind={effectiveSportRuleKind}
                   roundConfig={activeStage?.roundConfig}
-                  viewMode={viewMode}
+                  viewMode={effectiveViewMode}
                 />
               </div>
             ))

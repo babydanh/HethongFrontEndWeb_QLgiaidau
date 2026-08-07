@@ -33,8 +33,8 @@ export default function PrivacyPolicyPage() {
             </p>
             <ul className="list-disc pl-6 space-y-1 text-slate-600">
               <li>Chúng tôi thu thập thông tin cơ bản như: Họ tên, Ảnh đại diện, Email, Số điện thoại và Thành tích thi đấu.</li>
-              <li>**Bảng xếp hạng toàn cầu (Global Leaderboard & ELO Rating)**: Điểm số, trận thắng/thua và thứ hạng ELO của bạn sẽ được hiển thị công khai trên Bảng xếp hạng chung để phục vụ mục đích xếp hạt giống và thi đấu giải.</li>
-              <li>Bằng việc đăng ký tài khoản và tham gia giải đấu, bạn đồng ý cho phép ứng dụng hiển thị điểm số và thứ hạng công khai trên Bảng xếp hạng.</li>
+              <li>Bảng xếp hạng toàn cầu (Global Leaderboard & ELO Rating): Với nội dung giải có xếp hạng, tên hiển thị, kết quả trận đấu và điểm ELO của bạn có thể được lưu trên máy chủ và hiển thị trên bảng xếp hạng để phục vụ xếp hạt giống và thi đấu.</li>
+              <li>Màn hình đăng ký giải có xếp hạng sẽ hiển thị một ô xác nhận riêng. Chỉ khi bạn tích đồng ý, dữ liệu kết quả và điểm ELO mới được đưa vào hệ thống xếp hạng. Giải không xếp hạng không cập nhật ELO.</li>
             </ul>
           </div>
 

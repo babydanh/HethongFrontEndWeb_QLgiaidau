@@ -16,7 +16,6 @@ async function fetchTournamentWithRetry(url: string, init?: RequestInit) {
     }
     try {
       const response = await fetch(url, { ...init, cache: 'no-store' });
-      // A real 404/403 is final. 429 and 5xx are transient and worth retrying.
       if (response.ok || (response.status >= 400 && response.status < 500 && response.status !== 429)) {
         return response;
       }
@@ -31,7 +30,7 @@ async function fetchTournamentWithRetry(url: string, init?: RequestInit) {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const resolvedParams = await params;
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://giaidau.vnvar.com/api/v1';
   
   try {
     const response = await fetchTournamentWithRetry(`${baseUrl}/tournaments/${resolvedParams.id}`);
@@ -39,16 +38,21 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       const res = await response.json();
       const tournament = res.data;
       if (tournament) {
-        const title = `${tournament.name} | VNSPORT`;
-        const description = tournament.description || `Thông tin chi tiết về giải đấu ${tournament.name} trên hệ thống VNSPORT. Đăng ký tham gia ngay!`;
-        const imageUrl = tournament.bannerUrl || 'https://giaidau.vnvar.com/vndcsport.svg';
+        const title = `${tournament.name} | VNDC Sport`;
+        const description = tournament.description?.replace(/<[^>]*>?/gm, '').substring(0, 160) || `Thông tin chi tiết và lịch thi đấu giải đấu ${tournament.name} trên hệ thống VNDC Sport. Đăng ký tham gia ngay!`;
+        const imageUrl = tournament.bannerUrl || tournament.logoUrl || 'https://giaidau.vnvar.com/vndcsport.png';
+        const canonicalUrl = `https://giaidau.vnvar.com/tournaments/${resolvedParams.id}`;
 
         return {
           title,
           description,
+          alternates: {
+            canonical: canonicalUrl,
+          },
           openGraph: {
             title,
             description,
+            url: canonicalUrl,
             images: [{ url: imageUrl }],
             type: 'website',
           },
@@ -66,8 +70,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 
   return {
-    title: 'Chi tiết giải đấu | VNSPORT',
-    description: 'Thông tin chi tiết và lịch thi đấu giải đấu thể thao trên hệ thống VNSPORT.',
+    title: 'Chi tiết giải đấu | VNDC Sport',
+    description: 'Thông tin chi tiết và lịch thi đấu giải đấu thể thao trên hệ thống VNDC Sport.',
   };
 }
 
@@ -76,7 +80,7 @@ export default async function TournamentDetailPage({ params }: PageProps) {
   const cookieStore = await cookies();
   const cookieHeader = cookieStore.toString();
 
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://giaidau.vnvar.com/api/v1';
 
   let tournament = null;
 
@@ -88,9 +92,7 @@ export default async function TournamentDetailPage({ params }: PageProps) {
       },
     });
 
-    if (!response.ok) {
-      console.error(`API returned ${response.status} for tournament ${resolvedParams.id}`);
-    } else {
+    if (response.ok) {
       const res = await response.json();
       tournament = res.data ?? null;
     }
@@ -98,5 +100,42 @@ export default async function TournamentDetailPage({ params }: PageProps) {
     console.error('Failed to fetch tournament detail:', error);
   }
 
-  return <TournamentDetailClient tournamentId={resolvedParams.id} initialTournament={tournament} />;
+  const sportsEventSchema = tournament ? {
+    '@context': 'https://schema.org',
+    '@type': 'SportsEvent',
+    name: tournament.name,
+    description: tournament.description?.replace(/<[^>]*>?/gm, '').substring(0, 200) || tournament.name,
+    startDate: tournament.startDate || tournament.createdAt,
+    endDate: tournament.endDate || tournament.startDate,
+    eventStatus: 'https://schema.org/EventScheduled',
+    eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+    location: {
+      '@type': 'Place',
+      name: tournament.venue?.name || tournament.city || 'Sân thi đấu thể thao',
+      address: {
+        '@type': 'PostalAddress',
+        streetAddress: tournament.venue?.locationAddress || tournament.city || 'Việt Nam',
+        addressLocality: tournament.city || 'Việt Nam',
+        addressCountry: 'VN',
+      },
+    },
+    image: [tournament.bannerUrl || tournament.logoUrl || 'https://giaidau.vnvar.com/vndcsport.png'],
+    organizer: {
+      '@type': 'Organization',
+      name: 'VNDC Sport',
+      url: 'https://giaidau.vnvar.com',
+    },
+  } : null;
+
+  return (
+    <>
+      {sportsEventSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(sportsEventSchema) }}
+        />
+      )}
+      <TournamentDetailClient tournamentId={resolvedParams.id} initialTournament={tournament} />
+    </>
+  );
 }

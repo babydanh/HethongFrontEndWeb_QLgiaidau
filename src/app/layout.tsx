@@ -12,14 +12,43 @@ const inter = Inter({
   subsets: ["latin", "vietnamese"],
 });
 
+export const metadataBase = new URL('https://giaidau.vnvar.com');
+
 export const metadata: Metadata = {
-  title: "VNDC Sport - Nền tảng Quản lý giải đấu",
-  description: "Nền tảng tổ chức và tham gia giải đấu thể thao câu lạc bộ.",
+  metadataBase: new URL('https://giaidau.vnvar.com'),
+  title: {
+    default: "VNDC Sport - Nền tảng Quản lý và Tổ chức Giải đấu Thể thao",
+    template: "%s | VNDC Sport",
+  },
+  description: "Nền tảng tổ chức, quản lý và đăng ký tham gia giải đấu thể thao chuyên nghiệp (Pickleball, Cầu lông, Quần vợt, Bóng bàn).",
+  keywords: ["VNDC Sport", "quản lý giải đấu", "giải đấu pickleball", "tổ chức giải đấu", "bảng xếp hạng ELO", "cầu lông", "quần vợt"],
+  authors: [{ name: "VNDC Sport Team" }],
+  creator: "VNDC Sport",
+  publisher: "VNDC Sport",
+  alternates: {
+    canonical: '/',
+  },
   openGraph: {
     title: "VNDC Sport - Nền tảng Quản lý giải đấu",
-    description: "Nền tảng tổ chức và tham gia giải đấu thể thao câu lạc bộ.",
+    description: "Nền tảng tổ chức và tham gia giải đấu thể thao câu lạc bộ chuyên nghiệp.",
     siteName: "VNDC Sport",
+    url: 'https://giaidau.vnvar.com',
     type: "website",
+    locale: "vi_VN",
+    images: [
+      {
+        url: '/vndcsport.png',
+        width: 1200,
+        height: 630,
+        alt: 'VNDC Sport - Nền tảng Quản lý giải đấu',
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "VNDC Sport - Nền tảng Quản lý giải đấu",
+    description: "Nền tảng tổ chức và tham gia giải đấu thể thao câu lạc bộ chuyên nghiệp.",
+    images: ['/vndcsport.png'],
   },
   icons: {
     icon: [
@@ -38,8 +67,24 @@ export default async function RootLayout({
 }>) {
   const [locale, messages] = await Promise.all([getLocale(), getMessages()]);
 
+  const organizationSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'SportsOrganization',
+    name: 'VNDC Sport',
+    url: 'https://giaidau.vnvar.com',
+    logo: 'https://giaidau.vnvar.com/vndcsport.png',
+    description: 'Nền tảng tổ chức, quản lý và tham gia giải đấu thể thao câu lạc bộ chuyên nghiệp.',
+    sameAs: [],
+  };
+
   return (
     <html lang={locale} className={`${inter.variable} h-full antialiased`} suppressHydrationWarning>
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+        />
+      </head>
       <body className="min-h-full flex flex-col text-slate-900">
         <NextIntlClientProvider locale={locale} messages={messages}>
           <RootLayoutClient>{children}</RootLayoutClient>

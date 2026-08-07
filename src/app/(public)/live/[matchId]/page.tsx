@@ -698,9 +698,9 @@ export default function LiveMatchPage({ params }: Props) {
         newScores[activeIdx] = setObj;
       }
 
-      // KhÃ´ng cho nÃºt cÃ´ng vÆ°á»£t tráº§n preset. Ngoáº¡i lá»‡ pháº£i Ä‘Æ°á»£c báº­t vÃ  cÃ³ lÃ½ do trÆ°á»›c Ä‘Ã³.
+      // Không cho nút công vượt trần preset. Ngoại lệ phải được bật và có lý do trước đó.
       if (!isLiteMatch && !overrideEnabled && Math.max(newScores[activeIdx].team1Score, newScores[activeIdx].team2Score) > resolvedRules.maxPoints) {
-        toast.error(`Äiá»ƒm set khÃ´ng Ä‘Æ°á»£c vÆ°á»£t ${resolvedRules.maxPoints}. Báº­t ngoáº¡i lá»‡ náº¿u BTC/trá»ng tÃ i Ä‘Ã£ xÃ¡c nháº­n.`);
+        toast.error(`Điểm set không được vượt ${resolvedRules.maxPoints}. Bật ngoại lệ nếu BTC/trọng tài đã xác nhận.`);
         return;
       }
 

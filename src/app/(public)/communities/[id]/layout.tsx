@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import type { Community } from '@/types/community';
+import { stripHtmlAndNormalize } from '@/utils/string';
 
 interface CommunityPageProps {
   params: Promise<{ id: string }>;
@@ -18,10 +19,10 @@ export async function generateMetadata({ params }: CommunityPageProps): Promise<
 
       if (community) {
         const title = `${community.name} | VNDC Sport`;
-        const description = community.description
-          ? community.description.replace(/<[^>]*>/g, '').slice(0, 160)
-          : `Khám phá câu lạc bộ ${community.name} trên VNDC Sport.`;
+        const cleanDesc = stripHtmlAndNormalize(community.description, 160);
+        const description = cleanDesc || `Khám phá câu lạc bộ ${community.name} trên VNDC Sport.`;
         const imageUrl = community.bannerUrl || community.logoUrl || 'https://giaidau.vnvar.com/vndcsport.svg';
+
 
         return {
           title,

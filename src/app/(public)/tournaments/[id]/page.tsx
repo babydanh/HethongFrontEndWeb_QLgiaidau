@@ -1,7 +1,9 @@
 import { cookies } from 'next/headers';
 import { cache } from 'react';
 import type { Metadata } from 'next';
+import { stripHtmlAndNormalize } from '@/utils/string';
 import TournamentDetailClient from './TournamentDetailClient';
+
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -71,8 +73,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (tournament) {
     const title = `${tournament.name} | VNDC Sport`;
-    const description = tournament.description?.replace(/<[^>]*>?/gm, '').substring(0, 160) || `Thông tin chi tiết và lịch thi đấu giải đấu ${tournament.name} trên hệ thống VNDC Sport. Đăng ký tham gia ngay!`;
+    const cleanDesc = stripHtmlAndNormalize(tournament.description, 160);
+    const description = cleanDesc || `Thông tin chi tiết và lịch thi đấu giải đấu ${tournament.name} trên hệ thống VNDC Sport. Đăng ký tham gia ngay!`;
     const imageUrl = tournament.bannerUrl || tournament.logoUrl || 'https://giaidau.vnvar.com/vndcsport.png';
+
     const canonicalUrl = `https://giaidau.vnvar.com/tournaments/${resolvedParams.id}`;
 
     return {
@@ -130,7 +134,7 @@ export default async function TournamentDetailPage({ params }: PageProps) {
     '@context': 'https://schema.org',
     '@type': 'SportsEvent',
     name: tournament.name,
-    description: tournament.description?.replace(/<[^>]*>?/gm, '').substring(0, 200) || tournament.name,
+    description: stripHtmlAndNormalize(tournament.description, 200) || tournament.name,
     ...(tournament.startDate ? { startDate: tournament.startDate } : {}),
     // Không fallback về startDate khi thiếu endDate -> tránh phát sinh dữ liệu giả.
     ...(tournament.endDate ? { endDate: tournament.endDate } : {}),

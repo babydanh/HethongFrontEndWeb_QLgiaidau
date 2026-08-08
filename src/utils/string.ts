@@ -24,3 +24,33 @@ export const capitalizeFirstLetter = (str: string | null | undefined): string =>
   const trimmed = trimSpaces(str);
   return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
 };
+
+/**
+ * Loại bỏ toàn bộ thẻ HTML và HTML entities, chuẩn hóa khoảng trắng để làm SEO meta description
+ */
+export const stripHtmlAndNormalize = (
+  str: string | null | undefined,
+  maxLength = 160,
+): string => {
+  if (!str) return '';
+  let text = str;
+  // Giải mã HTML entities (kể cả bị encode kép như &lt;p&gt;)
+  for (let i = 0; i < 2; i += 1) {
+    text = text
+      .replace(/&lt;/gi, '<')
+      .replace(/&gt;/gi, '>')
+      .replace(/&quot;/gi, '"')
+      .replace(/&#39;/gi, "'")
+      .replace(/&amp;/gi, '&')
+      .replace(/&nbsp;/gi, ' ');
+  }
+  // Xóa toàn bộ thẻ HTML <...>
+  text = text.replace(/<[^>]*>?/gm, ' ');
+  // Chuẩn hóa nhiều khoảng trắng/xuống dòng thành 1 khoảng trắng
+  text = text.replace(/\s+/g, ' ').trim();
+
+  if (!text) return '';
+  if (text.length <= maxLength) return text;
+  return `${text.slice(0, maxLength - 3).trim()}...`;
+};
+

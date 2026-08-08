@@ -37,6 +37,7 @@ import {
   isTournamentRegistrationOpen,
 } from '@/utils/tournament-status';
 import toast from 'react-hot-toast';
+import { LiteInviteQr } from '@/components/tournaments/LiteInviteQr';
 import {
   DndContext,
   closestCenter,
@@ -507,7 +508,8 @@ export function RegistrationTab({
             )})()}
           </div>
 
-          {!isTournamentDraft(tournament.status) && (
+          {(visibility === 'PRIVATE' || registrationMode === 'INVITE_ONLY') &&
+            !isTournamentDraft(tournament.status) && (
             <div className="rounded-lg border border-blue-100 bg-blue-50 p-5">
               <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                 <div className="space-y-1">
@@ -553,6 +555,14 @@ export function RegistrationTab({
                     Sao chép link
                   </Button>
                 </div>
+              </div>
+
+              <div className="mt-4">
+                <LiteInviteQr
+                  inviteUrl={inviteLink}
+                  tournamentName={tournament.name}
+                  compact
+                />
               </div>
             </div>
           )}

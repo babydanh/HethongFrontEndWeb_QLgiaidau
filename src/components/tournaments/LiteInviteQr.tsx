@@ -5,7 +5,7 @@ import { QRCodeCanvas } from 'qrcode.react';
 import { Button } from '@/components/ui/Button';
 import { Copy, Download, QrCode, Share2 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { isScannableLiteJoinUrl } from '@/features/tournaments/lite-qr';
+import { isScannableJoinUrl } from '@/features/tournaments/lite-qr';
 import ShareModal from '@/components/common/ShareModal';
 
 type LiteInviteQrProps = {
@@ -17,7 +17,7 @@ type LiteInviteQrProps = {
 export function LiteInviteQr({ inviteUrl, tournamentName, compact = false }: LiteInviteQrProps) {
   const canvasWrapRef = useRef<HTMLDivElement>(null);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
-  const isValid = isScannableLiteJoinUrl(inviteUrl);
+  const isValid = isScannableJoinUrl(inviteUrl);
 
   const copyInvite = async () => {
     try {
@@ -51,7 +51,7 @@ export function LiteInviteQr({ inviteUrl, tournamentName, compact = false }: Lit
   const qrSize = compact ? 176 : 224;
 
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm" aria-label="Mã QR tham gia giải Lite">
+    <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm" aria-label="Mã QR tham gia giải">
       <div className={`grid gap-4 ${compact ? 'sm:grid-cols-[200px_1fr]' : 'md:grid-cols-[248px_1fr]'} items-center`}>
         <div className="flex flex-col items-center">
           <div ref={canvasWrapRef} className="rounded-lg border border-slate-200 bg-white p-3">
@@ -74,7 +74,7 @@ export function LiteInviteQr({ inviteUrl, tournamentName, compact = false }: Lit
           <div>
             <h3 className="text-base font-semibold text-slate-900">Mã QR tham gia giải</h3>
             <p className="mt-1 text-sm leading-6 text-slate-500">
-              Người chơi quét bằng camera điện thoại. Link HTTPS sẽ mở trang đăng nhập và quay lại màn tham gia giải.
+              Người chơi quét bằng camera điện thoại. Link HTTPS sẽ mở thẳng trang đăng ký hoặc tham gia giải.
             </p>
           </div>
           <div className="rounded-lg border border-blue-100 bg-blue-50/60 p-3">

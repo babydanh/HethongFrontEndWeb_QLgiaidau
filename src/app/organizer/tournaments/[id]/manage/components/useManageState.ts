@@ -31,6 +31,25 @@ import {
 import { getTournamentStatusLabel } from '@/utils/tournament-status';
 import type { StageRoundRuleConfig } from '@/types/tournament';
 
+type RoundConfigRecord = Record<string, unknown>;
+
+const isRoundConfigRecord = (value: unknown): value is RoundConfigRecord =>
+  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+
+const mergeRoundConfig = (existing: unknown, incoming: RoundConfigRecord): RoundConfigRecord => {
+  const previous = isRoundConfigRecord(existing) ? existing : {};
+  const merged: RoundConfigRecord = { ...previous, ...incoming };
+
+  // Stage-specific saves must not erase the other stage's settings.
+  for (const key of ['groupsConfig', 'advancementConfig', 'playoffConfig', 'scoring', 'tiebreakerRules', 'rounds']) {
+    if (isRoundConfigRecord(previous[key]) && isRoundConfigRecord(incoming[key])) {
+      merged[key] = { ...previous[key], ...incoming[key] };
+    }
+  }
+
+  return merged;
+};
+
 export type TournamentReferee = {
   id: string; userId: string; status: string; fullName: string; avatarUrl: string | null;
 };
@@ -509,7 +528,7 @@ export function useManageState(id: string) {
       const mapped = pm[normalizedMatchType] || {mt:MatchTypeDB.DOUBLES, gr:null};
       const selected = divisions.find(d=>d.id===selectedDivisionId);
       const normalizedKind = normalizeSportRuleKindForCategory(sportRuleKind, selectedCategory);
-      const nextRoundConfig = buildStageRoundConfigPayload({
+      const nextRoundConfig = mergeRoundConfig(selected?.roundConfig, buildStageRoundConfigPayload({
         kind: normalizedKind,
         setsToWin,
         pointsPerSet,
@@ -519,7 +538,7 @@ export function useManageState(id: string) {
         tiebreakerMode,
         roundsToPlay,
         rounds: selected?.roundConfig?.rounds || {},
-      });
+      }));
       const nextSportRules = buildSportRulesPayload({
         kind: normalizedKind,
         setsToWin,
@@ -554,15 +573,23 @@ export function useManageState(id: string) {
       await tournamentsApi.updateDivisionConfig(tournament.id, selectedDivisionId, {
         bracketType: 'ROUND_ROBIN',
         isConfigOverride: true,
-        roundConfig: {
-          ...(selected?.roundConfig ?? {}),
+        roundConfig: mergeRoundConfig(selected?.roundConfig, {
+          ...buildStageRoundConfigPayload({
+            kind: normalizeSportRuleKindForCategory(sportRuleKind, selectedCategory),
+            setsToWin,
+            pointsPerSet,
+            winByTwo,
+            maxPoints: winByTwo ? maxDeucePoints : null,
+            tiebreakPoints: superTiebreakEnabled ? superTiebreakPoints : null,
+            tiebreakerMode,
+          }),
           scoring: { winPoints: rrWinPoints, drawPoints: 0, lossPoints: rrLossPoints },
           tiebreakerRules: {
             primary: rrTiebreakerRule,
             secondary: ['SET_DIFF', 'H2H_POINTS', 'POINT_DIFF'].filter((rule) => rule !== rrTiebreakerRule),
           },
           roundsToPlay,
-        },
+        }),
       });
       toast.success('Lưu cấu hình vòng bảng thành công!');
       await refetchDivisionData();
@@ -614,8 +641,16 @@ export function useManageState(id: string) {
       await tournamentsApi.updateDivisionConfig(tournament.id, selectedDivisionId, {
         bracketType: 'GROUP_STAGE_KNOCKOUT',
         isConfigOverride: true,
-        roundConfig: {
-          ...(selected?.roundConfig ?? {}),
+        roundConfig: mergeRoundConfig(selected?.roundConfig, {
+          ...buildStageRoundConfigPayload({
+            kind: normalizeSportRuleKindForCategory(sportRuleKind, selectedCategory),
+            setsToWin,
+            pointsPerSet,
+            winByTwo,
+            maxPoints: winByTwo ? maxDeucePoints : null,
+            tiebreakPoints: superTiebreakEnabled ? superTiebreakPoints : null,
+            tiebreakerMode,
+          }),
           groupsConfig: { numGroups, teamsPerGroup, roundsToPlay: gskRoundsToPlay },
           advancementConfig: {
             teamsAdvancing,
@@ -628,7 +663,7 @@ export function useManageState(id: string) {
             primary: rrTiebreakerRule,
             secondary: ['SET_DIFF', 'H2H_POINTS', 'POINT_DIFF'].filter((rule) => rule !== rrTiebreakerRule),
           },
-        },
+        }),
       });
       toast.success('Lưu cấu hình vòng bảng + knockout thành công!');
       await refetchDivisionData();
@@ -670,7 +705,27 @@ export function useManageState(id: string) {
         toast.error('Hình thức này đã tồn tại!'); setIsCreatingDivision(false); return;
       }
       const generatedName = getFormatLabel(mapped.mt, mapped.gr);
-      const res = await divisionsApi.createDivision(tournament.id, { name: generatedName, matchType: mapped.mt, genderRestriction: mapped.gr, bracketType: newDivisionBracketType as Division['bracketType'], isConfigOverride: true });
+      const normalizedKind = normalizeSportRuleKindForCategory(
+        inferSportRuleKindFromCategory(selectedCategory),
+        selectedCategory,
+      );
+      const defaultRules = buildDefaultSportRules(normalizedKind);
+      const res = await divisionsApi.createDivision(tournament.id, {
+        name: generatedName,
+        matchType: mapped.mt,
+        genderRestriction: mapped.gr,
+        bracketType: newDivisionBracketType as Division['bracketType'],
+        isConfigOverride: true,
+        roundConfig: buildStageRoundConfigPayload({
+          kind: normalizedKind,
+          setsToWin: defaultRules.setsToWin,
+          pointsPerSet: defaultRules.pointsPerSet,
+          winByTwo: defaultRules.winByTwo,
+          maxPoints: defaultRules.maxPoints,
+          tiebreakPoints: defaultRules.tiebreakPoints,
+          roundsToPlay: 1,
+        }),
+      });
       toast.success(`Đã thêm "${generatedName}" thành công!`);
       setIsCreateDivisionModalOpen(false);
       setNewDivisionMatchType(normalizeMatchFormatForCategory('MALE_DOUBLES', selectedCategory));

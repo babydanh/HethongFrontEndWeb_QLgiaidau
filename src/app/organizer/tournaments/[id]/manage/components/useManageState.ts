@@ -717,9 +717,9 @@ export function useManageState(id: string) {
         isConfigOverride: true,
         roundConfig: buildStageRoundConfigPayload({
           kind: normalizedKind,
-          setsToWin: defaultRules.setsToWin,
-          pointsPerSet: defaultRules.pointsPerSet,
-          winByTwo: defaultRules.winByTwo,
+          setsToWin: defaultRules.setsToWin ?? 2,
+          pointsPerSet: defaultRules.pointsPerSet ?? 21,
+          winByTwo: defaultRules.winByTwo ?? true,
           maxPoints: defaultRules.maxPoints,
           tiebreakPoints: defaultRules.tiebreakPoints,
           roundsToPlay: 1,

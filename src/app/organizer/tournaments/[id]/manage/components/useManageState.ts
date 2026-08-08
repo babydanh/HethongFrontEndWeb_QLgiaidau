@@ -356,7 +356,6 @@ export function useManageState(id: string) {
         prizeDescription: prizeDescription || null,
         contactInfo,
         visibility,
-        genderRestriction: null,
         tournamentConfig: {
           ...tournament?.tournamentConfig,
           hideFeaturedCardText,

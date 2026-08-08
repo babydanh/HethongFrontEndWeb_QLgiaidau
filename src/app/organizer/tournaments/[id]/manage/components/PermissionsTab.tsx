@@ -125,10 +125,11 @@ export function PermissionsTab({ id, tournament }: PermissionsTabProps) {
     try {
       if (subTab === 'referees') {
         await tournamentsApi.addTournamentReferee(id, trimmedEmail);
-        toast.success('Đã gửi lời mời trọng tài.');
+        toast.success('Đã gửi lời mời trọng tài. Họ sẽ thấy lời mời trong thông báo hệ thống và xác nhận tại đây.');
       } else {
         await tournamentsApi.addTournamentStaff(id, { email: trimmedEmail, role: currentRole });
-        toast.success('Thêm nhân sự thành công.');
+        const roleLabel = currentRole === 'REFEREE' ? 'trọng tài' : currentRole === 'SPECTATOR' ? 'khách xem' : 'ban tổ chức';
+        toast.success(`Đã thêm ${trimmedEmail} làm ${roleLabel}. Người dùng này sẽ được gửi thông báo và xuất hiện trong danh sách ${roleLabel} bên dưới.`);
       }
       setEmail('');
       await fetchData();

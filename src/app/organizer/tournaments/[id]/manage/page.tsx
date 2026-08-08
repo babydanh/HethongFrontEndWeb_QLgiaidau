@@ -1,6 +1,7 @@
 'use client';
 
 import { use, useRef, useEffect } from 'react';
+import type { ReactNode } from 'react';
 import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Modal, ModalContent, ModalHeader, ModalTitle } from '@/components/ui/Modal';
@@ -20,8 +21,27 @@ import { PermissionsTab } from './components/PermissionsTab';
 import { LivestreamTab } from './components/LivestreamTab';
 import { getSportRulePresentation } from '@/features/tournaments/sport-rules/presentation';
 import { getScoreEntryGuidance, getSportRulePresets } from '@/features/tournaments/sport-rules/ui-guidance';
+import { resolveSportRuleView } from '@/features/tournaments/sport-rules/normalize';
 import { isTournamentRegistrationClosed, isTournamentRegistrationOpen } from '@/utils/tournament-status';
 import { useRouter } from 'next/navigation';
+
+function SummaryRow({ label, value }: { label: string; value: ReactNode }) {
+  return (
+    <div className="flex items-center justify-between gap-3 text-xs">
+      <span className="font-semibold text-slate-500">{label}</span>
+      <span className="font-bold text-slate-800 text-right">{value}</span>
+    </div>
+  );
+}
+
+function SummarySection({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <div className="rounded-lg border border-slate-200 bg-slate-50/70 p-3.5 space-y-2">
+      <p className="text-xs font-bold uppercase tracking-wider text-slate-500">{title}</p>
+      {children}
+    </div>
+  );
+}
 
 export default function TournamentManagePage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -35,6 +55,8 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
   const isPickleballSideOut = s.sportRuleKind === 'PICKLEBALL_SIDE_OUT';
   const scoreGuidance = getScoreEntryGuidance(s.sportRuleKind);
   const sportPresets = getSportRulePresets(s.sportRuleKind);
+  const selectedDivision = s.divisions.find((d) => d.id === s.selectedDivisionId);
+  const lockRuleView = resolveSportRuleView(selectedDivision?.roundConfig, s.sportRuleKind);
 
   // Lite tournament → redirect to dedicated Lite manager
   useEffect(() => {
@@ -440,10 +462,76 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                   ⚠️ Sau khi chốt, không thể thêm/sửa người chơi. Hệ thống sẽ tự động sinh sơ đồ thi đấu.
                 </div>
                 {s.lockSummary && (
-                  <div className="space-y-2 text-sm">
-                    <p>Người chơi: <strong>{s.lockSummary.totalPlayers}</strong></p>
-                    <p>Phí sàn: <strong>{s.lockSummary.platformFeePerPlayer.toLocaleString()}₫/người</strong></p>
-                    <p>Tổng phí: <strong>{s.lockSummary.totalPlatformFee.toLocaleString()}₫</strong></p>
+                  <div className="space-y-3">
+                    <SummarySection title="1. Đăng ký & danh sách">
+                      <SummaryRow
+                        label="Độ mở tìm thấy"
+                        value={s.visibility === 'PRIVATE' ? 'Riêng tư' : 'Công khai (Tìm kiếm được)'}
+                      />
+                      <SummaryRow
+                        label="Chế độ đăng ký"
+                        value={
+                          s.registrationMode === 'APPROVAL' ? 'Xét duyệt' :
+                          s.registrationMode === 'INVITE_ONLY' ? 'Chỉ nhận mã mời' :
+                          'Tự do (Vào thẳng danh sách)'
+                        }
+                      />
+                      <SummaryRow
+                        label="Hình thức đơn/đôi"
+                        value={
+                          selectedDivision
+                            ? s.getFormatLabel(selectedDivision.matchType, selectedDivision.genderRestriction)
+                            : s.matchType.startsWith('SINGLES') ? 'Đơn'
+                              : s.matchType.startsWith('MIXED') ? 'Đôi Nam Nữ'
+                                : 'Đôi'
+                        }
+                      />
+                      <SummaryRow label="Số đội đăng ký" value={`${s.lockSummary.totalParticipants} đội`} />
+                      <SummaryRow label="Số VĐV" value={`${s.lockSummary.totalPlayers} VĐV`} />
+                    </SummarySection>
+
+                    <SummarySection title="2. Thể thức sơ đồ">
+                      <SummaryRow label="Bảng / Hạng" value={selectedDivision?.name || selectedDivision?.id || '—'} />
+                      <SummaryRow
+                        label="Loại sơ đồ"
+                        value={s.getBracketLabel(selectedDivision?.bracketType ?? s.bracketType)}
+                      />
+                    </SummarySection>
+
+                    <SummarySection title="3. Cấu hình thể lệ điểm">
+                      <SummaryRow
+                        label="Môn & thể điểm"
+                        value={`${sportPresentation.sportLabel} – ${sportPresentation.scoringLabel}`}
+                      />
+                      <SummaryRow label="Số set/ván" value={`Thắng ${lockRuleView.setsToWin} (tối đa ${lockRuleView.bestOf})`} />
+                      <SummaryRow label={sportPresentation.setUnitLabel} value={`${lockRuleView.pointsPerSet}`} />
+                      <SummaryRow
+                        label={sportPresentation.winByTwoLabel}
+                        value={lockRuleView.winByTwo ? 'Áp dụng' : 'Không áp dụng'}
+                      />
+                      <SummaryRow label={sportPresentation.maxScoreLabel} value={`${lockRuleView.maxPoints}`} />
+                      <SummaryRow label={sportPresentation.tiebreakLabel} value={`${lockRuleView.tiebreakPoints}`} />
+                    </SummarySection>
+
+                    <SummarySection title="4. Phí">
+                      <SummaryRow
+                        label="Lệ phí tham dự"
+                        value={
+                          (selectedDivision?.entryFee ?? s.entryFee) > 0
+                            ? `${(selectedDivision?.entryFee ?? s.entryFee).toLocaleString('vi-VN')}₫`
+                            : 'Miễn phí'
+                        }
+                      />
+                      <SummaryRow
+                        label="Lệ phí sân/người"
+                        value={`${s.lockSummary.platformFeePerPlayer.toLocaleString('vi-VN')}₫/người`}
+                      />
+                      <SummaryRow label="Quy tắc phí" value={s.lockSummary.platformFeeRuleLabel} />
+                      <SummaryRow
+                        label="Tổng phí sân"
+                        value={`${s.lockSummary.totalPlatformFee.toLocaleString('vi-VN')}₫`}
+                      />
+                    </SummarySection>
                   </div>
                 )}
                 <div className="flex justify-end gap-3">

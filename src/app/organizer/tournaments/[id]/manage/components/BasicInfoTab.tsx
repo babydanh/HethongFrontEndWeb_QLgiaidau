@@ -317,7 +317,7 @@ export function BasicInfoTab({
                   </div>
                   {logoUrl ? (
                     <div className="relative w-28 h-28 rounded-lg overflow-hidden border border-slate-200 shadow-sm bg-white flex items-center justify-center p-2 mt-2">
-                      <img src={logoUrl} alt="Logo Preview" className="max-w-full max-h-full object-contain" />
+                      <img src={logoUrl} alt="Xem trước logo" className="max-w-full max-h-full object-contain" />
                       <div className="absolute bottom-1 right-1 bg-black/60 text-white text-[8px] font-bold px-1.5 py-0.5 rounded backdrop-blur-sm">
                         Logo
                       </div>
@@ -370,7 +370,7 @@ export function BasicInfoTab({
                   </p>
                   {bannerUrl ? (
                     <div className="relative aspect-[21/9] w-full rounded-lg overflow-hidden border border-slate-200 shadow-sm bg-white mt-2">
-                      <img src={bannerUrl} alt="Banner Preview" className="w-full h-full object-cover" />
+                      <img src={bannerUrl} alt="Xem trước banner" className="w-full h-full object-cover" />
                       <div className="absolute top-2 left-2 bg-black/60 text-white text-[10px] font-bold px-2 py-1 rounded-md backdrop-blur-sm">
                         Xem trước Banner
                       </div>

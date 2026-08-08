@@ -89,7 +89,7 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
         handledExpiry = true;
         setTimeLeft('Đã hết hạn');
         tournamentsApi.getMyRegistration(tournamentId, divisionId).then((res) => {
-          if (!res.data?.registered || res.data.participant?.teamStatus === 'EXPIRED') {
+          if (!res.data?.registered || (res.data.participant?.teamStatus as string) === 'EXPIRED') {
             setParticipant(null);
             setStep(1);
           }

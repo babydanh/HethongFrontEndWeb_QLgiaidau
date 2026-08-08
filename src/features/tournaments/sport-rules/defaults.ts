@@ -87,10 +87,19 @@ const DEFAULT_SPORT_RULES: Record<SportRuleKind, SportRulesEnvelope> = {
   },
 };
 
-export function buildDefaultSportRules(kind: SportRuleKind = 'BADMINTON'): SportRulesEnvelope {
+export type DefaultSportRulesEnvelope = SportRulesEnvelope & {
+  setsToWin: number;
+  pointsPerSet: number;
+  winByTwo: boolean;
+};
+
+export function buildDefaultSportRules(kind: SportRuleKind = 'BADMINTON'): DefaultSportRulesEnvelope {
   const base = DEFAULT_SPORT_RULES[kind];
   return {
     ...base,
+    setsToWin: base.setsToWin!,
+    pointsPerSet: base.pointsPerSet!,
+    winByTwo: base.winByTwo!,
     scoring: base.scoring ? { ...base.scoring } : undefined,
     format: base.format ? { ...base.format } : undefined,
   };

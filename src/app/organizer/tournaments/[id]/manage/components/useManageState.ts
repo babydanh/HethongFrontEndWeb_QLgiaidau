@@ -961,9 +961,11 @@ export function useManageState(id: string) {
     const rc = roundNumber === 0
       ? stage.roundConfig
       : stage.roundConfig?.rounds?.[roundNumber.toString()];
-    setStageVenueId(rc?.venue_id || (roundNumber === 0 ? '' : stage.venueId || ''));
-    setStageScheduledDate(rc?.scheduled_date ? rc.scheduled_date.substring(0, 16) : (roundNumber === 0 ? '' : stage.scheduledDate ? stage.scheduledDate.substring(0, 16) : ''));
-    setStageNotificationNote(rc?.custom_notes || '');
+    
+    const ruleConfig = rc as StageRoundRuleConfig | undefined | null;
+    setStageVenueId(ruleConfig?.venue_id || (roundNumber === 0 ? '' : stage.venueId || ''));
+    setStageScheduledDate(ruleConfig?.scheduled_date ? ruleConfig.scheduled_date.substring(0, 16) : (roundNumber === 0 ? '' : stage.scheduledDate ? stage.scheduledDate.substring(0, 16) : ''));
+    setStageNotificationNote(ruleConfig?.custom_notes || '');
     const resolvedRules = rc
       ? resolveSportRuleView(rc, sportRuleKind)
       : resolveSportRuleView({

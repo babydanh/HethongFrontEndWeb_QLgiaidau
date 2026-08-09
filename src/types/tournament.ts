@@ -74,7 +74,7 @@ export interface StageRoundConfig extends SportRuleScoringConfig {
   advance_count?: number;
   allow_player_choice_court?: boolean;
   time_limit_minutes?: number;
-  custom_notes?: string;
+  custom_notes?: string | null;
   rounds?: Record<string, StageRoundRuleConfig>;
 }
 

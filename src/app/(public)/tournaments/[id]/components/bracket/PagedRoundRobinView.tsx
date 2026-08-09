@@ -98,15 +98,30 @@ export function PagedRoundRobinView({
   if (subView === 'matrix') {
     return (
       <div className="flex flex-col gap-4 animate-in fade-in duration-200">
-        <div className="flex justify-end">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-xs font-semibold text-slate-500">
+            Tổng hợp kết quả {legCount > 1 ? `${legCount} lượt thi đấu` : 'thi đấu'}
+          </p>
           {viewButtons('matrix')}
         </div>
         <GroupCrossMatrixView 
           matches={legMatches} 
-          groupName={`Bảng chéo - Lượt ${currentLeg}`}
+          groupName={legCount > 1 ? `Bảng chéo - Lượt ${currentLeg}` : 'Bảng chéo'}
           activeLeg={currentLeg}
           legCount={legCount}
           onLegChange={setActiveLeg}
+        />
+        <RoundRobinView
+          matches={matches}
+          onScheduleMatch={onScheduleMatch}
+          selectedMatchId={selectedMatchId}
+          onSelectMatch={onSelectMatch}
+          tournamentId={tournamentId}
+          stageId={stageId}
+          fallbackSportRuleKind={fallbackSportRuleKind}
+          roundConfig={roundConfig}
+          tiebreakerMode={tiebreakerMode}
+          hideStandings={true}
         />
       </div>
     );

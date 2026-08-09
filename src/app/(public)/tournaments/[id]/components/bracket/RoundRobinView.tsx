@@ -41,6 +41,7 @@ interface Props {
   stageId?: string;
   fallbackSportRuleKind?: SportRuleKind;
   roundConfig?: StageRoundConfig | null;
+  hideStandings?: boolean;
 }
 
 export function RoundRobinView({
@@ -53,6 +54,7 @@ export function RoundRobinView({
   stageId,
   fallbackSportRuleKind,
   roundConfig,
+  hideStandings = false,
 }: Props) {
   const sampleMatch = matches.find((match) => !match.isBye) ?? matches[0];
   const effectiveRuleKind = sampleMatch
@@ -94,7 +96,7 @@ export function RoundRobinView({
 
   return (
     <div className="flex flex-col gap-8">
-      {/* standings table */}
+      {!hideStandings && (
       <div>
         <h5 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
           <Trophy className="w-4 h-4 text-blue-500" /> Bảng xếp hạng
@@ -297,6 +299,7 @@ export function RoundRobinView({
           </div>
         )}
       </div>
+      )}
 
       {/* Match schedule is paged by round so multi-leg groups stay readable. */}
       <div>

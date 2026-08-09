@@ -22,7 +22,11 @@ export const normalizeTournamentStatus = (status?: string | null): TournamentSta
     case 'FINISHED':
       return 'COMPLETED';
     case 'ACTIVE':
+    case 'LIVE':
       return 'IN_PROGRESS';
+    case 'PUBLISHED':
+    case 'REGISTRATION':
+      return 'REGISTRATION_OPEN';
     default:
       return 'DRAFT';
   }

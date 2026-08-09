@@ -584,7 +584,7 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
           <div className="space-y-1 text-center max-w-sm mx-auto">
             <h3 className="text-lg font-bold text-slate-900">Bước 2: Mời đồng đội tham gia</h3>
             <p className="text-slate-500 text-xs leading-relaxed">
-              Đội <strong className="text-slate-800">{participant.teamName}</strong> đã được khởi tạo. Hãy chia sẻ link hoặc mã QR dưới đây cho đồng đội của bạn.
+              Đội <strong className="text-slate-800">{participant.teamName}</strong> đã được khởi tạo. {partnerLink ? 'Hãy chia sẻ link hoặc mã QR dưới đây cho đồng đội của bạn.' : 'Đang chờ đồng đội của bạn xác nhận lời mời.'}
             </p>
           </div>
 
@@ -595,47 +595,53 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
             </div>
           )}
 
-          {/* QR Code Container */}
-          <div className="flex flex-col items-center justify-center bg-slate-50 border p-6 rounded-lg max-w-xs mx-auto">
-            {partnerLink ? (
-              <div className="bg-white p-2 rounded-lg border shadow-sm">
-                <QRCodeSVG value={partnerLink} size={160} level="M" />
+          {partnerLink ? (
+            <>
+              {/* QR Code Container */}
+              <div className="flex flex-col items-center justify-center bg-slate-50 border p-6 rounded-lg max-w-xs mx-auto">
+                <div className="bg-white p-2 rounded-lg border shadow-sm">
+                  <QRCodeSVG value={partnerLink} size={160} level="M" />
+                </div>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-3">Quét mã QR để tham gia đội</p>
               </div>
-            ) : (
-              <div className="w-44 h-44 flex items-center justify-center bg-white border border-dashed rounded-lg">
-                <QrCode className="w-12 h-12 text-slate-300" />
-              </div>
-            )}
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-3">Quét mã QR để tham gia đội</p>
-          </div>
 
-          {/* Share link input copy */}
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Đường dẫn tham gia đội của bạn</label>
-            <div className="flex gap-2">
-              <Input
-                value={partnerLink}
-                readOnly
-                className="bg-slate-50 text-slate-650 cursor-default select-all text-xs"
-              />
-              <Button
-                onClick={copyToClipboard}
-                variant="outline"
-                className="border-slate-205 hover:bg-slate-50 text-slate-700 shrink-0 flex items-center gap-1.5 font-bold h-11 mt-1"
-              >
-                {copied ? <Check className="w-4 h-4 text-blue-600" /> : <Copy className="w-4 h-4" />}
-                {copied ? 'Đã copy' : 'Sao chép'}
-              </Button>
-              <Button
-                onClick={() => setIsShareModalOpen(true)}
-                variant="outline"
-                className="border-blue-200 hover:bg-blue-50 text-blue-700 shrink-0 flex items-center gap-1.5 font-bold h-11 mt-1"
-              >
-                <Share2 className="w-4 h-4" />
-                Chia sẻ
-              </Button>
+              {/* Share link input copy */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Đường dẫn tham gia đội của bạn</label>
+                <div className="flex items-start gap-2">
+                  <Input
+                    value={partnerLink}
+                    readOnly
+                    className="bg-slate-50 text-slate-650 cursor-default select-all text-xs"
+                  />
+                  <Button
+                    onClick={copyToClipboard}
+                    variant="outline"
+                    className="border-slate-205 hover:bg-slate-50 text-slate-700 shrink-0 flex items-center gap-1.5 font-bold h-11"
+                  >
+                    {copied ? <Check className="w-4 h-4 text-blue-600" /> : <Copy className="w-4 h-4" />}
+                    {copied ? 'Đã copy' : 'Sao chép'}
+                  </Button>
+                  <Button
+                    onClick={() => setIsShareModalOpen(true)}
+                    variant="outline"
+                    className="border-blue-200 hover:bg-blue-50 text-blue-700 shrink-0 flex items-center gap-1.5 font-bold h-11"
+                  >
+                    <Share2 className="w-4 h-4" />
+                    Chia sẻ
+                  </Button>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="bg-blue-50 border border-blue-100 rounded-lg p-6 text-center animate-in fade-in duration-300">
+              <CheckCircle className="w-12 h-12 text-blue-500 mx-auto mb-3" />
+              <h4 className="text-sm font-bold text-blue-900">Đã gửi thông báo ghép đội</h4>
+              <p className="text-xs text-blue-700 mt-2 leading-relaxed max-w-sm mx-auto">
+                Chúng tôi đã gửi thông báo lời mời đến đồng đội của bạn qua tài khoản. Hãy nhắc họ mở ứng dụng hoặc truy cập web để xác nhận tham gia.
+              </p>
             </div>
-          </div>
+          )}
 
           {/* Polling Indicator */}
           <div className="flex flex-col items-center justify-center border border-dashed rounded-lg p-5 bg-blue-50/20 text-center space-y-3">

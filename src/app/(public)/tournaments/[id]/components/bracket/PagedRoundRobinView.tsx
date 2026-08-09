@@ -1,12 +1,11 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight, LayoutGrid, TableProperties } from 'lucide-react';
+import { TableProperties } from 'lucide-react';
 import type { BracketMatch, BracketStage } from '@/features/tournaments/api';
 import type { SportRuleKind } from '@/types/tournament';
 import type { OnScheduleMatch, OnSelectBracketMatch } from './types';
 import { buildMatchesByRound } from './helpers';
-import { MatchCard } from './MatchCard';
 import { RoundRobinView } from './RoundRobinView';
 import { GroupCrossMatrixView } from './GroupCrossMatrixView';
 
@@ -61,13 +60,12 @@ export function PagedRoundRobinView({
     return Math.max(1, Math.ceil(maxRound / roundsPerLeg));
   }, [rounds, roundsPerLeg]);
 
-  useEffect(() => {
-    setActiveLeg((current) => Math.min(Math.max(current, 1), legCount));
-  }, [legCount]);
+  // Use a derived clamped leg to prevent out-of-bounds rendering
+  const currentLeg = Math.min(Math.max(activeLeg, 1), legCount);
 
   const legRounds = useMemo(
-    () => rounds.filter((round) => Math.floor((round - 1) / roundsPerLeg) + 1 === activeLeg),
-    [activeLeg, rounds, roundsPerLeg],
+    () => rounds.filter((round) => Math.floor((round - 1) / roundsPerLeg) + 1 === currentLeg),
+    [currentLeg, rounds, roundsPerLeg],
   );
   const legMatches = useMemo(
     () => legRounds.flatMap((round) => byRound[round] ?? []),
@@ -105,8 +103,8 @@ export function PagedRoundRobinView({
         </div>
         <GroupCrossMatrixView 
           matches={legMatches} 
-          groupName={`Bảng chéo - Lượt ${activeLeg}`}
-          activeLeg={activeLeg}
+          groupName={`Bảng chéo - Lượt ${currentLeg}`}
+          activeLeg={currentLeg}
           legCount={legCount}
           onLegChange={setActiveLeg}
         />

@@ -45,3 +45,4 @@ next-env.d.ts
 # Tools & Local Cache
 graphify-out/
 .claude/
+.hermes/

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Settings } from 'lucide-react';
+import { Settings, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Tournament, BracketStage } from '@/types/tournament';
@@ -124,6 +124,14 @@ export function ConfigTab({
             <p className="text-xs text-blue-600 font-semibold mt-1 flex items-center gap-1">
               <span>⚠</span> Không thể thay đổi thể thức thi đấu khi đang mở đăng ký.
             </p>
+          )}
+          {bracketTypeState === 'ROUND_ROBIN' && isLimitEnabled && maxParticipants > 8 && (
+            <div className="mt-2 bg-amber-50 border border-amber-250/80 rounded-lg p-3 flex items-start gap-2.5">
+              <AlertTriangle className="w-4.5 h-4.5 text-amber-600 shrink-0 mt-0.5" />
+              <div className="text-xs text-amber-900 leading-relaxed font-medium">
+                <strong className="font-bold text-amber-950">⚠️ Cảnh báo số lượng đội:</strong> Thể thức Vòng Tròn khuyến nghị tối đa <strong>8 đội/bảng</strong> để tránh quá tải lịch thi đấu. Nếu giải có <strong>{maxParticipants} đội</strong>, nên dùng thể thức <strong>Vòng Bảng + Loại Trực Tiếp</strong>.
+              </div>
+            </div>
           )}
         </div>
       </div>

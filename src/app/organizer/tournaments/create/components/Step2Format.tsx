@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useCreateTournamentStore } from '@/lib/zustand/createTournamentStore';
-import { ChevronRight, ChevronLeft, Trophy, LayoutGrid, RotateCw } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Trophy, LayoutGrid, RotateCw, AlertTriangle } from 'lucide-react';
 import { resolveSportRuleView } from '@/features/tournaments/sport-rules/normalize';
 import { getSportRulePresentation } from '@/features/tournaments/sport-rules/presentation';
 import { buildDefaultSportRules } from '@/features/tournaments/sport-rules/defaults';
@@ -175,6 +175,17 @@ export default function Step2Format() {
           {...register('maxParticipants')}
           error={errors.maxParticipants?.message}
         />
+
+        {selectedFormat === 'ROUND_ROBIN' && Number(watch('maxParticipants')) > 8 && (
+          <div className="bg-amber-50 border border-amber-250/80 rounded-lg p-4 flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+            <div className="text-xs text-amber-900 leading-relaxed font-medium">
+              <strong className="font-bold text-amber-950">⚠️ Cảnh báo số lượng đội:</strong> Với thể thức <strong>Vòng Tròn Tính Điểm</strong>, số đội khuyên dùng tối đa là <strong>8 đội/bảng</strong> để tránh quá tải số trận thi đấu.
+              <br />
+              Nếu giải đấu có <strong>{watch('maxParticipants')} đội</strong>, hệ thống sẽ tự động chia thành nhiều bảng nhỏ (hoặc khuyến nghị chọn thể thức <strong>Vòng Bảng + Loại Trực Tiếp</strong>).
+            </div>
+          </div>
+        )}
 
         <div className="bg-blue-50/50 border border-blue-100 rounded-lg p-4 text-xs text-blue-700 leading-relaxed font-medium">
           <strong>💡 Mẹo:</strong> Số lượng đội tham gia tối đa này có thể được linh hoạt tùy chỉnh hoặc sửa đổi thêm trong mục <strong>Cài đặt nâng cao</strong> sau khi tạo giải đấu thành công.

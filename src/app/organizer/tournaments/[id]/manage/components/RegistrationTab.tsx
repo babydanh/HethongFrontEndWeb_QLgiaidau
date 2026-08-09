@@ -508,15 +508,18 @@ export function RegistrationTab({
             )})()}
           </div>
 
-          {(visibility === 'PRIVATE' || registrationMode === 'INVITE_ONLY') &&
-            !isTournamentDraft(tournament.status) && (
+          {(visibility === 'PRIVATE' || registrationMode === 'INVITE_ONLY') && (
             <div className="rounded-lg border border-blue-100 bg-blue-50 p-5">
               <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                 <div className="space-y-1">
                   <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-600">Mã mời đăng ký nhanh</p>
                   <p className="text-xl font-bold tracking-[0.18em] text-blue-700">{tournament.inviteCode || 'Chưa có'}</p>
-                  <p className="text-xs font-medium text-slate-650">
-                    Gửi mã hoặc link này cho VĐV khi cần vào thẳng luồng đăng ký.
+                  <p className="text-xs font-medium text-slate-600">
+                    {registrationMode === 'INVITE_ONLY'
+                      ? 'Giải chỉ nhận mã mời: VĐV bắt buộc dùng mã/link này mới mở được form đăng ký.'
+                      : visibility === 'PRIVATE'
+                        ? 'Giải không niêm yết trong danh sách: chia sẻ link này để VĐV vào đăng ký (mã không bắt buộc).'
+                        : 'Gửi mã hoặc link này cho VĐV khi cần vào thẳng luồng đăng ký.'}
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">

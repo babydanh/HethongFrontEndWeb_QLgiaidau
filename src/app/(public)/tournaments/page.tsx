@@ -107,7 +107,11 @@ export default function TournamentsListPage() {
           status: 'REGISTRATION_OPEN',
         });
         if (res && res.data) {
-          setFeaturedTournaments(res.data);
+          const validFeatured = res.data.filter((t: Tournament) => {
+            const st = (t.status as string)?.toUpperCase();
+            return !['DRAFT', 'PENDING_APPROVAL', 'SUSPENDED', 'PENDING_DELETE'].includes(st);
+          });
+          setFeaturedTournaments(validFeatured);
         }
       } catch (error) {
         console.error("Failed to fetch featured tournaments", error);
@@ -236,7 +240,11 @@ export default function TournamentsListPage() {
           endDate: apiEndDate,
           isRanked: isRankedParam,
         });
-        setTournaments(sortDiscoveryTournaments(res.data || []));
+        const validTournaments = (res.data || []).filter((t: Tournament) => {
+          const st = (t.status as string)?.toUpperCase();
+          return !['DRAFT', 'PENDING_APPROVAL', 'SUSPENDED', 'PENDING_DELETE'].includes(st);
+        });
+        setTournaments(sortDiscoveryTournaments(validTournaments));
         setTotalPages(res.meta.totalPages);
       } catch (error) {
         console.error("Failed to fetch tournaments", error);

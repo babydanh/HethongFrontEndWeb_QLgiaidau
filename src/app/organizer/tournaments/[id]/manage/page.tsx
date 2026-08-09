@@ -402,24 +402,14 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-bold text-slate-500">Sân / Địa điểm mặc định cho vòng này</label>
+                    <label className="text-xs font-bold text-slate-500">Vị trí thi đấu (Ghi đè)</label>
                     <input
-                      list="stage-venue-list"
                       type="text"
-                      value={s.venues.find(v => v.id === s.stageVenueId)?.name || s.stageVenueId}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        const matched = s.venues.find(v => v.name === val || v.id === val);
-                        s.setStageVenueId(matched ? matched.id : val);
-                      }}
-                      placeholder="Chọn sân từ tab Địa điểm hoặc nhập tay..."
+                      value={s.stageVenueId}
+                      onChange={(e) => s.setStageVenueId(e.target.value)}
+                      placeholder="Nhập vị trí riêng (để trống sẽ kế thừa giải đấu)..."
                       className="w-full border border-slate-300 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
-                    <datalist id="stage-venue-list">
-                      {s.venues.map((venue) => (
-                        <option key={venue.id} value={venue.name} />
-                      ))}
-                    </datalist>
                   </div>
                   <div><label className="text-xs font-bold text-slate-500">Giờ mặc định cho vòng này</label>
                     <DateTimePicker value={s.stageScheduledDate} onChange={s.setStageScheduledDate} /></div>

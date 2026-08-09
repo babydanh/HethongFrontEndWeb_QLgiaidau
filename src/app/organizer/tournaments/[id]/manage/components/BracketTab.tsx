@@ -739,26 +739,28 @@ export function BracketTab({
                 <div className="rounded-lg border border-slate-200 bg-white p-4 space-y-3">
                   <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-600">Cấu hình từng vòng</p>
 
-                  <div className="rounded-lg border border-sky-200 bg-sky-50/60 p-3 space-y-3">
-                    <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="relative overflow-hidden rounded-xl border border-blue-200/80 bg-gradient-to-br from-blue-50/70 via-sky-50/30 to-indigo-50/20 p-4 space-y-4 shadow-2xs">
+                    <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between">
                       <div>
-                        <p className="text-sm font-bold text-slate-900">Vòng bảng dùng chung</p>
-                        <p className="text-[11px] font-semibold text-slate-500">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-bold text-slate-900">Vòng bảng dùng chung</p>
+                          <span className="inline-flex items-center rounded-full bg-blue-600/10 px-2.5 py-0.5 text-[10px] font-bold text-blue-700 border border-blue-200/60">
+                            Chung toàn vòng bảng
+                          </span>
+                        </div>
+                        <p className="text-[11px] font-medium text-slate-500 mt-0.5">
                           Áp dụng cho tất cả bảng và mọi lượt đấu. Các vòng knockout có thể ghi đè riêng bên dưới.
                         </p>
                       </div>
-                      <span className="w-fit rounded-full bg-sky-100 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-sky-700">
-                        Chung toàn vòng bảng
-                      </span>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 items-end">
                       <label className="flex flex-col gap-1.5">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Số set thắng</span>
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600">Số set thắng</span>
                         <select
                           value={setsToWin}
                           onChange={(event) => setSetsToWin(Number(event.target.value))}
-                          className="h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-sky-400"
+                          className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm font-bold text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all shadow-2xs"
                         >
                           {presentation.setOptions.map((option) => (
                             <option key={option.value} value={option.value}>{option.label}</option>
@@ -785,26 +787,26 @@ export function BracketTab({
                           className="h-10 text-sm font-bold"
                         />
                       )}
+                    </div>
 
-                      <label className="flex h-10 items-center gap-2 self-end rounded-lg border border-slate-200 bg-white px-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-blue-100/80">
+                      <label className="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer select-none">
                         <input
                           type="checkbox"
                           checked={winByTwo}
                           onChange={(event) => setWinByTwo(event.target.checked)}
-                          className="h-4 w-4 rounded border-slate-300 text-sky-500"
+                          className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20"
                         />
-                        <span className="text-xs font-bold text-slate-700">{winByTwoLabel}</span>
+                        <span>{winByTwoLabel}</span>
                       </label>
-                    </div>
 
-                    <div className="flex justify-end">
                       <Button
                         type="button"
                         onClick={handleSaveMatchConfig}
                         disabled={isSavingConfig}
-                        className="h-9 bg-sky-500 px-4 text-xs font-bold text-white hover:bg-sky-600"
+                        className="h-9 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs px-4 rounded-lg shadow-sm shadow-blue-500/20 active:scale-[0.98] transition-all flex items-center gap-1.5"
                       >
-                        {isSavingConfig ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Save className="mr-1.5 h-4 w-4" />}
+                        {isSavingConfig ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
                         Lưu luật vòng bảng
                       </Button>
                     </div>

@@ -311,8 +311,11 @@ export function RoundRobinView({
           <div className="mb-3 flex flex-wrap gap-2 items-center" aria-label="Chọn lượt vòng bảng">
             <button
               type="button"
-              onClick={() => setSelectedRound(Math.max(activeRound! - 1, rounds[0]))}
-              disabled={activeRound! <= rounds[0]}
+              onClick={() => {
+                const idx = rounds.indexOf(activeRound!);
+                if (idx > 0) setSelectedRound(rounds[idx - 1]);
+              }}
+              disabled={activeRound === rounds[0]}
               className="rounded p-1 text-slate-500 hover:bg-slate-200 disabled:opacity-30 transition-colors cursor-pointer"
             >
               <ChevronLeft className="w-4 h-4" />
@@ -322,8 +325,11 @@ export function RoundRobinView({
             </span>
             <button
               type="button"
-              onClick={() => setSelectedRound(Math.min(activeRound! + 1, rounds[rounds.length - 1]))}
-              disabled={activeRound! >= rounds[rounds.length - 1]}
+              onClick={() => {
+                const idx = rounds.indexOf(activeRound!);
+                if (idx !== -1 && idx < rounds.length - 1) setSelectedRound(rounds[idx + 1]);
+              }}
+              disabled={activeRound === rounds[rounds.length - 1]}
               className="rounded p-1 text-slate-500 hover:bg-slate-200 disabled:opacity-30 transition-colors cursor-pointer"
             >
               <ChevronRight className="w-4 h-4" />

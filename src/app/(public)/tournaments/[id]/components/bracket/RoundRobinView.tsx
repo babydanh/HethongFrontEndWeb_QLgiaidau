@@ -82,6 +82,13 @@ export function RoundRobinView({
   const rounds = Object.keys(byRound)
     .map(Number)
     .sort((a, b) => a - b);
+  const [selectedRound, setSelectedRound] = useState<number | null>(null);
+  const activeRound = selectedRound != null && rounds.includes(selectedRound)
+    ? selectedRound
+    : rounds[0] ?? null;
+  const visibleMatches = activeRound == null
+    ? matches.filter((m) => !m.isBye)
+    : matches.filter((m) => !m.isBye && m.roundNumber === activeRound);
 
   return (
     <div className="flex flex-col gap-8">
@@ -134,21 +141,14 @@ export function RoundRobinView({
           <table className="w-full text-sm">
             <thead className="bg-slate-50 border-b border-slate-200 text-[10px] uppercase text-slate-500 font-bold">
               <tr>
-                <th className="px-4 py-3 text-center w-10" rowSpan={2}>#</th>
-                <th className="px-4 py-3 text-left min-w-[130px]" rowSpan={2}>Đội</th>
-                <th className="px-4 py-3 text-center w-12" rowSpan={2}>Trận</th>
-                <th className="px-4 py-3 text-center text-blue-600 w-9" rowSpan={2}>T</th>
-                <th className="px-4 py-3 text-center text-rose-500 w-9" rowSpan={2}>B</th>
-                <th className="px-4 py-3 text-center border-l border-slate-100" colSpan={2}>Set</th>
-                <th className="px-4 py-3 text-center border-l border-slate-100" colSpan={2}>{statLabels.aggregateLabel}</th>
-                <th className="px-4 py-3 text-center text-blue-600 bg-blue-50/50 w-12" rowSpan={2}>Đ</th>
-                <th className="px-4 py-3 text-center w-10" rowSpan={2} />
-              </tr>
-              <tr className="text-[9px] text-slate-400 font-semibold">
-                <th className="px-3 py-1.5 text-center w-20 border-t border-slate-150 border-l border-slate-100">T/B</th>
-                <th className="px-3 py-1.5 text-center w-16 border-t border-slate-150">+/-</th>
-                <th className="px-3 py-1.5 text-center w-20 border-t border-slate-150 border-l border-slate-100">T/B</th>
-                <th className="px-3 py-1.5 text-center w-16 border-t border-slate-150">+/-</th>
+                <th className="px-3 py-3 text-center w-10">#</th>
+                <th className="px-3 py-3 text-left min-w-[130px]">Đội</th>
+                <th className="px-3 py-3 text-center w-12">Trận</th>
+                <th className="px-3 py-3 text-center text-blue-600 w-9">T</th>
+                <th className="px-3 py-3 text-center text-rose-500 w-9">B</th>
+                <th className="px-3 py-3 text-center text-blue-600 bg-blue-50/50 w-14">Điểm</th>
+                <th className="px-3 py-3 text-center w-20">Hiệu số</th>
+                <th className="px-3 py-3 text-center w-10" />
               </tr>
             </thead>
             <tbody>
@@ -208,22 +208,12 @@ export function RoundRobinView({
                     <td className="px-3 py-3 text-center font-bold text-rose-400">
                       {row.lost}
                     </td>
-                    <td className="px-3 py-3 text-center text-slate-600 font-semibold">
-                      {row.setsWon}-{row.setsLost}
-                    </td>
-                    <td className={'px-3 py-3 text-center font-semibold ' + (row.setsWon - row.setsLost > 0 ? 'text-blue-600' : row.setsWon - row.setsLost < 0 ? 'text-rose-500' : 'text-slate-500')}>
-                      {row.setsWon - row.setsLost >= 0 ? '+' : ''}
-                      {row.setsWon - row.setsLost}
-                    </td>
-                    <td className="px-3 py-3 text-center text-slate-600 font-semibold">
-                      {row.pointsFor}-{row.pointsAgainst}
+                    <td className="px-3 py-3 text-center font-bold text-blue-700 bg-blue-50/20">
+                      {row.points}
                     </td>
                     <td className={'px-3 py-3 text-center font-semibold ' + (row.pointsFor - row.pointsAgainst > 0 ? 'text-blue-600' : row.pointsFor - row.pointsAgainst < 0 ? 'text-rose-500' : 'text-slate-500')}>
                       {row.pointsFor - row.pointsAgainst >= 0 ? '+' : ''}
                       {row.pointsFor - row.pointsAgainst}
-                    </td>
-                    <td className="px-3 py-3 text-center font-bold text-blue-700 bg-blue-50/20">
-                      {row.points}
                     </td>
                     <td className="px-3 py-3 text-center">
                       {isTied &&

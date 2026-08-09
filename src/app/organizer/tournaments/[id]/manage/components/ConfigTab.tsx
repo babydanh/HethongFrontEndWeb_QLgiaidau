@@ -3,6 +3,7 @@
 import React from 'react';
 import { Settings, AlertTriangle } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
 import { QRCodeSVG } from 'qrcode.react';
 import { Tournament, BracketStage } from '@/types/tournament';
 import { getSportRuleKind } from '@/features/tournaments/sport-rules/normalize';

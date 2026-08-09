@@ -754,61 +754,24 @@ export function BracketTab({
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 items-end">
-                      <label className="flex flex-col gap-1.5">
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600">Số set thắng</span>
-                        <select
-                          value={setsToWin}
-                          onChange={(event) => setSetsToWin(Number(event.target.value))}
-                          className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm font-bold text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all shadow-2xs"
-                        >
-                          {presentation.setOptions.map((option) => (
-                            <option key={option.value} value={option.value}>{option.label}</option>
-                          ))}
-                        </select>
-                      </label>
-
-                      <Input
-                        label={setUnitLabel}
-                        type="number"
-                        min={1}
-                        value={pointsPerSet}
-                        onChange={(event) => setPointsPerSet(Math.max(1, Number(event.target.value)))}
-                        className="h-10 text-sm font-bold"
-                      />
-
+                    <div className="rounded-lg bg-white/60 p-3 border border-blue-100/50 flex flex-wrap gap-2 text-xs font-semibold text-slate-700">
+                      <span className="bg-white px-2 py-1 rounded border border-slate-200 shadow-sm flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                        Thắng {setsToWin} set
+                      </span>
+                      <span className="bg-white px-2 py-1 rounded border border-slate-200 shadow-sm flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                        {pointsPerSet} điểm/set
+                      </span>
                       {winByTwo && (
-                        <Input
-                          label={maxScoreLabel}
-                          type="number"
-                          min={pointsPerSet}
-                          value={maxDeucePoints}
-                          onChange={(event) => setMaxDeucePoints(Math.max(pointsPerSet, Number(event.target.value)))}
-                          className="h-10 text-sm font-bold"
-                        />
+                        <span className="bg-white px-2 py-1 rounded border border-slate-200 shadow-sm flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                          Cách biệt 2 điểm (tối đa {maxDeucePoints})
+                        </span>
                       )}
                     </div>
-
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-blue-100/80">
-                      <label className="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer select-none">
-                        <input
-                          type="checkbox"
-                          checked={winByTwo}
-                          onChange={(event) => setWinByTwo(event.target.checked)}
-                          className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20"
-                        />
-                        <span>{winByTwoLabel}</span>
-                      </label>
-
-                      <Button
-                        type="button"
-                        onClick={handleSaveMatchConfig}
-                        disabled={isSavingConfig}
-                        className="h-9 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs px-4 rounded-lg shadow-sm shadow-blue-500/20 active:scale-[0.98] transition-all flex items-center gap-1.5"
-                      >
-                        {isSavingConfig ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-                        Lưu luật vòng bảng
-                      </Button>
+                    <div className="text-[11px] text-slate-500 italic mt-2">
+                      * Đang sử dụng <strong className="font-semibold text-slate-700">Preset theo môn</strong> ở cột bên trái làm chuẩn.
                     </div>
                   </div>
 

@@ -958,9 +958,13 @@ export function useManageState(id: string) {
 
   const handleOpenRoundModal = (stage: BracketStage, roundNumber: number) => {
     setSelectedStage(stage); setSelectedRoundNumber(roundNumber);
+    // For draft group stage legs, use 'leg_N' key to avoid collision with knockout round keys
+    const roundKey = stage.id === '__draft_gsk_group__' && roundNumber !== 0
+      ? `leg_${roundNumber}`
+      : roundNumber.toString();
     const rc = roundNumber === 0
       ? stage.roundConfig
-      : stage.roundConfig?.rounds?.[roundNumber.toString()];
+      : stage.roundConfig?.rounds?.[roundKey];
     
     const ruleConfig = rc as StageRoundRuleConfig | undefined | null;
     setStageVenueId(ruleConfig?.venue_id || (roundNumber === 0 ? '' : stage.venueId || ''));
@@ -1023,18 +1027,20 @@ export function useManageState(id: string) {
       if (selectedStage.id === '__draft_gsk_group__') {
         const selected = divisions.find((division) => division.id === selectedDivisionId);
         const isStageOverride = selectedRoundNumber === 0;
+        // For leg overrides, use 'leg_N' key to avoid collision with knockout round keys
+        const legKey = `leg_${selectedRoundNumber}`;
         await divisionsApi.updateDivisionConfig(tournament.id, selectedDivisionId, {
           roundConfig: {
             ...(selected?.roundConfig ?? {}),
-            ...(isStageOverride ? nextRoundRule : {}), // Override base division config if roundNumber === 0
+            ...(isStageOverride ? nextRoundRule : {}),
             kind: normalizedKind,
             rounds: {
               ...currentRounds,
-              ...(isStageOverride ? {} : { [selectedRoundNumber.toString()]: nextRoundRule }),
+              ...(isStageOverride ? {} : { [legKey]: nextRoundRule }),
             },
           },
         });
-        toast.success('Đã lưu cấu hình vòng bảng dự kiến!');
+        toast.success(isStageOverride ? 'Đã lưu cấu hình vòng bảng chung!' : `Đã lưu cấu hình Lượt ${selectedRoundNumber}!`);
         setSelectedStage(null);
         setSelectedRoundNumber(null);
         await fetchDivisions(tournament.id);

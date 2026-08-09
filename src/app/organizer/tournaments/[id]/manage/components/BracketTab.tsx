@@ -347,21 +347,19 @@ export function BracketTab({
   );
 
   const gskConfigurableGroupRounds = useMemo(() => {
-    if (!teamsPerGroup || teamsPerGroup < 2) return [];
-    const slotCount = teamsPerGroup % 2 === 0 ? teamsPerGroup : teamsPerGroup + 1;
-    const roundsPerLeg = Math.max(1, slotCount - 1);
-    const totalRounds = roundsPerLeg * Math.max(1, gskRoundsToPlay || 1);
-    
-    return Array.from({ length: totalRounds }, (_, idx) => {
-      const roundNumber = idx + 1;
+    if (!gskRoundsToPlay || gskRoundsToPlay < 1) return [];
+    // Show per-LEG config (Lượt 1, Lượt 2...), not per-round.
+    // Use 'leg_N' keys to avoid colliding with knockout round keys '1','2'...
+    return Array.from({ length: gskRoundsToPlay }, (_, idx) => {
+      const legNumber = idx + 1;
       return {
         stage: groupStage,
-        roundNumber,
-        name: `Vòng ${roundNumber}`,
-        override: groupStage.roundConfig?.rounds?.[roundNumber.toString()],
+        roundNumber: legNumber,
+        name: `Lượt ${legNumber}`,
+        override: groupStage.roundConfig?.rounds?.[`leg_${legNumber}`],
       };
     });
-  }, [teamsPerGroup, gskRoundsToPlay, groupStage]);
+  }, [gskRoundsToPlay, groupStage]);
 
   const participantCount = useMemo(() => {
     return (participants as Array<Record<string, unknown>>).filter(

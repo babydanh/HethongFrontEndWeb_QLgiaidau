@@ -324,7 +324,7 @@ export function RoundRobinView({
               <ChevronLeft className="w-4 h-4" />
             </button>
             <span className="text-xs font-semibold text-slate-600 min-w-10 text-center">
-              Lượt {activeRound} / {rounds[rounds.length - 1]}
+              Vòng {activeRound} / {rounds[rounds.length - 1]}
             </span>
             <button
               type="button"

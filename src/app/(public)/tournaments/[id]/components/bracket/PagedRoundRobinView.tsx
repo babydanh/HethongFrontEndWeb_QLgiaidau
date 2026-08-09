@@ -112,7 +112,7 @@ export function PagedRoundRobinView({
           onLegChange={setActiveLeg}
         />
         <RoundRobinView
-          matches={matches}
+          matches={legMatches} // Only pass matches for the current leg
           onScheduleMatch={onScheduleMatch}
           selectedMatchId={selectedMatchId}
           onSelectMatch={onSelectMatch}

@@ -335,11 +335,25 @@ export function BracketTab({
   // Determine if group stage has overrides
   // We consider it has an override if its roundConfig has fields like max_sets or scoring_type
   // that means it's not just an empty object or null.
-  // Wait, if it's the draft stage, roundConfig is divisionRoundConfig. We should check if divisionRoundConfig has overrides?
-  // Actually, divisionRoundConfig IS the base. The Group Stage override is stored in the Group Stage's roundConfig.
-  // For Draft, we can't easily distinguish Group Stage override from Division default unless we inspect the fields.
-  // To keep it simple, we just check if it's a real stage and its roundConfig exists and has max_sets.
   const hasGroupStageOverride = groupStage.id !== '__draft_gsk_group__' && groupStage.roundConfig != null && groupStage.roundConfig.max_sets != null;
+
+  const gskConfigurableGroupRounds = useMemo(() => {
+    // If it's a real stage, we can determine rounds from the generated matches or we can just calculate it.
+    // Assuming calculation based on teamsPerGroup and gskRoundsToPlay.
+    const slotCount = teamsPerGroup % 2 === 0 ? teamsPerGroup : teamsPerGroup + 1;
+    const roundsPerLeg = Math.max(1, slotCount - 1);
+    const totalRounds = roundsPerLeg * Math.max(1, gskRoundsToPlay || 1);
+    
+    return Array.from({ length: totalRounds }, (_, idx) => {
+      const roundNumber = idx + 1;
+      return {
+        stage: groupStage,
+        roundNumber,
+        name: `Vòng ${roundNumber}`,
+        override: groupStage.roundConfig?.rounds?.[roundNumber.toString()],
+      };
+    });
+  }, [teamsPerGroup, gskRoundsToPlay, groupStage]);
 
   const participantCount = useMemo(() => {
     return (participants as Array<Record<string, unknown>>).filter(
@@ -783,6 +797,27 @@ export function BracketTab({
                       </Button>
                     </div>
                   </div>
+
+                  <div className="pt-1">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">Từng vòng bảng</p>
+                  </div>
+                  {gskConfigurableGroupRounds.length > 0 ? (
+                    <div className="divide-y divide-slate-100 mb-6">
+                      {gskConfigurableGroupRounds.map(({ stage, roundNumber, name, override }) => (
+                        <div key={`${stage.id}-${roundNumber}`} className="py-2.5 flex items-center justify-between gap-4">
+                          <div>
+                            <p className="text-sm font-bold text-slate-800">{name}</p>
+                            <p className="text-[11px] text-slate-500 font-semibold">
+                              {override ? `${override.sets_to_win} set thắng, ${override.points_per_set || pointsPerSet} điểm/set` : 'Kế thừa luật mặc định của hình thức'}
+                            </p>
+                          </div>
+                          <Button variant="outline" size="sm" onClick={() => handleOpenRoundModal?.(stage, roundNumber)} className="border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold h-8">
+                            Cấu hình vòng
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
 
                   <div className="pt-1">
                     <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">Từng vòng knockout</p>

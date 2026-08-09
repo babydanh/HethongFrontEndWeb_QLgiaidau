@@ -1022,12 +1022,16 @@ export function useManageState(id: string) {
       
       if (selectedStage.id === '__draft_gsk_group__') {
         const selected = divisions.find((division) => division.id === selectedDivisionId);
+        const isStageOverride = selectedRoundNumber === 0;
         await divisionsApi.updateDivisionConfig(tournament.id, selectedDivisionId, {
           roundConfig: {
             ...(selected?.roundConfig ?? {}),
-            ...nextRoundRule, // Override base division config
+            ...(isStageOverride ? nextRoundRule : {}), // Override base division config if roundNumber === 0
             kind: normalizedKind,
-            rounds: currentRounds, // Preserve rounds
+            rounds: {
+              ...currentRounds,
+              ...(isStageOverride ? {} : { [selectedRoundNumber.toString()]: nextRoundRule }),
+            },
           },
         });
         toast.success('Đã lưu cấu hình vòng bảng dự kiến!');

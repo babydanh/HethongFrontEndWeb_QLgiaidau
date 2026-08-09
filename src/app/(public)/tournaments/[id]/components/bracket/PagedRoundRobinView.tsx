@@ -105,8 +105,9 @@ export function PagedRoundRobinView({
   );
 
   // Cumulative matches up to currentRound (for cross table — shows progressive results)
+  // Guard: if currentRound belongs to a different leg, fall back to all legMatches
   const cumulativeMatches = useMemo(() => {
-    if (currentRound == null) return legMatches;
+    if (currentRound == null || !legRounds.includes(currentRound)) return legMatches;
     return legRounds
       .filter((r) => r <= currentRound)
       .flatMap((r) => byRound[r] ?? []);

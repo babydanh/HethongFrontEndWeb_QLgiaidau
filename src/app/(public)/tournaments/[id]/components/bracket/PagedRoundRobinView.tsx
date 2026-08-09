@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { TableProperties } from 'lucide-react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { BracketMatch, BracketStage } from '@/features/tournaments/api';
@@ -44,11 +44,7 @@ export function PagedRoundRobinView({
     [byRound],
   );
 
-  // Reset activeRound when matches change
-  useEffect(() => {
-    setActiveRound(rounds[0] ?? null);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [matches.length]);
+
 
   const currentRound = activeRound != null && rounds.includes(activeRound)
     ? activeRound

@@ -291,24 +291,46 @@ export function RoundRobinView({
         )}
       </div>
 
-      {/* match schedule — flat list (khong chia vong) */}
+      {/* Match schedule is paged by round so multi-leg groups stay readable. */}
       <div>
         <h5 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
           <Clock className="w-4 h-4 text-slate-400" /> Lịch trận đấu
           <span className="text-[10px] text-slate-400 font-semibold normal-case">
-            ({matches.filter((m) => !m.isBye).length} trận)
+            ({visibleMatches.length} trận)
           </span>
         </h5>
 
+        {rounds.length > 1 && (
+          <div className="mb-3 flex flex-wrap gap-2" aria-label="Chọn lượt vòng bảng">
+            {rounds.map((round) => {
+              const isActive = activeRound === round;
+              return (
+                <button
+                  key={round}
+                  type="button"
+                  onClick={() => setSelectedRound(round)}
+                  className={
+                    'rounded-full border px-3 py-1.5 text-xs font-bold transition-colors ' +
+                    (isActive
+                      ? 'border-blue-500 bg-blue-600 text-white'
+                      : 'border-slate-200 bg-white text-slate-600 hover:border-blue-300 hover:text-blue-600')
+                  }
+                >
+                  Lượt {round}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         <div className="flex gap-4 overflow-x-auto pb-4 pt-1 -mx-1 px-1 no-scrollbar">
-          {matches.filter((m) => !m.isBye).length === 0 ? (
+          {visibleMatches.length === 0 ? (
             <div className="w-full text-center py-10 text-slate-400 italic text-sm border border-dashed border-slate-200 rounded-lg">
               Chưa có trận đấu nào.
             </div>
           ) : (
             <div className="w-full bg-slate-50/60 rounded-lg border border-slate-200 p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-              {matches
-                .filter((m) => !m.isBye)
+              {visibleMatches
                 .sort((a, b) => a.matchOrder - b.matchOrder)
                 .map((m) => {
                   const done = m.status === 'COMPLETED';
@@ -332,7 +354,7 @@ export function RoundRobinView({
                       <div className="mb-1.5 flex items-center justify-between">
                         <span className="flex items-center gap-1">
                           <span className="text-[8px] text-slate-400">#{m.matchOrder}</span>
-                          <span className="text-[8px] font-bold text-slate-500 bg-slate-200 px-1.5 py-0.5 rounded">Vòng {m.roundNumber}</span>
+                          <span className="text-[8px] font-bold text-slate-500 bg-slate-200 px-1.5 py-0.5 rounded">Lượt {m.roundNumber}</span>
                         </span>
                         {live && <span className="flex items-center gap-0.5 text-[8px] font-bold text-blue-600 animate-pulse"><Play className="w-2 h-2 fill-blue-600" /> TRỰC TIẾP</span>}
                       </div>

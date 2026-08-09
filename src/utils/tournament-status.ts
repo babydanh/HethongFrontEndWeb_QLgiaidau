@@ -10,6 +10,7 @@ export const normalizeTournamentStatus = (status?: string | null): TournamentSta
   switch (normalized) {
     case 'DRAFT':
     case 'PENDING_APPROVAL':
+    case 'PENDING_DELETE':
     case 'UPCOMING':
     case 'REGISTRATION_OPEN':
     case 'REGISTRATION_CLOSED':
@@ -33,6 +34,8 @@ export const getTournamentStatusLabel = (status?: string | null) => {
       return 'Nháp';
     case 'PENDING_APPROVAL':
       return 'Chờ duyệt công bố';
+    case 'PENDING_DELETE':
+      return 'Đang chờ xóa';
     case 'UPCOMING':
       return 'Sắp diễn ra';
     case 'REGISTRATION_OPEN':
@@ -57,6 +60,8 @@ export const getTournamentStatusClassName = (status?: string | null) => {
       return 'bg-slate-100 text-slate-600 border-slate-200';
     case 'PENDING_APPROVAL':
       return 'bg-amber-50 text-amber-700 border-amber-200';
+    case 'PENDING_DELETE':
+      return 'bg-rose-50 text-rose-600 border-rose-200';
     case 'UPCOMING':
       return 'bg-blue-50 text-blue-700 border-blue-200';
     case 'REGISTRATION_OPEN':
@@ -80,6 +85,9 @@ export const isTournamentDraft = (status?: string | null) =>
 
 export const isTournamentPendingApproval = (status?: string | null) =>
   normalizeTournamentStatus(status) === 'PENDING_APPROVAL';
+
+export const isTournamentPendingDelete = (status?: string | null) =>
+  normalizeTournamentStatus(status) === 'PENDING_DELETE';
 
 export const isTournamentUpcoming = (status?: string | null) =>
   normalizeTournamentStatus(status) === 'UPCOMING';

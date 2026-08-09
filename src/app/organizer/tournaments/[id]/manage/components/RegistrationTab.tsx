@@ -544,6 +544,12 @@ export function RegistrationTab({
                 </div>
               </div>
 
+              {isTournamentDraft(tournament.status) && (
+                <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs font-semibold text-amber-800">
+                  ⚠️ Giải đang ở trạng thái <strong>Bản nháp</strong>. Mã/link mời này chỉ có hiệu lực sau khi bạn <strong>công bố</strong> giải.
+                </div>
+              )}
+
               <div className="mt-4 rounded-lg border border-white/80 bg-white/80 p-4">
                 <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">
                   {visibility === 'PRIVATE' ? 'Đường dẫn đăng ký riêng tư' : 'Đường dẫn đăng ký hiện tại'}

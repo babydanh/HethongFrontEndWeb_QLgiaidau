@@ -41,6 +41,9 @@ interface TournamentItem {
   visibility: string;
   createdAt: string;
   creator?: CreatorInfo;
+  tournamentConfig?: {
+    registrationMode: string;
+  };
 }
 
 interface TournamentDetail extends TournamentItem {
@@ -417,10 +420,13 @@ export default function AdminTournamentsPage() {
                         <p className="font-semibold text-slate-800">{item.name}</p>
                         <div className="flex items-center gap-2 mt-1.5">
                           <span className="bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded">
-                            {item.tournamentType}
+                            {item.tournamentType === 'CLUB' ? 'Nội Bộ' : 'Mở Rộng'}
                           </span>
                           <span className="bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded">
-                            {item.visibility}
+                            {item.visibility === 'PRIVATE' ? 'Không Niêm Yết' : 'Công Khai'}
+                          </span>
+                          <span className="bg-blue-50 text-blue-600 border border-blue-100 text-[10px] font-bold px-2 py-0.5 rounded">
+                            {item.tournamentConfig?.registrationMode === 'APPROVAL' ? 'Duyệt Đăng Ký' : item.tournamentConfig?.registrationMode === 'INVITE_ONLY' ? 'Chỉ Mã Mời' : 'Tự Do Đăng Ký'}
                           </span>
                         </div>
                         <p className="text-[10px] text-slate-400 mt-1 flex items-center gap-1">

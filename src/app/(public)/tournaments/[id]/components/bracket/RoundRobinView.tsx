@@ -18,6 +18,8 @@ import {
   HelpCircle,
   X,
   CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import type { BracketMatch } from '@/features/tournaments/api';
 import type { SportRuleKind, StageRoundConfig } from '@/types/tournament';
@@ -306,25 +308,26 @@ export function RoundRobinView({
         </h5>
 
         {rounds.length > 1 && (
-          <div className="mb-3 flex flex-wrap gap-2" aria-label="Chọn lượt vòng bảng">
-            {rounds.map((round) => {
-              const isActive = activeRound === round;
-              return (
-                <button
-                  key={round}
-                  type="button"
-                  onClick={() => setSelectedRound(round)}
-                  className={
-                    'rounded-full border px-3 py-1.5 text-xs font-bold transition-colors ' +
-                    (isActive
-                      ? 'border-blue-500 bg-blue-600 text-white'
-                      : 'border-slate-200 bg-white text-slate-600 hover:border-blue-300 hover:text-blue-600')
-                  }
-                >
-                  Lượt {round}
-                </button>
-              );
-            })}
+          <div className="mb-3 flex flex-wrap gap-2 items-center" aria-label="Chọn lượt vòng bảng">
+            <button
+              type="button"
+              onClick={() => setSelectedRound(Math.max(activeRound! - 1, rounds[0]))}
+              disabled={activeRound! <= rounds[0]}
+              className="rounded p-1 text-slate-500 hover:bg-slate-200 disabled:opacity-30 transition-colors cursor-pointer"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <span className="text-xs font-semibold text-slate-600 min-w-10 text-center">
+              Lượt {activeRound} / {rounds[rounds.length - 1]}
+            </span>
+            <button
+              type="button"
+              onClick={() => setSelectedRound(Math.min(activeRound! + 1, rounds[rounds.length - 1]))}
+              disabled={activeRound! >= rounds[rounds.length - 1]}
+              className="rounded p-1 text-slate-500 hover:bg-slate-200 disabled:opacity-30 transition-colors cursor-pointer"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
           </div>
         )}
 

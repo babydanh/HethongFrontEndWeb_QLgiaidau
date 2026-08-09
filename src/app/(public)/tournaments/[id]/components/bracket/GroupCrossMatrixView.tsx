@@ -4,12 +4,23 @@ import React from 'react';
 import type { BracketMatch } from '@/features/tournaments/api';
 import { calculateStandings } from './helpers';
 
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+
 interface Props {
   matches: BracketMatch[];
   groupName?: string;
+  activeLeg?: number;
+  legCount?: number;
+  onLegChange?: (leg: number) => void;
 }
 
-export function GroupCrossMatrixView({ matches, groupName = 'Group A' }: Props) {
+export function GroupCrossMatrixView({ 
+  matches, 
+  groupName = 'Group A',
+  activeLeg = 1,
+  legCount = 1,
+  onLegChange
+}: Props) {
   const { standings } = calculateStandings(matches, { tiebreakerMode: 'split' });
 
   // Map participant index (1-based)
@@ -54,8 +65,33 @@ export function GroupCrossMatrixView({ matches, groupName = 'Group A' }: Props) 
 
   return (
     <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
-      <div className="bg-slate-50 border-b border-slate-200 px-4 py-3 text-center font-bold text-sm text-slate-800">
-        {groupName}
+      <div className="bg-slate-50 border-b border-slate-200 px-4 py-3 flex items-center justify-between">
+        <div className="font-bold text-sm text-slate-800">
+          {groupName}
+        </div>
+        {legCount > 1 && onLegChange && (
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => onLegChange(Math.max(activeLeg - 1, 1))}
+              disabled={activeLeg <= 1}
+              className="rounded p-1 text-slate-500 hover:bg-slate-200 disabled:opacity-30 transition-colors cursor-pointer"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <span className="text-xs font-semibold text-slate-600 min-w-10 text-center">
+              {activeLeg} / {legCount}
+            </span>
+            <button
+              type="button"
+              onClick={() => onLegChange(Math.min(activeLeg + 1, legCount))}
+              disabled={activeLeg >= legCount}
+              className="rounded p-1 text-slate-500 hover:bg-slate-200 disabled:opacity-30 transition-colors cursor-pointer"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="overflow-x-auto">

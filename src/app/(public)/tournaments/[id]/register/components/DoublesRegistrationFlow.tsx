@@ -347,7 +347,9 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
   };
 
   const partnerLink = participant?.teamInviteLink
-    ? participant.teamInviteLink
+    ? participant.teamInviteLink.startsWith('http')
+      ? participant.teamInviteLink
+      : `${window.location.origin}${participant.teamInviteLink.startsWith('/') ? '' : '/'}${participant.teamInviteLink}`
     : participant?.teamInviteToken
       ? `${window.location.origin}/tournaments/${tournamentId}/join-team?pid=${participant.id}&token=${participant.teamInviteToken}${divisionId ? `&divisionId=${encodeURIComponent(divisionId)}` : ''}`
       : '';

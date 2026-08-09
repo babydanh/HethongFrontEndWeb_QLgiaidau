@@ -528,7 +528,7 @@ export default function LeaderboardPage() {
                                         </form>
                                     </div>
                                     
-                                    <div className="space-y-3 text-xs text-slate-600 leading-relaxed max-h-[60vh] overflow-y-auto pr-1">
+                                    <div className="space-y-3 text-xs text-slate-600 leading-relaxed max-h-[60vh] overflow-y-auto">
                                         <div className="bg-blue-50/70 p-3 rounded-lg border border-blue-100">
                                             <h4 className="font-bold text-blue-900 mb-1">⚡ 1. Hệ số K-Factor linh hoạt</h4>
                                             <p className="text-slate-600">• Kỳ thủ mới (&lt;10 trận): Hệ số K = 40 (tăng/giảm điểm nhanh để xác định đúng trình độ).<br />• Kỳ thủ kinh nghiệm (10 - 30 trận): K = 24.<br />• Kỳ thủ kỳ cựu (&gt;30 trận): K = 16 (điểm số ổn định hơn).</p>

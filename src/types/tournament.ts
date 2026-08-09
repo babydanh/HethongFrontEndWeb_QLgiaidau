@@ -100,7 +100,7 @@ export interface Tournament {
   registrationStartDate?: string;
   registrationEndDate?: string;
   sportRules?: SportRulesEnvelope;
-  status: 'DRAFT' | 'PENDING_APPROVAL' | 'UPCOMING' | 'REGISTRATION_OPEN' | 'REGISTRATION_CLOSED' | 'IN_PROGRESS' | 'ONGOING' | 'COMPLETED' | 'CANCELLED';
+  status: 'DRAFT' | 'PENDING_APPROVAL' | 'PENDING_DELETE' | 'UPCOMING' | 'REGISTRATION_OPEN' | 'REGISTRATION_CLOSED' | 'IN_PROGRESS' | 'ONGOING' | 'COMPLETED' | 'CANCELLED';
   format: 'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION' | 'ROUND_ROBIN' | 'GROUP_STAGE_KNOCKOUT';
   maxParticipants?: number;
   entryFee?: number;
@@ -242,7 +242,8 @@ export interface TournamentParticipant {
     | 'KICKED'
     | 'NO_SHOW'
     | 'DISQUALIFIED'
-    | 'REPLACED';
+    | 'REPLACED'
+    | 'EXPIRED';
   registeredBy: {
     id: string;
     fullName: string | null;

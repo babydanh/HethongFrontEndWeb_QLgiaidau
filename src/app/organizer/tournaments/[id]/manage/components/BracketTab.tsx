@@ -891,7 +891,7 @@ export function BracketTab({
                 </div>
 
                 {rounds.length > 0 ? (
-                  <div className="divide-y divide-slate-100 max-h-[220px] overflow-y-auto pr-1 space-y-2.5">
+                  <div className="divide-y divide-slate-100 max-h-[220px] overflow-y-auto space-y-2.5">
                     {rounds.map(({ stage, roundNumber, name, override }) => {
                       return (
                         <div key={`${stage.id}-${roundNumber}`} className="pt-2.5 flex items-center justify-between gap-4 first:pt-0">

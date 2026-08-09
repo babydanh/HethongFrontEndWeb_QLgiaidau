@@ -504,7 +504,7 @@ export default function MembersTab({
                   <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
                 </div>
               ) : inviteResults.length > 0 ? (
-                <div className="space-y-3 max-h-[35vh] overflow-y-auto pr-1">
+                <div className="space-y-3 max-h-[35vh] overflow-y-auto">
                   {inviteResults.map((user) => (
                     <div key={user.id} className="flex items-center justify-between p-3 border border-slate-150 rounded-lg hover:bg-slate-50 transition-colors">
                       <div className="flex items-center gap-2">

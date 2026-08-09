@@ -422,8 +422,8 @@ export default function HomePage() {
         // Keep the last good list when a transient request fails.
         const activeTournaments = fetchedTournaments.filter(
           (t: Tournament) =>
-            t.status !== 'DRAFT' &&
-            t.status !== 'PENDING_DELETE' &&
+            (t.status as string) !== 'DRAFT' &&
+            (t.status as string) !== 'PENDING_DELETE' &&
             t.status !== 'CANCELLED'
         );
         const visibleTournaments = selectedCategoryId

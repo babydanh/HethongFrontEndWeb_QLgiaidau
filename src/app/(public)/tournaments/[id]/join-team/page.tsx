@@ -129,32 +129,18 @@ export default function JoinTeamPage({ params }: { params: Promise<{ id: string 
         teamInviteToken,
       });
 
-      toast.success('Gia nhập đội thi đấu thành công!');
+      toast.success('Gia nhập đội thi đấu thành công! Đội trưởng sẽ tiến hành hoàn tất thủ tục.');
 
-      const entryFee = Number((division?.entryFee ?? tournament?.entryFee) || 0);
       const effectiveDivisionId = divisionId || participant?.tournamentDivisionId || '';
 
-      if (entryFee > 0) {
-        const params = new URLSearchParams({
-          participantId,
-          tournamentId: id,
-          pid: participantId,
-          token: teamInviteToken,
-        });
-        if (effectiveDivisionId) {
-          params.set('divisionId', effectiveDivisionId);
-        }
-        router.push(`/payments/checkout?${params.toString()}`);
-      } else {
-        const params = new URLSearchParams({
-          pid: participantId,
-          token: teamInviteToken,
-        });
-        if (effectiveDivisionId) {
-          params.set('divisionId', effectiveDivisionId);
-        }
-        router.push(`/tournaments/${id}?${params.toString()}`);
+      const params = new URLSearchParams({
+        pid: participantId,
+        token: teamInviteToken,
+      });
+      if (effectiveDivisionId) {
+        params.set('divisionId', effectiveDivisionId);
       }
+      router.push(`/tournaments/${id}?${params.toString()}`);
     } catch (err) {
       toast.error(getErrorMessage(err));
     } finally {

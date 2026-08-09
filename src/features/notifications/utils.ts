@@ -10,10 +10,11 @@ import {
 } from '@/features/notifications/constants';
 
 export interface NotificationActionConfig {
-  kind: 'community-invite' | 'referee-invite';
+  kind: 'community-invite' | 'referee-invite' | 'partner-invite';
   communityId?: string;
   tournamentId?: string;
   refereeId?: string;
+  participantId?: string;
 }
 
 const VIETNAMESE_DATE_FORMATTER = new Intl.DateTimeFormat('vi-VN', {
@@ -178,7 +179,8 @@ export const getNotificationTone = (
     normalizedType.includes('SUCCESS') ||
     normalizedType.includes('COMPLETED') ||
     normalizedType.includes('UNBANNED') ||
-    normalizedType.includes('UNSUSPENDED')
+    normalizedType.includes('UNSUSPENDED') ||
+    normalizedType === 'PARTNER_INVITE_ACCEPTED'
   ) {
     return 'success';
   }
@@ -191,7 +193,11 @@ export const getNotificationTone = (
     return 'warning';
   }
 
-  if (normalizedType.includes('COMMUNITY_INVITED') || normalizedType.includes('REFEREE_INVITED')) {
+  if (
+    normalizedType.includes('COMMUNITY_INVITED') ||
+    normalizedType.includes('REFEREE_INVITED') ||
+    normalizedType.includes('PARTNER_INVITE_RECEIVED')
+  ) {
     return 'accent';
   }
 
@@ -261,6 +267,21 @@ export const getNotificationActionConfig = (
       kind: 'referee-invite',
       tournamentId,
       refereeId,
+    };
+  }
+
+  if (notificationType === 'PARTNER_INVITE_RECEIVED') {
+    const target = resolveNotificationTarget(notification.redirectUrl);
+    const match = target.href?.match(/^\/tournaments\/([0-9a-fA-F-]+)\/participants\/([0-9a-fA-F-]+)/);
+
+    if (!match) {
+      return null;
+    }
+
+    return {
+      kind: 'partner-invite',
+      tournamentId: match[1],
+      participantId: match[2],
     };
   }
 

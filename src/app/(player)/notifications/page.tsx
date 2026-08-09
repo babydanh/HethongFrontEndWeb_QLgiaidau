@@ -13,7 +13,6 @@ import {
 import toast from 'react-hot-toast';
 import { communitiesApi } from '@/features/communities/api';
 import { tournamentsApi } from '@/features/tournaments/api';
-import { Button } from '@/components/ui/Button';
 import type { NotificationItem } from '@/features/notifications/types';
 import { useSocket } from '@/hooks/useSocket';
 import {
@@ -176,6 +175,41 @@ export default function NotificationsPage() {
           action === 'ACCEPT'
             ? 'Không thể chấp nhận lời mời trọng tài lúc này.'
             : 'Không thể từ chối lời mời trọng tài lúc này.',
+        ),
+      );
+    } finally {
+      setPendingActionKey(null);
+    }
+  };
+
+  const handlePartnerInviteAction = async (
+    notificationId: string,
+    participantId: string,
+    action: 'accept' | 'decline',
+  ) => {
+    const actionKey = `${notificationId}:${action}`;
+
+    try {
+      setPendingActionKey(actionKey);
+      if (action === 'accept') {
+        await tournamentsApi.acceptPartnerInvite(participantId);
+      } else {
+        await tournamentsApi.rejectPartnerInvite(participantId);
+      }
+      await markNotificationAsRead(notificationId);
+      toast.success(
+        action === 'accept'
+          ? 'Đã chấp nhận lời mời ghép đôi.'
+          : 'Đã từ chối lời mời ghép đôi.',
+      );
+      await refreshNotifications();
+    } catch (error) {
+      toast.error(
+        getErrorMessage(
+          error,
+          action === 'accept'
+            ? 'Không thể chấp nhận lời mời lúc này.'
+            : 'Không thể từ chối lời mời lúc này.',
         ),
       );
     } finally {
@@ -390,7 +424,7 @@ export default function NotificationsPage() {
                                 </button>
 
                                 <div className="flex flex-wrap items-center gap-2 pt-1 md:ml-4 md:justify-end">
-                                  {(notificationAction?.kind === 'community-invite' || notificationAction?.kind === 'referee-invite') && !notification.isRead ? (
+                                  {(notificationAction?.kind === 'community-invite' || notificationAction?.kind === 'referee-invite' || notificationAction?.kind === 'partner-invite') && !notification.isRead ? (
                                     <>
                                       <button
                                         type="button"
@@ -412,6 +446,14 @@ export default function NotificationsPage() {
                                               notificationAction.refereeId,
                                               'ACCEPT',
                                             );
+                                            return;
+                                          }
+
+                                          if (
+                                            notificationAction.kind === 'partner-invite' &&
+                                            notificationAction.participantId
+                                          ) {
+                                            void handlePartnerInviteAction(notification.id, notificationAction.participantId, 'accept');
                                           }
                                         }}
                                         className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
@@ -439,6 +481,14 @@ export default function NotificationsPage() {
                                               notificationAction.refereeId,
                                               'DECLINE',
                                             );
+                                            return;
+                                          }
+
+                                          if (
+                                            notificationAction.kind === 'partner-invite' &&
+                                            notificationAction.participantId
+                                          ) {
+                                            void handlePartnerInviteAction(notification.id, notificationAction.participantId, 'decline');
                                           }
                                         }}
                                         className="inline-flex items-center gap-1 rounded-lg border border-rose-200 bg-white px-3.5 py-2 text-sm font-semibold text-rose-700 transition-colors hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"

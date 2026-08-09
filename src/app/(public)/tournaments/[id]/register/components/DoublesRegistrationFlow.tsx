@@ -71,13 +71,11 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
 
   useEffect(() => {
     if (step !== 2 || !participant?.partnerInviteExpiresAt) {
-      setTimeLeft('');
       return;
     }
 
     const endTime = new Date(participant.partnerInviteExpiresAt).getTime();
     if (!Number.isFinite(endTime)) {
-      setTimeLeft('');
       return;
     }
 
@@ -154,6 +152,16 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
               setParticipant(part);
               setStep(3);
               toast.success('Đồng đội của bạn đã tham gia đội thành công!', { id: 'partner-joined' });
+              clearInterval(intervalId);
+            } else if (part.teamStatus === 'EXPIRED' || part.teamStatus === 'REJECTED' || part.teamStatus === 'WITHDRAWN') {
+              setParticipant(null);
+              setStep(1);
+              toast.error(
+                part.teamStatus === 'REJECTED' ? 'Đồng đội đã từ chối lời mời tham gia đội.' :
+                part.teamStatus === 'WITHDRAWN' ? 'Đội đã bị hủy.' :
+                'Lời mời đồng đội đã hết hạn.',
+                { id: 'partner-rejected' }
+              );
               clearInterval(intervalId);
             }
           }

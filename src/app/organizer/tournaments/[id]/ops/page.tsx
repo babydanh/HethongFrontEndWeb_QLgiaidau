@@ -682,7 +682,7 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
         {/* Round Summary Card */}
         <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
           <h3 className="text-lg font-bold text-slate-900">Nhịp vận hành theo vòng</h3>
-          <div className="space-y-2.5 max-h-[360px] overflow-y-auto pr-1 no-scrollbar">
+          <div className="space-y-2.5 max-h-[360px] overflow-y-auto no-scrollbar">
             {roundSummary.map((round) => (
               <div key={`${round.order}-${round.label}`} className="rounded-lg border border-slate-150 bg-slate-50/50 p-4 transition-all hover:bg-slate-50">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

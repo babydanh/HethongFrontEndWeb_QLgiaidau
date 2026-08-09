@@ -1100,11 +1100,14 @@ export function useManageState(id: string) {
       setIsCustomMatchConfig(false);
       const stage = bracket?.stages.find(s => s.groups.some(g => g.id === match.groupId));
       const rc = stage?.roundConfig?.rounds?.[match.roundNumber?.toString()];
-      if (!match.courtName && rc?.venue_id) {
-        const roundVenue = venues.find((venue) => venue.id === rc.venue_id);
-        if (roundVenue) {
-          setMatchCourtName(roundVenue.name);
-          setMatchCourtAddress(roundVenue.locationAddress || '');
+      if (!match.courtName) {
+        if (rc?.venue_id) {
+          const roundVenue = venues.find((v) => v.id === rc.venue_id);
+          setMatchCourtName(roundVenue ? roundVenue.name : rc.venue_id);
+          setMatchCourtAddress(roundVenue?.locationAddress || '');
+        } else {
+          setMatchCourtName(tournament?.venue?.name || customVenueName || tournament?.locationAddress || '');
+          setMatchCourtAddress(tournament?.venue?.locationAddress || customVenueAddress || tournament?.locationAddress || '');
         }
       }
       if (!match.scheduledAt && rc?.scheduled_date) {

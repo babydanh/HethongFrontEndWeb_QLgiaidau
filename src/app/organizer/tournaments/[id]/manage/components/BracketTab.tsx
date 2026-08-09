@@ -335,11 +335,19 @@ export function BracketTab({
   // Determine if group stage has overrides
   // We consider it has an override if its roundConfig has fields like max_sets or scoring_type
   // that means it's not just an empty object or null.
-  const hasGroupStageOverride = groupStage.id !== '__draft_gsk_group__' && groupStage.roundConfig != null && groupStage.roundConfig.max_sets != null;
+  // hasGroupStageOverride: real stage has explicit override OR draft stage has divisionRoundConfig override
+  const hasGroupStageOverride = (
+    groupStage.id !== '__draft_gsk_group__' &&
+    groupStage.roundConfig != null &&
+    groupStage.roundConfig.max_sets != null
+  ) || (
+    groupStage.id === '__draft_gsk_group__' &&
+    divisionRoundConfig != null &&
+    divisionRoundConfig.max_sets != null
+  );
 
   const gskConfigurableGroupRounds = useMemo(() => {
-    // If it's a real stage, we can determine rounds from the generated matches or we can just calculate it.
-    // Assuming calculation based on teamsPerGroup and gskRoundsToPlay.
+    if (!teamsPerGroup || teamsPerGroup < 2) return [];
     const slotCount = teamsPerGroup % 2 === 0 ? teamsPerGroup : teamsPerGroup + 1;
     const roundsPerLeg = Math.max(1, slotCount - 1);
     const totalRounds = roundsPerLeg * Math.max(1, gskRoundsToPlay || 1);
@@ -789,7 +797,15 @@ export function BracketTab({
                     <div className="pt-2 border-t border-blue-100/50 flex items-center justify-between gap-4">
                       <div>
                         <p className="text-[11px] text-slate-500 font-semibold">
-                          {hasGroupStageOverride ? `${groupStage.roundConfig?.max_sets === 1 ? 1 : groupStage.roundConfig?.max_sets === 3 ? 2 : 3} set thắng, ${groupStage.roundConfig?.points_per_set || pointsPerSet} điểm/set` : 'Kế thừa luật mặc định của hình thức'}
+                          {hasGroupStageOverride
+                            ? (() => {
+                                const rc = groupStage.id === '__draft_gsk_group__'
+                                  ? divisionRoundConfig
+                                  : groupStage.roundConfig;
+                                const setsLabel = rc?.max_sets === 1 ? 1 : rc?.max_sets === 3 ? 2 : 3;
+                                return `${setsLabel} set thắng, ${rc?.points_per_set || pointsPerSet} điểm/set`;
+                              })()
+                            : 'Kế thừa luật mặc định của hình thức'}
                         </p>
                       </div>
                       <Button variant="outline" size="sm" onClick={() => handleOpenRoundModal?.(groupStage, 0)} className="border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold h-8">

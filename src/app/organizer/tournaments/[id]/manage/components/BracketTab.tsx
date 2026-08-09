@@ -737,7 +737,82 @@ export function BracketTab({
                 </div>
 
                 <div className="rounded-lg border border-slate-200 bg-white p-4 space-y-3">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-600">Cấu hình từng vòng knockout</p>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-600">Cấu hình từng vòng</p>
+
+                  <div className="rounded-lg border border-sky-200 bg-sky-50/60 p-3 space-y-3">
+                    <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <p className="text-sm font-bold text-slate-900">Vòng bảng dùng chung</p>
+                        <p className="text-[11px] font-semibold text-slate-500">
+                          Áp dụng cho tất cả bảng và mọi lượt đấu. Các vòng knockout có thể ghi đè riêng bên dưới.
+                        </p>
+                      </div>
+                      <span className="w-fit rounded-full bg-sky-100 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-sky-700">
+                        Chung toàn vòng bảng
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                      <label className="flex flex-col gap-1.5">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Số set thắng</span>
+                        <select
+                          value={setsToWin}
+                          onChange={(event) => setSetsToWin(Number(event.target.value))}
+                          className="h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-sky-400"
+                        >
+                          {presentation.setOptions.map((option) => (
+                            <option key={option.value} value={option.value}>{option.label}</option>
+                          ))}
+                        </select>
+                      </label>
+
+                      <Input
+                        label={setUnitLabel}
+                        type="number"
+                        min={1}
+                        value={pointsPerSet}
+                        onChange={(event) => setPointsPerSet(Math.max(1, Number(event.target.value)))}
+                        className="h-10 text-sm font-bold"
+                      />
+
+                      {winByTwo && (
+                        <Input
+                          label={maxScoreLabel}
+                          type="number"
+                          min={pointsPerSet}
+                          value={maxDeucePoints}
+                          onChange={(event) => setMaxDeucePoints(Math.max(pointsPerSet, Number(event.target.value)))}
+                          className="h-10 text-sm font-bold"
+                        />
+                      )}
+
+                      <label className="flex h-10 items-center gap-2 self-end rounded-lg border border-slate-200 bg-white px-3">
+                        <input
+                          type="checkbox"
+                          checked={winByTwo}
+                          onChange={(event) => setWinByTwo(event.target.checked)}
+                          className="h-4 w-4 rounded border-slate-300 text-sky-500"
+                        />
+                        <span className="text-xs font-bold text-slate-700">{winByTwoLabel}</span>
+                      </label>
+                    </div>
+
+                    <div className="flex justify-end">
+                      <Button
+                        type="button"
+                        onClick={handleSaveMatchConfig}
+                        disabled={isSavingConfig}
+                        className="h-9 bg-sky-500 px-4 text-xs font-bold text-white hover:bg-sky-600"
+                      >
+                        {isSavingConfig ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Save className="mr-1.5 h-4 w-4" />}
+                        Lưu luật vòng bảng
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="pt-1">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">Từng vòng knockout</p>
+                  </div>
                   {gskConfigurableRounds.length > 0 ? (
                     <div className="divide-y divide-slate-100">
                       {gskConfigurableRounds.map(({ stage, roundNumber, name, override }) => (

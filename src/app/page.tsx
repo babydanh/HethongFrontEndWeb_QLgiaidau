@@ -421,10 +421,10 @@ export default function HomePage() {
         const fetchedTournaments = tRes.status === 'fulfilled' ? tRes.value.data || [] : [];
         // Keep the last good list when a transient request fails.
         const activeTournaments = fetchedTournaments.filter(
-          (t: Tournament) =>
-            (t.status as string) !== 'DRAFT' &&
-            (t.status as string) !== 'PENDING_DELETE' &&
-            t.status !== 'CANCELLED'
+          (t: Tournament) => {
+            const st = (t.status as string)?.toUpperCase();
+            return !['DRAFT', 'PENDING_APPROVAL', 'SUSPENDED', 'CANCELLED', 'PENDING_DELETE'].includes(st);
+          }
         );
         const visibleTournaments = selectedCategoryId
           ? activeTournaments.filter(t => t.categoryId === selectedCategoryId)

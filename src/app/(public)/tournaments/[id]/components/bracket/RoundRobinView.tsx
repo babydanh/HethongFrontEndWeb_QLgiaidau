@@ -147,7 +147,8 @@ export function RoundRobinView({
                 <th className="px-3 py-3 text-center text-blue-600 w-9">T</th>
                 <th className="px-3 py-3 text-center text-rose-500 w-9">B</th>
                 <th className="px-3 py-3 text-center text-blue-600 bg-blue-50/50 w-14">Điểm</th>
-                <th className="px-3 py-3 text-center w-20">Hiệu số</th>
+                <th className="px-3 py-3 text-center min-w-[72px]">HS set</th>
+                <th className="px-3 py-3 text-center min-w-[80px]">HS điểm</th>
                 <th className="px-3 py-3 text-center w-10" />
               </tr>
             </thead>
@@ -210,6 +211,10 @@ export function RoundRobinView({
                     </td>
                     <td className="px-3 py-3 text-center font-bold text-blue-700 bg-blue-50/20">
                       {row.points}
+                    </td>
+                    <td className={'px-3 py-3 text-center font-semibold ' + (row.setsWon - row.setsLost > 0 ? 'text-blue-600' : row.setsWon - row.setsLost < 0 ? 'text-rose-500' : 'text-slate-500')}>
+                      {row.setsWon - row.setsLost >= 0 ? '+' : ''}
+                      {row.setsWon - row.setsLost}
                     </td>
                     <td className={'px-3 py-3 text-center font-semibold ' + (row.pointsFor - row.pointsAgainst > 0 ? 'text-blue-600' : row.pointsFor - row.pointsAgainst < 0 ? 'text-rose-500' : 'text-slate-500')}>
                       {row.pointsFor - row.pointsAgainst >= 0 ? '+' : ''}

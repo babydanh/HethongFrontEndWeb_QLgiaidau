@@ -20,6 +20,7 @@ import {
 } from '@/utils/tournament-display';
 import { Copy, Check, Loader2, QrCode, Users, CreditCard, CheckCircle, AlertTriangle, ArrowRight, Trash2, Search, UserMinus, X } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { QRCodeSVG } from 'qrcode.react';
 import { getRegistrationModeUi } from '../../../registrationMode';
 
 interface Props {
@@ -594,8 +595,10 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
 
           {/* QR Code Container */}
           <div className="flex flex-col items-center justify-center bg-slate-50 border p-6 rounded-lg max-w-xs mx-auto">
-            {qrImageUrl ? (
-              <img src={qrImageUrl} alt="QR Code" className="w-44 h-44 object-contain bg-white p-2 rounded-lg border" />
+            {partnerLink ? (
+              <div className="bg-white p-2 rounded-lg border shadow-sm">
+                <QRCodeSVG value={partnerLink} size={160} level="M" />
+              </div>
             ) : (
               <div className="w-44 h-44 flex items-center justify-center bg-white border border-dashed rounded-lg">
                 <QrCode className="w-12 h-12 text-slate-300" />

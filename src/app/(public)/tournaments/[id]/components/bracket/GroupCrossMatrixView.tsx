@@ -2,6 +2,7 @@
 
 import React from 'react';
 import type { BracketMatch } from '@/features/tournaments/api';
+import { extractMatchScores } from '@/features/matches/score-display';
 import { calculateStandings } from './helpers';
 
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -30,8 +31,8 @@ export function GroupCrossMatrixView({
     standings.map((team, idx) => [team.participantId, idx + 1])
   );
 
-  // Quick lookup matrix: matchResult[p1Id][p2Id] = score string
-  const scoreMatrix: Record<string, Record<string, string>> = {};
+  // Quick lookup matrix: matchResult[p1Id][p2Id] = array of per-set score strings
+  const scoreMatrix: Record<string, Record<string, string[]>> = {};
 
   matches.forEach((m) => {
     if (m.isBye || !m.participant1 || !m.participant2) return;
@@ -45,23 +46,22 @@ export function GroupCrossMatrixView({
     const isOngoing = m.status === 'ONGOING' || m.status === 'IN_PROGRESS';
 
     if (isCompleted || isOngoing) {
-      // Best score representation for set/point
       const p1Sets = m.p1SetsWon ?? 0;
       const p2Sets = m.p2SetsWon ?? 0;
-      let displayScore1 = `${p1Sets}-${p2Sets}`;
-      let displayScore2 = `${p2Sets}-${p1Sets}`;
 
-      // If sets are 1-0 / 2-0 / 2-1 or point scores available
-      if (m.scoreDetails && Array.isArray(m.scoreDetails) && m.scoreDetails.length > 0) {
-        const lastSet = m.scoreDetails[m.scoreDetails.length - 1] as { team1Score?: number; team2Score?: number };
-        if (typeof lastSet?.team1Score === 'number' && typeof lastSet?.team2Score === 'number') {
-          displayScore1 = `${lastSet.team1Score}-${lastSet.team2Score}`;
-          displayScore2 = `${lastSet.team2Score}-${lastSet.team1Score}`;
-        }
+      // Extract all individual set scores (Bo3/Bo5: [21-15, 18-21, 21-19])
+      const setScores = extractMatchScores(
+        m.scoreDetails as Record<string, unknown> | null | undefined
+      );
+
+      if (setScores.length > 0) {
+        scoreMatrix[p1Id][p2Id] = setScores.map((s) => `${s.team1Score}-${s.team2Score}`);
+        scoreMatrix[p2Id][p1Id] = setScores.map((s) => `${s.team2Score}-${s.team1Score}`);
+      } else {
+        // Fallback: only sets won count
+        scoreMatrix[p1Id][p2Id] = [`${p1Sets}-${p2Sets}`];
+        scoreMatrix[p2Id][p1Id] = [`${p2Sets}-${p1Sets}`];
       }
-
-      scoreMatrix[p1Id][p2Id] = displayScore1;
-      scoreMatrix[p2Id][p1Id] = displayScore2;
     }
   });
 
@@ -124,9 +124,9 @@ export function GroupCrossMatrixView({
                   <td className="px-4 py-3 font-semibold text-slate-800">
                     {row.teamName}
                   </td>
-                  {standings.map((otherRow, otherIdx) => {
+                  {standings.map((otherRow) => {
                     const isSelf = row.participantId === otherRow.participantId;
-                    const score = scoreMatrix[row.participantId]?.[otherRow.participantId];
+                    const sets = scoreMatrix[row.participantId]?.[otherRow.participantId];
 
                     return (
                       <td
@@ -137,8 +137,14 @@ export function GroupCrossMatrixView({
                       >
                         {isSelf ? (
                           ''
-                        ) : score ? (
-                          <span className="text-slate-800">{score}</span>
+                        ) : sets ? (
+                          <span className="flex flex-col items-center gap-0.5">
+                            {sets.map((s, i) => (
+                              <span key={i} className="text-slate-800 text-xs leading-tight whitespace-nowrap">
+                                {s}
+                              </span>
+                            ))}
+                          </span>
                         ) : (
                           <span className="text-slate-300">-</span>
                         )}

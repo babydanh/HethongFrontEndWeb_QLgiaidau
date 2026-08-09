@@ -958,9 +958,11 @@ export function useManageState(id: string) {
 
   const handleOpenRoundModal = (stage: BracketStage, roundNumber: number) => {
     setSelectedStage(stage); setSelectedRoundNumber(roundNumber);
-    const rc = stage.roundConfig?.rounds?.[roundNumber.toString()];
-    setStageVenueId(rc?.venue_id || stage.venueId || '');
-    setStageScheduledDate(rc?.scheduled_date ? rc.scheduled_date.substring(0, 16) : (stage.scheduledDate ? stage.scheduledDate.substring(0, 16) : ''));
+    const rc = roundNumber === 0
+      ? stage.roundConfig
+      : stage.roundConfig?.rounds?.[roundNumber.toString()];
+    setStageVenueId(rc?.venue_id || (roundNumber === 0 ? '' : stage.venueId || ''));
+    setStageScheduledDate(rc?.scheduled_date ? rc.scheduled_date.substring(0, 16) : (roundNumber === 0 ? '' : stage.scheduledDate ? stage.scheduledDate.substring(0, 16) : ''));
     setStageNotificationNote(rc?.custom_notes || '');
     const resolvedRules = rc
       ? resolveSportRuleView(rc, sportRuleKind)
@@ -1015,6 +1017,26 @@ export function useManageState(id: string) {
         await fetchDivisions(tournament.id);
         return;
       }
+      
+      if (selectedStage.id === '__draft_gsk_group__') {
+        const selected = divisions.find((division) => division.id === selectedDivisionId);
+        await divisionsApi.updateDivisionConfig(tournament.id, selectedDivisionId, {
+          roundConfig: {
+            ...(selected?.roundConfig ?? {}),
+            ...nextRoundRule, // Override base division config
+            kind: normalizedKind,
+            rounds: currentRounds, // Preserve rounds
+          },
+        });
+        toast.success('Đã lưu cấu hình vòng bảng dự kiến!');
+        setSelectedStage(null);
+        setSelectedRoundNumber(null);
+        await fetchDivisions(tournament.id);
+        return;
+      }
+
+      const isStageOverride = selectedRoundNumber === 0;
+
       await tournamentsApi.updateStage(selectedStage.id, {
         roundConfig: {
           ...buildStageRoundConfigPayload({
@@ -1028,8 +1050,9 @@ export function useManageState(id: string) {
             roundsToPlay,
           }),
           ...selectedStage.roundConfig,
+          ...(isStageOverride ? nextRoundRule : {}), // Apply overrides to top-level if stage override
           kind: normalizedKind,
-          rounds: {
+          rounds: isStageOverride ? currentRounds : {
             ...currentRounds,
             [selectedRoundNumber.toString()]: nextRoundRule,
           },

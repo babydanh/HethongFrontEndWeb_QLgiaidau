@@ -312,6 +312,14 @@ export function BracketTab({
     groups: [],
     roundConfig: divisionRoundConfig ?? null,
   };
+  const gskDraftGroupStage: BracketStage = {
+    id: '__draft_gsk_group__',
+    name: 'Vòng bảng dự kiến',
+    type: 'ROUND_ROBIN',
+    order: 1,
+    groups: [],
+    roundConfig: divisionRoundConfig ?? null,
+  };
   const plannedKnockoutRounds = Array.from({ length: gskKnockoutRoundCount }, (_, idx) => {
     const roundNumber = idx + 1;
     return {
@@ -322,6 +330,16 @@ export function BracketTab({
     };
   });
   const gskConfigurableRounds = knockoutRounds.length > 0 ? knockoutRounds : plannedKnockoutRounds;
+  
+  const groupStage = bracket?.stages?.find(s => s.type === 'ROUND_ROBIN') || gskDraftGroupStage;
+  // Determine if group stage has overrides
+  // We consider it has an override if its roundConfig has fields like max_sets or scoring_type
+  // that means it's not just an empty object or null.
+  // Wait, if it's the draft stage, roundConfig is divisionRoundConfig. We should check if divisionRoundConfig has overrides?
+  // Actually, divisionRoundConfig IS the base. The Group Stage override is stored in the Group Stage's roundConfig.
+  // For Draft, we can't easily distinguish Group Stage override from Division default unless we inspect the fields.
+  // To keep it simple, we just check if it's a real stage and its roundConfig exists and has max_sets.
+  const hasGroupStageOverride = groupStage.id !== '__draft_gsk_group__' && groupStage.roundConfig != null && groupStage.roundConfig.max_sets != null;
 
   const participantCount = useMemo(() => {
     return (participants as Array<Record<string, unknown>>).filter(
@@ -754,24 +772,15 @@ export function BracketTab({
                       </div>
                     </div>
 
-                    <div className="rounded-lg bg-white/60 p-3 border border-blue-100/50 flex flex-wrap gap-2 text-xs font-semibold text-slate-700">
-                      <span className="bg-white px-2 py-1 rounded border border-slate-200 shadow-sm flex items-center gap-1.5">
-                        <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-                        Thắng {setsToWin} set
-                      </span>
-                      <span className="bg-white px-2 py-1 rounded border border-slate-200 shadow-sm flex items-center gap-1.5">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                        {pointsPerSet} điểm/set
-                      </span>
-                      {winByTwo && (
-                        <span className="bg-white px-2 py-1 rounded border border-slate-200 shadow-sm flex items-center gap-1.5">
-                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                          Cách biệt 2 điểm (tối đa {maxDeucePoints})
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-[11px] text-slate-500 italic mt-2">
-                      * Đang sử dụng <strong className="font-semibold text-slate-700">Preset theo môn</strong> ở cột bên trái làm chuẩn.
+                    <div className="pt-2 border-t border-blue-100/50 flex items-center justify-between gap-4">
+                      <div>
+                        <p className="text-[11px] text-slate-500 font-semibold">
+                          {hasGroupStageOverride ? `${groupStage.roundConfig?.max_sets === 1 ? 1 : groupStage.roundConfig?.max_sets === 3 ? 2 : 3} set thắng, ${groupStage.roundConfig?.points_per_set || pointsPerSet} điểm/set` : 'Kế thừa luật mặc định của hình thức'}
+                        </p>
+                      </div>
+                      <Button variant="outline" size="sm" onClick={() => handleOpenRoundModal?.(groupStage, 0)} className="border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold h-8">
+                        Cấu hình vòng
+                      </Button>
                     </div>
                   </div>
 

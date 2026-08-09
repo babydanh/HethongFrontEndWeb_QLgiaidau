@@ -42,6 +42,9 @@ interface Props {
   fallbackSportRuleKind?: SportRuleKind;
   roundConfig?: StageRoundConfig | null;
   hideStandings?: boolean;
+  // Controlled round navigation (from parent for sync with cross table)
+  activeRound?: number | null;
+  onRoundChange?: (round: number) => void;
 }
 
 export function RoundRobinView({
@@ -55,6 +58,8 @@ export function RoundRobinView({
   fallbackSportRuleKind,
   roundConfig,
   hideStandings = false,
+  activeRound: controlledActiveRound,
+  onRoundChange,
 }: Props) {
   const sampleMatch = matches.find((match) => !match.isBye) ?? matches[0];
   const effectiveRuleKind = sampleMatch
@@ -87,9 +92,15 @@ export function RoundRobinView({
     .map(Number)
     .sort((a, b) => a - b);
   const [selectedRound, setSelectedRound] = useState<number | null>(null);
-  const activeRound = selectedRound != null && rounds.includes(selectedRound)
-    ? selectedRound
-    : rounds[0] ?? null;
+  // If controlled (parent provides activeRound), use that; else use internal state
+  const isControlled = controlledActiveRound !== undefined;
+  const activeRound = isControlled
+    ? (controlledActiveRound != null && rounds.includes(controlledActiveRound) ? controlledActiveRound : rounds[0] ?? null)
+    : (selectedRound != null && rounds.includes(selectedRound) ? selectedRound : rounds[0] ?? null);
+  const setActiveRound = (r: number) => {
+    if (isControlled) onRoundChange?.(r);
+    else setSelectedRound(r);
+  };
   const visibleMatches = activeRound == null
     ? matches.filter((m) => !m.isBye)
     : matches.filter((m) => !m.isBye && m.roundNumber === activeRound);
@@ -316,7 +327,7 @@ export function RoundRobinView({
               type="button"
               onClick={() => {
                 const idx = rounds.indexOf(activeRound!);
-                if (idx > 0) setSelectedRound(rounds[idx - 1]);
+                if (idx > 0) setActiveRound(rounds[idx - 1]);
               }}
               disabled={activeRound === rounds[0]}
               className="rounded p-1 text-slate-500 hover:bg-slate-200 disabled:opacity-30 transition-colors cursor-pointer"
@@ -330,7 +341,7 @@ export function RoundRobinView({
               type="button"
               onClick={() => {
                 const idx = rounds.indexOf(activeRound!);
-                if (idx !== -1 && idx < rounds.length - 1) setSelectedRound(rounds[idx + 1]);
+                if (idx !== -1 && idx < rounds.length - 1) setActiveRound(rounds[idx + 1]);
               }}
               disabled={activeRound === rounds[rounds.length - 1]}
               className="rounded p-1 text-slate-500 hover:bg-slate-200 disabled:opacity-30 transition-colors cursor-pointer"

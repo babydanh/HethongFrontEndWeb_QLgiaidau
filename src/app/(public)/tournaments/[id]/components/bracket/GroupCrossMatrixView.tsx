@@ -12,6 +12,7 @@ interface Props {
   activeLeg?: number;
   legCount?: number;
   onLegChange?: (leg: number) => void;
+  roundNavigation?: React.ReactNode;
 }
 
 export function GroupCrossMatrixView({ 
@@ -19,7 +20,8 @@ export function GroupCrossMatrixView({
   groupName = 'Group A',
   activeLeg = 1,
   legCount = 1,
-  onLegChange
+  onLegChange,
+  roundNavigation,
 }: Props) {
   const { standings } = calculateStandings(matches, { tiebreakerMode: 'split' });
 
@@ -92,6 +94,7 @@ export function GroupCrossMatrixView({
             </button>
           </div>
         )}
+        {roundNavigation}
       </div>
 
       <div className="overflow-x-auto">

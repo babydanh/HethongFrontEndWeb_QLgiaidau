@@ -401,13 +401,26 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <div><label className="text-xs font-bold text-slate-500">Sân mặc định cho vòng này</label>
-                    <select value={s.stageVenueId} onChange={e => s.setStageVenueId(e.target.value)} className="w-full border rounded-lg p-2 text-sm">
-                      <option value="">Chưa chọn sân mặc định</option>
+                  <div>
+                    <label className="text-xs font-bold text-slate-500">Sân / Địa điểm mặc định cho vòng này</label>
+                    <input
+                      list="stage-venue-list"
+                      type="text"
+                      value={s.venues.find(v => v.id === s.stageVenueId)?.name || s.stageVenueId}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        const matched = s.venues.find(v => v.name === val || v.id === val);
+                        s.setStageVenueId(matched ? matched.id : val);
+                      }}
+                      placeholder="Chọn sân từ tab Địa điểm hoặc nhập tay..."
+                      className="w-full border border-slate-300 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <datalist id="stage-venue-list">
                       {s.venues.map((venue) => (
-                        <option key={venue.id} value={venue.id}>{venue.name}</option>
+                        <option key={venue.id} value={venue.name} />
                       ))}
-                    </select></div>
+                    </datalist>
+                  </div>
                   <div><label className="text-xs font-bold text-slate-500">Giờ mặc định cho vòng này</label>
                     <DateTimePicker value={s.stageScheduledDate} onChange={s.setStageScheduledDate} /></div>
                   <div><label className="text-xs font-bold text-slate-500">Số set / game tối đa</label>

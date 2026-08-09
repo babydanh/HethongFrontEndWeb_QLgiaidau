@@ -18,10 +18,11 @@ import {
   isParticipantPendingPartner,
   isParticipantReadyForNextStep,
 } from '@/utils/tournament-display';
-import { Copy, Check, Loader2, QrCode, Users, CreditCard, CheckCircle, AlertTriangle, ArrowRight, Trash2, Search, UserMinus, X } from 'lucide-react';
+import { Copy, Check, Loader2, QrCode, Users, CreditCard, CheckCircle, AlertTriangle, ArrowRight, Trash2, Search, UserMinus, X, Share2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { QRCodeSVG } from 'qrcode.react';
 import { getRegistrationModeUi } from '../../../registrationMode';
+import ShareModal from '@/components/common/ShareModal';
 
 interface Props {
   tournament: Tournament;
@@ -58,6 +59,7 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [participant, setParticipant] = useState<RegistrationParticipant | null>(null);
   const [copied, setCopied] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isPolling, setIsPolling] = useState(false);
   const [isWithdrawing, setIsWithdrawing] = useState(false);
 
@@ -624,6 +626,14 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
                 {copied ? <Check className="w-4 h-4 text-blue-600" /> : <Copy className="w-4 h-4" />}
                 {copied ? 'Đã copy' : 'Sao chép'}
               </Button>
+              <Button
+                onClick={() => setIsShareModalOpen(true)}
+                variant="outline"
+                className="border-blue-200 hover:bg-blue-50 text-blue-700 shrink-0 flex items-center gap-1.5 font-bold h-11 mt-1"
+              >
+                <Share2 className="w-4 h-4" />
+                Chia sẻ
+              </Button>
             </div>
           </div>
 
@@ -654,6 +664,12 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
               </Button>
             </div>
           </div>
+          <ShareModal
+            isOpen={isShareModalOpen}
+            onClose={() => setIsShareModalOpen(false)}
+            shareUrl={partnerLink}
+            title={`Tham gia đội ${participant?.teamName || ''} - ${tournament.name}`}
+          />
         </div>
       )}
 

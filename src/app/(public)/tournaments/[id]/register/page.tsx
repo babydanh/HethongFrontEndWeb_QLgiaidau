@@ -24,6 +24,7 @@ import { getErrorMessage } from '@/utils/error';
 import { trimAndNormalizeSpaces } from '@/utils/string';
 import { formatDate, formatCurrency } from '@/utils/format';
 import { getSportLogo } from '@/constants/sports';
+import { MatchTypeDB } from '@/types/tournament';
 import toast from 'react-hot-toast';
 import DoublesRegistrationFlow from './components/DoublesRegistrationFlow';
 import { divisionsApi } from '@/features/tournaments/api';
@@ -90,6 +91,20 @@ const getDivisionMatchLabel = (matchType?: string | null, genderRestriction?: st
   return 'Chưa rõ';
 };
 
+const normalizeMatchType = (value?: string | null): Division['matchType'] | undefined => {
+  const normalized = value?.trim().toUpperCase();
+  if (normalized === 'SINGLES' || normalized === 'SINGLE' || normalized === 'ĐƠN') {
+    return MatchTypeDB.SINGLES;
+  }
+  if (normalized === 'MIXED_DOUBLES' || normalized === 'MIXED-DOUBLES' || normalized === 'ĐÔI NAM NỮ') {
+    return MatchTypeDB.MIXED_DOUBLES;
+  }
+  if (normalized === 'DOUBLES' || normalized === 'DOUBLE' || normalized === 'ĐÔI') {
+    return MatchTypeDB.DOUBLES;
+  }
+  return undefined;
+};
+
 const getDivisionBracketLabel = (bracketType?: string | null) => {
   if (bracketType === 'SINGLE_ELIMINATION') {
     return 'Loại trực tiếp';
@@ -154,7 +169,8 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
   const normalizeDivision = (division: NormalizableDivision): Division => ({
     id: division.id,
     name: division.name,
-    matchType: (division.matchType || 'DOUBLES') as Division['matchType'],
+    // Do not default missing API data to doubles; the UI will show "Chưa rõ".
+    matchType: normalizeMatchType(division.matchType) as Division['matchType'],
     genderRestriction: (division.genderRestriction ?? null) as Division['genderRestriction'],
     status: division.status || 'DRAFT',
     categoryId: division.categoryId,
@@ -770,7 +786,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                         onClick={() => setSelectedDivisionId(div.id)}
                         disabled={isSubmitting}
                         className={cn(
-                          'relative min-h-[104px] w-full cursor-pointer rounded-lg border px-5 py-3 text-xs font-bold transition-all',
+                          'relative min-h-[136px] w-full cursor-pointer rounded-lg border px-4 py-3 text-xs font-bold transition-all',
                           'flex flex-col items-center justify-center gap-1',
                           isActive
                             ? 'border-transparent text-white shadow-md'
@@ -790,8 +806,16 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                             {matchLabel}
                           </span>
                           <span className={`text-[9px] font-bold ${isActive ? 'text-blue-200' : 'text-slate-400'}`}>
-                            {bracketLabel} • {participantCount} hồ sơ tham gia
+                            {bracketLabel} • {participantCount}{div.maxParticipants ? ` / ${div.maxParticipants}` : ''} hồ sơ
                           </span>
+                          <span className={`text-[9px] font-semibold ${isActive ? 'text-blue-100' : 'text-slate-500'}`}>
+                            Lệ phí: {Number(div.entryFee ?? 0) > 0 ? formatCurrency(Number(div.entryFee)) : 'Miễn phí'}
+                          </span>
+                          {(div.minElo != null || div.maxElo != null) && (
+                            <span className={`text-[9px] font-semibold ${isActive ? 'text-blue-100' : 'text-slate-500'}`}>
+                              ELO: {div.minElo ?? 0} - {div.maxElo ?? 'không giới hạn'}
+                            </span>
+                          )}
                         </span>
                       </button>
                     );
@@ -876,12 +900,12 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                       <CheckCircle className="w-6 h-6" />
                     </div>
                     <h3 className="text-lg font-bold text-slate-900 font-bold">
-                      {(participant.teamStatus === 'APPROVED' || participant.teamStatus === 'COMPLETE')
+                      {participant.teamStatus === 'COMPLETE'
                         ? 'Đăng ký thành công! / BTC đã duyệt'
                         : (tournament?.tournamentConfig?.registrationMode === 'APPROVAL') ? 'Đã gửi yêu cầu tham gia!' : 'Đăng ký tham gia thành công!'}
                     </h3>
                     <p className="text-slate-500 text-xs max-w-sm mx-auto">
-                      {(participant.teamStatus === 'APPROVED' || participant.teamStatus === 'COMPLETE')
+                      {participant.teamStatus === 'COMPLETE'
                         ? 'Yêu cầu tham gia của bạn đã được xét duyệt thành công.'
                         : (tournament?.tournamentConfig?.registrationMode === 'APPROVAL')
                           ? 'Yêu cầu tham gia của bạn đang chờ BTC duyệt.'
@@ -914,7 +938,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                           <Button
                             variant="outline"
                             onClick={handleWithdrawClick}
-                            disabled={isWithdrawing || participant.teamStatus === 'APPROVED' || participant.teamStatus === 'COMPLETE'}
+                            disabled={isWithdrawing}
                             className="flex-1 border-rose-200 hover:bg-rose-50 text-rose-600 font-bold py-3 text-sm flex items-center justify-center gap-1.5 animate-all h-12"
                           >
                             <Trash2 className="w-4 h-4" /> Hủy & Rút
@@ -935,7 +959,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                           <Button
                             variant="outline"
                             onClick={handleWithdrawClick}
-                            disabled={isWithdrawing || participant.teamStatus === 'APPROVED' || participant.teamStatus === 'COMPLETE'}
+                            disabled={isWithdrawing}
                             className="w-full border-rose-200 hover:bg-rose-50 text-rose-600 font-bold py-2.5 text-sm flex items-center justify-center gap-1.5 h-11"
                           >
                             <Trash2 className="w-4 h-4" /> Hủy & Rút lui
@@ -959,7 +983,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                         <Button
                           variant="outline"
                           onClick={handleWithdrawClick}
-                          disabled={isWithdrawing || participant.teamStatus === 'APPROVED' || participant.teamStatus === 'COMPLETE'}
+                          disabled={isWithdrawing}
                           className="flex-1 border-rose-200 hover:bg-rose-50 text-rose-600 font-bold py-3 text-sm flex items-center justify-center gap-1.5 h-12"
                         >
                           <Trash2 className="w-4 h-4" /> Hủy & Rút lui

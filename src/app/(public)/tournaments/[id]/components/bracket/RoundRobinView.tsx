@@ -145,8 +145,7 @@ export function RoundRobinView({
               </li>
             </ol>
             <p className="mt-2 pt-2 border-t border-blue-200 text-blue-700">
-              <b>Set T/B</b> = Set thắng - Set thua. <b>Set +/-</b> = (Thắng - Thua).<br />
-              <b>{statLabels.aggregateLabel} T/B</b> = {statLabels.aggregateLabel} ghi - {statLabels.aggregateLabel.toLowerCase()} mất. <b>{statLabels.aggregateLabel} +/-</b> = (Ghi - Mất).<br />
+              <b>Hiệu số</b> = Tổng {statLabels.aggregateLabel.toLowerCase()} ghi - tổng {statLabels.aggregateLabel.toLowerCase()} mất ({statLabels.aggregateLabel} +/-) từ mọi set đã nhập.<br />
               <span className="text-blue-600">{statLabels.aggregateExample}</span>
             </p>
           </div>
@@ -162,8 +161,7 @@ export function RoundRobinView({
                 <th className="px-3 py-3 text-center text-blue-600 w-9">T</th>
                 <th className="px-3 py-3 text-center text-rose-500 w-9">B</th>
                 <th className="px-3 py-3 text-center text-blue-600 bg-blue-50/50 w-14">Điểm</th>
-                <th className="px-3 py-3 text-center min-w-[72px]">HS set</th>
-                <th className="px-3 py-3 text-center min-w-[80px]">HS điểm</th>
+                <th className="px-3 py-3 text-center min-w-[80px]">Hiệu số</th>
                 <th className="px-3 py-3 text-center w-10" />
               </tr>
             </thead>
@@ -226,10 +224,6 @@ export function RoundRobinView({
                     </td>
                     <td className="px-3 py-3 text-center font-bold text-blue-700 bg-blue-50/20">
                       {row.points}
-                    </td>
-                    <td className={'px-3 py-3 text-center font-semibold ' + (row.setsWon - row.setsLost > 0 ? 'text-blue-600' : row.setsWon - row.setsLost < 0 ? 'text-rose-500' : 'text-slate-500')}>
-                      {row.setsWon - row.setsLost >= 0 ? '+' : ''}
-                      {row.setsWon - row.setsLost}
                     </td>
                     <td className={'px-3 py-3 text-center font-semibold ' + (row.pointsFor - row.pointsAgainst > 0 ? 'text-blue-600' : row.pointsFor - row.pointsAgainst < 0 ? 'text-rose-500' : 'text-slate-500')}>
                       {row.pointsFor - row.pointsAgainst >= 0 ? '+' : ''}

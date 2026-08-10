@@ -21,27 +21,23 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
   const pid = typeof resolvedSearchParams.pid === 'string' ? resolvedSearchParams.pid : null;
   const token = typeof resolvedSearchParams.token === 'string' ? resolvedSearchParams.token : null;
 
-  const tournament = await getTournament(id);
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://giaidau.vnvar.com/api/v1';
+
+  const [tournament, participantsData] = await Promise.all([
+    getTournament(id),
+    pid
+      ? fetch(`${baseUrl}/tournaments/${id}/participants`, { next: { revalidate: 60 } })
+          .then((res) => (res.ok ? res.json() : null))
+          .catch(() => null)
+      : Promise.resolve(null),
+  ]);
   
   let teamName = '';
-  
-  if (pid) {
-    // Attempt to fetch participants to get team name
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://giaidau.vnvar.com/api/v1';
-    try {
-      const response = await fetch(`${baseUrl}/tournaments/${id}/participants`, {
-        next: { revalidate: 60 }
-      });
-      if (response.ok) {
-        const res = await response.json();
-        const participants: ParticipantItem[] = res.data || [];
-        const team = participants.find((p) => p.id === pid);
-        if (team && team.teamName) {
-          teamName = team.teamName;
-        }
-      }
-    } catch (e) {
-      console.error('Failed to fetch participants for metadata:', e);
+  if (participantsData?.data && Array.isArray(participantsData.data)) {
+    const participants: ParticipantItem[] = participantsData.data;
+    const team = participants.find((p) => p.id === pid);
+    if (team && team.teamName) {
+      teamName = team.teamName;
     }
   }
 

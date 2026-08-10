@@ -8,6 +8,11 @@ interface PageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
+interface ParticipantItem {
+  id: string;
+  teamName?: string;
+}
+
 export async function generateMetadata({ params, searchParams }: PageProps): Promise<Metadata> {
   const resolvedParams = await params;
   const resolvedSearchParams = await searchParams;
@@ -29,8 +34,8 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
       });
       if (response.ok) {
         const res = await response.json();
-        const participants = res.data || [];
-        const team = participants.find((p: any) => p.id === pid);
+        const participants: ParticipantItem[] = res.data || [];
+        const team = participants.find((p) => p.id === pid);
         if (team && team.teamName) {
           teamName = team.teamName;
         }

@@ -51,7 +51,7 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
       : cleanDesc || `Thông tin chi tiết và lịch thi đấu giải đấu ${tournament.name} trên hệ thống VNDC Sport. Đăng ký tham gia ngay!`;
       
     const imageUrl = tournament.bannerUrl || tournament.logoUrl || 'https://giaidau.vnvar.com/vndcsport.png';
-    const canonicalUrl = `https://giaidau.vnvar.com/tournaments/${id}/join-team?pid=${pid}&token=${token}`;
+    const canonicalUrl = `https://giaidau.vnvar.com/tournaments/${id}/join-team${pid ? `?pid=${pid}&token=${token ?? ''}` : ''}`;
 
     return {
       title,
@@ -63,6 +63,7 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
         title,
         description,
         url: canonicalUrl,
+        siteName: 'VNDC Sport',
         images: [{ url: imageUrl }],
         type: 'website',
       },
@@ -75,9 +76,27 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
     };
   }
 
+  const fallbackTitle = 'Mời tham gia đội thi đấu | VNDC Sport';
+  const fallbackDesc = 'Bạn nhận được lời mời tham gia đội thi đấu giải đấu tại VNDC Sport. Nhấn để xem chi tiết và xác nhận!';
+  const fallbackImage = 'https://giaidau.vnvar.com/vndcsport.png';
+
   return {
-    title: 'Tham gia đội | VNDC Sport',
-    description: 'Chấp nhận lời mời tham gia đội thi đấu tại VNDC Sport.',
+    title: fallbackTitle,
+    description: fallbackDesc,
+    openGraph: {
+      title: fallbackTitle,
+      description: fallbackDesc,
+      url: `https://giaidau.vnvar.com/tournaments/${id}/join-team`,
+      siteName: 'VNDC Sport',
+      images: [{ url: fallbackImage }],
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: fallbackTitle,
+      description: fallbackDesc,
+      images: [fallbackImage],
+    },
   };
 }
 

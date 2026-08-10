@@ -71,6 +71,7 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
   const [inviteLater, setInviteLater] = useState(false);
   const [rankingConsent, setRankingConsent] = useState(false);
   const [timeLeft, setTimeLeft] = useState<string>('');
+  const [isCheckingInitial, setIsCheckingInitial] = useState(true);
 
   useEffect(() => {
     if (step !== 2 || !participant?.partnerInviteExpiresAt) {
@@ -130,6 +131,8 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
         }
       } catch (err) {
         console.error('Lỗi kiểm tra đăng ký:', err);
+      } finally {
+        setIsCheckingInitial(false);
       }
     };
     checkRegistration();
@@ -376,6 +379,15 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
     toast.success('Đã sao chép link mời đồng đội!');
     setTimeout(() => setCopied(false), 2000);
   };
+
+  if (isCheckingInitial) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 space-y-4">
+        <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+        <p className="text-sm font-semibold text-slate-500 animate-pulse">Đang tải thông tin đăng ký...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">

@@ -421,7 +421,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                     ? 'bg-amber-50 text-amber-700 border-amber-300'
                     : 'bg-emerald-50 text-emerald-700 border-emerald-300'
                 }`}>
-                  {activeTournament.isRanked ? '⭐ GIẢI XẾP HẠNG (ELO)' : '🎾 GIẢI PHONG TRÀO'}
+                  {activeTournament.isRanked ? '⭐ GIẢI XẾP HẠNG' : '🎾 GIẢI PHONG TRÀO'}
                 </span>
               </div>
               

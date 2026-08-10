@@ -875,9 +875,17 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                     <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 mb-2">
                       <CheckCircle className="w-6 h-6" />
                     </div>
-                    <h3 className="text-lg font-bold text-slate-900 font-bold">Đăng ký tham gia thành công!</h3>
+                    <h3 className="text-lg font-bold text-slate-900 font-bold">
+                      {(participant.teamStatus === 'APPROVED' || participant.teamStatus === 'COMPLETE')
+                        ? 'Đăng ký thành công! / BTC đã duyệt'
+                        : (tournament?.tournamentConfig?.registrationMode === 'APPROVAL') ? 'Đã gửi yêu cầu tham gia!' : 'Đăng ký tham gia thành công!'}
+                    </h3>
                     <p className="text-slate-500 text-xs max-w-sm mx-auto">
-                      Bạn đã đăng ký thi đấu đơn ở nội dung: <strong className="text-slate-700">{selectedDivision?.name}</strong>.
+                      {(participant.teamStatus === 'APPROVED' || participant.teamStatus === 'COMPLETE')
+                        ? 'Yêu cầu tham gia của bạn đã được xét duyệt thành công.'
+                        : (tournament?.tournamentConfig?.registrationMode === 'APPROVAL')
+                          ? 'Yêu cầu tham gia của bạn đang chờ BTC duyệt.'
+                          : <>Bạn đã đăng ký thi đấu đơn ở nội dung: <strong className="text-slate-700">{selectedDivision?.name}</strong>.</>}
                     </p>
                   </div>
 
@@ -906,7 +914,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                           <Button
                             variant="outline"
                             onClick={handleWithdrawClick}
-                            disabled={isWithdrawing}
+                            disabled={isWithdrawing || participant.teamStatus === 'APPROVED' || participant.teamStatus === 'COMPLETE'}
                             className="flex-1 border-rose-200 hover:bg-rose-50 text-rose-600 font-bold py-3 text-sm flex items-center justify-center gap-1.5 animate-all h-12"
                           >
                             <Trash2 className="w-4 h-4" /> Hủy & Rút
@@ -927,7 +935,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                           <Button
                             variant="outline"
                             onClick={handleWithdrawClick}
-                            disabled={isWithdrawing}
+                            disabled={isWithdrawing || participant.teamStatus === 'APPROVED' || participant.teamStatus === 'COMPLETE'}
                             className="w-full border-rose-200 hover:bg-rose-50 text-rose-600 font-bold py-2.5 text-sm flex items-center justify-center gap-1.5 h-11"
                           >
                             <Trash2 className="w-4 h-4" /> Hủy & Rút lui
@@ -951,7 +959,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                         <Button
                           variant="outline"
                           onClick={handleWithdrawClick}
-                          disabled={isWithdrawing}
+                          disabled={isWithdrawing || participant.teamStatus === 'APPROVED' || participant.teamStatus === 'COMPLETE'}
                           className="flex-1 border-rose-200 hover:bg-rose-50 text-rose-600 font-bold py-3 text-sm flex items-center justify-center gap-1.5 h-12"
                         >
                           <Trash2 className="w-4 h-4" /> Hủy & Rút lui

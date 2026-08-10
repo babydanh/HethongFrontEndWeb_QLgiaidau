@@ -108,7 +108,8 @@ export default function CommunityDetailPage() {
       const res = await communitiesApi.getCommunityById(id);
       const data = (res as { data?: Community })?.data ?? (res as unknown as Community);
       setCommunity(data);
-    } catch (error: any) {
+    } catch (e) {
+      const error = e as any;
       console.error('Failed to fetch community details', error);
       if (error?.response?.status === 403) {
         setFetchError('Cộng đồng này đã bị vô hiệu hoá bởi quản trị viên.');
@@ -207,7 +208,8 @@ export default function CommunityDetailPage() {
         toast.success('Đã tham gia câu lạc bộ thành công!');
         fetchMembership();
         fetchCommunity();
-      } catch (error: any) {
+      } catch (e) {
+        const error = e as any;
         console.error('Failed to join community', error);
         if (error?.response?.status === 403) {
           toast.error('Câu lạc bộ này ở chế độ Chỉ Mời. Bạn không thể tự tham gia.');

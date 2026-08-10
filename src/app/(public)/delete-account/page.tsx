@@ -48,7 +48,7 @@ export default function DeleteAccountPage() {
                   <a href="mailto:support@vnvar.com" className="text-blue-600 hover:text-blue-700 underline underline-offset-2">
                     support@vnvar.com
                   </a>
-                  {' '}với tiêu đề <span className="text-gray-700">"Yêu cầu xóa tài khoản"</span>.
+                  {' '}với tiêu đề <span className="text-gray-700">&quot;Yêu cầu xóa tài khoản&quot;</span>.
                 </p>
               </div>
             </div>
@@ -72,7 +72,7 @@ export default function DeleteAccountPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
               </svg>
               <span className="text-gray-600">
-                <span className="font-medium text-gray-900">Giữ lại ẩn danh:</span> Lịch sử thi đấu, kết quả giải, điểm Elo được giữ nhưng không gắn với thông tin cá nhân (hiển thị "Người chơi đã xóa").
+                <span className="font-medium text-gray-900">Giữ lại ẩn danh:</span> Lịch sử thi đấu, kết quả giải, điểm Elo được giữ nhưng không gắn với thông tin cá nhân (hiển thị &quot;Người chơi đã xóa&quot;).
               </span>
             </div>
           </div>

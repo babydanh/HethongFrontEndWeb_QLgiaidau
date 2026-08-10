@@ -772,9 +772,20 @@ export function useManageState(id: string) {
   };
 
   const handlePublish = async () => {
-    try { setIsLoading(true); await tournamentsApi.publishTournament(id); toast.success('Giải đấu đã được công bố!'); await fetchTournamentData(); }
-    catch (err) { toast.error(getErrorMessage(err)); }
-    finally { setIsLoading(false); }
+    try {
+      setIsLoading(true);
+      if (divisions && divisions.length > 0) {
+        await Promise.all(divisions.map((d) => tournamentsApi.publishTournament(d.id)));
+      } else {
+        await tournamentsApi.publishTournament(id);
+      }
+      toast.success('Giải đấu đã được công bố!');
+      await fetchTournamentData();
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handlePayPublishFee = async () => {

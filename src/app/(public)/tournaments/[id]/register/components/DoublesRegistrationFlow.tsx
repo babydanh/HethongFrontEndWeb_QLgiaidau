@@ -663,7 +663,7 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
               <Button
                 variant="outline"
                 onClick={handleWithdrawClick}
-                disabled={isWithdrawing}
+                disabled={isWithdrawing || participant.teamStatus === 'APPROVED' || participant.teamStatus === 'COMPLETE'}
                 className="flex-1 text-rose-600 border-rose-100 hover:bg-rose-50 bg-white text-xs font-bold flex items-center justify-center gap-1.5"
               >
                 <Trash2 className="w-3.5 h-3.5" /> {"Hủy & Rút lui"}
@@ -687,12 +687,16 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
               <CheckCircle className="w-6 h-6" />
             </div>
             <h3 className="text-lg font-bold text-slate-900">
-              {isApprovalMode ? 'Đã gửi yêu cầu tham gia!' : 'Đăng ký đội thành công!'}
+              {(participant.teamStatus === 'APPROVED' || participant.teamStatus === 'COMPLETE')
+                ? 'Đăng ký thành công! / BTC đã duyệt'
+                : isApprovalMode ? 'Đã gửi yêu cầu tham gia!' : 'Đăng ký đội thành công!'}
             </h3>
             <p className="text-slate-500 text-xs max-w-sm mx-auto">
-              {isApprovalMode
-                ? 'Đội của bạn đã đủ thành viên và đang chờ BTC duyệt.'
-                : 'Đội của bạn đã tập hợp đủ 2 thành viên thi đấu chính thức.'}
+              {(participant.teamStatus === 'APPROVED' || participant.teamStatus === 'COMPLETE')
+                ? 'Đội của bạn đã được xét duyệt thành công.'
+                : isApprovalMode
+                  ? 'Đội của bạn đã đủ thành viên và đang chờ BTC duyệt.'
+                  : 'Đội của bạn đã tập hợp đủ 2 thành viên thi đấu chính thức.'}
             </p>
           </div>
 
@@ -754,7 +758,7 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
                   <Button
                     variant="outline"
                     onClick={handleWithdrawClick}
-                    disabled={isWithdrawing}
+                    disabled={isWithdrawing || participant.teamStatus === 'APPROVED' || participant.teamStatus === 'COMPLETE'}
                     className="flex-1 border-rose-200 hover:bg-rose-50 text-rose-600 font-bold py-3 text-sm flex items-center justify-center gap-1.5"
                   >
                     <Trash2 className="w-4 h-4" /> Hủy & Rút lui
@@ -787,7 +791,7 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
                 <Button
                   variant="outline"
                   onClick={handleWithdrawClick}
-                  disabled={isWithdrawing}
+                  disabled={isWithdrawing || participant.teamStatus === 'APPROVED' || participant.teamStatus === 'COMPLETE'}
                   className="flex-1 border-rose-200 hover:bg-rose-50 text-rose-600 font-bold py-3 text-sm flex items-center justify-center gap-1.5"
                 >
                   <Trash2 className="w-4 h-4" /> {"Hủy & Rút lui"}

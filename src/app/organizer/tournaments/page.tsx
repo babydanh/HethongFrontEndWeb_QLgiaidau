@@ -262,7 +262,9 @@ export default function MyTournamentsPage() {
                     {/* Status & Action Badges */}
                     <div className="absolute top-3 right-3 flex flex-col items-end gap-1.5 z-10">
                       <div className="flex items-center gap-1.5">
-                        {firstDivision && getStatusBadge(firstDivision.status)}
+                        {firstDivision && getStatusBadge(
+                          divisions.find((d: Tournament) => d.status !== 'DRAFT')?.status || firstDivision.status
+                        )}
                         <span className="px-2 py-0.5 bg-blue-600 text-white rounded-full text-[10px] font-bold shadow-sm whitespace-nowrap">
                           {divisions.length}
                         </span>

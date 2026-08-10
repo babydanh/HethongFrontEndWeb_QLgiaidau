@@ -194,7 +194,7 @@ export function OpsParticipants({
               ) : (
                 filteredParticipants.map((participant) => {
                   const isBusy = activeParticipantActionId === participant.id;
-                  const canKick = participant.teamStatus !== 'KICKED' && participant.teamStatus !== 'WITHDRAWN';
+                  const canKick = participant.teamStatus !== 'KICKED' && participant.teamStatus !== 'WITHDRAWN' && participant.teamStatus !== 'APPROVED' && participant.teamStatus !== 'COMPLETE';
 
                   return (
                     <tr key={participant.id}>

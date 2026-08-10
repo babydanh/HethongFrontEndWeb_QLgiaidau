@@ -28,11 +28,15 @@ export function ReportReviewModal({ report, open, isModeratorOnly, onOpenChange,
   const [note, setNote] = useState('');
   const [processing, setProcessing] = useState<ReviewAction | null>(null);
 
-  useEffect(() => {
-    if (!report) return;
-    setCategory(report.category);
-    setNote(report.resolutionNote ?? '');
-  }, [report]);
+  const [prevReportId, setPrevReportId] = useState<string | undefined>(report?.id);
+
+  if (report?.id !== prevReportId) {
+    setPrevReportId(report?.id);
+    if (report) {
+      setCategory(report.category);
+      setNote(report.resolutionNote ?? '');
+    }
+  }
 
   if (!report) return null;
   const terminal = report.status === 'RESOLVED' || report.status === 'REJECTED';

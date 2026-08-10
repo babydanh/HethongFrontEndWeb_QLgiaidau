@@ -220,7 +220,11 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
         const divisionsRes = await divisionsApi.getDivisions(tournament.id);
         const requestedDivisionId = searchParams.get('divisionId');
         if (divisionsRes.data && divisionsRes.data.length > 0) {
-          setDivisionsList(divisionsRes.data);
+          const divisionsWithCount = divisionsRes.data.map(d => {
+            const original = tournament?.divisions?.find(td => td.id === d.id);
+            return { ...d, _count: original?._count || d._count };
+          });
+          setDivisionsList(divisionsWithCount);
           const preferredDivision = requestedDivisionId
             ? divisionsRes.data.find((division) => division.id === requestedDivisionId)
             : null;

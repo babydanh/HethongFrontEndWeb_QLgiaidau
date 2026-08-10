@@ -1,7 +1,7 @@
 'use client';
 
-import { FileText, ShieldAlert, ArrowLeft } from 'lucide-react';
-import Link from 'next/navigation';
+import { FileText, ShieldAlert } from 'lucide-react';
+import Link from 'next/link';
 
 export default function TermsPage() {
   return (
@@ -98,12 +98,12 @@ export default function TermsPage() {
         {/* Footer Link */}
         <div className="p-6 md:p-8 border-t border-slate-100 bg-slate-50/50 flex justify-between items-center text-xs">
           <span className="text-slate-450 font-bold">© 2026 VNDC Sport. Bảo lưu mọi quyền.</span>
-          <a
+          <Link
             href="/"
             className="text-blue-650 hover:text-blue-700 font-bold flex items-center gap-1"
           >
             Quay lại trang chủ
-          </a>
+          </Link>
         </div>
       </div>
     </div>

@@ -310,6 +310,9 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
         if (regRes.data?.registered && normalizedParticipant) {
           setParticipant(normalizedParticipant);
           setIsRegistered(true);
+          if (normalizedParticipant.tournamentDivisionId && normalizedParticipant.tournamentDivisionId !== selectedDivisionId) {
+            setSelectedDivisionId(normalizedParticipant.tournamentDivisionId);
+          }
         } else {
           setParticipant(null);
           setIsRegistered(false);

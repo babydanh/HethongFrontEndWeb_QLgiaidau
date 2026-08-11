@@ -1133,9 +1133,14 @@ export default function HomePage() {
                               <TournamentLogoAvatar src={group.logoUrl} alt={group.name} />
                             </div>
                             <div className="min-w-0">
-                              <span className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded inline-block mb-0.5 ${isRanked ? 'text-sky-700 bg-sky-50' : 'text-slate-600 bg-slate-100'}`}>
-                                {isRanked ? 'XẾP HẠNG' : 'PHONG TRÀO'}
-                              </span>
+                              <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
+                                <span className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded ${isRanked ? 'text-sky-700 bg-sky-50' : 'text-slate-600 bg-slate-100'}`}>
+                                  {isRanked ? 'XẾP HẠNG' : 'PHONG TRÀO'}
+                                </span>
+                                <span className="text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded text-violet-700 bg-violet-50">
+                                  <LiveMatchSportLabel match={group.matches[0]} />
+                                </span>
+                              </div>
                               <h3 className="text-sm font-bold text-slate-900 group-hover/header:text-blue-600 transition-colors block leading-tight truncate">
                                 {group.name}
                               </h3>

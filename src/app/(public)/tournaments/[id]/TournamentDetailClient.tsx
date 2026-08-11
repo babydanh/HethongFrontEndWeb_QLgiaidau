@@ -413,9 +413,6 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                     return fmt;
                   })()}
                 </span>
-                <span className={`rounded-md border px-2.5 py-0.5 text-[10px] font-bold uppercase shadow-sm ${registrationModeUi.badgeClassName}`}>
-                  {registrationModeUi.badgeLabel}
-                </span>
                 <span className={`px-2.5 py-0.5 text-[10px] uppercase font-bold rounded-md border shadow-sm ${
                   activeTournament.isRanked
                     ? 'bg-amber-50 text-amber-700 border-amber-300'

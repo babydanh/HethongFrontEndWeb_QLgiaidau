@@ -784,14 +784,6 @@ export default function TournamentsListPage() {
                           </>
                         )}
 
-                        {registrationModeUi.mode !== 'OPEN' && (
-                          <>
-                            <span className="text-slate-300">•</span>
-                            <span className={`rounded border px-1.5 py-0.5 text-[8px] font-bold ${registrationModeUi.badgeClassName}`}>
-                              {registrationModeUi.badgeLabel}
-                            </span>
-                          </>
-                        )}
                       </div>
                       
                       {/* Title */}

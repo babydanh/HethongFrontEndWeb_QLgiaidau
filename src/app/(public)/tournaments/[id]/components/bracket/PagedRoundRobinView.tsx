@@ -81,6 +81,17 @@ export function PagedRoundRobinView({
     [byRound, legRounds],
   );
 
+  const changeLeg = (nextLeg: number) => {
+    const clampedLeg = Math.min(Math.max(nextLeg, 1), legCount);
+    setActiveLeg(clampedLeg);
+    // Round numbers are global across legs. Move the round cursor with the
+    // leg so the matrix never keeps rendering the previous leg's snapshot.
+    const firstRound = rounds.find(
+      (round) => Math.floor((round - 1) / roundsPerLeg) + 1 === clampedLeg,
+    );
+    setActiveRound(firstRound ?? null);
+  };
+
   const viewButtons = (exclude: 'matrix' | 'table') => (
     <div className="flex flex-wrap justify-end gap-2">
       {exclude !== 'matrix' && (
@@ -164,7 +175,7 @@ export function PagedRoundRobinView({
           groupName={legCount > 1 ? `Bảng chéo - Lượt ${currentLeg}` : 'Bảng chéo'}
           activeLeg={currentLeg}
           legCount={legCount}
-          onLegChange={setActiveLeg}
+          onLegChange={changeLeg}
           roundNavigation={roundNavigation}
         />
         {/* Match list — controlled by same activeRound */}
@@ -193,7 +204,7 @@ export function PagedRoundRobinView({
         {viewButtons('table')}
       </div>
       <RoundRobinView
-        matches={matches}
+        matches={legMatches}
         onScheduleMatch={onScheduleMatch}
         selectedMatchId={selectedMatchId}
         onSelectMatch={onSelectMatch}
@@ -202,6 +213,8 @@ export function PagedRoundRobinView({
         fallbackSportRuleKind={fallbackSportRuleKind}
         roundConfig={roundConfig}
         tiebreakerMode={tiebreakerMode}
+        activeRound={currentRound}
+        onRoundChange={setActiveRound}
       />
     </div>
   );

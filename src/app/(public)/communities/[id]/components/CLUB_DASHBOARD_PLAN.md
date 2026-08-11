@@ -1,86 +1,66 @@
-# Kế hoạch Thiết kế & Nâng cấp Tab Giới thiệu Câu lạc bộ (Club Dashboard View)
+# Kế hoạch Chuẩn hóa Giao diện & Tính năng Câu lạc bộ (Web & Mobile App)
 
 ## 📌 Bối cảnh & Mục tiêu
-Trang chi tiết Câu lạc bộ (`/communities/[id]`) hiện tại có phần **Tab Giới thiệu (AboutTab.tsx)** hiển thị khá trống và thụ động, chỉ gồm văn bản giới thiệu lớn và khung ảnh trống (`ẢNH (0)`).
+Chuẩn hóa đồng bộ giao diện và luồng dữ liệu của trang **Chi tiết Câu lạc bộ** giữa cả **Web Frontend (React/Next.js)** và **Mobile App (Flutter)**.
 
-Mục tiêu là biến **Tab Giới thiệu** thành một **Hồ sơ Dashboard Thành tích năng động (Club Profile & Stats Dashboard)** bằng cách khai thác tối đa dữ liệu thực tế đang có trong hệ thống (Giải đấu, Thành viên, Trận đấu ELO, Thách đấu liên CLB), **tuyệt đối KHÔNG sử dụng tin giả/mockup và KHÔNG làm tính năng Đăng bài/Newsfeed**.
-
----
-
-## 🏗️ Cấu trúc Giao diện Đề xuất (Proposed Layout & Components)
-
-Giao diện sẽ được chia làm 2 Cột chính (Layout 8/12 - 4/12 trên Desktop):
-
-```
-┌─────────────────────────────────────────────────────────────────────────────────────────┐
-│ ℹ️ TỔNG QUAN CLB (Quick Overview Metric Bar)                                            │
-│ [ 👥 328 Thành viên ]      [ 🏆 24 Giải đấu ]      [ ⚔️ 186 Trận đấu ]                    │
-└─────────────────────────────────────────────────────────────────────────────────────────┘
-
-┌───────────────────────────────────────────────┐ ┌───────────────────────────────────────┐
-│ ⚔️ TRẬN ĐẤU GẦN ĐÂY                           │ │ 📊 THỐNG KÊ & PHONG ĐỘ                │
-│ (Lấy 3-4 trận đấu ELO / Thách đấu gần nhất)  │ │ (Winrate %, Chuỗi thắng, Thách đấu)  │
-│                                               │ │                                       │
-│ ABC  3 - 1  XYZ     [🟢 THẮNG]                │ │  186         72%         +128         │
-│ ABC  2 - 0  DEF     [🟢 THẮNG]                │ │  Trận       Thắng        ELO*         │
-│ ABC  1 - 2  KLM     [🔴 THUA]                 │ │                                       │
-│                                               │ │  Chuỗi hiện tại: 🔥 2 trận thắng      │
-│ [ Xem tất cả trận đấu → ]                     │ └───────────────────────────────────────┘
-└───────────────────────────────────────────────┘
-                                                  ┌───────────────────────────────────────┐
-┌───────────────────────────────────────────────┐ │ ℹ️ THÔNG TIN VÀ LIÊN HỆ               │
-│ 🏆 GIẢI ĐẤU CLB MỚI NHẤT                      │ │ (Thu gọn từ Card lớn cũ)              │
-│ (Lấy 1-2 giải đấu do CLB tổ chức gần nhất)    │ │ 📍 Địa điểm: Trần Đề, Sóc Trăng       │
-│                                               │ │ ⚽ Bộ môn: Cầu lông, Pickleball       │
-│ Summer Cup 2026                               │ │ 📅 Thành lập: 11/08/2026             │
-│ 🥇 Vô địch: Nguyễn Văn A                      │ │                                       │
-│ [ 🟢 Đang diễn ra / Đã kết thúc ]             │ │ [ Xem chi tiết quy định → ]           │
-└───────────────────────────────────────────────┘ └───────────────────────────────────────┘
-
-┌───────────────────────────────────────────────┐ ┌───────────────────────────────────────┐
-│ 👑 THÀNH VIÊN NỔI BẬT                         │ │ ⚔️ ĐỐI ĐẦU CLB GẦN ĐÂY                │
-│ (Top 3 ELO thành viên cao nhất trong CLB)    │ │ (Lịch sử Thách đấu với CLB khác)      │
-│ 🥇 #1  Nguyễn Văn A    1682 ELO               │ │ CLB A   3 - 1   CLB B    [🟢 THẮNG]   │
-│ 🥈 #2  Trần Văn B      1542 ELO               │ │ CLB A   1 - 2   CLB C    [🔴 THUA]    │
-│ [ Xem Bảng xếp hạng CLB → ]                   │ │ [ Xem lịch sử giao hữu → ]            │
-└───────────────────────────────────────────────┘ └───────────────────────────────────────┘
-```
+Mục tiêu chính:
+1. Đổi tên Tab **"Giới thiệu"** ➔ **"Tổng quan"** (Overview Dashboard).
+2. Tận dụng tối đa dữ liệu thực tế sẵn có từ Backend (Giải đấu, Thành viên, Trận đấu ELO, Thách đấu giao hữu) để tạo một Hồ sơ Thể thao sống động.
+3. Rà soát chính xác **Tính năng nào đã có sẵn (Đang chạy)** và **Tính năng nào cần bổ sung/nâng cấp**.
+4. **Tuyệt đối KHÔNG làm tính năng Đăng bài / News feed / Chat giữa trang / Fake data**.
 
 ---
 
-## 🛠️ Chi tiết các Thành phần Changes
+## 🔍 HIỆN TRẠNG TÍNH NĂNG (FEATURE STATUS MATRIX)
 
-### 1. **Thanh Metric Tổng quan (Quick Overview Bar)**
-- **Vị trí**: Nằm ngang trên cùng của Tab.
-- **Chỉ số**: Thành viên (`_count.members`), Giải đấu (`_count.tournaments`), Tổng số trận đấu đã diễn ra.
-
-### 2. **Card Trận đấu gần đây (Recent Matches Card)**
-- **Dữ liệu**: Lấy danh sách 3-4 trận đấu ELO hoặc trận đấu trong giải CLB gần đây.
-- **Hiển thị**: Tên 2 bên, tỉ số, badge trạng thái `THẮNG (Xanh)` / `THUA (Đỏ)` / `HÒA (Vàng)`.
-
-### 3. **Card Phong độ & Thống kê (Form & Stats Sidebar Card)**
-- **Dữ liệu**: Tỷ lệ thắng (Win rate %), Tổng số trận thắng/thua, Chuỗi thắng hiện tại (Streak 🔥).
-- **Quy tắc**: Nếu CLB mới chưa có trận đấu nào, ẩn các chỉ số 0% để tránh nghèo giao diện, chỉ hiển thị "Chưa có dữ liệu thi đấu".
-
-### 4. **Card Giải đấu CLB nổi bật (Featured Club Tournament Card)**
-- **Dữ liệu**: Lấy giải đấu mới nhất do CLB đứng ra tổ chức.
-- **Hiển thị**: Banner/Tên giải, Trạng thái (Đang diễn ra/Mở đăng ký), Đội/VĐV vô địch (nếu giải đã COMPLETED).
-
-### 5. **Card Thành viên nổi bật (Top Club Members Card)**
-- **Dữ liệu**: Lấy Top 3 VĐV có điểm ELO cao nhất trong Bảng xếp hạng nội bộ CLB (`communityRankings`).
-- **Hiển thị**: Rank #1 #2 #3, Avatar, Tên VĐV, Điểm ELO. Nút chuyển nhanh sang Tab *Bảng xếp hạng*.
-
-### 6. **Card Thu gọn Thông tin CLB (Compact Info Sidebar Card)**
-- **Vị trí**: Đưa xuống cột bên phải thành 1 Card nhỏ gọn.
-- **Hiển thị**: Địa điểm, Chế độ tham gia, Bộ môn thể thao, Ngày thành lập.
-
-### 7. **Card Đối đầu giao hữu CLB (Inter-Club Challenges Card)**
-- **Dữ liệu**: Lấy thông tin từ bảng `communityChallenges` (Lịch sử giao hữu với CLB khác).
-- **Hiển thị**: Tên 2 CLB đối đầu, kết quả tỉ số trận giao hữu.
+| STT | Tính năng / Thành phần UI | Backend DB & API | Web Frontend | Mobile App (Flutter) | Trạng thái & Kế hoạch |
+| :---: | :--- | :---: | :---: | :---: | :--- |
+| **1** | **Header Cover & Banner** | ✅ Có sẵn | ✅ Có sẵn | ✅ Có sẵn | **Đã có**: Slide ảnh bìa, Avatar logo, Tên CLB, Bộ môn, Khu vực. |
+| **2** | **Nút Tham gia / Xin duyệt** | ✅ Có sẵn | ✅ Có sẵn | ✅ Có sẵn | **Đã có**: Logic JOINED, PENDING, APPROVAL mode hoạt động tốt. |
+| **3** | **Chia sẻ CLB (Share Modal)** | ✅ Có sẵn | ✅ Có sẵn | ✅ Có sẵn | **Đã có**: Share Web (Zalo, FB, Messenger) & Share App Mobile Native. |
+| **4** | **Tab 1: Tổng quan (Dashboard)** | 🟡 Cần tinh chỉnh | 🟡 Cần nâng cấp | 🟡 Cần nâng cấp | **Đang có**: Trang Giới thiệu cũ (Static description).<br>👉 **Kế hoạch**: Chuyển thành Dashboard Thành tích kết hợp Thông tin. |
+| **5** | **Tab 2: Giải đấu CLB** | ✅ Có sẵn | ✅ Có sẵn | ✅ Có sẵn | **Đã có**: Lấy danh sách giải đấu nội bộ & mở rộng của CLB. |
+| **6** | **Tab 3: Bảng xếp hạng ELO** | ✅ Có sẵn | ✅ Có sẵn | ✅ Có sẵn | **Đã có**: Bảng xếp hạng điểm ELO nội bộ CLB theo môn & thể thức. |
+| **7** | **Tab 4: Thách đấu (Giao hữu)** | ✅ Có sẵn | 🟡 Có ở trang BQT | 🔴 Chưa có tab public | **Backend có 100%**: Tạo/nhận thách đấu, tự động tạo giải giao hữu.<br>👉 **Kế hoạch**: Thêm Tab "Thách đấu" ra giao diện Public cho cả Web & App. |
+| **8** | **Tab 5: Thành viên** | ✅ Có sẵn | ✅ Có sẵn | ✅ Có sẵn | **Đã có**: Danh sách thành viên, phân quyền BQT, duyệt đơn xin vào. |
+| **9** | **Tab 6: Bộ sưu tập ảnh** | ✅ Có sẵn | ✅ Có sẵn | ✅ Có sẵn | **Đã có**: Thư viện ảnh hoạt động & Lightbox xem ảnh. |
 
 ---
 
-## 🚫 Những gì TUYỆT ĐỐI KHÔNG LÀM (Non-Goals)
-- ❌ Không thêm News Feed / Đăng bài / Bình luận / Lượt thích.
-- ❌ Không thêm tính năng Chat trực tiếp giữa trang.
-- ❌ Không tạo tin giả (mock data), chỉ dùng dữ liệu thực từ Backend API.
+## 🏗️ CHI TIẾT KẾ HOẠCH NÂNG CẤP TAB 1: "TỔNG QUAN" (WEB & FLUTTER APP)
+
+Tab **Tổng quan** mới sẽ kết hợp **30% Thông tin cố định (Cũ)** + **70% Chỉ số & Thành tích động (Mới)** theo bố cục chuẩn thể thao:
+
+### 1. Thanh Chỉ số Nhanh (Quick Metric Bar - Trên cùng)
+- 👥 **Thành viên** (`_count.members`)
+- 🏆 **Giải đấu** (`_count.tournaments`)
+- ⚔️ **Trận đấu đã diễn ra**
+
+### 2. Cột chính / Khung chính (70% Dữ liệu thi đấu động)
+- ⚔️ **Card Trận đấu gần đây**: Hiển thị 3-4 trận vừa diễn ra với Tỉ số & Badge kết quả (`[THẮNG]` / `[THUA]`).
+- 🏆 **Card Giải đấu nổi bật**: Giải đấu mới nhất do CLB tổ chức kèm trạng thái (`Đang diễn ra`/`Mở đăng ký`).
+- 👑 **Card VĐV Nổi bật (Hall of Fame)**: Top 3 VĐV có ELO cao nhất trong Bảng xếp hạng nội bộ CLB.
+
+### 3. Cột phụ / Khung phụ (30% Thông tin & Thống kê)
+- 📊 **Card Phong độ & Winrate**: Tỉ lệ thắng %, Chuỗi thắng liên tiếp (`🔥 2 trận thắng`).
+- ℹ️ **Card Thông tin & Liên hệ (Thu gọn)**: Địa điểm sân tập, Bộ môn, Ngày lập, Chế độ gia nhập, SĐT/FB.
+- 📜 **Card Mô tả & Quy định CLB**: Đoạn giới thiệu sinh hoạt CLB (Thu gọn có nút Xem thêm).
+
+---
+
+## 🔄 QUY TRÌNH CHUẨN HÓA ĐỒNG BỘ NỀN TẢNG (IMPLEMENTATION STEPS)
+
+### Bước 1: Cập nhật Web Frontend (`frontend-web_qlgiaidau`)
+1. Cập nhật `AboutTab.tsx` ➔ Đổi tên thành Dashboard Tổng quan kết hợp thông tin cũ & dữ liệu thi đấu.
+2. Thêm Tab **"Thách đấu"** vào thanh tab chính của `/communities/[id]/page.tsx`.
+
+### Bước 2: Cập nhật Mobile App (`app_quanly_giaidau`)
+1. Cập nhật `_buildAboutTab` trong `club_detail_screen.dart` chuẩn hóa đúng bố cục Dashboard 2 cột / dạng danh sách vuốt dọc như Web.
+2. Bổ sung Tab **"Thách đấu"** vào `TabBarView` của Flutter App.
+
+---
+
+## 🚫 CAM KẾT VÀ TÔN CHỈ (NON-GOALS)
+- ❌ Không làm tính năng Đăng bài / News feed / Like / Comment.
+- ❌ Không thêm chat ngầm giữa trang.
+- ❌ Tuyệt đối không dùng dữ liệu giả (Mock data) — chỉ hiển thị khi API có dữ liệu thật.

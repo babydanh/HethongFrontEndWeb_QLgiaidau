@@ -6,7 +6,7 @@ Chuẩn hóa đồng bộ giao diện và luồng dữ liệu của trang **Chi 
 Mục tiêu chính:
 1. Đổi tên Tab **"Giới thiệu"** ➔ **"Tổng quan"** (Overview Dashboard) với dữ liệu thi đấu thực tế, sinh động.
 2. Thiết kế tính năng **Gán Tag Tùy Chỉnh / Danh Hiệu Hài Hước cho Thành Viên** (Streak Thắng/Thua, Biệt danh CLB...).
-3. Thiết kế **Pop-up Hồ Sơ Thành Viên Nội Bộ CLB** (Club Member Profile Modal) chứa toàn bộ thống kê đóng góp trong CLB + Nút chuyển sang Profile chính toàn hệ thống.
+3. Thiết kế **Pop-up Hồ Sơ Thành Viên Nội Bộ CLB** (Club Member Profile Modal) với **4 Sub-tabs chi tiết** + EloTierBadge + Nút chuyển sang Profile chính toàn hệ thống.
 4. Xây dựng **Kênh Chat Chung Nội Bộ CLB** (Chat Room) có hiển thị Tag & Badge bên cạnh tên người gửi.
 5. **Tuyệt đối KHÔNG sử dụng tin giả (Mockup) hay dữ liệu 0% làm nghèo UI**.
 
@@ -37,26 +37,45 @@ Hệ thống chia làm 2 loại Tag hiển thị ở Badge bên cạnh tên thà
 
 ---
 
-## 🎴 2. POP-UP HỒ SƠ THÀNH VIÊN TRONG CLB (CLUB MEMBER PROFILE MODAL)
+## 🎴 2. POP-UP HỒ SƠ THÀNH VIÊN TRONG CLB (CLUB MEMBER PROFILE MODAL - 4 SUB-TABS)
 
-Khi người dùng bấm vào Avatar hoặc Tên của một thành viên trong **Tab Thành viên**, **Bảng Xếp Hạng**, hoặc trong **Kênh Chat**, một Pop-up đặc thù của CLB sẽ xuất hiện gồm 3 phần:
+Khi người dùng bấm vào Avatar hoặc Tên của một thành viên trong **Tab Thành viên**, **Bảng Xếp Hạng**, hoặc trong **Kênh Chat**, một Pop-up đặc thù của CLB sẽ xuất hiện gồm Top Header + **4 Sub-tabs chuyển đổi**:
 
-### A. Top Banner - Thông Tin & Tag CLB:
+### Top Header Cố Định:
 - **Avatar + Tên hiển thị + Username**.
 - **Chức vụ trong CLB**: `👑 Chủ sở hữu` / `🛡️ Quản trị viên` / `👤 Thành viên`.
+- **Badge Hạng Tier ELO Hệ Thống**: Dùng `EloTierBadge` sẵn có (`👑 Tier S`, `🔥 High Tier A`, `⚡ High Tier B`...).
 - **Danh hiệu & Tag CLB**: `[🔥 Win Streak x3]` `[Thánh Gánh Đội]` `[Thủ Quỹ]`.
-- **Thâm niên**: *Đã gia nhập 1 năm 2 tháng (15/05/2025)*.
 
-### B. Thống Kê Thi Đấu Trực Tiếp Liên Quan Đến CLB Này:
-- 🏅 **Thứ hạng & Điểm ELO CLB**: `1,580 ELO` (Xếp hạng **#3** toàn CLB).
-- ⚔️ **Thành tích thi đấu trong CLB**: `42 Trận` · `68% Thắng` (28 Thắng / 14 Thua).
-- 🏆 **Thành tích Giải đấu CLB**: *Vô địch Giải Cầu lông Mùa Hè 2026*, *Á quân Giải Pickleball Đôi Nam*.
-- 🤝 **Cặp đôi ăn ý nhất CLB**: Hay đánh đôi hợp rơ nhất với **Nguyễn Văn B** (Winrate 80%).
+---
 
-### C. Nút Chức Năng BQT & Nút Chuyển Profile Chính:
-- ⚙️ **Công cụ BQT (Nếu bạn là Owner/Mod)**: Nút **[🏷️ Chỉnh sửa Tag]** và Nút **[👑 Phân quyền / 🚫 Cấm]**.
-- 🚀 **Nút [👉 Xem Trang Cá Nhân Chính (Full Profile)]**:
-  - Chuyển hướng người dùng sang trang **Profile Toàn Hệ Thống** (`/players/[id]` hoặc `/profile`), nơi hiển thị toàn bộ lịch sử đấu giải bên ngoài, ELO tổng và tất cả CLB khác mà VĐV đó tham gia.
+### 📋 Cấu Trúc 4 Sub-tabs Nội Bộ Modal:
+
+#### 📊 Sub-tab 1: Tổng quan CLB (Overview & Rank)
+- 🏅 **Điểm & Thứ hạng ELO Nội Bộ CLB**: `1,580 ELO` (Xếp hạng **#3** / 328 thành viên trong CLB).
+- ⚔️ **Tỉ lệ thi đấu trong CLB**: `42 Trận` · `68% Thắng` (28 Thắng / 14 Thua) · Chuỗi hiện tại `🔥 Win x5`.
+- 🤝 **Cặp đôi ăn ý nhất CLB**: Hiển thị đồng đội hay đánh đôi hợp cạ nhất trong CLB kèm tỉ số thắng.
+- 📅 **Thâm niên**: *Đã gia nhập 1 năm 2 tháng (15/05/2025)*.
+
+#### ⚔️ Sub-tab 2: Trận đấu gần đây trong CLB (Recent Club Matches)
+- Danh sách 5-10 trận đấu ELO hoặc trận thách đấu mà VĐV này mới đánh gần nhất trong khuôn khổ CLB.
+- Dòng trận đấu: Tên đối thủ / Bạn đấu, Tỉ số, Badge `[THẮNG (+14 ELO)]` hoặc `[THUA (-10 ELO)]`, Thời gian đánh.
+
+#### 🏆 Sub-tab 3: Giải đấu tham gia cùng CLB (Club Tournaments)
+- Danh sách tất cả các giải đấu do CLB tổ chức mà VĐV này có đăng ký thi đấu.
+- Hiển thị thành tích cụ thể: `🥇 Vô địch`, `🥈 Á quân`, `🥉 Hạng 3` hoặc `Vòng Tứ kết` + Tên giải & Ngày thi đấu.
+
+#### ⚙️ Sub-tab 4: Quản lý & Cài đặt (Dành riêng cho BQT CLB)
+- *Chỉ xuất hiện khi người xem là Owner hoặc Moderator của CLB*:
+  - **gán Tag / Danh hiệu hài hước**: Nút mở Modal gán/xóa Tag.
+  - **Phân quyền BQT**: Thăng cấp lên Quản trị viên (`MODERATOR`) hoặc hạ về `MEMBER`.
+  - **Hành động kỷ luật**: `Khóa chat nội bộ` hoặc `Mời khỏi CLB (Kick/Ban)`.
+
+---
+
+### 🚀 Action Footer (Nút Cuối Modal):
+- Ở dưới cùng Modal luôn có nút lớn: **[👉 Xem Trang Cá Nhân Chính (Full Profile)]**.
+- Bấm vào sẽ mở trang Profile cá nhân toàn hệ thống (`/players/[id]`), nơi xem toàn bộ lịch sử đấu giải bên ngoài, ELO tổng và tất cả CLB khác mà họ tham gia.
 
 ---
 
@@ -128,7 +147,7 @@ Tab **Tổng quan** sẽ kết hợp 70% dữ liệu trận đấu thật gần 
 | :---: | :--- | :---: | :---: | :---: | :--- |
 | **1** | **Tab 1: Tổng quan Dashboard** | 🟡 Tinh chỉnh | 🟡 Cần nâng cấp | 🟡 Cần nâng cấp | Chuyển trang Giới thiệu cũ thành Dashboard Thành tích kết hợp Thông tin. |
 | **2** | **Tag Thành Viên & Biệt Danh** | 🟡 Thêm DB `tags` | 🟡 UI gán & hiển thị | 🟡 UI gán & hiển thị | BQT gán Tag hài hước + Hệ thống tự tính Streak Tag. |
-| **3** | **Pop-up Hồ Sơ Thành Viên CLB** | ✅ APIs có sẵn | 🟡 Modal Chi tiết | 🟡 Modal Chi tiết | Hiện thông tin đóng góp CLB + Nút chuyển sang Profile chính. |
+| **3** | **Pop-up Hồ Sơ Thành Viên CLB** | ✅ APIs có sẵn | 🟡 Modal 4 Sub-tabs | 🟡 Modal 4 Sub-tabs | Modal 4 Sub-tabs (Tổng quan, Trận vừa qua, Giải đấu, QL BQT) + EloTierBadge. |
 | **4** | **Kênh Chat Chung Nội Bộ** | 🟡 Bổ sung Chat API | 🟡 Tab Chat + Widget Chat | 🟡 Tab Chat + FAB Chat | Kênh chat riêng có hiển thị Member Tags cạnh tên. |
 | **5** | **Tab Thách Đấu (Giao hữu)** | ✅ Backend 100% | 🟡 Thêm Tab Public | 🔴 Thêm Tab Public | Đưa danh sách thách đấu & nút thách đấu ra giao diện ngoài. |
 | **6** | **Tab Giải đấu, BXH, Ảnh** | ✅ Có sẵn | ✅ Có sẵn | ✅ Có sẵn | Giữ nguyên và tối ưu giao diện. |
@@ -144,11 +163,11 @@ Tab **Tổng quan** sẽ kết hợp 70% dữ liệu trận đấu thật gần 
 
 ### Bước 2: Web Frontend (`frontend-web_qlgiaidau`)
 1. Cập nhật `AboutTab.tsx` ➔ Biến thành Dashboard **Tổng quan** (Ai mới đánh với ai, Giải đấu gần đây, Top ELO, Thông tin thu gọn).
-2. Tạo **Pop-up Hồ sơ Thành viên Nội bộ CLB** + Modal gán Tag.
+2. Tạo **Pop-up Hồ sơ Thành viên Nội bộ CLB (4 Sub-tabs)** + Modal gán Tag.
 3. Tạo Tab **Kênh Chat** + Khung Chat Floating Widget góc dưới.
 4. Thêm Tab **Thách đấu**.
 
 ### Bước 3: Mobile App (`app_quanly_giaidau`)
 1. Cập nhật `_buildAboutTab` trong `club_detail_screen.dart` thành Dashboard Tổng quan chuẩn 1:1 với Web.
-2. Tạo Pop-up Hồ sơ Thành viên Nội bộ trên Flutter App + Modal gán Tag cho BQT.
+2. Tạo Pop-up Hồ sơ Thành viên Nội bộ (4 Sub-tabs) trên Flutter App + Modal gán Tag cho BQT.
 3. Thêm Tab **Kênh Chat** nội bộ trên Flutter App.

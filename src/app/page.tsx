@@ -812,9 +812,16 @@ export default function HomePage() {
                 </>
               )}
             </div>
-            <span className="uppercase text-slate-650 bg-slate-100/80 px-2 py-0.5 rounded text-[8px] font-bold truncate max-w-[40%] md:max-w-[28%]">
-              {translateStageName(match.group?.stage?.name) || 'Vòng đấu'}
-            </span>
+            {(() => {
+              const stageBadgeText = translateStageName(match.group?.stage?.name);
+              // Hide right stage badge if roundLabel already covers it (e.g. "Vòng bảng - Vòng 1")
+              const shouldShowStageBadge = stageBadgeText && !roundLabel.toLowerCase().includes(stageBadgeText.toLowerCase());
+              return shouldShowStageBadge ? (
+                <span className="uppercase text-slate-650 bg-slate-100/80 px-2 py-0.5 rounded text-[8px] font-bold truncate max-w-[40%] md:max-w-[28%]">
+                  {stageBadgeText}
+                </span>
+              ) : null;
+            })()}
           </div>
 
           {/* Opponents Match Grid */}

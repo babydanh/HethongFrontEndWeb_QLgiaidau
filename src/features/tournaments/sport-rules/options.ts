@@ -1,5 +1,6 @@
 import type { Category } from '@/types/category';
 import type { SportRuleKind } from '@/types/tournament';
+import { inferSportRuleKindFromCategory } from './normalize';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -46,7 +47,10 @@ export function normalizeSportRuleKindForCategory(
 ): SportRuleKind {
   const allowedKinds = getAllowedSportRuleKinds(category);
   if (allowedKinds.length === 0) {
-    return currentKind;
+    // Older category records do not have ruleKind/allowedRuleKinds. Infer the
+    // sport from slug/name so a stale preset cannot keep a Pickleball event on
+    // the Badminton defaults.
+    return inferSportRuleKindFromCategory(category);
   }
   if (allowedKinds.includes(currentKind)) {
     return currentKind;

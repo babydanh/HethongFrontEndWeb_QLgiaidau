@@ -46,10 +46,6 @@ export function PagedRoundRobinView({
 
 
 
-  const currentRound = activeRound != null && rounds.includes(activeRound)
-    ? activeRound
-    : rounds[0] ?? null;
-
   const participantCount = useMemo(() => {
     const ids = new Set<string>();
     matches.forEach((match) => {
@@ -80,6 +76,11 @@ export function PagedRoundRobinView({
     () => legRounds.flatMap((round) => byRound[round] ?? []),
     [byRound, legRounds],
   );
+
+  // Round numbers stay global across legs. Keep the cursor in the selected leg.
+  const currentRound = activeRound != null && legRounds.includes(activeRound)
+    ? activeRound
+    : legRounds[0] ?? null;
 
   const changeLeg = (nextLeg: number) => {
     const clampedLeg = Math.min(Math.max(nextLeg, 1), legCount);
@@ -117,12 +118,7 @@ export function PagedRoundRobinView({
 
   // Cumulative matches up to currentRound (for cross table — shows progressive results)
   // Guard: if currentRound belongs to a different leg, fall back to all legMatches
-  const cumulativeMatches = useMemo(() => {
-    if (currentRound == null || !legRounds.includes(currentRound)) return legMatches;
-    return legRounds
-      .filter((r) => r <= currentRound)
-      .flatMap((r) => byRound[r] ?? []);
-  }, [currentRound, legRounds, legMatches, byRound]);
+  const cumulativeMatches = legMatches;
 
   // Round nav helpers
   const legRoundsForNav = legRounds;
@@ -204,7 +200,7 @@ export function PagedRoundRobinView({
         {viewButtons('table')}
       </div>
       <RoundRobinView
-        matches={legMatches}
+        matches={matches}
         onScheduleMatch={onScheduleMatch}
         selectedMatchId={selectedMatchId}
         onSelectMatch={onSelectMatch}
@@ -213,8 +209,6 @@ export function PagedRoundRobinView({
         fallbackSportRuleKind={fallbackSportRuleKind}
         roundConfig={roundConfig}
         tiebreakerMode={tiebreakerMode}
-        activeRound={currentRound}
-        onRoundChange={setActiveRound}
       />
     </div>
   );

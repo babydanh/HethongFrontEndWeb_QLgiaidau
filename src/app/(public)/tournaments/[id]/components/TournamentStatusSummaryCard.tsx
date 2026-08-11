@@ -255,21 +255,9 @@ export default function TournamentStatusSummaryCard({
                   {/* Center Score */}
                   <div className="flex flex-col items-center justify-center shrink-0 px-1">
                     {inProgress ? (
-                      <>
-                        <span className="text-xl font-black text-rose-600 tracking-tight leading-none">
-                          {activeSetScoreText}
-                        </span>
-                        <div className="mt-1.5 flex items-center gap-1 justify-center">
-                          {sets.length > 0 && (
-                            <span className="text-[10px] font-bold text-slate-400 uppercase">
-                              Set {sets.length}
-                            </span>
-                          )}
-                          <span className="text-[10px] font-extrabold text-slate-500">
-                            ({match.p1SetsWon ?? 0} - {match.p2SetsWon ?? 0} Set)
-                          </span>
-                        </div>
-                      </>
+                      <span className="text-xl font-black text-rose-600 tracking-tight leading-none">
+                        {activeSetScoreText}
+                      </span>
                     ) : (
                       <span className="text-sm font-black text-slate-400 tracking-wider">VS</span>
                     )}

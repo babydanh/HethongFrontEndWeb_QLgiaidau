@@ -13,7 +13,7 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { ApiResponse } from '@/types/api';
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const loginSchema = z.object({
@@ -43,6 +43,7 @@ export default function LoginPage() {
   const user = useAuthStore((state) => state.user);
   const setUser = useAuthStore((state) => state.setUser);
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Auto redirect to homepage if user is already logged in
   React.useEffect(() => {
@@ -224,7 +225,23 @@ export default function LoginPage() {
               </div>
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1.5">Mật khẩu</label>
-                <Input type="password" placeholder="••••••••" {...register('password')} error={errors.password?.message} />
+                <div className="relative">
+                  <Input
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="••••••••"
+                    className="pr-11"
+                    {...register('password')}
+                    error={errors.password?.message}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((visible) => !visible)}
+                    aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                    className="absolute right-3 top-[13px] z-10 text-slate-400 transition-colors hover:text-slate-700"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
                 <div className="flex justify-end mt-1">
                   <Link href="/forgot-password" className="text-xs font-semibold text-blue-600 hover:underline">
                     Quên mật khẩu?

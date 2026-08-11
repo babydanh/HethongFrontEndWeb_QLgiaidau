@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/Input';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import * as React from 'react';
 import { useAuthStore } from '@/lib/zustand/authStore';
@@ -44,6 +44,8 @@ export default function RegisterPage() {
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Auto redirect to homepage if user is already logged in
   React.useEffect(() => {
@@ -226,11 +228,21 @@ export default function RegisterPage() {
               </div>
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1.5">Mật khẩu</label>
-                <Input type="password" placeholder="••••••••" {...register('password')} error={errors.password?.message} />
+                <div className="relative">
+                  <Input type={showPassword ? 'text' : 'password'} placeholder="••••••••" className="pr-11" {...register('password')} error={errors.password?.message} />
+                  <button type="button" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'} className="absolute right-3 top-[13px] z-10 text-slate-400 transition-colors hover:text-slate-700">
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1.5">Xác nhận mật khẩu</label>
-                <Input type="password" placeholder="••••••••" {...register('confirmPassword')} error={errors.confirmPassword?.message} />
+                <div className="relative">
+                  <Input type={showConfirmPassword ? 'text' : 'password'} placeholder="••••••••" className="pr-11" {...register('confirmPassword')} error={errors.confirmPassword?.message} />
+                  <button type="button" onClick={() => setShowConfirmPassword((visible) => !visible)} aria-label={showConfirmPassword ? 'Ẩn mật khẩu xác nhận' : 'Hiện mật khẩu xác nhận'} className="absolute right-3 top-[13px] z-10 text-slate-400 transition-colors hover:text-slate-700">
+                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
               </div>
 
               <button

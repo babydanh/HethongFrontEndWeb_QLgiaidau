@@ -40,6 +40,7 @@ import { RankAvatar } from '@/components/ui/RankAvatar';
 interface EnrichedTournament {
   id: string;
   name: string;
+  categoryId?: string;
   createdBy?: string;
   sportRules?: unknown | null;
   categoryName?: string | null;
@@ -83,6 +84,17 @@ interface GroupMatchesData {
   isRanked?: boolean;
   matches: BracketMatch[];
 }
+
+const getMatchRankedStatus = (
+  match: BracketMatch,
+  fallbackTournament?: Tournament | null,
+): boolean => {
+  const matchTournament = (match as EnrichedMatch).tournament;
+  if (typeof matchTournament?.isRanked === 'boolean') {
+    return matchTournament.isRanked;
+  }
+  return fallbackTournament?.isRanked === true;
+};
 
 const getFormatLabel = (matchType?: string, genderRestriction?: string | null) => {
   const mt = matchType || '';
@@ -453,10 +465,17 @@ export default function HomePage() {
           const rawData = (allMatchesRes.value as Record<string, unknown>).data;
           const allMatchesData = (rawData as Record<string, unknown>)?.data || rawData || [];
           const allMatches = (Array.isArray(allMatchesData) ? allMatchesData : []) as BracketMatch[];
+          const categoryMatches = selectedCategoryId
+            ? allMatches.filter((match) => {
+                const matchTournament = (match as EnrichedMatch).tournament;
+                return matchTournament?.categoryId === selectedCategoryId ||
+                  validTournamentIds.has(match.tournamentId ?? '');
+              })
+            : allMatches;
 
           // Populate initial cheer counts from backend for all matches
           const matchCheerMap: Record<string, number> = {};
-          allMatches.forEach((m: unknown) => {
+          categoryMatches.forEach((m: unknown) => {
             const item = m as Record<string, unknown>;
             if (item.id && typeof item.cheerCount === 'number') {
               matchCheerMap[item.id as string] = item.cheerCount;
@@ -474,12 +493,12 @@ export default function HomePage() {
               m.completedAt != null ||
               m.winnerId != null;
           };
-          const allLiveMatches = allMatches.filter(m => m.status === 'ONGOING' && !isCompletedMatch(m));
-          setLiveMatches(allLiveMatches.filter(m => (!shouldFilterByTournament || validTournamentIds.has(m.tournamentId ?? '')) && !m.isBye));
+          const allLiveMatches = categoryMatches.filter(m => m.status === 'ONGOING' && !isCompletedMatch(m));
+          setLiveMatches(allLiveMatches.filter(m => (!shouldFilterByTournament || validTournamentIds.has(m.tournamentId ?? '') || selectedCategoryId) && !m.isBye));
 
-          const fetchedUpcoming = allMatches.filter(m => m.status === 'SCHEDULED');
+          const fetchedUpcoming = categoryMatches.filter(m => m.status === 'SCHEDULED');
           const validUpcoming = fetchedUpcoming.filter(m =>
-            (!shouldFilterByTournament || validTournamentIds.has(m.tournamentId ?? '')) &&
+            (!shouldFilterByTournament || validTournamentIds.has(m.tournamentId ?? '') || selectedCategoryId) &&
             !m.isBye &&
             m.participant1 != null &&
             m.participant2 != null &&
@@ -490,9 +509,9 @@ export default function HomePage() {
           );
           setUpcomingMatches(validUpcoming);
 
-          const fetchedCompleted = allMatches.filter(isCompletedMatch);
+          const fetchedCompleted = categoryMatches.filter(isCompletedMatch);
           const nextCompleted = fetchedCompleted.filter(m =>
-            (!shouldFilterByTournament || validTournamentIds.has(m.tournamentId ?? '')) && !m.isBye
+            (!shouldFilterByTournament || validTournamentIds.has(m.tournamentId ?? '') || selectedCategoryId) && !m.isBye
           );
           // A transient empty 200 response must not erase the last visible
           // results. Category-filtered requests are safe to clear explicitly.
@@ -1101,7 +1120,7 @@ export default function HomePage() {
                 {Object.entries(liveMatchesByTournament).slice(0, 6).map(([tournamentName, rawGroup]) => {
                     const group = rawGroup as GroupMatchesData;
                     const matchedTournament = tournaments.find(t => t.id === group.id);
-                    const isRanked = matchedTournament ? matchedTournament.isRanked : (group.isRanked || group.matches.some(m => (m as EnrichedMatch).tournament?.isRanked));
+                    const isRanked = getMatchRankedStatus(group.matches[0], matchedTournament);
                     return (
                       <div key={tournamentName} className="bg-slate-50/60 rounded-xl border border-slate-200/80 overflow-hidden flex flex-col">
                         {/* Group Tournament Header */}
@@ -1115,7 +1134,7 @@ export default function HomePage() {
                             </div>
                             <div className="min-w-0">
                               <span className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded inline-block mb-0.5 ${isRanked ? 'text-sky-700 bg-sky-50' : 'text-slate-600 bg-slate-100'}`}>
-                                {isRanked ? 'TÍNH ELO' : 'KHÔNG TÍNH ELO'}
+                                {isRanked ? 'XẾP HẠNG' : 'PHONG TRÀO'}
                               </span>
                               <h3 className="text-sm font-bold text-slate-900 group-hover/header:text-blue-600 transition-colors block leading-tight truncate">
                                 {group.name}
@@ -1195,7 +1214,7 @@ export default function HomePage() {
                   const totalPages = Math.ceil(group.matches.length / 4);
                   const displayMatches = group.matches.slice((currentPage - 1) * 4, currentPage * 4);
                   const matchedTournament = tournaments.find(t => t.id === group.id);
-                  const isRanked = matchedTournament ? matchedTournament.isRanked : (group.isRanked || group.matches.some(m => (m as EnrichedMatch).tournament?.isRanked));
+                  const isRanked = getMatchRankedStatus(group.matches[0], matchedTournament);
 
                   return (
                     <div key={tournamentName} className="bg-slate-50/60 rounded-xl border border-slate-200/80 overflow-hidden flex flex-col">
@@ -1210,7 +1229,7 @@ export default function HomePage() {
                           </div>
                             <div className="min-w-0">
                               <span className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded inline-block mb-0.5 ${isRanked ? 'text-sky-700 bg-sky-50' : 'text-slate-600 bg-slate-100'}`}>
-                                {isRanked ? 'TÍNH ELO' : 'KHÔNG TÍNH ELO'}
+                                {isRanked ? 'XẾP HẠNG' : 'PHONG TRÀO'}
                               </span>
                               <h3 className="text-sm font-bold text-slate-900 group-hover/header:text-blue-600 transition-colors block leading-tight truncate">
                                 {group.name}
@@ -1280,7 +1299,7 @@ export default function HomePage() {
                   const totalPages = Math.ceil(group.matches.length / 4);
                   const displayMatches = group.matches.slice((currentPage - 1) * 4, currentPage * 4);
                   const matchedTournament = tournaments.find(t => t.id === group.id);
-                  const isRanked = matchedTournament ? matchedTournament.isRanked : (group.isRanked || group.matches.some(m => (m as EnrichedMatch).tournament?.isRanked));
+                  const isRanked = getMatchRankedStatus(group.matches[0], matchedTournament);
 
                   return (
                     <div key={tournamentName} className="bg-slate-50/60 rounded-xl border border-slate-200/80 overflow-hidden flex flex-col">
@@ -1295,7 +1314,7 @@ export default function HomePage() {
                           </div>
                             <div className="min-w-0">
                               <span className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded inline-block mb-0.5 ${isRanked ? 'text-sky-700 bg-sky-50' : 'text-slate-600 bg-slate-100'}`}>
-                                {isRanked ? 'TÍNH ELO' : 'KHÔNG TÍNH ELO'}
+                                {isRanked ? 'XẾP HẠNG' : 'PHONG TRÀO'}
                               </span>
                               <h3 className="text-sm font-bold text-slate-900 group-hover/header:text-blue-600 transition-colors block leading-tight truncate">
                                 {group.name}

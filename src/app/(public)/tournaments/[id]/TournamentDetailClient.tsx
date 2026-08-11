@@ -433,7 +433,6 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                   ) : 'Chưa thiết lập ngày'}
                 </span>
                 <span className="flex items-center gap-1.5"><MapPin className="w-4 h-4 text-slate-400" /> {activeTournament.locationAddress || 'Chưa cập nhật địa điểm'}</span>
-                <span className="flex items-center gap-1.5"><Users className="w-4 h-4 text-slate-400" /> {participantCount} / {maxParticipants || '∞'} Hồ sơ</span>
               </div>
             </div>
           </div>

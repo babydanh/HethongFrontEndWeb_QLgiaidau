@@ -12,8 +12,8 @@ export const reportsApi = {
   create: (input: CreateReportInput) =>
     api.post<ApiResponse<ViolationReport>>('/users/reports', input),
 
-  getMine: (page: number, limit = 10) =>
-    api.get<ApiResponse<ViolationReport[]>>('/users/reports/me', { params: { page, limit } }),
+  getMine: (params: { limit?: number; cursor?: string | null } = {}) =>
+    api.get<ApiResponse<ViolationReport[]>>('/users/reports/me', { params }),
 
   list: (filters: ReportFilters) =>
     api.get<ApiResponse<ViolationReport[]>>('/admin/reports', {

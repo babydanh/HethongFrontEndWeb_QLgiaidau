@@ -2,7 +2,7 @@
 
 import { ChevronLeft, ChevronRight, ExternalLink, FileWarning, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/Button';
 import { ReportStatusBadge } from '@/features/reports/components/ReportStatusBadge';
@@ -23,6 +23,7 @@ export default function MyReportsPage() {
   const [reports, setReports] = useState<ViolationReport[]>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const cursorByPageRef = useRef<Record<number, string | null>>({ 1: null });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -30,10 +31,11 @@ export default function MyReportsPage() {
     const loadReports = async () => {
       setLoading(true);
       try {
-        const response = await reportsApi.getMine(page);
+        const response = await reportsApi.getMine({ limit: 10, cursor: cursorByPageRef.current[page] ?? null });
         if (!active) return;
         setReports(response.data ?? []);
         setTotalPages(response.meta?.totalPages ?? 1);
+        cursorByPageRef.current[page + 1] = response.meta?.nextCursor ?? null;
       } catch (error: unknown) {
         if (active) toast.error(getErrorMessage(error) || 'Không thể tải báo cáo của bạn.');
       } finally {

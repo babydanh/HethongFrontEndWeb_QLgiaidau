@@ -12,6 +12,7 @@ import { formatDate } from '@/utils/format';
 import { Tournament } from '@/types/tournament';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '@/utils/error';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 import {
   getTournamentStatusClassName,
   getTournamentStatusLabel,
@@ -35,6 +36,7 @@ export default function TournamentsTab({
   const [activeFilter, setActiveFilter] = useState<'ALL' | 'UPCOMING' | 'ONGOING' | 'COMPLETED'>('ALL');
   const [activeTypeFilter, setActiveTypeFilter] = useState<'ALL' | 'CLUB' | 'PUBLIC'>('ALL');
   const [isChoiceModalOpen, setIsChoiceModalOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; isGrouped: boolean } | null>(null);
 
   const fetchTournaments = useCallback(async () => {
     try {
@@ -57,9 +59,12 @@ export default function TournamentsTab({
     }
   }, [communityId, fetchTournaments]);
 
-  const handleDeleteTournament = async (id: string, isGrouped: boolean, e: React.MouseEvent) => {
+  const handleDeleteTournament = (id: string, isGrouped: boolean, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm('Bạn có chắc chắn muốn xoá giải đấu này không? Toàn bộ các hình thức thi đấu bên trong giải đấu này cũng sẽ bị xoá.')) return;
+    setDeleteTarget({ id, isGrouped });
+  };
+
+  const performDeleteTournament = async (id: string, isGrouped: boolean) => {
     try {
       if (isGrouped) {
         await tournamentsApi.deleteParentTournament(id);
@@ -302,7 +307,7 @@ export default function TournamentsTab({
                         {getStatusBadge(t.status)}
                         
                         {/* Lite vs Advanced Badge */}
-                        {(t.divisions.some(d => d.inviteCode) || t.description?.toLowerCase().includes('nhanh') || t.name?.toLowerCase().includes('lite')) ? (
+                        {(t.divisions.some(d => d.tournamentConfig?.mode === 'LITE')) ? (
                           <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-300">
                             Giải Nhanh (Lite)
                           </span>
@@ -377,7 +382,7 @@ export default function TournamentsTab({
                 </div>
 
                 {/* Note for Lite Tournaments */}
-                {(t.divisions.some(d => d.inviteCode) || t.description?.toLowerCase().includes('nhanh') || t.name?.toLowerCase().includes('lite')) && (
+                {(t.divisions.some(d => d.tournamentConfig?.mode === 'LITE')) && (
                   <div className="mb-3 text-[11px] text-amber-800 bg-amber-50/90 px-3 py-1.5 rounded-lg border border-amber-200/80 font-medium">
                     <span><strong>Note: Giải đấu tạo nhanh (Lite)</strong> — Quản lý đơn giản, chia sẻ mã/link tham gia ngay lập tức</span>
                   </div>
@@ -413,6 +418,27 @@ export default function TournamentsTab({
         communityId={communityId}
         isOpen={isChoiceModalOpen}
         onClose={() => setIsChoiceModalOpen(false)}
+      />
+
+      {/* Delete Tournament Confirmation Modal */}
+      <ConfirmModal
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDeleteTarget(null);
+          }
+        }}
+        title="Xoá giải đấu"
+        description="Bạn có chắc chắn muốn xoá giải đấu này không? Toàn bộ các hình thức thi đấu bên trong giải đấu này cũng sẽ bị xoá."
+        confirmLabel="Xoá giải đấu"
+        variant="danger"
+        onConfirm={() => {
+          if (deleteTarget) {
+            const target = deleteTarget;
+            setDeleteTarget(null);
+            performDeleteTournament(target.id, target.isGrouped);
+          }
+        }}
       />
     </div>
   );

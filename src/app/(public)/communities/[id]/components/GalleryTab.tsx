@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { communitiesApi, Community } from '@/features/communities/api';
 import { uploadApi } from '@/features/upload/api';
 import toast from 'react-hot-toast';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 
 interface GalleryImage {
   id: string;
@@ -24,6 +25,7 @@ export default function GalleryTab({ communityId, community, isOwnerOrMod }: Gal
   const [isUploading, setIsUploading] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [deleteImageId, setDeleteImageId] = useState<string | null>(null);
 
   const fetchGallery = async () => {
     try {
@@ -83,9 +85,12 @@ export default function GalleryTab({ communityId, community, isOwnerOrMod }: Gal
     }
   };
 
-  const handleDelete = async (imageId: string, e: React.MouseEvent) => {
+  const handleDelete = (imageId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm('Bạn có chắc chắn muốn xoá ảnh này?')) return;
+    setDeleteImageId(imageId);
+  };
+
+  const performDelete = async (imageId: string) => {
     try {
       await communitiesApi.removeGalleryItem(communityId, imageId);
       toast.success('Đã xoá ảnh!');
@@ -215,6 +220,27 @@ export default function GalleryTab({ communityId, community, isOwnerOrMod }: Gal
           </div>
         </div>
       )}
+
+      {/* Delete Image Confirmation Modal */}
+      <ConfirmModal
+        open={deleteImageId !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDeleteImageId(null);
+          }
+        }}
+        title="Xoá ảnh"
+        description="Bạn có chắc chắn muốn xoá ảnh này?"
+        confirmLabel="Xoá ảnh"
+        variant="danger"
+        onConfirm={() => {
+          if (deleteImageId) {
+            const imageId = deleteImageId;
+            setDeleteImageId(null);
+            performDelete(imageId);
+          }
+        }}
+      />
     </div>
   );
 }

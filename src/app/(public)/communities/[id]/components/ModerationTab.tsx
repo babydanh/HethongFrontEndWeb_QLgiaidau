@@ -15,6 +15,7 @@ import toast from 'react-hot-toast';
 import { communitiesApi, type CommunityMemberRecord } from '@/features/communities/api';
 import { usersApi } from '@/features/users/api';
 import { getErrorMessage } from '@/utils/error';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 
 interface UserSearchResult {
   id: string;
@@ -41,6 +42,8 @@ export default function ModerationTab({
   const [isSearchingUsers, setIsSearchingUsers] = useState(false);
   const [isInviting, setIsInviting] = useState<Record<string, boolean>>({});
   const [inviteRole, setInviteRole] = useState<'MEMBER' | 'MODERATOR'>('MEMBER');
+  const [cancelInviteUserId, setCancelInviteUserId] = useState<string | null>(null);
+  const [unbanUserId, setUnbanUserId] = useState<string | null>(null);
 
   const joinedMembers = useMemo(
     () => memberRecords.filter((item) => item.member?.status === 'JOINED'),
@@ -151,10 +154,6 @@ export default function ModerationTab({
   };
 
   const handleCancelInvite = async (userId: string) => {
-    if (!confirm('Bạn có chắc chắn muốn thu hồi lời mời này?')) {
-      return;
-    }
-
     try {
       await communitiesApi.removeMember(communityId, userId);
       toast.success('Đã thu hồi lời mời.');
@@ -165,10 +164,6 @@ export default function ModerationTab({
   };
 
   const handleUnbanMember = async (userId: string) => {
-    if (!confirm('Bạn có chắc chắn muốn gỡ cấm thành viên này?')) {
-      return;
-    }
-
     try {
       await communitiesApi.unbanMember(communityId, userId);
       toast.success('Đã gỡ cấm thành viên.');
@@ -378,7 +373,7 @@ export default function ModerationTab({
                     <p className="truncate text-[10px] text-slate-400">{invited.member?.role}</p>
                   </div>
                   <button
-                    onClick={() => invited.user?.id && handleCancelInvite(invited.user.id)}
+                    onClick={() => invited.user?.id && setCancelInviteUserId(invited.user.id)}
                     className="rounded-lg border border-slate-200 bg-white p-1.5 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600"
                     title="Thu hồi lời mời"
                   >
@@ -412,7 +407,7 @@ export default function ModerationTab({
                     <p className="truncate text-[10px] text-rose-500">Đang bị cấm khỏi cộng đồng</p>
                   </div>
                   <button
-                    onClick={() => member.user?.id && handleUnbanMember(member.user.id)}
+                    onClick={() => member.user?.id && setUnbanUserId(member.user.id)}
                     className="rounded-lg border border-slate-200 bg-white p-1.5 text-blue-600 transition-colors hover:bg-slate-50"
                     title="Gỡ cấm"
                   >
@@ -424,6 +419,47 @@ export default function ModerationTab({
           )}
         </section>
       </div>
+      {/* Cancel Invite Confirmation Modal */}
+      <ConfirmModal
+        open={cancelInviteUserId !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setCancelInviteUserId(null);
+          }
+        }}
+        title="Thu hồi lời mời"
+        description="Bạn có chắc chắn muốn thu hồi lời mời này?"
+        confirmLabel="Thu hồi lời mời"
+        variant="danger"
+        onConfirm={() => {
+          if (cancelInviteUserId) {
+            const userId = cancelInviteUserId;
+            setCancelInviteUserId(null);
+            handleCancelInvite(userId);
+          }
+        }}
+      />
+
+      {/* Unban Member Confirmation Modal */}
+      <ConfirmModal
+        open={unbanUserId !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setUnbanUserId(null);
+          }
+        }}
+        title="Gỡ cấm thành viên"
+        description="Bạn có chắc chắn muốn gỡ cấm thành viên này?"
+        confirmLabel="Gỡ cấm"
+        variant="danger"
+        onConfirm={() => {
+          if (unbanUserId) {
+            const userId = unbanUserId;
+            setUnbanUserId(null);
+            handleUnbanMember(userId);
+          }
+        }}
+      />
     </div>
   );
 }

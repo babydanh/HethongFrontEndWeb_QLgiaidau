@@ -20,6 +20,7 @@ import { rankingsApi, PlayerRanking } from '@/features/rankings/api';
 import { matchesApi } from '@/features/matches/api';
 import { socketClient } from '@/lib/socket';
 import { BracketMatch } from '@/features/tournaments/api';
+import type { SportRulesEnvelope } from '@/types/tournament';
 import TournamentHeroBanner from '@/components/ui/TournamentHeroBanner';
 import HomepageEloProgressCard from '@/components/rankings/HomepageEloProgressCard';
 import {
@@ -137,17 +138,20 @@ function CommunityLogoAvatar({ src, alt }: { src?: string | null; alt: string })
 }
 
 function LiveMatchSportLabel({ match, tournament, tournamentName }: { match?: BracketMatch | null; tournament?: Tournament | null; tournamentName?: string }) {
-  const matchTourn = match?.tournament as any;
-  const tourn = tournament as any;
+  const matchTourn = match?.tournament as Record<string, unknown> | undefined;
+  const tourn = tournament as Record<string, unknown> | undefined;
+  const matchCategory = matchTourn?.category as Record<string, unknown> | undefined;
+  const tournCategory = tourn?.category as Record<string, unknown> | undefined;
+
   const context = {
     ...match,
     tournament: {
-      name: matchTourn?.name ?? tourn?.name ?? tournamentName,
-      sportRules: matchTourn?.sportRules ?? tourn?.sportRules ?? null,
-      categoryName: matchTourn?.categoryName ?? tourn?.categoryName ?? tourn?.category?.name ?? null,
-      categorySlug: matchTourn?.categorySlug ?? tourn?.categorySlug ?? tourn?.category?.slug ?? null,
-      categoryConfig: matchTourn?.categoryConfig ?? tourn?.categoryConfig ?? tourn?.category?.categoryConfig ?? null,
-      category: matchTourn?.category ?? tourn?.category ?? null,
+      name: (typeof matchTourn?.name === 'string' ? matchTourn.name : undefined) ?? (typeof tourn?.name === 'string' ? tourn.name : undefined) ?? tournamentName,
+      sportRules: (matchTourn?.sportRules ?? tourn?.sportRules ?? null) as SportRulesEnvelope | null,
+      categoryName: (typeof matchTourn?.categoryName === 'string' ? matchTourn.categoryName : undefined) ?? (typeof tourn?.categoryName === 'string' ? tourn.categoryName : undefined) ?? (typeof matchCategory?.name === 'string' ? matchCategory.name : undefined) ?? (typeof tournCategory?.name === 'string' ? tournCategory.name : undefined) ?? null,
+      categorySlug: (typeof matchTourn?.categorySlug === 'string' ? matchTourn.categorySlug : undefined) ?? (typeof tourn?.categorySlug === 'string' ? tourn.categorySlug : undefined) ?? (typeof matchCategory?.slug === 'string' ? matchCategory.slug : undefined) ?? (typeof tournCategory?.slug === 'string' ? tournCategory.slug : undefined) ?? null,
+      categoryConfig: (matchTourn?.categoryConfig ?? tourn?.categoryConfig ?? matchCategory?.categoryConfig ?? tournCategory?.categoryConfig ?? null) as Record<string, unknown> | null,
+      category: (matchTourn?.category ?? tourn?.category ?? null) as { slug?: string | null; name?: string | null; categoryConfig?: Record<string, unknown> | null } | null,
     },
   };
   const resolvedRules = resolveMatchSportRules(context);
@@ -358,6 +362,7 @@ export default function HomePage() {
           { id: 'tennis', name: 'Tennis', slug: 'tennis', isActive: true },
           { id: 'badminton', name: 'Cầu lông', slug: 'badminton', isActive: true },
           { id: 'table_tennis', name: 'Bóng bàn', slug: 'table-tennis', isActive: true },
+          { id: 'football', name: 'Bóng đá', slug: 'football', isActive: true },
         ];
         setCategories(data);
         if (typeof window !== 'undefined') {
@@ -372,6 +377,7 @@ export default function HomePage() {
           { id: 'tennis', name: 'Tennis', slug: 'tennis', isActive: true },
           { id: 'badminton', name: 'Cầu lông', slug: 'badminton', isActive: true },
           { id: 'table_tennis', name: 'Bóng bàn', slug: 'table-tennis', isActive: true },
+          { id: 'football', name: 'Bóng đá', slug: 'football', isActive: true },
         ]);
       }
     };

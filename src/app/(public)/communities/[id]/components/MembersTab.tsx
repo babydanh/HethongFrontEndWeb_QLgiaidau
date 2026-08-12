@@ -9,6 +9,7 @@ import { usersApi } from '@/features/users/api';
 import toast from 'react-hot-toast';
 import Image from 'next/image';
 import { getErrorMessage } from '@/utils/error';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 
 interface UserSearchResult {
   id: string;
@@ -64,6 +65,10 @@ export default function MembersTab({
   // Transfer Confirmation state
   const [confirmTransferUserId, setConfirmTransferUserId] = useState<string | null>(null);
   const [confirmTransferName, setConfirmTransferName] = useState('');
+
+  // Kick / Ban confirmation targets
+  const [kickTarget, setKickTarget] = useState<{ userId: string; name: string } | null>(null);
+  const [banTarget, setBanTarget] = useState<{ userId: string; name: string } | null>(null);
 
   const fetchMembers = async () => {
     try {
@@ -134,7 +139,6 @@ export default function MembersTab({
   };
 
   const handleKickMember = async (targetUserId: string, targetName: string) => {
-    if (!confirm(`Bạn có chắc chắn muốn kích thành viên "${targetName}" ra khỏi cộng đồng?`)) return;
     try {
       await communitiesApi.removeMember(communityId, targetUserId);
       toast.success(`Đã kích "${targetName}" khỏi nhóm.`);
@@ -150,7 +154,6 @@ export default function MembersTab({
   };
 
   const handleBanMember = async (targetUserId: string, targetName: string) => {
-    if (!confirm(`Bạn có chắc chắn muốn cấm "${targetName}" khỏi cộng đồng?`)) return;
     try {
       await communitiesApi.banMember(communityId, targetUserId);
       toast.success(`Đã cấm "${targetName}" khỏi cộng đồng.`);
@@ -344,13 +347,13 @@ export default function MembersTab({
                                 </button>
                                 <hr className="my-1 border-slate-100" />
                                 <button
-                                  onClick={() => handleKickMember(item.user.id, item.user.fullName)}
+                                  onClick={() => setKickTarget({ userId: item.user.id, name: item.user.fullName })}
                                   className="w-full text-left px-4 py-2 text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2 transition-colors"
                                 >
                                   <Trash2 className="w-4 h-4 text-rose-500" /> Kích khỏi nhóm
                                 </button>
                                 <button
-                                  onClick={() => handleBanMember(item.user.id, item.user.fullName)}
+                                  onClick={() => setBanTarget({ userId: item.user.id, name: item.user.fullName })}
                                   className="w-full text-left px-4 py-2 text-xs text-rose-700 hover:bg-rose-50 flex items-center gap-2 transition-colors"
                                 >
                                   <Ban className="w-4 h-4 text-rose-600" /> Cấm khỏi cộng đồng
@@ -445,13 +448,13 @@ export default function MembersTab({
                                 </>
                               )}
                               <button
-                                  onClick={() => handleKickMember(item.user.id, item.user.fullName)}
+                                  onClick={() => setKickTarget({ userId: item.user.id, name: item.user.fullName })}
                                   className="w-full text-left px-4 py-2 text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2 transition-colors"
                                 >
                                   <Trash2 className="w-4 h-4 text-rose-500" /> Kích khỏi nhóm
                                 </button>
                               <button
-                                onClick={() => handleBanMember(item.user.id, item.user.fullName)}
+                                onClick={() => setBanTarget({ userId: item.user.id, name: item.user.fullName })}
                                 className="w-full text-left px-4 py-2 text-xs text-rose-700 hover:bg-rose-50 flex items-center gap-2 transition-colors"
                               >
                                 <Ban className="w-4 h-4 text-rose-600" /> Cấm khỏi cộng đồng
@@ -574,6 +577,56 @@ export default function MembersTab({
           </div>
         </div>
       )}
+
+      {/* Kick Member Confirmation Modal */}
+      <ConfirmModal
+        open={kickTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setKickTarget(null);
+          }
+        }}
+        title="Kích thành viên"
+        description={
+          kickTarget
+            ? `Bạn có chắc chắn muốn kích thành viên "${kickTarget.name}" ra khỏi cộng đồng?`
+            : undefined
+        }
+        confirmLabel="Kích khỏi nhóm"
+        variant="danger"
+        onConfirm={() => {
+          if (kickTarget) {
+            const target = kickTarget;
+            setKickTarget(null);
+            handleKickMember(target.userId, target.name);
+          }
+        }}
+      />
+
+      {/* Ban Member Confirmation Modal */}
+      <ConfirmModal
+        open={banTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setBanTarget(null);
+          }
+        }}
+        title="Cấm thành viên"
+        description={
+          banTarget
+            ? `Bạn có chắc chắn muốn cấm "${banTarget.name}" khỏi cộng đồng?`
+            : undefined
+        }
+        confirmLabel="Cấm khỏi cộng đồng"
+        variant="danger"
+        onConfirm={() => {
+          if (banTarget) {
+            const target = banTarget;
+            setBanTarget(null);
+            handleBanMember(target.userId, target.name);
+          }
+        }}
+      />
     </div>
   );
 }

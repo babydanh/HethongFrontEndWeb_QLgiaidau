@@ -13,6 +13,7 @@ import toast from 'react-hot-toast';
 import { getErrorMessage } from '@/utils/error';
 import { ReportViolationButton } from '@/features/reports/components/ReportViolationButton';
 import ShareModal from '@/components/common/ShareModal';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 
 interface CommunityMemberRecord {
   member?: { id?: string; userId?: string; role?: string; status?: string };
@@ -46,6 +47,7 @@ export default function CommunityDetailPage() {
   const [galleryImages, setGalleryImages] = useState<{ id: string; imageUrl: string }[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isLeaveConfirmOpen, setIsLeaveConfirmOpen] = useState(false);
 
   const fetchGallery = async () => {
     try {
@@ -144,6 +146,24 @@ export default function CommunityDetailPage() {
     }
   }, [id, user]);
 
+  const handleLeaveCommunity = async () => {
+    const currentUserId = user?.id;
+    if (!currentUserId) return;
+    try {
+      setIsJoinLoading(true);
+      await communitiesApi.removeMember(id, currentUserId);
+      toast.success('Đã rời khỏi câu lạc bộ.');
+      setMembership(null);
+      setIsLeaveConfirmOpen(false);
+      fetchCommunity();
+    } catch (error) {
+      console.error('Failed to leave community', error);
+      toast.error(getErrorMessage(error, 'Lỗi khi thực hiện rời câu lạc bộ.'));
+    } finally {
+      setIsJoinLoading(false);
+    }
+  };
+
   const handleJoinAction = async () => {
     if (!user) {
       toast.error('Vui lòng đăng nhập để tham gia câu lạc bộ.');
@@ -157,19 +177,7 @@ export default function CommunityDetailPage() {
     }
 
     if (membership?.status === 'JOINED') {
-      if (!confirm('Bạn có chắc chắn muốn rời khỏi câu lạc bộ này?')) return;
-      try {
-        setIsJoinLoading(true);
-        await communitiesApi.removeMember(id, user.id);
-        toast.success('Đã rời khỏi câu lạc bộ.');
-        setMembership(null);
-        fetchCommunity();
-      } catch (error) {
-        console.error('Failed to leave community', error);
-        toast.error(getErrorMessage(error, 'Lỗi khi thực hiện rời câu lạc bộ.'));
-      } finally {
-        setIsJoinLoading(false);
-      }
+      setIsLeaveConfirmOpen(true);
       return;
     }
 
@@ -500,6 +508,17 @@ export default function CommunityDetailPage() {
           }}
         />
       )}
+
+      <ConfirmModal
+        open={isLeaveConfirmOpen}
+        onOpenChange={setIsLeaveConfirmOpen}
+        title="Rời khỏi câu lạc bộ"
+        description="Bạn có chắc chắn muốn rời khỏi câu lạc bộ này?"
+        confirmLabel="Rời khỏi"
+        variant="danger"
+        isLoading={isJoinLoading}
+        onConfirm={handleLeaveCommunity}
+      />
 
       <ShareModal
         isOpen={isShareModalOpen}

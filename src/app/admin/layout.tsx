@@ -19,6 +19,7 @@ import {
   X,
   Settings,
   Trophy,
+  Layers,
   HandCoins,
   MessagesSquare,
 } from 'lucide-react';
@@ -43,6 +44,7 @@ export default function AdminLayout({
     { name: 'Khóa / xử phạt user', path: '/admin/moderation', icon: Users },
     { name: 'Báo cáo vi phạm', path: '/admin/reports', icon: ShieldAlert },
     { name: 'Quản lý giải đấu', path: '/admin/tournaments', icon: Trophy },
+    { name: 'Quản lý bộ môn', path: '/admin/categories', icon: Layers },
     { name: 'Quản lý cộng đồng', path: '/admin/communities', icon: Building },
     { name: 'Quản lý rút tiền', path: '/admin/payouts', icon: CreditCard },
     { name: 'Giao dịch hệ thống', path: '/admin/transactions', icon: HandCoins },

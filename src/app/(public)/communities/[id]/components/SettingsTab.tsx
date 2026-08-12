@@ -16,6 +16,7 @@ import { regionsApi, Region } from '@/features/regions/api';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '@/utils/error';
 import RichTextEditor from '@/components/ui/RichTextEditor';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 
 interface JoinRequest {
   id: string;
@@ -106,17 +107,11 @@ export default function SettingsTab({ community }: { community: Community }) {
 
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [deleteConfirmName, setDeleteConfirmName] = useState('');
   const router = useRouter();
 
   const handleDeleteCommunity = async () => {
-    const confirmName = prompt(`Để xác nhận xoá, vui lòng nhập chính xác tên câu lạc bộ: "${community.name}"`);
-    if (confirmName !== community.name) {
-      if (confirmName !== null) {
-        toast.error('Tên câu lạc bộ nhập vào không khớp. Huỷ thao tác xoá.');
-      }
-      return;
-    }
-    
     try {
       setIsDeleting(true);
       await communitiesApi.deleteCommunity(community.id);
@@ -700,7 +695,10 @@ export default function SettingsTab({ community }: { community: Community }) {
             Hành động này sẽ xóa vĩnh viễn Câu lạc bộ này khỏi hệ thống cùng với toàn bộ thành viên, hình ảnh và lịch sử giải đấu. Hành động này không thể hoàn tác.
           </p>
           <Button 
-            onClick={handleDeleteCommunity}
+            onClick={() => {
+              setDeleteConfirmName('');
+              setIsDeleteConfirmOpen(true);
+            }}
             disabled={isSaving || isDeleting}
             className="bg-rose-650 hover:bg-rose-700 text-white border-0 shadow-sm"
           >
@@ -711,6 +709,38 @@ export default function SettingsTab({ community }: { community: Community }) {
       </div>
 
       <div className="lg:col-span-1" />
+
+      {/* Delete Community Confirmation Modal */}
+      <ConfirmModal
+        open={isDeleteConfirmOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setIsDeleteConfirmOpen(false);
+            setDeleteConfirmName('');
+          }
+        }}
+        title="Xoá câu lạc bộ"
+        description={`Để xác nhận xoá, vui lòng nhập chính xác tên câu lạc bộ: "${community.name}"`}
+        confirmLabel="Xoá vĩnh viễn"
+        variant="danger"
+        isLoading={isDeleting}
+        onConfirm={() => {
+          if (deleteConfirmName !== community.name) {
+            toast.error('Tên câu lạc bộ nhập vào không khớp. Huỷ thao tác xoá.');
+            return;
+          }
+          handleDeleteCommunity();
+        }}
+      >
+        <input
+          type="text"
+          value={deleteConfirmName}
+          onChange={(e) => setDeleteConfirmName(e.target.value)}
+          placeholder="Nhập tên câu lạc bộ..."
+          autoFocus
+          className="w-full rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-900 outline-none transition-colors focus:border-rose-500 focus:ring-2 focus:ring-rose-500"
+        />
+      </ConfirmModal>
     </div>
   );
 }

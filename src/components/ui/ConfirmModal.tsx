@@ -1,0 +1,107 @@
+'use client';
+
+import * as React from 'react';
+import { AlertTriangle, TriangleAlert } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
+import {
+  Modal,
+  ModalContent,
+  ModalTitle,
+  ModalDescription,
+} from '@/components/ui/Modal';
+import { cn } from '@/utils/cn';
+
+interface ConfirmModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title: string;
+  description?: string;
+  confirmLabel: string;
+  cancelLabel?: string;
+  variant?: 'danger' | 'default';
+  onConfirm: () => void;
+  isLoading?: boolean;
+  /** Nội dung phụ (ví dụ input xác nhận tên CLB khi xoá) */
+  children?: React.ReactNode;
+}
+
+/**
+ * Modal xác nhận thống nhất thay cho confirm()/prompt() native.
+ * - variant 'danger': icon TriangleAlert + nút xác nhận đỏ (hành động nguy hiểm)
+ * - variant 'default': icon AlertTriangle + nút xác nhận emerald-600
+ * - Enter submit, Escape đóng (Radix Dialog mặc định)
+ */
+export default function ConfirmModal({
+  open,
+  onOpenChange,
+  title,
+  description,
+  confirmLabel,
+  cancelLabel = 'Huỷ',
+  variant = 'default',
+  onConfirm,
+  isLoading = false,
+  children,
+}: ConfirmModalProps) {
+  const isDanger = variant === 'danger';
+  const Icon = isDanger ? TriangleAlert : AlertTriangle;
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isLoading) return;
+    onConfirm();
+  };
+
+  return (
+    <Modal open={open} onOpenChange={onOpenChange}>
+      <ModalContent className="max-w-sm gap-0 overflow-hidden p-0">
+        <form onSubmit={handleSubmit}>
+          <div className="flex items-start gap-4 p-6">
+            <div
+              className={cn(
+                'flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border',
+                isDanger
+                  ? 'bg-rose-50 text-rose-600 border-rose-100'
+                  : 'bg-emerald-50 text-emerald-600 border-emerald-100'
+              )}
+            >
+              <Icon className="h-5 w-5" strokeWidth={1.5} />
+            </div>
+            <div className="min-w-0 flex-1 space-y-1.5 pt-0.5">
+              <ModalTitle className="text-base font-bold leading-tight text-slate-900">
+                {title}
+              </ModalTitle>
+              {description ? (
+                <ModalDescription className="text-sm leading-relaxed text-slate-500">
+                  {description}
+                </ModalDescription>
+              ) : null}
+            </div>
+          </div>
+
+          {children ? <div className="px-6 pb-5">{children}</div> : null}
+
+          <div className="flex justify-end gap-3 border-t border-slate-100 bg-slate-50/60 px-6 py-4">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isLoading}
+              onClick={() => onOpenChange(false)}
+              className="h-9 px-4 text-xs font-semibold"
+            >
+              {cancelLabel}
+            </Button>
+            <Button
+              type="submit"
+              variant={isDanger ? 'destructive' : 'success'}
+              isLoading={isLoading}
+              className="h-9 px-4 text-xs font-bold"
+            >
+              {isLoading ? 'Đang xử lý...' : confirmLabel}
+            </Button>
+          </div>
+        </form>
+      </ModalContent>
+    </Modal>
+  );
+}

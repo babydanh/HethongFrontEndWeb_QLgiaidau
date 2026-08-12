@@ -19,6 +19,7 @@ export const reportsApi = {
     api.get<ApiResponse<ViolationReport[]>>('/admin/reports', {
       params: {
         ...filters,
+        page: undefined,
         from: filters.dateFrom,
         to: filters.dateTo,
         dateFrom: undefined,

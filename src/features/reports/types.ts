@@ -78,4 +78,5 @@ export interface ReportFilters {
   category?: ReportCategory;
   dateFrom?: string;
   dateTo?: string;
+  cursor?: string;
 }

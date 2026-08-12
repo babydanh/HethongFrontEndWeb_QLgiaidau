@@ -1,7 +1,7 @@
 'use client';
 
 import { ChevronLeft, ChevronRight, Eye, Loader2, ShieldAlert } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/Button';
 import { reportsApi } from '@/features/reports/api';
@@ -28,16 +28,31 @@ export default function ReportsPage() {
   const [loading, setLoading] = useState(true);
   const [reloadKey, setReloadKey] = useState(0);
   const [selectedReport, setSelectedReport] = useState<ViolationReport | null>(null);
+  const cursorByPageRef = useRef<Record<number, string | null>>({ 1: null });
+  const filterKeyRef = useRef('');
 
   useEffect(() => {
+    const nextFilterKey = JSON.stringify({ ...filters, page: undefined });
+    if (filterKeyRef.current !== nextFilterKey) {
+      filterKeyRef.current = nextFilterKey;
+      cursorByPageRef.current = { 1: null };
+      if (filters.page !== 1) {
+        setFilters((value) => ({ ...value, page: 1 }));
+        return;
+      }
+    }
     let active = true;
     const timer = window.setTimeout(async () => {
       setLoading(true);
       try {
-        const response = await reportsApi.list(filters);
+        const response = await reportsApi.list({
+          ...filters,
+          cursor: cursorByPageRef.current[filters.page] ?? undefined,
+        });
         if (!active) return;
         setReports(response.data ?? []);
         setTotalPages(response.meta?.totalPages ?? 1);
+        cursorByPageRef.current[filters.page + 1] = response.meta?.nextCursor ?? null;
       } catch (error: unknown) {
         if (active) toast.error(getErrorMessage(error) || 'Không thể tải danh sách báo cáo.');
       } finally {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { api } from '@/lib/axios';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { toast } from 'react-hot-toast';
@@ -102,6 +102,7 @@ export default function AdminTournamentsPage() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const cursorByPageRef = useRef<Record<number, string | null>>({ 1: null });
   const [processing, setProcessing] = useState(false);
   const [selectedTournamentId, setSelectedTournamentId] = useState<string | null>(null);
   const [detailTournament, setDetailTournament] = useState<TournamentDetail | null>(null);
@@ -134,10 +135,14 @@ export default function AdminTournamentsPage() {
       setLoading(true);
     }
     try {
-      const statusParam = selectedStatus ? `&status=${selectedStatus}` : '';
-      const response = await api.get<ApiResponse<TournamentItem[]>>(`/admin/tournaments?page=${page}&limit=10&search=${searchTerm}${statusParam}`);
+      const params = new URLSearchParams({ limit: '10', search: searchTerm });
+      if (selectedStatus) params.set('status', selectedStatus);
+      const cursor = cursorByPageRef.current[page];
+      if (cursor) params.set('cursor', cursor);
+      const response = await api.get<ApiResponse<TournamentItem[]>>(`/admin/tournaments?${params.toString()}`);
       setTournaments(response.data || []);
       setTotalPages(response.meta?.totalPages || 1);
+      cursorByPageRef.current[page + 1] = response.meta?.nextCursor ?? null;
     } catch (error) {
       console.error(error);
       toast.error('Không thể lấy danh sách giải đấu');
@@ -145,6 +150,11 @@ export default function AdminTournamentsPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    cursorByPageRef.current = { 1: null };
+    setPage(1);
+  }, [selectedStatus]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -155,6 +165,7 @@ export default function AdminTournamentsPage() {
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    cursorByPageRef.current = { 1: null };
     setPage(1);
     fetchTournaments(search);
   };

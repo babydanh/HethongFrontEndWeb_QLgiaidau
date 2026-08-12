@@ -49,7 +49,7 @@ export default function DownloadPage() {
       {/* Soft Ambient Light Glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[400px] bg-gradient-to-b from-blue-100/70 via-emerald-100/30 to-transparent blur-3xl pointer-events-none" />
 
-      <div className="max-w-4xl mx-auto px-4 py-6 md:py-10 relative z-10 scale-90 md:scale-90 lg:scale-80 origin-top">
+      <div className="max-w-4xl mx-auto px-4 py-12 md:py-16 relative z-10">
         
         {/* Hero Section */}
         <motion.div 

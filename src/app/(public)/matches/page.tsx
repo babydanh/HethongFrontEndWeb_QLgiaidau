@@ -334,7 +334,7 @@ export default function MatchesListPage() {
 
         const res = await matchesApi.getMatches({
           page: 1, // Reset API page to 1 since we are paging tournaments locally now
-          limit: 500, // Fetch all matches so grouping works correctly
+          limit: 100, // Reduced from 500 to prevent 429 rate limits
           search: searchTerm || undefined,
           categoryId: selectedCategoryId || undefined,
           status: selectedStatus || undefined,

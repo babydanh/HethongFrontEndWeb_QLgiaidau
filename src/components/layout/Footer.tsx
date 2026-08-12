@@ -11,7 +11,7 @@ export function Footer() {
           <div>
             <Link href="/" className="inline-block mb-3">
               <img 
-                src="/vndcsport.svg" 
+                src="/sporto_v1.svg" 
                 alt="Sporto Logo" 
                 className="h-16 md:h-20 w-auto object-contain"
               />

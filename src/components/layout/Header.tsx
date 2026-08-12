@@ -288,7 +288,7 @@ export function Header() {
         <div className="flex h-full items-center gap-8">
           <Link href="/" className="relative flex h-full items-center py-0">
             <Image
-              src="/vndcsport.svg"
+              src="/sporto_v1.svg"
               alt="Sporto Logo"
               width={140}
               height={140}

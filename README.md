@@ -1,36 +1,99 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🏆 VNVAR - Tournament Management Web Application
 
-## Getting Started
+> **Hệ sinh thái công nghệ VAR thể thao phong trào đầu tiên tại Việt Nam**  
+> 🌐 **Production Portal**: [https://giaidau.vnvar.com](https://giaidau.vnvar.com)
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 📌 Giới thiệu dự án (About VNVAR)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+**VNVAR** (`giaidau.vnvar.com`) là nền tảng Web Application mã nguồn mở cao cấp thuộc hệ sinh thái **VNVAR**, tiên phong ứng dụng công nghệ **VAR (Video Assistant Referee)** và AI vào công tác tổ chức, điều hành các giải đấu thể thao phong trào (Pickleball, Cầu lông, Tennis) tại Việt Nam.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Dự án giúp Ban tổ chức, Trọng tài, Câu lạc bộ và VĐV dễ dàng vận hành giải đấu một cách tự động, minh bạch và chuyên nghiệp.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## ✨ Tính năng nổi bật (Key Features)
 
-To learn more about Next.js, take a look at the following resources:
+### 🏆 1. Quản lý Giải đấu & Vận hành Chuyên nghiệp
+- **Khởi tạo & Cấu hình Giải đấu**: Hỗ trợ giải Đơn / Đôi, các bộ môn Pickleball, Cầu lông, Tennis...
+- **Tự động hóa Xếp lịch & Bảng đấu**: Tự động sinh nhánh đấu loại trực tiếp (**Single Elimination**) và vòng bảng (**Round Robin**) chuẩn quốc tế.
+- **Tính toán ELO Realtime**: Hệ thống tính điểm ELO VĐV và xếp hạng Tier (`👑 Tier S`, `🔥 High Tier A`, `⚡ High Tier B`...).
+- **Cổng Đăng ký & Thanh toán Lệ phí**: Hỗ trợ đăng ký thi đấu, xác nhận thanh toán trực tuyến & hoàn phí tự động khi rút lui.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 🎥 2. Hệ thống VAR & Livestream Trực tiếp
+- **VAR Video Review**: Tích hợp luồng xem lại video tranh chấp tình huống trên sân cho Trọng tài.
+- **Live Score Realtime**: Cập nhật tỉ số trận đấu từng điểm số theo thời gian thực qua WebSocket.
+- **Overlay Livestream**: Tự động xuất tỉ số trận đấu chuẩn broadcast cho các kênh Livestream.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 👥 3. Hồ sơ Câu lạc bộ & Dashboard Năng động
+- **Overview Dashboard**: Hiển thị kết quả thi đấu vừa diễn ra ("Ai mới đánh với ai"), giải đấu nổi bật và Top 3 VĐV xuất sắc.
+- **Gán Tag & Biệt danh Thành viên**: Hệ thống gán Streak Tag phong độ (`🔥 Win Streak x5`, `🧊 Freeze Streak`) và biệt danh vui CLB.
+- **Pop-up Profile Nội bộ (4 Sub-tabs)**: Xem chi tiết chỉ số thi đấu CLB, lịch sử trận đấu, giải đã tham gia và phân quyền BQT.
+- **Thách đấu Liên CLB**: Tính năng thách đấu giao hữu tự động khởi tạo giải đấu 2 bên.
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🛠️ Công nghệ sử dụng (Tech Stack)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Framework**: [Next.js 15+](https://nextjs.org/) (App Router, React 19)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS, Lucide Icons, Glassmorphism UI
+- **State Management**: Zustand
+- **Realtime / Socket**: Socket.io-client / WebSockets
+- **HTTP Client**: Axios
+- **Deployment**: Vercel / Nginx Reverse Proxy (`https://giaidau.vnvar.com`)
+
+---
+
+## 🚀 Hướng dẫn Chạy ứng dụng ở Local (Development Guide)
+
+### Yêu cầu hệ thống (Prerequisites)
+- Node.js >= 18.x
+- npm / yarn / pnpm
+
+### các bước cài đặt:
+
+1. **Clone repository**:
+   ```bash
+   git clone https://github.com/babydanh/HethongFrontEndWeb_QLgiaidau.git
+   cd HethongFrontEndWeb_QLgiaidau
+   ```
+
+2. **Cài đặt dependencies**:
+   ```bash
+   npm install
+   ```
+
+3. **Cấu hình file môi trường (`.env.local`)**:
+   ```env
+   NEXT_PUBLIC_API_URL=https://giaidau.vnvar.com/api/v1
+   NEXT_PUBLIC_SITE_URL=https://giaidau.vnvar.com
+   ```
+
+4. **Khởi chạy Development Server**:
+   ```bash
+   npm run dev
+   ```
+   Mở trình duyệt truy cập `http://localhost:3000`.
+
+5. **Build cho Production**:
+   ```bash
+   npm run build
+   npm run start
+   ```
+
+---
+
+## 🔗 Liên kết & Mạng xã hội (Official Links)
+
+- 🌐 **Official Website**: [https://giaidau.vnvar.com](https://giaidau.vnvar.com)
+- 📖 **Open Source Program**: OpenAI Codex for Open Source Participant
+- 📧 **Liên hệ**: `macter.970@gmail.com`
+
+---
+
+## 📄 Bản quyền & Giấy phép (License)
+
+Dự án được phát hành dưới bản quyền mở phục vụ cộng đồng thể thao phong trào Việt Nam.  
+© 2026 **VNVAR Ecosystem**. All rights reserved.

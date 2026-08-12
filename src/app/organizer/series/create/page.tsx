@@ -118,7 +118,7 @@ export default function CreateSeriesPage() {
             href="/"
             className="w-12 h-12 bg-white border border-slate-200 rounded-lg flex items-center justify-center overflow-hidden shadow-sm shrink-0 hover:scale-105 transition-transform"
           >
-            <img src="/vndcsport.svg" alt="Sporto Logo" className="w-9 h-9 object-contain" />
+            <img src="/sporto_v1\.svg" alt="Sporto Logo" className="w-9 h-9 object-contain" />
           </Link>
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-slate-900">Thiết Lập Chuỗi Giải Đấu Mới</h1>

@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: CommunityPageProps): Promise<
         const title = `${community.name} | Sporto`;
         const cleanDesc = stripHtmlAndNormalize(community.description, 160);
         const description = cleanDesc || `Khám phá câu lạc bộ ${community.name} trên Sporto.`;
-        const imageUrl = community.bannerUrl || community.logoUrl || 'https://giaidau.vnvar.com/vndcsport.svg';
+        const imageUrl = community.bannerUrl || community.logoUrl || 'https://giaidau.vnvar.com/sporto_v1\.svg';
 
 
         return {

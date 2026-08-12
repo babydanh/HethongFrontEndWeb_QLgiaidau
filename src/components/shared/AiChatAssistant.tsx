@@ -507,7 +507,7 @@ export default function AiChatAssistant() {
                       )
                     ) : (
                       <img
-                        src="/vndcsport.svg"
+                        src="/sporto_v1\.svg"
                         alt="Sporto"
                         className="h-5 w-5 object-contain"
                       />

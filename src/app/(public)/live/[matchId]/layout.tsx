@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: LayoutProps): Promise<Metadat
         const sportName = match.tournament?.category?.name || 'Thể thao';
         const title = `Trực tiếp: ${team1} vs ${team2} | ${tournamentName}`;
         const description = `Xem tỷ số trực tuyến và diễn biến trận đấu giữa ${team1} vs ${team2}, bộ môn ${sportName} trên Sporto.`;
-        const imageUrl = match.tournament?.bannerUrl || 'https://giaidau.vnvar.com/vndcsport.svg';
+        const imageUrl = match.tournament?.bannerUrl || 'https://giaidau.vnvar.com/sporto_v1\.svg';
 
         return {
           title,

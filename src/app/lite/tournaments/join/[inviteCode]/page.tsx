@@ -101,7 +101,7 @@ export default function LiteJoinPage({ params }: { params: Promise<{ inviteCode:
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-8 max-w-sm w-full text-center space-y-4">
           <Image
-            src="/vndcsport.svg"
+            src="/sporto_v1\.svg"
             alt="Sporto Logo"
             width={200}
             height={80}
@@ -129,7 +129,7 @@ export default function LiteJoinPage({ params }: { params: Promise<{ inviteCode:
         {/* Sporto Official Logo — Big & Prominent */}
         <div className="text-center">
           <Image
-            src="/vndcsport.svg"
+            src="/sporto_v1\.svg"
             alt="Sporto Logo"
             width={240}
             height={90}

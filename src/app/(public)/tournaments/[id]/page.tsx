@@ -52,7 +52,7 @@ export default async function TournamentDetailPage({ params }: PageProps) {
         addressCountry: 'VN',
       },
     },
-    image: [tournament.bannerUrl || tournament.logoUrl || 'https://giaidau.vnvar.com/vndcsport.png'],
+    image: [tournament.bannerUrl || tournament.logoUrl || 'https://giaidau.vnvar.com/sporto_v1\.svg'],
     organizer: {
       '@type': 'Organization',
       name: 'Sporto',

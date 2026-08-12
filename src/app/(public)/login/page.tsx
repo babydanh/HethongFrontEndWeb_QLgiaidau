@@ -116,7 +116,7 @@ export default function LoginPage() {
         {/* Logo — larger */}
         <div className="relative z-10 p-10 pb-0">
           <img
-            src="/vndcsport.svg"
+            src="/sporto_v1\.svg"
             alt="Sporto"
             className="h-28 w-auto object-contain brightness-200 contrast-0"
           />
@@ -183,7 +183,7 @@ export default function LoginPage() {
             {/* Logo inside card for right panel */}
             <div className="flex items-center justify-center mb-4">
               <img
-                src="/vndcsport.svg"
+                src="/sporto_v1\.svg"
                 alt="Sporto"
                 className="h-24 w-auto object-contain scale-110"
               />

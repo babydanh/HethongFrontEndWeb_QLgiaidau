@@ -37,7 +37,7 @@ export const metadata: Metadata = {
     locale: "vi_VN",
     images: [
       {
-        url: '/sporto.svg',
+        url: '/sporto_v1\.svg',
         width: 1200,
         height: 630,
         alt: 'Sporto - Nền tảng Quản lý giải đấu',
@@ -48,7 +48,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Sporto - Nền tảng Quản lý giải đấu",
     description: "Nền tảng tổ chức và tham gia giải đấu thể thao câu lạc bộ chuyên nghiệp.",
-    images: ['/sporto.svg'],
+    images: ['/sporto_v1\.svg'],
   },
   icons: {
     icon: [
@@ -72,7 +72,7 @@ export default async function RootLayout({
     '@type': 'SportsOrganization',
     name: 'Sporto',
     url: 'https://sporto.asia',
-    logo: 'https://sporto.asia/sporto.svg',
+    logo: 'https://sporto.asia/sporto_v1\.svg',
     description: 'Nền tảng tổ chức, quản lý và tham gia giải đấu thể thao câu lạc bộ chuyên nghiệp.',
     sameAs: [],
   };

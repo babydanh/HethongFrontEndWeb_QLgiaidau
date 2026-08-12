@@ -352,6 +352,8 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
               isAdvancingStandings={s.isAdvancingStandings}
               handleSaveGskConfig={s.handleSaveGskConfig}
               isSavingGskConfig={s.isSavingGskConfig}
+              isLiteMode={s.isLiteMode}
+              setIsLiteMode={s.setIsLiteMode}
             />
           </div>
         )}

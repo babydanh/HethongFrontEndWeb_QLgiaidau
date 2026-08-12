@@ -29,6 +29,7 @@ export type SportRuleKind =
 export type SportScoringModel = 'RALLY_POINT_SET' | 'TENNIS_SET' | 'PICKLEBALL_SIDE_OUT';
 
 export interface SportRuleScoringConfig {
+  mode?: 'LITE' | 'STRICT';
   kind?: SportRuleKind;
   scoringModel?: SportScoringModel;
   setsToWin?: number;
@@ -166,7 +167,7 @@ export interface Tournament {
   }[] | null;
   city?: string | null;
   tournamentConfig?: {
-    mode?: 'LITE' | 'ADVANCED';
+    mode?: 'LITE' | 'ADVANCED' | 'STRICT';
     bracketType?: string;
     maxTeams?: number;
     seedingMethod?: 'ELO' | 'RANDOM' | 'MANUAL';

@@ -4,12 +4,15 @@ import type {
   SportRulesEnvelope,
   StageRoundConfig,
   StageRoundRuleConfig,
+  SportScoringModel,
 } from '@/types/tournament';
 import type { Category } from '@/types/category';
 import { buildDefaultSportRules } from './defaults';
 
 export interface ResolvedSportRuleView {
+  mode?: 'LITE' | 'STRICT';
   kind: SportRuleKind;
+  scoringModel: SportScoringModel;
   setsToWin: number;
   bestOf: number;
   pointsPerSet: number;
@@ -171,9 +174,12 @@ export function resolveSportRuleView(
   );
   const tiebreakerMode = (merged?.tiebreakerMode === 'playoff' ? 'playoff' : 'split') as 'split' | 'playoff';
   const hasCustomTiebreakTarget = readNumber(merged, ['tiebreakPoints', 'tiebreak_points', 'tiebreakAt', 'tiebreak_at']) !== undefined;
+  const scoringModel = (merged?.scoringModel as SportScoringModel) ?? (defaults.scoringModel as SportScoringModel) ?? 'STANDARD';
 
   return {
+    mode: (merged?.mode as 'LITE' | 'STRICT') ?? (defaults?.mode as 'LITE' | 'STRICT') ?? 'STRICT',
     kind: normalizeKind(merged?.kind) ?? fallbackKind,
+    scoringModel,
     setsToWin,
     bestOf: setsToWin * 2 - 1,
     pointsPerSet,

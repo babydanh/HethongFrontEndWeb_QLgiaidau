@@ -62,7 +62,9 @@ interface BracketTabProps {
   roundsToPlay?: number;
   setRoundsToPlay?: (val: number) => void;
   selectedMatchId?: string | null;
-  onSelectMatch?: (match: BracketMatch) => void;
+  onSelectMatch?: (match: import('@/types/tournament').BracketMatch) => void;
+  isLiteMode: boolean;
+  setIsLiteMode: (val: boolean) => void;
 
   // Lock state — disable config edits after lock
   isLocked?: boolean;
@@ -153,6 +155,9 @@ export function BracketTab({
   setRoundsToPlay,
   selectedMatchId,
   onSelectMatch,
+  handleSaveRoundRobinConfig,
+  isSavingRoundRobinConfig,
+  isLiteMode, setIsLiteMode,
   // Round Robin scoring
   rrWinPoints = 3,
   setRrWinPoints,
@@ -160,8 +165,6 @@ export function BracketTab({
   setRrLossPoints,
   rrTiebreaker = 'H2H_POINTS',
   setRrTiebreaker,
-  handleSaveRoundRobinConfig,
-  isSavingRoundRobinConfig = false,
   tournamentFormat,
   numGroups = 4,
   setNumGroups,
@@ -541,57 +544,107 @@ export function BracketTab({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 items-end">
-              <Input
-                label={setUnitLabel}
-                type="number"
-                value={pointsPerSet}
-                onChange={(e) => setPointsPerSet(Number(e.target.value))}
-                className="h-10 text-sm font-bold"
-              />
-              
-              <div className="flex items-center gap-2 h-10 pb-2">
-                <input
-                  type="checkbox"
-                  id="winByTwo_bracket"
-                  checked={winByTwo}
-                  onChange={(e) => setWinByTwo(e.target.checked)}
-                  className="w-4 h-4 text-blue-600 rounded border-slate-300 cursor-pointer"
-                />
-                <label htmlFor="winByTwo_bracket" className="text-xs font-bold text-slate-600 cursor-pointer select-none">
-                  {winByTwoLabel}
-                </label>
+            {/* Switch LITE vs STRICT */}
+            <div className="bg-white border border-slate-200 rounded-lg p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-bold text-slate-800 text-sm">Chế độ ghi điểm</h4>
+                  <p className="text-xs text-slate-500 font-medium">Tự do ghi điểm hoặc áp dụng luật khắt khe</p>
+                </div>
+                <div className="flex items-center bg-slate-100 rounded-lg p-1">
+                  <button
+                    type="button"
+                    onClick={() => setIsLiteMode(true)}
+                    className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
+                      isLiteMode 
+                        ? 'bg-blue-600 text-white shadow-sm' 
+                        : 'text-slate-500 hover:text-slate-700'
+                    }`}
+                  >
+                    ⚡ Tự do (Lite)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsLiteMode(false)}
+                    className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
+                      !isLiteMode 
+                        ? 'bg-slate-800 text-white shadow-sm' 
+                        : 'text-slate-500 hover:text-slate-700'
+                    }`}
+                  >
+                    🛡️ Tiêu chuẩn (Strict)
+                  </button>
+                </div>
               </div>
+
+              {!isLiteMode && (
+                <div className="animate-in fade-in slide-in-from-top-2 duration-300 space-y-4 pt-4 border-t border-slate-100">
+                  <div className="grid grid-cols-2 gap-4 items-end">
+                    <Input
+                      label={setUnitLabel}
+                      type="number"
+                      value={pointsPerSet}
+                      onChange={(e) => setPointsPerSet(Number(e.target.value))}
+                      className="h-10 text-sm font-bold"
+                    />
+                    
+                    <div className="flex items-center gap-2 h-10 pb-2">
+                      <input
+                        type="checkbox"
+                        id="winByTwo_bracket"
+                        checked={winByTwo}
+                        onChange={(e) => setWinByTwo(e.target.checked)}
+                        className="w-4 h-4 text-blue-600 rounded border-slate-300 cursor-pointer"
+                      />
+                      <label htmlFor="winByTwo_bracket" className="text-xs font-bold text-slate-600 cursor-pointer select-none">
+                        {winByTwoLabel}
+                      </label>
+                    </div>
+                  </div>
+
+                  {winByTwo && (
+                    <Input
+                      label={maxScoreLabel}
+                      type="number"
+                      value={maxDeucePoints}
+                      onChange={(e) => setMaxDeucePoints(Number(e.target.value))}
+                      placeholder={presentation.maxScorePlaceholder}
+                      className="h-10 text-sm font-bold"
+                    />
+                  )}
+
+                  {supportsTiebreakInput && (
+                    <Input
+                      label={presentation.tiebreakLabel}
+                      type="number"
+                      value={superTiebreakPoints}
+                      onChange={(e) => setSuperTiebreakPoints(Number(e.target.value))}
+                      placeholder={sportRuleKind === 'TENNIS' ? 'Ví dụ: 7' : 'Ví dụ: 11'}
+                      className="h-10 text-sm font-bold"
+                    />
+                  )}
+                </div>
+              )}
+
+              {isLiteMode && (
+                <div className="animate-in fade-in slide-in-from-top-2 duration-300 rounded-lg bg-blue-50/50 p-3 mt-2 border border-blue-100/50">
+                  <p className="text-xs text-blue-800 font-medium">
+                    ⚡ Ở chế độ tự do, trọng tài có thể tùy ý cộng điểm mà không bị giới hạn bởi {sportRuleKind === 'TENNIS' ? 'Luật Tennis (15-30-40, v.v)' : 'luật cách biệt 2 điểm hay điểm chạm'}. Giao diện điều khiển điểm số sẽ tối giản nhất để dễ thao tác.
+                  </p>
+                </div>
+              )}
             </div>
-
-            {winByTwo && (
-              <Input
-                label={maxScoreLabel}
-                type="number"
-                value={maxDeucePoints}
-                onChange={(e) => setMaxDeucePoints(Number(e.target.value))}
-                placeholder={presentation.maxScorePlaceholder}
-                className="h-10 text-sm font-bold"
-              />
-            )}
-
-            {supportsTiebreakInput && (
-              <Input
-                label={presentation.tiebreakLabel}
-                type="number"
-                value={superTiebreakPoints}
-                onChange={(e) => setSuperTiebreakPoints(Number(e.target.value))}
-                placeholder={sportRuleKind === 'TENNIS' ? 'Ví dụ: 7' : 'Ví dụ: 11'}
-                className="h-10 text-sm font-bold"
-              />
-            )}
 
             <div className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-xs font-semibold text-blue-900">
               Thiết lập hiện tại: thắng {setsToWin} {sportRuleKind === 'PICKLEBALL_SIDE_OUT' ? 'game' : 'set'}
-              {' • '}
-              {pointsPerSet} {sportRuleKind === 'TENNIS' ? 'game/set' : 'điểm'}
-              {winByTwo ? ' • hơn 2' : ' • chạm đích là chốt'}
-              {supportsTiebreakInput ? ` • ${presentation.tiebreakLabel.toLowerCase()}: ${superTiebreakPoints}` : ''}
+              {!isLiteMode && (
+                <>
+                  {' • '}
+                  {pointsPerSet} {sportRuleKind === 'TENNIS' ? 'game/set' : 'điểm'}
+                  {winByTwo ? ' • hơn 2' : ' • chạm đích là chốt'}
+                  {supportsTiebreakInput ? ` • ${presentation.tiebreakLabel.toLowerCase()}: ${superTiebreakPoints}` : ''}
+                </>
+              )}
             </div>
 
             <div className="bg-slate-50 border border-slate-200 p-4 rounded-lg space-y-3">

@@ -3,6 +3,7 @@ import type { SportRuleKind, SportRulesEnvelope } from '@/types/tournament';
 const DEFAULT_SPORT_RULES: Record<SportRuleKind, SportRulesEnvelope> = {
   BADMINTON: {
     version: 1,
+    mode: 'LITE',
     kind: 'BADMINTON',
     scoringModel: 'RALLY_POINT_SET',
     setsToWin: 2,
@@ -18,6 +19,7 @@ const DEFAULT_SPORT_RULES: Record<SportRuleKind, SportRulesEnvelope> = {
   },
   TABLE_TENNIS: {
     version: 1,
+    mode: 'LITE',
     kind: 'TABLE_TENNIS',
     scoringModel: 'RALLY_POINT_SET',
     setsToWin: 3,
@@ -33,6 +35,7 @@ const DEFAULT_SPORT_RULES: Record<SportRuleKind, SportRulesEnvelope> = {
   },
   PICKLEBALL_RALLY: {
     version: 1,
+    mode: 'LITE',
     kind: 'PICKLEBALL_RALLY',
     scoringModel: 'RALLY_POINT_SET',
     setsToWin: 2,
@@ -48,6 +51,7 @@ const DEFAULT_SPORT_RULES: Record<SportRuleKind, SportRulesEnvelope> = {
   },
   PICKLEBALL_SIDE_OUT: {
     version: 1,
+    mode: 'LITE',
     kind: 'PICKLEBALL_SIDE_OUT',
     scoringModel: 'PICKLEBALL_SIDE_OUT',
     setsToWin: 1,
@@ -70,6 +74,7 @@ const DEFAULT_SPORT_RULES: Record<SportRuleKind, SportRulesEnvelope> = {
   },
   TENNIS: {
     version: 1,
+    mode: 'LITE',
     kind: 'TENNIS',
     scoringModel: 'TENNIS_SET',
     setsToWin: 2,

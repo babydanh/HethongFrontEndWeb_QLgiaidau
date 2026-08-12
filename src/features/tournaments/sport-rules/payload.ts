@@ -15,6 +15,7 @@ interface SportRulePayloadOptions {
   tiebreakPoints?: number | null;
   tiebreakerMode?: 'split' | 'playoff';
   roundsToPlay?: number;
+  mode?: 'LITE' | 'STRICT';
 }
 
 function toPositiveInteger(value: number): number {
@@ -44,6 +45,10 @@ export function buildSportRulesPayload(options: SportRulePayloadOptions): SportR
     },
     ...(format ? { format } : {}),
   };
+
+  if (options.mode) {
+    payload.mode = options.mode;
+  }
 
   if (maxPoints !== undefined) {
     payload.maxPoints = maxPoints;

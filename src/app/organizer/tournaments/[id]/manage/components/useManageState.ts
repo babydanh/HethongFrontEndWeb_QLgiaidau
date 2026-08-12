@@ -144,6 +144,7 @@ export function useManageState(id: string) {
   const [isSavingConfig, setIsSavingConfig] = useState(false);
   const [tiebreakerMode, setTiebreakerMode] = useState<'split'|'playoff'>('split');
   const [roundsToPlay, setRoundsToPlay] = useState(1);
+  const [isLiteMode, setIsLiteMode] = useState(true);
 
   // Round Robin scoring config
   const [rrWinPoints, setRrWinPoints] = useState(3);
@@ -305,6 +306,7 @@ export function useManageState(id: string) {
     setSuperTiebreakPoints(resolvedRules.tiebreakPoints);
     setTiebreakerMode(resolvedRules.tiebreakerMode);
     setRoundsToPlay(resolvedRules.roundsToPlay);
+    setIsLiteMode(resolvedRules.mode !== 'STRICT');
   }, []);
 
   const applyDivisionFormValues = useCallback((selected: Division) => {
@@ -359,6 +361,7 @@ export function useManageState(id: string) {
         tournamentConfig: {
           ...tournament?.tournamentConfig,
           hideFeaturedCardText,
+          mode: isLiteMode ? 'LITE' : 'STRICT',
         },
       });
       if (selectedDivisionId && tournament) {
@@ -547,6 +550,7 @@ export function useManageState(id: string) {
         tiebreakPoints: superTiebreakEnabled ? superTiebreakPoints : null,
         tiebreakerMode,
         roundsToPlay,
+        mode: isLiteMode ? 'LITE' : 'STRICT',
       });
       await divisionsApi.updateDivisionConfig(tournament.id, selectedDivisionId, {
         matchType: mapped.mt, genderRestriction: mapped.gr,
@@ -554,11 +558,24 @@ export function useManageState(id: string) {
         maxParticipants: isLimitEnabled ? maxParticipants : null, isConfigOverride: true,
         roundConfig: nextRoundConfig,
       });
+      
+      // Đồng bộ mode vào tournamentConfig để mobile app (Flutter) có thể nhận diện LITE mode
+      await tournamentsApi.updateTournament(tournament.id, {
+        tournamentConfig: {
+          ...tournament.tournamentConfig,
+          mode: isLiteMode ? 'LITE' : 'STRICT',
+        }
+      });
+      
       toast.success('Lưu cấu hình thi đấu thành công!');
       await fetchDivisions(tournament.id);
       setTournament((current) => current ? {
         ...current,
         sportRules: nextSportRules,
+        tournamentConfig: {
+          ...(current.tournamentConfig || {}),
+          mode: isLiteMode ? 'LITE' : 'STRICT',
+        }
       } : current);
     } catch (err) { toast.error(getErrorMessage(err)); }
     finally { setIsSavingConfig(false); }
@@ -1247,6 +1264,7 @@ export function useManageState(id: string) {
             tiebreakPoints: effectiveRules.hasCustomTiebreakTarget ? effectiveRules.tiebreakPoints : null,
             tiebreakerMode: effectiveRules.tiebreakerMode,
             roundsToPlay: effectiveRules.roundsToPlay,
+            mode: isLiteMode ? 'LITE' : 'STRICT',
           }),
         } : current);
       }
@@ -1384,6 +1402,7 @@ export function useManageState(id: string) {
     isScheduling, setIsScheduling, isDeleting, setIsDeleting, hasConfigBeforeLock, setHasConfigBeforeLock,
     isPayingPlatformFee, setIsPayingPlatformFee, isPayingPublishFee, setIsPayingPublishFee,
     newGalleryUrl, setNewGalleryUrl, isAddingImage, setIsAddingImage,
+    isLiteMode, setIsLiteMode,
     mockNamesText, setMockNamesText, isSeedingMock, setIsSeedingMock, isClearingMock, setIsClearingMock,
     wildcardEmailOrPhone, setWildcardEmailOrPhone, wildcardPartnerEmailOrPhone, setWildcardPartnerEmailOrPhone, wildcardTeamName, setWildcardTeamName,
     eloEnabled, setEloEnabled, eloMin, setEloMin, eloMax, setEloMax, eloMaxCombined, setEloMaxCombined, eloMaxGap, setEloMaxGap,

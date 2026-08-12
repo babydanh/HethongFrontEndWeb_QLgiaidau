@@ -134,9 +134,10 @@ export function ScoringPanel({
   const p1Won = finishedSets.filter((set) => set.team1Score > set.team2Score).length;
   const p2Won = finishedSets.filter((set) => set.team2Score > set.team1Score).length;
   const hasEnteredScore = scoreDraft.sets.some((set) => set.team1Score !== 0 || set.team2Score !== 0);
-  const overrideEnabled = scoreDraft.overrideEnabled === true;
+  const isLiteMode = resolvedRules.mode === 'LITE';
+  const overrideEnabled = scoreDraft.overrideEnabled === true || isLiteMode;
   const overrideReason = scoreDraft.overrideReason ?? '';
-  const canSubmitWithOverride = !overrideEnabled || overrideReason.trim().length > 0;
+  const canSubmitWithOverride = !overrideEnabled || isLiteMode || overrideReason.trim().length > 0;
   const clampScore = (value: number) =>
     overrideEnabled
       ? Math.max(0, value)
@@ -166,59 +167,67 @@ export function ScoringPanel({
         </div>
       </div>
 
-      <div className="rounded-lg border border-slate-200 bg-white p-4">
-        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Chế độ trọng tài / BTC</p>
-            <p className="mt-2 text-sm font-bold text-slate-900">
-              {overrideEnabled ? 'Ngoại lệ đang bật' : 'Theo luật mặc định'}
-            </p>
-            <p className="mt-1 text-xs font-medium text-slate-500">
-              Chỉ bật khi cần chốt tỷ số khác luật mặc định. Hệ thống vẫn lưu đầy đủ người quyết định và lý do.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() =>
-              setScoreDraft((current) => ({
-                ...current,
-                overrideEnabled: !(current.overrideEnabled === true),
-                overrideReason: current.overrideEnabled === true ? '' : current.overrideReason ?? '',
-              }))
-            }
-            className={cn(
-              'rounded-lg border px-4 py-2 text-xs font-bold transition-colors',
-              overrideEnabled
-                ? 'border-amber-500 bg-amber-500 text-white'
-                : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100',
-            )}
-          >
-            {overrideEnabled ? 'Tắt ngoại lệ' : 'Bật ngoại lệ'}
-          </button>
-        </div>
-
-        {overrideEnabled ? (
-          <div className="mt-4 space-y-2">
-            <label className="text-xs font-bold uppercase tracking-[0.14em] text-amber-700">
-              Lý do ngoại lệ bắt buộc
-            </label>
-            <textarea
-              value={overrideReason}
-              onChange={(event) =>
+      {!isLiteMode && (
+        <div className="rounded-lg border border-slate-200 bg-white p-4">
+          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Chế độ trọng tài / BTC</p>
+              <p className="mt-2 text-sm font-bold text-slate-900">
+                {overrideEnabled ? 'Ngoại lệ đang bật' : 'Theo luật mặc định'}
+              </p>
+              <p className="mt-1 text-xs font-medium text-slate-500">
+                Chỉ bật khi cần chốt tỷ số khác luật mặc định. Hệ thống vẫn lưu đầy đủ người quyết định và lý do.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() =>
                 setScoreDraft((current) => ({
                   ...current,
-                  overrideReason: event.target.value,
+                  overrideEnabled: !(current.overrideEnabled === true),
+                  overrideReason: current.overrideEnabled === true ? '' : current.overrideReason ?? '',
                 }))
               }
-              className="min-h-24 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800"
-              placeholder="Ví dụ: trận tranh hạng ba thống nhất chơi loạt phụ rút gọn theo quyết định trọng tài và BTC..."
-            />
-            <p className="text-xs font-medium text-amber-700">
-              Hệ thống sẽ ghi lại người quyết định, thời điểm và lý do ngoại lệ của trận.
-            </p>
+              className={cn(
+                'rounded-lg border px-4 py-2 text-xs font-bold transition-colors',
+                overrideEnabled
+                  ? 'border-amber-500 bg-amber-500 text-white'
+                  : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100',
+              )}
+            >
+              {overrideEnabled ? 'Tắt ngoại lệ' : 'Bật ngoại lệ'}
+            </button>
           </div>
-        ) : null}
-      </div>
+
+          {overrideEnabled && !isLiteMode ? (
+            <div className="mt-4 space-y-2">
+              <label className="text-xs font-bold uppercase tracking-[0.14em] text-amber-700">
+                Lý do ngoại lệ bắt buộc
+              </label>
+              <textarea
+                value={overrideReason}
+                onChange={(event) =>
+                  setScoreDraft((current) => ({
+                    ...current,
+                    overrideReason: event.target.value,
+                  }))
+                }
+                className="min-h-24 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800"
+                placeholder="Ví dụ: trận tranh hạng ba thống nhất chơi loạt phụ rút gọn theo quyết định trọng tài và BTC..."
+              />
+              <p className="text-xs font-medium text-amber-700">
+                Hệ thống sẽ ghi lại người quyết định, thời điểm và lý do ngoại lệ của trận.
+              </p>
+            </div>
+          ) : null}
+        </div>
+      )}
+
+      {isLiteMode && (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-900">
+          ⚡ Giải đang dùng luật Tự do (Lite Mode). Trọng tài được tùy ý ghi/chỉnh điểm số không bị giới hạn.
+        </div>
+      )}
 
       {sideOutState ? (
         <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-900">

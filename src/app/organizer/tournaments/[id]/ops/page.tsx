@@ -614,7 +614,9 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
           handleAdvanceStandings={bracketManager.handleAdvanceStandings}
           isAdvancingStandings={bracketManager.isAdvancingStandings}
           selectedMatchId={focusedMatchId}
-          onSelectMatch={(match) => setFocusedMatchId(match.id)}
+          onSelectMatch={(match: import('@/types/tournament').BracketMatch) => setFocusedMatchId(match.id)}
+          isLiteMode={tournament.sportRules?.mode === 'LITE'}
+          setIsLiteMode={() => {}}
         />
       </div>
       ) : null}

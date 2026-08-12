@@ -12,10 +12,10 @@ const inter = Inter({
   subsets: ["latin", "vietnamese"],
 });
 
-export const metadataBase = new URL('https://giaidau.vnvar.com');
+export const metadataBase = new URL('https://sporto.asia');
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://giaidau.vnvar.com'),
+  metadataBase: new URL('https://sporto.asia'),
   title: {
     default: "VNDC Sport - Nền tảng Quản lý và Tổ chức Giải đấu Thể thao",
     template: "%s | VNDC Sport",
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     title: "VNDC Sport - Nền tảng Quản lý giải đấu",
     description: "Nền tảng tổ chức và tham gia giải đấu thể thao câu lạc bộ chuyên nghiệp.",
     siteName: "VNDC Sport",
-    url: 'https://giaidau.vnvar.com',
+    url: 'https://sporto.asia',
     type: "website",
     locale: "vi_VN",
     images: [

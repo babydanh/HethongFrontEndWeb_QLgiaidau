@@ -427,8 +427,8 @@ export default function CommunityDetailPage() {
             <div className="space-y-2.5">
               <div className="flex flex-wrap items-center gap-2">
                 {community.status === 'ACTIVE' && (
-                  <span className="px-2.5 py-0.5 bg-blue-50 border border-blue-200 text-blue-700 text-[10px] font-bold rounded-md flex items-center gap-1 shadow-sm">
-                    <ShieldCheck className="w-3.5 h-3.5" /> Đã kiểm duyệt
+                  <span className="px-2.5 py-0.5 bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-bold rounded-md flex items-center gap-1 shadow-sm">
+                    <ShieldCheck className="w-3.5 h-3.5" /> Đang hoạt động
                   </span>
                 )}
               </div>

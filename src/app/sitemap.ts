@@ -2,8 +2,8 @@ import { MetadataRoute } from 'next';
 
 export const revalidate = 3600;
 
-const baseUrl = 'https://giaidau.vnvar.com';
-const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://giaidau.vnvar.com/api/v1';
+const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sporto.asia';
+const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://sporto.asia/api/v1';
 
 // Backend DTO giới hạn limit tối đa 50 (@Max(50)); limit > 50 -> 400 -> sitemap mất toàn bộ dynamic URL.
 const PAGE_SIZE = 50;

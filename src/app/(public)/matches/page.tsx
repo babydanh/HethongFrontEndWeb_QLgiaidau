@@ -444,9 +444,11 @@ export default function MatchesListPage() {
       if (match.isBye) {
         return false;
       }
-      // Bỏ qua trận có tên đội là TBD hoặc không xác định
-      if (!match.participant1?.teamName || !match.participant2?.teamName ||
-          match.participant1.teamName === 'TBD' || match.participant2.teamName === 'TBD') {
+      // Chỉ bỏ trận chưa có hai participant thật. Một số response chỉ trả ID,
+      // còn tên được nạp ở endpoint chi tiết; không được làm rỗng cả danh sách.
+      const hasParticipant1 = Boolean(match.participant1?.id || match.participant1Id);
+      const hasParticipant2 = Boolean(match.participant2?.id || match.participant2Id);
+      if (!hasParticipant1 || !hasParticipant2) {
         return false;
       }
 
@@ -956,9 +958,6 @@ export default function MatchesListPage() {
           <h2 className="text-lg font-bold text-slate-900">Danh sách trận đấu</h2>
           <p className="mt-0.5 text-xs font-medium text-slate-500">Các trận được nhóm theo từng giải để dễ theo dõi.</p>
         </div>
-        {!isLoading && (
-          <span className="shrink-0 text-xs font-bold text-slate-500">{groupedMatches.length} giải đấu</span>
-        )}
       </div>
 
       {/* Danh sách các Giải đấu gom nhóm */}

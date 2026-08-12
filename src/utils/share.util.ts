@@ -32,7 +32,7 @@ export function getMessengerShareUrl(url: string, appId?: string): string {
   }
 
   // Trên Máy tính: Sử dụng Web Send Dialog qua trình duyệt
-  const currentDomain = typeof window !== 'undefined' ? window.location.origin : 'https://giaidau.vnvar.com';
+  const currentDomain = typeof window !== 'undefined' ? window.location.origin : 'https://sporto.asia';
   const targetAppId = appId || '1217981644879628';
   return `https://www.facebook.com/dialog/send?app_id=${targetAppId}&link=${encodeURIComponent(url)}&redirect_uri=${encodeURIComponent(currentDomain)}`;
 }

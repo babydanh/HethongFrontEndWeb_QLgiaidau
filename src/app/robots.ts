@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = 'https://giaidau.vnvar.com';
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sporto.asia';
 
   return {
     rules: {

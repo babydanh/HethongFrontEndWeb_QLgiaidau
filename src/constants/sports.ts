@@ -20,6 +20,10 @@ export const SPORT_LOGOS: Record<string, string> = {
 
   'Pickleball': '/images/Pickleball.png',
   'pickleball': '/images/Pickleball.png',
+
+  'Bóng đá': '/images/football.svg',
+  'Football': '/images/football.svg',
+  'football': '/images/football.svg',
 };
 
 /**
@@ -42,6 +46,7 @@ export function getSportLogo(name?: string | null): string | null {
   if (lower.includes('badminton') || lower.includes('cầu lông')) return '/images/badminton.svg';
   if (lower.includes('bóng bàn') || lower.includes('ping')) return '/images/ping-pong.svg';
   if (lower.includes('pickleball')) return '/images/Pickleball.png';
+  if (lower.includes('bóng đá') || lower.includes('football') || lower.includes('soccer')) return '/images/football.svg';
 
   return null;
 }
@@ -56,5 +61,6 @@ export function getSportColor(name?: string | null): string {
   if (lower.includes('badminton') || lower.includes('cầu lông')) return 'bg-blue-500';
   if (lower.includes('bóng bàn') || lower.includes('ping')) return 'bg-rose-500';
   if (lower.includes('pickleball')) return 'bg-emerald-500';
+  if (lower.includes('bóng đá') || lower.includes('football') || lower.includes('soccer')) return 'bg-teal-600';
   return 'bg-slate-500';
 }

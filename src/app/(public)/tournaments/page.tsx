@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Search, ChevronDown, SlidersHorizontal, Bookmark, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import Link from 'next/link';
 import { tournamentsApi, Tournament } from '@/features/tournaments/api';
@@ -73,8 +73,33 @@ export default function TournamentsListPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const cursorByPageRef = useRef<Record<number, string | null>>({ 1: null });
   const [followedTournamentIds, setFollowedTournamentIds] = useState<Set<string>>(new Set());
   const [followLoadingIds, setFollowLoadingIds] = useState<Set<string>>(new Set());
+
+  const filterKey = [
+    searchTerm,
+    selectedCategoryId,
+    selectedStatus,
+    selectedRegion,
+    selectedDistrict,
+    selectedContent,
+    selectedBracketType,
+    startDate,
+    endDate,
+    selectedIsRanked,
+  ].join('|');
+
+  useEffect(() => {
+    cursorByPageRef.current = { 1: null };
+    let active = true;
+    Promise.resolve().then(() => {
+      if (active) setPage((currentPage) => (currentPage === 1 ? currentPage : 1));
+    });
+    return () => {
+      active = false;
+    };
+  }, [filterKey]);
   
   useEffect(() => {
     const fetchCategories = async () => {
@@ -235,9 +260,10 @@ export default function TournamentsListPage() {
         if (selectedIsRanked === 'true') isRankedParam = true;
         if (selectedIsRanked === 'false') isRankedParam = false;
 
+        const cursor = cursorByPageRef.current[page] ?? null;
         const res = await tournamentsApi.getPublicTournaments({
-          page,
           limit: 10,
+          ...(cursor ? { cursor } : {}),
           search: searchTerm || undefined,
           categoryId: selectedCategoryId || undefined,
           status: selectedStatus || undefined,
@@ -255,6 +281,7 @@ export default function TournamentsListPage() {
         });
         setTournaments(sortDiscoveryTournaments(validTournaments));
         setTotalPages(res.meta.totalPages);
+        cursorByPageRef.current[page + 1] = res.meta.nextCursor ?? null;
       } catch (error) {
         console.error("Failed to fetch tournaments", error);
       } finally {
@@ -262,7 +289,7 @@ export default function TournamentsListPage() {
       }
     };
     fetchTournaments();
-  }, [page, searchTerm, selectedCategoryId, selectedStatus, selectedRegion, selectedDistrict, selectedContent, selectedBracketType, startDate, endDate, selectedIsRanked]);
+  }, [page, filterKey]);
 
   const handleToggleFollow = async (tournament: Tournament) => {
     if (!user?.id) return;

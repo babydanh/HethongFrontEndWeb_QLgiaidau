@@ -219,6 +219,8 @@ export interface PaginatedTournaments {
     page: number;
     limit: number;
     totalPages: number;
+    nextCursor?: string | null;
+    hasMore?: boolean;
   };
 }
 

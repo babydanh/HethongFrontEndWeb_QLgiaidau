@@ -67,7 +67,10 @@ export default function AdminCategoriesPage() {
         const res = await categoriesApi.getCategories();
         if (res.data && res.data.length > 0) {
           // Merge API data with FALLBACK_CATEGORIES to ensure all standard sports (like Football) are always visible
-          const apiCategories = res.data;
+          const apiCategories: Category[] = res.data.map((cat) => ({
+            ...cat,
+            isActive: cat.isActive !== false && (cat.categoryConfig as Record<string, unknown> | null | undefined)?.isActive !== false,
+          }));
           const mergedCategories = [...apiCategories];
           
           FALLBACK_CATEGORIES.forEach(fallbackCat => {

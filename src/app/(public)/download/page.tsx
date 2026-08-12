@@ -46,10 +46,9 @@ export default function DownloadPage() {
   const [showVersionModal, setShowVersionModal] = useState(false);
 
   return (
-    <div className="min-h-[100dvh] bg-gradient-to-b from-slate-900 via-slate-850 to-slate-900 text-white relative overflow-hidden selection:bg-blue-500 selection:text-white">
-      {/* Soft Premium Blue Ambient Glow */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[450px] bg-gradient-to-b from-blue-600/20 via-cyan-500/10 to-transparent blur-3xl pointer-events-none" />
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-gradient-to-b from-emerald-500/10 via-blue-500/5 to-transparent blur-3xl pointer-events-none" />
+    <div className="min-h-[100dvh] bg-slate-50 text-slate-900 relative overflow-hidden selection:bg-blue-500 selection:text-white">
+      {/* Soft Ambient Light Glow */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[400px] bg-gradient-to-b from-blue-100/70 via-emerald-100/30 to-transparent blur-3xl pointer-events-none" />
 
       <div className="max-w-4xl mx-auto px-4 py-12 md:py-20 relative z-10">
         
@@ -60,27 +59,27 @@ export default function DownloadPage() {
           transition={{ duration: 0.5 }}
           className="text-center mb-14"
         >
-          <div className="flex justify-center mb-6">
+          <div className="flex justify-center mb-5">
             <Image 
               src="/vndcsport.svg" 
               alt="VNSPORT Logo" 
               width={260} 
               height={70} 
-              className="w-56 md:w-64 h-auto object-contain drop-shadow-[0_4px_20px_rgba(59,130,246,0.3)] brightness-110"
+              className="w-56 md:w-64 h-auto object-contain drop-shadow-sm"
               priority
             />
           </div>
 
-          <h1 className="text-3xl md:text-5xl font-black tracking-tight text-white mb-4 drop-shadow-sm">
+          <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-slate-900 mb-4">
             Tải Ứng Dụng Di Động
           </h1>
-          <p className="text-slate-300 text-base md:text-lg max-w-xl mx-auto leading-relaxed font-normal">
+          <p className="text-slate-600 text-base md:text-lg max-w-xl mx-auto leading-relaxed font-normal">
             Quản lý giải đấu chuyên nghiệp, cập nhật tỷ số trực tiếp và theo dõi xếp hạng ELO tiện lợi ngay trên điện thoại của bạn.
           </p>
 
-          <div className="flex items-center justify-center gap-6 mt-6 text-xs text-slate-400 font-medium">
-            <span className="flex items-center gap-1.5"><ShieldCheck className="w-4 h-4 text-emerald-400" /> Chính chủ 100%</span>
-            <span className="flex items-center gap-1.5"><Zap className="w-4 h-4 text-blue-400" /> Cập nhật tức thì</span>
+          <div className="flex items-center justify-center gap-6 mt-6 text-xs text-slate-500 font-semibold">
+            <span className="flex items-center gap-1.5"><ShieldCheck className="w-4 h-4 text-emerald-600" /> Chính chủ 100%</span>
+            <span className="flex items-center gap-1.5"><Zap className="w-4 h-4 text-blue-600" /> Cập nhật tức thì</span>
           </div>
         </motion.div>
 
@@ -92,19 +91,19 @@ export default function DownloadPage() {
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.1 }}
-            className="bg-slate-800/80 backdrop-blur-md border border-slate-700/80 hover:border-blue-500/50 p-7 rounded-3xl flex flex-col justify-between shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 group"
+            className="bg-white border border-slate-200/90 hover:border-slate-300 p-7 rounded-3xl flex flex-col justify-between shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 group"
           >
             <div>
               <div className="flex items-center justify-between mb-6">
-                <div className="w-16 h-16 bg-slate-900/90 rounded-2xl flex items-center justify-center p-3.5 border border-slate-700/60 shadow-inner group-hover:scale-105 transition-transform">
+                <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center p-3.5 border border-slate-100 shadow-inner group-hover:scale-105 transition-transform">
                   <GooglePlaySvg className="w-10 h-10" />
                 </div>
-                <span className="text-[11px] font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                <span className="text-[11px] font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
                   Android
                 </span>
               </div>
-              <h3 className="text-xl font-extrabold text-white mb-2">Google Play</h3>
-              <p className="text-xs text-slate-300 mb-8 leading-relaxed">
+              <h3 className="text-xl font-bold text-slate-900 mb-2">Google Play</h3>
+              <p className="text-xs text-slate-500 mb-8 leading-relaxed">
                 Tải trực tiếp từ cửa hàng Google Play Store chính thức cho thiết bị Android.
               </p>
             </div>
@@ -113,7 +112,7 @@ export default function DownloadPage() {
               href="https://play.google.com/store/apps/details?id=vn.vnsport.quanlygiaidau&pcampaignid=web_share" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="w-full py-3.5 px-5 rounded-2xl bg-gradient-to-r from-blue-600 to-emerald-600 hover:from-blue-500 hover:to-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-3 transition-all shadow-lg hover:shadow-blue-500/25 active:scale-[0.98]"
+              className="w-full py-3.5 px-5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center justify-center gap-3 transition-all shadow-sm active:scale-[0.98]"
             >
               <GooglePlaySvg className="w-5 h-5" />
               <span>Mở Google Play</span>
@@ -125,19 +124,19 @@ export default function DownloadPage() {
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.2 }}
-            className="bg-slate-800/80 backdrop-blur-md border border-slate-700/80 hover:border-blue-500/50 p-7 rounded-3xl flex flex-col justify-between shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 group"
+            className="bg-white border border-slate-200/90 hover:border-slate-300 p-7 rounded-3xl flex flex-col justify-between shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 group"
           >
             <div>
               <div className="flex items-center justify-between mb-6">
-                <div className="w-16 h-16 bg-slate-900/90 rounded-2xl flex items-center justify-center p-3.5 border border-slate-700/60 shadow-inner group-hover:scale-105 transition-transform">
-                  <AppleSvg className="w-9 h-9 text-white" />
+                <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center p-3.5 border border-slate-100 shadow-inner group-hover:scale-105 transition-transform">
+                  <AppleSvg className="w-9 h-9 text-slate-900" />
                 </div>
-                <span className="text-[11px] font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/30">
+                <span className="text-[11px] font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
                   iOS App
                 </span>
               </div>
-              <h3 className="text-xl font-extrabold text-white mb-2">App Store</h3>
-              <p className="text-xs text-slate-300 mb-8 leading-relaxed">
+              <h3 className="text-xl font-bold text-slate-900 mb-2">App Store</h3>
+              <p className="text-xs text-slate-500 mb-8 leading-relaxed">
                 Trải nghiệm ứng dụng mượt mà dành riêng cho iPhone &amp; iPad trên App Store.
               </p>
             </div>
@@ -146,9 +145,9 @@ export default function DownloadPage() {
               href="https://apps.apple.com/vn/app/vnsport/id6795829694" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="w-full py-3.5 px-5 rounded-2xl bg-white hover:bg-slate-100 text-slate-900 font-extrabold text-xs flex items-center justify-center gap-3 transition-all shadow-lg hover:shadow-white/20 active:scale-[0.98]"
+              className="w-full py-3.5 px-5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center justify-center gap-3 transition-all shadow-sm active:scale-[0.98]"
             >
-              <AppleSvg className="w-5 h-5 text-slate-900" />
+              <AppleSvg className="w-5 h-5 text-white" />
               <span>Mở App Store</span>
             </a>
           </motion.div>
@@ -156,53 +155,53 @@ export default function DownloadPage() {
         </div>
 
         {/* Small Version Trigger at Bottom */}
-        <div className="text-center pt-4">
+        <div className="text-center pt-2">
           <button 
             onClick={() => setShowVersionModal(true)}
-            className="inline-flex items-center gap-2 text-xs text-slate-400 hover:text-slate-200 transition-colors font-medium cursor-pointer py-2 px-4 rounded-full bg-slate-800/40 border border-slate-700/50 hover:bg-slate-800/80"
+            className="inline-flex items-center gap-2 text-xs text-slate-500 hover:text-slate-700 transition-colors font-medium cursor-pointer py-2 px-4 rounded-full bg-white border border-slate-200 hover:bg-slate-50 shadow-sm"
           >
-            <Info className="w-3.5 h-3.5 text-blue-400" />
+            <Info className="w-3.5 h-3.5 text-blue-600" />
             <span>Thông tin phiên bản v1.0.2 (Build 3)</span>
           </button>
         </div>
 
         {/* Version Modal */}
         {showVersionModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-md p-4">
-            <div className="bg-slate-900 rounded-3xl p-6 max-w-sm w-full border border-slate-700/80 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200 text-white">
-              <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-800">
-                <h4 className="font-extrabold text-sm text-white flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-emerald-400" />
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+            <div className="bg-white rounded-3xl p-6 max-w-sm w-full border border-slate-200 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200 text-slate-900">
+              <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                <h4 className="font-extrabold text-sm text-slate-900 flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-emerald-600" />
                   <span>Chi tiết phiên bản App</span>
                 </h4>
                 <button 
                   onClick={() => setShowVersionModal(false)}
-                  className="text-slate-400 hover:text-white text-sm font-bold w-7 h-7 rounded-full hover:bg-slate-800 flex items-center justify-center"
+                  className="text-slate-400 hover:text-slate-700 text-sm font-bold w-7 h-7 rounded-full hover:bg-slate-100 flex items-center justify-center"
                 >
                   &times;
                 </button>
               </div>
-              <div className="space-y-3 text-xs text-slate-300 mb-6">
-                <div className="flex justify-between py-1.5 border-b border-slate-800/60">
+              <div className="space-y-3 text-xs text-slate-600 mb-6">
+                <div className="flex justify-between py-1.5 border-b border-slate-50">
                   <span className="text-slate-400">Phiên bản:</span>
-                  <span className="font-bold text-white">v1.0.2</span>
+                  <span className="font-bold text-slate-900">v1.0.2</span>
                 </div>
-                <div className="flex justify-between py-1.5 border-b border-slate-800/60">
+                <div className="flex justify-between py-1.5 border-b border-slate-50">
                   <span className="text-slate-400">Build Number:</span>
-                  <span className="font-bold text-white">Build 3</span>
+                  <span className="font-bold text-slate-900">Build 3</span>
                 </div>
-                <div className="flex justify-between py-1.5 border-b border-slate-800/60">
+                <div className="flex justify-between py-1.5 border-b border-slate-50">
                   <span className="text-slate-400">Trạng thái Google Play:</span>
-                  <span className="font-bold text-emerald-400">Đã phát hành</span>
+                  <span className="font-bold text-emerald-600">Đã phát hành</span>
                 </div>
                 <div className="flex justify-between py-1.5">
                   <span className="text-slate-400">Trạng thái App Store:</span>
-                  <span className="font-bold text-emerald-400">Đã phát hành</span>
+                  <span className="font-bold text-emerald-600">Đã phát hành</span>
                 </div>
               </div>
               <button 
                 onClick={() => setShowVersionModal(false)}
-                className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs transition-colors"
+                className="w-full py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-colors"
               >
                 Đóng
               </button>

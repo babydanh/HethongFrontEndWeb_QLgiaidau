@@ -253,7 +253,7 @@ export default function SettingsTab({ community }: { community: Community }) {
         locationAddress: combinedAddress,
         provinceCode,
         districtCode: districtCode || null,
-        wardCode: null,
+        wardCode: wardCode || null,
         categoryIds: selectedCategoryIds,
         logoUrl,
         bannerUrl,

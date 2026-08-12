@@ -1,5 +1,7 @@
 'use client';
 
+import type { SportRuleKind } from '@/types/tournament';
+
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -133,7 +135,7 @@ export function useManageState(id: string) {
   const [maxParticipants, setMaxParticipants] = useState(16);
   const [isLimitEnabled, setIsLimitEnabled] = useState(true);
   const [matchType, setMatchType] = useState('DOUBLES');
-  const [sportRuleKind, setSportRuleKind] = useState<'BADMINTON' | 'TABLE_TENNIS' | 'PICKLEBALL_RALLY' | 'PICKLEBALL_SIDE_OUT' | 'TENNIS'>('BADMINTON');
+  const [sportRuleKind, setSportRuleKind] = useState<SportRuleKind>('BADMINTON');
   const [setsToWin, setSetsToWin] = useState(2);
   const [pointsPerSet, setPointsPerSet] = useState(21);
   const [winByTwo, setWinByTwo] = useState(true);
@@ -1223,7 +1225,7 @@ export function useManageState(id: string) {
         try {
           const [vRes, cRes, fRes, pList] = await Promise.all([venuesApi.getVenues(), categoriesApi.getCategories(), tournamentsApi.getFeesConfig(), regionsApi.getProvinces()]);
           if (vRes.data) setVenues(vRes.data);
-          if (cRes.data) setCategories(cRes.data);
+          if (cRes.data) setCategories(cRes.data.filter((c) => c.isActive !== false));
           if (fRes.data) setFeesConfig(fRes.data);
           setProvinces(pList);
           await fetchCameras();

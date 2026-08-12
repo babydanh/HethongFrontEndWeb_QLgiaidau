@@ -109,7 +109,9 @@ export default function Step1Info() {
     const fetchCategoriesAndFees = async () => {
       try {
         const catRes = await categoriesApi.getCategories();
-        if (catRes.data) setCategories(catRes.data);
+        if (catRes.data) {
+          setCategories(catRes.data.filter((c) => c.isActive !== false));
+        }
       } catch (error) {
         console.error('Failed to fetch categories:', error);
       } finally {

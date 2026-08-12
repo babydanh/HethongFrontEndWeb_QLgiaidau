@@ -185,6 +185,18 @@ const SPORT_RULE_PRESETS: Record<SportRuleKind, SportRulePreset[]> = {
       tiebreakPoints: 7,
     },
   ],
+  FOOTBALL: [
+    {
+      id: 'football-standard',
+      label: 'Chuẩn',
+      description: '2 hiệp, mỗi hiệp 20 phút',
+      setsToWin: 1,
+      pointsPerSet: 1,
+      winByTwo: false,
+      maxPoints: 99,
+      tiebreakPoints: null,
+    },
+  ],
 };
 
 const SCORE_ENTRY_GUIDANCE: Record<SportRuleKind, ScoreEntryGuidance> = {
@@ -212,6 +224,11 @@ const SCORE_ENTRY_GUIDANCE: Record<SportRuleKind, ScoreEntryGuidance> = {
     targetSummary: 'Tennis nhập theo game trong từng set, không nhập điểm 15/30/40 ở đây.',
     examples: ['6-4', '7-5', '7-6'],
     operatorHint: 'Nếu set vào tie-break, dùng kết quả cuối set như 7-6 thay vì nhập điểm tie-break riêng.',
+  },
+  FOOTBALL: {
+    targetSummary: 'Nhập tỷ số bàn thắng.',
+    examples: ['2-1', '0-0', '3-2'],
+    operatorHint: 'Cập nhật tỷ số sau mỗi bàn thắng hoặc khi hết trận.',
   },
 };
 

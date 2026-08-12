@@ -101,6 +101,21 @@ const SPORT_RULE_PRESENTATIONS: Record<SportRuleKind, SportRulePresentation> = {
     maxScorePlaceholder: 'Ví dụ: 7',
     tiebreakLabel: 'Điểm tie-break (thường là 7)',
   },
+  FOOTBALL: {
+    kind: 'FOOTBALL',
+    sportLabel: 'Bóng đá',
+    scoringLabel: 'Tính bàn thắng',
+    setUnitLabel: 'Bàn thắng',
+    winByTwoLabel: 'Không bắt buộc',
+    maxScoreLabel: 'Không giới hạn',
+    presetSummary: 'Mặc định thường là 2 hiệp, phân định thắng thua qua tổng bàn thắng.',
+    roundConfigHint: 'Sử dụng cho bóng đá sân 5, 7, 11 người.',
+    setOptions: [
+      { value: 1, label: '1 trận' },
+    ],
+    maxScorePlaceholder: 'Để trống',
+    tiebreakLabel: 'Luân lưu',
+  },
 };
 
 export function getSportRulePresentation(kind: SportRuleKind): SportRulePresentation {

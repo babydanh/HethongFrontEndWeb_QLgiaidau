@@ -4,7 +4,6 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { Award, Trophy, ChevronDown, Loader2, Medal, Crown, Search, SlidersHorizontal, X } from 'lucide-react';
 import { Category } from '@/types/category';
 import { rankingsApi, PlayerRanking } from '@/features/rankings/api';
-import { communitiesApi } from '@/features/communities/api';
 import { EloTierBadge } from '@/components/ui/EloTierBadge';
 import { getRankRingClass } from '@/components/ui/RankAvatar';
 import { getEloMatchTypeLabel } from '@/features/rankings/elo-display';
@@ -14,11 +13,12 @@ import { useAuthStore } from '@/lib/zustand/authStore';
 interface RankingsTabProps {
   communityId: string;
   categories: Category[];
+  onGoToTournaments?: () => void;
 }
 
 type MatchType = 'SINGLES' | 'DOUBLES' | 'MIXED_DOUBLES';
 
-export default function RankingsTab({ communityId, categories }: RankingsTabProps) {
+export default function RankingsTab({ communityId, categories, onGoToTournaments }: RankingsTabProps) {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>(
     categories[0]?.id || ''
   );
@@ -45,33 +45,7 @@ export default function RankingsTab({ communityId, categories }: RankingsTabProp
         genderRestriction: selectedGender,
         limit: 20,
       });
-      let nextRankings = res.data || [];
-      if (nextRankings.length === 0 && selectedMatchType === 'SINGLES') {
-        const membersResponse = await communitiesApi.getMembers(communityId);
-        const members = membersResponse.data || [];
-        nextRankings = members
-          .filter((member) => member.member.status === 'JOINED')
-          .map((member, index): PlayerRanking => ({
-            id: `community-member-${member.member.id}`,
-            userId: member.user.id,
-            categoryId: selectedCategoryId,
-            categoryName: undefined,
-            matchType: selectedMatchType,
-            genderRestriction: selectedGender,
-            eloPoints: 1000,
-            matchesPlayed: 0,
-            matchesWon: 0,
-            winStreak: 0,
-            updatedAt: member.member.joinedAt,
-            tierName: 'Chưa xếp hạng',
-            communityId,
-            user: {
-              id: member.user.id,
-              fullName: member.user.fullName,
-              avatarUrl: member.user.avatarUrl,
-            },
-          }));
-      }
+      const nextRankings = res.data || [];
       setRankings(nextRankings);
       if (userId) {
         const userRes = await rankingsApi.getUserRankings(userId);
@@ -264,13 +238,23 @@ export default function RankingsTab({ communityId, categories }: RankingsTabProp
           <div className="p-16 text-center">
             <Award className="w-16 h-16 text-slate-300 mx-auto mb-4" />
             <p className="text-slate-800 font-bold text-lg">
-              {searchQuery ? 'Không tìm thấy thành viên' : 'Chưa có dữ liệu xếp hạng'}
+              {searchQuery ? 'Không tìm thấy thành viên' : 'Chưa có trận đấu xếp hạng'}
             </p>
             <p className="text-slate-450 mt-2 max-w-sm mx-auto text-xs leading-relaxed font-semibold">
               {searchQuery
                 ? 'Thử tìm kiếm với tên khác.'
-                : 'Hệ thống điểm ELO sẽ tự động kích hoạt khi các thành viên tham gia thi đấu.'}
+                : 'Thành viên sẽ xuất hiện tại đây sau khi tham gia thi đấu.'}
             </p>
+            {!searchQuery && (
+              <button
+                type="button"
+                onClick={onGoToTournaments}
+                className="mt-5 inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-emerald-700 transition-colors cursor-pointer"
+              >
+                <Trophy className="w-4 h-4" />
+                Xem giải đấu
+              </button>
+            )}
           </div>
         </div>
       ) : (

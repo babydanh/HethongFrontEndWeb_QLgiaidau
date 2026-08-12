@@ -1,5 +1,7 @@
 'use client';
 
+import type { SportRuleKind } from '@/types/tournament';
+
 import { useState } from 'react';
 import { Activity, AlertCircle, Check, Play, Trophy } from 'lucide-react';
 import { formatTennisPointDisplay } from '@/features/matches/live-score-state';
@@ -40,7 +42,7 @@ export interface LiveMatchControlPanelProps {
   activeSetIndex: number;
   scorePresentation: ReturnType<typeof getMatchScorePresentation>;
   scoreGuidance: ScoreEntryGuidance;
-  sportKind: 'BADMINTON' | 'TABLE_TENNIS' | 'PICKLEBALL_RALLY' | 'PICKLEBALL_SIDE_OUT' | 'TENNIS';
+  sportKind: SportRuleKind;
   isPickleballSideOut: boolean;
   sideOutState: PickleballSideOutState;
   isTennis: boolean;

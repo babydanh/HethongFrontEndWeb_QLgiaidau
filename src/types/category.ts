@@ -12,6 +12,7 @@ export interface Category {
   name: string;
   slug: string;
   description?: string | null;
+  isActive: boolean;
   iconUrl?: string;
   categoryConfig?: CategoryConfig | null;
 }

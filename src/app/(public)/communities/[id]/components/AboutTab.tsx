@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Community } from '@/features/communities/api';
 import { formatDate } from '@/utils/format';
-import { MapPin, Info, FileText, Image as ImageIcon, X, ChevronLeft, ChevronRight, Globe } from 'lucide-react';
+import { MapPin, Info, FileText, Image as ImageIcon, X, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface GalleryImage {
   id: string;
@@ -111,34 +111,6 @@ export default function AboutTab({
                   </div>
                 </div>
               </div>
-
-              {/* Social / Contact links */}
-              {community.socialLinks && Object.keys(community.socialLinks).length > 0 && (
-                <div className="mt-4 pt-4 border-t border-slate-100">
-                  <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-3 flex items-center gap-2">
-                    <Globe className="w-4 h-4 text-blue-600" /> Mạng xã hội & liên hệ
-                  </h4>
-                  <div className="flex flex-wrap gap-2">
-                    {Object.entries(community.socialLinks).map(([key, val]) => {
-                      if (!val) return null;
-                      const displayLabel = key.charAt(0).toUpperCase() + key.slice(1);
-                      const isUrl = val.startsWith('http://') || val.startsWith('https://');
-                      return (
-                        <div key={key} className="flex items-center gap-1.5 bg-slate-50 p-1 px-2.5 rounded-full border border-slate-200 text-xs">
-                          <span className="font-bold text-slate-500">{displayLabel}:</span>
-                          {isUrl ? (
-                            <a href={val} target="_blank" rel="noopener noreferrer" className="text-emerald-700 hover:underline font-semibold max-w-[150px] truncate">
-                              {val}
-                            </a>
-                          ) : (
-                            <span className="text-slate-700 font-semibold max-w-[150px] truncate">{val}</span>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
             </div>
  
             <div className="space-y-4">

@@ -90,6 +90,14 @@ export function buildSportRulesPayload(options: SportRulePayloadOptions): SportR
           winByTwo: options.winByTwo,
         };
         break;
+      case 'FOOTBALL':
+        payload.format = {
+          ...payload.format,
+          halvesCount: 2,
+          halfDuration: 20,
+          allowDraw: true,
+        };
+        break;
       default:
         payload.format = {
           ...payload.format,

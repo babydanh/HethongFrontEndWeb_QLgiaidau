@@ -352,7 +352,7 @@ export default function CommunityDetailPage() {
             </div>
             <div className="space-y-2.5">
               <div className="flex flex-wrap items-center gap-2">
-                {community.status === 'APPROVED' && (
+                {community.status === 'ACTIVE' && (
                   <span className="px-2.5 py-0.5 bg-blue-50 border border-blue-200 text-blue-700 text-[10px] font-bold rounded-md flex items-center gap-1 shadow-sm">
                     <ShieldCheck className="w-3.5 h-3.5" /> Đã kiểm duyệt
                   </span>
@@ -479,7 +479,7 @@ export default function CommunityDetailPage() {
               />
             )}
             {activeTab === 'gallery' && <GalleryTab communityId={id} community={community} isOwnerOrMod={isOwnerOrMod} />}
-            {activeTab === 'rankings' && <RankingsTab communityId={id} categories={community?.categories || []} />}
+            {activeTab === 'rankings' && <RankingsTab communityId={id} categories={community?.categories || []} onGoToTournaments={() => setActiveTab('tournaments')} />}
             {activeTab === 'moderation' && isOwnerOrMod && (
               <ModerationTab communityId={id} isOwner={isOwner} />
             )}

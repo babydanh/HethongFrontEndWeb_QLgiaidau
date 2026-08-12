@@ -25,7 +25,8 @@ export type SportRuleKind =
   | 'TABLE_TENNIS'
   | 'PICKLEBALL_RALLY'
   | 'PICKLEBALL_SIDE_OUT'
-  | 'TENNIS';
+  | 'TENNIS'
+  | 'FOOTBALL';
 export type SportScoringModel = 'RALLY_POINT_SET' | 'TENNIS_SET' | 'PICKLEBALL_SIDE_OUT';
 
 export interface SportRuleScoringConfig {

@@ -34,7 +34,7 @@ export default function Step2FormatMulti() {
     const loadCategories = async () => {
       try {
         const response = await categoriesApi.getCategories();
-        setCategories(response.data ?? []);
+        setCategories(response.data?.filter((c) => c.isActive !== false) ?? []);
       } catch {
         setCategories([]);
       }

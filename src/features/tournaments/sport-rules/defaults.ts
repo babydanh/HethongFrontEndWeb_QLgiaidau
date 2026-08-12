@@ -90,6 +90,27 @@ const DEFAULT_SPORT_RULES: Record<SportRuleKind, SportRulesEnvelope> = {
       maxPoints: 7,
     },
   },
+  FOOTBALL: {
+    version: 1,
+    mode: 'LITE',
+    kind: 'FOOTBALL',
+    scoringModel: 'RALLY_POINT_SET',
+    setsToWin: 1,
+    pointsPerSet: 1,
+    winByTwo: false,
+    maxPoints: 99,
+    format: {
+      halvesCount: 2,
+      halfDuration: 20,
+      allowDraw: true,
+    },
+    scoring: {
+      setsToWin: 1,
+      pointsPerSet: 1,
+      winByTwo: false,
+      maxPoints: 99,
+    },
+  },
 };
 
 export type DefaultSportRulesEnvelope = SportRulesEnvelope & {

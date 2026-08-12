@@ -342,10 +342,10 @@ export default function HomePage() {
         { id: 'pickleball', name: 'Pickleball', slug: 'pickleball', isActive: true },
         { id: 'tennis', name: 'Tennis', slug: 'tennis', isActive: true },
         { id: 'badminton', name: 'Cầu lông', slug: 'badminton', isActive: true },
-        { id: 'table_tennis', name: 'Bóng bàn', slug: 'table-tennis', isActive: true },
+        { id: 'table_tennis', name: 'Bóng bàn', slug: 'table_tennis', isActive: true },
         { id: 'football', name: 'Bóng đá', slug: 'football', isActive: true },
       ];
-      const CACHE_KEY = 'homepage_categories_v4';
+      const CACHE_KEY = 'homepage_categories_v5';
       const CACHE_TTL = 5 * 60 * 1000;
       try {
         if (typeof window !== 'undefined') {
@@ -376,15 +376,34 @@ export default function HomePage() {
           }
         });
 
-        setCategories(mergedCategories);
+        const activeCategories = mergedCategories.filter((cat) => {
+          const catKey = cat.slug || cat.id;
+          if (typeof window !== 'undefined') {
+            const localOverride = localStorage.getItem(`sport_active_${catKey}`);
+            if (localOverride === 'false') return false;
+            if (localOverride === 'true') return true;
+          }
+          return cat.isActive !== false && (cat.categoryConfig as Record<string, unknown> | null | undefined)?.isActive !== false;
+        });
+
+        setCategories(activeCategories);
         if (typeof window !== 'undefined') {
-          sessionStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: Date.now(), data: mergedCategories }));
+          sessionStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: Date.now(), data: activeCategories }));
         }
       } catch (error: unknown) {
         if (!isNetworkError(error)) {
           console.error('Failed to load categories on homepage', error);
         }
-        setCategories(DEFAULT_CATEGORIES);
+        const activeDefaults = DEFAULT_CATEGORIES.filter((cat) => {
+          const catKey = cat.slug || cat.id;
+          if (typeof window !== 'undefined') {
+            const localOverride = localStorage.getItem(`sport_active_${catKey}`);
+            if (localOverride === 'false') return false;
+            if (localOverride === 'true') return true;
+          }
+          return cat.isActive !== false;
+        });
+        setCategories(activeDefaults);
       }
     };
     loadCategories();

@@ -110,7 +110,16 @@ export default function Step1Info() {
       try {
         const catRes = await categoriesApi.getCategories();
         if (catRes.data) {
-          setCategories(catRes.data.filter((c) => c.isActive !== false));
+          const activeCats = catRes.data.filter((c) => {
+            const catKey = c.slug || c.id;
+            if (typeof window !== 'undefined') {
+              const localOverride = localStorage.getItem(`sport_active_${catKey}`);
+              if (localOverride === 'false') return false;
+              if (localOverride === 'true') return true;
+            }
+            return c.isActive !== false && (c.categoryConfig as Record<string, unknown> | null | undefined)?.isActive !== false;
+          });
+          setCategories(activeCats);
         }
       } catch (error) {
         console.error('Failed to fetch categories:', error);

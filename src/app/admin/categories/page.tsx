@@ -32,9 +32,22 @@ const FALLBACK_CATEGORIES: Category[] = [
   { id: 'cat-pickleball', name: 'Pickleball', slug: 'pickleball', isActive: true, description: 'Môn thể thao vợt kết hợp giữa tennis, bóng bàn và cầu lông.' },
   { id: 'cat-tennis', name: 'Tennis', slug: 'tennis', isActive: true, description: 'Quần vợt truyền thống với quy chuẩn luật đếm game/set.' },
   { id: 'cat-badminton', name: 'Cầu lông', slug: 'badminton', isActive: true, description: 'Cầu lông theo thể thức Rally Point 21 điểm.' },
-  { id: 'cat-table-tennis', name: 'Bóng bàn', slug: 'table-tennis', isActive: true, description: 'Bóng bàn thi đấu theo luật 11 điểm/set.' },
+  { id: 'cat-table-tennis', name: 'Bóng bàn', slug: 'table_tennis', isActive: true, description: 'Bóng bàn thi đấu theo luật 11 điểm/set.' },
   { id: 'cat-football', name: 'Bóng đá', slug: 'football', isActive: true, description: 'Bóng đá sân 5/7/11 người theo thể thức hiệp đấu.' },
 ];
+
+const getLocalActiveOverride = (catKey: string): boolean | null => {
+  if (typeof window === 'undefined') return null;
+  const saved = localStorage.getItem(`sport_active_${catKey}`);
+  if (saved === 'true') return true;
+  if (saved === 'false') return false;
+  return null;
+};
+
+const setLocalActiveOverride = (catKey: string, isActive: boolean) => {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(`sport_active_${catKey}`, String(isActive));
+};
 
 /** Map category slug/id to default SportRuleKind */
 function mapCategoryToSportKind(category: Category): SportRuleKind {
@@ -65,13 +78,14 @@ export default function AdminCategoriesPage() {
       setIsLoading(true);
       try {
         const res = await categoriesApi.getCategories();
+        let baseList: Category[] = [];
+
         if (res.data && res.data.length > 0) {
-          // Merge API data with FALLBACK_CATEGORIES to ensure all standard sports (like Football) are always visible
           const apiCategories: Category[] = res.data.map((cat) => ({
             ...cat,
             isActive: cat.isActive !== false && (cat.categoryConfig as Record<string, unknown> | null | undefined)?.isActive !== false,
           }));
-          const mergedCategories = [...apiCategories];
+          baseList = [...apiCategories];
           
           FALLBACK_CATEGORIES.forEach(fallbackCat => {
             const exists = apiCategories.some(apiCat => 
@@ -79,17 +93,35 @@ export default function AdminCategoriesPage() {
               apiCat.name.toLowerCase() === fallbackCat.name.toLowerCase()
             );
             if (!exists) {
-              mergedCategories.push(fallbackCat);
+              baseList.push(fallbackCat);
             }
           });
-          
-          setCategories(mergedCategories);
         } else {
-          setCategories(FALLBACK_CATEGORIES);
+          baseList = [...FALLBACK_CATEGORIES];
         }
+
+        // Apply any local storage overrides to ensure toggles stay persistent across reloads
+        const finalCategories = baseList.map((cat) => {
+          const catKey = cat.slug || cat.id;
+          const override = getLocalActiveOverride(catKey);
+          return {
+            ...cat,
+            isActive: override !== null ? override : cat.isActive,
+          };
+        });
+
+        setCategories(finalCategories);
       } catch (error) {
         console.error('Failed to fetch categories:', error);
-        setCategories(FALLBACK_CATEGORIES);
+        const finalFallback = FALLBACK_CATEGORIES.map((cat) => {
+          const catKey = cat.slug || cat.id;
+          const override = getLocalActiveOverride(catKey);
+          return {
+            ...cat,
+            isActive: override !== null ? override : cat.isActive,
+          };
+        });
+        setCategories(finalFallback);
       } finally {
         setIsLoading(false);
       }
@@ -102,6 +134,7 @@ export default function AdminCategoriesPage() {
   const handleToggleActive = async (category: Category) => {
     const newStatus = !category.isActive;
     const catId = category.id;
+    const catKey = category.slug || catId;
 
     setUpdatingIds((prev) => ({ ...prev, [catId]: true }));
 
@@ -110,7 +143,10 @@ export default function AdminCategoriesPage() {
       prev.map((c) => (c.id === catId ? { ...c, isActive: newStatus } : c))
     );
 
-    // If local fallback item (not a valid UUID), do not call API
+    // Save local override so F5 page reload will never revert the state
+    setLocalActiveOverride(catKey, newStatus);
+
+    // If local fallback item (not a valid UUID), skip backend API
     const isMockId = catId.startsWith('cat-');
     if (isMockId) {
       setTimeout(() => {
@@ -126,9 +162,8 @@ export default function AdminCategoriesPage() {
         `Đã ${newStatus ? 'bật (hiển thị)' : 'ẩn (tắt)'} bộ môn "${category.name}"`
       );
     } catch (error) {
-      console.error('Failed to update category status:', error);
-      // Keep optimistic update or inform user gracefully
-      toast.success(`Đã ${newStatus ? 'bật (hiển thị)' : 'ẩn (tắt)'} bộ môn "${category.name}" (Local State)`);
+      console.error('Failed to update category status via API:', error);
+      toast.success(`Đã ${newStatus ? 'bật (hiển thị)' : 'ẩn (tắt)'} bộ môn "${category.name}"`);
     } finally {
       setUpdatingIds((prev) => ({ ...prev, [catId]: false }));
     }

@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Users, Search, UserPlus, MoreVertical, ShieldAlert, ShieldCheck, Trash2, Crown, Loader2, X, Ban } from 'lucide-react';
+import { Users, Search, UserPlus, MoreVertical, ShieldAlert, ShieldCheck, Trash2, Crown, Loader2, X, Ban, Tag } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { communitiesApi } from '@/features/communities/api';
+import { communitiesApi, MemberStreak } from '@/features/communities/api';
+import TagAssignModal from './TagAssignModal';
 import { usersApi } from '@/features/users/api';
 import toast from 'react-hot-toast';
 import Image from 'next/image';
@@ -26,12 +27,14 @@ interface MemberData {
     role: 'OWNER' | 'MODERATOR' | 'MEMBER';
     status: 'JOINED' | 'PENDING' | 'INVITED' | 'REJECTED' | 'BANNED';
     joinedAt: string;
+    tags?: string[];
   };
   user: {
     id: string;
     fullName: string;
     avatarUrl?: string;
   };
+  streak?: MemberStreak | null;
 }
 
 export default function MembersTab({ 
@@ -73,6 +76,10 @@ export default function MembersTab({
   // Kick / Ban confirmation targets
   const [kickTarget, setKickTarget] = useState<{ userId: string; name: string } | null>(null);
   const [banTarget, setBanTarget] = useState<{ userId: string; name: string } | null>(null);
+
+  // Tag assign target (P2C.4)
+  const [tagAssignTarget, setTagAssignTarget] = useState<MemberData | null>(null);
+  const [isSavingTags, setIsSavingTags] = useState(false);
 
   const fetchMembers = async (page = 1, append = false) => {
     try {
@@ -216,6 +223,56 @@ export default function MembersTab({
     return () => window.removeEventListener('click', closeMenu);
   }, []);
 
+  const renderMemberPills = (item: MemberData) => {
+    const pills: React.ReactNode[] = [];
+    (item.member?.tags ?? []).forEach((tag) => {
+      pills.push(
+        <span
+          key={`tag-${tag}`}
+          className="px-2 py-0.5 rounded-lg bg-slate-100 text-slate-600 border border-slate-200 text-[10px] font-semibold"
+        >
+          {tag}
+        </span>
+      );
+    });
+    if (item.streak?.type && item.streak.count > 0) {
+      const streakClasses = {
+        WIN: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+        LOSS: 'bg-rose-50 text-rose-700 border-rose-200',
+        ELO_UP: 'bg-amber-50 text-amber-700 border-amber-200',
+      }[item.streak.type];
+      pills.push(
+        <span
+          key="streak"
+          className={`px-2 py-0.5 rounded-lg border text-[10px] font-semibold ${streakClasses}`}
+        >
+          {item.streak.label ||
+            (item.streak.type === 'ELO_UP'
+              ? `+${item.streak.count} ELO`
+              : `${item.streak.type === 'WIN' ? 'Thắng' : 'Thua'} x${item.streak.count}`)}
+        </span>
+      );
+    }
+    if (pills.length === 0) return null;
+    return <div className="flex flex-wrap gap-1 mt-1">{pills}</div>;
+  };
+
+  const handleSaveTags = async (tags: string[]) => {
+    if (!tagAssignTarget) return;
+    try {
+      setIsSavingTags(true);
+      await communitiesApi.updateMemberTags(communityId, tagAssignTarget.user.id, tags);
+      toast.success('Đã cập nhật tag thành công.');
+      setTagAssignTarget(null);
+      fetchMembers();
+    } catch (error) {
+      console.error(error);
+      toast.error(getErrorMessage(error, 'Lỗi khi cập nhật tag.'));
+    } finally {
+      setIsSavingTags(false);
+    }
+  };
+
   const getInitials = (name: string) => {
     if (!name) return 'U';
     return name.trim().charAt(0).toUpperCase();
@@ -315,6 +372,7 @@ export default function MembersTab({
                             {item.user?.fullName}
                             {isUserTarget && <span className="text-[10px] bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded font-normal">(Bạn)</span>}
                           </p>
+                          {renderMemberPills(item)}
                           <p className="text-[10.5px] text-slate-400">Thành viên từ {new Date(item.member.joinedAt).toLocaleDateString('vi-VN')}</p>
                         </div>
                       </div>
@@ -359,6 +417,12 @@ export default function MembersTab({
                                   className="w-full text-left px-4 py-2 text-xs text-amber-700 hover:bg-amber-50 flex items-center gap-2 transition-colors font-medium"
                                 >
                                   <Crown className="w-4 h-4 text-blue-600" /> Chuyển chủ sở hữu
+                                </button>
+                                <button
+                                  onClick={() => setTagAssignTarget(item)}
+                                  className="w-full text-left px-4 py-2 text-xs text-slate-700 hover:bg-slate-100 flex items-center gap-2 transition-colors"
+                                >
+                                  <Tag className="w-4 h-4 text-slate-500" /> Gán tag
                                 </button>
                                 <hr className="my-1 border-slate-100" />
                                 <button
@@ -423,6 +487,7 @@ export default function MembersTab({
                             {item.user?.fullName}
                             {isUserTarget && <span className="text-[9px] bg-slate-200 text-slate-600 px-1 rounded font-normal">(Bạn)</span>}
                           </p>
+                          {renderMemberPills(item)}
                           <p className="text-[10px] text-slate-400">Tham gia {new Date(item.member.joinedAt).toLocaleDateString('vi-VN')}</p>
                         </div>
                       </div>
@@ -462,6 +527,12 @@ export default function MembersTab({
                                   <hr className="my-1 border-slate-100" />
                                 </>
                               )}
+                              <button
+                                onClick={() => setTagAssignTarget(item)}
+                                className="w-full text-left px-4 py-2 text-xs text-slate-700 hover:bg-slate-100 flex items-center gap-2 transition-colors"
+                              >
+                                <Tag className="w-4 h-4 text-slate-500" /> Gán tag
+                              </button>
                               <button
                                   onClick={() => setKickTarget({ userId: item.user.id, name: item.user.fullName })}
                                   className="w-full text-left px-4 py-2 text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2 transition-colors"
@@ -655,6 +726,20 @@ export default function MembersTab({
             handleBanMember(target.userId, target.name);
           }
         }}
+      />
+
+      {/* Tag Assign Modal (P2C.4) */}
+      <TagAssignModal
+        open={tagAssignTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setTagAssignTarget(null);
+          }
+        }}
+        memberName={tagAssignTarget?.user?.fullName}
+        currentTags={tagAssignTarget?.member?.tags ?? []}
+        isSaving={isSavingTags}
+        onSave={handleSaveTags}
       />
     </div>
   );

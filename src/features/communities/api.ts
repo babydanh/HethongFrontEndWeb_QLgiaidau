@@ -20,6 +20,15 @@ export interface GalleryImage {
   createdAt: string;
 }
 
+export type MemberStreakType = 'WIN' | 'LOSS' | 'ELO_UP';
+
+/** P2C.3 — Streak tính động từ trận đấu (backend, không lưu DB). */
+export interface MemberStreak {
+  type: MemberStreakType | null;
+  count: number;
+  label?: string;
+}
+
 export interface CommunityMemberRecord {
   member: {
     id: string;
@@ -29,6 +38,8 @@ export interface CommunityMemberRecord {
     status: 'JOINED' | 'PENDING' | 'INVITED' | 'REJECTED' | 'BANNED';
     joinedAt: string;
     joinAnswers?: Record<string, string> | null;
+    /** P2C.1/P2C.2 — Tag BQT (tối đa 5, text[]). */
+    tags?: string[];
   };
   user: {
     id: string;
@@ -36,6 +47,8 @@ export interface CommunityMemberRecord {
     avatarUrl?: string;
     email?: string;
   };
+  /** P2C.3 — Streak thắng/thua/ELO tuần của member (null nếu chưa có). */
+  streak?: MemberStreak | null;
 }
 
 export interface JoinRequest {
@@ -117,6 +130,10 @@ export const communitiesApi = {
 
   unbanMember: (id: string, userId: string) =>
     api.delete<ApiResponse<CommunityMemberRecord>>(`/communities/${id}/members/${userId}/ban`),
+
+  // P2C.2 — Gán/Xoá tag BQT (replace toàn bộ, mảng rỗng = xoá hết; OWNER/MODERATOR)
+  updateMemberTags: (id: string, userId: string, tags: string[]) =>
+    api.patch<ApiResponse<CommunityMemberRecord>>(`/communities/${id}/members/${userId}/tags`, { tags }),
 
   // Join & Follow
   joinCommunity: (id: string, joinAnswers?: Record<string, string>) => 

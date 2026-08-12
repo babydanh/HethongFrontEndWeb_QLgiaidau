@@ -91,11 +91,43 @@ export default function LeaderboardPage() {
     useEffect(() => {
         const init = async () => {
             try {
-                const cats = await categoriesApi.getCategories();
-                if (cats.data.length > 0) {
-                    setCategories(cats.data);
-                    setActiveCategoryId(cats.data[0].id);
+                const catsRes = await categoriesApi.getCategories();
+                const apiCategories = (catsRes && catsRes.data && catsRes.data.length > 0) ? catsRes.data : [];
+                
+                const FALLBACK_CATEGORIES: Category[] = [
+                  { id: 'cat-badminton', name: 'Cầu lông', slug: 'badminton', isActive: true },
+                  { id: 'cat-table-tennis', name: 'Bóng bàn', slug: 'table_tennis', isActive: true },
+                  { id: 'cat-pickleball', name: 'Pickleball', slug: 'pickleball', isActive: true },
+                  { id: 'cat-tennis', name: 'Tennis', slug: 'tennis', isActive: true },
+                  { id: 'cat-football', name: 'Bóng đá', slug: 'football', isActive: true },
+                ];
+
+                const merged: Category[] = [...apiCategories];
+                FALLBACK_CATEGORIES.forEach(fallbackCat => {
+                  const exists = apiCategories.some(apiCat => 
+                    apiCat.slug === fallbackCat.slug || 
+                    apiCat.name.toLowerCase() === fallbackCat.name.toLowerCase()
+                  );
+                  if (!exists) {
+                    merged.push(fallbackCat);
+                  }
+                });
+
+                const activeCats = merged.filter((cat) => {
+                  const catKey = cat.slug || cat.id;
+                  if (typeof window !== 'undefined') {
+                    const localOverride = localStorage.getItem(`sport_active_${catKey}`);
+                    if (localOverride === 'false') return false;
+                    if (localOverride === 'true') return true;
+                  }
+                  return cat.isActive !== false && (cat.categoryConfig as Record<string, unknown> | null | undefined)?.isActive !== false;
+                });
+
+                setCategories(activeCats);
+                if (activeCats.length > 0) {
+                    setActiveCategoryId(activeCats[0].id);
                 }
+
                 const res = await regionsApi.getProvinces();
                 const provList = (Array.isArray(res) ? res : (res as { data?: Region[] }).data) || [];
                 setProvinces(provList);

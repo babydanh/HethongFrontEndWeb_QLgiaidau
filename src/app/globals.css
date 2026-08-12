@@ -216,6 +216,7 @@ body {
   to {
     transform: scale(0.9) translateY(-10px);
     opacity: 0;
+  }
 }
 
 /* Laptop màn nhỏ (13" - 15.6" Full HD với Windows DPI Scale 125%-150%) */

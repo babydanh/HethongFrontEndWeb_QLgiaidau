@@ -81,7 +81,16 @@ export default function TournamentsListPage() {
       try {
         const res = await categoriesApi.getCategories();
         if (res && res.data) {
-          setCategories(res.data);
+          const activeCats = res.data.filter(cat => {
+            const catKey = cat.slug || cat.id;
+            if (typeof window !== 'undefined') {
+              const localOverride = localStorage.getItem(`sport_active_${catKey}`);
+              if (localOverride === 'false') return false;
+              if (localOverride === 'true') return true;
+            }
+            return cat.isActive !== false && (cat.categoryConfig as Record<string, unknown> | null | undefined)?.isActive !== false;
+          });
+          setCategories(activeCats);
         }
       } catch (error) {
         console.error("Failed to fetch categories", error);

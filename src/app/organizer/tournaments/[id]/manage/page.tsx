@@ -375,39 +375,48 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
             <ModalContent className="bg-white rounded-lg p-6">
               <ModalHeader><ModalTitle className="text-xl font-bold text-slate-900">Cấu hình vòng đấu</ModalTitle></ModalHeader>
               <div className="space-y-4 mt-4">
-                {s.isLiteMode && (
-                  <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-xs font-bold text-amber-900 flex items-center gap-2">
-                    <Zap className="w-4 h-4 text-amber-600 shrink-0" />
-                    Chế độ Tự do (Lite) đang bật toàn giải: Hệ thống tự động tối giản luật, cho phép nhập điểm trực tiếp linh hoạt ở tất cả các vòng.
+                {s.isLiteMode ? (
+                  <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-medium text-amber-900 flex items-start gap-2.5">
+                    <Zap className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-bold text-amber-950">Chế độ Tự do (Lite) đang bật toàn giải</p>
+                      <p className="mt-0.5 text-amber-800">
+                        Trọng tài có thể tùy ý cộng/nhập điểm số trực tiếp mà không bị giới hạn bởi luật thi đấu hay cách biệt điểm. Giao diện điều phối được tối giản hoàn toàn.
+                      </p>
+                    </div>
                   </div>
+                ) : (
+                  <>
+                    <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+                      <p className="text-sm font-bold text-slate-900">{sportPresentation.sportLabel}: {sportPresentation.scoringLabel}</p>
+                      <p className="mt-1 text-xs font-semibold text-slate-500">{sportPresentation.roundConfigHint}</p>
+                    </div>
+                    <div className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3">
+                      <p className="text-xs font-bold uppercase tracking-[0.12em] text-blue-700">Preset nhanh cho vòng đấu</p>
+                      <div className="mt-3 grid gap-3 md:grid-cols-3">
+                        {sportPresets.map((preset) => (
+                          <button
+                            key={preset.id}
+                            type="button"
+                            onClick={() => {
+                              s.setStageMaxSets(preset.setsToWin * 2 - 1);
+                              s.setStagePointsPerSet(preset.pointsPerSet);
+                              s.setStageWinBy2Points(preset.winByTwo);
+                              s.setStageMaxDeucePoints(preset.maxPoints);
+                              s.setStageSuperTiebreakEnabled(preset.tiebreakPoints !== null);
+                              s.setStageSuperTiebreakPoints(preset.tiebreakPoints ?? preset.pointsPerSet);
+                            }}
+                            className="rounded-lg border border-blue-200 bg-white px-3 py-3 text-left transition-all hover:border-blue-400 hover:bg-blue-100"
+                          >
+                            <p className="text-sm font-bold text-slate-900">{preset.label}</p>
+                            <p className="mt-1 text-xs font-semibold text-slate-500">{preset.description}</p>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </>
                 )}
-                <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
-                  <p className="text-sm font-bold text-slate-900">{sportPresentation.sportLabel}: {sportPresentation.scoringLabel}</p>
-                  <p className="mt-1 text-xs font-semibold text-slate-500">{sportPresentation.roundConfigHint}</p>
-                </div>
-                <div className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3">
-                  <p className="text-xs font-bold uppercase tracking-[0.12em] text-blue-700">Preset nhanh cho vòng đấu</p>
-                  <div className="mt-3 grid gap-3 md:grid-cols-3">
-                    {sportPresets.map((preset) => (
-                      <button
-                        key={preset.id}
-                        type="button"
-                        onClick={() => {
-                          s.setStageMaxSets(preset.setsToWin * 2 - 1);
-                          s.setStagePointsPerSet(preset.pointsPerSet);
-                          s.setStageWinBy2Points(s.isLiteMode ? false : preset.winByTwo);
-                          s.setStageMaxDeucePoints(s.isLiteMode ? preset.pointsPerSet : preset.maxPoints);
-                          s.setStageSuperTiebreakEnabled(!s.isLiteMode && preset.tiebreakPoints !== null);
-                          s.setStageSuperTiebreakPoints(preset.tiebreakPoints ?? preset.pointsPerSet);
-                        }}
-                        className="rounded-lg border border-blue-200 bg-white px-3 py-3 text-left transition-all hover:border-blue-400 hover:bg-blue-100"
-                      >
-                        <p className="text-sm font-bold text-slate-900">{preset.label}</p>
-                        <p className="mt-1 text-xs font-semibold text-slate-500">{preset.description}</p>
-                      </button>
-                    ))}
-                  </div>
-                </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-xs font-bold text-slate-500">Địa điểm sân đấu</label>
@@ -419,45 +428,61 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                       className="w-full border border-slate-300 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
-                  <div><label className="text-xs font-bold text-slate-500">Giờ mặc định cho vòng này</label>
-                    <DateTimePicker value={s.stageScheduledDate} onChange={s.setStageScheduledDate} /></div>
-                  <div><label className="text-xs font-bold text-slate-500">Số set / game tối đa</label>
-                    <select value={s.stageMaxSets} onChange={e => s.setStageMaxSets(Number(e.target.value))} className="w-full border rounded-lg p-2 text-sm">
-                      <option value={1}>1 set</option><option value={3}>3 set</option><option value={5}>5 set</option>
-                    </select></div>
-                  <div><label className="text-xs font-bold text-slate-500">{sportPresentation.setUnitLabel}</label>
-                    <input type="number" value={s.stagePointsPerSet} onChange={e => s.setStagePointsPerSet(Number(e.target.value))} className="w-full border rounded-lg p-2 text-sm" /></div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-500">Giờ mặc định cho vòng này</label>
+                    <DateTimePicker value={s.stageScheduledDate} onChange={s.setStageScheduledDate} />
+                  </div>
+
                   {!s.isLiteMode && (
                     <>
-                      <div className="flex items-center gap-2"><input type="checkbox" checked={s.stageWinBy2Points} onChange={e => s.setStageWinBy2Points(e.target.checked)} />
-                        <label className="text-xs font-bold text-slate-500">{sportPresentation.winByTwoLabel}</label></div>
-                      {s.stageWinBy2Points && <div><label className="text-xs font-bold text-slate-500">{sportPresentation.maxScoreLabel}</label>
-                        <input type="number" value={s.stageMaxDeucePoints} onChange={e => s.setStageMaxDeucePoints(Number(e.target.value))} className="w-full border rounded-lg p-2 text-sm" /></div>}
+                      <div>
+                        <label className="text-xs font-bold text-slate-500">Số set / game tối đa</label>
+                        <select value={s.stageMaxSets} onChange={e => s.setStageMaxSets(Number(e.target.value))} className="w-full border rounded-lg p-2 text-sm">
+                          <option value={1}>1 set</option><option value={3}>3 set</option><option value={5}>5 set</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-xs font-bold text-slate-500">{sportPresentation.setUnitLabel}</label>
+                        <input type="number" value={s.stagePointsPerSet} onChange={e => s.setStagePointsPerSet(Number(e.target.value))} className="w-full border rounded-lg p-2 text-sm" />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input type="checkbox" checked={s.stageWinBy2Points} onChange={e => s.setStageWinBy2Points(e.target.checked)} />
+                        <label className="text-xs font-bold text-slate-500">{sportPresentation.winByTwoLabel}</label>
+                      </div>
+                      {s.stageWinBy2Points && (
+                        <div>
+                          <label className="text-xs font-bold text-slate-500">{sportPresentation.maxScoreLabel}</label>
+                          <input type="number" value={s.stageMaxDeucePoints} onChange={e => s.setStageMaxDeucePoints(Number(e.target.value))} className="w-full border rounded-lg p-2 text-sm" />
+                        </div>
+                      )}
                       {supportsTiebreakInput && (
                         <div>
                           <label className="text-xs font-bold text-slate-500">{sportPresentation.tiebreakLabel}</label>
                           <input type="number" value={s.stageSuperTiebreakPoints} onChange={e => s.setStageSuperTiebreakPoints(Number(e.target.value))} className="w-full border rounded-lg p-2 text-sm" />
                         </div>
                       )}
+                      <div className="col-span-2 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-900">
+                        Vòng này sẽ đánh: thắng {Math.ceil(s.stageMaxSets / 2)} {s.sportRuleKind === 'PICKLEBALL_SIDE_OUT' ? 'game' : 'set'}
+                        {' • '}
+                        {s.stagePointsPerSet} {s.sportRuleKind === 'TENNIS' ? 'game/set' : 'điểm'}
+                        {s.stageWinBy2Points ? ' • hơn 2' : ' • chạm đích là chốt'}
+                        {supportsTiebreakInput ? ` • ${sportPresentation.tiebreakLabel.toLowerCase()}: ${s.stageSuperTiebreakPoints}` : ''}
+                      </div>
+                      {isPickleballSideOut && (
+                        <div className="col-span-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700">
+                          Mode side-out: chỉ đội giao bóng mới ghi điểm. Vòng này hiện mới cấu hình score mục tiêu, chưa có state giao bóng live chi tiết.
+                        </div>
+                      )}
+                      <div className="col-span-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700">
+                        Gợi ý nhập điểm: {scoreGuidance.targetSummary} Ví dụ: {scoreGuidance.examples.join(' • ')}.
+                      </div>
                     </>
                   )}
-                  <div className="col-span-2 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-900">
-                    Vòng này sẽ đánh: thắng {Math.ceil(s.stageMaxSets / 2)} {s.sportRuleKind === 'PICKLEBALL_SIDE_OUT' ? 'game' : 'set'}
-                    {' • '}
-                    {s.stagePointsPerSet} {s.sportRuleKind === 'TENNIS' ? 'game/set' : 'điểm'}
-                    {s.isLiteMode ? ' • Tự do (Lite)' : s.stageWinBy2Points ? ' • hơn 2' : ' • chạm đích là chốt'}
-                    {!s.isLiteMode && supportsTiebreakInput ? ` • ${sportPresentation.tiebreakLabel.toLowerCase()}: ${s.stageSuperTiebreakPoints}` : ''}
+
+                  <div className="col-span-2">
+                    <label className="text-xs font-bold text-slate-500">Ghi chú điều phối vòng này</label>
+                    <textarea value={s.stageNotificationNote} onChange={e => s.setStageNotificationNote(e.target.value)} className="min-h-20 w-full border rounded-lg p-2 text-sm" placeholder="Ví dụ: ưu tiên gọi đồng loạt ở sân trung tâm lúc 08:00" />
                   </div>
-                  {isPickleballSideOut && (
-                    <div className="col-span-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700">
-                      Mode side-out: chỉ đội giao bóng mới ghi điểm. Vòng này hiện mới cấu hình score mục tiêu, chưa có state giao bóng live chi tiết.
-                    </div>
-                  )}
-                  <div className="col-span-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700">
-                    Gợi ý nhập điểm: {scoreGuidance.targetSummary} Ví dụ: {scoreGuidance.examples.join(' • ')}.
-                  </div>
-                  <div className="col-span-2"><label className="text-xs font-bold text-slate-500">Ghi chú điều phối vòng này</label>
-                    <textarea value={s.stageNotificationNote} onChange={e => s.setStageNotificationNote(e.target.value)} className="min-h-20 w-full border rounded-lg p-2 text-sm" placeholder="Ví dụ: ưu tiên gọi đồng loạt ở sân trung tâm lúc 08:00" /></div>
                 </div>
                 <Button onClick={s.handleSaveStageDetails} disabled={s.isSavingStage} className="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg">
                   {s.isSavingStage ? 'Đang lưu...' : 'Lưu cấu hình'}

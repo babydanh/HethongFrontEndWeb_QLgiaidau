@@ -4,5 +4,6 @@ out
 build
 .git
 .gitignore
+.env*
 *.log
 *.tsbuildinfo

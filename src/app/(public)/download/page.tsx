@@ -139,13 +139,15 @@ export default function DownloadPage() {
               </p>
             </div>
             
-            <button 
-              disabled
-              className="w-full py-3 px-4 rounded-xl bg-slate-100 border border-slate-200 text-slate-400 font-semibold text-xs flex items-center justify-center gap-2 cursor-not-allowed"
+            <a 
+              href="https://apps.apple.com/us/app/vnsport/id6795829694" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="w-full py-3 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs flex items-center justify-center gap-2.5 transition-all shadow-sm active:scale-[0.98]"
             >
-              <Smartphone className="w-4 h-4 opacity-60" />
-              <span>Đang cập nhật iOS</span>
-            </button>
+              <AppleSvg className="w-4 h-4 text-white" />
+              <span>Mở App Store</span>
+            </a>
           </motion.div>
 
           {/* Direct APK Card (Featured) */}
@@ -267,7 +269,7 @@ export default function DownloadPage() {
                 </div>
                 <div className="flex justify-between py-1">
                   <span className="text-slate-400">Trạng thái App Store:</span>
-                  <span className="font-bold text-blue-600">Đang duyệt (Pending)</span>
+                  <span className="font-bold text-emerald-600">Đã phát hành</span>
                 </div>
               </div>
               <button 

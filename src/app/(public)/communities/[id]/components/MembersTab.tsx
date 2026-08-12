@@ -50,7 +50,11 @@ export default function MembersTab({
   const router = useRouter();
   const [members, setMembers] = useState<MemberData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalMembers, setTotalMembers] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
+  const PAGE_SIZE = 50;
   
   // Menu dropdown state
   const [activeMenuUserId, setActiveMenuUserId] = useState<string | null>(null);
@@ -70,21 +74,30 @@ export default function MembersTab({
   const [kickTarget, setKickTarget] = useState<{ userId: string; name: string } | null>(null);
   const [banTarget, setBanTarget] = useState<{ userId: string; name: string } | null>(null);
 
-  const fetchMembers = async () => {
+  const fetchMembers = async (page = 1, append = false) => {
     try {
-      if (!isLoading) {
+      if (append) {
+        setIsLoadingMore(true);
+      } else if (!isLoading) {
         setIsLoading(true);
       }
-      const res = await communitiesApi.getMembers(communityId);
+      const res = await communitiesApi.getMembers(communityId, {
+        page,
+        limit: PAGE_SIZE,
+        status: 'JOINED',
+      });
       const data = res.data || [];
       // Only keep JOINED status members for the active list
       const joinedOnly = data.filter((m: MemberData) => m.member?.status === 'JOINED');
-      setMembers(joinedOnly);
+      setTotalMembers(res.meta?.total ?? joinedOnly.length);
+      setCurrentPage(page);
+      setMembers((prev) => (append ? [...prev, ...joinedOnly] : joinedOnly));
     } catch (error) {
       console.error('Failed to fetch members', error);
       toast.error('Lỗi khi tải danh sách thành viên.');
     } finally {
       setIsLoading(false);
+      setIsLoadingMore(false);
     }
   };
 
@@ -229,6 +242,8 @@ export default function MembersTab({
   const filteredMembers = ordinaryMembers.filter(m => 
     m.user?.fullName?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const hasMore = members.length < totalMembers;
 
   return (
     <div className="space-y-6">
@@ -469,6 +484,20 @@ export default function MembersTab({
               </div>
             )}
           </div>
+
+          {!isLoading && hasMore && (
+            <div className="flex justify-center pt-2">
+              <Button
+                onClick={() => fetchMembers(currentPage + 1, true)}
+                disabled={isLoadingMore}
+                variant="outline"
+                className="w-full sm:w-auto border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-800 font-medium"
+              >
+                {isLoadingMore && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                Tải thêm
+              </Button>
+            </div>
+          )}
         </div>
       )}
 

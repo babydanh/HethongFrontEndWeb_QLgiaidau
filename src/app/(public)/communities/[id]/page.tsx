@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { communitiesApi, Community } from '@/features/communities/api';
 import { Button } from '@/components/ui/Button';
-import { ChevronLeft, MapPin, Users, Trophy, Share2, MoreHorizontal, ShieldCheck, ShieldAlert, Settings as SettingsIcon, Loader2 } from 'lucide-react';
+import { ChevronLeft, MapPin, Users, Trophy, Share2, MoreHorizontal, ShieldCheck, ShieldAlert, Settings as SettingsIcon, Loader2, Bookmark, Star } from 'lucide-react';
 import { formatDate } from '@/utils/format';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { JoinCommunityModal } from '@/components/shared/JoinCommunityModal';
@@ -21,7 +21,7 @@ interface CommunityMemberRecord {
 }
 
 // Tabs
-import AboutTab from './components/AboutTab';
+import OverviewTab from './components/OverviewTab';
 import TournamentsTab from './components/TournamentsTab';
 import MembersTab from './components/MembersTab';
 import GalleryTab from './components/GalleryTab';
@@ -38,7 +38,7 @@ export default function CommunityDetailPage() {
   const [community, setCommunity] = useState<Community | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'about' | 'tournaments' | 'members' | 'gallery' | 'rankings' | 'moderation' | 'settings'>('about');
+  const [activeTab, setActiveTab] = useState<'overview' | 'tournaments' | 'members' | 'gallery' | 'rankings' | 'moderation' | 'settings'>('overview');
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
 
   // Real membership state
@@ -48,6 +48,9 @@ export default function CommunityDetailPage() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isLeaveConfirmOpen, setIsLeaveConfirmOpen] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [isFollowLoading, setIsFollowLoading] = useState(false);
 
   const fetchGallery = async () => {
     try {
@@ -101,6 +104,68 @@ export default function CommunityDetailPage() {
     }
   };
 
+  const fetchFollowState = async () => {
+    if (!user || !id) return;
+    try {
+      const res = await communitiesApi.getFavorites();
+      const favoritesData: unknown = res.data || res || [];
+      const favorites = Array.isArray(favoritesData) ? favoritesData : [];
+      setIsFavorite(favorites.some((f: { community?: { id?: string } }) => f.community?.id === id));
+    } catch (error) {
+      console.error('Failed to fetch favorite state', error);
+    }
+  };
+
+  const handleToggleFollow = async () => {
+    if (!user) {
+      toast.error('Vui lòng đăng nhập để theo dõi câu lạc bộ.');
+      router.push('/login');
+      return;
+    }
+    try {
+      setIsFollowLoading(true);
+      if (isFollowing) {
+        await communitiesApi.unfollowCommunity(id);
+        setIsFollowing(false);
+        toast.success('Đã bỏ theo dõi câu lạc bộ.');
+      } else {
+        await communitiesApi.followCommunity(id);
+        setIsFollowing(true);
+        toast.success('Đã theo dõi câu lạc bộ.');
+      }
+    } catch (error) {
+      console.error('Failed to toggle follow', error);
+      toast.error(getErrorMessage(error, 'Không thể cập nhật trạng thái theo dõi.'));
+    } finally {
+      setIsFollowLoading(false);
+    }
+  };
+
+  const handleToggleFavorite = async () => {
+    if (!user) {
+      toast.error('Vui lòng đăng nhập để lưu câu lạc bộ yêu thích.');
+      router.push('/login');
+      return;
+    }
+    try {
+      setIsFollowLoading(true);
+      if (isFavorite) {
+        await communitiesApi.unfavoriteCommunity(id);
+        setIsFavorite(false);
+        toast.success('Đã bỏ yêu thích câu lạc bộ.');
+      } else {
+        await communitiesApi.favoriteCommunity(id);
+        setIsFavorite(true);
+        toast.success('Đã thêm vào danh sách yêu thích.');
+      }
+    } catch (error) {
+      console.error('Failed to toggle favorite', error);
+      toast.error(getErrorMessage(error, 'Không thể cập nhật trạng thái yêu thích.'));
+    } finally {
+      setIsFollowLoading(false);
+    }
+  };
+
   const fetchCommunity = async () => {
     try {
       if (!isLoading) {
@@ -136,6 +201,7 @@ export default function CommunityDetailPage() {
     if (id && user) {
       Promise.resolve().then(() => {
         fetchMembership();
+        fetchFollowState();
       });
     } else {
       if (membership !== null) {
@@ -399,6 +465,36 @@ export default function CommunityDetailPage() {
             
             <Button
               variant="outline"
+              onClick={handleToggleFollow}
+              disabled={isFollowLoading}
+              className={`h-10 px-3 rounded-lg shadow-sm border transition-colors ${
+                isFollowing
+                  ? 'bg-emerald-50 border-emerald-300 text-emerald-600'
+                  : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700'
+              }`}
+              aria-label={isFollowing ? 'Bỏ theo dõi câu lạc bộ' : 'Theo dõi câu lạc bộ'}
+              title={isFollowing ? 'Bỏ theo dõi' : 'Theo dõi'}
+            >
+              <Bookmark strokeWidth={1.5} className={`w-4 h-4 ${isFollowing ? 'fill-emerald-600 text-emerald-600' : ''}`} />
+            </Button>
+
+            <Button
+              variant="outline"
+              onClick={handleToggleFavorite}
+              disabled={isFollowLoading}
+              className={`h-10 px-3 rounded-lg shadow-sm border transition-colors ${
+                isFavorite
+                  ? 'bg-emerald-50 border-emerald-300 text-emerald-600'
+                  : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700'
+              }`}
+              aria-label={isFavorite ? 'Bỏ yêu thích câu lạc bộ' : 'Yêu thích câu lạc bộ'}
+              title={isFavorite ? 'Bỏ yêu thích' : 'Yêu thích'}
+            >
+              <Star strokeWidth={1.5} className={`w-4 h-4 ${isFavorite ? 'fill-emerald-600 text-emerald-600' : ''}`} />
+            </Button>
+
+            <Button
+              variant="outline"
               onClick={() => setIsShareModalOpen(true)}
               className="h-10 px-3 bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700 rounded-lg shadow-sm"
               aria-label={`Chia sẻ câu lạc bộ ${community.name}`}
@@ -436,7 +532,7 @@ export default function CommunityDetailPage() {
         {/* Navigation Tabs */}
         <div className="flex overflow-x-auto gap-2 mb-6 mt-4 hide-scrollbar">
           {[
-            { id: 'about', label: 'Giới thiệu' },
+            { id: 'overview', label: 'Tổng quan' },
             { id: 'tournaments', label: 'Giải đấu' },
             { id: 'members', label: 'Thành viên' },
             { id: 'gallery', label: 'Ảnh' },
@@ -472,7 +568,12 @@ export default function CommunityDetailPage() {
         {/* Tab Content */}
         <div className="grid grid-cols-1 gap-8">
           <div>
-            {activeTab === 'about' && <AboutTab community={community} galleryImages={galleryImages} />}
+            {activeTab === 'overview' && (
+              <OverviewTab
+                onGoToTournaments={() => setActiveTab('tournaments')}
+                onGoToRankings={() => setActiveTab('rankings')}
+              />
+            )}
             {activeTab === 'tournaments' && <TournamentsTab communityId={id} isOwnerOrMod={isOwnerOrMod} />}
             {activeTab === 'members' && (
               <MembersTab 

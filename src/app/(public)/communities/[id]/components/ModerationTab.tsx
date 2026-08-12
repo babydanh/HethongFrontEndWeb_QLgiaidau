@@ -66,7 +66,7 @@ export default function ModerationTab({
       try {
         const [reqRes, memRes] = await Promise.all([
           communitiesApi.getJoinRequests(communityId),
-          communitiesApi.getMembers(communityId),
+          communitiesApi.getMembers(communityId, { limit: 200 }),
         ]);
 
         if (!active) {

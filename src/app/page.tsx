@@ -432,20 +432,37 @@ export default function HomePage() {
         }
         const communitiesPromise = communitiesApi.getCommunities(cParams);
 
-        // Start independent requests together to avoid serial network latency.
-        const allMatchesPromise = matchesApi.getMatches({
-          status: 'ONGOING,SCHEDULED,COMPLETED',
-          limit: 50,
+        // Fetch live, completed, and upcoming matches in separate targeted calls so scheduled matches don't drown out live/completed ones.
+        const matchCategoryParams = selectedCategoryId ? { categoryId: selectedCategoryId } : {};
+        const liveMatchesPromise = matchesApi.getMatches({
+          status: 'ONGOING',
+          limit: 20,
           publicOnly: true,
+          ...matchCategoryParams,
         });
+        const completedMatchesPromise = matchesApi.getMatches({
+          status: 'COMPLETED,FINISHED,DONE,ENDED',
+          limit: 20,
+          publicOnly: true,
+          ...matchCategoryParams,
+        });
+        const upcomingMatchesPromise = matchesApi.getMatches({
+          status: 'SCHEDULED',
+          limit: 30,
+          publicOnly: true,
+          ...matchCategoryParams,
+        });
+
         const userRankingsPromise = isAuthenticated && user?.id
           ? rankingsApi.getUserRankings(user.id)
           : Promise.resolve(null);
 
-        const [tRes, cRes, allMatchesRes, userRankRes] = await Promise.allSettled([
+        const [tRes, cRes, liveRes, completedRes, upcomingRes, userRankRes] = await Promise.allSettled([
           tournamentsPromise,
           communitiesPromise,
-          allMatchesPromise,
+          liveMatchesPromise,
+          completedMatchesPromise,
+          upcomingMatchesPromise,
           userRankingsPromise,
         ] as const);
 
@@ -467,11 +484,6 @@ export default function HomePage() {
           setTournaments([]);
         }
 
-        // Build set of valid tournament IDs
-        const validTournamentIds = new Set(visibleTournaments.map((t: Tournament) => t.id));
-        // Nếu tournaments API trả về rỗng, có thể cache cũ hoặc API lỗi.
-        // Vẫn hiển thị matches mà không filter theo tournament ID.
-        const shouldFilterByTournament = validTournamentIds.size > 0;
         const fetchedCommunities = cRes.status === 'fulfilled' ? cRes.value.data || [] : [];
         if (cRes.status === 'fulfilled') {
           setCommunities(selectedCategoryId
@@ -479,61 +491,56 @@ export default function HomePage() {
             : fetchedCommunities);
         }
 
-        // ── ĐỢT 2 (sau 300ms): matches — gộp 1 call multi-status, limit 50 ──
-        if (allMatchesRes.status === 'fulfilled') {
-          const rawData = (allMatchesRes.value as Record<string, unknown>).data;
-          const allMatchesData = (rawData as Record<string, unknown>)?.data || rawData || [];
-          const allMatches = (Array.isArray(allMatchesData) ? allMatchesData : []) as BracketMatch[];
-          const categoryMatches = selectedCategoryId
-            ? allMatches.filter((match) => {
-                const matchTournament = (match as EnrichedMatch).tournament;
-                return matchTournament?.categoryId === selectedCategoryId ||
-                  validTournamentIds.has(match.tournamentId ?? '');
-              })
-            : allMatches;
+        // Helper to extract matches array safely from AxiosResponse
+        const extractMatches = (settledRes: PromiseSettledResult<unknown>): BracketMatch[] => {
+          if (settledRes.status !== 'fulfilled' || !settledRes.value) return [];
+          const rawData = (settledRes.value as Record<string, unknown>).data;
+          const matchesData = (rawData as Record<string, unknown>)?.data || rawData || [];
+          return (Array.isArray(matchesData) ? matchesData : []) as BracketMatch[];
+        };
 
-          // Populate initial cheer counts from backend for all matches
-          const matchCheerMap: Record<string, number> = {};
-          categoryMatches.forEach((m: unknown) => {
-            const item = m as Record<string, unknown>;
-            if (item.id && typeof item.cheerCount === 'number') {
-              matchCheerMap[item.id as string] = item.cheerCount;
-            }
-          });
-          if (Object.keys(matchCheerMap).length > 0) {
-            setHighFives(prev => ({ ...prev, ...matchCheerMap }));
+        const liveList = extractMatches(liveRes);
+        const completedList = extractMatches(completedRes);
+        const upcomingList = extractMatches(upcomingRes);
+
+        // Populate initial cheer counts from backend
+        const matchCheerMap: Record<string, number> = {};
+        [...liveList, ...completedList, ...upcomingList].forEach((m: unknown) => {
+          const item = m as Record<string, unknown>;
+          if (item.id && typeof item.cheerCount === 'number') {
+            matchCheerMap[item.id as string] = item.cheerCount;
           }
-          const isCompletedMatch = (m: BracketMatch) => {
-            const status = String(m.status || '').toUpperCase();
-            return status === 'COMPLETED' ||
-              status === 'FINISHED' ||
-              status === 'DONE' ||
-              status === 'ENDED' ||
-              m.completedAt != null ||
-              m.winnerId != null;
-          };
-          const allLiveMatches = categoryMatches.filter(m => m.status === 'ONGOING' && !isCompletedMatch(m));
-          setLiveMatches(allLiveMatches.filter(m => !m.isBye));
+        });
+        if (Object.keys(matchCheerMap).length > 0) {
+          setHighFives(prev => ({ ...prev, ...matchCheerMap }));
+        }
 
-          const fetchedUpcoming = categoryMatches.filter(m => m.status === 'SCHEDULED');
-          const validUpcoming = fetchedUpcoming.filter(m =>
-            !m.isBye &&
-            m.participant1 != null &&
-            m.participant2 != null &&
-            m.participant1.teamName.trim().toLowerCase() !== 'tbd' &&
-            m.participant2.teamName.trim().toLowerCase() !== 'tbd' &&
-            m.participant1.teamName.trim().toLowerCase() !== 'chờ xác định' &&
-            m.participant2.teamName.trim().toLowerCase() !== 'chờ xác định'
-          );
-          setUpcomingMatches(validUpcoming);
+        const isCompletedMatch = (m: BracketMatch) => {
+          const status = String(m.status || '').toUpperCase();
+          return status === 'COMPLETED' ||
+            status === 'FINISHED' ||
+            status === 'DONE' ||
+            status === 'ENDED' ||
+            m.completedAt != null ||
+            m.winnerId != null;
+        };
 
-          const fetchedCompleted = categoryMatches.filter(isCompletedMatch);
-          const nextCompleted = fetchedCompleted.filter(m => !m.isBye);
-          // A transient empty 200 response must not erase the last visible
-          // results. Category-filtered requests are safe to clear explicitly.
-          if (nextCompleted.length > 0 || selectedCategoryId) {
-            setCompletedMatches(nextCompleted);
-          }
+        setLiveMatches(liveList.filter(m => (m.status === 'ONGOING' || m.status === 'IN_PROGRESS') && !isCompletedMatch(m) && !m.isBye));
+
+        const validUpcoming = upcomingList.filter(m =>
+          !m.isBye &&
+          m.participant1 != null &&
+          m.participant2 != null &&
+          m.participant1.teamName.trim().toLowerCase() !== 'tbd' &&
+          m.participant2.teamName.trim().toLowerCase() !== 'tbd' &&
+          m.participant1.teamName.trim().toLowerCase() !== 'chờ xác định' &&
+          m.participant2.teamName.trim().toLowerCase() !== 'chờ xác định'
+        );
+        setUpcomingMatches(validUpcoming);
+
+        const nextCompleted = completedList.filter(m => !m.isBye);
+        if (nextCompleted.length > 0 || selectedCategoryId) {
+          setCompletedMatches(nextCompleted);
         }
 
         // ── ĐỢT 3 (sau 600ms): rankings (1 call) ──

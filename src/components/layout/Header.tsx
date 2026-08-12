@@ -290,9 +290,9 @@ export function Header() {
             <Image
               src="/sporto_v1.svg"
               alt="Sporto Logo"
-              width={200}
-              height={50}
-              className="h-10 md:h-12 w-auto object-contain transition-transform duration-200 hover:scale-105"
+              width={140}
+              height={140}
+              className="h-[140px] w-auto object-contain transition-transform duration-200 hover:scale-105"
             />
           </Link>
 

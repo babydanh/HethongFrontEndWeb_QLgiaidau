@@ -21,7 +21,7 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
   const pid = typeof resolvedSearchParams.pid === 'string' ? resolvedSearchParams.pid : null;
   const token = typeof resolvedSearchParams.token === 'string' ? resolvedSearchParams.token : null;
 
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://giaidau.vnvar.com/api/v1';
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://sporto.asia/api/v1';
 
   const [tournament, participantsData] = await Promise.all([
     getTournament(id),
@@ -51,8 +51,8 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
       ? `Bạn được mời tham gia đội ${teamName} tại giải đấu ${tournament.name}. Nhấn vào link để xác nhận ngay!`
       : cleanDesc || `Thông tin chi tiết và lịch thi đấu giải đấu ${tournament.name} trên hệ thống Sporto. Đăng ký tham gia ngay!`;
       
-    const imageUrl = tournament.bannerUrl || tournament.logoUrl || 'https://giaidau.vnvar.com/sporto_v1\.svg';
-    const canonicalUrl = `https://giaidau.vnvar.com/tournaments/${id}/join-team${pid ? `?pid=${pid}&token=${token ?? ''}` : ''}`;
+    const imageUrl = tournament.bannerUrl || tournament.logoUrl || 'https://sporto.asia/sporto_v1\.svg';
+    const canonicalUrl = `https://sporto.asia/tournaments/${id}/join-team${pid ? `?pid=${pid}&token=${token ?? ''}` : ''}`;
 
     return {
       title,
@@ -79,7 +79,7 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
 
   const fallbackTitle = 'Mời tham gia đội thi đấu | Sporto';
   const fallbackDesc = 'Bạn nhận được lời mời tham gia đội thi đấu giải đấu tại Sporto. Nhấn để xem chi tiết và xác nhận!';
-  const fallbackImage = 'https://giaidau.vnvar.com/sporto_v1\.svg';
+  const fallbackImage = 'https://sporto.asia/sporto_v1\.svg';
 
   return {
     title: fallbackTitle,
@@ -87,7 +87,7 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
     openGraph: {
       title: fallbackTitle,
       description: fallbackDesc,
-      url: `https://giaidau.vnvar.com/tournaments/${id}/join-team`,
+      url: `https://sporto.asia/tournaments/${id}/join-team`,
       siteName: 'Sporto',
       images: [{ url: fallbackImage }],
       type: 'website',

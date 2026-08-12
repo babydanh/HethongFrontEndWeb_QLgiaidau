@@ -246,8 +246,8 @@ export function LivestreamTab({ tournament, bracket }: LivestreamTabProps) {
             ) : (
               cameras.map((camera) => {
                 const serverUrl = camera.protocol === 'SRT' 
-                  ? 'srt://giaidau.vnvar.com:8890' 
-                  : 'rtmp://giaidau.vnvar.com:1935/live';
+                  ? 'srt://sporto.asia:8890' 
+                  : 'rtmp://sporto.asia:1935/live';
                 const streamKey = camera.streamName || camera.id;
 
                 return (

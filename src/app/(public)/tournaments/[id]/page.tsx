@@ -52,11 +52,11 @@ export default async function TournamentDetailPage({ params }: PageProps) {
         addressCountry: 'VN',
       },
     },
-    image: [tournament.bannerUrl || tournament.logoUrl || 'https://giaidau.vnvar.com/sporto_v1\.svg'],
+    image: [tournament.bannerUrl || tournament.logoUrl || 'https://sporto.asia/sporto_v1\.svg'],
     organizer: {
       '@type': 'Organization',
       name: 'Sporto',
-      url: 'https://giaidau.vnvar.com',
+      url: 'https://sporto.asia',
     },
   } : null;
 

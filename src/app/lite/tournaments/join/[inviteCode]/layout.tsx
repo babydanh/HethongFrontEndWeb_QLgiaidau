@@ -7,7 +7,7 @@ type Props = {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { inviteCode } = await params;
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://giaidau.vnvar.com';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://sporto.asia';
 
   try {
     const response = await fetch(

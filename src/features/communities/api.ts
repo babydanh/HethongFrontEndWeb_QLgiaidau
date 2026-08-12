@@ -6,6 +6,9 @@ import { Tournament } from '@/features/tournaments/api';
 import type {
   CommunityDashboard,
   CommunityPost,
+  CommunityComment,
+  CommunityReactionType,
+  CommunitySocialSettings,
   CreateCommunityPostPayload,
   CursorPage,
 } from '@/types/community-social';
@@ -27,6 +30,7 @@ interface BackendPost {
   author?: CommunityPost['author'] | null;
   topics?: string[];
   mentions?: string[];
+  viewerReaction?: CommunityReactionType | null;
 }
 
 function mapPost(post: BackendPost): CommunityPost {
@@ -43,6 +47,7 @@ function mapPost(post: BackendPost): CommunityPost {
     commentCount: post.commentCount ?? 0,
     topics: post.topics ?? [],
     mentions: post.mentions ?? [],
+    viewerReaction: post.viewerReaction ?? null,
   };
 }
 
@@ -150,6 +155,12 @@ export const communitiesApi = {
 
   getDashboard: (id: string) =>
     api.get<ApiResponse<CommunityDashboard>>(`/communities/${id}/dashboard`),
+
+  getSocialSettings: (id: string) =>
+    api.get<ApiResponse<CommunitySocialSettings>>(`/communities/${id}/social-settings`),
+
+  updateSocialSettings: (id: string, data: Partial<CommunitySocialSettings>) =>
+    api.patch<ApiResponse<CommunitySocialSettings>>(`/communities/${id}/social-settings`, data),
 
   getPosts: (id: string, params?: { cursor?: string; limit?: number; sort?: 'LATEST' }) =>
     api.get<ApiResponse<BackendPost[]>>(`/communities/${id}/posts`, { params }).then((response) => ({

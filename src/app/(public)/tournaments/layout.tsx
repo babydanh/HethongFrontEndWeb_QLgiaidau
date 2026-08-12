@@ -6,11 +6,11 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Danh Sách Giải Đấu Thể Thao | Sporto',
     description: 'Tìm kiếm và đăng ký tham gia các giải đấu Pickleball, Cầu lông, Quần vợt, Bóng bàn phong trào và chuyên nghiệp.',
-    url: 'https://giaidau.vnvar.com/tournaments',
+    url: 'https://sporto.asia/tournaments',
     type: 'website',
   },
   alternates: {
-    canonical: 'https://giaidau.vnvar.com/tournaments',
+    canonical: 'https://sporto.asia/tournaments',
   },
 };
 

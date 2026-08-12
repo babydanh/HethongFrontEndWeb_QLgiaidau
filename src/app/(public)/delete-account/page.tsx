@@ -45,8 +45,8 @@ export default function DeleteAccountPage() {
                 <h3 className="text-sm font-medium text-gray-900">Gửi yêu cầu qua email</h3>
                 <p className="text-sm text-gray-500 leading-relaxed">
                   Gửi email từ tài khoản đã đăng ký đến{' '}
-                  <a href="mailto:support@vnvar.com" className="text-blue-600 hover:text-blue-700 underline underline-offset-2">
-                    support@vnvar.com
+                  <a href="mailto:support@sporto.asia" className="text-blue-600 hover:text-blue-700 underline underline-offset-2">
+                    support@sporto.asia
                   </a>
                   {' '}với tiêu đề <span className="text-gray-700">&quot;Yêu cầu xóa tài khoản&quot;</span>.
                 </p>

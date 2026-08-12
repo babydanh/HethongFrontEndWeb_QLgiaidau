@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { communitiesApi, type CommunityMemberRecord } from '@/features/communities/api';
+import type { CommunityPost } from '@/types/community-social';
 import { usersApi } from '@/features/users/api';
 import { getErrorMessage } from '@/utils/error';
 import ConfirmModal from '@/components/ui/ConfirmModal';
@@ -44,6 +45,7 @@ export default function ModerationTab({
   const [inviteRole, setInviteRole] = useState<'MEMBER' | 'MODERATOR'>('MEMBER');
   const [cancelInviteUserId, setCancelInviteUserId] = useState<string | null>(null);
   const [unbanUserId, setUnbanUserId] = useState<string | null>(null);
+  const [pendingPosts, setPendingPosts] = useState<CommunityPost[]>([]);
 
   const joinedMembers = useMemo(
     () => memberRecords.filter((item) => item.member?.status === 'JOINED'),
@@ -64,9 +66,10 @@ export default function ModerationTab({
 
     const loadData = async () => {
       try {
-        const [reqRes, memRes] = await Promise.all([
+        const [reqRes, memRes, pendingRes] = await Promise.all([
           communitiesApi.getJoinRequests(communityId),
           communitiesApi.getMembers(communityId, { limit: 200 }),
+          communitiesApi.getPendingPosts(communityId),
         ]);
 
         if (!active) {
@@ -78,6 +81,20 @@ export default function ModerationTab({
         setRequests(reqRes.data || []);
         setInvitedMembers(allMembers.filter((m) => m.member?.status === 'INVITED'));
         setBannedMembers(allMembers.filter((m) => m.member?.status === 'BANNED'));
+        setPendingPosts((pendingRes.data || []).map((post) => ({
+          id: post.id,
+          communityId: post.communityId,
+          author: post.author ?? { id: post.authorId, fullName: 'Thành viên CLB', avatarUrl: null },
+          content: post.body || '',
+          imageUrls: post.mediaUrls || [],
+          status: post.status,
+          createdAt: post.createdAt,
+          updatedAt: post.updatedAt,
+          reactionCount: post.reactionCount || 0,
+          commentCount: post.commentCount || 0,
+          topics: post.topics || [],
+          mentions: post.mentions || [],
+        })));
       } catch (error) {
         console.error('Failed to fetch moderation data', error);
         if (active) {
@@ -173,8 +190,41 @@ export default function ModerationTab({
     }
   };
 
+  const handleModeratePost = async (postId: string, status: 'PUBLISHED' | 'REJECTED') => {
+    try {
+      await communitiesApi.moderatePost(communityId, postId, { status });
+      setPendingPosts((posts) => posts.filter((post) => post.id !== postId));
+      toast.success(status === 'PUBLISHED' ? 'Đã duyệt bài viết.' : 'Đã từ chối bài viết.');
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Không thể xử lý bài viết.'));
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+      <section className="rounded-lg border border-amber-200 bg-amber-50/40 p-6 shadow-sm xl:col-span-2">
+        <div className="mb-5 flex items-center gap-2 border-b border-amber-100 pb-3">
+          <Ban className="h-4 w-4 text-amber-600" />
+          <h3 className="text-lg font-bold text-slate-900">Bài viết chờ duyệt</h3>
+          <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-700">{pendingPosts.length}</span>
+        </div>
+        {pendingPosts.length === 0 ? (
+          <p className="rounded-lg border border-dashed border-amber-200 bg-white px-4 py-8 text-center text-sm text-slate-500">Không có bài viết chờ duyệt.</p>
+        ) : (
+          <div className="grid gap-3 md:grid-cols-2">
+            {pendingPosts.map((post) => (
+              <article key={post.id} className="rounded-lg border border-slate-200 bg-white p-4">
+                <p className="text-sm font-semibold text-slate-900">{post.author.fullName}</p>
+                <p className="mt-2 whitespace-pre-wrap text-sm text-slate-700">{post.content || '(Bài viết hình ảnh)'}</p>
+                <div className="mt-4 flex gap-2">
+                  <button type="button" onClick={() => handleModeratePost(post.id, 'PUBLISHED')} className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700">Duyệt</button>
+                  <button type="button" onClick={() => handleModeratePost(post.id, 'REJECTED')} className="rounded-lg border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50">Từ chối</button>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
       <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
         <div className="mb-5 flex items-center gap-2 border-b border-slate-100 pb-3">
           <Users className="h-4 w-4 text-blue-600" />

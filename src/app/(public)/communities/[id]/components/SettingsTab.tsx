@@ -3,39 +3,20 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
-  Settings, Save, Check, X, Users, Globe, Lock, ShieldAlert, 
-  Plus, Search, Image as ImageIcon, Loader2, Mail, UserPlus, 
-  Trash2, ShieldCheck, MapPin, AlignLeft, ListChecks
+  Settings, Save, Globe, Lock, ShieldAlert,
+  Plus, Image as ImageIcon, Loader2,
+  Trash2, AlignLeft, ListChecks
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { Community, communitiesApi, CommunityMemberRecord } from '@/features/communities/api';
+import { Community, communitiesApi } from '@/features/communities/api';
+import type { CommunitySocialSettings } from '@/types/community-social';
 import { uploadApi } from '@/features/upload/api';
-import { usersApi } from '@/features/users/api';
 import { categoriesApi, Category } from '@/features/categories/api';
 import { regionsApi, Region } from '@/features/regions/api';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '@/utils/error';
 import RichTextEditor from '@/components/ui/RichTextEditor';
 import ConfirmModal from '@/components/ui/ConfirmModal';
-
-interface JoinRequest {
-  id: string;
-  joinedAt: string;
-  joinAnswers?: Record<string, string>;
-  user?: {
-    email?: string;
-    profile?: { fullName?: string };
-  };
-}
-
-
-
-interface UserSearchResult {
-  id: string;
-  email: string;
-  fullName?: string;
-  avatarUrl?: string;
-}
 
 export default function SettingsTab({ community }: { community: Community }) {
   // General Form States
@@ -45,7 +26,6 @@ export default function SettingsTab({ community }: { community: Community }) {
   const [visibility, setVisibility] = useState<'PUBLIC' | 'RESTRICTED' | 'PRIVATE'>(community.visibility || 'PUBLIC');
   const [joinMode, setJoinMode] = useState<'OPEN' | 'APPROVAL' | 'INVITE_ONLY'>(community.joinMode || 'OPEN');
   const [maxMembers, setMaxMembers] = useState(community.maxMembers || '');
-  const [locationAddress, setLocationAddress] = useState(community.locationAddress || '');
   
   // Cascade Regions States
   const [provinces, setProvinces] = useState<Region[]>([]);
@@ -75,6 +55,8 @@ export default function SettingsTab({ community }: { community: Community }) {
   const [newQuestion, setNewQuestion] = useState('');
 
   const [socialLinks, setSocialLinks] = useState<Record<string, string>>(community.socialLinks || {});
+  const [socialSettings, setSocialSettings] = useState<CommunitySocialSettings>({ postingPolicy: 'MEMBERS', postApprovalRequired: false, commentsEnabled: true, chatEnabled: true, publicFeed: true, memberTaggingPolicy: 'MEMBERS' });
+  const [isSavingSocial, setIsSavingSocial] = useState(false);
   const [newSocialType, setNewSocialType] = useState('facebook');
   const [newSocialLabel, setNewSocialLabel] = useState('');
   const [newSocialValue, setNewSocialValue] = useState('');
@@ -137,6 +119,23 @@ export default function SettingsTab({ community }: { community: Community }) {
       .then(setProvinces)
       .catch(err => console.error('Failed to load provinces', err));
   }, []);
+
+  useEffect(() => {
+    communitiesApi.getSocialSettings(community.id).then((response) => setSocialSettings(response.data)).catch(() => undefined);
+  }, [community.id]);
+
+  const saveSocialSettings = async () => {
+    try {
+      setIsSavingSocial(true);
+      const response = await communitiesApi.updateSocialSettings(community.id, socialSettings);
+      setSocialSettings(response.data);
+      toast.success('Đã lưu cài đặt sinh hoạt CLB.');
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Không thể lưu cài đặt social.'));
+    } finally {
+      setIsSavingSocial(false);
+    }
+  };
 
   // Fetch districts when provinceCode changes
   useEffect(() => {
@@ -271,6 +270,20 @@ export default function SettingsTab({ community }: { community: Community }) {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <section className="lg:col-span-3 rounded-lg border border-emerald-100 bg-emerald-50/40 p-6">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div><h3 className="text-lg font-bold text-slate-900">Sinh hoạt CLB</h3><p className="mt-1 text-xs text-slate-500">Điều khiển feed, chat và quyền thành viên.</p></div>
+          <Button type="button" onClick={() => void saveSocialSettings()} disabled={isSavingSocial} className="bg-emerald-600 text-white">{isSavingSocial ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}Lưu social</Button>
+        </div>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <label className="text-sm font-semibold text-slate-700">Quyền đăng bài<select value={socialSettings.postingPolicy} onChange={(event) => setSocialSettings((current) => ({ ...current, postingPolicy: event.target.value as CommunitySocialSettings['postingPolicy'] }))} className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"><option value="MEMBERS">Thành viên</option><option value="ADMINS">Chỉ ban quản trị</option><option value="OFF">Tắt đăng bài</option></select></label>
+          <label className="flex items-center gap-2 rounded-lg bg-white p-3 text-sm font-semibold text-slate-700"><input type="checkbox" checked={socialSettings.postApprovalRequired} onChange={(event) => setSocialSettings((current) => ({ ...current, postApprovalRequired: event.target.checked }))} />Bài thành viên phải duyệt</label>
+          <label className="flex items-center gap-2 rounded-lg bg-white p-3 text-sm font-semibold text-slate-700"><input type="checkbox" checked={socialSettings.commentsEnabled} onChange={(event) => setSocialSettings((current) => ({ ...current, commentsEnabled: event.target.checked }))} />Cho phép bình luận</label>
+          <label className="flex items-center gap-2 rounded-lg bg-white p-3 text-sm font-semibold text-slate-700"><input type="checkbox" checked={socialSettings.chatEnabled} onChange={(event) => setSocialSettings((current) => ({ ...current, chatEnabled: event.target.checked }))} />Mở chat CLB</label>
+          <label className="flex items-center gap-2 rounded-lg bg-white p-3 text-sm font-semibold text-slate-700"><input type="checkbox" checked={socialSettings.publicFeed} onChange={(event) => setSocialSettings((current) => ({ ...current, publicFeed: event.target.checked }))} />Feed cho khách xem</label>
+          <label className="text-sm font-semibold text-slate-700">Quyền gắn thẻ<select value={socialSettings.memberTaggingPolicy} onChange={(event) => setSocialSettings((current) => ({ ...current, memberTaggingPolicy: event.target.value as CommunitySocialSettings['memberTaggingPolicy'] }))} className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"><option value="MEMBERS">Thành viên</option><option value="ADMINS">Chỉ ban quản trị</option><option value="OFF">Tắt gắn thẻ</option></select></label>
+        </div>
+      </section>
       {/* LEFT & CENTER: Form Settings */}
       <div className="lg:col-span-2 space-y-8">
         {/* General Settings */}

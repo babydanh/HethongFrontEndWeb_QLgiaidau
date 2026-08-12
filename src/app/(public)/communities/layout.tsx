@@ -6,11 +6,11 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Danh Sách Câu Lạc Bộ Thể Thao | Sporto',
     description: 'Khám phá và gia nhập các câu lạc bộ Pickleball, Cầu lông, Quần vợt, Bóng bàn uy tín trên toàn quốc.',
-    url: 'https://giaidau.vnvar.com/communities',
+    url: 'https://sporto.asia/communities',
     type: 'website',
   },
   alternates: {
-    canonical: 'https://giaidau.vnvar.com/communities',
+    canonical: 'https://sporto.asia/communities',
   },
 };
 

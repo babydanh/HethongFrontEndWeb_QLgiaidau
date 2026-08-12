@@ -22,7 +22,7 @@ export default function PrivacyPolicyPage() {
           <div>
             <h2 className="text-lg font-bold text-slate-900 mb-2">1. Giới thiệu</h2>
             <p>
-              Chào mừng bạn đến với nền tảng **Quản Lý Giải Đấu (VNVar / giaidau.vnvar.com)**. Chúng tôi cam kết bảo vệ quyền riêng tư và thông tin cá nhân của người dùng khi sử dụng ứng dụng di động cũng như trang web của chúng tôi.
+              Chào mừng bạn đến với nền tảng **Quản Lý Giải Đấu (VNVar / sporto.asia)**. Chúng tôi cam kết bảo vệ quyền riêng tư và thông tin cá nhân của người dùng khi sử dụng ứng dụng di động cũng như trang web của chúng tôi.
             </p>
           </div>
 

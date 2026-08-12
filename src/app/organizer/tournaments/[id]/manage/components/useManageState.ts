@@ -1202,8 +1202,8 @@ export function useManageState(id: string) {
         else if (t.matchType === MatchTypeDB.MIXED_DOUBLES || t.matchType === 'MIXED') ui = MatchTypeUI.MIXED_DOUBLES;
         setMatchType(ui);
 
-        const categoryObj = t.category || (t.categoryName || t.categorySlug ? { id: t.categoryId, name: t.categoryName, slug: t.categorySlug } : null);
-        const categoryFallbackKind = inferSportRuleKindFromCategory(categoryObj as unknown as Category);
+        const categoryObj = t.category ?? null;
+        const categoryFallbackKind = inferSportRuleKindFromCategory(categoryObj);
         const resolvedRules = resolveSportRuleView(t.sportRules, categoryFallbackKind);
         applyResolvedRuleState(resolvedRules);
 
@@ -1250,12 +1250,12 @@ export function useManageState(id: string) {
       return;
     }
 
-    const selectedCategory = tournament.category || categories.find((category) => category.id === categoryId || category.slug === categoryId) || (tournament.categoryName || tournament.categorySlug ? { id: categoryId, name: tournament.categoryName, slug: tournament.categorySlug } : null);
-    const fallbackKind = inferSportRuleKindFromCategory(selectedCategory as unknown as Category);
+    const selectedCategory = tournament.category || categories.find((category) => category.id === categoryId || category.slug === categoryId) || null;
+    const fallbackKind = inferSportRuleKindFromCategory(selectedCategory);
     const resolvedRules = resolveSportRuleView(tournament.sportRules, fallbackKind);
 
     void Promise.resolve().then(() => {
-      const normalizedKind = normalizeSportRuleKindForCategory(resolvedRules.kind, selectedCategory as unknown as Category);
+      const normalizedKind = normalizeSportRuleKindForCategory(resolvedRules.kind, selectedCategory);
       const effectiveRules = normalizedKind === resolvedRules.kind
         ? resolvedRules
         : resolveSportRuleView(buildDefaultSportRules(normalizedKind), normalizedKind);

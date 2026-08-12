@@ -136,7 +136,6 @@ export default function TournamentsListPage() {
     const fetchFeatured = async () => {
       try {
         const res = await tournamentsApi.getPublicTournaments({
-          page: 1,
           limit: 5,
           status: 'REGISTRATION_OPEN',
         });

@@ -404,12 +404,19 @@ export default function ProfilePage() {
   const [isLoadingTab, setIsLoadingTab] = useState(false);
   const [matchesPage, setMatchesPage] = useState(1);
   const [matchesTotalPages, setMatchesTotalPages] = useState(1);
+  const matchesCursorByPageRef = useRef<Record<number, string | null>>({ 1: null });
+  const matchesCursorUserRef = useRef<string | null>(null);
   const featuredRank = (userRankings?.publicRanks || [])
     .filter((rank) => rank.matchesPlayed > 0)
     .sort((a, b) => b.eloPoints - a.eloPoints)[0] || null;
 
   useEffect(() => {
     if (!displayUser?.id) return;
+
+    if (matchesCursorUserRef.current !== displayUser.id) {
+      matchesCursorUserRef.current = displayUser.id;
+      matchesCursorByPageRef.current = { 1: null };
+    }
 
     let isMounted = true;
     const fetchTabData = async () => {
@@ -419,7 +426,13 @@ export default function ProfilePage() {
           rankingsApi.getUserRankings(displayUser.id),
           rankingsApi.getUserEloHistory(displayUser.id),
           tournamentsApi.getFollowedTournaments(),
-          matchesApi.getMatches({ userId: displayUser.id, page: matchesPage, limit: 10 })
+          matchesApi.getMatches({
+            userId: displayUser.id,
+            limit: 10,
+            ...(matchesCursorByPageRef.current[matchesPage]
+              ? { cursor: matchesCursorByPageRef.current[matchesPage] }
+              : {}),
+          })
         ]);
 
         if (isMounted) {
@@ -430,6 +443,7 @@ export default function ProfilePage() {
           if (matchesRes?.data) {
             setMatches(matchesRes.data);
             setMatchesTotalPages(matchesRes.meta?.totalPages || 1);
+            matchesCursorByPageRef.current[matchesPage + 1] = matchesRes.meta?.nextCursor ?? null;
           } else {
             setMatches([]);
             setMatchesTotalPages(1);

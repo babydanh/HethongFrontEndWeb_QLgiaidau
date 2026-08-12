@@ -68,7 +68,7 @@ export const buildScoreDraft = (
   const existingSets = extractMatchScores(match.scoreDetails);
   const seededSets = [...existingSets];
   const hasOpenSet = seededSets.some((set) => !set.isFinished);
-  if (!hasOpenSet && match.status !== 'COMPLETED' && seededSets.length < resolvedRules.bestOf) {
+  if (!hasOpenSet && match.status !== 'COMPLETED' && (resolvedRules.mode === 'LITE' || seededSets.length < resolvedRules.bestOf)) {
     seededSets.push({ team1Score: 0, team2Score: 0, isFinished: false });
   }
   if (seededSets.length === 0) {

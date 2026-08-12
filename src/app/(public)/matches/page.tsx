@@ -355,8 +355,15 @@ export default function MatchesListPage() {
   // a new cursor chain at page 1, while the UI still shows numbered pages.
   useEffect(() => {
     cursorByPageRef.current = { 1: null };
-    setPage(1);
-    setGroupPages({});
+    let active = true;
+    Promise.resolve().then(() => {
+      if (!active) return;
+      setPage((currentPage) => (currentPage === 1 ? currentPage : 1));
+      setGroupPages((currentPages) => (Object.keys(currentPages).length === 0 ? currentPages : {}));
+    });
+    return () => {
+      active = false;
+    };
   }, [filterKey]);
 
   // Fetch danh sách trận đấu dựa trên bộ lọc

@@ -501,22 +501,6 @@ export function BracketTab({
               )}
             </div>
 
-            <div className="grid gap-4">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Thể loại thi đấu</label>
-                <select
-                  value={matchType}
-                  onChange={(e) => setMatchType(e.target.value)}
-                  className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold"
-                >
-                  {availableMatchFormatOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.shortLabel}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
 
             {!isLiteMode && (
               <div className="animate-in fade-in slide-in-from-top-2 duration-300 space-y-4">

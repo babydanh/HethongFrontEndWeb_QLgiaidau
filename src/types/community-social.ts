@@ -89,6 +89,8 @@ export interface CommunityComment {
   body: string;
   createdAt: string;
   updatedAt?: string;
+  status?: 'PUBLISHED' | 'HIDDEN' | 'REJECTED';
+  moderationReason?: string | null;
 }
 
 export interface CommunitySocialSettings {

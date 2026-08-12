@@ -170,6 +170,30 @@ export const communitiesApi = {
       data: mapPost(response.data),
     })),
 
+  getComments: (communityId: string, postId: string, params?: { cursor?: string; limit?: number }) =>
+    api.get<ApiResponse<CommunityComment[]>>(`/communities/${communityId}/posts/${postId}/comments`, { params }),
+
+  createComment: (communityId: string, postId: string, data: { body: string; parentId?: string }) =>
+    api.post<ApiResponse<CommunityComment>>(`/communities/${communityId}/posts/${postId}/comments`, data),
+
+  updateComment: (communityId: string, commentId: string, body: string) =>
+    api.patch<ApiResponse<CommunityComment>>(`/communities/${communityId}/comments/${commentId}`, { body }),
+
+  deleteComment: (communityId: string, commentId: string) =>
+    api.post<ApiResponse<CommunityComment>>(`/communities/${communityId}/comments/${commentId}/delete`),
+
+  reactToPost: (communityId: string, postId: string, reactionType: CommunityReactionType) =>
+    api.post<ApiResponse<{ reactionType: CommunityReactionType | null; count: number }>>(`/communities/${communityId}/posts/${postId}/reaction`, { reactionType }),
+
+  reportPost: (communityId: string, postId: string, data: { reason: string; details?: string }) =>
+    api.post<ApiResponse<unknown>>(`/communities/${communityId}/posts/${postId}/report`, data),
+
+  getPendingPosts: (communityId: string) =>
+    api.get<ApiResponse<BackendPost[]>>(`/communities/${communityId}/moderation/posts`),
+
+  moderatePost: (communityId: string, postId: string, status: 'PUBLISHED' | 'REJECTED' | 'HIDDEN') =>
+    api.patch<ApiResponse<BackendPost>>(`/communities/${communityId}/posts/${postId}/moderation`, { status }),
+
   
   createCommunity: <T>(data: T) => 
     api.post<ApiResponse<Community>>('/communities', data),

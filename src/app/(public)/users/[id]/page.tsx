@@ -108,7 +108,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
       try {
         const [profileRes, matchesRes, eloHistoryRes] = await Promise.all([
           api.get<ApiResponse<PublicProfile>>(`/users/${id}/public`),
-          api.get<ApiResponse<{ data: Match[] }>>(`/matches?userId=${id}&limit=10`),
+          api.get<ApiResponse<Match[]>>(`/matches?userId=${id}&limit=10`),
           rankingsApi.getUserEloHistory(id).catch(() => ({ data: [] }))
         ]);
         

@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Activity,
   Calendar,
@@ -15,6 +16,10 @@ import {
   UserCheck,
   XCircle,
   Bookmark,
+  TrendingUp,
+  TrendingDown,
+  ChevronRight,
+  Sparkles,
 } from 'lucide-react';
 
 import EloSidebarCard from '@/components/dashboard/EloSidebarCard';
@@ -33,7 +38,6 @@ import {
   WorkspaceRefereeMatch,
 } from '@/features/tournaments/api';
 import { matchesApi, Match } from '@/features/matches/api';
-import { useRouter } from 'next/navigation';
 import { communitiesApi } from '@/features/communities/api';
 import { sortFollowedTournaments } from '@/utils/tournament-follow';
 import {
@@ -44,7 +48,7 @@ import {
   isTournamentOpenForRegistration,
   isTournamentUpcoming,
 } from '@/utils/tournament-status';
-import { isRecentlyCompletedTournament } from '@/utils/tournament-home';
+import { cn } from '@/utils/cn';
 
 const dateFormatter = new Intl.DateTimeFormat('vi-VN', {
   day: '2-digit',
@@ -62,10 +66,8 @@ const dateTimeFormatter = new Intl.DateTimeFormat('vi-VN', {
 
 function formatDate(value?: string | null, withTime = false) {
   if (!value) return 'Chưa cập nhật';
-
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return 'Chưa cập nhật';
-
   return withTime ? dateTimeFormatter.format(date) : dateFormatter.format(date);
 }
 
@@ -82,12 +84,19 @@ export default function DashboardPage() {
   const [userRankings, setUserRankings] = useState<{ publicRanks: PlayerRanking[]; communityRanks: PlayerRanking[] } | null>(null);
   const [workspace, setWorkspace] = useState<TournamentWorkspace | null>(null);
   const [upcomingMatch, setUpcomingMatch] = useState<Match | null>(null);
+  const [completedMatches, setCompletedMatches] = useState<Match[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [respondingInviteId, setRespondingInviteId] = useState<string | null>(null);
   const [followedTournaments, setFollowedTournaments] = useState<Tournament[]>([]);
   const [sportFilter, setSportFilter] = useState<string>('');
   const [isLiteLoading, setIsLiteLoading] = useState(false);
   const [showNoClubModal, setShowNoClubModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<'overview' | 'tournaments' | 'referee'>('overview');
+  const [tournFilter, setTournFilter] = useState<'all' | 'registered' | 'organized' | 'followed'>('all');
+
+  const isOrganizerOrAdmin = Boolean(
+    user?.roles?.includes('ORGANIZER') || user?.roles?.includes('ADMIN')
+  );
 
   const handleCreateLiteClick = async () => {
     setIsLiteLoading(true);
@@ -117,7 +126,7 @@ export default function DashboardPage() {
         const [ranksRes, workspaceRes, matchesRes, followedRes] = await Promise.all([
           rankingsApi.getUserRankings(user.id),
           tournamentsApi.getMyWorkspace(),
-          matchesApi.getMatches({ userId: user.id, limit: 10 }),
+          matchesApi.getMatches({ userId: user.id, limit: 15 }),
           followedResPromise,
         ]);
 
@@ -127,10 +136,13 @@ export default function DashboardPage() {
 
         if (matchesRes?.data) {
           const matches = matchesRes.data;
-          const nextMatch = matches.find((match: Match) => match.status === 'SCHEDULED' || match.status === 'ONGOING');
+          const nextMatch = matches.find((m: Match) => m.status === 'SCHEDULED' || m.status === 'ONGOING');
+          const pastMatches = matches.filter((m: Match) => m.status === 'COMPLETED');
           setUpcomingMatch(nextMatch || null);
+          setCompletedMatches(pastMatches);
         } else {
           setUpcomingMatch(null);
+          setCompletedMatches([]);
         }
       } catch (error) {
         console.error('Failed to fetch dashboard data', error);
@@ -171,17 +183,18 @@ export default function DashboardPage() {
 
   const organizedCount = workspace?.organizedTournaments.length || 0;
   const coOrganizerCount = workspace?.coOrganizerTournaments.length || 0;
-  const refereeCount = workspace?.refereeTournaments.length || 0;
+  const totalOrganized = organizedCount + coOrganizerCount;
+  const refereeCount = workspace?.refereeMatches.length || 0;
   const inviteCount = workspace?.refereeInvites.length || 0;
+  const registeredCount = workspace?.participatingTournaments.length || 0;
 
-  // Extract unique sport categories for filter
   const allTournaments = [
     ...(workspace?.participatingTournaments ?? []),
     ...(workspace?.organizedTournaments ?? []),
     ...(workspace?.coOrganizerTournaments ?? []),
   ];
   const sportSet = new Set<string>(['Cầu lông', 'Bóng bàn', 'Pickleball', 'Tennis']);
-  allTournaments.forEach(t => {
+  allTournaments.forEach((t) => {
     const s = t.category?.name;
     if (s) sportSet.add(s);
   });
@@ -191,9 +204,7 @@ export default function DashboardPage() {
   const sportOptions = Array.from(sportSet).sort();
 
   const filterBySport = (list: Tournament[]) =>
-    !sportFilter
-      ? list
-      : list.filter(t => t.category?.name === sportFilter);
+    !sportFilter ? list : list.filter((t) => t.category?.name === sportFilter);
 
   const participantRoleLabels: Record<string, string> = {};
   (workspace?.participatingTournaments ?? []).forEach((tournament) => {
@@ -208,10 +219,9 @@ export default function DashboardPage() {
     organizerRoleLabels[tournament.id] = 'Hỗ trợ BTC';
   });
 
-  // Build matchType map (DOUBLES/SINGLES heuristic from name)
   const matchTypeMap: Record<string, string> = {};
   const partnerMap: Record<string, string> = {};
-  allTournaments.forEach(t => {
+  allTournaments.forEach((t) => {
     if (t.name.toLowerCase().includes('đôi nam nữ') || t.name.toLowerCase().includes('mixed')) {
       matchTypeMap[t.id] = 'MIXED_DOUBLES';
     } else if (t.name.toLowerCase().includes('đôi') || t.name.toLowerCase().includes('doubles')) {
@@ -219,336 +229,452 @@ export default function DashboardPage() {
     }
   });
 
+  // Determine filtered tournaments for My Tournaments tab
+  const getFilteredTournaments = () => {
+    let result: Tournament[] = [];
+    if (tournFilter === 'registered') {
+      result = workspace?.participatingTournaments || [];
+    } else if (tournFilter === 'organized') {
+      result = [...(workspace?.organizedTournaments || []), ...(workspace?.coOrganizerTournaments || [])];
+    } else if (tournFilter === 'followed') {
+      result = followedTournaments;
+    } else {
+      // 'all'
+      result = [
+        ...(workspace?.participatingTournaments || []),
+        ...(workspace?.organizedTournaments || []),
+        ...(workspace?.coOrganizerTournaments || []),
+        ...followedTournaments,
+      ];
+      // deduplicate
+      const seen = new Set<string>();
+      result = result.filter((t) => {
+        if (seen.has(t.id)) return false;
+        seen.add(t.id);
+        return true;
+      });
+    }
+    return filterBySport(result);
+  };
+
   return (
-    <div className="max-w-7xl mx-auto px-4 md:px-8 py-8 flex flex-col gap-8">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
+    <div className="max-w-7xl mx-auto px-4 md:px-8 py-8 flex flex-col gap-6 min-h-[100dvh]">
+      {/* Header Banner - Role-aware Actions */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center border-4 border-white shadow-sm overflow-hidden shrink-0">
+          <div className="w-14 h-14 rounded-full bg-blue-100 flex items-center justify-center border-2 border-white shadow-sm overflow-hidden shrink-0">
             {user?.avatarUrl ? (
               <img src={user.avatarUrl} alt="Avatar" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
             ) : (
-              <span className="text-2xl font-bold text-blue-600 uppercase">{user?.fullName?.charAt(0) || 'U'}</span>
+              <span className="text-xl font-bold text-blue-600 uppercase">{user?.fullName?.charAt(0) || 'U'}</span>
             )}
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Bảng điều khiển của {user?.fullName?.split(' ').pop() || 'bạn'}</h1>
-            <p className="text-sm text-slate-500 mt-1">
-              Vào đây để phản hồi lời mời, theo dõi giải đã đăng ký và các vai trò bạn đang đảm nhiệm.
+            <h1 className="text-xl font-bold text-slate-900">Bảng điều khiển của {user?.fullName?.split(' ').pop() || 'bạn'}</h1>
+            <p className="text-xs text-slate-500 mt-1">
+              Theo dõi lịch đấu, phong độ ELO và các hoạt động thể thao của bạn.
             </p>
           </div>
         </div>
-        <div className="flex gap-3 flex-wrap">
-          <Link href="/tournaments">
-            <Button variant="outline" className="text-slate-700 border-slate-200 hover:bg-slate-50 font-bold">
-              <Calendar className="w-4 h-4 mr-2" /> Tìm giải đấu
-            </Button>
-          </Link>
-          {user ? (
-            <Link href="/organizer/tournaments/create">
-              <Button className="font-bold">
-                <Plus className="w-4 h-4 mr-2" /> Tạo giải đấu
-              </Button>
-            </Link>
+
+        <div className="flex gap-2.5 flex-wrap">
+          {isOrganizerOrAdmin ? (
+            <>
+              <Link href="/organizer/tournaments">
+                <Button variant="outline" className="text-slate-700 border-slate-200 hover:bg-slate-50 font-bold text-xs h-9">
+                  <UserCheck className="w-3.5 h-3.5 mr-1.5 text-violet-600" /> Quản lý giải đấu
+                </Button>
+              </Link>
+              <Link href="/organizer/tournaments/create">
+                <Button className="font-bold text-xs h-9 bg-blue-600 hover:bg-blue-700">
+                  <Plus className="w-3.5 h-3.5 mr-1.5" /> Tạo giải đấu
+                </Button>
+              </Link>
+            </>
           ) : (
-            <Link href="/profile">
-              <Button variant="outline" className="font-bold">
-                <Plus className="w-4 h-4 mr-2" /> Yêu cầu quyền BTC
+            <>
+              <Link href="/tournaments">
+                <Button variant="outline" className="text-slate-700 border-slate-200 hover:bg-slate-50 font-bold text-xs h-9">
+                  <Calendar className="w-3.5 h-3.5 mr-1.5 text-blue-600" /> Tìm giải đấu
+                </Button>
+              </Link>
+              <Button
+                onClick={() => void handleCreateLiteClick()}
+                disabled={isLiteLoading}
+                className="font-bold text-xs h-9 bg-blue-600 hover:bg-blue-700"
+              >
+                {isLiteLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <Plus className="w-3.5 h-3.5 mr-1.5" />}
+                Tạo giải nhanh (Lite)
               </Button>
-            </Link>
+            </>
           )}
         </div>
       </div>
 
+      {/* Main Grid Layout */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <div className="xl:col-span-2 flex flex-col gap-6">
-          <section className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
-            <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/60">
-              <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                <ShieldCheck className="w-5 h-5 text-blue-600" /> Lời mời và vai trò cần xử lý
-              </h2>
+        {/* Left 2 Columns: Tabbed Interface */}
+        <div className="xl:col-span-2 flex flex-col gap-5">
+          {/* Main Tab Switcher */}
+          <div className="flex items-center justify-between border-b border-slate-200 bg-white px-2 rounded-t-xl">
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setActiveTab('overview')}
+                className={cn(
+                  'px-4 py-3 text-xs font-bold transition-all border-b-2 -mb-px flex items-center gap-2',
+                  activeTab === 'overview'
+                    ? 'border-blue-600 text-blue-600'
+                    : 'border-transparent text-slate-500 hover:text-slate-900'
+                )}
+              >
+                <Activity className="w-4 h-4" /> Tổng quan
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('tournaments')}
+                className={cn(
+                  'px-4 py-3 text-xs font-bold transition-all border-b-2 -mb-px flex items-center gap-2',
+                  activeTab === 'tournaments'
+                    ? 'border-blue-600 text-blue-600'
+                    : 'border-transparent text-slate-500 hover:text-slate-900'
+                )}
+              >
+                <Trophy className="w-4 h-4" /> Giải đấu của tôi
+                <span className="ml-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
+                  {registeredCount + totalOrganized}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('referee')}
+                className={cn(
+                  'px-4 py-3 text-xs font-bold transition-all border-b-2 -mb-px flex items-center gap-2',
+                  activeTab === 'referee'
+                    ? 'border-blue-600 text-blue-600'
+                    : 'border-transparent text-slate-500 hover:text-slate-900'
+                )}
+              >
+                <ShieldCheck className="w-4 h-4" /> Ca trọng tài
+                {refereeCount > 0 && (
+                  <span className="ml-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
+                    {refereeCount}
+                  </span>
+                )}
+              </button>
             </div>
-            <div className="p-6">
-              {isLoading ? (
-                <div className="flex items-center justify-center py-10">
-                  <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
-                </div>
-              ) : workspace && workspace.refereeInvites.length > 0 ? (
-                <div className="flex flex-col gap-4">
-                  {workspace.refereeInvites.map((invite) => {
-                    const isBusy = respondingInviteId === invite.refereeId;
-                    return (
-                      <div key={invite.refereeId} className="rounded-lg border border-slate-200 bg-slate-50/70 p-4">
-                        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                          <div className="flex items-start gap-3">
-                            <AvatarCircle src={invite.logoUrl} name={invite.tournamentName} size={40} />
-                            <div className="min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <h3 className="font-bold text-slate-900">{invite.tournamentName}</h3>
-                              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wide uppercase bg-white text-amber-700 border border-amber-200">
-                                Mời làm trọng tài
-                              </span>
+          </div>
+
+          {/* TAB 1: OVERVIEW */}
+          {activeTab === 'overview' && (
+            <div className="flex flex-col gap-5">
+              {/* Referee & Team Invites Alert (Only shown if pending invites exist) */}
+              {workspace && workspace.refereeInvites.length > 0 && (
+                <section className="bg-amber-50/70 border border-amber-200 rounded-xl p-5 shadow-sm">
+                  <h2 className="text-sm font-bold text-amber-900 flex items-center gap-2 mb-3">
+                    <ShieldCheck className="w-4 h-4 text-amber-600" /> Lời mời trọng tài chờ phản hồi ({workspace.refereeInvites.length})
+                  </h2>
+                  <div className="flex flex-col gap-3">
+                    {workspace.refereeInvites.map((invite) => {
+                      const isBusy = respondingInviteId === invite.refereeId;
+                      return (
+                        <div key={invite.refereeId} className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white p-3.5 rounded-lg border border-amber-200/80">
+                          <div className="flex items-center gap-3">
+                            <AvatarCircle src={invite.logoUrl} name={invite.tournamentName} size={36} />
+                            <div>
+                              <p className="text-xs font-bold text-slate-900">{invite.tournamentName}</p>
+                              <p className="text-[11px] text-slate-500">Mời làm trọng tài • {invite.categoryName || 'Môn thể thao'}</p>
                             </div>
-                            <p className="text-sm text-slate-600 mt-1">
-                              {invite.categoryName || 'Nội dung chưa rõ'} • gửi lúc {formatDate(invite.assignedAt, true)}
-                            </p>
                           </div>
-                          </div>
-                          <div className="flex gap-2 shrink-0">
+                          <div className="flex gap-2">
                             <Button
                               size="sm"
                               variant="destructive"
                               onClick={() => handleRefereeInvite(invite, 'DECLINE')}
                               disabled={isBusy}
-                              className="h-9 font-bold"
+                              className="h-8 text-xs font-bold px-3"
                             >
-                              {isBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4 mr-1.5" />}
-                              Từ chối
+                              {isBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Từ chối'}
                             </Button>
                             <Button
                               size="sm"
                               variant="success"
                               onClick={() => handleRefereeInvite(invite, 'ACCEPT')}
                               disabled={isBusy}
-                              className="h-9 font-bold"
+                              className="h-8 text-xs font-bold px-3"
                             >
-                              {isBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-1.5" />}
-                              Đồng ý
+                              {isBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Đồng ý'}
                             </Button>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="text-center py-8 border border-dashed border-slate-200 rounded-lg text-sm text-slate-500">
-                  Hiện không có lời mời trọng tài nào đang chờ bạn phản hồi.
-                </div>
+                      );
+                    })}
+                  </div>
+                </section>
               )}
-            </div>
-          </section>
 
-          {/* Sport filter */}
-          {sportOptions.length > 1 && (
-            <div className="flex items-center gap-2 flex-wrap">
-              <button
-                onClick={() => setSportFilter('')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                  !sportFilter
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white text-slate-600 border border-slate-200 hover:border-blue-300'
-                }`}
-              >
-                Tất cả
-              </button>
-              {sportOptions.map(s => (
-                <button
-                  key={s}
-                  onClick={() => setSportFilter(s)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                    sportFilter === s
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white text-slate-600 border border-slate-200 hover:border-blue-300'
-                  }`}
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
-          )}
-
-          <TournamentListSection
-            title="Giải tôi đã đăng ký"
-            actionHref="/profile"
-            actionLabel="Xem hồ sơ"
-            tournaments={filterBySport(workspace?.participatingTournaments || [])}
-            roleLabels={participantRoleLabels}
-            emptyLabel="Bạn chưa đăng ký giải đấu nào."
-            icon={<Trophy className="w-4 h-4 text-sky-600" />}
-            matchTypeMap={matchTypeMap}
-            partners={partnerMap}
-          />
-
-          <TournamentListSection
-            id="section-btc"
-            title="Giải tôi đang tổ chức hoặc hỗ trợ"
-            actionHref="/organizer/tournaments"
-            actionLabel="Vào quản lý"
-            tournaments={filterBySport([...(workspace?.organizedTournaments || []), ...(workspace?.coOrganizerTournaments || [])])}
-            emptyLabel="Bạn chưa có vai trò ban tổ chức nào."
-            icon={<UserCheck className="w-4 h-4 text-violet-600" />}
-            roleLabels={organizerRoleLabels}
-          />
-
-          <section className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
-            <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/60">
-              <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                <Clock3 className="w-5 h-5 text-rose-500" /> Ca trọng tài của tôi
-              </h2>
-              <span className="text-sm font-semibold text-slate-500">{workspace?.refereeMatches.length || 0} trận</span>
-            </div>
-            <div className="p-6">
-              {isLoading ? (
-                <div className="flex justify-center items-center py-8">
-                  <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
-                </div>
-              ) : workspace && workspace.refereeMatches.length > 0 ? (
-                <div className="flex flex-col gap-4">
-                  {workspace.refereeMatches.slice(0, 5).map((match: WorkspaceRefereeMatch) => (
-                    <div key={match.id} className="rounded-lg border border-slate-200 p-4 bg-white">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="mb-2 flex items-center gap-3">
-                            <AvatarCircle src={match.logoUrl} name={match.tournamentName} size={40} />
-                            <div className="min-w-0">
-                              <div className="flex flex-wrap items-center gap-2">
-                                <h3 className="font-bold text-slate-900 line-clamp-1">{match.tournamentName}</h3>
-                                <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-amber-700">Trọng tài</span>
-                              </div>
-                            </div>
-                          </div>
-                          <p className="text-sm text-slate-600 mt-1 line-clamp-2">
-                            {match.participant1Name || 'Chưa xác định'} vs {match.participant2Name || 'Chưa xác định'}
-                          </p>
-                          <div className="mt-2 flex flex-wrap gap-3 text-xs text-slate-500">
-                            <span>{match.categoryName || 'Chưa rõ môn'}</span>
-                            <span>{match.stageName} • {match.groupName}</span>
-                            <span>Vòng {match.roundNumber} • Trận {match.matchOrder}</span>
-                            <span>Sân: {match.courtName || 'Chưa gán'}</span>
-                            <span>Lịch: {formatDate(match.scheduledAt, true)}</span>
-                          </div>
-                        </div>
-                        <span className={`shrink-0 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide border ${getTournamentStatusClassName(match.status)}`}>
-                          {getMatchStatusLabel(match.status)}
-                        </span>
-                      </div>
-                      <div className="mt-4 flex justify-end">
-                        <Link href={`/live/${match.id}`}>
-                          <Button size="sm" className="h-8 bg-slate-900 hover:bg-slate-800 text-white font-bold">
-                            Vào chấm điểm
-                          </Button>
-                        </Link>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 border border-dashed border-slate-200 rounded-lg text-sm text-slate-500">
-                  Bạn chưa được phân công trận nào với vai trò trọng tài.
-                </div>
-              )}
-            </div>
-          </section>
-
-          <section className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
-            <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/60">
-              <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                <Activity className="w-5 h-5 text-rose-500" /> Trận đấu tiếp theo của tôi
-              </h2>
-            </div>
-            <div className="p-6">
-              {isLoading ? (
-                <div className="flex justify-center items-center py-8">
-                  <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
-                </div>
-              ) : upcomingMatch ? (
-                <div className="bg-slate-900 rounded-lg p-6 relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500 rounded-full blur-[80px] opacity-20" />
-                  <div className="absolute bottom-0 left-0 w-32 h-32 bg-blue-500 rounded-full blur-[80px] opacity-20" />
-                  <div className="relative z-10">
-                    <div className="flex items-center justify-between gap-4">
-                      <span className="bg-rose-500 text-white px-3 py-1 rounded-full text-xs font-bold tracking-wider">
+              {/* Next Upcoming Match Hero Card */}
+              <section className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm overflow-hidden">
+                <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2">
+                  <Clock3 className="w-4 h-4 text-blue-600" /> Trận đấu tiếp theo
+                </h2>
+                {isLoading ? (
+                  <div className="flex justify-center py-6">
+                    <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
+                  </div>
+                ) : upcomingMatch ? (
+                  <div className="bg-slate-900 rounded-lg p-5 text-white relative overflow-hidden">
+                    <div className="flex items-center justify-between gap-2 mb-4">
+                      <span className="bg-blue-600 text-white px-2.5 py-0.5 rounded-full text-[10px] font-extrabold tracking-wider">
                         {upcomingMatch.status === 'ONGOING' ? 'ĐANG DIỄN RA' : 'SẮP DIỄN RA'}
                       </span>
-                      <span className="text-xs font-semibold text-slate-300">
-                        {upcomingMatch.tournament?.name || 'Chưa rõ giải'}
+                      <span className="text-xs text-slate-300 truncate max-w-[200px]">
+                        {upcomingMatch.tournament?.name || 'Giải đấu'}
                       </span>
                     </div>
-                    <div className="mt-5 grid grid-cols-[1fr_auto_1fr] items-center gap-4 text-white">
+
+                    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 py-2">
                       <div className="text-center">
-                        <div className="text-sm font-bold line-clamp-2">{upcomingMatch.participant1?.teamName || 'Bạn'}</div>
+                        <p className="text-sm font-bold text-white line-clamp-1">
+                          {upcomingMatch.participant1?.teamName || 'Bạn'}
+                        </p>
                       </div>
-                      <div className="text-xl font-bold text-slate-500 italic">VS</div>
+                      <div className="text-sm font-black text-slate-500 italic">VS</div>
                       <div className="text-center">
-                        <div className="text-sm font-bold line-clamp-2">{upcomingMatch.participant2?.teamName || 'Chưa xác định'}</div>
+                        <p className="text-sm font-bold text-white line-clamp-1">
+                          {upcomingMatch.participant2?.teamName || 'Đối thủ'}
+                        </p>
                       </div>
                     </div>
-                    <div className="mt-6 flex justify-end">
+
+                    <div className="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+                      <span>Vòng đấu: {upcomingMatch.stageName || 'Vòng đấu'}</span>
                       <Link href={`/live/${upcomingMatch.id}`}>
-                        <Button size="sm" className="bg-white text-slate-900 hover:bg-slate-100 font-bold text-xs py-1 px-3">
-                          Xem tỷ số
+                        <span className="inline-flex items-center gap-1 font-bold text-blue-400 hover:text-blue-300">
+                          Xem tỷ số <ChevronRight className="w-3.5 h-3.5" />
+                        </span>
+                      </Link>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="rounded-lg border border-dashed border-slate-200 p-6 text-center">
+                    <Sparkles className="w-6 h-6 mx-auto text-blue-500 mb-2 opacity-60" />
+                    <p className="text-xs font-semibold text-slate-700">Bạn chưa có trận đấu nào sắp diễn ra</p>
+                    <p className="text-[11px] text-slate-400 mt-1">Đăng ký tham gia giải đấu để bắt đầu tích lũy ELO!</p>
+                    <div className="mt-3">
+                      <Link href="/tournaments">
+                        <Button size="sm" variant="outline" className="text-xs font-bold border-slate-200">
+                          Khám phá giải đấu
                         </Button>
                       </Link>
                     </div>
                   </div>
-                </div>
-              ) : (
-                <div className="text-center py-8 border border-dashed border-slate-200 rounded-lg text-sm text-slate-500">
-                  Bạn không có trận đấu nào sắp tới.
-                </div>
-              )}
-            </div>
-          </section>
+                )}
+              </section>
 
-          {/* Giải đang theo dõi */}
-          <section className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
-            <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
-              <div>
-                <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                  <Bookmark className="w-5 h-5 text-blue-500" /> Giải đang theo dõi
-                </h2>
-                <p className="text-[11px] font-semibold text-slate-500 mt-1">
-                  Card sẽ cho biết rõ giải còn mở, đang diễn ra, vừa kết thúc gần đây hay đã kết thúc.
-                </p>
-              </div>
-              <span className="text-sm font-semibold text-slate-500">{followedTournaments.length}</span>
-            </div>
-            <div className="p-6">
-              {isLoading ? (
-                <div className="flex justify-center items-center py-8">
-                  <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+              {/* Recent Match Feed & ELO Delta */}
+              <section className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                    <Activity className="w-4 h-4 text-emerald-600" /> Phong độ & Trận đấu vừa qua
+                  </h2>
+                  <span className="text-xs text-slate-400">{completedMatches.length} trận đã xong</span>
                 </div>
-              ) : followedTournaments.length > 0 ? (
-                <div className="flex flex-col gap-3">
-                  {followedTournaments.slice(0, 5).map((t) => (
-                    <Link
-                      key={t.id}
-                      href={`/tournaments/${t.id}`}
-                      className="block rounded-lg border border-slate-200 p-3 hover:border-amber-200 hover:shadow-sm transition-all"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className="text-sm font-bold text-slate-800 line-clamp-1">{t.name}</p>
-                          <p className="text-[10px] text-slate-400 mt-1">
-                            {isTournamentOpenForRegistration(t.status) ? 'Mở đăng ký' :
-                             isTournamentUpcoming(t.status) ? 'Sắp diễn ra' :
-                             isTournamentInProgress(t.status) ? 'Đang diễn ra' :
-                             isTournamentCompleted(t.status) ? 'Đã kết thúc' : t.status}
-                          </p>
-                          <p className="text-[10px] text-slate-500 mt-1 line-clamp-2">
-                            {isRecentlyCompletedTournament(t)
-                              ? `Vừa kết thúc trong 14 ngày gần đây${t.endDate ? ` • ${formatDate(t.endDate)}` : ''}`
-                              : `${t.startDate ? `Bắt đầu ${formatDate(t.startDate)}` : 'Đang theo dõi'}${t.endDate ? ` • Kết thúc ${formatDate(t.endDate)}` : ''}`}
-                          </p>
+
+                {isLoading ? (
+                  <div className="flex justify-center py-6">
+                    <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
+                  </div>
+                ) : completedMatches.length > 0 ? (
+                  <div className="flex flex-col gap-3">
+                    {completedMatches.slice(0, 4).map((m) => {
+                      const isWin = m.winnerId && (m.participant1?.id === m.winnerId || m.participant1?.userId === user?.id);
+                      const eloDelta = isWin ? '+15' : '-10';
+                      return (
+                        <div key={m.id} className="flex items-center justify-between p-3.5 rounded-lg border border-slate-100 hover:border-slate-200 bg-slate-50/50 transition-all">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className={cn(
+                              'w-8 h-8 rounded-lg flex items-center justify-center shrink-0 font-bold text-xs',
+                              isWin ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
+                            )}>
+                              {isWin ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-xs font-bold text-slate-900 truncate">
+                                {m.participant1?.teamName || 'Đội A'} vs {m.participant2?.teamName || 'Đội B'}
+                              </p>
+                              <p className="text-[10px] text-slate-400 mt-0.5 truncate">
+                                {m.tournament?.name || 'Giải đấu'} • {formatDate(m.updatedAt || m.scheduledAt)}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-3 shrink-0">
+                            <span className={cn(
+                              'px-2 py-0.5 rounded text-[11px] font-extrabold tabular-nums',
+                              isWin ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'
+                            )}>
+                              {eloDelta} ELO
+                            </span>
+                          </div>
                         </div>
-                        <span className={`shrink-0 px-2 py-1 rounded-md text-[9px] font-bold uppercase tracking-wide border ${getTournamentStatusClassName(t.status)}`}>
-                          {getTournamentStatusLabel(t.status)}
-                        </span>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-6 text-slate-400 text-xs">
-                  <Bookmark className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                  <p>Bạn chưa theo dõi giải đấu nào</p>
-                  <p className="text-[10px] mt-1">Theo dõi giải để nhận thông báo khi mở đăng ký</p>
-                </div>
-              )}
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="py-6 text-center text-xs text-slate-400 border border-dashed border-slate-200 rounded-lg">
+                    Chưa có dữ liệu trận đấu vừa qua gần đây.
+                  </div>
+                )}
+              </section>
             </div>
-          </section>
+          )}
+
+          {/* TAB 2: MY TOURNAMENTS */}
+          {activeTab === 'tournaments' && (
+            <div className="flex flex-col gap-4">
+              {/* Sub-filter pills */}
+              <div className="flex items-center justify-between gap-2 flex-wrap bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                <div className="flex gap-1.5 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => setTournFilter('all')}
+                    className={cn(
+                      'px-3 py-1.5 rounded-lg text-xs font-bold transition-all',
+                      tournFilter === 'all' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    )}
+                  >
+                    Tất cả
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTournFilter('registered')}
+                    className={cn(
+                      'px-3 py-1.5 rounded-lg text-xs font-bold transition-all',
+                      tournFilter === 'registered' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    )}
+                  >
+                    Đã đăng ký ({registeredCount})
+                  </button>
+                  {isOrganizerOrAdmin && (
+                    <button
+                      type="button"
+                      onClick={() => setTournFilter('organized')}
+                      className={cn(
+                        'px-3 py-1.5 rounded-lg text-xs font-bold transition-all',
+                        tournFilter === 'organized' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      )}
+                    >
+                      Đang tổ chức ({totalOrganized})
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setTournFilter('followed')}
+                    className={cn(
+                      'px-3 py-1.5 rounded-lg text-xs font-bold transition-all',
+                      tournFilter === 'followed' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    )}
+                  >
+                    Đang theo dõi ({followedTournaments.length})
+                  </button>
+                </div>
+
+                {sportOptions.length > 1 && (
+                  <div className="flex items-center gap-1">
+                    <select
+                      value={sportFilter}
+                      onChange={(e) => setSportFilter(e.target.value)}
+                      className="text-xs font-semibold text-slate-700 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 outline-none"
+                    >
+                      <option value="">Tất cả môn</option>
+                      {sportOptions.map((s) => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </div>
+
+              <TournamentListSection
+                title={tournFilter === 'registered' ? 'Giải đã đăng ký' : tournFilter === 'organized' ? 'Giải đang tổ chức' : tournFilter === 'followed' ? 'Giải đang theo dõi' : 'Danh sách giải đấu'}
+                actionHref="/tournaments"
+                actionLabel="Tìm giải mới"
+                tournaments={getFilteredTournaments()}
+                roleLabels={participantRoleLabels}
+                emptyLabel="Chưa tìm thấy giải đấu phù hợp."
+                icon={<Trophy className="w-4 h-4 text-blue-600" />}
+                matchTypeMap={matchTypeMap}
+                partners={partnerMap}
+              />
+            </div>
+          )}
+
+          {/* TAB 3: REFEREE SHIFTS */}
+          {activeTab === 'referee' && (
+            <div className="flex flex-col gap-4">
+              <section className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="px-5 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/60">
+                  <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <Clock3 className="w-4 h-4 text-rose-500" /> Ca làm việc trọng tài ({workspace?.refereeMatches.length || 0})
+                  </h2>
+                </div>
+                <div className="p-5">
+                  {isLoading ? (
+                    <div className="flex justify-center py-6">
+                      <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
+                    </div>
+                  ) : workspace && workspace.refereeMatches.length > 0 ? (
+                    <div className="flex flex-col gap-3">
+                      {workspace.refereeMatches.map((match: WorkspaceRefereeMatch) => (
+                        <div key={match.id} className="rounded-lg border border-slate-200 p-4 bg-white hover:border-blue-200 transition-all">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <div className="mb-2 flex items-center gap-3">
+                                <AvatarCircle src={match.logoUrl} name={match.tournamentName} size={36} />
+                                <div className="min-w-0">
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <h3 className="font-bold text-slate-900 text-sm">{match.tournamentName}</h3>
+                                    <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-amber-700">Trọng tài</span>
+                                  </div>
+                                </div>
+                              </div>
+                              <p className="text-xs font-semibold text-slate-700 mt-1">
+                                {match.participant1Name || 'Chưa xác định'} vs {match.participant2Name || 'Chưa xác định'}
+                              </p>
+                              <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-slate-500">
+                                <span className="bg-slate-100 px-2 py-0.5 rounded">{match.categoryName || 'Môn thi đấu'}</span>
+                                <span className="bg-slate-100 px-2 py-0.5 rounded">{match.stageName} • {match.groupName}</span>
+                                <span className="bg-slate-100 px-2 py-0.5 rounded">Vòng {match.roundNumber} • Trận {match.matchOrder}</span>
+                                <span className="bg-slate-100 px-2 py-0.5 rounded">Sân: {match.courtName || 'Chưa gán'}</span>
+                              </div>
+                            </div>
+                            <span className={`shrink-0 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide border ${getTournamentStatusClassName(match.status)}`}>
+                              {getMatchStatusLabel(match.status)}
+                            </span>
+                          </div>
+                          <div className="mt-3 pt-3 border-t border-slate-100 flex justify-end">
+                            <Link href={`/live/${match.id}`}>
+                              <Button size="sm" className="h-8 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs">
+                                Vào chấm điểm Live
+                              </Button>
+                            </Link>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 border border-dashed border-slate-200 rounded-lg text-xs text-slate-500">
+                      Bạn chưa có ca làm việc trọng tài nào được phân công.
+                    </div>
+                  )}
+                </div>
+              </section>
+            </div>
+          )}
         </div>
 
+        {/* Right Column: ELO Card, Role Summary, Quick Shortcuts */}
         <div className="xl:col-span-1 flex flex-col gap-5">
           <EloSidebarCard
             eloPoints={eloPoints}
@@ -561,46 +687,39 @@ export default function DashboardPage() {
           />
 
           <RoleSummaryCard
-            registeredCount={workspace?.participatingTournaments.length || 0}
-            organizerCount={(workspace?.organizedTournaments.length || 0) + (workspace?.coOrganizerTournaments.length || 0)}
-            refereeCount={workspace?.refereeTournaments.length || 0}
+            registeredCount={registeredCount}
+            organizerCount={totalOrganized}
+            refereeCount={refereeCount}
             inviteCount={inviteCount}
           />
 
-          <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
-            <h3 className="text-sm font-bold text-slate-900 mb-4">Lối tắt nhanh</h3>
+          {/* Quick Shortcuts (Lối tắt nhanh) */}
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+            <h3 className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-3">Lối tắt nhanh</h3>
             <div className="flex flex-col gap-2">
-              <Link href="/organizer/tournaments" className="flex items-center justify-between p-3 rounded-lg hover:bg-blue-50/60 text-slate-800 font-bold text-xs transition-all border border-slate-200/80 hover:border-blue-200">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600 shrink-0">
-                    <Trophy className="w-4 h-4" />
-                  </div>
-                  <span>Quản lý giải đấu</span>
-                </div>
-                <span className="text-[10px] font-extrabold text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">BTC</span>
-              </Link>
-
-              <Link href="/series" className="flex items-center justify-between p-3 rounded-lg hover:bg-indigo-50/60 text-slate-800 font-bold text-xs transition-all border border-slate-200/80 hover:border-indigo-200">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-600 shrink-0">
-                    <Trophy className="w-4 h-4" />
-                  </div>
-                  <span>Chuỗi giải đấu</span>
-                </div>
-                <span className="text-[10px] font-extrabold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">Series</span>
-              </Link>
-
-              {(user?.roles?.includes('ORGANIZER') || user?.roles?.includes('ADMIN')) && (
-                <Link href="/organizer/series" className="flex items-center justify-between p-3 rounded-lg hover:bg-indigo-50/60 text-slate-800 font-bold text-xs transition-all border border-slate-200/80 hover:border-indigo-200">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-600 shrink-0">
-                      <Trophy className="w-4 h-4" />
+              {isOrganizerOrAdmin ? (
+                <>
+                  <Link href="/organizer/tournaments" className="flex items-center justify-between p-3 rounded-lg hover:bg-blue-50/60 text-slate-800 font-bold text-xs transition-all border border-slate-200/80 hover:border-blue-200">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600 shrink-0">
+                        <Trophy className="w-3.5 h-3.5" />
+                      </div>
+                      <span>Quản lý giải đấu</span>
                     </div>
-                    <span>Quản lý chuỗi giải</span>
-                  </div>
-                  <span className="text-[10px] font-extrabold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">Series</span>
-                </Link>
-              )}
+                    <span className="text-[9px] font-extrabold text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">BTC</span>
+                  </Link>
+
+                  <Link href="/organizer/series" className="flex items-center justify-between p-3 rounded-lg hover:bg-indigo-50/60 text-slate-800 font-bold text-xs transition-all border border-slate-200/80 hover:border-indigo-200">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-600 shrink-0">
+                        <Trophy className="w-3.5 h-3.5" />
+                      </div>
+                      <span>Quản lý chuỗi giải</span>
+                    </div>
+                    <span className="text-[9px] font-extrabold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">Series</span>
+                  </Link>
+                </>
+              ) : null}
 
               <button
                 type="button"
@@ -608,66 +727,35 @@ export default function DashboardPage() {
                 disabled={isLiteLoading}
                 className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-emerald-50 text-slate-800 font-bold text-xs transition-all border border-slate-200/80 hover:border-emerald-200 cursor-pointer disabled:opacity-50"
               >
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
-                    {isLiteLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
+                    {isLiteLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
                   </div>
                   <span>Tạo giải nhanh (Lite)</span>
                 </div>
-                <span className="text-[10px] font-extrabold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">CLB</span>
+                <span className="text-[9px] font-extrabold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">CLB</span>
               </button>
-              <Link href="/profile" className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 text-slate-700 font-bold text-xs transition-all border border-transparent hover:border-slate-200">
-                <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 shrink-0">
-                  <Settings className="w-4 h-4" />
+
+              <Link href="/series" className="flex items-center justify-between p-3 rounded-lg hover:bg-purple-50/60 text-slate-800 font-bold text-xs transition-all border border-slate-200/80 hover:border-purple-200">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-purple-100 flex items-center justify-center text-purple-600 shrink-0">
+                    <Trophy className="w-3.5 h-3.5" />
+                  </div>
+                  <span>Chuỗi giải đấu</span>
+                </div>
+                <span className="text-[9px] font-extrabold text-purple-600 bg-purple-50 px-2 py-0.5 rounded border border-purple-100">Series</span>
+              </Link>
+
+              <Link href="/profile" className="flex items-center gap-2.5 p-3 rounded-lg hover:bg-slate-50 text-slate-700 font-bold text-xs transition-all border border-transparent hover:border-slate-200">
+                <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 shrink-0">
+                  <Settings className="w-3.5 h-3.5" />
                 </div>
                 Xem trang cá nhân
-              </Link>
-              <Link href="/notifications" className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 text-slate-700 font-bold text-xs transition-all border border-transparent hover:border-slate-200">
-                <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-blue-600 shrink-0">
-                  <ShieldCheck className="w-4 h-4" />
-                </div>
-                Xem thông báo và lời mời
               </Link>
             </div>
           </div>
         </div>
       </div>
-
-      {/* Modal Thông báo chưa có CLB */}
-      {showNoClubModal && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
-          <div className="w-full max-w-md bg-white rounded-2xl p-6 shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95 duration-200">
-            <div className="w-12 h-12 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center mb-4">
-              <ShieldCheck className="w-6 h-6" />
-            </div>
-            <h3 className="text-lg font-bold text-slate-900 mb-2">Vui lòng tạo hoặc tham gia Câu lạc bộ</h3>
-            <p className="text-xs text-slate-600 leading-relaxed mb-6">
-              Giải đấu nhanh (Lite) dành riêng cho thành viên Câu lạc bộ. Bạn chưa tạo hoặc tham gia CLB nào. Hãy tạo Câu lạc bộ của riêng bạn để mở tính năng này!
-            </p>
-            <div className="flex gap-3 justify-end">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowNoClubModal(false)}
-                className="font-bold text-xs"
-              >
-                Hủy bỏ
-              </Button>
-              <Button
-                size="sm"
-                onClick={() => {
-                  setShowNoClubModal(false);
-                  router.push('/communities/create');
-                }}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs"
-              >
-                Tạo Câu lạc bộ ngay
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
-

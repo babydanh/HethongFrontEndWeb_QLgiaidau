@@ -71,7 +71,7 @@ interface EnrichedMatch extends Omit<Match, 'tournament' | 'participant1' | 'par
 
 type MatchFeedPayload = {
   data?: unknown;
-  meta?: { totalPages?: number };
+  meta?: { totalPages?: number; nextCursor?: string | null; hasMore?: boolean };
 };
 
 const getHttpStatus = (error: unknown): number | undefined => {
@@ -86,19 +86,29 @@ const getHttpStatus = (error: unknown): number | undefined => {
  * browser builds retain the Axios response shape. Accept both shapes so a
  * valid match feed can never silently become an empty list.
  */
-const readMatchFeed = (value: unknown): { matches: EnrichedMatch[]; totalPages: number } => {
+const readMatchFeed = (value: unknown): { matches: EnrichedMatch[]; totalPages: number; nextCursor: string | null; hasMore: boolean } => {
   const outer = value as MatchFeedPayload | undefined;
   const firstData = outer?.data;
   if (Array.isArray(firstData)) {
-    return { matches: firstData as EnrichedMatch[], totalPages: outer?.meta?.totalPages ?? 1 };
+    return {
+      matches: firstData as EnrichedMatch[],
+      totalPages: outer?.meta?.totalPages ?? 1,
+      nextCursor: outer?.meta?.nextCursor ?? null,
+      hasMore: outer?.meta?.hasMore ?? false,
+    };
   }
 
   const inner = firstData as MatchFeedPayload | undefined;
   if (Array.isArray(inner?.data)) {
-    return { matches: inner.data as EnrichedMatch[], totalPages: inner.meta?.totalPages ?? 1 };
+    return {
+      matches: inner.data as EnrichedMatch[],
+      totalPages: inner.meta?.totalPages ?? 1,
+      nextCursor: inner.meta?.nextCursor ?? null,
+      hasMore: inner.meta?.hasMore ?? false,
+    };
   }
 
-  return { matches: [], totalPages: 1 };
+  return { matches: [], totalPages: 1, nextCursor: null, hasMore: false };
 };
 
 const getShortName = (fullName: string | null | undefined): string => {
@@ -238,6 +248,19 @@ export default function MatchesListPage() {
   const [activeShareUrl, setActiveShareUrl] = useState('');
   const [activeShareTitle, setActiveShareTitle] = useState('');
   const [matchesRefreshTick, setMatchesRefreshTick] = useState(0);
+  const cursorByPageRef = useRef<Record<number, string | null>>({ 1: null });
+  const filterKey = [
+    searchTerm,
+    selectedCategoryId,
+    selectedStatus,
+    selectedContent,
+    selectedBracketType,
+    startDate,
+    endDate,
+    selectedProvince,
+    selectedDistrict,
+    isRanked,
+  ].join('|');
   const matchesRequestInFlightRef = useRef(false);
   const matchesRefreshQueuedRef = useRef(false);
 
@@ -328,6 +351,14 @@ export default function MatchesListPage() {
     return undefined;
   };
 
+  // Cursor state belongs to the active filter set. Any filter change starts
+  // a new cursor chain at page 1, while the UI still shows numbered pages.
+  useEffect(() => {
+    cursorByPageRef.current = { 1: null };
+    setPage(1);
+    setGroupPages({});
+  }, [filterKey]);
+
   // Fetch danh sách trận đấu dựa trên bộ lọc
   useEffect(() => {
     if (matchesRequestInFlightRef.current) {
@@ -366,9 +397,10 @@ export default function MatchesListPage() {
         const apiStartDate = formatDateForAPI(startDate);
         const apiEndDate = formatDateForAPI(endDate);
 
+        const cursor = cursorByPageRef.current[page] ?? null;
         const res = await matchesApi.getMatches({
-          page: 1, // Reset API page to 1 since we are paging tournaments locally now
-          limit: 100, // Reduced from 500 to prevent 429 rate limits
+          limit: 100,
+          ...(cursor ? { cursor } : {}),
           search: searchTerm || undefined,
           categoryId: selectedCategoryId || undefined,
           status: selectedStatus || undefined,
@@ -381,6 +413,7 @@ export default function MatchesListPage() {
         const feed = readMatchFeed(res);
         setMatches(feed.matches);
         setTotalPages(feed.totalPages);
+        cursorByPageRef.current[page + 1] = feed.nextCursor;
       } catch (error) {
         console.error('Failed to fetch matches', error);
         setIsRateLimited(getHttpStatus(error) === 429);
@@ -394,7 +427,7 @@ export default function MatchesListPage() {
       }
     };
     fetchMatches();
-  }, [searchTerm, selectedCategoryId, selectedStatus, selectedContent, selectedBracketType, startDate, endDate, selectedProvince, selectedDistrict, isRanked, matchesRefreshTick]);
+  }, [filterKey, page, matchesRefreshTick]);
 
   // Fetch cheer counts for all visible matches
   useEffect(() => {
@@ -619,10 +652,9 @@ export default function MatchesListPage() {
     isRanked,
   ].filter(Boolean).length;
 
-  // Pagination for Tournaments: Show 5 tournaments per page
-  const TOURNAMENTS_PER_PAGE = 5;
-  const totalTournamentsPages = Math.ceil(groupedMatches.length / TOURNAMENTS_PER_PAGE);
-  const currentTournaments = groupedMatches.slice((page - 1) * TOURNAMENTS_PER_PAGE, page * TOURNAMENTS_PER_PAGE);
+  // The API page is cursor-backed; grouping remains a presentation detail.
+  const totalTournamentsPages = totalPages;
+  const currentTournaments = groupedMatches;
 
   return (
     <div className="flex-grow w-full max-w-7xl mx-auto px-4 md:px-8 py-8 flex flex-col gap-6">

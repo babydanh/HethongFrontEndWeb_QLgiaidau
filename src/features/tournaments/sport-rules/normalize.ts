@@ -112,6 +112,9 @@ export function inferSportRuleKindFromCategory(category: Pick<Category, 'slug' |
   if (combined.includes('tennis') || combined.includes('quan vot')) {
     return 'TENNIS';
   }
+  if (combined.includes('football') || combined.includes('bong da') || combined.includes('soccer')) {
+    return 'FOOTBALL';
+  }
 
   return 'BADMINTON';
 }

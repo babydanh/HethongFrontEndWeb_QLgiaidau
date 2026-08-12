@@ -12,7 +12,8 @@ function isSportRuleKind(value: unknown): value is SportRuleKind {
     value === 'TABLE_TENNIS' ||
     value === 'PICKLEBALL_RALLY' ||
     value === 'PICKLEBALL_SIDE_OUT' ||
-    value === 'TENNIS'
+    value === 'TENNIS' ||
+    value === 'FOOTBALL'
   );
 }
 
@@ -45,16 +46,14 @@ export function normalizeSportRuleKindForCategory(
   currentKind: SportRuleKind,
   category: Category | null | undefined,
 ): SportRuleKind {
+  const inferred = inferSportRuleKindFromCategory(category);
   const allowedKinds = getAllowedSportRuleKinds(category);
   if (allowedKinds.length === 0) {
-    // Older category records do not have ruleKind/allowedRuleKinds. Infer the
-    // sport from slug/name so a stale preset cannot keep a Pickleball event on
-    // the Badminton defaults.
-    return inferSportRuleKindFromCategory(category);
+    return inferred;
   }
   if (allowedKinds.includes(currentKind)) {
     return currentKind;
   }
 
-  return allowedKinds[0] ?? 'BADMINTON';
+  return allowedKinds[0] ?? inferred ?? 'BADMINTON';
 }

@@ -459,91 +459,6 @@ export function BracketTab({
               </p>
             </div>
 
-            {isPickleballVariant && (
-              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-                <p className="text-xs font-bold uppercase tracking-[0.12em] text-emerald-700">Mode Pickleball</p>
-                <div className="mt-3 grid gap-3 md:grid-cols-2">
-                  {([
-                    { kind: 'PICKLEBALL_RALLY', title: 'Rally', description: 'Pha bóng nào thắng cũng có điểm.' },
-                    { kind: 'PICKLEBALL_SIDE_OUT', title: 'Side-out', description: 'Chỉ đội giao bóng mới được cộng điểm.' },
-                  ] as const)
-                    .filter((option) => normalizeSportRuleKindForCategory(option.kind, selectedCategory) === option.kind)
-                    .map((option) => {
-                    const isActive = sportRuleKind === option.kind;
-                    return (
-                      <button
-                        key={option.kind}
-                        type="button"
-                        onClick={() => handleSportRuleKindChange(option.kind)}
-                        className={`rounded-lg border px-4 py-3 text-left transition-all ${
-                          isActive
-                            ? 'border-emerald-500 bg-white ring-2 ring-emerald-200'
-                            : 'border-emerald-100 bg-white/80 hover:border-emerald-300'
-                        }`}
-                      >
-                        <p className="text-sm font-bold text-slate-900">{option.title}</p>
-                        <p className="mt-1 text-xs font-semibold text-slate-600">{option.description}</p>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-              <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-600">Preset theo môn</p>
-              <div className="mt-3 grid gap-3">
-                {presets.map((preset) => (
-                  <button
-                    key={preset.id}
-                    type="button"
-                    onClick={() => applyPreset(preset)}
-                    className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-left transition-all hover:border-blue-300 hover:bg-blue-50"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-bold text-slate-900">{preset.label}</p>
-                        <p className="mt-1 text-xs font-semibold text-slate-500">{preset.description}</p>
-                      </div>
-                      <div className="rounded-lg bg-slate-100 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-600">
-                        {preset.setsToWin} chạm • {preset.pointsPerSet}
-                      </div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Thể loại thi đấu</label>
-                <select
-                  value={matchType}
-                  onChange={(e) => setMatchType(e.target.value)}
-                  className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold"
-                >
-                  {availableMatchFormatOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.shortLabel}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Số Set chạm thắng</label>
-                <select
-                  value={setsToWin}
-                  onChange={(e) => setSetsToWin(Number(e.target.value))}
-                  className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold"
-                >
-                  {presentation.setOptions.map((option) => (
-                    <option key={option.value} value={option.value}>{option.label}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
             {/* Switch LITE vs STRICT */}
             <div className="bg-white border border-slate-200 rounded-lg p-4 space-y-4">
               <div className="flex items-center justify-between">
@@ -577,55 +492,6 @@ export function BracketTab({
                 </div>
               </div>
 
-              {!isLiteMode && (
-                <div className="animate-in fade-in slide-in-from-top-2 duration-300 space-y-4 pt-4 border-t border-slate-100">
-                  <div className="grid grid-cols-2 gap-4 items-end">
-                    <Input
-                      label={setUnitLabel}
-                      type="number"
-                      value={pointsPerSet}
-                      onChange={(e) => setPointsPerSet(Number(e.target.value))}
-                      className="h-10 text-sm font-bold"
-                    />
-                    
-                    <div className="flex items-center gap-2 h-10 pb-2">
-                      <input
-                        type="checkbox"
-                        id="winByTwo_bracket"
-                        checked={winByTwo}
-                        onChange={(e) => setWinByTwo(e.target.checked)}
-                        className="w-4 h-4 text-blue-600 rounded border-slate-300 cursor-pointer"
-                      />
-                      <label htmlFor="winByTwo_bracket" className="text-xs font-bold text-slate-600 cursor-pointer select-none">
-                        {winByTwoLabel}
-                      </label>
-                    </div>
-                  </div>
-
-                  {winByTwo && (
-                    <Input
-                      label={maxScoreLabel}
-                      type="number"
-                      value={maxDeucePoints}
-                      onChange={(e) => setMaxDeucePoints(Number(e.target.value))}
-                      placeholder={presentation.maxScorePlaceholder}
-                      className="h-10 text-sm font-bold"
-                    />
-                  )}
-
-                  {supportsTiebreakInput && (
-                    <Input
-                      label={presentation.tiebreakLabel}
-                      type="number"
-                      value={superTiebreakPoints}
-                      onChange={(e) => setSuperTiebreakPoints(Number(e.target.value))}
-                      placeholder={sportRuleKind === 'TENNIS' ? 'Ví dụ: 7' : 'Ví dụ: 11'}
-                      className="h-10 text-sm font-bold"
-                    />
-                  )}
-                </div>
-              )}
-
               {isLiteMode && (
                 <div className="animate-in fade-in slide-in-from-top-2 duration-300 rounded-lg bg-blue-50/50 p-3 mt-2 border border-blue-100/50">
                   <p className="text-xs text-blue-800 font-medium">
@@ -635,17 +501,149 @@ export function BracketTab({
               )}
             </div>
 
-            <div className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-xs font-semibold text-blue-900">
-              Thiết lập hiện tại: thắng {setsToWin} {sportRuleKind === 'PICKLEBALL_SIDE_OUT' ? 'game' : 'set'}
-              {!isLiteMode && (
-                <>
-                  {' • '}
-                  {pointsPerSet} {sportRuleKind === 'TENNIS' ? 'game/set' : 'điểm'}
-                  {winByTwo ? ' • hơn 2' : ' • chạm đích là chốt'}
-                  {supportsTiebreakInput ? ` • ${presentation.tiebreakLabel.toLowerCase()}: ${superTiebreakPoints}` : ''}
-                </>
-              )}
+            <div className="grid gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Thể loại thi đấu</label>
+                <select
+                  value={matchType}
+                  onChange={(e) => setMatchType(e.target.value)}
+                  className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold"
+                >
+                  {availableMatchFormatOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.shortLabel}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
+
+            {!isLiteMode && (
+              <div className="animate-in fade-in slide-in-from-top-2 duration-300 space-y-4">
+                {isPickleballVariant && (
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                    <p className="text-xs font-bold uppercase tracking-[0.12em] text-emerald-700">Mode Pickleball</p>
+                    <div className="mt-3 grid gap-3 md:grid-cols-2">
+                      {([
+                        { kind: 'PICKLEBALL_RALLY', title: 'Rally', description: 'Pha bóng nào thắng cũng có điểm.' },
+                        { kind: 'PICKLEBALL_SIDE_OUT', title: 'Side-out', description: 'Chỉ đội giao bóng mới được cộng điểm.' },
+                      ] as const)
+                        .filter((option) => normalizeSportRuleKindForCategory(option.kind, selectedCategory) === option.kind)
+                        .map((option) => {
+                        const isActive = sportRuleKind === option.kind;
+                        return (
+                          <button
+                            key={option.kind}
+                            type="button"
+                            onClick={() => handleSportRuleKindChange(option.kind)}
+                            className={`rounded-lg border px-4 py-3 text-left transition-all ${
+                              isActive
+                                ? 'border-emerald-500 bg-white ring-2 ring-emerald-200'
+                                : 'border-emerald-100 bg-white/80 hover:border-emerald-300'
+                            }`}
+                          >
+                            <p className="text-sm font-bold text-slate-900">{option.title}</p>
+                            <p className="mt-1 text-xs font-semibold text-slate-600">{option.description}</p>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-600">Preset theo môn</p>
+                  <div className="mt-3 grid gap-3">
+                    {presets.map((preset) => (
+                      <button
+                        key={preset.id}
+                        type="button"
+                        onClick={() => applyPreset(preset)}
+                        className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-left transition-all hover:border-blue-300 hover:bg-blue-50"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="text-sm font-bold text-slate-900">{preset.label}</p>
+                            <p className="mt-1 text-xs font-semibold text-slate-500">{preset.description}</p>
+                          </div>
+                          <div className="rounded-lg bg-slate-100 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-600">
+                            {preset.setsToWin} chạm • {preset.pointsPerSet}
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Số Set chạm thắng</label>
+                  <select
+                    value={setsToWin}
+                    onChange={(e) => setSetsToWin(Number(e.target.value))}
+                    className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm h-10 font-bold"
+                  >
+                    {presentation.setOptions.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 items-end pt-4 border-t border-slate-100">
+                  <Input
+                    label={setUnitLabel}
+                    type="number"
+                    value={pointsPerSet}
+                    onChange={(e) => setPointsPerSet(Number(e.target.value))}
+                    className="h-10 text-sm font-bold"
+                  />
+                  
+                  <div className="flex items-center gap-2 h-10 pb-2">
+                    <input
+                      type="checkbox"
+                      id="winByTwo_bracket"
+                      checked={winByTwo}
+                      onChange={(e) => setWinByTwo(e.target.checked)}
+                      className="w-4 h-4 text-blue-600 rounded border-slate-300 cursor-pointer"
+                    />
+                    <label htmlFor="winByTwo_bracket" className="text-xs font-bold text-slate-600 cursor-pointer select-none">
+                      {winByTwoLabel}
+                    </label>
+                  </div>
+                </div>
+
+                {winByTwo && (
+                  <Input
+                    label={maxScoreLabel}
+                    type="number"
+                    value={maxDeucePoints}
+                    onChange={(e) => setMaxDeucePoints(Number(e.target.value))}
+                    placeholder={presentation.maxScorePlaceholder}
+                    className="h-10 text-sm font-bold"
+                  />
+                )}
+
+                {supportsTiebreakInput && (
+                  <Input
+                    label={presentation.tiebreakLabel}
+                    type="number"
+                    value={superTiebreakPoints}
+                    onChange={(e) => setSuperTiebreakPoints(Number(e.target.value))}
+                    placeholder={sportRuleKind === 'TENNIS' ? 'Ví dụ: 7' : 'Ví dụ: 11'}
+                    className="h-10 text-sm font-bold"
+                  />
+                )}
+              </div>
+            )}
+
+            {!isLiteMode && (
+              <div className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-xs font-semibold text-blue-900">
+                Thiết lập hiện tại: thắng {setsToWin} {sportRuleKind === 'PICKLEBALL_SIDE_OUT' ? 'game' : 'set'}
+                {' • '}
+                {pointsPerSet} {sportRuleKind === 'TENNIS' ? 'game/set' : 'điểm'}
+                {winByTwo ? ' • hơn 2' : ' • chạm đích là chốt'}
+                {supportsTiebreakInput ? ` • ${presentation.tiebreakLabel.toLowerCase()}: ${superTiebreakPoints}` : ''}
+              </div>
+            )}
 
             <div className="bg-slate-50 border border-slate-200 p-4 rounded-lg space-y-3">
               <div className="flex items-center justify-between">

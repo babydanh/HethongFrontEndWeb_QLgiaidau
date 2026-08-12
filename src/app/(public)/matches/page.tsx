@@ -69,6 +69,31 @@ interface EnrichedMatch extends Omit<Match, 'tournament' | 'participant1' | 'par
   } | null;
 }
 
+type MatchFeedPayload = {
+  data?: unknown;
+  meta?: { totalPages?: number };
+};
+
+/**
+ * Axios normally returns the already-unwrapped API envelope, while some
+ * browser builds retain the Axios response shape. Accept both shapes so a
+ * valid match feed can never silently become an empty list.
+ */
+const readMatchFeed = (value: unknown): { matches: EnrichedMatch[]; totalPages: number } => {
+  const outer = value as MatchFeedPayload | undefined;
+  const firstData = outer?.data;
+  if (Array.isArray(firstData)) {
+    return { matches: firstData as EnrichedMatch[], totalPages: outer?.meta?.totalPages ?? 1 };
+  }
+
+  const inner = firstData as MatchFeedPayload | undefined;
+  if (Array.isArray(inner?.data)) {
+    return { matches: inner.data as EnrichedMatch[], totalPages: inner.meta?.totalPages ?? 1 };
+  }
+
+  return { matches: [], totalPages: 1 };
+};
+
 const getShortName = (fullName: string | null | undefined): string => {
   if (!fullName) return '';
   const parts = fullName.trim().split(/\s+/);
@@ -344,17 +369,9 @@ export default function MatchesListPage() {
           endDate: apiEndDate,
         });
         
-        if (res) {
-          // `api` unwraps AxiosResponse in its response interceptor, so `res`
-          // already is `{ data, meta }`. Reading `res.data.data` here turned a
-          // valid match feed into an empty list on every request.
-          const responseData = res as unknown as {
-            data?: EnrichedMatch[];
-            meta?: { totalPages?: number };
-          };
-          setMatches(Array.isArray(responseData.data) ? responseData.data : []);
-          setTotalPages(responseData.meta?.totalPages || 1);
-        }
+        const feed = readMatchFeed(res);
+        setMatches(feed.matches);
+        setTotalPages(feed.totalPages);
       } catch (error) {
         console.error('Failed to fetch matches', error);
       } finally {

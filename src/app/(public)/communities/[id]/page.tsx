@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { communitiesApi, Community } from '@/features/communities/api';
 import { Button } from '@/components/ui/Button';
-import { ChevronLeft, MapPin, Users, Trophy, Share2, MoreHorizontal, ShieldCheck, ShieldAlert, Settings as SettingsIcon, Loader2, Bookmark, Star } from 'lucide-react';
+import { ChevronLeft, MapPin, Users, Trophy, Share2, MoreHorizontal, ShieldAlert, Settings as SettingsIcon, Loader2, Bookmark, Star } from 'lucide-react';
 import { formatDate } from '@/utils/format';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { JoinCommunityModal } from '@/components/shared/JoinCommunityModal';
@@ -425,13 +425,6 @@ export default function CommunityDetailPage() {
               />
             </div>
             <div className="space-y-2.5">
-              <div className="flex flex-wrap items-center gap-2">
-                {community.status === 'ACTIVE' && (
-                  <span className="px-2.5 py-0.5 bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-bold rounded-md flex items-center gap-1 shadow-sm">
-                    <ShieldCheck className="w-3.5 h-3.5" /> Đang hoạt động
-                  </span>
-                )}
-              </div>
               <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-600 font-medium">
                 <span className="flex items-center gap-1">
                   <MapPin className="w-4 h-4 text-slate-400" />

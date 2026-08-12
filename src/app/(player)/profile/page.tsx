@@ -426,8 +426,15 @@ export default function ProfilePage() {
           setUserRankings(ranksRes);
           setEloHistory(historyRes?.data || []);
           setFollowedTournaments(sortFollowedTournaments(followedRes?.data || []));
-          setMatches(matchesRes?.data || []);
-          setMatchesTotalPages(matchesRes?.meta?.totalPages || 1);
+          
+          if (matchesRes && matchesRes.data) {
+            const matchesData = matchesRes.data as unknown as { data: Match[], meta: { totalPages?: number } };
+            setMatches(matchesData.data || []);
+            setMatchesTotalPages(matchesData.meta?.totalPages || 1);
+          } else {
+            setMatches([]);
+            setMatchesTotalPages(1);
+          }
         }
       } catch (err) {
         console.error('Failed to fetch profile tab data', err);

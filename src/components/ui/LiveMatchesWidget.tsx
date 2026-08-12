@@ -29,7 +29,8 @@ export default function LiveMatchesWidget({ limit = 5, showAllLink = true }: Pro
       try {
         const res = await matchesApi.getMatches({ status: 'ONGOING', limit });
         if (res && res.data) {
-          const items = res.data as unknown as BracketMatch[];
+          const responseData = res.data as unknown as { data: BracketMatch[] };
+          const items = responseData.data || [];
           latestItems = items;
           setMatches(items);
           joinVisibleMatches(items);

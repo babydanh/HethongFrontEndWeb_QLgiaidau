@@ -513,11 +513,10 @@ export default function HomePage() {
               m.winnerId != null;
           };
           const allLiveMatches = categoryMatches.filter(m => m.status === 'ONGOING' && !isCompletedMatch(m));
-          setLiveMatches(allLiveMatches.filter(m => (!shouldFilterByTournament || validTournamentIds.has(m.tournamentId ?? '') || selectedCategoryId) && !m.isBye));
+          setLiveMatches(allLiveMatches.filter(m => !m.isBye));
 
           const fetchedUpcoming = categoryMatches.filter(m => m.status === 'SCHEDULED');
           const validUpcoming = fetchedUpcoming.filter(m =>
-            (!shouldFilterByTournament || validTournamentIds.has(m.tournamentId ?? '') || selectedCategoryId) &&
             !m.isBye &&
             m.participant1 != null &&
             m.participant2 != null &&
@@ -529,9 +528,7 @@ export default function HomePage() {
           setUpcomingMatches(validUpcoming);
 
           const fetchedCompleted = categoryMatches.filter(isCompletedMatch);
-          const nextCompleted = fetchedCompleted.filter(m =>
-            (!shouldFilterByTournament || validTournamentIds.has(m.tournamentId ?? '') || selectedCategoryId) && !m.isBye
-          );
+          const nextCompleted = fetchedCompleted.filter(m => !m.isBye);
           // A transient empty 200 response must not erase the last visible
           // results. Category-filtered requests are safe to clear explicitly.
           if (nextCompleted.length > 0 || selectedCategoryId) {

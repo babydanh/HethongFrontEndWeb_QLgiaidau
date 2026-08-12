@@ -166,7 +166,14 @@ export function useOrganizerOps(
     ]);
 
     setParticipants(participantsRes.data ?? []);
-    setMatches(matchesRes.data ?? []);
+    
+    if (matchesRes.data) {
+      const resData = matchesRes.data as unknown as { data: Match[] };
+      setMatches(resData.data || []);
+    } else {
+      setMatches([]);
+    }
+
     setActivityLog((current) => {
       const backendLog = (auditRes.data ?? []).map((row) => mapAuditLogToActivity(tournamentId, row));
       const localOnly = current.filter((item) => item.id.includes('_'));

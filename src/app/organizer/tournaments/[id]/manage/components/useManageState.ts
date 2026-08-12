@@ -1208,7 +1208,10 @@ export function useManageState(id: string) {
         // Nạp danh sách trận đấu (dùng cho export kết quả toàn giải ở bước kết thúc)
         try {
           const mRes = await matchesApi.getMatches({ tournamentId: id, limit: 100 });
-          if (mRes.data) setMatches(mRes.data);
+          if (mRes.data) {
+            const resData = mRes.data as unknown as { data: Match[] };
+            setMatches(resData.data || []);
+          }
         } catch { /* không chặn luồng chính */ }
       }
       return tRes.data;

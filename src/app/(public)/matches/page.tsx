@@ -345,8 +345,9 @@ export default function MatchesListPage() {
         });
         
         if (res && res.data) {
-          setMatches(res.data as unknown as EnrichedMatch[]);
-          setTotalPages(res.meta.totalPages || 1);
+          const responseData = res.data as unknown as { data: EnrichedMatch[], meta: { totalPages?: number } };
+          setMatches(responseData.data || []);
+          setTotalPages(responseData.meta?.totalPages || 1);
         }
       } catch (error) {
         console.error('Failed to fetch matches', error);

@@ -35,7 +35,8 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
       if (cursor) matchParams.cursor = cursor;
       
       const res = await matchesApi.getMatches(matchParams);
-      return res as unknown as { data: BracketMatch[]; meta: { nextCursor?: string | null; hasMore?: boolean } };
+      const responseData = res.data as unknown as { data: BracketMatch[]; meta: { nextCursor?: string | null; hasMore?: boolean } };
+      return responseData;
     }
   );
   

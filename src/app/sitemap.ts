@@ -21,7 +21,7 @@ interface ApiItem {
 
 interface ListPage {
   data: ApiItem[];
-  meta?: { totalPages?: number };
+  meta?: { totalPages?: number; nextCursor?: string | null; hasMore?: boolean };
 }
 
 async function fetchListPage(path: string, params: Record<string, string>): Promise<ListPage> {
@@ -56,18 +56,19 @@ async function fetchListPage(path: string, params: Record<string, string>): Prom
  */
 async function fetchAllPages(path: string, params: Record<string, string>): Promise<ApiItem[]> {
   const all: ApiItem[] = [];
-  let page = 1;
-  let totalPages: number | undefined;
+  let cursor: string | null = null;
 
   while (all.length < MAX_URLS_PER_TYPE && page <= MAX_PAGES) {
-    const result = await fetchListPage(path, { ...params, limit: String(PAGE_SIZE), page: String(page) });
+    const result = await fetchListPage(path, {
+      ...params,
+      limit: String(PAGE_SIZE),
+      ...(cursor ? { cursor } : {}),
+    });
     if (result.data.length === 0) break;
 
     all.push(...result.data);
-    totalPages = result.meta?.totalPages;
-
-    if (totalPages !== undefined && page >= totalPages) break;
-    page += 1;
+    cursor = result.meta?.nextCursor ?? null;
+    if (!result.meta?.hasMore || !cursor) break;
   }
 
   return all;

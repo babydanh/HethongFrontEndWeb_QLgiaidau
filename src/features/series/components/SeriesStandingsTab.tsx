@@ -83,8 +83,7 @@ export const SeriesStandingsTab: React.FC<SeriesStandingsTabProps> = ({ seriesId
         const res = await seriesApi.getSeriesStandings(seriesId, {
           legId: selectedLegId,
           categoryId: selectedCategoryId,
-          limit: 100,
-          page: 1
+          limit: 100
         });
         if (active) {
           // Map backend standing list which contains { standing: SeriesStanding, user: UserProfile, category: Category }

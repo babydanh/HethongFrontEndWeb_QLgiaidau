@@ -140,6 +140,7 @@ export interface QuerySeriesDto {
   search?: string;
   page?: number;
   limit?: number;
+  cursor?: string;
   organizerId?: string;
 }
 
@@ -148,6 +149,7 @@ export interface QueryStandingsDto {
   categoryId?: string;
   page?: number;
   limit?: number;
+  cursor?: string;
   sort?: string;
   order?: 'asc' | 'desc';
 }

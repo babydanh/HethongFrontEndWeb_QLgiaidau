@@ -66,7 +66,21 @@ export default function AdminCategoriesPage() {
       try {
         const res = await categoriesApi.getCategories();
         if (res.data && res.data.length > 0) {
-          setCategories(res.data);
+          // Merge API data with FALLBACK_CATEGORIES to ensure all standard sports (like Football) are always visible
+          const apiCategories = res.data;
+          const mergedCategories = [...apiCategories];
+          
+          FALLBACK_CATEGORIES.forEach(fallbackCat => {
+            const exists = apiCategories.some(apiCat => 
+              apiCat.slug === fallbackCat.slug || 
+              apiCat.name.toLowerCase() === fallbackCat.name.toLowerCase()
+            );
+            if (!exists) {
+              mergedCategories.push(fallbackCat);
+            }
+          });
+          
+          setCategories(mergedCategories);
         } else {
           setCategories(FALLBACK_CATEGORIES);
         }

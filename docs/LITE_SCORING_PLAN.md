@@ -1,19 +1,20 @@
-# 📋 Kế Hoạch Thiết Kế Chế Độ Tính Điểm Tự Do (Lite/Free Scoring Mode & Custom Overrides)
+# 📋 Kế Hoạch Tối Ưu Chế Độ Tính Điểm Tự Do (Lite Mode) & Đồng Bộ Setting (Web & Mobile App)
 
-## 📌 Bối Cảnh & Vấn Đề Thực Tế (Problem Statement)
-Trong các giải đấu thể thao phong trào (Pickleball, Cầu lông, Tennis, Bóng bàn) tại Việt Nam:
-1. **Rất nhiều giải dùng "Luật Làng / Luật Tự Do"**: Không tuân theo các Preset tiêu chuẩn quốc tế (vd: đánh 1 set 15 điểm, đánh 1 set 8 game Tennis, đấu chạm 4 game Fast4, không áp dụng cách 2 điểm, v.v.).
-2. **Preset Tiêu Chuẩn quá cứng nhắc**: Khi cài đặt Preset (Strict Rules), hệ thống tự động khóa trận, tự động báo lỗi *"Chưa đủ cách 2 điểm"*, *"Vượt quá maxPoints"* hoặc tự nhảy set khi chưa muốn kết thúc ➔ Gây lỗi nghẽn cho Trọng tài trên sân.
+## 📌 Tôn Chỉ Kỹ Thuật: TẬN DỤNG CODEBASE CÓ SẴN (LEVERAGE EXISTING BASE)
+Hệ thống **ĐÃ CÓ SẴN 100% NỀN TẢNG CƠ SỞ**:
+- **Backend/DB**: Lưu `sportRules` và `scoreDetails`, hỗ trợ `revision` và kết thúc trận trực tiếp.
+- **Flutter Mobile App**: Đã có `ScorePanelNotifier`, `isLite = true`, `overrideEnabled = true`, `canCompleteAs()` và bộ chuyển đổi điểm Tennis `formatTennisPoint`.
+- **Frontend Web**: Đã có `resolveSportRuleView()` và `buildDefaultSportRules()`.
+
+👉 **Kế hoạch này KHÔNG VIẾT NÓI HAY THÊM CODE TÙY BIẾN PHỨC TẠP**, mà tập trung **RÚT GỌN MÀN HÌNH SETTING (CẤU HÌNH)** và **MẶC ĐỊNH CHẾ ĐỘ TỰ DO (LITE MODE)** để giải phóng Trọng tài & Ban tổ chức!
 
 ---
 
-## 🎯 GIẢI PHÁP THIẾT KẾ: 2 CHẾ ĐỘ CHẤM ĐIỂM (DUAL-MODE SCORING)
-
-Hệ thống sẽ được thiết kế lại theo **2 Chế độ Chấm Điểm rõ ràng**:
+## 🎯 GIẢI PHÁP 2 CHẾ ĐỘ CHẤM ĐIỂM (SETTING CẤU HÌNH)
 
 ```text
  ┌──────────────────────────────────────────────────────────────────────────────────┐
- │                                CHẾ ĐỘ CHẤM ĐIỂM                                  │
+ │                                CẤU HÌNH CHẤM ĐIỂM                                │
  ├────────────────────────────────────────┬─────────────────────────────────────────┤
  │ ⚡ CHẾ ĐỘ TỰ DO (Lite / Free Mode)      │ 🛡️ CHẾ ĐỘ TIÊU CHUẨN (Strict Preset)    │
  │ (MẶC ĐỊNH CHO TẤT CẢ GIẢI ĐẤU MỚI)     │ (CHỈ BẬT KHI CẤU HÌNH GIẢI CHUYÊN NGHIỆP)│
@@ -22,45 +23,40 @@ Hệ thống sẽ được thiết kế lại theo **2 Chế độ Chấm Điể
 
 ---
 
-## 🛠️ CHI TIẾT TỪNG CHẾ ĐỘ & QUY TẮC VẬN HÀNH
+## 🛠️ CHI TIẾT VẬN HÀNH & ĐỒNG BỘ NỀN TẢNG
 
-### 1. ⚡ CHẾ ĐỘ TỰ DO (Lite / Free Mode - MẶC ĐỊNH CHÍNH)
-- **Thiết lập khi Tạo/Sửa Giải**: 
-  - Người tạo giải **không bắt buộc phải cài đặt** bất kỳ tham số phức tạp nào (như `setsToWin`, `pointsPerSet`, `maxPoints`, `mustWinByTwo`).
-  - Hệ thống tự động đặt `mode = 'LITE'` làm mặc định.
-- **Trải nghiệm Trọng tài khi Chấm điểm (Scoring Panel UI)**:
-  - Nút bấm nhảy điểm theo đúng đặc thù môn:
-    - **Tennis**: Nhảy điểm Game `0 ➔ 15 ➔ 30 ➔ 40 ➔ Ad` (hoặc Tiebreak số thực 1, 2, 3...).
-    - **Pickleball / Cầu lông / Bóng bàn**: Nhảy điểm số thực `0 ➔ 1 ➔ 2 ➔ 3...`.
-  - **KHÔNG KHÓA ĐIỂM TỰ ĐỘNG**: Trận đấu không tự động nhảy set hay khóa nút khi chạm mốc điểm. Trọng tài có thể bấm `+` / `-` điểm hoàn toàn tự do.
-  - **Quyền quyết định thuộc về Trọng tài**:
-    - Nút **`[🎯 Kết thúc Set]`**: Trọng tài bấm khi kết thúc một set bất kỳ.
-    - Nút **`[🏆 XÁC NHẬN ĐỘI THẮNG]`**: Trọng tài chọn Đội 1 hoặc Đội 2 thắng trận và lưu kết quả mà **không bao giờ bị hệ thống chặn lỗi validation**.
+### 1. ⚡ CHẾ ĐỘ TỰ DO (Lite / Free Mode - MẶC ĐỊNH HỆ THỐNG)
+- **Tại Form Cấu hình Giải (Web & App)**:
+  - **Mặc định**: Ẩn/Xóa hết toàn bộ các ô nhập Preset rườm rà (`setsToWin`, `pointsPerSet`, `maxPoints`, `mustWinByTwo`).
+  - Người tạo giải chỉ cần chọn **Bộ môn (Cầu lông, Pickleball, Tennis...)** là xong! Hệ thống tự động thiết lập `mode = 'LITE'`.
+- **Tương tác Trọng tài khi Chấm điểm (Web & App)**:
+  - **Hiển thị nấc điểm chuẩn theo Môn**:
+    - **Tennis**: Điểm nấc chuẩn `0 ➔ 15 ➔ 30 ➔ 40 ➔ Ad` (hoặc Tiebreak số thực 1, 2, 3...).
+    - **Pickleball / Cầu lông / Bóng bàn**: Điểm nấc số thực `0 ➔ 1 ➔ 2 ➔ 3...`.
+  - **KHÔNG KHÓA ĐIỂM & BỎ HẲN VALIDATION CỨNG**: Trọng tài bấm `+` / `-` điểm hoàn toàn tự do. Trận đấu không tự động nhảy set hay chặn điểm.
+  - **Quyền quyết định tuyệt đối**:
+    - Nút **`[🎯 Kết thúc Set này]`**: Trọng tài bấm chốt set bất kỳ lúc nào.
+    - Nút **`[🏆 XÁC NHẬN ĐỘI THẮNG]`**: Trọng tài bấm chọn Đội 1 hoặc Đội 2 thắng và lưu kết quả 1-click mà không bị hệ thống chặn lỗi validation.
 
 ---
 
 ### 2. 🛡️ CHẾ ĐỘ TIÊU CHUẨN (Strict Preset Mode - TÙY CHỌN BẬT)
-- **Thiết lập khi Tạo/Sửa Giải**: 
-  - Chỉ khi BTC tích chọn **`[☑ Kích hoạt Luật Tiêu Chuẩn (Strict Mode)]`**, hệ thống mới hiển thị danh sách Presets môn học.
-- **Hệ thống Preset Tiêu Chuẩn (Có thể Custom Overrides)**:
-  - **Badminton**: Best of 3, chạm 21, cách 2, max 30.
-  - **Table Tennis**: Best of 5, chạm 11, cách 2.
-  - **Pickleball Rally / Side-Out**: Chạm 11 / 15, cách 2.
-  - **Tennis**: Best of 3, chạm 6 game, Tiebreak 7.
-- **Cơ chế Override (Khi xảy ra sự cố trên sân)**:
-  - Trọng tài có thể bấm công tắc **`[⚡ Bật Ngoại Lệ (Override)]`** ➔ Điền lý do ngoại lệ ➔ Bỏ qua mọi validation để chốt kết quả trận đấu lập tức.
+- **Tại Form Cấu hình Giải**:
+  - Chỉ khi BTC tích chọn **`[☑ Kích hoạt Luật Tiêu Chuẩn (Strict Mode)]`**, hệ thống mới hiển thị các ô Presets môn học.
+- **Tận dụng Cơ chế Override có sẵn**:
+  - Khi có sự cố trên sân (vd: VĐV bỏ cuộc hay BTC rút ngắn thời gian) ➔ Trọng tài gạt công tắc **`[⚡ Bật Ngoại Lệ (Override)]`** ➔ Nhập lý do ➔ Xóa mọi validation để chốt kết quả lập tức.
 
 ---
 
-## 📐 BỐ CỤC UI CHUẨN HÓA TRÊN WEB & FLUTTER APP
+## 📐 BỐ CỤC UI CHUẨN HÓA CẤU HÌNH (WEB & FLUTTER APP)
 
-### A. Màn hình Cấu hình Giải đấu (Tournament Settings Page)
+### A. Màn hình Cấu hình Giải đấu (Tournament Settings UI)
 ```text
 [ Cấu hình Tính điểm & Thể thức ]
 ◉ ⚡ Chế độ Tự do (Mặc định - Trọng tài tự bấm điểm & chốt kết quả)
 ◯ 🛡️ Chế độ Tiêu chuẩn (Áp dụng Preset luật chạm điểm & tự động nhảy set)
 
-  [Nếu chọn Strict Mode mới hiện rộng phần bên dưới]
+  [Chỉ khi chọn Strict Mode mới hiện phần bên dưới]
   ┌─────────────────────────────────────────────────────────────┐
   │ Bộ môn: Tennis                                              │
   │ • Số set thắng: [ 2 ]    • Số game/set: [ 6 ]                │
@@ -88,12 +84,12 @@ Hệ thống sẽ được thiết kế lại theo **2 Chế độ Chấm Điể
 ## 🔄 LỘ TRÌNH THỰC HIỆN DỰ ÁN (EXECUTION PLAN)
 
 ### 1. Database & Backend API (`backend-api_qlgiaidau`)
-- Mặc định `sportRules` dạng `LITE` khi khởi tạo giải mới nếu không truyền preset.
-- Đảm bảo endpoint `/matches/:id/complete` nhận kết quả trực tiếp từ `LITE` mode mà không bắt buộc `isMatchComplete`.
+- Đảm bảo endpoint `/tournaments` mặc định `sportRules.mode = 'LITE'` nếu không truyền preset.
+- Đảm bảo endpoint `/matches/:id/complete` cho phép hoàn thành trận đấu ở `LITE` mode mà không bắt buộc `isMatchComplete`.
 
 ### 2. Frontend Web (`frontend-web_qlgiaidau`)
-- Cập nhật form Cấu hình giải đấu (`useManageState.ts`) cho phép chọn `LITE` (mặc định) vs `STRICT`.
-- Nâng cấp UI Chấm điểm Tennis trên Web hiển thị điểm `0 ➔ 15 ➔ 30 ➔ 40 ➔ Ad` theo đúng thiết lập môn.
+- Tinh chỉnh form Cấu hình giải (`useManageState.ts` & Cấu hình Luật): Ẩn toàn bộ ô preset khi chọn `LITE` (mặc định).
+- Cập nhật UI Chấm điểm Tennis trên Web hiển thị nấc điểm `0 ➔ 15 ➔ 30 ➔ 40 ➔ Ad` theo đúng môn Tennis.
 
 ### 3. Mobile Flutter App (`app_quanly_giaidau`)
-- Đã có sẵn nền tảng `ScorePanelNotifier` & `isLite`. Tinh chỉnh để khi `isLite = true` thì ẩn các thông báo nhắc nhở preset cứng, cho phép bấm chốt kết quả 1-click.
+- Tận dụng `ScorePanelNotifier` & `isLite` có sẵn: Khi `isLite = true`, ẩn hoàn toàn các thông báo nhắc nhở preset cứng, mở nút chốt kết quả 1-click.

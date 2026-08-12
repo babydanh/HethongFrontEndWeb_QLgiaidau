@@ -216,7 +216,18 @@ body {
   to {
     transform: scale(0.9) translateY(-10px);
     opacity: 0;
+}
+
+/* Laptop màn nhỏ (13" - 15.6" Full HD với Windows DPI Scale 125%-150%) */
+@media (min-width: 1024px) and (max-width: 1536px) {
+  body {
+    zoom: 0.9; /* Thu nhỏ 90% vừa vặn cho Laptop màn nhỏ */
   }
 }
 
+/* Laptop màn nhỏ (13" - 15.6" Full HD với Windows DPI Scale 125%-150%) */
+@media (min-width: 1024px) and (max-width: 1536px) {
+  body {
+    zoom: 0.8; /* Thu nhỏ 80% vừa vặn cho Laptop màn nhỏ */
+  }
 }

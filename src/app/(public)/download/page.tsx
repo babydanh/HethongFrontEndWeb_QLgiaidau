@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
 import { Sparkles, Info, ShieldCheck, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -50,26 +49,15 @@ export default function DownloadPage() {
       {/* Soft Ambient Light Glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[400px] bg-gradient-to-b from-blue-100/70 via-emerald-100/30 to-transparent blur-3xl pointer-events-none" />
 
-      <div className="max-w-4xl mx-auto px-4 py-12 md:py-20 relative z-10">
+      <div className="max-w-4xl mx-auto px-4 py-6 md:py-10 relative z-10 scale-90 md:scale-90 lg:scale-80 origin-top">
         
         {/* Hero Section */}
         <motion.div 
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="text-center mb-14"
+          className="text-center mb-8"
         >
-          <div className="flex justify-center mb-5">
-            <Image 
-              src="/vndcsport.svg" 
-              alt="VNSPORT Logo" 
-              width={260} 
-              height={70} 
-              className="w-56 md:w-64 h-auto object-contain drop-shadow-sm"
-              priority
-            />
-          </div>
-
           <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-slate-900 mb-4">
             Tải Ứng Dụng Di Động
           </h1>

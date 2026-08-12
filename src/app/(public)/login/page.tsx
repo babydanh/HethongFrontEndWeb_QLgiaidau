@@ -117,7 +117,7 @@ export default function LoginPage() {
         <div className="relative z-10 p-10 pb-0">
           <img
             src="/vndcsport.svg"
-            alt="VNDC Sport"
+            alt="Sporto"
             className="h-28 w-auto object-contain brightness-200 contrast-0"
           />
         </div>
@@ -162,7 +162,7 @@ export default function LoginPage() {
         </div>
 
         <div className="relative z-10 p-10 pt-0">
-          <p className="text-slate-500 text-xs">© 2025 VNDC Sport</p>
+          <p className="text-slate-500 text-xs">© 2025 Sporto</p>
         </div>
       </div>
 
@@ -184,7 +184,7 @@ export default function LoginPage() {
             <div className="flex items-center justify-center mb-4">
               <img
                 src="/vndcsport.svg"
-                alt="VNDC Sport"
+                alt="Sporto"
                 className="h-24 w-auto object-contain scale-110"
               />
             </div>
@@ -275,3 +275,4 @@ export default function LoginPage() {
     </div>
   );
 }
+

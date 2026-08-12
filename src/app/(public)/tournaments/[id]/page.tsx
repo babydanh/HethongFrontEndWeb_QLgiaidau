@@ -55,7 +55,7 @@ export default async function TournamentDetailPage({ params }: PageProps) {
     image: [tournament.bannerUrl || tournament.logoUrl || 'https://giaidau.vnvar.com/vndcsport.png'],
     organizer: {
       '@type': 'Organization',
-      name: 'VNDC Sport',
+      name: 'Sporto',
       url: 'https://giaidau.vnvar.com',
     },
   } : null;

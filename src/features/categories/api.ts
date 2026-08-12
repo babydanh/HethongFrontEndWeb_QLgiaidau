@@ -11,3 +11,4 @@ export const categoriesApi = {
   updateCategory: (id: string, data: Partial<Category>) => api.patch<ApiResponse<Category>>(`/categories/${id}`, data),
   deleteCategory: (id: string) => api.delete<ApiResponse<{ message: string }>>(`/categories/${id}`),
 };
+

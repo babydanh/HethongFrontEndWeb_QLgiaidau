@@ -46,3 +46,4 @@ export function MapView({ lat, lng, zoom = 14, className = '', popupText }: MapV
     </div>
   );
 }
+

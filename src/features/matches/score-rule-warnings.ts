@@ -127,3 +127,4 @@ export function getScoreRuleWarnings(
 
   return warnings;
 }
+

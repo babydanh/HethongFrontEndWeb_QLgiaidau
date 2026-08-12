@@ -222,3 +222,4 @@ export const getShieldIconName = (state: ShieldStatus['state']): string => {
 export const getOnboardingCopy = (): string => {
   return 'Đánh 1 trận xếp hạng để bắt đầu tiến trình ELO.';
 };
+

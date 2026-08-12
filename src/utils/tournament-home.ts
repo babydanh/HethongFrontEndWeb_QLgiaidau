@@ -124,3 +124,4 @@ export const buildHomepageTournamentFeed = (tournaments: Tournament[]) => [
   ...getActiveHomepageTournaments(tournaments),
   ...getRecentCompletedTournaments(tournaments),
 ];
+

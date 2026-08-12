@@ -97,7 +97,7 @@ export default function DownloadPage() {
             </div>
             
             <a 
-              href="https://play.google.com/store/apps/details?id=vn.vnsport.quanlygiaidau&pcampaignid=web_share" 
+              href="https://play.google.com/store/apps/details?id=vn.Sporto.quanlygiaidau&pcampaignid=web_share" 
               target="_blank" 
               rel="noopener noreferrer"
               className="w-full py-3.5 px-5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center justify-center gap-3 transition-all shadow-sm active:scale-[0.98]"
@@ -130,7 +130,7 @@ export default function DownloadPage() {
             </div>
             
             <a 
-              href="https://apps.apple.com/vn/app/vnsport/id6795829694" 
+              href="https://apps.apple.com/vn/app/Sporto/id6795829694" 
               target="_blank" 
               rel="noopener noreferrer"
               className="w-full py-3.5 px-5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center justify-center gap-3 transition-all shadow-sm active:scale-[0.98]"
@@ -201,3 +201,4 @@ export default function DownloadPage() {
     </div>
   );
 }
+

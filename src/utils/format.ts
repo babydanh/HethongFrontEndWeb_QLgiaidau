@@ -83,3 +83,4 @@ export const formatDateTime = (dateString: string | Date | null | undefined): st
 
   return `${day}/${month}/${year} ${hours}:${minutes}`;
 };
+

@@ -112,7 +112,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
     if (!activeTournament) return;
     const shareData = {
       title: activeTournament.name,
-      text: `Hãy cùng tôi theo dõi và đăng ký giải đấu "${activeTournament.name}" trên VNDC Sport!`,
+      text: `Hãy cùng tôi theo dõi và đăng ký giải đấu "${activeTournament.name}" trên Sporto!`,
       url: typeof window !== 'undefined' ? window.location.href : '',
     };
     

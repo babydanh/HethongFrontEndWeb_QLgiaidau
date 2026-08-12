@@ -54,3 +54,4 @@ export function MapPicker({ defaultLat = 21.028511, defaultLng = 105.804817, onC
     </div>
   );
 }
+

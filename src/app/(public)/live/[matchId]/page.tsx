@@ -377,7 +377,7 @@ export default function LiveMatchPage({ params }: Props) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center bg-white p-8 rounded-xl shadow-sm border border-slate-100 max-w-md">
-          <img src="/vndcsport.svg" alt="VNDC Sport Logo" className="w-20 h-20 object-contain mx-auto mb-4" />
+          <img src="/vndcsport.svg" alt="Sporto Logo" className="w-20 h-20 object-contain mx-auto mb-4" />
           <h2 className="text-xl font-bold text-slate-900 mb-2">{error || 'Không tìm thấy trận đấu'}</h2>
           <p className="text-slate-500 text-sm mb-6">Trận đấu này có thể không tồn tại hoặc đã bị hủy.</p>
           <Link href="/tournaments" className="inline-flex items-center justify-center px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-all shadow-sm">
@@ -1182,7 +1182,7 @@ export default function LiveMatchPage({ params }: Props) {
           {/* Left 2 Columns: Match Details, Score Card, Referee Control Panel */}
           <div className="lg:col-span-2 flex flex-col gap-6">
             
-            {/* VNDC Sport Camera Live Stream / Replay Container */}
+            {/* Sporto Camera Live Stream / Replay Container */}
             <div className="bg-slate-950 rounded-2xl overflow-hidden shadow-2xl relative aspect-video flex flex-col items-center justify-center border border-slate-800 group">
               {/* Static scanner effect for premium vibe */}
               <div className="absolute inset-0 bg-gradient-to-b from-indigo-950/20 via-slate-950/40 to-slate-950 pointer-events-none z-0"></div>
@@ -1226,7 +1226,7 @@ export default function LiveMatchPage({ params }: Props) {
                       </span>
                     </div>
                     <h4 className="text-white font-bold text-base tracking-tight">Camera Trực Tiếp Sân Đấu</h4>
-                    <p className="text-xs text-slate-400 font-semibold leading-relaxed">Luồng truyền hình trực tiếp (Live Stream) từ camera thông minh của VNDC Sport đang hoạt động.</p>
+                    <p className="text-xs text-slate-400 font-semibold leading-relaxed">Luồng truyền hình trực tiếp (Live Stream) từ camera thông minh của Sporto đang hoạt động.</p>
                   </>
                 ) : match.status === 'COMPLETED' ? (
                   <>

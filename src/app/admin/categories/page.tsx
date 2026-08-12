@@ -212,7 +212,7 @@ export default function AdminCategoriesPage() {
 
   return (
     <div className="space-y-6 p-6 max-w-7xl mx-auto font-sans">
-      {/* Header Banner - Clean VNSPORT Dark Palette */}
+      {/* Header Banner - Clean Sporto Dark Palette */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-slate-900 p-6 md:p-8 rounded-3xl text-white shadow-lg border border-slate-800">
         <div>
           <div className="flex items-center gap-2 text-blue-400 font-bold text-xs uppercase tracking-wider mb-2">
@@ -427,7 +427,7 @@ export default function AdminCategoriesPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-fade-in">
           <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-2xl w-full overflow-hidden flex flex-col max-h-[90vh]">
             
-            {/* Modal Header - VNSPORT Slate-900 Style */}
+            {/* Modal Header - Sporto Slate-900 Style */}
             <div className="p-6 bg-slate-900 text-white flex items-center justify-between shrink-0 border-b border-slate-800">
               <div className="flex items-center gap-3">
                 <div className="w-11 h-11 rounded-2xl bg-blue-600/30 border border-blue-400/30 flex items-center justify-center text-blue-400 font-bold">
@@ -595,3 +595,4 @@ export default function AdminCategoriesPage() {
     </div>
   );
 }
+

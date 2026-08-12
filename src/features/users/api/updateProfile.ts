@@ -11,3 +11,4 @@ export const changePassword = async (data: { oldPassword: string; newPassword: s
   const response = await api.patch<ApiResponse<null>>('/users/change-password', data);
   return response;
 };
+

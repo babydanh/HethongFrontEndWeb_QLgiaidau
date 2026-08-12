@@ -119,7 +119,7 @@ export default function RegisterPage() {
         <div className="relative z-10 p-10">
           <img
             src="/vndcsport.svg"
-            alt="VNDC Sport"
+            alt="Sporto"
             className="h-16 w-auto object-contain brightness-200 contrast-0"
           />
         </div>
@@ -164,7 +164,7 @@ export default function RegisterPage() {
         </div>
 
         <div className="relative z-10 p-10 pt-0">
-          <p className="text-slate-500 text-xs">© 2025 VNDC Sport</p>
+          <p className="text-slate-500 text-xs">© 2025 Sporto</p>
         </div>
       </div>
 
@@ -186,7 +186,7 @@ export default function RegisterPage() {
             <div className="flex items-center gap-2.5 mb-5">
               <img
                 src="/vndcsport.svg"
-                alt="VNDC Sport"
+                alt="Sporto"
                 className="h-14 w-auto object-contain"
               />
             </div>
@@ -270,3 +270,4 @@ export default function RegisterPage() {
     </div>
   );
 }
+

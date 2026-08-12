@@ -18,3 +18,4 @@ export interface ChatConversation {
   participants: { id: string; fullName: string; avatarUrl?: string }[];
   updatedAt: string;
 }
+

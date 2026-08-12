@@ -59,3 +59,4 @@ export const sortFollowedTournaments = (tournaments: Tournament[]) =>
   [...tournaments].sort(
     (a, b) => getFollowedTournamentSortTimestamp(b) - getFollowedTournamentSortTimestamp(a)
   );
+

@@ -57,3 +57,4 @@ export function normalizeSportRuleKindForCategory(
 
   return allowedKinds[0] ?? inferred ?? 'BADMINTON';
 }
+

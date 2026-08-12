@@ -13,3 +13,4 @@ export const uploadApi = {
     }).then(res => res.data);
   },
 };
+

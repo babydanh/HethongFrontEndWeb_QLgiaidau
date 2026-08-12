@@ -115,3 +115,4 @@ export const isTournamentCancelled = (status?: string | null) =>
 
 export const isTournamentOpenForRegistration = (status?: string | null) =>
   isTournamentRegistrationOpen(status) || isTournamentUpcoming(status);
+

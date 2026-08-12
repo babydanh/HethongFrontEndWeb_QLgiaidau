@@ -62,3 +62,4 @@ export interface PaginatedRankings {
     hasMore?: boolean;
   };
 }
+

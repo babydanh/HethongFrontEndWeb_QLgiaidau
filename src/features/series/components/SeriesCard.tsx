@@ -133,3 +133,4 @@ export const SeriesCard: React.FC<SeriesCardProps> = ({ series, className }) => 
     </div>
   );
 };
+

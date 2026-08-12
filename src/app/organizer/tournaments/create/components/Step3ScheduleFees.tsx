@@ -231,3 +231,4 @@ export default function Step3ScheduleFees() {
     </div>
   );
 }
+

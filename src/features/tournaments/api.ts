@@ -445,3 +445,4 @@ export const divisionsApi = {
   deleteDivision: (divisionId: string) =>
     api.delete<ApiResponse<void>>(`/tournaments/divisions/${divisionId}`),
 };
+

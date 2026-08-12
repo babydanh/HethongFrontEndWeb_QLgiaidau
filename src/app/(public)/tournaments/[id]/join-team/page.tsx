@@ -43,13 +43,13 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
 
   if (tournament) {
     const title = teamName 
-      ? `Tham gia đội ${teamName} - ${tournament.name} | VNDC Sport`
-      : `Mời tham gia đội - ${tournament.name} | VNDC Sport`;
+      ? `Tham gia đội ${teamName} - ${tournament.name} | Sporto`
+      : `Mời tham gia đội - ${tournament.name} | Sporto`;
       
     const cleanDesc = stripHtmlAndNormalize(tournament.description, 100);
     const description = teamName
       ? `Bạn được mời tham gia đội ${teamName} tại giải đấu ${tournament.name}. Nhấn vào link để xác nhận ngay!`
-      : cleanDesc || `Thông tin chi tiết và lịch thi đấu giải đấu ${tournament.name} trên hệ thống VNDC Sport. Đăng ký tham gia ngay!`;
+      : cleanDesc || `Thông tin chi tiết và lịch thi đấu giải đấu ${tournament.name} trên hệ thống Sporto. Đăng ký tham gia ngay!`;
       
     const imageUrl = tournament.bannerUrl || tournament.logoUrl || 'https://giaidau.vnvar.com/vndcsport.png';
     const canonicalUrl = `https://giaidau.vnvar.com/tournaments/${id}/join-team${pid ? `?pid=${pid}&token=${token ?? ''}` : ''}`;
@@ -64,7 +64,7 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
         title,
         description,
         url: canonicalUrl,
-        siteName: 'VNDC Sport',
+        siteName: 'Sporto',
         images: [{ url: imageUrl }],
         type: 'website',
       },
@@ -77,8 +77,8 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
     };
   }
 
-  const fallbackTitle = 'Mời tham gia đội thi đấu | VNDC Sport';
-  const fallbackDesc = 'Bạn nhận được lời mời tham gia đội thi đấu giải đấu tại VNDC Sport. Nhấn để xem chi tiết và xác nhận!';
+  const fallbackTitle = 'Mời tham gia đội thi đấu | Sporto';
+  const fallbackDesc = 'Bạn nhận được lời mời tham gia đội thi đấu giải đấu tại Sporto. Nhấn để xem chi tiết và xác nhận!';
   const fallbackImage = 'https://giaidau.vnvar.com/vndcsport.png';
 
   return {
@@ -88,7 +88,7 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
       title: fallbackTitle,
       description: fallbackDesc,
       url: `https://giaidau.vnvar.com/tournaments/${id}/join-team`,
-      siteName: 'VNDC Sport',
+      siteName: 'Sporto',
       images: [{ url: fallbackImage }],
       type: 'website',
     },

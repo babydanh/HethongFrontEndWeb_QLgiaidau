@@ -18,9 +18,9 @@ export async function generateMetadata({ params }: CommunityPageProps): Promise<
       const community = payload.data;
 
       if (community) {
-        const title = `${community.name} | VNDC Sport`;
+        const title = `${community.name} | Sporto`;
         const cleanDesc = stripHtmlAndNormalize(community.description, 160);
-        const description = cleanDesc || `Khám phá câu lạc bộ ${community.name} trên VNDC Sport.`;
+        const description = cleanDesc || `Khám phá câu lạc bộ ${community.name} trên Sporto.`;
         const imageUrl = community.bannerUrl || community.logoUrl || 'https://giaidau.vnvar.com/vndcsport.svg';
 
 
@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: CommunityPageProps): Promise<
             title,
             description,
             url: canonical,
-            siteName: 'VNDC Sport',
+            siteName: 'Sporto',
             type: 'website',
             images: [{ url: imageUrl, alt: community.name }],
           },
@@ -50,8 +50,8 @@ export async function generateMetadata({ params }: CommunityPageProps): Promise<
   }
 
   return {
-    title: 'Câu lạc bộ | VNDC Sport',
-    description: 'Khám phá các câu lạc bộ thể thao trên VNDC Sport.',
+    title: 'Câu lạc bộ | Sporto',
+    description: 'Khám phá các câu lạc bộ thể thao trên Sporto.',
     alternates: { canonical },
   };
 }

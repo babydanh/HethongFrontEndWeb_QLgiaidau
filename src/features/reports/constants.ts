@@ -30,3 +30,4 @@ export const REPORT_STATUS_LABELS: Record<ReportStatus, string> = {
   RESOLVED: 'Đã xác nhận vi phạm',
   REJECTED: 'Đã bác báo cáo',
 };
+

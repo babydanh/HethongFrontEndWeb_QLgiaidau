@@ -309,3 +309,4 @@ export const DEFAULT_NOTIFICATION_META: NotificationTypeMeta = {
   unreadCardClassName: 'border-blue-200 bg-blue-50/70 shadow-sm',
   dotClassName: 'bg-blue-600',
 };
+

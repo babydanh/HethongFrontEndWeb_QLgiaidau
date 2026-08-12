@@ -45,3 +45,4 @@ export const TicketStatusBadge: React.FC<TicketStatusBadgeProps> = ({ status, cl
     </span>
   );
 };
+

@@ -106,3 +106,4 @@ export const SeriesRulesTab: React.FC<SeriesRulesTabProps> = ({ series }) => {
     </div>
   );
 };
+

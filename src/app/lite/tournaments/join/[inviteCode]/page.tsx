@@ -102,7 +102,7 @@ export default function LiteJoinPage({ params }: { params: Promise<{ inviteCode:
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-8 max-w-sm w-full text-center space-y-4">
           <Image
             src="/vndcsport.svg"
-            alt="VNDC Sport Logo"
+            alt="Sporto Logo"
             width={200}
             height={80}
             className="h-20 w-auto object-contain mx-auto"
@@ -126,11 +126,11 @@ export default function LiteJoinPage({ params }: { params: Promise<{ inviteCode:
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white rounded-xl border border-slate-200 shadow-sm p-6 sm:p-8 space-y-6">
-        {/* VNDC Sport Official Logo — Big & Prominent */}
+        {/* Sporto Official Logo — Big & Prominent */}
         <div className="text-center">
           <Image
             src="/vndcsport.svg"
-            alt="VNDC Sport Logo"
+            alt="Sporto Logo"
             width={240}
             height={90}
             className="h-20 sm:h-24 w-auto object-contain mx-auto mb-4"

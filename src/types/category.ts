@@ -16,3 +16,4 @@ export interface Category {
   iconUrl?: string;
   categoryConfig?: CategoryConfig | null;
 }
+

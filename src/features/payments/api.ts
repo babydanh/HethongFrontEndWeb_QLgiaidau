@@ -106,3 +106,4 @@ export const paymentsApi = {
   mockVerify: (paymentId: string) =>
     api.post<ApiResponse<{ message: string }>>('/payments/mock-verify', { paymentId }),
 };
+

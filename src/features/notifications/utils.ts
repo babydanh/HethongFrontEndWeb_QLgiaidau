@@ -287,3 +287,4 @@ export const getNotificationActionConfig = (
 
   return null;
 };
+

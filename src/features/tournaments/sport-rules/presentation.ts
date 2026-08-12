@@ -121,3 +121,4 @@ const SPORT_RULE_PRESENTATIONS: Record<SportRuleKind, SportRulePresentation> = {
 export function getSportRulePresentation(kind: SportRuleKind): SportRulePresentation {
   return SPORT_RULE_PRESENTATIONS[kind];
 }
+

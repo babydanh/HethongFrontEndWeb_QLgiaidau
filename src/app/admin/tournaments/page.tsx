@@ -898,3 +898,4 @@ export default function AdminTournamentsPage() {
     </div>
   );
 }
+

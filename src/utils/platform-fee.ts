@@ -36,3 +36,4 @@ export function getPlatformFeeBreakdown(
     ruleLabel: 'Cố định 5.000đ / người',
   };
 }
+

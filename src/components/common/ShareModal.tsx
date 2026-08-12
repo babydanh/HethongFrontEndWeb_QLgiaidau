@@ -264,3 +264,4 @@ export default function ShareModal({ isOpen, onClose, shareUrl, title, fbAppId }
     </div>
   );
 }
+

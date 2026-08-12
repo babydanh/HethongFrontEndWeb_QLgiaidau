@@ -17,3 +17,4 @@ export default function OrganizerLayout({
     </RouteGuard>
   );
 }
+

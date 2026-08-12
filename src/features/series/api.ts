@@ -55,3 +55,4 @@ export const seriesApi = {
   unlinkEvent: (seriesId: string, legId: string, eventId: string) =>
     api.delete<SeriesEvent>(`/organizer/series/${seriesId}/legs/${legId}/events/${eventId}`),
 };
+

@@ -409,3 +409,4 @@ export default function RichTextEditor({ value, onChange, placeholder, error, la
     </div>
   );
 }
+

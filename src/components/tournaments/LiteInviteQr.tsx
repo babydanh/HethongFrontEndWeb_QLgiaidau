@@ -102,3 +102,4 @@ export function LiteInviteQr({ inviteUrl, tournamentName, compact = false }: Lit
     </section>
   );
 }
+

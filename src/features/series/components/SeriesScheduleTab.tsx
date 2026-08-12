@@ -190,3 +190,4 @@ export const SeriesScheduleTab: React.FC<SeriesScheduleTabProps> = ({ legs }) =>
     </div>
   );
 };
+

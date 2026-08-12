@@ -12,9 +12,9 @@ export async function generateMetadata({ params }: LayoutProps): Promise<Metadat
   const tournament = await getTournament(resolvedParams.id);
 
   if (tournament) {
-    const title = `${tournament.name} | VNDC Sport`;
+    const title = `${tournament.name} | Sporto`;
     const cleanDesc = stripHtmlAndNormalize(tournament.description, 160);
-    const description = cleanDesc || `Thông tin chi tiết và lịch thi đấu giải đấu ${tournament.name} trên hệ thống VNDC Sport. Đăng ký tham gia ngay!`;
+    const description = cleanDesc || `Thông tin chi tiết và lịch thi đấu giải đấu ${tournament.name} trên hệ thống Sporto. Đăng ký tham gia ngay!`;
     const imageUrl = tournament.bannerUrl || tournament.logoUrl || 'https://giaidau.vnvar.com/vndcsport.png';
 
     const canonicalUrl = `https://giaidau.vnvar.com/tournaments/${resolvedParams.id}`;
@@ -42,8 +42,8 @@ export async function generateMetadata({ params }: LayoutProps): Promise<Metadat
   }
 
   return {
-    title: 'Chi tiết giải đấu | VNDC Sport',
-    description: 'Thông tin chi tiết và lịch thi đấu giải đấu thể thao trên hệ thống VNDC Sport.',
+    title: 'Chi tiết giải đấu | Sporto',
+    description: 'Thông tin chi tiết và lịch thi đấu giải đấu thể thao trên hệ thống Sporto.',
   };
 }
 

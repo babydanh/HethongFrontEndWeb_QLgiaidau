@@ -4,3 +4,4 @@ import type { Tournament } from '@/types/tournament';
 export function shouldHideFeaturedCardText(tournament: Tournament): boolean {
   return tournament.hideFeaturedCardText === true || tournament.tournamentConfig?.hideFeaturedCardText === true;
 }
+

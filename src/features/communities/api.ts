@@ -3,8 +3,56 @@ import { Category } from '@/types/category';
 import { Community } from '@/types/community';
 import { PaginatedResponse, ApiResponse } from '@/types/api';
 import { Tournament } from '@/features/tournaments/api';
+import type {
+  CommunityDashboard,
+  CommunityPost,
+  CreateCommunityPostPayload,
+  CursorPage,
+} from '@/types/community-social';
 
 export type { Category, Community, PaginatedResponse, ApiResponse };
+export type { CommunityDashboard, CommunityPost, CreateCommunityPostPayload, CursorPage };
+
+interface BackendPost {
+  id: string;
+  communityId: string;
+  authorId: string;
+  body: string | null;
+  mediaUrls: string[];
+  status: CommunityPost['status'];
+  createdAt: string;
+  updatedAt: string;
+  reactionCount: number;
+  commentCount: number;
+  author?: CommunityPost['author'] | null;
+  topics?: string[];
+  mentions?: string[];
+}
+
+function mapPost(post: BackendPost): CommunityPost {
+  return {
+    id: post.id,
+    communityId: post.communityId,
+    author: post.author ?? { id: post.authorId, fullName: 'Thành viên CLB', avatarUrl: null },
+    content: post.body ?? '',
+    imageUrls: post.mediaUrls ?? [],
+    status: post.status,
+    createdAt: post.createdAt,
+    updatedAt: post.updatedAt,
+    reactionCount: post.reactionCount ?? 0,
+    commentCount: post.commentCount ?? 0,
+    topics: post.topics ?? [],
+    mentions: post.mentions ?? [],
+  };
+}
+
+function mapPostPage(posts: BackendPost[], meta?: { nextCursor?: string | null; hasMore?: boolean }): CursorPage<CommunityPost> {
+  return {
+    items: Array.isArray(posts) ? posts.map(mapPost) : [],
+    nextCursor: meta?.nextCursor ?? null,
+    hasMore: meta?.hasMore === true,
+  };
+}
 
 export interface MyCommunitiesResponse {
   created: Community[];
@@ -99,6 +147,29 @@ export const communitiesApi = {
   
   getCommunityById: (id: string) => 
     api.get<ApiResponse<Community>>(`/communities/${id}`),
+
+  getDashboard: (id: string) =>
+    api.get<ApiResponse<CommunityDashboard>>(`/communities/${id}/dashboard`),
+
+  getPosts: (id: string, params?: { cursor?: string; limit?: number; sort?: 'LATEST' }) =>
+    api.get<ApiResponse<BackendPost[]>>(`/communities/${id}/posts`, { params }).then((response) => ({
+      ...response,
+      data: mapPostPage(response.data, response.meta),
+    })),
+
+  createPost: (id: string, data: CreateCommunityPostPayload, idempotencyKey?: string) =>
+    api.post<ApiResponse<BackendPost>>(`/communities/${id}/posts`, {
+      body: data.content,
+      mediaUrls: data.imageUrls,
+      topics: data.topics,
+      mentions: data.mentions,
+    }, {
+      headers: idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : undefined,
+    }).then((response) => ({
+      ...response,
+      data: mapPost(response.data),
+    })),
+
   
   createCommunity: <T>(data: T) => 
     api.post<ApiResponse<Community>>('/communities', data),
@@ -180,3 +251,4 @@ export const communitiesApi = {
   getRankings: (id: string, limit?: number) => 
     api.get<ApiResponse<CommunityRankingRecord[]>>(`/communities/${id}/rankings`, { params: { limit } }),
 };
+

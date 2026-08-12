@@ -18,3 +18,4 @@ export function ReportStatusBadge({ status }: { status: ReportStatus }) {
     </span>
   );
 }
+

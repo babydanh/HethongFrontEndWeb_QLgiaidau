@@ -39,3 +39,4 @@ export const notificationsApi = {
       .patch<NotificationListResponse>('/notifications/read-all', {})
       .then((response) => response.data),
 };
+

@@ -46,3 +46,4 @@ export const isNetworkError = (error: unknown): boolean => {
   const err = error as ErrorWithResponse;
   return !err.response && err.message === 'Network Error';
 };
+

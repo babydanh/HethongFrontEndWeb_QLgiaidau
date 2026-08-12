@@ -6,3 +6,4 @@ export const getProfile = async (): Promise<ApiResponse<UserProfile>> => {
   const response = await api.get<ApiResponse<UserProfile>>('/users/profile');
   return response;
 };
+

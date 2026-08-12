@@ -2,7 +2,7 @@
  * Cấu hình chung cho toàn bộ app
  */
 export const APP_CONFIG = {
-  SITE_NAME: 'VNDC Sport',
+  SITE_NAME: 'Sporto',
   SITE_DESCRIPTION: 'Nền tảng quản lý giải đấu thể thao chuyên nghiệp',
   DEFAULT_PAGE_SIZE: 12,
   MAX_PAGE_SIZE: 50,
@@ -29,3 +29,4 @@ export const ERROR_CODES = {
   VALIDATION_ERROR: 422,
   INTERNAL_SERVER_ERROR: 500,
 };
+

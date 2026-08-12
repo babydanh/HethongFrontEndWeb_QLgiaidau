@@ -108,3 +108,4 @@ export function EloTierBadge({ elo, tierName, size = 'md', className, ...props }
     </div>
   );
 }
+

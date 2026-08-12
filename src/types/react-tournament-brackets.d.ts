@@ -82,3 +82,4 @@ declare module '@g-loot/react-tournament-brackets' {
   export const createTheme: (theme: unknown) => unknown;
   export const MATCH_STATES: unknown;
 }
+

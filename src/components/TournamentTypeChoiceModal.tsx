@@ -83,3 +83,4 @@ export function TournamentTypeChoiceModal({
     </Modal>
   );
 }
+

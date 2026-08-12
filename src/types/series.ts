@@ -153,3 +153,4 @@ export interface QueryStandingsDto {
   sort?: string;
   order?: 'asc' | 'desc';
 }
+

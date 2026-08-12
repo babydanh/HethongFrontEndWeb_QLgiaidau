@@ -8,3 +8,4 @@ export const localeCookieName = 'NEXT_LOCALE';
 export function isAppLocale(value: string | null | undefined): value is AppLocale {
   return locales.includes(value as AppLocale);
 }
+

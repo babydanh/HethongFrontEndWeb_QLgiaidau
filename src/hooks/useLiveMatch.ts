@@ -244,3 +244,4 @@ export function useLiveMatch(matchId: string) {
     error,
   };
 }
+

@@ -110,3 +110,4 @@ export const StandingsTable: React.FC<StandingsTableProps> = ({ standings, class
     </div>
   );
 };
+

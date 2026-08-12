@@ -274,7 +274,7 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[28
                       <div className={`absolute inset-0 bg-gradient-to-tr ${getGradientBg(tournament.category?.name)} opacity-30`} />
                       <img
                         src="/vndcsport.svg"
-                        alt="VNDC Sport Logo"
+                        alt="Sporto Logo"
                         className="w-48 h-auto object-contain relative z-10 opacity-75"
                         draggable="false"
                       />
@@ -372,3 +372,4 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[28
     </div>
   );
 }
+

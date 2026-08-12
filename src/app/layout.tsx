@@ -17,38 +17,38 @@ export const metadataBase = new URL('https://sporto.asia');
 export const metadata: Metadata = {
   metadataBase: new URL('https://sporto.asia'),
   title: {
-    default: "VNDC Sport - Nền tảng Quản lý và Tổ chức Giải đấu Thể thao",
-    template: "%s | VNDC Sport",
+    default: "Sporto - Nền tảng Quản lý và Tổ chức Giải đấu Thể thao",
+    template: "%s | Sporto",
   },
-  description: "Nền tảng tổ chức, quản lý và đăng ký tham gia giải đấu thể thao chuyên nghiệp (Pickleball, Cầu lông, Quần vợt, Bóng bàn).",
-  keywords: ["VNDC Sport", "quản lý giải đấu", "giải đấu pickleball", "tổ chức giải đấu", "bảng xếp hạng ELO", "cầu lông", "quần vợt"],
-  authors: [{ name: "VNDC Sport Team" }],
-  creator: "VNDC Sport",
-  publisher: "VNDC Sport",
+  description: "Nền tảng tổ chức, quản lý và đăng ký tham gia giải đấu thể thao chuyên nghiệp (Pickleball, Cầu lông, Quần vợt, Bóng bàn, Bóng đá).",
+  keywords: ["Sporto", "quản lý giải đấu", "giải đấu pickleball", "tổ chức giải đấu", "bảng xếp hạng ELO", "cầu lông", "quần vợt", "bóng đá"],
+  authors: [{ name: "Sporto Team" }],
+  creator: "Sporto",
+  publisher: "Sporto",
   alternates: {
     canonical: '/',
   },
   openGraph: {
-    title: "VNDC Sport - Nền tảng Quản lý giải đấu",
+    title: "Sporto - Nền tảng Quản lý giải đấu",
     description: "Nền tảng tổ chức và tham gia giải đấu thể thao câu lạc bộ chuyên nghiệp.",
-    siteName: "VNDC Sport",
+    siteName: "Sporto",
     url: 'https://sporto.asia',
     type: "website",
     locale: "vi_VN",
     images: [
       {
-        url: '/vndcsport.png',
+        url: '/sporto.svg',
         width: 1200,
         height: 630,
-        alt: 'VNDC Sport - Nền tảng Quản lý giải đấu',
+        alt: 'Sporto - Nền tảng Quản lý giải đấu',
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "VNDC Sport - Nền tảng Quản lý giải đấu",
+    title: "Sporto - Nền tảng Quản lý giải đấu",
     description: "Nền tảng tổ chức và tham gia giải đấu thể thao câu lạc bộ chuyên nghiệp.",
-    images: ['/vndcsport.png'],
+    images: ['/sporto.svg'],
   },
   icons: {
     icon: [
@@ -70,9 +70,9 @@ export default async function RootLayout({
   const organizationSchema = {
     '@context': 'https://schema.org',
     '@type': 'SportsOrganization',
-    name: 'VNDC Sport',
-    url: 'https://giaidau.vnvar.com',
-    logo: 'https://giaidau.vnvar.com/vndcsport.png',
+    name: 'Sporto',
+    url: 'https://sporto.asia',
+    logo: 'https://sporto.asia/sporto.svg',
     description: 'Nền tảng tổ chức, quản lý và tham gia giải đấu thể thao câu lạc bộ chuyên nghiệp.',
     sameAs: [],
   };
@@ -95,3 +95,4 @@ export default async function RootLayout({
     </html>
   );
 }
+

@@ -46,7 +46,7 @@ export default function GalleryCarousel({ images = [], defaultBanner, className 
         <div className="relative z-10 flex flex-col items-center gap-2">
           <img
             src="/vndcsport.svg"
-            alt="VNDC Sport Logo"
+            alt="Sporto Logo"
             className="h-16 md:h-20 w-auto object-contain drop-shadow-md brightness-0 invert"
           />
           <span className="text-[11px] tracking-widest text-slate-300 font-bold uppercase mt-1">HỆ THỐNG QUẢN LÝ GIẢI ĐẤU CHUYÊN NGHIỆP</span>
@@ -116,3 +116,4 @@ export default function GalleryCarousel({ images = [], defaultBanner, className 
     </div>
   );
 }
+

@@ -130,3 +130,4 @@ export function buildDefaultSportRules(kind: SportRuleKind = 'BADMINTON'): Defau
     format: base.format ? { ...base.format } : undefined,
   };
 }
+

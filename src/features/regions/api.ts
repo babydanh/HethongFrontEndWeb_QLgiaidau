@@ -15,3 +15,4 @@ export const regionsApi = {
   getWards: (districtCode: string, search?: string) => 
     api.get<ApiResponse<Region[]>>('/regions/wards', { params: { districtCode, search } }).then(res => res.data),
 };
+

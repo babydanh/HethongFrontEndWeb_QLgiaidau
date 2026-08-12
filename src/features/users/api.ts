@@ -86,3 +86,4 @@ export const usersApi = {
   rejectChangeRequest: (id: string, data?: { adminNote?: string }) =>
     api.patch<ApiResponse<UserChangeRequest>>(`/users/admin/change-requests/${id}/reject`, data).then(res => res.data),
 };
+

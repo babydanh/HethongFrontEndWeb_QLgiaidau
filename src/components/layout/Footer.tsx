@@ -12,7 +12,7 @@ export function Footer() {
             <Link href="/" className="inline-block mb-3">
               <img 
                 src="/vndcsport.svg" 
-                alt="VNSPORT Logo" 
+                alt="Sporto Logo" 
                 className="h-16 md:h-20 w-auto object-contain"
               />
             </Link>
@@ -44,9 +44,10 @@ export function Footer() {
           </div>
         </div>
         <div className="mt-8 border-t border-slate-100 pt-8 text-center text-sm text-slate-500 select-none">
-          © 2026 VNDC Sport. Tất cả các quyền được bảo lưu.
+          © 2026 Sporto. Tất cả các quyền được bảo lưu.
         </div>
       </div>
     </footer>
   );
 }
+

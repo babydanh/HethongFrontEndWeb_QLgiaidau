@@ -11,3 +11,4 @@ export const authApi = {
   requestPhoneVerification: (phoneNumber?: string) => api.post<ApiResponse<unknown>>('/auth/verify-phone/request', { phoneNumber }).then(res => res.data),
   confirmPhoneVerification: (code: string) => api.post<ApiResponse<unknown>>('/auth/verify-phone/confirm', { code }).then(res => res.data),
 };
+

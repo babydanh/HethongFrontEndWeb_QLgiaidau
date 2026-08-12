@@ -40,3 +40,4 @@ export interface NotificationListResult {
   items: NotificationItem[];
   meta?: NotificationListResponse['meta'];
 }
+

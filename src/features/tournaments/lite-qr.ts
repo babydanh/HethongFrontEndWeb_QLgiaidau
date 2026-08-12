@@ -64,3 +64,4 @@ export function isScannableJoinUrl(value: string): boolean {
     return false;
   }
 }
+

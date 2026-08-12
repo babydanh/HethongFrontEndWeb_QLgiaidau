@@ -41,3 +41,4 @@ export const reportsApi = {
   resolve: (reportId: string, status: Extract<ReportStatus, 'RESOLVED' | 'REJECTED'>, resolutionNote: string, category?: ReportCategory) =>
     api.post<ApiResponse<ViolationReport>>(`/admin/reports/${reportId}/resolve`, { status, resolutionNote, category }),
 };
+

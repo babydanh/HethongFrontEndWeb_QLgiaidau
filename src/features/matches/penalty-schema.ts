@@ -294,3 +294,4 @@ export function getPenaltySchema(sportKind: ResolvedSportRuleView['kind']): Pena
 
   return DEFAULT_SCHEMA;
 }
+

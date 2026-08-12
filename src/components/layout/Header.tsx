@@ -289,7 +289,7 @@ export function Header() {
           <Link href="/" className="relative flex h-full items-center py-0">
             <Image
               src="/vndcsport.svg"
-              alt="VNDC Sport Logo"
+              alt="Sporto Logo"
               width={140}
               height={140}
               className="h-[140px] w-auto object-contain transition-transform duration-200 hover:scale-105"
@@ -745,3 +745,4 @@ export function Header() {
     </header>
   );
 }
+

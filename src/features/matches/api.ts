@@ -52,3 +52,4 @@ export const matchesApi = {
   getCheerCount: (id: string) =>
     api.get<{ data: { cheerCount: number } }>(`/matches/${id}/cheer-count`).then((res) => res.data),
 };
+

@@ -37,3 +37,4 @@ export function getRegistrationModeUi(
 ): RegistrationModeUi {
   return REGISTRATION_MODE_UI[mode ?? 'OPEN'];
 }
+

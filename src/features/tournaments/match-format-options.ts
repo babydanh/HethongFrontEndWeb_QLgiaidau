@@ -74,3 +74,4 @@ export function normalizeMatchFormatForCategory(
   return allowedOptions[0]?.value ?? 'MALE_DOUBLES';
 }
 
+

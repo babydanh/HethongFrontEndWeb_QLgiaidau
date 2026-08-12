@@ -48,3 +48,4 @@ export function InfiniteScrollTrigger({
     </div>
   );
 }
+

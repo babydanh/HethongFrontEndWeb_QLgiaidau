@@ -47,7 +47,7 @@ function CreateTournamentForm() {
         {/* Header */}
         <div className="mb-8 text-center">
           <div className="w-24 h-24 flex items-center justify-center mx-auto mb-4">
-            <Image src="/vndcsport.svg" alt="VNDC Sport Logo" width={96} height={96} className="w-full h-full object-contain" priority />
+            <Image src="/vndcsport.svg" alt="Sporto Logo" width={96} height={96} className="w-full h-full object-contain" priority />
           </div>
           <h1 className="text-3xl font-bold text-slate-900">Tạo Giải Đấu Mới</h1>
           <p className="text-slate-500 mt-2 font-medium">Lập giải đấu nháp rõ ràng trong 4 bước</p>
@@ -116,3 +116,4 @@ export default function CreateTournamentPage() {
     </Suspense>
   );
 }
+

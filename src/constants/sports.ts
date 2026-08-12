@@ -64,3 +64,4 @@ export function getSportColor(name?: string | null): string {
   if (lower.includes('bóng đá') || lower.includes('football') || lower.includes('soccer')) return 'bg-teal-600';
   return 'bg-slate-500';
 }
+

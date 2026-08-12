@@ -33,3 +33,4 @@ export const venuesApi = {
   addCourt: <T>(id: string, data: T) => api.post<ApiResponse<Court>>(`/venues/${id}/courts`, data),
   deleteCourt: (id: string, courtId: string) => api.delete<ApiResponse<void>>(`/venues/${id}/courts/${courtId}`),
 };
+

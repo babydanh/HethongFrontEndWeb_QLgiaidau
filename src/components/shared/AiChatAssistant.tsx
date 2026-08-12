@@ -128,7 +128,7 @@ export default function AiChatAssistant() {
     {
       role: 'assistant',
       content:
-        'Xin chào! Tôi là **Trợ lý ảo VNDC Sport**. Tôi có thể giúp gì cho bạn hôm nay? Bạn có thể hỏi tôi về cách đăng ký giải, cách tính ELO, chính sách hoàn tiền, hoặc các tính năng khác trên hệ thống.',
+        'Xin chào! Tôi là **Trợ lý ảo Sporto**. Tôi có thể giúp gì cho bạn hôm nay? Bạn có thể hỏi tôi về cách đăng ký giải, cách tính ELO, chính sách hoàn tiền, hoặc các tính năng khác trên hệ thống.',
     },
   ]);
   const [input, setInput] = useState('');
@@ -453,7 +453,7 @@ export default function AiChatAssistant() {
                 </div>
                 <div>
                   <p className="text-white font-bold text-[13px] leading-tight flex items-center gap-1">
-                    {mode === 'support' ? 'Chat trực tiếp với admin' : 'Trợ lý AI VNDC Sport'}
+                    {mode === 'support' ? 'Chat trực tiếp với admin' : 'Trợ lý AI Sporto'}
                     {mode === 'ai' && <Sparkles className="w-3 h-3 text-yellow-300 animate-pulse" />}
                   </p>
                   <p className="text-white/85 text-[10px] leading-tight mt-0.5">
@@ -508,7 +508,7 @@ export default function AiChatAssistant() {
                     ) : (
                       <img
                         src="/vndcsport.svg"
-                        alt="VNDC Sport"
+                        alt="Sporto"
                         className="h-5 w-5 object-contain"
                       />
                     )}
@@ -575,7 +575,7 @@ export default function AiChatAssistant() {
                     </div>
                     <div className={`max-w-[78%] ${mine ? 'text-right' : 'text-left'}`}>
                       <p className="mb-1 truncate text-[10px] font-semibold text-slate-500">
-                        {mine ? user?.fullName || 'Bạn' : msg.senderName || 'Hỗ trợ VNDC Sport'}
+                        {mine ? user?.fullName || 'Bạn' : msg.senderName || 'Hỗ trợ Sporto'}
                       </p>
                       <div
                         className={`px-3.5 py-2.5 rounded-lg text-[12.5px] leading-relaxed shadow-sm border whitespace-pre-wrap break-words ${
@@ -717,3 +717,4 @@ export default function AiChatAssistant() {
     </div>
   );
 }
+

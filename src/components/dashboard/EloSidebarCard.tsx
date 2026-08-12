@@ -89,3 +89,4 @@ export default function EloSidebarCard({ eloPoints, matchesWon, matchesPlayed, w
     </div>
   );
 }
+

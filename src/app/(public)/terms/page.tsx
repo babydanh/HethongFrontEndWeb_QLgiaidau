@@ -16,7 +16,7 @@ export default function TermsPage() {
             <span className="text-xs font-bold uppercase tracking-wider text-slate-450">Pháp lý & Điều khoản</span>
           </div>
           <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
-            Điều khoản sử dụng VNSPORT
+            Điều khoản sử dụng Sporto
           </h1>
           <p className="text-slate-500 font-medium text-xs mt-2">
             Cập nhật lần cuối: ngày 14 tháng 07 năm 2026
@@ -30,7 +30,7 @@ export default function TermsPage() {
               1. Chấp thuận điều khoản
             </h2>
             <p>
-              Chào mừng bạn đến với <strong>VNSPORT</strong> (&quot;Nền tảng&quot;), được vận hành bởi Công ty TNHH VNDC Sport. Bằng việc đăng ký tài khoản, truy cập hoặc sử dụng bất kỳ tính năng nào của VNSPORT trên cả hai nền tảng Web và ứng dụng di động, bạn đồng ý tuân thủ và chịu sự ràng buộc bởi các Điều khoản sử dụng này. Nếu bạn không đồng ý với bất kỳ phần nào của các điều khoản này, vui lòng ngừng sử dụng dịch vụ ngay lập tức.
+              Chào mừng bạn đến với <strong>Sporto</strong> (&quot;Nền tảng&quot;). Bằng việc đăng ký tài khoản, truy cập hoặc sử dụng bất kỳ tính năng nào của Sporto trên cả hai nền tảng Web và ứng dụng di động, bạn đồng ý tuân thủ và chịu sự ràng buộc bởi các Điều khoản sử dụng này. Nếu bạn không đồng ý với bất kỳ phần nào của các điều khoản này, vui lòng ngừng sử dụng dịch vụ ngay lập tức.
             </p>
           </section>
 
@@ -62,7 +62,7 @@ export default function TermsPage() {
               4. Giao dịch tài chính &amp; Hoàn tiền
             </h2>
             <p>
-              Mọi giao dịch đóng lệ phí tham gia giải đấu trực tuyến được xử lý qua cổng thanh toán liên kết của VNSPORT. Việc rút lui khỏi giải đấu và yêu cầu hoàn tiền phải tuân thủ chính sách hoàn trả cụ thể của từng giải đấu do BTC quy định. VNSPORT chỉ chịu trách nhiệm chuyển tiền hoàn lại khi yêu cầu đáp ứng đủ điều kiện quy định và được BTC phê duyệt hợp lệ.
+              Mọi giao dịch đóng lệ phí tham gia giải đấu trực tuyến được xử lý qua cổng thanh toán liên kết của Sporto. Việc rút lui khỏi giải đấu và yêu cầu hoàn tiền phải tuân thủ chính sách hoàn trả cụ thể của từng giải đấu do BTC quy định. Sporto chỉ chịu trách nhiệm chuyển tiền hoàn lại khi yêu cầu đáp ứng đủ điều kiện quy định và được BTC phê duyệt hợp lệ.
             </p>
           </section>
 
@@ -71,7 +71,7 @@ export default function TermsPage() {
               5. Quyền sở hữu trí tuệ
             </h2>
             <p>
-              Tất cả nội dung, nhãn hiệu, logo, mã nguồn, thiết kế đồ họa và công nghệ liên quan thuộc sở hữu độc quyền của VNDC Sport hoặc các đối tác cấp phép. Bạn không được sao chép, sửa đổi, phân phối hoặc sử dụng cho mục đích thương mại mà không có sự đồng ý trước bằng văn bản từ chúng tôi.
+              Tất cả nội dung, nhãn hiệu, logo, mã nguồn, thiết kế đồ họa và công nghệ liên quan thuộc sở hữu độc quyền của Sporto hoặc các đối tác cấp phép. Bạn không được sao chép, sửa đổi, phân phối hoặc sử dụng cho mục đích thương mại mà không có sự đồng ý trước bằng văn bản từ chúng tôi.
             </p>
           </section>
 
@@ -80,7 +80,7 @@ export default function TermsPage() {
               6. Giới hạn trách nhiệm
             </h2>
             <p>
-              VNSPORT cung cấp nền tảng kết nối và quản lý kỹ thuật. Chúng tôi không chịu trách nhiệm đối với bất kỳ chấn thương thể chất, tổn thất tài sản cá nhân hay sự cố phát sinh ngoài ý muốn nào xảy ra trong quá trình diễn ra các giải đấu thực tế trên sân. BTC và người chơi tự chịu trách nhiệm đảm bảo các điều kiện an toàn sức khỏe và y tế cần thiết khi thi đấu.
+              Sporto cung cấp nền tảng kết nối và quản lý kỹ thuật. Chúng tôi không chịu trách nhiệm đối với bất kỳ chấn thương thể chất, tổn thất tài sản cá nhân hay sự cố phát sinh ngoài ý muốn nào xảy ra trong quá trình diễn ra các giải đấu thực tế trên sân. BTC và người chơi tự chịu trách nhiệm đảm bảo các điều kiện an toàn sức khỏe và y tế cần thiết khi thi đấu.
             </p>
           </section>
 
@@ -97,7 +97,7 @@ export default function TermsPage() {
 
         {/* Footer Link */}
         <div className="p-6 md:p-8 border-t border-slate-100 bg-slate-50/50 flex justify-between items-center text-xs">
-          <span className="text-slate-450 font-bold">© 2026 VNDC Sport. Bảo lưu mọi quyền.</span>
+          <span className="text-slate-450 font-bold">© 2026 Sporto. Bảo lưu mọi quyền.</span>
           <Link
             href="/"
             className="text-blue-650 hover:text-blue-700 font-bold flex items-center gap-1"
@@ -109,3 +109,4 @@ export default function TermsPage() {
     </div>
   );
 }
+

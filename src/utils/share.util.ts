@@ -72,3 +72,4 @@ export async function triggerShare(options: ShareOptions): Promise<boolean> {
 
   return false; // Thiết bị Desktop hoặc không hỗ trợ, cần mở Modal thủ công
 }
+

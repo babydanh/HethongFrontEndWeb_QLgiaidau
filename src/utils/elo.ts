@@ -40,3 +40,4 @@ export function calcEloProgress(elo: number): {
 export function getTierBgColor(tierColor: string): string {
   return tierColor.split(' ')[0] || 'bg-slate-500';
 }
+

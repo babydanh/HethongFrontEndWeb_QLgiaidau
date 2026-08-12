@@ -347,12 +347,12 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
                 <>
                   <Input
                     label="Email hoặc SĐT đồng đội"
-                    placeholder="partner@vnsport.com hoặc 0912***"
+                    placeholder="partner@Sporto.com hoặc 0912***"
                     {...register('partnerEmailOrPhone')}
                     error={errors.partnerEmailOrPhone?.message}
                   />
                   <p className="text-xs text-slate-400 -mt-3">
-                    Đồng đội cần có tài khoản VNSport. Nếu chưa có, hãy đăng ký trước khi điền.
+                    Đồng đội cần có tài khoản Sporto. Nếu chưa có, hãy đăng ký trước khi điền.
                   </p>
                 </>
               )}

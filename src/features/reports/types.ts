@@ -80,3 +80,4 @@ export interface ReportFilters {
   dateTo?: string;
   cursor?: string;
 }
+

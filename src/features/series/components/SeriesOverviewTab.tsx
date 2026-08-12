@@ -133,3 +133,4 @@ export const SeriesOverviewTab: React.FC<SeriesOverviewTabProps> = ({ series, le
     </div>
   );
 };
+

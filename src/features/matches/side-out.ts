@@ -60,3 +60,4 @@ export const setServingTeamSideOutState = (
   serverNumber: 1,
   openingSequenceDone,
 });
+

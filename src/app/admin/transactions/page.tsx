@@ -545,7 +545,7 @@ export default function AdminTransactionsList() {
           <div className="w-full max-w-md bg-white rounded-xl border border-gray-200 shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
             <div className="px-6 py-5 border-b border-gray-100 flex items-start justify-between">
               <div>
-                <p className="text-[10px] uppercase tracking-widest text-blue-600 font-bold">VNSport</p>
+                <p className="text-[10px] uppercase tracking-widest text-blue-600 font-bold">Sporto</p>
                 <h3 className="text-lg font-bold text-gray-900 mt-1">Chung tu thanh toan</h3>
                 <p className="text-xs text-gray-500 mt-1">Ma chung tu: {selectedReceipt.receiptNumber}</p>
               </div>
@@ -563,7 +563,7 @@ export default function AdminTransactionsList() {
                 <div className="flex justify-between"><span className="text-gray-500">Thue</span><b>{formatCurrency(selectedReceipt.taxAmount)}</b></div>
                 <div className="border-t border-gray-200 pt-3 flex justify-between text-base"><span className="font-bold">Tong thanh toan</span><b className="text-blue-600">{formatCurrency(selectedReceipt.totalAmount)}</b></div>
               </div>
-              <p className="text-[11px] leading-5 text-gray-500">Day la chung tu dien tu ghi nhan giao dich tren VNSport, khong thay the hoa don VAT hoac hoa don dien tu neu giao dich thuoc truong hop phai xuat hoa don.</p>
+              <p className="text-[11px] leading-5 text-gray-500">Day la chung tu dien tu ghi nhan giao dich tren Sporto, khong thay the hoa don VAT hoac hoa don dien tu neu giao dich thuoc truong hop phai xuat hoa don.</p>
             </div>
             <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex justify-end gap-2">
               <button onClick={() => window.print()} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg">In chung tu</button>
@@ -641,3 +641,4 @@ export default function AdminTransactionsList() {
     </div>
   );
 }
+

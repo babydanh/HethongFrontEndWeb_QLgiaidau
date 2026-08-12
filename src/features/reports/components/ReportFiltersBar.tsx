@@ -62,3 +62,4 @@ export function ReportFiltersBar({ filters, onChange }: ReportFiltersBarProps) {
     </section>
   );
 }
+

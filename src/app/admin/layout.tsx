@@ -82,7 +82,7 @@ export default function AdminLayout({
             <Link href="/" className="flex items-center gap-2 py-2">
               <img 
                 src="/vndcsport.svg" 
-                alt="VNDC Sport Logo" 
+                alt="Sporto Logo" 
                 className="h-8 w-auto object-contain"
               />
               <span className="text-sm font-bold text-slate-800 border-l border-slate-350 pl-2">Admin</span>
@@ -179,3 +179,4 @@ export default function AdminLayout({
     </RouteGuard>
   );
 }
+

@@ -563,6 +563,7 @@ export default function CommunityDetailPage() {
           <div>
             {activeTab === 'overview' && (
               <OverviewTab
+                communityId={id}
                 onGoToTournaments={() => setActiveTab('tournaments')}
                 onGoToRankings={() => setActiveTab('rankings')}
               />

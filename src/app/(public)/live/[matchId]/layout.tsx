@@ -21,10 +21,10 @@ export async function generateMetadata({ params }: LayoutProps): Promise<Metadat
       if (match) {
         const team1 = match.participant1?.teamName || 'Chưa xác định';
         const team2 = match.participant2?.teamName || 'Chưa xác định';
-        const tournamentName = match.tournament?.name || 'Giải đấu VNDC Sport';
+        const tournamentName = match.tournament?.name || 'Giải đấu Sporto';
         const sportName = match.tournament?.category?.name || 'Thể thao';
         const title = `Trực tiếp: ${team1} vs ${team2} | ${tournamentName}`;
-        const description = `Xem tỷ số trực tuyến và diễn biến trận đấu giữa ${team1} vs ${team2}, bộ môn ${sportName} trên VNDC Sport.`;
+        const description = `Xem tỷ số trực tuyến và diễn biến trận đấu giữa ${team1} vs ${team2}, bộ môn ${sportName} trên Sporto.`;
         const imageUrl = match.tournament?.bannerUrl || 'https://giaidau.vnvar.com/vndcsport.svg';
 
         return {
@@ -52,8 +52,8 @@ export async function generateMetadata({ params }: LayoutProps): Promise<Metadat
   }
 
   return {
-    title: 'Trực tiếp trận đấu | VNDC Sport',
-    description: 'Bảng điểm và tỷ số trực tiếp các trận đấu thể thao trên VNDC Sport.',
+    title: 'Trực tiếp trận đấu | Sporto',
+    description: 'Bảng điểm và tỷ số trực tiếp các trận đấu thể thao trên Sporto.',
     alternates: { canonical },
   };
 }

@@ -201,3 +201,4 @@ export const SeriesStandingsTab: React.FC<SeriesStandingsTabProps> = ({ seriesId
     </div>
   );
 };
+

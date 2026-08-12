@@ -848,3 +848,4 @@ function RestRankingsTable({ rankings, selectedMatchType }: { rankings: PlayerRa
         </div>
     );
 }
+

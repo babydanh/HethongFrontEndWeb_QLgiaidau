@@ -1080,7 +1080,7 @@ export default function MatchesListPage() {
                     {group.tournamentLogoUrl ? (
                       <img src={group.tournamentLogoUrl} alt={group.tournamentName} className="w-10 h-10 object-contain" />
                     ) : (
-                      <img src="/vndcsport.svg" alt="VNDC Sport" className="w-10 h-10 object-contain opacity-60" />
+                      <img src="/vndcsport.svg" alt="Sporto" className="w-10 h-10 object-contain opacity-60" />
                     )}
                   </Link>
                   <div>
@@ -1486,3 +1486,4 @@ export default function MatchesListPage() {
     </div>
   );
 }
+

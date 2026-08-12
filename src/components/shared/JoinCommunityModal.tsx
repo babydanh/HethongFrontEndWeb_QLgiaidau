@@ -110,3 +110,4 @@ export function JoinCommunityModal({ community, isOpen, onClose, onSuccess }: Jo
     </Modal>
   );
 }
+

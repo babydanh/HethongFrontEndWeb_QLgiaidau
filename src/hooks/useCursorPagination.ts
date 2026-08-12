@@ -71,3 +71,4 @@ export function useCursorPagination<T extends { id?: string }>(
     resetAndFetch: () => fetchNextPage(true)
   };
 }
+

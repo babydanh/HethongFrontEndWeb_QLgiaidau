@@ -134,3 +134,4 @@ export const getParticipantStatusClassName = (status?: string | null) => {
 
   return 'border-slate-200 bg-slate-100 text-slate-600';
 };
+

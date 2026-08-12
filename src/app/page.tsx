@@ -1028,7 +1028,7 @@ export default function HomePage() {
                 Tất cả
               </span>
             </button>
-            {categories.map((cat) => {
+            {categories.filter(cat => cat.isActive !== false).map((cat) => {
               const isActive = selectedCategoryId === cat.id;
               return (
                 <button

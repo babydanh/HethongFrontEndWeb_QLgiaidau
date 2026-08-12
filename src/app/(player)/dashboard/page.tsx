@@ -580,6 +580,16 @@ export default function DashboardPage() {
                 <span className="text-[10px] font-extrabold text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">BTC</span>
               </Link>
 
+              <Link href="/series" className="flex items-center justify-between p-3 rounded-lg hover:bg-indigo-50/60 text-slate-800 font-bold text-xs transition-all border border-slate-200/80 hover:border-indigo-200">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-600 shrink-0">
+                    <Trophy className="w-4 h-4" />
+                  </div>
+                  <span>Chuỗi giải đấu</span>
+                </div>
+                <span className="text-[10px] font-extrabold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">Series</span>
+              </Link>
+
               {(user?.roles?.includes('ORGANIZER') || user?.roles?.includes('ADMIN')) && (
                 <Link href="/organizer/series" className="flex items-center justify-between p-3 rounded-lg hover:bg-indigo-50/60 text-slate-800 font-bold text-xs transition-all border border-slate-200/80 hover:border-indigo-200">
                   <div className="flex items-center gap-3">

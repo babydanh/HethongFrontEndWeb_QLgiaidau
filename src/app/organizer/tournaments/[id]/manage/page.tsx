@@ -375,6 +375,12 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
             <ModalContent className="bg-white rounded-lg p-6">
               <ModalHeader><ModalTitle className="text-xl font-bold text-slate-900">Cấu hình vòng đấu</ModalTitle></ModalHeader>
               <div className="space-y-4 mt-4">
+                {s.isLiteMode && (
+                  <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-xs font-bold text-amber-900 flex items-center gap-2">
+                    <Zap className="w-4 h-4 text-amber-600 shrink-0" />
+                    Chế độ Tự do (Lite) đang bật toàn giải: Hệ thống tự động tối giản luật, cho phép nhập điểm trực tiếp linh hoạt ở tất cả các vòng.
+                  </div>
+                )}
                 <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
                   <p className="text-sm font-bold text-slate-900">{sportPresentation.sportLabel}: {sportPresentation.scoringLabel}</p>
                   <p className="mt-1 text-xs font-semibold text-slate-500">{sportPresentation.roundConfigHint}</p>
@@ -389,9 +395,9 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                         onClick={() => {
                           s.setStageMaxSets(preset.setsToWin * 2 - 1);
                           s.setStagePointsPerSet(preset.pointsPerSet);
-                          s.setStageWinBy2Points(preset.winByTwo);
-                          s.setStageMaxDeucePoints(preset.maxPoints);
-                          s.setStageSuperTiebreakEnabled(preset.tiebreakPoints !== null);
+                          s.setStageWinBy2Points(s.isLiteMode ? false : preset.winByTwo);
+                          s.setStageMaxDeucePoints(s.isLiteMode ? preset.pointsPerSet : preset.maxPoints);
+                          s.setStageSuperTiebreakEnabled(!s.isLiteMode && preset.tiebreakPoints !== null);
                           s.setStageSuperTiebreakPoints(preset.tiebreakPoints ?? preset.pointsPerSet);
                         }}
                         className="rounded-lg border border-blue-200 bg-white px-3 py-3 text-left transition-all hover:border-blue-400 hover:bg-blue-100"
@@ -404,12 +410,12 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-bold text-slate-500">Vị trí thi đấu (Ghi đè)</label>
+                    <label className="text-xs font-bold text-slate-500">Địa điểm sân đấu</label>
                     <input
                       type="text"
                       value={s.stageVenueId}
                       onChange={(e) => s.setStageVenueId(e.target.value)}
-                      placeholder="Nhập vị trí riêng (để trống sẽ kế thừa giải đấu)..."
+                      placeholder="Nhập sân thi đấu riêng cho vòng này (để trống sẽ dùng địa điểm giải đấu)..."
                       className="w-full border border-slate-300 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
@@ -421,22 +427,26 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                     </select></div>
                   <div><label className="text-xs font-bold text-slate-500">{sportPresentation.setUnitLabel}</label>
                     <input type="number" value={s.stagePointsPerSet} onChange={e => s.setStagePointsPerSet(Number(e.target.value))} className="w-full border rounded-lg p-2 text-sm" /></div>
-                  <div className="flex items-center gap-2"><input type="checkbox" checked={s.stageWinBy2Points} onChange={e => s.setStageWinBy2Points(e.target.checked)} />
-                    <label className="text-xs font-bold text-slate-500">{sportPresentation.winByTwoLabel}</label></div>
-                  {s.stageWinBy2Points && <div><label className="text-xs font-bold text-slate-500">{sportPresentation.maxScoreLabel}</label>
-                    <input type="number" value={s.stageMaxDeucePoints} onChange={e => s.setStageMaxDeucePoints(Number(e.target.value))} className="w-full border rounded-lg p-2 text-sm" /></div>}
-                  {supportsTiebreakInput && (
-                    <div>
-                      <label className="text-xs font-bold text-slate-500">{sportPresentation.tiebreakLabel}</label>
-                      <input type="number" value={s.stageSuperTiebreakPoints} onChange={e => s.setStageSuperTiebreakPoints(Number(e.target.value))} className="w-full border rounded-lg p-2 text-sm" />
-                    </div>
+                  {!s.isLiteMode && (
+                    <>
+                      <div className="flex items-center gap-2"><input type="checkbox" checked={s.stageWinBy2Points} onChange={e => s.setStageWinBy2Points(e.target.checked)} />
+                        <label className="text-xs font-bold text-slate-500">{sportPresentation.winByTwoLabel}</label></div>
+                      {s.stageWinBy2Points && <div><label className="text-xs font-bold text-slate-500">{sportPresentation.maxScoreLabel}</label>
+                        <input type="number" value={s.stageMaxDeucePoints} onChange={e => s.setStageMaxDeucePoints(Number(e.target.value))} className="w-full border rounded-lg p-2 text-sm" /></div>}
+                      {supportsTiebreakInput && (
+                        <div>
+                          <label className="text-xs font-bold text-slate-500">{sportPresentation.tiebreakLabel}</label>
+                          <input type="number" value={s.stageSuperTiebreakPoints} onChange={e => s.setStageSuperTiebreakPoints(Number(e.target.value))} className="w-full border rounded-lg p-2 text-sm" />
+                        </div>
+                      )}
+                    </>
                   )}
                   <div className="col-span-2 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-900">
                     Vòng này sẽ đánh: thắng {Math.ceil(s.stageMaxSets / 2)} {s.sportRuleKind === 'PICKLEBALL_SIDE_OUT' ? 'game' : 'set'}
                     {' • '}
                     {s.stagePointsPerSet} {s.sportRuleKind === 'TENNIS' ? 'game/set' : 'điểm'}
-                    {s.stageWinBy2Points ? ' • hơn 2' : ' • chạm đích là chốt'}
-                    {supportsTiebreakInput ? ` • ${sportPresentation.tiebreakLabel.toLowerCase()}: ${s.stageSuperTiebreakPoints}` : ''}
+                    {s.isLiteMode ? ' • Tự do (Lite)' : s.stageWinBy2Points ? ' • hơn 2' : ' • chạm đích là chốt'}
+                    {!s.isLiteMode && supportsTiebreakInput ? ` • ${sportPresentation.tiebreakLabel.toLowerCase()}: ${s.stageSuperTiebreakPoints}` : ''}
                   </div>
                   {isPickleballSideOut && (
                     <div className="col-span-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700">

@@ -1,0 +1,50 @@
+import { useEffect, useRef } from 'react';
+import { Loader2 } from 'lucide-react';
+
+interface InfiniteScrollTriggerProps {
+  onLoadMore: () => void;
+  hasMore: boolean;
+  isLoading: boolean;
+  className?: string;
+}
+
+export function InfiniteScrollTrigger({
+  onLoadMore,
+  hasMore,
+  isLoading,
+  className = ''
+}: InfiniteScrollTriggerProps) {
+  const triggerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!hasMore || isLoading) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          onLoadMore();
+        }
+      },
+      { threshold: 0.1, rootMargin: '100px' }
+    );
+
+    if (triggerRef.current) {
+      observer.observe(triggerRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [hasMore, isLoading, onLoadMore]);
+
+  if (!hasMore) return null;
+
+  return (
+    <div ref={triggerRef} className={`flex justify-center p-4 w-full ${className}`}>
+      {isLoading && (
+        <div className="flex items-center gap-2 text-primary-500">
+          <Loader2 className="w-5 h-5 animate-spin" />
+          <span className="text-sm font-medium">Đang tải thêm...</span>
+        </div>
+      )}
+    </div>
+  );
+}

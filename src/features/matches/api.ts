@@ -5,10 +5,12 @@ import type { MatchOperationInput } from '@/features/organizer/ops/types';
 export type { Match, MatchComment, MatchScore };
 
 interface PaginationMeta {
-  currentPage: number;
-  totalPages: number;
-  totalItems: number;
-  itemsPerPage: number;
+  page?: number;
+  totalPages?: number;
+  total?: number;
+  limit?: number;
+  nextCursor?: string | null;
+  hasMore?: boolean;
 }
 
 export const matchesApi = {

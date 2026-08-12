@@ -5,6 +5,8 @@ import { extractMatchScores, getMatchScorePresentation, resolveMatchSportRules }
 import { Tournament, BracketMatch } from '@/features/tournaments/api';
 import { matchesApi } from '@/features/matches/api';
 import { socketClient } from '@/lib/socket';
+import { useCursorPagination } from '@/hooks/useCursorPagination';
+import { InfiniteScrollTrigger } from '@/components/ui/infinite-scroll-trigger';
 import { Calendar, Play, Trophy, MapPin, Info, LayoutGrid, Search } from 'lucide-react';
 import Link from 'next/link';
 import { formatDateTime } from '@/utils/format';
@@ -20,8 +22,22 @@ type StatusFilter = 'ALL' | 'ONGOING' | 'SCHEDULED' | 'COMPLETED';
 
 export default function MatchesTab({ tournament, tournamentId, divisionId }: Props) {
   const effectiveTournamentId = tournamentId ?? tournament.id;
-  const [matches, setMatches] = useState<BracketMatch[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  
+  // Pagination Hook
+  const { data: matches, setData: setMatches, fetchNextPage, hasMore, isLoading, resetAndFetch } = useCursorPagination<BracketMatch>(
+    async (cursor) => {
+      const matchParams: Record<string, string | number> = {
+        tournament_id: effectiveTournamentId,
+        status: '', // Overrides default status filter to get all matches
+        limit: 20,
+      };
+      if (divisionId) matchParams.division_id = divisionId;
+      if (cursor) matchParams.cursor = cursor;
+      
+      const res = await matchesApi.getMatches(matchParams);
+      return res as unknown as { data: BracketMatch[]; meta: { nextCursor?: string | null; hasMore?: boolean } };
+    }
+  );
   
   // States for filtering
   const [selectedRoundKey, setSelectedRoundKey] = useState<string | 'ALL'>('ALL');
@@ -40,58 +56,33 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
   };
   const bracketSize = getBracketSize();
 
+  // Initial load
   useEffect(() => {
-    const fetchMatches = async () => {
-      setIsLoading(true);
-      try {
-        const matchParams: Record<string, string | number> = {
-          tournament_id: effectiveTournamentId,
-          status: '', // Overrides default status filter to get all matches
-          limit: 100,
-        };
-        if (divisionId) {
-          matchParams.division_id = divisionId;
-        }
+    resetAndFetch();
+  }, [divisionId, effectiveTournamentId, resetAndFetch]);
 
-        const res = await matchesApi.getMatches(matchParams);
-        if (res && res.data) {
-          const fetchedMatches = res.data as unknown as BracketMatch[];
-          setMatches(fetchedMatches);
-
-          // Auto-detect best round to display
-          if (fetchedMatches.length > 0) {
-            // Find rounds that contain ONGOING matches
-            const ongoingMatch = fetchedMatches.find(m => m.status === 'ONGOING');
-            if (ongoingMatch && ongoingMatch.roundNumber) {
-              const options = buildRoundFilterOptions(fetchedMatches, tournament.format, bracketSize);
-              const activeOption = options.find(option => option.roundNumber === ongoingMatch.roundNumber);
-              setSelectedRoundKey(activeOption?.key ?? 'ALL');
-              return;
-            }
-
-            // Otherwise, find the earliest round that has SCHEDULED matches
-            const scheduledMatches = fetchedMatches.filter(m => m.status === 'SCHEDULED');
-            if (scheduledMatches.length > 0) {
-              const minRound = Math.min(...scheduledMatches.map(m => m.roundNumber).filter(Boolean) as number[]);
-              const options = buildRoundFilterOptions(fetchedMatches, tournament.format, bracketSize);
-              const activeOption = options.find(option => option.roundNumber === minRound);
-              setSelectedRoundKey(activeOption?.key ?? 'ALL');
-              return;
-            }
-
-            // Default to 'ALL' if no specific active round is detected
-            setSelectedRoundKey('ALL');
-          }
-        }
-      } catch (error) {
-        console.error('Failed to fetch matches for division:', { tournamentId: effectiveTournamentId, divisionId }, error);
-      } finally {
-        setIsLoading(false);
+  // Auto-detect best round to display on first load
+  const [hasDetectedRound, setHasDetectedRound] = useState(false);
+  useEffect(() => {
+    if (matches.length > 0 && !hasDetectedRound) {
+      setHasDetectedRound(true);
+      const ongoingMatch = matches.find(m => m.status === 'ONGOING');
+      if (ongoingMatch && ongoingMatch.roundNumber) {
+        const options = buildRoundFilterOptions(matches, tournament.format, bracketSize);
+        const activeOption = options.find(option => option.roundNumber === ongoingMatch.roundNumber);
+        setSelectedRoundKey(activeOption?.key ?? 'ALL');
+        return;
       }
-    };
-
-    fetchMatches();
-  }, [divisionId, effectiveTournamentId, tournament.format, bracketSize]);
+      const scheduledMatches = matches.filter(m => m.status === 'SCHEDULED');
+      if (scheduledMatches.length > 0) {
+        const minRound = Math.min(...scheduledMatches.map(m => m.roundNumber).filter(Boolean) as number[]);
+        const options = buildRoundFilterOptions(matches, tournament.format, bracketSize);
+        const activeOption = options.find(option => option.roundNumber === minRound);
+        setSelectedRoundKey(activeOption?.key ?? 'ALL');
+        return;
+      }
+    }
+  }, [matches, hasDetectedRound, tournament.format, bracketSize]);
 
   useEffect(() => {
     const socket = socketClient.getMatchSocket();
@@ -121,7 +112,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
       socket.off('match:update', handleMatchUpdate);
       socket.emit('leaveTournament', effectiveTournamentId);
     };
-  }, [effectiveTournamentId]);
+  }, [effectiveTournamentId, setMatches]);
 
   // Extract unique rounds from current matches
   const roundOptions = useMemo(() => buildRoundFilterOptions(matches, tournament.format, bracketSize), [matches, tournament.format, bracketSize]);
@@ -222,7 +213,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
     return { all: matches.length, ongoing, scheduled, completed };
   }, [matches]);
 
-  if (isLoading) {
+  if (isLoading && matches.length === 0) {
     return <div className="animate-pulse bg-slate-900/10 h-64 rounded-lg w-full"></div>;
   }
 
@@ -625,6 +616,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
               </div>
             );
           })}
+          <InfiniteScrollTrigger onLoadMore={fetchNextPage} hasMore={hasMore} isLoading={isLoading} />
         </div>
       ) : (
         <div className="text-center py-16 border border-dashed border-slate-200 rounded-xl text-slate-450 bg-white">

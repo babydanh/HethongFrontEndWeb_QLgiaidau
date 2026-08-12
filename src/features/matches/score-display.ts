@@ -82,7 +82,7 @@ export function resolveMatchSportRules(
   const inferredFromTournament = match.tournament
     ? inferSportRuleKindFromCategory({
         slug: match.tournament.categorySlug ?? match.tournament.category?.slug ?? '',
-        name: match.tournament.categoryName ?? match.tournament.category?.name ?? '',
+        name: match.tournament.categoryName ?? match.tournament.category?.name ?? match.tournament.name ?? '',
         categoryConfig:
           match.tournament.categoryConfig ?? match.tournament.category?.categoryConfig ?? null,
       })

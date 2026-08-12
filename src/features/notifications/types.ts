@@ -32,6 +32,7 @@ export type NotificationUnreadCountResponse = ApiResponse<{ unreadCount?: number
 export interface NotificationQueryParams {
   page?: number;
   limit?: number;
+  cursor?: string | null;
   isRead?: boolean;
 }
 

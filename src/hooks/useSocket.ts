@@ -212,7 +212,7 @@ const fetchNotifications = async () => {
   }));
 
   notificationsFetchPromise = notificationsApi
-    .getMyNotifications({ page: 1, limit: NOTIFICATIONS_PAGE_LIMIT })
+    .getMyNotifications({ limit: NOTIFICATIONS_PAGE_LIMIT })
     .then(async ({ items }) => {
       replaceNotifications(items);
       const unreadCount = await notificationsApi.getUnreadCount().catch(() =>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Users, Search, UserPlus, MoreVertical, ShieldAlert, ShieldCheck, Trash2, Crown, Loader2, X, Ban, Tag } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
@@ -56,6 +56,7 @@ export default function MembersTab({
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalMembers, setTotalMembers] = useState(0);
+  const cursorByPageRef = useRef<Record<number, string | null>>({ 1: null });
   const [searchQuery, setSearchQuery] = useState('');
   const PAGE_SIZE = 50;
   
@@ -89,15 +90,16 @@ export default function MembersTab({
         setIsLoading(true);
       }
       const res = await communitiesApi.getMembers(communityId, {
-        page,
         limit: PAGE_SIZE,
         status: 'JOINED',
+        ...(cursorByPageRef.current[page] ? { cursor: cursorByPageRef.current[page] } : {}),
       });
       const data = res.data || [];
       // Only keep JOINED status members for the active list
       const joinedOnly = data.filter((m: MemberData) => m.member?.status === 'JOINED');
       setTotalMembers(res.meta?.total ?? joinedOnly.length);
       setCurrentPage(page);
+      cursorByPageRef.current[page + 1] = res.meta?.nextCursor ?? null;
       setMembers((prev) => (append ? [...prev, ...joinedOnly] : joinedOnly));
     } catch (error) {
       console.error('Failed to fetch members', error);
@@ -110,6 +112,7 @@ export default function MembersTab({
 
   useEffect(() => {
     if (communityId) {
+      cursorByPageRef.current = { 1: null };
       Promise.resolve().then(() => {
         fetchMembers();
       });

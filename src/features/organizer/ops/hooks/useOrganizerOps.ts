@@ -168,8 +168,7 @@ export function useOrganizerOps(
     setParticipants(participantsRes.data ?? []);
     
     if (matchesRes.data) {
-      const resData = matchesRes.data as unknown as { data: Match[] };
-      setMatches(resData.data || []);
+      setMatches(matchesRes.data);
     } else {
       setMatches([]);
     }

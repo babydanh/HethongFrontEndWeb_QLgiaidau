@@ -427,10 +427,9 @@ export default function ProfilePage() {
           setEloHistory(historyRes?.data || []);
           setFollowedTournaments(sortFollowedTournaments(followedRes?.data || []));
           
-          if (matchesRes && matchesRes.data) {
-            const matchesData = matchesRes.data as unknown as { data: Match[], meta: { totalPages?: number } };
-            setMatches(matchesData.data || []);
-            setMatchesTotalPages(matchesData.meta?.totalPages || 1);
+          if (matchesRes?.data) {
+            setMatches(matchesRes.data);
+            setMatchesTotalPages(matchesRes.meta?.totalPages || 1);
           } else {
             setMatches([]);
             setMatchesTotalPages(1);

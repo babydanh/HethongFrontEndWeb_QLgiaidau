@@ -344,9 +344,15 @@ export default function MatchesListPage() {
           endDate: apiEndDate,
         });
         
-        if (res && res.data) {
-          const responseData = res.data as unknown as { data: EnrichedMatch[], meta: { totalPages?: number } };
-          setMatches(responseData.data || []);
+        if (res) {
+          // `api` unwraps AxiosResponse in its response interceptor, so `res`
+          // already is `{ data, meta }`. Reading `res.data.data` here turned a
+          // valid match feed into an empty list on every request.
+          const responseData = res as unknown as {
+            data?: EnrichedMatch[];
+            meta?: { totalPages?: number };
+          };
+          setMatches(Array.isArray(responseData.data) ? responseData.data : []);
           setTotalPages(responseData.meta?.totalPages || 1);
         }
       } catch (error) {

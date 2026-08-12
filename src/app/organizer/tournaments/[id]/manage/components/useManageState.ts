@@ -1213,8 +1213,7 @@ export function useManageState(id: string) {
         try {
           const mRes = await matchesApi.getMatches({ tournamentId: id, limit: 100 });
           if (mRes.data) {
-            const resData = mRes.data as unknown as { data: Match[] };
-            setMatches(resData.data || []);
+            setMatches(mRes.data);
           }
         } catch { /* không chặn luồng chính */ }
       }

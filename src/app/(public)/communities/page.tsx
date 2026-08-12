@@ -200,7 +200,7 @@ export default function CommunitiesPage() {
                       community.joinMode === 'INVITE_ONLY' ? 'bg-rose-500 animate-pulse' : community.joinMode === 'APPROVAL' ? 'bg-amber-500' : 'bg-emerald-500'
                     }`} />
                     <span className="text-[8px] font-bold tracking-wider uppercase text-slate-700">
-                      {community.joinMode === 'INVITE_ONLY' ? 'Chỉ mời' : community.joinMode === 'APPROVAL' ? 'Xét duyệt' : 'Tự do'}
+                      {community.joinMode === 'INVITE_ONLY' ? 'Chỉ mời' : community.joinMode === 'APPROVAL' ? 'Duyệt thành viên' : 'Tự do'}
                     </span>
                   </div>
 

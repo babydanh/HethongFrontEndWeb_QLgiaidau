@@ -126,8 +126,7 @@ export default function DashboardPage() {
         setFollowedTournaments(sortFollowedTournaments(Array.isArray(followedRes?.data) ? followedRes.data : []));
 
         if (matchesRes?.data) {
-          const responseData = matchesRes.data as unknown as { data: Match[] };
-          const matches = responseData.data || [];
+          const matches = matchesRes.data;
           const nextMatch = matches.find((match: Match) => match.status === 'SCHEDULED' || match.status === 'ONGOING');
           setUpcomingMatch(nextMatch || null);
         } else {

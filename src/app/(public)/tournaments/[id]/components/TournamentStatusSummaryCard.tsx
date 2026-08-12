@@ -123,8 +123,7 @@ export default function TournamentStatusSummaryCard({
     void matchesApi.getMatches(params)
       .then((response) => {
         if (active) {
-          const resData = response.data as unknown as { data: Match[] };
-          setMatches(readMatches((resData.data || []) as unknown as MatchListPayload));
+          setMatches(readMatches((response.data || []) as unknown as MatchListPayload));
         }
       })
       .catch(() => {});

@@ -113,7 +113,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
         ]);
         
         setProfile(profileRes.data);
-        setMatches(matchesRes.data.data || []);
+        setMatches(matchesRes.data || []);
         setEloHistory(eloHistoryRes?.data || []);
       } catch (err: unknown) {
         console.error('Failed to fetch public profile:', err);

@@ -57,8 +57,10 @@ async function fetchListPage(path: string, params: Record<string, string>): Prom
 async function fetchAllPages(path: string, params: Record<string, string>): Promise<ApiItem[]> {
   const all: ApiItem[] = [];
   let cursor: string | null = null;
+  let pageCount = 0;
 
-  while (all.length < MAX_URLS_PER_TYPE && page <= MAX_PAGES) {
+  while (all.length < MAX_URLS_PER_TYPE && pageCount < MAX_PAGES) {
+    pageCount += 1;
     const result = await fetchListPage(path, {
       ...params,
       limit: String(PAGE_SIZE),

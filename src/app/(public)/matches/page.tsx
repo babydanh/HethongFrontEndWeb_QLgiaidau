@@ -74,6 +74,13 @@ type MatchFeedPayload = {
   meta?: { totalPages?: number };
 };
 
+const getHttpStatus = (error: unknown): number | undefined => {
+  if (typeof error !== 'object' || error === null || !('response' in error)) return undefined;
+  const response = error.response;
+  if (typeof response !== 'object' || response === null || !('status' in response)) return undefined;
+  return typeof response.status === 'number' ? response.status : undefined;
+};
+
 /**
  * Axios normally returns the already-unwrapped API envelope, while some
  * browser builds retain the Axios response shape. Accept both shapes so a
@@ -222,6 +229,7 @@ export default function MatchesListPage() {
   const [selectedDistrict, setSelectedDistrict] = useState('');
 
   const [isLoading, setIsLoading] = useState(true);
+  const [isRateLimited, setIsRateLimited] = useState(false);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [groupPages, setGroupPages] = useState<Record<string, number>>({});
@@ -331,6 +339,7 @@ export default function MatchesListPage() {
     const fetchMatches = async () => {
       // Keep the last successful feed visible during background refreshes.
       setIsLoading(matches.length === 0);
+      setIsRateLimited(false);
       try {
         // Map lựa chọn nội dung đấu sang matchType + genderRestriction
         let matchType: string | undefined;
@@ -374,6 +383,7 @@ export default function MatchesListPage() {
         setTotalPages(feed.totalPages);
       } catch (error) {
         console.error('Failed to fetch matches', error);
+        setIsRateLimited(getHttpStatus(error) === 429);
       } finally {
         setIsLoading(false);
         matchesRequestInFlightRef.current = false;
@@ -986,6 +996,19 @@ export default function MatchesListPage() {
       {/* Danh sách các Giải đấu gom nhóm */}
       {isLoading ? (
         <div className="flex justify-center items-center h-64 text-slate-500 font-bold">Đang tải danh sách trận đấu...</div>
+      ) : isRateLimited ? (
+        <div className="flex flex-col justify-center items-center h-64 text-slate-400 bg-white border border-slate-200 rounded-lg p-6 text-center">
+          <Trophy className="w-12 h-12 text-slate-300 mb-2 stroke-[1.5]" />
+          <p className="text-sm font-bold text-slate-600">Hệ thống đang nhận nhiều yêu cầu.</p>
+          <p className="text-xs text-slate-400 mt-1">Vui lòng chờ vài giây rồi thử lại.</p>
+          <button
+            type="button"
+            onClick={() => setMatchesRefreshTick((value) => value + 1)}
+            className="mt-4 px-4 py-2 rounded-lg bg-sky-500 text-white text-sm font-bold hover:bg-sky-600 transition-colors"
+          >
+            Thử lại
+          </button>
+        </div>
       ) : currentTournaments.length === 0 ? (
         <div className="flex flex-col justify-center items-center h-64 text-slate-400 bg-white border border-slate-200 rounded-lg p-6 text-center">
           <Trophy className="w-12 h-12 text-slate-300 mb-2 stroke-[1.5]" />

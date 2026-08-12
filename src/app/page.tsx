@@ -137,15 +137,17 @@ function CommunityLogoAvatar({ src, alt }: { src?: string | null; alt: string })
 }
 
 function LiveMatchSportLabel({ match, tournament, tournamentName }: { match?: BracketMatch | null; tournament?: Tournament | null; tournamentName?: string }) {
+  const matchTourn = match?.tournament as any;
+  const tourn = tournament as any;
   const context = {
     ...match,
     tournament: {
-      name: match?.tournament?.name ?? tournament?.name ?? tournamentName,
-      sportRules: match?.tournament?.sportRules ?? tournament?.sportRules ?? null,
-      categoryName: match?.tournament?.categoryName ?? (tournament as any)?.categoryName ?? tournament?.category?.name ?? null,
-      categorySlug: match?.tournament?.categorySlug ?? (tournament as any)?.categorySlug ?? tournament?.category?.slug ?? null,
-      categoryConfig: match?.tournament?.categoryConfig ?? (tournament as any)?.categoryConfig ?? tournament?.category?.categoryConfig ?? null,
-      category: match?.tournament?.category ?? tournament?.category ?? null,
+      name: matchTourn?.name ?? tourn?.name ?? tournamentName,
+      sportRules: matchTourn?.sportRules ?? tourn?.sportRules ?? null,
+      categoryName: matchTourn?.categoryName ?? tourn?.categoryName ?? tourn?.category?.name ?? null,
+      categorySlug: matchTourn?.categorySlug ?? tourn?.categorySlug ?? tourn?.category?.slug ?? null,
+      categoryConfig: matchTourn?.categoryConfig ?? tourn?.categoryConfig ?? tourn?.category?.categoryConfig ?? null,
+      category: matchTourn?.category ?? tourn?.category ?? null,
     },
   };
   const resolvedRules = resolveMatchSportRules(context);

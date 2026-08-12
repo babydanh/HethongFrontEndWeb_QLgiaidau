@@ -338,47 +338,53 @@ export default function HomePage() {
   useEffect(() => {
     const timer = setTimeout(() => setIsClient(true), 0);
     const loadCategories = async () => {
-      // Cache categories trong sessionStorage (5 phút)
-      const CACHE_KEY = 'homepage_categories_v3';
-      const CACHE_TTL = 5 * 60 * 1000; // 5 phút
+      const DEFAULT_CATEGORIES: Category[] = [
+        { id: 'pickleball', name: 'Pickleball', slug: 'pickleball', isActive: true },
+        { id: 'tennis', name: 'Tennis', slug: 'tennis', isActive: true },
+        { id: 'badminton', name: 'Cầu lông', slug: 'badminton', isActive: true },
+        { id: 'table_tennis', name: 'Bóng bàn', slug: 'table-tennis', isActive: true },
+        { id: 'football', name: 'Bóng đá', slug: 'football', isActive: true },
+      ];
+      const CACHE_KEY = 'homepage_categories_v4';
+      const CACHE_TTL = 5 * 60 * 1000;
       try {
         if (typeof window !== 'undefined') {
           const cached = sessionStorage.getItem(CACHE_KEY);
           if (cached) {
             try {
               const parsed = JSON.parse(cached);
-              if (Date.now() - parsed.timestamp < CACHE_TTL) {
-                setCategories(parsed.data || []);
-                return; // Dùng cache, không cần gọi API
+              if (Date.now() - parsed.timestamp < CACHE_TTL && Array.isArray(parsed.data) && parsed.data.length >= 5) {
+                setCategories(parsed.data);
+                return;
               }
             } catch {
-              // Ignore parse error, fetch fresh
+              // Ignore parse error
             }
           }
         }
         const res = await categoriesApi.getCategories();
-        const data = (res.data && res.data.length > 0) ? res.data : [
-          { id: 'pickleball', name: 'Pickleball', slug: 'pickleball', isActive: true },
-          { id: 'tennis', name: 'Tennis', slug: 'tennis', isActive: true },
-          { id: 'badminton', name: 'Cầu lông', slug: 'badminton', isActive: true },
-          { id: 'table_tennis', name: 'Bóng bàn', slug: 'table-tennis', isActive: true },
-          { id: 'football', name: 'Bóng đá', slug: 'football', isActive: true },
-        ];
-        setCategories(data);
+        const apiCategories = (res.data && res.data.length > 0) ? res.data : [];
+        const mergedCategories = [...apiCategories];
+
+        DEFAULT_CATEGORIES.forEach(defaultCat => {
+          const exists = mergedCategories.some(cat =>
+            cat.slug === defaultCat.slug ||
+            cat.name.toLowerCase() === defaultCat.name.toLowerCase()
+          );
+          if (!exists) {
+            mergedCategories.push(defaultCat);
+          }
+        });
+
+        setCategories(mergedCategories);
         if (typeof window !== 'undefined') {
-          sessionStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: Date.now(), data }));
+          sessionStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: Date.now(), data: mergedCategories }));
         }
       } catch (error: unknown) {
         if (!isNetworkError(error)) {
           console.error('Failed to load categories on homepage', error);
         }
-        setCategories([
-          { id: 'pickleball', name: 'Pickleball', slug: 'pickleball', isActive: true },
-          { id: 'tennis', name: 'Tennis', slug: 'tennis', isActive: true },
-          { id: 'badminton', name: 'Cầu lông', slug: 'badminton', isActive: true },
-          { id: 'table_tennis', name: 'Bóng bàn', slug: 'table-tennis', isActive: true },
-          { id: 'football', name: 'Bóng đá', slug: 'football', isActive: true },
-        ]);
+        setCategories(DEFAULT_CATEGORIES);
       }
     };
     loadCategories();

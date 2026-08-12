@@ -58,5 +58,7 @@ export interface PaginatedRankings {
     page: number;
     limit: number;
     total?: number;
+    nextCursor?: string | null;
+    hasMore?: boolean;
   };
 }

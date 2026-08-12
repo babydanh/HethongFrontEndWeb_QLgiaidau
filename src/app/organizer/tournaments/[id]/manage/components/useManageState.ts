@@ -1201,8 +1201,12 @@ export function useManageState(id: string) {
         else if (t.matchType === MatchTypeDB.DOUBLES) ui = t.genderRestriction === GenderRestriction.FEMALE ? MatchTypeUI.FEMALE_DOUBLES : MatchTypeUI.MALE_DOUBLES;
         else if (t.matchType === MatchTypeDB.MIXED_DOUBLES || t.matchType === 'MIXED') ui = MatchTypeUI.MIXED_DOUBLES;
         setMatchType(ui);
-        const resolvedRules = resolveSportRuleView(t.sportRules);
+
+        const categoryObj = t.category || (t.categoryName || t.categorySlug ? { id: t.categoryId, name: t.categoryName, slug: t.categorySlug } : null);
+        const categoryFallbackKind = inferSportRuleKindFromCategory(categoryObj as unknown as Category);
+        const resolvedRules = resolveSportRuleView(t.sportRules, categoryFallbackKind);
         applyResolvedRuleState(resolvedRules);
+
         if (t.parentId) await fetchDivisions(t.parentId); else await fetchDivisions(id);
         if (t.venueId) await fetchVenueCourts(t.venueId);
         // Nạp danh sách trận đấu (dùng cho export kết quả toàn giải ở bước kết thúc)
@@ -1228,7 +1232,7 @@ export function useManageState(id: string) {
         try {
           const [vRes, cRes, fRes, pList] = await Promise.all([venuesApi.getVenues(), categoriesApi.getCategories(), tournamentsApi.getFeesConfig(), regionsApi.getProvinces()]);
           if (vRes.data) setVenues(vRes.data);
-          if (cRes.data) setCategories(cRes.data.filter((c) => c.isActive !== false));
+          if (cRes.data) setCategories(cRes.data);
           if (fRes.data) setFeesConfig(fRes.data);
           setProvinces(pList);
           await fetchCameras();
@@ -1242,16 +1246,16 @@ export function useManageState(id: string) {
   }, [fetchDivisions, fetchTournamentData]);
 
   useEffect(() => {
-    if (!tournament || !categoryId || categories.length === 0) {
+    if (!tournament) {
       return;
     }
 
-    const selectedCategory = categories.find((category) => category.id === categoryId);
-    const fallbackKind = inferSportRuleKindFromCategory(selectedCategory);
+    const selectedCategory = tournament.category || categories.find((category) => category.id === categoryId || category.slug === categoryId) || (tournament.categoryName || tournament.categorySlug ? { id: categoryId, name: tournament.categoryName, slug: tournament.categorySlug } : null);
+    const fallbackKind = inferSportRuleKindFromCategory(selectedCategory as unknown as Category);
     const resolvedRules = resolveSportRuleView(tournament.sportRules, fallbackKind);
 
     void Promise.resolve().then(() => {
-      const normalizedKind = normalizeSportRuleKindForCategory(resolvedRules.kind, selectedCategory);
+      const normalizedKind = normalizeSportRuleKindForCategory(resolvedRules.kind, selectedCategory as unknown as Category);
       const effectiveRules = normalizedKind === resolvedRules.kind
         ? resolvedRules
         : resolveSportRuleView(buildDefaultSportRules(normalizedKind), normalizedKind);

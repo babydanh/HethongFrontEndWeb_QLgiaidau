@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { communitiesApi, Community } from "@/features/communities/api";
 import { JoinCommunityModal } from "@/components/shared/JoinCommunityModal";
 import { useAuthStore } from "@/lib/zustand/authStore";
@@ -48,6 +48,7 @@ export default function CommunitiesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const cursorByPageRef = useRef<Record<number, string | null>>({ 1: null });
   const [categories, setCategories] = useState<{ id: string, name: string }[]>([]);
   const [provinces, setProvinces] = useState<{ code: string, name: string }[]>([]);
 
@@ -80,11 +81,25 @@ export default function CommunitiesPage() {
   const [categoryId, setCategoryId] = useState('');
   const [sortBy] = useState('newest');
 
+  const filterKey = [search, provinceCode, categoryId, sortBy].join('|');
+  useEffect(() => {
+    cursorByPageRef.current = { 1: null };
+    let active = true;
+    Promise.resolve().then(() => {
+      if (active) setPage((currentPage) => (currentPage === 1 ? currentPage : 1));
+    });
+    return () => {
+      active = false;
+    };
+  }, [filterKey]);
+
   useEffect(() => {
     const fetchCommunities = async () => {
       setIsLoading(true);
       try {
-        const query: Record<string, unknown> = { page, limit: 9 };
+        const query: Record<string, unknown> = { limit: 9 };
+        const cursor = cursorByPageRef.current[page] ?? null;
+        if (cursor) query.cursor = cursor;
         if (search) query.search = search;
         if (provinceCode) query.provinceCode = provinceCode;
         if (categoryId) query.categoryId = categoryId;
@@ -92,6 +107,7 @@ export default function CommunitiesPage() {
         const res = await communitiesApi.getCommunities(query);
         setCommunities(res.data || []);
         setTotalPages(res.meta?.totalPages || 1);
+        cursorByPageRef.current[page + 1] = res.meta?.nextCursor ?? null;
       } catch (error) {
         console.error("Failed to fetch communities", error);
       } finally {
@@ -104,7 +120,7 @@ export default function CommunitiesPage() {
     }, 500);
     
     return () => clearTimeout(timer);
-  }, [page, search, provinceCode, categoryId, sortBy]);
+  }, [page, filterKey]);
 
   useEffect(() => {
     import('@/features/categories/api').then(m =>

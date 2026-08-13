@@ -15,7 +15,7 @@ interface Props {
   emptyLabel: string;
   emptyActionHref?: string;
   emptyActionLabel?: string;
-  icon: ReactNode;
+  icon?: ReactNode;
   count?: number;
   roleLabels?: Record<string, string>;
   partners?: Record<string, string>; // tournamentId → partner name

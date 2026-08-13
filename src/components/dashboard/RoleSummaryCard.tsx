@@ -1,8 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { Trophy, UserCheck, Shield, Bell, type LucideIcon } from 'lucide-react';
-
 interface Props {
   registeredCount: number;
   organizerCount: number;
@@ -14,17 +12,14 @@ interface RoleDef {
   key: string;
   label: string;
   href: string;
-  icon: LucideIcon;
-  color: string;
-  iconColor: string;
   urgent?: boolean;
 }
 
 const ROLES: RoleDef[] = [
-  { key: 'player', label: 'Giải đã đăng ký', href: '/profile', icon: Trophy, color: 'bg-sky-50 text-sky-700 border-sky-200 hover:border-sky-300', iconColor: 'text-sky-600' },
-  { key: 'btc', label: 'Vai trò BTC', href: '#section-btc', icon: UserCheck, color: 'bg-violet-50 text-violet-700 border-violet-200 hover:border-violet-300', iconColor: 'text-violet-600' },
-  { key: 'referee', label: 'Giải làm TT', href: '#section-referee', icon: Shield, color: 'bg-amber-50 text-amber-700 border-amber-200 hover:border-amber-300', iconColor: 'text-amber-600' },
-  { key: 'invite', label: 'Lời mời chờ', href: '#section-invites', icon: Bell, color: 'bg-rose-50 text-rose-700 border-rose-200 hover:border-rose-300', iconColor: 'text-rose-600', urgent: true },
+  { key: 'player', label: 'Giải đã đăng ký', href: '/profile' },
+  { key: 'btc', label: 'Vai trò BTC', href: '#section-btc' },
+  { key: 'referee', label: 'Giải làm trọng tài', href: '#section-referee' },
+  { key: 'invite', label: 'Lời mời chờ', href: '#section-invites', urgent: true },
 ];
 
 export default function RoleSummaryCard(props: Props) {
@@ -41,10 +36,9 @@ export default function RoleSummaryCard(props: Props) {
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
       <h3 className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-3">Vai trò của tôi</h3>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="divide-y divide-slate-100 rounded-lg border border-slate-100 bg-slate-50/60">
         {ROLES.map(role => {
           const count = getValue(role.key);
-          const Icon = role.icon;
           const ariaLabel = role.urgent && count > 0
             ? `${count} ${role.label} — cần phản hồi`
             : undefined;
@@ -53,14 +47,15 @@ export default function RoleSummaryCard(props: Props) {
               key={role.key}
               href={role.href}
               aria-label={ariaLabel}
-              className={`rounded-lg border p-3 flex flex-col gap-1.5 transition-all ${role.color}`}
+              className="flex items-center justify-between gap-3 px-3.5 py-3 transition-colors hover:bg-white"
             >
-              <Icon className={`w-4 h-4 ${role.iconColor}`} strokeWidth={2} aria-hidden="true" />
-              <span className="text-[22px] font-bold tabular-nums leading-none text-inherit">{count}</span>
-              <span className="text-[10px] font-medium opacity-80 leading-tight">{role.label}</span>
-              {role.urgent && count > 0 && (
-                <span className="inline-block w-2 h-2 rounded-full bg-rose-500 animate-pulse" aria-hidden="true" />
-              )}
+              <span className="text-xs font-medium text-slate-600">{role.label}</span>
+              <span className="flex items-center gap-2 text-lg font-bold tabular-nums text-slate-900">
+                {count}
+                {role.urgent && count > 0 && (
+                  <span className="h-1.5 w-1.5 rounded-full bg-rose-500" aria-hidden="true" />
+                )}
+              </span>
             </Link>
           );
         })}

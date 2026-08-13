@@ -19,7 +19,6 @@ import {
   TrendingUp,
   TrendingDown,
   ChevronRight,
-  Sparkles,
 } from 'lucide-react';
 
 import EloSidebarCard from '@/components/dashboard/EloSidebarCard';
@@ -37,6 +36,7 @@ import {
   WorkspaceRefereeInvite,
   WorkspaceRefereeMatch,
 } from '@/features/tournaments/api';
+import { categoriesApi, Category } from '@/features/categories/api';
 import { matchesApi, Match } from '@/features/matches/api';
 import { communitiesApi } from '@/features/communities/api';
 import { sortFollowedTournaments } from '@/utils/tournament-follow';
@@ -116,6 +116,8 @@ export default function DashboardPage() {
     }
   };
 
+  const [categories, setCategories] = useState<Category[]>([]);
+
   useEffect(() => {
     if (!user?.id) return;
 
@@ -123,16 +125,21 @@ export default function DashboardPage() {
       try {
         setIsLoading(true);
         const followedResPromise = tournamentsApi.getFollowedTournaments().catch(() => null);
-        const [ranksRes, workspaceRes, matchesRes, followedRes] = await Promise.all([
+        const categoriesResPromise = categoriesApi.getCategories().catch(() => null);
+        const [ranksRes, workspaceRes, matchesRes, followedRes, categoriesRes] = await Promise.all([
           rankingsApi.getUserRankings(user.id),
           tournamentsApi.getMyWorkspace(),
           matchesApi.getMatches({ userId: user.id, limit: 15 }),
           followedResPromise,
+          categoriesResPromise,
         ]);
 
         setUserRankings(ranksRes);
         setWorkspace(workspaceRes.data || null);
         setFollowedTournaments(sortFollowedTournaments(Array.isArray(followedRes?.data) ? followedRes.data : []));
+        if (Array.isArray(categoriesRes?.data)) {
+          setCategories(categoriesRes.data.filter((c: Category) => c.isActive !== false));
+        }
 
         if (matchesRes?.data) {
           const matches = matchesRes.data;
@@ -201,7 +208,10 @@ export default function DashboardPage() {
   (userRankings?.publicRanks || []).forEach((rank) => {
     if (rank.categoryName) sportSet.add(rank.categoryName);
   });
-  const sportOptions = Array.from(sportSet).sort();
+  const apiActiveSportNames = categories.map((c) => c.name);
+  const sportOptions = apiActiveSportNames.length > 0
+    ? apiActiveSportNames
+    : Array.from(sportSet).sort();
 
   const filterBySport = (list: Tournament[]) =>
     !sportFilter ? list : list.filter((t) => t.category?.name === sportFilter);
@@ -458,7 +468,6 @@ export default function DashboardPage() {
                   </div>
                 ) : (
                   <div className="rounded-lg border border-dashed border-slate-200 p-6 text-center">
-                    <Sparkles className="w-6 h-6 mx-auto text-blue-500 mb-2 opacity-60" />
                     <p className="text-xs font-semibold text-slate-700">Bạn chưa có trận đấu nào sắp diễn ra</p>
                     <p className="text-[11px] text-slate-400 mt-1">Đăng ký tham gia giải đấu để bắt đầu tích lũy ELO!</p>
                     <div className="mt-3">
@@ -603,7 +612,6 @@ export default function DashboardPage() {
                 tournaments={getFilteredTournaments()}
                 roleLabels={participantRoleLabels}
                 emptyLabel="Chưa tìm thấy giải đấu phù hợp."
-                icon={<Trophy className="w-4 h-4 text-blue-600" />}
                 matchTypeMap={matchTypeMap}
                 partners={partnerMap}
               />

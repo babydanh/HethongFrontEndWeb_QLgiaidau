@@ -54,6 +54,7 @@ jobs:
           build-args: |
             NEXT_PUBLIC_API_URL=https://sporto.asia/api/v1
             NEXT_PUBLIC_SITE_URL=https://sporto.asia
+            NEXT_PUBLIC_APP_API_KEY=sporto-secret-key-2026
           tags: ghcr.io/babydanh/hethongfrontendweb_qlgiaidau:latest,ghcr.io/babydanh/hethongfrontendweb_qlgiaidau:${{ github.sha }}
 
   # Job 2: Chỉ kéo bản build sạch về chạy trên VPS (Mất 5s, không tốn tài nguyên build)

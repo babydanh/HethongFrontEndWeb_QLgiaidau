@@ -124,7 +124,11 @@ export default function CommunitiesPage() {
 
   useEffect(() => {
     import('@/features/categories/api').then(m =>
-      m.categoriesApi.getCategories().then(res => setCategories(res.data)).catch(() => {/* categories fetch failed */})
+      m.categoriesApi.getCategories().then(res => {
+        if (Array.isArray(res.data)) {
+          setCategories(res.data.filter(c => c.isActive !== false));
+        }
+      }).catch(() => {/* categories fetch failed */})
     ).catch(() => {/* categories module load failed */});
     import('@/features/regions/api').then(m =>
       m.regionsApi.getProvinces().then(setProvinces).catch(() => {/* provinces fetch failed */})

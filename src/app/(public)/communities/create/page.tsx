@@ -80,8 +80,14 @@ export default function CreateCommunityPage() {
   const watchBannerUrl = watch('bannerUrl');
 
   useEffect(() => {
-    // Load categories
-    categoriesApi.getCategories().then(res => setCategories(res.data)).catch(console.error);
+    // Load categories (filter active only)
+    categoriesApi.getCategories()
+      .then(res => {
+        if (Array.isArray(res.data)) {
+          setCategories(res.data.filter(c => c.isActive !== false));
+        }
+      })
+      .catch(console.error);
     // Load provinces
     regionsApi.getProvinces().then(setProvinces).catch(console.error);
   }, []);

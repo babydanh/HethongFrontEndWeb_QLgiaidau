@@ -2,16 +2,25 @@
 
 import { useState, useEffect } from 'react';
 import { api } from '@/lib/axios';
+import { usersApi } from '@/features/users/api';
 import { toast } from 'react-hot-toast';
 import { Button } from '@/components/ui/Button';
-import { Search, Ban, ShieldAlert, CheckCircle2, UserCheck, AlertTriangle, ShieldCheck, X, Calendar } from 'lucide-react';
+import { Search, Ban, UserCheck, AlertTriangle, ShieldCheck, X, Calendar, KeyRound, Loader2 } from 'lucide-react';
 import type { ApiResponse } from '@/types/api';
+import { useAuthStore } from '@/lib/zustand/authStore';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import type { SystemRole } from '@/features/users/api';
+import { getErrorMessage } from '@/utils/error';
+import { useWatch } from 'react-hook-form';
 
 interface UserItem {
   id: string;
   email: string;
   isEmailVerified: boolean;
   createdAt: string;
+  roles?: SystemRole[];
   profile: {
     fullName: string;
     avatarUrl?: string;
@@ -23,6 +32,19 @@ interface UserItem {
     expiresAt?: string;
   };
 }
+
+const SYSTEM_ROLE_OPTIONS: ReadonlyArray<{ value: SystemRole; label: string }> = [
+  { value: 'PLAYER', label: 'Vận động viên' },
+  { value: 'REFEREE', label: 'Trọng tài' },
+  { value: 'ORGANIZER', label: 'Ban tổ chức' },
+  { value: 'MODERATOR', label: 'Điều phối viên' },
+  { value: 'ADMIN', label: 'Quản trị viên' },
+];
+const systemRoleSchema = z.object({ roles: z.array(z.enum(['PLAYER', 'REFEREE', 'ORGANIZER', 'MODERATOR', 'ADMIN'])).min(1, 'Phải giữ ít nhất một vai trò.') });
+type SystemRoleForm = z.infer<typeof systemRoleSchema>;
+
+const roleLabel = (role: SystemRole): string =>
+  SYSTEM_ROLE_OPTIONS.find((option) => option.value === role)?.label ?? role;
 
 export default function ModerationPage() {
   type BanType = 'WARN' | 'SOFT_BAN' | 'HARD_BAN';
@@ -37,6 +59,17 @@ export default function ModerationPage() {
   const [banReason, setBanReason] = useState('');
   const [banDurationDays, setBanDurationDays] = useState('7');
   const [processing, setProcessing] = useState(false);
+  const [showRoleModal, setShowRoleModal] = useState(false);
+  const [roleUser, setRoleUser] = useState<UserItem | null>(null);
+  const [roleProcessing, setRoleProcessing] = useState(false);
+  const [roleFilter, setRoleFilter] = useState<SystemRole | 'ALL'>('ALL');
+  const { user: currentUser } = useAuthStore();
+  const canManageSystemRoles = currentUser?.roles?.includes('ADMIN') === true;
+  const roleForm = useForm<SystemRoleForm>({
+    resolver: zodResolver(systemRoleSchema),
+    defaultValues: { roles: ['PLAYER'] },
+  });
+  const selectedRoles = useWatch({ control: roleForm.control, name: 'roles' });
 
   const fetchUsers = async (searchTerm = '', showLoading = true) => {
     if (showLoading) {
@@ -122,6 +155,29 @@ export default function ModerationPage() {
     }
   };
 
+  const openRoleModal = (user: UserItem) => {
+    setRoleUser(user);
+    roleForm.reset({ roles: user.roles?.length ? user.roles : ['PLAYER'] });
+    setShowRoleModal(true);
+  };
+
+  const handleRoleSubmit = roleForm.handleSubmit(async (values) => {
+    if (!roleUser || !canManageSystemRoles) return;
+    setRoleProcessing(true);
+    try {
+      const updated = await usersApi.updateSystemRoles(roleUser.id, values.roles);
+      const nextRoles = updated.roles ?? values.roles;
+      setUsers((current) => current.map((item) => item.id === roleUser.id ? { ...item, roles: nextRoles } : item));
+      toast.success('Đã cập nhật vai trò hệ thống.');
+      setShowRoleModal(false);
+      setRoleUser(null);
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Không thể cập nhật vai trò.'));
+    } finally {
+      setRoleProcessing(false);
+    }
+  });
+
   type FilterStatus = 'ALL' | 'ACTIVE' | 'BANNED';
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('ALL');
 
@@ -142,6 +198,7 @@ export default function ModerationPage() {
   const filteredUsers = users.filter((u) => {
     if (filterStatus === 'ACTIVE' && u.activeBan) return false;
     if (filterStatus === 'BANNED' && !u.activeBan) return false;
+    if (roleFilter !== 'ALL' && !u.roles?.includes(roleFilter)) return false;
 
     const fromDate = dateFrom ? parseDate(dateFrom) : null;
     const toDate = dateTo ? parseDate(dateTo) : null;
@@ -222,6 +279,18 @@ export default function ModerationPage() {
             className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs font-medium text-slate-700 focus:outline-none focus:border-blue-500 placeholder-slate-400"
           />
         </div>
+        <label className="flex items-center gap-2 min-w-[170px]">
+          <span className="sr-only">Lọc theo vai trò hệ thống</span>
+          <select
+            aria-label="Lọc theo vai trò hệ thống"
+            value={roleFilter}
+            onChange={(event) => setRoleFilter(event.target.value as SystemRole | 'ALL')}
+            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-xs font-semibold text-slate-700 focus:outline-none focus:border-blue-500"
+          >
+            <option value="ALL">Tất cả vai trò</option>
+            {SYSTEM_ROLE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+          </select>
+        </label>
       </div>
 
       {/* Users Table */}
@@ -242,6 +311,7 @@ export default function ModerationPage() {
                 <tr className="border-b border-slate-200 bg-slate-50/80 text-slate-500 text-xs font-bold uppercase tracking-wider">
                   <th className="p-4 pl-6">Người dùng</th>
                   <th className="p-4">Trạng thái</th>
+                  <th className="p-4">Vai trò hệ thống</th>
                   <th className="p-4">Ngày tham gia</th>
                   <th className="p-4">Xác minh</th>
                   <th className="p-4 pr-6 text-right">Hành động</th>
@@ -270,6 +340,15 @@ export default function ModerationPage() {
                         </div>
                       </td>
                       <td className="p-4">{getStatusBadge(item)}</td>
+                      <td className="p-4">
+                        <div className="flex flex-wrap gap-1.5 max-w-[230px]">
+                          {item.roles?.length ? item.roles.map((role) => (
+                            <span key={role} className="inline-flex items-center rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-[10px] font-bold text-blue-700">
+                              {roleLabel(role)}
+                            </span>
+                          )) : <span className="text-xs font-semibold text-slate-400">Chưa gán</span>}
+                        </div>
+                      </td>
                       <td className="p-4 text-xs font-semibold text-slate-500">
                         {new Date(item.createdAt).toLocaleDateString('vi-VN')}
                       </td>
@@ -310,6 +389,18 @@ export default function ModerationPage() {
                               Xử phạt
                             </Button>
                           )}
+                          <Button
+                            type="button"
+                            onClick={() => openRoleModal(item)}
+                            disabled={!canManageSystemRoles || processing || roleProcessing || item.id === currentUser?.id}
+                            size="sm"
+                            variant="outline"
+                            title={item.id === currentUser?.id ? 'Không thể tự thay đổi vai trò của mình' : canManageSystemRoles ? 'Gán vai trò hệ thống' : 'Chỉ quản trị viên mới được gán vai trò hệ thống'}
+                            className="text-xs font-bold border-blue-200 text-blue-700 hover:bg-blue-50"
+                          >
+                            <KeyRound className="w-3.5 h-3.5 mr-1" />
+                            Vai trò
+                          </Button>
                         </div>
                       </td>
                     </tr>
@@ -318,6 +409,71 @@ export default function ModerationPage() {
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+
+      {showRoleModal && roleUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" role="presentation">
+          <form
+            onSubmit={handleRoleSubmit}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="system-role-title"
+            className="w-full max-w-md bg-white border border-slate-200 rounded-lg overflow-hidden shadow-2xl"
+          >
+            <div className="p-6 border-b border-slate-200 flex items-center justify-between">
+              <div>
+                <h3 id="system-role-title" className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                  <KeyRound className="w-5 h-5 text-blue-600" />
+                  Gán vai trò hệ thống
+                </h3>
+                <p className="text-xs text-slate-500 mt-1">Các vai trò có sẵn của nền tảng, không ảnh hưởng vai trò CLB.</p>
+              </div>
+              <button type="button" aria-label="Đóng cửa sổ gán vai trò" onClick={() => setShowRoleModal(false)} className="text-slate-400 hover:text-slate-700">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="rounded-lg bg-slate-50 border border-slate-200 px-4 py-3">
+                <p className="text-sm font-semibold text-slate-800">{roleUser.profile?.fullName || 'Người dùng'}</p>
+                <p className="text-xs text-slate-500">{roleUser.email}</p>
+              </div>
+              <fieldset>
+                <legend className="text-xs font-bold uppercase tracking-wide text-slate-500 mb-2">Vai trò được áp dụng</legend>
+                <p className="mb-3 text-xs text-slate-500">Vận động viên luôn được giữ làm vai trò nền. ADMIN/MODERATOR là quyền nhạy cảm, chỉ cấp khi đã xác minh trách nhiệm.</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {SYSTEM_ROLE_OPTIONS.map((option) => {
+                            const selected = selectedRoles.includes(option.value);
+                    return (
+                      <label key={option.value} className={`flex items-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-semibold cursor-pointer transition-colors ${selected ? 'border-blue-300 bg-blue-50 text-blue-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>
+                        <input
+                          type="checkbox"
+                          value={option.value}
+                          checked={option.value === 'PLAYER' || selected}
+                          disabled={option.value === 'PLAYER'}
+                          onChange={(event) => {
+                            const current = roleForm.getValues('roles');
+                            const next = event.target.checked ? [...current, option.value] : current.filter((role) => role !== option.value && role !== 'PLAYER');
+                            roleForm.setValue('roles', next as SystemRole[], { shouldValidate: true });
+                          }}
+                          className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        {option.label}
+                      </label>
+                    );
+                  })}
+                </div>
+                {roleForm.formState.errors.roles?.message && <p className="mt-2 text-xs font-semibold text-rose-600">{roleForm.formState.errors.roles.message}</p>}
+              </fieldset>
+            </div>
+            <div className="p-6 bg-slate-50 border-t border-slate-200 flex justify-end gap-3">
+              <button type="button" onClick={() => setShowRoleModal(false)} className="bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 px-4 py-2 rounded-lg text-xs font-semibold">Hủy</button>
+              <Button type="submit" disabled={roleProcessing || !canManageSystemRoles} className="text-xs">
+                {roleProcessing && <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />}
+                Lưu vai trò
+              </Button>
+            </div>
+          </form>
         </div>
       )}
 

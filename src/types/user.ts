@@ -10,7 +10,7 @@ export interface UserProfile {
   gender?: string | null;
   address?: string | null;
   provinceCode?: string | null;
-  role: 'PLAYER' | 'ORGANIZER' | 'MODERATOR' | 'ADMIN';
+  role: 'PLAYER' | 'REFEREE' | 'ORGANIZER' | 'MODERATOR' | 'ADMIN';
   roles?: string[];
   status: string;
   isActive?: boolean;

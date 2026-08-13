@@ -202,7 +202,7 @@ export default function CommunitiesPage() {
                 className="bg-white rounded-lg border border-slate-150 overflow-hidden shadow-[0_2px_12px_rgba(15,23,42,0.04)] hover:shadow-[0_12px_24px_rgba(15,23,42,0.08)] hover:-translate-y-1 transition-all duration-500 flex flex-col justify-between group cursor-pointer"
               >
                 {/* Header Banner */}
-                <div className="h-40 bg-slate-50 relative overflow-hidden shrink-0">
+                <div className="h-48 sm:h-52 bg-slate-50 relative overflow-hidden shrink-0">
                   {community.bannerUrl ? (
                     <Image 
                       src={community.bannerUrl.split(',')[0]} 
@@ -232,10 +232,10 @@ export default function CommunitiesPage() {
                 </div>
 
                 {/* Card Info (White Area) */}
-                <div className="p-4 pt-3 flex flex-col justify-between flex-grow bg-white">
+                <div className="p-4 pt-2.5 flex flex-col justify-between bg-white">
                   <div className="flex items-start gap-3 relative">
                     {/* Circular Logo - Half overlap */}
-                    <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-white bg-white shadow-md -mt-8 z-10 shrink-0 relative">
+                    <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-white bg-white shadow-md -mt-9 z-10 shrink-0 relative">
                       <Image 
                         src={community.logoUrl || "/sporto_v1.svg"} 
                         alt={community.name} 
@@ -256,7 +256,7 @@ export default function CommunitiesPage() {
                       </div>
 
                       {/* Stats row directly below title */}
-                      <div className="flex items-center gap-2 mt-1 text-[10px] text-slate-500 font-semibold flex-wrap">
+                      <div className="flex items-center gap-2 mt-0.5 text-[10px] text-slate-500 font-semibold flex-wrap">
                         <span className="flex items-center gap-0.5">
                           <Users className="w-3 h-3 text-slate-400" />
                           {community._count?.members || 0} thành viên
@@ -271,7 +271,7 @@ export default function CommunitiesPage() {
                   </div>
 
                   {/* Categories Row */}
-                  <div className="flex flex-wrap gap-1 mt-3.5 mb-2 min-h-[18px]">
+                  <div className="flex flex-wrap gap-1 mt-2.5 mb-1">
                     {community.categories && community.categories.length > 0 ? (
                       community.categories.slice(0, 2).map(cat => {
                         const styles = getCategoryStyles(cat.name);
@@ -298,7 +298,7 @@ export default function CommunitiesPage() {
                   </div>
 
                   {/* Card Button */}
-                  <div className="pt-2.5 border-t border-slate-100 mt-2">
+                  <div className="pt-2 border-t border-slate-100 mt-2">
                     {isOwner ? (
                       <div 
                         className="w-full text-[10px] font-bold bg-slate-900 hover:bg-slate-800 text-white py-2 rounded-lg transition-all flex items-center justify-center gap-1 h-8 shadow-sm"

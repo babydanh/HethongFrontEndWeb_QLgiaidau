@@ -13,7 +13,7 @@ export function Footer() {
               <img 
                 src="/sporto_v1.svg" 
                 alt="Sporto Logo" 
-                className="h-8 md:h-10 w-auto object-contain"
+                className="h-10 md:h-12 w-auto object-contain"
               />
             </Link>
             <p className="text-sm text-slate-500">

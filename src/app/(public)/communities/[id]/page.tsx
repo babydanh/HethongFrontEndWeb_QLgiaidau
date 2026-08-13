@@ -49,6 +49,8 @@ export default function CommunityDetailPage() {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isLeaveConfirmOpen, setIsLeaveConfirmOpen] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
+  // Legacy favorite state is retained only for backwards-compatible API data;
+  // the community header no longer exposes a redundant favorite action.
   const [isFavorite, setIsFavorite] = useState(false);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
 
@@ -475,7 +477,7 @@ export default function CommunityDetailPage() {
               variant="outline"
               onClick={handleToggleFavorite}
               disabled={isFollowLoading}
-              className={`h-10 px-3 rounded-lg shadow-sm border transition-colors ${
+              className={`hidden h-10 px-3 rounded-lg shadow-sm border transition-colors ${
                 isFavorite
                   ? 'bg-emerald-50 border-emerald-300 text-emerald-600'
                   : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700'
@@ -537,7 +539,7 @@ export default function CommunityDetailPage() {
               onClick={() => setActiveTab(tab.id as typeof activeTab)}
               className={`px-5 py-2.5 rounded-lg font-bold text-sm whitespace-nowrap transition-all flex items-center gap-2 ${
                 activeTab === tab.id 
-                  ? 'bg-emerald-600 text-white shadow-sm' 
+                  ? 'bg-[#3AB5F6] text-white shadow-sm' 
                   : 'bg-slate-200/60 text-slate-600 hover:bg-slate-300/60 hover:text-slate-900'
               }`}
             >
@@ -549,7 +551,7 @@ export default function CommunityDetailPage() {
                onClick={() => setActiveTab('settings')}
                className={`px-5 py-2.5 rounded-lg font-bold text-sm whitespace-nowrap transition-all flex items-center gap-2 ${
                 activeTab === 'settings' 
-                  ? 'bg-emerald-600 text-white shadow-sm' 
+                  ? 'bg-[#3AB5F6] text-white shadow-sm' 
                   : 'bg-slate-200/60 text-slate-600 hover:bg-slate-300/60 hover:text-slate-900'
               }`}
              >

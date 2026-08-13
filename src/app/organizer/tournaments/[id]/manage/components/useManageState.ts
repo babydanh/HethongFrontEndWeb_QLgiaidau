@@ -91,6 +91,7 @@ export function useManageState(id: string) {
   const [selectedDivisionId, setSelectedDivisionId] = useState<string>('');
   const [isCreateDivisionModalOpen, setIsCreateDivisionModalOpen] = useState(false);
   const [newDivisionMatchType, setNewDivisionMatchType] = useState('MALE_DOUBLES');
+  const [newDivisionName, setNewDivisionName] = useState('');
   const [newDivisionBracketType, setNewDivisionBracketType] = useState('SINGLE_ELIMINATION');
   const [isCreatingDivision, setIsCreatingDivision] = useState(false);
   const [divisionPendingDelete, setDivisionPendingDelete] = useState<Division | null>(null);
@@ -733,17 +734,15 @@ export function useManageState(id: string) {
         selectedCategory,
       );
       const mapped = pm[normalizedMatchType] || {mt:MatchTypeDB.DOUBLES, gr:null};
-      if (divisions.some(d=>d.matchType===mapped.mt && d.genderRestriction===mapped.gr)) {
-        toast.error('Hình thức này đã tồn tại!'); setIsCreatingDivision(false); return;
-      }
       const generatedName = getFormatLabel(mapped.mt, mapped.gr);
+      const divisionName = newDivisionName.trim() || generatedName;
       const normalizedKind = normalizeSportRuleKindForCategory(
         inferSportRuleKindFromCategory(selectedCategory),
         selectedCategory,
       );
       const defaultRules = buildDefaultSportRules(normalizedKind);
       const res = await divisionsApi.createDivision(tournament.id, {
-        name: generatedName,
+        name: divisionName,
         matchType: mapped.mt,
         genderRestriction: mapped.gr,
         bracketType: newDivisionBracketType as Division['bracketType'],
@@ -758,9 +757,10 @@ export function useManageState(id: string) {
           roundsToPlay: 1,
         }),
       });
-      toast.success(`Đã thêm "${generatedName}" thành công!`);
+      toast.success(`Đã thêm "${divisionName}" thành công!`);
       setIsCreateDivisionModalOpen(false);
       setNewDivisionMatchType(normalizeMatchFormatForCategory('MALE_DOUBLES', selectedCategory));
+      setNewDivisionName('');
       setNewDivisionBracketType('SINGLE_ELIMINATION');
       await fetchDivisions(tournament.id);
       if (res.data) setSelectedDivisionId(res.data.id);
@@ -1379,7 +1379,7 @@ export function useManageState(id: string) {
     referees, setReferees, refereeEmail, setRefereeEmail, isAddingReferee, setIsAddingReferee,
     divisions, setDivisions, selectedDivisionId, setSelectedDivisionId,
     isCreateDivisionModalOpen, setIsCreateDivisionModalOpen,
-    newDivisionMatchType, setNewDivisionMatchType, newDivisionBracketType, setNewDivisionBracketType,
+    newDivisionMatchType, setNewDivisionMatchType, newDivisionName, setNewDivisionName, newDivisionBracketType, setNewDivisionBracketType,
     isCreatingDivision, setIsCreatingDivision, divisionPendingDelete, setDivisionPendingDelete, isDeletingDivision, setIsDeletingDivision,
     name, setName, categoryId, setCategoryId, description, setDescription,
     bannerUrl, setBannerUrl, logoUrl, setLogoUrl, hideFeaturedCardText, setHideFeaturedCardText, prizeDescription, setPrizeDescription,

@@ -72,9 +72,30 @@ export default function Step2FormatMulti() {
     updateFormData({ selectedFormats: newSelected });
   };
 
+  // Team sport (bóng đá): khi chọn sân → set minTeamSize/maxTeamSize/maxReserve
+  const isFootball = resolvedRules.kind === 'FOOTBALL';
+  const [teamSize, setTeamSize] = useState<5 | 7 | 11>(7);
+  const [maxReserve, setMaxReserve] = useState(3);
+  const [twoLegged, setTwoLegged] = useState(false);
+  const [awayGoalsRule, setAwayGoalsRule] = useState(false);
+  const [penaltyShootout, setPenaltyShootout] = useState(true);
+  const [allowDraw, setAllowDraw] = useState(true);
+
   const handleNext = () => {
     if (selected.length === 0) return;
-    updateFormData({ format: bracketType });
+    const next: Record<string, unknown> = { format: bracketType };
+    if (isFootball) {
+      next.teamSize = teamSize;
+      next.teamSizeOptions = [5, 7, 11];
+      next.minTeamSize = teamSize;
+      next.maxTeamSize = teamSize + maxReserve;
+      next.maxReserve = maxReserve;
+      next.twoLegged = twoLegged;
+      next.awayGoalsRule = awayGoalsRule;
+      next.penaltyShootout = penaltyShootout;
+      next.allowDraw = allowDraw;
+    }
+    updateFormData(next);
     nextStep();
   };
 
@@ -152,6 +173,75 @@ export default function Step2FormatMulti() {
           {selected.length > 1 && `Bạn chọn ${selected.length} hình thức. Sẽ tạo ${selected.length} bảng thi đấu riêng biệt.`}
         </p>
       </div>
+
+      {isFootball && (
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-5 space-y-4">
+          <p className="text-sm font-bold text-emerald-900">⚽ Bóng đá — Đội hình & thể thức</p>
+
+          <div>
+            <label className="text-sm font-semibold text-emerald-800">Chọn sân (đội hình chính thức tối thiểu)</label>
+            <div className="grid grid-cols-3 gap-3 mt-2">
+              {([5, 7, 11] as const).map((size) => (
+                <button
+                  key={size}
+                  type="button"
+                  onClick={() => setTeamSize(size)}
+                  className={cn(
+                    'p-3 rounded-lg border-2 text-center font-bold',
+                    teamSize === size
+                      ? 'border-emerald-500 bg-white ring-2 ring-emerald-200 text-emerald-900'
+                      : 'border-emerald-200 bg-white/70 text-emerald-700 hover:border-emerald-300',
+                  )}
+                >
+                  Sân {size}
+                </button>
+              ))}
+            </div>
+            <p className="mt-1 text-xs font-semibold text-emerald-700">
+              Đội cần tối thiểu {teamSize} cầu thủ chính thức.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-semibold text-emerald-800">Dự bị tối đa</label>
+              <select
+                value={maxReserve}
+                onChange={(e) => setMaxReserve(Number(e.target.value))}
+                className="mt-1 w-full border border-emerald-300 rounded-lg px-3 py-2 bg-white text-emerald-900"
+              >
+                {[0, 1, 2, 3, 4, 5].map((n) => (
+                  <option key={n} value={n}>{n} người</option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-emerald-800">Thể thức loại trực tiếp</label>
+              <label className="flex items-center gap-2 text-sm text-emerald-800">
+                <input type="checkbox" checked={twoLegged} onChange={(e) => setTwoLegged(e.target.checked)} className="w-4 h-4" />
+                Lượt đi – Lượt về (2 trận/cặp)
+              </label>
+              {twoLegged && (
+                <label className="flex items-center gap-2 text-sm text-emerald-800">
+                  <input type="checkbox" checked={awayGoalsRule} onChange={(e) => setAwayGoalsRule(e.target.checked)} className="w-4 h-4" />
+                  Luật bàn thắng sân khách
+                </label>
+              )}
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-4">
+            <label className="flex items-center gap-2 text-sm text-emerald-800">
+              <input type="checkbox" checked={allowDraw} onChange={(e) => setAllowDraw(e.target.checked)} className="w-4 h-4" />
+              Cho phép hòa (vòng bảng)
+            </label>
+            <label className="flex items-center gap-2 text-sm text-emerald-800">
+              <input type="checkbox" checked={penaltyShootout} onChange={(e) => setPenaltyShootout(e.target.checked)} className="w-4 h-4" />
+              Luân lưu phân định (hòa ở knockout)
+            </label>
+          </div>
+        </div>
+      )}
 
       <div className="flex justify-between mt-4 pt-6 border-t border-slate-100">
         <Button type="button" variant="outline" onClick={prevStep} className="border-slate-200 text-slate-600">

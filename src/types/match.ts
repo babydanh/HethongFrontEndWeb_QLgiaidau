@@ -100,6 +100,7 @@ export interface Match {
     sportRules?: SportRulesEnvelope | null;
     categoryName?: string | null;
     categorySlug?: string | null;
+    venueName?: string | null;
     categoryConfig?: Record<string, unknown> | null;
     tournamentConfig?: { mode?: 'LITE' | 'ADVANCED' } | null;
   } | null;

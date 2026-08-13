@@ -28,6 +28,12 @@ export interface ScoreDraft {
   sideOutState?: PickleballSideOutState;
   overrideEnabled?: boolean;
   overrideReason?: string;
+  // Bóng đá: luân lưu phân định khi hòa ở knockout
+  shootout?: {
+    p1Goals: number;
+    p2Goals: number;
+    winnerId?: string | null;
+  };
 }
 
 interface ScoringPanelProps {
@@ -143,7 +149,10 @@ export function ScoringPanel({
       ? Math.max(0, value)
       : Math.min(resolvedRules.maxPoints, Math.max(0, value));
   const scoreWarnings = getScoreRuleWarnings(scoreDraft.sets, resolvedRules);
-  const canSubmitScore = hasEnteredScore && !hasDrawnFinishedSet && (overrideEnabled || scoreWarnings.length === 0);
+  const isFootball = resolvedRules.kind === 'FOOTBALL';
+  // Bóng đá: cho phép hòa nếu đã nhập luân lưu (shootout) để phân định.
+  const hasShootout = isFootball && scoreDraft.shootout?.winnerId != null;
+  const canSubmitScore = hasEnteredScore && (!hasDrawnFinishedSet || hasShootout) && (overrideEnabled || scoreWarnings.length === 0);
   const activeSetSummary = activeSet
     ? `${scorePresentation.sequenceLabel.charAt(0).toUpperCase() + scorePresentation.sequenceLabel.slice(1)} hiện tại ${activeSet.team1Score} - ${activeSet.team2Score}${activeSet.isFinished ? ' (đã chốt)' : ' (đang mở)'}`
     : 'Chưa có ${scorePresentation.sequenceLabel} đang mở';
@@ -525,6 +534,92 @@ export function ScoringPanel({
           Đã bật ngoại lệ, cần nhập lý do để BTC và trọng tài tra cứu lại sau.
         </div>
       ) : null}
+
+      {isFootball && hasDrawnFinishedSet && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 space-y-3">
+          <p className="text-sm font-bold text-amber-900">
+            ⚽ Trận hòa ở vòng loại trực tiếp — nhập luân lưu để phân định
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-amber-800">{match.participant1?.teamName || 'Đội 1'} (luân lưu)</label>
+              <input
+                type="number"
+                min={0}
+                value={scoreDraft.shootout?.p1Goals ?? 0}
+                onChange={(e) =>
+                  setScoreDraft((current) => ({
+                    ...current,
+                    shootout: {
+                      ...(current.shootout ?? { p1Goals: 0, p2Goals: 0 }),
+                      p1Goals: Number(e.target.value),
+                    },
+                  }))
+                }
+                className="h-10 w-full rounded-lg border border-amber-300 bg-white px-3 text-sm"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-amber-800">{match.participant2?.teamName || 'Đội 2'} (luân lưu)</label>
+              <input
+                type="number"
+                min={0}
+                value={scoreDraft.shootout?.p2Goals ?? 0}
+                onChange={(e) =>
+                  setScoreDraft((current) => ({
+                    ...current,
+                    shootout: {
+                      ...(current.shootout ?? { p1Goals: 0, p2Goals: 0 }),
+                      p2Goals: Number(e.target.value),
+                    },
+                  }))
+                }
+                className="h-10 w-full rounded-lg border border-amber-300 bg-white px-3 text-sm"
+              />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              size="sm"
+              variant={scoreDraft.shootout?.winnerId === match.participant1?.id ? 'default' : 'outline'}
+              onClick={() =>
+                setScoreDraft((current) => ({
+                  ...current,
+                  shootout: {
+                    ...current.shootout,
+                    p1Goals: current.shootout?.p1Goals ?? 0,
+                    p2Goals: current.shootout?.p2Goals ?? 0,
+                    winnerId: match.participant1?.id,
+                  },
+                }))
+              }
+              className="flex-1"
+            >
+              {match.participant1?.teamName || 'Đội 1'} thắng luân lưu
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={scoreDraft.shootout?.winnerId === match.participant2?.id ? 'default' : 'outline'}
+              onClick={() =>
+                setScoreDraft((current) => ({
+                  ...current,
+                  shootout: {
+                    ...current.shootout,
+                    p1Goals: current.shootout?.p1Goals ?? 0,
+                    p2Goals: current.shootout?.p2Goals ?? 0,
+                    winnerId: match.participant2?.id,
+                  },
+                }))
+              }
+              className="flex-1"
+            >
+              {match.participant2?.teamName || 'Đội 2'} thắng luân lưu
+            </Button>
+          </div>
+        </div>
+      )}
 
       <ModalFooter className="gap-2">
         <Button variant="outline" className="border-slate-200 text-slate-700" onClick={onCancel}>

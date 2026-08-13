@@ -748,6 +748,13 @@ export function RegistrationTab({
                             {(participant.members || []).map((member) => (
                               <span key={member.userId} className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-bold text-slate-700">
                                 {member.isMock ? 'VĐV ảo' : (member.fullName || 'Chưa rõ')}
+                                {(member.role === 'MAIN' || member.role === 'RESERVE') && (
+                                  <span className={`ml-1.5 px-1.5 py-0.5 rounded text-[9px] font-bold ${
+                                    member.role === 'MAIN' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+                                  }`}>
+                                    {member.role === 'MAIN' ? 'Chính thức' : 'Dự bị'}
+                                  </span>
+                                )}
                               </span>
                             ))}
                           </div>

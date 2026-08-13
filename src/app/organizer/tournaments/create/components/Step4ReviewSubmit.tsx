@@ -127,6 +127,16 @@ export default function Step4ReviewSubmit() {
           maxTeammateGap: formData.maxTeammateGap,
           registrationMode: formData.registrationMode || 'OPEN',
           registrationScope: isClubTournament ? 'CLUB_MEMBERS_ONLY' : 'PUBLIC_OPEN',
+          // Team sport (bóng đá): sân 5/7/11 + thể thức nâng cao
+          ...(formData.teamSize != null ? { teamSize: formData.teamSize } : {}),
+          ...(formData.teamSizeOptions ? { teamSizeOptions: formData.teamSizeOptions } : {}),
+          ...(formData.minTeamSize != null ? { minTeamSize: formData.minTeamSize } : {}),
+          ...(formData.maxTeamSize != null ? { maxTeamSize: formData.maxTeamSize } : {}),
+          ...(formData.maxReserve != null ? { maxReserve: formData.maxReserve } : {}),
+          ...(formData.twoLegged != null ? { twoLegged: formData.twoLegged } : {}),
+          ...(formData.awayGoalsRule != null ? { awayGoalsRule: formData.awayGoalsRule } : {}),
+          ...(formData.penaltyShootout != null ? { penaltyShootout: formData.penaltyShootout } : {}),
+          ...(formData.allowDraw != null ? { allowDraw: formData.allowDraw } : {}),
         },
       };
 
@@ -141,14 +151,9 @@ export default function Step4ReviewSubmit() {
       }
 
       // 2. Create divisions for each selected format under the tournament.
-      // Deduplicate to prevent unique constraint violations on parallel requests
-      const uniqueDivisions = divisions.filter((div, index, self) =>
-        index === self.findIndex((t) => (
-          t.matchType === div.matchType && t.genderRestriction === div.genderRestriction
-        ))
-      );
-
-      const divisionPromises = uniqueDivisions.map((div) => {
+      // Same format may intentionally appear more than once. The division name
+      // and its ELO/settings distinguish variants such as Low ELO / High ELO.
+      const divisionPromises = divisions.map((div) => {
         const divisionInput: CreateDivisionInput = {
           name: div.name,
           matchType: div.matchType,

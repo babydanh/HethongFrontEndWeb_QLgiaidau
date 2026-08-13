@@ -98,7 +98,7 @@ export interface Tournament {
   bannerUrl?: string;
   startDate?: string;
   endDate?: string;
-  city?: string;
+  city?: string | null;
   locationAddress?: string;
   registrationStartDate?: string;
   registrationEndDate?: string;
@@ -168,7 +168,6 @@ export interface Tournament {
     maxParticipants?: number;
     inviteCode?: string | null;
   }[] | null;
-  city?: string | null;
   tournamentConfig?: {
     isLite?: boolean;
     mode?: 'LITE' | 'ADVANCED' | 'STRICT';
@@ -182,6 +181,16 @@ export interface Tournament {
     maxTeammateGap?: number | null;
     registrationMode?: 'OPEN' | 'APPROVAL' | 'INVITE_ONLY';
     hideFeaturedCardText?: boolean;
+    // Team sport (bóng đá)
+    teamSize?: 5 | 7 | 11;
+    teamSizeOptions?: Array<5 | 7 | 11>;
+    minTeamSize?: number;
+    maxTeamSize?: number;
+    maxReserve?: number;
+    twoLegged?: boolean;
+    awayGoalsRule?: boolean;
+    penaltyShootout?: boolean;
+    allowDraw?: boolean;
   } | null;
   /** Normalized by GET /tournaments/public for banner rendering. */
   hideFeaturedCardText?: boolean;
@@ -291,6 +300,7 @@ export interface BracketMatch {
   completedAt?: string | null;
   courtName?: string | null;
   courtAddress?: string | null;
+  cheerCount?: number;
   refereeId?: string | null;
   refereeName?: string | null;
   groupId: string;

@@ -60,6 +60,16 @@ interface TournamentFormData {
   entryFee: number;
   isRanked: boolean;
   registrationMode: 'OPEN' | 'APPROVAL' | 'INVITE_ONLY';
+  // Team sport (bóng đá): sân 5/7/11 + thể thức nâng cao
+  teamSize?: 5 | 7 | 11;
+  teamSizeOptions?: Array<5 | 7 | 11>;
+  minTeamSize?: number;
+  maxTeamSize?: number;
+  maxReserve?: number;
+  twoLegged?: boolean;
+  awayGoalsRule?: boolean;
+  penaltyShootout?: boolean;
+  allowDraw?: boolean;
 }
 
 interface CreateTournamentState {

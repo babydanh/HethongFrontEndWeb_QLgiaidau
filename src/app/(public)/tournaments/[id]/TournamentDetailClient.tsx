@@ -49,6 +49,15 @@ import {
 } from '@/utils/tournament-status';
 import { getRegistrationModeUi } from '../registrationMode';
 
+const formatVenueSummary = (venueName?: string | null, address?: string | null, city?: string | null) => {
+  const values = [venueName, address, city]
+    .filter((value): value is string => Boolean(value?.trim()))
+    .flatMap((value) => value.split(','))
+    .map((value) => value.trim())
+    .filter(Boolean);
+  return Array.from(new Map(values.map((value) => [value.toLowerCase(), value])).values()).join(', ');
+};
+
 
 interface Props {
   tournamentId: string;
@@ -433,10 +442,10 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                     </>
                   ) : 'Chưa thiết lập ngày'}
                 </span>
-                <span className="flex items-center gap-1.5 min-w-0">
+                <span className="flex min-w-0 max-w-full items-start gap-1.5 md:max-w-[min(100%,760px)]">
                   <MapPin className="w-4 h-4 text-slate-400 shrink-0" />
-                  <span className="truncate" title={[activeTournament.venue?.name, activeTournament.venue?.locationAddress || activeTournament.locationAddress, activeTournament.city].filter(Boolean).join(' • ')}>
-                    {[activeTournament.venue?.name, activeTournament.venue?.locationAddress || activeTournament.locationAddress, activeTournament.city].filter(Boolean).join(' • ') || 'Chưa cập nhật địa điểm'}
+                  <span className="break-words whitespace-normal leading-6" title={formatVenueSummary(activeTournament.venue?.name, activeTournament.venue?.locationAddress || activeTournament.locationAddress, activeTournament.city)}>
+                    {formatVenueSummary(activeTournament.venue?.name, activeTournament.venue?.locationAddress || activeTournament.locationAddress, activeTournament.city) || 'Chưa cập nhật địa điểm'}
                   </span>
                 </span>
               </div>

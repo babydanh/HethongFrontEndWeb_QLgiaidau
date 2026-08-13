@@ -130,7 +130,7 @@ function CommunityLogoAvatar({ src, alt }: { src?: string | null; alt: string })
       src={imageSrc}
       alt={alt}
       fill
-      className="object-cover group-hover:scale-105 transition-transform duration-500"
+      className={`object-contain p-2 group-hover:scale-105 transition-transform duration-500 ${imageSrc === fallbackSrc ? 'p-3' : ''}`}
       onError={() => setImgError(true)}
       unoptimized={imageSrc === fallbackSrc}
     />
@@ -236,7 +236,7 @@ function TournamentLogoAvatar({ src, alt }: { src?: string | null; alt: string }
       src={imageSrc}
       alt={alt}
       fill
-      className="object-cover group-hover:scale-105 transition-transform duration-500"
+      className={`object-contain p-2 group-hover:scale-105 transition-transform duration-500 ${imageSrc === fallbackSrc ? 'p-3' : ''}`}
       onError={() => setImgError(true)}
       unoptimized={imageSrc === fallbackSrc}
     />
@@ -589,7 +589,7 @@ export default function HomePage() {
             
             // Sync initial cheer counts from backend
             const initialCheerMap: Record<string, number> = {};
-            matchesArray.forEach((m: Record<string, unknown>) => {
+            matchesArray.forEach((m) => {
               if (m.id && typeof m.cheerCount === 'number') {
                 initialCheerMap[m.id as string] = m.cheerCount;
               }

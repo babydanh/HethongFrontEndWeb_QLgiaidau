@@ -295,24 +295,24 @@ export default function SettingsTab({ community }: { community: Community }) {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      <section className="lg:col-span-3 rounded-lg border border-emerald-100 bg-emerald-50/40 p-6">
-        <div className="mb-4 flex items-center justify-between gap-3">
+      <section className="lg:col-span-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-6">
+        <div className="mb-6 flex flex-col gap-4 border-b border-slate-100 pb-5 sm:flex-row sm:items-center sm:justify-between">
           <div><h3 className="text-lg font-bold text-slate-900">Sinh hoạt CLB</h3><p className="mt-1 text-xs text-slate-500">Điều khiển feed, chat và quyền thành viên.</p></div>
           <Button type="button" onClick={() => void saveSocialSettings()} disabled={isSavingSocial} className="bg-emerald-600 text-white">{isSavingSocial ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}Lưu social</Button>
         </div>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
           <label className="text-sm font-semibold text-slate-700">Quyền đăng bài<select value={socialSettings.postingPolicy} onChange={(event) => setSocialSettings((current) => ({ ...current, postingPolicy: event.target.value as CommunitySocialSettings['postingPolicy'] }))} className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"><option value="MEMBERS">Thành viên</option><option value="ADMINS">Chỉ ban quản trị</option><option value="OFF">Tắt đăng bài</option></select></label>
           <label className="flex items-center gap-2 rounded-lg bg-white p-3 text-sm font-semibold text-slate-700"><input type="checkbox" checked={socialSettings.postApprovalRequired} onChange={(event) => setSocialSettings((current) => ({ ...current, postApprovalRequired: event.target.checked }))} />Bài thành viên phải duyệt</label>
           <label className="flex items-center gap-2 rounded-lg bg-white p-3 text-sm font-semibold text-slate-700"><input type="checkbox" checked={socialSettings.commentsEnabled} onChange={(event) => setSocialSettings((current) => ({ ...current, commentsEnabled: event.target.checked }))} />Cho phép bình luận</label>
           <label className="flex items-center gap-2 rounded-lg bg-white p-3 text-sm font-semibold text-slate-700"><input type="checkbox" checked={socialSettings.chatEnabled} onChange={(event) => setSocialSettings((current) => ({ ...current, chatEnabled: event.target.checked }))} />Mở chat CLB</label>
           <label className="flex items-center gap-2 rounded-lg bg-white p-3 text-sm font-semibold text-slate-700"><input type="checkbox" checked={socialSettings.publicFeed} onChange={(event) => setSocialSettings((current) => ({ ...current, publicFeed: event.target.checked }))} />Feed cho khách xem</label>
           <label className="text-sm font-semibold text-slate-700">Quyền gắn thẻ<select value={socialSettings.memberTaggingPolicy} onChange={(event) => setSocialSettings((current) => ({ ...current, memberTaggingPolicy: event.target.value as CommunitySocialSettings['memberTaggingPolicy'] }))} className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"><option value="MEMBERS">Thành viên</option><option value="ADMINS">Chỉ ban quản trị</option><option value="OFF">Tắt gắn thẻ</option></select></label>
-          <div className="rounded-lg border border-slate-200 bg-white p-4 space-y-3">
+          <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 space-y-3 md:col-span-2 xl:col-span-1">
             <div><p className="text-sm font-bold text-slate-800">Tag thành viên</p><p className="text-xs text-slate-500">Tạo tag vui vẻ và chọn màu để BQT dùng khi gán cho thành viên.</p></div>
             <div className="flex gap-2">
               <input value={newTagName} onChange={(event) => setNewTagName(event.target.value)} maxLength={24} placeholder="Ví dụ: MVP tuần" className="min-w-0 flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm" />
               <input type="color" value={newTagColor} onChange={(event) => setNewTagColor(event.target.value)} aria-label="Màu tag" className="h-10 w-12 cursor-pointer rounded border border-slate-200 bg-white p-1" />
-              <Button type="button" onClick={handleCreateTagPreset} className="bg-emerald-600 text-white px-3"><Plus className="h-4 w-4" /></Button>
+              <Button type="button" onClick={handleCreateTagPreset} aria-label="Tạo tag" className="bg-emerald-600 px-3 text-white"><Plus className="h-4 w-4" /></Button>
             </div>
             <div className="flex flex-wrap gap-2">
               {tagPresets.map((preset) => <span key={preset.id} className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold" style={{ backgroundColor: preset.color, color: '#334155' }}>{preset.name}<button type="button" onClick={() => handleDeleteTagPreset(preset.id)} aria-label={`Xóa ${preset.name}`}><Trash2 className="h-3 w-3" /></button></span>)}

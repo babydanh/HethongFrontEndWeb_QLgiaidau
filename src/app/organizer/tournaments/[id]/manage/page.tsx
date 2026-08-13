@@ -615,6 +615,17 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                       </option>
                     ))}
                   </select></div>
+                <div>
+                  <label className="text-xs font-bold text-slate-500">Tên nội dung riêng</label>
+                  <input
+                    value={s.newDivisionName}
+                    onChange={(e) => s.setNewDivisionName(e.target.value)}
+                    placeholder="Ví dụ: Đôi Nam ELO thấp"
+                    maxLength={255}
+                    className="w-full border rounded-lg p-2 text-sm mt-1"
+                  />
+                  <p className="text-[11px] text-slate-400 mt-1">Để trống sẽ dùng tên mặc định theo loại.</p>
+                </div>
                 <div><label className="text-xs font-bold text-slate-500">Thể thức</label>
                   <select value={s.newDivisionBracketType} onChange={e => s.setNewDivisionBracketType(e.target.value)} className="w-full border rounded-lg p-2 text-sm">
                     <option value="SINGLE_ELIMINATION">Loại trực tiếp</option>

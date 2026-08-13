@@ -56,6 +56,9 @@ export default function SettingsTab({ community }: { community: Community }) {
 
   const [socialLinks, setSocialLinks] = useState<Record<string, string>>(community.socialLinks || {});
   const [socialSettings, setSocialSettings] = useState<CommunitySocialSettings>({ postingPolicy: 'MEMBERS', postApprovalRequired: false, commentsEnabled: true, chatEnabled: true, publicFeed: true, memberTaggingPolicy: 'MEMBERS' });
+  const [tagPresets, setTagPresets] = useState<Array<{ id: string; name: string; color: string }>>([]);
+  const [newTagName, setNewTagName] = useState('');
+  const [newTagColor, setNewTagColor] = useState('#E2E8F0');
   const [isSavingSocial, setIsSavingSocial] = useState(false);
   const [newSocialType, setNewSocialType] = useState('facebook');
   const [newSocialLabel, setNewSocialLabel] = useState('');
@@ -123,6 +126,28 @@ export default function SettingsTab({ community }: { community: Community }) {
   useEffect(() => {
     communitiesApi.getSocialSettings(community.id).then((response) => setSocialSettings(response.data)).catch(() => undefined);
   }, [community.id]);
+
+  useEffect(() => {
+    void communitiesApi.getTagPresets(community.id).then((response) => setTagPresets(response.data ?? [])).catch(() => undefined);
+  }, [community.id]);
+
+  const handleCreateTagPreset = async () => {
+    const nameValue = newTagName.trim();
+    if (!nameValue) return;
+    try {
+      const response = await communitiesApi.createTagPreset(community.id, { name: nameValue, color: newTagColor });
+      if (response.data) setTagPresets((current) => [...current, response.data!]);
+      setNewTagName('');
+      toast.success('Đã tạo tag preset.');
+    } catch (error) { toast.error(getErrorMessage(error)); }
+  };
+
+  const handleDeleteTagPreset = async (presetId: string) => {
+    try {
+      await communitiesApi.deleteTagPreset(community.id, presetId);
+      setTagPresets((current) => current.filter((preset) => preset.id !== presetId));
+    } catch (error) { toast.error(getErrorMessage(error)); }
+  };
 
   const saveSocialSettings = async () => {
     try {
@@ -282,6 +307,17 @@ export default function SettingsTab({ community }: { community: Community }) {
           <label className="flex items-center gap-2 rounded-lg bg-white p-3 text-sm font-semibold text-slate-700"><input type="checkbox" checked={socialSettings.chatEnabled} onChange={(event) => setSocialSettings((current) => ({ ...current, chatEnabled: event.target.checked }))} />Mở chat CLB</label>
           <label className="flex items-center gap-2 rounded-lg bg-white p-3 text-sm font-semibold text-slate-700"><input type="checkbox" checked={socialSettings.publicFeed} onChange={(event) => setSocialSettings((current) => ({ ...current, publicFeed: event.target.checked }))} />Feed cho khách xem</label>
           <label className="text-sm font-semibold text-slate-700">Quyền gắn thẻ<select value={socialSettings.memberTaggingPolicy} onChange={(event) => setSocialSettings((current) => ({ ...current, memberTaggingPolicy: event.target.value as CommunitySocialSettings['memberTaggingPolicy'] }))} className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"><option value="MEMBERS">Thành viên</option><option value="ADMINS">Chỉ ban quản trị</option><option value="OFF">Tắt gắn thẻ</option></select></label>
+          <div className="rounded-lg border border-slate-200 bg-white p-4 space-y-3">
+            <div><p className="text-sm font-bold text-slate-800">Tag thành viên</p><p className="text-xs text-slate-500">Tạo tag vui vẻ và chọn màu để BQT dùng khi gán cho thành viên.</p></div>
+            <div className="flex gap-2">
+              <input value={newTagName} onChange={(event) => setNewTagName(event.target.value)} maxLength={24} placeholder="Ví dụ: MVP tuần" className="min-w-0 flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm" />
+              <input type="color" value={newTagColor} onChange={(event) => setNewTagColor(event.target.value)} aria-label="Màu tag" className="h-10 w-12 cursor-pointer rounded border border-slate-200 bg-white p-1" />
+              <Button type="button" onClick={handleCreateTagPreset} className="bg-emerald-600 text-white px-3"><Plus className="h-4 w-4" /></Button>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {tagPresets.map((preset) => <span key={preset.id} className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold" style={{ backgroundColor: preset.color, color: '#334155' }}>{preset.name}<button type="button" onClick={() => handleDeleteTagPreset(preset.id)} aria-label={`Xóa ${preset.name}`}><Trash2 className="h-3 w-3" /></button></span>)}
+            </div>
+          </div>
         </div>
       </section>
       {/* LEFT & CENTER: Form Settings */}

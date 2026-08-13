@@ -81,6 +81,14 @@ export default function MembersTab({
   // Tag assign target (P2C.4)
   const [tagAssignTarget, setTagAssignTarget] = useState<MemberData | null>(null);
   const [isSavingTags, setIsSavingTags] = useState(false);
+  const [tagPresets, setTagPresets] = useState<Array<{ id: string; name: string; color: string }>>([]);
+
+  useEffect(() => {
+    if (!communityId) return;
+    communitiesApi.getTagPresets(communityId)
+      .then((res) => setTagPresets(res.data ?? []))
+      .catch(() => setTagPresets([]));
+  }, [communityId, isOwnerOrMod]);
 
   const fetchMembers = async (page = 1, append = false) => {
     try {
@@ -229,10 +237,12 @@ export default function MembersTab({
   const renderMemberPills = (item: MemberData) => {
     const pills: React.ReactNode[] = [];
     (item.member?.tags ?? []).forEach((tag) => {
+      const preset = tagPresets.find((candidate) => candidate.name.toLowerCase() === tag.toLowerCase());
       pills.push(
         <span
           key={`tag-${tag}`}
-          className="px-2 py-0.5 rounded-lg bg-slate-100 text-slate-600 border border-slate-200 text-[10px] font-semibold"
+          className="px-2 py-0.5 rounded-lg border text-[10px] font-semibold"
+          style={preset ? { backgroundColor: `${preset.color}26`, borderColor: `${preset.color}66`, color: preset.color } : undefined}
         >
           {tag}
         </span>
@@ -741,6 +751,7 @@ export default function MembersTab({
         }}
         memberName={tagAssignTarget?.user?.fullName}
         currentTags={tagAssignTarget?.member?.tags ?? []}
+        presets={tagPresets}
         isSaving={isSavingTags}
         onSave={handleSaveTags}
       />

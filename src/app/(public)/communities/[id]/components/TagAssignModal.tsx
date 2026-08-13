@@ -30,6 +30,7 @@ interface TagAssignModalProps {
   onOpenChange: (open: boolean) => void;
   memberName?: string;
   currentTags?: string[];
+  presets?: Array<{ name: string; color: string }>;
   isSaving?: boolean;
   onSave: (tags: string[]) => void;
 }
@@ -43,9 +44,11 @@ export default function TagAssignModal({
   onOpenChange,
   memberName,
   currentTags = [],
+  presets,
   isSaving = false,
   onSave,
 }: TagAssignModalProps) {
+  const availablePresets = presets?.length ? presets : TAG_PRESETS.map((name) => ({ name, color: '#E2E8F0' }));
   const [tags, setTags] = useState<string[]>(currentTags);
   const [input, setInput] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -185,18 +188,19 @@ export default function TagAssignModal({
           </div>
 
           <div className="flex flex-wrap gap-2">
-            {TAG_PRESETS.map((preset) => (
+            {availablePresets.map((preset) => (
               <button
-                key={preset}
+                key={preset.name}
                 type="button"
                 onClick={() => {
-                  setInput(preset);
+                  setInput(preset.name);
                   setError(null);
                 }}
                 disabled={isSaving || tags.length >= MAX_TAGS}
-                className="rounded-full border border-slate-200 px-2.5 py-1 text-[11px] font-semibold text-slate-600 hover:border-emerald-300 hover:text-emerald-700 disabled:opacity-50"
+                className="rounded-full border px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:border-emerald-300 hover:text-emerald-700 disabled:opacity-50"
+                style={{ backgroundColor: `${preset.color}26`, borderColor: `${preset.color}66` }}
               >
-                {preset}
+                {preset.name}
               </button>
             ))}
           </div>

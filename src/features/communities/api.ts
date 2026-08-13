@@ -240,6 +240,9 @@ export const communitiesApi = {
   // P2C.2 — Gán/Xoá tag BQT (replace toàn bộ, mảng rỗng = xoá hết; OWNER/MODERATOR)
   updateMemberTags: (id: string, userId: string, tags: string[]) =>
     api.patch<ApiResponse<CommunityMemberRecord>>(`/communities/${id}/members/${userId}/tags`, { tags }),
+  getTagPresets: (id: string) => api.get<ApiResponse<Array<{ id: string; name: string; color: string }>>>(`/communities/${id}/tag-presets`),
+  createTagPreset: (id: string, data: { name: string; color: string }) => api.post<ApiResponse<{ id: string; name: string; color: string }>>(`/communities/${id}/tag-presets`, data),
+  deleteTagPreset: (id: string, presetId: string) => api.delete<ApiResponse<unknown>>(`/communities/${id}/tag-presets/${presetId}`),
 
   // Join & Follow
   joinCommunity: (id: string, joinAnswers?: Record<string, string>) => 

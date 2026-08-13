@@ -50,7 +50,32 @@ const mapUserProfile = (data: RawUserProfileResponse): UserProfile => {
 
 export const usersApi = {
   getUsers: (params?: Record<string, unknown>) => api.get<ApiResponse<UserProfile[]>>('/users', { params }).then(res => res.data),
-  searchUsers: (q: string) => api.get<ApiResponse<UserProfile[]>>(`/users/search/public?q=${encodeURIComponent(q)}`).then(res => res.data),
+  searchUsers: (q: string) =>
+    api.get<ApiResponse<unknown>>(`/users/search/public?q=${encodeURIComponent(q)}`).then((res) => {
+      const payload = res.data;
+      let rawList: Record<string, unknown>[] = [];
+      if (Array.isArray(payload)) {
+        rawList = payload as Record<string, unknown>[];
+      } else if (payload && typeof payload === 'object') {
+        const d = (payload as { data?: unknown }).data;
+        if (Array.isArray(d)) {
+          rawList = d as Record<string, unknown>[];
+        } else if (d && typeof d === 'object' && Array.isArray((d as { data?: unknown[] }).data)) {
+          rawList = (d as { data: Record<string, unknown>[] }).data;
+        }
+      }
+
+      return rawList.map((item) => {
+        const profile = item.profile as Record<string, unknown> | null | undefined;
+        return {
+          ...item,
+          id: (item.id as string) || '',
+          email: (item.email as string) || '',
+          fullName: (item.fullName as string) || (profile?.fullName as string) || undefined,
+          avatarUrl: (item.avatarUrl as string) || (profile?.avatarUrl as string) || undefined,
+        } as UserProfile;
+      });
+    }),
   searchUsersByQuery: (q: string) => api.get<ApiResponse<UserProfile[]>>(`/users/search?q=${encodeURIComponent(q)}`).then(res => res.data),
   getProfile: () => api.get<ApiResponse<RawUserProfileResponse>>('/users/profile').then(res => {
     const mapped = mapUserProfile(res.data);

@@ -296,38 +296,6 @@ export default function CommunitiesPage() {
                       </span>
                     )}
                   </div>
-
-                  {/* Card Button */}
-                  <div className="pt-2 border-t border-slate-100 mt-2">
-                    {isOwner ? (
-                      <div 
-                        className="w-full text-[10px] font-bold bg-slate-900 hover:bg-slate-800 text-white py-2 rounded-lg transition-all flex items-center justify-center gap-1 h-8 shadow-sm"
-                      >
-                        Quản lý CLB <ArrowRight className="w-3 h-3" />
-                      </div>
-                    ) : isJoined ? (
-                      <div 
-                        className="w-full text-[10px] font-bold border border-emerald-600/20 bg-slate-50 text-slate-600 py-2 rounded-lg transition-all flex items-center justify-center h-8"
-                      >
-                        Đã tham gia
-                      </div>
-                    ) : (
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (!user) {
-                            toast.error('Vui lòng đăng nhập để tham gia câu lạc bộ.');
-                            window.location.href = '/login';
-                            return;
-                          }
-                          setSelectedCommunity(community);
-                        }}
-                        className="w-full text-[10px] font-bold bg-emerald-600 hover:bg-slate-500 text-white py-2 rounded-lg transition-all h-8 flex items-center justify-center gap-1 shadow-sm active:scale-[0.98]"
-                      >
-                        {community.joinMode === 'APPROVAL' ? 'Xin gia nhập' : 'Tham gia ngay'}
-                      </button>
-                    )}
-                  </div>
                 </div>
               </div>
             );

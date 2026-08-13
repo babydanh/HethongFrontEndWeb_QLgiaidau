@@ -47,7 +47,9 @@ export const api = axios.create({
   baseURL: getBaseUrl(),
   headers: {
     'Content-Type': 'application/json',
-    'x-app-key': process.env.NEXT_PUBLIC_APP_API_KEY || 'sporto-secret-key-2026',
+    ...(process.env.NEXT_PUBLIC_APP_API_KEY
+      ? { 'x-app-key': process.env.NEXT_PUBLIC_APP_API_KEY }
+      : {}),
   },
   withCredentials: true,
   // Match feeds can involve several joins and Redis fallback under load.

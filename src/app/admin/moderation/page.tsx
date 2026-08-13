@@ -181,8 +181,11 @@ export default function ModerationPage() {
         setShowRoleModal(false);
         return;
       }
-      const touchesPrivileged = nextRoles.some((role) => (role === 'ADMIN' || role === 'MODERATOR') !== currentRoles.includes(role));
-      if (touchesPrivileged && !roleForm.getValues('acknowledgeSensitive')) return;
+      const touchesPrivileged = (['ADMIN', 'MODERATOR'] as const).some((role) => nextRoles.includes(role) !== currentRoles.includes(role));
+      if (touchesPrivileged && !roleForm.getValues('acknowledgeSensitive')) {
+        roleForm.setError('acknowledgeSensitive', { message: 'Vui lòng xác nhận quyền nhạy cảm trước khi lưu.' });
+        return;
+      }
       const updated = await usersApi.updateSystemRoles(roleUser.id, nextRoles);
       const savedRoles = updated.roles ?? nextRoles;
       setUsers((current) => current.map((item) => item.id === roleUser.id ? { ...item, roles: savedRoles } : item));
@@ -390,7 +393,7 @@ export default function ModerationPage() {
                           {item.activeBan ? (
                             <Button
                               onClick={() => handleUnban(item.id)}
-                              disabled={processing}
+                              disabled={processing || item.id === currentUser?.id}
                               size="sm"
                               className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm"
                             >
@@ -409,7 +412,7 @@ export default function ModerationPage() {
                               className="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-sm"
                             >
                               <Ban className="w-3.5 h-3.5 mr-1" />
-                              Xử phạt
+                              {item.id === currentUser?.id ? 'Không thể tự phạt' : 'Xử phạt'}
                             </Button>
                           )}
                           <Button
@@ -499,6 +502,7 @@ export default function ModerationPage() {
                   <input type="checkbox" {...roleForm.register('acknowledgeSensitive')} className="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-600" />
                   <span>Tôi xác nhận việc cấp/gỡ ADMIN hoặc MODERATOR là quyền nhạy cảm và đã kiểm tra trách nhiệm người dùng.</span>
                 </label>
+                {roleForm.formState.errors.acknowledgeSensitive?.message && <p className="mt-2 text-xs font-semibold text-rose-600">{roleForm.formState.errors.acknowledgeSensitive.message}</p>}
               </fieldset>
             </div>
             <div className="p-6 bg-slate-50 border-t border-slate-200 flex justify-end gap-3">

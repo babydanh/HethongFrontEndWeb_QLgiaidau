@@ -58,9 +58,9 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
   const selectedDivision = s.divisions.find((d) => d.id === s.selectedDivisionId);
   const lockRuleView = resolveSportRuleView(selectedDivision?.roundConfig, s.sportRuleKind);
 
-  // Lite tournament → redirect to dedicated Lite manager
+  // Only redirect if tournament is explicitly marked as a quick Lite tournament (isLite), NOT based on scoring mode (mode === 'LITE')
   useEffect(() => {
-    if (!s.isLoading && s.tournament?.tournamentConfig?.mode === 'LITE') {
+    if (!s.isLoading && (s.tournament?.isLite === true || s.tournament?.tournamentConfig?.isLite === true)) {
       router.replace(`/lite/tournaments/${id}/manage`);
     }
   }, [s.isLoading, s.tournament, id, router]);

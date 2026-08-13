@@ -564,6 +564,7 @@ export default function CommunityDetailPage() {
             {activeTab === 'overview' && (
               <OverviewTab
                 communityId={id}
+                canManageTags={isOwnerOrMod || Boolean(user?.roles?.includes('ADMIN'))}
                 onGoToTournaments={() => setActiveTab('tournaments')}
                 onGoToRankings={() => setActiveTab('rankings')}
               />

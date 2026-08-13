@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Plus, X, Tag } from 'lucide-react';
+import { useState } from "react";
+import { Plus, X, Tag } from "lucide-react";
 import {
   Modal,
   ModalContent,
@@ -9,14 +9,21 @@ import {
   ModalTitle,
   ModalDescription,
   ModalFooter,
-} from '@/components/ui/Modal';
-import { Button } from '@/components/ui/Button';
-import { cn } from '@/utils/cn';
+} from "@/components/ui/Modal";
+import { Button } from "@/components/ui/Button";
+import { cn } from "@/utils/cn";
 
 const MAX_TAGS = 5;
 const MAX_TAG_LENGTH = 24;
 // Khớp backend UpdateMemberTagsDto: chữ/số/khoảng trắng/_/-, không emoji/ký tự đặc biệt.
 const TAG_PATTERN = /^[\p{L}\p{N} _-]+$/u;
+const TAG_PRESETS = [
+  "Cây hài",
+  "Kèo thơm",
+  "MVP tuần",
+  "Đang lên form",
+  "Kèo khó",
+];
 
 interface TagAssignModalProps {
   open: boolean;
@@ -40,7 +47,7 @@ export default function TagAssignModal({
   onSave,
 }: TagAssignModalProps) {
   const [tags, setTags] = useState<string[]>(currentTags);
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   // Reset state mỗi khi modal mở — pattern "adjust state during render"
@@ -50,7 +57,7 @@ export default function TagAssignModal({
     setLastOpen(open);
     if (open) {
       setTags(currentTags);
-      setInput('');
+      setInput("");
       setError(null);
     }
   }
@@ -68,16 +75,18 @@ export default function TagAssignModal({
       return;
     }
     if (!TAG_PATTERN.test(value)) {
-      setError('Tag chỉ được chứa chữ cái, số, khoảng trắng, gạch dưới (_) và gạch ngang (-).');
+      setError(
+        "Tag chỉ được chứa chữ cái, số, khoảng trắng, gạch dưới (_) và gạch ngang (-).",
+      );
       return;
     }
     if (tags.some((t) => t.toLowerCase() === value.toLowerCase())) {
-      setError('Tag này đã tồn tại.');
+      setError("Tag này đã tồn tại.");
       return;
     }
 
     setTags((prev) => [...prev, value]);
-    setInput('');
+    setInput("");
     setError(null);
   };
 
@@ -91,7 +100,7 @@ export default function TagAssignModal({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       e.preventDefault();
       addTag();
     }
@@ -106,8 +115,11 @@ export default function TagAssignModal({
             Gán tag cho thành viên
           </ModalTitle>
           <ModalDescription>
-            {memberName ? `Đang gán tag cho "${memberName}". ` : ''}
-            Tag hiển thị cạnh tên trong danh sách thành viên (tối đa {MAX_TAGS} tag).
+            {memberName ? `Đang gán tag cho "${memberName}". ` : ""}
+            Tag hiển thị cạnh tên trong danh sách thành viên (tối đa {
+              MAX_TAGS
+            }{" "}
+            tag).
           </ModalDescription>
         </ModalHeader>
 
@@ -133,7 +145,9 @@ export default function TagAssignModal({
               ))}
             </div>
           ) : (
-            <p className="text-sm text-slate-400">Chưa có tag nào. Thêm tag bên dưới để bắt đầu.</p>
+            <p className="text-sm text-slate-400">
+              Chưa có tag nào. Thêm tag bên dưới để bắt đầu.
+            </p>
           )}
 
           <div className="flex items-center gap-2">
@@ -150,12 +164,12 @@ export default function TagAssignModal({
               placeholder={
                 tags.length >= MAX_TAGS
                   ? `Đã đạt tối đa ${MAX_TAGS} tag`
-                  : 'Nhập tag mới...'
+                  : "Nhập tag mới..."
               }
               className={cn(
-                'flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none transition-all',
-                'focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500',
-                'disabled:bg-slate-50 disabled:text-slate-400'
+                "flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none transition-all",
+                "focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500",
+                "disabled:bg-slate-50 disabled:text-slate-400",
               )}
             />
             <Button
@@ -168,6 +182,23 @@ export default function TagAssignModal({
               <Plus className="h-4 w-4 mr-1" strokeWidth={1.5} />
               Thêm
             </Button>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {TAG_PRESETS.map((preset) => (
+              <button
+                key={preset}
+                type="button"
+                onClick={() => {
+                  setInput(preset);
+                  setError(null);
+                }}
+                disabled={isSaving || tags.length >= MAX_TAGS}
+                className="rounded-full border border-slate-200 px-2.5 py-1 text-[11px] font-semibold text-slate-600 hover:border-emerald-300 hover:text-emerald-700 disabled:opacity-50"
+              >
+                {preset}
+              </button>
+            ))}
           </div>
 
           {error ? (
@@ -194,7 +225,7 @@ export default function TagAssignModal({
             disabled={isSaving}
             className="text-xs"
           >
-            {isSaving ? 'Đang lưu...' : 'Lưu tag'}
+            {isSaving ? "Đang lưu..." : "Lưu tag"}
           </Button>
         </ModalFooter>
       </ModalContent>

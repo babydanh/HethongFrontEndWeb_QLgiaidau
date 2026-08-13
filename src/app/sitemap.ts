@@ -40,13 +40,17 @@ async function fetchListPage(path: string, params: Record<string, string>): Prom
       }
 
       lastError = new Error(`Sitemap request failed: ${path} returned ${res.status}`);
-      if (res.status !== 429 && res.status < 500) break;
+      if (res.status !== 429 && res.status < 500) {
+        console.warn(`[sitemap] API ${path} returned ${res.status}, falling back to empty list.`);
+        return { data: [] };
+      }
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
     }
   }
 
-  throw lastError ?? new Error(`Sitemap request failed: ${path}`);
+  console.warn(`[sitemap] API ${path} unreachable: ${lastError?.message}. Falling back to empty list.`);
+  return { data: [] };
 }
 
 /**

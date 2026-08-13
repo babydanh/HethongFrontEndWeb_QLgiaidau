@@ -292,7 +292,7 @@ export function Header() {
               alt="Sporto Logo"
               width={120}
               height={36}
-              className="h-8 md:h-9 w-auto object-contain transition-transform duration-200 hover:scale-105"
+              className="h-6 md:h-7 w-auto object-contain transition-transform duration-200 hover:scale-105"
             />
           </Link>
 

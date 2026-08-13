@@ -911,11 +911,11 @@ export default function HomePage() {
                 {getFormatLabel((match as EnrichedMatch).tournament?.matchType || ((match as unknown) as Record<string, unknown>).matchType as string | undefined, (match as EnrichedMatch).tournament?.genderRestriction || ((match as unknown) as Record<string, unknown>).genderRestriction as string | undefined)}
               </span>
             </div>
-            {match.courtName ? (
-              <div className="truncate max-w-[220px]" title={match.courtAddress ? `${match.courtName} - ${match.courtAddress}` : match.courtName}>
+            {match.courtName || match.tournament?.venueName ? (
+              <div className="truncate max-w-[220px]" title={match.courtAddress ? `${match.courtName || match.tournament?.venueName} - ${match.courtAddress}` : match.courtName || match.tournament?.venueName || ''}>
                 <span className="text-slate-400 font-semibold">Sân:</span>{' '}
                 <span className="font-semibold text-slate-750">
-                  {match.courtName}{match.courtAddress ? ` (${match.courtAddress})` : ''}
+                  {match.courtName || match.tournament?.venueName}{match.courtAddress ? ` (${match.courtAddress})` : ''}
                 </span>
               </div>
             ) : (

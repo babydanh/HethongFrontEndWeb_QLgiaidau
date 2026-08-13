@@ -390,11 +390,11 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
               title="Xem chi tiết giải đấu"
             >
               <img 
-                src={activeTournament.logoUrl || '/sporto_v1.svg'} 
+                src={activeTournament.logoUrl || '/sporto_v1_with_text.svg'}
                 alt="Logo giải đấu" 
-                className="w-full h-full object-cover rounded-full"
+                className="w-full h-full object-contain rounded-full p-2"
                 onError={(e) => {
-                  (e.currentTarget as HTMLImageElement).src = '/sporto_v1.svg';
+                  (e.currentTarget as HTMLImageElement).src = '/sporto_v1_with_text.svg';
                 }}
               />
             </Link>
@@ -433,7 +433,12 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                     </>
                   ) : 'Chưa thiết lập ngày'}
                 </span>
-                <span className="flex items-center gap-1.5"><MapPin className="w-4 h-4 text-slate-400" /> {activeTournament.venue?.name || activeTournament.locationAddress || 'Chưa cập nhật địa điểm'}</span>
+                <span className="flex items-center gap-1.5 min-w-0">
+                  <MapPin className="w-4 h-4 text-slate-400 shrink-0" />
+                  <span className="truncate" title={[activeTournament.venue?.name, activeTournament.venue?.locationAddress || activeTournament.locationAddress, activeTournament.city].filter(Boolean).join(' • ')}>
+                    {[activeTournament.venue?.name, activeTournament.venue?.locationAddress || activeTournament.locationAddress, activeTournament.city].filter(Boolean).join(' • ') || 'Chưa cập nhật địa điểm'}
+                  </span>
+                </span>
               </div>
             </div>
           </div>

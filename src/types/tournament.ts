@@ -98,6 +98,7 @@ export interface Tournament {
   bannerUrl?: string;
   startDate?: string;
   endDate?: string;
+  city?: string;
   locationAddress?: string;
   registrationStartDate?: string;
   registrationEndDate?: string;
@@ -302,6 +303,7 @@ export interface BracketMatch {
   } | null;
   tournament?: {
     name: string;
+    venueName?: string | null;
   } | null;
 }
 

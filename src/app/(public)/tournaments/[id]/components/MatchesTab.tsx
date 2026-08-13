@@ -598,11 +598,11 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                           : 'Chưa xếp lịch'}
                       </span>
                     </div>
-                    {match.courtName && (
+                    {(match.courtName || match.tournament?.venueName) && (
                       <div className="flex items-center gap-1">
                         <MapPin className="w-3.5 h-3.5 shrink-0 text-slate-400" />
-                        <span className="truncate max-w-[200px]" title={match.courtName}>
-                          Sân: {match.courtName}
+                        <span className="truncate max-w-[200px]" title={match.courtName || match.tournament?.venueName || ''}>
+                          Sân: {match.courtName || match.tournament?.venueName}
                         </span>
                       </div>
                     )}

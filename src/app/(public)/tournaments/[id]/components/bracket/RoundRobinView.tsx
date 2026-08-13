@@ -397,7 +397,7 @@ export function RoundRobinView({
                         </div>
                         <div className="flex items-center gap-1 text-[8px] text-slate-400 font-bold">
                           <Info className="w-2 h-2 flex-shrink-0" />
-                          <span className="truncate">{m.courtName ? m.courtName + (m.courtAddress ? ' (' + m.courtAddress + ')' : '') : 'Chưa xếp sân'}</span>
+                          <span className="truncate">{m.courtName || m.tournament?.venueName ? (m.courtName || m.tournament?.venueName) + (m.courtAddress ? ' (' + m.courtAddress + ')' : '') : 'Chưa xếp sân'}</span>
                         </div>
                         {onScheduleMatch && !done && m.participant1 && m.participant2 && (
                           <button onClick={() => onScheduleMatch(m)} className="mt-1 w-full text-[8px] font-bold text-blue-600 border border-blue-200 bg-white hover:bg-blue-50 rounded-lg py-1 transition-colors cursor-pointer">Xếp Sân & Giờ</button>

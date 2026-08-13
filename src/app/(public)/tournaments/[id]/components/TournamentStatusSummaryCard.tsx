@@ -238,8 +238,8 @@ export default function TournamentStatusSummaryCard({
                     ) : match.roundNumber ? (
                       <span className="text-slate-400 font-semibold"> • Vòng {match.roundNumber}</span>
                     ) : null}
-                    {match.courtName && (
-                      <span className="text-slate-500 font-bold"> (Sân {match.courtName})</span>
+                    {(match.courtName || match.tournament?.venueName) && (
+                      <span className="text-slate-500 font-bold"> (Sân {match.courtName || match.tournament?.venueName})</span>
                     )}
                   </div>
                 </div>

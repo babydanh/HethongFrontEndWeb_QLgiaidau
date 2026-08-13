@@ -1035,7 +1035,7 @@ export default function ProfilePage() {
                           ) : (
                             <div className="absolute inset-0 bg-gradient-to-br from-indigo-650 to-blue-800 opacity-90 group-hover:scale-103 transition-transform duration-500 flex items-center justify-center">
                               <img 
-                                src="/sporto_v1\.svg" 
+                                src="/sporto_v1.svg" 
                                 alt="Sporto Logo" 
                                 className="w-20 h-auto object-contain opacity-75"
                               />

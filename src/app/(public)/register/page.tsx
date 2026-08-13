@@ -118,7 +118,7 @@ export default function RegisterPage() {
         {/* Logo — larger */}
         <div className="relative z-10 p-10">
           <img
-            src="/sporto_v1\.svg"
+            src="/sporto_v1.svg"
             alt="Sporto"
             className="h-16 w-auto object-contain brightness-200 contrast-0"
           />
@@ -185,7 +185,7 @@ export default function RegisterPage() {
             {/* Logo inside card */}
             <div className="flex items-center gap-2.5 mb-5">
               <img
-                src="/sporto_v1\.svg"
+                src="/sporto_v1.svg"
                 alt="Sporto"
                 className="h-14 w-auto object-contain"
               />

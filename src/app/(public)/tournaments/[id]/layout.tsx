@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: LayoutProps): Promise<Metadat
     const title = `${tournament.name} | Sporto`;
     const cleanDesc = stripHtmlAndNormalize(tournament.description, 160);
     const description = cleanDesc || `Thông tin chi tiết và lịch thi đấu giải đấu ${tournament.name} trên hệ thống Sporto. Đăng ký tham gia ngay!`;
-    const imageUrl = tournament.bannerUrl || tournament.logoUrl || 'https://sporto.asia/sporto_v1\.svg';
+    const imageUrl = tournament.bannerUrl || tournament.logoUrl || 'https://sporto.asia/sporto_v1.svg';
 
     const canonicalUrl = `https://sporto.asia/tournaments/${resolvedParams.id}`;
 

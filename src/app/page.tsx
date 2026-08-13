@@ -113,7 +113,7 @@ const getFormatLabel = (matchType?: string, genderRestriction?: string | null) =
 };
 
 function CommunityLogoAvatar({ src, alt }: { src?: string | null; alt: string }) {
-  const fallbackSrc = '/sporto_v1\.svg';
+  const fallbackSrc = '/sporto_v1.svg';
   // Track only whether the image failed to load — src is derived directly from props
   const [imgError, setImgError] = useState(false);
   // Reset error when src changes (React recommended "derived state" pattern)
@@ -221,7 +221,7 @@ function RegistrationCountdown({ targetDate }: { targetDate: string }) {
 }
 
 function TournamentLogoAvatar({ src, alt }: { src?: string | null; alt: string }) {
-  const fallbackSrc = '/sporto_v1\.svg';
+  const fallbackSrc = '/sporto_v1.svg';
   const [imgError, setImgError] = useState(false);
   const [prevSrc, setPrevSrc] = useState(src);
   if (prevSrc !== src) {
@@ -245,7 +245,7 @@ function TournamentLogoAvatar({ src, alt }: { src?: string | null; alt: string }
 
 function HomepageTournamentCard({ tournament }: { tournament: Tournament }) {
   const [imgError, setImgError] = useState(false);
-  const fallbackSrc = '/sporto_v1\.svg';
+  const fallbackSrc = '/sporto_v1.svg';
   const imageSrc = (!imgError && tournament.bannerUrl?.trim()) ? tournament.bannerUrl.split(',')[0] : fallbackSrc;
   const hideFeaturedCardText = shouldHideFeaturedCardText(tournament);
 

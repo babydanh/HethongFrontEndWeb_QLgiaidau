@@ -63,7 +63,7 @@ export default function ModerationLayout({
             <div className="flex h-16 items-center justify-between border-b border-slate-200 px-6">
               <Link href="/" className="flex items-center gap-2 py-2">
                 <img
-                  src="/sporto_v1\.svg"
+                  src="/sporto_v1.svg"
                   alt="Sporto Logo"
                   className="h-8 w-auto object-contain"
                 />

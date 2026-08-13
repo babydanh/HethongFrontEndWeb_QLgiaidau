@@ -233,7 +233,7 @@ export default function CommunitiesPage() {
                     {/* Circular Logo - Half overlap */}
                     <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-white bg-white shadow-md -mt-8 z-10 shrink-0 relative">
                       <Image 
-                        src={community.logoUrl || "/sporto_v1\.svg"} 
+                        src={community.logoUrl || "/sporto_v1.svg"} 
                         alt={community.name} 
                         fill 
                         className="object-cover" 

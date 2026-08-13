@@ -24,7 +24,7 @@ interface Props {
 
 export function AvatarCircle({ src, name, size = 32 }: { src?: string | null; name: string; size?: number }) {
   const [imgError, setImgError] = useState(false);
-  const logoSrc = (!imgError && src) ? src : '/sporto_v1\.svg';
+  const logoSrc = (!imgError && src) ? src : '/sporto_v1.svg';
 
   return (
     <div 

@@ -212,7 +212,7 @@ export default function CreateCommunityPage() {
         </button>
 
         <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
-          <div className="bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-700 px-8 py-10 text-white text-center rounded-t-xl">
+          <div className="bg-blue-600 px-8 py-10 text-white text-center rounded-t-xl">
             <h1 className="text-3xl font-bold mb-2">Tạo Câu Lạc Bộ Mới</h1>
             <p className="text-blue-100">Xây dựng và phát triển câu lạc bộ thể thao của riêng bạn</p>
           </div>

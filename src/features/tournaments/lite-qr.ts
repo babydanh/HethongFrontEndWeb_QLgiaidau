@@ -1,5 +1,26 @@
 const LITE_JOIN_PATH = '/lite/tournaments/join/';
 
+/**
+ * Đúng chuẩn phân biệt LOẠI GIẢI: giải lite (nhanh) vs giải nâng cao.
+ * Dùng field `isLite` (top-level hoặc trong tournamentConfig) — KHÔNG dùng `mode` (scoring).
+ * Fallback an toàn cho giải lite cũ (mode='LITE' + hideAdvancedSettings=true) trước migration.
+ */
+export function isLiteTournament(t: {
+  isLite?: boolean;
+  tournamentConfig?: {
+    isLite?: boolean;
+    mode?: 'LITE' | 'ADVANCED' | 'STRICT' | string;
+    hideAdvancedSettings?: boolean;
+  } | null;
+} | null | undefined): boolean {
+  if (!t) return false;
+  const cfg = t.tournamentConfig;
+  if (t.isLite === true) return true;
+  if (cfg?.isLite === true) return true;
+  if (cfg?.mode === 'LITE' && cfg?.hideAdvancedSettings === true) return true;
+  return false;
+}
+
 export function buildLiteJoinUrl(inviteCode: string, origin: string): string {
   const cleanCode = inviteCode.trim();
   if (!cleanCode) return '';

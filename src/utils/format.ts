@@ -84,3 +84,31 @@ export const formatDateTime = (dateString: string | Date | null | undefined): st
   return `${day}/${month}/${year} ${hours}:${minutes}`;
 };
 
+/**
+ * Chuẩn hóa ngày người dùng nhập (dd/MM/yyyy hoặc yyyy-MM-dd) thành ISO date-only.
+ * Trả về null khi ngày không hợp lệ để caller chủ động hiển thị lỗi.
+ */
+export const parseDateInputToIso = (value: string): string | null => {
+  const input = value.trim();
+  const vietnameseMatch = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(input);
+  const isoMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(input);
+  const parts = vietnameseMatch
+    ? [vietnameseMatch[3], vietnameseMatch[2], vietnameseMatch[1]]
+    : isoMatch
+      ? [isoMatch[1], isoMatch[2], isoMatch[3]]
+      : null;
+
+  if (!parts) return null;
+  const [year, month, day] = parts.map((part) => Number.parseInt(part, 10));
+  const date = new Date(Date.UTC(year, month - 1, day));
+  if (
+    date.getUTCFullYear() !== year
+    || date.getUTCMonth() !== month - 1
+    || date.getUTCDate() !== day
+  ) {
+    return null;
+  }
+
+  return `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+};
+

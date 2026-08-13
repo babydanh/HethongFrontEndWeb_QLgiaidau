@@ -63,9 +63,10 @@ export function AdminModerationFilters({
             <button
               key={option.value}
               type="button"
+              disabled={disabled}
               onClick={() => onStatusFilterChange(option.value)}
               className={cn(
-                'rounded-lg px-3.5 py-1.5 text-xs font-bold transition-colors',
+                'rounded-lg px-3.5 py-1.5 text-xs font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-60',
                 statusFilter === option.value
                   ? 'bg-blue-600 text-white shadow-sm'
                   : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50',

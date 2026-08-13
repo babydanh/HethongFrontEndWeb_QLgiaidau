@@ -28,6 +28,7 @@ import { MatchTypeDB } from '@/types/tournament';
 import toast from 'react-hot-toast';
 import DoublesRegistrationFlow from './components/DoublesRegistrationFlow';
 import { divisionsApi } from '@/features/tournaments/api';
+import { isLiteTournament } from '@/features/tournaments/lite-qr';
 import { WithdrawModal } from '@/components/shared/WithdrawModal';
 import { isTournamentDraft, isTournamentOpenForRegistration, isTournamentUpcoming } from '@/utils/tournament-status';
 
@@ -237,7 +238,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
         setTournament(t);
 
         // Lite tournament → redirect to dedicated join page
-        if (t.tournamentConfig?.mode === 'LITE') {
+        if (isLiteTournament(t)) {
           if (t.inviteCode) {
             router.replace(`/lite/tournaments/join/${t.inviteCode}`);
           } else {

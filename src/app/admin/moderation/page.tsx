@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { Button } from '@/components/ui/Button';
@@ -10,6 +10,7 @@ import {
   type AdminUserRoleFilter,
   type AdminUserStatusFilter,
   type BanUserPayload,
+  type ListAdminUsersParams,
 } from '@/features/users/adminModerationApi';
 import type { SystemRole } from '@/features/users/api';
 import { AdminBanModal } from '@/features/users/components/AdminBanModal';
@@ -18,19 +19,17 @@ import { AdminUsersTable } from '@/features/users/components/AdminUsersTable';
 import { SystemRoleModal } from '@/features/users/components/SystemRoleModal';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { getErrorMessage } from '@/utils/error';
+import { parseDateInputToIso } from '@/utils/format';
 
-const parseDate = (value: string): Date | null => {
-  const parts = value.split('/');
-  if (parts.length !== 3) return null;
-  const [day, month, year] = parts.map((part) => Number.parseInt(part, 10));
-  if (![day, month, year].every(Number.isFinite)) return null;
+type ActiveUserQuery = Pick<
+  ListAdminUsersParams,
+  'search' | 'role' | 'status' | 'from' | 'to'
+>;
 
-  const date = new Date(year, month - 1, day);
-  return date.getFullYear() === year
-    && date.getMonth() === month - 1
-    && date.getDate() === day
-    ? date
-    : null;
+const INITIAL_QUERY: ActiveUserQuery = {
+  search: '',
+  role: 'ALL',
+  status: 'ALL',
 };
 
 const appendUniqueUsers = (current: AdminUser[], incoming: AdminUser[]): AdminUser[] => {
@@ -53,29 +52,32 @@ export default function ModerationPage() {
   const [banUser, setBanUser] = useState<AdminUser | null>(null);
   const [roleUser, setRoleUser] = useState<AdminUser | null>(null);
   const requestSequence = useRef(0);
+  const activeQuery = useRef<ActiveUserQuery>(INITIAL_QUERY);
   const currentUser = useAuthStore((state) => state.user);
   const canManageSystemRoles = currentUser?.roles?.includes('ADMIN') === true;
 
   const loadUsers = useCallback(async ({
-    searchTerm,
-    role,
+    query,
     cursor = null,
     append = false,
   }: {
-    searchTerm: string;
-    role: AdminUserRoleFilter;
+    query: ActiveUserQuery;
     cursor?: string | null;
     append?: boolean;
   }) => {
     const requestId = ++requestSequence.current;
     if (append) setLoadingMore(true);
-    else setInitialLoading(true);
+    else {
+      setInitialLoading(true);
+      setLoadingMore(false);
+      setNextCursor(null);
+      setHasMoreUsers(false);
+    }
 
     try {
       const result = await adminModerationApi.listUsers({
         limit: 20,
-        search: searchTerm,
-        role,
+        ...query,
         cursor,
       });
       if (requestId !== requestSequence.current) return;
@@ -97,31 +99,46 @@ export default function ModerationPage() {
   }, []);
 
   useEffect(() => {
-    void Promise.resolve().then(() => loadUsers({ searchTerm: '', role: 'ALL' }));
+    void Promise.resolve().then(() => loadUsers({ query: INITIAL_QUERY }));
   }, [loadUsers]);
 
-  const visibleUsers = useMemo(() => {
-    const start = dateFrom ? parseDate(dateFrom) : null;
-    const finish = dateTo ? parseDate(dateTo) : null;
-    if (finish) finish.setHours(23, 59, 59, 999);
-
-    return users.filter((user) => {
-      if (statusFilter === 'ACTIVE' && user.activeBan) return false;
-      if (statusFilter === 'BANNED' && !user.activeBan) return false;
-      const createdAt = new Date(user.createdAt);
-      if (start && createdAt < start) return false;
-      if (finish && createdAt > finish) return false;
-      return true;
-    });
-  }, [dateFrom, dateTo, statusFilter, users]);
-
   const refreshUsers = () =>
-    loadUsers({ searchTerm: search, role: roleFilter });
+    loadUsers({ query: activeQuery.current });
+
+  const activateQuery = (query: ActiveUserQuery) => {
+    activeQuery.current = query;
+    void loadUsers({ query });
+  };
 
   const handleRoleFilterChange = (role: AdminUserRoleFilter) => {
     setRoleFilter(role);
-    setNextCursor(null);
-    void loadUsers({ searchTerm: search, role });
+    activateQuery({ ...activeQuery.current, role });
+  };
+
+  const handleStatusFilterChange = (status: AdminUserStatusFilter) => {
+    setStatusFilter(status);
+    activateQuery({ ...activeQuery.current, status });
+  };
+
+  const handleSubmitFilters = () => {
+    const parsedFrom = dateFrom.trim() ? parseDateInputToIso(dateFrom) : undefined;
+    const parsedTo = dateTo.trim() ? parseDateInputToIso(dateTo) : undefined;
+    if (parsedFrom === null) {
+      toast.error('Ngày bắt đầu không hợp lệ. Vui lòng nhập theo định dạng dd/mm/yyyy.');
+      return;
+    }
+    if (parsedTo === null) {
+      toast.error('Ngày kết thúc không hợp lệ. Vui lòng nhập theo định dạng dd/mm/yyyy.');
+      return;
+    }
+    const from = parsedFrom ?? undefined;
+    const to = parsedTo ?? undefined;
+    if (from && to && from > to) {
+      toast.error('Ngày bắt đầu không được sau ngày kết thúc.');
+      return;
+    }
+
+    activateQuery({ search, role: roleFilter, status: statusFilter, from, to });
   };
 
   const handleBan = async (payload: BanUserPayload) => {
@@ -158,6 +175,7 @@ export default function ModerationPage() {
     setUsers((current) => current.map((user) =>
       user.id === roleUser.id ? { ...user, roles } : user,
     ));
+    void refreshUsers();
   };
 
   return (
@@ -173,12 +191,12 @@ export default function ModerationPage() {
         onDateFromChange={setDateFrom}
         onDateToChange={setDateTo}
         onRoleFilterChange={handleRoleFilterChange}
-        onStatusFilterChange={setStatusFilter}
-        onSubmit={() => void refreshUsers()}
+        onStatusFilterChange={handleStatusFilterChange}
+        onSubmit={handleSubmitFilters}
       />
 
       <AdminUsersTable
-        users={visibleUsers}
+        users={users}
         loading={initialLoading}
         processing={processing}
         currentUserId={currentUser?.id}
@@ -194,8 +212,7 @@ export default function ModerationPage() {
             type="button"
             variant="outline"
             onClick={() => void loadUsers({
-              searchTerm: search,
-              role: roleFilter,
+              query: activeQuery.current,
               cursor: nextCursor,
               append: true,
             })}

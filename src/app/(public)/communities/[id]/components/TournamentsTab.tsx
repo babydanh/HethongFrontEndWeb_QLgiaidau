@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { TournamentTypeChoiceModal } from '@/components/TournamentTypeChoiceModal';
 import { communitiesApi } from '@/features/communities/api';
 import { tournamentsApi } from '@/features/tournaments/api';
+import { isLiteTournament } from '@/features/tournaments/lite-qr';
 import { getSportLogo } from '@/constants/sports';
 import { formatDate } from '@/utils/format';
 import { Tournament } from '@/types/tournament';
@@ -307,7 +308,7 @@ export default function TournamentsTab({
                         {getStatusBadge(t.status)}
                         
                         {/* Lite vs Advanced Badge */}
-                        {(t.divisions.some(d => d.tournamentConfig?.mode === 'LITE')) ? (
+                        {t.divisions.some(d => isLiteTournament(d)) ? (
                           <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-300">
                             Giải Nhanh (Lite)
                           </span>
@@ -382,7 +383,7 @@ export default function TournamentsTab({
                 </div>
 
                 {/* Note for Lite Tournaments */}
-                {(t.divisions.some(d => d.tournamentConfig?.mode === 'LITE')) && (
+                {t.divisions.some(d => isLiteTournament(d)) && (
                   <div className="mb-3 text-[11px] text-amber-800 bg-amber-50/90 px-3 py-1.5 rounded-lg border border-amber-200/80 font-medium">
                     <span><strong>Note: Giải đấu tạo nhanh (Lite)</strong> — Quản lý đơn giản, chia sẻ mã/link tham gia ngay lập tức</span>
                   </div>

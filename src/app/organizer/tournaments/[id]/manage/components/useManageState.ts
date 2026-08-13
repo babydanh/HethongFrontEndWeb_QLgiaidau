@@ -146,6 +146,8 @@ export function useManageState(id: string) {
   const [isSavingConfig, setIsSavingConfig] = useState(false);
   const [tiebreakerMode, setTiebreakerMode] = useState<'split'|'playoff'>('split');
   const [roundsToPlay, setRoundsToPlay] = useState(1);
+  // ⚠️ isLiteMode = CÁCH TÍNH ĐIỂM (scoring): LITE (tự do) vs STRICT (preset).
+  // KHÔNG phải loại giải "giải lite". Loại giải dùng field riêng tournamentConfig.isLite.
   const [isLiteMode, setIsLiteMode] = useState(true);
 
   // Round Robin scoring config

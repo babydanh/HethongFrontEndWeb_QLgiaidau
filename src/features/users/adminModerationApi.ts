@@ -31,6 +31,9 @@ export interface ListAdminUsersParams {
   limit?: number;
   search?: string;
   role?: AdminUserRoleFilter;
+  status?: AdminUserStatusFilter;
+  from?: string;
+  to?: string;
   cursor?: string | null;
 }
 
@@ -50,6 +53,9 @@ const listUsers = async ({
   limit = 20,
   search = '',
   role = 'ALL',
+  status = 'ALL',
+  from,
+  to,
   cursor,
 }: ListAdminUsersParams = {}): Promise<AdminUserListResult> => {
   const normalizedSearch = trimAndNormalizeSpaces(search);
@@ -58,6 +64,9 @@ const listUsers = async ({
       limit,
       ...(normalizedSearch ? { search: normalizedSearch } : {}),
       ...(role !== 'ALL' ? { role } : {}),
+      ...(status !== 'ALL' ? { status } : {}),
+      ...(from ? { from } : {}),
+      ...(to ? { to } : {}),
       ...(cursor ? { cursor } : {}),
     },
   });

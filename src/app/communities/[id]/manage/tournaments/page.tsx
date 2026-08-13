@@ -8,6 +8,7 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Modal, ModalContent, ModalHeader, ModalTitle } from '@/components/ui/Modal';
 import { communitiesApi, Community } from '@/features/communities/api';
 import { tournamentsApi, Tournament } from '@/features/tournaments/api';
+import { isLiteTournament } from '@/features/tournaments/lite-qr';
 import { categoriesApi, Category } from '@/features/categories/api';
 import { getSportLogo } from '@/constants/sports';
 import { Trophy, Calendar, Users, Plus, Settings, Eye, ChevronLeft, ShieldCheck } from 'lucide-react';
@@ -306,7 +307,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
                         })()}
                         {t.category?.name || 'Bộ môn'}
                       </span>
-                      {t.tournamentConfig?.mode === 'LITE' ? (
+                      {isLiteTournament(t) ? (
                         <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-300">
                           Giải Nhanh (Lite)
                         </span>
@@ -333,7 +334,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
                 </div>
 
                 <div className="flex gap-3 pt-3 border-t border-slate-100">
-                  {t.tournamentConfig?.mode === 'LITE' ? (
+                  {isLiteTournament(t) ? (
                     <Link href={`/lite/tournaments/${t.id}/manage`} className="flex-1">
                       <Button variant="outline" className="w-full border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold flex items-center justify-center gap-1">
                         <Settings className="w-3.5 h-3.5" /> Quản lý giải nhanh

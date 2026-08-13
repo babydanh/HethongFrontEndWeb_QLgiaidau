@@ -359,7 +359,7 @@ export function useManageState(id: string) {
     );
     const defaultBracketType = (tournament?.tournamentConfig as { bracketType?: string })?.bracketType || 'SINGLE_ELIMINATION';
     setBracketTypeState((selected.bracketType || defaultBracketType) as 'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION' | 'ROUND_ROBIN' | 'GROUP_STAGE_KNOCKOUT');
-  }, [applyResolvedRuleState, tournament]);
+  }, [applyResolvedRuleState, selectedCategory, tournament]);
 
   // ── Handlers ──
   const handleSaveBasicInfo = async () => {

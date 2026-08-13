@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import type { FormEventHandler, KeyboardEventHandler, RefObject } from "react";
-import { ImagePlus, Loader2, Send, Sparkles, X } from "lucide-react";
+import { ImagePlus, Loader2, Send, X } from "lucide-react";
 import type { UseFormRegisterReturn } from "react-hook-form";
 import type { CommunityMemberRecord } from "@/features/communities/api";
 import { cn } from "@/utils/cn";
@@ -52,10 +52,7 @@ export default function CommunityPostComposer({
       onSubmit={onSubmit}
       className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
     >
-      <div className="flex items-center gap-2 text-sm font-bold text-slate-800">
-        <Sparkles className="h-4 w-4 text-emerald-600" />
-        Chia sẻ cùng câu lạc bộ
-      </div>
+      <div className="text-sm font-bold text-slate-800">Chia sẻ cùng câu lạc bộ</div>
 
       <div className="relative">
         <textarea

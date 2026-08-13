@@ -45,7 +45,7 @@ export default function GalleryCarousel({ images = [], defaultBanner, className 
         
         <div className="relative z-10 flex flex-col items-center gap-2">
           <img
-            src="/sporto_v1_with_text.svg"
+            src="/sporto_v1.svg"
             alt="Sporto Logo"
             className="h-16 md:h-20 w-auto object-contain drop-shadow-md"
           />

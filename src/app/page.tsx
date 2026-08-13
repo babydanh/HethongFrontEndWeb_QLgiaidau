@@ -457,23 +457,12 @@ export default function HomePage() {
         }
         const communitiesPromise = communitiesApi.getCommunities(cParams);
 
-        // Fetch live, completed, and upcoming matches in separate targeted calls so scheduled matches don't drown out live/completed ones.
+        // Fetch the public feed once. Separate status requests caused a burst of
+        // identical /matches calls (and 429s behind the production proxy).
         const matchCategoryParams = selectedCategoryId ? { categoryId: selectedCategoryId } : {};
-        const liveMatchesPromise = matchesApi.getMatches({
-          status: 'ONGOING',
-          limit: 20,
-          publicOnly: true,
-          ...matchCategoryParams,
-        });
-        const completedMatchesPromise = matchesApi.getMatches({
-          status: 'COMPLETED,FINISHED,DONE,ENDED',
-          limit: 20,
-          publicOnly: true,
-          ...matchCategoryParams,
-        });
-        const upcomingMatchesPromise = matchesApi.getMatches({
-          status: 'SCHEDULED',
-          limit: 30,
+        const publicMatchesPromise = matchesApi.getMatches({
+          status: 'ONGOING,SCHEDULED,COMPLETED,FINISHED,DONE,ENDED',
+          limit: 100,
           publicOnly: true,
           ...matchCategoryParams,
         });
@@ -482,12 +471,10 @@ export default function HomePage() {
           ? rankingsApi.getUserRankings(user.id)
           : Promise.resolve(null);
 
-        const [tRes, cRes, liveRes, completedRes, upcomingRes, userRankRes] = await Promise.allSettled([
+        const [tRes, cRes, publicMatchesRes, userRankRes] = await Promise.allSettled([
           tournamentsPromise,
           communitiesPromise,
-          liveMatchesPromise,
-          completedMatchesPromise,
-          upcomingMatchesPromise,
+          publicMatchesPromise,
           userRankingsPromise,
         ] as const);
 
@@ -524,9 +511,10 @@ export default function HomePage() {
           return (Array.isArray(matchesData) ? matchesData : []) as BracketMatch[];
         };
 
-        const liveList = extractMatches(liveRes);
-        const completedList = extractMatches(completedRes);
-        const upcomingList = extractMatches(upcomingRes);
+        const publicMatchList = extractMatches(publicMatchesRes);
+        const liveList = publicMatchList.filter((m) => ['ONGOING', 'IN_PROGRESS'].includes(String(m.status).toUpperCase()));
+        const completedList = publicMatchList.filter((m) => ['COMPLETED', 'FINISHED', 'DONE', 'ENDED'].includes(String(m.status).toUpperCase()));
+        const upcomingList = publicMatchList.filter((m) => String(m.status).toUpperCase() === 'SCHEDULED');
 
         // Populate initial cheer counts from backend
         const matchCheerMap: Record<string, number> = {};
@@ -594,11 +582,9 @@ export default function HomePage() {
         if (foundRanked) {
           setRankedTournament(foundRanked);
           try {
-            const matchesRes = await matchesApi.getMatches({ tournamentId: foundRanked.id, limit: 50 });
-            // Extract from Axios response properly
-            const responseData = (matchesRes as Record<string, unknown>).data;
-            const mData = (responseData as Record<string, unknown>)?.data || responseData || [];
-            const matchesArray = Array.isArray(mData) ? mData : [];
+            // Reuse the single public feed; never issue a second per-tournament
+            // request on the homepage just to populate the ranked card.
+            const matchesArray = publicMatchList.filter((match) => match.tournamentId === foundRanked.id);
             setRankedTournamentMatches(matchesArray as unknown as BracketMatch[]);
             
             // Sync initial cheer counts from backend

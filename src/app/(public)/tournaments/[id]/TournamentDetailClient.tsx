@@ -390,11 +390,11 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
               title="Xem chi tiết giải đấu"
             >
               <img 
-                src={activeTournament.logoUrl || '/sporto_v1_with_text.svg'} 
+                src={activeTournament.logoUrl || '/sporto_v1.svg'} 
                 alt="Logo giải đấu" 
                 className="w-full h-full object-cover rounded-full"
                 onError={(e) => {
-                  (e.currentTarget as HTMLImageElement).src = '/sporto_v1_with_text.svg';
+                  (e.currentTarget as HTMLImageElement).src = '/sporto_v1.svg';
                 }}
               />
             </Link>
@@ -433,7 +433,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                     </>
                   ) : 'Chưa thiết lập ngày'}
                 </span>
-                <span className="flex items-center gap-1.5"><MapPin className="w-4 h-4 text-slate-400" /> {activeTournament.locationAddress || 'Chưa cập nhật địa điểm'}</span>
+                <span className="flex items-center gap-1.5"><MapPin className="w-4 h-4 text-slate-400" /> {activeTournament.venue?.name || activeTournament.locationAddress || 'Chưa cập nhật địa điểm'}</span>
               </div>
             </div>
           </div>

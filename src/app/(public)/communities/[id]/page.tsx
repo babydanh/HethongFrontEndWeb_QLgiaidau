@@ -420,7 +420,7 @@ export default function CommunityDetailPage() {
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 w-full md:w-auto">
             <div className="w-20 h-20 md:w-24 md:h-24 rounded-lg border border-slate-200 overflow-hidden bg-white shadow-md relative shrink-0 p-1.5">
               <Image 
-                src={community.logoUrl || "/sporto_v1_with_text.svg"} 
+                src={community.logoUrl || "/sporto_v1.svg"}
                 alt={community.name} 
                 fill 
                 className="object-cover rounded-lg"
@@ -569,6 +569,7 @@ export default function CommunityDetailPage() {
                 canManageTags={isOwnerOrMod || Boolean(user?.roles?.includes('ADMIN'))}
                 onGoToTournaments={() => setActiveTab('tournaments')}
                 onGoToRankings={() => setActiveTab('rankings')}
+                onGoToGallery={() => setActiveTab('gallery')}
               />
             )}
             {activeTab === 'tournaments' && <TournamentsTab communityId={id} isOwnerOrMod={isOwnerOrMod} />}

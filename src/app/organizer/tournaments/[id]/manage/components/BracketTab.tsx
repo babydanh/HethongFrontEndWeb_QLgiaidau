@@ -234,39 +234,57 @@ export function BracketTab({
   // Helper to extract bracket rounds from matches inside stage groups
   const getRoundsList = () => {
     if (!bracket || !bracket.stages) return [];
-    
-    return bracket.stages.flatMap(stage => {
-      // Find all unique roundNumbers from all matches in all groups
-      const matches = stage.groups?.flatMap(g => g.matches) || [];
-      const matchRoundNumbers = matches.map(m => m.roundNumber);
-      const maxRound = matchRoundNumbers.length > 0 ? Math.max(...matchRoundNumbers) : 0;
-      
-      return Array.from({ length: maxRound }, (_, idx) => {
-        const roundNum = idx + 1;
-        
-        // Dynamic Round labels matching getRoundLabel in PublicBracketTab
-        const getRoundLabelText = (ri: number, total: number) => {
-          const fromEnd = total - 1 - ri;
-          if (fromEnd === 0) return 'Chung kết';
-          if (fromEnd === 1) return 'Bán kết';
-          if (fromEnd === 2) return 'Tứ kết';
-          if (fromEnd === 3) return 'Vòng 16';
-          if (fromEnd === 4) return 'Vòng 32';
-          if (fromEnd === 5) return 'Vòng 64';
-          return `Vòng ${2 ** (fromEnd + 1)}`;
-        };
-        
-        const name = getKnockoutRoundLabel(idx, maxRound);
-        // Find existing override settings in stage.roundConfig.rounds[roundNum]
-        const roundOverride = stage.roundConfig?.rounds?.[roundNum.toString()];
-        
-        return {
-          stage,
-          roundNumber: roundNum,
-          name,
-          override: roundOverride
-        };
-      });
+
+    // The round number is shared by winners/losers groups in double elimination.
+    // Flattening every group and deriving the label from the largest round was
+    // producing phantom Vòng 128/duplicate Vòng 64 rows for a 32-team bracket.
+    // Use the canonical winners bracket (and grand final) as the source of the
+    // configurable rounds; its match count gives the real bracket size.
+    const configuredBracketSize = isLimitEnabled && maxParticipants >= 2
+      ? getKnockoutBracketSize(maxParticipants)
+      : null;
+
+    return bracket.stages.flatMap((stage) => {
+      const groups = stage.groups ?? [];
+      const sourceGroups = stage.type === 'DOUBLE_ELIMINATION'
+        ? groups.filter((group) => {
+            const name = group.name.toLowerCase();
+            return name.includes('winner') || name.includes('thắng') || name.includes('grand') || name.includes('chung');
+          })
+        : groups;
+      const effectiveGroups = sourceGroups.length > 0 ? sourceGroups : groups;
+      const roundsByNumber = new Map<number, { capacity: number; isGrandFinal: boolean }>();
+
+      for (const group of effectiveGroups) {
+        const roundNumbers = [...new Set(group.matches.map((match) => match.roundNumber))];
+        for (const roundNumber of roundNumbers) {
+          const matchCount = group.matches.filter((match) => match.roundNumber === roundNumber).length;
+          const capacity = Math.max(2, matchCount * 2);
+          const isGrandFinal = group.name.toLowerCase().includes('grand') || group.name.toLowerCase().includes('chung');
+          const previous = roundsByNumber.get(roundNumber);
+          // Winners rounds are the canonical numbering. Grand Finals also use
+          // round 1 internally, so never let that group replace winners round 1.
+          if (!previous || (!isGrandFinal && previous.isGrandFinal)) {
+            roundsByNumber.set(roundNumber, { capacity, isGrandFinal });
+          }
+        }
+      }
+
+      return [...roundsByNumber.entries()]
+        .sort(([left], [right]) => left - right)
+        .filter(([, round]) => !configuredBracketSize || round.capacity <= configuredBracketSize)
+        .map(([roundNumber, round]) => {
+          const totalRounds = Math.max(1, Math.round(Math.log2(round.capacity)));
+          const name = round.isGrandFinal
+            ? 'Chung kết'
+            : getKnockoutRoundLabel(0, totalRounds);
+          return {
+            stage,
+            roundNumber,
+            name,
+            override: stage.roundConfig?.rounds?.[roundNumber.toString()],
+          };
+        });
     });
   };
 

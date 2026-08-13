@@ -16,13 +16,13 @@ interface RankingsTabProps {
   onGoToTournaments?: () => void;
 }
 
-type MatchType = 'SINGLES' | 'DOUBLES' | 'MIXED_DOUBLES';
+type MatchType = 'ALL' | 'SINGLES' | 'DOUBLES' | 'MIXED_DOUBLES';
 
 export default function RankingsTab({ communityId, categories, onGoToTournaments }: RankingsTabProps) {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>(
     categories[0]?.id || ''
   );
-  const [selectedMatchType, setSelectedMatchType] = useState<MatchType>('SINGLES');
+  const [selectedMatchType, setSelectedMatchType] = useState<MatchType>('ALL');
   const [selectedGender, setSelectedGender] = useState<'MALE' | 'FEMALE'>('MALE');
   const [rankings, setRankings] = useState<PlayerRanking[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -41,8 +41,8 @@ export default function RankingsTab({ communityId, categories, onGoToTournaments
         scope: 'COMMUNITY',
         communityId,
         categoryId: selectedCategoryId,
-        matchType: selectedMatchType,
-        genderRestriction: selectedGender,
+        ...(selectedMatchType !== 'ALL' ? { matchType: selectedMatchType } : {}),
+        ...(selectedMatchType !== 'ALL' ? { genderRestriction: selectedGender } : {}),
         limit: 20,
       });
       const nextRankings = res.data || [];
@@ -52,8 +52,8 @@ export default function RankingsTab({ communityId, categories, onGoToTournaments
         const own = userRes.communityRanks?.find((rank) =>
           rank.communityId === communityId &&
           rank.categoryId === selectedCategoryId &&
-          rank.matchType === selectedMatchType &&
-          (selectedMatchType === 'MIXED_DOUBLES' || rank.genderRestriction === selectedGender),
+          (selectedMatchType === 'ALL' || rank.matchType === selectedMatchType) &&
+          (selectedMatchType === 'ALL' || selectedMatchType === 'MIXED_DOUBLES' || rank.genderRestriction === selectedGender),
         );
         setMyRanking(own || null);
       } else {
@@ -90,7 +90,7 @@ export default function RankingsTab({ communityId, categories, onGoToTournaments
     };
   }, [selectedCategoryId, fetchRankings]);
 
-  const matchTypes: MatchType[] = ['SINGLES', 'DOUBLES', 'MIXED_DOUBLES'];
+  const matchTypes: MatchType[] = ['ALL', 'SINGLES', 'DOUBLES', 'MIXED_DOUBLES'];
 
   const filtered = searchQuery.trim()
     ? rankings.filter(p => {
@@ -206,7 +206,7 @@ export default function RankingsTab({ communityId, categories, onGoToTournaments
             <div className="space-y-4">
               {categories.length > 1 && <div><p className="mb-2 text-xs font-bold text-slate-500">Môn thể thao</p><div className="flex flex-wrap gap-2">{categories.map((cat) => <button key={cat.id} type="button" onClick={() => setSelectedCategoryId(cat.id)} className={`rounded-lg border px-3 py-2 text-xs font-bold ${selectedCategoryId === cat.id ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-200 text-slate-700'}`}>{cat.name}</button>)}</div></div>}
               <div><p className="mb-2 text-xs font-bold text-slate-500">Thể thức</p><div className="flex flex-wrap gap-2">{matchTypes.map((mt) => <button key={mt} type="button" onClick={() => { setSelectedMatchType(mt); if (mt === 'MIXED_DOUBLES') setSelectedGender('MALE'); }} className={`rounded-lg border px-3 py-2 text-xs font-bold ${selectedMatchType === mt ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-200 text-slate-700'}`}>{getEloMatchTypeLabel(mt)}</button>)}</div></div>
-              {selectedMatchType !== 'MIXED_DOUBLES' && <div><p className="mb-2 text-xs font-bold text-slate-500">Giới tính</p><div className="flex gap-2">{(['MALE', 'FEMALE'] as const).map((gender) => <button key={gender} type="button" onClick={() => setSelectedGender(gender)} className={`rounded-lg border px-4 py-2 text-xs font-bold ${selectedGender === gender ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-200 text-slate-700'}`}>{gender === 'MALE' ? 'Nam' : 'Nữ'}</button>)}</div></div>}
+              {selectedMatchType !== 'ALL' && selectedMatchType !== 'MIXED_DOUBLES' && <div><p className="mb-2 text-xs font-bold text-slate-500">Giới tính</p><div className="flex gap-2">{(['MALE', 'FEMALE'] as const).map((gender) => <button key={gender} type="button" onClick={() => setSelectedGender(gender)} className={`rounded-lg border px-4 py-2 text-xs font-bold ${selectedGender === gender ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-200 text-slate-700'}`}>{gender === 'MALE' ? 'Nam' : 'Nữ'}</button>)}</div></div>}
             </div>
             <button type="button" onClick={() => setIsFilterOpen(false)} className="mt-6 w-full rounded-lg bg-blue-600 py-2.5 text-sm font-black text-white hover:bg-blue-700">Áp dụng bộ lọc</button>
           </div>

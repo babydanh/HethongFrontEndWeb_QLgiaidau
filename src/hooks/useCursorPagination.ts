@@ -21,19 +21,25 @@ export function useCursorPagination<T extends { id?: string }>(
   
   // Track the current cursor to prevent duplicate fetches
   const fetchLock = useRef(false);
+  const fetchFnRef = useRef(fetchFn);
+  const nextCursorRef = useRef(nextCursor);
+  const hasMoreRef = useRef(hasMore);
+  fetchFnRef.current = fetchFn;
+  nextCursorRef.current = nextCursor;
+  hasMoreRef.current = hasMore;
 
   const fetchNextPage = useCallback(async (reset = false) => {
     if (fetchLock.current) return;
-    if (!reset && !hasMore) return;
+    if (!reset && !hasMoreRef.current) return;
     
-    const cursorToFetch = reset ? null : nextCursor;
+    const cursorToFetch = reset ? null : nextCursorRef.current;
 
     setIsLoading(true);
     setError(null);
     fetchLock.current = true;
 
     try {
-      const response = await fetchFn(cursorToFetch);
+      const response = await fetchFnRef.current(cursorToFetch);
       
       setData((prev) => {
         if (reset) {
@@ -51,13 +57,17 @@ export function useCursorPagination<T extends { id?: string }>(
       
       setNextCursor(response.meta.nextCursor || null);
       setHasMore(response.meta.hasMore || false);
+      nextCursorRef.current = response.meta.nextCursor || null;
+      hasMoreRef.current = response.meta.hasMore || false;
     } catch (err) {
       setError(err instanceof Error ? err : new Error('An error occurred'));
     } finally {
       setIsLoading(false);
       fetchLock.current = false;
     }
-  }, [fetchFn, nextCursor, hasMore]);
+  }, []);
+
+  const resetAndFetch = useCallback(() => fetchNextPage(true), [fetchNextPage]);
 
   // Initial fetch can be triggered manually or via useEffect depending on use case
   return {
@@ -68,7 +78,7 @@ export function useCursorPagination<T extends { id?: string }>(
     isLoading,
     error,
     fetchNextPage,
-    resetAndFetch: () => fetchNextPage(true)
+    resetAndFetch
   };
 }
 

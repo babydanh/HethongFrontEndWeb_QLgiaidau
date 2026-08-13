@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { QRCodeSVG } from 'qrcode.react';
 import { Tournament, BracketStage } from '@/types/tournament';
-import { getSportRuleKind } from '@/features/tournaments/sport-rules/normalize';
+import { getSportRuleKind, inferSportRuleKindFromCategory } from '@/features/tournaments/sport-rules/normalize';
+import { normalizeSportRuleKindForCategory } from '@/features/tournaments/sport-rules/options';
 import { getSportRulePresentation } from '@/features/tournaments/sport-rules/presentation';
 import { isTournamentRegistrationClosed, isTournamentRegistrationOpen } from '@/utils/tournament-status';
 
@@ -54,7 +55,12 @@ export function ConfigTab({
   setBracketTypeState,
 }: ConfigTabProps) {
   const isRegistrationOpen = isTournamentRegistrationOpen(tournament.status) || isTournamentRegistrationClosed(tournament.status);
-  const sportRuleKind = getSportRuleKind(tournament.sportRules);
+  // Category is authoritative. Older tournaments can contain a stale
+  // sportRules.kind from the previous preset, which must not relabel the UI.
+  const sportRuleKind = normalizeSportRuleKindForCategory(
+    getSportRuleKind(tournament.sportRules),
+    tournament.category ?? null,
+  );
   const presentation = getSportRulePresentation(sportRuleKind);
   const setUnitLabel = presentation.setUnitLabel;
   const winByTwoLabel = presentation.winByTwoLabel;

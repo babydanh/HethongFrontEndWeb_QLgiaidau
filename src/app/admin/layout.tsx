@@ -41,7 +41,7 @@ export default function AdminLayout({
   const allMenuItems = [
     { name: 'Tổng quan', path: '/admin', icon: LayoutDashboard },
     { name: 'Quản lý sao uy tín', path: '/admin/verification', icon: ShieldCheck },
-    { name: 'Khóa / xử phạt user', path: '/admin/moderation', icon: Users },
+    { name: 'Người dùng & phân quyền', path: '/admin/moderation', icon: Users },
     { name: 'Báo cáo vi phạm', path: '/admin/reports', icon: ShieldAlert },
     { name: 'Quản lý giải đấu', path: '/admin/tournaments', icon: Trophy },
     { name: 'Quản lý bộ môn', path: '/admin/categories', icon: Layers },

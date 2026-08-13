@@ -40,7 +40,7 @@ const SYSTEM_ROLE_OPTIONS: ReadonlyArray<{ value: SystemRole; label: string }> =
   { value: 'MODERATOR', label: 'Điều phối viên' },
   { value: 'ADMIN', label: 'Quản trị viên' },
 ];
-const systemRoleSchema = z.object({ roles: z.array(z.enum(['PLAYER', 'REFEREE', 'ORGANIZER', 'MODERATOR', 'ADMIN'])).min(1, 'Phải giữ ít nhất một vai trò.') });
+const systemRoleSchema = z.object({ roles: z.array(z.enum(['PLAYER', 'REFEREE', 'ORGANIZER', 'MODERATOR', 'ADMIN'])).min(1, 'Phải giữ ít nhất một vai trò.'), acknowledgeSensitive: z.boolean() });
 type SystemRoleForm = z.infer<typeof systemRoleSchema>;
 
 const roleLabel = (role: SystemRole): string =>
@@ -63,24 +63,33 @@ export default function ModerationPage() {
   const [roleUser, setRoleUser] = useState<UserItem | null>(null);
   const [roleProcessing, setRoleProcessing] = useState(false);
   const [roleFilter, setRoleFilter] = useState<SystemRole | 'ALL'>('ALL');
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [hasMoreUsers, setHasMoreUsers] = useState(false);
   const { user: currentUser } = useAuthStore();
   const canManageSystemRoles = currentUser?.roles?.includes('ADMIN') === true;
   const roleForm = useForm<SystemRoleForm>({
     resolver: zodResolver(systemRoleSchema),
-    defaultValues: { roles: ['PLAYER'] },
+    defaultValues: { roles: ['PLAYER'], acknowledgeSensitive: false },
   });
   const selectedRoles = useWatch({ control: roleForm.control, name: 'roles' });
 
-  const fetchUsers = async (searchTerm = '', showLoading = true) => {
+  const fetchUsers = async (searchTerm = '', showLoading = true, requestedRole: SystemRole | 'ALL' = roleFilter, append = false, cursor: string | null = null) => {
     if (showLoading) {
       setLoading(true);
     }
     try {
       // Find all users from admin user endpoint
-      const response = await api.get<ApiResponse<UserItem[]>>(`/users?limit=20&search=${searchTerm}`);
+      const params = new URLSearchParams({ limit: '20' });
+      if (searchTerm.trim()) params.set('search', searchTerm.trim());
+      if (requestedRole !== 'ALL') params.set('role', requestedRole);
+      if (append && cursor) params.set('cursor', cursor);
+      const response = await api.get<ApiResponse<UserItem[]>>(`/users?${params.toString()}`);
       // Drizzle returns items. We might need to map or check if there is an active ban in response.
       // For presentation, we will check if the user is banned.
-      setUsers(response.data || []);
+      const incoming = response.data || [];
+      setUsers((current) => append ? [...current, ...incoming.filter((item) => !current.some((existing) => existing.id === item.id))] : incoming);
+      setNextCursor(response.meta?.nextCursor ?? null);
+      setHasMoreUsers(response.meta?.hasMore === true);
     } catch (error: unknown) {
       console.error(error);
       toast.error('Lỗi khi tải danh sách người dùng');
@@ -103,7 +112,8 @@ export default function ModerationPage() {
   };
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    fetchUsers(search);
+    setNextCursor(null);
+    fetchUsers(search, true, roleFilter);
   };
 
   const handleBanSubmit = async () => {
@@ -157,7 +167,7 @@ export default function ModerationPage() {
 
   const openRoleModal = (user: UserItem) => {
     setRoleUser(user);
-    roleForm.reset({ roles: user.roles?.length ? user.roles : ['PLAYER'] });
+    roleForm.reset({ roles: Array.from(new Set(['PLAYER', ...(user.roles ?? [])])) as SystemRole[], acknowledgeSensitive: false });
     setShowRoleModal(true);
   };
 
@@ -165,9 +175,17 @@ export default function ModerationPage() {
     if (!roleUser || !canManageSystemRoles) return;
     setRoleProcessing(true);
     try {
-      const updated = await usersApi.updateSystemRoles(roleUser.id, values.roles);
-      const nextRoles = updated.roles ?? values.roles;
-      setUsers((current) => current.map((item) => item.id === roleUser.id ? { ...item, roles: nextRoles } : item));
+      const nextRoles = Array.from(new Set(['PLAYER', ...values.roles])) as SystemRole[];
+      const currentRoles = Array.from(new Set(['PLAYER', ...(roleUser.roles ?? [])])).sort();
+      if (JSON.stringify(nextRoles.slice().sort()) === JSON.stringify(currentRoles)) {
+        setShowRoleModal(false);
+        return;
+      }
+      const touchesPrivileged = nextRoles.some((role) => (role === 'ADMIN' || role === 'MODERATOR') !== currentRoles.includes(role));
+      if (touchesPrivileged && !roleForm.getValues('acknowledgeSensitive')) return;
+      const updated = await usersApi.updateSystemRoles(roleUser.id, nextRoles);
+      const savedRoles = updated.roles ?? nextRoles;
+      setUsers((current) => current.map((item) => item.id === roleUser.id ? { ...item, roles: savedRoles } : item));
       toast.success('Đã cập nhật vai trò hệ thống.');
       setShowRoleModal(false);
       setRoleUser(null);
@@ -218,7 +236,7 @@ export default function ModerationPage() {
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">Khóa / Xử Phạt Người Dùng</h2>
+          <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">Người dùng &amp; phân quyền</h2>
           <p className="text-slate-500 text-sm font-medium mt-1">
             Quản lý vi phạm, cảnh cáo, khóa tài khoản người dùng hoặc cấp bậc uy tín hệ thống.
           </p>
@@ -284,7 +302,12 @@ export default function ModerationPage() {
           <select
             aria-label="Lọc theo vai trò hệ thống"
             value={roleFilter}
-            onChange={(event) => setRoleFilter(event.target.value as SystemRole | 'ALL')}
+            onChange={(event) => {
+              const nextRole = event.target.value as SystemRole | 'ALL';
+              setRoleFilter(nextRole);
+              setNextCursor(null);
+              void fetchUsers(search, true, nextRole, false);
+            }}
             className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-xs font-semibold text-slate-700 focus:outline-none focus:border-blue-500"
           >
             <option value="ALL">Tất cả vai trò</option>
@@ -412,6 +435,14 @@ export default function ModerationPage() {
         </div>
       )}
 
+      {!loading && hasMoreUsers && (
+        <div className="flex justify-center">
+          <Button type="button" variant="outline" onClick={() => void fetchUsers(search, true, roleFilter, true, nextCursor)} disabled={processing} className="text-xs font-bold">
+            Xem thêm người dùng
+          </Button>
+        </div>
+      )}
+
       {showRoleModal && roleUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" role="presentation">
           <form
@@ -464,6 +495,10 @@ export default function ModerationPage() {
                   })}
                 </div>
                 {roleForm.formState.errors.roles?.message && <p className="mt-2 text-xs font-semibold text-rose-600">{roleForm.formState.errors.roles.message}</p>}
+                <label className="mt-3 flex items-start gap-2 text-xs text-slate-600">
+                  <input type="checkbox" {...roleForm.register('acknowledgeSensitive')} className="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-600" />
+                  <span>Tôi xác nhận việc cấp/gỡ ADMIN hoặc MODERATOR là quyền nhạy cảm và đã kiểm tra trách nhiệm người dùng.</span>
+                </label>
               </fieldset>
             </div>
             <div className="p-6 bg-slate-50 border-t border-slate-200 flex justify-end gap-3">

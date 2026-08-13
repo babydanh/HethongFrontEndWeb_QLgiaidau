@@ -115,6 +115,7 @@ export default function Step2Format() {
       maxParticipants: data.maxParticipants === '' ? null : Number(data.maxParticipants),
       sportRules: buildSportRulesPayload({
         kind: normalizeSportRuleKindForCategory(resolvedRules.kind, selectedCategory),
+        mode: 'STRICT',
         setsToWin: data.setsToWin,
         pointsPerSet: data.pointsPerSet,
         winByTwo: data.winByTwo,

@@ -96,6 +96,14 @@ export default function Step1Info() {
   const [selectedFormat, setSelectedFormat] = useState<'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION' | 'ROUND_ROBIN' | 'GROUP_STAGE_KNOCKOUT'>(
     formData.format || 'SINGLE_ELIMINATION'
   );
+  const [enableEloLimit, setEnableEloLimit] = useState<boolean>(() => {
+    return (
+      (formData.minElo !== null && formData.minElo !== undefined) ||
+      (formData.maxElo !== null && formData.maxElo !== undefined) ||
+      (formData.maxCombinedElo !== null && formData.maxCombinedElo !== undefined) ||
+      (formData.maxTeammateGap !== null && formData.maxTeammateGap !== undefined)
+    );
+  });
   const [fees, setFees] = useState({
     feePublicRanked: 100000,
     feePublicUnranked: 50000,
@@ -163,10 +171,10 @@ export default function Step1Info() {
       isRanked: data.isRanked,
       registrationMode: data.registrationMode,
       maxParticipants: data.maxParticipants === '' ? null : Number(data.maxParticipants),
-      minElo: data.minElo === '' || data.minElo === undefined ? null : Number(data.minElo),
-      maxElo: data.maxElo === '' || data.maxElo === undefined ? null : Number(data.maxElo),
-      maxCombinedElo: data.maxCombinedElo === '' || data.maxCombinedElo === undefined ? null : Number(data.maxCombinedElo),
-      maxTeammateGap: data.maxTeammateGap === '' || data.maxTeammateGap === undefined ? null : Number(data.maxTeammateGap),
+      minElo: enableEloLimit && data.minElo !== '' && data.minElo !== undefined ? Number(data.minElo) : null,
+      maxElo: enableEloLimit && data.maxElo !== '' && data.maxElo !== undefined ? Number(data.maxElo) : null,
+      maxCombinedElo: enableEloLimit && data.maxCombinedElo !== '' && data.maxCombinedElo !== undefined ? Number(data.maxCombinedElo) : null,
+      maxTeammateGap: enableEloLimit && data.maxTeammateGap !== '' && data.maxTeammateGap !== undefined ? Number(data.maxTeammateGap) : null,
     });
     nextStep();
   };
@@ -390,44 +398,67 @@ export default function Step1Info() {
         {/* ELO Constraints Section */}
         {watchIsRanked && (
           <div className="bg-slate-50 border border-slate-200 rounded-lg p-5 space-y-4">
-            <div>
-              <h4 className="text-sm font-bold text-slate-800">Giới hạn trình độ ELO (Tùy chọn)</h4>
-              <p className="text-xs text-slate-500 mt-1">Thiết lập khoảng ELO cho phép của các vận động viên đăng ký giải đấu này.</p>
-            </div>
+            <label className="flex items-start gap-3 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={enableEloLimit}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setEnableEloLimit(checked);
+                  if (!checked) {
+                    setValue('minElo', '');
+                    setValue('maxElo', '');
+                    setValue('maxCombinedElo', '');
+                    setValue('maxTeammateGap', '');
+                  }
+                }}
+                className="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+              />
+              <div>
+                <h4 className="text-sm font-bold text-slate-800">Giới hạn trình độ ELO (Tùy chọn)</h4>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Bật tùy chọn này để thiết lập khoảng ELO cho phép của các vận động viên đăng ký giải đấu này.
+                </p>
+              </div>
+            </label>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input
-                label="ELO tối thiểu (Min ELO)"
-                placeholder="Ví dụ: 800"
-                type="number"
-                {...register('minElo')}
-                error={errors.minElo?.message}
-              />
-              <Input
-                label="ELO tối đa (Max ELO)"
-                placeholder="Ví dụ: 1500"
-                type="number"
-                {...register('maxElo')}
-                error={errors.maxElo?.message}
-              />
-            </div>
+            {enableEloLimit && (
+              <div className="space-y-4 pt-2 border-t border-slate-200/80 animate-in fade-in duration-200">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Input
+                    label="ELO tối thiểu (Min ELO)"
+                    placeholder="Ví dụ: 800"
+                    type="number"
+                    {...register('minElo')}
+                    error={errors.minElo?.message}
+                  />
+                  <Input
+                    label="ELO tối đa (Max ELO)"
+                    placeholder="Ví dụ: 1500"
+                    type="number"
+                    {...register('maxElo')}
+                    error={errors.maxElo?.message}
+                  />
+                </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-slate-200/60 pt-3">
-              <Input
-                label="Tổng ELO cặp đôi tối đa"
-                placeholder="Ví dụ: 2800"
-                type="number"
-                {...register('maxCombinedElo')}
-                error={errors.maxCombinedElo?.message}
-              />
-              <Input
-                label="Chênh lệch ELO tối đa giữa đồng đội"
-                placeholder="Ví dụ: 300"
-                type="number"
-                {...register('maxTeammateGap')}
-                error={errors.maxTeammateGap?.message}
-              />
-            </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-slate-200/60 pt-3">
+                  <Input
+                    label="Tổng ELO cặp đôi tối đa"
+                    placeholder="Ví dụ: 2800"
+                    type="number"
+                    {...register('maxCombinedElo')}
+                    error={errors.maxCombinedElo?.message}
+                  />
+                  <Input
+                    label="Chênh lệch ELO tối đa giữa đồng đội"
+                    placeholder="Ví dụ: 300"
+                    type="number"
+                    {...register('maxTeammateGap')}
+                    error={errors.maxTeammateGap?.message}
+                  />
+                </div>
+              </div>
+            )}
           </div>
         )}
 

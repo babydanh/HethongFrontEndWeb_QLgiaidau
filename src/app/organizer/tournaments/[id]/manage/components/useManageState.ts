@@ -235,7 +235,12 @@ export function useManageState(id: string) {
   const [isPayingPublishFee, setIsPayingPublishFee] = useState(false);
   const [seedingMethod, setSeedingMethod] = useState<'ELO' | 'RANDOM' | 'MANUAL'>('MANUAL');
   const [isAutoSeeding, setIsAutoSeeding] = useState(false);
-  const selectedCategory = categories.find((category) => category.id === categoryId) ?? null;
+  // The tournament response already includes its canonical category. Prefer it
+  // over the asynchronously loaded category list so changing a division cannot
+  // temporarily fall back to the badminton defaults while categories load.
+  const selectedCategory = tournament?.category
+    ?? categories.find((category) => category.id === categoryId)
+    ?? null;
   const availableMatchFormatOptions = getAllowedMatchFormatOptions(selectedCategory);
   const selectedDivision = divisions.find((d) => d.id === selectedDivisionId);
   const bracketType = selectedDivision?.bracketType || null;
@@ -314,7 +319,14 @@ export function useManageState(id: string) {
   }, []);
 
   const applyDivisionFormValues = useCallback((selected: Division) => {
-    const resolvedRules = resolveSportRuleView(selected.roundConfig);
+    const categoryKind = inferSportRuleKindFromCategory(selectedCategory);
+    const rawResolvedRules = resolveSportRuleView(selected.roundConfig, categoryKind);
+    // A legacy division may contain a stale kind from another sport. Never let
+    // that override the tournament category when the division is selected.
+    const normalizedKind = normalizeSportRuleKindForCategory(rawResolvedRules.kind, selectedCategory);
+    const resolvedRules = normalizedKind === rawResolvedRules.kind
+      ? rawResolvedRules
+      : resolveSportRuleView(buildDefaultSportRules(normalizedKind), normalizedKind);
     const roundConfig = selected.roundConfig as Record<string, unknown> | null | undefined;
     const groupsConfig = roundConfig?.groupsConfig as Record<string, unknown> | undefined;
     const advancementConfig = roundConfig?.advancementConfig as Record<string, unknown> | undefined;

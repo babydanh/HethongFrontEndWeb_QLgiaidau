@@ -5,7 +5,7 @@ import { ApiResponse } from '@/types/api';
 export type { Category };
 
 export const categoriesApi = {
-  getCategories: () => api.get<ApiResponse<Category[]>>('/categories'),
+  getCategories: (params?: { includeInactive?: boolean }) => api.get<ApiResponse<Category[]>>('/categories', { params }),
   getCategoryById: (id: string) => api.get<ApiResponse<Category>>(`/categories/${id}`),
   createCategory: (data: Partial<Category>) => api.post<ApiResponse<Category>>('/categories', data),
   updateCategory: (id: string, data: Partial<Category>) => api.patch<ApiResponse<Category>>(`/categories/${id}`, data),

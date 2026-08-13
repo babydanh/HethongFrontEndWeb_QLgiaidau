@@ -77,7 +77,7 @@ export default function AdminCategoriesPage() {
     const loadCategories = async () => {
       setIsLoading(true);
       try {
-        const res = await categoriesApi.getCategories();
+        const res = await categoriesApi.getCategories({ includeInactive: true });
         let baseList: Category[] = [];
 
         if (res.data && res.data.length > 0) {

@@ -27,8 +27,8 @@ const createCommunitySchema = z.object({
   visibility: z.enum(['PUBLIC', 'PRIVATE', 'RESTRICTED']),
   joinMode: z.enum(['OPEN', 'APPROVAL', 'INVITE_ONLY']),
   joinQuestions: z.array(z.object({ value: z.string() })).optional(),
-  logoUrl: z.string().min(1, "Vui lòng tải lên Logo cho câu lạc bộ").url("Logo URL không hợp lệ"),
-  bannerUrl: z.string().min(1, "Vui lòng tải lên Ảnh bìa (Banner) cho câu lạc bộ").url("Banner URL không hợp lệ"),
+  logoUrl: z.string().optional(),
+  bannerUrl: z.string().optional(),
 });
 
 type CreateCommunityFormValues = z.infer<typeof createCommunitySchema>;
@@ -176,6 +176,8 @@ export default function CreateCommunityPage() {
 
       const payload = {
         ...data,
+        logoUrl: data.logoUrl?.trim() ? data.logoUrl : undefined,
+        bannerUrl: data.bannerUrl?.trim() ? data.bannerUrl : undefined,
         locationAddress: combinedAddress,
         districtCode: data.districtCode || null,
         wardCode: null,
@@ -322,13 +324,13 @@ export default function CreateCommunityPage() {
             {/* BƯỚC 3: HÌNH ẢNH CÂU LẠC BỘ */}
             <section className="space-y-6">
               <h2 className="text-xl font-semibold text-slate-800 border-b pb-2">BƯỚC 3: HÌNH ẢNH CÂU LẠC BỘ</h2>
-              <p className="text-sm text-slate-500">Tải lên Logo đại diện và Ảnh bìa (Banner) để thu hút thành viên tham gia câu lạc bộ của bạn.</p>
+              <p className="text-sm text-slate-500">Tải lên Logo đại diện và Ảnh bìa (Banner) để thu hút thành viên. Bạn có thể bỏ qua bước này và cập nhật sau.</p>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 {/* Logo Uploader */}
                 <div className="flex flex-col items-center justify-center p-6 bg-slate-50 rounded-lg border border-slate-200">
                   <label className="block text-sm font-semibold text-slate-700 mb-4 text-center">
-                    Logo / Avatar nhóm <span className="text-rose-500">*</span>
+                    Logo / Avatar nhóm <span className="text-slate-400 font-normal text-xs">(Không bắt buộc)</span>
                   </label>
                   
                   <input
@@ -384,7 +386,7 @@ export default function CreateCommunityPage() {
                 {/* Banner Uploader */}
                 <div className="md:col-span-2 flex flex-col p-6 bg-slate-50 rounded-lg border border-slate-200">
                   <label className="block text-sm font-semibold text-slate-700 mb-4">
-                    Ảnh bìa (Cover Banner) <span className="text-rose-500">*</span>
+                    Ảnh bìa (Cover Banner) <span className="text-slate-400 font-normal text-xs">(Không bắt buộc)</span>
                   </label>
                   
                   <input

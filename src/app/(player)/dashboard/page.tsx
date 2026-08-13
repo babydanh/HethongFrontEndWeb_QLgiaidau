@@ -471,7 +471,9 @@ export default function DashboardPage() {
                     </div>
 
                     <div className="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
-                      <span>Vòng đấu: {upcomingMatch.stageName || 'Vòng đấu'}</span>
+                      <span>
+                        Vòng đấu: {upcomingMatch.group?.stage?.name || upcomingMatch.group?.name || 'Vòng đấu'}
+                      </span>
                       <Link href={`/live/${upcomingMatch.id}`}>
                         <span className="inline-flex items-center gap-1 font-bold text-blue-400 hover:text-blue-300">
                           Xem tỷ số <ChevronRight className="w-3.5 h-3.5" />
@@ -510,7 +512,12 @@ export default function DashboardPage() {
                 ) : completedMatches.length > 0 ? (
                   <div className="flex flex-col gap-3">
                     {completedMatches.slice(0, 4).map((m) => {
-                      const isWin = m.winnerId && (m.participant1?.id === m.winnerId || m.participant1?.userId === user?.id);
+                      const userParticipantId = m.participant1?.members?.some((member) => member.userId === user?.id)
+                        ? m.participant1.id
+                        : m.participant2?.members?.some((member) => member.userId === user?.id)
+                          ? m.participant2.id
+                          : null;
+                      const isWin = Boolean(m.winnerId && userParticipantId === m.winnerId);
                       const eloDelta = isWin ? '+15' : '-10';
                       return (
                         <div key={m.id} className="flex items-center justify-between p-3.5 rounded-lg border border-slate-100 hover:border-slate-200 bg-slate-50/50 transition-all">

@@ -50,7 +50,7 @@ interface EnrichedParticipant {
   }[];
 }
 
-interface EnrichedMatch extends Omit<Match, 'tournament' | 'participant1' | 'participant2'> {
+interface EnrichedMatch extends Omit<Match, 'tournament' | 'participant1' | 'participant2' | 'group'> {
   tournament?: EnrichedTournament | null;
   participant1?: EnrichedParticipant | null;
   participant2?: EnrichedParticipant | null;

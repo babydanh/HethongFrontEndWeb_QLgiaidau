@@ -117,6 +117,7 @@ export interface Tournament {
   venueId?: string | null;
   isRanked?: boolean;
   isRegistrationLocked?: boolean;
+  isLite?: boolean;
   venue?: {
     id: string;
     name: string;
@@ -168,6 +169,7 @@ export interface Tournament {
   }[] | null;
   city?: string | null;
   tournamentConfig?: {
+    isLite?: boolean;
     mode?: 'LITE' | 'ADVANCED' | 'STRICT';
     bracketType?: string;
     maxTeams?: number;

@@ -192,7 +192,7 @@ export default function ModerationTab({
 
   const handleModeratePost = async (postId: string, status: 'PUBLISHED' | 'REJECTED') => {
     try {
-      await communitiesApi.moderatePost(communityId, postId, { status });
+      await communitiesApi.moderatePost(communityId, postId, status);
       setPendingPosts((posts) => posts.filter((post) => post.id !== postId));
       toast.success(status === 'PUBLISHED' ? 'Đã duyệt bài viết.' : 'Đã từ chối bài viết.');
     } catch (error) {

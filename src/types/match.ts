@@ -59,6 +59,7 @@ export interface Match {
   scheduledAt?: string | null;
   startedAt?: string | null;
   completedAt?: string | null;
+  updatedAt: string;
   courtName?: string | null;
   participant1Id?: string | null;
   participant2Id?: string | null;
@@ -101,6 +102,16 @@ export interface Match {
     categorySlug?: string | null;
     categoryConfig?: Record<string, unknown> | null;
     tournamentConfig?: { mode?: 'LITE' | 'ADVANCED' } | null;
+  } | null;
+  group?: {
+    id: string;
+    name: string;
+    roundConfig?: Record<string, unknown> | null;
+    stage?: {
+      name: string;
+      type?: string;
+      roundConfig?: StageRoundConfig | null;
+    } | null;
   } | null;
   stage?: {
     type?: string;

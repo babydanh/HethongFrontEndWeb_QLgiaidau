@@ -89,6 +89,7 @@ export default function DashboardPage() {
   const [respondingInviteId, setRespondingInviteId] = useState<string | null>(null);
   const [followedTournaments, setFollowedTournaments] = useState<Tournament[]>([]);
   const [sportFilter, setSportFilter] = useState<string>('');
+  const [eloCategoryId, setEloCategoryId] = useState<string>('');
   const [isLiteLoading, setIsLiteLoading] = useState(false);
   const [showNoClubModal, setShowNoClubModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'tournaments' | 'referee'>('overview');
@@ -138,7 +139,10 @@ export default function DashboardPage() {
         setWorkspace(workspaceRes.data || null);
         setFollowedTournaments(sortFollowedTournaments(Array.isArray(followedRes?.data) ? followedRes.data : []));
         if (Array.isArray(categoriesRes?.data)) {
-          setCategories(categoriesRes.data.filter((c: Category) => c.isActive !== false));
+          setCategories(categoriesRes.data.filter((c: Category) => (
+            c.isActive !== false
+            && (c.categoryConfig as (Record<string, unknown> & { isActive?: boolean }) | null | undefined)?.isActive !== false
+          )));
         }
 
         if (matchesRes?.data) {
@@ -174,14 +178,23 @@ export default function DashboardPage() {
     }
   };
 
-  const strongestSport = [...(userRankings?.publicRanks || [])]
-    .filter((rank) => rank.matchesPlayed > 0 && rank.categoryName)
-    .sort((a, b) => b.eloPoints - a.eloPoints || b.matchesPlayed - a.matchesPlayed)[0]?.categoryName || '';
-  const activeSport = sportFilter || strongestSport;
-  const activeSportRanks = activeSport
-    ? (userRankings?.publicRanks || []).filter((rank) => rank.categoryName === activeSport)
-    : (userRankings?.publicRanks || []);
-  const activeRank = getBestRankForCategory(activeSportRanks);
+  const publicRanks = userRankings?.publicRanks || [];
+  const strongestRank = [...publicRanks]
+    .filter((rank) => rank.matchesPlayed > 0)
+    .sort((a, b) => b.eloPoints - a.eloPoints || b.matchesPlayed - a.matchesPlayed)[0];
+  const strongestActiveCategoryId = strongestRank
+    && categories.some((category) => category.id === strongestRank.categoryId)
+    ? strongestRank.categoryId
+    : '';
+  const stableCategoryIndex = categories.length > 0
+    ? Array.from(user?.id || 'sporto').reduce((total, character) => total + character.charCodeAt(0), 0) % categories.length
+    : 0;
+  const selectedEloCategoryId = categories.some((category) => category.id === eloCategoryId)
+    ? eloCategoryId
+    : strongestActiveCategoryId || categories[stableCategoryIndex]?.id || '';
+  const activeRank = selectedEloCategoryId
+    ? getBestRankForCategory(publicRanks, selectedEloCategoryId)
+    : getBestRankForCategory(publicRanks);
   const eloPoints = activeRank ? activeRank.eloPoints : 1000;
   const matchesPlayed = activeRank ? activeRank.matchesPlayed : 0;
   const matchesWon = activeRank ? activeRank.matchesWon : 0;
@@ -691,7 +704,10 @@ export default function DashboardPage() {
             winRate={winRate}
             tierName={tierName}
             activeRank={activeRank}
-            sportLabel={activeRank?.categoryName ? [activeRank.categoryName, activeRank.matchType === 'SINGLES' ? 'Đơn' : activeRank.matchType === 'DOUBLES' ? 'Đôi' : ''].filter(Boolean).join(' - ') : undefined}
+            sportLabel={activeRank?.matchType === 'SINGLES' ? 'Đơn' : activeRank?.matchType === 'DOUBLES' ? 'Đôi' : activeRank?.matchType === 'MIXED_DOUBLES' ? 'Đôi nam nữ' : undefined}
+            sportOptions={categories.map((category) => ({ id: category.id, name: category.name }))}
+            selectedSportId={selectedEloCategoryId}
+            onSportChange={setEloCategoryId}
           />
 
           <RoleSummaryCard

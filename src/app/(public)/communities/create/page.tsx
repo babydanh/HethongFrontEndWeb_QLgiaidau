@@ -212,9 +212,9 @@ export default function CreateCommunityPage() {
         </button>
 
         <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
-          <div className="bg-emerald-600 px-8 py-10 text-white text-center">
+          <div className="bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-700 px-8 py-10 text-white text-center rounded-t-xl">
             <h1 className="text-3xl font-bold mb-2">Tạo Câu Lạc Bộ Mới</h1>
-            <p className="text-emerald-100">Xây dựng và phát triển câu lạc bộ thể thao của riêng bạn</p>
+            <p className="text-blue-100">Xây dựng và phát triển câu lạc bộ thể thao của riêng bạn</p>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="p-8 space-y-10">
@@ -229,7 +229,7 @@ export default function CreateCommunityPage() {
                 <input 
                   {...register('name')}
                   placeholder="VD: CLB Cầu Lông Ba Đình"
-                  className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                  className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                 />
                 {errors.name && <p className="text-rose-500 text-sm mt-1">{errors.name.message}</p>}
               </div>
@@ -242,7 +242,7 @@ export default function CreateCommunityPage() {
                   {...register('description')}
                   rows={3}
                   placeholder="Giới thiệu ngắn về câu lạc bộ..."
-                  className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                  className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                 />
               </div>
 
@@ -254,7 +254,7 @@ export default function CreateCommunityPage() {
                   {...register('rules')}
                   rows={4}
                   placeholder="1. Tôn trọng lẫn nhau&#10;2. Đúng giờ..."
-                  className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                  className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                 />
               </div>
             </section>
@@ -270,7 +270,7 @@ export default function CreateCommunityPage() {
                   </label>
                   <select
                     {...register('provinceCode')}
-                    className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none"
+                    className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none"
                   >
                     <option value="">Chọn Tỉnh/Thành phố</option>
                     {provinces.map(p => <option key={p.code} value={p.code}>{p.name}</option>)}
@@ -283,7 +283,7 @@ export default function CreateCommunityPage() {
                   </label>
                   <select
                     {...register('districtCode')}
-                    className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none"
+                    className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none"
                     disabled={!watchProvince}
                   >
                     <option value="">Chọn Quận/Huyện</option>
@@ -304,10 +304,10 @@ export default function CreateCommunityPage() {
                         key={cat.id}
                         type="button"
                         onClick={() => handleCategoryToggle(cat.id)}
-                        className={`px-4 py-2 rounded-full border text-sm font-medium transition-colors ${
+                        className={`px-4 py-2 rounded-full border text-sm font-medium transition-all ${
                           isSelected 
-                            ? 'bg-blue-50 border-emerald-500 text-blue-700'
-                            : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
+                            ? 'bg-blue-600 border-blue-600 text-white font-semibold shadow-sm'
+                            : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50'
                         }`}
                       >
                         {isSelected && '✓ '}{cat.name}
@@ -343,8 +343,8 @@ export default function CreateCommunityPage() {
                     onClick={() => !isUploadingLogo && logoInputRef.current?.click()}
                     className={`group w-32 h-32 rounded-full border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all overflow-hidden relative ${
                       watchLogoUrl 
-                        ? 'border-emerald-500 bg-white' 
-                        : 'border-slate-300 hover:border-emerald-500 bg-white hover:bg-slate-50'
+                        ? 'border-blue-500 bg-white' 
+                        : 'border-slate-300 hover:border-blue-500 bg-white hover:bg-slate-50'
                     }`}
                   >
                     {isUploadingLogo ? (
@@ -399,8 +399,8 @@ export default function CreateCommunityPage() {
                     onClick={() => !isUploadingBanner && bannerInputRef.current?.click()}
                     className={`group w-full h-36 rounded-lg border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all overflow-hidden relative ${
                       watchBannerUrl 
-                        ? 'border-emerald-500 bg-white' 
-                        : 'border-slate-300 hover:border-emerald-500 bg-white hover:bg-slate-50'
+                        ? 'border-blue-500 bg-white' 
+                        : 'border-slate-300 hover:border-blue-500 bg-white hover:bg-slate-50'
                     }`}
                   >
                     {isUploadingBanner ? (
@@ -460,7 +460,7 @@ export default function CreateCommunityPage() {
                             type="radio"
                             value={opt.value}
                             {...register('visibility')}
-                            className="w-4 h-4 text-blue-600 border-slate-300 focus:ring-emerald-500"
+                            className="w-4 h-4 text-blue-600 border-slate-300 focus:ring-blue-500"
                           />
                         </div>
                         <div className="ml-3 text-sm">
@@ -486,7 +486,7 @@ export default function CreateCommunityPage() {
                             type="radio"
                             value={opt.value}
                             {...register('joinMode')}
-                            className="w-4 h-4 text-blue-600 border-slate-300 focus:ring-emerald-500"
+                            className="w-4 h-4 text-blue-600 border-slate-300 focus:ring-blue-500"
                           />
                         </div>
                         <div className="ml-3 text-sm">
@@ -510,7 +510,7 @@ export default function CreateCommunityPage() {
                         <input
                           {...register(`joinQuestions.${index}.value` as const)}
                           placeholder={`Câu hỏi ${index + 1}...`}
-                          className="flex-1 px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none"
+                          className="flex-1 px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none"
                         />
                         <button
                           type="button"
@@ -526,7 +526,7 @@ export default function CreateCommunityPage() {
                   <button
                     type="button"
                     onClick={() => appendQuestion({ value: '' })}
-                    className="flex items-center text-sm text-blue-600 font-medium hover:text-emerald-700"
+                    className="flex items-center text-sm text-blue-600 font-medium hover:text-blue-700"
                   >
                     <Plus className="w-4 h-4 mr-1" /> Thêm câu hỏi
                   </button>
@@ -545,7 +545,7 @@ export default function CreateCommunityPage() {
               <Button 
                 type="submit" 
                 isLoading={isSubmitting}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white min-w-[140px]"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold min-w-[140px] shadow-md shadow-blue-500/20"
               >
                 Tạo Câu Lạc Bộ
               </Button>

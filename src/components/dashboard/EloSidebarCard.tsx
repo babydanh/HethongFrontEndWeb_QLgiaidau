@@ -14,6 +14,9 @@ interface Props {
   tierName: string;
   activeRank?: PlayerRanking | null;
   sportLabel?: string;
+  sportOptions?: Array<{ id: string; name: string }>;
+  selectedSportId?: string;
+  onSportChange?: (categoryId: string) => void;
 }
 
 function getTierColor(name: string): string {
@@ -25,7 +28,18 @@ function getTierColor(name: string): string {
   return 'text-slate-500 border-slate-200 bg-slate-50';
 }
 
-export default function EloSidebarCard({ eloPoints, matchesWon, matchesPlayed, winRate, tierName, activeRank, sportLabel }: Props) {
+export default function EloSidebarCard({
+  eloPoints,
+  matchesWon,
+  matchesPlayed,
+  winRate,
+  tierName,
+  activeRank,
+  sportLabel,
+  sportOptions = [],
+  selectedSportId = '',
+  onSportChange,
+}: Props) {
   const streak = activeRank?.winStreak ?? 0;
   const recentDelta = streak * ELO_PER_STREAK_WIN;
   const TrendIcon = recentDelta > 0 ? TrendingUp : recentDelta < 0 ? TrendingDown : Minus;
@@ -39,7 +53,20 @@ export default function EloSidebarCard({ eloPoints, matchesWon, matchesPlayed, w
     <div className={`bg-white rounded-xl border-2 ${tierBorder} p-5 shadow-sm`}>
       <div className="flex items-center justify-between mb-3">
         <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">ELO Xếp hạng</span>
-        {sportLabel && <span className="text-[10px] text-slate-400">{sportLabel}</span>}
+        {sportOptions.length > 1 && onSportChange ? (
+          <select
+            aria-label="Chọn môn thể thao để xem ELO"
+            value={selectedSportId}
+            onChange={(event) => onSportChange(event.target.value)}
+            className="max-w-32 rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-semibold text-slate-700 outline-none transition-colors hover:border-slate-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+          >
+            {sportOptions.map((sport) => (
+              <option key={sport.id} value={sport.id}>{sport.name}</option>
+            ))}
+          </select>
+        ) : sportOptions.length === 1 ? (
+          <span className="max-w-32 truncate text-[10px] font-medium text-slate-500">{sportOptions[0].name}</span>
+        ) : null}
       </div>
 
       <div className="flex items-end gap-3 mb-1">
@@ -52,9 +79,12 @@ export default function EloSidebarCard({ eloPoints, matchesWon, matchesPlayed, w
         )}
       </div>
 
-      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold border ${tierColor} mb-3`}>
-        {tierName}
-      </span>
+      <div className="mb-3 flex items-center gap-2">
+        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold border ${tierColor}`}>
+          {tierName}
+        </span>
+        {sportLabel && <span className="text-[10px] font-medium text-slate-400">{sportLabel}</span>}
+      </div>
 
       <div className="mb-3 rounded-lg bg-slate-50 px-3 py-2.5">
         <div className="mb-1.5 flex items-center justify-between gap-2 text-[10px] font-semibold text-slate-500">

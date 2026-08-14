@@ -261,7 +261,19 @@ export default function SettingsTab({ community }: { community: Community }) {
       const districtName = districts.find(d => d.code === districtCode)?.name || '';
       const wardName = wards.find(w => w.code === wardCode)?.name || '';
       const trimmedAddress = locationAddress.trim();
-      const combinedAddress = trimmedAddress || [wardName, districtName, provinceName].filter(Boolean).join(', ') || null;
+      const regionPart = [wardName, districtName, provinceName].filter(Boolean).join(', ');
+      
+      // Ghép địa chỉ: Nếu người dùng nhập tên sân/địa chỉ riêng, ghép kèm khu vực hành chính (nếu chưa có trong chuỗi)
+      let combinedAddress = '';
+      if (trimmedAddress) {
+        if (regionPart && !trimmedAddress.includes(provinceName) && !trimmedAddress.includes(districtName)) {
+          combinedAddress = `${trimmedAddress}, ${regionPart}`;
+        } else {
+          combinedAddress = trimmedAddress;
+        }
+      } else {
+        combinedAddress = regionPart;
+      }
 
       const updateData = {
         name,
@@ -270,7 +282,7 @@ export default function SettingsTab({ community }: { community: Community }) {
         visibility,
         joinMode,
         maxMembers: maxMembers ? Number(maxMembers) : null,
-        locationAddress: combinedAddress,
+        locationAddress: combinedAddress || null,
         provinceCode,
         districtCode: districtCode || null,
         wardCode: wardCode || null,

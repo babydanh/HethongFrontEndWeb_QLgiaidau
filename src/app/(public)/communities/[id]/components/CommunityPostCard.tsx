@@ -37,7 +37,7 @@ export default function CommunityPostCard({
 }: CommunityPostCardProps) {
   const { user: currentUser } = useAuthStore();
   const [comments, setComments] = useState<CommunityComment[]>([]);
-  const [localCommentCount, setLocalCommentCount] = useState(post.commentCount ?? 0);
+  const [overrideCommentCount, setOverrideCommentCount] = useState<number | null>(null);
   const [commentText, setCommentText] = useState("");
   const [loadingComments, setLoadingComments] = useState(false);
   const [submittingComment, setSubmittingComment] = useState(false);
@@ -46,10 +46,7 @@ export default function CommunityPostCard({
   const [likedComments, setLikedComments] = useState<Record<string, boolean>>({});
   const commentInputRef = useRef<HTMLInputElement>(null);
 
-  // Sync with post prop updates
-  useEffect(() => {
-    setLocalCommentCount(post.commentCount ?? 0);
-  }, [post.commentCount]);
+  const commentCount = overrideCommentCount ?? (post.commentCount ?? 0);
 
   const isAuthor = Boolean(currentUser?.id && post.author?.id && currentUser.id === post.author.id);
   const canDelete = isAuthor || canManage;
@@ -211,7 +208,7 @@ export default function CommunityPostCard({
       );
       const fetched = response.data ?? [];
       setComments(fetched);
-      setLocalCommentCount(fetched.length);
+      setOverrideCommentCount(fetched.length);
     } catch (error: unknown) {
       toast.error(getErrorMessage(error, "Không thể tải bình luận."));
     } finally {
@@ -238,7 +235,7 @@ export default function CommunityPostCard({
         },
       };
       setComments((current) => [...current, newComment]);
-      setLocalCommentCount((c) => c + 1);
+      setOverrideCommentCount((c) => (c ?? (post.commentCount ?? 0)) + 1);
       onComment();
       setCommentText("");
       setReplyingTo(null);
@@ -260,7 +257,7 @@ export default function CommunityPostCard({
           if (c.parentId === commentId) deletedIds.add(c.id);
         });
         const remaining = current.filter((c) => !deletedIds.has(c.id));
-        setLocalCommentCount(remaining.length);
+        setOverrideCommentCount(remaining.length);
         return remaining;
       });
       toast.success("Đã xóa bình luận.");
@@ -424,7 +421,7 @@ export default function CommunityPostCard({
             )}
           >
             <MessageCircle className="h-4 w-4" />
-            <span>{localCommentCount} bình luận</span>
+            <span>{commentCount} bình luận</span>
           </button>
         </div>
 

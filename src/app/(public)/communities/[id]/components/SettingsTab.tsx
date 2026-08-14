@@ -39,7 +39,7 @@ export default function SettingsTab({ community }: { community: Community }) {
   // Categories Selection
   const [allCategories, setAllCategories] = useState<Category[]>([]);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>(
-    community.categories?.map(c => c.id) || []
+    community.categories?.map(c => c.id).slice(0, 1) || []
   );
 
   // Logo & Banner
@@ -236,9 +236,7 @@ export default function SettingsTab({ community }: { community: Community }) {
 
   // Toggle Category
   const handleToggleCategory = (id: string) => {
-    setSelectedCategoryIds(prev => 
-      prev.includes(id) ? prev.filter(cId => cId !== id) : [...prev, id]
-    );
+    setSelectedCategoryIds([id]);
   };
 
   // Save Settings
@@ -251,8 +249,8 @@ export default function SettingsTab({ community }: { community: Community }) {
       toast.error('Vui lòng chọn tỉnh/thành phố.');
       return;
     }
-    if (selectedCategoryIds.length === 0) {
-      toast.error('Vui lòng chọn ít nhất 1 môn thể thao.');
+    if (selectedCategoryIds.length !== 1) {
+      toast.error('Câu lạc bộ phải có đúng 1 môn thể thao chính.');
       return;
     }
 
@@ -429,9 +427,10 @@ export default function SettingsTab({ community }: { community: Community }) {
               </div>
             </div>
 
-            {/* Môn thể thao (Categories) */}
+            {/* Môn thể thao chính */}
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">Môn thể thao hoạt động *</label>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Môn thể thao chính *</label>
+              <p className="mb-3 text-xs text-slate-500">Mỗi CLB chỉ có một môn. Các đội trực thuộc có thể khác giới tính hoặc quy mô thi đấu.</p>
               <div className="flex flex-wrap gap-2">
                 {allCategories.map(cat => {
                   const isSelected = selectedCategoryIds.includes(cat.id);

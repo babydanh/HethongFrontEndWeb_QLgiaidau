@@ -174,6 +174,22 @@ export default function LiveMatchPage({ params }: Props) {
   // Ref tới khung chat (overflow-y-auto) — chỉ cuộn khung này, KHÔNG cuộn cả trang.
   const commentsBoxRef = useRef<HTMLDivElement | null>(null);
 
+  const mergeMatchUpdate = (nextMatch: Match): Match => ({
+    ...(match ?? ({} as Match)),
+    ...nextMatch,
+    participant1: nextMatch.participant1 ?? match?.participant1,
+    participant2: nextMatch.participant2 ?? match?.participant2,
+    tournament: nextMatch.tournament ?? match?.tournament,
+    stage: nextMatch.stage ?? match?.stage,
+  });
+
+  const applyServerSnapshot = (nextMatch: Match) => {
+    startTransition(() => {
+      setMatch(mergeMatchUpdate(nextMatch));
+      setScores(extractMatchScores(nextMatch.scoreDetails));
+    });
+  };
+
 
 
   const getTeamEloDisplay = (part: typeof part1) => {
@@ -375,9 +391,16 @@ export default function LiveMatchPage({ params }: Props) {
   ]);
 
   useEffect(() => {
-    const rules = resolveMatchSportRules(match ?? {});
-    if (rules.kind !== 'FOOTBALL' || !match) return;
-    setFootballScore(readFootballScore(match.scoreDetails));
+    let isCancelled = false;
+    void Promise.resolve().then(() => {
+      if (isCancelled) return;
+      const rules = resolveMatchSportRules(match ?? {});
+      if (rules.kind !== 'FOOTBALL' || !match) return;
+      setFootballScore(readFootballScore(match.scoreDetails));
+    });
+    return () => {
+      isCancelled = true;
+    };
   }, [match?.id, match?.scoreDetails]);
 
   useEffect(() => {
@@ -631,21 +654,6 @@ export default function LiveMatchPage({ params }: Props) {
       { p1SetsWon: 0, p2SetsWon: 0 },
     );
 
-  const mergeMatchUpdate = (nextMatch: Match): Match => ({
-    ...match,
-    ...nextMatch,
-    participant1: nextMatch.participant1 ?? match.participant1,
-    participant2: nextMatch.participant2 ?? match.participant2,
-    tournament: nextMatch.tournament ?? match.tournament,
-    stage: nextMatch.stage ?? match.stage,
-  });
-
-  const applyServerSnapshot = (nextMatch: Match) => {
-    startTransition(() => {
-      setMatch(mergeMatchUpdate(nextMatch));
-      setScores(extractMatchScores(nextMatch.scoreDetails));
-    });
-  };
 
   const flushScoreSync = async () => {
     if (scoreSyncInFlightRef.current || !pendingScorePayloadRef.current) return;

@@ -1,8 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import { useState } from "react";
-import { Flag, Heart, Loader2, MessageCircle } from "lucide-react";
+import { Flag, Heart, Loader2, MessageCircle, Maximize2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { communitiesApi } from "@/features/communities/api";
 import type {
@@ -13,12 +12,45 @@ import type {
 import { cn } from "@/utils/cn";
 import { getErrorMessage } from "@/utils/error";
 import CommunityAvatar from "./CommunityAvatar";
+import ImageLightboxModal from "@/components/common/ImageLightboxModal";
 
 interface CommunityPostCardProps {
   post: CommunityPost;
   onReact: (type: CommunityReactionType) => void;
   onReport: () => void;
   onComment: () => void;
+}
+
+/** Helper parse text to highlight @mentions & #hashtags */
+function renderRichContent(content: string) {
+  if (!content) return null;
+
+  // Regex bắt @Tên hoặc #Hashtag hoặc các đoạn chữ thông thường
+  const tokens = content.split(/(#[a-zA-Z0-9_\u00C0-\u1EF9]+|@[a-zA-Z0-9_\s\u00C0-\u1EF9]+?(?=\s[#@]|\s\s|$|[.,!?;:\n]))/gu);
+
+  return tokens.map((token, index) => {
+    if (token.startsWith("@")) {
+      return (
+        <span
+          key={index}
+          className="inline-flex items-center mx-0.5 px-1.5 py-0.5 rounded-md bg-blue-50 text-blue-600 font-semibold text-xs border border-blue-100/80 hover:bg-blue-100 transition-colors cursor-pointer select-none"
+        >
+          {token}
+        </span>
+      );
+    }
+    if (token.startsWith("#")) {
+      return (
+        <span
+          key={index}
+          className="inline-flex items-center mx-0.5 px-1.5 py-0.2 rounded text-emerald-600 font-medium hover:underline cursor-pointer"
+        >
+          {token}
+        </span>
+      );
+    }
+    return <span key={index}>{token}</span>;
+  });
 }
 
 export default function CommunityPostCard({
@@ -31,6 +63,10 @@ export default function CommunityPostCard({
   const [commentText, setCommentText] = useState("");
   const [loadingComments, setLoadingComments] = useState(false);
   const [submittingComment, setSubmittingComment] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+
+  const authorName = post.author?.fullName?.trim() || "Thành viên CLB";
+  const authorAvatar = post.author?.avatarUrl;
 
   const loadComments = async () => {
     setLoadingComments(true);
@@ -69,135 +105,182 @@ export default function CommunityPostCard({
   };
 
   return (
-    <article className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex items-center gap-3">
-        <CommunityAvatar
-          src={post.author.avatarUrl}
-          name={post.author.fullName}
-        />
-        <div className="min-w-0">
-          <p className="truncate text-sm font-bold text-slate-900">
-            {post.author.fullName}
-          </p>
-          <p className="text-xs text-slate-400">
-            {new Date(post.createdAt).toLocaleDateString("vi-VN")}
-            {post.status === "PENDING" ? " · Đang chờ duyệt" : ""}
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={onReport}
-          aria-label="Báo cáo bài viết"
-          className="ml-auto text-slate-400 hover:text-rose-600"
-        >
-          <Flag className="h-4 w-4" />
-        </button>
-      </div>
-
-      {post.status === "PENDING" && (
-        <div className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700">
-          Bài viết đang chờ ban quản trị duyệt.
-        </div>
-      )}
-      {post.content && (
-        <p className="mt-4 whitespace-pre-wrap text-sm leading-6 text-slate-700">
-          {post.content}
-        </p>
-      )}
-      {(post.topics ?? []).length > 0 && (
-        <div className="mt-3 flex flex-wrap gap-2">
-          {post.topics?.map((topic) => (
-            <span
-              key={topic}
-              className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700"
-            >
-              #{topic}
-            </span>
-          ))}
-        </div>
-      )}
-      {post.imageUrls.length > 0 && (
-        <div className="mt-4 grid grid-cols-2 gap-2">
-          {post.imageUrls.map((url) => (
-            <Image
-              key={url}
-              src={url}
-              alt="Ảnh bài viết"
-              width={640}
-              height={360}
-              unoptimized
-              className="aspect-video w-full rounded-lg object-cover"
-            />
-          ))}
-        </div>
-      )}
-
-      <div className="mt-4 flex items-center gap-3 border-t border-slate-100 pt-3 text-xs font-semibold text-slate-500">
-        <button
-          type="button"
-          onClick={() => onReact("CHEER")}
-          className={cn(
-            "inline-flex items-center gap-1",
-            post.viewerReaction === "CHEER"
-              ? "text-rose-600"
-              : "hover:text-rose-600",
-          )}
-        >
-          <Heart
-            className="h-4 w-4"
-            fill={post.viewerReaction === "CHEER" ? "currentColor" : "none"}
+    <>
+      <article className="rounded-xl border border-slate-200/90 bg-white p-5 shadow-sm transition hover:shadow-md">
+        {/* Header: Author info & Report */}
+        <div className="flex items-center gap-3">
+          <CommunityAvatar
+            src={authorAvatar}
+            name={authorName}
+            size={42}
           />
-          {post.reactionCount}
-        </button>
-        <button
-          type="button"
-          onClick={() => void loadComments()}
-          className="inline-flex items-center gap-1 hover:text-emerald-600"
-        >
-          <MessageCircle className="h-4 w-4" />
-          {post.commentCount}
-        </button>
-      </div>
-
-      {(loadingComments || comments.length > 0) && (
-        <div className="mt-3 space-y-2">
-          {loadingComments ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            comments.map((comment) => (
-              <div
-                key={comment.id}
-                className="rounded-lg bg-slate-50 px-3 py-2 text-xs"
-              >
-                <span className="font-bold text-slate-700">
-                  {comment.author?.fullName ?? "Thành viên"}
-                </span>
-                <p className="mt-1 text-slate-600">{comment.body}</p>
-              </div>
-            ))
-          )}
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-bold text-slate-900 hover:text-blue-600 transition-colors cursor-pointer">
+              {authorName}
+            </p>
+            <p className="text-xs text-slate-500 font-medium">
+              {new Date(post.createdAt).toLocaleDateString("vi-VN", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+              })}
+              {post.status === "PENDING" ? " · Đang chờ duyệt" : ""}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onReport}
+            aria-label="Báo cáo bài viết"
+            className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition"
+            title="Báo cáo bài viết"
+          >
+            <Flag className="h-4 w-4" />
+          </button>
         </div>
-      )}
 
-      <div className="mt-3 flex gap-2">
-        <input
-          value={commentText}
-          onChange={(event) => setCommentText(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") void submitComment();
-          }}
-          placeholder="Viết bình luận..."
-          className="min-w-0 flex-1 rounded-lg border border-slate-200 px-3 py-2 text-xs"
-        />
-        <button
-          type="button"
-          onClick={() => void submitComment()}
-          disabled={submittingComment}
-          className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white disabled:opacity-60"
-        >
-          Gửi
-        </button>
-      </div>
-    </article>
+        {/* Pending status banner */}
+        {post.status === "PENDING" && (
+          <div className="mt-3 rounded-lg bg-amber-50 px-3.5 py-2 text-xs font-semibold text-amber-700 border border-amber-200/60">
+            Bài viết đang chờ ban quản trị duyệt trước khi hiển thị công khai.
+          </div>
+        )}
+
+        {/* Post Content */}
+        {post.content && (
+          <div className="mt-3.5 whitespace-pre-wrap text-sm leading-relaxed text-slate-800">
+            {renderRichContent(post.content)}
+          </div>
+        )}
+
+        {/* Topic Badges */}
+        {(post.topics ?? []).length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {post.topics?.map((topic) => (
+              <span
+                key={topic}
+                className="rounded-md bg-emerald-50 border border-emerald-200/60 px-2 py-0.5 text-xs font-semibold text-emerald-700"
+              >
+                #{topic}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Images Grid with Click to Open Lightbox */}
+        {post.imageUrls.length > 0 && (
+          <div
+            className={cn(
+              "mt-3.5 gap-2 overflow-hidden rounded-xl",
+              post.imageUrls.length === 1 ? "grid grid-cols-1" : "grid grid-cols-2",
+            )}
+          >
+            {post.imageUrls.map((url, idx) => (
+              <div
+                key={url}
+                onClick={() => setLightboxIndex(idx)}
+                className="group relative cursor-pointer overflow-hidden rounded-lg bg-slate-100"
+              >
+                <img
+                  src={url}
+                  alt={`Ảnh bài viết ${idx + 1}`}
+                  className={cn(
+                    "w-full object-cover transition-transform duration-300 group-hover:scale-105",
+                    post.imageUrls.length === 1 ? "max-h-[28rem] rounded-lg" : "aspect-video",
+                  )}
+                />
+                {/* Hover overlay hint */}
+                <div className="absolute inset-0 flex items-center justify-center bg-black/25 opacity-0 backdrop-blur-[2px] transition-opacity group-hover:opacity-100">
+                  <div className="flex items-center gap-1.5 rounded-full bg-black/60 px-3 py-1 text-xs font-bold text-white shadow-md">
+                    <Maximize2 className="h-3.5 w-3.5" />
+                    Phóng to
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Interaction Actions */}
+        <div className="mt-4 flex items-center gap-4 border-t border-slate-100 pt-3 text-xs font-semibold text-slate-600">
+          <button
+            type="button"
+            onClick={() => onReact("CHEER")}
+            className={cn(
+              "inline-flex items-center gap-1.5 py-1 px-2 rounded-lg transition-colors",
+              post.viewerReaction === "CHEER"
+                ? "text-rose-600 bg-rose-50 font-bold"
+                : "hover:text-rose-600 hover:bg-slate-50",
+            )}
+          >
+            <Heart
+              className="h-4 w-4"
+              fill={post.viewerReaction === "CHEER" ? "currentColor" : "none"}
+            />
+            <span>{post.reactionCount}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => void loadComments()}
+            className="inline-flex items-center gap-1.5 py-1 px-2 rounded-lg hover:text-emerald-700 hover:bg-slate-50 transition-colors"
+          >
+            <MessageCircle className="h-4 w-4" />
+            <span>{post.commentCount} bình luận</span>
+          </button>
+        </div>
+
+        {/* Comments section */}
+        {(loadingComments || comments.length > 0) && (
+          <div className="mt-3.5 space-y-2 border-t border-slate-100 pt-3">
+            {loadingComments ? (
+              <div className="flex items-center justify-center py-3 text-slate-400">
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                <span className="text-xs">Đang tải bình luận...</span>
+              </div>
+            ) : (
+              comments.map((comment) => (
+                <div
+                  key={comment.id}
+                  className="rounded-lg bg-slate-50/80 p-3 text-xs border border-slate-100"
+                >
+                  <span className="font-bold text-slate-800">
+                    {comment.author?.fullName ?? "Thành viên"}
+                  </span>
+                  <p className="mt-1 text-slate-700 leading-5">{comment.body}</p>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+
+        {/* Comment input form */}
+        <div className="mt-3.5 flex gap-2">
+          <input
+            value={commentText}
+            onChange={(event) => setCommentText(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") void submitComment();
+            }}
+            placeholder="Viết bình luận..."
+            className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-slate-50/70 px-3.5 py-2 text-xs text-slate-800 placeholder:text-slate-500 outline-none transition focus:border-emerald-500 focus:bg-white"
+          />
+          <button
+            type="button"
+            onClick={() => void submitComment()}
+            disabled={submittingComment}
+            className="rounded-lg bg-emerald-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-emerald-700 disabled:opacity-60"
+          >
+            Gửi
+          </button>
+        </div>
+      </article>
+
+      {/* Lightbox Modal */}
+      <ImageLightboxModal
+        images={post.imageUrls}
+        initialIndex={lightboxIndex ?? 0}
+        isOpen={lightboxIndex !== null}
+        onClose={() => setLightboxIndex(null)}
+      />
+    </>
   );
 }

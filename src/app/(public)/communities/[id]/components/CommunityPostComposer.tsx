@@ -12,6 +12,8 @@ interface CommunityPostComposerProps {
   onSubmit: FormEventHandler<HTMLFormElement>;
   contentRegistration: UseFormRegisterReturn<"content">;
   topicsRegistration: UseFormRegisterReturn<"topics">;
+  topicsValue: string;
+  onTopicsChange: (value: string) => void;
   contentError?: string;
   isSubmitting: boolean;
   composerRef: RefObject<HTMLTextAreaElement | null>;
@@ -32,6 +34,8 @@ export default function CommunityPostComposer({
   onSubmit,
   contentRegistration,
   topicsRegistration,
+  topicsValue,
+  onTopicsChange,
   contentError,
   isSubmitting,
   composerRef,
@@ -140,30 +144,56 @@ export default function CommunityPostComposer({
       {contentError && (
         <p className="mt-1 text-xs text-rose-600">{contentError}</p>
       )}
-      <input
-        {...topicsRegistration}
-        placeholder="#pickleball #giaoluu"
-        className="mt-3 w-full rounded-lg border border-slate-200 bg-slate-50/70 px-3 py-2 text-xs text-slate-800 placeholder:text-slate-500 outline-none transition focus:border-emerald-500 focus:bg-white"
-        disabled={isSubmitting}
-      />
+
+      {/* Gợi ý chủ đề nhanh (Topic Chips) */}
+      <div className="mt-3 flex flex-wrap items-center gap-1.5">
+        <span className="text-[11px] font-semibold text-slate-600 mr-1">Chủ đề:</span>
+        {["GiaoLuu", "TimDoiThu", "GiaiDau", "ChiaSeKyThuat", "ThongBao"].map((chip) => {
+          const isSelected = (topicsValue || "").includes(chip);
+          return (
+            <button
+              key={chip}
+              type="button"
+              onClick={() => {
+                const current = (topicsValue || "")
+                  .split(/[\s,]+/)
+                  .map((t: string) => t.replace(/^#/, "").trim())
+                  .filter(Boolean);
+                const next = current.includes(chip)
+                  ? current.filter((t: string) => t !== chip)
+                  : [...current, chip].slice(0, 4);
+                onTopicsChange(next.map((t: string) => `#${t}`).join(" "));
+              }}
+              className={cn(
+                "rounded-full px-2.5 py-0.5 text-xs font-semibold transition-all select-none",
+                isSelected
+                  ? "bg-emerald-600 text-white shadow-xs"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900 border border-slate-200/60",
+              )}
+            >
+              #{chip}
+            </button>
+          );
+        })}
+      </div>
 
       {previewUrls.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-2">
           {previewUrls.map((url, index) => (
-            <div key={url} className="relative">
+            <div key={url} className="relative group">
               <Image
                 src={url}
                 alt="Ảnh xem trước"
                 width={96}
                 height={72}
                 unoptimized
-                className="h-18 w-24 rounded-md object-cover"
+                className="h-18 w-24 rounded-lg object-cover border border-slate-200"
               />
               <button
                 type="button"
                 onClick={() => onRemoveImage(index)}
                 aria-label={`Xóa ảnh ${index + 1}`}
-                className="absolute right-1 top-1 rounded-full bg-black/60 p-1 text-white"
+                className="absolute -right-1.5 -top-1.5 rounded-full bg-rose-600 p-1 text-white shadow-md hover:bg-rose-700 transition"
               >
                 <X className="h-3 w-3" />
               </button>
@@ -180,19 +210,40 @@ export default function CommunityPostComposer({
         hidden
         onChange={(event) => onFilesSelected(event.target.files)}
       />
-      <div className="mt-3 flex items-center justify-between gap-3">
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          className="flex items-center gap-2 text-xs font-semibold text-slate-600 hover:text-emerald-700"
-        >
-          <ImagePlus className="h-4 w-4 text-slate-500" />
-          Thêm ảnh
-        </button>
+      <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-emerald-700 transition"
+          >
+            <ImagePlus className="h-4 w-4 text-emerald-600" />
+            Đính kèm ảnh
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              if (composerRef.current) {
+                const el = composerRef.current;
+                const pos = el.selectionStart || el.value.length;
+                const nextVal = el.value.slice(0, pos) + "@" + el.value.slice(pos);
+                contentRegistration.onChange({ target: { value: nextVal } });
+                el.focus();
+                setTimeout(() => el.setSelectionRange(pos + 1, pos + 1), 0);
+              }
+            }}
+            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-blue-600 transition"
+          >
+            <span className="font-bold text-blue-600">@</span>
+            Nhắc thành viên
+          </button>
+        </div>
+
         <button
           type="submit"
           disabled={isSubmitting}
-          className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-5 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isSubmitting ? (
             <Loader2 className="h-4 w-4 animate-spin" />

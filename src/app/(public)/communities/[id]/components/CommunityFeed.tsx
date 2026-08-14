@@ -10,6 +10,7 @@ import {
   type CommunityMemberRecord,
 } from "@/features/communities/api";
 import { uploadApi } from "@/features/upload/api";
+import { useAuthStore } from "@/lib/zustand/authStore";
 import type { CommunityPost } from "@/types/community-social";
 import { getErrorMessage } from "@/utils/error";
 import ClubChatLauncher from "./ClubChatLauncher";
@@ -43,6 +44,7 @@ export default function CommunityFeed({
   communityId,
   canManageTags = false,
 }: CommunityFeedProps) {
+  const { user } = useAuthStore();
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
@@ -70,6 +72,7 @@ export default function CommunityFeed({
     defaultValues: { content: "", topics: "" },
   });
   const content = useWatch({ control, name: "content" }) ?? "";
+  const topicsValue = useWatch({ control, name: "topics" }) ?? "";
   const contentRegistration = register("content");
   const topicsRegistration = register("topics");
   const {
@@ -183,9 +186,19 @@ export default function CommunityFeed({
         },
         crypto.randomUUID(),
       );
+      const postWithAuthor = {
+        ...response.data,
+        author: response.data.author?.fullName && response.data.author.fullName !== "Thành viên CLB"
+          ? response.data.author
+          : {
+              id: user?.id || response.data.author.id,
+              fullName: user?.fullName || response.data.author.fullName,
+              avatarUrl: user?.avatarUrl || response.data.author.avatarUrl,
+            },
+      };
       setPosts((current) => [
-        response.data,
-        ...current.filter((post) => post.id !== response.data.id),
+        postWithAuthor,
+        ...current.filter((post) => post.id !== postWithAuthor.id),
       ]);
       reset();
       setSelectedFiles([]);
@@ -229,6 +242,8 @@ export default function CommunityFeed({
           }}
           contentRegistration={contentRegistration}
           topicsRegistration={topicsRegistration}
+          topicsValue={topicsValue}
+          onTopicsChange={(val) => setValue("topics", val, { shouldDirty: true })}
           contentError={errors.content?.message}
           isSubmitting={isSubmitting}
           composerRef={composerRef}

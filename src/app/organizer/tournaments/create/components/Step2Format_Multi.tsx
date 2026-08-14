@@ -30,6 +30,8 @@ export default function Step2FormatMulti() {
   const selectedCategory = categories.find((category) => category.id === formData.categoryId);
   const formatOptions = getAllowedMatchFormatOptions(selectedCategory);
   const selected = selectedFormats.length > 0 ? selectedFormats : [formData.matchFormat];
+  const isFootball = resolvedRules.kind === 'FOOTBALL';
+  const footballGender = formData.footballGenderRestriction ?? null;
 
   useEffect(() => {
     if (validationTarget?.step !== 2) return;
@@ -51,6 +53,7 @@ export default function Step2FormatMulti() {
   }, []);
 
   useEffect(() => {
+    if (isFootball) return;
     if (!selectedCategory) {
       return;
     }
@@ -70,7 +73,7 @@ export default function Step2FormatMulti() {
       matchFormat: normalizedMatchFormat,
       selectedFormats: normalizedSelectedFormats,
     });
-  }, [formData.matchFormat, selected, selectedCategory, selectedFormats, updateFormData]);
+  }, [formData.matchFormat, isFootball, selected, selectedCategory, selectedFormats, updateFormData]);
 
   const toggleFormat = (format: MatchFormat) => {
     setStep2Error(null);
@@ -81,7 +84,6 @@ export default function Step2FormatMulti() {
   };
 
   // Team sport (bóng đá): khi chọn sân → set minTeamSize/maxTeamSize/maxReserve
-  const isFootball = resolvedRules.kind === 'FOOTBALL';
   const [teamSize, setTeamSize] = useState<5 | 7 | 11>(7);
   const [maxReserve, setMaxReserve] = useState(3);
   const [twoLegged, setTwoLegged] = useState(false);
@@ -90,12 +92,15 @@ export default function Step2FormatMulti() {
   const [allowDraw, setAllowDraw] = useState(true);
 
   const handleNext = () => {
-    if (selected.length === 0) {
+    if (!isFootball && selected.length === 0) {
       setStep2Error('Vui lòng chọn ít nhất một hình thức thi đấu.');
       return;
     }
     const next: Record<string, unknown> = { format: bracketType };
     if (isFootball) {
+      next.footballGenderRestriction = footballGender;
+      next.matchFormat = 'MALE_DOUBLES';
+      next.selectedFormats = ['MALE_DOUBLES'];
       next.teamSize = teamSize;
       next.teamSizeOptions = [5, 7, 11];
       next.minTeamSize = teamSize;
@@ -126,7 +131,7 @@ export default function Step2FormatMulti() {
         </p>
       </div>
 
-      <div className={cn('grid grid-cols-1 md:grid-cols-2 gap-3 rounded-lg', step2Error && 'border border-rose-500 p-2')}>
+      {!isFootball && <div className={cn('grid grid-cols-1 md:grid-cols-2 gap-3 rounded-lg', step2Error && 'border border-rose-500 p-2')}>
         {formatOptions.map((opt) => {
           const isSelected = selected.includes(opt.value);
           return (
@@ -153,7 +158,35 @@ export default function Step2FormatMulti() {
             </button>
           );
         })}
-      </div>
+      </div>}
+      {isFootball && (
+        <div className={cn('rounded-lg border border-slate-200 bg-white p-4', step2Error && 'border-rose-500')}>
+          <p className="text-sm font-semibold text-slate-800">Đối tượng giới tính của đội</p>
+          <p className="mt-1 text-xs text-slate-500">Chọn Nam, Nữ hoặc không ràng buộc giới tính.</p>
+          <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-3">
+            {([
+              { value: 'MALE' as const, label: 'Nam', description: 'Đội nam' },
+              { value: 'FEMALE' as const, label: 'Nữ', description: 'Đội nữ' },
+              { value: null, label: 'Không ràng buộc', description: 'Mở rộng cho mọi giới tính' },
+            ]).map((option) => (
+              <button
+                key={option.value ?? 'OPEN'}
+                type="button"
+                onClick={() => { setStep2Error(null); updateFormData({ footballGenderRestriction: option.value }); }}
+                className={cn(
+                  'rounded-lg border-2 p-3 text-left transition-all',
+                  footballGender === option.value
+                    ? 'border-emerald-500 bg-emerald-50 ring-2 ring-emerald-200'
+                    : 'border-slate-200 bg-white hover:border-slate-300',
+                )}
+              >
+                <span className="block font-semibold text-slate-900">{option.label}</span>
+                <span className="mt-1 block text-xs text-slate-500">{option.description}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
       {step2Error && <p className="text-sm font-semibold text-rose-500">{step2Error}</p>}
 
       <div className="bg-slate-50 border border-slate-200 rounded-lg p-5 space-y-3">

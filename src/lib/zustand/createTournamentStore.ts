@@ -70,6 +70,8 @@ interface TournamentFormData {
   awayGoalsRule?: boolean;
   penaltyShootout?: boolean;
   allowDraw?: boolean;
+  // Football team eligibility: null/open means no gender restriction.
+  footballGenderRestriction?: 'MALE' | 'FEMALE' | null;
 }
 
 interface CreateTournamentState {
@@ -82,7 +84,7 @@ interface CreateTournamentState {
   nextStep: () => void;
   prevStep: () => void;
   updateFormData: (data: Partial<TournamentFormData>) => void;
-  getDivisionsFromFormats: () => Array<{ matchType: MatchTypeDB; genderRestriction: GenderRestriction; name: string }>;
+  getDivisionsFromFormats: () => Array<{ matchType: MatchTypeDB; genderRestriction: GenderRestriction | null; name: string }>;
   reset: () => void;
 }
 
@@ -111,6 +113,7 @@ const defaultFormData: TournamentFormData = {
   entryFee: 0,
   isRanked: true,
   registrationMode: 'OPEN',
+  footballGenderRestriction: null,
 };
 
 type PersistedCreateTournamentState = Partial<Omit<CreateTournamentState, 'formData'>> & {
@@ -145,6 +148,25 @@ export const useCreateTournamentStore = create<CreateTournamentState>()(
       getDivisionsFromFormats: () => {
         const state = get();
         const formData = normalizeFormData(state.formData);
+        const isFootball = formData.sportRules?.kind === 'FOOTBALL';
+        if (isFootball) {
+          const rawRestriction = formData.footballGenderRestriction;
+          const genderRestriction: GenderRestriction | null = rawRestriction === 'MALE'
+            ? GenderRestriction.MALE
+            : rawRestriction === 'FEMALE'
+              ? GenderRestriction.FEMALE
+              : null;
+          const name = genderRestriction === GenderRestriction.MALE
+            ? 'Bóng đá Nam'
+            : genderRestriction === GenderRestriction.FEMALE
+              ? 'Bóng đá Nữ'
+              : 'Bóng đá Mở rộng';
+          return [{
+            matchType: MatchTypeDB.DOUBLES,
+            genderRestriction,
+            name,
+          }];
+        }
         const formats = formData.selectedFormats.length > 0
           ? formData.selectedFormats
           : [formData.matchFormat];

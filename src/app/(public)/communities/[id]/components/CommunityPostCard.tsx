@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Flag, Heart, Loader2, MessageCircle, Maximize2, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { Flag, Heart, Loader2, MessageCircle, Maximize2, Trash2, Trophy, Calendar, ArrowUpRight } from "lucide-react";
 import toast from "react-hot-toast";
 import { communitiesApi } from "@/features/communities/api";
 import type {
@@ -362,6 +363,49 @@ export default function CommunityPostCard({
           </div>
         )}
 
+
+        {/* Tournament Preview Card */}
+        {post.tournamentId && (
+          <div className="mt-3.5 overflow-hidden rounded-xl border border-blue-100 bg-gradient-to-br from-blue-50/70 via-indigo-50/40 to-white p-4 shadow-sm transition-all hover:border-blue-300 hover:shadow-md">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-start gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md shadow-blue-500/20">
+                  <Trophy className="h-6 w-6" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="rounded-md bg-blue-100/80 px-2 py-0.5 text-[10px] font-bold text-blue-700">
+                      GIẢI ĐẤU CLB
+                    </span>
+                    {post.tournament?.categoryName && (
+                      <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
+                        {post.tournament.categoryName}
+                      </span>
+                    )}
+                  </div>
+                  <h4 className="mt-1 text-sm font-bold text-slate-900 line-clamp-1">
+                    {post.tournament?.name || "Giải đấu Câu lạc bộ"}
+                  </h4>
+                  {post.tournament?.startDate && (
+                    <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-500 font-medium">
+                      <Calendar className="h-3.5 w-3.5 text-slate-400" />
+                      <span>
+                        Bắt đầu: {new Date(post.tournament.startDate).toLocaleDateString("vi-VN")}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <Link
+                href={`/tournaments/${post.tournamentId}`}
+                className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-sm shadow-blue-500/20 transition-all hover:bg-blue-700 active:scale-95 shrink-0"
+              >
+                <span>Xem chi tiết giải</span>
+                <ArrowUpRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+          </div>
+        )}
 
         {/* Images Grid with Click to Open Lightbox */}
         {post.imageUrls.length > 0 && (

@@ -20,6 +20,9 @@ interface BackendPost {
   id: string;
   communityId: string;
   authorId: string;
+  tournamentId?: string | null;
+  type?: string;
+  tournament?: CommunityPost['tournament'];
   body: string | null;
   mediaUrls: string[];
   status: CommunityPost['status'];
@@ -38,6 +41,9 @@ function mapPost(post: BackendPost): CommunityPost {
     id: post.id,
     communityId: post.communityId,
     author: post.author ?? { id: post.authorId, fullName: 'Thành viên CLB', avatarUrl: null },
+    tournamentId: post.tournamentId ?? null,
+    type: post.type ?? 'NORMAL',
+    tournament: post.tournament ?? null,
     content: post.body ?? '',
     imageUrls: post.mediaUrls ?? [],
     status: post.status,

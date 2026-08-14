@@ -64,10 +64,26 @@ export interface CommunityPostAuthor {
   avatarUrl: string | null;
 }
 
+export interface CommunityPostTournament {
+  id: string;
+  name: string;
+  sport?: string | null;
+  categoryName?: string | null;
+  matchType?: string | null;
+  startDate?: string | null;
+  endDate?: string | null;
+  status?: string | null;
+  bannerUrl?: string | null;
+  maxParticipants?: number | null;
+}
+
 export interface CommunityPost {
   id: string;
   communityId: string;
   author: CommunityPostAuthor;
+  tournamentId?: string | null;
+  type?: 'NORMAL' | 'TOURNAMENT_ANNOUNCEMENT' | string;
+  tournament?: CommunityPostTournament | null;
   content: string;
   imageUrls: string[];
   status: CommunityPostStatus;

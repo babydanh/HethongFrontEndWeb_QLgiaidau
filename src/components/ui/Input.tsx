@@ -52,10 +52,12 @@ export interface DateTimePickerProps {
   error?: string;
   className?: string;
   disabled?: boolean;
+  min?: string;
+  max?: string;
 }
 
 export const DateTimePicker = React.forwardRef<HTMLInputElement, DateTimePickerProps>(
-  ({ name, label, value, onChange, error, className, disabled }, ref) => {
+  ({ name, label, value, onChange, error, className, disabled, min, max }, ref) => {
     const defaultRef = React.useRef<HTMLInputElement>(null);
     const activeRef = (ref as React.RefObject<HTMLInputElement>) || defaultRef;
     const [draft, setDraft] = React.useState('');
@@ -158,6 +160,8 @@ export const DateTimePicker = React.forwardRef<HTMLInputElement, DateTimePickerP
             name={name}
             ref={activeRef}
             value={value}
+            min={min}
+            max={max}
             disabled={disabled}
             onChange={(e) => onChange(e.target.value)}
             className="absolute inset-0 opacity-0 pointer-events-none w-full h-full"
@@ -214,19 +218,23 @@ const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
             {label}
           </label>
         )}
-        <div 
-          onClick={handleWrapperClick}
+        <div
           className={cn(
-            "relative w-full cursor-pointer flex h-11 items-center justify-between rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus-within:ring-2 focus-within:ring-blue-600 focus-within:border-blue-600 transition-colors duration-200 select-none",
+            "relative w-full flex h-11 items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus-within:ring-2 focus-within:ring-blue-600 focus-within:border-blue-600 transition-colors duration-200",
             disabled && "cursor-not-allowed opacity-50 bg-slate-50",
             error && "border-rose-500 focus-within:ring-red-500 focus-within:border-rose-500",
             className
           )}
         >
-          <span className={value ? "text-slate-800 font-medium" : "text-slate-400 font-normal"}>
-            {value ? formatDate(value) : "dd/mm/yyyy"}
-          </span>
-          <svg
+          <input
+            value={formatDate(value)}
+            disabled={disabled}
+            readOnly
+            placeholder="dd/mm/yyyy"
+            className="min-w-0 flex-1 bg-transparent font-medium outline-none placeholder:font-normal placeholder:text-slate-400 disabled:cursor-not-allowed"
+          />
+          <button type="button" aria-label="Mở lịch chọn ngày" disabled={disabled} onClick={handleWrapperClick} className="shrink-0 text-slate-400 hover:text-blue-600 disabled:cursor-not-allowed">
+            <svg
             xmlns="http://www.w3.org/2000/svg"
             width="16"
             height="16"
@@ -243,16 +251,16 @@ const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
             <line x1="8" x2="8" y1="2" y2="6"/>
             <line x1="3" x2="21" y1="10" y2="10"/>
           </svg>
-          
           <input
             type="date"
-            name={`${name ?? ''}-picker`}
+            name={name}
             ref={activeRef}
             value={value}
             disabled={disabled}
             onChange={(e) => onChange(e.target.value)}
-            className="pointer-events-none absolute h-0 w-0 opacity-0"
+            className="absolute inset-0 opacity-0 pointer-events-none w-full h-full"
           />
+          </button>
           {error && (
             <p className="absolute -bottom-5 text-xs font-medium text-rose-500 left-1">{error}</p>
           )}
@@ -264,4 +272,3 @@ const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
 DatePicker.displayName = "DatePicker";
 
 export { Input, DatePicker }
-

@@ -45,6 +45,9 @@ export const NOTIFICATION_TYPE_LABELS: Record<string, string> = {
   STAFF_ADDED: 'Thêm vào ban tổ chức',
   PAYOUT_APPROVED: 'Rút tiền được duyệt',
   PAYOUT_REJECTED: 'Rút tiền bị từ chối',
+  COMMUNITY_POST_MENTIONED: 'Được nhắc tên',
+  COMMUNITY_POST_COMMENTED: 'Bình luận mới',
+  COMMUNITY_POST_APPROVED: 'Bài viết được duyệt',
 };
 
 export interface NotificationTypeMeta {
@@ -300,6 +303,24 @@ export const NOTIFICATION_TYPE_META: Record<string, NotificationTypeMeta> = {
     cardClassName: 'hover:border-blue-200 hover:bg-blue-50/50',
     unreadCardClassName: 'border-blue-200 bg-blue-50/70 shadow-sm',
     dotClassName: 'bg-blue-500',
+  },
+  COMMUNITY_POST_MENTIONED: {
+    badgeClassName: 'bg-indigo-100 text-indigo-800 font-semibold',
+    cardClassName: 'hover:border-indigo-200 hover:bg-indigo-50/50',
+    unreadCardClassName: 'border-indigo-200 bg-indigo-50/70 shadow-sm',
+    dotClassName: 'bg-indigo-600',
+  },
+  COMMUNITY_POST_COMMENTED: {
+    badgeClassName: 'bg-sky-100 text-sky-800 font-semibold',
+    cardClassName: 'hover:border-sky-200 hover:bg-sky-50/50',
+    unreadCardClassName: 'border-sky-200 bg-sky-50/70 shadow-sm',
+    dotClassName: 'bg-sky-600',
+  },
+  COMMUNITY_POST_APPROVED: {
+    badgeClassName: 'bg-emerald-100 text-emerald-800 font-semibold',
+    cardClassName: 'hover:border-emerald-200 hover:bg-emerald-50/50',
+    unreadCardClassName: 'border-emerald-200 bg-emerald-50/70 shadow-sm',
+    dotClassName: 'bg-emerald-500',
   },
 };
 

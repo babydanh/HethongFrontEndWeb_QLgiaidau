@@ -23,6 +23,8 @@ interface CommunityPostListProps {
     count: number,
   ) => void;
   onCommentAdded: (postId: string) => void;
+  onDeletePost?: (postId: string) => void;
+  canManage?: boolean;
 }
 
 export default function CommunityPostList({
@@ -33,6 +35,8 @@ export default function CommunityPostList({
   onLoadMore,
   onReactionUpdated,
   onCommentAdded,
+  onDeletePost,
+  canManage = false,
 }: CommunityPostListProps) {
   return (
     <>
@@ -40,6 +44,8 @@ export default function CommunityPostList({
         <CommunityPostCard
           key={post.id}
           post={post}
+          canManage={canManage}
+          onDelete={onDeletePost}
           onReact={(type) => {
             void communitiesApi
               .reactToPost(communityId, post.id, type)

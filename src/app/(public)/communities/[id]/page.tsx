@@ -448,11 +448,7 @@ export default function CommunityDetailPage() {
             <Button 
               onClick={handleJoinAction}
               disabled={isJoinLoading || membership?.status === 'PENDING'}
-              className={`flex-1 md:flex-none px-6 font-semibold text-xs shadow-sm transition-all h-10 rounded-lg ${
-                isOwner ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200' :
-                membership?.status === 'JOINED' ? 'bg-blue-50 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 text-blue-700 border border-blue-200' :
-                'bg-blue-600 hover:bg-blue-700 text-white border-none'
-              }`}
+              className={`flex-1 md:flex-none px-6 font-semibold text-xs shadow-sm transition-all h-10 rounded-lg ${getJoinButtonStyles()}`}
             >
               {isJoinLoading && <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />}
               {getJoinButtonLabel()}

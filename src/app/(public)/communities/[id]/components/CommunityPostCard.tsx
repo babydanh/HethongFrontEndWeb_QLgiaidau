@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Flag, Heart, Loader2, MessageCircle, Maximize2 } from "lucide-react";
+import { Flag, Heart, Loader2, MessageCircle, Maximize2, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { communitiesApi } from "@/features/communities/api";
 import type {
@@ -16,12 +16,15 @@ import ImageLightboxModal from "@/components/common/ImageLightboxModal";
 import UserProfilePopover, {
   type PopoverUserProfile,
 } from "@/components/common/UserProfilePopover";
+import { useAuthStore } from "@/lib/zustand/authStore";
 
 interface CommunityPostCardProps {
   post: CommunityPost;
   onReact: (type: CommunityReactionType) => void;
   onReport: () => void;
   onComment: () => void;
+  onDelete?: (postId: string) => void;
+  canManage?: boolean;
 }
 
 export default function CommunityPostCard({
@@ -29,12 +32,21 @@ export default function CommunityPostCard({
   onReact,
   onReport,
   onComment,
+  onDelete,
+  canManage = false,
 }: CommunityPostCardProps) {
+  const { user: currentUser } = useAuthStore();
   const [comments, setComments] = useState<CommunityComment[]>([]);
   const [commentText, setCommentText] = useState("");
   const [loadingComments, setLoadingComments] = useState(false);
   const [submittingComment, setSubmittingComment] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [likedComments, setLikedComments] = useState<Record<string, boolean>>({});
+  const commentInputRef = useRef<HTMLInputElement>(null);
+
+  const isAuthor = Boolean(currentUser?.id && post.author?.id && currentUser.id === post.author.id);
+  const canDelete = isAuthor || canManage;
 
   // Popover Profile State
   const [popoverUser, setPopoverUser] = useState<PopoverUserProfile | null>(null);
@@ -174,13 +186,21 @@ export default function CommunityPostCard({
     });
   };
 
-  const loadComments = async () => {
+  const [showComments, setShowComments] = useState(false);
+
+  const loadComments = async (forceShow = true) => {
+    if (showComments && !forceShow) {
+      setShowComments(false);
+      return;
+    }
+    setShowComments(true);
+    if (comments.length > 0 && !forceShow) return;
     setLoadingComments(true);
     try {
       const response = await communitiesApi.getComments(
         post.communityId,
         post.id,
-        { limit: 3 },
+        { limit: 20 },
       );
       setComments(response.data ?? []);
     } catch (error: unknown) {
@@ -210,10 +230,38 @@ export default function CommunityPostCard({
     }
   };
 
+  const handleDeleteComment = async (commentId: string) => {
+    if (!window.confirm("Bạn có chắc muốn xóa bình luận này không?")) return;
+    try {
+      await communitiesApi.deleteComment(post.communityId, commentId);
+      setComments((current) => current.filter((c) => c.id !== commentId));
+      toast.success("Đã xóa bình luận.");
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, "Không thể xóa bình luận lúc này."));
+    }
+  };
+
+  const handleDeletePost = async () => {
+    if (!window.confirm("Bạn có chắc chắn muốn xóa bài viết này không?")) return;
+    setIsDeleting(true);
+    try {
+      await communitiesApi.deletePost(post.communityId, post.id);
+      toast.success("Đã xóa bài viết.");
+      onDelete?.(post.id);
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, "Không thể xóa bài viết lúc này."));
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <>
-      <article className="rounded-xl border border-slate-200/90 bg-white p-5 shadow-sm transition hover:shadow-md">
-        {/* Header: Author info & Report */}
+      <article
+        id={`post-${post.id}`}
+        className="rounded-xl border border-slate-200/90 bg-white p-5 shadow-sm transition-all duration-500 hover:shadow-md target:ring-2 target:ring-blue-500 target:border-blue-500 target:bg-blue-50/20 scroll-mt-24"
+      >
+        {/* Header: Author info, Delete & Report */}
         <div className="flex items-center gap-3">
           <div
             onClick={handleOpenAuthorProfile}
@@ -243,15 +291,33 @@ export default function CommunityPostCard({
               {post.status === "PENDING" ? " · Đang chờ duyệt" : ""}
             </p>
           </div>
-          <button
-            type="button"
-            onClick={onReport}
-            aria-label="Báo cáo bài viết"
-            className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition"
-            title="Báo cáo bài viết"
-          >
-            <Flag className="h-4 w-4" />
-          </button>
+          <div className="flex items-center gap-1">
+            {canDelete && (
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={handleDeletePost}
+                aria-label="Xóa bài viết"
+                className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition disabled:opacity-50 cursor-pointer"
+                title={isAuthor ? "Xóa bài viết của bạn" : "Xóa bài viết (Quyền quản trị)"}
+              >
+                {isDeleting ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-rose-500" />
+                ) : (
+                  <Trash2 className="h-4 w-4" />
+                )}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={onReport}
+              aria-label="Báo cáo bài viết"
+              className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition"
+              title="Báo cáo bài viết"
+            >
+              <Flag className="h-4 w-4" />
+            </button>
+          </div>
         </div>
 
         {/* Pending status banner */}
@@ -323,8 +389,11 @@ export default function CommunityPostCard({
           </button>
           <button
             type="button"
-            onClick={() => void loadComments()}
-            className="inline-flex items-center gap-1.5 py-1 px-2 rounded-lg hover:text-blue-600 hover:bg-slate-50 transition-colors"
+            onClick={() => void loadComments(false)}
+            className={cn(
+              "inline-flex items-center gap-1.5 py-1 px-2 rounded-lg transition-colors cursor-pointer",
+              showComments ? "text-blue-600 bg-blue-50 font-bold" : "hover:text-blue-600 hover:bg-slate-50",
+            )}
           >
             <MessageCircle className="h-4 w-4" />
             <span>{post.commentCount} bình luận</span>
@@ -332,8 +401,8 @@ export default function CommunityPostCard({
         </div>
 
         {/* Comments section */}
-        {(loadingComments || comments.length > 0) && (
-          <div className="mt-3.5 space-y-2 border-t border-slate-100 pt-3">
+        {(showComments || comments.length > 0) && (
+          <div className="mt-3.5 space-y-3.5 border-t border-slate-100 pt-3">
             {loadingComments ? (
               <div className="flex items-center justify-center py-3 text-slate-400">
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -343,7 +412,7 @@ export default function CommunityPostCard({
               comments.map((comment) => (
                 <div
                   key={comment.id}
-                  className="flex items-start gap-2.5 rounded-xl bg-slate-50/90 p-2.5 text-xs border border-slate-100"
+                  className="flex items-start gap-2.5 text-xs group"
                 >
                   <button
                     type="button"
@@ -357,32 +426,83 @@ export default function CommunityPostCard({
                       });
                       setPopoverAnchorRect(rect);
                     }}
-                    className="shrink-0 transition-transform hover:scale-105"
+                    className="shrink-0 transition-transform hover:scale-105 cursor-pointer pt-0.5"
                   >
                     <CommunityAvatar
                       src={comment.author?.avatarUrl}
                       name={comment.author?.fullName || "Thành viên"}
-                      size={28}
+                      size={32}
                     />
                   </button>
                   <div className="min-w-0 flex-1">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const rect = e.currentTarget.getBoundingClientRect();
-                        setPopoverUser({
-                          id: comment.author?.id || "",
-                          fullName: comment.author?.fullName || "Thành viên",
-                          avatarUrl: comment.author?.avatarUrl,
-                        });
-                        setPopoverAnchorRect(rect);
-                      }}
-                      className="font-bold text-slate-900 hover:text-blue-600 transition-colors"
-                    >
-                      {comment.author?.fullName ?? "Thành viên"}
-                    </button>
-                    <p className="mt-0.5 text-slate-700 leading-5">{comment.body}</p>
+                    {/* Bubble content */}
+                    <div className="inline-block rounded-2xl bg-slate-100/90 px-3.5 py-2 text-xs border border-slate-200/60 max-w-full">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          setPopoverUser({
+                            id: comment.author?.id || "",
+                            fullName: comment.author?.fullName || "Thành viên",
+                            avatarUrl: comment.author?.avatarUrl,
+                          });
+                          setPopoverAnchorRect(rect);
+                        }}
+                        className="font-bold text-slate-900 hover:text-blue-600 transition-colors cursor-pointer block text-left"
+                      >
+                        {comment.author?.fullName ?? "Thành viên"}
+                      </button>
+                      <p className="mt-0.5 text-slate-800 leading-relaxed break-words">{comment.body}</p>
+                    </div>
+
+                    {/* Actions under comment: Thích, Trả lời, Thời gian */}
+                    <div className="mt-1 flex items-center gap-3 pl-2 text-[11px] font-semibold text-slate-500">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setLikedComments((prev) => ({
+                            ...prev,
+                            [comment.id]: !prev[comment.id],
+                          }));
+                        }}
+                        className={cn(
+                          "hover:underline cursor-pointer transition-colors",
+                          likedComments[comment.id] ? "text-rose-600 font-bold" : "hover:text-rose-600",
+                        )}
+                      >
+                        {likedComments[comment.id] ? "Đã thích" : "Thích"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const authorMention = `@${comment.author?.fullName ?? "Thành viên"} `;
+                          setCommentText((prev) => (prev ? `${prev} ${authorMention}` : authorMention));
+                          commentInputRef.current?.focus();
+                        }}
+                        className="hover:underline hover:text-blue-600 cursor-pointer"
+                      >
+                        Trả lời
+                      </button>
+                      {comment.createdAt && (
+                        <span className="text-slate-400 font-normal">
+                          {new Date(comment.createdAt).toLocaleDateString("vi-VN", {
+                            day: "2-digit",
+                            month: "2-digit",
+                          })}
+                        </span>
+                      )}
+                      {(currentUser?.id === comment.author?.id || canManage) && (
+                        <button
+                          type="button"
+                          onClick={() => void handleDeleteComment(comment.id)}
+                          className="text-slate-400 hover:text-rose-600 transition-colors cursor-pointer opacity-0 group-hover:opacity-100"
+                          title="Xóa bình luận"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))
@@ -390,25 +510,57 @@ export default function CommunityPostCard({
           </div>
         )}
 
-        {/* Comment input form */}
-        <div className="mt-3.5 flex gap-2">
-          <input
-            value={commentText}
-            onChange={(event) => setCommentText(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") void submitComment();
+        {/* Comment input form with current user avatar */}
+        <div className="mt-3.5 flex items-center gap-2.5">
+          <div
+            onClick={(e) => {
+              if (currentUser?.id) {
+                e.stopPropagation();
+                const rect = e.currentTarget.getBoundingClientRect();
+                setPopoverUser({
+                  id: currentUser.id,
+                  fullName: currentUser.fullName || "Bạn",
+                  avatarUrl: currentUser.avatarUrl,
+                });
+                setPopoverAnchorRect(rect);
+              }
             }}
-            placeholder="Viết bình luận..."
-            className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-slate-50/70 px-3.5 py-2 text-xs text-slate-800 placeholder:text-slate-500 outline-none transition focus:border-blue-500 focus:bg-white"
-          />
-          <button
-            type="button"
-            onClick={() => void submitComment()}
-            disabled={submittingComment}
-            className="rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-blue-700 disabled:opacity-60"
+            className="shrink-0 cursor-pointer transition-transform hover:scale-105"
+            title="Hồ sơ của bạn"
           >
-            Gửi
-          </button>
+            <CommunityAvatar
+              src={currentUser?.avatarUrl}
+              name={currentUser?.fullName || "Tôi"}
+              size={32}
+            />
+          </div>
+          <div className="flex-1 relative flex items-center">
+            <input
+              ref={commentInputRef}
+              value={commentText}
+              onChange={(event) => setCommentText(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && !event.shiftKey) {
+                  event.preventDefault();
+                  void submitComment();
+                }
+              }}
+              placeholder="Viết bình luận..."
+              className="w-full rounded-full border border-slate-200 bg-slate-100/80 px-4 py-2 text-xs text-slate-800 placeholder:text-slate-500 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100 pr-14"
+            />
+            <button
+              type="button"
+              onClick={() => void submitComment()}
+              disabled={submittingComment || !commentText.trim()}
+              className="absolute right-1.5 rounded-full bg-blue-600 px-3 py-1 text-xs font-bold text-white transition hover:bg-blue-700 disabled:opacity-40 cursor-pointer"
+            >
+              {submittingComment ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                "Gửi"
+              )}
+            </button>
+          </div>
         </div>
       </article>
 

@@ -29,6 +29,20 @@ export function extractMatchScores(scoreDetails?: Record<string, unknown> | null
     return [];
   }
 
+  const football = scoreDetails.football;
+  if (football && typeof football === 'object' && !Array.isArray(football)) {
+    const value = football as Record<string, unknown>;
+    const team1Score = Number(value.team1Goals);
+    const team2Score = Number(value.team2Goals);
+    if (Number.isFinite(team1Score) && Number.isFinite(team2Score)) {
+      return [{
+        team1Score,
+        team2Score,
+        isFinished: ['FULL_TIME', 'PENALTY_SHOOTOUT', 'COMPLETED'].includes(String(value.phase)),
+      }];
+    }
+  }
+
   const setsValue = scoreDetails.sets;
   if (Array.isArray(setsValue)) {
     return setsValue.flatMap((setValue) => {
@@ -122,6 +136,20 @@ export function getMatchScorePresentation(kind: SportRuleKind) {
     };
   }
 
+  if (kind === 'FOOTBALL') {
+    return {
+      sportLabel: sportPresentation.sportLabel || 'Bóng đá',
+      scoreUnit: 'bàn',
+      scoreUnitPlural: 'bàn',
+      currentScoreLabel: 'Tỉ số hiện tại',
+      sequenceLabel: 'hiệp',
+      sequenceLabelPlural: 'hiệp',
+      summaryLabel: 'Tỉ số trận',
+      completeActionLabel: 'Chốt trận đấu',
+      wonSummaryLabel: 'Tỉ số',
+    };
+  }
+
   return {
     sportLabel: sportPresentation.sportLabel || 'Cầu lông/Khác',
     scoreUnit: 'điểm',
@@ -141,6 +169,18 @@ export function buildMatchScoreSummary(
 ): string {
   const resolved = resolveMatchSportRules(match, fallbackKind);
   const presentation = getMatchScorePresentation(resolved.kind);
+  if (resolved.kind === 'FOOTBALL') {
+    const football = match.scoreDetails?.football;
+    if (football && typeof football === 'object' && !Array.isArray(football)) {
+      const value = football as Record<string, unknown>;
+      const team1Goals = Number(value.team1Goals);
+      const team2Goals = Number(value.team2Goals);
+      if (Number.isFinite(team1Goals) && Number.isFinite(team2Goals)) {
+        const phase = typeof value.phase === 'string' ? value.phase : null;
+        return `${team1Goals}-${team2Goals}${phase ? ` · ${phaseLabel(phase)}` : ''}`;
+      }
+    }
+  }
   const sets = extractMatchScores(match.scoreDetails);
 
   if (sets.length > 0) {
@@ -148,6 +188,16 @@ export function buildMatchScoreSummary(
   }
 
   return `${presentation.wonSummaryLabel}: ${match.p1SetsWon} - ${match.p2SetsWon}`;
+}
+
+function phaseLabel(phase: string): string {
+  const labels: Record<string, string> = {
+    FIRST_HALF: 'Hiệp 1', HALFTIME: 'Giải lao', SECOND_HALF: 'Hiệp 2',
+    STOPPAGE_TIME: 'Bù giờ', FULL_TIME: 'Hết giờ', EXTRA_TIME_FIRST_HALF: 'Hiệp phụ 1',
+    EXTRA_TIME_BREAK: 'Nghỉ hiệp phụ', EXTRA_TIME_SECOND_HALF: 'Hiệp phụ 2',
+    PENALTY_SHOOTOUT: 'Luân lưu', COMPLETED: 'Hoàn thành',
+  };
+  return labels[phase] ?? phase;
 }
 
 export function buildAutoWinnerScore(

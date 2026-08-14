@@ -664,6 +664,36 @@ export default function LiveMatchPage({ params }: Props) {
     }, 140);
   };
 
+  useEffect(() => {
+    const socket = socketClient.getMatchSocket();
+    const join = () => socket.emit('joinMatch', matchId);
+    const handleScoreUpdate = (raw: string | Match) => {
+      let payload: Match;
+      try {
+        payload = typeof raw === 'string' ? JSON.parse(raw) as Match : raw;
+      } catch {
+        return;
+      }
+      if (!payload || payload.id !== matchId) return;
+      const currentRevision = match.revision ?? 0;
+      if ((payload.revision ?? 0) < currentRevision) return;
+      applyServerSnapshot(payload);
+      if (resolvedRules.kind === 'FOOTBALL') {
+        setFootballScore(readFootballScore(payload.scoreDetails));
+      }
+    };
+    socket.on('connect', join);
+    socket.on('score:update', handleScoreUpdate);
+    socket.on('match:status', handleScoreUpdate);
+    if (socket.connected) join(); else socket.connect();
+    return () => {
+      socket.emit('leaveMatch', matchId);
+      socket.off('connect', join);
+      socket.off('score:update', handleScoreUpdate);
+      socket.off('match:status', handleScoreUpdate);
+    };
+  }, [matchId, resolvedRules.kind]);
+
   const syncFootballScore = (nextScore: FootballScoreState) => {
     setFootballScore(nextScore);
     const nextScores: MatchScore[] = [{

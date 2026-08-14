@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { X, MessageCircle, User, CheckCircle2 } from "lucide-react";
 import { usersApi } from "@/features/users/api";
-import { communitiesApi, MemberStreak } from "@/features/communities/api";
+import { communitiesApi, MemberStreak, CommunityMemberRecord } from "@/features/communities/api";
 import { useRouter } from "next/navigation";
 import CommunityAvatar from "@/app/(public)/communities/[id]/components/CommunityAvatar";
 import { EloTierBadge } from "@/components/ui/EloTierBadge";
@@ -98,18 +98,19 @@ export default function UserProfilePopover({
         .getMembers(communityId, { limit: 100 })
         .then((res) => {
           if (!isMounted) return;
-          const members = (Array.isArray(res.data) ? res.data : (res.data as any)?.data) ?? [];
+          const members = (Array.isArray(res.data) ? res.data : (res.data as { data?: CommunityMemberRecord[] })?.data) ?? [];
           const found = Array.isArray(members)
-            ? members.find((m: any) => m.user?.id === user.id || m.userId === user.id)
+            ? members.find((m) => m.user?.id === user.id || (m as { userId?: string }).userId === user.id)
             : null;
           if (found) {
+            const rawFound = found as Partial<CommunityMemberRecord> & { role?: string; tags?: string[]; joinedAt?: string };
             setFetchedDetails((prev) => ({
               ...(prev?.id === user.id ? prev : {}),
               id: user.id,
-              role: found.member?.role || found.role || prev?.role,
-              tags: found.member?.tags || found.tags || prev?.tags,
+              role: found.member?.role || rawFound.role || prev?.role,
+              tags: found.member?.tags || rawFound.tags || prev?.tags,
               streak: found.streak || prev?.streak,
-              joinedAt: found.member?.joinedAt || found.joinedAt || prev?.joinedAt,
+              joinedAt: found.member?.joinedAt || rawFound.joinedAt || prev?.joinedAt,
             }));
           }
         })

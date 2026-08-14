@@ -130,6 +130,20 @@ export default function CommunityFeed({
     return () => window.clearTimeout(timer);
   }, [loadPosts]);
 
+  // Auto scroll to target post if hash matches #post-[id] or query ?postId=[id]
+  useEffect(() => {
+    if (isLoading || posts.length === 0) return;
+    const hash = typeof window !== 'undefined' ? window.location.hash : '';
+    const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+    const targetPostId = params?.get('postId') || (hash.startsWith('#post-') ? hash.replace('#post-', '') : null);
+    if (targetPostId) {
+      const el = document.getElementById(`post-${targetPostId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+  }, [isLoading, posts]);
+
   useEffect(() => {
     previewUrlsRef.current = previewUrls;
   }, [previewUrls]);
@@ -285,6 +299,12 @@ export default function CommunityFeed({
                     ? { ...post, commentCount: post.commentCount + 1 }
                     : post,
                 ),
+              )
+            }
+            canManage={canManageTags}
+            onDeletePost={(deletedPostId) =>
+              setPosts((current) =>
+                current.filter((post) => post.id !== deletedPostId),
               )
             }
           />

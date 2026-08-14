@@ -33,6 +33,12 @@ export default function RankingsTab({ communityId, categories, onGoToTournaments
 
   const userId = user?.id;
 
+  useEffect(() => {
+    if (!selectedCategoryId && categories.length > 0) {
+      setSelectedCategoryId(categories[0].id);
+    }
+  }, [categories, selectedCategoryId]);
+
   const fetchRankings = useCallback(async () => {
     if (!selectedCategoryId) return;
     try {

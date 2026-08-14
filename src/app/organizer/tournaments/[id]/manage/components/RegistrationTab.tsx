@@ -417,6 +417,11 @@ export function RegistrationTab({
                   <DateTimePicker
                     label="Thời gian mở đăng ký"
                     value={registrationStartDate}
+                    min={(() => {
+                      const now = new Date();
+                      const pad = (v: number) => String(v).padStart(2, '0');
+                      return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+                    })()}
                     onChange={setRegistrationStartDate}
                   />
                   {registrationStartDate && (
@@ -435,6 +440,11 @@ export function RegistrationTab({
                   <DateTimePicker
                     label="Thời gian đóng đăng ký"
                     value={registrationEndDate}
+                    min={registrationStartDate || (() => {
+                      const now = new Date();
+                      const pad = (v: number) => String(v).padStart(2, '0');
+                      return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+                    })()}
                     onChange={setRegistrationEndDate}
                   />
                   {registrationEndDate && (

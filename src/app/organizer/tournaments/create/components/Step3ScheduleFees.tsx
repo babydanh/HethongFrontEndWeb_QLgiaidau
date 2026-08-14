@@ -10,6 +10,12 @@ import { useCreateTournamentStore } from '@/lib/zustand/createTournamentStore';
 import { ChevronRight, ChevronLeft, Calendar, DollarSign } from 'lucide-react';
 import { tournamentsApi } from '@/features/tournaments/api';
 
+const getCurrentIsoMinute = () => {
+  const now = new Date();
+  const pad = (value: number) => String(value).padStart(2, '0');
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+};
+
 const step3Schema = z.object({
   startDate: z.string().min(1, 'Vui lòng chọn ngày bắt đầu thi đấu'),
   endDate: z.string().min(1, 'Vui lòng chọn ngày kết thúc thi đấu'),
@@ -20,6 +26,20 @@ const step3Schema = z.object({
     return !isNaN(num) && num >= 0;
   }, 'Lệ phí phải là số không âm'),
 }).superRefine((data, ctx) => {
+  const currentNow = new Date();
+  currentNow.setMinutes(currentNow.getMinutes() - 2); // 2-minute buffer
+
+  if (data.registrationStartDate) {
+    const regStart = new Date(data.registrationStartDate);
+    if (regStart < currentNow) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Thời gian mở đăng ký không được trước thời điểm hiện tại',
+        path: ['registrationStartDate'],
+      });
+    }
+  }
+
   if (data.registrationStartDate && data.registrationEndDate) {
     const regStart = new Date(data.registrationStartDate);
     const regEnd = new Date(data.registrationEndDate);
@@ -63,11 +83,7 @@ export default function Step3ScheduleFees() {
   const { formData, updateFormData, nextStep, prevStep, validationTarget, clearValidationTarget } = useCreateTournamentStore();
   const isClubTournament = formData.tournamentType === 'CLUB' || Boolean(formData.communityId);
   const [allowEntryFees, setAllowEntryFees] = useState(true);
-  const defaultRegistrationStart = formData.registrationStartDate || (() => {
-    const now = new Date();
-    const pad = (value: number) => String(value).padStart(2, '0');
-    return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
-  })();
+  const defaultRegistrationStart = formData.registrationStartDate || getCurrentIsoMinute();
 
   const { register, handleSubmit, control, setValue, setError, setFocus, formState: { errors } } = useForm<Step3Values>({
     resolver: zodResolver(step3Schema),
@@ -140,6 +156,7 @@ export default function Step3ScheduleFees() {
                   label="Ngày bắt đầu đăng ký"
                   name={field.name}
                   value={field.value || ''}
+                  min={getCurrentIsoMinute()}
                   onChange={field.onChange}
                   error={errors.registrationStartDate?.message}
                 />
@@ -153,6 +170,7 @@ export default function Step3ScheduleFees() {
                   label="Ngày kết thúc đăng ký"
                   name={field.name}
                   value={field.value || ''}
+                  min={getCurrentIsoMinute()}
                   onChange={field.onChange}
                   error={errors.registrationEndDate?.message}
                 />
@@ -176,6 +194,7 @@ export default function Step3ScheduleFees() {
                   label="Ngày bắt đầu thi đấu"
                   name={field.name}
                   value={field.value || ''}
+                  min={getCurrentIsoMinute()}
                   onChange={field.onChange}
                   error={errors.startDate?.message}
                 />
@@ -189,6 +208,7 @@ export default function Step3ScheduleFees() {
                   label="Ngày kết thúc thi đấu"
                   name={field.name}
                   value={field.value || ''}
+                  min={getCurrentIsoMinute()}
                   onChange={field.onChange}
                   error={errors.endDate?.message}
                 />
@@ -244,4 +264,3 @@ export default function Step3ScheduleFees() {
     </div>
   );
 }
-

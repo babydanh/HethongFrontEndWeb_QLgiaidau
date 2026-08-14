@@ -37,6 +37,7 @@ export default function CommunityPostCard({
 }: CommunityPostCardProps) {
   const { user: currentUser } = useAuthStore();
   const [comments, setComments] = useState<CommunityComment[]>([]);
+  const [localCommentCount, setLocalCommentCount] = useState(post.commentCount ?? 0);
   const [commentText, setCommentText] = useState("");
   const [loadingComments, setLoadingComments] = useState(false);
   const [submittingComment, setSubmittingComment] = useState(false);
@@ -44,6 +45,11 @@ export default function CommunityPostCard({
   const [isDeleting, setIsDeleting] = useState(false);
   const [likedComments, setLikedComments] = useState<Record<string, boolean>>({});
   const commentInputRef = useRef<HTMLInputElement>(null);
+
+  // Sync with post prop updates
+  useEffect(() => {
+    setLocalCommentCount(post.commentCount ?? 0);
+  }, [post.commentCount]);
 
   const isAuthor = Boolean(currentUser?.id && post.author?.id && currentUser.id === post.author.id);
   const canDelete = isAuthor || canManage;
@@ -203,7 +209,9 @@ export default function CommunityPostCard({
         post.id,
         { limit: 50 },
       );
-      setComments(response.data ?? []);
+      const fetched = response.data ?? [];
+      setComments(fetched);
+      setLocalCommentCount(fetched.length);
     } catch (error: unknown) {
       toast.error(getErrorMessage(error, "Không thể tải bình luận."));
     } finally {
@@ -221,7 +229,16 @@ export default function CommunityPostCard({
         post.id,
         { body, parentId: replyingTo?.id },
       );
-      setComments((current) => [...current, response.data]);
+      const newComment: CommunityComment = {
+        ...response.data,
+        author: response.data?.author?.fullName ? response.data.author : {
+          id: currentUser?.id || "",
+          fullName: currentUser?.fullName || "Bạn",
+          avatarUrl: currentUser?.avatarUrl || null,
+        },
+      };
+      setComments((current) => [...current, newComment]);
+      setLocalCommentCount((c) => c + 1);
       onComment();
       setCommentText("");
       setReplyingTo(null);
@@ -237,7 +254,15 @@ export default function CommunityPostCard({
     try {
       await communitiesApi.deleteComment(post.communityId, commentId);
       // Remove deleted comment and any direct replies to it
-      setComments((current) => current.filter((c) => c.id !== commentId && c.parentId !== commentId));
+      setComments((current) => {
+        const deletedIds = new Set([commentId]);
+        current.forEach((c) => {
+          if (c.parentId === commentId) deletedIds.add(c.id);
+        });
+        const remaining = current.filter((c) => !deletedIds.has(c.id));
+        setLocalCommentCount(remaining.length);
+        return remaining;
+      });
       toast.success("Đã xóa bình luận.");
     } catch (error: unknown) {
       toast.error(getErrorMessage(error, "Không thể xóa bình luận lúc này."));
@@ -399,7 +424,7 @@ export default function CommunityPostCard({
             )}
           >
             <MessageCircle className="h-4 w-4" />
-            <span>{post.commentCount} bình luận</span>
+            <span>{localCommentCount} bình luận</span>
           </button>
         </div>
 

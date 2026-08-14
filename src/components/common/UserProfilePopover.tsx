@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { X, MessageCircle, User, ShieldCheck, Crown, Shield, Tag, Sparkles, CheckCircle2 } from "lucide-react";
+import { X, MessageCircle, User, CheckCircle2 } from "lucide-react";
 import { usersApi } from "@/features/users/api";
-import { communitiesApi } from "@/features/communities/api";
+import { communitiesApi, MemberStreak } from "@/features/communities/api";
 import { useRouter } from "next/navigation";
 import CommunityAvatar from "@/app/(public)/communities/[id]/components/CommunityAvatar";
 import { EloTierBadge } from "@/components/ui/EloTierBadge";
@@ -17,6 +17,7 @@ export interface PopoverUserProfile {
   systemRole?: string;
   roles?: string[];
   tags?: string[];
+  streak?: MemberStreak | null;
   bio?: string | null;
   joinedAt?: string | null;
   isVerified?: boolean;
@@ -45,6 +46,7 @@ export default function UserProfilePopover({
   const router = useRouter();
   const popoverRef = useRef<HTMLDivElement>(null);
   const [fetchedDetails, setFetchedDetails] = useState<Partial<PopoverUserProfile> | null>(null);
+  const [tagPresets, setTagPresets] = useState<Array<{ id: string; name: string; color: string }>>([]);
 
   // Derive profileData by merging initial user prop with any fetched details
   const profileData = user
@@ -81,8 +83,17 @@ export default function UserProfilePopover({
       })
       .catch(() => {});
 
-    // 2. Fetch community member role if inside a community
+    // 2. Fetch community member role, streak, and tags if inside a community
     if (communityId) {
+      communitiesApi
+        .getTagPresets(communityId)
+        .then((res) => {
+          if (!isMounted) return;
+          const presets = res.data ?? [];
+          setTagPresets(Array.isArray(presets) ? presets : []);
+        })
+        .catch(() => {});
+
       communitiesApi
         .getMembers(communityId, { limit: 100 })
         .then((res) => {
@@ -97,6 +108,7 @@ export default function UserProfilePopover({
               id: user.id,
               role: found.member?.role || found.role || prev?.role,
               tags: found.member?.tags || found.tags || prev?.tags,
+              streak: found.streak || prev?.streak,
               joinedAt: found.member?.joinedAt || found.joinedAt || prev?.joinedAt,
             }));
           }
@@ -159,19 +171,12 @@ export default function UserProfilePopover({
   // Community Role
   const communityRoleLabel =
     profileData.role === "OWNER"
-      ? "Chủ nhiệm CLB"
+      ? "Chủ CLB"
       : profileData.role === "MODERATOR"
         ? "Quản trị viên"
         : profileData.role === "MEMBER"
-          ? "Thành viên CLB"
+          ? "Thành viên"
           : null;
-
-  const CommunityRoleIcon =
-    profileData.role === "OWNER"
-      ? Crown
-      : profileData.role === "MODERATOR"
-        ? ShieldCheck
-        : Shield;
 
   // System Role helper
   const getSystemRoleBadge = (role?: string) => {
@@ -202,8 +207,8 @@ export default function UserProfilePopover({
       className="z-[99999] w-[330px] animate-in fade-in zoom-in-95 duration-150 rounded-2xl border border-slate-200/90 bg-white shadow-2xl overflow-hidden text-slate-800"
       onClick={(e) => e.stopPropagation()}
     >
-      {/* Cover Header */}
-      <div className="relative h-20 bg-gradient-to-r from-blue-600 via-indigo-600 to-emerald-600 overflow-hidden">
+      {/* Cover Header (Solid Surface - No Gradient) */}
+      <div className="relative h-20 bg-slate-900 overflow-hidden">
         {profileData.coverUrl && (
           <img
             src={profileData.coverUrl}
@@ -235,10 +240,10 @@ export default function UserProfilePopover({
           </div>
 
           <div className="flex flex-wrap items-center gap-1.5 justify-end">
-            {/* Community Role Badge */}
+            {/* Community Role Badge (Plain & Clean - No Crown Icon) */}
             {communityRoleLabel && (
               <span
-                className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold shadow-xs border ${
+                className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold shadow-xs border ${
                   profileData.role === "OWNER"
                     ? "bg-amber-50 text-amber-800 border-amber-200"
                     : profileData.role === "MODERATOR"
@@ -246,15 +251,6 @@ export default function UserProfilePopover({
                       : "bg-slate-100 text-slate-700 border-slate-200"
                 }`}
               >
-                <CommunityRoleIcon
-                  className={`h-3 w-3 ${
-                    profileData.role === "OWNER"
-                      ? "text-amber-600"
-                      : profileData.role === "MODERATOR"
-                        ? "text-blue-600"
-                        : "text-slate-500"
-                  }`}
-                />
                 {communityRoleLabel}
               </span>
             )}
@@ -262,9 +258,8 @@ export default function UserProfilePopover({
             {/* System Role Badge */}
             {sysRoleBadge && !communityRoleLabel && (
               <span
-                className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold shadow-xs border ${sysRoleBadge.color}`}
+                className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold shadow-xs border ${sysRoleBadge.color}`}
               >
-                <Shield className="h-3 w-3 opacity-70" />
                 {sysRoleBadge.label}
               </span>
             )}
@@ -284,7 +279,7 @@ export default function UserProfilePopover({
             )}
           </div>
 
-          <div className="flex items-center gap-2 mt-0.5">
+          <div className="flex items-center flex-wrap gap-2 mt-0.5">
             <p className="text-xs text-slate-500">
               {profileData.joinedAt
                 ? `Tham gia từ ${new Date(profileData.joinedAt).toLocaleDateString("vi-VN")}`
@@ -299,6 +294,24 @@ export default function UserProfilePopover({
                 size="sm"
               />
             )}
+
+            {/* Streak Badge if available (Win/Loss/ELO Up) */}
+            {profileData.streak?.type && profileData.streak.count > 0 && (
+              <span
+                className={`inline-flex items-center px-2 py-0.5 rounded-lg border text-[10px] font-semibold ${
+                  profileData.streak.type === "WIN"
+                    ? "bg-blue-50 text-blue-700 border-blue-200"
+                    : profileData.streak.type === "LOSS"
+                      ? "bg-rose-50 text-rose-700 border-rose-200"
+                      : "bg-amber-50 text-amber-700 border-amber-200"
+                }`}
+              >
+                {profileData.streak.label ||
+                  (profileData.streak.type === "ELO_UP"
+                    ? `+${profileData.streak.count} ELO`
+                    : `${profileData.streak.type === "WIN" ? "Thắng" : "Thua"} x${profileData.streak.count}`)}
+              </span>
+            )}
           </div>
         </div>
 
@@ -309,18 +322,35 @@ export default function UserProfilePopover({
           </p>
         )}
 
-        {/* Tags if any */}
+        {/* Fun / Club Member Tags (Gán tag vui vẻ) */}
         {(profileData.tags ?? []).length > 0 && (
-          <div className="mt-2 flex flex-wrap gap-1">
-            {profileData.tags?.map((tag) => (
-              <span
-                key={tag}
-                className="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700 border border-blue-100"
-              >
-                <Tag className="h-2.5 w-2.5" />
-                {tag}
-              </span>
-            ))}
+          <div className="mt-2.5 flex flex-wrap gap-1">
+            {profileData.tags?.map((tag) => {
+              const preset = tagPresets.find(
+                (p) => p.name.toLowerCase() === tag.toLowerCase()
+              );
+              return (
+                <span
+                  key={tag}
+                  className="inline-flex items-center px-2 py-0.5 rounded-lg border text-[10px] font-semibold"
+                  style={
+                    preset
+                      ? {
+                          backgroundColor: `${preset.color}26`,
+                          borderColor: `${preset.color}66`,
+                          color: preset.color,
+                        }
+                      : {
+                          backgroundColor: "#EFF6FF",
+                          borderColor: "#BFDBFE",
+                          color: "#1D4ED8",
+                        }
+                  }
+                >
+                  {tag}
+                </span>
+              );
+            })}
           </div>
         )}
 
@@ -334,7 +364,7 @@ export default function UserProfilePopover({
                 router.push(`/communities/${communityId}?tab=overview`);
               }
             }}
-            className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2 text-xs font-bold text-white shadow-xs transition hover:bg-blue-700 active:scale-98"
+            className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-blue-700 active:scale-98"
           >
             <MessageCircle className="h-3.5 w-3.5" />
             Nhắn tin
@@ -348,7 +378,7 @@ export default function UserProfilePopover({
                 router.push(`/users/${profileData.id}`);
               }
             }}
-            className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-slate-100 px-3.5 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-200 active:scale-98 border border-slate-200/80"
+            className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-slate-100 px-3.5 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-200 active:scale-98 border border-slate-200/80"
           >
             <User className="h-3.5 w-3.5" />
             Trang cá nhân

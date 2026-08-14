@@ -209,8 +209,6 @@ export default function CommunityPostCard({
       );
       const fetched = response.data ?? [];
       setComments(fetched);
-      setOverrideCommentCount(fetched.length);
-      onCommentUpdated?.(post.id, fetched.length);
     } catch (error: unknown) {
       toast.error(getErrorMessage(error, "Không thể tải bình luận."));
     } finally {
@@ -236,11 +234,12 @@ export default function CommunityPostCard({
           avatarUrl: currentUser?.avatarUrl || null,
         },
       };
-      const updatedComments = [...comments, newComment];
-      setComments(updatedComments);
-      const newCount = updatedComments.length;
-      setOverrideCommentCount(newCount);
-      onCommentUpdated?.(post.id, newCount);
+      setComments((current) => [...current, newComment]);
+      setOverrideCommentCount((c) => {
+        const next = (c ?? (post.commentCount ?? 0)) + 1;
+        onCommentUpdated?.(post.id, next);
+        return next;
+      });
       setCommentText("");
       setReplyingTo(null);
     } catch (error: unknown) {
@@ -261,9 +260,11 @@ export default function CommunityPostCard({
       });
       const remaining = comments.filter((c) => !deletedIds.has(c.id));
       setComments(remaining);
-      const newCount = remaining.length;
-      setOverrideCommentCount(newCount);
-      onCommentUpdated?.(post.id, newCount);
+      setOverrideCommentCount((c) => {
+        const next = Math.max(0, (c ?? (post.commentCount ?? 0)) - 1);
+        onCommentUpdated?.(post.id, next);
+        return next;
+      });
       toast.success("Đã xóa bình luận.");
     } catch (error: unknown) {
       toast.error(getErrorMessage(error, "Không thể xóa bình luận lúc này."));

@@ -30,7 +30,7 @@ import {
   normalizeMatchFormatForCategory,
   type MatchFormatOptionValue,
 } from '@/features/tournaments/match-format-options';
-import { getTournamentStatusLabel } from '@/utils/tournament-status';
+import { getTournamentStatusLabel, isTournamentRegistrationClosed } from '@/utils/tournament-status';
 import type { StageRoundRuleConfig } from '@/types/tournament';
 
 type RoundConfigRecord = Record<string, unknown>;
@@ -83,6 +83,7 @@ export function useManageState(id: string) {
   }, [id]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'basic'|'schedule'|'registration'|'bracket'|'livestream'|'finance'|'permissions'>('basic');
+  const [validationField, setValidationField] = useState<string | null>(null);
   const [basicSubTab, setBasicSubTab] = useState<'general'|'branding'|'prizes'|'contact'>('general');
   const [referees, setReferees] = useState<TournamentReferee[]>([]);
   const [refereeEmail, setRefereeEmail] = useState('');
@@ -746,6 +747,10 @@ export function useManageState(id: string) {
         matchType: mapped.mt,
         genderRestriction: mapped.gr,
         bracketType: newDivisionBracketType as Division['bracketType'],
+        // A new division follows the tournament-wide schedule by default.
+        // Per-division overrides remain available through the division schedule API.
+        startDate: tournament.startDate ?? null,
+        endDate: tournament.endDate ?? null,
         isConfigOverride: true,
         roundConfig: buildStageRoundConfigPayload({
           kind: normalizedKind,
@@ -805,6 +810,23 @@ export function useManageState(id: string) {
   };
 
   const handlePublish = async () => {
+    const hasDescription = Boolean(tournament?.description?.trim());
+    const hasDivisions = Boolean(tournament?.divisions?.length || divisions.length);
+    const hasVenue = Boolean(tournament?.venueId || tournament?.locationAddress?.trim());
+    const hasDates = Boolean(tournament?.registrationStartDate && tournament?.registrationEndDate && tournament?.startDate && tournament?.endDate);
+    const hasValidDates = hasDates && new Date(tournament!.registrationStartDate!) < new Date(tournament!.registrationEndDate!) && new Date(tournament!.registrationEndDate!) <= new Date(tournament!.startDate!);
+    const hasContact = Boolean(tournament?.contactInfo && ((tournament.contactInfo as Record<string, string>).email || (tournament.contactInfo as Record<string, string>).phone));
+    const invalid = (tab: typeof activeTab, field: string, message: string) => {
+      setActiveTab(tab);
+      setValidationField(field);
+      toast.error(message);
+    };
+    if (!hasDescription) return invalid('basic', 'description', 'Hãy bổ sung mô tả giải đấu trước khi công bố.');
+    if (!hasDivisions) return invalid('basic', 'divisions', 'Hãy tạo ít nhất một bảng thi đấu trước khi công bố.');
+    if (!hasVenue) return invalid('schedule', 'venue', 'Hãy nhập tên sân và địa chỉ thi đấu trước khi công bố.');
+    if (!hasValidDates) return invalid('schedule', 'dates', 'Hãy kiểm tra đầy đủ ngày giờ đăng ký và thi đấu.');
+    if (!hasContact) return invalid('basic', 'contactInfo', 'Hãy bổ sung email hoặc số điện thoại liên hệ BTC.');
+    setValidationField(null);
     try {
       setIsLoading(true);
       await tournamentsApi.publishTournament(id);
@@ -885,6 +907,14 @@ export function useManageState(id: string) {
   };
 
   const handleConfirmOpen = async () => {
+    const phase2RegLocked = tournament?.isRegistrationLocked === true || isTournamentRegistrationClosed(tournament?.status);
+    const phase2PaidCheck = !entryFee || Number(entryFee) <= 0 || participants.every((p) => p.teamStatus === 'COMPLETE' ? p.isPaid !== false : true);
+    const phase2BracketCheck = divisions.some((d) => d.roundConfig && typeof d.roundConfig === 'object' && Object.keys(d.roundConfig as object).length > 0);
+    const phase2HasMinTeams = participants.length >= 2;
+    if (!phase2RegLocked) { setActiveTab('registration'); setValidationField('lock'); toast.error('Hãy chốt danh sách đăng ký trước khi khai mạc.'); return; }
+    if (!phase2PaidCheck) { setActiveTab('registration'); setValidationField('payment'); toast.error('Vẫn còn đội chưa hoàn tất phí tham gia.'); return; }
+    if (!phase2BracketCheck) { setActiveTab('bracket'); setValidationField('bracket'); toast.error('Hãy khởi tạo sơ đồ thi đấu trước khi khai mạc.'); return; }
+    if (!phase2HasMinTeams) { setActiveTab('registration'); setValidationField('participants'); toast.error('Cần ít nhất 2 đội tham gia trước khi khai mạc.'); return; }
     setIsOpening(true);
     try { await tournamentsApi.updateTournament(id, { status: 'IN_PROGRESS' }); toast.success('Giải đấu đã khai mạc!'); await fetchTournamentData(); }
     catch (err) { toast.error(getErrorMessage(err)); }
@@ -1375,7 +1405,7 @@ export function useManageState(id: string) {
   return {
     tournament, setTournament, participants, setParticipants, matches, setMatches, bracket, setBracket,
     venues, setVenues, categories, setCategories, feesConfig, setFeesConfig, courts, setCourts,
-    isLoading, setIsLoading, activeTab, setActiveTab, basicSubTab, setBasicSubTab,
+    isLoading, setIsLoading, activeTab, setActiveTab, validationField, setValidationField, basicSubTab, setBasicSubTab,
     referees, setReferees, refereeEmail, setRefereeEmail, isAddingReferee, setIsAddingReferee,
     divisions, setDivisions, selectedDivisionId, setSelectedDivisionId,
     isCreateDivisionModalOpen, setIsCreateDivisionModalOpen,

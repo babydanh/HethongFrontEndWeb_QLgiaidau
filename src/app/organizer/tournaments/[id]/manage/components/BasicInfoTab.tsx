@@ -14,6 +14,7 @@ import { getErrorMessage } from '@/utils/error';
 import { isTournamentDraft } from '@/utils/tournament-status';
 
 interface BasicInfoTabProps {
+  validationField?: string | null;
   id: string;
   tournament: Tournament;
   categories: Category[];

@@ -10,6 +10,8 @@ import CommunityMatchPosts from "./CommunityMatchPosts";
 
 interface OverviewTabProps {
   communityId: string;
+  description?: string;
+  rules?: string;
   canManageTags?: boolean;
   onGoToTournaments?: () => void;
   onGoToRankings?: () => void;
@@ -27,6 +29,8 @@ function DashboardSkeleton() {
 
 export default function OverviewTab({
   communityId,
+  description,
+  rules,
   canManageTags = false,
   onGoToGallery,
 }: OverviewTabProps) {
@@ -54,7 +58,7 @@ export default function OverviewTab({
 
   return (
     <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)]">
-      <CommunityInfoSidebar communityId={communityId} onGoToGallery={onGoToGallery} />
+      <CommunityInfoSidebar communityId={communityId} description={description} rules={rules} onGoToGallery={onGoToGallery} />
       <main className="min-w-0">
         {dashboard && <CommunityMatchPosts dashboard={dashboard} />}
         <CommunityFeed communityId={communityId} canManageTags={canManageTags} />

@@ -61,6 +61,10 @@ export interface LiveMatchControlPanelProps {
   onSetServingTeam: (team: 1 | 2) => void;
   onSideOut: () => void;
   onAddPenalty: (team: 1 | 2 | null, kind: string, label: string, note?: string) => void;
+  // Bóng đá: luân lưu phân định khi hòa knockout
+  isFootball?: boolean;
+  shootoutGoals?: { p1Goals: number; p2Goals: number };
+  onShootoutGoalsChange?: (goals: { p1Goals: number; p2Goals: number }) => void;
 }
 
 export function LiveMatchControlPanel({
@@ -93,6 +97,9 @@ export function LiveMatchControlPanel({
   onSetServingTeam,
   onSideOut,
   onAddPenalty,
+  isFootball = false,
+  shootoutGoals = { p1Goals: 0, p2Goals: 0 },
+  onShootoutGoalsChange,
 }: LiveMatchControlPanelProps) {
   const [confirmWinner, setConfirmWinner] = useState<1 | 2 | null>(null);
   const [activeTab, setActiveTab] = useState<'score' | 'penalty'>('score');
@@ -378,14 +385,14 @@ export function LiveMatchControlPanel({
                 <div className="flex flex-wrap justify-end gap-2">
                 <button
                   onClick={() => handleCompleteMatch(1)}
-                  disabled={isSubmitting || !match.participant1Id || !match.participant2Id || (!isLiteMatch && (!overrideEnabled || !overrideReason.trim()))}
+                  disabled={isSubmitting || !match.participant1Id || !match.participant2Id || (!isLiteMatch && !isFootball && (!overrideEnabled || !overrideReason.trim()))}
                   className={cn('inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-[11px] font-bold text-white shadow-sm transition-colors disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none', isLiteMatch ? 'bg-blue-600 hover:bg-blue-700' : 'bg-amber-600 hover:bg-amber-700')}
                 >
                   <Trophy className="h-3.5 w-3.5" /> {isLiteMatch ? 'Đội 1 thắng' : 'Đội 1 thắng ngoại lệ'}
                 </button>
                 <button
                   onClick={() => handleCompleteMatch(2)}
-                  disabled={isSubmitting || !match.participant1Id || !match.participant2Id || (!isLiteMatch && (!overrideEnabled || !overrideReason.trim()))}
+                  disabled={isSubmitting || !match.participant1Id || !match.participant2Id || (!isLiteMatch && !isFootball && (!overrideEnabled || !overrideReason.trim()))}
                   className={cn('inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-[11px] font-bold text-white shadow-sm transition-colors disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none', isLiteMatch ? 'bg-blue-600 hover:bg-blue-700' : 'bg-amber-600 hover:bg-amber-700')}
                 >
                   <Trophy className="h-3.5 w-3.5" /> {isLiteMatch ? 'Đội 2 thắng' : 'Đội 2 thắng ngoại lệ'}
@@ -431,12 +438,46 @@ export function LiveMatchControlPanel({
               <span className="mt-1.5 block text-base font-bold text-slate-900 underline decoration-blue-500 decoration-2 underline-offset-4">
                 {confirmWinner === 1 ? team1Name : team2Name}
               </span>
-              Hành động này sẽ kết thúc trận đấu và khóa bảng điểm. Lý do ngoại lệ:
-              <span className="mt-2 block rounded-lg bg-slate-50 px-3 py-2 text-xs font-bold text-slate-800">
-                {overrideReason.trim()}
-              </span>
+              {isFootball ? (
+                <span className="mt-2 block rounded-lg bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-800">
+                  ⚽ Trận hòa ở vòng loại trực tiếp — nhập kết quả LUÂN LƯU để phân định.
+                </span>
+              ) : (
+                <>
+                  Hành động này sẽ kết thúc trận đấu và khóa bảng điểm. Lý do ngoại lệ:
+                  <span className="mt-2 block rounded-lg bg-slate-50 px-3 py-2 text-xs font-bold text-slate-800">
+                    {overrideReason.trim()}
+                  </span>
+                </>
+              )}
             </ModalDescription>
           </ModalHeader>
+
+          {isFootball && (
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-emerald-800">{team1Name} (luân lưu)</label>
+                <input
+                  type="number"
+                  min={0}
+                  value={shootoutGoals.p1Goals}
+                  onChange={(e) => onShootoutGoalsChange?.({ ...shootoutGoals, p1Goals: Number(e.target.value) })}
+                  className="h-10 w-full rounded-lg border border-emerald-300 bg-white px-3 text-sm"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-emerald-800">{team2Name} (luân lưu)</label>
+                <input
+                  type="number"
+                  min={0}
+                  value={shootoutGoals.p2Goals}
+                  onChange={(e) => onShootoutGoalsChange?.({ ...shootoutGoals, p2Goals: Number(e.target.value) })}
+                  className="h-10 w-full rounded-lg border border-emerald-300 bg-white px-3 text-sm"
+                />
+              </div>
+            </div>
+          )}
+
           <ModalFooter className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-end">
             <Button
               variant="outline"
@@ -446,7 +487,7 @@ export function LiveMatchControlPanel({
               Hủy thao tác
             </Button>
             <Button
-              disabled={!overrideEnabled || !overrideReason.trim()}
+              disabled={!isFootball && (!overrideEnabled || !overrideReason.trim())}
               variant="warning"
               className="w-full font-bold disabled:bg-slate-200 disabled:text-slate-400 sm:w-auto"
               onClick={() => {
@@ -456,7 +497,7 @@ export function LiveMatchControlPanel({
                 setConfirmWinner(null);
               }}
             >
-              Chốt thắng ngoại lệ
+              {isFootball ? 'Chốt thắng (luân lưu)' : 'Chốt thắng ngoại lệ'}
             </Button>
           </ModalFooter>
         </ModalContent>

@@ -58,6 +58,7 @@ export const DateTimePicker = React.forwardRef<HTMLInputElement, DateTimePickerP
   ({ name, label, value, onChange, error, className, disabled }, ref) => {
     const defaultRef = React.useRef<HTMLInputElement>(null);
     const activeRef = (ref as React.RefObject<HTMLInputElement>) || defaultRef;
+    const [draft, setDraft] = React.useState('');
 
     const handleWrapperClick = () => {
       if (disabled) return;
@@ -91,6 +92,19 @@ export const DateTimePicker = React.forwardRef<HTMLInputElement, DateTimePickerP
       return `${day}/${month}/${year} ${hours}:${minutes}`;
     };
 
+    React.useEffect(() => {
+      setDraft(value ? formatDateTime(value) : '');
+    }, [value]);
+
+    const parseManualValue = (input: string) => {
+      const match = input.trim().match(/^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})$/);
+      if (!match) return null;
+      const [, day, month, year, hour, minute] = match;
+      const date = new Date(Number(year), Number(month) - 1, Number(day), Number(hour), Number(minute));
+      if (date.getFullYear() !== Number(year) || date.getMonth() !== Number(month) - 1 || date.getDate() !== Number(day) || date.getHours() !== Number(hour) || date.getMinutes() !== Number(minute)) return null;
+      return `${year}-${month}-${day}T${hour}:${minute}`;
+    };
+
     return (
       <div className="w-full relative flex flex-col gap-1.5">
         {label && (
@@ -98,19 +112,30 @@ export const DateTimePicker = React.forwardRef<HTMLInputElement, DateTimePickerP
             {label}
           </label>
         )}
-        <div 
-          onClick={handleWrapperClick}
+        <div
           className={cn(
-            "relative w-full cursor-pointer flex h-11 items-center justify-between rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus-within:ring-2 focus-within:ring-blue-600 focus-within:border-blue-600 transition-colors duration-200 select-none",
+            "relative w-full flex h-11 items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus-within:ring-2 focus-within:ring-blue-600 focus-within:border-blue-600 transition-colors duration-200",
             disabled && "cursor-not-allowed opacity-50 bg-slate-50",
             error && "border-rose-500 focus-within:ring-red-500 focus-within:border-rose-500",
             className
           )}
         >
-          <span className={value ? "text-slate-800 font-medium" : "text-slate-400 font-normal"}>
-            {value ? formatDateTime(value) : "dd/mm/yyyy --:--"}
-          </span>
-          <svg
+          <input
+            value={draft}
+            disabled={disabled}
+            placeholder="dd/mm/yyyy HH:mm"
+            onChange={(event) => {
+              setDraft(event.target.value);
+              const parsed = parseManualValue(event.target.value);
+              onChange(parsed ?? '');
+            }}
+            onBlur={() => {
+              if (draft && !parseManualValue(draft)) setDraft(value ? formatDateTime(value) : draft);
+            }}
+            className="min-w-0 flex-1 bg-transparent font-medium outline-none placeholder:font-normal placeholder:text-slate-400 disabled:cursor-not-allowed"
+          />
+          <button type="button" aria-label="Mở lịch chọn ngày giờ" disabled={disabled} onClick={handleWrapperClick} className="shrink-0 text-slate-400 hover:text-blue-600 disabled:cursor-not-allowed">
+            <svg
             xmlns="http://www.w3.org/2000/svg"
             width="16"
             height="16"
@@ -136,7 +161,8 @@ export const DateTimePicker = React.forwardRef<HTMLInputElement, DateTimePickerP
             disabled={disabled}
             onChange={(e) => onChange(e.target.value)}
             className="absolute inset-0 opacity-0 pointer-events-none w-full h-full"
-          />
+            />
+          </button>
           {error && (
             <p className="absolute -bottom-5 text-xs font-medium text-rose-500 left-1">{error}</p>
           )}
@@ -220,12 +246,12 @@ const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
           
           <input
             type="date"
-            name={name}
+            name={`${name ?? ''}-picker`}
             ref={activeRef}
             value={value}
             disabled={disabled}
             onChange={(e) => onChange(e.target.value)}
-            className="absolute inset-0 opacity-0 pointer-events-none w-full h-full"
+            className="pointer-events-none absolute h-0 w-0 opacity-0"
           />
           {error && (
             <p className="absolute -bottom-5 text-xs font-medium text-rose-500 left-1">{error}</p>

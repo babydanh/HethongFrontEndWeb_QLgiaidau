@@ -418,12 +418,12 @@ export default function CommunityDetailPage() {
       <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 mt-6">
         <div className="bg-white border border-slate-200/80 rounded-lg p-5 md:p-6 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 w-full md:w-auto">
-            <div className="w-20 h-20 md:w-24 md:h-24 rounded-lg border border-slate-200 overflow-hidden bg-white shadow-md relative shrink-0 p-1.5">
+            <div className="w-20 h-20 md:w-24 md:h-24 rounded-full border border-slate-200 overflow-hidden bg-white shadow-md relative shrink-0 p-1.5">
               <Image 
                 src={community.logoUrl || "/sporto_v1_with_text.svg"}
                 alt={community.name} 
                 fill 
-                className="object-contain rounded-lg p-2"
+                className="object-contain rounded-full p-2"
               />
             </div>
             <div className="space-y-2.5">
@@ -566,6 +566,8 @@ export default function CommunityDetailPage() {
             {activeTab === 'overview' && (
               <OverviewTab
                 communityId={id}
+                description={community.description}
+                rules={community.rules}
                 canManageTags={isOwnerOrMod || Boolean(user?.roles?.includes('ADMIN'))}
                 onGoToTournaments={() => setActiveTab('tournaments')}
                 onGoToRankings={() => setActiveTab('rankings')}

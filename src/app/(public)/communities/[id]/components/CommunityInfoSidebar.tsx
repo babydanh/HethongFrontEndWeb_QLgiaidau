@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { BookOpen, Image as ImageIcon, MessageCircle, ShieldCheck, Users } from "lucide-react";
+import { BookOpen, Image as ImageIcon } from "lucide-react";
 import { communitiesApi } from "@/features/communities/api";
-import type { CommunitySocialSettings } from "@/types/community-social";
 
 interface CommunityInfoSidebarProps {
   communityId: string;
+  description?: string;
+  rules?: string;
   onGoToGallery?: () => void;
 }
 
@@ -15,27 +16,14 @@ interface GalleryPreview {
   imageUrl: string;
 }
 
-function settingLabel(value: string | boolean): string {
-  if (typeof value === "boolean") return value ? "Bật" : "Tắt";
-  if (value === "MEMBERS") return "Thành viên";
-  if (value === "ADMINS") return "Ban quản trị";
-  if (value === "OFF") return "Tắt";
-  return value;
-}
-
-export default function CommunityInfoSidebar({ communityId, onGoToGallery }: CommunityInfoSidebarProps) {
-  const [settings, setSettings] = useState<CommunitySocialSettings | null>(null);
+export default function CommunityInfoSidebar({ communityId, description, rules, onGoToGallery }: CommunityInfoSidebarProps) {
   const [gallery, setGallery] = useState<GalleryPreview[]>([]);
 
   useEffect(() => {
     let mounted = true;
     Promise.resolve().then(async () => {
-      const [settingsResult, galleryResult] = await Promise.allSettled([
-        communitiesApi.getSocialSettings(communityId),
-        communitiesApi.getGallery(communityId),
-      ]);
+      const [galleryResult] = await Promise.allSettled([communitiesApi.getGallery(communityId)]);
       if (!mounted) return;
-      if (settingsResult.status === "fulfilled") setSettings(settingsResult.value.data);
       if (galleryResult.status === "fulfilled") {
         const raw: unknown = galleryResult.value.data;
         const items = Array.isArray(raw)
@@ -49,13 +37,6 @@ export default function CommunityInfoSidebar({ communityId, onGoToGallery }: Com
     return () => { mounted = false; };
   }, [communityId]);
 
-  const rows = settings ? [
-    { icon: Users, label: "Đăng bài", value: settingLabel(settings.postingPolicy) },
-    { icon: ShieldCheck, label: "Duyệt bài", value: settingLabel(settings.postApprovalRequired) },
-    { icon: MessageCircle, label: "Bình luận", value: settingLabel(settings.commentsEnabled) },
-    { icon: MessageCircle, label: "Chat CLB", value: settingLabel(settings.chatEnabled) },
-  ] : [];
-
   return (
     <aside className="space-y-5 lg:sticky lg:top-24">
       <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
@@ -63,15 +44,15 @@ export default function CommunityInfoSidebar({ communityId, onGoToGallery }: Com
           <BookOpen className="h-4 w-4 text-[#3AB5F6]" strokeWidth={1.8} />
           <h3 className="text-sm font-bold uppercase tracking-wide text-slate-600">Thông tin CLB</h3>
         </div>
-        <p className="mb-4 text-xs leading-relaxed text-slate-500">Luật sinh hoạt và quyền tương tác hiện tại của câu lạc bộ.</p>
-        <div className="space-y-3">
-          {rows.map(({ icon: Icon, label, value }) => (
-            <div key={label} className="flex items-center justify-between gap-3 text-xs">
-              <span className="flex items-center gap-2 text-slate-500"><Icon className="h-3.5 w-3.5 text-slate-400" />{label}</span>
-              <span className="font-bold text-slate-800">{value}</span>
-            </div>
-          ))}
-          {!settings && <p className="text-xs text-slate-400">Đang tải thiết lập…</p>}
+        <div className="space-y-4 text-sm leading-6 text-slate-600">
+          <div>
+            <p className="mb-1 text-[11px] font-bold uppercase tracking-wide text-slate-400">Giới thiệu</p>
+            <p className="whitespace-pre-line break-words">{description?.trim() || "Chưa có giới thiệu cho câu lạc bộ."}</p>
+          </div>
+          <div className="border-t border-slate-100 pt-4">
+            <p className="mb-1 text-[11px] font-bold uppercase tracking-wide text-slate-400">Luật lệ & quy tắc</p>
+            <p className="whitespace-pre-line break-words">{rules?.trim() || "Câu lạc bộ chưa cập nhật luật lệ riêng."}</p>
+          </div>
         </div>
       </section>
 

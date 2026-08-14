@@ -75,7 +75,10 @@ interface TournamentFormData {
 interface CreateTournamentState {
   currentStep: number;
   formData: TournamentFormData;
+  validationTarget?: { step: number; field: string; message: string; nonce: number };
   setStep: (step: number) => void;
+  setValidationTarget: (target: { step: number; field: string; message: string }) => void;
+  clearValidationTarget: () => void;
   nextStep: () => void;
   prevStep: () => void;
   updateFormData: (data: Partial<TournamentFormData>) => void;
@@ -129,7 +132,10 @@ export const useCreateTournamentStore = create<CreateTournamentState>()(
     (set, get) => ({
       currentStep: 1,
       formData: defaultFormData,
+      validationTarget: undefined,
       setStep: (step) => set({ currentStep: step }),
+      setValidationTarget: (target) => set({ validationTarget: { ...target, nonce: Date.now() } }),
+      clearValidationTarget: () => set({ validationTarget: undefined }),
       nextStep: () => set((state) => ({ currentStep: Math.min(state.currentStep + 1, 4) })),
       prevStep: () => set((state) => ({ currentStep: Math.max(state.currentStep - 1, 1) })),
       updateFormData: (data) =>
@@ -152,7 +158,7 @@ export const useCreateTournamentStore = create<CreateTournamentState>()(
           };
         });
       },
-      reset: () => set({ currentStep: 1, formData: defaultFormData }),
+      reset: () => set({ currentStep: 1, formData: defaultFormData, validationTarget: undefined }),
     }),
     {
       name: 'create-tournament-storage-v2',
@@ -177,4 +183,3 @@ export const useCreateTournamentStore = create<CreateTournamentState>()(
     }
   )
 );
-

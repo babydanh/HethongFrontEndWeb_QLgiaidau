@@ -128,6 +128,8 @@ export default function LiveMatchPage({ params }: Props) {
   const [isCommentSubmitting, setIsCommentSubmitting] = useState(false);
   const [overrideEnabled, setOverrideEnabled] = useState(false);
   const [overrideReason, setOverrideReason] = useState('');
+  // Bóng đá: kết quả luân lưu khi trận hòa ở knockout
+  const [shootoutGoals, setShootoutGoals] = useState<{ p1Goals: number; p2Goals: number }>({ p1Goals: 0, p2Goals: 0 });
   const [isOfficialScoreModalOpen, setIsOfficialScoreModalOpen] = useState(false);
   const [optimisticTennisPointState, setOptimisticTennisPointState] = useState<TennisLivePointState | null>(null);
   const lastSyncedTennisServerKeyRef = useRef<string>('init');
@@ -526,6 +528,7 @@ export default function LiveMatchPage({ params }: Props) {
     nextSideOutState: PickleballSideOutState = sideOutState,
     nextTennisPointState: TennisLivePointState | null = tennisPointState,
     nextPenalties: MatchPenaltyRecord[] = penalties,
+    nextShootout?: { p1Goals: number; p2Goals: number; winnerId: string | null },
   ) => {
     const basePayload =
       match.scoreDetails && typeof match.scoreDetails === 'object'
@@ -540,6 +543,11 @@ export default function LiveMatchPage({ params }: Props) {
 
     if (isPickleballSideOut) {
       payload.sideOutState = nextSideOutState;
+    }
+
+    // Bóng đá: ghi luân lưu (shootout) khi trận hòa phân định ở knockout.
+    if (nextShootout) {
+      payload.shootout = nextShootout;
     }
 
     const liveState =
@@ -869,12 +877,13 @@ export default function LiveMatchPage({ params }: Props) {
     if (!ensureCanControlLiveMatch()) {
       return;
     }
-    if (!isLiteMatch && !overrideEnabled) {
+    const isFootball = resolvedRules.kind === 'FOOTBALL';
+    if (!isLiteMatch && !isFootball && !overrideEnabled) {
       toast.error('Chốt một đội thắng thẳng là nghiệp vụ ngoại lệ. Hãy bật ngoại lệ và nhập lý do trước.');
       return;
     }
-    const appliedOverrideReason = isLiteMatch ? null : resolveOverrideReason();
-    if (!isLiteMatch && !appliedOverrideReason) {
+    const appliedOverrideReason = isLiteMatch || isFootball ? null : resolveOverrideReason();
+    if (!isLiteMatch && !isFootball && !appliedOverrideReason) {
       return;
     }
     if (isSubmitting) return;
@@ -904,11 +913,36 @@ export default function LiveMatchPage({ params }: Props) {
         setOptimisticTennisPointState(null);
       }
 
+      // Bóng đá knockout hòa → ghi luân lưu (shootout) để phân định winner.
+      const isFootballDraw = resolvedRules.kind === 'FOOTBALL' && winnerId
+        ? nextSetsWon.p1SetsWon === nextSetsWon.p2SetsWon
+        : false;
+      const shootoutPayload = isFootballDraw
+        ? {
+            p1Goals: shootoutGoals.p1Goals,
+            p2Goals: shootoutGoals.p2Goals,
+            winnerId,
+          }
+        : undefined;
+      if (isFootballDraw && (!Number.isInteger(shootoutGoals.p1Goals) || !Number.isInteger(shootoutGoals.p2Goals) || shootoutGoals.p1Goals < 0 || shootoutGoals.p2Goals < 0 || shootoutGoals.p1Goals === shootoutGoals.p2Goals)) {
+        toast.error('Tỷ số luân lưu phải là số không âm và phải có đội thắng.');
+        setIsSubmitting(false);
+        return;
+      }
+      if (isFootballDraw) {
+        const shootoutWinner = shootoutGoals.p1Goals > shootoutGoals.p2Goals ? match.participant1Id : match.participant2Id;
+        if (shootoutWinner !== winnerId) {
+          toast.error('Đội thắng phải có tỷ số luân lưu cao hơn.');
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
       // Update score and winner
       const completedMatch = await updateScoreWithRevision({
         p1SetsWon: nextSetsWon.p1SetsWon,
         p2SetsWon: nextSetsWon.p2SetsWon,
-        scoreDetails: buildScoreDetailsPayload(newScores, sideOutState, null),
+        scoreDetails: buildScoreDetailsPayload(newScores, sideOutState, null, penalties, shootoutPayload),
         winnerId,
         ...(appliedOverrideReason ? { overrideReason: appliedOverrideReason } : {}),
       });
@@ -1730,6 +1764,9 @@ export default function LiveMatchPage({ params }: Props) {
           onSetServingTeam={(team) => void handleSetServingTeam(team)}
           onSideOut={() => void handleSideOut()}
           onAddPenalty={(team, kind, label, note) => void handleAddPenalty(team, kind, label, note)}
+          isFootball={resolvedRules.kind === 'FOOTBALL'}
+          shootoutGoals={shootoutGoals}
+          onShootoutGoalsChange={setShootoutGoals}
         />
 
         <ShareModal

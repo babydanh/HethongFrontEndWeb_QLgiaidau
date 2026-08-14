@@ -86,6 +86,7 @@ export interface Division {
   bracketType?: 'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION' | 'ROUND_ROBIN' | 'GROUP_STAGE_KNOCKOUT' | null;
   roundConfig?: StageRoundConfig | null;
   startDate?: string | null;
+  endDate?: string | null;
   registrationEndDate?: string | null;
   minElo?: number | null;
   maxElo?: number | null;
@@ -108,6 +109,7 @@ export interface CreateDivisionInput {
   bracketType?: Division['bracketType'];
   roundConfig?: Division['roundConfig'];
   startDate?: string | null;
+  endDate?: string | null;
   registrationEndDate?: string | null;
   minElo?: number | null;
   maxElo?: number | null;

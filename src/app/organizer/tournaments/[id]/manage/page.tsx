@@ -179,7 +179,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
               <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Hình thức thi đấu</p>
               <p className="text-xs text-slate-400">Chọn hình thức để xem cấu hình riêng</p>
             </div>
-            <Button size="sm" onClick={() => s.setIsCreateDivisionModalOpen(true)}
+            <Button size="sm" onClick={() => { const current = s.availableMatchFormatOptions.find((option) => option.value === s.matchType); s.setNewDivisionMatchType(s.matchType); s.setNewDivisionName(current?.shortLabel ?? ''); s.setIsCreateDivisionModalOpen(true); }}
               disabled={isTournamentRegistrationOpen(s.tournament.status) || isTournamentRegistrationClosed(s.tournament.status)}
               className="font-bold text-xs flex items-center gap-1.5 h-9 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white whitespace-nowrap">
               <Plus className="w-3.5 h-3.5" /> Thêm hình thức
@@ -242,6 +242,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
 
         {/* Tab content */}
         {s.activeTab === 'basic' && <BasicInfoTab id={id} tournament={s.tournament} categories={s.categories}
+          validationField={s.validationField}
           basicSubTab={s.basicSubTab} setBasicSubTab={s.setBasicSubTab}
           name={s.name} setName={s.setName} categoryId={s.categoryId} setCategoryId={s.setCategoryId}
           description={s.description} setDescription={s.setDescription}
@@ -263,6 +264,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
           winByTwo={s.winByTwo} setWinByTwo={s.setWinByTwo} />}
 
         {s.activeTab === 'schedule' && <ScheduleTab tournament={s.tournament} bracket={s.bracket} venues={s.venues}
+          validationField={s.validationField}
           customVenueName={s.customVenueName} setCustomVenueName={s.setCustomVenueName}
           customVenueAddress={s.customVenueAddress} setCustomVenueAddress={s.setCustomVenueAddress}
           provinceCode={s.provinceCode} setProvinceCode={s.setProvinceCode}
@@ -608,7 +610,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
               <ModalHeader><ModalTitle className="text-lg font-bold">Thêm hình thức thi đấu</ModalTitle></ModalHeader>
               <div className="space-y-4 mt-4">
                 <div><label className="text-xs font-bold text-slate-500">Loại</label>
-                  <select value={s.newDivisionMatchType} onChange={e => s.setNewDivisionMatchType(e.target.value)} className="w-full border rounded-lg p-2 text-sm">
+                  <select value={s.newDivisionMatchType} onChange={e => { const value = e.target.value; const option = s.availableMatchFormatOptions.find((item) => item.value === value); s.setNewDivisionMatchType(value); s.setNewDivisionName(option?.shortLabel ?? ''); }} className="w-full border rounded-lg p-2 text-sm">
                     {s.availableMatchFormatOptions.map((option) => (
                       <option key={option.value} value={option.value}>
                         {option.shortLabel}

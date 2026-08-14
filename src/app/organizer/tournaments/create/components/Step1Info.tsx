@@ -67,11 +67,11 @@ const step1Schema = z.object({
 type Step1Values = z.infer<typeof step1Schema>;
 
 export default function Step1Info() {
-  const { formData, updateFormData, nextStep } = useCreateTournamentStore();
+  const { formData, updateFormData, nextStep, validationTarget, clearValidationTarget } = useCreateTournamentStore();
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const { register, handleSubmit, setValue, control, formState: { errors } } = useForm<Step1Values>({
+  const { register, handleSubmit, setValue, setError, setFocus, control, formState: { errors } } = useForm<Step1Values>({
     resolver: zodResolver(step1Schema),
     defaultValues: {
       name: formData.name,
@@ -88,6 +88,14 @@ export default function Step1Info() {
       maxTeammateGap: formData.maxTeammateGap !== null && formData.maxTeammateGap !== undefined ? String(formData.maxTeammateGap) : '',
     },
   });
+
+  useEffect(() => {
+    if (validationTarget?.step !== 1) return;
+    const field = validationTarget.field as keyof Step1Values;
+    setError(field, { type: 'publish', message: validationTarget.message });
+    setFocus(field);
+    clearValidationTarget();
+  }, [clearValidationTarget, setError, setFocus, validationTarget]);
 
   const watchIsRanked = useWatch({ control, name: 'isRanked' });
   const watchTournamentType = useWatch({ control, name: 'tournamentType' }) || (formData.communityId ? 'CLUB' : 'PUBLIC');
@@ -199,7 +207,9 @@ export default function Step1Info() {
             <label className="text-sm font-semibold text-slate-700">Bộ môn thi đấu <span className="text-rose-500">*</span></label>
             <select 
               {...register('categoryId')} 
-              className="border border-slate-300 rounded-lg px-3 py-2.5 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-50"
+              className={`border rounded-lg px-3 py-2.5 bg-white text-slate-700 focus:outline-none focus:ring-2 disabled:bg-slate-50 ${
+                errors.categoryId ? 'border-rose-500 focus:ring-rose-500' : 'border-slate-300 focus:ring-blue-500'
+              }`}
               disabled={isLoading}
             >
               <option value="">{isLoading ? 'Đang tải...' : '-- Chọn bộ môn --'}</option>

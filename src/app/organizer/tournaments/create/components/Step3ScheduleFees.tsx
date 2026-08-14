@@ -11,10 +11,10 @@ import { ChevronRight, ChevronLeft, Calendar, DollarSign } from 'lucide-react';
 import { tournamentsApi } from '@/features/tournaments/api';
 
 const step3Schema = z.object({
-  startDate: z.string().optional(),
-  endDate: z.string().optional(),
-  registrationStartDate: z.string().optional(),
-  registrationEndDate: z.string().optional(),
+  startDate: z.string().min(1, 'Vui lòng chọn ngày bắt đầu thi đấu'),
+  endDate: z.string().min(1, 'Vui lòng chọn ngày kết thúc thi đấu'),
+  registrationStartDate: z.string().min(1, 'Vui lòng chọn ngày bắt đầu đăng ký'),
+  registrationEndDate: z.string().min(1, 'Vui lòng chọn ngày kết thúc đăng ký'),
   entryFee: z.string().refine((val) => {
     const num = Number(val);
     return !isNaN(num) && num >= 0;
@@ -60,20 +60,33 @@ const step3Schema = z.object({
 type Step3Values = z.infer<typeof step3Schema>;
 
 export default function Step3ScheduleFees() {
-  const { formData, updateFormData, nextStep, prevStep } = useCreateTournamentStore();
+  const { formData, updateFormData, nextStep, prevStep, validationTarget, clearValidationTarget } = useCreateTournamentStore();
   const isClubTournament = formData.tournamentType === 'CLUB' || Boolean(formData.communityId);
   const [allowEntryFees, setAllowEntryFees] = useState(true);
+  const defaultRegistrationStart = formData.registrationStartDate || (() => {
+    const now = new Date();
+    const pad = (value: number) => String(value).padStart(2, '0');
+    return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  })();
 
-  const { register, handleSubmit, control, setValue, formState: { errors } } = useForm<Step3Values>({
+  const { register, handleSubmit, control, setValue, setError, setFocus, formState: { errors } } = useForm<Step3Values>({
     resolver: zodResolver(step3Schema),
     defaultValues: {
       startDate: formData.startDate || undefined,
       endDate: formData.endDate || undefined,
-      registrationStartDate: formData.registrationStartDate || undefined,
+      registrationStartDate: defaultRegistrationStart,
       registrationEndDate: formData.registrationEndDate || undefined,
       entryFee: isClubTournament ? '0' : String(formData.entryFee || 0),
     },
   });
+
+  useEffect(() => {
+    if (validationTarget?.step !== 3) return;
+    const field = validationTarget.field as keyof Step3Values;
+    setError(field, { type: 'publish', message: validationTarget.message });
+    setFocus(field);
+    clearValidationTarget();
+  }, [clearValidationTarget, setError, setFocus, validationTarget]);
 
   useEffect(() => {
     const loadFeePolicy = async () => {

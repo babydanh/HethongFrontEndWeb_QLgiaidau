@@ -14,7 +14,7 @@ import { GenderRestriction } from '@/types/tournament';
 import type { TournamentFeesConfig } from '@/features/tournaments/api';
 
 export default function Step4ReviewSubmit() {
-  const { formData, getDivisionsFromFormats, prevStep, reset } = useCreateTournamentStore();
+  const { formData, getDivisionsFromFormats, prevStep, reset, setStep, setValidationTarget } = useCreateTournamentStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feesConfig, setFeesConfig] = useState<TournamentFeesConfig>({
     feePublicRanked: 100000,
@@ -49,6 +49,31 @@ export default function Step4ReviewSubmit() {
   }, []);
 
   const validateTournamentDraft = () => {
+    const invalid = (step: number, field: string, message: string): never => {
+      setStep(step);
+      setValidationTarget({ step, field, message });
+      throw new Error(message);
+    };
+    if (!formData.name.trim()) invalid(1, 'name', 'Vui lòng nhập tên giải đấu.');
+    if (formData.description.trim().length < 10) invalid(1, 'description', 'Mô tả phải có ít nhất 10 ký tự.');
+    if (!formData.categoryId) invalid(1, 'categoryId', 'Vui lòng chọn bộ môn thi đấu.');
+    if (!formData.sportRules || typeof formData.sportRules !== 'object' || !('kind' in formData.sportRules)) {
+      invalid(1, 'categoryId', 'Chưa xác định được bộ luật theo môn đã chọn. Vui lòng chọn lại bộ môn.');
+    }
+    if (!primaryDivision || divisions.length === 0) invalid(2, 'selectedFormats', 'Vui lòng chọn ít nhất một hình thức thi đấu.');
+    if (!formData.registrationStartDate) invalid(3, 'registrationStartDate', 'Vui lòng chọn ngày bắt đầu đăng ký.');
+    if (!formData.registrationEndDate) invalid(3, 'registrationEndDate', 'Vui lòng chọn ngày kết thúc đăng ký.');
+    if (!formData.startDate) invalid(3, 'startDate', 'Vui lòng chọn ngày bắt đầu thi đấu.');
+    if (!formData.endDate) invalid(3, 'endDate', 'Vui lòng chọn ngày kết thúc thi đấu.');
+    const registrationStart = new Date(formData.registrationStartDate);
+    const registrationEnd = new Date(formData.registrationEndDate);
+    const tournamentStart = new Date(formData.startDate);
+    const tournamentEnd = new Date(formData.endDate);
+    if (registrationStart >= registrationEnd) invalid(3, 'registrationEndDate', 'Ngày bắt đầu đăng ký phải trước ngày kết thúc đăng ký.');
+    if (registrationEnd > tournamentStart) invalid(3, 'registrationEndDate', 'Hạn chót đăng ký phải trước hoặc bằng ngày bắt đầu thi đấu.');
+    if (tournamentStart >= tournamentEnd) invalid(3, 'endDate', 'Ngày bắt đầu thi đấu phải trước ngày kết thúc.');
+    if ((formData.maxParticipants ?? 0) < 2) invalid(1, 'maxParticipants', 'Số đội tham gia tối đa phải lớn hơn hoặc bằng 2.');
+    if ((formData.entryFee ?? 0) < 0) invalid(3, 'entryFee', 'Lệ phí tham gia không được là số âm.');
     if (!formData.name.trim()) throw new Error('Thiếu tên giải đấu ở Bước 1.');
     if (!formData.categoryId) throw new Error('Thiếu bộ môn thi đấu ở Bước 1.');
     if (!formData.sportRules || typeof formData.sportRules !== 'object' || !('kind' in formData.sportRules)) {

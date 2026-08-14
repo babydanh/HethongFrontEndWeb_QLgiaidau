@@ -18,8 +18,9 @@ const BRACKET_TYPE_OPTIONS: { value: 'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION'
 ];
 
 export default function Step2FormatMulti() {
-  const { formData, updateFormData, nextStep, prevStep } = useCreateTournamentStore();
+  const { formData, updateFormData, nextStep, prevStep, validationTarget, clearValidationTarget } = useCreateTournamentStore();
   const [categories, setCategories] = useState<Category[]>([]);
+  const [step2Error, setStep2Error] = useState<string | null>(null);
   const resolvedRules = resolveSportRuleView(formData.sportRules);
   const presentation = getSportRulePresentation(resolvedRules.kind);
   const [bracketType, setBracketType] = useState<'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION' | 'ROUND_ROBIN' | 'GROUP_STAGE_KNOCKOUT'>(
@@ -29,6 +30,12 @@ export default function Step2FormatMulti() {
   const selectedCategory = categories.find((category) => category.id === formData.categoryId);
   const formatOptions = getAllowedMatchFormatOptions(selectedCategory);
   const selected = selectedFormats.length > 0 ? selectedFormats : [formData.matchFormat];
+
+  useEffect(() => {
+    if (validationTarget?.step !== 2) return;
+    setStep2Error(validationTarget.message);
+    clearValidationTarget();
+  }, [clearValidationTarget, validationTarget]);
 
   useEffect(() => {
     const loadCategories = async () => {
@@ -66,6 +73,7 @@ export default function Step2FormatMulti() {
   }, [formData.matchFormat, selected, selectedCategory, selectedFormats, updateFormData]);
 
   const toggleFormat = (format: MatchFormat) => {
+    setStep2Error(null);
     const newSelected = selected.includes(format)
       ? selected.filter((f) => f !== format)
       : [...selected, format];
@@ -82,7 +90,10 @@ export default function Step2FormatMulti() {
   const [allowDraw, setAllowDraw] = useState(true);
 
   const handleNext = () => {
-    if (selected.length === 0) return;
+    if (selected.length === 0) {
+      setStep2Error('Vui lòng chọn ít nhất một hình thức thi đấu.');
+      return;
+    }
     const next: Record<string, unknown> = { format: bracketType };
     if (isFootball) {
       next.teamSize = teamSize;
@@ -115,7 +126,7 @@ export default function Step2FormatMulti() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div className={cn('grid grid-cols-1 md:grid-cols-2 gap-3 rounded-lg', step2Error && 'border border-rose-500 p-2')}>
         {formatOptions.map((opt) => {
           const isSelected = selected.includes(opt.value);
           return (
@@ -143,6 +154,7 @@ export default function Step2FormatMulti() {
           );
         })}
       </div>
+      {step2Error && <p className="text-sm font-semibold text-rose-500">{step2Error}</p>}
 
       <div className="bg-slate-50 border border-slate-200 rounded-lg p-5 space-y-3">
         <label className="text-sm font-semibold text-slate-700">Chọn Loại nhánh thi đấu <span className="text-rose-500">*</span></label>

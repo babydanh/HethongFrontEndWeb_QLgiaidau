@@ -14,6 +14,7 @@ interface Venue {
 }
 
 interface ScheduleTabProps {
+  validationField?: string | null;
   tournament: Tournament;
   bracket: { stages: BracketStage[] } | null;
   venues: Venue[];
@@ -39,6 +40,7 @@ interface ScheduleTabProps {
 }
 
 export function ScheduleTab({
+  validationField,
   tournament,
   bracket,
   venues,
@@ -76,6 +78,7 @@ export function ScheduleTab({
             value={customVenueName}
             onChange={(e) => setCustomVenueName(e.target.value)}
           />
+          {validationField === 'venue' && <p className="text-xs font-semibold text-rose-600">Vui lòng nhập tên sân và địa chỉ đầy đủ.</p>}
 
           <Input
             label="Địa chỉ chi tiết"
@@ -151,6 +154,7 @@ export function ScheduleTab({
             value={endDate}
             onChange={setEndDate}
           />
+          {validationField === 'dates' && <p className="text-xs font-semibold text-rose-600">Vui lòng kiểm tra ngày giờ đăng ký và thi đấu.</p>}
         </div>
       </div>
 

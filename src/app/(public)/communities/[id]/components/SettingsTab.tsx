@@ -257,10 +257,23 @@ export default function SettingsTab({ community }: { community: Community }) {
 
     try {
       setIsSaving(true);
-      // Tìm tên tỉnh/thành và quận/huyện
       const provinceName = provinces.find(p => p.code === provinceCode)?.name || '';
       const districtName = districts.find(d => d.code === districtCode)?.name || '';
-      const combinedAddress = [districtName, provinceName].filter(Boolean).join(', ') || null;
+      const wardName = wards.find(w => w.code === wardCode)?.name || '';
+      
+      const adminPart = [wardName, districtName, provinceName].filter(Boolean).join(', ');
+      const detail = locationAddress.trim();
+      let combinedAddress = '';
+      if (detail) {
+        // Nếu người dùng nhập tên sân/số nhà riêng chưa có tên quận/tỉnh thì ghép kèm vào
+        if (adminPart && !detail.includes(provinceName) && !detail.includes(districtName)) {
+          combinedAddress = `${detail}, ${adminPart}`;
+        } else {
+          combinedAddress = detail;
+        }
+      } else {
+        combinedAddress = adminPart;
+      }
 
       const updateData = {
         name,
@@ -269,10 +282,10 @@ export default function SettingsTab({ community }: { community: Community }) {
         visibility,
         joinMode,
         maxMembers: maxMembers ? Number(maxMembers) : null,
-        locationAddress: combinedAddress,
+        locationAddress: combinedAddress || null,
         provinceCode,
         districtCode: districtCode || null,
-        wardCode: null,
+        wardCode: wardCode || null,
         categoryIds: selectedCategoryIds,
         logoUrl,
         bannerUrl,
@@ -542,12 +555,13 @@ export default function SettingsTab({ community }: { community: Community }) {
             {/* Khu vực hoạt động */}
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-2">Khu vực hoạt động *</label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-3">
                 <select
                   value={provinceCode}
                   onChange={(e) => {
                     setProvinceCode(e.target.value);
                     setDistrictCode('');
+                    setWardCode('');
                   }}
                   className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                 >
@@ -557,13 +571,37 @@ export default function SettingsTab({ community }: { community: Community }) {
 
                 <select
                   value={districtCode}
-                  onChange={(e) => setDistrictCode(e.target.value)}
+                  onChange={(e) => {
+                    setDistrictCode(e.target.value);
+                    setWardCode('');
+                  }}
                   disabled={!provinceCode}
                   className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:opacity-50"
                 >
                   <option value="">-- Quận/Huyện --</option>
                   {districts.map(d => <option key={d.code} value={d.code}>{d.name}</option>)}
                 </select>
+
+                <select
+                  value={wardCode}
+                  onChange={(e) => setWardCode(e.target.value)}
+                  disabled={!districtCode}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:opacity-50"
+                >
+                  <option value="">-- Phường/Xã --</option>
+                  {wards.map(w => <option key={w.code} value={w.code}>{w.name}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Địa chỉ chi tiết / Tên sân (tuỳ chọn)</label>
+                <input
+                  type="text"
+                  placeholder="Ví dụ: Sân Pickleball Thăng Long, Số 123 Đường Nguyễn Trãi..."
+                  value={locationAddress}
+                  onChange={(e) => setLocationAddress(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                />
               </div>
             </div>
 

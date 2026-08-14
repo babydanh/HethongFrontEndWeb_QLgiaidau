@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Flag, Heart, Loader2, MessageCircle, Maximize2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { communitiesApi } from "@/features/communities/api";
@@ -13,81 +13,15 @@ import { cn } from "@/utils/cn";
 import { getErrorMessage } from "@/utils/error";
 import CommunityAvatar from "./CommunityAvatar";
 import ImageLightboxModal from "@/components/common/ImageLightboxModal";
+import UserProfilePopover, {
+  type PopoverUserProfile,
+} from "@/components/common/UserProfilePopover";
 
 interface CommunityPostCardProps {
   post: CommunityPost;
   onReact: (type: CommunityReactionType) => void;
   onReport: () => void;
   onComment: () => void;
-}
-
-/** Helper parse text to highlight @mentions & #hashtags */
-function renderRichContent(content: string) {
-  if (!content) return null;
-
-  // Tách dòng để giữ nguyên ngắt dòng
-  const lines = content.split("\n");
-
-  return lines.map((line, lineIdx) => {
-    // Regex chuẩn bắt @[Tên có dấu và khoảng trắng] hoặc #Hashtag
-    const regex = /(@[^\s@#]+(?:\s+[^\s@#]+)*|#[a-zA-Z0-9_\u00C0-\u1EF9]+)/gu;
-    const parts: Array<{ text: string; isMention: boolean; isHashtag: boolean }> = [];
-    let lastIndex = 0;
-    let match: RegExpExecArray | null;
-
-    while ((match = regex.exec(line)) !== null) {
-      if (match.index > lastIndex) {
-        parts.push({
-          text: line.substring(lastIndex, match.index),
-          isMention: false,
-          isHashtag: false,
-        });
-      }
-      const token = match[0];
-      parts.push({
-        text: token,
-        isMention: token.startsWith("@"),
-        isHashtag: token.startsWith("#"),
-      });
-      lastIndex = regex.lastIndex;
-    }
-
-    if (lastIndex < line.length) {
-      parts.push({
-        text: line.substring(lastIndex),
-        isMention: false,
-        isHashtag: false,
-      });
-    }
-
-    return (
-      <span key={lineIdx} className="block min-h-[1.25rem]">
-        {parts.map((part, partIdx) => {
-          if (part.isMention) {
-            return (
-              <span
-                key={partIdx}
-                className="inline-flex items-center mx-0.5 px-1.5 py-0.5 rounded-md bg-blue-50 text-blue-600 font-semibold text-xs border border-blue-100/80 hover:bg-blue-100 hover:text-blue-700 transition-colors cursor-pointer select-none"
-              >
-                {part.text}
-              </span>
-            );
-          }
-          if (part.isHashtag) {
-            return (
-              <span
-                key={partIdx}
-                className="inline-flex items-center mx-0.5 px-1 py-0.5 rounded text-emerald-600 font-semibold text-xs hover:underline cursor-pointer"
-              >
-                {part.text}
-              </span>
-            );
-          }
-          return <span key={partIdx}>{part.text}</span>;
-        })}
-      </span>
-    );
-  });
 }
 
 export default function CommunityPostCard({
@@ -102,8 +36,143 @@ export default function CommunityPostCard({
   const [submittingComment, setSubmittingComment] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
+  // Popover Profile State
+  const [popoverUser, setPopoverUser] = useState<PopoverUserProfile | null>(null);
+  const [popoverAnchorRect, setPopoverAnchorRect] = useState<DOMRect | null>(null);
+
   const authorName = post.author?.fullName?.trim() || "Thành viên CLB";
   const authorAvatar = post.author?.avatarUrl;
+
+  const handleOpenAuthorProfile = (event: React.MouseEvent<HTMLElement>) => {
+    event.stopPropagation();
+    const rect = event.currentTarget.getBoundingClientRect();
+    setPopoverUser({
+      id: post.author.id,
+      fullName: authorName,
+      avatarUrl: authorAvatar,
+      joinedAt: post.createdAt,
+    });
+    setPopoverAnchorRect(rect);
+  };
+
+  const handleOpenMentionProfile = (
+    event: React.MouseEvent<HTMLElement>,
+    mentionName: string,
+  ) => {
+    event.stopPropagation();
+    const cleanName = mentionName.replace(/^@/, "").trim();
+    const rect = event.currentTarget.getBoundingClientRect();
+    
+    // Nếu mention chính là author
+    if (cleanName === authorName) {
+      setPopoverUser({
+        id: post.author.id,
+        fullName: authorName,
+        avatarUrl: authorAvatar,
+        joinedAt: post.createdAt,
+      });
+      setPopoverAnchorRect(rect);
+      return;
+    }
+
+    // Tra cứu thông tin member qua mention
+    setPopoverUser({
+      id: "", // Sẽ được fetch hoặc tra cứu
+      fullName: cleanName,
+      avatarUrl: null,
+    });
+    setPopoverAnchorRect(rect);
+
+    // Tìm kiếm profile chính xác qua tên
+    communitiesApi
+      .getMembers(post.communityId, { search: cleanName, limit: 1 })
+      .then((res) => {
+        const found = (res.data ?? []).find(
+          (m) =>
+            m.user?.fullName?.trim().toLowerCase() === cleanName.toLowerCase(),
+        );
+        if (found) {
+          setPopoverUser({
+            id: found.user.id,
+            fullName: found.user.fullName,
+            avatarUrl: found.user.avatarUrl,
+            role: found.member.role,
+            tags: found.member.tags,
+            joinedAt: found.member.joinedAt,
+          });
+        }
+      })
+      .catch(() => {});
+  };
+
+  /** Helper parse text to highlight @mentions & #hashtags */
+  const renderRichContent = (content: string) => {
+    if (!content) return null;
+
+    const lines = content.split("\n");
+
+    return lines.map((line, lineIdx) => {
+      const regex = /(@[^\s@#]+(?:\s+[^\s@#]+)*|#[a-zA-Z0-9_\u00C0-\u1EF9]+)/gu;
+      const parts: Array<{ text: string; isMention: boolean; isHashtag: boolean }> = [];
+      let lastIndex = 0;
+      let match: RegExpExecArray | null;
+
+      while ((match = regex.exec(line)) !== null) {
+        if (match.index > lastIndex) {
+          parts.push({
+            text: line.substring(lastIndex, match.index),
+            isMention: false,
+            isHashtag: false,
+          });
+        }
+        const token = match[0];
+        parts.push({
+          text: token,
+          isMention: token.startsWith("@"),
+          isHashtag: token.startsWith("#"),
+        });
+        lastIndex = regex.lastIndex;
+      }
+
+      if (lastIndex < line.length) {
+        parts.push({
+          text: line.substring(lastIndex),
+          isMention: false,
+          isHashtag: false,
+        });
+      }
+
+      return (
+        <span key={lineIdx} className="block min-h-[1.25rem]">
+          {parts.map((part, partIdx) => {
+            if (part.isMention) {
+              return (
+                <button
+                  type="button"
+                  key={partIdx}
+                  onClick={(e) => handleOpenMentionProfile(e, part.text)}
+                  className="inline-flex items-center mx-0.5 px-1.5 py-0.5 rounded-md bg-blue-50 text-blue-600 font-semibold text-xs border border-blue-100/80 hover:bg-blue-100 hover:text-blue-700 transition-colors cursor-pointer select-none"
+                >
+                  {part.text}
+                </button>
+              );
+            }
+            if (part.isHashtag) {
+              return (
+                <span
+                  key={partIdx}
+                  className="inline-flex items-center mx-0.5 px-1 py-0.5 rounded text-emerald-600 font-semibold text-xs hover:underline cursor-pointer"
+                >
+                  {part.text}
+                </span>
+              );
+            }
+            return <span key={partIdx}>{part.text}</span>;
+          })}
+        </span>
+      );
+    });
+  };
 
   const loadComments = async () => {
     setLoadingComments(true);
@@ -146,15 +215,25 @@ export default function CommunityPostCard({
       <article className="rounded-xl border border-slate-200/90 bg-white p-5 shadow-sm transition hover:shadow-md">
         {/* Header: Author info & Report */}
         <div className="flex items-center gap-3">
-          <CommunityAvatar
-            src={authorAvatar}
-            name={authorName}
-            size={42}
-          />
+          <div
+            onClick={handleOpenAuthorProfile}
+            className="cursor-pointer transition-transform hover:scale-105"
+            title="Xem hồ sơ"
+          >
+            <CommunityAvatar
+              src={authorAvatar}
+              name={authorName}
+              size={42}
+            />
+          </div>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-bold text-slate-900 hover:text-blue-600 transition-colors cursor-pointer">
+            <button
+              type="button"
+              onClick={handleOpenAuthorProfile}
+              className="truncate text-left text-sm font-bold text-slate-900 hover:text-blue-600 transition-colors cursor-pointer"
+            >
               {authorName}
-            </p>
+            </button>
             <p className="text-xs text-slate-500 font-medium">
               {new Date(post.createdAt).toLocaleDateString("vi-VN", {
                 day: "2-digit",
@@ -317,6 +396,18 @@ export default function CommunityPostCard({
         initialIndex={lightboxIndex ?? 0}
         isOpen={lightboxIndex !== null}
         onClose={() => setLightboxIndex(null)}
+      />
+
+      {/* Mini Profile Popover (Facebook Style) */}
+      <UserProfilePopover
+        user={popoverUser}
+        anchorRect={popoverAnchorRect}
+        isOpen={popoverUser !== null && popoverAnchorRect !== null}
+        onClose={() => {
+          setPopoverUser(null);
+          setPopoverAnchorRect(null);
+        }}
+        communityId={post.communityId}
       />
     </>
   );

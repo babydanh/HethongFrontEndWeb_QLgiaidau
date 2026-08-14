@@ -29,6 +29,7 @@ interface EnrichedTournament {
   // Added fields for location filtering
   city?: string;
   locationAddress?: string;
+  venueName?: string | null;
   logoUrl?: string | null;
   community?: {
     logoUrl?: string | null;
@@ -598,6 +599,7 @@ export default function MatchesListPage() {
     tournamentName: string;
     tournamentCategory: string;
     tournamentLogoUrl: string | null;
+    tournamentVenueName: string | null;
     matches: EnrichedMatch[];
   }
 
@@ -611,6 +613,7 @@ export default function MatchesListPage() {
         tournamentName: match.tournament?.name || 'Giải đấu',
         tournamentCategory: match.tournament?.category?.name || match.tournament?.categoryName || 'Chưa cập nhật',
         tournamentLogoUrl: match.tournament?.logoUrl || match.tournament?.community?.logoUrl || null,
+        tournamentVenueName: match.tournament?.venueName || null,
         matches: []
       };
       groupedMatches.push(group);
@@ -1084,24 +1087,32 @@ export default function MatchesListPage() {
                     )}
                   </Link>
                   <div>
-                    <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider mb-1">
-                      GIẢI ĐẤU HẠNG • {group.tournamentCategory}
-                      {(() => {
-                        const firstMatch = group.matches[0];
-                        const tConfig = firstMatch?.tournament as Record<string, unknown> | undefined;
-                        const tConfigObj = tConfig?.tournamentConfig as Record<string, unknown> | undefined;
-                        const bType = tConfig?.bracketType as string || tConfigObj?.bracketType as string || firstMatch?.stage?.type;
-                        const label = getBracketTypeLabel(bType);
-                        return label ? ` • ${label}` : '';
-                      })()}
-                    </span>
-                      <Link href={`/tournaments/${group.tournamentId}`} className="hover:text-blue-600 transition-colors">
-                        <h3 className="font-bold text-slate-900 text-sm md:text-base uppercase tracking-tight leading-none">
-                          {group.tournamentName}
-                        </h3>
-                      </Link>
+                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                      <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                        GIẢI ĐẤU HẠNG • {group.tournamentCategory}
+                        {(() => {
+                          const firstMatch = group.matches[0];
+                          const tConfig = firstMatch?.tournament as Record<string, unknown> | undefined;
+                          const tConfigObj = tConfig?.tournamentConfig as Record<string, unknown> | undefined;
+                          const bType = tConfig?.bracketType as string || tConfigObj?.bracketType as string || firstMatch?.stage?.type;
+                          const label = getBracketTypeLabel(bType);
+                          return label ? ` • ${label}` : '';
+                        })()}
+                      </span>
+                      {group.tournamentVenueName && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-medium text-slate-500 bg-white border border-slate-200 px-2 py-0.5 rounded-full">
+                          <MapPin className="w-3 h-3 text-rose-500 shrink-0" />
+                          <span>{group.tournamentVenueName}</span>
+                        </span>
+                      )}
                     </div>
+                    <Link href={`/tournaments/${group.tournamentId}`} className="hover:text-blue-600 transition-colors">
+                      <h3 className="font-bold text-slate-900 text-sm md:text-base uppercase tracking-tight leading-none">
+                        {group.tournamentName}
+                      </h3>
+                    </Link>
                   </div>
+                </div>
                   
                 </div>
 

@@ -292,11 +292,11 @@ export default function CommunityFeed({
                 ),
               )
             }
-            onCommentAdded={(postId) =>
+            onCommentUpdated={(postId, newCount) =>
               setPosts((current) =>
                 current.map((post) =>
                   post.id === postId
-                    ? { ...post, commentCount: post.commentCount + 1 }
+                    ? { ...post, commentCount: newCount }
                     : post,
                 ),
               )

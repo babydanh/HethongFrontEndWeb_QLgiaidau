@@ -22,7 +22,7 @@ interface CommunityPostListProps {
     reactionType: CommunityReactionType | null,
     count: number,
   ) => void;
-  onCommentAdded: (postId: string) => void;
+  onCommentUpdated: (postId: string, newCount: number) => void;
   onDeletePost?: (postId: string) => void;
   canManage?: boolean;
 }
@@ -34,7 +34,7 @@ export default function CommunityPostList({
   isLoadingMore,
   onLoadMore,
   onReactionUpdated,
-  onCommentAdded,
+  onCommentUpdated,
   onDeletePost,
   canManage = false,
 }: CommunityPostListProps) {
@@ -70,7 +70,7 @@ export default function CommunityPostList({
                 toast.error(getErrorMessage(error, "Không thể báo cáo.")),
               );
           }}
-          onComment={() => onCommentAdded(post.id)}
+          onCommentUpdated={onCommentUpdated}
         />
       ))}
       {hasMore && (

@@ -22,7 +22,7 @@ interface CommunityPostCardProps {
   post: CommunityPost;
   onReact: (type: CommunityReactionType) => void;
   onReport: () => void;
-  onComment: () => void;
+  onCommentUpdated?: (postId: string, newCount: number) => void;
   onDelete?: (postId: string) => void;
   canManage?: boolean;
 }
@@ -31,7 +31,7 @@ export default function CommunityPostCard({
   post,
   onReact,
   onReport,
-  onComment,
+  onCommentUpdated,
   onDelete,
   canManage = false,
 }: CommunityPostCardProps) {
@@ -209,6 +209,7 @@ export default function CommunityPostCard({
       const fetched = response.data ?? [];
       setComments(fetched);
       setOverrideCommentCount(fetched.length);
+      onCommentUpdated?.(post.id, fetched.length);
     } catch (error: unknown) {
       toast.error(getErrorMessage(error, "Không thể tải bình luận."));
     } finally {
@@ -234,9 +235,11 @@ export default function CommunityPostCard({
           avatarUrl: currentUser?.avatarUrl || null,
         },
       };
-      setComments((current) => [...current, newComment]);
-      setOverrideCommentCount((c) => (c ?? (post.commentCount ?? 0)) + 1);
-      onComment();
+      const updatedComments = [...comments, newComment];
+      setComments(updatedComments);
+      const newCount = updatedComments.length;
+      setOverrideCommentCount(newCount);
+      onCommentUpdated?.(post.id, newCount);
       setCommentText("");
       setReplyingTo(null);
     } catch (error: unknown) {
@@ -251,15 +254,15 @@ export default function CommunityPostCard({
     try {
       await communitiesApi.deleteComment(post.communityId, commentId);
       // Remove deleted comment and any direct replies to it
-      setComments((current) => {
-        const deletedIds = new Set([commentId]);
-        current.forEach((c) => {
-          if (c.parentId === commentId) deletedIds.add(c.id);
-        });
-        const remaining = current.filter((c) => !deletedIds.has(c.id));
-        setOverrideCommentCount(remaining.length);
-        return remaining;
+      const deletedIds = new Set([commentId]);
+      comments.forEach((c) => {
+        if (c.parentId === commentId) deletedIds.add(c.id);
       });
+      const remaining = comments.filter((c) => !deletedIds.has(c.id));
+      setComments(remaining);
+      const newCount = remaining.length;
+      setOverrideCommentCount(newCount);
+      onCommentUpdated?.(post.id, newCount);
       toast.success("Đã xóa bình luận.");
     } catch (error: unknown) {
       toast.error(getErrorMessage(error, "Không thể xóa bình luận lúc này."));

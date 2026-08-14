@@ -15,6 +15,7 @@ export default function ChatPage() {
   const [inputText, setInputText] = useState('');
   const [isLoadingConversations, setIsLoadingConversations] = useState(true);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const [blockedUserIds, setBlockedUserIds] = useState<string[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -39,6 +40,7 @@ export default function ChatPage() {
       }
     };
     fetchConversations();
+    chatApi.getBlockedUsers().then((items) => setBlockedUserIds(items.map((item) => item.blockedId))).catch(() => undefined);
   }, []);
 
   // Fetch messages when active conversation changes
@@ -50,6 +52,8 @@ export default function ChatPage() {
       try {
         const data = await chatApi.getMessages(activeConvId);
         setMessages(data);
+        // Keep read state consistent with the mobile client and other tabs.
+        await chatApi.markRead(activeConvId);
         scrollToBottom();
       } catch (error) {
         console.error('Failed to fetch messages', error);
@@ -65,7 +69,10 @@ export default function ChatPage() {
       socket.connect();
     }
     
-    socket.emit('joinChatRoom', activeConvId);
+    const joinRoom = () => socket.emit('joinChatRoom', activeConvId);
+    // Re-join after Socket.IO reconnects; room membership is connection-scoped.
+    socket.on('connect', joinRoom);
+    joinRoom();
 
     socket.on('chat:message', (msg: { id?: string; senderId: string; senderName?: string; senderAvatar?: string; content?: string; messageText?: string; createdAt?: string; timestamp?: string }) => {
       const activeConversation = conversations.find(c => c.id === activeConvId);
@@ -92,6 +99,7 @@ export default function ChatPage() {
 
     return () => {
       socket.emit('leaveChatRoom', activeConvId);
+      socket.off('connect', joinRoom);
       socket.off('chat:message');
     };
   }, [activeConvId, conversations]);
@@ -103,6 +111,8 @@ export default function ChatPage() {
     if (!inputText.trim() || !activeConvId) return;
 
     const socket = socketClient.getChatSocket();
+    const otherUserId = activeConversation?.participants.find(p => p.id !== user?.id)?.id;
+    if (otherUserId && blockedUserIds.includes(otherUserId)) return;
     
     socket.emit('sendMessage', {
       roomId: activeConvId,
@@ -110,6 +120,20 @@ export default function ChatPage() {
     });
 
     setInputText('');
+  };
+
+  const handleToggleBlock = async () => {
+    const otherUserId = activeConversation?.participants.find(p => p.id !== user?.id)?.id;
+    if (!otherUserId || activeConversation?.type !== 'PRIVATE') return;
+    const isBlocked = blockedUserIds.includes(otherUserId);
+    if (!window.confirm(isBlocked ? 'Bỏ chặn người này?' : 'Chặn người này?')) return;
+    try {
+      if (isBlocked) await chatApi.unblockUser(otherUserId);
+      else await chatApi.blockUser(otherUserId);
+      setBlockedUserIds(prev => isBlocked ? prev.filter(id => id !== otherUserId) : [...prev, otherUserId]);
+    } catch (error) {
+      console.error('Failed to update chat block', error);
+    }
   };
 
   const activeConversation = conversations.find(c => c.id === activeConvId);
@@ -197,7 +221,7 @@ export default function ChatPage() {
                   <p className="text-xs text-blue-500 font-medium">Đang trực tuyến</p>
                 </div>
               </div>
-              <button className="w-10 h-10 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-500 transition-colors">
+              <button onClick={handleToggleBlock} title={activeConversation.type === 'PRIVATE' ? 'Chặn / bỏ chặn' : 'Chỉ áp dụng cho chat riêng'} className="w-10 h-10 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-500 transition-colors">
                 <MoreVertical className="w-5 h-5" />
               </button>
             </div>

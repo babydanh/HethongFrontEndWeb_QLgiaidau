@@ -11,5 +11,10 @@ export const chatApi = {
   sendClubMessage: (roomId: string, messageText: string) => api.post<ApiResponse<CommunityChatMessage>>('/chat/messages', { roomId, messageText }),
   getConversations: () => api.get<{ data: ChatConversation[] }>('/chat/rooms').then(res => res.data),
   getMessages: (roomId: string) => api.get<{ data: ChatMessage[] }>(`/chat/rooms/${roomId}/messages`).then(res => res.data),
+  markRead: (roomId: string) => api.put(`/chat/rooms/${roomId}/read`),
+  getUnreadCount: (roomId: string) => api.get<{ data: { count: number } }>(`/chat/rooms/${roomId}/unread`).then(res => res.data.count),
+  getBlockedUsers: () => api.get<{ data: Array<{ blockedId: string }> }>('/chat/blocks').then(res => res.data),
+  blockUser: (userId: string) => api.post(`/chat/blocks/${userId}`),
+  unblockUser: (userId: string) => api.delete(`/chat/blocks/${userId}`),
 };
 

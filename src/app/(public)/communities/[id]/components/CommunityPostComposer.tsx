@@ -11,9 +11,6 @@ import CommunityAvatar from "./CommunityAvatar";
 interface CommunityPostComposerProps {
   onSubmit: FormEventHandler<HTMLFormElement>;
   contentRegistration: UseFormRegisterReturn<"content">;
-  topicsRegistration?: UseFormRegisterReturn<"topics">;
-  topicsValue?: string;
-  onTopicsChange?: (value: string) => void;
   contentError?: string;
   isSubmitting: boolean;
   composerRef: RefObject<HTMLTextAreaElement | null>;
@@ -33,9 +30,6 @@ interface CommunityPostComposerProps {
 export default function CommunityPostComposer({
   onSubmit,
   contentRegistration,
-  topicsRegistration,
-  topicsValue,
-  onTopicsChange,
   contentError,
   isSubmitting,
   composerRef,

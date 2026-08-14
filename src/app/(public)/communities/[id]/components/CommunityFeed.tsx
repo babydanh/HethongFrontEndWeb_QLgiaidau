@@ -30,7 +30,6 @@ const postSchema = z.object({
     .trim()
     .max(5000, "Bài viết tối đa 5000 ký tự.")
     .optional(),
-  topics: z.string().trim().max(200, "Chủ đề quá dài.").optional(),
 });
 
 type PostFormValues = z.infer<typeof postSchema>;
@@ -69,12 +68,10 @@ export default function CommunityFeed({
     formState: { errors, isSubmitting },
   } = useForm<PostFormValues>({
     resolver: zodResolver(postSchema),
-    defaultValues: { content: "", topics: "" },
+    defaultValues: { content: "" },
   });
   const content = useWatch({ control, name: "content" }) ?? "";
-  const topicsValue = useWatch({ control, name: "topics" }) ?? "";
   const contentRegistration = register("content");
-  const topicsRegistration = register("topics");
   const {
     setEntries: setMentionEntries,
     query: mentionQuery,
@@ -171,17 +168,12 @@ export default function CommunityFeed({
           uploadApi.uploadImage(file).then((result) => result.url),
         ),
       );
-      const topics = (values.topics ?? "")
-        .split(/[\s,]+/)
-        .map((topic) => topic.replace(/^#/, "").trim())
-        .filter(Boolean)
-        .slice(0, 5);
       const response = await communitiesApi.createPost(
         communityId,
         {
           content: values.content?.trim() ?? "",
           imageUrls,
-          topics,
+          topics: [],
           mentions: validIds,
         },
         crypto.randomUUID(),
@@ -241,9 +233,6 @@ export default function CommunityFeed({
             void handleSubmit(onSubmit)(event);
           }}
           contentRegistration={contentRegistration}
-          topicsRegistration={topicsRegistration}
-          topicsValue={topicsValue}
-          onTopicsChange={(val) => setValue("topics", val, { shouldDirty: true })}
           contentError={errors.content?.message}
           isSubmitting={isSubmitting}
           composerRef={composerRef}

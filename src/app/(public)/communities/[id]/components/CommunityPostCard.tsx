@@ -268,19 +268,6 @@ export default function CommunityPostCard({
           </div>
         )}
 
-        {/* Topic Badges */}
-        {(post.topics ?? []).length > 0 && (
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            {post.topics?.map((topic) => (
-              <span
-                key={topic}
-                className="rounded-md bg-blue-50 border border-blue-200/60 px-2 py-0.5 text-xs font-semibold text-blue-700"
-              >
-                #{topic}
-              </span>
-            ))}
-          </div>
-        )}
 
         {/* Images Grid with Click to Open Lightbox */}
         {post.imageUrls.length > 0 && (

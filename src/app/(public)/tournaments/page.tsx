@@ -696,7 +696,13 @@ export default function TournamentsListPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
           {tournaments.map(tournament => {
             const { startDay, endDay, startMonth, endMonth } = getParsedDates(tournament.startDate, tournament.endDate);
-            const city = tournament.locationAddress ? tournament.locationAddress.split(',').slice(-1)[0]?.trim() || 'Việt Nam' : 'Chưa cập nhật';
+            const rawLoc = tournament.locationAddress || tournament.venue?.locationAddress || tournament.city || '';
+            const locationParts = rawLoc ? rawLoc.split(',').map((s: string) => s.trim()).filter(Boolean) : [];
+            const displayLocation = locationParts.length >= 2
+              ? locationParts.slice(-2).join(', ')
+              : locationParts.length === 1
+              ? locationParts[0]
+              : 'Chưa cập nhật';
             const registrationModeUi = getRegistrationModeUi(tournament.tournamentConfig?.registrationMode);
             
             return (
@@ -738,31 +744,10 @@ export default function TournamentsListPage() {
                     </span>
                   </div>
 
-                  {/* Bookmark Button (Top-Right) */}
-                  {user?.id && (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        void handleToggleFollow(tournament);
-                      }}
-                      disabled={followLoadingIds.has(tournament.id)}
-                      className={`absolute top-3 right-3 p-1.5 rounded-full transition-colors shadow-sm z-10 cursor-pointer border ${
-                        followedTournamentIds.has(tournament.id)
-                          ? 'bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100'
-                          : 'bg-white/90 text-slate-650 border-slate-200 hover:text-blue-600 hover:bg-white'
-                      }`}
-                      aria-label={followedTournamentIds.has(tournament.id) ? 'Bỏ theo dõi' : 'Theo dõi'}
-                    >
-                      <Bookmark className={`w-4 h-4 ${followedTournamentIds.has(tournament.id) ? 'fill-current' : ''}`} />
-                    </button>
-                  )}
-
                   {/* Location Overlay (Bottom-Left) */}
                   <div className="absolute bottom-3 left-3 z-10">
                     <span className="bg-white/95 text-slate-800 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm border border-slate-200 flex items-center gap-1">
-                      📍 {city}
+                      📍 {displayLocation}
                     </span>
                   </div>
                 </div>

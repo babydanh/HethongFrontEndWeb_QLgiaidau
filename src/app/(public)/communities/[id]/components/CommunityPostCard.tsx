@@ -25,31 +25,68 @@ interface CommunityPostCardProps {
 function renderRichContent(content: string) {
   if (!content) return null;
 
-  // Regex bắt @Tên hoặc #Hashtag hoặc các đoạn chữ thông thường
-  const tokens = content.split(/(#[a-zA-Z0-9_\u00C0-\u1EF9]+|@[a-zA-Z0-9_\s\u00C0-\u1EF9]+?(?=\s[#@]|\s\s|$|[.,!?;:\n]))/gu);
+  // Tách dòng để giữ nguyên ngắt dòng
+  const lines = content.split("\n");
 
-  return tokens.map((token, index) => {
-    if (token.startsWith("@")) {
-      return (
-        <span
-          key={index}
-          className="inline-flex items-center mx-0.5 px-1.5 py-0.5 rounded-md bg-blue-50 text-blue-600 font-semibold text-xs border border-blue-100/80 hover:bg-blue-100 transition-colors cursor-pointer select-none"
-        >
-          {token}
-        </span>
-      );
+  return lines.map((line, lineIdx) => {
+    // Regex chuẩn bắt @[Tên có dấu và khoảng trắng] hoặc #Hashtag
+    const regex = /(@[^\s@#]+(?:\s+[^\s@#]+)*|#[a-zA-Z0-9_\u00C0-\u1EF9]+)/gu;
+    const parts: Array<{ text: string; isMention: boolean; isHashtag: boolean }> = [];
+    let lastIndex = 0;
+    let match: RegExpExecArray | null;
+
+    while ((match = regex.exec(line)) !== null) {
+      if (match.index > lastIndex) {
+        parts.push({
+          text: line.substring(lastIndex, match.index),
+          isMention: false,
+          isHashtag: false,
+        });
+      }
+      const token = match[0];
+      parts.push({
+        text: token,
+        isMention: token.startsWith("@"),
+        isHashtag: token.startsWith("#"),
+      });
+      lastIndex = regex.lastIndex;
     }
-    if (token.startsWith("#")) {
-      return (
-        <span
-          key={index}
-          className="inline-flex items-center mx-0.5 px-1.5 py-0.2 rounded text-emerald-600 font-medium hover:underline cursor-pointer"
-        >
-          {token}
-        </span>
-      );
+
+    if (lastIndex < line.length) {
+      parts.push({
+        text: line.substring(lastIndex),
+        isMention: false,
+        isHashtag: false,
+      });
     }
-    return <span key={index}>{token}</span>;
+
+    return (
+      <span key={lineIdx} className="block min-h-[1.25rem]">
+        {parts.map((part, partIdx) => {
+          if (part.isMention) {
+            return (
+              <span
+                key={partIdx}
+                className="inline-flex items-center mx-0.5 px-1.5 py-0.5 rounded-md bg-blue-50 text-blue-600 font-semibold text-xs border border-blue-100/80 hover:bg-blue-100 hover:text-blue-700 transition-colors cursor-pointer select-none"
+              >
+                {part.text}
+              </span>
+            );
+          }
+          if (part.isHashtag) {
+            return (
+              <span
+                key={partIdx}
+                className="inline-flex items-center mx-0.5 px-1 py-0.5 rounded text-emerald-600 font-semibold text-xs hover:underline cursor-pointer"
+              >
+                {part.text}
+              </span>
+            );
+          }
+          return <span key={partIdx}>{part.text}</span>;
+        })}
+      </span>
+    );
   });
 }
 

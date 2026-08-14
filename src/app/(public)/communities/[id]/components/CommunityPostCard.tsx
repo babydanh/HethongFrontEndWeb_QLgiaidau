@@ -187,6 +187,7 @@ export default function CommunityPostCard({
   };
 
   const [showComments, setShowComments] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<{ id: string; authorName: string } | null>(null);
 
   const loadComments = async (forceShow = true) => {
     if (showComments && !forceShow) {
@@ -200,7 +201,7 @@ export default function CommunityPostCard({
       const response = await communitiesApi.getComments(
         post.communityId,
         post.id,
-        { limit: 20 },
+        { limit: 50 },
       );
       setComments(response.data ?? []);
     } catch (error: unknown) {
@@ -218,11 +219,12 @@ export default function CommunityPostCard({
       const response = await communitiesApi.createComment(
         post.communityId,
         post.id,
-        { body },
+        { body, parentId: replyingTo?.id },
       );
       setComments((current) => [...current, response.data]);
       onComment();
       setCommentText("");
+      setReplyingTo(null);
     } catch (error: unknown) {
       toast.error(getErrorMessage(error, "Không thể gửi bình luận."));
     } finally {
@@ -234,7 +236,8 @@ export default function CommunityPostCard({
     if (!window.confirm("Bạn có chắc muốn xóa bình luận này không?")) return;
     try {
       await communitiesApi.deleteComment(post.communityId, commentId);
-      setComments((current) => current.filter((c) => c.id !== commentId));
+      // Remove deleted comment and any direct replies to it
+      setComments((current) => current.filter((c) => c.id !== commentId && c.parentId !== commentId));
       toast.success("Đã xóa bình luận.");
     } catch (error: unknown) {
       toast.error(getErrorMessage(error, "Không thể xóa bình luận lúc này."));
@@ -409,34 +412,29 @@ export default function CommunityPostCard({
                 <span className="text-xs">Đang tải bình luận...</span>
               </div>
             ) : (
-              comments.map((comment) => (
-                <div
-                  key={comment.id}
-                  className="flex items-start gap-2.5 text-xs group"
-                >
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const rect = e.currentTarget.getBoundingClientRect();
-                      setPopoverUser({
-                        id: comment.author?.id || "",
-                        fullName: comment.author?.fullName || "Thành viên",
-                        avatarUrl: comment.author?.avatarUrl,
-                      });
-                      setPopoverAnchorRect(rect);
-                    }}
-                    className="shrink-0 transition-transform hover:scale-105 cursor-pointer pt-0.5"
-                  >
-                    <CommunityAvatar
-                      src={comment.author?.avatarUrl}
-                      name={comment.author?.fullName || "Thành viên"}
-                      size={32}
-                    />
-                  </button>
-                  <div className="min-w-0 flex-1">
-                    {/* Bubble content */}
-                    <div className="inline-block rounded-2xl bg-slate-100/90 px-3.5 py-2 text-xs border border-slate-200/60 max-w-full">
+              (() => {
+                const rootComments = comments.filter((c) => !c.parentId);
+                const replyMap = new Map<string, CommunityComment[]>();
+                comments.forEach((c) => {
+                  if (c.parentId) {
+                    const list = replyMap.get(c.parentId) || [];
+                    list.push(c);
+                    replyMap.set(c.parentId, list);
+                  }
+                });
+
+                const renderCommentItem = (comment: CommunityComment, isReply = false) => {
+                  const authorName = comment.author?.fullName?.trim() || "Thành viên";
+                  const authorAvatar = comment.author?.avatarUrl;
+
+                  return (
+                    <div
+                      key={comment.id}
+                      className={cn(
+                        "flex items-start gap-2.5 text-xs group",
+                        isReply && "pl-8 relative before:absolute before:left-3 before:top-3 before:bottom-0 before:w-0.5 before:bg-slate-200 before:content-['']"
+                      )}
+                    >
                       <button
                         type="button"
                         onClick={(e) => {
@@ -444,69 +442,135 @@ export default function CommunityPostCard({
                           const rect = e.currentTarget.getBoundingClientRect();
                           setPopoverUser({
                             id: comment.author?.id || "",
-                            fullName: comment.author?.fullName || "Thành viên",
-                            avatarUrl: comment.author?.avatarUrl,
+                            fullName: authorName,
+                            avatarUrl: authorAvatar,
+                            joinedAt: comment.createdAt,
                           });
                           setPopoverAnchorRect(rect);
                         }}
-                        className="font-bold text-slate-900 hover:text-blue-600 transition-colors cursor-pointer block text-left"
+                        className="shrink-0 transition-transform hover:scale-105 cursor-pointer pt-0.5"
                       >
-                        {comment.author?.fullName ?? "Thành viên"}
+                        <CommunityAvatar
+                          src={authorAvatar}
+                          name={authorName}
+                          size={isReply ? 26 : 32}
+                        />
                       </button>
-                      <p className="mt-0.5 text-slate-800 leading-relaxed break-words">{comment.body}</p>
-                    </div>
+                      <div className="min-w-0 flex-1">
+                        {/* Bubble content */}
+                        <div className="inline-block rounded-2xl bg-slate-100/90 px-3.5 py-2 text-xs border border-slate-200/60 max-w-full">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              setPopoverUser({
+                                id: comment.author?.id || "",
+                                fullName: authorName,
+                                avatarUrl: authorAvatar,
+                                joinedAt: comment.createdAt,
+                              });
+                              setPopoverAnchorRect(rect);
+                            }}
+                            className="font-bold text-slate-900 hover:text-blue-600 transition-colors cursor-pointer block text-left"
+                          >
+                            {authorName}
+                          </button>
+                          <p className="mt-0.5 text-slate-800 leading-relaxed break-words">{comment.body}</p>
+                        </div>
 
-                    {/* Actions under comment: Thích, Trả lời, Thời gian */}
-                    <div className="mt-1 flex items-center gap-3 pl-2 text-[11px] font-semibold text-slate-500">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setLikedComments((prev) => ({
-                            ...prev,
-                            [comment.id]: !prev[comment.id],
-                          }));
-                        }}
-                        className={cn(
-                          "hover:underline cursor-pointer transition-colors",
-                          likedComments[comment.id] ? "text-rose-600 font-bold" : "hover:text-rose-600",
-                        )}
-                      >
-                        {likedComments[comment.id] ? "Đã thích" : "Thích"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const authorMention = `@${comment.author?.fullName ?? "Thành viên"} `;
-                          setCommentText((prev) => (prev ? `${prev} ${authorMention}` : authorMention));
-                          commentInputRef.current?.focus();
-                        }}
-                        className="hover:underline hover:text-blue-600 cursor-pointer"
-                      >
-                        Trả lời
-                      </button>
-                      {comment.createdAt && (
-                        <span className="text-slate-400 font-normal">
-                          {new Date(comment.createdAt).toLocaleDateString("vi-VN", {
-                            day: "2-digit",
-                            month: "2-digit",
-                          })}
-                        </span>
-                      )}
-                      {(currentUser?.id === comment.author?.id || canManage) && (
-                        <button
-                          type="button"
-                          onClick={() => void handleDeleteComment(comment.id)}
-                          className="text-slate-400 hover:text-rose-600 transition-colors cursor-pointer opacity-0 group-hover:opacity-100"
-                          title="Xóa bình luận"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </button>
-                      )}
+                        {/* Actions under comment: Thích, Trả lời, Thời gian, Xóa */}
+                        <div className="mt-1 flex items-center gap-3 pl-2 text-[11px] font-semibold text-slate-500">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setLikedComments((prev) => ({
+                                ...prev,
+                                [comment.id]: !prev[comment.id],
+                              }));
+                            }}
+                            className={cn(
+                              "hover:underline cursor-pointer transition-colors",
+                              likedComments[comment.id] ? "text-rose-600 font-bold" : "hover:text-rose-600",
+                            )}
+                          >
+                            {likedComments[comment.id] ? "Đã thích" : "Thích"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const targetRootId = comment.parentId || comment.id;
+                              setReplyingTo({ id: targetRootId, authorName });
+                              const mention = `@${authorName} `;
+                              setCommentText(mention);
+                              commentInputRef.current?.focus();
+                            }}
+                            className="hover:underline hover:text-blue-600 cursor-pointer"
+                          >
+                            Trả lời
+                          </button>
+                          {comment.createdAt && (
+                            <span className="text-slate-400 font-normal">
+                              {new Date(comment.createdAt).toLocaleDateString("vi-VN", {
+                                day: "2-digit",
+                                month: "2-digit",
+                              })}
+                            </span>
+                          )}
+                          {(currentUser?.id === comment.author?.id || canManage) && (
+                            <button
+                              type="button"
+                              onClick={() => void handleDeleteComment(comment.id)}
+                              className="text-slate-400 hover:text-rose-600 transition-colors cursor-pointer opacity-0 group-hover:opacity-100"
+                              title="Xóa bình luận"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
                     </div>
+                  );
+                };
+
+                return (
+                  <div className="space-y-3">
+                    {rootComments.map((root) => {
+                      const replies = replyMap.get(root.id) || [];
+                      return (
+                        <div key={root.id} className="space-y-2.5">
+                          {renderCommentItem(root, false)}
+                          {replies.length > 0 && (
+                            <div className="space-y-2.5">
+                              {replies.map((rep) => renderCommentItem(rep, true))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
-                </div>
-              ))
+                );
+              })()
             )}
+          </div>
+        )}
+
+        {/* Replying-to indicator */}
+        {replyingTo && (
+          <div className="mt-2.5 flex items-center justify-between rounded-lg bg-blue-50/80 px-3 py-1.5 text-xs text-blue-700">
+            <span>
+              Đang trả lời <strong className="font-bold">{replyingTo.authorName}</strong>
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                setReplyingTo(null);
+                setCommentText("");
+              }}
+              className="text-slate-400 hover:text-slate-700 text-xs font-bold cursor-pointer"
+            >
+              ✕ Hủy
+            </button>
           </div>
         )}
 
@@ -545,7 +609,7 @@ export default function CommunityPostCard({
                   void submitComment();
                 }
               }}
-              placeholder="Viết bình luận..."
+              placeholder={replyingTo ? `Trả lời ${replyingTo.authorName}...` : "Viết bình luận..."}
               className="w-full rounded-full border border-slate-200 bg-slate-100/80 px-4 py-2 text-xs text-slate-800 placeholder:text-slate-500 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100 pr-14"
             />
             <button

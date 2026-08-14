@@ -85,6 +85,7 @@ export type CommunityReactionType = 'LIKE' | 'CHEER' | 'RESPECT' | 'LAUGH' | 'CL
 export interface CommunityComment {
   id: string;
   postId: string;
+  parentId?: string | null;
   author: CommunityPostAuthor;
   body: string;
   createdAt: string;

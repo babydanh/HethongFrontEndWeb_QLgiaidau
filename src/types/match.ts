@@ -61,6 +61,7 @@ export interface Match {
   completedAt?: string | null;
   updatedAt: string;
   courtName?: string | null;
+  courtAddress?: string | null;
   participant1Id?: string | null;
   participant2Id?: string | null;
   participant1?: { id: string; teamName: string; members?: { userId?: string; fullName?: string | null; avatarUrl?: string | null }[] } | null;
@@ -101,6 +102,7 @@ export interface Match {
     categoryName?: string | null;
     categorySlug?: string | null;
     venueName?: string | null;
+    venueAddress?: string | null;
     categoryConfig?: Record<string, unknown> | null;
     tournamentConfig?: { mode?: 'LITE' | 'ADVANCED' } | null;
   } | null;

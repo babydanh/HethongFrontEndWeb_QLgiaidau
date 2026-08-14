@@ -1376,6 +1376,19 @@ export default function LiveMatchPage({ params }: Props) {
               <Activity className="w-3.5 h-3.5 text-blue-500" />
               <span>Môn: {scorePresentation.sportLabel}</span>
             </span>
+            {(match.courtName || match.tournament?.venueName) && (
+              <span className="text-xs font-bold text-slate-700 bg-slate-50 border border-slate-200 px-3 py-1 rounded-full flex items-center gap-1 max-w-[320px] truncate" title={
+                match.courtAddress 
+                  ? `${match.courtName || match.tournament?.venueName} - ${match.courtAddress}`
+                  : (match.tournament?.venueAddress ? `${match.courtName || match.tournament?.venueName} - ${match.tournament.venueAddress}` : (match.courtName || match.tournament?.venueName || ''))
+              }>
+                <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                <span className="truncate">
+                  {match.courtName ? `Sân: ${match.courtName}` : `Sân: ${match.tournament?.venueName}`}
+                  {(match.courtAddress || match.tournament?.venueAddress) ? ` (${match.courtAddress || match.tournament?.venueAddress})` : ''}
+                </span>
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <Button
@@ -1764,8 +1777,18 @@ export default function LiveMatchPage({ params }: Props) {
 
               {/* Footer Info */}
               <div className="bg-slate-50 p-4 border-t border-slate-100 flex justify-between items-center text-xs font-semibold text-slate-500">
-                <div className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-slate-400" /> {match.courtName || 'Sân trung tâm'}
+                <div className="flex items-center gap-2 max-w-[50%] truncate" title={
+                  match.courtAddress 
+                    ? `${match.courtName || match.tournament?.venueName} - ${match.courtAddress}`
+                    : (match.tournament?.venueAddress ? `${match.courtName || match.tournament?.venueName} - ${match.tournament.venueAddress}` : (match.courtName || match.tournament?.venueName || ''))
+                }>
+                  <MapPin className="w-4 h-4 text-slate-400 shrink-0" /> 
+                  <span className="truncate">
+                    {match.courtName 
+                      ? `Sân: ${match.courtName}` 
+                      : (match.tournament?.venueName ? `Sân: ${match.tournament.venueName}` : 'Sân trung tâm')}
+                    {(match.courtAddress || match.tournament?.venueAddress) ? ` (${match.courtAddress || match.tournament?.venueAddress})` : ''}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Clock className="w-4 h-4 text-slate-400" /> {match.scheduledAt ? new Date(match.scheduledAt).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'}) : 'Chưa xếp giờ'}

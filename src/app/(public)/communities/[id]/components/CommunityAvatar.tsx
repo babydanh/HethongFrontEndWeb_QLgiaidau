@@ -27,7 +27,7 @@ export default function CommunityAvatar({
 
   return (
     <span
-      className="flex shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700"
+      className="flex shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-semibold text-blue-700"
       style={{ width: size, height: size }}
     >
       {name.slice(0, 1).toUpperCase()}

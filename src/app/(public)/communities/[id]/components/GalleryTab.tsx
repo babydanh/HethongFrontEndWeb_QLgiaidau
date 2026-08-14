@@ -120,7 +120,7 @@ export default function GalleryTab({ communityId, community, isOwnerOrMod }: Gal
             <Button 
               onClick={handleUploadClick}
               disabled={isUploading}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs"
+              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs"
             >
               {isUploading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}
               {isUploading ? 'Đang tải lên...' : 'Upload ảnh mới'}

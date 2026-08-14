@@ -242,13 +242,13 @@ export default function TournamentsTab({
             <Button 
               onClick={() => router.push(`/communities/${communityId}/manage/tournaments`)}
               variant="outline"
-              className="w-full sm:w-auto border-emerald-600 text-blue-700 hover:bg-blue-50 font-bold shadow-sm transition-all"
+              className="w-full sm:w-auto border-blue-600 text-blue-700 hover:bg-blue-50 font-semibold shadow-sm transition-all"
             >
               Quản lý giải đấu CLB
             </Button>
             <Button 
               onClick={() => setIsChoiceModalOpen(true)}
-              className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-sm transition-all"
+              className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-sm transition-all"
             >
               + Tạo giải đấu cấp CLB
             </Button>
@@ -267,9 +267,9 @@ export default function TournamentsTab({
           <button
             key={opt.key}
             onClick={() => setActiveFilter(opt.key)}
-            className={`px-3 py-1.5 rounded-lg border text-[11px] font-bold transition-all ${
+            className={`px-3 py-1.5 rounded-lg border text-[11px] font-semibold transition-all ${
               activeFilter === opt.key
-                ? 'border-emerald-600 text-blue-700 bg-blue-50 shadow-sm'
+                ? 'border-blue-600 text-blue-700 bg-blue-50 shadow-sm'
                 : 'border-slate-200 text-slate-600 bg-white hover:bg-slate-50'
             }`}
           >
@@ -297,7 +297,7 @@ export default function TournamentsTab({
             <div 
               key={t.id}
               onClick={() => router.push(`/tournaments/${t.divisions[0].id}`)}
-              className="group cursor-pointer bg-white border border-slate-200 hover:border-emerald-500/80 rounded-lg p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
+              className="group cursor-pointer bg-white border border-slate-200 hover:border-blue-500/80 rounded-lg p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-start justify-between gap-3 mb-3">
@@ -359,7 +359,7 @@ export default function TournamentsTab({
                         {t.divisions.length} hình thức
                       </span>
                     </div>
-                    <h3 className="font-bold text-slate-900 group-hover:text-emerald-700 transition-colors text-base line-clamp-1 mt-1">
+                    <h3 className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors text-base line-clamp-1 mt-1">
                       {t.name}
                     </h3>
                   </div>
@@ -406,7 +406,7 @@ export default function TournamentsTab({
               </div>
 
               <div className="mt-5 pt-4 border-t border-slate-100 flex justify-end">
-                <span className="text-xs font-bold text-blue-600 group-hover:text-emerald-700 flex items-center gap-1 transition-colors">
+                <span className="text-xs font-bold text-blue-600 group-hover:text-blue-700 flex items-center gap-1 transition-colors">
                   Xem chi tiết giải đấu →
                 </span>
               </div>

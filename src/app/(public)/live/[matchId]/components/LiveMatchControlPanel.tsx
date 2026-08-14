@@ -30,6 +30,8 @@ import {
   ModalTitle,
 } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
+import { FootballOfficialPanel } from './FootballOfficialPanel';
+import type { FootballEventType, FootballMatchPhase, FootballScoreState } from '@/features/matches/football-score';
 
 export interface LiveMatchControlPanelProps {
   canControlLiveMatch: boolean;
@@ -65,6 +67,12 @@ export interface LiveMatchControlPanelProps {
   isFootball?: boolean;
   shootoutGoals?: { p1Goals: number; p2Goals: number };
   onShootoutGoalsChange?: (goals: { p1Goals: number; p2Goals: number }) => void;
+  footballScore?: FootballScoreState;
+  onFootballGoal?: (team: 1 | 2) => void;
+  onFootballUndoGoal?: (team: 1 | 2) => void;
+  onFootballPhaseChange?: (phase: FootballMatchPhase) => void;
+  onFootballEvent?: (type: FootballEventType, team: 1 | 2) => void;
+  onFootballMinuteChange?: (minute: number) => void;
 }
 
 export function LiveMatchControlPanel({
@@ -100,6 +108,12 @@ export function LiveMatchControlPanel({
   isFootball = false,
   shootoutGoals = { p1Goals: 0, p2Goals: 0 },
   onShootoutGoalsChange,
+  footballScore,
+  onFootballGoal,
+  onFootballUndoGoal,
+  onFootballPhaseChange,
+  onFootballEvent,
+  onFootballMinuteChange,
 }: LiveMatchControlPanelProps) {
   const [confirmWinner, setConfirmWinner] = useState<1 | 2 | null>(null);
   const [activeTab, setActiveTab] = useState<'score' | 'penalty'>('score');
@@ -172,7 +186,7 @@ export function LiveMatchControlPanel({
           onSideOut={onSideOut}
         />
       ) : null}
-         {!isLiteMatch && scoreWarnings.length > 0 ? (
+         {!isFootball && !isLiteMatch && scoreWarnings.length > 0 ? (
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900">
           <span className="font-bold">⚠️ Cảnh báo bám luật:</span>
           <div className="mt-1 space-y-0.5">
@@ -183,12 +197,12 @@ export function LiveMatchControlPanel({
         </div>
       ) : null}
 
-      <div className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-900">
+      {!isFootball ? <div className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-900">
         {scoreGuidance.targetSummary}
         <span className="ml-1 opacity-75">| {scoreGuidance.examples.join(', ')}</span>
-      </div>
+      </div> : null}
 
-      <div className="rounded-lg border border-slate-200 bg-white p-3">
+      {!isFootball ? <div className="rounded-lg border border-slate-200 bg-white p-3">
         <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Tiến trình set</p>
@@ -237,9 +251,9 @@ export function LiveMatchControlPanel({
             </div>
           ))}
         </div>
-      </div>
+      </div> : null}
 
-      {!isLiteMatch ? <div className="rounded-lg border border-slate-200 bg-white p-3">
+      {!isFootball && !isLiteMatch ? <div className="rounded-lg border border-slate-200 bg-white p-3">
         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Chế độ trọng tài</p>
@@ -328,7 +342,19 @@ export function LiveMatchControlPanel({
 
         {match.status === 'ONGOING' ? (
           <div className="space-y-6">
-            {isTennis ? (
+            {isFootball && footballScore && onFootballGoal && onFootballUndoGoal && onFootballPhaseChange && onFootballEvent && onFootballMinuteChange ? (
+              <FootballOfficialPanel
+                team1Name={team1Name}
+                team2Name={team2Name}
+                score={footballScore}
+                isSubmitting={isSubmitting}
+                onGoal={onFootballGoal}
+                onUndoGoal={onFootballUndoGoal}
+                onPhaseChange={onFootballPhaseChange}
+                onEvent={onFootballEvent}
+                onMinuteChange={onFootballMinuteChange}
+              />
+            ) : isTennis ? (
               <TennisOfficialPanel
                 match={match}
                 team1Name={team1Name}
@@ -369,7 +395,7 @@ export function LiveMatchControlPanel({
               />
             )}
 
-            <div className="sticky bottom-0 z-10 -mx-3 flex min-w-0 flex-col justify-between gap-3 border-t border-slate-100 bg-white/95 px-3 pb-1 pt-3 backdrop-blur sm:-mx-4 sm:flex-row sm:px-4 md:-mx-5 md:px-5">
+            {!isFootball ? <div className="sticky bottom-0 z-10 -mx-3 flex min-w-0 flex-col justify-between gap-3 border-t border-slate-100 bg-white/95 px-3 pb-1 pt-3 backdrop-blur sm:-mx-4 sm:flex-row sm:px-4 md:-mx-5 md:px-5">
               <button
                 onClick={onFinishSet}
                 disabled={isSubmitting || !match.participant1Id || !match.participant2Id}
@@ -404,7 +430,7 @@ export function LiveMatchControlPanel({
                   Game hiện tại của set: {currentSet.team1Score} - {currentSet.team2Score}
                 </p>
               ) : null}
-            </div>
+            </div> : null}
           </div>
         ) : null}
 

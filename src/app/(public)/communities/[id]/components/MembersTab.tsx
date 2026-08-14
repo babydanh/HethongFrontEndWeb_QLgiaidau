@@ -250,7 +250,7 @@ export default function MembersTab({
     });
     if (item.streak?.type && item.streak.count > 0) {
       const streakClasses = {
-        WIN: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+        WIN: 'bg-blue-50 text-blue-700 border-blue-200',
         LOSS: 'bg-rose-50 text-rose-700 border-rose-200',
         ELO_UP: 'bg-amber-50 text-amber-700 border-amber-200',
       }[item.streak.type];
@@ -326,14 +326,14 @@ export default function MembersTab({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="block w-full pl-10 pr-3 py-2 border border-slate-200 rounded-lg bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm transition-all"
+            className="block w-full pl-10 pr-3 py-2 border border-slate-200 rounded-lg bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all"
             placeholder="Tìm thành viên..."
           />
         </div>
         {isOwnerOrMod && (
           <Button 
             onClick={() => setIsInviteOpen(true)}
-            className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-sm transition-all"
+            className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-sm transition-all"
           >
             <UserPlus className="w-4 h-4 mr-2" />
             Mời thành viên
@@ -373,7 +373,7 @@ export default function MembersTab({
                       className="flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100/70 border border-slate-200/60 rounded-lg transition-all relative cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 font-bold shrink-0 relative overflow-hidden">
+                        <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold shrink-0 relative overflow-hidden">
                           {item.user?.avatarUrl ? (
                             <Image src={item.user.avatarUrl} alt={item.user.fullName} fill className="object-cover" />
                           ) : (
@@ -547,11 +547,11 @@ export default function MembersTab({
                                 <Tag className="w-4 h-4 text-slate-500" /> Gán tag
                               </button>
                               <button
-                                  onClick={() => setKickTarget({ userId: item.user.id, name: item.user.fullName })}
-                                  className="w-full text-left px-4 py-2 text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2 transition-colors"
-                                >
-                                  <Trash2 className="w-4 h-4 text-rose-500" /> Kích khỏi nhóm
-                                </button>
+                                onClick={() => setKickTarget({ userId: item.user.id, name: item.user.fullName })}
+                                className="w-full text-left px-4 py-2 text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2 transition-colors"
+                              >
+                                <Trash2 className="w-4 h-4 text-rose-500" /> Kích khỏi nhóm
+                              </button>
                               <button
                                 onClick={() => setBanTarget({ userId: item.user.id, name: item.user.fullName })}
                                 className="w-full text-left px-4 py-2 text-xs text-rose-700 hover:bg-rose-50 flex items-center gap-2 transition-colors"
@@ -611,7 +611,7 @@ export default function MembersTab({
                   value={inviteSearch}
                   onChange={(e) => setInviteSearch(e.target.value)}
                   placeholder="Nhập tên hoặc email người dùng..."
-                  className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-250 outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all text-sm"
+                  className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm"
                 />
               </div>
 
@@ -640,7 +640,7 @@ export default function MembersTab({
                         size="sm" 
                         onClick={() => handleInviteUser(user)}
                         disabled={isInvitingId === user.id}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-1 rounded"
+                        className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1 rounded"
                       >
                         {isInvitingId === user.id ? 'Đang mời...' : 'Mời'}
                       </Button>

@@ -171,7 +171,7 @@ export default function TagAssignModal({
               }
               className={cn(
                 "flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none transition-all",
-                "focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500",
+                "focus:ring-2 focus:ring-blue-500 focus:border-blue-500",
                 "disabled:bg-slate-50 disabled:text-slate-400",
               )}
             />
@@ -197,7 +197,7 @@ export default function TagAssignModal({
                   setError(null);
                 }}
                 disabled={isSaving || tags.length >= MAX_TAGS}
-                className="rounded-full border px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:border-emerald-300 hover:text-emerald-700 disabled:opacity-50"
+                className="rounded-full border px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:border-blue-300 hover:text-blue-700 disabled:opacity-50"
                 style={{ backgroundColor: `${preset.color}26`, borderColor: `${preset.color}66` }}
               >
                 {preset.name}
@@ -224,10 +224,9 @@ export default function TagAssignModal({
             Hủy bỏ
           </Button>
           <Button
-            variant="success"
             onClick={handleSave}
             disabled={isSaving}
-            className="text-xs"
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs"
           >
             {isSaving ? "Đang lưu..." : "Lưu tag"}
           </Button>

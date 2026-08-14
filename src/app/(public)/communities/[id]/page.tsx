@@ -314,7 +314,7 @@ export default function CommunityDetailPage() {
     if (membership?.status === 'PENDING') return 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200';
     if (membership?.status === 'INVITED') return 'bg-blue-600 hover:bg-blue-700 text-white animate-pulse';
     if (community?.joinMode === 'INVITE_ONLY') return 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200';
-    return 'bg-emerald-600 hover:bg-emerald-700 text-white';
+    return 'bg-blue-600 hover:bg-blue-700 text-white';
   };
 
   if (isLoading) {
@@ -336,7 +336,7 @@ export default function CommunityDetailPage() {
         <Users className="w-16 h-16 text-slate-300 mb-4" />
         <h2 className="text-2xl font-bold text-slate-900 mb-2">Không tìm thấy câu lạc bộ</h2>
         <p className="text-slate-500 mb-6">Câu lạc bộ này có thể đã bị xóa hoặc không tồn tại.</p>
-        <Button onClick={() => router.push('/communities')} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+        <Button onClick={() => router.push('/communities')} className="bg-blue-600 hover:bg-blue-700 text-white">
           Quay lại danh sách
         </Button>
       </div>
@@ -365,7 +365,7 @@ export default function CommunityDetailPage() {
               priority 
             />
           ) : (
-            <div className="absolute inset-0 bg-gradient-to-r from-slate-800 to-slate-950"></div>
+            <div className="absolute inset-0 bg-slate-900"></div>
           )}
           
           {/* Back button */}
@@ -448,10 +448,10 @@ export default function CommunityDetailPage() {
             <Button 
               onClick={handleJoinAction}
               disabled={isJoinLoading || membership?.status === 'PENDING'}
-              className={`flex-1 md:flex-none px-6 font-bold text-xs shadow-sm transition-all h-10 rounded-lg ${
+              className={`flex-1 md:flex-none px-6 font-semibold text-xs shadow-sm transition-all h-10 rounded-lg ${
                 isOwner ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200' :
                 membership?.status === 'JOINED' ? 'bg-blue-50 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 text-blue-700 border border-blue-200' :
-                'bg-emerald-600 hover:bg-emerald-700 text-white border-none'
+                'bg-blue-600 hover:bg-blue-700 text-white border-none'
               }`}
             >
               {isJoinLoading && <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />}
@@ -464,13 +464,13 @@ export default function CommunityDetailPage() {
               disabled={isFollowLoading}
               className={`h-10 px-3 rounded-lg shadow-sm border transition-colors ${
                 isFollowing
-                  ? 'bg-emerald-50 border-emerald-300 text-emerald-600'
+                  ? 'bg-blue-50 border-blue-300 text-blue-600'
                   : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700'
               }`}
               aria-label={isFollowing ? 'Bỏ theo dõi câu lạc bộ' : 'Theo dõi câu lạc bộ'}
               title={isFollowing ? 'Bỏ theo dõi' : 'Theo dõi'}
             >
-              <Bookmark strokeWidth={1.5} className={`w-4 h-4 ${isFollowing ? 'fill-emerald-600 text-emerald-600' : ''}`} />
+              <Bookmark strokeWidth={1.5} className={`w-4 h-4 ${isFollowing ? 'fill-blue-600 text-blue-600' : ''}`} />
             </Button>
 
             <Button
@@ -479,13 +479,13 @@ export default function CommunityDetailPage() {
               disabled={isFollowLoading}
               className={`hidden h-10 px-3 rounded-lg shadow-sm border transition-colors ${
                 isFavorite
-                  ? 'bg-emerald-50 border-emerald-300 text-emerald-600'
+                  ? 'bg-blue-50 border-blue-300 text-blue-600'
                   : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700'
               }`}
               aria-label={isFavorite ? 'Bỏ yêu thích câu lạc bộ' : 'Yêu thích câu lạc bộ'}
               title={isFavorite ? 'Bỏ yêu thích' : 'Yêu thích'}
             >
-              <Star strokeWidth={1.5} className={`w-4 h-4 ${isFavorite ? 'fill-emerald-600 text-emerald-600' : ''}`} />
+              <Star strokeWidth={1.5} className={`w-4 h-4 ${isFavorite ? 'fill-blue-600 text-blue-600' : ''}`} />
             </Button>
 
             <Button
@@ -537,9 +537,9 @@ export default function CommunityDetailPage() {
             <button 
               key={tab.id}
               onClick={() => setActiveTab(tab.id as typeof activeTab)}
-              className={`px-5 py-2.5 rounded-lg font-bold text-sm whitespace-nowrap transition-all flex items-center gap-2 ${
+              className={`px-5 py-2.5 rounded-lg font-semibold text-sm whitespace-nowrap transition-all flex items-center gap-2 ${
                 activeTab === tab.id 
-                  ? 'bg-[#0d8fd4] text-white shadow-sm' 
+                  ? 'bg-blue-600 text-white shadow-sm' 
                   : 'bg-slate-200/80 text-slate-700 hover:bg-slate-300 hover:text-slate-950'
               }`}
             >
@@ -549,9 +549,9 @@ export default function CommunityDetailPage() {
           {isOwner && (
              <button 
                onClick={() => setActiveTab('settings')}
-               className={`px-5 py-2.5 rounded-lg font-bold text-sm whitespace-nowrap transition-all flex items-center gap-2 ${
+               className={`px-5 py-2.5 rounded-lg font-semibold text-sm whitespace-nowrap transition-all flex items-center gap-2 ${
                 activeTab === 'settings' 
-                  ? 'bg-[#0d8fd4] text-white shadow-sm' 
+                  ? 'bg-blue-600 text-white shadow-sm' 
                   : 'bg-slate-200/80 text-slate-700 hover:bg-slate-300 hover:text-slate-950'
               }`}
              >

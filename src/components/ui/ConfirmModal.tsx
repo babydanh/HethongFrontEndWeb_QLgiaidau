@@ -21,6 +21,7 @@ interface ConfirmModalProps {
   variant?: 'danger' | 'default';
   onConfirm: () => void;
   isLoading?: boolean;
+  confirmDisabled?: boolean;
   /** Nội dung phụ (ví dụ input xác nhận tên CLB khi xoá) */
   children?: React.ReactNode;
 }
@@ -28,7 +29,7 @@ interface ConfirmModalProps {
 /**
  * Modal xác nhận thống nhất thay cho confirm()/prompt() native.
  * - variant 'danger': icon TriangleAlert + nút xác nhận đỏ (hành động nguy hiểm)
- * - variant 'default': icon AlertTriangle + nút xác nhận emerald-600
+ * - variant 'default': icon AlertTriangle + nút xác nhận brand blue
  * - Enter submit, Escape đóng (Radix Dialog mặc định)
  */
 export default function ConfirmModal({
@@ -41,6 +42,7 @@ export default function ConfirmModal({
   variant = 'default',
   onConfirm,
   isLoading = false,
+  confirmDisabled = false,
   children,
 }: ConfirmModalProps) {
   const isDanger = variant === 'danger';
@@ -48,7 +50,7 @@ export default function ConfirmModal({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (isLoading) return;
+    if (isLoading || confirmDisabled) return;
     onConfirm();
   };
 
@@ -62,7 +64,7 @@ export default function ConfirmModal({
                 'flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border',
                 isDanger
                   ? 'bg-rose-50 text-rose-600 border-rose-100'
-                  : 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                  : 'bg-blue-50 text-blue-600 border-blue-100'
               )}
             >
               <Icon className="h-5 w-5" strokeWidth={1.5} />
@@ -93,9 +95,10 @@ export default function ConfirmModal({
             </Button>
             <Button
               type="submit"
-              variant={isDanger ? 'destructive' : 'success'}
+              variant={isDanger ? 'destructive' : 'default'}
               isLoading={isLoading}
-              className="h-9 px-4 text-xs font-bold"
+              disabled={isLoading || confirmDisabled}
+              className="h-9 px-4 text-xs font-semibold"
             >
               {isLoading ? 'Đang xử lý...' : confirmLabel}
             </Button>

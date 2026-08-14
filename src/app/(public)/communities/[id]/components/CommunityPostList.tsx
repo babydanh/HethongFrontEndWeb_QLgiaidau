@@ -73,7 +73,7 @@ export default function CommunityPostList({
           disabled={isLoadingMore}
           onClick={onLoadMore}
           className={cn(
-            "mx-auto flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-600 hover:border-emerald-300 hover:text-emerald-700",
+            "mx-auto flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:border-blue-300 hover:text-blue-700",
             isLoadingMore && "opacity-60",
           )}
         >

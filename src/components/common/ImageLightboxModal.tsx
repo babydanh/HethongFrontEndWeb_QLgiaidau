@@ -17,10 +17,14 @@ export default function ImageLightboxModal({
   onClose,
 }: ImageLightboxModalProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
+  const [prevInitialIndex, setPrevInitialIndex] = useState(initialIndex);
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
 
-  useEffect(() => {
+  if (initialIndex !== prevInitialIndex || isOpen !== prevIsOpen) {
+    setPrevInitialIndex(initialIndex);
+    setPrevIsOpen(isOpen);
     setCurrentIndex(initialIndex);
-  }, [initialIndex, isOpen]);
+  }
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {

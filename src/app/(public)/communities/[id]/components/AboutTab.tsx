@@ -94,7 +94,7 @@ export default function AboutTab({
                               <span key={key} className="inline-flex items-center gap-1 bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
                                 <span className="font-bold text-[10px] text-slate-500">{label}:</span>
                                 {isUrl ? (
-                                  <a href={val} target="_blank" rel="noopener noreferrer" className="text-emerald-700 hover:underline max-w-[120px] truncate font-semibold">
+                                  <a href={val} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-700 hover:underline max-w-[120px] truncate font-semibold">
                                     Link
                                   </a>
                                 ) : (

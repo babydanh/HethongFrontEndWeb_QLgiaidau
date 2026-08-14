@@ -217,7 +217,7 @@ export default function ModerationTab({
                 <p className="text-sm font-semibold text-slate-900">{post.author.fullName}</p>
                 <p className="mt-2 whitespace-pre-wrap text-sm text-slate-700">{post.content || '(Bài viết hình ảnh)'}</p>
                 <div className="mt-4 flex gap-2">
-                  <button type="button" onClick={() => handleModeratePost(post.id, 'PUBLISHED')} className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700">Duyệt</button>
+                  <button type="button" onClick={() => handleModeratePost(post.id, 'PUBLISHED')} className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700">Duyệt</button>
                   <button type="button" onClick={() => handleModeratePost(post.id, 'REJECTED')} className="rounded-lg border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50">Từ chối</button>
                 </div>
               </article>
@@ -225,6 +225,7 @@ export default function ModerationTab({
           </div>
         )}
       </section>
+
       <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
         <div className="mb-5 flex items-center gap-2 border-b border-slate-100 pb-3">
           <Users className="h-4 w-4 text-blue-600" />
@@ -275,7 +276,7 @@ export default function ModerationTab({
                     <div className="flex shrink-0 flex-col gap-2">
                       <button
                         onClick={() => handleReview(userId, 'APPROVE')}
-                        className="rounded-lg bg-emerald-600 p-2 text-white transition-colors hover:bg-emerald-700"
+                        className="rounded-lg bg-blue-600 p-2 text-white transition-colors hover:bg-blue-700"
                         title="Duyệt"
                       >
                         <Check className="h-4 w-4" />
@@ -365,7 +366,7 @@ export default function ModerationTab({
             <input
               value={userSearchQuery}
               onChange={(e) => setUserSearchQuery(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 py-2 pl-9 pr-3 text-sm text-slate-900 outline-none transition-colors focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500"
+              className="w-full rounded-lg border border-slate-200 py-2 pl-9 pr-3 text-sm text-slate-900 outline-none transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
               placeholder="Nhập tên hoặc email..."
               type="text"
             />
@@ -387,7 +388,7 @@ export default function ModerationTab({
                   <button
                     onClick={() => handleInvite(user.id)}
                     disabled={isInviting[user.id]}
-                    className="shrink-0 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:bg-emerald-100 disabled:opacity-60"
+                    className="shrink-0 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 disabled:opacity-60"
                   >
                     {isInviting[user.id] ? 'Đang gửi...' : 'Mời'}
                   </button>

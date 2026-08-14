@@ -40,6 +40,15 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/Button';
 import { OfficialScoreModal } from './components/OfficialScoreModal';
+import { FootballOfficialPanel } from './components/FootballOfficialPanel';
+import {
+  DEFAULT_FOOTBALL_SCORE,
+  readFootballScore,
+  writeFootballScore,
+  type FootballEventType,
+  type FootballMatchPhase,
+  type FootballScoreState,
+} from '@/features/matches/football-score';
 
 import type { TournamentParticipant } from '@/types/tournament';
 import { ReportViolationButton } from '@/features/reports/components/ReportViolationButton';
@@ -130,6 +139,7 @@ export default function LiveMatchPage({ params }: Props) {
   const [overrideReason, setOverrideReason] = useState('');
   // Bóng đá: kết quả luân lưu khi trận hòa ở knockout
   const [shootoutGoals, setShootoutGoals] = useState<{ p1Goals: number; p2Goals: number }>({ p1Goals: 0, p2Goals: 0 });
+  const [footballScore, setFootballScore] = useState<FootballScoreState>(DEFAULT_FOOTBALL_SCORE);
   const [isOfficialScoreModalOpen, setIsOfficialScoreModalOpen] = useState(false);
   const [optimisticTennisPointState, setOptimisticTennisPointState] = useState<TennisLivePointState | null>(null);
   const lastSyncedTennisServerKeyRef = useRef<string>('init');
@@ -411,6 +421,10 @@ export default function LiveMatchPage({ params }: Props) {
   const currentSet = scores[activeSetIdx] || { team1Score: 0, team2Score: 0, isFinished: false };
   const normalizedCommentText = trimAndNormalizeSpaces(commentText);
   const resolvedRules = resolveMatchSportRules(match);
+  useEffect(() => {
+    if (resolvedRules.kind !== 'FOOTBALL') return;
+    setFootballScore(readFootballScore(match.scoreDetails));
+  }, [match.id, match.scoreDetails, resolvedRules.kind]);
   const isLiteMatch = match?.tournament?.tournamentConfig?.mode === 'LITE';
   const scorePresentation = getMatchScorePresentation(resolvedRules.kind);
   const scoreGuidance = isLiteMatch
@@ -648,6 +662,88 @@ export default function LiveMatchPage({ params }: Props) {
       scoreSyncTimerRef.current = null;
       void flushScoreSync();
     }, 140);
+  };
+
+  const syncFootballScore = (nextScore: FootballScoreState) => {
+    setFootballScore(nextScore);
+    const nextScores: MatchScore[] = [{
+      team1Score: nextScore.team1Goals,
+      team2Score: nextScore.team2Goals,
+      isFinished: nextScore.phase === 'FULL_TIME' || nextScore.phase === 'COMPLETED',
+    }];
+    setScores(nextScores);
+    const isDecisivePhase = nextScore.phase === 'FULL_TIME' || nextScore.phase === 'COMPLETED' || nextScore.phase === 'PENALTY_SHOOTOUT';
+    const currentWinner = !isDecisivePhase || nextScore.team1Goals === nextScore.team2Goals
+      ? null
+      : nextScore.team1Goals > nextScore.team2Goals
+        ? match.participant1Id
+        : match.participant2Id;
+    enqueueScoreSync({
+      p1SetsWon: 0,
+      p2SetsWon: 0,
+      scoreDetails: {
+        ...buildScoreDetailsPayload(nextScores),
+        football: writeFootballScore(nextScore),
+      },
+      winnerId: currentWinner,
+    });
+  };
+
+  const handleFootballGoal = (team: 1 | 2) => {
+    if (!ensureCanControlLiveMatch()) return;
+    const nextScore: FootballScoreState = {
+      ...footballScore,
+      team1Goals: footballScore.team1Goals + (team === 1 ? 1 : 0),
+      team2Goals: footballScore.team2Goals + (team === 2 ? 1 : 0),
+      events: [
+        ...footballScore.events,
+        {
+          id: crypto.randomUUID(),
+          type: 'GOAL',
+          team,
+          minute: footballScore.minute,
+          addedMinute: footballScore.addedMinute,
+        },
+      ],
+    };
+    syncFootballScore(nextScore);
+  };
+
+  const handleFootballUndoGoal = (team: 1 | 2) => {
+    if (!ensureCanControlLiveMatch()) return;
+    const eventIndex = [...footballScore.events].reverse().findIndex((event) => event.team === team && event.type === 'GOAL');
+    const resolvedIndex = eventIndex === -1 ? -1 : footballScore.events.length - 1 - eventIndex;
+    const events = resolvedIndex === -1
+      ? footballScore.events
+      : footballScore.events.filter((_, index) => index !== resolvedIndex);
+    syncFootballScore({
+      ...footballScore,
+      team1Goals: Math.max(0, footballScore.team1Goals - (team === 1 ? 1 : 0)),
+      team2Goals: Math.max(0, footballScore.team2Goals - (team === 2 ? 1 : 0)),
+      events,
+    });
+  };
+
+  const handleFootballEvent = (type: FootballEventType, team: 1 | 2) => {
+    if (!ensureCanControlLiveMatch()) return;
+    syncFootballScore({
+      ...footballScore,
+      events: [
+        ...footballScore.events,
+        {
+          id: crypto.randomUUID(),
+          type,
+          team,
+          minute: footballScore.minute,
+          addedMinute: footballScore.addedMinute,
+        },
+      ],
+    });
+  };
+
+  const handleFootballPhaseChange = (phase: FootballMatchPhase) => {
+    if (!ensureCanControlLiveMatch()) return;
+    syncFootballScore({ ...footballScore, phase });
   };
 
   // Handle Score Updates
@@ -896,6 +992,54 @@ export default function LiveMatchPage({ params }: Props) {
       const winnerId = winnerTeam === 1 ? match.participant1Id : match.participant2Id;
       if (!winnerId) {
         toast.error('Không tìm thấy ID người thắng cuộc');
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (isFootball) {
+        const isRegulationDraw = footballScore.team1Goals === footballScore.team2Goals;
+        const shootoutIsValid = Number.isInteger(shootoutGoals.p1Goals)
+          && Number.isInteger(shootoutGoals.p2Goals)
+          && shootoutGoals.p1Goals >= 0
+          && shootoutGoals.p2Goals >= 0
+          && shootoutGoals.p1Goals !== shootoutGoals.p2Goals;
+        if (isRegulationDraw && !shootoutIsValid) {
+          toast.error('Tráº­n hÃ²a pháº£i nháº­p tá»· sá»‘ luÃ¢n lÆ°u khÃ¡c nhau Ä‘á»ƒ phÃ¢n Ä‘á»‹nh.');
+          setIsSubmitting(false);
+          return;
+        }
+        if (isRegulationDraw) {
+          const shootoutWinner = shootoutGoals.p1Goals > shootoutGoals.p2Goals ? match.participant1Id : match.participant2Id;
+          if (shootoutWinner !== winnerId) {
+            toast.error('Äá»™i tháº¯ng pháº£i cÃ³ tá»· sá»‘ luÃ¢n lÆ°u cao hÆ¡n.');
+            setIsSubmitting(false);
+            return;
+          }
+        } else {
+          const scoreWinner = footballScore.team1Goals > footballScore.team2Goals ? match.participant1Id : match.participant2Id;
+          if (scoreWinner !== winnerId) {
+            toast.error('Äá»™i tháº¯ng pháº£i khá»›p vá»›i tá»· sá»‘ bÃ n tháº¯ng.');
+            setIsSubmitting(false);
+            return;
+          }
+        }
+        const completedFootball: FootballScoreState = {
+          ...footballScore,
+          phase: isRegulationDraw ? 'PENALTY_SHOOTOUT' : 'COMPLETED',
+          shootout: isRegulationDraw ? { ...shootoutGoals, winnerId } : footballScore.shootout,
+        };
+        const completedMatch = await updateScoreWithRevision({
+          p1SetsWon: 0,
+          p2SetsWon: 0,
+          scoreDetails: {
+            ...buildScoreDetailsPayload([], sideOutState, null, penalties),
+            football: writeFootballScore(completedFootball),
+          },
+          winnerId,
+        });
+        setFootballScore(completedFootball);
+        applyServerSnapshot(completedMatch);
+        toast.success(`ÄÃ£ hoÃ n táº¥t tráº­n Ä‘áº¥u. Äá»™i tháº¯ng: ${winnerTeam === 1 ? team1Name : team2Name}.`);
         setIsSubmitting(false);
         return;
       }
@@ -1767,6 +1911,12 @@ export default function LiveMatchPage({ params }: Props) {
           isFootball={resolvedRules.kind === 'FOOTBALL'}
           shootoutGoals={shootoutGoals}
           onShootoutGoalsChange={setShootoutGoals}
+          footballScore={footballScore}
+          onFootballGoal={handleFootballGoal}
+          onFootballUndoGoal={handleFootballUndoGoal}
+          onFootballPhaseChange={handleFootballPhaseChange}
+          onFootballEvent={handleFootballEvent}
+          onFootballMinuteChange={(minute) => syncFootballScore({ ...footballScore, minute })}
         />
 
         <ShareModal

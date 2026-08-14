@@ -15,7 +15,7 @@ const getCategoryStyles = (name: string) => {
   if (normalized.includes("pickleball")) {
     return {
       bg: "bg-blue-50/80 text-blue-700 border-blue-200/30",
-      dot: "bg-emerald-500"
+      dot: "bg-blue-500"
     };
   }
   if (normalized.includes("tennis")) {
@@ -145,7 +145,7 @@ export default function CommunitiesPage() {
           <input 
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-xs font-semibold text-slate-800 outline-none transition-all h-11" 
+            className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs font-semibold text-slate-800 outline-none transition-all h-11" 
             placeholder="Tìm kiếm câu lạc bộ theo tên..." 
             type="text" 
           />
@@ -155,7 +155,7 @@ export default function CommunitiesPage() {
           <select 
             value={provinceCode}
             onChange={(e) => setProvinceCode(e.target.value)}
-            className="w-full px-3.5 py-2.5 border border-slate-300 rounded-lg bg-slate-50 text-xs font-semibold text-slate-700 focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none h-11 cursor-pointer"
+            className="w-full px-3.5 py-2.5 border border-slate-300 rounded-lg bg-slate-50 text-xs font-semibold text-slate-700 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none h-11 cursor-pointer"
           >
             <option value="">Tất cả tỉnh/thành</option>
             {provinces.map(p => <option key={p.code} value={p.code}>{p.name}</option>)}
@@ -166,7 +166,7 @@ export default function CommunitiesPage() {
           <select 
             value={categoryId}
             onChange={(e) => setCategoryId(e.target.value)}
-            className="w-full px-3.5 py-2.5 border border-slate-300 rounded-lg bg-slate-50 text-xs font-semibold text-slate-700 focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none h-11 cursor-pointer"
+            className="w-full px-3.5 py-2.5 border border-slate-300 rounded-lg bg-slate-50 text-xs font-semibold text-slate-700 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none h-11 cursor-pointer"
           >
             <option value="">Tất cả môn thể thao</option>
             {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -211,13 +211,13 @@ export default function CommunitiesPage() {
                       className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out" 
                     />
                   ) : (
-                    <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-emerald-950 to-slate-950 opacity-90" />
+                    <div className="absolute inset-0 bg-slate-900" />
                   )}
                   
                   {/* Join Mode Badge */}
                   <div className="absolute top-3 left-3 z-10 flex items-center gap-1 px-2.5 py-0.5 bg-white/95 backdrop-blur-md rounded-full shadow-sm text-slate-800 border border-white/20">
                     <span className={`w-1.5 h-1.5 rounded-full ${
-                      community.joinMode === 'INVITE_ONLY' ? 'bg-rose-500 animate-pulse' : community.joinMode === 'APPROVAL' ? 'bg-amber-500' : 'bg-emerald-500'
+                      community.joinMode === 'INVITE_ONLY' ? 'bg-rose-500 animate-pulse' : community.joinMode === 'APPROVAL' ? 'bg-amber-500' : 'bg-blue-500'
                     }`} />
                     <span className="text-[8px] font-bold tracking-wider uppercase text-slate-700">
                       {community.joinMode === 'INVITE_ONLY' ? 'Chỉ mời' : community.joinMode === 'APPROVAL' ? 'Xét duyệt' : 'Tự do'}
@@ -226,7 +226,7 @@ export default function CommunitiesPage() {
 
                   {/* Floating Location Badge */}
                   <div className="absolute top-3 right-3 z-10 flex items-center gap-1 px-2.5 py-0.5 bg-white/95 backdrop-blur-md rounded-full shadow-sm text-slate-800 border border-white/20">
-                    <MapPin className="w-2.5 h-2.5 text-blue-500 fill-emerald-500/20" />
+                    <MapPin className="w-2.5 h-2.5 text-blue-600" />
                     <span className="text-[8px] font-bold tracking-wider uppercase">{provinceName}</span>
                   </div>
                 </div>
@@ -327,7 +327,7 @@ export default function CommunitiesPage() {
             <span className="material-symbols-outlined">chevron_left</span>
           </button>
           
-          <button className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg bg-emerald-600 text-white text-xs font-bold">
+          <button className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg bg-blue-600 text-white text-xs font-semibold">
             {page}
           </button>
 

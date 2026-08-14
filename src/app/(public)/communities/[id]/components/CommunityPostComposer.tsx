@@ -67,7 +67,7 @@ export default function CommunityPostComposer({
           }}
           onKeyDown={onComposerKeyDown}
           placeholder="Bạn đang nghĩ gì về trận đấu hôm nay? Gõ @ để nhắc thành viên"
-          className="mt-4 min-h-28 w-full resize-y rounded-lg border border-slate-200 bg-slate-50/70 p-3 text-sm text-slate-800 placeholder:text-slate-500 outline-none transition focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-100"
+          className="mt-4 min-h-28 w-full resize-y rounded-lg border border-slate-200 bg-slate-50/70 p-3 text-sm text-slate-800 placeholder:text-slate-500 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
           disabled={isSubmitting}
         />
 
@@ -95,7 +95,7 @@ export default function CommunityPostComposer({
                 className={cn(
                   "flex items-center gap-2 rounded-lg px-2 py-2",
                   index === mentionIndex
-                    ? "bg-emerald-50"
+                    ? "bg-blue-50 text-blue-900"
                     : "hover:bg-slate-50",
                 )}
               >
@@ -130,7 +130,7 @@ export default function CommunityPostComposer({
                       event.stopPropagation();
                       onManageTags(member);
                     }}
-                    className="rounded border border-slate-200 px-2 py-1 text-[10px] font-semibold text-slate-500 hover:border-emerald-300 hover:text-emerald-700"
+                    className="rounded border border-slate-200 px-2 py-1 text-[10px] font-semibold text-slate-500 hover:border-blue-300 hover:text-blue-700"
                   >
                     Gán tag
                   </button>
@@ -167,7 +167,7 @@ export default function CommunityPostComposer({
               className={cn(
                 "rounded-full px-2.5 py-0.5 text-xs font-semibold transition-all select-none",
                 isSelected
-                  ? "bg-emerald-600 text-white shadow-xs"
+                  ? "bg-blue-600 text-white shadow-xs"
                   : "bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900 border border-slate-200/60",
               )}
             >
@@ -215,9 +215,9 @@ export default function CommunityPostComposer({
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-emerald-700 transition"
+            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-blue-700 transition"
           >
-            <ImagePlus className="h-4 w-4 text-emerald-600" />
+            <ImagePlus className="h-4 w-4 text-blue-600" />
             Đính kèm ảnh
           </button>
 
@@ -243,7 +243,7 @@ export default function CommunityPostComposer({
         <button
           type="submit"
           disabled={isSubmitting}
-          className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-5 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isSubmitting ? (
             <Loader2 className="h-4 w-4 animate-spin" />

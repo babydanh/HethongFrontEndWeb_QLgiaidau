@@ -298,7 +298,7 @@ export default function SettingsTab({ community }: { community: Community }) {
       <section className="lg:col-span-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-6">
         <div className="mb-6 flex flex-col gap-4 border-b border-slate-100 pb-5 sm:flex-row sm:items-center sm:justify-between">
           <div><h3 className="text-lg font-bold text-slate-900">Sinh hoạt CLB</h3><p className="mt-1 text-xs text-slate-500">Điều khiển feed, chat và quyền thành viên.</p></div>
-          <Button type="button" onClick={() => void saveSocialSettings()} disabled={isSavingSocial} className="bg-emerald-600 text-white">{isSavingSocial ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}Lưu social</Button>
+          <Button type="button" onClick={() => void saveSocialSettings()} disabled={isSavingSocial} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold">{isSavingSocial ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}Lưu social</Button>
         </div>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
           <label className="text-sm font-semibold text-slate-700">Quyền đăng bài<select value={socialSettings.postingPolicy} onChange={(event) => setSocialSettings((current) => ({ ...current, postingPolicy: event.target.value as CommunitySocialSettings['postingPolicy'] }))} className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"><option value="MEMBERS">Thành viên</option><option value="ADMINS">Chỉ ban quản trị</option><option value="OFF">Tắt đăng bài</option></select></label>
@@ -312,7 +312,7 @@ export default function SettingsTab({ community }: { community: Community }) {
             <div className="flex gap-2">
               <input value={newTagName} onChange={(event) => setNewTagName(event.target.value)} maxLength={24} placeholder="Ví dụ: MVP tuần" className="min-w-0 flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm" />
               <input type="color" value={newTagColor} onChange={(event) => setNewTagColor(event.target.value)} aria-label="Màu tag" className="h-10 w-12 cursor-pointer rounded border border-slate-200 bg-white p-1" />
-              <Button type="button" onClick={handleCreateTagPreset} aria-label="Tạo tag" className="bg-emerald-600 px-3 text-white"><Plus className="h-4 w-4" /></Button>
+              <Button type="button" onClick={handleCreateTagPreset} aria-label="Tạo tag" className="bg-blue-600 hover:bg-blue-700 px-3 text-white"><Plus className="h-4 w-4" /></Button>
             </div>
             <div className="flex flex-wrap gap-2">
               {tagPresets.map((preset) => <span key={preset.id} className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold" style={{ backgroundColor: preset.color, color: '#334155' }}>{preset.name}<button type="button" onClick={() => handleDeleteTagPreset(preset.id)} aria-label={`Xóa ${preset.name}`}><Trash2 className="h-3 w-3" /></button></span>)}
@@ -337,7 +337,7 @@ export default function SettingsTab({ community }: { community: Community }) {
                 <input 
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none" 
+                  className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" 
                   placeholder="Tên nhóm của bạn..." 
                   type="text" 
                 />
@@ -352,15 +352,15 @@ export default function SettingsTab({ community }: { community: Community }) {
               </div>
             </div>
 
-            {/* Logo & Banner Custom styling */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Logo & Banner Uploads */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4 border-t border-slate-100">
               {/* Logo */}
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Ảnh đại diện / Logo của câu lạc bộ</label>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Ảnh đại diện (Logo)</label>
                 <div className="flex items-center gap-4">
-                  <div className="relative w-20 h-20 rounded-full border border-slate-200 overflow-hidden bg-slate-50 flex items-center justify-center shrink-0">
+                  <div className="relative w-16 h-16 rounded-full border border-slate-200 overflow-hidden bg-slate-50 flex items-center justify-center shrink-0">
                     {logoUrl ? (
-                      <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                      <img src={logoUrl} alt="Logo" className="w-full h-full object-contain p-1" />
                     ) : (
                       <ImageIcon className="w-8 h-8 text-slate-300" />
                     )}
@@ -398,8 +398,8 @@ export default function SettingsTab({ community }: { community: Community }) {
                     {bannerUrl ? (
                       <img src={bannerUrl} alt="Banner" className="w-full h-full object-cover" />
                     ) : (
-                      <div className="absolute inset-0 bg-gradient-to-r from-emerald-600/30 to-teal-800/30 flex items-center justify-center">
-                        <ImageIcon className="w-8 h-8 text-slate-300" />
+                      <div className="absolute inset-0 bg-slate-100 flex items-center justify-center">
+                        <ImageIcon className="w-8 h-8 text-slate-400" />
                       </div>
                     )}
                     {isUploadingBanner && (
@@ -442,7 +442,7 @@ export default function SettingsTab({ community }: { community: Community }) {
                       onClick={() => handleToggleCategory(cat.id)}
                       className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all border ${
                         isSelected 
-                          ? 'bg-blue-50 text-blue-700 border-emerald-300' 
+                          ? 'bg-blue-50 text-blue-700 border-blue-300' 
                           : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
                       }`}
                     >
@@ -493,7 +493,7 @@ export default function SettingsTab({ community }: { community: Community }) {
                         setNewSocialLabel('');
                       }
                     }}
-                    className="w-full border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-750 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 h-11"
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-750 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 h-11"
                   >
                     <option value="facebook">Facebook</option>
                     <option value="zalo">Zalo</option>
@@ -512,7 +512,7 @@ export default function SettingsTab({ community }: { community: Community }) {
                       placeholder="Telegram, Viber,..."
                       value={newSocialLabel}
                       onChange={(e) => setNewSocialLabel(e.target.value)}
-                      className="w-full border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-755 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 h-11"
+                      className="w-full border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-755 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 h-11"
                     />
                   </div>
                 )}
@@ -524,14 +524,14 @@ export default function SettingsTab({ community }: { community: Community }) {
                     placeholder="Link liên kết hoặc giá trị"
                     value={newSocialValue}
                     onChange={(e) => setNewSocialValue(e.target.value)}
-                    className="w-full border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-755 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 h-11"
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-755 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 h-11"
                   />
                 </div>
 
                 <Button
                   type="button"
                   onClick={handleAddSocialLink}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-11 px-5 w-full sm:w-auto text-xs shrink-0 rounded-lg"
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold h-11 px-5 w-full sm:w-auto text-xs shrink-0 rounded-lg"
                 >
                   Thêm
                 </Button>
@@ -549,7 +549,7 @@ export default function SettingsTab({ community }: { community: Community }) {
                     setDistrictCode('');
                     setWardCode('');
                   }}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                 >
                   <option value="">-- Tỉnh/Thành --</option>
                   {provinces.map(p => <option key={p.code} value={p.code}>{p.name}</option>)}
@@ -562,7 +562,7 @@ export default function SettingsTab({ community }: { community: Community }) {
                     setWardCode('');
                   }}
                   disabled={!provinceCode}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none disabled:opacity-50"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:opacity-50"
                 >
                   <option value="">-- Quận/Huyện --</option>
                   {districts.map(d => <option key={d.code} value={d.code}>{d.name}</option>)}
@@ -587,7 +587,7 @@ export default function SettingsTab({ community }: { community: Community }) {
                         key={item.val} 
                         className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
                           visibility === item.val 
-                            ? 'bg-emerald-50/50 border-emerald-300' 
+                            ? 'bg-blue-50/60 border-blue-300' 
                             : 'bg-white border-slate-200 hover:bg-slate-50'
                         }`}
                       >
@@ -597,7 +597,7 @@ export default function SettingsTab({ community }: { community: Community }) {
                           value={item.val} 
                           checked={visibility === item.val}
                           onChange={() => setVisibility(item.val as 'PUBLIC' | 'RESTRICTED' | 'PRIVATE')}
-                          className="mt-1 text-blue-600 focus:ring-emerald-500" 
+                          className="mt-1 text-blue-600 focus:ring-blue-500" 
                         />
                         <div>
                           <span className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
@@ -625,7 +625,7 @@ export default function SettingsTab({ community }: { community: Community }) {
                       key={item.val} 
                       className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
                         joinMode === item.val 
-                          ? 'bg-emerald-50/50 border-emerald-300' 
+                          ? 'bg-blue-50/60 border-blue-300' 
                           : 'bg-white border-slate-200 hover:bg-slate-50'
                       }`}
                     >
@@ -635,7 +635,7 @@ export default function SettingsTab({ community }: { community: Community }) {
                         value={item.val} 
                         checked={joinMode === item.val}
                         onChange={() => setJoinMode(item.val as 'OPEN' | 'APPROVAL' | 'INVITE_ONLY')}
-                        className="mt-1 text-blue-600 focus:ring-emerald-500" 
+                        className="mt-1 text-blue-600 focus:ring-blue-500" 
                       />
                       <div>
                         <span className="text-sm font-bold text-slate-900">{item.label}</span>
@@ -654,7 +654,7 @@ export default function SettingsTab({ community }: { community: Community }) {
                 <input 
                   value={maxMembers}
                   onChange={(e) => setMaxMembers(e.target.value)}
-                  className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none" 
+                  className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" 
                   placeholder="Không giới hạn" 
                   type="number" 
                 />
@@ -668,7 +668,7 @@ export default function SettingsTab({ community }: { community: Community }) {
                   value={rules}
                   onChange={(e) => setRules(e.target.value)}
                   rows={2}
-                  className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none" 
+                  className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" 
                   placeholder="Quy định ứng xử, thời gian sinh hoạt, đóng phí..." 
                 />
               </div>
@@ -704,7 +704,7 @@ export default function SettingsTab({ community }: { community: Community }) {
                   <input 
                     value={newQuestion}
                     onChange={(e) => setNewQuestion(e.target.value)}
-                    className="flex-grow px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none" 
+                    className="flex-grow px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" 
                     placeholder="Nhập câu hỏi mới..." 
                     type="text" 
                     onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddQuestion(); } }}
@@ -725,7 +725,7 @@ export default function SettingsTab({ community }: { community: Community }) {
               <Button 
                 onClick={handleSaveSettings}
                 disabled={isSaving}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white min-w-[140px]"
+                className="bg-blue-600 hover:bg-blue-700 text-white min-w-[140px] font-semibold"
               >
                 {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
                 Lưu cài đặt
@@ -757,38 +757,54 @@ export default function SettingsTab({ community }: { community: Community }) {
         </div>
       </div>
 
-      <div className="lg:col-span-1" />
+      {/* RIGHT: Quick Info Card */}
+      <div className="space-y-6">
+        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
+          <h4 className="font-bold text-slate-900 text-base mb-4">Gợi ý thiết lập</h4>
+          <ul className="space-y-3 text-xs text-slate-600">
+            <li className="flex items-start gap-2">
+              <span className="text-blue-500 font-bold">•</span>
+              <span><strong>Hình ảnh bắt mắt:</strong> Thêm logo và ảnh bìa chất lượng cao để CLB trông chuyên nghiệp hơn.</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-blue-500 font-bold">•</span>
+              <span><strong>Mô tả rõ ràng:</strong> Nêu rõ trình độ người chơi, thời gian sinh hoạt cố định và chi phí tham gia (nếu có).</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-blue-500 font-bold">•</span>
+              <span><strong>Duyệt thành viên:</strong> Bật chế độ duyệt đơn nếu CLB của bạn giới hạn trình độ hoặc số lượng người.</span>
+            </li>
+          </ul>
+        </div>
+      </div>
 
       {/* Delete Community Confirmation Modal */}
       <ConfirmModal
         open={isDeleteConfirmOpen}
         onOpenChange={(open) => {
-          if (!open) {
-            setIsDeleteConfirmOpen(false);
-            setDeleteConfirmName('');
-          }
+          setIsDeleteConfirmOpen(open);
+          if (!open) setDeleteConfirmName('');
         }}
-        title="Xoá câu lạc bộ"
-        description={`Để xác nhận xoá, vui lòng nhập chính xác tên câu lạc bộ: "${community.name}"`}
+        title="Xoá vĩnh viễn câu lạc bộ"
+        description={`Bạn có chắc chắn muốn xoá câu lạc bộ "${community.name}"? Toàn bộ dữ liệu thành viên, bài viết và hoạt động sẽ bị xoá vĩnh viễn và không thể khôi phục.`}
         confirmLabel="Xoá vĩnh viễn"
         variant="danger"
+        confirmDisabled={deleteConfirmName.trim() !== community.name.trim()}
         isLoading={isDeleting}
-        onConfirm={() => {
-          if (deleteConfirmName !== community.name) {
-            toast.error('Tên câu lạc bộ nhập vào không khớp. Huỷ thao tác xoá.');
-            return;
-          }
-          handleDeleteCommunity();
-        }}
+        onConfirm={handleDeleteCommunity}
       >
-        <input
-          type="text"
-          value={deleteConfirmName}
-          onChange={(e) => setDeleteConfirmName(e.target.value)}
-          placeholder="Nhập tên câu lạc bộ..."
-          autoFocus
-          className="w-full rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-900 outline-none transition-colors focus:border-rose-500 focus:ring-2 focus:ring-rose-500"
-        />
+        <div className="space-y-3">
+          <label className="block text-xs font-semibold text-slate-700">
+            Nhập tên câu lạc bộ <span className="text-rose-600 font-bold">{community.name}</span> để xác nhận:
+          </label>
+          <input
+            type="text"
+            value={deleteConfirmName}
+            onChange={(e) => setDeleteConfirmName(e.target.value)}
+            placeholder="Nhập chính xác tên câu lạc bộ..."
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none"
+          />
+        </div>
       </ConfirmModal>
     </div>
   );

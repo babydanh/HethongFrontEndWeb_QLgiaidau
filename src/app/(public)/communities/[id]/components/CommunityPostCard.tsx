@@ -161,7 +161,7 @@ export default function CommunityPostCard({
               return (
                 <span
                   key={partIdx}
-                  className="inline-flex items-center mx-0.5 px-1 py-0.5 rounded text-emerald-600 font-semibold text-xs hover:underline cursor-pointer"
+                  className="inline-flex items-center mx-0.5 px-1 py-0.5 rounded text-blue-600 font-semibold text-xs hover:underline cursor-pointer"
                 >
                   {part.text}
                 </span>
@@ -274,7 +274,7 @@ export default function CommunityPostCard({
             {post.topics?.map((topic) => (
               <span
                 key={topic}
-                className="rounded-md bg-emerald-50 border border-emerald-200/60 px-2 py-0.5 text-xs font-semibold text-emerald-700"
+                className="rounded-md bg-blue-50 border border-blue-200/60 px-2 py-0.5 text-xs font-semibold text-blue-700"
               >
                 #{topic}
               </span>
@@ -337,7 +337,7 @@ export default function CommunityPostCard({
           <button
             type="button"
             onClick={() => void loadComments()}
-            className="inline-flex items-center gap-1.5 py-1 px-2 rounded-lg hover:text-emerald-700 hover:bg-slate-50 transition-colors"
+            className="inline-flex items-center gap-1.5 py-1 px-2 rounded-lg hover:text-blue-600 hover:bg-slate-50 transition-colors"
           >
             <MessageCircle className="h-4 w-4" />
             <span>{post.commentCount} bình luận</span>
@@ -356,12 +356,47 @@ export default function CommunityPostCard({
               comments.map((comment) => (
                 <div
                   key={comment.id}
-                  className="rounded-lg bg-slate-50/80 p-3 text-xs border border-slate-100"
+                  className="flex items-start gap-2.5 rounded-xl bg-slate-50/90 p-2.5 text-xs border border-slate-100"
                 >
-                  <span className="font-bold text-slate-800">
-                    {comment.author?.fullName ?? "Thành viên"}
-                  </span>
-                  <p className="mt-1 text-slate-700 leading-5">{comment.body}</p>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      setPopoverUser({
+                        id: comment.author?.id || "",
+                        fullName: comment.author?.fullName || "Thành viên",
+                        avatarUrl: comment.author?.avatarUrl,
+                      });
+                      setPopoverAnchorRect(rect);
+                    }}
+                    className="shrink-0 transition-transform hover:scale-105"
+                  >
+                    <CommunityAvatar
+                      src={comment.author?.avatarUrl}
+                      name={comment.author?.fullName || "Thành viên"}
+                      size={28}
+                    />
+                  </button>
+                  <div className="min-w-0 flex-1">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setPopoverUser({
+                          id: comment.author?.id || "",
+                          fullName: comment.author?.fullName || "Thành viên",
+                          avatarUrl: comment.author?.avatarUrl,
+                        });
+                        setPopoverAnchorRect(rect);
+                      }}
+                      className="font-bold text-slate-900 hover:text-blue-600 transition-colors"
+                    >
+                      {comment.author?.fullName ?? "Thành viên"}
+                    </button>
+                    <p className="mt-0.5 text-slate-700 leading-5">{comment.body}</p>
+                  </div>
                 </div>
               ))
             )}
@@ -377,13 +412,13 @@ export default function CommunityPostCard({
               if (event.key === "Enter") void submitComment();
             }}
             placeholder="Viết bình luận..."
-            className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-slate-50/70 px-3.5 py-2 text-xs text-slate-800 placeholder:text-slate-500 outline-none transition focus:border-emerald-500 focus:bg-white"
+            className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-slate-50/70 px-3.5 py-2 text-xs text-slate-800 placeholder:text-slate-500 outline-none transition focus:border-blue-500 focus:bg-white"
           />
           <button
             type="button"
             onClick={() => void submitComment()}
             disabled={submittingComment}
-            className="rounded-lg bg-emerald-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-emerald-700 disabled:opacity-60"
+            className="rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-blue-700 disabled:opacity-60"
           >
             Gửi
           </button>

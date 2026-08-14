@@ -1,13 +1,12 @@
 'use client';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { Award, Trophy, ChevronDown, Loader2, Medal, Crown, Search, SlidersHorizontal, X } from 'lucide-react';
+import { Award, Trophy, Loader2, Crown, Search, SlidersHorizontal, X } from 'lucide-react';
 import { Category } from '@/types/category';
 import { rankingsApi, PlayerRanking } from '@/features/rankings/api';
 import { EloTierBadge } from '@/components/ui/EloTierBadge';
 import { getRankRingClass } from '@/components/ui/RankAvatar';
 import { getEloMatchTypeLabel } from '@/features/rankings/elo-display';
-import toast from 'react-hot-toast';
 import { useAuthStore } from '@/lib/zustand/authStore';
 
 interface RankingsTabProps {
@@ -163,7 +162,6 @@ export default function RankingsTab({ communityId, categories, onGoToTournaments
 
   return (
     <div className="space-y-6">
-      {/* Mini Preview — top 3 nổi bật */}
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
         <div>
@@ -245,11 +243,11 @@ export default function RankingsTab({ communityId, categories, onGoToTournaments
                 ? 'Thử tìm kiếm với tên khác.'
                 : 'Thành viên sẽ xuất hiện tại đây sau khi tham gia thi đấu.'}
             </p>
-            {!searchQuery && (
+            {!searchQuery && onGoToTournaments && (
               <button
                 type="button"
                 onClick={onGoToTournaments}
-                className="mt-5 inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-emerald-700 transition-colors cursor-pointer"
+                className="mt-5 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition-colors cursor-pointer"
               >
                 <Trophy className="w-4 h-4" />
                 Xem giải đấu
@@ -259,7 +257,7 @@ export default function RankingsTab({ communityId, categories, onGoToTournaments
         </div>
       ) : (
         <>
-          {/* ─── Compact Podium ─── */}
+          {/* Podium */}
           {topThree.length > 0 && (
             <div className="flex items-end justify-center gap-3 sm:gap-4 px-2 pt-4">
               {[0, 1, 2].map((i) => {
@@ -289,8 +287,8 @@ export default function RankingsTab({ communityId, categories, onGoToTournaments
                       </span>
                       <EloTierBadge elo={p.eloPoints} tierName={p.tier?.name} size="sm" className="mt-1 scale-[0.85] origin-center" />
                     </div>
-                    <div className={`w-full ${mc.bg} rounded-t-lg border ${mc.border} flex items-center justify-center ${isCenter ? 'h-28 bg-gradient-to-t from-amber-50 to-amber-100/70 border-2 shadow-sm' : 'h-24'}`}>
-                      <span className={`text-2xl font-black ${mc.color}/60 ${isCenter ? 'text-3xl text-amber-400/70' : ''}`}>{rankLabel}</span>
+                    <div className={`w-full ${mc.bg} rounded-t-lg border ${mc.border} flex items-center justify-center ${isCenter ? 'h-28 bg-amber-100/70 border-2 shadow-sm' : 'h-24'}`}>
+                      <span className={`text-2xl font-black ${mc.color}/60 ${isCenter ? 'text-3xl text-amber-500' : ''}`}>{rankLabel}</span>
                     </div>
                   </div>
                 );
@@ -298,10 +296,10 @@ export default function RankingsTab({ communityId, categories, onGoToTournaments
             </div>
           )}
 
-          {/* ─── Ranks 4-20 List ─── */}
+          {/* Ranks 4-20 List */}
           {restRankings.length > 0 && (
             <div className="space-y-1.5 mt-4">
-              {restRankings.map((player, index) => {
+              {restRankings.map((player) => {
                 const rank = rankings.findIndex((item) => item.id === player.id) + 1;
                 const winRate = getWinRate(player);
                 return (

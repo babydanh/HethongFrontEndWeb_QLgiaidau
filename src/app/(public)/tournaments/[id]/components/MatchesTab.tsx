@@ -11,6 +11,7 @@ import { Calendar, Play, Trophy, MapPin, Info, LayoutGrid, Search } from 'lucide
 import Link from 'next/link';
 import { formatDateTime } from '@/utils/format';
 import { buildRoundFilterOptions, getMatchRoundLabel } from '@/utils/match-round-label';
+import { useUserProfileModalStore } from '@/lib/zustand/userProfileModalStore';
 
 interface Props {
   tournament: Tournament;
@@ -21,6 +22,7 @@ interface Props {
 type StatusFilter = 'ALL' | 'ONGOING' | 'SCHEDULED' | 'COMPLETED';
 
 export default function MatchesTab({ tournament, tournamentId, divisionId }: Props) {
+  const { openUserProfile } = useUserProfileModalStore();
   const effectiveTournamentId = tournamentId ?? tournament.id;
   
   // Pagination Hook
@@ -263,9 +265,25 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
         }`}>
           {participant.members.map((m, idx) => (
             <span key={m.userId} className="inline-flex items-center">
-              <Link href={`/users/${m.userId}`} className="hover:text-blue-600 hover:underline transition-colors">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  openUserProfile(
+                    {
+                      id: m.userId,
+                      fullName: m.fullName || 'Thành viên',
+                      avatarUrl: (m as { avatarUrl?: string | null }).avatarUrl || null,
+                    },
+                    rect,
+                    tournament.communityId || undefined,
+                  );
+                }}
+                className="hover:text-blue-600 hover:underline transition-colors cursor-pointer text-left font-bold"
+              >
                 {m.fullName || 'Thành viên'}
-              </Link>
+              </button>
               {idx < participant.members!.length - 1 && <span className="text-slate-350 mx-1">/</span>}
             </span>
           ))}

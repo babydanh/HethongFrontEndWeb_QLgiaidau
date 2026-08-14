@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { Tournament, tournamentsApi, TournamentParticipant } from '@/features/tournaments/api';
 import { ChevronDown, ChevronUp, User, Award } from 'lucide-react';
-import Link from 'next/link';
+import { useUserProfileModalStore } from '@/lib/zustand/userProfileModalStore';
 
 interface Props {
   tournament: Tournament;
@@ -12,6 +12,7 @@ interface Props {
 }
 
 export default function TeamsTab({ tournament, tournamentId, divisionId }: Props) {
+  const { openUserProfile } = useUserProfileModalStore();
   const [participants, setParticipants] = useState<TournamentParticipant[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [expandedTeamId, setExpandedTeamId] = useState<string | null>(null);
@@ -203,9 +204,24 @@ export default function TeamsTab({ tournament, tournamentId, divisionId }: Props
                                     className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between hover:border-blue-300 transition-all"
                                   >
                                     {targetUserId ? (
-                                      <Link href={`/users/${targetUserId}`} className="flex items-center gap-3 hover:opacity-90 transition-opacity flex-1 min-w-0">
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          const rect = e.currentTarget.getBoundingClientRect();
+                                          openUserProfile(
+                                            {
+                                              id: targetUserId,
+                                              fullName: member.fullName || 'Thành viên',
+                                              avatarUrl: avatarSrc,
+                                            },
+                                            rect,
+                                            tournament.communityId || undefined,
+                                          );
+                                        }}
+                                        className="flex items-center gap-3 hover:opacity-90 transition-opacity flex-1 min-w-0 text-left cursor-pointer"
+                                      >
                                         {CardContent}
-                                      </Link>
+                                      </button>
                                     ) : (
                                       CardContent
                                     )}

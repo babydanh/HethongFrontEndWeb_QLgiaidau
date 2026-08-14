@@ -10,6 +10,7 @@ import { usersApi } from '@/features/users/api';
 import { isHttpStatusError, isNetworkError } from '@/utils/error';
 import { cn } from '@/utils/cn';
 import UnifiedChatWidget from '@/components/shared/UnifiedChatWidget';
+import GlobalUserProfileModal from '@/components/common/GlobalUserProfileModal';
 
 export default function RootLayoutClient({
   children,
@@ -77,6 +78,7 @@ export default function RootLayoutClient({
       </main>
       {!hideHeaderFooter && !isGuestRoute && <Footer />}
       {!hideHeaderFooter && !isGuestRoute && <UnifiedChatWidget />}
+      <GlobalUserProfileModal />
     </>
   );
 }

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { communitiesApi, MemberStreak } from '@/features/communities/api';
 import TagAssignModal from './TagAssignModal';
 import { usersApi } from '@/features/users/api';
+import { useUserProfileModalStore } from '@/lib/zustand/userProfileModalStore';
 import toast from 'react-hot-toast';
 import Image from 'next/image';
 import { getErrorMessage } from '@/utils/error';
@@ -286,19 +287,35 @@ export default function MembersTab({
     }
   };
 
+  const { openUserProfile } = useUserProfileModalStore();
+
   const getInitials = (name: string) => {
     if (!name) return 'U';
     return name.trim().charAt(0).toUpperCase();
   };
 
-  const openProfile = (targetUserId: string) => {
-    if (targetUserId) router.push(`/users/${targetUserId}`);
+  const openProfile = (targetUserId: string, targetMember?: MemberData, event?: React.MouseEvent | React.KeyboardEvent) => {
+    if (!targetUserId) return;
+    const rect = (event?.currentTarget as HTMLElement)?.getBoundingClientRect?.() || null;
+    openUserProfile(
+      {
+        id: targetUserId,
+        fullName: targetMember?.user?.fullName || 'Thành viên',
+        avatarUrl: targetMember?.user?.avatarUrl || null,
+        role: targetMember?.member?.role,
+        tags: targetMember?.member?.tags,
+        streak: targetMember?.streak,
+        joinedAt: targetMember?.member?.joinedAt,
+      },
+      rect,
+      communityId,
+    );
   };
 
-  const handleProfileKeyDown = (event: React.KeyboardEvent, targetUserId: string) => {
+  const handleProfileKeyDown = (event: React.KeyboardEvent, targetUserId: string, targetMember?: MemberData) => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
-      openProfile(targetUserId);
+      openProfile(targetUserId, targetMember, event);
     }
   };
 
@@ -368,8 +385,8 @@ export default function MembersTab({
                       role="link"
                       tabIndex={0}
                       aria-label={`Xem hồ sơ ${item.user?.fullName}`}
-                      onClick={() => openProfile(item.user?.id)}
-                      onKeyDown={(event) => handleProfileKeyDown(event, item.user?.id)}
+                      onClick={(event) => openProfile(item.user?.id, item, event)}
+                      onKeyDown={(event) => handleProfileKeyDown(event, item.user?.id, item)}
                       className="flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100/70 border border-slate-200/60 rounded-lg transition-all relative cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
                     >
                       <div className="flex items-center gap-3">
@@ -483,8 +500,8 @@ export default function MembersTab({
                       role="link"
                       tabIndex={0}
                       aria-label={`Xem hồ sơ ${item.user?.fullName}`}
-                      onClick={() => openProfile(item.user?.id)}
-                      onKeyDown={(event) => handleProfileKeyDown(event, item.user?.id)}
+                      onClick={(event) => openProfile(item.user?.id, item, event)}
+                      onKeyDown={(event) => handleProfileKeyDown(event, item.user?.id, item)}
                       className="flex items-center justify-between p-3.5 bg-white border border-slate-200 rounded-lg hover:shadow-sm transition-all relative cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
                     >
                       <div className="flex items-center gap-3">

@@ -8,6 +8,7 @@ import { EloTierBadge } from '@/components/ui/EloTierBadge';
 import { getRankRingClass } from '@/components/ui/RankAvatar';
 import { getEloMatchTypeLabel } from '@/features/rankings/elo-display';
 import { useAuthStore } from '@/lib/zustand/authStore';
+import { useUserProfileModalStore } from '@/lib/zustand/userProfileModalStore';
 
 interface RankingsTabProps {
   communityId: string;
@@ -126,6 +127,8 @@ export default function RankingsTab({ communityId, categories, onGoToTournaments
   const getWinRate = (p: PlayerRanking) =>
     p.matchesPlayed > 0 ? Math.round((p.matchesWon / p.matchesPlayed) * 100) : 0;
 
+  const { openUserProfile } = useUserProfileModalStore();
+
   const rankingName = (p: PlayerRanking) =>
     p.user1 && p.user2
       ? `${p.user1.fullName} / ${p.user2.fullName}`
@@ -139,7 +142,21 @@ export default function RankingsTab({ communityId, categories, onGoToTournaments
         {members.map((member, index) => (
           <div
             key={member.id}
-            className={`${sizeClass} rounded-full overflow-hidden bg-slate-100 border-2 border-white relative flex items-center justify-center ${index > 0 ? '-ml-2' : ''}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              const rect = e.currentTarget.getBoundingClientRect();
+              openUserProfile(
+                {
+                  id: member.id,
+                  fullName: member.fullName,
+                  avatarUrl: member.avatarUrl,
+                },
+                rect,
+                communityId,
+              );
+            }}
+            className={`${sizeClass} rounded-full overflow-hidden bg-slate-100 border-2 border-white relative flex items-center justify-center cursor-pointer transition-transform hover:scale-110 z-10 ${index > 0 ? '-ml-2' : ''}`}
+            title={`Xem thông tin ${member.fullName}`}
           >
             {member.avatarUrl ? (
               <img src={member.avatarUrl} alt={member.fullName} className="w-full h-full object-cover" />

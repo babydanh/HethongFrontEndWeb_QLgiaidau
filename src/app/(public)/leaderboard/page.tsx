@@ -9,6 +9,7 @@ import { usersApi } from "@/features/users/api";
 import { EloTierBadge } from "@/components/ui/EloTierBadge";
 import { Trophy, ChevronDown, ChevronUp, Award, Users, Info, Loader2, Search } from "lucide-react";
 import Link from "next/link";
+import { useUserProfileModalStore } from "@/lib/zustand/userProfileModalStore";
 
 interface LeaderboardSearchResult {
     id: string;
@@ -20,6 +21,7 @@ interface LeaderboardSearchResult {
 }
 
 export default function LeaderboardPage() {
+    const { openUserProfile } = useUserProfileModalStore();
     const [categories, setCategories] = useState<Category[]>([]);
     const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
     const [rankings, setRankings] = useState<PlayerRanking[]>([]);
@@ -277,9 +279,21 @@ export default function LeaderboardPage() {
                                     
                                     {/* Rank 2 - Silver (Left) */}
                                     <div className="w-full md:w-1/3 order-2 md:order-1 flex flex-col items-center group/podium">
-                                        <Link 
-                                            href={rankings[1]?.user?.id ? `/users/${rankings[1].user.id}` : '#'}
-                                            className="flex flex-col items-center hover:opacity-95 transition-opacity"
+                                        <button 
+                                            type="button"
+                                            onClick={(e) => {
+                                                if (!rankings[1]?.user?.id) return;
+                                                const rect = e.currentTarget.getBoundingClientRect();
+                                                openUserProfile(
+                                                    {
+                                                        id: rankings[1].user.id,
+                                                        fullName: rankings[1].user.fullName || 'Vận động viên',
+                                                        avatarUrl: rankings[1].user.avatarUrl,
+                                                    },
+                                                    rect,
+                                                );
+                                            }}
+                                            className="flex flex-col items-center hover:opacity-95 transition-opacity cursor-pointer"
                                         >
                                             <div className="relative mb-4 transition-transform duration-300 group-hover:scale-105">
                                                 <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20 bg-slate-100 text-slate-700 font-bold text-[10px] px-3.5 py-1 rounded-full border border-slate-300/80 shadow-xs whitespace-nowrap">
@@ -325,7 +339,7 @@ export default function LeaderboardPage() {
                                             ) : (
                                                 <div className="text-[10px] text-[#64748B] font-bold mb-3">--- ELO</div>
                                             )}
-                                        </Link>
+                                        </button>
                                         
                                         {/* Stand 2 (Silver) */}
                                         <div className="w-full h-36 bg-[#F1F5F9] rounded-t-2xl border-2 border-[#94A3B8]/70 flex flex-col items-center justify-center shadow-xs">
@@ -338,9 +352,21 @@ export default function LeaderboardPage() {
 
                                     {/* Rank 1 - Champion Gold (Center) */}
                                     <div className="w-full md:w-1/3 order-1 md:order-2 flex flex-col items-center group/podium relative -translate-y-2 md:-translate-y-4">
-                                        <Link 
-                                            href={rankings[0]?.user?.id ? `/users/${rankings[0].user.id}` : '#'}
-                                            className="flex flex-col items-center hover:opacity-95 transition-opacity"
+                                        <button 
+                                            type="button"
+                                            onClick={(e) => {
+                                                if (!rankings[0]?.user?.id) return;
+                                                const rect = e.currentTarget.getBoundingClientRect();
+                                                openUserProfile(
+                                                    {
+                                                        id: rankings[0].user.id,
+                                                        fullName: rankings[0].user.fullName || 'Vận động viên',
+                                                        avatarUrl: rankings[0].user.avatarUrl,
+                                                    },
+                                                    rect,
+                                                );
+                                            }}
+                                            className="flex flex-col items-center hover:opacity-95 transition-opacity cursor-pointer"
                                         >
                                             <div className="relative mb-5 transition-transform duration-300 group-hover:scale-105">
                                                 <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-30 bg-amber-400 text-amber-950 font-extrabold text-[10px] px-4 py-1 rounded-full shadow-sm flex items-center gap-1 border border-amber-300 whitespace-nowrap animate-bounce">
@@ -386,7 +412,7 @@ export default function LeaderboardPage() {
                                             ) : (
                                                 <div className="text-[10px] text-amber-500 font-bold mb-3">--- ELO</div>
                                             )}
-                                        </Link>
+                                        </button>
                                         
                                         {/* Stand 1 (Gold) */}
                                         <div className="w-full h-44 bg-amber-50/70 rounded-t-2xl border-2 border-amber-300/80 flex flex-col items-center justify-center shadow-xs relative overflow-hidden">
@@ -399,9 +425,21 @@ export default function LeaderboardPage() {
 
                                     {/* Rank 3 - Bronze (Right) */}
                                     <div className="w-full md:w-1/3 order-3 md:order-3 flex flex-col items-center group/podium">
-                                        <Link 
-                                            href={rankings[2]?.user?.id ? `/users/${rankings[2].user.id}` : '#'}
-                                            className="flex flex-col items-center hover:opacity-95 transition-opacity"
+                                        <button 
+                                            type="button"
+                                            onClick={(e) => {
+                                                if (!rankings[2]?.user?.id) return;
+                                                const rect = e.currentTarget.getBoundingClientRect();
+                                                openUserProfile(
+                                                    {
+                                                        id: rankings[2].user.id,
+                                                        fullName: rankings[2].user.fullName || 'Vận động viên',
+                                                        avatarUrl: rankings[2].user.avatarUrl,
+                                                    },
+                                                    rect,
+                                                );
+                                            }}
+                                            className="flex flex-col items-center hover:opacity-95 transition-opacity cursor-pointer"
                                         >
                                             <div className="relative mb-4 transition-transform duration-300 group-hover:scale-105">
                                                 <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20 bg-amber-50 text-[#C2410C] font-bold text-[10px] px-3.5 py-1 rounded-full border border-amber-200 shadow-xs whitespace-nowrap">
@@ -447,7 +485,7 @@ export default function LeaderboardPage() {
                                             ) : (
                                                 <div className="text-[10px] text-[#C2410C] font-bold mb-3">--- ELO</div>
                                             )}
-                                        </Link>
+                                        </button>
                                         
                                         {/* Stand 3 (Bronze) */}
                                         <div className="w-full h-32 bg-[#FFF7ED] rounded-t-2xl border-2 border-[#C2410C]/60 flex flex-col items-center justify-center shadow-xs">
@@ -466,10 +504,23 @@ export default function LeaderboardPage() {
                                             const player = rankings[idx];
                                             const rankNum = idx + 1;
                                             return (
-                                                <Link 
+                                                <button 
+                                                    type="button"
                                                     key={idx} 
-                                                    href={player?.user?.id ? `/users/${player.user.id}` : '#'}
-                                                    className="bg-white/80 backdrop-blur-xs rounded-lg border border-blue-100/60 p-3 flex flex-col items-center justify-between shadow-xs transition-all duration-300 hover:scale-105 hover:shadow-sm hover:border-blue-300 hover:text-blue-650"
+                                                    disabled={!player?.user?.id}
+                                                    onClick={(e) => {
+                                                        if (!player?.user?.id) return;
+                                                        const rect = e.currentTarget.getBoundingClientRect();
+                                                        openUserProfile(
+                                                            {
+                                                                id: player.user.id,
+                                                                fullName: player.user.fullName || 'Vận động viên',
+                                                                avatarUrl: player.user.avatarUrl,
+                                                            },
+                                                            rect,
+                                                        );
+                                                    }}
+                                                    className="bg-white/80 backdrop-blur-xs rounded-lg border border-blue-100/60 p-3 flex flex-col items-center justify-between shadow-xs transition-all duration-300 hover:scale-105 hover:shadow-sm hover:border-blue-300 hover:text-blue-650 cursor-pointer"
                                                 >
                                                     <span className="text-[10px] font-bold text-blue-600 bg-blue-50/50 px-2 py-0.5 rounded-full mb-2">
                                                         #{rankNum}
@@ -509,7 +560,7 @@ export default function LeaderboardPage() {
                                                     ) : (
                                                         <span className="text-[10px] text-slate-400 font-bold">--- ELO</span>
                                                     )}
-                                                </Link>
+                                                </button>
                                             );
                                         })}
                                     </div>
@@ -669,10 +720,25 @@ export default function LeaderboardPage() {
                             {searchResult.length > 0 && (
                                 <div className="space-y-2.5 pt-2 border-t border-slate-100">
                                     {searchResult.map((u) => (
-                                        <Link
+                                        <button
+                                            type="button"
                                             key={u.id}
-                                            href={`/users/${u.id}`}
-                                            className="flex items-center gap-3 p-2.5 rounded-lg border border-slate-150 bg-slate-50/50 hover:bg-blue-50/20 hover:border-blue-200 transition-all cursor-pointer group"
+                                            onClick={(e) => {
+                                                const rect = e.currentTarget.getBoundingClientRect();
+                                                openUserProfile(
+                                                    {
+                                                        id: u.id,
+                                                        fullName: u.fullName || 'Kỳ thủ',
+                                                        avatarUrl: u.avatarUrl,
+                                                        highlightRank: {
+                                                            eloPoints: u.eloPoints,
+                                                            tierName: u.tierName,
+                                                        },
+                                                    },
+                                                    rect,
+                                                );
+                                            }}
+                                            className="w-full flex items-center gap-3 p-2.5 rounded-lg border border-slate-150 bg-slate-50/50 hover:bg-blue-50/20 hover:border-blue-200 transition-all cursor-pointer group text-left"
                                         >
                                             <div className="w-9 h-9 rounded-full object-cover relative overflow-hidden bg-slate-100 shrink-0">
                                                 {u.avatarUrl ? (
@@ -697,7 +763,7 @@ export default function LeaderboardPage() {
                                                     {u.tierName}
                                                 </span>
                                             </div>
-                                        </Link>
+                                        </button>
                                     ))}
                                 </div>
                             )}
@@ -710,6 +776,7 @@ export default function LeaderboardPage() {
 }
 
 function RestRankingsTable({ rankings, selectedMatchType }: { rankings: PlayerRanking[], selectedMatchType: string }) {
+    const { openUserProfile } = useUserProfileModalStore();
     // Rankings starting from index 10 (Hạng 11 trở đi)
     const realData = rankings.slice(10, 100);
     
@@ -768,9 +835,22 @@ function RestRankingsTable({ rankings, selectedMatchType }: { rankings: PlayerRa
                                             #{rankNum}
                                         </td>
                                         <td className="py-2.5 px-3">
-                                            <Link 
-                                                href={isPlaceholder ? '#' : `/users/${rank.user?.id}`}
-                                                className={`flex items-center gap-2 hover:text-blue-600 transition-colors ${isPlaceholder ? "pointer-events-none" : ""}`}
+                                            <button
+                                                type="button"
+                                                disabled={isPlaceholder || !rank.user?.id}
+                                                onClick={(e) => {
+                                                    if (isPlaceholder || !rank.user?.id) return;
+                                                    const rect = e.currentTarget.getBoundingClientRect();
+                                                    openUserProfile(
+                                                        {
+                                                            id: rank.user.id,
+                                                            fullName: rank.user.fullName || 'Vận động viên',
+                                                            avatarUrl: rank.user.avatarUrl,
+                                                        },
+                                                        rect,
+                                                    );
+                                                }}
+                                                className={`flex items-center gap-2 hover:text-blue-600 transition-colors text-left cursor-pointer ${isPlaceholder ? "pointer-events-none" : ""}`}
                                             >
                                                 {/* Stacked Avatar for Doubles in table list */}
                                                 {selectedMatchType.includes('DOUBLES') ? (
@@ -800,7 +880,7 @@ function RestRankingsTable({ rankings, selectedMatchType }: { rankings: PlayerRa
                                                 <span className={`font-bold truncate max-w-[100px] sm:max-w-[150px] ${isPlaceholder ? "text-slate-400 font-medium" : "text-slate-900"}`}>
                                                     {rank.user?.fullName || "Đang chờ..."}
                                                 </span>
-                                            </Link>
+                                            </button>
                                         </td>
                                         <td className="py-2.5 px-3">
                                             {isPlaceholder ? (

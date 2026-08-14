@@ -1099,12 +1099,6 @@ export default function MatchesListPage() {
                           return label ? ` • ${label}` : '';
                         })()}
                       </span>
-                      {group.tournamentVenueName && (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-medium text-slate-500 bg-white border border-slate-200 px-2 py-0.5 rounded-full">
-                          <MapPin className="w-3 h-3 text-rose-500 shrink-0" />
-                          <span>{group.tournamentVenueName}</span>
-                        </span>
-                      )}
                     </div>
                     <Link href={`/tournaments/${group.tournamentId}`} className="hover:text-blue-600 transition-colors">
                       <h3 className="font-bold text-slate-900 text-sm md:text-base uppercase tracking-tight leading-none">

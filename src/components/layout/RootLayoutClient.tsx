@@ -8,6 +8,7 @@ import { useEffect, useRef } from 'react';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { usersApi } from '@/features/users/api';
 import { isHttpStatusError, isNetworkError } from '@/utils/error';
+import { cn } from '@/utils/cn';
 import UnifiedChatWidget from '@/components/shared/UnifiedChatWidget';
 
 export default function RootLayoutClient({
@@ -61,31 +62,21 @@ export default function RootLayoutClient({
   const hideHeaderFooter = pathname.startsWith('/admin');
   const isGuestRoute = ['/login', '/register'].some((route) => pathname.startsWith(route));
 
-  if (hideHeaderFooter) {
-    return (
-      <main className="flex-grow flex flex-col h-screen overflow-hidden">
-        {children}
-      </main>
-    );
-  }
-
-  // Auth pages (login / register) fill the full viewport without Header/Footer
-  if (isGuestRoute) {
-    return (
-      <main className="flex-grow flex flex-col">
-        {children}
-      </main>
-    );
-  }
-
   return (
     <>
-      <Header />
-      <main className="flex-grow">
-        <PageTransition>{children}</PageTransition>
+      {!hideHeaderFooter && !isGuestRoute && <Header />}
+      <main className={cn(
+        "flex-grow flex flex-col",
+        hideHeaderFooter && "h-screen overflow-hidden",
+      )}>
+        {hideHeaderFooter || isGuestRoute ? (
+          children
+        ) : (
+          <PageTransition>{children}</PageTransition>
+        )}
       </main>
-      <Footer />
-      <UnifiedChatWidget />
+      {!hideHeaderFooter && !isGuestRoute && <Footer />}
+      {!hideHeaderFooter && !isGuestRoute && <UnifiedChatWidget />}
     </>
   );
 }

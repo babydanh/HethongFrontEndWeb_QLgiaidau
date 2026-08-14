@@ -50,7 +50,7 @@ export default function CommunityPostComposer({
   return (
     <form
       onSubmit={onSubmit}
-      className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+      className="rounded-xl border border-slate-200/90 bg-white p-5 shadow-sm"
     >
       <div className="text-sm font-bold text-slate-800">Chia sẻ cùng câu lạc bộ</div>
 
@@ -63,7 +63,7 @@ export default function CommunityPostComposer({
           }}
           onKeyDown={onComposerKeyDown}
           placeholder="Bạn đang nghĩ gì về trận đấu hôm nay? Gõ @ để nhắc thành viên"
-          className="mt-4 min-h-28 w-full resize-y rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+          className="mt-4 min-h-28 w-full resize-y rounded-lg border border-slate-200 bg-slate-50/70 p-3 text-sm text-slate-800 placeholder:text-slate-500 outline-none transition focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-100"
           disabled={isSubmitting}
         />
 
@@ -143,7 +143,7 @@ export default function CommunityPostComposer({
       <input
         {...topicsRegistration}
         placeholder="#pickleball #giaoluu"
-        className="mt-3 w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-emerald-400"
+        className="mt-3 w-full rounded-lg border border-slate-200 bg-slate-50/70 px-3 py-2 text-xs text-slate-800 placeholder:text-slate-500 outline-none transition focus:border-emerald-500 focus:bg-white"
         disabled={isSubmitting}
       />
 
@@ -184,9 +184,9 @@ export default function CommunityPostComposer({
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
-          className="flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-emerald-600"
+          className="flex items-center gap-2 text-xs font-semibold text-slate-600 hover:text-emerald-700"
         >
-          <ImagePlus className="h-4 w-4" />
+          <ImagePlus className="h-4 w-4 text-slate-500" />
           Thêm ảnh
         </button>
         <button

@@ -33,9 +33,9 @@ export function CommunityFeedError({
 
 export function CommunityFeedEmpty() {
   return (
-    <div className="rounded-lg border border-dashed border-slate-300 bg-white p-12 text-center">
-      <MessageCircle className="mx-auto h-10 w-10 text-slate-300" />
-      <p className="mt-3 text-sm font-semibold text-slate-700">
+    <div className="rounded-xl border border-dashed border-slate-300 bg-white p-12 text-center shadow-sm">
+      <MessageCircle className="mx-auto h-12 w-12 text-slate-400" strokeWidth={1.5} />
+      <p className="mt-3 text-sm font-semibold text-slate-800">
         Chưa có bài viết nào
       </p>
     </div>

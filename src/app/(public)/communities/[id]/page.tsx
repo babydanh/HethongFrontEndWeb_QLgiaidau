@@ -427,17 +427,17 @@ export default function CommunityDetailPage() {
               />
             </div>
             <div className="space-y-2.5">
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-600 font-medium">
-                <span className="flex items-center gap-1">
-                  <MapPin className="w-4 h-4 text-slate-400" />
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-medium">
+                <span className="flex items-center gap-1.5 text-slate-700">
+                  <MapPin className="w-4 h-4 text-slate-500 shrink-0" />
                   {community.locationAddress || 'Chưa cập nhật địa điểm'}
                 </span>
-                <span className="flex items-center gap-1">
-                  <Users className="w-4 h-4 text-slate-400" />
+                <span className="flex items-center gap-1.5 text-slate-700">
+                  <Users className="w-4 h-4 text-slate-500 shrink-0" />
                   {community._count?.members || 1} thành viên
                 </span>
-                <span className="flex items-center gap-1">
-                  <Trophy className="w-4 h-4 text-slate-400" />
+                <span className="flex items-center gap-1.5 text-slate-700">
+                  <Trophy className="w-4 h-4 text-slate-500 shrink-0" />
                   {community._count?.tournaments || 0} giải đấu
                 </span>
               </div>
@@ -539,8 +539,8 @@ export default function CommunityDetailPage() {
               onClick={() => setActiveTab(tab.id as typeof activeTab)}
               className={`px-5 py-2.5 rounded-lg font-bold text-sm whitespace-nowrap transition-all flex items-center gap-2 ${
                 activeTab === tab.id 
-                  ? 'bg-[#3AB5F6] text-white shadow-sm' 
-                  : 'bg-slate-200/60 text-slate-600 hover:bg-slate-300/60 hover:text-slate-900'
+                  ? 'bg-[#0d8fd4] text-white shadow-sm' 
+                  : 'bg-slate-200/80 text-slate-700 hover:bg-slate-300 hover:text-slate-950'
               }`}
             >
               {tab.label}
@@ -551,8 +551,8 @@ export default function CommunityDetailPage() {
                onClick={() => setActiveTab('settings')}
                className={`px-5 py-2.5 rounded-lg font-bold text-sm whitespace-nowrap transition-all flex items-center gap-2 ${
                 activeTab === 'settings' 
-                  ? 'bg-[#3AB5F6] text-white shadow-sm' 
-                  : 'bg-slate-200/60 text-slate-600 hover:bg-slate-300/60 hover:text-slate-900'
+                  ? 'bg-[#0d8fd4] text-white shadow-sm' 
+                  : 'bg-slate-200/80 text-slate-700 hover:bg-slate-300 hover:text-slate-950'
               }`}
              >
                Cài đặt

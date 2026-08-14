@@ -35,6 +35,7 @@ export default function SettingsTab({ community }: { community: Community }) {
   const [provinceCode, setProvinceCode] = useState(community.provinceCode || '');
   const [districtCode, setDistrictCode] = useState(community.districtCode || '');
   const [wardCode, setWardCode] = useState(community.wardCode || '');
+  const [locationAddress, setLocationAddress] = useState(community.locationAddress || '');
 
   // Categories Selection
   const [allCategories, setAllCategories] = useState<Category[]>([]);
@@ -258,7 +259,9 @@ export default function SettingsTab({ community }: { community: Community }) {
       setIsSaving(true);
       const provinceName = provinces.find(p => p.code === provinceCode)?.name || '';
       const districtName = districts.find(d => d.code === districtCode)?.name || '';
-      const combinedAddress = [districtName, provinceName].filter(Boolean).join(', ');
+      const wardName = wards.find(w => w.code === wardCode)?.name || '';
+      const trimmedAddress = locationAddress.trim();
+      const combinedAddress = trimmedAddress || [wardName, districtName, provinceName].filter(Boolean).join(', ') || null;
 
       const updateData = {
         name,
@@ -540,7 +543,7 @@ export default function SettingsTab({ community }: { community: Community }) {
             {/* Khu vực hoạt động */}
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-2">Khu vực hoạt động *</label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-3">
                 <select
                   value={provinceCode}
                   onChange={(e) => {
@@ -550,7 +553,7 @@ export default function SettingsTab({ community }: { community: Community }) {
                   }}
                   className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                 >
-                  <option value="">-- Tỉnh/Thành --</option>
+                  <option value="">-- Tỉnh/Thành phố --</option>
                   {provinces.map(p => <option key={p.code} value={p.code}>{p.name}</option>)}
                 </select>
 
@@ -566,6 +569,27 @@ export default function SettingsTab({ community }: { community: Community }) {
                   <option value="">-- Quận/Huyện --</option>
                   {districts.map(d => <option key={d.code} value={d.code}>{d.name}</option>)}
                 </select>
+
+                <select
+                  value={wardCode}
+                  onChange={(e) => setWardCode(e.target.value)}
+                  disabled={!districtCode}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:opacity-50"
+                >
+                  <option value="">-- Phường/Xã --</option>
+                  {wards.map(w => <option key={w.code} value={w.code}>{w.name}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Địa chỉ chi tiết / Sân bãi chính (tuỳ chọn)</label>
+                <input
+                  type="text"
+                  placeholder="Ví dụ: Sân Pickleball Thăng Long, Số 123 Đường Nguyễn Trãi..."
+                  value={locationAddress}
+                  onChange={(e) => setLocationAddress(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                />
               </div>
             </div>
 

@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { communitiesApi, Community } from '@/features/communities/api';
 import { Button } from '@/components/ui/Button';
-import { ChevronLeft, MapPin, Users, Trophy, Share2, MoreHorizontal, ShieldAlert, Settings as SettingsIcon, Loader2, Bookmark, Star } from 'lucide-react';
+import { ChevronLeft, MapPin, Users, Trophy, Share2, MoreHorizontal, ShieldAlert, Settings as SettingsIcon, Loader2 } from 'lucide-react';
 import { formatDate } from '@/utils/format';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { JoinCommunityModal } from '@/components/shared/JoinCommunityModal';
@@ -454,36 +454,6 @@ export default function CommunityDetailPage() {
               {getJoinButtonLabel()}
             </Button>
             
-            <Button
-              variant="outline"
-              onClick={handleToggleFollow}
-              disabled={isFollowLoading}
-              className={`h-10 px-3 rounded-lg shadow-sm border transition-colors ${
-                isFollowing
-                  ? 'bg-blue-50 border-blue-300 text-blue-600'
-                  : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700'
-              }`}
-              aria-label={isFollowing ? 'Bỏ theo dõi câu lạc bộ' : 'Theo dõi câu lạc bộ'}
-              title={isFollowing ? 'Bỏ theo dõi' : 'Theo dõi'}
-            >
-              <Bookmark strokeWidth={1.5} className={`w-4 h-4 ${isFollowing ? 'fill-blue-600 text-blue-600' : ''}`} />
-            </Button>
-
-            <Button
-              variant="outline"
-              onClick={handleToggleFavorite}
-              disabled={isFollowLoading}
-              className={`hidden h-10 px-3 rounded-lg shadow-sm border transition-colors ${
-                isFavorite
-                  ? 'bg-blue-50 border-blue-300 text-blue-600'
-                  : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700'
-              }`}
-              aria-label={isFavorite ? 'Bỏ yêu thích câu lạc bộ' : 'Yêu thích câu lạc bộ'}
-              title={isFavorite ? 'Bỏ yêu thích' : 'Yêu thích'}
-            >
-              <Star strokeWidth={1.5} className={`w-4 h-4 ${isFavorite ? 'fill-blue-600 text-blue-600' : ''}`} />
-            </Button>
-
             <Button
               variant="outline"
               onClick={() => setIsShareModalOpen(true)}

@@ -6,6 +6,7 @@ import { BarChart3, CheckCircle2, Circle, Plus, Loader2, Users } from 'lucide-re
 import type { CommunityPoll, CommunityPollOption } from '@/types/community-social';
 import { communitiesApi } from '@/features/communities/api';
 import { useUserProfileModalStore } from '@/lib/zustand/userProfileModalStore';
+import { useAuthStore } from '@/lib/zustand/authStore';
 import { cn } from '@/utils/cn';
 
 interface CommunityPollCardProps {
@@ -19,18 +20,22 @@ export default function CommunityPollCard({
   poll,
   onPollUpdated,
 }: CommunityPollCardProps) {
+  const { user } = useAuthStore();
   const { openUserProfile } = useUserProfileModalStore();
   const [currentPoll, setCurrentPoll] = useState<CommunityPoll>(poll);
   const [votingOptionId, setVotingOptionId] = useState<string | null>(null);
   const [isAddingOption, setIsAddingOption] = useState(false);
   const [newOptionText, setNewOptionText] = useState('');
   const [isSubmittingOption, setIsSubmittingOption] = useState(false);
+  const [isClosingPoll, setIsClosingPoll] = useState(false);
   const [selectedOptionForVoters, setSelectedOptionForVoters] = useState<CommunityPollOption | null>(null);
 
   const totalVotes = currentPoll.options.reduce((acc, opt) => acc + opt.voteCount, 0);
+  const isExpired = currentPoll.isClosed || (currentPoll.expiresAt && new Date(currentPoll.expiresAt) < new Date());
+  const canClosePoll = !currentPoll.isClosed && user?.id && currentPoll.creatorId === user.id;
 
   const handleVote = async (optionId: string) => {
-    if (currentPoll.isClosed) return;
+    if (isExpired) return;
     try {
       setVotingOptionId(optionId);
       const res = await communitiesApi.votePoll(communityId, currentPoll.id, optionId);
@@ -42,6 +47,22 @@ export default function CommunityPollCard({
       console.error('Failed to vote poll:', err);
     } finally {
       setVotingOptionId(null);
+    }
+  };
+
+  const handleClosePollEarly = async () => {
+    if (!window.confirm('Bạn có chắc muốn kết thúc cuộc bình chọn này sớm không?')) return;
+    try {
+      setIsClosingPoll(true);
+      const res = await communitiesApi.closePoll(communityId, currentPoll.id);
+      if (res.data) {
+        setCurrentPoll(res.data);
+        onPollUpdated?.(res.data);
+      }
+    } catch (err) {
+      console.error('Failed to close poll:', err);
+    } finally {
+      setIsClosingPoll(false);
     }
   };
 
@@ -66,10 +87,10 @@ export default function CommunityPollCard({
 
   return (
     <div className="mt-3 overflow-hidden rounded-xl border border-blue-100 bg-slate-50/60 p-4 shadow-xs">
-      {/* Header: Question + Mode Badge */}
+      {/* Header: Question + Mode Badge + Expiration / Close Button */}
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-1">
-          <div className="flex items-center gap-1.5 text-[11px] font-bold text-blue-600">
+          <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-bold text-blue-600">
             <BarChart3 className="h-3.5 w-3.5" />
             <span>Thăm dò ý kiến</span>
             {currentPoll.allowMultipleAnswers ? (
@@ -77,12 +98,33 @@ export default function CommunityPollCard({
             ) : (
               <span className="rounded bg-slate-200/70 px-1.5 py-0.5 text-[10px] text-slate-700">Chọn một</span>
             )}
+
+            {isExpired ? (
+              <span className="rounded bg-rose-100 px-1.5 py-0.5 text-[10px] font-bold text-rose-700">Đã kết thúc</span>
+            ) : currentPoll.expiresAt ? (
+              <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">
+                Hết hạn: {new Date(currentPoll.expiresAt).toLocaleDateString('vi-VN')}
+              </span>
+            ) : null}
           </div>
           <h4 className="text-sm font-bold text-slate-900 leading-snug">{currentPoll.question}</h4>
         </div>
-        <span className="text-xs font-semibold text-slate-500 whitespace-nowrap">
-          {totalVotes} lượt bình chọn
-        </span>
+
+        <div className="flex flex-col items-end gap-1 shrink-0">
+          <span className="text-xs font-semibold text-slate-500 whitespace-nowrap">
+            {totalVotes} lượt bình chọn
+          </span>
+          {canClosePoll && (
+            <button
+              type="button"
+              disabled={isClosingPoll}
+              onClick={handleClosePollEarly}
+              className="text-[11px] font-bold text-rose-600 hover:text-rose-700 hover:underline cursor-pointer disabled:opacity-50"
+            >
+              {isClosingPoll ? 'Đang kết thúc...' : 'Kết thúc sớm'}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Options List */}

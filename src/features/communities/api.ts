@@ -217,6 +217,9 @@ export const communitiesApi = {
   addPollOption: (communityId: string, pollId: string, optionText: string) =>
     api.post<ApiResponse<any>>(`/communities/${communityId}/polls/${pollId}/options`, { optionText }),
 
+  closePoll: (communityId: string, pollId: string) =>
+    api.post<ApiResponse<any>>(`/communities/${communityId}/polls/${pollId}/close`),
+
   getPendingPosts: (communityId: string) =>
     api.get<ApiResponse<BackendPost[]>>(`/communities/${communityId}/moderation/posts`),
 

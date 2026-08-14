@@ -23,7 +23,7 @@ const createCommunitySchema = z.object({
   districtCode: z.string().optional(),
   wardCode: z.string().optional(),
   locationAddress: z.string().max(255, "Địa chỉ quá dài").optional(),
-  categoryIds: z.array(z.string().uuid()).min(1, "Vui lòng chọn ít nhất 1 môn thể thao"),
+  categoryIds: z.array(z.string().uuid()).length(1, "Vui lòng chọn đúng 1 môn thể thao"),
   visibility: z.enum(['PUBLIC', 'PRIVATE', 'RESTRICTED']),
   joinMode: z.enum(['OPEN', 'APPROVAL', 'INVITE_ONLY']),
   joinQuestions: z.array(z.object({ value: z.string() })).optional(),
@@ -109,12 +109,8 @@ export default function CreateCommunityPage() {
   }, [watchDistrict, setValue]);
 
   const handleCategoryToggle = (id: string) => {
-    const current = watchCategoryIds || [];
-    if (current.includes(id)) {
-      setValue('categoryIds', current.filter(c => c !== id));
-    } else {
-      setValue('categoryIds', [...current, id]);
-    }
+    // A club owns one primary sport. Selecting another replaces the previous one.
+    setValue('categoryIds', [id], { shouldValidate: true });
   };
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -296,8 +292,9 @@ export default function CreateCommunityPage() {
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-3">
-                  Môn thể thao <span className="text-rose-500">*</span>
+                  Môn thể thao chính <span className="text-rose-500">*</span>
                 </label>
+                <p className="mb-3 text-sm text-slate-500">Mỗi câu lạc bộ chỉ chọn một môn. Bạn có thể tạo các đội khác nhau trong cùng CLB.</p>
                 <div className="flex flex-wrap gap-3">
                   {categories.map(cat => {
                     const isSelected = watchCategoryIds?.includes(cat.id);

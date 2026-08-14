@@ -37,6 +37,8 @@ interface CommunityPostComposerProps {
   onTogglePollAllowMultiple: () => void;
   pollAllowAddOptions: boolean;
   onTogglePollAllowAddOptions: () => void;
+  pollExpiresInDays: number | null;
+  onChangePollExpiresInDays: (days: number | null) => void;
 }
 
 export default function CommunityPostComposer({
@@ -68,6 +70,8 @@ export default function CommunityPostComposer({
   onTogglePollAllowMultiple,
   pollAllowAddOptions,
   onTogglePollAllowAddOptions,
+  pollExpiresInDays,
+  onChangePollExpiresInDays,
 }: CommunityPostComposerProps) {
   return (
     <form
@@ -200,25 +204,44 @@ export default function CommunityPostComposer({
             )}
           </div>
 
-          <div className="pt-2 border-t border-blue-100 flex flex-wrap gap-4 text-xs font-semibold text-slate-700">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={pollAllowMultiple}
-                onChange={onTogglePollAllowMultiple}
-                className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-              />
-              <span>Cho phép chọn nhiều câu trả lời</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={pollAllowAddOptions}
-                onChange={onTogglePollAllowAddOptions}
-                className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-              />
-              <span>Cho phép mọi người thêm lựa chọn mới</span>
-            </label>
+          <div className="pt-2 border-t border-blue-100 flex flex-wrap items-center justify-between gap-4 text-xs font-semibold text-slate-700">
+            <div className="flex flex-wrap gap-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={pollAllowMultiple}
+                  onChange={onTogglePollAllowMultiple}
+                  className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span>Cho phép chọn nhiều câu trả lời</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={pollAllowAddOptions}
+                  onChange={onTogglePollAllowAddOptions}
+                  className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span>Cho phép mọi người thêm lựa chọn mới</span>
+              </label>
+            </div>
+
+            {/* Poll Expiration Selector */}
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-bold text-slate-500">Thời hạn:</span>
+              <select
+                value={pollExpiresInDays ?? ''}
+                onChange={(e) => onChangePollExpiresInDays(e.target.value ? Number(e.target.value) : null)}
+                className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-800 focus:border-blue-500 focus:outline-hidden"
+              >
+                <option value="">Không giới hạn</option>
+                <option value="1">1 ngày</option>
+                <option value="3">3 ngày</option>
+                <option value="7">7 ngày</option>
+                <option value="14">14 ngày</option>
+                <option value="30">30 ngày</option>
+              </select>
+            </div>
           </div>
         </div>
       )}

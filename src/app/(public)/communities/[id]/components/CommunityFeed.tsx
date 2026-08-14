@@ -63,6 +63,7 @@ export default function CommunityFeed({
   const [pollOptions, setPollOptions] = useState<string[]>(["", ""]);
   const [pollAllowMultiple, setPollAllowMultiple] = useState(false);
   const [pollAllowAddOptions, setPollAllowAddOptions] = useState(true);
+  const [pollExpiresInDays, setPollExpiresInDays] = useState<number | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const previewUrlsRef = useRef<string[]>([]);
@@ -192,12 +193,20 @@ export default function CommunityFeed({
       );
 
       const validPollOptions = pollOptions.map((o) => o.trim()).filter(Boolean);
+      let expiresAt: string | undefined;
+      if (pollExpiresInDays && pollExpiresInDays > 0) {
+        const d = new Date();
+        d.setDate(d.getDate() + pollExpiresInDays);
+        expiresAt = d.toISOString();
+      }
+
       const pollPayload = isPollOpen && pollQuestion.trim() && validPollOptions.length >= 2
         ? {
             question: pollQuestion.trim(),
             options: validPollOptions,
             allowMultipleAnswers: pollAllowMultiple,
             allowAddOptions: pollAllowAddOptions,
+            expiresAt,
           }
         : undefined;
 
@@ -238,6 +247,7 @@ export default function CommunityFeed({
       setPollOptions(["", ""]);
       setPollAllowMultiple(false);
       setPollAllowAddOptions(true);
+      setPollExpiresInDays(null);
 
       toast.success(
         response.data.status === "PENDING"
@@ -309,6 +319,8 @@ export default function CommunityFeed({
           onTogglePollAllowMultiple={() => setPollAllowMultiple((prev) => !prev)}
           pollAllowAddOptions={pollAllowAddOptions}
           onTogglePollAllowAddOptions={() => setPollAllowAddOptions((prev) => !prev)}
+          pollExpiresInDays={pollExpiresInDays}
+          onChangePollExpiresInDays={setPollExpiresInDays}
         />
 
         {isLoading ? (

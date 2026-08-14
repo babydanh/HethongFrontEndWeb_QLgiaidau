@@ -11,9 +11,9 @@ import CommunityAvatar from "./CommunityAvatar";
 interface CommunityPostComposerProps {
   onSubmit: FormEventHandler<HTMLFormElement>;
   contentRegistration: UseFormRegisterReturn<"content">;
-  topicsRegistration: UseFormRegisterReturn<"topics">;
-  topicsValue: string;
-  onTopicsChange: (value: string) => void;
+  topicsRegistration?: UseFormRegisterReturn<"topics">;
+  topicsValue?: string;
+  onTopicsChange?: (value: string) => void;
   contentError?: string;
   isSubmitting: boolean;
   composerRef: RefObject<HTMLTextAreaElement | null>;
@@ -145,37 +145,6 @@ export default function CommunityPostComposer({
         <p className="mt-1 text-xs text-rose-600">{contentError}</p>
       )}
 
-      {/* Gợi ý chủ đề nhanh (Topic Chips) */}
-      <div className="mt-3 flex flex-wrap items-center gap-1.5">
-        <span className="text-[11px] font-semibold text-slate-600 mr-1">Chủ đề:</span>
-        {["GiaoLuu", "TimDoiThu", "GiaiDau", "ChiaSeKyThuat", "ThongBao"].map((chip) => {
-          const isSelected = (topicsValue || "").includes(chip);
-          return (
-            <button
-              key={chip}
-              type="button"
-              onClick={() => {
-                const current = (topicsValue || "")
-                  .split(/[\s,]+/)
-                  .map((t: string) => t.replace(/^#/, "").trim())
-                  .filter(Boolean);
-                const next = current.includes(chip)
-                  ? current.filter((t: string) => t !== chip)
-                  : [...current, chip].slice(0, 4);
-                onTopicsChange(next.map((t: string) => `#${t}`).join(" "));
-              }}
-              className={cn(
-                "rounded-full px-2.5 py-0.5 text-xs font-semibold transition-all select-none",
-                isSelected
-                  ? "bg-blue-600 text-white shadow-xs"
-                  : "bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900 border border-slate-200/60",
-              )}
-            >
-              #{chip}
-            </button>
-          );
-        })}
-      </div>
 
       {previewUrls.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-2">

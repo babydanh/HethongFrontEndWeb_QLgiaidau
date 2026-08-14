@@ -1026,7 +1026,9 @@ export default function LiveMatchPage({ params }: Props) {
         const completedFootball: FootballScoreState = {
           ...footballScore,
           phase: isRegulationDraw ? 'PENALTY_SHOOTOUT' : 'COMPLETED',
-          shootout: isRegulationDraw ? { ...shootoutGoals, winnerId } : footballScore.shootout,
+          shootout: isRegulationDraw
+            ? { team1Goals: shootoutGoals.p1Goals, team2Goals: shootoutGoals.p2Goals, winnerId }
+            : footballScore.shootout,
         };
         const completedMatch = await updateScoreWithRevision({
           p1SetsWon: 0,

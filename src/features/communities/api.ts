@@ -34,6 +34,7 @@ interface BackendPost {
   topics?: string[];
   mentions?: string[];
   viewerReaction?: CommunityReactionType | null;
+  poll?: CommunityPost['poll'];
 }
 
 function mapPost(post: BackendPost): CommunityPost {
@@ -54,6 +55,7 @@ function mapPost(post: BackendPost): CommunityPost {
     topics: post.topics ?? [],
     mentions: post.mentions ?? [],
     viewerReaction: post.viewerReaction ?? null,
+    poll: post.poll ?? null,
   };
 }
 
@@ -180,6 +182,7 @@ export const communitiesApi = {
       mediaUrls: data.imageUrls,
       topics: data.topics,
       mentions: data.mentions,
+      poll: data.poll,
     }, {
       headers: idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : undefined,
     }).then((response) => ({
@@ -207,6 +210,12 @@ export const communitiesApi = {
 
   reportPost: (communityId: string, postId: string, data: { reason: string; details?: string }) =>
     api.post<ApiResponse<unknown>>(`/communities/${communityId}/posts/${postId}/report`, data),
+
+  votePoll: (communityId: string, pollId: string, optionId: string) =>
+    api.post<ApiResponse<any>>(`/communities/${communityId}/polls/${pollId}/vote`, { optionId }),
+
+  addPollOption: (communityId: string, pollId: string, optionText: string) =>
+    api.post<ApiResponse<any>>(`/communities/${communityId}/polls/${pollId}/options`, { optionText }),
 
   getPendingPosts: (communityId: string) =>
     api.get<ApiResponse<BackendPost[]>>(`/communities/${communityId}/moderation/posts`),

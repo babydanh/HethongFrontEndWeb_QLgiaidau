@@ -77,6 +77,38 @@ export interface CommunityPostTournament {
   maxParticipants?: number | null;
 }
 
+export interface CommunityPollVoter {
+  id: string;
+  fullName: string;
+  avatarUrl: string | null;
+}
+
+export interface CommunityPollOption {
+  id: string;
+  pollId: string;
+  optionText: string;
+  voteCount: number;
+  isVoted: boolean;
+  voters: CommunityPollVoter[];
+}
+
+export interface CommunityPoll {
+  id: string;
+  communityId: string;
+  postId?: string | null;
+  creatorId?: string | null;
+  creator?: CommunityPostAuthor | null;
+  question: string;
+  allowMultipleAnswers: boolean;
+  allowAddOptions: boolean;
+  isClosed: boolean;
+  expiresAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  totalVotes: number;
+  options: CommunityPollOption[];
+}
+
 export interface CommunityPost {
   id: string;
   communityId: string;
@@ -94,6 +126,7 @@ export interface CommunityPost {
   topics?: string[];
   mentions?: string[];
   viewerReaction?: CommunityReactionType | null;
+  poll?: CommunityPoll | null;
 }
 
 export type CommunityReactionType = 'LIKE' | 'CHEER' | 'RESPECT' | 'LAUGH' | 'CLUTCH';
@@ -143,10 +176,20 @@ export interface CursorPage<T> {
   hasMore: boolean;
 }
 
+export interface CreatePollPayload {
+  question: string;
+  options: string[];
+  allowMultipleAnswers?: boolean;
+  allowAddOptions?: boolean;
+  expiresAt?: string;
+}
+
 export interface CreateCommunityPostPayload {
   content: string;
   imageUrls?: string[];
   topics?: string[];
   mentions?: string[];
+  poll?: CreatePollPayload;
 }
+
 

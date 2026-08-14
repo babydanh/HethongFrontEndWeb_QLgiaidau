@@ -56,6 +56,14 @@ export default function CommunityFeed({
     null,
   );
   const [isTagSaving, setIsTagSaving] = useState(false);
+
+  // Poll state
+  const [isPollOpen, setIsPollOpen] = useState(false);
+  const [pollQuestion, setPollQuestion] = useState("");
+  const [pollOptions, setPollOptions] = useState<string[]>(["", ""]);
+  const [pollAllowMultiple, setPollAllowMultiple] = useState(false);
+  const [pollAllowAddOptions, setPollAllowAddOptions] = useState(true);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const previewUrlsRef = useRef<string[]>([]);
 
@@ -182,6 +190,17 @@ export default function CommunityFeed({
           uploadApi.uploadImage(file).then((result) => result.url),
         ),
       );
+
+      const validPollOptions = pollOptions.map((o) => o.trim()).filter(Boolean);
+      const pollPayload = isPollOpen && pollQuestion.trim() && validPollOptions.length >= 2
+        ? {
+            question: pollQuestion.trim(),
+            options: validPollOptions,
+            allowMultipleAnswers: pollAllowMultiple,
+            allowAddOptions: pollAllowAddOptions,
+          }
+        : undefined;
+
       const response = await communitiesApi.createPost(
         communityId,
         {
@@ -189,6 +208,7 @@ export default function CommunityFeed({
           imageUrls,
           topics: [],
           mentions: validIds,
+          poll: pollPayload,
         },
         crypto.randomUUID(),
       );
@@ -211,6 +231,14 @@ export default function CommunityFeed({
       previewUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
       setPreviewUrls([]);
       setMentionEntries([]);
+
+      // Reset poll
+      setIsPollOpen(false);
+      setPollQuestion("");
+      setPollOptions(["", ""]);
+      setPollAllowMultiple(false);
+      setPollAllowAddOptions(true);
+
       toast.success(
         response.data.status === "PENDING"
           ? "Bài viết đang chờ duyệt."
@@ -261,6 +289,26 @@ export default function CommunityFeed({
           onRemoveImage={removeImage}
           fileInputRef={fileInputRef}
           onFilesSelected={onFilesSelected}
+          isPollOpen={isPollOpen}
+          onTogglePoll={() => setIsPollOpen((prev) => !prev)}
+          pollQuestion={pollQuestion}
+          onChangePollQuestion={setPollQuestion}
+          pollOptions={pollOptions}
+          onChangePollOption={(index, val) => {
+            setPollOptions((prev) => {
+              const next = [...prev];
+              next[index] = val;
+              return next;
+            });
+          }}
+          onAddPollOptionField={() => setPollOptions((prev) => [...prev, ""])}
+          onRemovePollOptionField={(index) => {
+            setPollOptions((prev) => prev.filter((_, i) => i !== index));
+          }}
+          pollAllowMultiple={pollAllowMultiple}
+          onTogglePollAllowMultiple={() => setPollAllowMultiple((prev) => !prev)}
+          pollAllowAddOptions={pollAllowAddOptions}
+          onTogglePollAllowAddOptions={() => setPollAllowAddOptions((prev) => !prev)}
         />
 
         {isLoading ? (

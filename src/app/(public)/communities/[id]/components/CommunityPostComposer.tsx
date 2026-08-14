@@ -25,6 +25,18 @@ interface CommunityPostComposerProps {
   onRemoveImage: (index: number) => void;
   fileInputRef: RefObject<HTMLInputElement | null>;
   onFilesSelected: (files: FileList | null) => void;
+  isPollOpen: boolean;
+  onTogglePoll: () => void;
+  pollQuestion: string;
+  onChangePollQuestion: (val: string) => void;
+  pollOptions: string[];
+  onChangePollOption: (index: number, val: string) => void;
+  onAddPollOptionField: () => void;
+  onRemovePollOptionField: (index: number) => void;
+  pollAllowMultiple: boolean;
+  onTogglePollAllowMultiple: () => void;
+  pollAllowAddOptions: boolean;
+  onTogglePollAllowAddOptions: () => void;
 }
 
 export default function CommunityPostComposer({
@@ -44,6 +56,18 @@ export default function CommunityPostComposer({
   onRemoveImage,
   fileInputRef,
   onFilesSelected,
+  isPollOpen,
+  onTogglePoll,
+  pollQuestion,
+  onChangePollQuestion,
+  pollOptions,
+  onChangePollOption,
+  onAddPollOptionField,
+  onRemovePollOptionField,
+  pollAllowMultiple,
+  onTogglePollAllowMultiple,
+  pollAllowAddOptions,
+  onTogglePollAllowAddOptions,
 }: CommunityPostComposerProps) {
   return (
     <form
@@ -60,93 +84,152 @@ export default function CommunityPostComposer({
             composerRef.current = element;
           }}
           onKeyDown={onComposerKeyDown}
-          placeholder="Bạn đang nghĩ gì về trận đấu hôm nay? Gõ @ để nhắc thành viên"
-          className="mt-4 min-h-28 w-full resize-y rounded-lg border border-slate-200 bg-slate-50/70 p-3 text-sm text-slate-800 placeholder:text-slate-500 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"
-          disabled={isSubmitting}
+          placeholder="Bạn muốn chia sẻ điều gì với các thành viên? (Gõ @ để nhắc tên)"
+          rows={3}
+          className="mt-3 w-full resize-none rounded-xl border border-slate-200 bg-slate-50/50 p-3.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:outline-hidden transition"
         />
 
         {mentionQuery !== null && suggestions.length > 0 && (
-          <div
-            role="listbox"
-            aria-label="Gợi ý thành viên"
-            className="absolute left-2 right-2 top-full z-20 mt-1 max-h-64 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1 shadow-xl"
-          >
-            {suggestions.map((member, index) => (
-              <div
-                key={member.user?.id ?? member.member?.userId}
-                role="option"
-                aria-selected={index === mentionIndex}
-                onMouseDown={(event) => {
-                  if (event.button !== 0) return;
-                  event.preventDefault();
-                  onSelectMention(member);
-                }}
-                onContextMenu={(event) => {
-                  if (!canManageTags) return;
-                  event.preventDefault();
-                  onManageTags(member);
-                }}
-                className={cn(
-                  "flex items-center gap-2 rounded-lg px-2 py-2",
-                  index === mentionIndex
-                    ? "bg-blue-50 text-blue-900"
-                    : "hover:bg-slate-50",
-                )}
-              >
-                <CommunityAvatar
-                  src={member.user?.avatarUrl}
-                  name={member.user?.fullName ?? "M"}
-                  size={32}
-                />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs font-bold text-slate-800">
-                    {member.user?.fullName}
-                  </p>
-                  <div className="flex flex-wrap gap-1">
-                    {(member.member?.tags ?? []).map((tag) => (
-                      <span
-                        key={tag}
-                        className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-500"
-                      >
-                        {tag}
-                      </span>
-                    ))}
+          <div className="absolute left-0 right-0 top-full z-30 mt-1 max-h-56 overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-xl">
+            {suggestions.map((item, index) => {
+              const active = index === mentionIndex;
+              return (
+                <div
+                  key={item.member.id}
+                  className={cn(
+                    "flex items-center justify-between px-3.5 py-2.5 cursor-pointer text-xs transition",
+                    active ? "bg-blue-50 text-blue-900 font-semibold" : "hover:bg-slate-50",
+                  )}
+                  onMouseDown={(event) => {
+                    event.preventDefault();
+                    onSelectMention(item);
+                  }}
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <CommunityAvatar
+                      name={item.user.fullName}
+                      src={item.user.avatarUrl}
+                      size={32}
+                    />
+                    <div className="min-w-0">
+                      <div className="font-semibold text-slate-800 truncate">
+                        {item.user.fullName}
+                      </div>
+                      <div className="text-[10px] text-slate-400">
+                        {item.member.role === "OWNER"
+                          ? "Chủ nhiệm"
+                          : item.member.role === "MODERATOR"
+                            ? "Quản trị viên"
+                            : "Thành viên"}
+                      </div>
+                    </div>
                   </div>
                 </div>
-                {canManageTags && (
-                  <button
-                    type="button"
-                    onMouseDown={(event) => {
-                      event.preventDefault();
-                      event.stopPropagation();
-                    }}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      onManageTags(member);
-                    }}
-                    className="rounded border border-slate-200 px-2 py-1 text-[10px] font-semibold text-slate-500 hover:border-blue-300 hover:text-blue-700"
-                  >
-                    Gán tag
-                  </button>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
 
       {contentError && (
-        <p className="mt-1 text-xs text-rose-600">{contentError}</p>
+        <div className="mt-1 text-xs text-rose-500">{contentError}</div>
       )}
 
+      {isPollOpen && (
+        <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50/30 p-4 space-y-3">
+          <div className="flex items-center justify-between border-b border-blue-100 pb-2">
+            <span className="text-xs font-bold text-blue-900 flex items-center gap-1.5">
+              📊 Tạo cuộc thăm dò ý kiến
+            </span>
+            <button
+              type="button"
+              onClick={onTogglePoll}
+              className="text-slate-400 hover:text-rose-600 text-xs font-bold cursor-pointer"
+            >
+              Hủy bình chọn
+            </button>
+          </div>
+
+          <div>
+            <label className="text-[11px] font-bold text-slate-700 block mb-1">
+              Câu hỏi bình chọn *
+            </label>
+            <input
+              type="text"
+              placeholder="Nhập câu hỏi hoặc chủ đề..."
+              value={pollQuestion}
+              onChange={(e) => onChangePollQuestion(e.target.value)}
+              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 focus:border-blue-500 focus:outline-hidden"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[11px] font-bold text-slate-700 block">
+              Các lựa chọn trả lời *
+            </label>
+            {pollOptions.map((opt, idx) => (
+              <div key={idx} className="flex items-center gap-2">
+                <span className="text-[11px] font-bold text-slate-400 w-4 text-center">{idx + 1}.</span>
+                <input
+                  type="text"
+                  placeholder={`Lựa chọn ${idx + 1}`}
+                  value={opt}
+                  onChange={(e) => onChangePollOption(idx, e.target.value)}
+                  className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-900 focus:border-blue-500 focus:outline-hidden"
+                />
+                {pollOptions.length > 2 && (
+                  <button
+                    type="button"
+                    onClick={() => onRemovePollOptionField(idx)}
+                    className="text-slate-400 hover:text-rose-500 p-1 cursor-pointer"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+            ))}
+
+            {pollOptions.length < 10 && (
+              <button
+                type="button"
+                onClick={onAddPollOptionField}
+                className="text-xs font-bold text-blue-600 hover:text-blue-700 cursor-pointer pt-1"
+              >
+                + Thêm lựa chọn
+              </button>
+            )}
+          </div>
+
+          <div className="pt-2 border-t border-blue-100 flex flex-wrap gap-4 text-xs font-semibold text-slate-700">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={pollAllowMultiple}
+                onChange={onTogglePollAllowMultiple}
+                className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span>Cho phép chọn nhiều câu trả lời</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={pollAllowAddOptions}
+                onChange={onTogglePollAllowAddOptions}
+                className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span>Cho phép mọi người thêm lựa chọn mới</span>
+            </label>
+          </div>
+        </div>
+      )}
 
       {previewUrls.length > 0 && (
-        <div className="mt-3 flex flex-wrap gap-2">
+        <div className="mt-3 flex flex-wrap gap-2.5">
           {previewUrls.map((url, index) => (
             <div key={url} className="relative group">
               <Image
                 src={url}
-                alt="Ảnh xem trước"
+                alt={`Ảnh xem trước ${index + 1}`}
                 width={96}
                 height={72}
                 unoptimized
@@ -156,7 +239,7 @@ export default function CommunityPostComposer({
                 type="button"
                 onClick={() => onRemoveImage(index)}
                 aria-label={`Xóa ảnh ${index + 1}`}
-                className="absolute -right-1.5 -top-1.5 rounded-full bg-rose-600 p-1 text-white shadow-md hover:bg-rose-700 transition"
+                className="absolute -right-1.5 -top-1.5 rounded-full bg-rose-600 p-1 text-white shadow-md hover:bg-rose-700 transition cursor-pointer"
               >
                 <X className="h-3 w-3" />
               </button>
@@ -178,10 +261,24 @@ export default function CommunityPostComposer({
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-blue-700 transition"
+            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-blue-700 transition cursor-pointer"
           >
             <ImagePlus className="h-4 w-4 text-blue-600" />
             Đính kèm ảnh
+          </button>
+
+          <button
+            type="button"
+            onClick={onTogglePoll}
+            className={cn(
+              "flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition cursor-pointer",
+              isPollOpen
+                ? "bg-blue-100/70 text-blue-700 font-bold"
+                : "text-slate-700 hover:bg-slate-100 hover:text-blue-700"
+            )}
+          >
+            <span>📊</span>
+            Thăm dò ý kiến
           </button>
 
           <button
@@ -196,7 +293,7 @@ export default function CommunityPostComposer({
                 setTimeout(() => el.setSelectionRange(pos + 1, pos + 1), 0);
               }
             }}
-            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-blue-600 transition"
+            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-blue-600 transition cursor-pointer"
           >
             <span className="font-bold text-blue-600">@</span>
             Nhắc thành viên
@@ -206,7 +303,7 @@ export default function CommunityPostComposer({
         <button
           type="submit"
           disabled={isSubmitting}
-          className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
         >
           {isSubmitting ? (
             <Loader2 className="h-4 w-4 animate-spin" />

@@ -13,6 +13,7 @@ import type {
 import { cn } from "@/utils/cn";
 import { getErrorMessage } from "@/utils/error";
 import CommunityAvatar from "./CommunityAvatar";
+import CommunityPollCard from "./CommunityPollCard";
 import ImageLightboxModal from "@/components/common/ImageLightboxModal";
 import UserProfilePopover, {
   type PopoverUserProfile,
@@ -406,6 +407,14 @@ export default function CommunityPostCard({
               </Link>
             </div>
           </div>
+        )}
+
+        {/* Poll Component (Facebook Style) */}
+        {post.poll && (
+          <CommunityPollCard
+            communityId={post.communityId}
+            poll={post.poll}
+          />
         )}
 
         {/* Images Grid with Click to Open Lightbox */}

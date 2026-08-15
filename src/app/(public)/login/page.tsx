@@ -113,13 +113,15 @@ export default function LoginPage() {
       >
         <div className="absolute inset-0 bg-gradient-to-b from-slate-900/85 via-slate-900/55 to-slate-900/90" />
 
-        {/* Logo — larger */}
+        {/* Logo */}
         <div className="relative z-10 p-10 pb-0">
-          <img
-            src="/sporto_v1.svg"
-            alt="Sporto"
-            className="h-28 w-auto object-contain brightness-200 contrast-0"
-          />
+          <Link href="/" className="inline-block">
+            <img
+              src="/sporto_v1_with_text.svg"
+              alt="Sporto"
+              className="h-10 w-auto object-contain brightness-0 invert opacity-95 hover:opacity-100 transition-opacity"
+            />
+          </Link>
         </div>
 
         {/* Headline + highlights */}
@@ -181,12 +183,14 @@ export default function LoginPage() {
           {/* Form card */}
           <div className="bg-white rounded-lg shadow-lg border border-slate-100 px-8 py-8">
             {/* Logo inside card for right panel */}
-            <div className="flex items-center justify-center mb-4">
-              <img
-                src="/sporto_v1.svg"
-                alt="Sporto"
-                className="h-24 w-auto object-contain scale-110"
-              />
+            <div className="flex items-center justify-center mb-5">
+              <Link href="/" className="inline-block">
+                <img
+                  src="/sporto_v1_with_text.svg"
+                  alt="Sporto"
+                  className="h-9 w-auto object-contain hover:opacity-90 transition-opacity"
+                />
+              </Link>
             </div>
 
             <h2 className="text-xl font-bold text-slate-900 tracking-tight">Chào mừng trở lại</h2>

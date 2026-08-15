@@ -115,13 +115,15 @@ export default function RegisterPage() {
       >
         <div className="absolute inset-0 bg-gradient-to-b from-slate-900/85 via-slate-900/55 to-slate-900/90" />
 
-        {/* Logo — larger */}
+        {/* Logo */}
         <div className="relative z-10 p-10">
-          <img
-            src="/sporto_v1.svg"
-            alt="Sporto"
-            className="h-16 w-auto object-contain brightness-200 contrast-0"
-          />
+          <Link href="/" className="inline-block">
+            <img
+              src="/sporto_v1_with_text.svg"
+              alt="Sporto"
+              className="h-10 w-auto object-contain brightness-0 invert opacity-95 hover:opacity-100 transition-opacity"
+            />
+          </Link>
         </div>
 
         {/* Headline + list */}
@@ -183,12 +185,14 @@ export default function RegisterPage() {
           {/* Form card */}
           <div className="bg-white rounded-lg shadow-lg border border-slate-100 px-8 py-7">
             {/* Logo inside card */}
-            <div className="flex items-center gap-2.5 mb-5">
-              <img
-                src="/sporto_v1.svg"
-                alt="Sporto"
-                className="h-14 w-auto object-contain"
-              />
+            <div className="flex items-center justify-center mb-5">
+              <Link href="/" className="inline-block">
+                <img
+                  src="/sporto_v1_with_text.svg"
+                  alt="Sporto"
+                  className="h-9 w-auto object-contain hover:opacity-90 transition-opacity"
+                />
+              </Link>
             </div>
 
             <h2 className="text-xl font-bold text-slate-900 tracking-tight">Tạo tài khoản</h2>

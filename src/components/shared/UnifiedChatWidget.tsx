@@ -1863,7 +1863,7 @@ export default function UnifiedChatWidget() {
                                       <div
                                         onClick={(e) => e.stopPropagation()}
                                         className={`absolute bottom-full ${
-                                          message.mine ? 'right-0' : 'left-0'
+                                          message.mine ? 'left-0' : 'right-0'
                                         } mb-2 z-50 w-60 rounded-2xl border border-slate-200 bg-white p-2.5 shadow-2xl animate-in fade-in zoom-in-95`}
                                       >
                                         {/* Reactions Row */}

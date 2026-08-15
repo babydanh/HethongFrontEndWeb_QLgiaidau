@@ -71,6 +71,7 @@ export default function Step1Info() {
   const { formData, updateFormData, nextStep, validationTarget, clearValidationTarget } = useCreateTournamentStore();
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [clubCommunity, setClubCommunity] = useState<Community | null>(null);
 
   const { register, handleSubmit, setValue, setError, setFocus, control, formState: { errors } } = useForm<Step1Values>({
     resolver: zodResolver(step1Schema),
@@ -159,16 +160,38 @@ export default function Step1Info() {
       }
     };
     fetchCategoriesAndFees();
-  }, []);
+
+    if (formData.communityId) {
+      communitiesApi.getCommunityById(formData.communityId)
+        .then((res) => {
+          const comm = (res as { data?: Community })?.data || (res as unknown as Community);
+          if (comm) {
+            setClubCommunity(comm);
+            if (comm.categories?.[0]) {
+              const clubCatId = comm.categories[0].id;
+              setValue('categoryId', clubCatId);
+              updateFormData({ categoryId: clubCatId });
+            }
+          }
+        })
+        .catch((err) => {
+          console.error('Failed to fetch club community:', err);
+        });
+    }
+  }, [formData.communityId, setValue, updateFormData]);
+
+  const clubCategory = clubCommunity?.categories?.[0];
+  const isClubLocked = Boolean(formData.communityId && clubCategory);
 
   const onSubmit = (data: Step1Values) => {
-    const selectedCategory = categories.find((category) => category.id === data.categoryId);
+    const finalCategoryId = isClubLocked && clubCategory ? clubCategory.id : data.categoryId;
+    const selectedCategory = categories.find((category) => category.id === finalCategoryId);
     const inferredKind = inferSportRuleKindFromCategory(selectedCategory);
 
     updateFormData({
       name: trimAndNormalizeSpaces(data.name),
       description: data.description ? trimAndNormalizeSpaces(data.description) : '',
-      categoryId: data.categoryId,
+      categoryId: finalCategoryId,
       format: selectedFormat,
       sportRules: buildDefaultSportRules(inferredKind),
       matchFormat: normalizeMatchFormatForCategory(formData.matchFormat, selectedCategory),
@@ -205,20 +228,34 @@ export default function Step1Info() {
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-semibold text-slate-700">Bộ môn thi đấu <span className="text-rose-500">*</span></label>
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-semibold text-slate-700">
+                Bộ môn thi đấu <span className="text-rose-500">*</span>
+              </label>
+              {isClubLocked && clubCategory && (
+                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded">
+                  <Lock className="w-3 h-3" /> Cố định theo CLB
+                </span>
+              )}
+            </div>
             <select 
               {...register('categoryId')} 
-              className={`border rounded-lg px-3 py-2.5 bg-white text-slate-700 focus:outline-none focus:ring-2 disabled:bg-slate-50 ${
+              className={`border rounded-lg px-3 py-2.5 bg-white text-slate-700 focus:outline-none focus:ring-2 disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed ${
                 errors.categoryId ? 'border-rose-500 focus:ring-rose-500' : 'border-slate-300 focus:ring-blue-500'
               }`}
-              disabled={isLoading}
+              disabled={isLoading || isClubLocked}
             >
               <option value="">{isLoading ? 'Đang tải...' : '-- Chọn bộ môn --'}</option>
               {categories.map(cat => (
                 <option key={cat.id} value={cat.id}>{cat.name}</option>
               ))}
             </select>
-            {errors.categoryId && <p className="text-xs font-semibold text-rose-500">{errors.categoryId.message}</p>}
+            {isClubLocked && clubCategory && (
+              <p className="text-xs text-slate-500 font-medium">
+                🔒 Giải đấu của CLB được tự động khóa theo bộ môn của câu lạc bộ ({clubCategory.name}).
+              </p>
+            )}
+            {errors.categoryId && !isClubLocked && <p className="text-xs font-semibold text-rose-500">{errors.categoryId.message}</p>}
           </div>
 
           <div className="flex flex-col">

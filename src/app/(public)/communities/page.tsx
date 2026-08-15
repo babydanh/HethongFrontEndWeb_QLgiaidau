@@ -211,12 +211,12 @@ export default function CommunitiesPage() {
                       className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out" 
                     />
                   ) : (
-                    <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-850 to-blue-950 flex items-center justify-center p-6 group-hover:scale-105 transition-transform duration-700 ease-out">
+                    <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-blue-50/80 to-indigo-100/90 border-b border-slate-100 flex items-center justify-center p-6 group-hover:scale-105 transition-transform duration-700 ease-out">
                       <Image 
                         src="/sporto_v1_with_text.svg" 
                         alt="Sporto" 
                         fill
-                        className="object-contain p-8 opacity-85"
+                        className="object-contain p-8 drop-shadow-sm"
                       />
                     </div>
                   )}

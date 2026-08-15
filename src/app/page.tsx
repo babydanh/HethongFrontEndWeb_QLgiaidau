@@ -246,7 +246,8 @@ function TournamentLogoAvatar({ src, alt }: { src?: string | null; alt: string }
 function HomepageTournamentCard({ tournament }: { tournament: Tournament }) {
   const [imgError, setImgError] = useState(false);
   const fallbackSrc = '/sporto_v1_with_text.svg';
-  const imageSrc = (!imgError && tournament.bannerUrl?.trim()) ? tournament.bannerUrl.split(',')[0] : fallbackSrc;
+  const hasBanner = !imgError && Boolean(tournament.bannerUrl?.trim());
+  const imageSrc = hasBanner ? tournament.bannerUrl!.split(',')[0] : fallbackSrc;
   const hideFeaturedCardText = shouldHideFeaturedCardText(tournament);
 
   const dateRange = useMemo(() => {
@@ -258,16 +259,16 @@ function HomepageTournamentCard({ tournament }: { tournament: Tournament }) {
 
   return (
     <div className={`${hideFeaturedCardText ? 'aspect-[21/9] bg-slate-900' : 'bg-white'} rounded-2xl border border-slate-200/80 shadow-[0_2px_12px_rgba(15,23,42,0.06)] overflow-hidden flex flex-col group relative`}>
-      <div className={`${hideFeaturedCardText ? 'absolute inset-0' : 'h-44 shrink-0'} bg-slate-900 relative overflow-hidden`}>
+      <div className={`${hideFeaturedCardText ? 'absolute inset-0' : 'h-44 shrink-0'} ${hasBanner ? 'bg-slate-900' : 'bg-gradient-to-br from-slate-50 via-blue-50/80 to-indigo-100/90 border-b border-slate-100'} relative overflow-hidden`}>
         <Image
           src={imageSrc}
           alt={tournament.name}
           fill
-          className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+          className={hasBanner ? "object-cover group-hover:scale-105 transition-transform duration-700 ease-out" : "object-contain p-8 drop-shadow-sm group-hover:scale-105 transition-transform duration-700 ease-out"}
           onError={() => setImgError(true)}
           unoptimized={imageSrc === fallbackSrc}
         />
-        {!hideFeaturedCardText && (
+        {!hideFeaturedCardText && hasBanner && (
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
         )}
         

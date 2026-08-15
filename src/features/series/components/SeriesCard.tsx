@@ -50,11 +50,11 @@ export const SeriesCard: React.FC<SeriesCardProps> = ({ series, className }) => 
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90 group-hover:opacity-100"
           />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-slate-900 via-slate-850 to-blue-950 flex items-center justify-center p-6">
+          <div className="w-full h-full bg-gradient-to-br from-slate-50 via-blue-50/80 to-indigo-100/90 border-b border-slate-100 flex items-center justify-center p-6">
             <img
               src="/sporto_v1_with_text.svg"
               alt="Sporto"
-              className="w-36 h-auto object-contain opacity-80"
+              className="w-36 md:w-40 h-auto object-contain drop-shadow-sm"
             />
           </div>
         )}

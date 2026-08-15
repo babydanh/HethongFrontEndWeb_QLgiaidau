@@ -243,7 +243,7 @@ export default function MyTournamentsPage() {
                       <img 
                         src={parent.bannerUrl || firstDivision?.bannerUrl || getDefaultBanner(firstDivision?.category?.name || parent.name)} 
                         alt={parent.name} 
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" 
+                        className={`w-full h-full transition-transform duration-300 group-hover:scale-105 ${(parent.bannerUrl || firstDivision?.bannerUrl) ? "object-cover" : "object-contain p-6 bg-gradient-to-br from-slate-50 via-blue-50/80 to-indigo-100/90 border-b border-slate-100"}`} 
                       />
                     </Link>
 

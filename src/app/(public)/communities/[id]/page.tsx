@@ -365,12 +365,12 @@ export default function CommunityDetailPage() {
               priority 
             />
           ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-850 to-blue-950 flex items-center justify-center p-8">
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-blue-50/80 to-indigo-100/90 border-b border-slate-200 flex items-center justify-center p-8">
               <Image 
                 src="/sporto_v1_with_text.svg" 
                 alt="Sporto" 
                 fill
-                className="object-contain p-12 opacity-85"
+                className="object-contain p-12 md:p-16 drop-shadow-sm"
                 priority
               />
             </div>

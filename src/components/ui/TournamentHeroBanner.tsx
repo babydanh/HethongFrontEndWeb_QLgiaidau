@@ -270,12 +270,12 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[28
                       draggable="false"
                     />
                   ) : (
-                    <div className="w-full h-full bg-slate-950 flex items-center justify-center relative overflow-hidden">
-                      <div className={`absolute inset-0 bg-gradient-to-tr ${getGradientBg(tournament.category?.name)} opacity-30`} />
+                    <div className="w-full h-full bg-gradient-to-br from-slate-50 via-blue-50/80 to-indigo-100/90 flex items-center justify-center relative overflow-hidden border-b border-slate-100">
+                      <div className={`absolute inset-0 bg-gradient-to-tr ${getGradientBg(tournament.category?.name)} opacity-15`} />
                       <img
                         src="/sporto_v1_with_text.svg"
                         alt="Sporto Logo"
-                        className="w-52 h-auto object-contain relative z-10 opacity-80"
+                        className="w-56 md:w-64 h-auto object-contain relative z-10 drop-shadow-sm"
                         draggable="false"
                       />
                     </div>

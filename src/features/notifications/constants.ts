@@ -18,6 +18,7 @@ export const NOTIFICATION_TYPE_LABELS: Record<string, string> = {
   TOURNAMENT_KICKED: 'Bị loại',
   TOURNAMENT_FULL_CANCELLED: 'Hủy do đầy slot',
   TOURNAMENT_TEAM_TIMEOUT: 'Hết hạn xác nhận',
+  TOURNAMENT_FOOTBALL_ROSTER_CONFIRMATION: 'Xác nhận đội hình bóng đá',
   PARTNER_INVITE_RECEIVED: 'Lời mời ghép đôi',
   PARTNER_INVITE_ACCEPTED: 'Đồng đội đã nhận lời',
   PARTNER_INVITE_REJECTED: 'Lời mời bị từ chối',
@@ -116,6 +117,12 @@ export const NOTIFICATION_TYPE_META: Record<string, NotificationTypeMeta> = {
     badgeClassName: 'bg-amber-100 text-amber-800',
     cardClassName: 'hover:border-amber-200 hover:bg-amber-50/50',
     unreadCardClassName: 'border-amber-200 bg-amber-50/70 shadow-sm',
+    dotClassName: 'bg-amber-500',
+  },
+  TOURNAMENT_FOOTBALL_ROSTER_CONFIRMATION: {
+    badgeClassName: 'bg-amber-100 text-amber-800',
+    cardClassName: 'hover:border-amber-200 hover:bg-amber-50/50',
+    unreadCardClassName: 'border-amber-200 bg-amber-50/80 shadow-sm',
     dotClassName: 'bg-amber-500',
   },
   TOURNAMENT_TEAM_COMPLETED: {

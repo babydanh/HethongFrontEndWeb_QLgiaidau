@@ -106,13 +106,30 @@ export function parseScoreDetails(
     p1PointsFor: 0,
     p2PointsFor: 0,
   };
-  for (const set of extractMatchScores(scoreDetails)) {
+  const sets = extractMatchScores(scoreDetails);
+  for (const set of sets) {
     const t1 = set.team1Score;
     const t2 = set.team2Score;
     if (t1 > t2) result.p1SetsWon++;
     else if (t2 > t1) result.p2SetsWon++;
     result.p1PointsFor += t1;
     result.p2PointsFor += t2;
+  }
+
+  // Football stores regulation/extra-time goals directly instead of a
+  // badminton-style `sets` array. Keep goal difference available to the same
+  // standing tiebreaker pipeline without treating goals as extra sets.
+  if (sets.length === 0 && scoreDetails) {
+    const toNumber = (value: unknown) => {
+      const parsed = typeof value === 'number' ? value : Number(value);
+      return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+    };
+    const team1Goals = toNumber(scoreDetails.team1Goals ?? scoreDetails.p1Goals);
+    const team2Goals = toNumber(scoreDetails.team2Goals ?? scoreDetails.p2Goals);
+    if (team1Goals != null && team2Goals != null) {
+      result.p1PointsFor = team1Goals;
+      result.p2PointsFor = team2Goals;
+    }
   }
 
   return result;

@@ -9,6 +9,7 @@
 
 import React, { memo } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Play, Clock } from 'lucide-react';
 import type { BracketMatch } from '@/features/tournaments/api';
 import { extractMatchScores } from '@/features/matches/score-display';
@@ -229,6 +230,15 @@ const RowSide = memo(function RowSide({
             {p.seed}
           </span>
         )}
+        {p?.logoUrl ? (
+          <Image
+            src={p.logoUrl}
+            alt=""
+            width={18}
+            height={18}
+            className="h-[18px] w-[18px] rounded-full object-cover shrink-0"
+          />
+        ) : null}
         <span
           className={
             'text-[10.5px] truncate leading-tight ' +

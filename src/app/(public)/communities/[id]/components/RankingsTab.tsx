@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { Award, Trophy, Loader2, Crown, Search, SlidersHorizontal, X } from 'lucide-react';
 import { Category } from '@/types/category';
-import { rankingsApi, PlayerRanking } from '@/features/rankings/api';
+import { rankingsApi, PlayerRanking, FootballTeamRanking } from '@/features/rankings/api';
 import { EloTierBadge } from '@/components/ui/EloTierBadge';
 import { getRankRingClass } from '@/components/ui/RankAvatar';
 import { getEloMatchTypeLabel } from '@/features/rankings/elo-display';
@@ -25,6 +25,7 @@ export default function RankingsTab({ communityId, categories, onGoToTournaments
   const [selectedMatchType, setSelectedMatchType] = useState<MatchType>('ALL');
   const [selectedGender, setSelectedGender] = useState<'MALE' | 'FEMALE'>('MALE');
   const [rankings, setRankings] = useState<PlayerRanking[]>([]);
+  const [teamRankings, setTeamRankings] = useState<FootballTeamRanking[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [myRanking, setMyRanking] = useState<PlayerRanking | null>(null);
@@ -36,13 +37,27 @@ export default function RankingsTab({ communityId, categories, onGoToTournaments
 
   useEffect(() => {
     if (!selectedCategoryId && categories.length > 0) {
-      setSelectedCategoryId(categories[0].id);
+      queueMicrotask(() => setSelectedCategoryId(categories[0].id));
     }
   }, [categories, selectedCategoryId]);
+
+  const activeCategory = categories.find((c) => c.id === selectedCategoryId);
+  const isFootball = Boolean(activeCategory && (
+    activeCategory.slug.toLowerCase().includes('football') ||
+    activeCategory.name.toLowerCase().includes('bóng đá') ||
+    activeCategory.name.toLowerCase().includes('bong da')
+  ));
 
   const fetchRankings = useCallback(async () => {
     if (!selectedCategoryId) return;
     try {
+      if (isFootball) {
+        const res = await rankingsApi.getFootballTeamRankings({ categoryId: selectedCategoryId, limit: 20 });
+        setTeamRankings(res.data || []);
+        setRankings([]);
+        setMyRanking(null);
+        return;
+      }
       const res = await rankingsApi.getRankings({
         scope: 'COMMUNITY',
         communityId,
@@ -68,7 +83,7 @@ export default function RankingsTab({ communityId, categories, onGoToTournaments
     } catch (err) {
       console.error('Failed to fetch community rankings:', err);
     }
-  }, [communityId, selectedCategoryId, selectedMatchType, selectedGender, userId]);
+  }, [communityId, selectedCategoryId, selectedMatchType, selectedGender, userId, isFootball]);
 
   useEffect(() => {
     let isMounted = true;
@@ -106,6 +121,9 @@ export default function RankingsTab({ communityId, categories, onGoToTournaments
           p.user2?.fullName?.toLowerCase().includes(query);
       })
     : rankings;
+  const filteredTeams = searchQuery.trim()
+    ? teamRankings.filter((team) => team.teamName.toLowerCase().includes(searchQuery.trim().toLowerCase()))
+    : teamRankings;
 
   const isSearching = searchQuery.trim().length > 0;
   const topThree = isSearching ? [] : filtered.slice(0, 3);
@@ -115,8 +133,6 @@ export default function RankingsTab({ communityId, categories, onGoToTournaments
   if (topThree[1]) podiumOrder[0] = topThree[1];
   if (topThree[0]) podiumOrder[1] = topThree[0];
   if (topThree[2]) podiumOrder[2] = topThree[2];
-
-  const activeCategory = categories.find((c) => c.id === selectedCategoryId);
 
   const podiumTiers = [
     { color: 'text-amber-400', bg: 'bg-amber-50', border: 'border-amber-300', label: '🥇' },
@@ -179,6 +195,40 @@ export default function RankingsTab({ communityId, categories, onGoToTournaments
         <p className="text-slate-500 mt-1 max-w-sm mx-auto text-xs leading-relaxed">
           Câu lạc bộ này hiện chưa đăng ký bất kỳ môn thể thao nào để tính điểm ELO.
         </p>
+      </div>
+    );
+  }
+
+  if (isFootball) {
+    return (
+      <div className="space-y-5">
+        <div className="flex flex-col gap-1 border-b border-slate-100 pb-4">
+          <h3 className="flex items-center gap-2 text-lg font-bold text-slate-900"><Trophy className="h-5 w-5 text-amber-500" /> Bảng xếp hạng đội bóng</h3>
+          <p className="text-xs text-slate-500">ELO được tính chung theo đội, chỉ hiển thị đội đã có trận xếp hạng.</p>
+        </div>
+        <div className="relative max-w-sm">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <input value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="Tìm tên đội..." className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-xs shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+        {isLoading ? (
+          <div className="flex justify-center rounded-lg border border-slate-200 bg-white py-20"><Loader2 className="h-8 w-8 animate-spin text-blue-600" /></div>
+        ) : filteredTeams.length === 0 ? (
+          <div className="rounded-lg border border-slate-200 bg-white p-14 text-center"><Award className="mx-auto mb-3 h-12 w-12 text-slate-300" /><p className="font-bold text-slate-800">Chưa có đội xếp hạng</p><p className="mt-1 text-xs text-slate-500">Đội sẽ xuất hiện sau khi hoàn thành trận bóng đá xếp hạng.</p></div>
+        ) : (
+          <div className="space-y-2">
+            {filteredTeams.map((team, index) => (
+              <div key={team.id} className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm">
+                <span className="w-7 text-center text-xs font-black text-slate-400">#{index + 1}</span>
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-50 text-xs font-black text-slate-500">
+                  {team.logoUrl ? <img src={team.logoUrl} alt="" className="h-full w-full object-cover" /> : team.teamName.slice(0, 2).toUpperCase()}
+                </div>
+                <div className="min-w-0 flex-1"><p className="truncate text-sm font-bold text-slate-800">{team.teamName}</p><p className="text-[11px] text-slate-500">{team.matchesWon}/{team.matchesPlayed} thắng · streak {team.winStreak}</p></div>
+                <div className="text-right"><p className="text-sm font-black text-blue-600">{team.eloPoints} ELO</p><p className="text-[10px] text-slate-400">Cao nhất {team.peakElo ?? team.eloPoints}</p></div>
+              </div>
+            ))}
+          </div>
+        )}
+        <p className="text-center text-[10px] italic text-slate-400">Tự động cập nhật mỗi 30 giây</p>
       </div>
     );
   }

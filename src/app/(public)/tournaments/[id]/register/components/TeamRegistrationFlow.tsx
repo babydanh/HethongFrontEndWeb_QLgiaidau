@@ -1,241 +1,141 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { tournamentsApi } from '@/features/tournaments/api';
-import { usersApi, UserProfile } from '@/features/users/api';
+import { footballTeamsApi, tournamentsApi, type FootballTeam } from '@/features/tournaments/api';
 import { getErrorMessage } from '@/utils/error';
-import { trimAndNormalizeSpaces } from '@/utils/string';
-import {
-  Check,
-  Loader2,
-  Users,
-  Search,
-  Trash2,
-  ArrowRight,
-  ShieldCheck,
-} from 'lucide-react';
+import { Check, Loader2, Plus, ShieldCheck, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface Props {
   tournamentId: string;
   inviteCode?: string;
   divisionId?: string;
+  categoryId?: string;
   teamSize: number;
   maxTeamSize?: number;
   maxReserve?: number;
   registrationMode?: string;
 }
 
-interface TeamMember {
-  userId: string;
-  fullName: string;
-  role: 'MAIN' | 'RESERVE';
-}
-
 export default function TeamRegistrationFlow({
-  tournamentId,
-  inviteCode,
-  divisionId,
-  teamSize,
-  maxTeamSize,
-  maxReserve = 0,
-  registrationMode,
+  tournamentId, inviteCode, divisionId, categoryId, teamSize, maxTeamSize, maxReserve = 0, registrationMode,
 }: Props) {
   const router = useRouter();
-  const [teamName, setTeamName] = useState('');
-  const [search, setSearch] = useState('');
-  const [results, setResults] = useState<UserProfile[]>([]);
-  const [members, setMembers] = useState<TeamMember[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-
+  const [teams, setTeams] = useState<FootballTeam[]>([]);
+  const [selectedId, setSelectedId] = useState('');
+  const [newName, setNewName] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [teamMembers, setTeamMembers] = useState<NonNullable<FootballTeam['members']>>([]);
+  const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
   const cap = maxTeamSize ?? teamSize + maxReserve;
-  const mainCount = members.filter((m) => m.role === 'MAIN').length;
-  const reserveCount = members.filter((m) => m.role === 'RESERVE').length;
-  const isFull = members.length >= cap;
 
-  const doSearch = async () => {
-    const q = trimAndNormalizeSpaces(search);
-    if (!q) return;
-    setLoading(true);
+  useEffect(() => {
+    if (!selectedId) return;
+    let active = true;
+    footballTeamsApi.get(selectedId).then((res) => {
+      if (!active) return;
+      const members = (res.data?.members ?? []).filter((member) => member.status === undefined || member.status === 'ACTIVE');
+      setTeamMembers(members);
+      setSelectedMemberIds(members.map((member) => member.userId));
+    }).catch(() => { if (active) { setTeamMembers([]); setSelectedMemberIds([]); } });
+    return () => { active = false; };
+  }, [selectedId]);
+
+  useEffect(() => {
+    let active = true;
+    footballTeamsApi.listMine().then((res) => {
+      if (!active) return;
+      const rows = (res.data ?? []).map((row) => row.team).filter((team) => team.status === 'ACTIVE' && team.categoryId === categoryId);
+      setTeams(rows);
+      if (rows[0]) setSelectedId(rows[0].id);
+    }).catch(() => { if (active) setTeams([]); }).finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [categoryId]);
+
+  const createTeam = async () => {
+    const name = newName.trim();
+    if (!name || !categoryId) return toast.error('Vui lòng nhập tên đội và chọn đúng môn bóng đá.');
+    setSaving(true);
     try {
-      const res = await usersApi.searchUsersByQuery(q);
-      const list = (Array.isArray(res) ? res : []) as UserProfile[];
-      setResults(list.filter((u) => !members.some((m) => m.userId === u.id)));
-    } catch {
-      setResults([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const addMember = (user: UserProfile, role: 'MAIN' | 'RESERVE') => {
-    if (isFull) {
-      toast.error(`Đội đã đủ ${cap} thành viên.`);
-      return;
-    }
-    if (role === 'MAIN' && mainCount >= teamSize) {
-      toast.error(`Đội hình chính thức tối đa ${teamSize} người. Thêm vào dự bị.`);
-      role = 'RESERVE';
-    }
-    if (role === 'RESERVE' && reserveCount >= maxReserve) {
-      toast.error(`Chỉ được tối đa ${maxReserve} dự bị.`);
-      return;
-    }
-    setMembers((prev) => [
-      ...prev,
-      { userId: user.id, fullName: user.fullName || user.email || 'Thành viên', role },
-    ]);
-    setSearch('');
-    setResults([]);
-  };
-
-  const removeMember = (userId: string) => {
-    setMembers((prev) => prev.filter((m) => m.userId !== userId));
+      const res = await footballTeamsApi.create({ name, categoryId });
+      const team = res.data;
+      setTeams((current) => [team, ...current]);
+      setSelectedId(team.id);
+      setNewName('');
+      toast.success('Đã tạo đội. Hãy vào trang đội để mời đủ thành viên.');
+    } catch (error) { toast.error(getErrorMessage(error)); }
+    finally { setSaving(false); }
   };
 
   const submit = async () => {
-    if (!trimAndNormalizeSpaces(teamName)) {
-      toast.error('Vui lòng nhập tên đội.');
-      return;
-    }
-    if (mainCount < teamSize) {
-      toast.error(`Đội cần tối thiểu ${teamSize} cầu thủ chính thức (hiện có ${mainCount}).`);
-      return;
-    }
-    setSubmitting(true);
+    const team = teams.find((item) => item.id === selectedId);
+    if (!team) return toast.error('Hãy chọn hoặc tạo một đội bóng trước.');
+    setSaving(true);
     try {
-      const memberIds = members.map((m) => m.userId);
       const res = await tournamentsApi.register(tournamentId, {
-        teamName: trimAndNormalizeSpaces(teamName),
+        teamName: team.name,
+        footballTeamId: team.id,
+        memberIds: selectedMemberIds,
         inviteCode,
         divisionId,
         tournamentDivisionId: divisionId,
-        memberIds,
         rankingConsent: true,
       });
-      const payload = res.data;
-      const participantId = payload?.participant?.id;
-      const teamInviteLink = payload?.teamInviteLink;
-      if (participantId) {
-        router.push(
-          `/payments/checkout?participantId=${participantId}&tournamentId=${tournamentId}&divisionId=${divisionId || ''}`,
-        );
-      } else if (teamInviteLink) {
-        toast.success('Đăng ký thành công! Hãy mời thêm thành viên qua link.');
-        router.refresh();
-      } else {
-        toast.success(registrationMode === 'APPROVAL' ? 'Đã gửi yêu cầu chờ BTC duyệt.' : 'Đăng ký thành công!');
-        router.refresh();
-      }
-    } catch (err) {
-      toast.error(getErrorMessage(err));
-    } finally {
-      setSubmitting(false);
-    }
+      const participantId = res.data?.participant?.id;
+      if (participantId) router.push(`/payments/checkout?participantId=${participantId}&tournamentId=${tournamentId}&divisionId=${divisionId || ''}`);
+      else { toast.success(registrationMode === 'APPROVAL' ? 'Đã gửi yêu cầu chờ BTC duyệt.' : 'Đăng ký đội thành công!'); router.refresh(); }
+    } catch (error) { toast.error(getErrorMessage(error)); }
+    finally { setSaving(false); }
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
+    <div className="space-y-5 animate-in fade-in duration-300">
       <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3">
-        <p className="text-sm font-bold text-emerald-900 flex items-center gap-2">
-          <ShieldCheck className="w-4 h-4" /> Đăng ký đội bóng đá
-        </p>
-        <p className="mt-1 text-xs font-semibold text-emerald-700">
-          Đội hình chính thức tối thiểu <b>{teamSize}</b> người · Dự bị tối đa <b>{maxReserve}</b> · Tổng tối đa <b>{cap}</b> người
-        </p>
+        <p className="flex items-center gap-2 text-sm font-bold text-emerald-900"><ShieldCheck className="h-4 w-4" /> Đăng ký bằng đội bóng</p>
+        <p className="mt-1 text-xs font-semibold text-emerald-700">Đội hình chính tối thiểu <b>{teamSize}</b> người · dự bị tối đa <b>{maxReserve}</b> · tổng tối đa <b>{cap}</b>. BTC sẽ kiểm tra roster khi khóa đăng ký.</p>
       </div>
-
-      <div className="space-y-2">
-        <label className="text-sm font-semibold text-slate-700">Tên đội</label>
-        <Input
-          placeholder="VD: FC Sao Vàng"
-          value={teamName}
-          onChange={(e) => setTeamName(e.target.value)}
-        />
-      </div>
-
-      <div className="space-y-2">
-        <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-          <Users className="w-4 h-4" /> Danh sách thành viên ({members.length}/{cap})
-        </label>
-
-        {members.length > 0 && (
-          <div className="border border-slate-200 rounded-lg divide-y divide-slate-100">
-            {members.map((m) => (
-              <div key={m.userId} className="flex items-center justify-between px-3 py-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-slate-800">{m.fullName}</span>
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                    m.role === 'MAIN' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
-                  }`}>
-                    {m.role === 'MAIN' ? 'Chính thức' : 'Dự bị'}
-                  </span>
-                </div>
-                <button onClick={() => removeMember(m.userId)} className="text-slate-400 hover:text-rose-600">
-                  <Trash2 className="w-4 h-4" />
-                </button>
+      {loading ? <div className="flex items-center justify-center py-8 text-sm text-slate-400"><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Đang tải đội của bạn…</div> : (
+        <>
+          <div className="space-y-2">
+            <p className="flex items-center gap-2 text-sm font-bold text-slate-700"><Users className="h-4 w-4" /> Đội đủ điều kiện</p>
+            {teams.length === 0 ? <p className="rounded-lg border border-dashed border-slate-300 px-4 py-5 text-center text-xs font-semibold text-slate-500">Bạn chưa có đội bóng phù hợp với môn này.</p> : (
+              <div className="grid gap-2">
+                {teams.map((team) => <button key={team.id} type="button" onClick={() => setSelectedId(team.id)} className={`flex items-center gap-3 rounded-lg border p-3 text-left transition ${selectedId === team.id ? 'border-emerald-500 bg-emerald-50 ring-1 ring-emerald-500' : 'border-slate-200 bg-white hover:border-emerald-300'}`}>
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-sm font-black text-slate-500">{team.name.slice(0, 2).toUpperCase()}</div>
+                  <span className="min-w-0 flex-1"><b className="block truncate text-sm text-slate-900">{team.name}</b><small className="text-xs font-semibold text-slate-500">{team.membership?.role === 'PLAYER' ? 'Thành viên' : 'Có quyền đăng ký'} · quản lý roster tại trang đội</small></span>
+                  {selectedId === team.id && <Check className="h-5 w-5 text-emerald-600" />}
+                </button>)}
               </div>
-            ))}
+            )}
           </div>
-        )}
-
-        <div className="flex gap-2">
-          <Input
-            placeholder="Tìm thành viên theo tên / email / SĐT"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && doSearch()}
-          />
-          <Button type="button" onClick={doSearch} disabled={loading} variant="outline">
-            <Search className="w-4 h-4" />
-          </Button>
-        </div>
-
-        {results.length > 0 && (
-          <div className="border border-slate-200 rounded-lg divide-y divide-slate-100 max-h-64 overflow-auto">
-            {results.map((u) => (
-              <div key={u.id} className="flex items-center justify-between px-3 py-2">
-                <span className="text-sm font-semibold text-slate-800">
-                  {u.fullName || u.email || 'Người dùng'}
-                </span>
-                <div className="flex gap-1">
-                  <button
-                    onClick={() => addMember(u, 'MAIN')}
-                    disabled={mainCount >= teamSize}
-                    className="text-[11px] font-bold px-2 py-1 rounded bg-emerald-100 text-emerald-700 hover:bg-emerald-200 disabled:opacity-40"
-                  >
-                    Chính thức
-                  </button>
-                  <button
-                    onClick={() => addMember(u, 'RESERVE')}
-                    disabled={reserveCount >= maxReserve}
-                    className="text-[11px] font-bold px-2 py-1 rounded bg-amber-100 text-amber-700 hover:bg-amber-200 disabled:opacity-40"
-                  >
-                    Dự bị
-                  </button>
-                </div>
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+            <p className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-500">Tạo đội nhanh</p>
+            <div className="flex gap-2"><Input value={newName} onChange={(event) => setNewName(event.target.value)} placeholder="Tên đội, ví dụ FC Sao Vàng" /><Button type="button" onClick={createTeam} disabled={saving || !newName.trim()} variant="outline"><Plus className="h-4 w-4" /> Tạo</Button></div>
+            <p className="mt-2 text-[11px] font-semibold text-slate-400">Sau khi tạo, hãy mời thành viên và hoàn thiện đội hình tại trang quản lý đội.</p>
+          </div>
+          {teamMembers.length > 0 && (
+            <div className="rounded-lg border border-slate-200 bg-white p-3">
+              <p className="mb-1 text-sm font-bold text-slate-800">Đội hình đăng ký</p>
+              <p className="mb-3 text-xs font-semibold text-slate-500">Chọn {teamSize}–{cap} thành viên active cho division này.</p>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {teamMembers.map((member) => {
+                  const checked = selectedMemberIds.includes(member.userId);
+                  return <label key={member.userId} className="flex cursor-pointer items-center gap-2 rounded-md border border-slate-100 px-2 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">
+                    <input type="checkbox" checked={checked} onChange={() => setSelectedMemberIds((current) => checked ? current.filter((id) => id !== member.userId) : [...current, member.userId])} />
+                    <span className="truncate">{member.profile?.fullName || member.userId.slice(0, 8)}</span>
+                    {member.role !== 'PLAYER' && <span className="ml-auto text-[10px] text-slate-400">{member.role}</span>}
+                  </label>;
+                })}
               </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <Button
-        type="button"
-        onClick={submit}
-        disabled={submitting}
-        className="w-full bg-emerald-600 hover:bg-emerald-700"
-      >
-        {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-        Đăng ký đội
-      </Button>
-      <p className="text-xs text-slate-400 text-center">
-        Sau khi đăng ký, bạn có thể mời thêm thành viên qua link hoặc email/SĐT.
-      </p>
+            </div>
+          )}
+        </>
+      )}
+      <Button type="button" onClick={submit} disabled={saving || loading || !selectedId || selectedMemberIds.length < teamSize || selectedMemberIds.length > cap} className="w-full bg-emerald-600 hover:bg-emerald-700">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Đăng ký đội đã chọn</Button>
     </div>
   );
 }

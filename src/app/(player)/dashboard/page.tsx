@@ -19,6 +19,7 @@ import {
   TrendingUp,
   TrendingDown,
   ChevronRight,
+  Users,
 } from 'lucide-react';
 
 import EloSidebarCard from '@/components/dashboard/EloSidebarCard';
@@ -728,6 +729,13 @@ export default function DashboardPage() {
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
             <h3 className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-3">Lối tắt nhanh</h3>
             <div className="flex flex-col gap-2">
+              <Link href="/football-teams" className="flex items-center justify-between p-3 rounded-lg hover:bg-emerald-50/60 text-slate-800 font-bold text-xs transition-all border border-slate-200/80 hover:border-emerald-200">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0"><Users className="w-3.5 h-3.5" /></div>
+                  <span>Đội bóng của tôi</span>
+                </div>
+                <span className="text-[9px] font-extrabold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">ELO</span>
+              </Link>
               {isOrganizerOrAdmin ? (
                 <>
                   <Link href="/organizer/tournaments" className="flex items-center justify-between p-3 rounded-lg hover:bg-blue-50/60 text-slate-800 font-bold text-xs transition-all border border-slate-200/80 hover:border-blue-200">

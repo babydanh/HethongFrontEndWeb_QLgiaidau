@@ -396,7 +396,12 @@ export default function LiveMatchPage({ params }: Props) {
       if (isCancelled) return;
       const rules = resolveMatchSportRules(match ?? {});
       if (rules.kind !== 'FOOTBALL' || !match) return;
-      setFootballScore(readFootballScore(match.scoreDetails));
+      const nextFootball = readFootballScore(match.scoreDetails);
+      setFootballScore(nextFootball);
+      setShootoutGoals({
+        p1Goals: nextFootball.shootout?.team1Goals ?? 0,
+        p2Goals: nextFootball.shootout?.team2Goals ?? 0,
+      });
     });
     return () => {
       isCancelled = true;
@@ -420,7 +425,12 @@ export default function LiveMatchPage({ params }: Props) {
       applyServerSnapshot(payload);
       const rules = resolveMatchSportRules(payload);
       if (rules.kind === 'FOOTBALL') {
-        setFootballScore(readFootballScore(payload.scoreDetails));
+        const nextFootball = readFootballScore(payload.scoreDetails);
+        setFootballScore(nextFootball);
+        setShootoutGoals({
+          p1Goals: nextFootball.shootout?.team1Goals ?? 0,
+          p2Goals: nextFootball.shootout?.team2Goals ?? 0,
+        });
       }
     };
     socket.on('connect', join);
@@ -599,7 +609,7 @@ export default function LiveMatchPage({ params }: Props) {
     nextSideOutState: PickleballSideOutState = sideOutState,
     nextTennisPointState: TennisLivePointState | null = tennisPointState,
     nextPenalties: MatchPenaltyRecord[] = penalties,
-    nextShootout?: { p1Goals: number; p2Goals: number; winnerId: string | null },
+    nextShootout?: { team1Goals: number; team2Goals: number; winnerId: string | null },
   ) => {
     const basePayload =
       match.scoreDetails && typeof match.scoreDetails === 'object'
@@ -1109,8 +1119,8 @@ export default function LiveMatchPage({ params }: Props) {
         : false;
       const shootoutPayload = isFootballDraw
         ? {
-            p1Goals: shootoutGoals.p1Goals,
-            p2Goals: shootoutGoals.p2Goals,
+            team1Goals: shootoutGoals.p1Goals,
+            team2Goals: shootoutGoals.p2Goals,
             winnerId,
           }
         : undefined;

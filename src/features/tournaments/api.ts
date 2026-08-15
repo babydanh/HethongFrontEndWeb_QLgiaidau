@@ -184,11 +184,28 @@ export interface FootballTeam {
   rank?: { eloPoints: number; peakElo: number; matchesPlayed: number; matchesWon: number; winStreak: number } | null;
 }
 
+export interface FootballTeamMemberCandidate {
+  id: string;
+  fullName?: string | null;
+  avatarUrl?: string | null;
+}
+
 export const footballTeamsApi = {
   listMine: () => api.get<ApiResponse<Array<{ team: FootballTeam; membership: FootballTeam['membership'] }>>>('/football-teams/mine'),
   create: (data: { name: string; categoryId: string; logoUrl?: string; communityId?: string }) =>
     api.post<ApiResponse<FootballTeam>>('/football-teams', data),
   get: (teamId: string) => api.get<ApiResponse<FootballTeam>>(`/football-teams/${teamId}`),
+  update: (teamId: string, data: { name?: string; logoUrl?: string | null; status?: 'ACTIVE' | 'SUSPENDED' | 'ARCHIVED' }) =>
+    api.patch<ApiResponse<FootballTeam>>(`/football-teams/${teamId}`, data),
+  searchCandidates: (teamId: string, search: string) =>
+    api.get<ApiResponse<FootballTeamMemberCandidate[]>>(`/football-teams/${teamId}/member-candidates`, { params: { q: search, limit: 20 } }),
+  invite: (teamId: string, userId: string) =>
+    api.post<ApiResponse<unknown>>(`/football-teams/${teamId}/invites`, { userId }),
+  updateMember: (teamId: string, userId: string, role: 'CAPTAIN' | 'MANAGER' | 'PLAYER') =>
+    api.patch<ApiResponse<unknown>>(`/football-teams/${teamId}/members/${userId}`, { role }),
+  removeMember: (teamId: string, userId: string) =>
+    api.delete<ApiResponse<unknown>>(`/football-teams/${teamId}/members/${userId}`),
+  leave: (teamId: string) => api.delete<ApiResponse<unknown>>(`/football-teams/${teamId}/members/me`),
 };
 
 export interface RegisterTournamentResponse {
@@ -197,6 +214,28 @@ export interface RegisterTournamentResponse {
   paymentUrl?: string;
   teamInviteLink?: string;
 }
+
+export interface FootballRosterSnapshot {
+  id: string;
+  userId: string;
+  role: 'MAIN' | 'RESERVE';
+  confirmationStatus: 'PENDING' | 'CONFIRMED' | 'DECLINED';
+  fullName?: string | null;
+  avatarUrl?: string | null;
+}
+
+export interface FootballRosterStatus {
+  entry: {
+    id: string;
+    status: 'DRAFT' | 'PENDING_CONFIRMATION' | 'CONFIRMED' | 'LOCKED' | 'WITHDRAWN';
+    displayNameSnapshot: string;
+    logoUrlSnapshot?: string | null;
+    lockedAt?: string | null;
+  } | null;
+  roster: FootballRosterSnapshot[];
+  currentMember: FootballRosterSnapshot | null;
+}
+type FootballRosterEntryStatus = NonNullable<FootballRosterStatus['entry']>['status'];
 
 export interface MyRegistrationParticipant extends Omit<TournamentParticipant, 'members'> {
   members?: TournamentParticipant['members'];
@@ -299,6 +338,13 @@ export const tournamentsApi = {
     api.get<ApiResponse<MyRegistrationResponse>>(`/tournaments/${id}/my-registration`, {
       params: { _t: Date.now(), ...(divisionId ? { divisionId } : {}) },
     }),
+  getFootballRosterStatus: (id: string, participantId: string) =>
+    api.get<ApiResponse<FootballRosterStatus>>(`/tournaments/${id}/participants/${participantId}/football-roster`),
+  respondFootballRoster: (id: string, participantId: string, action: 'CONFIRM' | 'DECLINE') =>
+    api.post<ApiResponse<{ entryId: string; confirmationStatus: 'CONFIRMED' | 'DECLINED'; status: FootballRosterEntryStatus }>>(
+      `/tournaments/${id}/participants/${participantId}/football-roster/respond`,
+      { action },
+    ),
   withdraw: (id: string, bankData?: { bankName?: string; bankAccountNumber?: string; bankAccountName?: string }, divisionId?: string) =>
     api.post<ApiResponse<{ message: string; refundAmount?: number }>>(`/tournaments/${id}/withdraw`, { ...(bankData || {}), ...(divisionId ? { tournamentDivisionId: divisionId } : {}) }),
   createParentTournament: <T>(data: T) => api.post<ApiResponse<ParentTournament>>('/tournaments/parent', data),

@@ -898,6 +898,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                   tournamentId={id}
                   inviteCode={inviteCode}
                   divisionId={selectedDivisionId || undefined}
+                  categoryId={selectedDivision?.categoryId}
                   teamSize={tournament?.tournamentConfig?.teamSize || 7}
                   maxTeamSize={tournament?.tournamentConfig?.maxTeamSize}
                   maxReserve={tournament?.tournamentConfig?.maxReserve ?? 0}

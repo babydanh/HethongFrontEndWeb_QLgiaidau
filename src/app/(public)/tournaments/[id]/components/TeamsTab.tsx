@@ -1,21 +1,25 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Tournament, tournamentsApi, TournamentParticipant } from '@/features/tournaments/api';
-import { ChevronDown, ChevronUp, User, Award } from 'lucide-react';
+import { Tournament, tournamentsApi, TournamentParticipant, FootballRosterStatus } from '@/features/tournaments/api';
+import { ChevronDown, ChevronUp, User, Award, ShieldCheck, XCircle, CheckCircle } from 'lucide-react';
 import { useUserProfileModalStore } from '@/lib/zustand/userProfileModalStore';
+import toast from 'react-hot-toast';
 
 interface Props {
   tournament: Tournament;
   tournamentId?: string;
   divisionId?: string;
+  participantId?: string;
 }
 
-export default function TeamsTab({ tournament, tournamentId, divisionId }: Props) {
+export default function TeamsTab({ tournament, tournamentId, divisionId, participantId }: Props) {
   const { openUserProfile } = useUserProfileModalStore();
   const [participants, setParticipants] = useState<TournamentParticipant[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [expandedTeamId, setExpandedTeamId] = useState<string | null>(null);
+  const [rosterStatus, setRosterStatus] = useState<FootballRosterStatus | null>(null);
+  const [rosterAction, setRosterAction] = useState(false);
 
   useEffect(() => {
     const fetchParticipants = async () => {
@@ -35,6 +39,33 @@ export default function TeamsTab({ tournament, tournamentId, divisionId }: Props
     fetchParticipants();
   }, [divisionId, tournament.id, tournamentId]);
 
+  useEffect(() => {
+    if (!participantId) {
+      setRosterStatus(null);
+      return;
+    }
+    let active = true;
+    tournamentsApi.getFootballRosterStatus(tournamentId ?? tournament.id, participantId)
+      .then((res) => { if (active) setRosterStatus(res.data ?? null); })
+      .catch(() => { if (active) setRosterStatus(null); });
+    return () => { active = false; };
+  }, [participantId, tournament.id, tournamentId]);
+
+  const respondToRoster = async (action: 'CONFIRM' | 'DECLINE') => {
+    if (!participantId || rosterAction) return;
+    setRosterAction(true);
+    try {
+      await tournamentsApi.respondFootballRoster(tournamentId ?? tournament.id, participantId, action);
+      const refreshed = await tournamentsApi.getFootballRosterStatus(tournamentId ?? tournament.id, participantId);
+      setRosterStatus(refreshed.data ?? null);
+      toast.success(action === 'CONFIRM' ? 'Đã xác nhận đội hình.' : 'Đã từ chối tham gia đội hình.');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Không thể cập nhật xác nhận đội hình.');
+    } finally {
+      setRosterAction(false);
+    }
+  };
+
   const toggleExpand = (teamId: string) => {
     setExpandedTeamId(expandedTeamId === teamId ? null : teamId);
   };
@@ -50,6 +81,21 @@ export default function TeamsTab({ tournament, tournamentId, divisionId }: Props
 
   return (
     <div className="flex flex-col gap-6">
+      {rosterStatus?.currentMember?.confirmationStatus === 'PENDING' && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
+          <div className="flex items-start gap-3">
+            <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+            <div className="min-w-0 flex-1">
+              <p className="font-bold text-amber-950">Bạn được chọn vào đội hình giải này</p>
+              <p className="mt-1 text-xs font-medium text-amber-800">Xác nhận trước khi Ban tổ chức khóa roster. Bạn có thể từ chối nếu chưa sẵn sàng.</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button type="button" disabled={rosterAction} onClick={() => respondToRoster('CONFIRM')} className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-700 disabled:opacity-60"><CheckCircle className="h-4 w-4" /> Xác nhận tham gia</button>
+                <button type="button" disabled={rosterAction} onClick={() => respondToRoster('DECLINE')} className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-white px-3 py-2 text-xs font-bold text-rose-700 hover:bg-rose-50 disabled:opacity-60"><XCircle className="h-4 w-4" /> Từ chối</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="flex flex-col gap-3">
         <div>
           <h3 className="text-lg font-bold text-slate-900">

@@ -573,7 +573,12 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                 <>
                   {activeTab === 'overview' && <OverviewTab tournament={selectedDivision} />}
                   {activeTab === 'teams' && (
-                    <TeamsTab tournament={selectedDivision} tournamentId={tournament.id} divisionId={selectedDivisionId || undefined} />
+                    <TeamsTab
+                      tournament={selectedDivision}
+                      tournamentId={tournament.id}
+                      divisionId={selectedDivisionId || undefined}
+                      participantId={searchParams.get('participantId') || undefined}
+                    />
                   )}
                   {activeTab === 'bracket' && (
                     <BracketTab tournament={selectedDivision} tournamentId={tournament.id} divisionId={selectedDivisionId || undefined} />

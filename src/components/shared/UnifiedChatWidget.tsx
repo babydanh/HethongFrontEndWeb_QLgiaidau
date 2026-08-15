@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import {
   Bot,
@@ -151,7 +151,7 @@ export default function UnifiedChatWidget() {
     return blockedUserIds.includes(otherParticipant.id);
   }, [otherParticipant, blockedUserIds]);
 
-  const refreshRooms = async () => {
+  const refreshRooms = useCallback(async () => {
     if (!isAuthenticated) return;
     try {
       const fetched = unwrapRooms(await inboxApi.getRooms());
@@ -171,7 +171,7 @@ export default function UnifiedChatWidget() {
     } catch {
       // background refresh
     }
-  };
+  }, [isAuthenticated, selection]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -183,8 +183,18 @@ export default function UnifiedChatWidget() {
   }, [isAuthenticated]);
 
   useEffect(() => {
-    if (open) void refreshRooms();
-  }, [open, isAuthenticated]);
+    let isSubscribed = true;
+    if (open && isAuthenticated) {
+      void (async () => {
+        if (isSubscribed) {
+          await refreshRooms();
+        }
+      })();
+    }
+    return () => {
+      isSubscribed = false;
+    };
+  }, [open, isAuthenticated, refreshRooms]);
 
   // Support opening specific club room via global custom event
   useEffect(() => {
@@ -283,14 +293,14 @@ export default function UnifiedChatWidget() {
     socket.on('connect', joinRoom);
     joinRoom();
 
-    setLoading(true);
-    setNextCursor(null);
-    setHasMoreMessages(false);
-    setTypingUserId(null);
+    const fetchRoomMessages = async () => {
+      setLoading(true);
+      setNextCursor(null);
+      setHasMoreMessages(false);
+      setTypingUserId(null);
 
-    void inboxApi
-      .getMessages(roomId)
-      .then((page) => {
+      try {
+        const page = await inboxApi.getMessages(roomId);
         if (active) {
           setMessages(
             unwrapMessages(page).map((message) => ({
@@ -301,13 +311,14 @@ export default function UnifiedChatWidget() {
           setNextCursor(page.meta?.nextCursor ?? null);
           setHasMoreMessages(page.meta?.hasMore === true);
         }
-      })
-      .catch((error: unknown) => {
+      } catch (error: unknown) {
         if (active) toast.error(getErrorMessage(error, 'Không thể tải tin nhắn.'));
-      })
-      .finally(() => {
+      } finally {
         if (active) setLoading(false);
-      });
+      }
+    };
+
+    void fetchRoomMessages();
 
     void inboxApi
       .markRead(roomId)
@@ -335,18 +346,27 @@ export default function UnifiedChatWidget() {
   useEffect(() => {
     if (!open || selection.kind !== 'SUPPORT' || !isAuthenticated) return;
     let active = true;
-    setLoading(true);
-    void supportApi
-      .getMine()
-      .then((conversation) => {
-        if (active) setSupportMessages(conversation?.messages ?? []);
-      })
-      .catch((error: unknown) => {
-        if (active) toast.error(getErrorMessage(error, 'Không thể tải hỗ trợ Sporto.'));
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
+
+    const fetchSupportConversation = async () => {
+      setLoading(true);
+      try {
+        const conversation = await supportApi.getMine();
+        if (active) {
+          setSupportMessages(conversation?.messages ?? []);
+        }
+      } catch (error: unknown) {
+        if (active) {
+          toast.error(getErrorMessage(error, 'Không thể tải hỗ trợ Sporto.'));
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    };
+
+    void fetchSupportConversation();
+
     return () => {
       active = false;
     };

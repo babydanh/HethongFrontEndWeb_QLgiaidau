@@ -76,6 +76,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
   const [liteRecurringFrequency, setLiteRecurringFrequency] = useState<'DAILY' | 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY'>('WEEKLY');
   const [liteRecurringDaysOfWeek, setLiteRecurringDaysOfWeek] = useState<number[]>([6]);
   const [liteRecurringTimeOfDay, setLiteRecurringTimeOfDay] = useState('18:00');
+  const [liteIsRanked, setLiteIsRanked] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -131,6 +132,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
         bracketType: liteBracketType,
         maxTeams: liteMaxTeams,
         description: `Giải đấu giao hữu nhanh CLB ${community?.name || ''}`,
+        isRanked: liteIsRanked,
         startDate: liteStartDate || undefined,
         startTime: liteStartTime || undefined,
         isRecurring: liteIsRecurring,
@@ -401,7 +403,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
 
         {isCreateModalOpen && (
           <Modal open={isCreateModalOpen} onOpenChange={(open) => { if (!open) setIsCreateModalOpen(false); }}>
-            <ModalContent className="bg-white rounded-lg p-6">
+            <ModalContent className="bg-white rounded-xl p-6 max-h-[90vh] overflow-y-auto w-full max-w-lg shadow-xl">
               <ModalHeader>
                 <ModalTitle className="text-xl font-bold text-slate-900">
                   Tạo Giải Đấu Nội Bộ CLB (Miễn phí)

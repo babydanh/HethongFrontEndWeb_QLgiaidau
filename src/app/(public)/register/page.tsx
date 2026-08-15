@@ -121,7 +121,7 @@ export default function RegisterPage() {
             <img
               src="/sporto_v1_with_text.svg"
               alt="Sporto"
-              className="h-10 w-auto object-contain brightness-0 invert opacity-95 hover:opacity-100 transition-opacity"
+              className="h-16 w-auto object-contain brightness-0 invert opacity-95 hover:opacity-100 transition-opacity"
             />
           </Link>
         </div>
@@ -190,7 +190,7 @@ export default function RegisterPage() {
                 <img
                   src="/sporto_v1_with_text.svg"
                   alt="Sporto"
-                  className="h-9 w-auto object-contain hover:opacity-90 transition-opacity"
+                  className="h-14 w-auto object-contain hover:opacity-90 transition-opacity"
                 />
               </Link>
             </div>

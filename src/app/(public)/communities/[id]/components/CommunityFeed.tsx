@@ -61,7 +61,7 @@ export default function CommunityFeed({
   const [isPollOpen, setIsPollOpen] = useState(false);
   const [pollQuestion, setPollQuestion] = useState("");
   const [pollOptions, setPollOptions] = useState<string[]>(["", ""]);
-  const [pollAllowMultiple, setPollAllowMultiple] = useState(false);
+  const [pollAllowMultiple, setPollAllowMultiple] = useState(true);
   const [pollAllowAddOptions, setPollAllowAddOptions] = useState(true);
   const [pollExpiresInDays, setPollExpiresInDays] = useState<number | null>(null);
 
@@ -245,7 +245,7 @@ export default function CommunityFeed({
       setIsPollOpen(false);
       setPollQuestion("");
       setPollOptions(["", ""]);
-      setPollAllowMultiple(false);
+      setPollAllowMultiple(true);
       setPollAllowAddOptions(true);
       setPollExpiresInDays(null);
 

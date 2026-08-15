@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { BarChart3, CheckCircle2, Circle, Plus, Loader2, Users } from 'lucide-react';
+import { BarChart3, CheckCircle2, Circle, CheckSquare2, Square, Plus, Loader2, Users } from 'lucide-react';
 import type { CommunityPoll, CommunityPollOption } from '@/types/community-social';
 import { communitiesApi } from '@/features/communities/api';
 import { useUserProfileModalStore } from '@/lib/zustand/userProfileModalStore';
@@ -157,6 +157,12 @@ export default function CommunityPollCard({
               <div className="relative z-10 flex min-w-0 items-center gap-2.5">
                 {isVotingThis ? (
                   <Loader2 className="h-4 w-4 shrink-0 animate-spin text-blue-600" />
+                ) : currentPoll.allowMultipleAnswers ? (
+                  option.isVoted ? (
+                    <CheckSquare2 className="h-4 w-4 shrink-0 text-blue-600" />
+                  ) : (
+                    <Square className="h-4 w-4 shrink-0 text-slate-300 group-hover:text-slate-400" />
+                  )
                 ) : option.isVoted ? (
                   <CheckCircle2 className="h-4 w-4 shrink-0 text-blue-600" />
                 ) : (

@@ -67,11 +67,21 @@ function unwrapRooms(value: InboxRoomsResponse): InboxRoom[] {
 
 function roomTitle(room: InboxRoom): string {
   if (room.name) return room.name;
-  const other = room.participants.find((participant) => participant.fullName);
+  if (room.clubName) return room.clubName;
+  if (room.communityName) return room.communityName;
+  const other = room.participants?.find((participant) => participant.fullName);
   return (
     other?.fullName ||
     (room.type === 'CLUB' ? 'Câu lạc bộ' : 'Cuộc trò chuyện')
   );
+}
+
+function getRoomAvatar(room: InboxRoom, currentUserId?: string): string | null {
+  if (room.type === 'CLUB') {
+    return room.clubAvatar || room.communityLogo || null;
+  }
+  const other = room.participants?.find((p) => p.id !== currentUserId);
+  return other?.avatarUrl || null;
 }
 
 function formatDateSeparator(dateStr: string): string {
@@ -123,11 +133,15 @@ export default function UnifiedChatWidget() {
         ? 'Hỗ trợ Sporto'
         : roomTitle(selectedRoom!);
 
+  const selectedRoomAvatar = selectedRoom
+    ? getRoomAvatar(selectedRoom, user?.id)
+    : null;
+
   const otherParticipant = useMemo(() => {
     if (!selectedRoom || selectedRoom.type === 'CLUB') return null;
     return (
-      selectedRoom.participants.find((p) => p.id !== user?.id) ||
-      selectedRoom.participants[0] ||
+      selectedRoom.participants?.find((p) => p.id !== user?.id) ||
+      selectedRoom.participants?.[0] ||
       null
     );
   }, [selectedRoom, user?.id]);
@@ -204,9 +218,11 @@ export default function UnifiedChatWidget() {
             if (roomData?.id) {
               const newInboxRoom: InboxRoom = {
                 id: roomData.id,
-                name: roomData.name || 'Phòng Chat CLB',
+                name: roomData.name || roomData.clubName || 'Phòng Chat CLB',
                 type: 'CLUB',
                 communityId,
+                clubName: roomData.clubName,
+                clubAvatar: roomData.clubAvatar,
                 unreadCount: 0,
                 updatedAt: new Date().toISOString(),
                 participants: [],
@@ -669,7 +685,7 @@ export default function UnifiedChatWidget() {
                 const isClub = room.type === 'CLUB';
                 const isSelected =
                   selection.kind === 'ROOM' && selectedRoom?.id === room.id;
-                const other = room.participants.find((p) => p.id !== user?.id);
+                const avatar = getRoomAvatar(room, user?.id);
 
                 return (
                   <button
@@ -689,17 +705,17 @@ export default function UnifiedChatWidget() {
                           : 'bg-slate-200 text-slate-600'
                       }`}
                     >
-                      {other?.avatarUrl ? (
+                      {avatar ? (
                         <img
-                          src={other.avatarUrl}
-                          alt={other.fullName || ''}
+                          src={avatar}
+                          alt={roomTitle(room)}
                           className="h-full w-full object-cover"
                         />
                       ) : isClub ? (
                         <MessageCircle className="h-4 w-4" />
                       ) : (
                         <span className="text-xs font-bold">
-                          {(other?.fullName || 'U').charAt(0).toUpperCase()}
+                          {roomTitle(room).charAt(0).toUpperCase()}
                         </span>
                       )}
                       {room.unreadCount > 0 && (
@@ -741,11 +757,17 @@ export default function UnifiedChatWidget() {
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </button>
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full overflow-hidden bg-blue-50 text-blue-600 shadow-sm border border-slate-100">
                   {selection.kind === 'AI' ? (
                     <Bot className="h-4 w-4" />
                   ) : selection.kind === 'SUPPORT' ? (
                     <Headset className="h-4 w-4" />
+                  ) : selectedRoomAvatar ? (
+                    <img
+                      src={selectedRoomAvatar}
+                      alt={selectedTitle}
+                      className="h-full w-full object-cover"
+                    />
                   ) : (
                     <MessageCircle className="h-4 w-4" />
                   )}
@@ -942,6 +964,15 @@ export default function UnifiedChatWidget() {
                           new Date(prevMsg.createdAt).toDateString();
                       const msgReactions = reactions[message.id] || [];
 
+                      const senderAvatar =
+                        message.senderAvatarUrl ||
+                        (message as unknown as { senderAvatar?: string })?.senderAvatar ||
+                        null;
+
+                      const senderName =
+                        message.senderName ||
+                        (message.mine ? user?.fullName || 'Tôi' : 'Thành viên');
+
                       return (
                         <div key={message.id} className="space-y-2">
                           {/* Timeline Date Separator */}
@@ -955,23 +986,21 @@ export default function UnifiedChatWidget() {
 
                           {/* Message Bubble Item */}
                           <div
-                            className={`group relative flex items-end gap-2 ${
+                            className={`group relative flex items-end gap-2.5 ${
                               message.mine ? 'justify-end' : 'justify-start'
                             }`}
                           >
                             {/* Avatar on other person's bubble */}
                             {!message.mine && (
-                              <div className="h-7 w-7 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden shadow-sm">
-                                {message.senderAvatarUrl ? (
+                              <div className="h-8 w-8 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden shadow-sm border border-slate-100">
+                                {senderAvatar ? (
                                   <img
-                                    src={message.senderAvatarUrl}
-                                    alt={message.senderName || ''}
+                                    src={senderAvatar}
+                                    alt={senderName}
                                     className="h-full w-full object-cover"
                                   />
                                 ) : (
-                                  (message.senderName || 'U')
-                                    .charAt(0)
-                                    .toUpperCase()
+                                  senderName.charAt(0).toUpperCase()
                                 )}
                               </div>
                             )}
@@ -981,9 +1010,9 @@ export default function UnifiedChatWidget() {
                                 message.mine ? 'items-end' : 'items-start'
                               } max-w-[78%]`}
                             >
-                              {!message.mine && message.senderName && (
-                                <span className="text-[11px] font-semibold text-slate-500 mb-0.5 px-1">
-                                  {message.senderName}
+                              {!message.mine && (
+                                <span className="text-[11px] font-semibold text-slate-600 mb-0.5 px-1">
+                                  {senderName}
                                 </span>
                               )}
 

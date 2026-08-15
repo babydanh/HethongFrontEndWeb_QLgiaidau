@@ -7,10 +7,20 @@ export interface InboxRoom {
   name: string | null;
   type: string;
   communityId: string | null;
+  clubName?: string | null;
+  clubAvatar?: string | null;
+  communityName?: string | null;
+  communityLogo?: string | null;
   unreadCount: number;
   updatedAt: string;
   participants: Array<{ id: string; fullName: string | null; avatarUrl: string | null }>;
-  lastMessage?: { content: string; createdAt: string; senderId: string | null };
+  lastMessage?: {
+    id?: string;
+    content: string;
+    createdAt: string;
+    senderId: string | null;
+    sender?: { id: string | null; fullName: string; avatarUrl?: string };
+  };
 }
 
 export interface InboxMessagesPage {

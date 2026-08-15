@@ -2127,25 +2127,36 @@ export default function UnifiedChatWidget() {
                                 </div>
 
                                 {/* Reaction Badges Pill (Messenger Style) */}
-                                {!message.isRevoked && msgReactions.length > 0 && (
-                                  <div
-                                    className={`absolute -bottom-2.5 ${
-                                      message.mine ? 'left-2' : 'right-2'
-                                    } z-10 flex items-center gap-0.5 rounded-full bg-white px-1.5 py-0.5 text-xs shadow-md border border-slate-200 cursor-pointer hover:scale-105 active:scale-95 transition`}
-                                    onClick={() => void toggleReaction(message.id, msgReactions[0])}
-                                  >
-                                    {Array.from(new Set(msgReactions)).map((emoji) => (
-                                      <span key={emoji} className="text-xs leading-none">
-                                        {emoji}
-                                      </span>
-                                    ))}
-                                    {msgReactions.length > 1 && (
-                                      <span className="text-[10px] font-bold text-slate-600 ml-0.5">
-                                        {msgReactions.length}
-                                      </span>
-                                    )}
-                                  </div>
-                                )}
+                                {!message.isRevoked && msgReactions.length > 0 && (() => {
+                                  const reactionCounts = msgReactions.reduce<Record<string, number>>((acc, emoji) => {
+                                    acc[emoji] = (acc[emoji] || 0) + 1;
+                                    return acc;
+                                  }, {});
+                                  const reactionSummary = Object.entries(reactionCounts)
+                                    .map(([emoji, count]) => `${emoji} ${count}`)
+                                    .join('  ');
+
+                                  return (
+                                    <div
+                                      className={`absolute -bottom-2.5 ${
+                                        message.mine ? 'left-2' : 'right-2'
+                                      } z-10 flex items-center gap-0.5 rounded-full bg-white px-1.5 py-0.5 text-xs shadow-md border border-slate-200 cursor-pointer hover:scale-105 active:scale-95 transition`}
+                                      onClick={() => void toggleReaction(message.id, msgReactions[0])}
+                                      title={`${msgReactions.length} cảm xúc: ${reactionSummary} (Nhấn để thả/bỏ cảm xúc)`}
+                                    >
+                                      {Object.keys(reactionCounts).map((emoji) => (
+                                        <span key={emoji} className="text-xs leading-none">
+                                          {emoji}
+                                        </span>
+                                      ))}
+                                      {msgReactions.length > 1 && (
+                                        <span className="text-[10px] font-bold text-slate-600 ml-0.5">
+                                          {msgReactions.length}
+                                        </span>
+                                      )}
+                                    </div>
+                                  );
+                                })()}
                               </div>
 
                               {/* Read receipts / Seen indicator at the bottom of the latest message */}

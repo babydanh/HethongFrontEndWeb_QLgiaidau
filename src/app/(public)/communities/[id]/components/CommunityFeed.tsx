@@ -13,7 +13,6 @@ import { uploadApi } from "@/features/upload/api";
 import { useAuthStore } from "@/lib/zustand/authStore";
 import type { CommunityPost } from "@/types/community-social";
 import { getErrorMessage } from "@/utils/error";
-import ClubChatLauncher from "./ClubChatLauncher";
 import {
   CommunityFeedEmpty,
   CommunityFeedError,
@@ -370,7 +369,6 @@ export default function CommunityFeed({
           />
         )}
       </section>
-      <ClubChatLauncher communityId={communityId} />
       <TagAssignModal
         open={tagTarget !== null}
         onOpenChange={(open) => {

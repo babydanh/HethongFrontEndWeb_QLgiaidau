@@ -7,6 +7,7 @@ import { getErrorMessage } from "@/utils/error";
 import CommunityFeed from "./CommunityFeed";
 import CommunityInfoSidebar from "./CommunityInfoSidebar";
 import CommunityMatchPosts from "./CommunityMatchPosts";
+import ClubChatLauncher from "./ClubChatLauncher";
 
 interface OverviewTabProps {
   communityId: string;
@@ -37,6 +38,7 @@ export default function OverviewTab({
   const [dashboard, setDashboard] = useState<CommunityDashboard | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -58,11 +60,22 @@ export default function OverviewTab({
 
   return (
     <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)]">
-      <CommunityInfoSidebar communityId={communityId} description={description} rules={rules} onGoToGallery={onGoToGallery} />
+      <CommunityInfoSidebar
+        communityId={communityId}
+        description={description}
+        rules={rules}
+        onGoToGallery={onGoToGallery}
+        onOpenChat={() => setIsChatOpen(true)}
+      />
       <main className="min-w-0">
         {dashboard && <CommunityMatchPosts dashboard={dashboard} />}
         <CommunityFeed communityId={communityId} canManageTags={canManageTags} />
       </main>
+      <ClubChatLauncher
+        communityId={communityId}
+        isOpen={isChatOpen}
+        onOpenChange={setIsChatOpen}
+      />
     </div>
   );
 }

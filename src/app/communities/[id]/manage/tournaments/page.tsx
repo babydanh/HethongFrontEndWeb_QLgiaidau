@@ -11,7 +11,7 @@ import { tournamentsApi, Tournament } from '@/features/tournaments/api';
 import { isLiteTournament } from '@/features/tournaments/lite-qr';
 import { categoriesApi, Category } from '@/features/categories/api';
 import { getSportLogo } from '@/constants/sports';
-import { Trophy, Calendar, Users, Plus, Settings, Eye, ChevronLeft, ShieldCheck, Lock } from 'lucide-react';
+import { Trophy, Calendar, Users, Plus, Settings, Eye, ChevronLeft, ShieldCheck, Lock, Clock, RotateCw } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
@@ -60,6 +60,11 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
   const [liteFormat, setLiteFormat] = useState<'singles' | 'doubles'>('doubles');
   const [liteBracketType, setLiteBracketType] = useState<'single_elimination' | 'double_elimination' | 'round_robin' | 'group_stage_knockout'>('single_elimination');
   const [liteMaxTeams, setLiteMaxTeams] = useState(16);
+  const [liteStartDate, setLiteStartDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [liteStartTime, setLiteStartTime] = useState('18:00');
+  const [liteIsRecurring, setLiteIsRecurring] = useState(false);
+  const [liteRecurringFrequency, setLiteRecurringFrequency] = useState<'DAILY' | 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY'>('WEEKLY');
+  const [liteRecurringDayOfWeek, setLiteRecurringDayOfWeek] = useState<number>(6);
 
   const fetchData = async () => {
     try {
@@ -115,6 +120,12 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
         bracketType: liteBracketType,
         maxTeams: liteMaxTeams,
         description: `Giải đấu giao hữu nhanh CLB ${community?.name || ''}`,
+        startDate: liteStartDate || undefined,
+        startTime: liteStartTime || undefined,
+        isRecurring: liteIsRecurring,
+        recurringFrequency: liteIsRecurring ? liteRecurringFrequency : undefined,
+        recurringDayOfWeek: liteIsRecurring ? liteRecurringDayOfWeek : undefined,
+        recurringTimeOfDay: liteIsRecurring ? liteStartTime : undefined,
       });
 
       toast.success('Tạo giải đấu nhanh thành công!');
@@ -557,6 +568,100 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
                     value={liteMaxTeams}
                     onChange={(e) => setLiteMaxTeams(Number(e.target.value))}
                   />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-semibold text-slate-700 flex items-center gap-1.5">
+                      <Calendar className="w-4 h-4 text-slate-500" /> Ngày bắt đầu
+                    </label>
+                    <input
+                      type="date"
+                      value={liteStartDate}
+                      onChange={(e) => setLiteStartDate(e.target.value)}
+                      className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-semibold text-slate-700 flex items-center gap-1.5">
+                      <Clock className="w-4 h-4 text-slate-500" /> Giờ thi đấu
+                    </label>
+                    <input
+                      type="time"
+                      value={liteStartTime}
+                      onChange={(e) => setLiteStartTime(e.target.value)}
+                      className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    />
+                  </div>
+                </div>
+
+                <div className="rounded-lg border border-slate-200 bg-slate-50/70 p-3.5 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex flex-col">
+                      <span className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
+                        <RotateCw className={`w-4 h-4 ${liteIsRecurring ? 'text-emerald-600' : 'text-slate-500'}`} />
+                        Tự động tạo giải theo chu kỳ định kỳ
+                      </span>
+                      <span className="text-xs text-slate-500 mt-0.5">
+                        Tự động tạo giải mới và mở đăng ký theo lịch lặp lại
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={liteIsRecurring}
+                      onClick={() => setLiteIsRecurring(!liteIsRecurring)}
+                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-600 ${
+                        liteIsRecurring ? 'bg-emerald-600' : 'bg-slate-300'
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition-transform ${
+                          liteIsRecurring ? 'translate-x-5' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                  </div>
+
+                  {liteIsRecurring && (
+                    <div className="pt-2.5 border-t border-slate-200/80 space-y-2.5 animate-in fade-in duration-200">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="flex flex-col gap-1">
+                          <label className="text-xs font-semibold text-slate-700">Tần suất</label>
+                          <select
+                            value={liteRecurringFrequency}
+                            onChange={(e) => setLiteRecurringFrequency(e.target.value as typeof liteRecurringFrequency)}
+                            className="border border-slate-300 rounded-lg px-2.5 py-1.5 bg-white text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                          >
+                            <option value="WEEKLY">Hằng tuần (Weekly)</option>
+                            <option value="BIWEEKLY">2 tuần một lần (Bi-weekly)</option>
+                            <option value="DAILY">Hằng ngày (Daily)</option>
+                            <option value="MONTHLY">Hằng tháng (Monthly)</option>
+                          </select>
+                        </div>
+
+                        {liteRecurringFrequency !== 'DAILY' && (
+                          <div className="flex flex-col gap-1">
+                            <label className="text-xs font-semibold text-slate-700">Thứ trong tuần</label>
+                            <select
+                              value={liteRecurringDayOfWeek}
+                              onChange={(e) => setLiteRecurringDayOfWeek(Number(e.target.value))}
+                              className="border border-slate-300 rounded-lg px-2.5 py-1.5 bg-white text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                            >
+                              <option value={1}>Thứ Hai</option>
+                              <option value={2}>Thứ Ba</option>
+                              <option value={3}>Thứ Tư</option>
+                              <option value={4}>Thứ Năm</option>
+                              <option value={5}>Thứ Sáu</option>
+                              <option value={6}>Thứ Bảy</option>
+                              <option value={0}>Chủ Nhật</option>
+                            </select>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex justify-end gap-3 pt-4 border-t mt-4">

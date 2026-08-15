@@ -412,6 +412,13 @@ export const tournamentsApi = {
     maxTeams?: number;
     description?: string;
     isRanked?: boolean;
+    startDate?: string;
+    startTime?: string;
+    endDate?: string;
+    isRecurring?: boolean;
+    recurringFrequency?: 'DAILY' | 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY';
+    recurringDayOfWeek?: number;
+    recurringTimeOfDay?: string;
   }) => api.post<ApiResponse<{ id: string; name: string; status: string; inviteCode?: string; joinUrl?: string; qrPayload?: string }>>('/tournaments/lite', data).then(res => res.data),
 
   getLiteParticipants: (id: string) =>

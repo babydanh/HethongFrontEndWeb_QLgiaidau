@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { tournamentsApi } from '@/features/tournaments/api';
 import { communitiesApi, Community } from '@/features/communities/api';
-import { ChevronLeft, Loader2, Zap, Info, Lock } from 'lucide-react';
+import { ChevronLeft, Loader2, Zap, Info, Lock, Calendar, Clock, RotateCw } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '@/utils/error';
 import { LiteInviteQr } from '@/components/tournaments/LiteInviteQr';
@@ -55,6 +55,11 @@ export default function CreateLiteTournamentPage({
   const [maxTeams, setMaxTeams] = useState(16);
   const [description, setDescription] = useState('');
   const [isRanked, setIsRanked] = useState(false);
+  const [startDate, setStartDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [startTime, setStartTime] = useState('18:00');
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [recurringFrequency, setRecurringFrequency] = useState<'DAILY' | 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY'>('WEEKLY');
+  const [recurringDayOfWeek, setRecurringDayOfWeek] = useState<number>(6);
 
   useEffect(() => {
     const init = async () => {
@@ -100,6 +105,12 @@ export default function CreateLiteTournamentPage({
         maxTeams,
         description: description.trim() || `Giải đấu nhanh CLB ${community?.name || ''}`,
         isRanked,
+        startDate: startDate || undefined,
+        startTime: startTime || undefined,
+        isRecurring,
+        recurringFrequency: isRecurring ? recurringFrequency : undefined,
+        recurringDayOfWeek: isRecurring ? recurringDayOfWeek : undefined,
+        recurringTimeOfDay: isRecurring ? startTime : undefined,
       });
 
       if (res?.id && res.inviteCode) {
@@ -262,6 +273,106 @@ export default function CreateLiteTournamentPage({
             value={maxTeams}
             onChange={(e) => setMaxTeams(Number(e.target.value))}
           />
+
+          {/* Thời gian thi đấu */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-slate-700 flex items-center gap-1.5">
+                <Calendar className="w-4 h-4 text-slate-500" /> Ngày bắt đầu
+              </label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-slate-700 flex items-center gap-1.5">
+                <Clock className="w-4 h-4 text-slate-500" /> Giờ thi đấu
+              </label>
+              <input
+                type="time"
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
+                className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
+              />
+            </div>
+          </div>
+
+          {/* Lên lịch định kỳ tự động */}
+          <div className="rounded-lg border border-slate-200 bg-slate-50/70 p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex flex-col">
+                <span className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
+                  <RotateCw className={`w-4 h-4 ${isRecurring ? 'text-emerald-600' : 'text-slate-500'}`} />
+                  Tự động tạo giải theo chu kỳ định kỳ
+                </span>
+                <span className="text-xs text-slate-500 mt-0.5">
+                  Hệ thống tự động tạo giải mới và mở đăng ký cho thành viên CLB theo lịch lặp lại
+                </span>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={isRecurring}
+                onClick={() => setIsRecurring(!isRecurring)}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-600 ${
+                  isRecurring ? 'bg-emerald-600' : 'bg-slate-300'
+                }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition-transform ${
+                    isRecurring ? 'translate-x-5' : 'translate-x-0'
+                  }`}
+                />
+              </button>
+            </div>
+
+            {isRecurring && (
+              <div className="pt-3 border-t border-slate-200/80 space-y-3 animate-in fade-in duration-200">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-semibold text-slate-700">Tần suất lặp lại</label>
+                    <select
+                      value={recurringFrequency}
+                      onChange={(e) => setRecurringFrequency(e.target.value as typeof recurringFrequency)}
+                      className="h-10 w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                    >
+                      <option value="WEEKLY">Hằng tuần (Weekly)</option>
+                      <option value="BIWEEKLY">2 tuần một lần (Bi-weekly)</option>
+                      <option value="DAILY">Hằng ngày (Daily)</option>
+                      <option value="MONTHLY">Hằng tháng (Monthly)</option>
+                    </select>
+                  </div>
+
+                  {recurringFrequency !== 'DAILY' && (
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-semibold text-slate-700">Thứ trong tuần</label>
+                      <select
+                        value={recurringDayOfWeek}
+                        onChange={(e) => setRecurringDayOfWeek(Number(e.target.value))}
+                        className="h-10 w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                      >
+                        <option value={1}>Thứ Hai</option>
+                        <option value={2}>Thứ Ba</option>
+                        <option value={3}>Thứ Tư</option>
+                        <option value={4}>Thứ Năm</option>
+                        <option value={5}>Thứ Sáu</option>
+                        <option value={6}>Thứ Bảy</option>
+                        <option value={0}>Chủ Nhật</option>
+                      </select>
+                    </div>
+                  )}
+                </div>
+
+                <div className="p-2.5 rounded bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 font-medium">
+                  💡 <strong>Thông báo tự động:</strong> Mỗi khi giải đấu mới được tạo theo chu kỳ, toàn bộ thành viên câu lạc bộ sẽ nhận được thông báo để đăng ký tham gia thi đấu.
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Description */}
           <div className="flex flex-col gap-1.5">

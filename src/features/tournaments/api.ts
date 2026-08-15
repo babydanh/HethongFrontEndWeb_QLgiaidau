@@ -164,6 +164,7 @@ export interface RegisterTournamentPayload {
   teamName: string;
   footballTeamId?: string;
   memberIds?: string[];
+  reserveMemberIds?: string[];
   partnerEmailOrPhone?: string;
   inviteCode?: string;
   divisionId?: string;

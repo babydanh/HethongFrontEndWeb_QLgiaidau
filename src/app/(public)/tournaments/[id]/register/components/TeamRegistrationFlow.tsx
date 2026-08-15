@@ -31,6 +31,7 @@ export default function TeamRegistrationFlow({
   const [saving, setSaving] = useState(false);
   const [teamMembers, setTeamMembers] = useState<NonNullable<FootballTeam['members']>>([]);
   const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
+  const [selectedReserveIds, setSelectedReserveIds] = useState<string[]>([]);
   const cap = maxTeamSize ?? teamSize + maxReserve;
 
   useEffect(() => {
@@ -40,7 +41,8 @@ export default function TeamRegistrationFlow({
       if (!active) return;
       const members = (res.data?.members ?? []).filter((member) => member.status === undefined || member.status === 'ACTIVE');
       setTeamMembers(members);
-      setSelectedMemberIds(members.map((member) => member.userId));
+      setSelectedMemberIds(members.slice(0, teamSize).map((member) => member.userId));
+      setSelectedReserveIds([]);
     }).catch(() => { if (active) { setTeamMembers([]); setSelectedMemberIds([]); } });
     return () => { active = false; };
   }, [selectedId]);
@@ -80,6 +82,7 @@ export default function TeamRegistrationFlow({
         teamName: team.name,
         footballTeamId: team.id,
         memberIds: selectedMemberIds,
+        reserveMemberIds: selectedReserveIds,
         inviteCode,
         divisionId,
         tournamentDivisionId: divisionId,
@@ -120,22 +123,35 @@ export default function TeamRegistrationFlow({
           {teamMembers.length > 0 && (
             <div className="rounded-lg border border-slate-200 bg-white p-3">
               <p className="mb-1 text-sm font-bold text-slate-800">Đội hình đăng ký</p>
-              <p className="mb-3 text-xs font-semibold text-slate-500">Chọn {teamSize}–{cap} thành viên active cho division này.</p>
+              <p className="mb-3 text-xs font-semibold text-slate-500">Chọn đúng {teamSize} cầu thủ chính và tối đa {maxReserve} dự bị.</p>
               <div className="grid gap-2 sm:grid-cols-2">
                 {teamMembers.map((member) => {
-                  const checked = selectedMemberIds.includes(member.userId);
-                  return <label key={member.userId} className="flex cursor-pointer items-center gap-2 rounded-md border border-slate-100 px-2 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">
-                    <input type="checkbox" checked={checked} onChange={() => setSelectedMemberIds((current) => checked ? current.filter((id) => id !== member.userId) : [...current, member.userId])} />
-                    <span className="truncate">{member.profile?.fullName || member.userId.slice(0, 8)}</span>
-                    {member.role !== 'PLAYER' && <span className="ml-auto text-[10px] text-slate-400">{member.role}</span>}
-                  </label>;
+                  const isMain = selectedMemberIds.includes(member.userId);
+                  const isReserve = selectedReserveIds.includes(member.userId);
+                  return <div key={member.userId} className="flex items-center gap-2 rounded-md border border-slate-100 px-2 py-2 text-xs font-semibold text-slate-700">
+                    <span className="min-w-0 flex-1 truncate">{member.profile?.fullName || member.userId.slice(0, 8)}</span>
+                    {member.role !== 'PLAYER' && <span className="text-[10px] text-slate-400">{member.role}</span>}
+                    <button type="button" className={`rounded px-2 py-1 text-[10px] font-bold ${isMain ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`} onClick={() => {
+                      setSelectedMemberIds((current) => isMain ? current.filter((id) => id !== member.userId) : [...current.filter((id) => id !== member.userId), member.userId]);
+                      setSelectedReserveIds((current) => current.filter((id) => id !== member.userId));
+                    }}>Chính</button>
+                    <button type="button" className={`rounded px-2 py-1 text-[10px] font-bold ${isReserve ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'}`} onClick={() => {
+                      setSelectedReserveIds((current) => isReserve ? current.filter((id) => id !== member.userId) : [...current.filter((id) => id !== member.userId), member.userId]);
+                      setSelectedMemberIds((current) => current.filter((id) => id !== member.userId));
+                    }}>Dự bị</button>
+                    <button type="button" className={`rounded px-2 py-1 text-[10px] font-bold ${isReserve ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'}`} onClick={() => {
+                      setSelectedReserveIds((current) => isReserve ? current.filter((id) => id !== member.userId) : [...current.filter((id) => id !== member.userId), member.userId]);
+                      setSelectedMemberIds((current) => current.filter((id) => id !== member.userId));
+                    }}>Dự bị</button>
+                    </div>;
                 })}
               </div>
+              <p className="mt-3 text-xs font-semibold text-slate-500">Đang chọn: {selectedMemberIds.length} chính · {selectedReserveIds.length}/{maxReserve} dự bị.</p>
             </div>
           )}
         </>
       )}
-      <Button type="button" onClick={submit} disabled={saving || loading || !selectedId || selectedMemberIds.length < teamSize || selectedMemberIds.length > cap} className="w-full bg-emerald-600 hover:bg-emerald-700">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Đăng ký đội đã chọn</Button>
+      <Button type="button" onClick={submit} disabled={saving || loading || !selectedId || selectedMemberIds.length !== teamSize || selectedReserveIds.length > maxReserve} className="w-full bg-emerald-600 hover:bg-emerald-700">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Đăng ký đội đã chọn</Button>
     </div>
   );
 }

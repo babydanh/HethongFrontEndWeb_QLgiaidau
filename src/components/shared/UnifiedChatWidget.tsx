@@ -32,6 +32,7 @@ import {
   Download,
   AlertCircle,
   MoreHorizontal,
+  Camera,
 } from 'lucide-react';
 import { getBaseUrl } from '@/lib/axios';
 import ReactMarkdown from 'react-markdown';
@@ -160,10 +161,13 @@ export default function UnifiedChatWidget() {
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const [showClubSettings, setShowClubSettings] = useState(false);
   const [activeMsgMenuId, setActiveMsgMenuId] = useState<string | null>(null);
+  const [settingsClubAvatar, setSettingsClubAvatar] = useState<string>('');
+  const [uploadingClubAvatar, setUploadingClubAvatar] = useState(false);
 
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const clubAvatarInputRef = useRef<HTMLInputElement>(null);
   const socketRoomRef = useRef<string | null>(null);
   const typingTimerRef = useRef<number | null>(null);
 
@@ -619,6 +623,22 @@ export default function UnifiedChatWidget() {
     }
   };
 
+  const handleClubAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setUploadingClubAvatar(true);
+      const res = await uploadApi.uploadImage(file);
+      setSettingsClubAvatar(res.url);
+      toast.success('Đã tải ảnh logo lên thành công!');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Không thể tải ảnh logo lên.'));
+    } finally {
+      setUploadingClubAvatar(false);
+      if (clubAvatarInputRef.current) clubAvatarInputRef.current.value = '';
+    }
+  };
+
   const handleToggleBlock = async () => {
     if (!otherParticipant) return;
     const isBlocked = blockedUserIds.includes(otherParticipant.id);
@@ -1063,7 +1083,10 @@ export default function UnifiedChatWidget() {
                 {selection.kind === 'ROOM' && selection.room.type === 'CLUB' && (
                   <button
                     type="button"
-                    onClick={() => setShowClubSettings(true)}
+                    onClick={() => {
+                      setSettingsClubAvatar(selection.room.clubAvatar || selection.room.communityLogo || '');
+                      setShowClubSettings(true);
+                    }}
                     title="Cài đặt phòng chat CLB"
                     className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition"
                   >
@@ -1880,6 +1903,65 @@ export default function UnifiedChatWidget() {
                   </div>
 
                   <div className="space-y-4 text-xs">
+                    {/* Cloudinary Club Logo Uploader */}
+                    <div className="flex flex-col items-center justify-center gap-2 py-1">
+                      <input
+                        ref={clubAvatarInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleClubAvatarUpload}
+                        className="hidden"
+                      />
+                      <div
+                        onClick={() => !uploadingClubAvatar && clubAvatarInputRef.current?.click()}
+                        className="relative group h-20 w-20 rounded-full border-2 border-blue-500 overflow-hidden shadow-md cursor-pointer bg-slate-100 flex items-center justify-center transition hover:ring-4 hover:ring-blue-100"
+                        title="Bấm để tải ảnh logo CLB mới lên Cloudinary"
+                      >
+                        {settingsClubAvatar ? (
+                          <img
+                            src={settingsClubAvatar}
+                            alt="Club Logo"
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <MessageCircle className="h-8 w-8 text-slate-400" />
+                        )}
+
+                        {/* Overlay with Camera Icon */}
+                        <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white transition duration-200">
+                          <Camera className="h-5 w-5 mb-0.5" />
+                          <span className="text-[9px] font-bold">Đổi logo</span>
+                        </div>
+
+                        {uploadingClubAvatar && (
+                          <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white">
+                            <Loader2 className="h-5 w-5 animate-spin text-white mb-0.5" />
+                            <span className="text-[9px] font-medium">Đang tải...</span>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => !uploadingClubAvatar && clubAvatarInputRef.current?.click()}
+                          disabled={uploadingClubAvatar}
+                          className="text-[11px] font-bold text-blue-600 hover:text-blue-700 transition"
+                        >
+                          {uploadingClubAvatar ? 'Đang tải lên Cloudinary...' : 'Tải lên logo CLB từ máy'}
+                        </button>
+                        {settingsClubAvatar && (
+                          <button
+                            type="button"
+                            onClick={() => setSettingsClubAvatar('')}
+                            className="text-[11px] font-medium text-rose-500 hover:text-rose-600 transition"
+                          >
+                            Xóa logo
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
                     <div>
                       <label className="font-semibold text-slate-700 block mb-1">
                         Tên phòng chat
@@ -1944,6 +2026,7 @@ export default function UnifiedChatWidget() {
                             try {
                               await inboxApi.updateClubRoomSettings(selection.room.id, {
                                 name: nameInput,
+                                clubAvatar: settingsClubAvatar || undefined,
                                 isAnnouncementOnly: annInput,
                                 slowModeSeconds: slowInput,
                               });
@@ -1954,11 +2037,25 @@ export default function UnifiedChatWidget() {
                                       room: {
                                         ...curr.room,
                                         name: nameInput,
+                                        clubAvatar: settingsClubAvatar || curr.room.clubAvatar,
                                         isAnnouncementOnly: annInput,
                                         slowModeSeconds: slowInput,
                                       },
                                     }
                                   : curr,
+                              );
+                              setRooms((curr) =>
+                                curr.map((r) =>
+                                  r.id === selection.room.id
+                                    ? {
+                                        ...r,
+                                        name: nameInput,
+                                        clubAvatar: settingsClubAvatar || r.clubAvatar,
+                                        isAnnouncementOnly: annInput,
+                                        slowModeSeconds: slowInput,
+                                      }
+                                    : r,
+                                ),
                               );
                               setShowClubSettings(false);
                               toast.success('Đã lưu cài đặt phòng chat!');

@@ -4,6 +4,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { Bot, ChevronLeft, Headset, Loader2, MessageCircle, Send, Sparkles, Users, X } from 'lucide-react';
 import { getBaseUrl } from '@/lib/axios';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { inboxApi, type InboxRoom, type InboxRoomsResponse } from '@/features/chat/inbox-api';
 import { supportApi, type SupportMessage } from '@/features/support/api';
 import { socketClient } from '@/lib/socket';
@@ -64,9 +66,17 @@ export default function UnifiedChatWidget() {
   const refreshRooms = async () => {
     if (!isAuthenticated) return;
     try {
-      setRooms(unwrapRooms(await inboxApi.getRooms()));
+      const fetched = unwrapRooms(await inboxApi.getRooms());
+      setRooms((current) => {
+        // Retain any custom / lazily-selected club room that might not be in the default list yet
+        const currentActiveClub = selection.kind === 'ROOM' && selection.room.type === 'CLUB' ? selection.room : null;
+        if (currentActiveClub && !fetched.some((r) => r.id === currentActiveClub.id)) {
+          return [currentActiveClub, ...fetched];
+        }
+        return fetched;
+      });
     } catch (error: unknown) {
-      toast.error(getErrorMessage(error, 'Không thể tải danh sách cuộc trò chuyện.'));
+      // Background poll silently fails or logs
     }
   };
 
@@ -387,8 +397,16 @@ export default function UnifiedChatWidget() {
                 <>
                   {aiMessages.map((message, index) => (
                     <div key={`${message.role}-${index}`} className={`mb-3 flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`max-w-[78%] rounded-2xl px-3 py-2 text-sm ${message.role === 'user' ? 'bg-blue-600 text-white' : 'bg-blue-50 text-slate-700'}`}>
-                        <p className="whitespace-pre-wrap">{message.content || 'Đang trả lời...'}</p>
+                      <div className={`max-w-[80%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${message.role === 'user' ? 'bg-blue-600 text-white' : 'bg-blue-50/90 text-slate-800 border border-blue-100/60'}`}>
+                        {message.role === 'user' ? (
+                          <p className="whitespace-pre-wrap">{message.content}</p>
+                        ) : (
+                          <div className="prose prose-sm max-w-none text-slate-800 prose-p:my-1 prose-ul:my-1 prose-li:my-0.5">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                              {message.content || 'Đang trả lời...'}
+                            </ReactMarkdown>
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -448,10 +466,19 @@ export default function UnifiedChatWidget() {
                     <p className="mt-10 text-center text-xs text-slate-400">Chưa có tin nhắn nào.</p>
                   ) : (
                     messages.map((message) => (
-                      <div key={message.id} className={`mb-3 flex ${message.mine ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`max-w-[78%] rounded-2xl px-3 py-2 text-sm ${message.mine ? 'bg-blue-600 text-white' : 'bg-white text-slate-700 shadow-sm'}`}>
-                          <p className="whitespace-pre-wrap">{message.messageText}</p>
-                          <time className="mt-1 block text-[10px] opacity-60">
+                      <div key={message.id} className={`mb-3 flex flex-col ${message.mine ? 'items-end' : 'items-start'}`}>
+                        {!message.mine && message.senderName && (
+                          <span className="text-[11px] font-semibold text-slate-500 mb-1 px-1">
+                            {message.senderName}
+                          </span>
+                        )}
+                        <div className={`max-w-[80%] rounded-2xl px-3.5 py-2 text-sm shadow-sm leading-relaxed ${
+                          message.mine
+                            ? 'bg-blue-600 text-white rounded-br-none'
+                            : 'bg-white text-slate-800 border border-slate-200/70 rounded-bl-none'
+                        }`}>
+                          <p className="whitespace-pre-wrap break-words">{message.messageText}</p>
+                          <time className={`mt-1 block text-[10px] ${message.mine ? 'text-blue-100 text-right' : 'text-slate-400'}`}>
                             {new Date(message.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
                           </time>
                         </div>

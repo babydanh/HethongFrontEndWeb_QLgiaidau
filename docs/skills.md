@@ -104,12 +104,18 @@
 
 ### Phải biết gì?
 - **Kết nối an toàn**: Gửi kèm JWT Access Token khi khởi tạo kết nối (trong mục `auth: { token }`).
-- **Xử lý sự kiện**: Lắng nghe các event từ Backend như `score:update`, `match:status`, `chat:message`.
+- **Xử lý sự kiện**: Lắng nghe các event từ Backend như `score:update`, `match:status`, `chat:message`, `chat:club:message`, `chat:message:pinned`, `chat:message:revoked`, `chat:message:reaction`.
 - **Clean up**: Bắt buộc phải `socket.off()` hoặc ngắt kết nối trong `useEffect` return function để tránh memory leak.
+- **Tiêu chuẩn UX Real-time Widget (Messenger/Telegram Standard)**:
+  - Bắt buộc xử lý **Click Outside to Close** để widget tự thu nhỏ khi người dùng click ra ngoài màn hình.
+  - Bắt buộc xử lý **Scroll-To-Bottom Floating Button**: Khi người dùng cuộn lên đọc tin cũ, không tự ý giật màn hình xuống, mà hiển thị nút tròn nổi `<ChevronDown>` kèm badge đếm số lượng tin nhắn mới.
+  - Hỗ trợ **Tìm kiếm tin nhắn nội bộ (In-Chat Search)**: Cho phép tìm kiếm tức thời theo từ khóa, highlight cụm từ khớp và nhảy cuộn mượt đến vị trí tin nhắn.
+  - Đảm bảo **Responsive Layout**: Không để sidebar hội thoại và khung chat đè lên nhau trên mobile; tự động chuyển đổi view với nút quay lại `<ChevronLeft>`.
 
 ### Dùng ở đâu trong dự án?
 - Trang **Live Score Board** (`/live/:matchId`).
 - Trang **Chat Room** (`/chat/:roomId`).
+- Widget chat nổi toàn cục **UnifiedChatWidget** (`components/shared/UnifiedChatWidget.tsx`).
 - Global Header cho **Notifications**.
 
 ---

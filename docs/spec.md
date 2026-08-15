@@ -222,3 +222,33 @@ try {
 | `409` | Toast conflict message (VD: "Email đã tồn tại") |
 | `422` | Toast logic error (VD: "Giải đã kết thúc") |
 | `500` | Toast "Lỗi hệ thống, vui lòng thử lại" |
+
+---
+
+## 9. Unified Chat Widget Specification (Widget Chat Đồng Bộ & Trợ Lý AI)
+
+Quy định cấu trúc, luồng hoạt động và trải nghiệm tương tác (UX/UI) chuẩn cho component `UnifiedChatWidget.tsx` dùng chung trên toàn hệ thống Sporto:
+
+### 1. Kiến trúc Đa Kênh (Multi-channel Modes)
+- **Trợ lý AI Sporto (`AI`)**: Trực tiếp hỗ trợ giải đáp thể thức giải đấu, luật ELO và điều hướng tính năng 24/7 (hỗ trợ streaming Markdown + cú pháp câu hỏi nhanh).
+- **Hỗ trợ BQT (`SUPPORT`)**: Kênh trao đổi 1-1 trực tiếp với Ban Quản Trị hệ thống.
+- **Phòng Chat Hội Thoại & CLB (`ROOM`)**: Chat 1-1 riêng tư hoặc phòng chat nội bộ CLB/Cộng đồng (hỗ trợ đính kèm nhiều ảnh, bình chọn Poll, ghim tin nhắn Pinned Message, trả lời trích dẫn Quoted Reply, reaction cảm xúc và chia sẻ giải đấu Tournament Card).
+
+### 2. Trải nghiệm Tương tác & Responsive Layout (UX Standards)
+- **Responsive 2-Pane Switching**:
+  - Trên màn hình Desktop (`md:`): Hiển thị đồng thời sidebar danh sách hội thoại bên trái (240px) và khung chat bên phải.
+  - Trên màn hình Mobile / hẹp: Tự động chuyển đổi mượt mà giữa danh sách hội thoại và khung chat đang chọn thông qua state `isMobileRoomOpen`. Có nút `<ChevronLeft>` trên header để quay lại danh sách phòng mà không làm vỡ hoặc đè layout.
+- **Click-Outside to Close (Bấm ra ngoài đóng widget)**:
+  - Bắt sự kiện `mousedown` / `touchstart` trên `document` để tự động đóng/thu nhỏ widget chat (`setOpen(false)`) khi người dùng nhấp chuột ra ngoài phạm vi `widgetRef`.
+  - Tự động bỏ qua không đóng khi click vào modal/dialog portal con (như Lightbox xem ảnh, popup bình chọn, popup cài đặt CLB).
+- **Floating Scroll-To-Latest Button (Nút cuộn về tin mới nhất)**:
+  - Lắng nghe sự kiện `onScroll` trên khung tin nhắn. Khi người dùng cuộn lên trên (`distanceFromBottom > 140px`), xuất hiện nút tròn nổi hiện đại có biểu tượng `<ChevronDown>`.
+  - Tích hợp Badge đếm số tin nhắn mới nhận được từ người khác trong lúc người dùng đang đọc tin cũ.
+  - Nhấp vào nút (hoặc khi người dùng gửi tin mới) sẽ kích hoạt cuộn mượt (`scrollIntoView({ behavior: 'smooth' })`) về đáy tin nhắn mới nhất.
+- **In-Chat Message Search Engine (Tìm kiếm tin nhắn tức thời)**:
+  - Tích hợp nút `<Search>` trên Header phòng chat để mở thanh tìm kiếm inline.
+  - Lọc và đếm kết quả khớp từ khóa trong toàn bộ tin nhắn đã tải (hiển thị dạng `Index/Total` hoặc `0 kết quả`).
+  - Hỗ trợ nút `<ChevronUp>` / `<ChevronDown>` kèm phím tắt `Enter` / `Shift+Enter` để nhảy scroll tới vị trí tin nhắn khớp, đồng thời kích hoạt hiệu ứng viền phát sáng (`ring-2 ring-amber-400`).
+  - Tự động highlight từ khóa màu vàng nổi bật trong nội dung tin nhắn (`renderHighlightedText`).
+- **Popover & Context Action Positioning**:
+  - Menu tùy chọn tin nhắn (Thả cảm xúc, Trả lời, Sao chép, Ghim, Thu hồi) và bảng Emoji Picker được gán vị trí an toàn (`z-50`, căn `left-0` hoặc `right-0` theo người gửi) đảm bảo không bị tràn ra ngoài màn hình hay bị che khuất bởi sidebar.

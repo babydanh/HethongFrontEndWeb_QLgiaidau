@@ -14,6 +14,7 @@ interface Props {
   inviteCode?: string;
   divisionId?: string;
   categoryId?: string;
+  currentUserId?: string;
   teamSize: number;
   maxTeamSize?: number;
   maxReserve?: number;
@@ -21,7 +22,7 @@ interface Props {
 }
 
 export default function TeamRegistrationFlow({
-  tournamentId, inviteCode, divisionId, categoryId, teamSize, maxTeamSize, maxReserve = 0, registrationMode,
+  tournamentId, inviteCode, divisionId, categoryId, currentUserId, teamSize, maxTeamSize, maxReserve = 0, registrationMode,
 }: Props) {
   const router = useRouter();
   const [teams, setTeams] = useState<FootballTeam[]>([]);
@@ -41,11 +42,16 @@ export default function TeamRegistrationFlow({
       if (!active) return;
       const members = (res.data?.members ?? []).filter((member) => member.status === undefined || member.status === 'ACTIVE');
       setTeamMembers(members);
-      setSelectedMemberIds(members.slice(0, teamSize).map((member) => member.userId));
+      const ids = members.map((member) => member.userId);
+      const orderedIds = [
+        ...(currentUserId && ids.includes(currentUserId) ? [currentUserId] : []),
+        ...ids.filter((id) => id !== currentUserId),
+      ];
+      setSelectedMemberIds(orderedIds.slice(0, teamSize));
       setSelectedReserveIds([]);
     }).catch(() => { if (active) { setTeamMembers([]); setSelectedMemberIds([]); } });
     return () => { active = false; };
-  }, [selectedId]);
+  }, [currentUserId, selectedId, teamSize]);
 
   useEffect(() => {
     let active = true;

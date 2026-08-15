@@ -495,7 +495,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
 
         {isLiteModalOpen && (
           <Modal open={isLiteModalOpen} onOpenChange={(open) => { if (!open) setIsLiteModalOpen(false); }}>
-            <ModalContent className="bg-white rounded-lg p-6">
+            <ModalContent className="bg-white rounded-2xl p-6 sm:p-8 max-w-2xl w-full shadow-2xl max-h-[90vh] overflow-y-auto">
               <ModalHeader>
                 <ModalTitle className="text-xl font-bold text-slate-900">
                   Tạo Nhanh Giải Đấu (Lite Mode)

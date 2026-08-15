@@ -622,7 +622,7 @@ export default function UnifiedChatWidget() {
                     : 'hover:bg-white text-slate-700'
                 }`}
               >
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-sm">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white shadow-sm">
                   <Bot className="h-4 w-4" />
                 </span>
                 <span className="min-w-0 flex-1">
@@ -1092,7 +1092,7 @@ export default function UnifiedChatWidget() {
         type="button"
         onClick={() => setOpen((value) => !value)}
         aria-label="Mở tin nhắn"
-        className="relative flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-xl shadow-blue-500/25 transition-all hover:scale-105 hover:shadow-2xl active:scale-95 border-2 border-white/20"
+        className="relative flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-xl transition-all hover:scale-105 active:scale-95"
       >
         <MessageCircle className="h-6 w-6" />
         {totalUnread > 0 && (

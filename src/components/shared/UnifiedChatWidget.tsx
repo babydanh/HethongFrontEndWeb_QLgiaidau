@@ -317,6 +317,23 @@ export default function UnifiedChatWidget() {
           ? current
           : [...current, { ...message, mine: message.senderId === user?.id }],
       );
+      setRooms((prev) =>
+        prev.map((r) =>
+          r.id === message.roomId
+            ? {
+                ...r,
+                lastMessage: {
+                  id: message.id,
+                  senderId: message.senderId,
+                  senderName: message.senderName || 'Thành viên',
+                  content: message.messageText || (message.attachmentsUrls?.length ? '🖼️ [Hình ảnh]' : ''),
+                  createdAt: message.createdAt,
+                },
+                updatedAt: message.createdAt,
+              }
+            : r,
+        ).sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()),
+      );
     };
 
     const onRevoked = (data: { roomId: string; messageId: string; revokedBy: string }) => {
@@ -719,6 +736,23 @@ export default function UnifiedChatWidget() {
               },
             ],
       );
+      setRooms((prev) =>
+        prev.map((r) =>
+          r.id === selection.room.id
+            ? {
+                ...r,
+                lastMessage: {
+                  id: message.id,
+                  senderId: message.senderId,
+                  senderName: message.senderName || (user?.fullName || 'Tôi'),
+                  content: message.messageText || (attachmentsUrls.length ? '🖼️ [Hình ảnh]' : ''),
+                  createdAt: message.createdAt,
+                },
+                updatedAt: message.createdAt,
+              }
+            : r,
+        ).sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()),
+      );
     } catch (error: unknown) {
       setDraft(text);
       setSelectedFiles(filesToUpload);
@@ -1012,7 +1046,7 @@ export default function UnifiedChatWidget() {
                         )}
                       </div>
                       <small className="block truncate text-[10px] text-slate-500 mt-0.5">
-                        {room.lastMessage?.content || 'Chưa có tin nhắn'}
+                        {room.lastMessage?.content || (room.lastMessage ? '🖼️ [Hình ảnh]' : 'Chưa có tin nhắn')}
                       </small>
                     </span>
                   </button>
@@ -1580,12 +1614,14 @@ export default function UnifiedChatWidget() {
                                 {/* Bubble Box */}
                                 <div
                                   onClick={() => setActiveMsgMenuId(activeMsgMenuId === message.id ? null : message.id)}
-                                  className={`relative px-3.5 py-2 text-sm leading-relaxed shadow-2xs transition cursor-pointer select-text ${
+                                  className={`relative transition cursor-pointer select-text ${
                                     message.isRevoked
-                                      ? 'bg-slate-100/90 text-slate-400 italic border border-slate-200 rounded-2xl'
-                                      : message.mine
-                                        ? 'bg-blue-600 text-white rounded-2xl rounded-br-xs'
-                                        : 'bg-white text-slate-800 border border-slate-200/90 rounded-2xl rounded-bl-xs'
+                                      ? 'px-3.5 py-2 text-sm leading-relaxed bg-slate-100/90 text-slate-400 italic border border-slate-200 rounded-2xl shadow-2xs'
+                                      : !message.messageText && message.attachmentsUrls && message.attachmentsUrls.length > 0
+                                        ? 'bg-transparent p-0 border-0 shadow-none'
+                                        : message.mine
+                                          ? 'px-3.5 py-2 text-sm leading-relaxed bg-blue-600 text-white rounded-2xl rounded-br-xs shadow-2xs'
+                                          : 'px-3.5 py-2 text-sm leading-relaxed bg-white text-slate-800 border border-slate-200/90 rounded-2xl rounded-bl-xs shadow-2xs'
                                   }`}
                                 >
                                   {message.isRevoked ? (
@@ -1593,6 +1629,63 @@ export default function UnifiedChatWidget() {
                                       <Ban className="h-3.5 w-3.5 text-slate-400" />
                                       Tin nhắn đã được thu hồi
                                     </p>
+                                  ) : !message.messageText && message.attachmentsUrls && message.attachmentsUrls.length > 0 ? (
+                                    /* Clean Borderless Image-Only View (Messenger Standard) */
+                                    <div className="relative group/img-only">
+                                      {message.replyTo && (
+                                        <div
+                                          className={`mb-1.5 rounded-lg px-2.5 py-1 text-xs border-l-2 ${
+                                            message.mine
+                                              ? 'bg-blue-700/60 border-white/70 text-blue-100'
+                                              : 'bg-slate-100 border-blue-500 text-slate-600'
+                                          }`}
+                                        >
+                                          <p className="font-bold text-[11px] truncate">
+                                            {message.replyTo.senderName}
+                                          </p>
+                                          <p className="line-clamp-1 italic text-[11px] opacity-90">
+                                            {message.replyTo.text}
+                                          </p>
+                                        </div>
+                                      )}
+
+                                      <div
+                                        className={`grid gap-1.5 rounded-2xl overflow-hidden ${
+                                          message.attachmentsUrls.length === 1
+                                            ? 'grid-cols-1 max-w-[280px] sm:max-w-[320px]'
+                                            : message.attachmentsUrls.length === 2
+                                              ? 'grid-cols-2 max-w-[280px]'
+                                              : 'grid-cols-3 max-w-[320px]'
+                                        }`}
+                                      >
+                                        {message.attachmentsUrls.map((url, imgIdx) => (
+                                          <div
+                                            key={`${url}-${imgIdx}`}
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              setLightboxUrl(url);
+                                            }}
+                                            className="group/img relative cursor-pointer overflow-hidden rounded-2xl bg-slate-100 border border-slate-200/50 shadow-sm"
+                                          >
+                                            <img
+                                              src={url}
+                                              alt="Hình đính kèm"
+                                              className="h-auto max-h-[320px] w-full object-cover transition duration-200 group-hover/img:scale-103"
+                                            />
+                                            <div className="absolute inset-0 bg-black/25 opacity-0 group-hover/img:opacity-100 flex items-center justify-center transition">
+                                              <ZoomIn className="h-5 w-5 text-white" />
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+
+                                      <span className="absolute bottom-2 right-2 rounded-full bg-black/55 backdrop-blur-xs px-2 py-0.5 text-[9px] text-white font-medium shadow">
+                                        {new Date(message.createdAt).toLocaleTimeString('vi-VN', {
+                                          hour: '2-digit',
+                                          minute: '2-digit',
+                                        })}
+                                      </span>
+                                    </div>
                                   ) : (
                                     <>
                                       {/* Quoted Reply Preview inside bubble */}
@@ -1627,7 +1720,10 @@ export default function UnifiedChatWidget() {
                                           {message.attachmentsUrls.map((url, imgIdx) => (
                                             <div
                                               key={`${url}-${imgIdx}`}
-                                              onClick={() => setLightboxUrl(url)}
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                setLightboxUrl(url);
+                                              }}
                                               className="group/img relative aspect-square cursor-pointer overflow-hidden rounded-lg bg-slate-100 border border-slate-200/40"
                                             >
                                               <img
@@ -1648,21 +1744,21 @@ export default function UnifiedChatWidget() {
                                           {message.messageText}
                                         </p>
                                       )}
+
+                                      <time
+                                        className={`mt-0.5 block text-[10px] ${
+                                          message.mine && !message.isRevoked
+                                            ? 'text-blue-100/80 text-right'
+                                            : 'text-slate-400'
+                                        }`}
+                                      >
+                                        {new Date(message.createdAt).toLocaleTimeString('vi-VN', {
+                                          hour: '2-digit',
+                                          minute: '2-digit',
+                                        })}
+                                      </time>
                                     </>
                                   )}
-
-                                  <time
-                                    className={`mt-0.5 block text-[10px] ${
-                                      message.mine && !message.isRevoked
-                                        ? 'text-blue-100/80 text-right'
-                                        : 'text-slate-400'
-                                    }`}
-                                  >
-                                    {new Date(message.createdAt).toLocaleTimeString('vi-VN', {
-                                      hour: '2-digit',
-                                      minute: '2-digit',
-                                    })}
-                                  </time>
                                 </div>
 
                                 {/* Reaction Badges Pill (Messenger Style) */}
@@ -1671,7 +1767,7 @@ export default function UnifiedChatWidget() {
                                     className={`absolute -bottom-2.5 ${
                                       message.mine ? 'left-2' : 'right-2'
                                     } z-10 flex items-center gap-0.5 rounded-full bg-white px-1.5 py-0.5 text-xs shadow-md border border-slate-200 cursor-pointer hover:scale-105 active:scale-95 transition`}
-                                    onClick={() => toggleReaction(message.id, msgReactions[0])}
+                                    onClick={() => void toggleReaction(message.id, msgReactions[0])}
                                   >
                                     {Array.from(new Set(msgReactions)).map((emoji) => (
                                       <span key={emoji} className="text-xs leading-none">
@@ -1686,6 +1782,27 @@ export default function UnifiedChatWidget() {
                                   </div>
                                 )}
                               </div>
+
+                              {/* Read receipts / Seen indicator at the bottom of the latest message */}
+                              {index === messages.length - 1 && message.mine && (
+                                <div className="mt-1 flex items-center justify-end gap-1 px-1">
+                                  {otherParticipant?.avatarUrl ? (
+                                    <div className="flex items-center gap-1" title={`Đã xem bởi ${otherParticipant.fullName || ''}`}>
+                                      <span className="text-[9px] text-slate-400 font-medium">Đã xem</span>
+                                      <img
+                                        src={otherParticipant.avatarUrl}
+                                        alt={otherParticipant.fullName || 'Đã xem'}
+                                        className="h-3.5 w-3.5 rounded-full object-cover border border-white shadow-2xs"
+                                      />
+                                    </div>
+                                  ) : (
+                                    <span className="flex items-center gap-0.5 text-[9px] font-medium text-slate-400">
+                                      <Check className="h-3 w-3 text-blue-500" />
+                                      Đã gửi
+                                    </span>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>

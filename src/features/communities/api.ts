@@ -178,7 +178,7 @@ export const communitiesApi = {
 
   createPost: (id: string, data: CreateCommunityPostPayload, idempotencyKey?: string) =>
     api.post<ApiResponse<BackendPost>>(`/communities/${id}/posts`, {
-      body: data.content,
+      body: data.content?.trim() ? data.content.trim() : (data.poll ? data.poll.question : undefined),
       mediaUrls: data.imageUrls,
       topics: data.topics,
       mentions: data.mentions,

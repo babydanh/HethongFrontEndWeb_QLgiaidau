@@ -42,6 +42,9 @@ import {
   Plus,
   Trash,
   Vote,
+  Search,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { getBaseUrl } from '@/lib/axios';
 import ReactMarkdown from 'react-markdown';
@@ -141,6 +144,22 @@ function formatDateSeparator(dateStr: string): string {
   });
 }
 
+function renderHighlightedText(text: string, query: string) {
+  if (!query?.trim() || !text) return text;
+  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const regex = new RegExp(`(${escaped})`, 'gi');
+  const parts = text.split(regex);
+  return parts.map((part, i) =>
+    regex.test(part) ? (
+      <mark key={i} className="bg-amber-300 text-slate-950 font-bold rounded px-0.5 shadow-2xs">
+        {part}
+      </mark>
+    ) : (
+      part
+    ),
+  );
+}
+
 export default function UnifiedChatWidget() {
   const pathname = usePathname();
   const { user, isAuthenticated } = useAuthStore();
@@ -177,7 +196,16 @@ export default function UnifiedChatWidget() {
   const [pollOptions, setPollOptions] = useState<string[]>(['', '']);
   const [pollAllowMultiple, setPollAllowMultiple] = useState(false);
   const [creatingPoll, setCreatingPoll] = useState(false);
+  const [isMobileRoomOpen, setIsMobileRoomOpen] = useState(false);
+  const [showScrollBottom, setShowScrollBottom] = useState(false);
+  const [unreadSinceScrolledUp, setUnreadSinceScrolledUp] = useState(0);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeSearchMatchIndex, setActiveSearchMatchIndex] = useState(0);
 
+  const widgetRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -238,6 +266,89 @@ export default function UnifiedChatWidget() {
       // background refresh
     }
   }, [isAuthenticated]);
+
+  const searchMatches = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    const q = searchQuery.toLowerCase();
+    if (selection.kind === 'ROOM') {
+      return messages
+        .filter((m) => !m.isRevoked && m.messageText?.toLowerCase().includes(q))
+        .map((m) => m.id);
+    }
+    if (selection.kind === 'SUPPORT') {
+      return supportMessages
+        .filter((m) => m.messageText?.toLowerCase().includes(q))
+        .map((m) => m.id);
+    }
+    if (selection.kind === 'AI') {
+      return aiMessages
+        .map((m, idx) => ({ id: `ai-${idx}`, text: m.content }))
+        .filter((m) => m.text.toLowerCase().includes(q))
+        .map((m) => m.id);
+    }
+    return [];
+  }, [searchQuery, selection.kind, messages, supportMessages, aiMessages]);
+
+  const jumpToSearchMatch = useCallback(
+    (index: number) => {
+      if (searchMatches.length === 0) return;
+      const safeIndex = (index + searchMatches.length) % searchMatches.length;
+      setActiveSearchMatchIndex(safeIndex);
+      const targetId = searchMatches[safeIndex];
+      const el = document.getElementById(`msg-${targetId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.classList.add('ring-2', 'ring-amber-400', 'bg-amber-100/60');
+        window.setTimeout(() => {
+          el.classList.remove('ring-2', 'ring-amber-400', 'bg-amber-100/60');
+        }, 2500);
+      }
+    },
+    [searchMatches],
+  );
+
+  const handleNextSearchMatch = () => {
+    jumpToSearchMatch(activeSearchMatchIndex + 1);
+  };
+
+  const handlePrevSearchMatch = () => {
+    jumpToSearchMatch(activeSearchMatchIndex - 1);
+  };
+
+  const handleTimelineScroll = useCallback(() => {
+    if (!scrollContainerRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
+    const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+    const isScrolledUp = distanceFromBottom > 140;
+    setShowScrollBottom(isScrolledUp);
+    if (!isScrolledUp) {
+      setUnreadSinceScrolledUp(0);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleOutsideClick = (e: MouseEvent | TouchEvent) => {
+      const target = e.target as Node;
+      if (widgetRef.current && !widgetRef.current.contains(target)) {
+        const isModal = (target as HTMLElement).closest?.('.fixed.inset-0.z-50');
+        const isFloatingTrigger = (target as HTMLElement).closest?.('#chat-floating-trigger');
+        if (!isModal && !isFloatingTrigger) {
+          setOpen(false);
+        }
+      }
+    };
+    const timer = window.setTimeout(() => {
+      document.addEventListener('mousedown', handleOutsideClick);
+      document.addEventListener('touchstart', handleOutsideClick);
+    }, 100);
+
+    return () => {
+      window.clearTimeout(timer);
+      document.removeEventListener('mousedown', handleOutsideClick);
+      document.removeEventListener('touchstart', handleOutsideClick);
+    };
+  }, [open]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -553,13 +664,16 @@ export default function UnifiedChatWidget() {
   }, [open, selection.kind, isAuthenticated]);
 
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (!showScrollBottom) {
+      endRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
   }, [
     messages.length,
     supportMessages.length,
     aiMessages.length,
     selection,
     typingUserId,
+    showScrollBottom,
   ]);
 
   useEffect(() => {
@@ -1024,9 +1138,16 @@ export default function UnifiedChatWidget() {
   return (
     <div className="fixed bottom-6 right-6 z-[9999] flex flex-col items-end font-sans">
       {open && (
-        <div className="mb-3 flex h-[min(640px,calc(100vh-2rem))] w-[min(780px,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl animate-in fade-in slide-in-from-bottom-3 duration-200">
+        <div
+          ref={widgetRef}
+          className="mb-3 flex h-[min(640px,calc(100vh-2rem))] w-[min(780px,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl animate-in fade-in slide-in-from-bottom-3 duration-200"
+        >
           {/* Left Sidebar: Conversations & Channels */}
-          <aside className="flex w-[240px] shrink-0 flex-col border-r border-slate-100 bg-slate-50">
+          <aside
+            className={`${
+              isMobileRoomOpen ? 'hidden md:flex' : 'flex'
+            } w-full md:w-[240px] shrink-0 flex-col border-r border-slate-100 bg-slate-50`}
+          >
             <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3.5">
               <p className="text-sm font-bold text-slate-900">Tin nhắn</p>
               <button
@@ -1043,7 +1164,10 @@ export default function UnifiedChatWidget() {
               {/* Bot AI Channel */}
               <button
                 type="button"
-                onClick={() => setSelection({ kind: 'AI' })}
+                onClick={() => {
+                  setSelection({ kind: 'AI' });
+                  setIsMobileRoomOpen(true);
+                }}
                 className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left transition ${
                   selection.kind === 'AI'
                     ? 'bg-blue-100/90 text-blue-950 font-medium shadow-sm'
@@ -1068,7 +1192,10 @@ export default function UnifiedChatWidget() {
               {/* Support Admin Channel */}
               <button
                 type="button"
-                onClick={() => setSelection({ kind: 'SUPPORT' })}
+                onClick={() => {
+                  setSelection({ kind: 'SUPPORT' });
+                  setIsMobileRoomOpen(true);
+                }}
                 className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left transition ${
                   selection.kind === 'SUPPORT'
                     ? 'bg-blue-100/90 text-blue-950 font-medium shadow-sm'
@@ -1103,7 +1230,10 @@ export default function UnifiedChatWidget() {
                   <button
                     key={room.id}
                     type="button"
-                    onClick={() => setSelection({ kind: 'ROOM', room })}
+                    onClick={() => {
+                      setSelection({ kind: 'ROOM', room });
+                      setIsMobileRoomOpen(true);
+                    }}
                     className={`flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2.5 text-left transition ${
                       isSelected
                         ? 'bg-blue-100/90 text-blue-950 font-medium shadow-sm'
@@ -1158,16 +1288,21 @@ export default function UnifiedChatWidget() {
           </aside>
 
           {/* Right Main Chat Frame */}
-          <section className="flex min-w-0 flex-1 flex-col bg-white">
+          <section
+            className={`${
+              !isMobileRoomOpen ? 'hidden md:flex' : 'flex'
+            } min-w-0 flex-1 flex-col bg-white relative`}
+          >
             {/* Header */}
-            <header className="flex items-center justify-between border-b border-slate-200 px-5 py-3.5 shadow-xs">
-              <div className="flex items-center gap-3 min-w-0">
+            <header className="flex items-center justify-between border-b border-slate-200 px-4 sm:px-5 py-3.5 shadow-xs">
+              <div className="flex items-center gap-2.5 min-w-0">
                 <button
                   type="button"
-                  className="md:hidden p-1 text-slate-500 hover:text-slate-700"
-                  onClick={() => setSelection({ kind: 'AI' })}
+                  className="md:hidden p-1 text-slate-500 hover:text-slate-700 rounded-md hover:bg-slate-100 transition"
+                  onClick={() => setIsMobileRoomOpen(false)}
+                  title="Quay lại danh sách tin nhắn"
                 >
-                  <ChevronLeft className="h-4 w-4" />
+                  <ChevronLeft className="h-5 w-5" />
                 </button>
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full overflow-hidden bg-blue-50 text-blue-600 shadow-xs border border-slate-100">
                   {selection.kind === 'AI' ? (
@@ -1216,6 +1351,27 @@ export default function UnifiedChatWidget() {
 
               {/* Action Buttons in Header */}
               <div className="flex items-center gap-1">
+                {/* Search Toggle Button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsSearching((prev) => !prev);
+                    if (isSearching) {
+                      setSearchQuery('');
+                    } else {
+                      window.setTimeout(() => searchInputRef.current?.focus(), 100);
+                    }
+                  }}
+                  title="Tìm kiếm tin nhắn"
+                  className={`p-1.5 rounded-lg transition ${
+                    isSearching
+                      ? 'bg-blue-100 text-blue-600'
+                      : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'
+                  }`}
+                >
+                  <Search className="w-4 h-4" />
+                </button>
+
                 {selection.kind === 'ROOM' && selection.room.type === 'CLUB' && (
                   <button
                     type="button"
@@ -1264,6 +1420,76 @@ export default function UnifiedChatWidget() {
               </div>
             </header>
 
+            {/* Search Bar Strip */}
+            {isSearching && (
+              <div className="flex items-center gap-2 border-b border-slate-200 bg-slate-50/95 px-4 py-2 text-xs shadow-inner animate-in slide-in-from-top-1 duration-150">
+                <Search className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setActiveSearchMatchIndex(0);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      if (e.shiftKey) {
+                        handlePrevSearchMatch();
+                      } else {
+                        handleNextSearchMatch();
+                      }
+                    } else if (e.key === 'Escape') {
+                      setIsSearching(false);
+                      setSearchQuery('');
+                    }
+                  }}
+                  placeholder="Tìm kiếm trong đoạn chat..."
+                  className="min-w-0 flex-1 bg-transparent text-xs text-slate-800 outline-none placeholder:text-slate-400"
+                  autoFocus
+                />
+                {searchQuery.trim() && (
+                  <span className="shrink-0 text-[11px] font-medium text-slate-500">
+                    {searchMatches.length > 0
+                      ? `${activeSearchMatchIndex + 1}/${searchMatches.length}`
+                      : '0 kết quả'}
+                  </span>
+                )}
+                {searchMatches.length > 0 && (
+                  <div className="flex items-center gap-0.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={handlePrevSearchMatch}
+                      title="Kết quả trước (Shift+Enter)"
+                      className="p-1 rounded text-slate-500 hover:bg-slate-200/70 hover:text-slate-800 transition"
+                    >
+                      <ChevronUp className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleNextSearchMatch}
+                      title="Kết quả tiếp theo (Enter)"
+                      className="p-1 rounded text-slate-500 hover:bg-slate-200/70 hover:text-slate-800 transition"
+                    >
+                      <ChevronDown className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsSearching(false);
+                    setSearchQuery('');
+                  }}
+                  title="Đóng tìm kiếm (Esc)"
+                  className="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-200/70 transition shrink-0"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            )}
+
             {/* Pinned Message Sticky Banner */}
             {selection.kind === 'ROOM' && pinnedMessage && (
               <div className="flex items-center justify-between border-b border-amber-200/80 bg-amber-50/90 px-4 py-2 text-xs shadow-2xs animate-in slide-in-from-top-1 duration-150">
@@ -1300,15 +1526,20 @@ export default function UnifiedChatWidget() {
             )}
 
             {/* Chat Body & Timeline */}
-            <div className="flex-1 overflow-y-auto bg-slate-50/60 p-4 space-y-3">
+            <div
+              ref={scrollContainerRef}
+              onScroll={handleTimelineScroll}
+              className="flex-1 overflow-y-auto bg-slate-50/60 p-4 space-y-3 relative"
+            >
               {selection.kind === 'AI' ? (
                 <>
                   {aiMessages.map((message, index) => (
                     <div
                       key={`${message.role}-${index}`}
+                      id={`msg-ai-${index}`}
                       className={`flex ${
                         message.role === 'user' ? 'justify-end' : 'justify-start'
-                      }`}
+                      } transition-all duration-300 rounded-2xl`}
                     >
                       <div
                         className={`max-w-[82%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-xs ${
@@ -1319,7 +1550,7 @@ export default function UnifiedChatWidget() {
                       >
                         {message.role === 'user' ? (
                           <p className="whitespace-pre-wrap break-words">
-                            {message.content}
+                            {renderHighlightedText(message.content, searchQuery)}
                           </p>
                         ) : (
                           <div className="prose prose-sm max-w-none text-slate-800 prose-p:my-1 prose-ul:my-1 prose-li:my-0.5">
@@ -1368,11 +1599,12 @@ export default function UnifiedChatWidget() {
                 supportMessages.map((message) => (
                   <div
                     key={message.id}
+                    id={`msg-${message.id}`}
                     className={`flex ${
                       message.senderId === user?.id
                         ? 'justify-end'
                         : 'justify-start'
-                    }`}
+                    } transition-all duration-300 rounded-2xl`}
                   >
                     <div
                       className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm shadow-xs ${
@@ -1382,7 +1614,7 @@ export default function UnifiedChatWidget() {
                       }`}
                     >
                       <p className="whitespace-pre-wrap break-words">
-                        {message.messageText}
+                        {renderHighlightedText(message.messageText || '', searchQuery)}
                       </p>
                       <time
                         className={`mt-1 block text-[10px] ${
@@ -1975,7 +2207,7 @@ export default function UnifiedChatWidget() {
                                       {/* Standard Text Message */}
                                       {message.type !== 'POLL' && message.type !== 'TOURNAMENT_SHARE' && message.messageText && (
                                         <p className="whitespace-pre-wrap break-words">
-                                          {message.messageText}
+                                          {renderHighlightedText(message.messageText, searchQuery)}
                                         </p>
                                       )}
 
@@ -2046,6 +2278,28 @@ export default function UnifiedChatWidget() {
                 </>
               )}
               <div ref={endRef} />
+
+              {/* Floating Messenger-like Scroll-To-Bottom Button */}
+              {showScrollBottom && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    endRef.current?.scrollIntoView({ behavior: 'smooth' });
+                    setShowScrollBottom(false);
+                    setUnreadSinceScrolledUp(0);
+                  }}
+                  aria-label="Cuộn xuống tin nhắn mới nhất"
+                  className="sticky bottom-2 ml-auto mr-2 z-30 flex items-center gap-1.5 rounded-full bg-white/95 backdrop-blur-md px-3.5 py-1.5 text-xs font-bold text-slate-700 shadow-xl border border-slate-200/90 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 transition-all duration-200 animate-in fade-in slide-in-from-bottom-2 hover:scale-105 active:scale-95 group"
+                >
+                  <ChevronDown className="h-4 w-4 text-blue-600 group-hover:translate-y-0.5 transition-transform" />
+                  <span>Tin mới nhất</span>
+                  {unreadSinceScrolledUp > 0 && (
+                    <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white shadow-2xs">
+                      {unreadSinceScrolledUp > 99 ? '99+' : unreadSinceScrolledUp}
+                    </span>
+                  )}
+                </button>
+              )}
             </div>
 
             {/* Replying Banner */}

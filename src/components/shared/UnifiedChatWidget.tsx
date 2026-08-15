@@ -62,7 +62,11 @@ function unwrapMessages(
 }
 
 function unwrapRooms(value: InboxRoomsResponse): InboxRoom[] {
-  return Array.isArray(value) ? value : value.data;
+  if (Array.isArray(value)) return value;
+  if (value && Array.isArray((value as { data?: InboxRoom[] }).data)) {
+    return (value as { data: InboxRoom[] }).data;
+  }
+  return [];
 }
 
 function roomTitle(room: InboxRoom): string {
@@ -151,14 +155,20 @@ export default function UnifiedChatWidget() {
     return blockedUserIds.includes(otherParticipant.id);
   }, [otherParticipant, blockedUserIds]);
 
+  const selectionRef = useRef(selection);
+  useEffect(() => {
+    selectionRef.current = selection;
+  }, [selection]);
+
   const refreshRooms = useCallback(async () => {
     if (!isAuthenticated) return;
     try {
       const fetched = unwrapRooms(await inboxApi.getRooms());
       setRooms((current) => {
+        const currentSelection = selectionRef.current;
         const currentActiveClub =
-          selection.kind === 'ROOM' && selection.room.type === 'CLUB'
-            ? selection.room
+          currentSelection.kind === 'ROOM' && currentSelection.room.type === 'CLUB'
+            ? currentSelection.room
             : null;
         if (
           currentActiveClub &&
@@ -171,7 +181,7 @@ export default function UnifiedChatWidget() {
     } catch {
       // background refresh
     }
-  }, [isAuthenticated, selection]);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -208,45 +218,32 @@ export default function UnifiedChatWidget() {
 
       try {
         setLoading(true);
-        const roomsRes = unwrapRooms(await inboxApi.getRooms());
-        setRooms(roomsRes);
+        // Call official chatApi to get or lazy-create the club room with proper authentication
+        const res = await chatApi.getClubRoom(communityId);
+        const roomData = ((res as unknown as { data?: Partial<InboxRoom> })?.data || res) as Partial<InboxRoom> | undefined;
 
-        const targetRoom = roomsRes.find(
-          (r) => r.type === 'CLUB' && r.communityId === communityId,
-        );
+        if (roomData?.id) {
+          const clubRoom: InboxRoom = {
+            id: roomData.id,
+            name: roomData.name || roomData.clubName || 'Phòng Chat CLB',
+            type: 'CLUB',
+            communityId,
+            clubName: roomData.clubName || roomData.name,
+            clubAvatar: roomData.clubAvatar || (roomData as unknown as { communityLogo?: string }).communityLogo,
+            unreadCount: 0,
+            updatedAt: new Date().toISOString(),
+            participants: roomData.participants || [],
+          };
 
-        if (targetRoom) {
-          setSelection({ kind: 'ROOM', room: targetRoom });
-        } else {
-          const clubRes = await fetch(
-            `${getBaseUrl()}/chat/rooms?type=CLUB&communityId=${communityId}`,
-            { credentials: 'include' },
-          );
-          if (clubRes.ok) {
-            const data = await clubRes.json();
-            const roomData = data?.data;
-            if (roomData?.id) {
-              const newInboxRoom: InboxRoom = {
-                id: roomData.id,
-                name: roomData.name || roomData.clubName || 'Phòng Chat CLB',
-                type: 'CLUB',
-                communityId,
-                clubName: roomData.clubName,
-                clubAvatar: roomData.clubAvatar,
-                unreadCount: 0,
-                updatedAt: new Date().toISOString(),
-                participants: [],
-              };
-              setSelection({ kind: 'ROOM', room: newInboxRoom });
-              setRooms((prev) => [
-                newInboxRoom,
-                ...prev.filter((r) => r.id !== newInboxRoom.id),
-              ]);
-            }
-          }
+          setSelection({ kind: 'ROOM', room: clubRoom });
+          setRooms((prev) => [
+            clubRoom,
+            ...prev.filter((r) => r.id !== clubRoom.id),
+          ]);
         }
       } catch (err) {
         console.error('Failed to focus club room in unified chat:', err);
+        toast.error(getErrorMessage(err, 'Không thể mở chat CLB.'));
       } finally {
         setLoading(false);
       }
@@ -262,7 +259,7 @@ export default function UnifiedChatWidget() {
     if (!open || !isAuthenticated) return;
     const timer = window.setInterval(() => void refreshRooms(), 10000);
     return () => window.clearInterval(timer);
-  }, [open, isAuthenticated]);
+  }, [open, isAuthenticated, refreshRooms]);
 
   useEffect(() => {
     if (!open || selection.kind !== 'ROOM') return;
@@ -341,7 +338,7 @@ export default function UnifiedChatWidget() {
       if (typingTimerRef.current) window.clearTimeout(typingTimerRef.current);
       socketRoomRef.current = null;
     };
-  }, [open, selection, user?.id]);
+  }, [open, selection.kind, selection.kind === 'ROOM' ? selection.room.id : null, user?.id]);
 
   useEffect(() => {
     if (!open || selection.kind !== 'SUPPORT' || !isAuthenticated) return;
@@ -370,7 +367,7 @@ export default function UnifiedChatWidget() {
     return () => {
       active = false;
     };
-  }, [open, selection, isAuthenticated]);
+  }, [open, selection.kind, isAuthenticated]);
 
   useEffect(() => {
     if (!open || selection.kind !== 'SUPPORT' || !isAuthenticated) return;
@@ -399,7 +396,7 @@ export default function UnifiedChatWidget() {
       socket.off('connect', subscribe);
       socket.off('chat:message', onMessage);
     };
-  }, [open, selection, isAuthenticated]);
+  }, [open, selection.kind, isAuthenticated]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { BookOpen, Image as ImageIcon, MessageCircle, Users, ArrowUpRight } from "lucide-react";
+import { BookOpen, Image as ImageIcon, MessageCircle, ArrowUpRight } from "lucide-react";
 import { communitiesApi } from "@/features/communities/api";
 import { Button } from "@/components/ui/Button";
 
@@ -57,34 +57,29 @@ export default function CommunityInfoSidebar({
 
   return (
     <aside className="space-y-5 lg:sticky lg:top-24">
-      {/* 💬 Card Vào Chat Chung CLB (Nổi Bật) */}
-      <section className="relative overflow-hidden rounded-2xl border border-blue-200/90 bg-gradient-to-br from-blue-600 via-indigo-600 to-blue-700 p-5 text-white shadow-lg shadow-blue-500/15 transition-all hover:shadow-xl">
-        <div className="absolute -right-6 -bottom-6 w-24 h-24 rounded-full bg-white/10 blur-xl pointer-events-none" />
-        <div className="flex items-start justify-between gap-3 mb-3">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/15 backdrop-blur-md text-white shadow-inner">
-            <MessageCircle className="h-6 w-6" />
+      {/* 💬 Card Vào Chat Chung CLB (Tối Giản, Nền Trắng Tinh Gọn) */}
+      <section className="rounded-xl border border-slate-200/90 bg-white p-4 shadow-sm transition-all hover:border-slate-300">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <MessageCircle className="h-4 w-4 text-blue-600" />
+            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">
+              Chat CLB
+            </h3>
           </div>
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-400/20 px-2.5 py-1 text-[11px] font-bold text-emerald-200 border border-emerald-400/30">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            Đang hoạt động
+          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            Hoạt động
           </span>
         </div>
-
-        <h3 className="text-base font-bold tracking-tight text-white mb-1">
-          Phòng Chat Chung CLB
-        </h3>
-        <p className="text-xs text-blue-100 leading-relaxed mb-4">
-          Giao lưu, hẹn lịch thi đấu và nhận thông báo các giải đấu nhanh trực tiếp cùng thành viên CLB.
-        </p>
 
         <Button
           type="button"
           onClick={onOpenChat}
-          className="w-full bg-white text-blue-700 font-bold hover:bg-blue-50 hover:text-blue-800 transition-all shadow-md shadow-black/10 flex items-center justify-center gap-2 text-xs h-10 rounded-xl active:scale-[0.98]"
+          className="w-full bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-all flex items-center justify-center gap-2 text-xs h-9 rounded-lg active:scale-[0.98]"
         >
           <MessageCircle className="w-4 h-4" />
-          <span>Vào phòng Chat CLB</span>
-          <ArrowUpRight className="w-3.5 h-3.5 opacity-70" />
+          <span>Vào phòng Chat</span>
+          <ArrowUpRight className="w-3.5 h-3.5 opacity-80" />
         </Button>
       </section>
 

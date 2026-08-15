@@ -1371,13 +1371,13 @@ export default function UnifiedChatWidget() {
                               )}
 
                               {/* Message Bubble + Floating Action Bar Container */}
-                              <div className="relative group/bubble flex items-center gap-1">
-                                {/* Desktop Hover Action Bar with hover bridge */}
+                              <div className="relative group/bubble flex items-center gap-1.5 pt-1">
+                                {/* Desktop Hover Action Bar attached seamlessly without disappearing */}
                                 {!message.isRevoked && (
                                   <div
-                                    className={`absolute -top-10 ${
+                                    className={`absolute -top-9 ${
                                       message.mine ? 'right-0' : 'left-0'
-                                    } z-30 hidden group-hover/bubble:flex group-hover/msg:flex items-center gap-1 rounded-full bg-white px-2 py-1 shadow-xl border border-slate-200/90 animate-in fade-in zoom-in-95 duration-100 before:absolute before:inset-x-0 before:-bottom-3 before:h-4 before:content-['']`}
+                                    } z-30 hidden group-hover/msg:flex items-center gap-1 rounded-full bg-white px-2 py-1 shadow-2xl border border-slate-200/90 animate-in fade-in zoom-in-95 duration-100 before:absolute before:inset-x-0 before:-bottom-4 before:h-5 before:content-['']`}
                                   >
                                     {QUICK_REACTIONS.map((emoji) => {
                                       const isSelected = msgReactions.includes(emoji);
@@ -1385,8 +1385,11 @@ export default function UnifiedChatWidget() {
                                         <button
                                           key={emoji}
                                           type="button"
-                                          onClick={() => toggleReaction(message.id, emoji)}
-                                          className={`flex h-7 w-7 items-center justify-center rounded-full text-sm transition-transform hover:scale-130 active:scale-95 ${
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            void toggleReaction(message.id, emoji);
+                                          }}
+                                          className={`flex h-8 w-8 items-center justify-center rounded-full text-base transition-transform hover:scale-135 active:scale-95 ${
                                             isSelected ? 'bg-blue-100 scale-110' : 'hover:bg-slate-100'
                                           }`}
                                           title={`Thả ${emoji}`}
@@ -1398,17 +1401,23 @@ export default function UnifiedChatWidget() {
                                     <div className="h-4 w-px bg-slate-200 mx-0.5" />
                                     <button
                                       type="button"
-                                      onClick={() => handleReply(message)}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleReply(message);
+                                      }}
                                       title="Trả lời"
-                                      className="flex h-7 w-7 items-center justify-center rounded-full text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition"
+                                      className="flex h-8 w-8 items-center justify-center rounded-full text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition"
                                     >
                                       <Reply className="h-4 w-4" />
                                     </button>
                                     <button
                                       type="button"
-                                      onClick={() => handleCopyText(message.messageText || '', message.id)}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleCopyText(message.messageText || '', message.id);
+                                      }}
                                       title="Sao chép"
-                                      className="flex h-7 w-7 items-center justify-center rounded-full text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition"
+                                      className="flex h-8 w-8 items-center justify-center rounded-full text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition"
                                     >
                                       {copiedId === message.id ? (
                                         <Check className="h-4 w-4 text-emerald-500" />
@@ -1418,18 +1427,24 @@ export default function UnifiedChatWidget() {
                                     </button>
                                     <button
                                       type="button"
-                                      onClick={() => void handlePinMessage(message.id)}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        void handlePinMessage(message.id);
+                                      }}
                                       title="Ghim tin nhắn"
-                                      className="flex h-7 w-7 items-center justify-center rounded-full text-slate-600 hover:bg-amber-50 hover:text-amber-600 transition"
+                                      className="flex h-8 w-8 items-center justify-center rounded-full text-slate-600 hover:bg-amber-50 hover:text-amber-600 transition"
                                     >
                                       <Pin className="h-4 w-4" />
                                     </button>
                                     {(message.mine || isClubChat) && (
                                       <button
                                         type="button"
-                                        onClick={() => void handleRevokeMessage(message.id)}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          void handleRevokeMessage(message.id);
+                                        }}
                                         title="Thu hồi tin nhắn"
-                                        className="flex h-7 w-7 items-center justify-center rounded-full text-slate-600 hover:bg-rose-50 hover:text-rose-600 transition"
+                                        className="flex h-8 w-8 items-center justify-center rounded-full text-slate-600 hover:bg-rose-50 hover:text-rose-600 transition"
                                       >
                                         <Trash2 className="h-4 w-4" />
                                       </button>
@@ -1437,7 +1452,7 @@ export default function UnifiedChatWidget() {
                                   </div>
                                 )}
 
-                                {/* Side Action Menu Trigger Button (Visible on hover & mobile) */}
+                                {/* Side 3-Dots Quick Trigger (Visible on hover & on click) */}
                                 {!message.isRevoked && (
                                   <div className={`relative ${message.mine ? 'order-first' : 'order-last'}`}>
                                     <button
@@ -1446,10 +1461,10 @@ export default function UnifiedChatWidget() {
                                         e.stopPropagation();
                                         setActiveMsgMenuId(activeMsgMenuId === message.id ? null : message.id);
                                       }}
-                                      className="flex h-6 w-6 items-center justify-center rounded-full text-slate-400 opacity-60 hover:opacity-100 hover:bg-slate-200/70 transition"
+                                      className="flex h-7 w-7 items-center justify-center rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-200/80 transition opacity-80 group-hover/msg:opacity-100"
                                       title="Tùy chọn tin nhắn"
                                     >
-                                      <MoreHorizontal className="h-3.5 w-3.5" />
+                                      <MoreHorizontal className="h-4 w-4" />
                                     </button>
 
                                     {/* Mobile/Click Popover Action Menu */}
@@ -1458,19 +1473,20 @@ export default function UnifiedChatWidget() {
                                         onClick={(e) => e.stopPropagation()}
                                         className={`absolute bottom-full ${
                                           message.mine ? 'right-0' : 'left-0'
-                                        } mb-2 z-50 w-56 rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl animate-in fade-in zoom-in-95`}
+                                        } mb-2 z-50 w-60 rounded-2xl border border-slate-200 bg-white p-2.5 shadow-2xl animate-in fade-in zoom-in-95`}
                                       >
                                         {/* Reactions Row */}
-                                        <div className="flex items-center justify-between px-1 py-1.5 border-b border-slate-100 mb-1.5">
+                                        <div className="flex items-center justify-between px-1 py-1.5 border-b border-slate-100 mb-2">
                                           {QUICK_REACTIONS.map((emoji) => (
                                             <button
                                               key={emoji}
                                               type="button"
-                                              onClick={() => {
-                                                toggleReaction(message.id, emoji);
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                void toggleReaction(message.id, emoji);
                                                 setActiveMsgMenuId(null);
                                               }}
-                                              className="flex h-8 w-8 items-center justify-center rounded-full text-base hover:bg-slate-100 active:scale-125 transition"
+                                              className="flex h-9 w-9 items-center justify-center rounded-full text-lg hover:bg-slate-100 active:scale-130 transition"
                                             >
                                               {emoji}
                                             </button>
@@ -1478,14 +1494,15 @@ export default function UnifiedChatWidget() {
                                         </div>
 
                                         {/* Actions List */}
-                                        <div className="space-y-0.5 text-xs">
+                                        <div className="space-y-1 text-xs">
                                           <button
                                             type="button"
-                                            onClick={() => {
+                                            onClick={(e) => {
+                                              e.stopPropagation();
                                               handleReply(message);
                                               setActiveMsgMenuId(null);
                                             }}
-                                            className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 font-semibold text-slate-700 hover:bg-blue-50 hover:text-blue-600 transition"
+                                            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 font-semibold text-slate-700 hover:bg-blue-50 hover:text-blue-600 transition"
                                           >
                                             <Reply className="h-4 w-4 text-blue-600" />
                                             <span>Trả lời tin nhắn</span>
@@ -1493,11 +1510,12 @@ export default function UnifiedChatWidget() {
 
                                           <button
                                             type="button"
-                                            onClick={() => {
+                                            onClick={(e) => {
+                                              e.stopPropagation();
                                               handleCopyText(message.messageText || '', message.id);
                                               setActiveMsgMenuId(null);
                                             }}
-                                            className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 font-semibold text-slate-700 hover:bg-slate-100 transition"
+                                            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 font-semibold text-slate-700 hover:bg-slate-100 transition"
                                           >
                                             <Copy className="h-4 w-4 text-slate-500" />
                                             <span>Sao chép nội dung</span>
@@ -1505,11 +1523,12 @@ export default function UnifiedChatWidget() {
 
                                           <button
                                             type="button"
-                                            onClick={() => {
+                                            onClick={(e) => {
+                                              e.stopPropagation();
                                               void handlePinMessage(message.id);
                                               setActiveMsgMenuId(null);
                                             }}
-                                            className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 font-semibold text-slate-700 hover:bg-amber-50 hover:text-amber-700 transition"
+                                            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 font-semibold text-slate-700 hover:bg-amber-50 hover:text-amber-700 transition"
                                           >
                                             <Pin className="h-4 w-4 text-amber-600" />
                                             <span>Ghim lên đầu phòng</span>
@@ -1518,11 +1537,12 @@ export default function UnifiedChatWidget() {
                                           {(message.mine || isClubChat) && (
                                             <button
                                               type="button"
-                                              onClick={() => {
+                                              onClick={(e) => {
+                                                e.stopPropagation();
                                                 void handleRevokeMessage(message.id);
                                                 setActiveMsgMenuId(null);
                                               }}
-                                              className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 font-semibold text-rose-600 hover:bg-rose-50 transition"
+                                              className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 font-semibold text-rose-600 hover:bg-rose-50 transition"
                                             >
                                               <Trash2 className="h-4 w-4 text-rose-600" />
                                               <span>Thu hồi tin nhắn</span>
@@ -1536,7 +1556,8 @@ export default function UnifiedChatWidget() {
 
                                 {/* Bubble Box */}
                                 <div
-                                  className={`relative px-3.5 py-2 text-sm leading-relaxed shadow-2xs transition ${
+                                  onClick={() => setActiveMsgMenuId(activeMsgMenuId === message.id ? null : message.id)}
+                                  className={`relative px-3.5 py-2 text-sm leading-relaxed shadow-2xs transition cursor-pointer select-text ${
                                     message.isRevoked
                                       ? 'bg-slate-100/90 text-slate-400 italic border border-slate-200 rounded-2xl'
                                       : message.mine

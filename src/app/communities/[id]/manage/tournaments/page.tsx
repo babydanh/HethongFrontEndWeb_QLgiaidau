@@ -703,6 +703,23 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
                           </div>
                         </div>
                       )}
+
+                      <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-xs text-emerald-900 leading-relaxed">
+                        🔄 <strong>Lịch trình tự động:</strong> Giải đấu sẽ tự động được tạo và mở đăng ký vào{' '}
+                        <strong className="text-emerald-950 font-bold">{liteRecurringTimeOfDay}</strong>{' '}
+                        {liteRecurringFrequency === 'DAILY'
+                          ? 'hằng ngày'
+                          : liteRecurringFrequency === 'MONTHLY'
+                          ? `ngày ${liteStartDate ? new Date(liteStartDate).getDate() : 15} hàng tháng`
+                          : `các ngày ${liteRecurringDaysOfWeek
+                              .map((d) => DAYS_OF_WEEK.find((item) => item.value === d)?.label)
+                              .filter(Boolean)
+                              .join(', ')} hằng ${liteRecurringFrequency === 'BIWEEKLY' ? '2 tuần' : 'tuần'}`}.
+                        <br />
+                        <span className="text-emerald-700 text-[11px] mt-1 inline-block">
+                          📢 Toàn bộ thành viên CLB sẽ nhận được thông báo & bài đăng bảng tin để tham gia.
+                        </span>
+                      </div>
                     </div>
                   )}
                 </div>

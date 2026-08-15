@@ -167,6 +167,12 @@ export interface ChatMessage {
   senderAvatarUrl?: string | null;
   messageText?: string | null;
   attachmentsUrls?: string[];
+  isRevoked?: boolean;
+  revokedBy?: string | null;
+  isPinned?: boolean;
+  replyToId?: string | null;
+  replyTo?: { id: string; senderName: string; text: string } | null;
+  reactions?: string[];
   createdAt: string;
 }
 

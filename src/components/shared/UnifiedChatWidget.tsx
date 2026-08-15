@@ -22,6 +22,16 @@ import {
   ThumbsUp,
   Flame,
   CornerDownRight,
+  Image as ImageIcon,
+  Pin,
+  PinOff,
+  Trash2,
+  Settings,
+  Ban,
+  ZoomIn,
+  Download,
+  AlertCircle,
+  MoreHorizontal,
 } from 'lucide-react';
 import { getBaseUrl } from '@/lib/axios';
 import ReactMarkdown from 'react-markdown';
@@ -32,6 +42,7 @@ import {
   type InboxRoomsResponse,
 } from '@/features/chat/inbox-api';
 import { chatApi } from '@/features/chat/api';
+import { uploadApi } from '@/features/upload/api';
 import { supportApi, type SupportMessage } from '@/features/support/api';
 import { socketClient } from '@/lib/socket';
 import { useAuthStore } from '@/lib/zustand/authStore';
@@ -44,7 +55,7 @@ type Selection =
   | { kind: 'SUPPORT' }
   | { kind: 'ROOM'; room: InboxRoom };
 
-type DisplayMessage = ChatMessage & { mine: boolean; replyTo?: { id: string; senderName: string; text: string } };
+type DisplayMessage = ChatMessage & { mine: boolean };
 type AiMessage = { role: 'user' | 'assistant'; content: string };
 type TypingEvent = { roomId: string; userId: string; isTyping: boolean };
 
@@ -142,9 +153,17 @@ export default function UnifiedChatWidget() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [blockedUserIds, setBlockedUserIds] = useState<string[]>([]);
   const [showRoomMenu, setShowRoomMenu] = useState(false);
+  const [pinnedMessage, setPinnedMessage] = useState<ChatMessage | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  const [uploadingMedia, setUploadingMedia] = useState(false);
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+  const [showClubSettings, setShowClubSettings] = useState(false);
+  const [activeMsgMenuId, setActiveMsgMenuId] = useState<string | null>(null);
 
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const socketRoomRef = useRef<string | null>(null);
   const typingTimerRef = useRef<number | null>(null);
 
@@ -296,6 +315,57 @@ export default function UnifiedChatWidget() {
       );
     };
 
+    const onRevoked = (data: { roomId: string; messageId: string; revokedBy: string }) => {
+      if (data.roomId !== roomId || !active) return;
+      setMessages((current) =>
+        current.map((m) =>
+          m.id === data.messageId
+            ? { ...m, isRevoked: true, messageText: null, attachmentsUrls: [] }
+            : m,
+        ),
+      );
+    };
+
+    const onPinned = (data: { roomId: string; messageId: string; pinnedBy: string; pinnedMessage?: ChatMessage }) => {
+      if (data.roomId !== roomId || !active) return;
+      if (data.pinnedMessage) {
+        setPinnedMessage(data.pinnedMessage);
+      }
+      setMessages((current) =>
+        current.map((m) =>
+          m.id === data.messageId ? { ...m, isPinned: true } : { ...m, isPinned: false },
+        ),
+      );
+      toast.success('Đã có tin nhắn mới được ghim!');
+    };
+
+    const onUnpinned = (data: { roomId: string; messageId: string }) => {
+      if (data.roomId !== roomId || !active) return;
+      setPinnedMessage(null);
+      setMessages((current) =>
+        current.map((m) =>
+          m.id === data.messageId ? { ...m, isPinned: false } : m,
+        ),
+      );
+    };
+
+    const onReaction = (data: { roomId: string; messageId: string; userId: string; emoji: string; reactions: string[] }) => {
+      if (data.roomId !== roomId || !active) return;
+      setReactions((prev) => ({
+        ...prev,
+        [data.messageId]: data.reactions,
+      }));
+    };
+
+    const onRoomUpdated = (data: { roomId: string; room: Partial<InboxRoom> }) => {
+      if (data.roomId !== roomId || !active) return;
+      setSelection((curr) =>
+        curr.kind === 'ROOM' && curr.room.id === data.roomId
+          ? { ...curr, room: { ...curr.room, ...data.room } }
+          : curr,
+      );
+    };
+
     const onTyping = (event: TypingEvent) => {
       if (event.roomId !== roomId || event.userId === user?.id) return;
       setTypingUserId(event.isTyping ? event.userId : null);
@@ -303,6 +373,11 @@ export default function UnifiedChatWidget() {
 
     socket.on('chat:message', onMessage);
     socket.on('chat:club:message', onMessage);
+    socket.on('chat:message:revoked', onRevoked);
+    socket.on('chat:message:pinned', onPinned);
+    socket.on('chat:message:unpinned', onUnpinned);
+    socket.on('chat:message:reaction', onReaction);
+    socket.on('chat:room:updated', onRoomUpdated);
     socket.on('chat:typing', onTyping);
 
     const joinRoom = () => socket.emit('joinChatRoom', roomId);
@@ -336,6 +411,17 @@ export default function UnifiedChatWidget() {
 
     void fetchRoomMessages();
 
+    // Fetch pinned message
+    void inboxApi
+      .getPinnedMessage(roomId)
+      .then((res) => {
+        const data = (res as unknown as { data?: { data?: ChatMessage } })?.data?.data || res.data;
+        if (active && data) {
+          setPinnedMessage(data as ChatMessage);
+        }
+      })
+      .catch(() => undefined);
+
     void inboxApi
       .markRead(roomId)
       .then(() => {
@@ -352,6 +438,11 @@ export default function UnifiedChatWidget() {
       socket.emit('leaveChatRoom', roomId);
       socket.off('chat:message', onMessage);
       socket.off('chat:club:message', onMessage);
+      socket.off('chat:message:revoked', onRevoked);
+      socket.off('chat:message:pinned', onPinned);
+      socket.off('chat:message:unpinned', onUnpinned);
+      socket.off('chat:message:reaction', onReaction);
+      socket.off('chat:room:updated', onRoomUpdated);
       socket.off('chat:typing', onTyping);
       socket.off('connect', joinRoom);
       if (typingTimerRef.current) window.clearTimeout(typingTimerRef.current);
@@ -427,7 +518,8 @@ export default function UnifiedChatWidget() {
     typingUserId,
   ]);
 
-  const toggleReaction = (messageId: string, emoji: string) => {
+  const toggleReaction = async (messageId: string, emoji: string) => {
+    // Optimistic UI update
     setReactions((prev) => {
       const current = prev[messageId] || [];
       const hasEmoji = current.includes(emoji);
@@ -438,6 +530,12 @@ export default function UnifiedChatWidget() {
           : [...current, emoji],
       };
     });
+
+    try {
+      await inboxApi.toggleReaction(messageId, emoji);
+    } catch {
+      // socket listener will sync
+    }
   };
 
   const handleReply = (message: DisplayMessage) => {
@@ -451,6 +549,68 @@ export default function UnifiedChatWidget() {
     setCopiedId(id);
     toast.success('Đã sao chép tin nhắn!');
     window.setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    const newFiles = [...selectedFiles, ...files].slice(0, 5); // max 5 images
+    setSelectedFiles(newFiles);
+    setPreviewUrls(newFiles.map((file) => URL.createObjectURL(file)));
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const removeSelectedFile = (index: number) => {
+    const newFiles = selectedFiles.filter((_, i) => i !== index);
+    setSelectedFiles(newFiles);
+    setPreviewUrls(newFiles.map((file) => URL.createObjectURL(file)));
+  };
+
+  const handleRevokeMessage = async (messageId: string) => {
+    const confirmed = window.confirm('Bạn có chắc muốn thu hồi tin nhắn này với mọi người?');
+    if (!confirmed) return;
+    try {
+      await inboxApi.revokeMessage(messageId);
+      setMessages((current) =>
+        current.map((m) =>
+          m.id === messageId
+            ? { ...m, isRevoked: true, messageText: null, attachmentsUrls: [] }
+            : m,
+        ),
+      );
+      toast.success('Đã thu hồi tin nhắn.');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Không thể thu hồi tin nhắn.'));
+    }
+  };
+
+  const handlePinMessage = async (messageId: string) => {
+    if (selection.kind !== 'ROOM') return;
+    try {
+      await inboxApi.pinMessage(selection.room.id, messageId);
+      const targetMsg = messages.find((m) => m.id === messageId);
+      if (targetMsg) setPinnedMessage(targetMsg);
+      setMessages((current) =>
+        current.map((m) => (m.id === messageId ? { ...m, isPinned: true } : { ...m, isPinned: false })),
+      );
+      toast.success('Đã ghim tin nhắn lên đầu phòng chat.');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Không thể ghim tin nhắn.'));
+    }
+  };
+
+  const handleUnpinMessage = async (messageId: string) => {
+    if (selection.kind !== 'ROOM') return;
+    try {
+      await inboxApi.unpinMessage(selection.room.id, messageId);
+      setPinnedMessage(null);
+      setMessages((current) =>
+        current.map((m) => (m.id === messageId ? { ...m, isPinned: false } : m)),
+      );
+      toast.success('Đã bỏ ghim tin nhắn.');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Không thể bỏ ghim tin nhắn.'));
+    }
   };
 
   const handleToggleBlock = async () => {
@@ -481,19 +641,37 @@ export default function UnifiedChatWidget() {
 
   const sendRoomMessage = async (overrideText?: string) => {
     const text = (overrideText ?? draft).trim();
-    if (!text || selection.kind !== 'ROOM' || sending) return;
+    if ((!text && selectedFiles.length === 0) || selection.kind !== 'ROOM' || sending) return;
     if (isOtherBlocked) {
       toast.error('Bạn đã chặn người dùng này. Bỏ chặn để gửi tin nhắn.');
       return;
     }
     const currentReply = replyingTo;
+    const filesToUpload = [...selectedFiles];
+
     setSending(true);
     setDraft('');
+    setSelectedFiles([]);
+    setPreviewUrls([]);
     setReplyingTo(null);
     setShowEmojiPicker(false);
 
     try {
-      const response = await inboxApi.sendMessage(selection.room.id, text);
+      let attachmentsUrls: string[] = [];
+      if (filesToUpload.length > 0) {
+        setUploadingMedia(true);
+        const uploadPromises = filesToUpload.map((file) => uploadApi.uploadImage(file));
+        const results = await Promise.all(uploadPromises);
+        attachmentsUrls = results.map((r) => r.url);
+        setUploadingMedia(false);
+      }
+
+      const response = await inboxApi.sendMessage(
+        selection.room.id,
+        text,
+        attachmentsUrls,
+        currentReply?.id,
+      );
       const message = response.data;
       setMessages((current) =>
         current.some((item) => item.id === message.id)
@@ -517,10 +695,13 @@ export default function UnifiedChatWidget() {
       );
     } catch (error: unknown) {
       setDraft(text);
+      setSelectedFiles(filesToUpload);
+      setPreviewUrls(filesToUpload.map((file) => URL.createObjectURL(file)));
       setReplyingTo(currentReply);
       toast.error(getErrorMessage(error, 'Không thể gửi tin nhắn.'));
     } finally {
       setSending(false);
+      setUploadingMedia(false);
     }
   };
 
@@ -817,7 +998,7 @@ export default function UnifiedChatWidget() {
           {/* Right Main Chat Frame */}
           <section className="flex min-w-0 flex-1 flex-col bg-white">
             {/* Header */}
-            <header className="flex items-center justify-between border-b border-slate-200 px-5 py-3.5 shadow-sm">
+            <header className="flex items-center justify-between border-b border-slate-200 px-5 py-3.5 shadow-xs">
               <div className="flex items-center gap-3 min-w-0">
                 <button
                   type="button"
@@ -826,7 +1007,7 @@ export default function UnifiedChatWidget() {
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </button>
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full overflow-hidden bg-blue-50 text-blue-600 shadow-sm border border-slate-100">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full overflow-hidden bg-blue-50 text-blue-600 shadow-xs border border-slate-100">
                   {selection.kind === 'AI' ? (
                     <Bot className="h-4 w-4" />
                   ) : selection.kind === 'SUPPORT' ? (
@@ -842,9 +1023,16 @@ export default function UnifiedChatWidget() {
                   )}
                 </span>
                 <div className="min-w-0">
-                  <p className="text-sm font-bold text-slate-900 truncate">
-                    {selectedTitle}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-bold text-slate-900 truncate">
+                      {selectedTitle}
+                    </p>
+                    {selection.kind === 'ROOM' && selection.room.type === 'CLUB' && (
+                      <span className="rounded bg-blue-100 px-1.5 py-0.2 text-[9px] font-bold text-blue-700">
+                        CLB
+                      </span>
+                    )}
+                  </div>
                   <p className="text-[11px] text-slate-500 flex items-center gap-1">
                     {selection.kind === 'AI' ? (
                       'Trợ lý AI Sporto 24/7'
@@ -864,38 +1052,87 @@ export default function UnifiedChatWidget() {
                 </div>
               </div>
 
-              {/* Action Dropdown Menu (Block / Unblock for private chat) */}
-              {selection.kind === 'ROOM' &&
-                selection.room.type !== 'CLUB' &&
-                otherParticipant && (
-                  <div className="relative">
-                    <button
-                      type="button"
-                      onClick={() => setShowRoomMenu((prev) => !prev)}
-                      aria-label="Tùy chọn"
-                      className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition"
-                    >
-                      <MoreVertical className="w-4 h-4" />
-                    </button>
-                    {showRoomMenu && (
-                      <div className="absolute right-0 top-8 z-50 w-44 rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl animate-in fade-in">
-                        <button
-                          type="button"
-                          onClick={handleToggleBlock}
-                          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 transition"
-                        >
-                          <ShieldAlert className="w-4 h-4" />
-                          <span>
-                            {isOtherBlocked
-                              ? 'Bỏ chặn người này'
-                              : 'Chặn tin nhắn'}
-                          </span>
-                        </button>
-                      </div>
-                    )}
-                  </div>
+              {/* Action Buttons in Header */}
+              <div className="flex items-center gap-1">
+                {selection.kind === 'ROOM' && selection.room.type === 'CLUB' && (
+                  <button
+                    type="button"
+                    onClick={() => setShowClubSettings(true)}
+                    title="Cài đặt phòng chat CLB"
+                    className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition"
+                  >
+                    <Settings className="w-4 h-4" />
+                  </button>
                 )}
+
+                {/* Block / Unblock for private chat */}
+                {selection.kind === 'ROOM' &&
+                  selection.room.type !== 'CLUB' &&
+                  otherParticipant && (
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setShowRoomMenu((prev) => !prev)}
+                        aria-label="Tùy chọn"
+                        className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition"
+                      >
+                        <MoreVertical className="w-4 h-4" />
+                      </button>
+                      {showRoomMenu && (
+                        <div className="absolute right-0 top-8 z-50 w-44 rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl animate-in fade-in">
+                          <button
+                            type="button"
+                            onClick={handleToggleBlock}
+                            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 transition"
+                          >
+                            <ShieldAlert className="w-4 h-4" />
+                            <span>
+                              {isOtherBlocked
+                                ? 'Bỏ chặn người này'
+                                : 'Chặn tin nhắn'}
+                            </span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+              </div>
             </header>
+
+            {/* Pinned Message Sticky Banner */}
+            {selection.kind === 'ROOM' && pinnedMessage && (
+              <div className="flex items-center justify-between border-b border-amber-200/80 bg-amber-50/90 px-4 py-2 text-xs shadow-2xs animate-in slide-in-from-top-1 duration-150">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const el = document.getElementById(`msg-${pinnedMessage.id}`);
+                    if (el) {
+                      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      el.classList.add('ring-2', 'ring-amber-400');
+                      window.setTimeout(() => el.classList.remove('ring-2', 'ring-amber-400'), 2000);
+                    }
+                  }}
+                  className="flex items-center gap-2 min-w-0 text-left group/pin flex-1"
+                >
+                  <Pin className="h-3.5 w-3.5 text-amber-600 shrink-0 group-hover/pin:scale-110 transition" />
+                  <span className="font-bold text-amber-900 shrink-0">Tin ghim:</span>
+                  <span className="font-semibold text-amber-800 truncate max-w-[120px]">
+                    {pinnedMessage.senderName || 'Thành viên'}:
+                  </span>
+                  <span className="text-amber-900/80 truncate flex-1">
+                    {pinnedMessage.messageText || (pinnedMessage.attachmentsUrls?.length ? '🖼️ [Hình ảnh]' : '')}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleUnpinMessage(pinnedMessage.id)}
+                  title="Bỏ ghim tin nhắn"
+                  className="p-1 text-amber-600 hover:text-amber-800 rounded-md hover:bg-amber-200/60 transition ml-2 shrink-0"
+                >
+                  <PinOff className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            )}
 
             {/* Chat Body & Timeline */}
             <div className="flex-1 overflow-y-auto bg-slate-50/60 p-4 space-y-3">
@@ -909,10 +1146,10 @@ export default function UnifiedChatWidget() {
                       }`}
                     >
                       <div
-                        className={`max-w-[82%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-sm ${
+                        className={`max-w-[82%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-xs ${
                           message.role === 'user'
-                            ? 'bg-blue-600 text-white rounded-br-none'
-                            : 'bg-white text-slate-800 border border-slate-200/80 rounded-tl-none'
+                            ? 'bg-blue-600 text-white rounded-br-xs'
+                            : 'bg-white text-slate-800 border border-slate-200/80 rounded-tl-xs'
                         }`}
                       >
                         {message.role === 'user' ? (
@@ -941,7 +1178,7 @@ export default function UnifiedChatWidget() {
                           onClick={() => {
                             setDraft(prompt);
                           }}
-                          className="block w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-left text-xs font-medium text-slate-700 shadow-sm hover:border-blue-300 hover:bg-blue-50/50 hover:text-blue-600 transition"
+                          className="block w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-left text-xs font-medium text-slate-700 shadow-xs hover:border-blue-300 hover:bg-blue-50/50 hover:text-blue-600 transition"
                         >
                           {prompt}
                         </button>
@@ -949,7 +1186,7 @@ export default function UnifiedChatWidget() {
                       <button
                         type="button"
                         onClick={() => setSelection({ kind: 'SUPPORT' })}
-                        className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-amber-200 bg-amber-50/80 px-3.5 py-2.5 text-center text-xs font-bold text-amber-800 hover:bg-amber-100 transition shadow-sm"
+                        className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-amber-200 bg-amber-50/80 px-3.5 py-2.5 text-center text-xs font-bold text-amber-800 hover:bg-amber-100 transition shadow-xs"
                       >
                         <Headset className="h-4 w-4 text-amber-600" />
                         Chat trực tiếp với Ban Quản Trị
@@ -973,10 +1210,10 @@ export default function UnifiedChatWidget() {
                     }`}
                   >
                     <div
-                      className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm shadow-sm ${
+                      className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm shadow-xs ${
                         message.senderId === user?.id
-                          ? 'bg-blue-600 text-white rounded-br-none'
-                          : 'bg-white text-slate-800 border border-slate-200/80 rounded-tl-none'
+                          ? 'bg-blue-600 text-white rounded-br-xs'
+                          : 'bg-white text-slate-800 border border-slate-200/80 rounded-tl-xs'
                       }`}
                     >
                       <p className="whitespace-pre-wrap break-words">
@@ -1004,7 +1241,7 @@ export default function UnifiedChatWidget() {
                       type="button"
                       onClick={() => void loadOlderMessages()}
                       disabled={loadingOlder}
-                      className="mx-auto mb-3 flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-1 text-xs font-medium text-slate-600 shadow-sm hover:bg-slate-50 disabled:opacity-50"
+                      className="mx-auto mb-3 flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-1 text-xs font-medium text-slate-600 shadow-xs hover:bg-slate-50 disabled:opacity-50"
                     >
                       {loadingOlder && (
                         <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-600" />
@@ -1052,7 +1289,7 @@ export default function UnifiedChatWidget() {
                             new Date(message.createdAt).getTime(),
                         ) < 120000;
 
-                      const msgReactions = reactions[message.id] || [];
+                      const msgReactions = reactions[message.id] || message.reactions || [];
 
                       const senderAvatar =
                         message.senderAvatarUrl ||
@@ -1069,7 +1306,8 @@ export default function UnifiedChatWidget() {
                       return (
                         <div
                           key={message.id}
-                          className={`${isSameSenderAsPrev ? 'mt-1' : 'mt-3.5'}`}
+                          id={`msg-${message.id}`}
+                          className={`${isSameSenderAsPrev ? 'mt-1' : 'mt-3.5'} transition-all duration-300 rounded-2xl`}
                         >
                           {/* Timeline Date Separator */}
                           {isNewDay && (
@@ -1090,7 +1328,7 @@ export default function UnifiedChatWidget() {
                             {!message.mine && (
                               <div className="w-8 shrink-0 flex items-end">
                                 {!isSameSenderAsNext ? (
-                                  <div className="h-7 w-7 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 text-white flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden shadow-sm border border-white">
+                                  <div className="h-7 w-7 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 text-white flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden shadow-xs border border-white">
                                     {senderAvatar ? (
                                       <img
                                         src={senderAvatar}
@@ -1129,83 +1367,146 @@ export default function UnifiedChatWidget() {
                               {/* Message Bubble + Floating Action Bar Container */}
                               <div className="relative group/bubble flex items-center">
                                 {/* Floating Messenger Action Bar on Hover */}
-                                <div
-                                  className={`absolute -top-8 ${
-                                    message.mine ? 'right-0' : 'left-0'
-                                  } z-20 hidden group-hover/bubble:flex items-center gap-0.5 rounded-full bg-white/95 backdrop-blur-md px-2 py-0.5 shadow-lg border border-slate-200 animate-in fade-in zoom-in-95 duration-150`}
-                                >
-                                  {QUICK_REACTIONS.map((emoji) => {
-                                    const isSelected = msgReactions.includes(emoji);
-                                    return (
+                                {!message.isRevoked && (
+                                  <div
+                                    className={`absolute -top-8 ${
+                                      message.mine ? 'right-0' : 'left-0'
+                                    } z-20 hidden group-hover/bubble:flex items-center gap-0.5 rounded-full bg-white/95 backdrop-blur-md px-2 py-0.5 shadow-lg border border-slate-200 animate-in fade-in zoom-in-95 duration-150`}
+                                  >
+                                    {QUICK_REACTIONS.map((emoji) => {
+                                      const isSelected = msgReactions.includes(emoji);
+                                      return (
+                                        <button
+                                          key={emoji}
+                                          type="button"
+                                          onClick={() => toggleReaction(message.id, emoji)}
+                                          className={`flex h-6 w-6 items-center justify-center rounded-full text-xs transition-all hover:scale-130 active:scale-95 ${
+                                            isSelected ? 'bg-blue-100 scale-110' : 'hover:bg-slate-100'
+                                          }`}
+                                          title={`Thả ${emoji}`}
+                                        >
+                                          {emoji}
+                                        </button>
+                                      );
+                                    })}
+                                    <div className="h-3 w-px bg-slate-200 mx-0.5" />
+                                    <button
+                                      type="button"
+                                      onClick={() => handleReply(message)}
+                                      title="Trả lời"
+                                      className="flex h-6 w-6 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-blue-600 transition"
+                                    >
+                                      <Reply className="h-3 w-3" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleCopyText(message.messageText || '', message.id)}
+                                      title="Sao chép"
+                                      className="flex h-6 w-6 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition"
+                                    >
+                                      {copiedId === message.id ? (
+                                        <Check className="h-3 w-3 text-emerald-500" />
+                                      ) : (
+                                        <Copy className="h-3 w-3" />
+                                      )}
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => void handlePinMessage(message.id)}
+                                      title="Ghim tin nhắn"
+                                      className="flex h-6 w-6 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-amber-600 transition"
+                                    >
+                                      <Pin className="h-3 w-3" />
+                                    </button>
+                                    {(message.mine || isClubChat) && (
                                       <button
-                                        key={emoji}
                                         type="button"
-                                        onClick={() => toggleReaction(message.id, emoji)}
-                                        className={`flex h-6 w-6 items-center justify-center rounded-full text-xs transition-all hover:scale-130 active:scale-95 ${
-                                          isSelected ? 'bg-blue-100 scale-110' : 'hover:bg-slate-100'
-                                        }`}
-                                        title={`Thả ${emoji}`}
+                                        onClick={() => void handleRevokeMessage(message.id)}
+                                        title="Thu hồi tin nhắn"
+                                        className="flex h-6 w-6 items-center justify-center rounded-full text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition"
                                       >
-                                        {emoji}
+                                        <Trash2 className="h-3 w-3" />
                                       </button>
-                                    );
-                                  })}
-                                  <div className="h-3 w-px bg-slate-200 mx-0.5" />
-                                  <button
-                                    type="button"
-                                    onClick={() => handleReply(message)}
-                                    title="Trả lời"
-                                    className="flex h-6 w-6 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-blue-600 transition"
-                                  >
-                                    <Reply className="h-3 w-3" />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleCopyText(message.messageText || '', message.id)}
-                                    title="Sao chép"
-                                    className="flex h-6 w-6 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition"
-                                  >
-                                    {copiedId === message.id ? (
-                                      <Check className="h-3 w-3 text-emerald-500" />
-                                    ) : (
-                                      <Copy className="h-3 w-3" />
                                     )}
-                                  </button>
-                                </div>
+                                  </div>
+                                )}
 
                                 {/* Bubble Box */}
                                 <div
-                                  className={`relative px-3.5 py-2 text-sm leading-relaxed shadow-xs transition ${
-                                    message.mine
-                                      ? 'bg-blue-600 text-white rounded-2xl rounded-br-xs'
-                                      : 'bg-white text-slate-800 border border-slate-200/90 rounded-2xl rounded-bl-xs'
+                                  className={`relative px-3.5 py-2 text-sm leading-relaxed shadow-2xs transition ${
+                                    message.isRevoked
+                                      ? 'bg-slate-100/90 text-slate-400 italic border border-slate-200 rounded-2xl'
+                                      : message.mine
+                                        ? 'bg-blue-600 text-white rounded-2xl rounded-br-xs'
+                                        : 'bg-white text-slate-800 border border-slate-200/90 rounded-2xl rounded-bl-xs'
                                   }`}
                                 >
-                                  {/* Quoted Reply Preview inside bubble */}
-                                  {message.replyTo && (
-                                    <div
-                                      className={`mb-1.5 rounded-lg px-2.5 py-1 text-xs border-l-2 ${
-                                        message.mine
-                                          ? 'bg-blue-700/60 border-white/70 text-blue-100'
-                                          : 'bg-slate-100 border-blue-500 text-slate-600'
-                                      }`}
-                                    >
-                                      <p className="font-bold text-[11px] truncate">
-                                        {message.replyTo.senderName}
-                                      </p>
-                                      <p className="line-clamp-1 italic text-[11px] opacity-90">
-                                        {message.replyTo.text}
-                                      </p>
-                                    </div>
-                                  )}
+                                  {message.isRevoked ? (
+                                    <p className="flex items-center gap-1 text-xs text-slate-500 italic">
+                                      <Ban className="h-3.5 w-3.5 text-slate-400" />
+                                      Tin nhắn đã được thu hồi
+                                    </p>
+                                  ) : (
+                                    <>
+                                      {/* Quoted Reply Preview inside bubble */}
+                                      {message.replyTo && (
+                                        <div
+                                          className={`mb-1.5 rounded-lg px-2.5 py-1 text-xs border-l-2 ${
+                                            message.mine
+                                              ? 'bg-blue-700/60 border-white/70 text-blue-100'
+                                              : 'bg-slate-100 border-blue-500 text-slate-600'
+                                          }`}
+                                        >
+                                          <p className="font-bold text-[11px] truncate">
+                                            {message.replyTo.senderName}
+                                          </p>
+                                          <p className="line-clamp-1 italic text-[11px] opacity-90">
+                                            {message.replyTo.text}
+                                          </p>
+                                        </div>
+                                      )}
 
-                                  <p className="whitespace-pre-wrap break-words">
-                                    {message.messageText}
-                                  </p>
+                                      {/* Attached Images Grid */}
+                                      {message.attachmentsUrls && message.attachmentsUrls.length > 0 && (
+                                        <div
+                                          className={`mb-2 grid gap-1.5 rounded-xl overflow-hidden ${
+                                            message.attachmentsUrls.length === 1
+                                              ? 'grid-cols-1 max-w-[260px]'
+                                              : message.attachmentsUrls.length === 2
+                                                ? 'grid-cols-2 max-w-[280px]'
+                                                : 'grid-cols-3 max-w-[320px]'
+                                          }`}
+                                        >
+                                          {message.attachmentsUrls.map((url, imgIdx) => (
+                                            <div
+                                              key={`${url}-${imgIdx}`}
+                                              onClick={() => setLightboxUrl(url)}
+                                              className="group/img relative aspect-square cursor-pointer overflow-hidden rounded-lg bg-slate-100 border border-slate-200/40"
+                                            >
+                                              <img
+                                                src={url}
+                                                alt="Hình đính kèm"
+                                                className="h-full w-full object-cover transition duration-200 group-hover/img:scale-105"
+                                              />
+                                              <div className="absolute inset-0 bg-black/20 opacity-0 group-hover/img:opacity-100 flex items-center justify-center transition">
+                                                <ZoomIn className="h-4 w-4 text-white" />
+                                              </div>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      )}
+
+                                      {message.messageText && (
+                                        <p className="whitespace-pre-wrap break-words">
+                                          {message.messageText}
+                                        </p>
+                                      )}
+                                    </>
+                                  )}
 
                                   <time
                                     className={`mt-0.5 block text-[10px] ${
-                                      message.mine
+                                      message.mine && !message.isRevoked
                                         ? 'text-blue-100/80 text-right'
                                         : 'text-slate-400'
                                     }`}
@@ -1218,7 +1519,7 @@ export default function UnifiedChatWidget() {
                                 </div>
 
                                 {/* Reaction Badges Pill (Messenger Style) */}
-                                {msgReactions.length > 0 && (
+                                {!message.isRevoked && msgReactions.length > 0 && (
                                   <div
                                     className={`absolute -bottom-2.5 ${
                                       message.mine ? 'left-2' : 'right-2'
@@ -1259,7 +1560,7 @@ export default function UnifiedChatWidget() {
                     {replyingTo.senderName || (replyingTo.mine ? 'Tôi' : 'Thành viên')}:
                   </span>
                   <span className="italic text-slate-600 truncate max-w-[280px]">
-                    &ldquo;{replyingTo.messageText}&rdquo;
+                    &ldquo;{replyingTo.messageText || (replyingTo.attachmentsUrls?.length ? '🖼️ Hình ảnh' : '')}&rdquo;
                   </span>
                 </div>
                 <button
@@ -1269,6 +1570,33 @@ export default function UnifiedChatWidget() {
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
+              </div>
+            )}
+
+            {/* Selected Images Preview Strip */}
+            {previewUrls.length > 0 && (
+              <div className="flex items-center gap-2 border-t border-slate-200 bg-slate-50/80 px-4 py-2 overflow-x-auto">
+                {previewUrls.map((url, idx) => (
+                  <div
+                    key={`${url}-${idx}`}
+                    className="relative h-14 w-14 shrink-0 rounded-xl overflow-hidden border border-slate-200 shadow-2xs group"
+                  >
+                    <img src={url} alt="Preview" className="h-full w-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => removeSelectedFile(idx)}
+                      className="absolute right-0.5 top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-slate-900/80 text-white hover:bg-rose-600 transition"
+                    >
+                      <X className="h-2.5 w-2.5" />
+                    </button>
+                  </div>
+                ))}
+                {uploadingMedia && (
+                  <div className="flex items-center gap-1.5 text-xs text-blue-600">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Đang tải ảnh...</span>
+                  </div>
+                )}
               </div>
             )}
 
@@ -1310,14 +1638,37 @@ export default function UnifiedChatWidget() {
             <form
               onSubmit={(event) => {
                 event.preventDefault();
-                if (draft.trim()) {
+                if (draft.trim() || selectedFiles.length > 0) {
                   send();
                 } else if (selection.kind === 'ROOM') {
                   void sendRoomMessage('👍');
                 }
               }}
-              className="relative flex items-center gap-2 border-t border-slate-200 bg-white p-3 shadow-inner"
+              className="relative flex items-center gap-1.5 border-t border-slate-200 bg-white p-3 shadow-inner"
             >
+              {/* Hidden File Input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+
+              {/* Photo Upload Trigger Button */}
+              {selection.kind === 'ROOM' && (
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  title="Gửi hình ảnh"
+                  disabled={isOtherBlocked || sending}
+                  className="p-2 rounded-full text-slate-500 hover:bg-slate-100 hover:text-blue-600 transition disabled:opacity-40"
+                >
+                  <ImageIcon className="h-5 w-5" />
+                </button>
+              )}
+
               {/* Emoji Picker Button */}
               <button
                 type="button"
@@ -1350,14 +1701,18 @@ export default function UnifiedChatWidget() {
               />
 
               {/* Quick Send Button / Messenger Thumbs Up or Heart */}
-              {draft.trim() ? (
+              {draft.trim() || selectedFiles.length > 0 ? (
                 <button
                   type="submit"
                   disabled={sending || isOtherBlocked}
                   aria-label="Gửi tin nhắn"
                   className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-white shadow-md shadow-blue-500/20 transition hover:bg-blue-700 active:scale-95 disabled:opacity-40 shrink-0"
                 >
-                  <Send className="h-4 w-4" />
+                  {sending ? (
+                    <Loader2 className="h-4 w-4 animate-spin text-white" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
                 </button>
               ) : selection.kind === 'ROOM' ? (
                 <button
@@ -1381,6 +1736,161 @@ export default function UnifiedChatWidget() {
                 </button>
               )}
             </form>
+
+            {/* Club Chat Settings Modal */}
+            {showClubSettings && selection.kind === 'ROOM' && selection.room.type === 'CLUB' && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4 animate-in fade-in">
+                <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl border border-slate-100 animate-in zoom-in-95">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+                    <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
+                      <Settings className="w-4 h-4 text-blue-600" />
+                      Cài đặt phòng chat CLB
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => setShowClubSettings(false)}
+                      className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <div className="space-y-4 text-xs">
+                    <div>
+                      <label className="font-semibold text-slate-700 block mb-1">
+                        Tên phòng chat
+                      </label>
+                      <input
+                        type="text"
+                        defaultValue={selection.room.name || selection.room.clubName || ''}
+                        id="club-settings-name"
+                        className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                        placeholder="Nhập tên phòng chat..."
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between rounded-xl bg-slate-50 p-3 border border-slate-200/80">
+                      <div>
+                        <p className="font-semibold text-slate-800">Chỉ Ban Quản Trị nhắn tin</p>
+                        <p className="text-[10px] text-slate-500">
+                          Thành viên thường chỉ có thể xem tin nhắn
+                        </p>
+                      </div>
+                      <input
+                        type="checkbox"
+                        id="club-settings-announcement"
+                        defaultChecked={selection.room.isAnnouncementOnly || false}
+                        className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="font-semibold text-slate-700 block mb-1">
+                        Chế độ làm chậm (Slow mode)
+                      </label>
+                      <select
+                        id="club-settings-slowmode"
+                        defaultValue={selection.room.slowModeSeconds || 0}
+                        className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs outline-none focus:border-blue-500"
+                      >
+                        <option value={0}>Tắt (Nhắn tin bình thường)</option>
+                        <option value={5}>5 giây</option>
+                        <option value={15}>15 giây</option>
+                        <option value={30}>30 giây</option>
+                        <option value={60}>1 phút</option>
+                      </select>
+                    </div>
+
+                    <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                      <button
+                        type="button"
+                        onClick={() => setShowClubSettings(false)}
+                        className="rounded-xl px-3.5 py-2 font-semibold text-slate-600 hover:bg-slate-100 transition"
+                      >
+                        Hủy
+                      </button>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const nameInput = (document.getElementById('club-settings-name') as HTMLInputElement)?.value;
+                          const annInput = (document.getElementById('club-settings-announcement') as HTMLInputElement)?.checked;
+                          const slowInput = Number((document.getElementById('club-settings-slowmode') as HTMLSelectElement)?.value || 0);
+
+                          if (selection.kind === 'ROOM') {
+                            try {
+                              await inboxApi.updateClubRoomSettings(selection.room.id, {
+                                name: nameInput,
+                                isAnnouncementOnly: annInput,
+                                slowModeSeconds: slowInput,
+                              });
+                              setSelection((curr) =>
+                                curr.kind === 'ROOM'
+                                  ? {
+                                      ...curr,
+                                      room: {
+                                        ...curr.room,
+                                        name: nameInput,
+                                        isAnnouncementOnly: annInput,
+                                        slowModeSeconds: slowInput,
+                                      },
+                                    }
+                                  : curr,
+                              );
+                              setShowClubSettings(false);
+                              toast.success('Đã lưu cài đặt phòng chat!');
+                            } catch (err) {
+                              toast.error(getErrorMessage(err, 'Không thể cập nhật cài đặt.'));
+                            }
+                          }
+                        }}
+                        className="rounded-xl bg-blue-600 px-4 py-2 font-bold text-white shadow-sm hover:bg-blue-700 transition active:scale-95"
+                      >
+                        Lưu cài đặt
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Media Lightbox Modal */}
+            {lightboxUrl && (
+              <div
+                onClick={() => setLightboxUrl(null)}
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 animate-in fade-in duration-200"
+              >
+                <div
+                  onClick={(e) => e.stopPropagation()}
+                  className="relative max-h-[90vh] max-w-[90vw] rounded-2xl overflow-hidden shadow-2xl bg-black/40 border border-white/10"
+                >
+                  <img
+                    src={lightboxUrl}
+                    alt="Xem ảnh"
+                    className="max-h-[85vh] max-w-[85vw] object-contain rounded-xl"
+                  />
+                  <div className="absolute top-3 right-3 flex items-center gap-2">
+                    <a
+                      href={lightboxUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      download
+                      className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/40 transition backdrop-blur-md"
+                      title="Tải ảnh về"
+                    >
+                      <Download className="h-4 w-4" />
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => setLightboxUrl(null)}
+                      className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/40 transition backdrop-blur-md"
+                      title="Đóng"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </section>
         </div>
       )}

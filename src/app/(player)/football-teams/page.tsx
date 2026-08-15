@@ -22,7 +22,7 @@ export default function FootballTeamsPage() {
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const selected = useMemo(() => teams.find((team) => team.id === selectedId) ?? null, [teams, selectedId]);
-  const footballCategory = categories.find((category) => /football|bóng đá|soccer/i.test(`${category.name} ${category.slug ?? ''}`));
+  const footballCategory = categories.find((category) => category.isActive && /football|bóng đá|soccer/i.test(`${category.name} ${category.slug ?? ''}`));
 
   const load = async () => {
     setLoading(true);

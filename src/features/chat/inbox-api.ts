@@ -11,6 +11,9 @@ export interface InboxRoom {
   clubAvatar?: string | null;
   communityName?: string | null;
   communityLogo?: string | null;
+  isAnnouncementOnly?: boolean;
+  slowModeSeconds?: number;
+  pinnedMessageId?: string | null;
   unreadCount: number;
   updatedAt: string;
   participants: Array<{ id: string; fullName: string | null; avatarUrl: string | null }>;
@@ -36,7 +39,27 @@ export const inboxApi = {
     api.get<InboxMessagesPage>(`/chat/rooms/${roomId}/messages`, {
       params: { limit: 30, ...(cursor ? { cursor } : {}) },
     }),
-  sendMessage: (roomId: string, messageText: string) =>
-    api.post<ApiResponse<ChatMessage>>('/chat/messages', { roomId, messageText }),
-  markRead: (roomId: string) => api.put<ApiResponse<{ success: boolean }>>(`/chat/rooms/${roomId}/read`, {}),
+  sendMessage: (roomId: string, messageText?: string, attachmentsUrls?: string[], replyToId?: string) =>
+    api.post<ApiResponse<ChatMessage>>('/chat/messages', {
+      roomId,
+      messageText,
+      attachmentsUrls,
+      replyToId,
+    }),
+  markRead: (roomId: string) =>
+    api.put<ApiResponse<{ success: boolean }>>(`/chat/rooms/${roomId}/read`, {}),
+  revokeMessage: (messageId: string) =>
+    api.post<ApiResponse<ChatMessage>>(`/chat/messages/${messageId}/revoke`),
+  pinMessage: (roomId: string, messageId: string) =>
+    api.post<ApiResponse<{ success: boolean }>>(`/chat/rooms/${roomId}/messages/${messageId}/pin`),
+  unpinMessage: (roomId: string, messageId: string) =>
+    api.delete<ApiResponse<{ success: boolean }>>(`/chat/rooms/${roomId}/messages/${messageId}/pin`),
+  getPinnedMessage: (roomId: string) =>
+    api.get<ApiResponse<ChatMessage | null>>(`/chat/rooms/${roomId}/pinned`),
+  toggleReaction: (messageId: string, emoji: string) =>
+    api.post<ApiResponse<{ reactions: string[] }>>(`/chat/messages/${messageId}/reaction`, { emoji }),
+  updateClubRoomSettings: (
+    roomId: string,
+    data: { name?: string; clubAvatar?: string; isAnnouncementOnly?: boolean; slowModeSeconds?: number },
+  ) => api.put<ApiResponse<InboxRoom>>(`/chat/rooms/${roomId}/settings`, data),
 };

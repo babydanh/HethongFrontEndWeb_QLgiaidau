@@ -23,6 +23,24 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: pnpm
+
+      - name: Enable pnpm
+        run: corepack enable
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck web
+        run: pnpm tsc --noEmit
+
+      - name: Check i18n messages
+        run: pnpm i18n:check
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 

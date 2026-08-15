@@ -162,6 +162,7 @@ export interface MockPaymentPayload {
 
 export interface RegisterTournamentPayload {
   teamName: string;
+  footballTeamId?: string;
   memberIds?: string[];
   partnerEmailOrPhone?: string;
   inviteCode?: string;
@@ -170,6 +171,25 @@ export interface RegisterTournamentPayload {
   matchType?: 'SINGLES' | 'DOUBLES' | 'MIXED_DOUBLES';
   rankingConsent?: boolean;
 }
+
+export interface FootballTeam {
+  id: string;
+  name: string;
+  logoUrl?: string | null;
+  categoryId: string;
+  communityId?: string | null;
+  status: 'ACTIVE' | 'SUSPENDED' | 'ARCHIVED';
+  membership?: { role: 'CAPTAIN' | 'MANAGER' | 'PLAYER'; status: string };
+  members?: Array<{ userId: string; role: 'CAPTAIN' | 'MANAGER' | 'PLAYER'; status?: string; profile?: { fullName?: string | null; avatarUrl?: string | null } }>;
+  rank?: { eloPoints: number; peakElo: number; matchesPlayed: number; matchesWon: number; winStreak: number } | null;
+}
+
+export const footballTeamsApi = {
+  listMine: () => api.get<ApiResponse<Array<{ team: FootballTeam; membership: FootballTeam['membership'] }>>>('/football-teams/mine'),
+  create: (data: { name: string; categoryId: string; logoUrl?: string; communityId?: string }) =>
+    api.post<ApiResponse<FootballTeam>>('/football-teams', data),
+  get: (teamId: string) => api.get<ApiResponse<FootballTeam>>(`/football-teams/${teamId}`),
+};
 
 export interface RegisterTournamentResponse {
   participant: TournamentParticipant;
@@ -420,6 +440,7 @@ export const tournamentsApi = {
     recurringDayOfWeek?: number;
     recurringDaysOfWeek?: number[];
     recurringTimeOfDay?: string;
+    recurringAdvanceDays?: number;
   }) => api.post<ApiResponse<{ id: string; name: string; status: string; inviteCode?: string; joinUrl?: string; qrPayload?: string }>>('/tournaments/lite', data).then(res => res.data),
 
   getLiteParticipants: (id: string) =>
@@ -455,4 +476,3 @@ export const divisionsApi = {
   deleteDivision: (divisionId: string) =>
     api.delete<ApiResponse<void>>(`/tournaments/divisions/${divisionId}`),
 };
-

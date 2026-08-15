@@ -73,6 +73,7 @@ export default function CreateLiteTournamentPage({
   const [recurringFrequency, setRecurringFrequency] = useState<'DAILY' | 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY'>('WEEKLY');
   const [recurringDaysOfWeek, setRecurringDaysOfWeek] = useState<number[]>([6]);
   const [recurringTimeOfDay, setRecurringTimeOfDay] = useState('18:00');
+  const [recurringAdvanceDays, setRecurringAdvanceDays] = useState<number>(0);
 
   const toggleRecurringDay = (day: number) => {
     setRecurringDaysOfWeek((prev: number[]) => {
@@ -136,6 +137,7 @@ export default function CreateLiteTournamentPage({
         recurringDayOfWeek: isRecurring ? (recurringDaysOfWeek[0] ?? 6) : undefined,
         recurringDaysOfWeek: isRecurring ? recurringDaysOfWeek : undefined,
         recurringTimeOfDay: isRecurring ? recurringTimeOfDay : undefined,
+        recurringAdvanceDays: isRecurring ? recurringAdvanceDays : undefined,
       });
 
       if (res?.id && res.inviteCode) {
@@ -415,8 +417,27 @@ export default function CreateLiteTournamentPage({
                   </div>
                 )}
 
+                                {/* Mở đăng ký trước bao nhiêu ngày */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-slate-700">
+                    Thời điểm hệ thống tự tạo giải & mở đăng ký
+                  </label>
+                  <select
+                    value={recurringAdvanceDays}
+                    onChange={(e) => setRecurringAdvanceDays(Number(e.target.value))}
+                    className="h-10 w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-600 font-medium"
+                  >
+                    <option value={0}>Tạo & mở đăng ký đúng ngày thi đấu (Cùng ngày)</option>
+                    <option value={1}>Tạo trước 1 ngày (Mở đăng ký trước 24h)</option>
+                    <option value={2}>Tạo trước 2 ngày (Mở đăng ký trước 48h)</option>
+                    <option value={3}>Tạo trước 3 ngày (Mở đăng ký trước 3 ngày)</option>
+                    <option value={5}>Tạo trước 5 ngày</option>
+                    <option value={7}>Tạo trước 1 tuần (Mở đăng ký trước 7 ngày)</option>
+                  </select>
+                </div>
+
                 <div className="p-3 rounded-lg bg-emerald-50/90 border border-emerald-200 text-xs text-emerald-900 leading-relaxed">
-                  🔄 <strong>Lịch trình tự động:</strong> Giải đấu sẽ tự động được tạo và mở đăng ký vào{' '}
+                  🔄 <strong>Lịch trình tự động:</strong> Giải đấu sẽ thi đấu vào{' '}
                   <strong className="text-emerald-950 font-bold">{recurringTimeOfDay}</strong>{' '}
                   {recurringFrequency === 'DAILY'
                     ? 'hằng ngày'

@@ -76,6 +76,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
   const [liteRecurringFrequency, setLiteRecurringFrequency] = useState<'DAILY' | 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY'>('WEEKLY');
   const [liteRecurringDaysOfWeek, setLiteRecurringDaysOfWeek] = useState<number[]>([6]);
   const [liteRecurringTimeOfDay, setLiteRecurringTimeOfDay] = useState('18:00');
+  const [liteRecurringAdvanceDays, setLiteRecurringAdvanceDays] = useState<number>(0);
   const [liteIsRanked, setLiteIsRanked] = useState(false);
 
   const fetchData = async () => {
@@ -140,6 +141,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
         recurringDayOfWeek: liteIsRecurring ? (liteRecurringDaysOfWeek[0] ?? 6) : undefined,
         recurringDaysOfWeek: liteIsRecurring ? liteRecurringDaysOfWeek : undefined,
         recurringTimeOfDay: liteIsRecurring ? liteRecurringTimeOfDay : undefined,
+        recurringAdvanceDays: liteIsRecurring ? liteRecurringAdvanceDays : undefined,
       });
 
       toast.success('Tạo giải đấu nhanh thành công!');
@@ -703,6 +705,24 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
                           </div>
                         </div>
                       )}
+
+                                            {/* Mở đăng ký trước bao nhiêu ngày */}
+                      <div className="flex flex-col gap-1">
+                        <label className="text-xs font-semibold text-slate-700">
+                          Thời điểm tự động tạo giải & mở đăng ký
+                        </label>
+                        <select
+                          value={liteRecurringAdvanceDays}
+                          onChange={(e) => setLiteRecurringAdvanceDays(Number(e.target.value))}
+                          className="border border-slate-300 rounded-lg px-2.5 py-1.5 bg-white text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-600 font-medium"
+                        >
+                          <option value={0}>Tạo đúng ngày thi đấu (Cùng ngày)</option>
+                          <option value={1}>Tạo trước 1 ngày (Mở đăng ký trước 24h)</option>
+                          <option value={2}>Tạo trước 2 ngày (Mở đăng ký trước 48h)</option>
+                          <option value={3}>Tạo trước 3 ngày</option>
+                          <option value={7}>Tạo trước 1 tuần (Mở đăng ký trước 7 ngày)</option>
+                        </select>
+                      </div>
 
                       <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-xs text-emerald-900 leading-relaxed">
                         🔄 <strong>Lịch trình tự động:</strong> Giải đấu sẽ tự động được tạo và mở đăng ký vào{' '}

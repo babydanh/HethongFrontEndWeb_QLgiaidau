@@ -15,6 +15,13 @@ import {
   Heart,
   ShieldAlert,
   MoreVertical,
+  Reply,
+  Copy,
+  Check,
+  Smile,
+  ThumbsUp,
+  Flame,
+  CornerDownRight,
 } from 'lucide-react';
 import { getBaseUrl } from '@/lib/axios';
 import ReactMarkdown from 'react-markdown';
@@ -37,9 +44,17 @@ type Selection =
   | { kind: 'SUPPORT' }
   | { kind: 'ROOM'; room: InboxRoom };
 
-type DisplayMessage = ChatMessage & { mine: boolean };
+type DisplayMessage = ChatMessage & { mine: boolean; replyTo?: { id: string; senderName: string; text: string } };
 type AiMessage = { role: 'user' | 'assistant'; content: string };
 type TypingEvent = { roomId: string; userId: string; isTyping: boolean };
+
+const QUICK_REACTIONS = ['❤️', '👍', '😂', '😮', '😢', '🔥'] as const;
+const EMOJI_PICKER_LIST = [
+  '❤️', '👍', '🔥', '😂', '👏', '🎉',
+  '⚽', '🏆', '🥇', '🏸', '🏓', '🎾',
+  '😮', '😢', '🤝', '💯', '😍', '🚀',
+  '💪', '🥳', '😎', '🙏', '🎯', '⚡',
+];
 
 const initialAiMessages: AiMessage[] = [
   {
@@ -122,10 +137,14 @@ export default function UnifiedChatWidget() {
   const [loadingOlder, setLoadingOlder] = useState(false);
   const [typingUserId, setTypingUserId] = useState<string | null>(null);
   const [reactions, setReactions] = useState<Record<string, string[]>>({});
+  const [replyingTo, setReplyingTo] = useState<DisplayMessage | null>(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const [blockedUserIds, setBlockedUserIds] = useState<string[]>([]);
   const [showRoomMenu, setShowRoomMenu] = useState(false);
 
   const endRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const socketRoomRef = useRef<string | null>(null);
   const typingTimerRef = useRef<number | null>(null);
 
@@ -408,17 +427,30 @@ export default function UnifiedChatWidget() {
     typingUserId,
   ]);
 
-  const toggleHeartReaction = (messageId: string) => {
+  const toggleReaction = (messageId: string, emoji: string) => {
     setReactions((prev) => {
       const current = prev[messageId] || [];
-      const hasHeart = current.includes('❤️');
+      const hasEmoji = current.includes(emoji);
       return {
         ...prev,
-        [messageId]: hasHeart
-          ? current.filter((r) => r !== '❤️')
-          : [...current, '❤️'],
+        [messageId]: hasEmoji
+          ? current.filter((r) => r !== emoji)
+          : [...current, emoji],
       };
     });
+  };
+
+  const handleReply = (message: DisplayMessage) => {
+    setReplyingTo(message);
+    inputRef.current?.focus();
+  };
+
+  const handleCopyText = (text: string, id: string) => {
+    if (!text) return;
+    void navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    toast.success('Đã sao chép tin nhắn!');
+    window.setTimeout(() => setCopiedId(null), 2000);
   };
 
   const handleToggleBlock = async () => {
@@ -447,25 +479,45 @@ export default function UnifiedChatWidget() {
     }
   };
 
-  const sendRoomMessage = async () => {
-    const text = draft.trim();
+  const sendRoomMessage = async (overrideText?: string) => {
+    const text = (overrideText ?? draft).trim();
     if (!text || selection.kind !== 'ROOM' || sending) return;
     if (isOtherBlocked) {
       toast.error('Bạn đã chặn người dùng này. Bỏ chặn để gửi tin nhắn.');
       return;
     }
+    const currentReply = replyingTo;
     setSending(true);
     setDraft('');
+    setReplyingTo(null);
+    setShowEmojiPicker(false);
+
     try {
       const response = await inboxApi.sendMessage(selection.room.id, text);
       const message = response.data;
       setMessages((current) =>
         current.some((item) => item.id === message.id)
           ? current
-          : [...current, { ...message, mine: true }],
+          : [
+              ...current,
+              {
+                ...message,
+                mine: true,
+                replyTo: currentReply
+                  ? {
+                      id: currentReply.id,
+                      senderName:
+                        currentReply.senderName ||
+                        (currentReply.mine ? 'Tôi' : 'Thành viên'),
+                      text: currentReply.messageText || '',
+                    }
+                  : undefined,
+              },
+            ],
       );
     } catch (error: unknown) {
       setDraft(text);
+      setReplyingTo(currentReply);
       toast.error(getErrorMessage(error, 'Không thể gửi tin nhắn.'));
     } finally {
       setSending(false);
@@ -975,10 +1027,31 @@ export default function UnifiedChatWidget() {
                   ) : (
                     messages.map((message, index) => {
                       const prevMsg = messages[index - 1];
+                      const nextMsg = messages[index + 1];
                       const isNewDay =
                         !prevMsg ||
                         new Date(message.createdAt).toDateString() !==
                           new Date(prevMsg.createdAt).toDateString();
+
+                      const isSameSenderAsPrev =
+                        prevMsg &&
+                        prevMsg.senderId === message.senderId &&
+                        !isNewDay &&
+                        Math.abs(
+                          new Date(message.createdAt).getTime() -
+                            new Date(prevMsg.createdAt).getTime(),
+                        ) < 120000;
+
+                      const isSameSenderAsNext =
+                        nextMsg &&
+                        nextMsg.senderId === message.senderId &&
+                        new Date(message.createdAt).toDateString() ===
+                          new Date(nextMsg.createdAt).toDateString() &&
+                        Math.abs(
+                          new Date(nextMsg.createdAt).getTime() -
+                            new Date(message.createdAt).getTime(),
+                        ) < 120000;
+
                       const msgReactions = reactions[message.id] || [];
 
                       const senderAvatar =
@@ -990,34 +1063,46 @@ export default function UnifiedChatWidget() {
                         message.senderName ||
                         (message.mine ? user?.fullName || 'Tôi' : 'Thành viên');
 
+                      const isClubChat =
+                        selection.kind === 'ROOM' && selection.room.type === 'CLUB';
+
                       return (
-                        <div key={message.id} className="space-y-2">
+                        <div
+                          key={message.id}
+                          className={`${isSameSenderAsPrev ? 'mt-1' : 'mt-3.5'}`}
+                        >
                           {/* Timeline Date Separator */}
                           {isNewDay && (
                             <div className="flex items-center justify-center my-3">
-                              <span className="rounded-full bg-slate-200/70 px-3 py-0.5 text-[10px] font-bold text-slate-600 uppercase tracking-wider">
+                              <span className="rounded-full bg-slate-200/80 px-3 py-0.5 text-[10px] font-bold text-slate-600 uppercase tracking-wider shadow-2xs">
                                 {formatDateSeparator(message.createdAt)}
                               </span>
                             </div>
                           )}
 
-                          {/* Message Bubble Item */}
+                          {/* Message Row */}
                           <div
-                            className={`group relative flex items-end gap-2.5 ${
+                            className={`group/msg relative flex items-end gap-2 ${
                               message.mine ? 'justify-end' : 'justify-start'
                             }`}
                           >
-                            {/* Avatar on other person's bubble */}
+                            {/* Avatar on other person's message (shows on bottom of cluster) */}
                             {!message.mine && (
-                              <div className="h-8 w-8 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden shadow-sm border border-slate-100">
-                                {senderAvatar ? (
-                                  <img
-                                    src={senderAvatar}
-                                    alt={senderName}
-                                    className="h-full w-full object-cover"
-                                  />
+                              <div className="w-8 shrink-0 flex items-end">
+                                {!isSameSenderAsNext ? (
+                                  <div className="h-7 w-7 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 text-white flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden shadow-sm border border-white">
+                                    {senderAvatar ? (
+                                      <img
+                                        src={senderAvatar}
+                                        alt={senderName}
+                                        className="h-full w-full object-cover"
+                                      />
+                                    ) : (
+                                      senderName.charAt(0).toUpperCase()
+                                    )}
+                                  </div>
                                 ) : (
-                                  senderName.charAt(0).toUpperCase()
+                                  <div className="w-7 h-7" />
                                 )}
                               </div>
                             )}
@@ -1027,61 +1112,126 @@ export default function UnifiedChatWidget() {
                                 message.mine ? 'items-end' : 'items-start'
                               } max-w-[78%]`}
                             >
-                              {!message.mine && (
-                                <span className="text-[11px] font-semibold text-slate-600 mb-0.5 px-1">
-                                  {senderName}
-                                </span>
+                              {/* Sender Name & Badge (only on start of cluster for others) */}
+                              {!message.mine && !isSameSenderAsPrev && (
+                                <div className="flex items-center gap-1.5 mb-1 px-1">
+                                  <span className="text-[11px] font-bold text-slate-700">
+                                    {senderName}
+                                  </span>
+                                  {isClubChat && (
+                                    <span className="rounded bg-blue-100 px-1 py-0.2 text-[9px] font-bold text-blue-700">
+                                      Thành viên
+                                    </span>
+                                  )}
+                                </div>
                               )}
 
-                              <div className="relative group/bubble">
+                              {/* Message Bubble + Floating Action Bar Container */}
+                              <div className="relative group/bubble flex items-center">
+                                {/* Floating Messenger Action Bar on Hover */}
                                 <div
-                                  className={`rounded-2xl px-3.5 py-2 text-sm leading-relaxed shadow-sm transition ${
+                                  className={`absolute -top-8 ${
+                                    message.mine ? 'right-0' : 'left-0'
+                                  } z-20 hidden group-hover/bubble:flex items-center gap-0.5 rounded-full bg-white/95 backdrop-blur-md px-2 py-0.5 shadow-lg border border-slate-200 animate-in fade-in zoom-in-95 duration-150`}
+                                >
+                                  {QUICK_REACTIONS.map((emoji) => {
+                                    const isSelected = msgReactions.includes(emoji);
+                                    return (
+                                      <button
+                                        key={emoji}
+                                        type="button"
+                                        onClick={() => toggleReaction(message.id, emoji)}
+                                        className={`flex h-6 w-6 items-center justify-center rounded-full text-xs transition-all hover:scale-130 active:scale-95 ${
+                                          isSelected ? 'bg-blue-100 scale-110' : 'hover:bg-slate-100'
+                                        }`}
+                                        title={`Thả ${emoji}`}
+                                      >
+                                        {emoji}
+                                      </button>
+                                    );
+                                  })}
+                                  <div className="h-3 w-px bg-slate-200 mx-0.5" />
+                                  <button
+                                    type="button"
+                                    onClick={() => handleReply(message)}
+                                    title="Trả lời"
+                                    className="flex h-6 w-6 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-blue-600 transition"
+                                  >
+                                    <Reply className="h-3 w-3" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleCopyText(message.messageText || '', message.id)}
+                                    title="Sao chép"
+                                    className="flex h-6 w-6 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition"
+                                  >
+                                    {copiedId === message.id ? (
+                                      <Check className="h-3 w-3 text-emerald-500" />
+                                    ) : (
+                                      <Copy className="h-3 w-3" />
+                                    )}
+                                  </button>
+                                </div>
+
+                                {/* Bubble Box */}
+                                <div
+                                  className={`relative px-3.5 py-2 text-sm leading-relaxed shadow-xs transition ${
                                     message.mine
-                                      ? 'bg-blue-600 text-white rounded-br-sm'
-                                      : 'bg-white text-slate-800 border border-slate-200/80 rounded-bl-sm'
+                                      ? 'bg-blue-600 text-white rounded-2xl rounded-br-xs'
+                                      : 'bg-white text-slate-800 border border-slate-200/90 rounded-2xl rounded-bl-xs'
                                   }`}
                                 >
+                                  {/* Quoted Reply Preview inside bubble */}
+                                  {message.replyTo && (
+                                    <div
+                                      className={`mb-1.5 rounded-lg px-2.5 py-1 text-xs border-l-2 ${
+                                        message.mine
+                                          ? 'bg-blue-700/60 border-white/70 text-blue-100'
+                                          : 'bg-slate-100 border-blue-500 text-slate-600'
+                                      }`}
+                                    >
+                                      <p className="font-bold text-[11px] truncate">
+                                        {message.replyTo.senderName}
+                                      </p>
+                                      <p className="line-clamp-1 italic text-[11px] opacity-90">
+                                        {message.replyTo.text}
+                                      </p>
+                                    </div>
+                                  )}
+
                                   <p className="whitespace-pre-wrap break-words">
                                     {message.messageText}
                                   </p>
+
                                   <time
-                                    className={`mt-1 block text-[10px] ${
+                                    className={`mt-0.5 block text-[10px] ${
                                       message.mine
-                                        ? 'text-blue-100 text-right'
+                                        ? 'text-blue-100/80 text-right'
                                         : 'text-slate-400'
                                     }`}
                                   >
-                                    {new Date(
-                                      message.createdAt,
-                                    ).toLocaleTimeString('vi-VN', {
+                                    {new Date(message.createdAt).toLocaleTimeString('vi-VN', {
                                       hour: '2-digit',
                                       minute: '2-digit',
                                     })}
                                   </time>
                                 </div>
 
-                                {/* Floating Heart Button on Hover (like Messenger) */}
-                                <button
-                                  type="button"
-                                  onClick={() => toggleHeartReaction(message.id)}
-                                  title="Thả tim tin nhắn"
-                                  className={`absolute -top-3 ${
-                                    message.mine ? '-left-6' : '-right-6'
-                                  } opacity-0 group-hover/bubble:opacity-100 transition p-1 bg-white hover:bg-rose-50 rounded-full shadow-md border border-slate-100 text-rose-500 active:scale-125`}
-                                >
-                                  <Heart className="w-3.5 h-3.5 fill-rose-500 text-rose-500" />
-                                </button>
-
-                                {/* Heart Badge if Reacted */}
+                                {/* Reaction Badges Pill (Messenger Style) */}
                                 {msgReactions.length > 0 && (
                                   <div
-                                    className={`absolute -bottom-2 ${
+                                    className={`absolute -bottom-2.5 ${
                                       message.mine ? 'left-2' : 'right-2'
-                                    } flex items-center gap-0.5 rounded-full bg-white px-1.5 py-0.5 text-[11px] shadow-sm border border-slate-100`}
+                                    } z-10 flex items-center gap-0.5 rounded-full bg-white px-1.5 py-0.5 text-xs shadow-md border border-slate-200 cursor-pointer hover:scale-105 active:scale-95 transition`}
+                                    onClick={() => toggleReaction(message.id, msgReactions[0])}
                                   >
-                                    <span>❤️</span>
+                                    {Array.from(new Set(msgReactions)).map((emoji) => (
+                                      <span key={emoji} className="text-xs leading-none">
+                                        {emoji}
+                                      </span>
+                                    ))}
                                     {msgReactions.length > 1 && (
-                                      <span className="text-[10px] font-bold text-slate-600">
+                                      <span className="text-[10px] font-bold text-slate-600 ml-0.5">
                                         {msgReactions.length}
                                       </span>
                                     )}
@@ -1099,15 +1249,91 @@ export default function UnifiedChatWidget() {
               <div ref={endRef} />
             </div>
 
-            {/* Input Bar */}
+            {/* Replying Banner */}
+            {replyingTo && (
+              <div className="flex items-center justify-between border-t border-slate-200 bg-blue-50/70 px-4 py-2 text-xs animate-in slide-in-from-bottom-2 duration-150">
+                <div className="flex items-center gap-2 min-w-0">
+                  <CornerDownRight className="h-3.5 w-3.5 text-blue-600 shrink-0" />
+                  <span className="text-slate-500 shrink-0 font-medium">Đang trả lời</span>
+                  <span className="font-bold text-blue-900 truncate">
+                    {replyingTo.senderName || (replyingTo.mine ? 'Tôi' : 'Thành viên')}:
+                  </span>
+                  <span className="italic text-slate-600 truncate max-w-[280px]">
+                    &ldquo;{replyingTo.messageText}&rdquo;
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setReplyingTo(null)}
+                  className="p-1 text-slate-400 hover:text-slate-600 rounded-md hover:bg-slate-200/60 transition ml-2 shrink-0"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            )}
+
+            {/* Emoji Palette Picker Popup */}
+            {showEmojiPicker && (
+              <div className="relative">
+                <div className="absolute bottom-full left-4 mb-2 z-50 w-72 rounded-2xl border border-slate-200 bg-white p-3 shadow-xl animate-in fade-in zoom-in-95">
+                  <div className="flex items-center justify-between mb-2 pb-1 border-b border-slate-100">
+                    <span className="text-xs font-bold text-slate-700">Biểu tượng cảm xúc</span>
+                    <button
+                      type="button"
+                      onClick={() => setShowEmojiPicker(false)}
+                      className="p-1 text-slate-400 hover:text-slate-600 rounded-md"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-6 gap-1">
+                    {EMOJI_PICKER_LIST.map((emoji) => (
+                      <button
+                        key={emoji}
+                        type="button"
+                        onClick={() => {
+                          setDraft((prev) => prev + emoji);
+                          setShowEmojiPicker(false);
+                          inputRef.current?.focus();
+                        }}
+                        className="flex h-9 w-9 items-center justify-center rounded-xl text-lg hover:bg-slate-100 active:scale-125 transition"
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Messenger Input Bar */}
             <form
               onSubmit={(event) => {
                 event.preventDefault();
-                send();
+                if (draft.trim()) {
+                  send();
+                } else if (selection.kind === 'ROOM') {
+                  void sendRoomMessage('👍');
+                }
               }}
-              className="flex items-center gap-2 border-t border-slate-200 bg-white p-3 shadow-inner"
+              className="relative flex items-center gap-2 border-t border-slate-200 bg-white p-3 shadow-inner"
             >
+              {/* Emoji Picker Button */}
+              <button
+                type="button"
+                onClick={() => setShowEmojiPicker((prev) => !prev)}
+                className={`p-2 rounded-full transition ${
+                  showEmojiPicker
+                    ? 'bg-blue-100 text-blue-600'
+                    : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+                }`}
+                title="Chọn biểu tượng cảm xúc"
+              >
+                <Smile className="h-5 w-5" />
+              </button>
+
               <input
+                ref={inputRef}
                 value={draft}
                 onChange={(event) => handleDraftChange(event.target.value)}
                 placeholder={
@@ -1115,19 +1341,45 @@ export default function UnifiedChatWidget() {
                     ? 'Bạn đã chặn người này...'
                     : selection.kind === 'AI'
                       ? 'Hỏi trợ lý Sporto...'
-                      : 'Nhập tin nhắn...'
+                      : replyingTo
+                        ? `Trả lời ${replyingTo.senderName || 'thành viên'}...`
+                        : 'Nhập tin nhắn...'
                 }
                 disabled={isOtherBlocked}
-                className="min-w-0 flex-1 rounded-full border border-slate-200 bg-slate-50/60 px-4 py-2 text-sm outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20 disabled:bg-slate-100 disabled:text-slate-400"
+                className="min-w-0 flex-1 rounded-full border border-slate-200 bg-slate-50/70 px-4 py-2 text-sm outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20 disabled:bg-slate-100 disabled:text-slate-400"
               />
-              <button
-                type="submit"
-                disabled={!draft.trim() || sending || isOtherBlocked}
-                aria-label="Gửi tin nhắn"
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-white shadow-md shadow-blue-500/20 transition hover:bg-blue-700 active:scale-95 disabled:opacity-40 shrink-0"
-              >
-                <Send className="h-4 w-4" />
-              </button>
+
+              {/* Quick Send Button / Messenger Thumbs Up or Heart */}
+              {draft.trim() ? (
+                <button
+                  type="submit"
+                  disabled={sending || isOtherBlocked}
+                  aria-label="Gửi tin nhắn"
+                  className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-white shadow-md shadow-blue-500/20 transition hover:bg-blue-700 active:scale-95 disabled:opacity-40 shrink-0"
+                >
+                  <Send className="h-4 w-4" />
+                </button>
+              ) : selection.kind === 'ROOM' ? (
+                <button
+                  type="button"
+                  onClick={() => void sendRoomMessage('👍')}
+                  disabled={sending || isOtherBlocked}
+                  aria-label="Thả Like nhanh"
+                  title="Thả Like nhanh"
+                  className="flex h-9 w-9 items-center justify-center rounded-full text-blue-600 hover:bg-blue-50 transition active:scale-125 shrink-0"
+                >
+                  <ThumbsUp className="h-5 w-5 fill-blue-600 text-blue-600" />
+                </button>
+              ) : (
+                <button
+                  type="submit"
+                  disabled={true}
+                  aria-label="Gửi tin nhắn"
+                  className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-200 text-slate-400 transition shrink-0 cursor-not-allowed"
+                >
+                  <Send className="h-4 w-4" />
+                </button>
+              )}
             </form>
           </section>
         </div>

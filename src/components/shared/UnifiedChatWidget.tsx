@@ -71,6 +71,11 @@ type Selection =
 type DisplayMessage = ChatMessage & { mine: boolean };
 type AiMessage = { role: 'user' | 'assistant'; content: string };
 type TypingEvent = { roomId: string; userId: string; isTyping: boolean };
+type PollOption = {
+  id: string;
+  voterIds?: string[];
+  [key: string]: unknown;
+};
 
 const QUICK_REACTIONS = ['❤️', '👍', '😂', '😮', '😢', '🔥'] as const;
 const EMOJI_PICKER_LIST = [
@@ -675,12 +680,6 @@ export default function UnifiedChatWidget() {
     showScrollBottom,
   ]);
 
-  useEffect(() => {
-    const handleGlobalClick = () => setActiveMsgMenuId(null);
-    window.addEventListener('click', handleGlobalClick);
-    return () => window.removeEventListener('click', handleGlobalClick);
-  }, []);
-
   const toggleReaction = async (messageId: string, emoji: string) => {
     // Optimistic UI update
     setReactions((prev) => {
@@ -797,9 +796,13 @@ export default function UnifiedChatWidget() {
     setMessages((current) =>
       current.map((m) => {
         if (m.id !== messageId) return m;
-        const meta = m.metadata || {};
-        const options = (meta.options || []).map((opt: any) => {
-          let voterIds: string[] = opt.voterIds || [];
+        const meta = (m.metadata || {}) as {
+          options?: PollOption[];
+          allowMultiple?: boolean;
+          [key: string]: unknown;
+        };
+        const options = (meta.options || []).map((opt) => {
+          let voterIds: string[] = opt.voterIds ?? [];
           const isVoted = voterIds.includes(user.id);
           if (opt.id === optionId) {
             voterIds = isVoted ? voterIds.filter((id) => id !== user.id) : [...voterIds, user.id];

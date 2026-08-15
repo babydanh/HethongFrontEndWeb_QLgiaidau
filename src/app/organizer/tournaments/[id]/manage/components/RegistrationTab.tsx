@@ -21,7 +21,7 @@ import {
   GripVertical,
 } from 'lucide-react';
 import { Tournament, TournamentParticipant } from '@/types/tournament';
-import { Division } from '@/features/tournaments/api';
+import { Division, tournamentsApi } from '@/features/tournaments/api';
 import { formatDate } from '@/utils/format';
 import CountdownTimer from '@/components/shared/CountdownTimer';
 import {
@@ -171,6 +171,8 @@ export function RegistrationTab({
   const [filter, setFilter] = React.useState<'ALL' | 'PENDING' | 'COMPLETE' | 'UNPAID' | 'REJECTED'>('ALL');
   const [editingSeed, setEditingSeed] = React.useState<string | null>(null);
   const [seedInputValue, setSeedInputValue] = React.useState('');
+  const [rosterActionId, setRosterActionId] = React.useState<string | null>(null);
+  const [locallyLockedRosterIds, setLocallyLockedRosterIds] = React.useState<Set<string>>(new Set());
 
   const participantSummary = React.useMemo(() => ({
     total: participants.length,
@@ -223,6 +225,32 @@ export function RegistrationTab({
     } catch (err) {
       const { getErrorMessage } = await import('@/utils/error');
       toast.error(getErrorMessage(err));
+    }
+  };
+
+  const handleRosterLock = async (participant: TournamentParticipant) => {
+    if (!participant.footballTeamId || rosterActionId) return;
+    const isLocked = Boolean(participant.rosterLockedAt) || locallyLockedRosterIds.has(participant.id);
+    setRosterActionId(participant.id);
+    try {
+      if (isLocked) {
+        await tournamentsApi.unlockFootballRoster(tournament.id, participant.id);
+        setLocallyLockedRosterIds((current) => {
+          const next = new Set(current);
+          next.delete(participant.id);
+          return next;
+        });
+        toast.success('Đã mở khóa roster trước khi giải bắt đầu.');
+      } else {
+        await tournamentsApi.lockFootballRoster(tournament.id, participant.id);
+        setLocallyLockedRosterIds((current) => new Set(current).add(participant.id));
+        toast.success('Đã khóa roster đội bóng.');
+      }
+    } catch (error) {
+      const { getErrorMessage } = await import('@/utils/error');
+      toast.error(getErrorMessage(error));
+    } finally {
+      setRosterActionId(null);
     }
   };
 
@@ -784,6 +812,18 @@ export function RegistrationTab({
                         </td>
                         <td className="py-4 text-right">
                           <div className="flex justify-end gap-2">
+                            {participant.footballTeamId && (
+                              <Button
+                                variant="outline"
+                                onClick={() => { void handleRosterLock(participant); }}
+                                disabled={rosterActionId === participant.id || isBusy || !isParticipantApproved(participant.teamStatus)}
+                                className="border-blue-200 text-blue-700 hover:bg-blue-50 font-bold"
+                                title="Roster chỉ mở khóa được trước khi giải bắt đầu"
+                              >
+                                {rosterActionId === participant.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Lock className="mr-2 h-4 w-4" />}
+                                {participant.rosterLockedAt || locallyLockedRosterIds.has(participant.id) ? 'Mở khóa roster' : 'Khóa roster'}
+                              </Button>
+                            )}
                             <Button
                                onClick={() => { void handleApproveParticipant(participant.id); }}
                               disabled={!canApprove || isBusy}

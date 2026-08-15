@@ -358,6 +358,10 @@ export const tournamentsApi = {
       `/tournaments/${id}/participants/${participantId}/football-roster/respond`,
       { action },
     ),
+  lockFootballRoster: (id: string, participantId: string) =>
+    api.post<ApiResponse<TournamentParticipant>>(`/tournaments/${id}/participants/${participantId}/lock-roster`),
+  unlockFootballRoster: (id: string, participantId: string) =>
+    api.post<ApiResponse<TournamentParticipant>>(`/tournaments/${id}/participants/${participantId}/unlock-roster`),
   withdraw: (id: string, bankData?: { bankName?: string; bankAccountNumber?: string; bankAccountName?: string }, divisionId?: string) =>
     api.post<ApiResponse<{ message: string; refundAmount?: number }>>(`/tournaments/${id}/withdraw`, { ...(bankData || {}), ...(divisionId ? { tournamentDivisionId: divisionId } : {}) }),
   createParentTournament: <T>(data: T) => api.post<ApiResponse<ParentTournament>>('/tournaments/parent', data),

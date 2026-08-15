@@ -239,6 +239,9 @@ export interface PaginatedTournaments {
 export interface TournamentParticipant {
   id: string;
   teamName: string;
+  footballTeamId?: string | null;
+  footballTeamLogoUrl?: string | null;
+  rosterLockedAt?: string | null;
   seed: number | null;
   isPaid: boolean;
   eloPoints?: number;

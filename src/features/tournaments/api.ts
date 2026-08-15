@@ -418,6 +418,7 @@ export const tournamentsApi = {
     isRecurring?: boolean;
     recurringFrequency?: 'DAILY' | 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY';
     recurringDayOfWeek?: number;
+    recurringDaysOfWeek?: number[];
     recurringTimeOfDay?: string;
   }) => api.post<ApiResponse<{ id: string; name: string; status: string; inviteCode?: string; joinUrl?: string; qrPayload?: string }>>('/tournaments/lite', data).then(res => res.data),
 

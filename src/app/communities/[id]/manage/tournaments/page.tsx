@@ -30,6 +30,16 @@ const mapCategoryToLiteSport = (cat?: { slug?: string; name?: string } | null): 
   return 'badminton';
 };
 
+const DAYS_OF_WEEK: { value: number; label: string; short: string }[] = [
+  { value: 1, label: 'Thứ 2', short: 'T2' },
+  { value: 2, label: 'Thứ 3', short: 'T3' },
+  { value: 3, label: 'Thứ 4', short: 'T4' },
+  { value: 4, label: 'Thứ 5', short: 'T5' },
+  { value: 5, label: 'Thứ 6', short: 'T6' },
+  { value: 6, label: 'Thứ 7', short: 'T7' },
+  { value: 0, label: 'Chủ Nhật', short: 'CN' },
+];
+
 export default function ClubTournamentsPage({ params }: { params: Promise<{ id: string }> }) {
   type CommunityTournamentMatchType = 'SINGLES' | 'DOUBLES' | 'MIXED_DOUBLES';
   const resolvedParams = use(params);
@@ -64,7 +74,8 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
   const [liteStartTime, setLiteStartTime] = useState('18:00');
   const [liteIsRecurring, setLiteIsRecurring] = useState(false);
   const [liteRecurringFrequency, setLiteRecurringFrequency] = useState<'DAILY' | 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY'>('WEEKLY');
-  const [liteRecurringDayOfWeek, setLiteRecurringDayOfWeek] = useState<number>(6);
+  const [liteRecurringDaysOfWeek, setLiteRecurringDaysOfWeek] = useState<number[]>([6]);
+  const [liteRecurringTimeOfDay, setLiteRecurringTimeOfDay] = useState('18:00');
 
   const fetchData = async () => {
     try {
@@ -124,8 +135,9 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
         startTime: liteStartTime || undefined,
         isRecurring: liteIsRecurring,
         recurringFrequency: liteIsRecurring ? liteRecurringFrequency : undefined,
-        recurringDayOfWeek: liteIsRecurring ? liteRecurringDayOfWeek : undefined,
-        recurringTimeOfDay: liteIsRecurring ? liteStartTime : undefined,
+        recurringDayOfWeek: liteIsRecurring ? (liteRecurringDaysOfWeek[0] ?? 6) : undefined,
+        recurringDaysOfWeek: liteIsRecurring ? liteRecurringDaysOfWeek : undefined,
+        recurringTimeOfDay: liteIsRecurring ? liteRecurringTimeOfDay : undefined,
       });
 
       toast.success('Tạo giải đấu nhanh thành công!');
@@ -625,7 +637,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
                   </div>
 
                   {liteIsRecurring && (
-                    <div className="pt-2.5 border-t border-slate-200/80 space-y-2.5 animate-in fade-in duration-200">
+                    <div className="pt-2.5 border-t border-slate-200/80 space-y-3 animate-in fade-in duration-200">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div className="flex flex-col gap-1">
                           <label className="text-xs font-semibold text-slate-700">Tần suất</label>
@@ -641,25 +653,54 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
                           </select>
                         </div>
 
-                        {liteRecurringFrequency !== 'DAILY' && (
-                          <div className="flex flex-col gap-1">
-                            <label className="text-xs font-semibold text-slate-700">Thứ trong tuần</label>
-                            <select
-                              value={liteRecurringDayOfWeek}
-                              onChange={(e) => setLiteRecurringDayOfWeek(Number(e.target.value))}
-                              className="border border-slate-300 rounded-lg px-2.5 py-1.5 bg-white text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-600"
-                            >
-                              <option value={1}>Thứ Hai</option>
-                              <option value={2}>Thứ Ba</option>
-                              <option value={3}>Thứ Tư</option>
-                              <option value={4}>Thứ Năm</option>
-                              <option value={5}>Thứ Sáu</option>
-                              <option value={6}>Thứ Bảy</option>
-                              <option value={0}>Chủ Nhật</option>
-                            </select>
-                          </div>
-                        )}
+                        <div className="flex flex-col gap-1">
+                          <label className="text-xs font-semibold text-slate-700 flex items-center gap-1">
+                            <Clock className="w-3.5 h-3.5 text-slate-500" /> Giờ thi đấu
+                          </label>
+                          <input
+                            type="time"
+                            value={liteRecurringTimeOfDay}
+                            onChange={(e) => setLiteRecurringTimeOfDay(e.target.value)}
+                            className="border border-slate-300 rounded-lg px-2.5 py-1.5 bg-white text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-600 font-semibold"
+                          />
+                        </div>
                       </div>
+
+                      {liteRecurringFrequency !== 'DAILY' && liteRecurringFrequency !== 'MONTHLY' && (
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-xs font-semibold text-slate-700">
+                            Các ngày trong tuần ({liteRecurringDaysOfWeek.length} ngày đã chọn)
+                          </label>
+                          <div className="flex flex-wrap gap-1.5">
+                            {DAYS_OF_WEEK.map(({ value, label }: { value: number; label: string }) => {
+                              const isSelected = liteRecurringDaysOfWeek.includes(value);
+                              return (
+                                <button
+                                  key={value}
+                                  type="button"
+                                  onClick={() => {
+                                    setLiteRecurringDaysOfWeek((prev) => {
+                                      if (prev.includes(value)) {
+                                        if (prev.length === 1) return prev;
+                                        return prev.filter((d) => d !== value);
+                                      } else {
+                                        return [...prev, value].sort((a, b) => (a === 0 ? 7 : a) - (b === 0 ? 7 : b));
+                                      }
+                                    });
+                                  }}
+                                  className={`px-2.5 py-1 rounded text-xs font-semibold transition-all border ${
+                                    isSelected
+                                      ? 'bg-emerald-600 text-white border-emerald-600'
+                                      : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+                                  }`}
+                                >
+                                  {label}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

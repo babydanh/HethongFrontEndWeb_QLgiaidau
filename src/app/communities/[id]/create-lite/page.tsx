@@ -33,6 +33,18 @@ const mapCategoryToLiteSport = (cat?: { slug?: string; name?: string } | null): 
   return 'badminton';
 };
 
+
+  const DAYS_OF_WEEK = [
+    { value: 1, label: 'Thứ 2', short: 'T2' },
+    { value: 2, label: 'Thứ 3', short: 'T3' },
+    { value: 3, label: 'Thứ 4', short: 'T4' },
+    { value: 4, label: 'Thứ 5', short: 'T5' },
+    { value: 5, label: 'Thứ 6', short: 'T6' },
+    { value: 6, label: 'Thứ 7', short: 'T7' },
+    { value: 0, label: 'Chủ Nhật', short: 'CN' },
+  ];
+
+  
 export default function CreateLiteTournamentPage({
   params,
 }: {
@@ -59,7 +71,19 @@ export default function CreateLiteTournamentPage({
   const [startTime, setStartTime] = useState('18:00');
   const [isRecurring, setIsRecurring] = useState(false);
   const [recurringFrequency, setRecurringFrequency] = useState<'DAILY' | 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY'>('WEEKLY');
-  const [recurringDayOfWeek, setRecurringDayOfWeek] = useState<number>(6);
+  const [recurringDaysOfWeek, setRecurringDaysOfWeek] = useState<number[]>([6]);
+  const [recurringTimeOfDay, setRecurringTimeOfDay] = useState('18:00');
+
+  const toggleRecurringDay = (day: number) => {
+    setRecurringDaysOfWeek((prev: number[]) => {
+      if (prev.includes(day)) {
+        if (prev.length === 1) return prev;
+        return prev.filter((d: number) => d !== day);
+      } else {
+        return [...prev, day].sort((a: number, b: number) => (a === 0 ? 7 : a) - (b === 0 ? 7 : b));
+      }
+    });
+  };
 
   useEffect(() => {
     const init = async () => {
@@ -109,8 +133,9 @@ export default function CreateLiteTournamentPage({
         startTime: startTime || undefined,
         isRecurring,
         recurringFrequency: isRecurring ? recurringFrequency : undefined,
-        recurringDayOfWeek: isRecurring ? recurringDayOfWeek : undefined,
-        recurringTimeOfDay: isRecurring ? startTime : undefined,
+        recurringDayOfWeek: isRecurring ? (recurringDaysOfWeek[0] ?? 6) : undefined,
+        recurringDaysOfWeek: isRecurring ? recurringDaysOfWeek : undefined,
+        recurringTimeOfDay: isRecurring ? recurringTimeOfDay : undefined,
       });
 
       if (res?.id && res.inviteCode) {
@@ -331,14 +356,14 @@ export default function CreateLiteTournamentPage({
             </div>
 
             {isRecurring && (
-              <div className="pt-3 border-t border-slate-200/80 space-y-3 animate-in fade-in duration-200">
+              <div className="pt-3 border-t border-slate-200/80 space-y-4 animate-in fade-in duration-200">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="flex flex-col gap-1.5">
                     <label className="text-xs font-semibold text-slate-700">Tần suất lặp lại</label>
                     <select
                       value={recurringFrequency}
                       onChange={(e) => setRecurringFrequency(e.target.value as typeof recurringFrequency)}
-                      className="h-10 w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                      className="h-10 w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-600 font-medium"
                     >
                       <option value="WEEKLY">Hằng tuần (Weekly)</option>
                       <option value="BIWEEKLY">2 tuần một lần (Bi-weekly)</option>
@@ -347,28 +372,64 @@ export default function CreateLiteTournamentPage({
                     </select>
                   </div>
 
-                  {recurringFrequency !== 'DAILY' && (
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-xs font-semibold text-slate-700">Thứ trong tuần</label>
-                      <select
-                        value={recurringDayOfWeek}
-                        onChange={(e) => setRecurringDayOfWeek(Number(e.target.value))}
-                        className="h-10 w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-600"
-                      >
-                        <option value={1}>Thứ Hai</option>
-                        <option value={2}>Thứ Ba</option>
-                        <option value={3}>Thứ Tư</option>
-                        <option value={4}>Thứ Năm</option>
-                        <option value={5}>Thứ Sáu</option>
-                        <option value={6}>Thứ Bảy</option>
-                        <option value={0}>Chủ Nhật</option>
-                      </select>
-                    </div>
-                  )}
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-semibold text-slate-700 flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5 text-slate-500" /> Giờ thi đấu định kỳ
+                    </label>
+                    <input
+                      type="time"
+                      value={recurringTimeOfDay}
+                      onChange={(e) => setRecurringTimeOfDay(e.target.value)}
+                      className="h-10 w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-600 font-semibold"
+                    />
+                  </div>
                 </div>
 
-                <div className="p-2.5 rounded bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 font-medium">
-                  💡 <strong>Thông báo tự động:</strong> Mỗi khi giải đấu mới được tạo theo chu kỳ, toàn bộ thành viên câu lạc bộ sẽ nhận được thông báo để đăng ký tham gia thi đấu.
+                {recurringFrequency !== 'DAILY' && recurringFrequency !== 'MONTHLY' && (
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-semibold text-slate-700">
+                        Chọn các ngày thi đấu trong tuần ({recurringDaysOfWeek.length} ngày đã chọn)
+                      </label>
+                      <span className="text-[11px] text-slate-500 font-normal">Có thể chọn nhiều ngày</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {DAYS_OF_WEEK.map(({ value, label, short }) => {
+                        const isSelected = recurringDaysOfWeek.includes(value);
+                        return (
+                          <button
+                            key={value}
+                            type="button"
+                            onClick={() => toggleRecurringDay(value)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border ${
+                              isSelected
+                                ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                                : 'bg-white text-slate-700 border-slate-300 hover:border-slate-400 hover:bg-slate-50'
+                            }`}
+                          >
+                            {label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                <div className="p-3 rounded-lg bg-emerald-50/90 border border-emerald-200 text-xs text-emerald-900 leading-relaxed">
+                  🔄 <strong>Lịch trình tự động:</strong> Giải đấu sẽ tự động được tạo và mở đăng ký vào{' '}
+                  <strong className="text-emerald-950 font-bold">{recurringTimeOfDay}</strong>{' '}
+                  {recurringFrequency === 'DAILY'
+                    ? 'hằng ngày'
+                    : recurringFrequency === 'MONTHLY'
+                    ? 'hằng tháng'
+                    : `các ngày ${recurringDaysOfWeek
+                        .map((d) => DAYS_OF_WEEK.find((item) => item.value === d)?.label)
+                        .filter(Boolean)
+                        .join(', ')} hằng ${recurringFrequency === 'BIWEEKLY' ? '2 tuần' : 'tuần'}`}.
+                  <br />
+                  <span className="text-emerald-700 text-[11px] mt-1 inline-block">
+                    📢 Toàn bộ thành viên CLB sẽ nhận được thông báo & bài đăng bảng tin để tham gia.
+                  </span>
                 </div>
               </div>
             )}

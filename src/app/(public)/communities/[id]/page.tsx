@@ -365,7 +365,15 @@ export default function CommunityDetailPage() {
               priority 
             />
           ) : (
-            <div className="absolute inset-0 bg-slate-900"></div>
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-850 to-blue-950 flex items-center justify-center p-8">
+              <Image 
+                src="/sporto_v1_with_text.svg" 
+                alt="Sporto" 
+                fill
+                className="object-contain p-12 opacity-85"
+                priority
+              />
+            </div>
           )}
           
           {/* Back button */}

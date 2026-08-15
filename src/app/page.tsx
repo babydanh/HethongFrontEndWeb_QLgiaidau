@@ -113,7 +113,7 @@ const getFormatLabel = (matchType?: string, genderRestriction?: string | null) =
 };
 
 function CommunityLogoAvatar({ src, alt }: { src?: string | null; alt: string }) {
-  const fallbackSrc = '/sporto_v1.svg';
+  const fallbackSrc = '/sporto_v1_with_text.svg';
   // Track only whether the image failed to load — src is derived directly from props
   const [imgError, setImgError] = useState(false);
   // Reset error when src changes (React recommended "derived state" pattern)
@@ -221,7 +221,7 @@ function RegistrationCountdown({ targetDate }: { targetDate: string }) {
 }
 
 function TournamentLogoAvatar({ src, alt }: { src?: string | null; alt: string }) {
-  const fallbackSrc = '/sporto_v1.svg';
+  const fallbackSrc = '/sporto_v1_with_text.svg';
   const [imgError, setImgError] = useState(false);
   const [prevSrc, setPrevSrc] = useState(src);
   if (prevSrc !== src) {
@@ -245,7 +245,7 @@ function TournamentLogoAvatar({ src, alt }: { src?: string | null; alt: string }
 
 function HomepageTournamentCard({ tournament }: { tournament: Tournament }) {
   const [imgError, setImgError] = useState(false);
-  const fallbackSrc = '/sporto_v1.svg';
+  const fallbackSrc = '/sporto_v1_with_text.svg';
   const imageSrc = (!imgError && tournament.bannerUrl?.trim()) ? tournament.bannerUrl.split(',')[0] : fallbackSrc;
   const hideFeaturedCardText = shouldHideFeaturedCardText(tournament);
 
@@ -924,9 +924,9 @@ export default function HomePage() {
           </div>
         </Link>
 
-        {/* Interactive Footer (Heart & Share aligned to the right with larger click area) */}
-        <div className="px-3 py-1 bg-slate-50/50 border-t border-slate-100 flex items-center justify-end gap-1.5 relative z-10">
-          {/* Cổ vũ icon-only (Larger click target) */}
+        {/* Interactive Footer (Full Hitbox Action Bar) */}
+        <div className="grid grid-cols-2 border-t border-slate-100 bg-slate-50/50 divide-x divide-slate-100 relative z-10">
+          {/* Cổ vũ Button */}
           <button 
             onClick={(e) => {
               e.preventDefault();
@@ -934,13 +934,15 @@ export default function HomePage() {
               handleHighFive(match.id);
             }}
             title={`Cổ vũ (${currentHighFives})`}
-            className="flex items-center justify-center px-2.5 py-1 hover:bg-white rounded-md text-slate-600 transition-all border border-transparent hover:border-slate-200 active:scale-95 duration-100 cursor-pointer shrink-0"
+            className="flex items-center justify-center gap-1.5 py-1.5 px-3 hover:bg-rose-50/70 hover:text-rose-600 text-slate-600 transition-colors active:scale-[0.98] cursor-pointer group/cheer"
           >
-            <Heart className="w-4 h-4 text-rose-500 fill-rose-500/10" />
-            <span className="text-[11px] font-bold text-slate-600 ml-1">({currentHighFives})</span>
+            <Heart className="w-4 h-4 text-rose-500 fill-rose-500/15 group-hover/cheer:scale-110 transition-transform" />
+            <span className="text-[11px] font-bold text-slate-600 group-hover/cheer:text-rose-600">
+              Cổ vũ <span className="text-slate-500 group-hover/cheer:text-rose-600">({currentHighFives})</span>
+            </span>
           </button>
 
-          {/* Chia sẻ icon-only (Larger click target) */}
+          {/* Chia sẻ Button */}
           <button
             onClick={(e) => {
               e.preventDefault();
@@ -952,9 +954,12 @@ export default function HomePage() {
               setIsShareModalOpen(true);
             }}
             title="Chia sẻ trận đấu"
-            className="flex items-center justify-center px-2.5 py-1 hover:bg-white rounded-md text-slate-600 transition-all border border-transparent hover:border-slate-200 active:scale-95 duration-100 cursor-pointer shrink-0"
+            className="flex items-center justify-center gap-1.5 py-1.5 px-3 hover:bg-blue-50/70 hover:text-blue-600 text-slate-600 transition-colors active:scale-[0.98] cursor-pointer group/share"
           >
-            <Share2 className="w-4 h-4 text-blue-500" />
+            <Share2 className="w-3.5 h-3.5 text-blue-500 group-hover/share:scale-110 transition-transform" />
+            <span className="text-[11px] font-bold text-slate-600 group-hover/share:text-blue-600">
+              Chia sẻ
+            </span>
           </button>
         </div>
       </motion.div>

@@ -50,8 +50,12 @@ export const SeriesCard: React.FC<SeriesCardProps> = ({ series, className }) => 
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90 group-hover:opacity-100"
           />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-slate-800 to-slate-950 flex items-center justify-center">
-            <Trophy className="w-12 h-12 text-slate-600" />
+          <div className="w-full h-full bg-gradient-to-br from-slate-900 via-slate-850 to-blue-950 flex items-center justify-center p-6">
+            <img
+              src="/sporto_v1_with_text.svg"
+              alt="Sporto"
+              className="w-36 h-auto object-contain opacity-80"
+            />
           </div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent"></div>

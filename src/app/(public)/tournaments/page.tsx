@@ -720,11 +720,11 @@ export default function TournamentsListPage() {
                       className={`absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-103 ${isTournamentCompleted(tournament.status) ? 'grayscale opacity-60' : ''}`}
                     />
                   ) : (
-                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-650 to-blue-800 opacity-90 group-hover:scale-103 transition-transform duration-500 flex items-center justify-center">
+                    <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-850 to-blue-950 opacity-95 group-hover:scale-103 transition-transform duration-500 flex items-center justify-center p-6">
                       <img 
-                        src="/sporto_v1.svg" 
+                        src="/sporto_v1_with_text.svg" 
                         alt="Sporto Logo" 
-                        className="w-40 md:w-48 h-auto object-contain opacity-80"
+                        className="w-44 md:w-52 h-auto object-contain opacity-85"
                       />
                     </div>
                   )}

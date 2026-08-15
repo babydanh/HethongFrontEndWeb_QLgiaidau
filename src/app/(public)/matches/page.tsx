@@ -1369,8 +1369,9 @@ export default function MatchesListPage() {
                           </div>
                         </Link>
 
-                        {/* Interactive Footer (Heart & Share aligned right) */}
-                        <div className="px-3 py-1 bg-slate-50/50 border-t border-slate-100 flex items-center justify-end gap-1.5 relative z-10">
+                        {/* Interactive Footer (Full Hitbox Action Bar) */}
+                        <div className="grid grid-cols-2 border-t border-slate-100 bg-slate-50/50 divide-x divide-slate-100 relative z-10">
+                          {/* Cổ vũ Button */}
                           <button 
                             onClick={async (e) => {
                               e.preventDefault();
@@ -1394,12 +1395,15 @@ export default function MatchesListPage() {
                               }
                             }}
                             title={`Cổ vũ (${cheerCounts[match.id] || 0})`}
-                            className="flex items-center justify-center px-2.5 py-1 hover:bg-white rounded-md text-slate-600 transition-all border border-transparent hover:border-slate-200 active:scale-95 duration-100 cursor-pointer shrink-0"
+                            className="flex items-center justify-center gap-1.5 py-1.5 px-3 hover:bg-rose-50/70 hover:text-rose-600 text-slate-600 transition-colors active:scale-[0.98] cursor-pointer group/cheer"
                           >
-                            <Heart className="w-4 h-4 text-rose-500 fill-rose-500/10" />
-                            <span className="text-[11px] font-bold text-slate-600 ml-1">({cheerCounts[match.id] || 0})</span>
+                            <Heart className="w-4 h-4 text-rose-500 fill-rose-500/15 group-hover/cheer:scale-110 transition-transform" />
+                            <span className="text-[11px] font-bold text-slate-600 group-hover/cheer:text-rose-600">
+                              Cổ vũ <span className="text-slate-500 group-hover/cheer:text-rose-600">({cheerCounts[match.id] || 0})</span>
+                            </span>
                           </button>
 
+                          {/* Chia sẻ Button */}
                           <button 
                             onClick={(e) => {
                               e.preventDefault();
@@ -1410,9 +1414,13 @@ export default function MatchesListPage() {
                               setActiveShareTitle(`Trận đấu: ${p1Name} vs ${p2Name}`);
                               setIsShareModalOpen(true);
                             }}
-                            className="flex items-center justify-center gap-1 hover:text-slate-700 transition-colors py-1 min-h-[32px] cursor-pointer"
+                            title="Chia sẻ trận đấu"
+                            className="flex items-center justify-center gap-1.5 py-1.5 px-3 hover:bg-blue-50/70 hover:text-blue-600 text-slate-600 transition-colors active:scale-[0.98] cursor-pointer group/share"
                           >
-                            <Share2 className="w-3 h-3 text-slate-400" />
+                            <Share2 className="w-3.5 h-3.5 text-blue-500 group-hover/share:scale-110 transition-transform" />
+                            <span className="text-[11px] font-bold text-slate-600 group-hover/share:text-blue-600">
+                              Chia sẻ
+                            </span>
                           </button>
                         </div>
                       </motion.div>

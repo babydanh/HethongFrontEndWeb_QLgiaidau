@@ -211,36 +211,27 @@ export default function CommunitiesPage() {
                       className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out" 
                     />
                   ) : (
-                    <div className="absolute inset-0 bg-slate-900" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-850 to-blue-950 flex items-center justify-center p-6 group-hover:scale-105 transition-transform duration-700 ease-out">
+                      <Image 
+                        src="/sporto_v1_with_text.svg" 
+                        alt="Sporto" 
+                        fill
+                        className="object-contain p-8 opacity-85"
+                      />
+                    </div>
                   )}
-                  
-                  {/* Join Mode Badge */}
-                  <div className="absolute top-3 left-3 z-10 flex items-center gap-1 px-2.5 py-0.5 bg-white/95 backdrop-blur-md rounded-full shadow-sm text-slate-800 border border-white/20">
-                    <span className={`w-1.5 h-1.5 rounded-full ${
-                      community.joinMode === 'INVITE_ONLY' ? 'bg-rose-500 animate-pulse' : community.joinMode === 'APPROVAL' ? 'bg-amber-500' : 'bg-blue-500'
-                    }`} />
-                    <span className="text-[8px] font-bold tracking-wider uppercase text-slate-700">
-                      {community.joinMode === 'INVITE_ONLY' ? 'Chỉ mời' : community.joinMode === 'APPROVAL' ? 'Xét duyệt' : 'Tự do'}
-                    </span>
-                  </div>
-
-                  {/* Floating Location Badge */}
-                  <div className="absolute top-3 right-3 z-10 flex items-center gap-1 px-2.5 py-0.5 bg-white/95 backdrop-blur-md rounded-full shadow-sm text-slate-800 border border-white/20">
-                    <MapPin className="w-2.5 h-2.5 text-blue-600" />
-                    <span className="text-[8px] font-bold tracking-wider uppercase">{provinceName}</span>
-                  </div>
                 </div>
 
                 {/* Card Info (White Area) */}
                 <div className="p-4 pt-2.5 flex flex-col justify-between bg-white">
                   <div className="flex items-start gap-3 relative">
                     {/* Circular Logo - Half overlap */}
-                    <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-white bg-white shadow-md -mt-9 z-10 shrink-0 relative">
+                    <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-white bg-white shadow-md -mt-9 z-10 shrink-0 relative flex items-center justify-center">
                       <Image 
-                        src={community.logoUrl || "/sporto_v1.svg"} 
+                        src={community.logoUrl || "/sporto_v1_with_text.svg"} 
                         alt={community.name} 
                         fill 
-                        className="object-cover" 
+                        className={`transition-transform duration-300 ${community.logoUrl ? 'object-cover' : 'object-contain p-1.5'}`}
                       />
                     </div>
 
@@ -270,13 +261,14 @@ export default function CommunitiesPage() {
                     </div>
                   </div>
 
-                  {/* Categories Row */}
-                  <div className="flex flex-wrap gap-1 mt-2.5 mb-1">
+                  {/* Badges / Tags Row */}
+                  <div className="flex flex-wrap items-center gap-1.5 mt-3 pt-2.5 border-t border-slate-100">
+                    {/* Categories */}
                     {community.categories && community.categories.length > 0 ? (
                       community.categories.slice(0, 2).map(cat => {
                         const styles = getCategoryStyles(cat.name);
                         return (
-                          <span key={cat.id} className={`inline-flex items-center gap-0.5 px-2 py-0.2 rounded-full border text-[10px] sm:text-[8px] font-bold uppercase tracking-wider ${styles.bg}`}>
+                          <span key={cat.id} className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] sm:text-[9px] font-bold uppercase tracking-wider ${styles.bg}`}>
                             {(() => {
                               const logo = getSportLogo(cat.name);
                               return logo ? (
@@ -290,11 +282,31 @@ export default function CommunitiesPage() {
                         );
                       })
                     ) : (
-                      <span className="inline-flex items-center gap-0.5 px-2 py-0.2 rounded-full border border-slate-100 bg-slate-50 text-slate-500 text-[8px] font-bold uppercase tracking-wider">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-slate-100 bg-slate-50 text-slate-500 text-[10px] sm:text-[9px] font-bold uppercase tracking-wider">
                         <span className="w-1 h-1 rounded-full bg-slate-400" />
                         Giao hữu
                       </span>
                     )}
+
+                    {/* Location Badge */}
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-slate-200 bg-slate-50 text-slate-600 text-[10px] sm:text-[9px] font-semibold">
+                      <MapPin className="w-2.5 h-2.5 text-rose-500 shrink-0" />
+                      <span className="truncate max-w-[130px]">{provinceName}</span>
+                    </span>
+
+                    {/* Join Mode Badge */}
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] sm:text-[9px] font-bold uppercase tracking-wider ${
+                      community.joinMode === 'INVITE_ONLY' 
+                        ? 'bg-rose-50 border-rose-200 text-rose-700' 
+                        : community.joinMode === 'APPROVAL' 
+                          ? 'bg-amber-50 border-amber-200 text-amber-700' 
+                          : 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                    }`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${
+                        community.joinMode === 'INVITE_ONLY' ? 'bg-rose-500 animate-pulse' : community.joinMode === 'APPROVAL' ? 'bg-amber-500' : 'bg-emerald-500'
+                      }`} />
+                      {community.joinMode === 'INVITE_ONLY' ? 'Chỉ mời' : community.joinMode === 'APPROVAL' ? 'Xét duyệt' : 'Tự do'}
+                    </span>
                   </div>
                 </div>
               </div>

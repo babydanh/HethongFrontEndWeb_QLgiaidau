@@ -31,8 +31,8 @@ const stripHtml = (html?: string | null) => {
   return html.replace(/<[^>]*>/g, '').trim();
 };
 
-const getDefaultBanner = (categoryName?: string | null) => {
-  return '/sporto_v1.svg';
+const getDefaultBanner = (_categoryName?: string | null) => {
+  return '/sporto_v1_with_text.svg';
 };
 
 const getFormatLabel = (matchType: string, genderRestriction?: string | null) => {

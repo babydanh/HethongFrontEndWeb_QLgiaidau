@@ -74,6 +74,63 @@ export default function UnifiedChatWidget() {
     if (open) void refreshRooms();
   }, [open, isAuthenticated]);
 
+  // Support opening specific club room via global custom event
+  useEffect(() => {
+    const handleOpenClubChat = async (e: Event) => {
+      const customEvent = e as CustomEvent<{ communityId: string }>;
+      const communityId = customEvent.detail?.communityId;
+      if (!communityId) return;
+
+      setOpen(true);
+      if (!isAuthenticated) return;
+
+      try {
+        setLoading(true);
+        const roomsRes = unwrapRooms(await inboxApi.getRooms());
+        setRooms(roomsRes);
+
+        const targetRoom = roomsRes.find(
+          (r) => r.type === 'CLUB' && r.communityId === communityId
+        );
+
+        if (targetRoom) {
+          setSelection({ kind: 'ROOM', room: targetRoom });
+        } else {
+          // If room not in list yet, fetch from rooms directly
+          const clubRes = await fetch(`${getBaseUrl()}/chat/rooms?type=CLUB&communityId=${communityId}`, {
+            credentials: 'include',
+          });
+          if (clubRes.ok) {
+            const data = await clubRes.json();
+            const roomData = data?.data;
+            if (roomData?.id) {
+              const newInboxRoom: InboxRoom = {
+                id: roomData.id,
+                name: roomData.name || 'Phòng Chat CLB',
+                type: 'CLUB',
+                communityId,
+                unreadCount: 0,
+                updatedAt: new Date().toISOString(),
+                participants: [],
+              };
+              setSelection({ kind: 'ROOM', room: newInboxRoom });
+              setRooms((prev) => [newInboxRoom, ...prev.filter((r) => r.id !== newInboxRoom.id)]);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Failed to focus club room in unified chat:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    window.addEventListener('sporto:open-club-chat', handleOpenClubChat);
+    return () => {
+      window.removeEventListener('sporto:open-club-chat', handleOpenClubChat);
+    };
+  }, [isAuthenticated]);
+
   useEffect(() => {
     if (!open || !isAuthenticated) return;
     const timer = window.setInterval(() => void refreshRooms(), 10000);
@@ -271,27 +328,45 @@ export default function UnifiedChatWidget() {
                 </span>
                 <Sparkles className="ml-auto h-3 w-3 text-blue-500" />
               </button>
-              {sortedRooms.map((room) => (
-                <button
-                  key={room.id}
-                  type="button"
-                  onClick={() => setSelection({ kind: 'ROOM', room })}
-                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left ${selection.kind === 'ROOM' && selectedRoom?.id === room.id ? 'bg-blue-100' : 'hover:bg-white'}`}
-                >
-                  <span className="relative flex h-9 w-9 items-center justify-center rounded-full bg-white text-slate-500 shadow-sm">
-                    <Users className="h-4 w-4" />
-                    {room.unreadCount > 0 && (
-                      <b className="absolute -right-1 -top-1 rounded-full bg-rose-500 px-1.5 text-[9px] text-white">
-                        {room.unreadCount > 99 ? '99+' : room.unreadCount}
-                      </b>
-                    )}
-                  </span>
-                  <span className="min-w-0">
-                    <strong className="block truncate text-xs">{roomTitle(room)}</strong>
-                    <small className="block truncate text-[10px] text-slate-500">{room.lastMessage?.content || 'Chưa có tin nhắn'}</small>
-                  </span>
-                </button>
-              ))}
+              {sortedRooms.map((room) => {
+                const isClub = room.type === 'CLUB';
+                return (
+                  <button
+                    key={room.id}
+                    type="button"
+                    onClick={() => setSelection({ kind: 'ROOM', room })}
+                    className={`flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2.5 text-left transition ${
+                      selection.kind === 'ROOM' && selectedRoom?.id === room.id
+                        ? 'bg-blue-100/80 text-blue-950 font-medium'
+                        : 'hover:bg-white text-slate-700'
+                    }`}
+                  >
+                    <span className={`relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full shadow-sm ${
+                      isClub ? 'bg-blue-600 text-white' : 'bg-white text-slate-500'
+                    }`}>
+                      {isClub ? <MessageCircle className="h-4 w-4" /> : <Users className="h-4 w-4" />}
+                      {room.unreadCount > 0 && (
+                        <b className="absolute -right-1 -top-1 rounded-full bg-rose-500 px-1.5 text-[9px] text-white">
+                          {room.unreadCount > 99 ? '99+' : room.unreadCount}
+                        </b>
+                      )}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <strong className="block truncate text-xs font-semibold">{roomTitle(room)}</strong>
+                        {isClub && (
+                          <span className="rounded bg-blue-200/60 px-1 py-0.2 text-[9px] font-bold text-blue-800 shrink-0">
+                            CLB
+                          </span>
+                        )}
+                      </div>
+                      <small className="block truncate text-[10px] text-slate-500 mt-0.5">
+                        {room.lastMessage?.content || 'Chưa có tin nhắn'}
+                      </small>
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </aside>
           <section className="flex min-w-0 flex-1 flex-col">

@@ -74,11 +74,20 @@ export default function CommunityInfoSidebar({
 
         <Button
           type="button"
-          onClick={onOpenChat}
+          onClick={() => {
+            if (onOpenChat) onOpenChat();
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(
+                new CustomEvent('sporto:open-club-chat', {
+                  detail: { communityId },
+                })
+              );
+            }
+          }}
           className="w-full bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-all flex items-center justify-center gap-2 text-xs h-9 rounded-lg active:scale-[0.98]"
         >
           <MessageCircle className="w-4 h-4" />
-          <span>Vào phòng Chat</span>
+          <span>Vào phòng Chat CLB</span>
           <ArrowUpRight className="w-3.5 h-3.5 opacity-80" />
         </Button>
       </section>

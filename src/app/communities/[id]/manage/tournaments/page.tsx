@@ -11,11 +11,24 @@ import { tournamentsApi, Tournament } from '@/features/tournaments/api';
 import { isLiteTournament } from '@/features/tournaments/lite-qr';
 import { categoriesApi, Category } from '@/features/categories/api';
 import { getSportLogo } from '@/constants/sports';
-import { Trophy, Calendar, Users, Plus, Settings, Eye, ChevronLeft, ShieldCheck } from 'lucide-react';
+import { Trophy, Calendar, Users, Plus, Settings, Eye, ChevronLeft, ShieldCheck, Lock } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { getErrorMessage } from '@/utils/error';
+
+const mapCategoryToLiteSport = (cat?: { slug?: string; name?: string } | null): 'badminton' | 'tennis' | 'pickleball' | 'table_tennis' => {
+  if (!cat) return 'badminton';
+  const slug = (cat.slug || cat.name || '').toLowerCase();
+  if (slug.includes('badminton') || slug.includes('cầu lông') || slug.includes('cau long')) return 'badminton';
+  if (slug.includes('tennis') || slug.includes('quần vợt') || slug.includes('quan vot')) return 'tennis';
+  if (slug.includes('pickleball')) return 'pickleball';
+  if (slug.includes('table_tennis') || slug.includes('table-tennis') || slug.includes('bóng bàn') || slug.includes('bong ban') || slug.includes('tabletennis')) return 'table_tennis';
+  if (['badminton', 'tennis', 'pickleball', 'table_tennis'].includes(slug)) {
+    return slug as 'badminton' | 'tennis' | 'pickleball' | 'table_tennis';
+  }
+  return 'badminton';
+};
 
 export default function ClubTournamentsPage({ params }: { params: Promise<{ id: string }> }) {
   type CommunityTournamentMatchType = 'SINGLES' | 'DOUBLES' | 'MIXED_DOUBLES';
@@ -51,7 +64,8 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
   const fetchData = async () => {
     try {
       const cRes = await communitiesApi.getCommunityById(id);
-      setCommunity((cRes as { data?: Community })?.data || (cRes as unknown as Community));
+      const commData = (cRes as { data?: Community })?.data || (cRes as unknown as Community);
+      setCommunity(commData);
 
       const tRes = await communitiesApi.getTournaments(id);
       setTournaments((tRes as { data?: Tournament[] })?.data || (tRes as unknown as Tournament[]) || []);
@@ -59,7 +73,11 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
       const catRes = await categoriesApi.getCategories();
       if (catRes.data) {
         setCategories(catRes.data);
-        if (catRes.data.length > 0) {
+        if (commData?.categories?.[0]) {
+          setNewTourneyCategory(commData.categories[0].id);
+          const mappedSport = mapCategoryToLiteSport(commData.categories[0]);
+          if (mappedSport) setLiteSport(mappedSport);
+        } else if (catRes.data.length > 0) {
           setNewTourneyCategory(catRes.data[0].id);
         }
       }
@@ -374,18 +392,37 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
                   onChange={(e) => setNewTourneyName(e.target.value)}
                 />
 
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-slate-700">Chọn môn thể thao</label>
-                  <select
-                    value={newTourneyCategory}
-                    onChange={(e) => setNewTourneyCategory(e.target.value)}
-                    className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    {categories.map(cat => (
-                      <option key={cat.id} value={cat.id}>{cat.name}</option>
-                    ))}
-                  </select>
-                </div>
+                {(() => {
+                  const clubCategory = community?.categories?.[0];
+                  const isClubLocked = Boolean(clubCategory);
+                  return (
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-semibold text-slate-700">Chọn môn thể thao *</label>
+                        {isClubLocked && clubCategory && (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                            <Lock className="w-3 h-3" /> Cố định theo CLB: {clubCategory.name}
+                          </span>
+                        )}
+                      </div>
+                      <select
+                        value={newTourneyCategory}
+                        onChange={(e) => setNewTourneyCategory(e.target.value)}
+                        disabled={isClubLocked}
+                        className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed"
+                      >
+                        {categories.map(cat => (
+                          <option key={cat.id} value={cat.id}>{cat.name}</option>
+                        ))}
+                      </select>
+                      {isClubLocked && clubCategory && (
+                        <p className="text-xs text-slate-500 font-medium">
+                          🔒 Giải đấu nội bộ được tự động khóa theo bộ môn của CLB ({clubCategory.name}).
+                        </p>
+                      )}
+                    </div>
+                  );
+                })()}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1.5">
@@ -448,19 +485,38 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
                 />
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-semibold text-slate-700">Môn thể thao</label>
-                    <select
-                      value={liteSport}
-                      onChange={(e) => setLiteSport(e.target.value as 'badminton' | 'tennis' | 'pickleball' | 'table_tennis')}
-                      className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="badminton">Cầu lông (Badminton)</option>
-                      <option value="tennis">Quần vợt (Tennis)</option>
-                      <option value="pickleball">Pickleball</option>
-                      <option value="table_tennis">Bóng bàn (Table Tennis)</option>
-                    </select>
-                  </div>
+                  {(() => {
+                    const clubCategory = community?.categories?.[0];
+                    const isClubLocked = Boolean(clubCategory);
+                    return (
+                      <div className="flex flex-col gap-1.5">
+                        <div className="flex items-center justify-between">
+                          <label className="text-sm font-semibold text-slate-700">Môn thể thao *</label>
+                          {isClubLocked && clubCategory && (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                              <Lock className="w-3 h-3" /> Cố định theo CLB
+                            </span>
+                          )}
+                        </div>
+                        <select
+                          value={liteSport}
+                          onChange={(e) => setLiteSport(e.target.value as 'badminton' | 'tennis' | 'pickleball' | 'table_tennis')}
+                          disabled={isClubLocked}
+                          className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed"
+                        >
+                          <option value="badminton">Cầu lông (Badminton)</option>
+                          <option value="tennis">Quần vợt (Tennis)</option>
+                          <option value="pickleball">Pickleball</option>
+                          <option value="table_tennis">Bóng bàn (Table Tennis)</option>
+                        </select>
+                        {isClubLocked && clubCategory && (
+                          <p className="text-xs text-slate-500 font-medium">
+                            🔒 Khóa theo bộ môn của CLB ({clubCategory.name}).
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })()}
 
                   <div className="flex flex-col gap-1.5">
                     <label className="text-sm font-semibold text-slate-750 text-slate-700">Hình thức</label>

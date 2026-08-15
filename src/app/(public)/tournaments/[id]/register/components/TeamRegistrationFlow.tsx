@@ -139,10 +139,6 @@ export default function TeamRegistrationFlow({
                       setSelectedReserveIds((current) => isReserve ? current.filter((id) => id !== member.userId) : [...current.filter((id) => id !== member.userId), member.userId]);
                       setSelectedMemberIds((current) => current.filter((id) => id !== member.userId));
                     }}>Dự bị</button>
-                    <button type="button" className={`rounded px-2 py-1 text-[10px] font-bold ${isReserve ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'}`} onClick={() => {
-                      setSelectedReserveIds((current) => isReserve ? current.filter((id) => id !== member.userId) : [...current.filter((id) => id !== member.userId), member.userId]);
-                      setSelectedMemberIds((current) => current.filter((id) => id !== member.userId));
-                    }}>Dự bị</button>
                     </div>;
                 })}
               </div>

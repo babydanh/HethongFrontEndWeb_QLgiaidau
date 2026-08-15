@@ -39,12 +39,21 @@ export const inboxApi = {
     api.get<InboxMessagesPage>(`/chat/rooms/${roomId}/messages`, {
       params: { limit: 30, ...(cursor ? { cursor } : {}) },
     }),
-  sendMessage: (roomId: string, messageText?: string, attachmentsUrls?: string[], replyToId?: string) =>
+  sendMessage: (
+    roomId: string,
+    messageText?: string,
+    attachmentsUrls?: string[],
+    replyToId?: string,
+    type?: string,
+    metadata?: Record<string, any>,
+  ) =>
     api.post<ApiResponse<ChatMessage>>('/chat/messages', {
       roomId,
       messageText,
       attachmentsUrls,
       replyToId,
+      type: type || 'TEXT',
+      metadata,
     }),
   markRead: (roomId: string) =>
     api.put<ApiResponse<{ success: boolean }>>(`/chat/rooms/${roomId}/read`, {}),
@@ -58,6 +67,12 @@ export const inboxApi = {
     api.get<ApiResponse<ChatMessage | null>>(`/chat/rooms/${roomId}/pinned`),
   toggleReaction: (messageId: string, emoji: string) =>
     api.post<ApiResponse<{ reactions: string[] }>>(`/chat/messages/${messageId}/reaction`, { emoji }),
+  votePoll: (messageId: string, optionId: string) =>
+    api.post<ApiResponse<{ messageId: string; roomId: string; metadata: any }>>(`/chat/messages/${messageId}/poll/vote`, { optionId }),
+  getLinkPreview: (url: string) =>
+    api.get<ApiResponse<{ url: string; title?: string; description?: string; image?: string; siteName?: string }>>('/chat/link-preview', {
+      params: { url },
+    }),
   updateClubRoomSettings: (
     roomId: string,
     data: { name?: string; clubAvatar?: string; isAnnouncementOnly?: boolean; slowModeSeconds?: number },

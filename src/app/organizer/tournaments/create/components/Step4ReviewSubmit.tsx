@@ -12,6 +12,8 @@ import { getErrorMessage } from '@/utils/error';
 import { formatCurrency, formatDateTime } from '@/utils/format';
 import { GenderRestriction } from '@/types/tournament';
 import type { TournamentFeesConfig } from '@/features/tournaments/api';
+import { api } from '@/lib/axios';
+import { inboxApi } from '@/features/chat/inbox-api';
 
 export default function Step4ReviewSubmit() {
   const { formData, getDivisionsFromFormats, prevStep, reset, setStep, setValidationTarget } = useCreateTournamentStore();
@@ -191,6 +193,33 @@ export default function Step4ReviewSubmit() {
       });
 
       await Promise.all(divisionPromises);
+
+      // Auto-share tournament card into Club Chat if created for a community
+      if (formData.communityId) {
+        try {
+          const clubRoomRes: any = await api.get(`/chat/rooms?type=CLUB&communityId=${formData.communityId}`);
+          const clubRoom = clubRoomRes.data?.data || clubRoomRes.data;
+          if (clubRoom?.id) {
+            await inboxApi.sendMessage(
+              clubRoom.id,
+              `🏆 Giải đấu mới: ${formData.name}`,
+              [],
+              undefined,
+              'TOURNAMENT_SHARE',
+              {
+                tournamentId,
+                title: formData.name,
+                sportType: primaryDivision?.name || 'Giải đấu',
+                totalTeams: formData.maxParticipants || 16,
+                registeredTeams: 0,
+                startDate: formData.startDate,
+              },
+            );
+          }
+        } catch {
+          // Non-blocking fallback
+        }
+      }
 
       toast.success(`Tạo giải đấu với ${divisions.length} bảng thi đấu thành công!`);
       reset();

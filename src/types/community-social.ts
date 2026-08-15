@@ -172,6 +172,8 @@ export interface ChatMessage {
   isPinned?: boolean;
   replyToId?: string | null;
   replyTo?: { id: string; senderName: string; text: string } | null;
+  type?: 'TEXT' | 'POLL' | 'TOURNAMENT_SHARE' | 'LINK_PREVIEW' | string;
+  metadata?: any;
   reactions?: string[];
   createdAt: string;
 }

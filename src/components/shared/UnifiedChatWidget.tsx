@@ -33,6 +33,15 @@ import {
   AlertCircle,
   MoreHorizontal,
   Camera,
+  BarChart2,
+  ExternalLink,
+  Calendar,
+  Trophy,
+  CheckSquare,
+  Square,
+  Plus,
+  Trash,
+  Vote,
 } from 'lucide-react';
 import { getBaseUrl } from '@/lib/axios';
 import ReactMarkdown from 'react-markdown';
@@ -163,6 +172,11 @@ export default function UnifiedChatWidget() {
   const [activeMsgMenuId, setActiveMsgMenuId] = useState<string | null>(null);
   const [settingsClubAvatar, setSettingsClubAvatar] = useState<string>('');
   const [uploadingClubAvatar, setUploadingClubAvatar] = useState(false);
+  const [showPollCreator, setShowPollCreator] = useState(false);
+  const [pollQuestion, setPollQuestion] = useState('');
+  const [pollOptions, setPollOptions] = useState<string[]>(['', '']);
+  const [pollAllowMultiple, setPollAllowMultiple] = useState(false);
+  const [creatingPoll, setCreatingPoll] = useState(false);
 
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -392,6 +406,13 @@ export default function UnifiedChatWidget() {
       setTypingUserId(event.isTyping ? event.userId : null);
     };
 
+    const onPollVoted = (data: { roomId: string; messageId: string; metadata: any }) => {
+      if (data.roomId !== roomId || !active) return;
+      setMessages((current) =>
+        current.map((m) => (m.id === data.messageId ? { ...m, metadata: data.metadata } : m)),
+      );
+    };
+
     socket.on('chat:message', onMessage);
     socket.on('chat:club:message', onMessage);
     socket.on('chat:message:revoked', onRevoked);
@@ -399,6 +420,7 @@ export default function UnifiedChatWidget() {
     socket.on('chat:message:unpinned', onUnpinned);
     socket.on('chat:message:reaction', onReaction);
     socket.on('chat:room:updated', onRoomUpdated);
+    socket.on('chat:poll:voted', onPollVoted);
     socket.on('chat:typing', onTyping);
 
     const joinRoom = () => socket.emit('joinChatRoom', roomId);
@@ -464,6 +486,7 @@ export default function UnifiedChatWidget() {
       socket.off('chat:message:unpinned', onUnpinned);
       socket.off('chat:message:reaction', onReaction);
       socket.off('chat:room:updated', onRoomUpdated);
+      socket.off('chat:poll:voted', onPollVoted);
       socket.off('chat:typing', onTyping);
       socket.off('connect', joinRoom);
       if (typingTimerRef.current) window.clearTimeout(typingTimerRef.current);
@@ -653,6 +676,85 @@ export default function UnifiedChatWidget() {
     } finally {
       setUploadingClubAvatar(false);
       if (clubAvatarInputRef.current) clubAvatarInputRef.current.value = '';
+    }
+  };
+
+  const handleVotePoll = async (messageId: string, optionId: string) => {
+    if (!user?.id) return;
+    setMessages((current) =>
+      current.map((m) => {
+        if (m.id !== messageId) return m;
+        const meta = m.metadata || {};
+        const options = (meta.options || []).map((opt: any) => {
+          let voterIds: string[] = opt.voterIds || [];
+          const isVoted = voterIds.includes(user.id);
+          if (opt.id === optionId) {
+            voterIds = isVoted ? voterIds.filter((id) => id !== user.id) : [...voterIds, user.id];
+          } else if (!meta.allowMultiple && !isVoted) {
+            voterIds = voterIds.filter((id) => id !== user.id);
+          }
+          return { ...opt, voterIds };
+        });
+        return { ...m, metadata: { ...meta, options } };
+      }),
+    );
+    try {
+      await inboxApi.votePoll(messageId, optionId);
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Không thể gửi bình chọn.'));
+    }
+  };
+
+  const handleCreatePoll = async () => {
+    if (selection.kind !== 'ROOM') return;
+    const q = pollQuestion.trim();
+    if (!q) {
+      toast.error('Vui lòng nhập câu hỏi bình chọn.');
+      return;
+    }
+    const validOpts = pollOptions.map((o) => o.trim()).filter(Boolean);
+    if (validOpts.length < 2) {
+      toast.error('Cần ít nhất 2 lựa chọn để tạo bình chọn.');
+      return;
+    }
+
+    try {
+      setCreatingPoll(true);
+      const formattedOptions = validOpts.map((text, idx) => ({
+        id: `opt_${Date.now()}_${idx}`,
+        text,
+        voterIds: [],
+      }));
+
+      const pollMetadata = {
+        question: q,
+        options: formattedOptions,
+        allowMultiple: pollAllowMultiple,
+        creatorName: user?.fullName || 'Thành viên',
+        creatorId: user?.id,
+        createdAt: new Date().toISOString(),
+      };
+
+      const res = await inboxApi.sendMessage(
+        selection.room.id,
+        `📊 Bình chọn: ${q}`,
+        [],
+        undefined,
+        'POLL',
+        pollMetadata,
+      );
+
+      const newMsg = res.data;
+      setMessages((curr) => [...curr, { ...newMsg, mine: true }]);
+      setShowPollCreator(false);
+      setPollQuestion('');
+      setPollOptions(['', '']);
+      setPollAllowMultiple(false);
+      toast.success('Đã tạo cuộc bình chọn thành công!');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Không thể tạo bình chọn.'));
+    } finally {
+      setCreatingPoll(false);
     }
   };
 
@@ -1739,7 +1841,139 @@ export default function UnifiedChatWidget() {
                                         </div>
                                       )}
 
-                                      {message.messageText && (
+                                      {/* Interactive Poll Message Card */}
+                                      {message.type === 'POLL' && message.metadata && (
+                                        <div className="min-w-[240px] max-w-[320px] py-1 text-slate-800">
+                                          <div className={`flex items-center gap-1.5 font-bold text-sm mb-2.5 ${message.mine ? 'text-white' : 'text-slate-900'}`}>
+                                            <BarChart2 className="h-4 w-4 text-blue-400 shrink-0" />
+                                            <span>{message.metadata.question}</span>
+                                          </div>
+                                          <div className="space-y-2">
+                                            {(() => {
+                                              const options = (message.metadata.options || []) as Array<{ id: string; text: string; voterIds: string[] }>;
+                                              const totalVotes = options.reduce((sum, opt) => sum + (opt.voterIds?.length || 0), 0);
+                                              return options.map((opt) => {
+                                                const count = opt.voterIds?.length || 0;
+                                                const pct = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
+                                                const isUserVoted = Boolean(user?.id && (opt.voterIds || []).includes(user.id));
+                                                return (
+                                                  <div
+                                                    key={opt.id}
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      void handleVotePoll(message.id, opt.id);
+                                                    }}
+                                                    className={`relative overflow-hidden rounded-xl border p-2.5 cursor-pointer transition active:scale-[0.98] ${
+                                                      message.mine
+                                                        ? isUserVoted
+                                                          ? 'border-white/60 bg-blue-700/80 text-white font-bold shadow-xs'
+                                                          : 'border-blue-500/50 bg-blue-700/40 text-blue-50 hover:bg-blue-700/60'
+                                                        : isUserVoted
+                                                          ? 'border-blue-500 bg-blue-50/80 text-blue-950 font-bold shadow-xs'
+                                                          : 'border-slate-200 bg-slate-50 text-slate-800 hover:bg-slate-100/80'
+                                                    }`}
+                                                  >
+                                                    {/* Progress bar fill background */}
+                                                    <div
+                                                      className={`absolute inset-y-0 left-0 transition-all duration-300 ${
+                                                        message.mine
+                                                          ? isUserVoted ? 'bg-white/25' : 'bg-white/10'
+                                                          : isUserVoted ? 'bg-blue-200/50' : 'bg-slate-200/50'
+                                                      }`}
+                                                      style={{ width: `${pct}%` }}
+                                                    />
+                                                    <div className="relative flex items-center justify-between z-10 text-xs">
+                                                      <div className="flex items-center gap-2 min-w-0">
+                                                        {isUserVoted ? (
+                                                          <CheckSquare className="h-4 w-4 text-emerald-400 shrink-0" />
+                                                        ) : (
+                                                          <Square className={`h-4 w-4 shrink-0 ${message.mine ? 'text-blue-200' : 'text-slate-400'}`} />
+                                                        )}
+                                                        <span className="truncate">{opt.text}</span>
+                                                      </div>
+                                                      <div className="flex items-center gap-1 shrink-0 font-semibold text-[11px]">
+                                                        <span>{pct}%</span>
+                                                        <span className={`text-[10px] ${message.mine ? 'text-blue-200' : 'text-slate-400'}`}>({count})</span>
+                                                      </div>
+                                                    </div>
+                                                  </div>
+                                                );
+                                              });
+                                            })()}
+                                          </div>
+                                          <div className={`mt-2.5 flex items-center justify-between text-[10px] font-medium pt-1.5 border-t ${message.mine ? 'border-white/20 text-blue-200' : 'border-slate-100 text-slate-400'}`}>
+                                            <span>
+                                              {(message.metadata.options || []).reduce((s: number, o: any) => s + (o.voterIds?.length || 0), 0)} lượt bình chọn
+                                            </span>
+                                            <span>{message.metadata.allowMultiple ? 'Được chọn nhiều' : 'Chọn 1'}</span>
+                                          </div>
+                                        </div>
+                                      )}
+
+                                      {/* Tournament Share Rich Card */}
+                                      {message.type === 'TOURNAMENT_SHARE' && message.metadata && (
+                                        <div
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (message.metadata?.tournamentId) {
+                                              window.open(`/tournaments/${message.metadata.tournamentId}`, '_blank');
+                                            }
+                                          }}
+                                          className="min-w-[240px] max-w-[320px] rounded-xl overflow-hidden bg-white text-slate-800 shadow-md border border-slate-200 cursor-pointer group hover:shadow-lg transition my-1"
+                                        >
+                                          {message.metadata.bannerUrl ? (
+                                            <div className="relative aspect-video w-full overflow-hidden bg-slate-900">
+                                              <img
+                                                src={message.metadata.bannerUrl}
+                                                alt={message.metadata.title}
+                                                className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                                              />
+                                              {message.metadata.sportType && (
+                                                <span className="absolute top-2 left-2 rounded-full bg-blue-600/90 backdrop-blur-xs px-2 py-0.5 text-[10px] font-bold text-white shadow">
+                                                  {message.metadata.sportType}
+                                                </span>
+                                              )}
+                                            </div>
+                                          ) : (
+                                            <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-3 text-white">
+                                              <span className="text-[10px] font-bold uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-full">
+                                                {message.metadata.sportType || 'GIẢI ĐẤU'}
+                                              </span>
+                                            </div>
+                                          )}
+                                          <div className="p-3">
+                                            <h4 className="font-bold text-sm text-slate-900 line-clamp-1 group-hover:text-blue-600 transition">
+                                              {message.metadata.title || message.messageText || 'Giải đấu Sporto'}
+                                            </h4>
+                                            <div className="mt-2 space-y-1 text-[11px] text-slate-600">
+                                              {message.metadata.totalTeams && (
+                                                <div className="flex items-center gap-1.5">
+                                                  <Users className="h-3.5 w-3.5 text-blue-600" />
+                                                  <span>
+                                                    Quy mô: {message.metadata.registeredTeams || 0}/{message.metadata.totalTeams} Đội
+                                                  </span>
+                                                </div>
+                                              )}
+                                              {message.metadata.startDate && (
+                                                <div className="flex items-center gap-1.5">
+                                                  <Calendar className="h-3.5 w-3.5 text-amber-600" />
+                                                  <span>Khởi tranh: {new Date(message.metadata.startDate).toLocaleDateString('vi-VN')}</span>
+                                                </div>
+                                              )}
+                                            </div>
+                                            <button
+                                              type="button"
+                                              className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-lg bg-blue-600 py-1.5 text-xs font-bold text-white transition hover:bg-blue-700 shadow-xs active:scale-95"
+                                            >
+                                              <span>Xem chi tiết & Đăng ký</span>
+                                              <ExternalLink className="h-3.5 w-3.5" />
+                                            </button>
+                                          </div>
+                                        </div>
+                                      )}
+
+                                      {/* Standard Text Message */}
+                                      {message.type !== 'POLL' && message.type !== 'TOURNAMENT_SHARE' && message.messageText && (
                                         <p className="whitespace-pre-wrap break-words">
                                           {message.messageText}
                                         </p>
@@ -1922,15 +2156,27 @@ export default function UnifiedChatWidget() {
 
               {/* Photo Upload Trigger Button */}
               {selection.kind === 'ROOM' && (
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  title="Gửi hình ảnh"
-                  disabled={isOtherBlocked || sending}
-                  className="p-2 rounded-full text-slate-500 hover:bg-slate-100 hover:text-blue-600 transition disabled:opacity-40"
-                >
-                  <ImageIcon className="h-5 w-5" />
-                </button>
+                <>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    title="Gửi hình ảnh"
+                    disabled={isOtherBlocked || sending}
+                    className="p-2 rounded-full text-slate-500 hover:bg-slate-100 hover:text-blue-600 transition disabled:opacity-40"
+                  >
+                    <ImageIcon className="h-5 w-5" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowPollCreator(true)}
+                    title="Tạo cuộc bình chọn"
+                    disabled={isOtherBlocked || sending}
+                    className="p-2 rounded-full text-slate-500 hover:bg-slate-100 hover:text-blue-600 transition disabled:opacity-40"
+                  >
+                    <BarChart2 className="h-5 w-5" />
+                  </button>
+                </>
               )}
 
               {/* Emoji Picker Button */}
@@ -2184,6 +2430,118 @@ export default function UnifiedChatWidget() {
                         className="rounded-xl bg-blue-600 px-4 py-2 font-bold text-white shadow-sm hover:bg-blue-700 transition active:scale-95"
                       >
                         Lưu cài đặt
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Poll Creator Modal */}
+            {showPollCreator && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4 animate-in fade-in">
+                <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl border border-slate-100 animate-in zoom-in-95">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+                    <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
+                      <BarChart2 className="w-4 h-4 text-blue-600" />
+                      Tạo cuộc bình chọn
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => setShowPollCreator(false)}
+                      className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <div className="space-y-4 text-xs">
+                    <div>
+                      <label className="font-semibold text-slate-700 block mb-1">
+                        Câu hỏi bình chọn *
+                      </label>
+                      <input
+                        type="text"
+                        value={pollQuestion}
+                        onChange={(e) => setPollQuestion(e.target.value)}
+                        className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                        placeholder="Ví dụ: Chọn ngày đá giải CLB?"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="font-semibold text-slate-700 block mb-1">
+                        Các lựa chọn bình chọn *
+                      </label>
+                      <div className="space-y-2">
+                        {pollOptions.map((opt, idx) => (
+                          <div key={idx} className="flex items-center gap-2">
+                            <input
+                              type="text"
+                              value={opt}
+                              onChange={(e) => {
+                                const newOpts = [...pollOptions];
+                                newOpts[idx] = e.target.value;
+                                setPollOptions(newOpts);
+                              }}
+                              className="flex-1 rounded-xl border border-slate-200 px-3 py-2 text-xs outline-none focus:border-blue-500"
+                              placeholder={`Lựa chọn ${idx + 1}...`}
+                            />
+                            {pollOptions.length > 2 && (
+                              <button
+                                type="button"
+                                onClick={() => setPollOptions(pollOptions.filter((_, i) => i !== idx))}
+                                className="p-2 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50"
+                              >
+                                <Trash className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+
+                      {pollOptions.length < 8 && (
+                        <button
+                          type="button"
+                          onClick={() => setPollOptions([...pollOptions, ''])}
+                          className="mt-2 flex items-center gap-1 font-semibold text-blue-600 hover:text-blue-700"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>Thêm lựa chọn</span>
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="flex items-center justify-between rounded-xl bg-slate-50 p-3 border border-slate-200/80">
+                      <div>
+                        <p className="font-semibold text-slate-800">Cho phép chọn nhiều mục</p>
+                        <p className="text-[10px] text-slate-500">
+                          Thành viên có thể bỏ phiếu cho nhiều hơn 1 phương án
+                        </p>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={pollAllowMultiple}
+                        onChange={(e) => setPollAllowMultiple(e.target.checked)}
+                        className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                      <button
+                        type="button"
+                        onClick={() => setShowPollCreator(false)}
+                        className="rounded-xl px-3.5 py-2 font-semibold text-slate-600 hover:bg-slate-100 transition"
+                      >
+                        Hủy
+                      </button>
+                      <button
+                        type="button"
+                        disabled={creatingPoll}
+                        onClick={handleCreatePoll}
+                        className="rounded-xl bg-blue-600 px-4 py-2 font-bold text-white shadow-sm hover:bg-blue-700 transition active:scale-95 disabled:opacity-50"
+                      >
+                        {creatingPoll ? 'Đang tạo...' : 'Tạo bình chọn'}
                       </button>
                     </div>
                   </div>

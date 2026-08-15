@@ -1,9 +1,9 @@
 packages:
   - '.'
 
-onlyBuiltDependencies:
-  - '@parcel/watcher'
-  - '@swc/core'
-  - 'sharp'
-  - 'styled-components'
-  - 'unrs-resolver'
+allowBuilds:
+  '@parcel/watcher': true
+  '@swc/core': true
+  sharp: true
+  styled-components: true
+  unrs-resolver: true

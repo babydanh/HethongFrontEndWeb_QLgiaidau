@@ -355,7 +355,7 @@ export default function CommunityDetailPage() {
     <div className="min-h-screen bg-slate-50 pb-12">
       {/* Banner / Cover */}
       <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 pt-4 md:pt-6">
-        <div className="relative h-[280px] md:h-[400px] w-full bg-slate-200 shadow-xl rounded-lg md:rounded-2xl overflow-hidden group/banner">
+        <div className="relative h-[340px] md:h-[480px] lg:h-[520px] w-full bg-slate-200 shadow-xl rounded-lg md:rounded-2xl overflow-hidden group/banner">
           {slides.length > 0 ? (
             <Image 
               src={slides[currentSlide]} 
@@ -426,7 +426,7 @@ export default function CommunityDetailPage() {
       <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 mt-6">
         <div className="bg-white border border-slate-200/80 rounded-lg p-5 md:p-6 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 w-full md:w-auto">
-            <div className="w-20 h-20 md:w-24 md:h-24 rounded-full border border-slate-200 overflow-hidden bg-white shadow-md relative shrink-0 p-1.5">
+            <div className="w-24 h-24 md:w-28 md:h-28 rounded-full border border-slate-200 overflow-hidden bg-white shadow-md relative shrink-0 p-1.5">
               <Image 
                 src={community.logoUrl || "/sporto_v1_with_text.svg"}
                 alt={community.name} 

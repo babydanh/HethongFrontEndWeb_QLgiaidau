@@ -188,7 +188,6 @@ export default function UnifiedChatWidget() {
   const [uploadingMedia, setUploadingMedia] = useState(false);
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const [showClubSettings, setShowClubSettings] = useState(false);
-  const [activeMsgMenuId, setActiveMsgMenuId] = useState<string | null>(null);
   const [settingsClubAvatar, setSettingsClubAvatar] = useState<string>('');
   const [uploadingClubAvatar, setUploadingClubAvatar] = useState(false);
   const [showPollCreator, setShowPollCreator] = useState(false);
@@ -1529,7 +1528,7 @@ export default function UnifiedChatWidget() {
             <div
               ref={scrollContainerRef}
               onScroll={handleTimelineScroll}
-              className="flex-1 overflow-y-auto bg-slate-50/60 p-4 space-y-3 relative"
+              className="flex-1 overflow-y-auto overflow-x-hidden bg-slate-50/60 p-4 space-y-3 relative"
             >
               {selection.kind === 'AI' ? (
                 <>
@@ -1843,111 +1842,8 @@ export default function UnifiedChatWidget() {
                                   </div>
                                 )}
 
-                                {/* Side 3-Dots Quick Trigger (Visible on hover & on click) */}
-                                {!message.isRevoked && (
-                                  <div className={`relative ${message.mine ? 'order-first' : 'order-last'}`}>
-                                    <button
-                                      type="button"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setActiveMsgMenuId(activeMsgMenuId === message.id ? null : message.id);
-                                      }}
-                                      className="flex h-7 w-7 items-center justify-center rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-200/80 transition opacity-80 group-hover/msg:opacity-100"
-                                      title="Tùy chọn tin nhắn"
-                                    >
-                                      <MoreHorizontal className="h-4 w-4" />
-                                    </button>
-
-                                    {/* Mobile/Click Popover Action Menu */}
-                                    {activeMsgMenuId === message.id && (
-                                      <div
-                                        onClick={(e) => e.stopPropagation()}
-                                        className={`absolute bottom-full ${
-                                          message.mine ? 'left-0' : 'right-0'
-                                        } mb-2 z-50 w-60 rounded-2xl border border-slate-200 bg-white p-2.5 shadow-2xl animate-in fade-in zoom-in-95`}
-                                      >
-                                        {/* Reactions Row */}
-                                        <div className="flex items-center justify-between px-1 py-1.5 border-b border-slate-100 mb-2">
-                                          {QUICK_REACTIONS.map((emoji) => (
-                                            <button
-                                              key={emoji}
-                                              type="button"
-                                              onClick={(e) => {
-                                                e.stopPropagation();
-                                                void toggleReaction(message.id, emoji);
-                                                setActiveMsgMenuId(null);
-                                              }}
-                                              className="flex h-9 w-9 items-center justify-center rounded-full text-lg hover:bg-slate-100 active:scale-130 transition"
-                                            >
-                                              {emoji}
-                                            </button>
-                                          ))}
-                                        </div>
-
-                                        {/* Actions List */}
-                                        <div className="space-y-1 text-xs">
-                                          <button
-                                            type="button"
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              handleReply(message);
-                                              setActiveMsgMenuId(null);
-                                            }}
-                                            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 font-semibold text-slate-700 hover:bg-blue-50 hover:text-blue-600 transition"
-                                          >
-                                            <Reply className="h-4 w-4 text-blue-600" />
-                                            <span>Trả lời tin nhắn</span>
-                                          </button>
-
-                                          <button
-                                            type="button"
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              handleCopyText(message.messageText || '', message.id);
-                                              setActiveMsgMenuId(null);
-                                            }}
-                                            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 font-semibold text-slate-700 hover:bg-slate-100 transition"
-                                          >
-                                            <Copy className="h-4 w-4 text-slate-500" />
-                                            <span>Sao chép nội dung</span>
-                                          </button>
-
-                                          <button
-                                            type="button"
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              void handlePinMessage(message.id);
-                                              setActiveMsgMenuId(null);
-                                            }}
-                                            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 font-semibold text-slate-700 hover:bg-amber-50 hover:text-amber-700 transition"
-                                          >
-                                            <Pin className="h-4 w-4 text-amber-600" />
-                                            <span>Ghim lên đầu phòng</span>
-                                          </button>
-
-                                          {(message.mine || isClubChat) && (
-                                            <button
-                                              type="button"
-                                              onClick={(e) => {
-                                                e.stopPropagation();
-                                                void handleRevokeMessage(message.id);
-                                                setActiveMsgMenuId(null);
-                                              }}
-                                              className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 font-semibold text-rose-600 hover:bg-rose-50 transition"
-                                            >
-                                              <Trash2 className="h-4 w-4 text-rose-600" />
-                                              <span>Thu hồi tin nhắn</span>
-                                            </button>
-                                          )}
-                                        </div>
-                                      </div>
-                                    )}
-                                  </div>
-                                )}
-
                                 {/* Bubble Box */}
                                 <div
-                                  onClick={() => setActiveMsgMenuId(activeMsgMenuId === message.id ? null : message.id)}
                                   className={`relative transition cursor-pointer select-text ${
                                     message.isRevoked
                                       ? 'px-3.5 py-2 text-sm leading-relaxed bg-slate-100/90 text-slate-400 italic border border-slate-200 rounded-2xl shadow-2xs'

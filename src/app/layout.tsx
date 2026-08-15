@@ -52,12 +52,19 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/icon.png', type: 'image/png', sizes: '512x512' },
+      { url: '/sporto_512.png', type: 'image/png', sizes: '512x512' },
       { url: '/sporto_v1.svg', type: 'image/svg+xml' },
-      { url: '/favicon.ico?v=4' },
-      { url: '/icon.png?v=4', type: 'image/png' },
     ],
-    shortcut: '/sporto_v1.svg',
-    apple: '/apple-touch-icon.png?v=4',
+    shortcut: [
+      { url: '/favicon.ico' },
+      { url: '/icon.png', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+      { url: '/apple-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
   },
 };
 
@@ -68,23 +75,47 @@ export default async function RootLayout({
 }>) {
   const [locale, messages] = await Promise.all([getLocale(), getMessages()]);
 
-  const organizationSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'SportsOrganization',
-    name: 'Sporto',
-    url: 'https://sporto.asia',
-    logo: 'https://sporto.asia/sporto_v1.svg',
-    description: 'Nền tảng tổ chức, quản lý và tham gia giải đấu thể thao câu lạc bộ chuyên nghiệp.',
-    sameAs: [],
-  };
+  const structuredSchemas = [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'SportsOrganization',
+      name: 'Sporto',
+      alternateName: 'Sporto Asia',
+      url: 'https://sporto.asia',
+      logo: {
+        '@type': 'ImageObject',
+        url: 'https://sporto.asia/sporto_512.png',
+        width: '512',
+        height: '512',
+      },
+      image: 'https://sporto.asia/sporto_1024.png',
+      description: 'Nền tảng tổ chức, quản lý và tham gia giải đấu thể thao câu lạc bộ chuyên nghiệp.',
+      sameAs: [],
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
+      name: 'Sporto',
+      alternateName: 'Sporto - Quản lý giải đấu',
+      url: 'https://sporto.asia',
+    },
+  ];
 
   return (
     <html lang={locale} className={`${inter.variable} h-full antialiased`} suppressHydrationWarning>
       <head>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
-        />
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" href="/icon.png" type="image/png" sizes="512x512" />
+        <link rel="icon" href="/sporto_512.png" type="image/png" sizes="512x512" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
+        <link rel="manifest" href="/manifest.webmanifest" />
+        {structuredSchemas.map((schema, index) => (
+          <script
+            key={index}
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+          />
+        ))}
       </head>
       <body className="min-h-full flex flex-col text-slate-900">
         <NextIntlClientProvider locale={locale} messages={messages}>

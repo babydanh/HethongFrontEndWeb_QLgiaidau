@@ -23,15 +23,18 @@ import {
 } from 'lucide-react';
 
 import EloSidebarCard from '@/components/dashboard/EloSidebarCard';
+import FootballTeamEloCard from '@/components/dashboard/FootballTeamEloCard';
 import RoleSummaryCard from '@/components/dashboard/RoleSummaryCard';
 import TournamentListSection, { AvatarCircle } from '@/components/dashboard/TournamentListSection';
 
 import { Button } from '@/components/ui/Button';
 import { useAuthStore } from '@/lib/zustand/authStore';
-import { rankingsApi, PlayerRanking } from '@/features/rankings/api';
+import { rankingsApi, PlayerRanking, FootballTeamRanking } from '@/features/rankings/api';
 import { getBestRankForCategory } from '@/features/rankings/elo-display';
 import {
   tournamentsApi,
+  footballTeamsApi,
+  FootballTeam,
   Tournament,
   TournamentWorkspace,
   WorkspaceRefereeInvite,
@@ -89,6 +92,8 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [respondingInviteId, setRespondingInviteId] = useState<string | null>(null);
   const [followedTournaments, setFollowedTournaments] = useState<Tournament[]>([]);
+  const [footballTeams, setFootballTeams] = useState<FootballTeam[]>([]);
+  const [footballTeamRankings, setFootballTeamRankings] = useState<FootballTeamRanking[]>([]);
   const [sportFilter, setSportFilter] = useState<string>('');
   const [eloCategoryId, setEloCategoryId] = useState<string>('');
   const [isLiteLoading, setIsLiteLoading] = useState(false);
@@ -127,18 +132,32 @@ export default function DashboardPage() {
       try {
         setIsLoading(true);
         const followedResPromise = tournamentsApi.getFollowedTournaments().catch(() => null);
+        const footballTeamsResPromise = footballTeamsApi.listMine().catch(() => null);
         const categoriesResPromise = categoriesApi.getCategories().catch(() => null);
-        const [ranksRes, workspaceRes, matchesRes, followedRes, categoriesRes] = await Promise.all([
+        const [ranksRes, workspaceRes, matchesRes, followedRes, categoriesRes, footballTeamsRes] = await Promise.all([
           rankingsApi.getUserRankings(user.id),
           tournamentsApi.getMyWorkspace(),
           matchesApi.getMatches({ userId: user.id, limit: 15 }),
           followedResPromise,
           categoriesResPromise,
+          footballTeamsResPromise,
         ]);
 
         setUserRankings(ranksRes);
         setWorkspace(workspaceRes.data || null);
         setFollowedTournaments(sortFollowedTournaments(Array.isArray(followedRes?.data) ? followedRes.data : []));
+        const mine = Array.isArray(footballTeamsRes?.data) ? footballTeamsRes.data : [];
+        const activeTeams = mine
+          .filter((item) => item.team.status === 'ACTIVE' && item.membership?.status === 'ACTIVE')
+          .map((item) => ({ ...item.team, rank: item.rank ?? item.team.rank }));
+        setFootballTeams(activeTeams);
+        const footballCategoryId = activeTeams[0]?.categoryId;
+        if (footballCategoryId) {
+          const teamRanks = await rankingsApi.getFootballTeamRankings({ categoryId: footballCategoryId, limit: 100 }).catch(() => null);
+          setFootballTeamRankings(Array.isArray(teamRanks?.data) ? teamRanks.data : []);
+        } else {
+          setFootballTeamRankings([]);
+        }
         if (Array.isArray(categoriesRes?.data)) {
           setCategories(categoriesRes.data.filter((c: Category) => (
             c.isActive !== false
@@ -201,6 +220,17 @@ export default function DashboardPage() {
   const matchesWon = activeRank ? activeRank.matchesWon : 0;
   const winRate = matchesPlayed > 0 ? Math.round((matchesWon / matchesPlayed) * 100) : 0;
   const tierName = matchesPlayed > 0 ? (activeRank?.tier?.name || activeRank?.tierName || 'Chưa xếp hạng') : 'Chưa xếp hạng';
+
+  const bestFootballTeam = [...footballTeams].sort((a, b) => {
+    const eloDelta = (b.rank?.eloPoints ?? 1000) - (a.rank?.eloPoints ?? 1000);
+    return eloDelta || (b.rank?.matchesPlayed ?? 0) - (a.rank?.matchesPlayed ?? 0);
+  })[0] ?? null;
+  const bestFootballTeamRanking = bestFootballTeam
+    ? footballTeamRankings.find((ranking) => ranking.teamId === bestFootballTeam.id) ?? null
+    : null;
+  const bestFootballTeamPosition = bestFootballTeamRanking
+    ? footballTeamRankings.findIndex((ranking) => ranking.teamId === bestFootballTeam.id) + 1
+    : null;
 
   const organizedCount = workspace?.organizedTournaments.length || 0;
   const coOrganizerCount = workspace?.coOrganizerTournaments.length || 0;
@@ -705,6 +735,13 @@ export default function DashboardPage() {
 
         {/* Right Column: ELO Card, Role Summary, Quick Shortcuts */}
         <div className="xl:col-span-1 flex flex-col gap-5">
+          {bestFootballTeam && (
+            <FootballTeamEloCard
+              team={bestFootballTeam}
+              ranking={bestFootballTeamRanking}
+              position={bestFootballTeamPosition}
+            />
+          )}
           <EloSidebarCard
             eloPoints={eloPoints}
             matchesWon={matchesWon}

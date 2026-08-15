@@ -182,7 +182,19 @@ export interface FootballTeam {
   status: 'ACTIVE' | 'SUSPENDED' | 'ARCHIVED';
   membership?: { role: 'CAPTAIN' | 'MANAGER' | 'PLAYER'; status: string };
   members?: Array<{ userId: string; role: 'CAPTAIN' | 'MANAGER' | 'PLAYER'; status?: string; profile?: { fullName?: string | null; avatarUrl?: string | null } }>;
-  rank?: { eloPoints: number; peakElo: number; matchesPlayed: number; matchesWon: number; winStreak: number } | null;
+  rank?: FootballTeamRank | null;
+}
+
+export interface FootballTeamRank {
+  id?: string;
+  teamId?: string;
+  eloPoints: number;
+  peakElo: number;
+  matchesPlayed: number;
+  matchesWon: number;
+  winStreak: number;
+  tierId?: string | null;
+  tierName?: string | null;
 }
 
 export interface FootballTeamMemberCandidate {
@@ -192,7 +204,7 @@ export interface FootballTeamMemberCandidate {
 }
 
 export const footballTeamsApi = {
-  listMine: () => api.get<ApiResponse<Array<{ team: FootballTeam; membership: FootballTeam['membership'] }>>>('/football-teams/mine'),
+  listMine: () => api.get<ApiResponse<Array<{ team: FootballTeam; membership: FootballTeam['membership']; rank?: FootballTeamRank | null }>>>('/football-teams/mine'),
   create: (data: { name: string; categoryId: string; logoUrl?: string; communityId?: string }) =>
     api.post<ApiResponse<FootballTeam>>('/football-teams', data),
   get: (teamId: string) => api.get<ApiResponse<FootballTeam>>(`/football-teams/${teamId}`),

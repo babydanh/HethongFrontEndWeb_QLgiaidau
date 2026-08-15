@@ -517,7 +517,7 @@ export default function UnifiedChatWidget() {
       setTypingUserId(event.isTyping ? event.userId : null);
     };
 
-    const onPollVoted = (data: { roomId: string; messageId: string; metadata: any }) => {
+    const onPollVoted = (data: { roomId: string; messageId: string; metadata: ChatMessage['metadata'] }) => {
       if (data.roomId !== roomId || !active) return;
       setMessages((current) =>
         current.map((m) => (m.id === data.messageId ? { ...m, metadata: data.metadata } : m)),
@@ -2135,7 +2135,7 @@ export default function UnifiedChatWidget() {
                                           </div>
                                           <div className={`mt-2.5 flex items-center justify-between text-[10px] font-medium pt-1.5 border-t ${message.mine ? 'border-white/20 text-blue-200' : 'border-slate-100 text-slate-400'}`}>
                                             <span>
-                                              {(message.metadata.options || []).reduce((s: number, o: any) => s + (o.voterIds?.length || 0), 0)} lượt bình chọn
+                                              {(message.metadata.options || []).reduce((s: number, o: { voterIds?: string[] }) => s + (o.voterIds?.length || 0), 0)} lượt bình chọn
                                             </span>
                                             <span>{message.metadata.allowMultiple ? 'Được chọn nhiều' : 'Chọn 1'}</span>
                                           </div>

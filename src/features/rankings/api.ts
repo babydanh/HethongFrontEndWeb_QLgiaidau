@@ -14,6 +14,7 @@ export interface FootballTeamRanking {
   matchesWon: number;
   winStreak: number;
   tierId?: string | null;
+  tierName?: string | null;
 }
 
 interface UserRankResponse {

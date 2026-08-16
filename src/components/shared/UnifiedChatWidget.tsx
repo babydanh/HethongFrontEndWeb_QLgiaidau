@@ -56,6 +56,7 @@ import {
 } from '@/features/chat/inbox-api';
 import { chatApi } from '@/features/chat/api';
 import { uploadApi } from '@/features/upload/api';
+import { communitiesApi } from '@/features/communities/api';
 import { supportApi, type SupportMessage } from '@/features/support/api';
 import { socketClient } from '@/lib/socket';
 import { useAuthStore } from '@/lib/zustand/authStore';

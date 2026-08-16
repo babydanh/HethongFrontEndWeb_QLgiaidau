@@ -10,6 +10,7 @@ import Step2FormatMulti from './components/Step2Format_Multi';
 import Step3ScheduleFees from './components/Step3ScheduleFees';
 import Step4ReviewSubmit from './components/Step4ReviewSubmit';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { BRAND } from '@/constants/brand';
 
 const STEPS = [
   { id: 1, label: 'Thông Tin', icon: Info },
@@ -43,11 +44,11 @@ function CreateTournamentForm() {
   return (
     <div className="bg-slate-50 min-h-screen py-12 px-4 md:px-8">
       <div className="max-w-3xl mx-auto">
-        
+
         {/* Header */}
         <div className="mb-8 text-center">
           <div className="w-24 h-24 flex items-center justify-center mx-auto mb-4">
-            <Image src="/sporto_v1.svg" alt="Sporto Logo" width={96} height={96} className="w-full h-full object-contain" priority />
+            <Image src={BRAND.assets.logoIcon} alt={`${BRAND.name} Logo`} width={96} height={96} className="w-full h-full object-contain" priority />
           </div>
           <h1 className="text-3xl font-bold text-slate-900">Tạo Giải Đấu Mới</h1>
           <p className="text-slate-500 mt-2 font-medium">Lập giải đấu nháp rõ ràng trong 4 bước</p>

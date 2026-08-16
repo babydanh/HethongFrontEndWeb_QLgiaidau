@@ -5,7 +5,10 @@ import { useRouter } from 'next/navigation';
 import { 
   Settings, Save, Globe, Lock, ShieldAlert,
   Plus, Image as ImageIcon, Loader2,
-  Trash2, AlignLeft, ListChecks
+  Trash2, AlignLeft, ListChecks, Sparkles,
+  Users, Activity, ShieldCheck, HelpCircle,
+  Share2, MapPin, CheckCircle2, ChevronRight,
+  Sliders, MessageSquare, Tag, Eye
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Community, communitiesApi } from '@/features/communities/api';
@@ -307,255 +310,341 @@ export default function SettingsTab({ community }: { community: Community }) {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      <section className="lg:col-span-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-6">
+    <div className="space-y-8">
+      {/* SECTION 1: Cài đặt Sinh hoạt & Tương tác CLB */}
+      <section className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm transition-all hover:shadow-md">
         <div className="mb-6 flex flex-col gap-4 border-b border-slate-100 pb-5 sm:flex-row sm:items-center sm:justify-between">
-          <div><h3 className="text-lg font-bold text-slate-900">Sinh hoạt CLB</h3><p className="mt-1 text-xs text-slate-500">Điều khiển feed, chat và quyền thành viên.</p></div>
-          <Button type="button" onClick={() => void saveSocialSettings()} disabled={isSavingSocial} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold">{isSavingSocial ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}Lưu social</Button>
-        </div>
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-          <label className="text-sm font-semibold text-slate-700">Quyền đăng bài<select value={socialSettings.postingPolicy} onChange={(event) => setSocialSettings((current) => ({ ...current, postingPolicy: event.target.value as CommunitySocialSettings['postingPolicy'] }))} className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"><option value="MEMBERS">Thành viên</option><option value="ADMINS">Chỉ ban quản trị</option><option value="OFF">Tắt đăng bài</option></select></label>
-          <label className="flex items-center gap-2 rounded-lg bg-white p-3 text-sm font-semibold text-slate-700"><input type="checkbox" checked={socialSettings.postApprovalRequired} onChange={(event) => setSocialSettings((current) => ({ ...current, postApprovalRequired: event.target.checked }))} />Bài thành viên phải duyệt</label>
-          <label className="flex items-center gap-2 rounded-lg bg-white p-3 text-sm font-semibold text-slate-700"><input type="checkbox" checked={socialSettings.commentsEnabled} onChange={(event) => setSocialSettings((current) => ({ ...current, commentsEnabled: event.target.checked }))} />Cho phép bình luận</label>
-          <label className="flex items-center gap-2 rounded-lg bg-white p-3 text-sm font-semibold text-slate-700"><input type="checkbox" checked={socialSettings.chatEnabled} onChange={(event) => setSocialSettings((current) => ({ ...current, chatEnabled: event.target.checked }))} />Mở chat CLB</label>
-          <label className="flex items-center gap-2 rounded-lg bg-white p-3 text-sm font-semibold text-slate-700"><input type="checkbox" checked={socialSettings.publicFeed} onChange={(event) => setSocialSettings((current) => ({ ...current, publicFeed: event.target.checked }))} />Feed cho khách xem</label>
-          <label className="text-sm font-semibold text-slate-700">Quyền gắn thẻ<select value={socialSettings.memberTaggingPolicy} onChange={(event) => setSocialSettings((current) => ({ ...current, memberTaggingPolicy: event.target.value as CommunitySocialSettings['memberTaggingPolicy'] }))} className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"><option value="MEMBERS">Thành viên</option><option value="ADMINS">Chỉ ban quản trị</option><option value="OFF">Tắt gắn thẻ</option></select></label>
-          <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 space-y-3 md:col-span-2 xl:col-span-1">
-            <div><p className="text-sm font-bold text-slate-800">Tag thành viên</p><p className="text-xs text-slate-500">Tạo tag vui vẻ và chọn màu để BQT dùng khi gán cho thành viên.</p></div>
-            <div className="flex gap-2">
-              <input value={newTagName} onChange={(event) => setNewTagName(event.target.value)} maxLength={24} placeholder="Ví dụ: MVP tuần" className="min-w-0 flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm" />
-              <input type="color" value={newTagColor} onChange={(event) => setNewTagColor(event.target.value)} aria-label="Màu tag" className="h-10 w-12 cursor-pointer rounded border border-slate-200 bg-white p-1" />
-              <Button type="button" onClick={handleCreateTagPreset} aria-label="Tạo tag" className="bg-blue-600 hover:bg-blue-700 px-3 text-white"><Plus className="h-4 w-4" /></Button>
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+              <Activity className="h-5 w-5" />
             </div>
-            <div className="flex flex-wrap gap-2">
-              {tagPresets.map((preset) => <span key={preset.id} className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold" style={{ backgroundColor: preset.color, color: '#334155' }}>{preset.name}<button type="button" onClick={() => handleDeleteTagPreset(preset.id)} aria-label={`Xóa ${preset.name}`}><Trash2 className="h-3 w-3" /></button></span>)}
+            <div>
+              <h3 className="text-lg font-bold text-slate-900">Sinh hoạt & Tương tác CLB</h3>
+              <p className="text-xs text-slate-500">Thiết lập quyền đăng bài, phê duyệt bài viết, tính năng chat và tag thành viên.</p>
+            </div>
+          </div>
+          <Button 
+            type="button" 
+            onClick={() => void saveSocialSettings()} 
+            disabled={isSavingSocial} 
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
+          >
+            {isSavingSocial ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+            Lưu cài đặt sinh hoạt
+          </Button>
+        </div>
+
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          {/* Cột 1: Quyền hạn */}
+          <div className="space-y-4 rounded-xl border border-slate-150 bg-slate-50/50 p-4">
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500">
+              <Sliders className="h-3.5 w-3.5" />
+              Quyền hạn & Chính sách
+            </div>
+            
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Quyền đăng bài</label>
+                <select 
+                  value={socialSettings.postingPolicy} 
+                  onChange={(event) => setSocialSettings((current) => ({ ...current, postingPolicy: event.target.value as CommunitySocialSettings['postingPolicy'] }))} 
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-800 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                >
+                  <option value="MEMBERS">Tất cả thành viên</option>
+                  <option value="ADMINS">Chỉ Ban quản trị (BQT)</option>
+                  <option value="OFF">Tắt tính năng đăng bài</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Quyền gắn thẻ (Tag)</label>
+                <select 
+                  value={socialSettings.memberTaggingPolicy} 
+                  onChange={(event) => setSocialSettings((current) => ({ ...current, memberTaggingPolicy: event.target.value as CommunitySocialSettings['memberTaggingPolicy'] }))} 
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-800 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                >
+                  <option value="MEMBERS">Thành viên có thể tag</option>
+                  <option value="ADMINS">Chỉ Ban quản trị (BQT)</option>
+                  <option value="OFF">Tắt gắn thẻ</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Cột 2: Bật/Tắt tính năng */}
+          <div className="space-y-3 rounded-xl border border-slate-150 bg-slate-50/50 p-4">
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500">
+              <MessageSquare className="h-3.5 w-3.5" />
+              Tính năng cộng đồng
+            </div>
+
+            <div className="space-y-2.5">
+              <label className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-2.5 text-xs font-semibold text-slate-700 shadow-sm cursor-pointer hover:bg-slate-50 transition-colors">
+                <input 
+                  type="checkbox" 
+                  checked={socialSettings.postApprovalRequired} 
+                  onChange={(event) => setSocialSettings((current) => ({ ...current, postApprovalRequired: event.target.checked }))}
+                  className="h-4 w-4 rounded text-blue-600 focus:ring-blue-500" 
+                />
+                <span>Kiểm duyệt bài viết thành viên</span>
+              </label>
+
+              <label className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-2.5 text-xs font-semibold text-slate-700 shadow-sm cursor-pointer hover:bg-slate-50 transition-colors">
+                <input 
+                  type="checkbox" 
+                  checked={socialSettings.commentsEnabled} 
+                  onChange={(event) => setSocialSettings((current) => ({ ...current, commentsEnabled: event.target.checked }))}
+                  className="h-4 w-4 rounded text-blue-600 focus:ring-blue-500" 
+                />
+                <span>Cho phép bình luận bài viết</span>
+              </label>
+
+              <label className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-2.5 text-xs font-semibold text-slate-700 shadow-sm cursor-pointer hover:bg-slate-50 transition-colors">
+                <input 
+                  type="checkbox" 
+                  checked={socialSettings.chatEnabled} 
+                  onChange={(event) => setSocialSettings((current) => ({ ...current, chatEnabled: event.target.checked }))}
+                  className="h-4 w-4 rounded text-blue-600 focus:ring-blue-500" 
+                />
+                <span>Mở phòng Chat nội bộ CLB</span>
+              </label>
+
+              <label className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-2.5 text-xs font-semibold text-slate-700 shadow-sm cursor-pointer hover:bg-slate-50 transition-colors">
+                <input 
+                  type="checkbox" 
+                  checked={socialSettings.publicFeed} 
+                  onChange={(event) => setSocialSettings((current) => ({ ...current, publicFeed: event.target.checked }))}
+                  className="h-4 w-4 rounded text-blue-600 focus:ring-blue-500" 
+                />
+                <span>Công khai bảng tin cho khách vãng lai</span>
+              </label>
+            </div>
+          </div>
+
+          {/* Cột 3: Tag Danh hiệu Thành viên */}
+          <div className="space-y-3 rounded-xl border border-slate-150 bg-slate-50/50 p-4">
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500">
+              <Tag className="h-3.5 w-3.5" />
+              Tag danh hiệu thành viên
+            </div>
+            
+            <p className="text-xs text-slate-500">Tạo nhãn vinh danh (MVP tuần, Đội trưởng, Thủ môn xuất sắc...).</p>
+
+            <div className="flex gap-2">
+              <input 
+                value={newTagName} 
+                onChange={(event) => setNewTagName(event.target.value)} 
+                maxLength={24} 
+                placeholder="VD: MVP tuần" 
+                className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-900 shadow-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" 
+              />
+              <input 
+                type="color" 
+                value={newTagColor} 
+                onChange={(event) => setNewTagColor(event.target.value)} 
+                aria-label="Màu tag" 
+                className="h-8 w-10 cursor-pointer rounded border border-slate-200 bg-white p-0.5 shadow-sm" 
+              />
+              <Button 
+                type="button" 
+                onClick={handleCreateTagPreset} 
+                aria-label="Tạo tag" 
+                className="bg-blue-600 hover:bg-blue-700 px-3 text-white h-8 text-xs font-semibold shadow-sm"
+              >
+                <Plus className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+
+            <div className="flex flex-wrap gap-1.5 pt-1">
+              {tagPresets.length === 0 ? (
+                <span className="text-[11px] italic text-slate-400">Chưa tạo tag nào.</span>
+              ) : (
+                tagPresets.map((preset) => (
+                  <span 
+                    key={preset.id} 
+                    className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold shadow-sm" 
+                    style={{ backgroundColor: preset.color, color: '#1e293b' }}
+                  >
+                    {preset.name}
+                    <button 
+                      type="button" 
+                      onClick={() => handleDeleteTagPreset(preset.id)} 
+                      aria-label={`Xóa ${preset.name}`}
+                      className="text-slate-600 hover:text-rose-600 transition-colors"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  </span>
+                ))
+              )}
             </div>
           </div>
         </div>
       </section>
-      {/* LEFT & CENTER: Form Settings */}
-      <div className="lg:col-span-2 space-y-8">
-        {/* General Settings */}
-        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6 md:p-8">
-          <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2 border-b pb-4">
-            <Settings className="w-5 h-5 text-blue-600" />
-            Cài đặt chung
-          </h3>
-          
-          <div className="space-y-6">
-            {/* Tên & Mô tả */}
-            <div className="grid grid-cols-1 gap-4">
+
+      {/* SECTION 2: Grid Form Cài Đặt Chung + Sidebar Gợi Ý */}
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+        {/* MAIN: Form Cài Đặt Chính (Chiếm 2 cột) */}
+        <div className="lg:col-span-2 space-y-8">
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm md:p-8 space-y-8">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-slate-100 pb-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                  <Settings className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-slate-900">Thông tin cơ bản CLB</h3>
+                  <p className="text-xs text-slate-500">Tùy chỉnh thông tin nhận diện, vị trí, quyền riêng tư và quy chế tham gia.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Block 1: Tên, Mô tả, Môn thể thao */}
+            <div className="space-y-5">
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1">Tên câu lạc bộ *</label>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                  Tên câu lạc bộ <span className="text-rose-500">*</span>
+                </label>
                 <input 
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" 
-                  placeholder="Tên nhóm của bạn..." 
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm font-medium text-slate-900 shadow-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all" 
+                  placeholder="Nhập tên câu lạc bộ..." 
                   type="text" 
                 />
               </div>
+
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1">Mô tả chi tiết</label>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                  Mô tả & Giới thiệu chi tiết
+                </label>
                 <RichTextEditor 
                   value={description}
                   onChange={(data) => setDescription(data)}
-                  placeholder="Giới thiệu về mục đích hoạt động, lịch sinh hoạt..." 
+                  placeholder="Giới thiệu về mục đích hoạt động, lịch sinh hoạt cố định..." 
                 />
               </div>
-            </div>
 
-            {/* Logo & Banner Uploads */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4 border-t border-slate-100">
-              {/* Logo */}
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Ảnh đại diện (Logo)</label>
-                <div className="flex items-center gap-4">
-                  <div className="relative w-16 h-16 rounded-full border border-slate-200 overflow-hidden bg-slate-50 flex items-center justify-center shrink-0">
-                    {logoUrl ? (
-                      <img src={logoUrl} alt="Logo" className="w-full h-full object-contain p-1" />
-                    ) : (
-                      <ImageIcon className="w-8 h-8 text-slate-300" />
-                    )}
-                    {isUploadingLogo && (
-                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                        <Loader2 className="w-5 h-5 text-white animate-spin" />
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <input 
-                      type="file" 
-                      accept="image/*" 
-                      className="hidden" 
-                      ref={logoInputRef} 
-                      onChange={(e) => handleUploadFile(e, 'logo')} 
-                    />
-                    <Button 
-                      variant="outline" 
-                      onClick={() => logoInputRef.current?.click()}
-                      disabled={isUploadingLogo}
-                      className="border-slate-200 text-slate-700 text-xs py-1.5 px-3 h-auto"
-                    >
-                      Chọn ảnh
-                    </Button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Banner */}
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Ảnh bìa nhóm (Cover)</label>
-                <div className="flex items-center gap-4">
-                  <div className="relative w-32 h-20 rounded-lg border border-slate-200 overflow-hidden bg-slate-50 flex items-center justify-center shrink-0">
-                    {bannerUrl ? (
-                      <img src={bannerUrl} alt="Banner" className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="absolute inset-0 bg-slate-100 flex items-center justify-center">
-                        <ImageIcon className="w-8 h-8 text-slate-400" />
-                      </div>
-                    )}
-                    {isUploadingBanner && (
-                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                        <Loader2 className="w-5 h-5 text-white animate-spin" />
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <input 
-                      type="file" 
-                      accept="image/*" 
-                      className="hidden" 
-                      ref={bannerInputRef} 
-                      onChange={(e) => handleUploadFile(e, 'banner')} 
-                    />
-                    <Button 
-                      variant="outline" 
-                      onClick={() => bannerInputRef.current?.click()}
-                      disabled={isUploadingBanner}
-                      className="border-slate-200 text-slate-700 text-xs py-1.5 px-3 h-auto"
-                    >
-                      Chọn ảnh
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Môn thể thao chính */}
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">Môn thể thao chính *</label>
-              <p className="mb-3 text-xs text-slate-500">Mỗi CLB chỉ có một môn. Các đội trực thuộc có thể khác giới tính hoặc quy mô thi đấu.</p>
-              <div className="flex flex-wrap gap-2">
-                {allCategories.map(cat => {
-                  const isSelected = selectedCategoryIds.includes(cat.id);
-                  return (
-                    <button
-                      key={cat.id}
-                      type="button"
-                      onClick={() => handleToggleCategory(cat.id)}
-                      className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all border ${
-                        isSelected 
-                          ? 'bg-blue-50 text-blue-700 border-blue-300' 
-                          : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                      }`}
-                    >
-                      {cat.name}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Liên kết mạng xã hội & Liên hệ khác */}
-            <div className="border-t pt-5 mt-5 space-y-4">
-              <label className="block text-sm font-semibold text-slate-700">Liên kết mạng xã hội & Liên hệ khác</label>
-              
-              {/* Current list */}
-              <div className="space-y-2">
-                {Object.entries(socialLinks).map(([key, val]) => {
-                  const displayLabel = key.charAt(0).toUpperCase() + key.slice(1);
-                  return (
-                    <div key={key} className="flex gap-2 items-center bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-                      <span className="text-xs font-bold text-slate-650 min-w-[100px]">{displayLabel}:</span>
-                      <span className="text-sm text-slate-800 flex-grow truncate">{val}</span>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveSocialLink(key)}
-                        className="text-slate-400 hover:text-rose-500 p-1 transition-colors"
-                        title="Xóa"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+              {/* Logo & Banner Uploads */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2">
+                {/* Logo */}
+                <div className="rounded-xl border border-slate-150 bg-slate-50/50 p-4">
+                  <label className="block text-xs font-bold text-slate-700 mb-3 flex items-center gap-1.5">
+                    <ImageIcon className="w-3.5 h-3.5 text-blue-600" />
+                    Ảnh đại diện (Logo)
+                  </label>
+                  <div className="flex items-center gap-4">
+                    <div className="relative w-16 h-16 rounded-full border-2 border-white shadow-md overflow-hidden bg-white flex items-center justify-center shrink-0">
+                      {logoUrl ? (
+                        <img src={logoUrl} alt="Logo" className="w-full h-full object-contain p-1" />
+                      ) : (
+                        <ImageIcon className="w-7 h-7 text-slate-300" />
+                      )}
+                      {isUploadingLogo && (
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                          <Loader2 className="w-5 h-5 text-white animate-spin" />
+                        </div>
+                      )}
                     </div>
-                  );
-                })}
-                {Object.keys(socialLinks).length === 0 && (
-                  <p className="text-xs text-slate-400 italic">Chưa có liên kết liên hệ nào.</p>
-                )}
+                    <div>
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        className="hidden" 
+                        ref={logoInputRef} 
+                        onChange={(e) => handleUploadFile(e, 'logo')} 
+                      />
+                      <Button 
+                        variant="outline" 
+                        onClick={() => logoInputRef.current?.click()}
+                        disabled={isUploadingLogo}
+                        className="border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold py-1.5 px-3 h-auto shadow-sm"
+                      >
+                        {isUploadingLogo ? 'Đang tải...' : 'Thay đổi logo'}
+                      </Button>
+                      <p className="text-[10px] text-slate-400 mt-1">PNG, JPG tỉ lệ 1:1</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Banner */}
+                <div className="rounded-xl border border-slate-150 bg-slate-50/50 p-4">
+                  <label className="block text-xs font-bold text-slate-700 mb-3 flex items-center gap-1.5">
+                    <ImageIcon className="w-3.5 h-3.5 text-blue-600" />
+                    Ảnh bìa CLB (Cover Banner)
+                  </label>
+                  <div className="flex items-center gap-4">
+                    <div className="relative w-28 h-16 rounded-lg border-2 border-white shadow-md overflow-hidden bg-slate-100 flex items-center justify-center shrink-0">
+                      {bannerUrl ? (
+                        <img src={bannerUrl} alt="Banner" className="w-full h-full object-cover" />
+                      ) : (
+                        <ImageIcon className="w-6 h-6 text-slate-400" />
+                      )}
+                      {isUploadingBanner && (
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                          <Loader2 className="w-5 h-5 text-white animate-spin" />
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        className="hidden" 
+                        ref={bannerInputRef} 
+                        onChange={(e) => handleUploadFile(e, 'banner')} 
+                      />
+                      <Button 
+                        variant="outline" 
+                        onClick={() => bannerInputRef.current?.click()}
+                        disabled={isUploadingBanner}
+                        className="border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold py-1.5 px-3 h-auto shadow-sm"
+                      >
+                        {isUploadingBanner ? 'Đang tải...' : 'Thay đổi ảnh bìa'}
+                      </Button>
+                      <p className="text-[10px] text-slate-400 mt-1">Khuyên dùng 1200x400 px</p>
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              {/* Add Form */}
-              <div className="bg-slate-50/50 p-4 rounded-lg border border-slate-200 flex flex-col sm:flex-row gap-3 items-end">
-                <div className="flex-1 w-full space-y-1">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase">Loại liên kết</label>
-                  <select
-                    value={newSocialType}
-                    onChange={(e) => {
-                      setNewSocialType(e.target.value);
-                      if (e.target.value !== 'custom') {
-                        setNewSocialLabel('');
-                      }
-                    }}
-                    className="w-full border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-750 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 h-11"
-                  >
-                    <option value="facebook">Facebook</option>
-                    <option value="zalo">Zalo</option>
-                    <option value="website">Website</option>
-                    <option value="instagram">Instagram</option>
-                    <option value="tiktok">Tiktok</option>
-                    <option value="custom">Khác (Tự nhập nhãn)...</option>
-                  </select>
+              {/* Môn thể thao chính */}
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                  Môn thể thao chính <span className="text-rose-500">*</span>
+                </label>
+                <p className="mb-2.5 text-xs text-slate-500">Mỗi CLB gắn liền với một môn thể thao trọng tâm.</p>
+                <div className="flex flex-wrap gap-2">
+                  {allCategories.map(cat => {
+                    const isSelected = selectedCategoryIds.includes(cat.id);
+                    return (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => handleToggleCategory(cat.id)}
+                        className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all border shadow-sm ${
+                          isSelected 
+                            ? 'bg-blue-600 text-white border-blue-600 shadow-blue-500/20' 
+                            : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                        }`}
+                      >
+                        {cat.name}
+                      </button>
+                    );
+                  })}
                 </div>
-
-                {newSocialType === 'custom' && (
-                  <div className="flex-1 w-full space-y-1 animate-in fade-in slide-in-from-left-2 duration-150">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase">Nhãn liên kết</label>
-                    <input
-                      type="text"
-                      placeholder="Telegram, Viber,..."
-                      value={newSocialLabel}
-                      onChange={(e) => setNewSocialLabel(e.target.value)}
-                      className="w-full border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-755 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 h-11"
-                    />
-                  </div>
-                )}
-
-                <div className="flex-[2] w-full space-y-1">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase">Đường dẫn / Giá trị</label>
-                  <input
-                    type="text"
-                    placeholder="Link liên kết hoặc giá trị"
-                    value={newSocialValue}
-                    onChange={(e) => setNewSocialValue(e.target.value)}
-                    className="w-full border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-755 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 h-11"
-                  />
-                </div>
-
-                <Button
-                  type="button"
-                  onClick={handleAddSocialLink}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold h-11 px-5 w-full sm:w-auto text-xs shrink-0 rounded-lg"
-                >
-                  Thêm
-                </Button>
               </div>
             </div>
 
-            {/* Khu vực hoạt động */}
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">Khu vực hoạt động *</label>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-3">
+            {/* Block 2: Khu vực hoạt động */}
+            <div className="border-t border-slate-100 pt-6 space-y-4">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                <MapPin className="w-3.5 h-3.5 text-blue-600" />
+                Địa điểm & Khu vực hoạt động <span className="text-rose-500">*</span>
+              </label>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <select
                   value={provinceCode}
                   onChange={(e) => {
@@ -563,9 +652,9 @@ export default function SettingsTab({ community }: { community: Community }) {
                     setDistrictCode('');
                     setWardCode('');
                   }}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 shadow-sm focus:ring-1 focus:ring-blue-500 outline-none"
                 >
-                  <option value="">-- Tỉnh/Thành phố --</option>
+                  <option value="">-- Tỉnh / Thành phố --</option>
                   {provinces.map(p => <option key={p.code} value={p.code}>{p.name}</option>)}
                 </select>
 
@@ -576,9 +665,9 @@ export default function SettingsTab({ community }: { community: Community }) {
                     setWardCode('');
                   }}
                   disabled={!provinceCode}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:opacity-50"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 shadow-sm focus:ring-1 focus:ring-blue-500 outline-none disabled:opacity-50 disabled:bg-slate-50"
                 >
-                  <option value="">-- Quận/Huyện --</option>
+                  <option value="">-- Quận / Huyện --</option>
                   {districts.map(d => <option key={d.code} value={d.code}>{d.name}</option>)}
                 </select>
 
@@ -586,230 +675,365 @@ export default function SettingsTab({ community }: { community: Community }) {
                   value={wardCode}
                   onChange={(e) => setWardCode(e.target.value)}
                   disabled={!districtCode}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:opacity-50"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 shadow-sm focus:ring-1 focus:ring-blue-500 outline-none disabled:opacity-50 disabled:bg-slate-50"
                 >
-                  <option value="">-- Phường/Xã --</option>
+                  <option value="">-- Phường / Xã --</option>
                   {wards.map(w => <option key={w.code} value={w.code}>{w.name}</option>)}
                 </select>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">Địa chỉ chi tiết / Tên sân (tuỳ chọn)</label>
                 <input
                   type="text"
-                  placeholder="Ví dụ: Sân Pickleball Thăng Long, Số 123 Đường Nguyễn Trãi..."
+                  placeholder="Địa chỉ sân nhà / địa điểm sinh hoạt cụ thể (VD: Sân Thể Thao Tuổi Trẻ, Số 123 Lê Lợi...)"
                   value={locationAddress}
                   onChange={(e) => setLocationAddress(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 shadow-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
                 />
               </div>
             </div>
 
-            {/* Quyền riêng tư & Cách thức tham gia */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-100">
-              {/* Visibility */}
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Quyền riêng tư</label>
-                <div className="space-y-2">
-                  {[
-                    { val: 'PUBLIC', label: 'Công khai', desc: 'Ai cũng có thể tìm thấy nhóm và xem bài viết.', icon: Globe },
-                    { val: 'RESTRICTED', label: 'Hạn chế', desc: 'Có thể tìm thấy nhóm, nhưng bài viết chỉ cho thành viên.', icon: ShieldAlert },
-                    { val: 'PRIVATE', label: 'Riêng tư', desc: 'Ẩn khỏi danh sách tìm kiếm công cộng, chỉ vào qua link mời.', icon: Lock }
-                  ].map(item => {
-                    const Icon = item.icon;
-                    return (
-                      <label 
-                        key={item.val} 
-                        className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
-                          visibility === item.val 
-                            ? 'bg-blue-50/60 border-blue-300' 
-                            : 'bg-white border-slate-200 hover:bg-slate-50'
-                        }`}
-                      >
-                        <input 
-                          type="radio" 
-                          name="visibility" 
-                          value={item.val} 
-                          checked={visibility === item.val}
-                          onChange={() => setVisibility(item.val as 'PUBLIC' | 'RESTRICTED' | 'PRIVATE')}
-                          className="mt-1 text-blue-600 focus:ring-blue-500" 
-                        />
-                        <div>
-                          <span className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                            <Icon className="w-4 h-4 text-blue-600 shrink-0" />
-                            {item.label}
-                          </span>
-                          <p className="text-xs text-slate-500 mt-0.5">{item.desc}</p>
-                        </div>
-                      </label>
-                    );
-                  })}
+            {/* Block 3: Quyền riêng tư & Cách tham gia */}
+            <div className="border-t border-slate-100 pt-6 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Quyền riêng tư */}
+                <div className="space-y-2.5">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                    <Eye className="w-3.5 h-3.5 text-blue-600" />
+                    Quyền riêng tư
+                  </label>
+                  <div className="space-y-2">
+                    {[
+                      { val: 'PUBLIC', label: 'Công khai', desc: 'Mọi người đều tìm thấy và xem được thông tin.', icon: Globe },
+                      { val: 'RESTRICTED', label: 'Hạn chế', desc: 'Tìm thấy CLB nhưng nội dung chỉ dành cho thành viên.', icon: ShieldAlert },
+                      { val: 'PRIVATE', label: 'Riêng tư', desc: 'Ẩn khỏi tìm kiếm, chỉ tham gia qua đường link mời.', icon: Lock }
+                    ].map(item => {
+                      const Icon = item.icon;
+                      const isChecked = visibility === item.val;
+                      return (
+                        <label 
+                          key={item.val} 
+                          className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all shadow-sm ${
+                            isChecked 
+                              ? 'bg-blue-50/80 border-blue-300 ring-1 ring-blue-300' 
+                              : 'bg-white border-slate-200 hover:bg-slate-50'
+                          }`}
+                        >
+                          <input 
+                            type="radio" 
+                            name="visibility" 
+                            value={item.val} 
+                            checked={isChecked}
+                            onChange={() => setVisibility(item.val as 'PUBLIC' | 'RESTRICTED' | 'PRIVATE')}
+                            className="mt-1 text-blue-600 focus:ring-blue-500" 
+                          />
+                          <div>
+                            <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                              <Icon className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                              {item.label}
+                            </span>
+                            <p className="text-[11px] text-slate-500 mt-0.5">{item.desc}</p>
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Cách thức tham gia */}
+                <div className="space-y-2.5">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                    <Users className="w-3.5 h-3.5 text-blue-600" />
+                    Cách thức tham gia
+                  </label>
+                  <div className="space-y-2">
+                    {[
+                      { val: 'OPEN', label: 'Mở tự do', desc: 'Thành viên nhấn tham gia là vào nhóm ngay.' },
+                      { val: 'APPROVAL', label: 'Cần phê duyệt đơn', desc: 'Phải trả lời câu hỏi và chờ BQT chấp thuận.' },
+                      { val: 'INVITE_ONLY', label: 'Chỉ nhận lời mời', desc: 'Chỉ thành viên được mời mới có thể tham gia.' }
+                    ].map(item => {
+                      const isChecked = joinMode === item.val;
+                      return (
+                        <label 
+                          key={item.val} 
+                          className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all shadow-sm ${
+                            isChecked 
+                              ? 'bg-blue-50/80 border-blue-300 ring-1 ring-blue-300' 
+                              : 'bg-white border-slate-200 hover:bg-slate-50'
+                          }`}
+                        >
+                          <input 
+                            type="radio" 
+                            name="joinMode" 
+                            value={item.val} 
+                            checked={isChecked}
+                            onChange={() => setJoinMode(item.val as 'OPEN' | 'APPROVAL' | 'INVITE_ONLY')}
+                            className="mt-1 text-blue-600 focus:ring-blue-500" 
+                          />
+                          <div>
+                            <span className="text-xs font-bold text-slate-900">{item.label}</span>
+                            <p className="text-[11px] text-slate-500 mt-0.5">{item.desc}</p>
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
 
-              {/* Join Mode */}
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Cách thức tham gia</label>
-                <div className="space-y-2">
-                  {[
-                    { val: 'OPEN', label: 'Mở tự do', desc: 'Thành viên nhấn nút tham gia sẽ vào ngay lập tức.' },
-                    { val: 'APPROVAL', label: 'Cần phê duyệt đơn', desc: 'Người tham gia cần trả lời câu hỏi và chờ chủ nhóm duyệt.' },
-                    { val: 'INVITE_ONLY', label: 'Chỉ nhận qua lời mời', desc: 'Chỉ những thành viên được quản trị viên mời mới có thể vào.' }
-                  ].map(item => (
-                    <label 
-                      key={item.val} 
-                      className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
-                        joinMode === item.val 
-                          ? 'bg-blue-50/60 border-blue-300' 
-                          : 'bg-white border-slate-200 hover:bg-slate-50'
-                      }`}
-                    >
-                      <input 
-                        type="radio" 
-                        name="joinMode" 
-                        value={item.val} 
-                        checked={joinMode === item.val}
-                        onChange={() => setJoinMode(item.val as 'OPEN' | 'APPROVAL' | 'INVITE_ONLY')}
-                        className="mt-1 text-blue-600 focus:ring-blue-500" 
-                      />
-                      <div>
-                        <span className="text-sm font-bold text-slate-900">{item.label}</span>
-                        <p className="text-xs text-slate-500 mt-0.5">{item.desc}</p>
+              {/* Giới hạn thành viên & Nội quy */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+                <div className="sm:col-span-1">
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Số thành viên tối đa</label>
+                  <input 
+                    value={maxMembers}
+                    onChange={(e) => setMaxMembers(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 shadow-sm focus:ring-1 focus:ring-blue-500 outline-none" 
+                    placeholder="Không giới hạn" 
+                    type="number" 
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1">
+                    <AlignLeft className="w-3.5 h-3.5 text-blue-600" />
+                    Nội quy câu lạc bộ
+                  </label>
+                  <textarea 
+                    value={rules}
+                    onChange={(e) => setRules(e.target.value)}
+                    rows={2}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 shadow-sm focus:ring-1 focus:ring-blue-500 outline-none" 
+                    placeholder="Quy định ứng xử, thời gian sinh hoạt, đóng quỹ..." 
+                  />
+                </div>
+              </div>
+
+              {/* Câu hỏi tuyển thành viên khi chọn APPROVAL */}
+              {joinMode === 'APPROVAL' && (
+                <div className="rounded-xl border border-blue-150 bg-blue-50/40 p-4 space-y-3 animate-in fade-in duration-200">
+                  <label className="block text-xs font-bold text-blue-950 flex items-center gap-1.5">
+                    <ListChecks className="w-4 h-4 text-blue-600" />
+                    Câu hỏi xét duyệt thành viên
+                  </label>
+                  <p className="text-xs text-slate-600">Thành viên bắt buộc phải trả lời những câu hỏi này khi gửi đơn xin vào CLB.</p>
+                  
+                  <div className="space-y-2">
+                    {joinQuestions.map((q, idx) => (
+                      <div key={idx} className="flex gap-2 items-center bg-white p-2.5 rounded-lg border border-slate-200 shadow-sm">
+                        <span className="text-xs font-bold text-blue-600 w-5 text-center">{idx + 1}</span>
+                        <span className="text-xs font-medium text-slate-800 flex-grow">{q}</span>
+                        <button 
+                          type="button" 
+                          onClick={() => handleRemoveQuestion(idx)}
+                          className="text-slate-400 hover:text-rose-500 p-1 transition-colors"
+                          title="Xoá câu hỏi"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
                       </div>
-                    </label>
-                  ))}
+                    ))}
+                  </div>
+
+                  <div className="flex gap-2 pt-1">
+                    <input 
+                      value={newQuestion}
+                      onChange={(e) => setNewQuestion(e.target.value)}
+                      className="flex-grow px-3 py-2 border border-slate-200 rounded-lg text-xs font-medium text-slate-900 bg-white shadow-sm focus:ring-1 focus:ring-blue-500 outline-none" 
+                      placeholder="Nhập câu hỏi (VD: Trình độ ELO / DUPR hiện tại của bạn là bao nhiêu?)..." 
+                      type="text" 
+                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddQuestion(); } }}
+                    />
+                    <Button 
+                      type="button" 
+                      onClick={handleAddQuestion}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 h-8 text-xs font-semibold shadow-sm flex items-center gap-1"
+                    >
+                      <Plus className="w-3.5 h-3.5" /> Thêm câu hỏi
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
-            {/* Giới hạn số lượng thành viên & Nội quy */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-slate-100">
-              <div className="md:col-span-1">
-                <label className="block text-sm font-semibold text-slate-700 mb-1">Số thành viên tối đa</label>
-                <input 
-                  value={maxMembers}
-                  onChange={(e) => setMaxMembers(e.target.value)}
-                  className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" 
-                  placeholder="Không giới hạn" 
-                  type="number" 
-                />
-              </div>
-              <div className="md:col-span-2">
-                <label className="block text-sm font-semibold text-slate-700 mb-1 flex items-center gap-1.5">
-                  <AlignLeft className="w-4 h-4 text-blue-600" />
-                  Nội quy câu lạc bộ
-                </label>
-                <textarea 
-                  value={rules}
-                  onChange={(e) => setRules(e.target.value)}
-                  rows={2}
-                  className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" 
-                  placeholder="Quy định ứng xử, thời gian sinh hoạt, đóng phí..." 
-                />
-              </div>
-            </div>
-
-            {/* Câu hỏi tuyển thành viên (Chỉ hiện khi chọn APPROVAL) */}
-            {joinMode === 'APPROVAL' && (
-              <div className="pt-4 border-t border-slate-100 space-y-4">
-                <label className="block text-sm font-semibold text-slate-700 flex items-center gap-1.5">
-                  <ListChecks className="w-4 h-4 text-blue-600" />
-                  Câu hỏi dành cho người muốn tham gia
-                </label>
-                <p className="text-xs text-slate-500 -mt-2">Giúp lọc thành viên phù hợp bằng cách yêu cầu họ trả lời khi nhấn nút xin vào nhóm.</p>
-                
-                <div className="space-y-2">
-                  {joinQuestions.map((q, idx) => (
-                    <div key={idx} className="flex gap-2 items-center bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-                      <span className="text-xs font-bold text-slate-400 w-5 text-center">{idx + 1}</span>
-                      <span className="text-sm text-slate-700 flex-grow">{q}</span>
-                      <button 
-                        type="button" 
-                        onClick={() => handleRemoveQuestion(idx)}
-                        className="text-slate-400 hover:text-rose-500 p-1"
-                        title="Xoá câu hỏi"
+            {/* Block 4: Liên kết mạng xã hội */}
+            <div className="border-t border-slate-100 pt-6 space-y-4">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                <Share2 className="w-3.5 h-3.5 text-blue-600" />
+                Mạng xã hội & Kênh liên hệ
+              </label>
+              
+              {/* Danh sách link hiện có */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {Object.entries(socialLinks).map(([key, val]) => {
+                  const displayLabel = key.charAt(0).toUpperCase() + key.slice(1);
+                  return (
+                    <div key={key} className="flex gap-2 items-center bg-slate-50 px-3 py-2 rounded-xl border border-slate-200">
+                      <span className="text-xs font-bold text-slate-700 min-w-[70px]">{displayLabel}:</span>
+                      <span className="text-xs text-slate-600 flex-grow truncate">{val}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveSocialLink(key)}
+                        className="text-slate-400 hover:text-rose-500 p-1 transition-colors"
+                        title="Xóa"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
-                  ))}
-                </div>
-
-                <div className="flex gap-2">
-                  <input 
-                    value={newQuestion}
-                    onChange={(e) => setNewQuestion(e.target.value)}
-                    className="flex-grow px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" 
-                    placeholder="Nhập câu hỏi mới..." 
-                    type="text" 
-                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddQuestion(); } }}
-                  />
-                  <Button 
-                    type="button" 
-                    onClick={handleAddQuestion}
-                    className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 flex items-center gap-1"
-                  >
-                    <Plus className="w-4 h-4" /> Thêm
-                  </Button>
-                </div>
+                  );
+                })}
               </div>
-            )}
 
-            {/* Action buttons */}
-            <div className="pt-6 border-t flex justify-end gap-4">
+              {/* Form thêm link */}
+              <div className="bg-slate-50/70 p-3.5 rounded-xl border border-slate-200 flex flex-col sm:flex-row gap-2.5 items-center">
+                <select
+                  value={newSocialType}
+                  onChange={(e) => {
+                    setNewSocialType(e.target.value);
+                    if (e.target.value !== 'custom') setNewSocialLabel('');
+                  }}
+                  className="w-full sm:w-36 border border-slate-200 rounded-lg px-2.5 py-1.5 bg-white text-xs font-medium text-slate-800 shadow-sm outline-none focus:border-blue-500 h-9"
+                >
+                  <option value="facebook">Facebook</option>
+                  <option value="zalo">Zalo</option>
+                  <option value="website">Website</option>
+                  <option value="instagram">Instagram</option>
+                  <option value="tiktok">Tiktok</option>
+                  <option value="custom">Khác...</option>
+                </select>
+
+                {newSocialType === 'custom' && (
+                  <input
+                    type="text"
+                    placeholder="Tên kênh (Telegram, Viber...)"
+                    value={newSocialLabel}
+                    onChange={(e) => setNewSocialLabel(e.target.value)}
+                    className="w-full sm:w-36 border border-slate-200 rounded-lg px-2.5 py-1.5 bg-white text-xs font-medium text-slate-900 shadow-sm outline-none focus:border-blue-500 h-9"
+                  />
+                )}
+
+                <input
+                  type="text"
+                  placeholder="Đường dẫn liên kết hoặc số điện thoại..."
+                  value={newSocialValue}
+                  onChange={(e) => setNewSocialValue(e.target.value)}
+                  className="flex-1 w-full border border-slate-200 rounded-lg px-3 py-1.5 bg-white text-xs font-medium text-slate-900 shadow-sm outline-none focus:border-blue-500 h-9"
+                />
+
+                <Button
+                  type="button"
+                  onClick={handleAddSocialLink}
+                  className="bg-slate-800 hover:bg-slate-900 text-white font-semibold text-xs px-4 h-9 w-full sm:w-auto shrink-0 rounded-lg shadow-sm"
+                >
+                  Thêm liên kết
+                </Button>
+              </div>
+            </div>
+
+            {/* Bottom Save Action */}
+            <div className="pt-6 border-t border-slate-100 flex justify-end gap-3">
               <Button 
                 onClick={handleSaveSettings}
                 disabled={isSaving}
-                className="bg-blue-600 hover:bg-blue-700 text-white min-w-[140px] font-semibold"
+                className="bg-blue-600 hover:bg-blue-700 text-white min-w-[160px] font-semibold shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
               >
                 {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-                Lưu cài đặt
+                Lưu toàn bộ cài đặt
+              </Button>
+            </div>
+          </div>
+
+          {/* Vùng nguy hiểm */}
+          <div className="rounded-2xl border border-rose-200 bg-rose-50/50 p-6 md:p-8 space-y-4">
+            <div className="flex items-center gap-2 text-rose-900">
+              <Trash2 className="w-5 h-5 text-rose-600" />
+              <h3 className="text-lg font-bold">Vùng nguy hiểm</h3>
+            </div>
+            <p className="text-xs text-rose-700 leading-relaxed">
+              Hành động này sẽ xóa vĩnh viễn Câu lạc bộ này cùng toàn bộ bài viết, bảng xếp hạng và lịch sử giải đấu. Không thể hoàn tác sau khi xác nhận.
+            </p>
+            <div>
+              <Button 
+                onClick={() => {
+                  setDeleteConfirmName('');
+                  setIsDeleteConfirmOpen(true);
+                }}
+                disabled={isSaving || isDeleting}
+                className="bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold shadow-sm"
+              >
+                {isDeleting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Trash2 className="w-4 h-4 mr-2" />}
+                Xoá vĩnh viễn Câu lạc bộ
               </Button>
             </div>
           </div>
         </div>
 
-        {/* Danger Zone */}
-        <div className="bg-rose-50 rounded-lg shadow-sm border border-slate-200 p-6 md:p-8">
-          <h3 className="text-xl font-bold text-rose-950 mb-2 flex items-center gap-2">
-            <Trash2 className="w-5 h-5 text-rose-700" />
-            Vùng nguy hiểm
-          </h3>
-          <p className="text-sm text-rose-700 mb-6 leading-relaxed">
-            Hành động này sẽ xóa vĩnh viễn Câu lạc bộ này khỏi hệ thống cùng với toàn bộ thành viên, hình ảnh và lịch sử giải đấu. Hành động này không thể hoàn tác.
-          </p>
-          <Button 
-            onClick={() => {
-              setDeleteConfirmName('');
-              setIsDeleteConfirmOpen(true);
-            }}
-            disabled={isSaving || isDeleting}
-            className="bg-rose-650 hover:bg-rose-700 text-white border-0 shadow-sm"
-          >
-            {isDeleting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Trash2 className="w-4 h-4 mr-2" />}
-            Xoá Câu lạc bộ
-          </Button>
-        </div>
-      </div>
+        {/* SIDEBAR: Sticky Gợi Ý Thiết Lập & Tiện Ích CLB (Chiếm 1 cột, bám theo khi cuộn trang) */}
+        <div className="lg:col-span-1 space-y-6">
+          <div className="sticky top-24 space-y-6">
+            {/* Card 1: Gợi ý tối ưu hồ sơ CLB */}
+            <div className="rounded-2xl border border-blue-100 bg-gradient-to-br from-white via-blue-50/20 to-indigo-50/30 p-6 shadow-sm">
+              <div className="flex items-center gap-2.5 mb-4 text-blue-900">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white shadow-sm">
+                  <Sparkles className="h-4 w-4" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-sm text-slate-900">Gợi ý thiết lập CLB</h4>
+                  <p className="text-[11px] text-slate-500">Mẹo thu hút thêm nhiều thành viên</p>
+                </div>
+              </div>
 
-      {/* RIGHT: Quick Info Card */}
-      <div className="space-y-6">
-        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
-          <h4 className="font-bold text-slate-900 text-base mb-4">Gợi ý thiết lập</h4>
-          <ul className="space-y-3 text-xs text-slate-600">
-            <li className="flex items-start gap-2">
-              <span className="text-blue-500 font-bold">•</span>
-              <span><strong>Hình ảnh bắt mắt:</strong> Thêm logo và ảnh bìa chất lượng cao để CLB trông chuyên nghiệp hơn.</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-blue-500 font-bold">•</span>
-              <span><strong>Mô tả rõ ràng:</strong> Nêu rõ trình độ người chơi, thời gian sinh hoạt cố định và chi phí tham gia (nếu có).</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-blue-500 font-bold">•</span>
-              <span><strong>Duyệt thành viên:</strong> Bật chế độ duyệt đơn nếu CLB của bạn giới hạn trình độ hoặc số lượng người.</span>
-            </li>
-          </ul>
+              <div className="space-y-3.5 text-xs text-slate-600">
+                <div className="flex items-start gap-2.5 rounded-xl bg-white p-3 border border-slate-100 shadow-2xs">
+                  <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+                  <div>
+                    <strong className="text-slate-900 font-semibold block mb-0.5">Hình ảnh bắt mắt</strong>
+                    <span>Logo sắc nét và ảnh bìa chụp sân tập hoặc giải đấu sẽ giúp CLB trông uy tín và chuyên nghiệp hơn.</span>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-2.5 rounded-xl bg-white p-3 border border-slate-100 shadow-2xs">
+                  <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+                  <div>
+                    <strong className="text-slate-900 font-semibold block mb-0.5">Mô tả rõ ràng</strong>
+                    <span>Nêu rõ trình độ người chơi, khung giờ sinh hoạt cố định trong tuần và chi phí tham gia (nếu có).</span>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-2.5 rounded-xl bg-white p-3 border border-slate-100 shadow-2xs">
+                  <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+                  <div>
+                    <strong className="text-slate-900 font-semibold block mb-0.5">Duyệt thành viên</strong>
+                    <span>Bật chế độ phê duyệt đơn kèm câu hỏi phân loại nếu CLB giới hạn trình độ kỹ năng hoặc số lượng người.</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 2: Trạng thái & Tóm tắt nhanh */}
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-3">
+              <div className="flex items-center justify-between text-xs font-bold text-slate-800">
+                <span>Trạng thái hoạt động</span>
+                <span className="inline-flex items-center gap-1 text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full text-[11px]">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  Đang hoạt động
+                </span>
+              </div>
+              <div className="divide-y divide-slate-100 text-xs">
+                <div className="py-2 flex justify-between text-slate-600">
+                  <span>Quyền riêng tư:</span>
+                  <strong className="text-slate-900">{visibility === 'PUBLIC' ? 'Công khai' : visibility === 'RESTRICTED' ? 'Hạn chế' : 'Riêng tư'}</strong>
+                </div>
+                <div className="py-2 flex justify-between text-slate-600">
+                  <span>Gia nhập:</span>
+                  <strong className="text-slate-900">{joinMode === 'OPEN' ? 'Tự do' : joinMode === 'APPROVAL' ? 'Duyệt đơn' : 'Lời mời'}</strong>
+                </div>
+                <div className="py-2 flex justify-between text-slate-600">
+                  <span>Phòng Chat CLB:</span>
+                  <strong className={socialSettings.chatEnabled ? 'text-blue-600' : 'text-slate-400'}>{socialSettings.chatEnabled ? 'Đang mở' : 'Đang tắt'}</strong>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

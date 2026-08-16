@@ -1,5 +1,6 @@
 import { cn } from "@/utils/cn";
 import * as React from "react";
+import { BRAND } from "@/constants/brand";
 
 const LoadingSpinner = React.forwardRef<
   HTMLDivElement,
@@ -16,10 +17,10 @@ const LoadingSpinner = React.forwardRef<
     >
       {/* Outer spinning border */}
       <div className="absolute inset-0 rounded-full border-2 border-slate-200 border-t-blue-600 animate-spin" />
-      
+
       {/* Inner logo */}
       <img
-        src="/sporto_v1.svg"
+        src={BRAND.assets.logoIcon}
         alt="Loading..."
         className="w-[60%] h-[60%] object-contain animate-pulse"
       />

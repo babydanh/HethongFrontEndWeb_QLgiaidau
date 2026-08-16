@@ -14,6 +14,7 @@ import { Tournament } from '@/types/tournament';
 import { formatDate } from '@/utils/format';
 import { getSportLogo } from '@/constants/sports';
 import { getTournamentStatusClassName, getTournamentStatusLabel } from '@/utils/tournament-status';
+import { BRAND } from '@/constants/brand';
 
 interface ParentWithDivisions {
   id: string;
@@ -32,7 +33,7 @@ const stripHtml = (html?: string | null) => {
 };
 
 const getDefaultBanner = (_categoryName?: string | null) => {
-  return '/sporto_v1_with_text.svg';
+  return BRAND.assets.defaultTournamentLogo;
 };
 
 const getFormatLabel = (matchType: string, genderRestriction?: string | null) => {
@@ -73,7 +74,7 @@ export default function MyTournamentsPage() {
       // Fetch giải đấu lớn (parent tournaments) - mỗi giải chứa nhiều hình thức thi đấu
       const res = await tournamentsApi.getMyParentTournaments();
       let parentsWithDivisions: ParentWithDivisions[] = [];
-      
+
       if (res.data) {
         parentsWithDivisions = await Promise.all(
           res.data.map(async (p: { id: string }) => {
@@ -208,7 +209,7 @@ export default function MyTournamentsPage() {
         {parents.length === 0 ? (
           <div className="bg-white rounded-lg p-6 md:p-12 text-center border border-slate-200 shadow-sm flex flex-col items-center max-w-xl mx-auto">
             <div className="w-16 h-16 md:w-24 md:h-24 flex items-center justify-center mb-4">
-              <img src="/sporto_v1.svg" alt="Sporto" className="w-full h-full object-contain" />
+              <img src={BRAND.assets.logoIcon} alt={BRAND.name} className="w-full h-full object-contain" />
             </div>
             <h3 className="text-lg md:text-xl font-bold text-slate-900">Chưa có giải đấu nào</h3>
             <p className="text-slate-500 mt-2 font-medium max-w-sm">
@@ -233,17 +234,17 @@ export default function MyTournamentsPage() {
                 : `/organizer/tournaments/${firstDivision?.id || parent.id}/ops`;
 
               return (
-                <div 
-                  key={parent.id} 
+                <div
+                  key={parent.id}
                   className="bg-white rounded-lg border border-slate-200 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col justify-between"
                 >
                   {/* Visual Header */}
                   <div className="relative h-44 bg-slate-100 overflow-hidden group">
                     <Link href={publicHref} target="_blank" className="block w-full h-full">
-                      <img 
-                        src={parent.bannerUrl || firstDivision?.bannerUrl || getDefaultBanner(firstDivision?.category?.name || parent.name)} 
-                        alt={parent.name} 
-                        className={`w-full h-full transition-transform duration-300 group-hover:scale-105 ${(parent.bannerUrl || firstDivision?.bannerUrl) ? "object-cover" : "object-contain p-6 bg-gradient-to-br from-slate-50 via-blue-50/80 to-indigo-100/90 border-b border-slate-100"}`} 
+                      <img
+                        src={parent.bannerUrl || firstDivision?.bannerUrl || getDefaultBanner(firstDivision?.category?.name || parent.name)}
+                        alt={parent.name}
+                        className={`w-full h-full transition-transform duration-300 group-hover:scale-105 ${(parent.bannerUrl || firstDivision?.bannerUrl) ? "object-cover" : "object-contain p-6 bg-gradient-to-br from-slate-50 via-blue-50/80 to-indigo-100/90 border-b border-slate-100"}`}
                       />
                     </Link>
 
@@ -260,7 +261,7 @@ export default function MyTournamentsPage() {
                         {firstDivision?.isRanked ? 'Tính ELO' : 'Không tính ELO'}
                       </span>
                     </div>
-                    
+
                     {/* Status & Action Badges */}
                     <div className="absolute top-3 right-3 flex flex-col items-end gap-1.5 z-10">
                       <div className="flex items-center gap-1.5">

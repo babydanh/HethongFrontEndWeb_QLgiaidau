@@ -1,69 +1,63 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/Toaster";
 import RootLayoutClient from "@/components/layout/RootLayoutClient";
 import LiveMetricsWidget from "@/components/common/LiveMetricsWidget";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
+import { BRAND } from "@/constants/brand";
 
-const inter = Inter({
-  variable: "--font-sans",
-  subsets: ["latin", "vietnamese"],
-});
-
-export const metadataBase = new URL('https://sporto.asia');
+export const metadataBase = new URL(BRAND.domain);
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://sporto.asia'),
+  metadataBase: new URL(BRAND.domain),
   title: {
-    default: "Sporto - Nền tảng Quản lý và Tổ chức Giải đấu Thể thao",
-    template: "%s | Sporto",
+    default: `${BRAND.name} - ${BRAND.tagline}`,
+    template: `%s | ${BRAND.name}`,
   },
   description: "Nền tảng tổ chức, quản lý và đăng ký tham gia giải đấu thể thao chuyên nghiệp (Pickleball, Cầu lông, Quần vợt, Bóng bàn, Bóng đá).",
-  keywords: ["Sporto", "quản lý giải đấu", "giải đấu pickleball", "tổ chức giải đấu", "bảng xếp hạng ELO", "cầu lông", "quần vợt", "bóng đá"],
-  authors: [{ name: "Sporto Team" }],
-  creator: "Sporto",
-  publisher: "Sporto",
+  keywords: [BRAND.name, "quản lý giải đấu", "giải đấu pickleball", "tổ chức giải đấu", "bảng xếp hạng ELO", "cầu lông", "quần vợt", "bóng đá"],
+  authors: [{ name: `${BRAND.name} Team` }],
+  creator: BRAND.name,
+  publisher: BRAND.name,
   alternates: {
     canonical: '/',
   },
   openGraph: {
-    title: "Sporto - Nền tảng Quản lý giải đấu",
+    title: `${BRAND.name} - ${BRAND.tagline}`,
     description: "Nền tảng tổ chức và tham gia giải đấu thể thao câu lạc bộ chuyên nghiệp.",
-    siteName: "Sporto",
-    url: 'https://sporto.asia',
+    siteName: BRAND.name,
+    url: BRAND.domain,
     type: "website",
     locale: "vi_VN",
     images: [
       {
-        url: '/sporto_v1.svg',
+        url: BRAND.assets.logoIcon,
         width: 1200,
         height: 630,
-        alt: 'Sporto - Nền tảng Quản lý giải đấu',
+        alt: `${BRAND.name} - Nền tảng Quản lý giải đấu`,
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Sporto - Nền tảng Quản lý giải đấu",
+    title: `${BRAND.name} - ${BRAND.tagline}`,
     description: "Nền tảng tổ chức và tham gia giải đấu thể thao câu lạc bộ chuyên nghiệp.",
-    images: ['/sporto_v1.svg'],
+    images: [BRAND.assets.logoIcon],
   },
   icons: {
     icon: [
-      { url: '/favicon.ico', sizes: 'any' },
+      { url: BRAND.assets.favicon, sizes: 'any' },
       { url: '/icon.png', type: 'image/png', sizes: '512x512' },
-      { url: '/sporto_512.png', type: 'image/png', sizes: '512x512' },
-      { url: '/sporto_v1.svg', type: 'image/svg+xml' },
+      { url: BRAND.assets.logo512, type: 'image/png', sizes: '512x512' },
+      { url: BRAND.assets.logoIcon, type: 'image/svg+xml' },
     ],
     shortcut: [
-      { url: '/favicon.ico' },
+      { url: BRAND.assets.favicon },
       { url: '/icon.png', type: 'image/png' },
     ],
     apple: [
-      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
-      { url: '/apple-icon.png', sizes: '180x180', type: 'image/png' },
+      { url: BRAND.assets.appleTouchIcon, sizes: '180x180', type: 'image/png' },
     ],
   },
 };
@@ -102,7 +96,7 @@ export default async function RootLayout({
   ];
 
   return (
-    <html lang={locale} className={`${inter.variable} h-full antialiased`} suppressHydrationWarning>
+    <html lang={locale} className="h-full antialiased" suppressHydrationWarning>
       <head>
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="icon" href="/icon.png" type="image/png" sizes="512x512" />
@@ -127,4 +121,3 @@ export default async function RootLayout({
     </html>
   );
 }
-

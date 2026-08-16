@@ -12,6 +12,7 @@ import { getErrorMessage } from '@/utils/error';
 import toast from 'react-hot-toast';
 import { CheckCircle, AlertTriangle, Users, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import { BRAND } from '@/constants/brand';
 
 type JoinStatus = {
   requiresAuth?: boolean;
@@ -101,8 +102,8 @@ export default function LiteJoinPage({ params }: { params: Promise<{ inviteCode:
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-8 max-w-sm w-full text-center space-y-4">
           <Image
-            src="/sporto_v1.svg"
-            alt="Sporto Logo"
+            src={BRAND.assets.logoIcon}
+            alt={`${BRAND.name} Logo`}
             width={200}
             height={80}
             className="h-20 w-auto object-contain mx-auto"
@@ -129,8 +130,8 @@ export default function LiteJoinPage({ params }: { params: Promise<{ inviteCode:
         {/* Sporto Official Logo — Big & Prominent */}
         <div className="text-center">
           <Image
-            src="/sporto_v1.svg"
-            alt="Sporto Logo"
+            src={BRAND.assets.logoIcon}
+            alt={`${BRAND.name} Logo`}
             width={240}
             height={90}
             className="h-20 sm:h-24 w-auto object-contain mx-auto mb-4"

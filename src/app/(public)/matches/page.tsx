@@ -11,6 +11,7 @@ import { regionsApi, type Region } from '@/features/regions/api';
 import type { SportRulesEnvelope } from '@/types/tournament';
 import { getMatchRoundLabel } from '@/utils/match-round-label';
 import ShareModal from '@/components/common/ShareModal';
+import { BRAND } from '@/constants/brand';
 
 interface EnrichedTournament {
   id: string;
@@ -171,8 +172,8 @@ const renderTeamAvatars = (part: EnrichedParticipant | null | undefined, default
           <div
             key={idx}
             className={`w-7.5 h-7.5 rounded-full border border-white ${
-              idx === 0 
-                ? 'bg-blue-100 text-blue-700 border-blue-200' 
+              idx === 0
+                ? 'bg-blue-100 text-blue-700 border-blue-200'
                 : 'bg-blue-100 text-blue-700 border-blue-200'
             } flex items-center justify-center font-bold text-[9px] shadow-xs ${zIndexClass}`}
           >
@@ -417,7 +418,7 @@ export default function MatchesListPage() {
           startDate: apiStartDate,
           endDate: apiEndDate,
         });
-        
+
         const feed = readMatchFeed(res);
         setMatches(feed.matches);
         setTotalPages(feed.totalPages);
@@ -550,7 +551,7 @@ export default function MatchesListPage() {
       // Lọc theo Nội dung (client-side fallback)
       if (selectedContent) {
         const nameLower = (match.tournament?.name || '').toLowerCase();
-        
+
         // Suy luận matchType thực tế từ tên giải đấu
         let actualMatchType = match.tournament?.matchType || '';
         if (nameLower.includes('đơn')) {
@@ -560,10 +561,10 @@ export default function MatchesListPage() {
         }
 
         const genderRestriction = match.tournament?.genderRestriction || '';
-        
+
         let targetMatchType = '';
         let targetGender = '';
-        
+
         if (selectedContent === 'SINGLE_MALE') {
           targetMatchType = 'SINGLES';
           targetGender = 'MALE';
@@ -580,7 +581,7 @@ export default function MatchesListPage() {
           targetMatchType = 'DOUBLES';
           targetGender = 'MIXED';
         }
-        
+
         if (targetMatchType && actualMatchType !== targetMatchType) return false;
 
         if (targetGender) {
@@ -634,7 +635,7 @@ export default function MatchesListPage() {
       const wA = getStatusWeight(a);
       const wB = getStatusWeight(b);
       if (wA !== wB) return wA - wB;
-      
+
       // Cùng trạng thái thì xếp theo ngày
       if (a.status === 'COMPLETED' && b.status === 'COMPLETED') {
         const timeA = a.completedAt ? new Date(a.completedAt).getTime() : 0;
@@ -668,7 +669,7 @@ export default function MatchesListPage() {
 
   return (
     <div className="flex-grow w-full max-w-7xl mx-auto px-4 md:px-8 py-8 flex flex-col gap-6">
-      
+
       <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-sm flex flex-col gap-4">
         {/* Hàng bộ lọc chính */}
         <div className="flex flex-col sm:flex-row gap-4 items-end">
@@ -1064,26 +1065,26 @@ export default function MatchesListPage() {
             const MATCHES_PER_PAGE = 6;
             const groupPage = groupPages[group.tournamentId] || 1;
             const totalGroupPages = Math.ceil(group.matches.length / MATCHES_PER_PAGE);
-            
+
             // Slice matches based on sub-pagination inside the card
             const visibleMatches = group.matches.slice((groupPage - 1) * MATCHES_PER_PAGE, groupPage * MATCHES_PER_PAGE);
 
             return (
-              <div 
-                key={group.tournamentId} 
+              <div
+                key={group.tournamentId}
                 className="bg-slate-50/80 p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-5"
               >
                 {/* Header giải đấu */}
                 <div className="flex items-center justify-between pb-4 border-b border-slate-100 flex-wrap gap-3">
                   <div className="flex items-center gap-3">
-                  <Link 
+                  <Link
                     href={`/tournaments/${group.tournamentId}`}
                     className="w-14 h-14 rounded-full bg-white overflow-hidden flex items-center justify-center border border-slate-200 shrink-0 hover:opacity-85 transition-opacity shadow-sm"
                   >
                     {group.tournamentLogoUrl ? (
                       <img src={group.tournamentLogoUrl} alt={group.tournamentName} className="w-10 h-10 object-contain" />
                     ) : (
-                      <img src="/sporto_v1.svg" alt="Sporto" className="w-10 h-10 object-contain opacity-60" />
+                      <img src={BRAND.assets.logoIcon} alt={BRAND.name} className="w-10 h-10 object-contain opacity-60" />
                     )}
                   </Link>
                   <div>
@@ -1107,7 +1108,7 @@ export default function MatchesListPage() {
                     </Link>
                   </div>
                 </div>
-                  
+
                 </div>
 
                 {/* Grid 3 cột x 2 hàng */}
@@ -1146,13 +1147,13 @@ export default function MatchesListPage() {
                     const maxSetsCount = setsToWinSetting === 2 ? 3 : setsToWinSetting === 1 ? 1 : 5;
 
                     return (
-                      <motion.div 
+                      <motion.div
                         key={match.id}
                         whileHover={{ y: -3, scale: 1.005 }}
                         transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                         className={`bg-white rounded-lg border ${
-                          isLive 
-                            ? 'border-rose-100 shadow-[0_4px_20px_rgba(244,63,94,0.03)]' 
+                          isLive
+                            ? 'border-rose-100 shadow-[0_4px_20px_rgba(244,63,94,0.03)]'
                             : 'border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.015)]'
                         } overflow-hidden flex flex-col justify-between group relative`}
                       >
@@ -1185,7 +1186,7 @@ export default function MatchesListPage() {
                                 </>
                               )}
                             </span>
-                            
+
                             {isLive && typeof match.viewerCount === 'number' && match.viewerCount > 0 && (
                               <span className="flex items-center gap-1 text-[9px] font-bold text-blue-700 bg-blue-50 border border-blue-100/60 px-2 py-0.5 rounded-full">
                                 <Eye className="w-3 h-3 text-blue-600 animate-pulse" />
@@ -1205,12 +1206,12 @@ export default function MatchesListPage() {
                                     <div className={`text-xs truncate group-hover:text-blue-600 transition-colors ${p1Won ? 'text-emerald-700 font-extrabold' : 'text-slate-800 font-bold'}`}>
                                       {getTeamShortName(match.participant1?.teamName)}
                                     </div>
-                                    
+
                                     {/* Hiển thị ELO / Thành viên thông minh */}
                                     {match.tournament?.matchType === 'SINGLES' ? (
                                       (() => {
-                                        const elo = match.participant1?.eloPoints ?? 
-                                                    match.participant1?.members?.[0]?.elo?.eloPoints ?? 
+                                        const elo = match.participant1?.eloPoints ??
+                                                    match.participant1?.members?.[0]?.elo?.eloPoints ??
                                                     1000;
                                         return (
                                           <span className="text-[9px] font-bold text-slate-900 bg-slate-100/80 px-1.5 py-0.5 rounded-full border border-slate-200/70 block w-max mt-1">
@@ -1256,10 +1257,10 @@ export default function MatchesListPage() {
                                       const isSetDone = set.isFinished;
                                       const isWinner = isSetDone && (Number(set.team1Score) > Number(set.team2Score));
                                       return (
-                                        <div 
-                                          key={idx} 
+                                        <div
+                                          key={idx}
                                           className={`w-6.5 h-6.5 rounded text-[10px] flex items-center justify-center border transition-all ${
-                                            isLive 
+                                            isLive
                                               ? 'bg-rose-50 text-rose-600 border-rose-100 font-bold animate-pulse'
                                               : isWinner
                                               ? 'bg-blue-50 text-blue-700 border-emerald-250 font-extrabold shadow-xs scale-103'
@@ -1282,12 +1283,12 @@ export default function MatchesListPage() {
                                     <div className={`text-xs truncate group-hover:text-blue-600 transition-colors ${p2Won ? 'text-emerald-700 font-extrabold' : 'text-slate-800 font-bold'}`}>
                                       {getTeamShortName(match.participant2?.teamName)}
                                     </div>
-                                    
+
                                     {/* Hiển thị ELO / Thành viên thông minh */}
                                     {match.tournament?.matchType === 'SINGLES' ? (
                                       (() => {
-                                        const elo = match.participant2?.eloPoints ?? 
-                                                    match.participant2?.members?.[0]?.elo?.eloPoints ?? 
+                                        const elo = match.participant2?.eloPoints ??
+                                                    match.participant2?.members?.[0]?.elo?.eloPoints ??
                                                     1000;
                                         return (
                                           <span className="text-[9px] font-bold text-slate-900 bg-slate-100/80 px-1.5 py-0.5 rounded-full border border-slate-200/70 block w-max mt-1">
@@ -1333,10 +1334,10 @@ export default function MatchesListPage() {
                                       const isSetDone = set.isFinished;
                                       const isWinner = isSetDone && (Number(set.team2Score) > Number(set.team1Score));
                                       return (
-                                        <div 
-                                          key={idx} 
+                                        <div
+                                          key={idx}
                                           className={`w-6.5 h-6.5 rounded text-[10px] flex items-center justify-center border transition-all ${
-                                            isLive 
+                                            isLive
                                               ? 'bg-rose-50 text-rose-600 border-rose-100 font-bold animate-pulse'
                                               : isWinner
                                               ? 'bg-blue-50 text-blue-700 border-emerald-250 font-extrabold shadow-xs scale-103'
@@ -1361,8 +1362,8 @@ export default function MatchesListPage() {
                               </span>
                               <span className="text-slate-200">|</span>
                               <span>
-                                 {match.courtName 
-                                   ? `Sân: ${match.courtName}` 
+                                 {match.courtName
+                                   ? `Sân: ${match.courtName}`
                                    : (match.tournament?.venueName ? `Sân: ${match.tournament.venueName}` : 'Chờ xếp sân')}
                               </span>
                             </div>
@@ -1372,7 +1373,7 @@ export default function MatchesListPage() {
                         {/* Interactive Footer (Full Hitbox Action Bar) */}
                         <div className="grid grid-cols-2 border-t border-slate-100 bg-slate-50/50 divide-x divide-slate-100 relative z-10">
                           {/* Cổ vũ Button */}
-                          <button 
+                          <button
                             onClick={async (e) => {
                               e.preventDefault();
                               e.stopPropagation();
@@ -1404,7 +1405,7 @@ export default function MatchesListPage() {
                           </button>
 
                           {/* Chia sẻ Button */}
-                          <button 
+                          <button
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
@@ -1466,7 +1467,7 @@ export default function MatchesListPage() {
           >
             Trước
           </button>
-          
+
           <button
             className="relative px-3.5 py-2 flex items-center justify-center text-xs font-bold rounded-lg border border-blue-600 bg-blue-600 text-white shadow-sm"
           >

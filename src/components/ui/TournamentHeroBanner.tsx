@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Calendar, MapPin, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getSportLogo } from '@/constants/sports';
 import { shouldHideFeaturedCardText } from '@/features/tournaments/featured-banner';
+import { BRAND } from '@/constants/brand';
 
 interface Props {
   tournaments: Tournament[];
@@ -233,7 +234,7 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[28
   return (
     <div className="relative w-full select-none group overflow-hidden rounded-lg">
       {/* Slider Wrapper */}
-      <div 
+      <div
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
@@ -252,8 +253,8 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[28
           const isActive = idx === currentIndex;
           const hideFeaturedCardText = shouldHideFeaturedCardText(tournament);
           return (
-            <div 
-              key={tournament.id} 
+            <div
+              key={tournament.id}
               className="shrink-0 pr-3"
               style={{
                 width: `${slideWidth}%`,
@@ -273,8 +274,8 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[28
                     <div className="w-full h-full bg-gradient-to-br from-slate-50 via-blue-50/80 to-indigo-100/90 flex items-center justify-center relative overflow-hidden border-b border-slate-100">
                       <div className={`absolute inset-0 bg-gradient-to-tr ${getGradientBg(tournament.category?.name)} opacity-15`} />
                       <img
-                        src="/sporto_v1_with_text.svg"
-                        alt="Sporto Logo"
+                        src={BRAND.assets.logoFull}
+                        alt={`${BRAND.name} Logo`}
                         className="w-56 md:w-64 h-auto object-contain relative z-10 drop-shadow-sm"
                         draggable="false"
                       />
@@ -286,10 +287,10 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[28
                 </div>
 
                 {/* Clickable Overlay for the whole card */}
-                <Link 
-                  href={`/tournaments/${tournament.id}`} 
+                <Link
+                  href={`/tournaments/${tournament.id}`}
                   onClick={handleLinkClick}
-                  className="absolute inset-0 z-10" 
+                  className="absolute inset-0 z-10"
                 />
 
                 {!hideFeaturedCardText && (

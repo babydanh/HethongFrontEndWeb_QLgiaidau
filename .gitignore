@@ -46,3 +46,10 @@ next-env.d.ts
 graphify-out/
 .claude/
 .hermes/
+
+# Firebase & Secrets (Do NOT commit to git)
+secrets/
+*firebase*.json
+*adminsdk*.json
+*service-account*.json
+*google-services*.json

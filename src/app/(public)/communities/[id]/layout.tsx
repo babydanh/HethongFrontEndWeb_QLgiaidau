@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import type { Community } from '@/types/community';
 import { stripHtmlAndNormalize } from '@/utils/string';
+import { BRAND } from '@/constants/brand';
 
 interface CommunityPageProps {
   params: Promise<{ id: string }>;
@@ -18,10 +19,10 @@ export async function generateMetadata({ params }: CommunityPageProps): Promise<
       const community = payload.data;
 
       if (community) {
-        const title = `${community.name} | Sporto`;
+        const title = `${community.name} | ${BRAND.name}`;
         const cleanDesc = stripHtmlAndNormalize(community.description, 160);
-        const description = cleanDesc || `Khám phá câu lạc bộ ${community.name} trên Sporto.`;
-        const imageUrl = community.bannerUrl || community.logoUrl || '/sporto_v1_with_text.svg';
+        const description = cleanDesc || `Khám phá câu lạc bộ ${community.name} trên ${BRAND.name}.`;
+        const imageUrl = community.bannerUrl || community.logoUrl || BRAND.assets.defaultCommunityLogo;
 
 
         return {

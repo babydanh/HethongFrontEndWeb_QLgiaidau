@@ -29,7 +29,7 @@ export const rankingsApi = {
   getUserRankings: (userId: string) => api.get<{ publicRanks: PlayerRanking[]; communityRanks: PlayerRanking[] }>(`/rankings/user/${userId}`),
   getUserEloHistory: (userId: string, params?: Record<string, unknown>) => api.get<{ data: EloHistoryLog[]; meta: { page: number; limit: number } }>(`/rankings/user/${userId}/history`, { params }),
   getUserRank: (userId: string, categoryId: string) => api.get<UserRankResponse>(`/rankings/user/${userId}/rank/${categoryId}`),
-  getFootballTeamRankings: (params: { categoryId: string; limit?: number; cursor?: string }) =>
+  getFootballTeamRankings: (params: { categoryId: string; communityId?: string; limit?: number; cursor?: string }) =>
     api.get<{ data: FootballTeamRanking[]; meta: { nextCursor?: string | null; hasMore?: boolean } }>('/rankings/football-teams', { params }),
 };
 

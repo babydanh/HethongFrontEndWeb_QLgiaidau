@@ -9,6 +9,7 @@ import { PsrPointConfig, ExclusionScope } from '@/types/series';
 import { ArrowLeft, Save, Plus, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
+import { BRAND } from '@/constants/brand';
 
 export default function CreateSeriesPage() {
   const router = useRouter();
@@ -30,7 +31,7 @@ export default function CreateSeriesPage() {
   const [exclusionRule, setExclusionRule] = useState(true);
   const [exclusionScope, setExclusionScope] = useState<ExclusionScope>('CATEGORY');
   const [rulesDescription, setRulesDescription] = useState('Tính điểm PSR tích lũy. Top 2 nhận vé thẳng, Top 16 PSR nhận vé vớt chặng.');
-  
+
   // Ranks points configuration
   const [pointsByRank, setPointsByRank] = useState<Array<{ rank: number; points: number }>>([
     { rank: 1, points: 100 },
@@ -105,7 +106,7 @@ export default function CreateSeriesPage() {
     <div className="min-h-screen bg-slate-50 py-10 px-4 md:px-8 font-sans">
       <div className="max-w-4xl mx-auto">
         {/* Back Link */}
-        <Link 
+        <Link
           href="/organizer/series"
           className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900 transition-colors mb-6"
         >
@@ -114,11 +115,11 @@ export default function CreateSeriesPage() {
 
         {/* Header Title */}
         <div className="flex items-center gap-4 mb-8">
-          <Link 
+          <Link
             href="/"
             className="w-12 h-12 bg-white border border-slate-200 rounded-lg flex items-center justify-center overflow-hidden shadow-sm shrink-0 hover:scale-105 transition-transform"
           >
-            <img src="/sporto_v1.svg" alt="Sporto Logo" className="w-9 h-9 object-contain" />
+            <img src={BRAND.assets.logoIcon} alt={`${BRAND.name} Logo`} className="w-9 h-9 object-contain" />
           </Link>
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-slate-900">Thiết Lập Chuỗi Giải Đấu Mới</h1>
@@ -130,7 +131,7 @@ export default function CreateSeriesPage() {
           {/* Section 1: General Info */}
           <div className="bg-white p-6 md:p-8 rounded-lg border border-slate-200 shadow-sm flex flex-col gap-6">
             <h2 className="text-base font-bold text-slate-900 border-b border-slate-100 pb-3">Thông Tin Chung</h2>
-            
+
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-bold text-slate-700">Tên chuỗi giải đấu *</label>
               <Input
@@ -216,7 +217,7 @@ export default function CreateSeriesPage() {
           {/* Section 2: PSR Calculation Rules */}
           <div className="bg-white p-6 md:p-8 rounded-lg border border-slate-200 shadow-sm flex flex-col gap-6">
             <h2 className="text-base font-bold text-slate-900 border-b border-slate-100 pb-3">Quy Tắc Tích Lũy Điểm PSR</h2>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-bold text-slate-700">Ngưỡng vé thẳng (Hạng đạt được)</label>
@@ -297,9 +298,9 @@ export default function CreateSeriesPage() {
                   <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Cấu hình phân phối điểm theo thứ hạng</h3>
                   <p className="text-[10px] text-slate-400 mt-0.5">Xác định số điểm PSR tương ứng khi VĐV đạt thứ hạng</p>
                 </div>
-                <Button 
-                  type="button" 
-                  variant="outline" 
+                <Button
+                  type="button"
+                  variant="outline"
                   onClick={handleAddRank}
                   className="text-xs border-slate-200 hover:bg-slate-50 flex items-center gap-1.5 py-1 px-3"
                 >
@@ -350,8 +351,8 @@ export default function CreateSeriesPage() {
                 Hủy bỏ
               </Button>
             </Link>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="px-6 bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
               isLoading={isSubmitting}
             >

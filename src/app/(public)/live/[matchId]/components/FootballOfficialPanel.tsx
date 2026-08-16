@@ -13,6 +13,7 @@ interface FootballOfficialPanelProps {
   onPhaseChange: (phase: FootballMatchPhase) => void;
   onEvent: (type: FootballEventType, team: 1 | 2) => void;
   onMinuteChange: (minute: number) => void;
+  onAddedMinuteChange: (addedMinute: number) => void;
 }
 
 const phases: FootballMatchPhase[] = [
@@ -78,6 +79,7 @@ export function FootballOfficialPanel({
   onPhaseChange,
   onEvent,
   onMinuteChange,
+  onAddedMinuteChange,
 }: FootballOfficialPanelProps) {
   return (
     <div className="space-y-4 rounded-xl border border-emerald-100 bg-emerald-50/40 p-3 sm:p-4">
@@ -86,18 +88,31 @@ export function FootballOfficialPanel({
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-emerald-700">Bóng đá · Scoring live</p>
           <p className="mt-1 text-sm font-bold text-slate-900">{footballPhaseLabel(score.phase)}</p>
         </div>
-        <label className="inline-flex items-center gap-2 text-xs font-semibold text-slate-600">
+        <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-600">
           <Timer className="h-4 w-4 text-emerald-600" />
-          Phút
-          <input
-            type="number"
-            min={0}
-            max={150}
-            value={score.minute}
-            onChange={(event) => onMinuteChange(Math.max(0, Number(event.target.value) || 0))}
-            className="h-8 w-16 rounded-md border border-slate-200 bg-white px-2 text-center font-bold text-slate-900"
-          />
-        </label>
+          <label className="inline-flex items-center gap-1.5">
+            Phút
+            <input
+              type="number"
+              min={0}
+              max={150}
+              value={score.minute}
+              onChange={(event) => onMinuteChange(Math.max(0, Number(event.target.value) || 0))}
+              className="h-8 w-16 rounded-md border border-slate-200 bg-white px-2 text-center font-bold text-slate-900"
+            />
+          </label>
+          <label className="inline-flex items-center gap-1.5">
+            Bù giờ +
+            <input
+              type="number"
+              min={0}
+              max={30}
+              value={score.addedMinute}
+              onChange={(event) => onAddedMinuteChange(Math.max(0, Number(event.target.value) || 0))}
+              className="h-8 w-16 rounded-md border border-slate-200 bg-white px-2 text-center font-bold text-slate-900"
+            />
+          </label>
+        </div>
       </div>
 
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">

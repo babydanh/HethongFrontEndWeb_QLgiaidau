@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { startTransition, useEffect, useRef, useState, use } from 'react';
+import { BRAND } from '@/constants/brand';
 import { matchesApi, Match, MatchComment } from '@/features/matches/api';
 import {
   buildAutoWinnerScore,
@@ -194,17 +195,17 @@ export default function LiveMatchPage({ params }: Props) {
 
   const getTeamEloDisplay = (part: typeof part1) => {
     if (!part) return null;
-    
+
     // 1. Dùng eloPoints chung từ backend trả về nếu có
     if (typeof part.eloPoints === 'number') {
       return part.eloPoints;
     }
-    
+
     // 2. Fallback nếu API cũ chưa update:
     if (!part.members || part.members.length === 0) return null;
     const validMembers = part.members.filter(m => !m.isMock);
     if (validMembers.length === 0) return 1000;
-    
+
     const sum = validMembers.reduce((acc, m) => acc + (m.elo?.eloPoints || 1000), 0);
     return Math.round(sum / validMembers.length);
   };
@@ -460,7 +461,7 @@ export default function LiveMatchPage({ params }: Props) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center bg-white p-8 rounded-xl shadow-sm border border-slate-100 max-w-md">
-          <img src="/sporto_v1.svg" alt="Sporto Logo" className="w-20 h-20 object-contain mx-auto mb-4" />
+          <img src={BRAND.assets.logoIcon} alt={`${BRAND.name} Logo`} className="w-20 h-20 object-contain mx-auto mb-4" />
           <h2 className="text-xl font-bold text-slate-900 mb-2">{error || 'Không tìm thấy trận đấu'}</h2>
           <p className="text-slate-500 text-sm mb-6">Trận đấu này có thể không tồn tại hoặc đã bị hủy.</p>
           <Link href="/tournaments" className="inline-flex items-center justify-center px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-all shadow-sm">
@@ -819,8 +820,8 @@ export default function LiveMatchPage({ params }: Props) {
         newScores.push({ team1Score: 0, team2Score: 0, isFinished: false });
       }
 
-      const activeIdx = newScores.findIndex((s) => !s.isFinished) !== -1 
-        ? newScores.findIndex((s) => !s.isFinished) 
+      const activeIdx = newScores.findIndex((s) => !s.isFinished) !== -1
+        ? newScores.findIndex((s) => !s.isFinished)
         : newScores.length - 1;
 
       const setObj = { ...newScores[activeIdx] };
@@ -1334,7 +1335,7 @@ export default function LiveMatchPage({ params }: Props) {
   return (
     <div className="min-h-screen bg-slate-50 pt-10 pb-20 px-4">
       <div className="max-w-6xl mx-auto">
-        
+
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
           <div className="flex flex-wrap items-center gap-3">
@@ -1359,10 +1360,10 @@ export default function LiveMatchPage({ params }: Props) {
             )}
 
             <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
-              match.status === 'ONGOING' 
-                ? 'bg-rose-50 text-rose-600 border border-rose-100' 
-                : match.status === 'COMPLETED' 
-                ? 'bg-slate-100 text-slate-700 border border-slate-200' 
+              match.status === 'ONGOING'
+                ? 'bg-rose-50 text-rose-600 border border-rose-100'
+                : match.status === 'COMPLETED'
+                ? 'bg-slate-100 text-slate-700 border border-slate-200'
                 : 'bg-blue-50 text-blue-700 border border-blue-100'
             }`}>
               {match.status === 'ONGOING' && (
@@ -1388,7 +1389,7 @@ export default function LiveMatchPage({ params }: Props) {
             </span>
             {(match.courtName || match.tournament?.venueName) && (
               <span className="text-xs font-bold text-slate-700 bg-slate-50 border border-slate-200 px-3 py-1 rounded-full flex items-center gap-1 max-w-[320px] truncate" title={
-                match.courtAddress 
+                match.courtAddress
                   ? `${match.courtName || match.tournament?.venueName} - ${match.courtAddress}`
                   : (match.tournament?.venueAddress ? `${match.courtName || match.tournament?.venueName} - ${match.tournament.venueAddress}` : (match.courtName || match.tournament?.venueName || ''))
               }>
@@ -1415,8 +1416,8 @@ export default function LiveMatchPage({ params }: Props) {
               targetLabel={`Trận vòng ${match.roundNumber}`}
               className="h-9 text-xs px-3.5 rounded-lg shadow-xs"
             />
-            <Link 
-              href={`/tournaments/${match.tournamentId}`} 
+            <Link
+              href={`/tournaments/${match.tournamentId}`}
               className="flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-blue-600 hover:border-blue-200 transition-all bg-white border border-slate-200 px-3.5 h-9 rounded-lg shadow-xs shrink-0"
             >
               <Trophy className="w-3.5 h-3.5 text-blue-500" />
@@ -1428,12 +1429,12 @@ export default function LiveMatchPage({ params }: Props) {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left 2 Columns: Match Details, Score Card, Referee Control Panel */}
           <div className="lg:col-span-2 flex flex-col gap-6">
-            
+
             {/* Sporto Camera Live Stream / Replay Container */}
             <div className="bg-slate-950 rounded-2xl overflow-hidden shadow-2xl relative aspect-video flex flex-col items-center justify-center border border-slate-800 group">
               {/* Static scanner effect for premium vibe */}
               <div className="absolute inset-0 bg-gradient-to-b from-indigo-950/20 via-slate-950/40 to-slate-950 pointer-events-none z-0"></div>
-              
+
               {/* Floating hearts container inside video container */}
               <div className="absolute inset-0 pointer-events-none z-40 overflow-hidden">
                 {hearts.map((h) => (
@@ -1501,7 +1502,7 @@ export default function LiveMatchPage({ params }: Props) {
                   </>
                 )}
               </div>
-              
+
               {/* Subtle decoration lines */}
               <div className="absolute top-4 left-4 border-t border-l border-slate-700 w-4 h-4 rounded-tl"></div>
               <div className="absolute top-4 right-4 border-t border-r border-slate-700 w-4 h-4 rounded-tr"></div>
@@ -1512,10 +1513,10 @@ export default function LiveMatchPage({ params }: Props) {
             {/* Score Card */}
             <div className="bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden relative">
               <div className="h-2 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500"></div>
-              
+
               <div className="p-8 md:p-12">
                 <div className="flex flex-col md:flex-row justify-between items-center gap-8 md:gap-4">
-                  
+
                   {/* Team 1 */}
                   <div className="flex flex-col items-center flex-1 w-full">
                     {/* Large Premium Team Avatar */}
@@ -1684,8 +1685,8 @@ export default function LiveMatchPage({ params }: Props) {
                           const isOngoing = isPlayed && !set.isFinished;
                           return (
                             <div key={idx} className={`px-5 py-2.5 rounded-lg border flex flex-col items-center shadow-sm min-w-[80px] ${
-                              isOngoing 
-                                ? 'bg-rose-50 border-rose-100 ring-2 ring-rose-100' 
+                              isOngoing
+                                ? 'bg-rose-50 border-rose-100 ring-2 ring-rose-100'
                                 : isPlayed
                                 ? 'bg-slate-50 border-slate-200'
                                 : 'bg-slate-50/50 border-slate-100 opacity-60'
@@ -1788,14 +1789,14 @@ export default function LiveMatchPage({ params }: Props) {
               {/* Footer Info */}
               <div className="bg-slate-50 p-4 border-t border-slate-100 flex justify-between items-center text-xs font-semibold text-slate-500">
                 <div className="flex items-center gap-2 max-w-[50%] truncate" title={
-                  match.courtAddress 
+                  match.courtAddress
                     ? `${match.courtName || match.tournament?.venueName} - ${match.courtAddress}`
                     : (match.tournament?.venueAddress ? `${match.courtName || match.tournament?.venueName} - ${match.tournament.venueAddress}` : (match.courtName || match.tournament?.venueName || ''))
                 }>
-                  <MapPin className="w-4 h-4 text-slate-400 shrink-0" /> 
+                  <MapPin className="w-4 h-4 text-slate-400 shrink-0" />
                   <span className="truncate">
-                    {match.courtName 
-                      ? `Sân: ${match.courtName}` 
+                    {match.courtName
+                      ? `Sân: ${match.courtName}`
                       : (match.tournament?.venueName ? `Sân: ${match.tournament.venueName}` : 'Sân trung tâm')}
                     {(match.courtAddress || match.tournament?.venueAddress) ? ` (${match.courtAddress || match.tournament?.venueAddress})` : ''}
                   </span>
@@ -1875,7 +1876,7 @@ export default function LiveMatchPage({ params }: Props) {
                   animation: floatUp 2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
                 }
               `}</style>
-              
+
               <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
                   <MessageSquare className="w-5 h-5 text-blue-600" />

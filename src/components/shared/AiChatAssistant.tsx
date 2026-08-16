@@ -16,6 +16,7 @@ import {
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { getErrorMessage } from '@/utils/error';
 import { socketClient } from '@/lib/socket';
+import { BRAND } from '@/constants/brand';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -362,7 +363,7 @@ export default function AiChatAssistant() {
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split(/\r?\n\r?\n/);
-        
+
         // Giữ lại phần chưa hoàn thành ở cuối buffer
         buffer = lines.pop() || '';
 
@@ -507,8 +508,8 @@ export default function AiChatAssistant() {
                       )
                     ) : (
                       <img
-                        src="/sporto_v1.svg"
-                        alt="Sporto"
+                        src={BRAND.assets.logoIcon}
+                        alt={BRAND.name}
                         className="h-5 w-5 object-contain"
                       />
                     )}

@@ -79,9 +79,12 @@ const getBranchLabel = (branch: string | null | undefined) =>
 
 const OPERATION_OPTIONS: Array<{ value: MatchOperationAction; label: string; description: string }> = [
   { value: 'WALKOVER', label: 'Thắng trắng', description: 'Đối thủ không ra sân hoặc không đủ điều kiện thi đấu.' },
+  { value: 'NO_SHOW', label: 'Không đến sân', description: 'Một bên không có mặt đúng thời hạn theo điều lệ.' },
   { value: 'RETIREMENT', label: 'Chấn thương / bỏ cuộc', description: 'Trận kết thúc sớm do một bên xin dừng.' },
   { value: 'DISQUALIFICATION', label: 'Truất quyền', description: 'BTC xử thua do vi phạm điều lệ hoặc gian lận.' },
   { value: 'OVERRIDE_RESULT', label: 'Chốt lại kết quả', description: 'BTC chốt lại kết quả cuối cùng theo biên bản.' },
+  { value: 'POSTPONE', label: 'Hoãn trận', description: 'Trận chưa bắt đầu; xóa lịch hiện tại để BTC xếp lại giờ và sân.' },
+  { value: 'ABANDON', label: 'Bỏ trận / cần xử lý', description: 'Trận không thể tiếp tục; chuyển sang tranh chấp để BTC hoặc admin phân xử.' },
 ];
 
 export function OpsMatches({
@@ -470,7 +473,14 @@ export function OpsMatches({
               variant="outline"
               className="border-amber-200 text-amber-700 hover:bg-amber-50"
               onClick={() => openOperationModal(match)}
-              disabled={isBusy || isDirectAdvance || !match.participant1Id || !match.participant2Id}
+              disabled={
+                isBusy ||
+                isDirectAdvance ||
+                match.status === 'COMPLETED' ||
+                match.status === 'DISPUTED' ||
+                !match.participant1Id ||
+                !match.participant2Id
+              }
             >
               <AlertOctagon className="mr-2 h-4 w-4" />
               Xử lý đặc biệt
@@ -661,7 +671,7 @@ export function OpsMatches({
         <ModalContent className="sm:max-w-2xl">
           <ModalHeader>
             <ModalTitle>Quyết định nghiệp vụ đặc biệt</ModalTitle>
-          <ModalDescription>Chọn tình huống, đội được xử thắng và ghi lý do để lưu vào nhật ký giải.</ModalDescription>
+          <ModalDescription>Chọn tình huống và ghi lý do để lưu vào nhật ký giải. Chỉ các quyết định chốt kết quả mới cần chọn đội thắng.</ModalDescription>
           </ModalHeader>
 
           <div className="space-y-4">
@@ -691,8 +701,13 @@ export function OpsMatches({
                   value={operationDraft.winnerId}
                   onChange={(event) => setOperationDraft((current) => ({ ...current, winnerId: event.target.value }))}
                   className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm"
+                  disabled={operationDraft.action === 'POSTPONE' || operationDraft.action === 'ABANDON'}
                 >
-                  <option value="">Chọn đội thắng</option>
+                  <option value="">
+                    {operationDraft.action === 'POSTPONE' || operationDraft.action === 'ABANDON'
+                      ? 'Không chốt đội thắng'
+                      : 'Chọn đội thắng'}
+                  </option>
                   {selectedOperationMatch?.participant1Id ? (
                     <option value={selectedOperationMatch.participant1Id}>
                       {selectedOperationMatch.participant1?.teamName || 'Đội 1'}
@@ -706,7 +721,11 @@ export function OpsMatches({
                 </select>
               </div>
               <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-xs font-medium text-slate-600">
-                Kết quả này sẽ tự chốt trận, đẩy nhánh đấu đi tiếp và để lại audit log để BTC tra cứu sau.
+                {operationDraft.action === 'POSTPONE'
+                  ? 'Trận sẽ quay về trạng thái chờ xếp lịch; sau đó BTC cần gán lại ngày giờ và sân.'
+                  : operationDraft.action === 'ABANDON'
+                    ? 'Trận sẽ chuyển sang cần xử lý, không cộng ELO và không tự đẩy nhánh đấu.'
+                    : 'Kết quả sẽ chốt trận, đẩy nhánh đấu đi tiếp và lưu audit log.'}
               </div>
             </div>
 
@@ -730,7 +749,8 @@ export function OpsMatches({
               onClick={() => void handleSubmitOperation()}
               disabled={
                 !operationDraft.reason.trim() ||
-                !operationDraft.winnerId ||
+                ((operationDraft.action !== 'POSTPONE' && operationDraft.action !== 'ABANDON') &&
+                  !operationDraft.winnerId) ||
                 activeMatchActionId === selectedOperationMatch?.id
               }
             >

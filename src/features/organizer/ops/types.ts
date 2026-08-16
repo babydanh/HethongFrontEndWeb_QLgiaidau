@@ -52,14 +52,17 @@ export interface MatchScoreInput {
 
 export type MatchOperationAction =
   | 'WALKOVER'
+  | 'NO_SHOW'
   | 'RETIREMENT'
   | 'DISQUALIFICATION'
-  | 'OVERRIDE_RESULT';
+  | 'OVERRIDE_RESULT'
+  | 'POSTPONE'
+  | 'ABANDON';
 
 export interface MatchOperationInput {
   action: MatchOperationAction;
   reason: string;
-  winnerId: string;
+  winnerId?: string;
 }
 
 export interface MatchStatusOption {

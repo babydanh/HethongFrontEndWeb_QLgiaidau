@@ -37,6 +37,9 @@ export default function ClubChatLauncher({
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState('');
   const [loading, setLoading] = useState(false);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingOlder, setLoadingOlder] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -64,9 +67,11 @@ export default function ClubChatLauncher({
         const room = response.data;
         roomRef.current = room.id;
         setRoomId(room.id);
-        const history = await chatApi.getClubMessages(room.id);
+        const history = await chatApi.getClubMessages(room.id, { limit: 50 });
         if (active) {
           setMessages(Array.isArray(history.data) ? history.data : []);
+          setNextCursor(history.meta?.nextCursor ?? null);
+          setHasMore(history.meta?.hasMore ?? false);
           socket.emit('joinChatRoom', room.id);
         }
       })
@@ -88,6 +93,21 @@ export default function ClubChatLauncher({
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages.length, open]);
+
+  const loadOlder = async () => {
+    if (!roomId || !hasMore || !nextCursor || loadingOlder) return;
+    setLoadingOlder(true);
+    try {
+      const history = await chatApi.getClubMessages(roomId, { cursor: nextCursor, limit: 50 });
+      setMessages((current) => [...(Array.isArray(history.data) ? history.data : []), ...current]);
+      setNextCursor(history.meta?.nextCursor ?? null);
+      setHasMore(history.meta?.hasMore ?? false);
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Không thể tải thêm tin nhắn.'));
+    } finally {
+      setLoadingOlder(false);
+    }
+  };
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -123,7 +143,7 @@ export default function ClubChatLauncher({
       {open && (
         <aside className="fixed bottom-5 right-5 z-50 flex h-[min(640px,calc(100vh-2.5rem))] w-[min(400px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-2xl animate-in fade-in slide-in-from-bottom-5 duration-200">
           {/* Header */}
-          <header className="flex items-center justify-between bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-3.5 text-white shadow-sm">
+          <header className="flex items-center justify-between bg-blue-600 px-4 py-3.5 text-white shadow-sm">
             <div className="flex items-center gap-2.5">
               <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20 backdrop-blur-md">
                 <Users className="h-5 w-5 text-white" />
@@ -147,7 +167,12 @@ export default function ClubChatLauncher({
           </header>
 
           {/* Messages Body */}
-          <div className="flex-1 space-y-3.5 overflow-y-auto bg-slate-50/70 p-4">
+          <div className="flex-1 overflow-y-auto bg-slate-50 px-3 py-4">
+            {hasMore && (
+              <button type="button" onClick={() => void loadOlder()} disabled={loadingOlder} className="mx-auto mb-3 block text-xs font-semibold text-blue-700 disabled:opacity-50">
+                {loadingOlder ? 'Đang tải…' : 'Tải tin nhắn cũ hơn'}
+              </button>
+            )}
             {loading ? (
               <div className="flex flex-col items-center justify-center h-full gap-2 text-slate-400 py-10">
                 <Loader2 className="h-6 w-6 animate-spin text-blue-600" />

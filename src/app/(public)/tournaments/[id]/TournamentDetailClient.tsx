@@ -18,6 +18,8 @@ import { triggerShare } from '@/utils/share.util';
 import ShareModal from '@/components/common/ShareModal';
 import CountdownTimer from '@/components/shared/CountdownTimer';
 import toast from 'react-hot-toast';
+import { BRAND } from '@/constants/brand';
+import { socketClient } from '@/lib/socket';
 
 const InstagramIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
@@ -125,7 +127,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
       text: `Hãy cùng tôi theo dõi và đăng ký giải đấu "${activeTournament.name}" trên Sporto!`,
       url: typeof window !== 'undefined' ? window.location.href : '',
     };
-    
+
     // Gọi Web Share API nếu có (trên mobile), nếu không (trên desktop) nó trả về false để mở Modal
     const sharedNative = await triggerShare(shareData);
     if (!sharedNative) {
@@ -189,6 +191,38 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
       isMounted = false;
     };
   }, [tournamentId, tournament]);
+
+  useEffect(() => {
+    const socket = socketClient.getMatchSocket();
+    const joinTournament = () => socket.emit('joinTournament', tournamentId);
+    const handleRegistrationUpdate = (raw: unknown) => {
+      let payload: { tournamentId?: string } | null = null;
+      try {
+        payload = typeof raw === 'string' ? JSON.parse(raw) as { tournamentId?: string } : raw as { tournamentId?: string };
+      } catch {
+        return;
+      }
+      if (payload?.tournamentId !== tournamentId) return;
+      tournamentsApi.getTournamentById(tournamentId)
+        .then((response) => {
+          if (response.data) setTournament(response.data);
+        })
+        .catch(() => {
+          // Keep the last confirmed snapshot; the 15-second API refresh remains the fallback.
+        });
+    };
+
+    socket.on('connect', joinTournament);
+    socket.on('registration:update', handleRegistrationUpdate);
+    if (!socket.connected) socket.connect();
+    else joinTournament();
+
+    return () => {
+      socket.off('connect', joinTournament);
+      socket.off('registration:update', handleRegistrationUpdate);
+      socket.emit('leaveTournament', tournamentId);
+    };
+  }, [tournamentId]);
 
   useEffect(() => {
     if (!user?.id || !tournament?.id) return;
@@ -373,12 +407,12 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
       {/* Banner Carousel Showcase */}
       <div className="max-w-screen-2xl mx-auto px-4 md:px-8 pt-4 md:pt-6">
         <div className="relative w-full h-56 sm:h-72 md:h-[380px] lg:h-[460px] xl:h-[500px] rounded-lg md:rounded-2xl overflow-hidden shadow-xl">
-          <GalleryCarousel 
-            images={activeTournament.galleryImages && activeTournament.galleryImages.length > 0 ? activeTournament.galleryImages : []} 
+          <GalleryCarousel
+            images={activeTournament.galleryImages && activeTournament.galleryImages.length > 0 ? activeTournament.galleryImages : []}
             defaultBanner={activeTournament.bannerUrl || undefined}
             className="w-full h-56 sm:h-72 md:h-[380px] lg:h-[460px] xl:h-[500px]"
           />
-          
+
           {!hidePublicBannerText && (
             <div className="absolute bottom-4 left-6 md:bottom-6 md:left-8 z-10 space-y-1">
               <h1 className="text-xl md:text-2xl font-bold text-white drop-shadow-md tracking-wide uppercase truncate">
@@ -393,17 +427,17 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
       <div className="max-w-screen-2xl mx-auto px-4 md:px-8 mt-6">
         <div className="bg-white border border-slate-200/80 rounded-lg p-5 md:p-6 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 w-full md:w-auto">
-            <Link 
+            <Link
               href={`/tournaments/${activeTournament.id}`}
               className="w-20 h-20 md:w-24 md:h-24 bg-white rounded-full p-1.5 flex items-center justify-center border border-slate-200 shadow-md flex-shrink-0 hover:scale-105 transition-transform cursor-pointer"
               title="Xem chi tiết giải đấu"
             >
-              <img 
-                src={activeTournament.logoUrl || '/sporto_v1_with_text.svg'}
-                alt="Logo giải đấu" 
+              <img
+                src={activeTournament.logoUrl || BRAND.assets.defaultTournamentLogo}
+                alt="Logo giải đấu"
                 className="w-full h-full object-contain rounded-full p-2"
                 onError={(e) => {
-                  (e.currentTarget as HTMLImageElement).src = '/sporto_v1_with_text.svg';
+                  (e.currentTarget as HTMLImageElement).src = BRAND.assets.defaultTournamentLogo;
                 }}
               />
             </Link>
@@ -413,7 +447,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                   {getTournamentStatusLabel(activeTournament.status).toUpperCase()}
                 </span>
                 <span className="px-2.5 py-0.5 text-[10px] uppercase font-bold rounded-md bg-slate-100 text-slate-700 border border-slate-200/80 shadow-sm flex items-center gap-1">
-                  <Trophy className="w-3 h-3 text-blue-500" /> 
+                  <Trophy className="w-3 h-3 text-blue-500" />
                   {(() => {
                     const fmt = (activeTournament.format ?? '').replace('.', '_').replace(' ', '_').toUpperCase();
                     if (fmt === 'SINGLE_ELIMINATION') return 'LOẠI TRỰC TIẾP';
@@ -431,7 +465,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                   {activeTournament.isRanked ? '⭐ GIẢI XẾP HẠNG' : '🎾 GIẢI PHONG TRÀO'}
                 </span>
               </div>
-              
+
               <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-600 font-medium">
                 <span className="flex items-center gap-1.5">
                   <Calendar className="w-4 h-4 text-slate-400" />
@@ -480,13 +514,13 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                 compact
               />
             </div>
-            
+
             {!isOwner && !isTournamentDraft(activeTournament.status) && (
-              <Button 
+              <Button
                 disabled={isRegistrationButtonDisabled}
                 className={`${
-                  isRegistrationButtonDisabled 
-                    ? 'bg-slate-200 text-slate-400 cursor-not-allowed border-slate-200 hover:bg-slate-200' 
+                  isRegistrationButtonDisabled
+                    ? 'bg-slate-200 text-slate-400 cursor-not-allowed border-slate-200 hover:bg-slate-200'
                     : 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-900/10'
                 } font-bold w-full md:w-auto shadow-sm h-10 text-xs md:text-sm`}
                 onClick={() => {
@@ -525,7 +559,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
 
       <div className="max-w-screen-2xl mx-auto px-4 md:px-8 mt-6">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
-          
+
           {/* Left Area - Tabs & Content (takes 3 cols) */}
           <div className="lg:col-span-3 space-y-6">
             {/* Tabs */}
@@ -535,8 +569,8 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={`px-3.5 py-2 sm:px-5 sm:py-2.5 rounded-lg font-bold text-xs sm:text-sm whitespace-nowrap transition-all flex items-center gap-1.5 sm:gap-2 cursor-pointer ${
-                    activeTab === tab.id 
-                      ? 'bg-emerald-600 text-white shadow-sm' 
+                    activeTab === tab.id
+                      ? 'bg-emerald-600 text-white shadow-sm'
                       : 'bg-slate-200/60 text-slate-600 hover:bg-slate-300/60 hover:text-slate-900'
                   }`}
                 >
@@ -602,8 +636,8 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
               <div>
                 <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Lệ phí tham gia</span>
                 <div className="text-2xl font-bold text-blue-600">
-                  {selectedDivision?.entryFee && selectedDivision.entryFee > 0 
-                    ? `${Number(selectedDivision.entryFee).toLocaleString('vi-VN')} VNĐ` 
+                  {selectedDivision?.entryFee && selectedDivision.entryFee > 0
+                    ? `${Number(selectedDivision.entryFee).toLocaleString('vi-VN')} VNĐ`
                     : 'Miễn phí'}
                 </div>
                 <p className="text-[11px] text-slate-500 mt-0.5">Lệ phí đóng khi đăng ký</p>
@@ -690,7 +724,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                           <span className="text-slate-500">{divParticipants} / {divMax} ({divPercent}%)</span>
                         </div>
                         <div className="w-full h-1 bg-slate-100 rounded-full overflow-hidden">
-                          <div 
+                          <div
                             className={`h-full rounded-full transition-all duration-500 ${
                               divPercent >= 90 ? 'bg-rose-500' : divPercent >= 70 ? 'bg-amber-500' : 'bg-emerald-600'
                             }`}
@@ -709,7 +743,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                       <span className="text-slate-800">{participantCount} / {maxParticipants}</span>
                     </div>
                     <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                      <div 
+                      <div
                         className={`h-full rounded-full transition-all duration-500 ${
                           percentageFilled >= 90 ? 'bg-rose-500' : percentageFilled >= 70 ? 'bg-amber-500' : 'bg-blue-650'
                         }`}
@@ -905,10 +939,10 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                     if (!val) return null;
                     const lowercaseKey = key.toLowerCase();
                     const isUrl = typeof val === 'string' && (val.startsWith('http://') || val.startsWith('https://'));
-                    
+
                     let IconComponent: React.ComponentType<React.SVGProps<SVGSVGElement>> = Globe;
                     let iconColor = 'text-slate-450';
-                    
+
                     if (lowercaseKey.includes('instagram')) {
                       IconComponent = InstagramIcon;
                       iconColor = 'text-pink-600';
@@ -937,15 +971,15 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
 
         </div>
       </div>
-      
-      <RegisterModal 
-        tournamentId={activeTournament.id} 
-        tournamentName={tournament.name} 
+
+      <RegisterModal
+        tournamentId={activeTournament.id}
+        tournamentName={tournament.name}
         entryFee={selectedDivision ? (Number(selectedDivision.entryFee) || 0) : 0}
         matchType={selectedDivision?.matchType || divisionsList[0]?.matchType}
         isRanked={Boolean(activeTournament.isRanked)}
-        isOpen={isRegisterModalOpen} 
-        onClose={() => setIsRegisterModalOpen(false)} 
+        isOpen={isRegisterModalOpen}
+        onClose={() => setIsRegisterModalOpen(false)}
       />
 
       <ShareModal

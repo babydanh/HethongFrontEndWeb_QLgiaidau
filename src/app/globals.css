@@ -2,6 +2,7 @@
 @config "../../tailwind.config.ts";
 
 :root {
+    --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
     --color-background: #ffffff; /* pure white background */
     --color-foreground: #0f172a; /* slate-900 */
 
@@ -228,4 +229,3 @@ body {
     text-rendering: optimizeLegibility;
   }
 }
-

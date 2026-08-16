@@ -91,6 +91,59 @@ export default function Step2FormatMulti() {
   const [penaltyShootout, setPenaltyShootout] = useState(true);
   const [allowDraw, setAllowDraw] = useState(true);
 
+  // Keep the football controls in sync with the persisted wizard draft. The
+  // controls are intentionally local while editing, but they must hydrate
+  // whenever the user returns to this step or Zustand restores a saved draft.
+  useEffect(() => {
+    if (!isFootball) return;
+
+    const persistedTeamSize = formData.teamSize;
+    if (persistedTeamSize === 5 || persistedTeamSize === 7 || persistedTeamSize === 11) {
+      setTeamSize(persistedTeamSize);
+    }
+    if (typeof formData.maxReserve === 'number' && Number.isFinite(formData.maxReserve)) {
+      setMaxReserve(Math.max(0, Math.min(20, Math.floor(formData.maxReserve))));
+    }
+    if (typeof formData.twoLegged === 'boolean') setTwoLegged(formData.twoLegged);
+    if (typeof formData.awayGoalsRule === 'boolean') setAwayGoalsRule(formData.awayGoalsRule);
+    if (typeof formData.penaltyShootout === 'boolean') setPenaltyShootout(formData.penaltyShootout);
+    if (typeof formData.allowDraw === 'boolean') setAllowDraw(formData.allowDraw);
+  }, [
+    formData.allowDraw,
+    formData.awayGoalsRule,
+    formData.maxReserve,
+    formData.penaltyShootout,
+    formData.teamSize,
+    formData.twoLegged,
+    isFootball,
+  ]);
+
+  useEffect(() => {
+    const persistedFormat = formData.format;
+    if (BRACKET_TYPE_OPTIONS.some((option) => option.value === persistedFormat)) {
+      setBracketType(persistedFormat as typeof bracketType);
+    }
+  }, [formData.format]);
+
+  const setFootballTeamSize = (size: 5 | 7 | 11) => {
+    setTeamSize(size);
+    updateFormData({
+      teamSize: size,
+      minTeamSize: size,
+      teamSizeOptions: [5, 7, 11],
+      maxTeamSize: size + maxReserve,
+    });
+  };
+
+  const setFootballReserveLimit = (reserve: number) => {
+    const safeReserve = Math.max(0, Math.min(20, Math.floor(reserve)));
+    setMaxReserve(safeReserve);
+    updateFormData({
+      maxReserve: safeReserve,
+      maxTeamSize: teamSize + safeReserve,
+    });
+  };
+
   const handleNext = () => {
     if (!isFootball && selected.length === 0) {
       setStep2Error('Vui lòng chọn ít nhất một hình thức thi đấu.');
@@ -196,7 +249,10 @@ export default function Step2FormatMulti() {
             <button
               key={opt.value}
               type="button"
-              onClick={() => setBracketType(opt.value)}
+              onClick={() => {
+                setBracketType(opt.value);
+                updateFormData({ format: opt.value });
+              }}
               className={cn(
                 'p-3.5 rounded-lg border-2 transition-all text-left text-sm font-semibold',
                 bracketType === opt.value
@@ -230,7 +286,7 @@ export default function Step2FormatMulti() {
                 <button
                   key={size}
                   type="button"
-                  onClick={() => setTeamSize(size)}
+                  onClick={() => setFootballTeamSize(size)}
                   className={cn(
                     'p-3 rounded-lg border-2 text-center font-bold',
                     teamSize === size
@@ -252,7 +308,7 @@ export default function Step2FormatMulti() {
               <label className="text-sm font-semibold text-emerald-800">Dự bị tối đa</label>
               <select
                 value={maxReserve}
-                onChange={(e) => setMaxReserve(Number(e.target.value))}
+                onChange={(e) => setFootballReserveLimit(Number(e.target.value))}
                 className="mt-1 w-full border border-emerald-300 rounded-lg px-3 py-2 bg-white text-emerald-900"
               >
                 {[0, 1, 2, 3, 4, 5].map((n) => (
@@ -263,12 +319,12 @@ export default function Step2FormatMulti() {
             <div className="space-y-2">
               <label className="block text-sm font-semibold text-emerald-800">Thể thức loại trực tiếp</label>
               <label className="flex items-center gap-2 text-sm text-emerald-800">
-                <input type="checkbox" checked={twoLegged} onChange={(e) => setTwoLegged(e.target.checked)} className="w-4 h-4" />
+                <input type="checkbox" checked={twoLegged} onChange={(e) => { setTwoLegged(e.target.checked); updateFormData({ twoLegged: e.target.checked }); }} className="w-4 h-4" />
                 Lượt đi – Lượt về (2 trận/cặp)
               </label>
               {twoLegged && (
                 <label className="flex items-center gap-2 text-sm text-emerald-800">
-                  <input type="checkbox" checked={awayGoalsRule} onChange={(e) => setAwayGoalsRule(e.target.checked)} className="w-4 h-4" />
+                  <input type="checkbox" checked={awayGoalsRule} onChange={(e) => { setAwayGoalsRule(e.target.checked); updateFormData({ awayGoalsRule: e.target.checked }); }} className="w-4 h-4" />
                   Luật bàn thắng sân khách
                 </label>
               )}
@@ -277,11 +333,11 @@ export default function Step2FormatMulti() {
 
           <div className="flex flex-wrap gap-4">
             <label className="flex items-center gap-2 text-sm text-emerald-800">
-              <input type="checkbox" checked={allowDraw} onChange={(e) => setAllowDraw(e.target.checked)} className="w-4 h-4" />
+              <input type="checkbox" checked={allowDraw} onChange={(e) => { setAllowDraw(e.target.checked); updateFormData({ allowDraw: e.target.checked }); }} className="w-4 h-4" />
               Cho phép hòa (vòng bảng)
             </label>
             <label className="flex items-center gap-2 text-sm text-emerald-800">
-              <input type="checkbox" checked={penaltyShootout} onChange={(e) => setPenaltyShootout(e.target.checked)} className="w-4 h-4" />
+              <input type="checkbox" checked={penaltyShootout} onChange={(e) => { setPenaltyShootout(e.target.checked); updateFormData({ penaltyShootout: e.target.checked }); }} className="w-4 h-4" />
               Luân lưu phân định (hòa ở knockout)
             </label>
           </div>

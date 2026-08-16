@@ -91,6 +91,7 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
   const [bracketLoading, setBracketLoading] = useState(false);
   const [hasBracket, setHasBracket] = useState(false);
   const [mockLoading, setMockLoading] = useState(false);
+  const [rosterConfirming, setRosterConfirming] = useState(false);
 
   const fetchParticipants = useCallback(async () => {
     if (!id) return;
@@ -221,6 +222,21 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
       toast.error(getErrorMessage(err));
     } finally {
       setBracketLoading(false);
+    }
+  };
+
+  const handleConfirmRoster = async () => {
+    if (tournament?.isRegistrationLocked) return;
+    if (!confirm('Chốt danh sách người tham gia hiện tại? Người mới sẽ không thể đăng ký; thao tác này không tự tạo bracket.')) return;
+    setRosterConfirming(true);
+    try {
+      const response = await tournamentsApi.confirmLiteRoster(id);
+      setTournament(response.data ?? (tournament ? { ...tournament, isRegistrationLocked: true, status: 'REGISTRATION_CLOSED' } : tournament));
+      toast.success('Đã chốt danh sách người tham gia.');
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setRosterConfirming(false);
     }
   };
 
@@ -667,6 +683,20 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                   {/* Tạo bracket */}
                   {(tournament?.matchType === 'DOUBLES' ? pairedParticipants.length > 0 : participants.length > 0) && (
                     <div className="pt-4 border-t border-slate-100">
+                      <div className="mb-3 flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold text-amber-900">Danh sách tham gia</p>
+                          <p className="text-xs text-amber-700">Chốt tùy chọn trước khi tạo bracket. Không bắt buộc.</p>
+                        </div>
+                        {tournament?.isRegistrationLocked ? (
+                          <Badge className="shrink-0 border-emerald-200 bg-emerald-50 text-emerald-700">Đã chốt</Badge>
+                        ) : (
+                          <Button variant="outline" onClick={handleConfirmRoster} disabled={rosterConfirming} className="shrink-0 border-amber-300 text-amber-800 hover:bg-amber-100">
+                            {rosterConfirming ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}
+                            Chốt danh sách
+                          </Button>
+                        )}
+                      </div>
                       {!hasBracket && <Button
                         onClick={handleGenerateBracket}
                         disabled={bracketLoading}

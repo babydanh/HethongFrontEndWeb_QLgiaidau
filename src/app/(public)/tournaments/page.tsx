@@ -9,6 +9,7 @@ import { regionsApi, Region } from '@/features/regions/api';
 import { formatCurrency } from '@/utils/format';
 import { getSportLogo } from '@/constants/sports';
 import TournamentHeroBanner from '@/components/ui/TournamentHeroBanner';
+import { BRAND } from '@/constants/brand';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { sortDiscoveryTournaments, isRecentlyCompletedTournament } from '@/utils/tournament-home';
 import {
@@ -44,12 +45,12 @@ export default function TournamentsListPage() {
     if (!startStr) return { startDay: '--', endDay: '--', startMonth: '--', endMonth: '--' };
     const start = new Date(startStr);
     const end = endStr ? new Date(endStr) : start;
-    
+
     const startDay = start.getDate().toString().padStart(2, '0');
     const endDay = end.getDate().toString().padStart(2, '0');
     const startMonth = (start.getMonth() + 1).toString().padStart(2, '0');
     const endMonth = (end.getMonth() + 1).toString().padStart(2, '0');
-    
+
     return { startDay, endDay, startMonth, endMonth };
   };
 
@@ -100,7 +101,7 @@ export default function TournamentsListPage() {
       active = false;
     };
   }, [filterKey]);
-  
+
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -121,7 +122,7 @@ export default function TournamentsListPage() {
         console.error("Failed to fetch categories", error);
       }
     };
-    
+
     const fetchRegions = async () => {
       try {
         const res = await regionsApi.getProvinces();
@@ -165,7 +166,7 @@ export default function TournamentsListPage() {
     const loadDistricts = async () => {
       try {
         const cleanRegionName = selectedRegion.trim().toLowerCase();
-        const foundRegion = regions.find(r => 
+        const foundRegion = regions.find(r =>
           r.name.replace(/^(Thành phố|Tỉnh)\s+/i, '').trim().toLowerCase() === cleanRegionName
         );
 
@@ -325,7 +326,7 @@ export default function TournamentsListPage() {
 
   return (
     <div className="flex-grow w-full max-w-7xl mx-auto px-4 md:px-8 py-8 flex flex-col gap-6">
-      
+
 
 
       {/* Filter Bar */}
@@ -336,7 +337,7 @@ export default function TournamentsListPage() {
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Tìm kiếm</label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
-              <input 
+              <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => {
@@ -348,11 +349,11 @@ export default function TournamentsListPage() {
               />
             </div>
           </div>
-          
+
           <div className="w-full sm:w-48 shrink-0">
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Môn thể thao</label>
             <div className="relative">
-              <select 
+              <select
                 value={selectedCategoryId}
                 onChange={(e) => {
                   setSelectedCategoryId(e.target.value);
@@ -372,7 +373,7 @@ export default function TournamentsListPage() {
           <div className="w-full sm:w-48 shrink-0">
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Trạng thái</label>
             <div className="relative">
-              <select 
+              <select
                 value={selectedStatus}
                 onChange={(e) => {
                   setSelectedStatus(e.target.value);
@@ -390,11 +391,11 @@ export default function TournamentsListPage() {
             </div>
           </div>
 
-          <button 
+          <button
             onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
             className={`w-full sm:w-auto px-4 py-2.5 rounded-lg text-xs font-bold border transition-all flex items-center justify-center gap-2 h-[42px] cursor-pointer shrink-0 ${
               showAdvancedFilters || selectedContent || selectedBracketType || selectedIsRanked || selectedRegion || selectedDistrict || startDate || endDate
-                ? 'bg-blue-50 border-blue-250 text-blue-700 shadow-sm animate-pulse-subtle' 
+                ? 'bg-blue-50 border-blue-250 text-blue-700 shadow-sm animate-pulse-subtle'
                 : 'bg-slate-105 hover:bg-slate-200 text-slate-900 border-slate-200'
             }`}
           >
@@ -410,7 +411,7 @@ export default function TournamentsListPage() {
             <div>
               <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Nội dung</label>
               <div className="relative">
-                <select 
+                <select
                   value={selectedContent}
                   onChange={(e) => {
                     setSelectedContent(e.target.value);
@@ -433,7 +434,7 @@ export default function TournamentsListPage() {
             <div>
               <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Thể thức</label>
               <div className="relative">
-                <select 
+                <select
                   value={selectedBracketType}
                   onChange={(e) => {
                     setSelectedBracketType(e.target.value);
@@ -455,7 +456,7 @@ export default function TournamentsListPage() {
             <div>
               <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Xếp hạng</label>
               <div className="relative">
-                <select 
+                <select
                   value={selectedIsRanked}
                   onChange={(e) => {
                     setSelectedIsRanked(e.target.value);
@@ -475,7 +476,7 @@ export default function TournamentsListPage() {
             <div>
               <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Tỉnh / Thành phố</label>
               <div className="relative">
-                <select 
+                <select
                   value={selectedRegion}
                   onChange={(e) => {
                     const newRegion = e.target.value;
@@ -501,7 +502,7 @@ export default function TournamentsListPage() {
             <div>
               <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Quận / Huyện</label>
               <div className="relative">
-                <select 
+                <select
                   disabled={!selectedRegion || districts.length === 0}
                   value={selectedDistrict}
                   onChange={(e) => {
@@ -704,31 +705,31 @@ export default function TournamentsListPage() {
               ? locationParts[0]
               : 'Chưa cập nhật';
             const registrationModeUi = getRegistrationModeUi(tournament.tournamentConfig?.registrationMode);
-            
+
             return (
-              <Link 
-                key={tournament.id} 
+              <Link
+                key={tournament.id}
                 href={`/tournaments/${tournament.id}`}
                 className="bg-white rounded-lg border border-slate-200 shadow-sm hover:border-slate-350 hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col group cursor-pointer"
               >
                 {/* Top: Large Image Banner */}
                 <div className="relative aspect-[2.1/1] w-full bg-slate-100 overflow-hidden">
                   {tournament.bannerUrl ? (
-                    <img 
-                      src={tournament.bannerUrl} 
-                      alt={tournament.name} 
+                    <img
+                      src={tournament.bannerUrl}
+                      alt={tournament.name}
                       className={`absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-103 ${isTournamentCompleted(tournament.status) ? 'grayscale opacity-60' : ''}`}
                     />
                   ) : (
                     <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-blue-50/80 to-indigo-100/90 border-b border-slate-100 group-hover:scale-103 transition-transform duration-500 flex items-center justify-center p-6">
-                      <img 
-                        src="/sporto_v1_with_text.svg" 
-                        alt="Sporto Logo" 
+                      <img
+                        src={BRAND.assets.defaultTournamentLogo}
+                        alt={`${BRAND.name} Logo`}
                         className="w-44 md:w-52 h-auto object-contain drop-shadow-sm"
                       />
                     </div>
                   )}
-                  
+
                   {/* Status Overlay (Top-Left) */}
                   <div className="absolute top-3 left-3 z-10">
                     <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm border ${getTournamentStatusClassName(tournament.status)}`}>
@@ -782,9 +783,9 @@ export default function TournamentsListPage() {
                           );
                         })()}
                         <span className="text-slate-500">{tournament.category?.name || 'MULTISPORT'}</span>
-                        
+
                         <span className="text-slate-300">•</span>
-                        
+
                         {/* Ranked or Unranked Badge */}
                         <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold ${
                           tournament.isRanked
@@ -805,7 +806,7 @@ export default function TournamentsListPage() {
                         )}
 
                       </div>
-                      
+
                       {/* Title */}
                       <h3 className="text-sm md:text-base font-bold text-slate-900 uppercase leading-snug line-clamp-2">
                         {tournament.name}
@@ -855,16 +856,16 @@ export default function TournamentsListPage() {
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex justify-center items-center gap-2">
-          <button 
+          <button
             onClick={() => setPage(p => Math.max(1, p - 1))}
             disabled={page === 1}
             className="p-2 border border-slate-200 rounded-lg text-slate-500 hover:bg-slate-100 transition-colors disabled:opacity-50 cursor-pointer"
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
-          
+
           {[...Array(totalPages)].map((_, i) => (
-            <button 
+            <button
               key={i + 1}
               onClick={() => setPage(i + 1)}
               className={`min-w-[44px] min-h-[44px] border rounded-lg font-bold text-xs transition-colors cursor-pointer ${
@@ -877,7 +878,7 @@ export default function TournamentsListPage() {
             </button>
           ))}
 
-          <button 
+          <button
             onClick={() => setPage(p => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
             className="p-2 border border-slate-200 rounded-lg text-slate-500 hover:bg-slate-100 transition-colors disabled:opacity-50 cursor-pointer"

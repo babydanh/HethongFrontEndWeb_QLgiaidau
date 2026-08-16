@@ -3,6 +3,7 @@
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { Button } from '@/components/ui/Button';
 import Link from 'next/link';
+import { BRAND } from '@/constants/brand';
 import { buildMatchScoreSummary } from '@/features/matches/score-display';
 import { Trophy, Calendar, Users, Activity, Settings, MapPin, Edit3, ShieldCheck, Loader2, Phone, UploadCloud, X, Mail, Camera, AlertTriangle, ChevronRight, Zap, Award, Bookmark } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
@@ -291,7 +292,7 @@ export default function ProfilePage() {
 
   useEffect(() => {
     let isMounted = true;
-    
+
     const fetchProfile = async () => {
       try {
         setIsLoading(true);
@@ -383,7 +384,7 @@ export default function ProfilePage() {
       setIsModalOpen(false);
       setPhone('');
       setEvidenceUrl('');
-      
+
       const res = await api.get<ApiResponse<VerificationTicket[]>>('/admin/verification-tickets/my');
       setTickets(res.data || []);
     } catch (error) {
@@ -439,7 +440,7 @@ export default function ProfilePage() {
           setUserRankings(ranksRes);
           setEloHistory(historyRes?.data || []);
           setFollowedTournaments(sortFollowedTournaments(followedRes?.data || []));
-          
+
           if (matchesRes?.data) {
             setMatches(matchesRes.data);
             setMatchesTotalPages(matchesRes.meta?.totalPages || 1);
@@ -515,31 +516,31 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 md:px-8 py-8 flex flex-col gap-6">
-      
+
       {/* Profile Header */}
       <div className="bg-white rounded-xl border border-slate-150 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
         {/* Cover Photo */}
         <div className="h-56 bg-slate-900 relative group overflow-hidden">
-          <input 
-            type="file" 
-            accept="image/*" 
-            className="hidden" 
-            ref={coverInputRef} 
-            onChange={handleCoverChange} 
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            ref={coverInputRef}
+            onChange={handleCoverChange}
           />
           {displayUser?.coverUrl ? (
-            <img 
-              src={displayUser.coverUrl} 
-              alt="Cover" 
-              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
+            <img
+              src={displayUser.coverUrl}
+              alt="Cover"
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
             />
           ) : (
             <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-indigo-650 to-purple-650 opacity-90"></div>
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950/40 via-transparent to-transparent"></div>
-          
-          <button 
-            type="button" 
+
+          <button
+            type="button"
             onClick={handleCoverClick}
             disabled={isUploadingCover}
             className="absolute top-4 right-4 bg-black/40 hover:bg-black/60 text-white px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-200 backdrop-blur-md border border-white/10 shadow-lg cursor-pointer"
@@ -582,7 +583,7 @@ export default function ProfilePage() {
               </Button>
             </div>
           </div>
-          
+
           {/* Info */}
           <div className="space-y-3">
             <div>
@@ -606,7 +607,7 @@ export default function ProfilePage() {
                 )}
               </p>
             </div>
-            
+
             <div className="flex flex-wrap items-center gap-2">
               {Array.from(new Set((displayUser as unknown as Record<string, unknown>)?.roles as string[] | undefined || user?.roles || [])).map((role: string) => {
                 let roleLabel = role;
@@ -729,7 +730,7 @@ export default function ProfilePage() {
                     <div className="flex flex-col gap-1 border-b border-slate-100 pb-3">
                       <span className="text-slate-500 font-medium">Ngày sinh</span>
                       <span className="text-slate-900 font-semibold">
-                        {profileData?.dateOfBirth 
+                        {profileData?.dateOfBirth
                           ? `${new Date(profileData.dateOfBirth).getDate().toString().padStart(2, '0')}/${(new Date(profileData.dateOfBirth).getMonth() + 1).toString().padStart(2, '0')}/${new Date(profileData.dateOfBirth).getFullYear()}`
                           : 'Chưa cập nhật'}
                       </span>
@@ -866,7 +867,7 @@ export default function ProfilePage() {
                     </Button>
                   </Link>
                 </div>
-                
+
                 {isLoading ? (
                   <div className="animate-pulse flex gap-4">
                     <div className="w-16 h-16 bg-slate-200 rounded-full"></div>
@@ -888,7 +889,7 @@ export default function ProfilePage() {
                             const isOwner = community.creatorId === displayUser?.id || community.myRole === 'OWNER';
                             const roleBadgeLabel = isOwner ? 'Người tạo / Chủ sở hữu' : community.myRole === 'MODERATOR' ? 'Quản trị viên' : 'Thành viên';
                             const roleBadgeStyle = isOwner ? 'bg-blue-50 text-blue-700 border-blue-200' : community.myRole === 'MODERATOR' ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-slate-100 text-slate-700 border-slate-200';
-                            
+
                             return (
                               <Link href={`/communities/${community.id}`} key={community.id}>
                                 <div className="flex items-center gap-4 p-4 rounded-lg border border-slate-100 hover:border-blue-500 hover:shadow-md transition-all group bg-slate-50 cursor-pointer">
@@ -1019,29 +1020,29 @@ export default function ProfilePage() {
                               : 'Đang theo dõi';
 
                     return (
-                      <Link 
-                        key={tournament.id} 
+                      <Link
+                        key={tournament.id}
                         href={`/tournaments/${tournament.id}`}
                         className="bg-white rounded-lg border border-slate-200 shadow-sm hover:border-slate-350 hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col group cursor-pointer"
                       >
                         {/* Top: Large Image Banner */}
                         <div className="relative aspect-[2.1/1] w-full bg-slate-100 overflow-hidden">
                           {coverImage ? (
-                            <img 
-                              src={coverImage} 
-                              alt={tournament.name} 
+                            <img
+                              src={coverImage}
+                              alt={tournament.name}
                               className={`absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-103 ${isEnded ? 'grayscale opacity-60' : ''}`}
                             />
                           ) : (
                             <div className="absolute inset-0 bg-gradient-to-br from-indigo-650 to-blue-800 opacity-90 group-hover:scale-103 transition-transform duration-500 flex items-center justify-center">
-                              <img 
-                                src="/sporto_v1.svg" 
-                                alt="Sporto Logo" 
+                              <img
+                                src={BRAND.assets.logoIcon}
+                                alt={`${BRAND.name} Logo`}
                                 className="w-20 h-auto object-contain opacity-75"
                               />
                             </div>
                           )}
-                          
+
                           {/* Status Overlay (Top-Left) */}
                           <div className="absolute top-3 left-3 z-10">
                             <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm border ${statusClassName}`}>
@@ -1108,7 +1109,7 @@ export default function ProfilePage() {
                                 {statusHint}
                                 {formattedStartDate && formattedEndDate && !isEnded ? ` • ${formattedStartDate} → ${formattedEndDate}` : ''}
                               </p>
-                              
+
                               <h3 className="text-sm font-bold text-slate-900 uppercase leading-snug line-clamp-2">
                                 {tournament.name}
                               </h3>
@@ -1220,7 +1221,7 @@ export default function ProfilePage() {
                 {matches.map((match) => {
                   const isCompleted = match.status === 'COMPLETED';
                   const isP1 = match.participant1?.teamName?.toLowerCase() === displayUser?.fullName?.toLowerCase();
-                  
+
                   const isWinner = isCompleted && match.winnerId && (
                     (match.winnerId === match.participant1Id && isP1) ||
                     (match.winnerId === match.participant2Id && !isP1)
@@ -1283,7 +1284,7 @@ export default function ProfilePage() {
                     </div>
                   );
                 })}
-                
+
                 {matchesTotalPages > 1 && (
                   <div className="flex justify-center items-center gap-3 mt-6 pt-4 border-t border-slate-100">
                     <Button
@@ -1497,7 +1498,7 @@ export default function ProfilePage() {
               <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
                 Ảnh minh chứng năng lực <span className="text-rose-500">*</span>
               </label>
-              
+
               <div className="flex flex-col items-center justify-center p-4 bg-slate-50 rounded-lg border border-slate-200">
                 <input
                   type="file"
@@ -1506,7 +1507,7 @@ export default function ProfilePage() {
                   className="hidden"
                   id="evidence-upload"
                 />
-                
+
                 {isUploading ? (
                   <div className="flex flex-col items-center justify-center py-4 text-slate-500">
                     <Loader2 className="w-6 h-6 animate-spin text-blue-500" />

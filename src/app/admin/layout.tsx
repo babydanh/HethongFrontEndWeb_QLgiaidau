@@ -26,6 +26,7 @@ import {
 import { cn } from '@/utils/cn';
 import { Button } from '@/components/ui/Button';
 import { AdminSupportBell } from '@/components/admin/AdminSupportBell';
+import { BRAND } from '@/constants/brand';
 
 export default function AdminLayout({
   children,
@@ -80,14 +81,14 @@ export default function AdminLayout({
           {/* Header/Logo */}
           <div className="h-16 flex items-center justify-between px-6 border-b border-slate-200">
             <Link href="/" className="flex items-center gap-2 py-2">
-              <img 
-                src="/sporto_v1.svg" 
-                alt="Sporto Logo" 
+              <img
+                src={BRAND.assets.logoIcon}
+                alt={`${BRAND.name} Logo`}
                 className="h-8 w-auto object-contain"
               />
               <span className="text-sm font-bold text-slate-800 border-l border-slate-350 pl-2">Admin</span>
             </Link>
-            <button 
+            <button
               className="md:hidden text-slate-500 hover:text-slate-950"
               onClick={() => setIsSidebarOpen(false)}
             >
@@ -101,13 +102,13 @@ export default function AdminLayout({
               const Icon = item.icon;
               const active = pathname === item.path;
               return (
-                <Link 
-                  key={item.path} 
+                <Link
+                  key={item.path}
                   href={item.path}
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 group",
-                    active 
-                      ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20" 
+                    active
+                      ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20"
                       : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                   )}
                 >
@@ -121,7 +122,7 @@ export default function AdminLayout({
 
         {/* Footer actions */}
         <div className="p-4 border-t border-slate-200 space-y-1">
-          <Link 
+          <Link
             href="/"
             className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-all duration-200"
           >
@@ -144,7 +145,7 @@ export default function AdminLayout({
         {/* Top Navbar */}
         <header className="relative z-[80] h-16 overflow-visible border-b border-slate-200 bg-white/80 backdrop-blur-md flex items-center justify-between px-6 md:px-8">
           <div className="flex items-center gap-4">
-            <button 
+            <button
               className="md:hidden text-slate-500 hover:text-slate-950"
               onClick={() => setIsSidebarOpen(true)}
             >
@@ -179,4 +180,3 @@ export default function AdminLayout({
     </RouteGuard>
   );
 }
-

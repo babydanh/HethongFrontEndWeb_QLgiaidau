@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Trophy } from "lucide-react";
+import { BRAND } from "@/constants/brand";
 
 export function Footer() {
   return (
@@ -10,9 +11,9 @@ export function Footer() {
         <div className="grid gap-6 sm:gap-8 md:grid-cols-2 lg:grid-cols-4">
           <div>
             <Link href="/" className="inline-block mb-3">
-              <img 
-                src="/sporto_v1.svg" 
-                alt="Sporto Logo" 
+              <img
+                src={BRAND.assets.logoIcon}
+                alt={`${BRAND.name} Logo`}
                 className="h-10 md:h-12 w-auto object-contain"
               />
             </Link>

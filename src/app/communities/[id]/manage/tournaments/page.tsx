@@ -17,15 +17,18 @@ import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { getErrorMessage } from '@/utils/error';
 
-const mapCategoryToLiteSport = (cat?: { slug?: string; name?: string } | null): 'badminton' | 'tennis' | 'pickleball' | 'table_tennis' => {
+type LiteSport = 'badminton' | 'tennis' | 'pickleball' | 'table_tennis' | 'football';
+
+const mapCategoryToLiteSport = (cat?: { slug?: string; name?: string } | null): LiteSport => {
   if (!cat) return 'badminton';
   const slug = (cat.slug || cat.name || '').toLowerCase();
   if (slug.includes('badminton') || slug.includes('cầu lông') || slug.includes('cau long')) return 'badminton';
   if (slug.includes('tennis') || slug.includes('quần vợt') || slug.includes('quan vot')) return 'tennis';
   if (slug.includes('pickleball')) return 'pickleball';
   if (slug.includes('table_tennis') || slug.includes('table-tennis') || slug.includes('bóng bàn') || slug.includes('bong ban') || slug.includes('tabletennis')) return 'table_tennis';
-  if (['badminton', 'tennis', 'pickleball', 'table_tennis'].includes(slug)) {
-    return slug as 'badminton' | 'tennis' | 'pickleball' | 'table_tennis';
+  if (slug.includes('football') || slug.includes('bóng đá') || slug.includes('bong da') || slug.includes('soccer')) return 'football';
+  if (['badminton', 'tennis', 'pickleball', 'table_tennis', 'football'].includes(slug)) {
+    return slug as LiteSport;
   }
   return 'badminton';
 };
@@ -45,11 +48,11 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
   const resolvedParams = use(params);
   const id = resolvedParams.id;
   const router = useRouter();
-  
+
   const [community, setCommunity] = useState<Community | null>(null);
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  
+
   const [isLoading, setIsLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isLiteModalOpen, setIsLiteModalOpen] = useState(false);
@@ -66,7 +69,10 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
 
   // Form states for Lite creation
   const [liteName, setLiteName] = useState('');
-  const [liteSport, setLiteSport] = useState<'badminton' | 'tennis' | 'pickleball' | 'table_tennis'>('badminton');
+  const [liteSport, setLiteSport] = useState<LiteSport>('badminton');
+  const [liteGenderRestriction, setLiteGenderRestriction] = useState<'MALE' | 'FEMALE' | ''>('');
+  const [liteTeamSize, setLiteTeamSize] = useState<5 | 7 | 11>(7);
+  const [liteMaxReserve, setLiteMaxReserve] = useState(5);
   const [liteFormat, setLiteFormat] = useState<'singles' | 'doubles'>('doubles');
   const [liteBracketType, setLiteBracketType] = useState<'single_elimination' | 'double_elimination' | 'round_robin' | 'group_stage_knockout'>('single_elimination');
   const [liteMaxTeams, setLiteMaxTeams] = useState(16);
@@ -129,7 +135,10 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
         name: liteName.trim(),
         sport: liteSport,
         communityId: id,
-        format: liteFormat,
+        format: liteSport === 'football' ? 'doubles' : liteFormat,
+        ...(liteSport === 'football'
+          ? { genderRestriction: liteGenderRestriction || undefined, teamSize: liteTeamSize, maxReserve: liteMaxReserve }
+          : {}),
         bracketType: liteBracketType,
         maxTeams: liteMaxTeams,
         description: `Giải đấu giao hữu nhanh CLB ${community?.name || ''}`,
@@ -146,10 +155,13 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
 
       toast.success('Tạo giải đấu nhanh thành công!');
       setIsLiteModalOpen(false);
-      
+
       // Reset form
       setLiteName('');
       setLiteSport('badminton');
+      setLiteGenderRestriction('');
+      setLiteTeamSize(7);
+      setLiteMaxReserve(5);
       setLiteFormat('doubles');
       setLiteBracketType('single_elimination');
       setLiteMaxTeams(16);
@@ -174,7 +186,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
 
     try {
       setIsSubmitting(true);
-      
+
       // 1. Create Parent Tournament first
       const parentRes = await tournamentsApi.createParentTournament({
         name: newTourneyName.trim(),
@@ -210,12 +222,12 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
       const res = await tournamentsApi.createTournament(data);
       toast.success('Tạo giải đấu nội bộ thành công!');
       setIsCreateModalOpen(false);
-      
+
       // Reset form
       setNewTourneyName('');
       setNewTourneyMatchType('DOUBLES');
       setNewTourneyMaxParticipants(16);
-      
+
       // Refresh list
       fetchData();
 
@@ -277,7 +289,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
   return (
     <div className="min-h-screen bg-slate-50 py-8 px-4 md:px-8">
       <div className="max-w-5xl mx-auto">
-        
+
         {/* Back Link */}
         <Link href={`/communities/${community.id}`} className="inline-flex items-center gap-1.5 text-slate-500 hover:text-slate-800 text-sm font-semibold mb-6">
           <ChevronLeft className="w-4 h-4" /> Quay lại Câu lạc bộ
@@ -527,14 +539,15 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
                         </div>
                         <select
                           value={liteSport}
-                          onChange={(e) => setLiteSport(e.target.value as 'badminton' | 'tennis' | 'pickleball' | 'table_tennis')}
+                          onChange={(e) => setLiteSport(e.target.value as LiteSport)}
                           disabled={isClubLocked}
                           className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed"
                         >
-                          <option value="badminton">Cầu lông (Badminton)</option>
-                          <option value="tennis">Quần vợt (Tennis)</option>
-                          <option value="pickleball">Pickleball</option>
-                          <option value="table_tennis">Bóng bàn (Table Tennis)</option>
+                          {categories.filter((category) => category.isActive !== false).map((category) => (
+                            <option key={category.id} value={mapCategoryToLiteSport(category)}>
+                              {category.name}
+                            </option>
+                          ))}
                         </select>
                         {isClubLocked && clubCategory && (
                           <p className="text-xs text-slate-500 font-medium">
@@ -550,6 +563,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
                     <select
                       value={liteFormat}
                       onChange={(e) => setLiteFormat(e.target.value as 'singles' | 'doubles')}
+                      disabled={liteSport === 'football'}
                       className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="singles">Đơn (Singles)</option>
@@ -557,6 +571,28 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
                     </select>
                   </div>
                 </div>
+
+                {liteSport === 'football' && (
+                  <div className="grid grid-cols-1 gap-4 rounded-lg border border-blue-100 bg-blue-50/60 p-4 sm:grid-cols-3">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-sm font-semibold text-slate-700">Đội hình</label>
+                      <select value={liteTeamSize} onChange={(e) => setLiteTeamSize(Number(e.target.value) as 5 | 7 | 11)} className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700">
+                        <option value={5}>Sân 5</option>
+                        <option value={7}>Sân 7</option>
+                        <option value={11}>Sân 11</option>
+                      </select>
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-sm font-semibold text-slate-700">Giới tính</label>
+                      <select value={liteGenderRestriction} onChange={(e) => setLiteGenderRestriction(e.target.value as 'MALE' | 'FEMALE' | '')} className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-700">
+                        <option value="">Không ràng buộc</option>
+                        <option value="MALE">Nam</option>
+                        <option value="FEMALE">Nữ</option>
+                      </select>
+                    </div>
+                    <Input label="Dự bị tối đa" type="number" min={0} max={20} value={liteMaxReserve} onChange={(e) => setLiteMaxReserve(Math.max(0, Math.min(20, Number(e.target.value) || 0)))} />
+                  </div>
+                )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1.5">

@@ -15,6 +15,7 @@ import Link from 'next/link';
 import { ApiResponse } from '@/types/api';
 import { CheckCircle2, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { BRAND } from '@/constants/brand';
 
 const loginSchema = z.object({
   email: z.string().email('Email không hợp lệ'),
@@ -60,7 +61,7 @@ export default function LoginPage() {
       }
     };
     window.addEventListener('pageshow', handlePageShow);
-    
+
     return () => {
       window.removeEventListener('pageshow', handlePageShow);
     };
@@ -117,8 +118,8 @@ export default function LoginPage() {
         <div className="relative z-10 p-10 pb-0">
           <Link href="/" className="inline-block">
             <img
-              src="/sporto_v1_with_text.svg"
-              alt="Sporto"
+              src={BRAND.assets.logoFull}
+              alt={BRAND.name}
               className="h-8 w-auto object-contain brightness-0 invert opacity-95 hover:opacity-100 transition-opacity"
             />
           </Link>
@@ -186,8 +187,8 @@ export default function LoginPage() {
             <div className="flex items-center justify-center mb-5">
               <Link href="/" className="inline-block">
                 <img
-                  src="/sporto_v1_with_text.svg"
-                  alt="Sporto"
+                  src={BRAND.assets.logoFull}
+                  alt={BRAND.name}
                   className="h-8 w-auto object-contain hover:opacity-90 transition-opacity"
                 />
               </Link>

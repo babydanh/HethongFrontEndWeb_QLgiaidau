@@ -8,6 +8,7 @@ import { usersApi } from "@/features/users/api";
 import toast from "react-hot-toast";
 import { motion } from "framer-motion";
 import { Trophy } from "lucide-react";
+import { BRAND } from "@/constants/brand";
 
 const CallbackContent = () => {
   const router = useRouter();
@@ -44,20 +45,20 @@ const CallbackContent = () => {
 
   return (
     <div className="flex h-screen w-screen items-center justify-center bg-slate-50 p-4">
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5 }}
         className="flex flex-col items-center text-center space-y-6"
       >
         <div className="relative w-32 h-32 flex items-center justify-center mb-2">
-          <img 
-            src="/sporto_v1.svg" 
-            alt="Sporto Logo" 
+            <img
+            src={BRAND.assets.logoIcon}
+            alt={`${BRAND.name} Logo`}
             className="w-full h-full object-contain animate-pulse"
           />
         </div>
-        
+
         <div className="space-y-2 flex flex-col items-center">
           <p className="text-slate-650 font-bold text-base">Đang đồng bộ tài khoản Google của bạn...</p>
         </div>

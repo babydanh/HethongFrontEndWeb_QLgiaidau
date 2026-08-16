@@ -13,6 +13,7 @@ import { CheckCircle2, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import * as React from 'react';
 import { useAuthStore } from '@/lib/zustand/authStore';
+import { BRAND } from '@/constants/brand';
 
 const registerSchema = z
   .object({
@@ -62,7 +63,7 @@ export default function RegisterPage() {
       }
     };
     window.addEventListener('pageshow', handlePageShow);
-    
+
     return () => {
       window.removeEventListener('pageshow', handlePageShow);
     };
@@ -116,11 +117,11 @@ export default function RegisterPage() {
         <div className="absolute inset-0 bg-gradient-to-b from-slate-900/85 via-slate-900/55 to-slate-900/90" />
 
         {/* Logo */}
-        <div className="relative z-10 p-10">
+        <div className="relative z-10 p-10 pb-0">
           <Link href="/" className="inline-block">
             <img
-              src="/sporto_v1_with_text.svg"
-              alt="Sporto"
+              src={BRAND.assets.logoFull}
+              alt={BRAND.name}
               className="h-8 w-auto object-contain brightness-0 invert opacity-95 hover:opacity-100 transition-opacity"
             />
           </Link>
@@ -184,12 +185,12 @@ export default function RegisterPage() {
         >
           {/* Form card */}
           <div className="bg-white rounded-lg shadow-lg border border-slate-100 px-8 py-7">
-            {/* Logo inside card */}
+            {/* Logo inside card for right panel */}
             <div className="flex items-center justify-center mb-5">
               <Link href="/" className="inline-block">
                 <img
-                  src="/sporto_v1_with_text.svg"
-                  alt="Sporto"
+                  src={BRAND.assets.logoFull}
+                  alt={BRAND.name}
                   className="h-8 w-auto object-contain hover:opacity-90 transition-opacity"
                 />
               </Link>

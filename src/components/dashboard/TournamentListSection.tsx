@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ChevronDown, ChevronUp, Users } from 'lucide-react';
 import type { Tournament } from '@/features/tournaments/api';
 import { getTournamentStatusClassName, getTournamentStatusLabel } from '@/utils/tournament-status';
+import { BRAND } from '@/constants/brand';
 
 interface Props {
   id?: string;
@@ -24,10 +25,10 @@ interface Props {
 
 export function AvatarCircle({ src, name, size = 32 }: { src?: string | null; name: string; size?: number }) {
   const [imgError, setImgError] = useState(false);
-  const logoSrc = (!imgError && src) ? src : '/sporto_v1_with_text.svg';
+  const logoSrc = (!imgError && src) ? src : BRAND.assets.defaultTournamentLogo;
 
   return (
-    <div 
+    <div
       className="rounded-full bg-slate-50 border border-slate-200 overflow-hidden flex items-center justify-center shrink-0 p-0.5"
       style={{ width: size, height: size }}
     >

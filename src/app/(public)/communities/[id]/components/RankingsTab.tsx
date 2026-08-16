@@ -52,7 +52,11 @@ export default function RankingsTab({ communityId, categories, onGoToTournaments
     if (!selectedCategoryId) return;
     try {
       if (isFootball) {
-        const res = await rankingsApi.getFootballTeamRankings({ categoryId: selectedCategoryId, limit: 20 });
+        const res = await rankingsApi.getFootballTeamRankings({
+          categoryId: selectedCategoryId,
+          communityId,
+          limit: 20,
+        });
         setTeamRankings(res.data || []);
         setRankings([]);
         setMyRanking(null);

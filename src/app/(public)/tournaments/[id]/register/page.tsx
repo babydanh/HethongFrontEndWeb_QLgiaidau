@@ -156,7 +156,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
   // Division select states
   const [selectedDivisionId, setSelectedDivisionId] = useState<string>('');
   const [allDivisions, setAllDivisions] = useState<Division[]>([]);
-  
+
   // Invite states for Private Tournaments
   const [inviteCode, setInviteCode] = useState(urlInvite);
   const [needInviteValidation, setNeedInviteValidation] = useState(false);
@@ -706,7 +706,9 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
   const entryFeeVal = selectedDivision ? Number(selectedDivision.entryFee || 0) : 0;
   const isDoubles = selectedDivision ? (selectedDivision.matchType === 'DOUBLES' || selectedDivision.matchType === 'MIXED_DOUBLES') : false;
   // Team sport (bóng đá): config có teamSize → đăng ký đội nhiều người.
-  const isTeamSport = (tournament?.tournamentConfig?.teamSize != null || tournament?.tournamentConfig?.minTeamSize != null);
+  const isFootballCategory = tournament?.category?.slug?.toLowerCase() === 'football' || tournament?.sportRules?.kind === 'FOOTBALL';
+  const isTeamSport = isFootballCategory || (tournament?.tournamentConfig?.teamSize != null || tournament?.tournamentConfig?.minTeamSize != null);
+  const effectiveFootballTeamSize = tournament?.tournamentConfig?.teamSize ?? (isFootballCategory ? 11 : 7);
 
   const userGender = normalizeGenderValue(user?.gender);
   const divisionGender = normalizeGenderValue(selectedDivision?.genderRestriction);
@@ -900,10 +902,14 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                   divisionId={selectedDivisionId || undefined}
                   categoryId={selectedDivision?.categoryId}
                   currentUserId={user?.id}
-                  teamSize={tournament?.tournamentConfig?.teamSize || 7}
+                  participantId={participant?.id}
+                  participantTeamId={participant?.footballTeamId}
+                  rosterLockedAt={participant?.rosterLockedAt}
+                  teamSize={effectiveFootballTeamSize}
                   maxTeamSize={tournament?.tournamentConfig?.maxTeamSize}
                   maxReserve={tournament?.tournamentConfig?.maxReserve ?? 0}
                   registrationMode={tournament?.tournamentConfig?.registrationMode}
+                  onRegistrationChanged={() => fetchTournament()}
                 />
               ) : isDoubles ? (
                 <DoublesRegistrationFlow

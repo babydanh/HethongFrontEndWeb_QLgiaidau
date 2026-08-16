@@ -11,6 +11,7 @@ import {
   Hourglass, Coins, Sparkles
 } from 'lucide-react';
 import { getSportLogo } from '@/constants/sports';
+import { BRAND } from '@/constants/brand';
 import { categoriesApi } from '@/features/categories/api';
 import { Category } from '@/types/category';
 import { useAuthStore } from '@/lib/zustand/authStore';
@@ -113,7 +114,7 @@ const getFormatLabel = (matchType?: string, genderRestriction?: string | null) =
 };
 
 function CommunityLogoAvatar({ src, alt }: { src?: string | null; alt: string }) {
-  const fallbackSrc = '/sporto_v1_with_text.svg';
+  const fallbackSrc = BRAND.assets.defaultFallback;
   // Track only whether the image failed to load — src is derived directly from props
   const [imgError, setImgError] = useState(false);
   // Reset error when src changes (React recommended "derived state" pattern)
@@ -221,7 +222,7 @@ function RegistrationCountdown({ targetDate }: { targetDate: string }) {
 }
 
 function TournamentLogoAvatar({ src, alt }: { src?: string | null; alt: string }) {
-  const fallbackSrc = '/sporto_v1_with_text.svg';
+  const fallbackSrc = BRAND.assets.defaultFallback;
   const [imgError, setImgError] = useState(false);
   const [prevSrc, setPrevSrc] = useState(src);
   if (prevSrc !== src) {
@@ -245,7 +246,7 @@ function TournamentLogoAvatar({ src, alt }: { src?: string | null; alt: string }
 
 function HomepageTournamentCard({ tournament }: { tournament: Tournament }) {
   const [imgError, setImgError] = useState(false);
-  const fallbackSrc = '/sporto_v1_with_text.svg';
+  const fallbackSrc = BRAND.assets.defaultFallback;
   const hasBanner = !imgError && Boolean(tournament.bannerUrl?.trim());
   const imageSrc = hasBanner ? tournament.bannerUrl!.split(',')[0] : fallbackSrc;
   const hideFeaturedCardText = shouldHideFeaturedCardText(tournament);
@@ -271,7 +272,7 @@ function HomepageTournamentCard({ tournament }: { tournament: Tournament }) {
         {!hideFeaturedCardText && hasBanner && (
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
         )}
-        
+
         {/* Badges */}
         {!hideFeaturedCardText && (
         <div className="absolute top-4 left-4 z-10 flex gap-2">
@@ -587,7 +588,7 @@ export default function HomePage() {
             // request on the homepage just to populate the ranked card.
             const matchesArray = publicMatchList.filter((match) => match.tournamentId === foundRanked.id);
             setRankedTournamentMatches(matchesArray as unknown as BracketMatch[]);
-            
+
             // Sync initial cheer counts from backend
             const initialCheerMap: Record<string, number> = {};
             matchesArray.forEach((m) => {
@@ -722,8 +723,8 @@ export default function HomePage() {
   const showOngoingOnly = ongoingInRound.length > 0;
 
   // If no ongoing, show completed and scheduled
-  const displayRankedMatches = showOngoingOnly 
-    ? ongoingInRound 
+  const displayRankedMatches = showOngoingOnly
+    ? ongoingInRound
     : roundMatches.filter(m => m.status === 'COMPLETED' || m.status === 'SCHEDULED');
 
   const sortedDisplayRankedMatches = [...displayRankedMatches].sort((a, b) => {
@@ -809,13 +810,13 @@ export default function HomePage() {
     });
 
     return (
-      <motion.div 
+      <motion.div
         key={match.id}
         whileHover={{ y: -3, scale: 1.005 }}
         transition={{ type: 'spring', stiffness: 400, damping: 25 }}
         className={`bg-white rounded-lg border ${
-          isLive 
-            ? 'border-rose-100 shadow-[0_4px_20px_rgba(244,63,94,0.03)]' 
+          isLive
+            ? 'border-rose-100 shadow-[0_4px_20px_rgba(244,63,94,0.03)]'
             : 'border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.015)]'
         } overflow-hidden flex flex-col justify-between group relative`}
       >
@@ -880,8 +881,8 @@ export default function HomePage() {
                 </span>
               ) : (
                 <div className={`flex items-center justify-center px-2.5 py-1 rounded-full font-mono text-[10px] font-bold leading-none tracking-wider shadow-sm border ${
-                  isLive 
-                    ? 'bg-blue-50 text-blue-700 border-blue-200' 
+                  isLive
+                    ? 'bg-blue-50 text-blue-700 border-blue-200'
                     : 'bg-slate-100 text-slate-700 border-slate-200'
                 }`}>
                   {(() => {
@@ -928,7 +929,7 @@ export default function HomePage() {
         {/* Interactive Footer (Full Hitbox Action Bar) */}
         <div className="grid grid-cols-2 border-t border-slate-100 bg-slate-50/50 divide-x divide-slate-100 relative z-10">
           {/* Cổ vũ Button */}
-          <button 
+          <button
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -967,7 +968,7 @@ export default function HomePage() {
     );
   };
 
-  const filteredCommunities = selectedCategoryId 
+  const filteredCommunities = selectedCategoryId
     ? communities.filter(c => c.categories?.some(cat => cat.id === selectedCategoryId))
     : communities;
 
@@ -1011,10 +1012,10 @@ export default function HomePage() {
 
   return (
     <div className="bg-slate-50 min-h-screen text-slate-900 font-sans selection:bg-blue-100 selection:text-blue-900 animate-in fade-in duration-200">
-      
+
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 md:px-8 py-8 grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
+
         {/* Left Column (9/12) */}
         <div className="lg:col-span-9 flex flex-col gap-8">
           {/* Sports Selector Bar */}
@@ -1079,7 +1080,7 @@ export default function HomePage() {
                 Xem tất cả <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
-            
+
             {isLoading ? (
               <div className="w-full h-[220px] md:h-[300px] bg-slate-200 animate-pulse rounded-lg"></div>
             ) : activeTournaments.length === 0 ? (
@@ -1272,7 +1273,7 @@ export default function HomePage() {
                     <div key={tournamentName} className="bg-slate-50/60 rounded-xl border border-slate-200/80 overflow-hidden flex flex-col">
                       {/* Group Tournament Header */}
                       <div className="px-4 py-3 bg-white border-b border-slate-100 flex items-center justify-between">
-                        <Link 
+                        <Link
                           href={group.id ? `/tournaments/${group.id}` : '#'}
                           className="flex items-center gap-3 group/header hover:opacity-90 transition-opacity flex-1 min-w-0"
                         >
@@ -1331,7 +1332,7 @@ export default function HomePage() {
             )}
             </div>
           </section>
- 
+
           {/* Section 2.5: Trận đấu sắp diễn ra */}
           <section className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_2px_12px_rgba(15,23,42,0.06)] overflow-hidden">
             <div className="px-5 py-4 border-b border-slate-100 flex justify-between items-center">
@@ -1362,7 +1363,7 @@ export default function HomePage() {
                     <div key={tournamentName} className="bg-slate-50/60 rounded-xl border border-slate-200/80 overflow-hidden flex flex-col">
                       {/* Group Tournament Header */}
                       <div className="px-4 py-3 bg-white border-b border-slate-100 flex items-center justify-between">
-                        <Link 
+                        <Link
                           href={group.id ? `/tournaments/${group.id}` : '#'}
                           className="flex items-center gap-3 group/header hover:opacity-90 transition-opacity flex-1 min-w-0"
                         >
@@ -1459,11 +1460,11 @@ export default function HomePage() {
 
         {/* Right Column (3/12) */}
         <div className="lg:col-span-3 flex flex-col gap-6">
-          
+
           {!isClient ? (
              <div className="animate-pulse bg-slate-200 h-[180px] rounded-2xl w-full"></div>
            ) : !isAuthenticated ? (
-             <motion.div 
+             <motion.div
                whileHover={{ y: -2 }}
                className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.02)] p-5 flex flex-col items-center text-center"
              >
@@ -1562,7 +1563,7 @@ export default function HomePage() {
               <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/35 to-transparent z-10"></div>
               <div className="absolute inset-0 bg-blue-600 opacity-20 group-hover:opacity-35 transition-opacity duration-300"></div>
               <div className="absolute top-3 right-3 bg-white/20 backdrop-blur-md text-white/90 text-[9px] px-2 py-0.5 rounded font-bold tracking-wider uppercase z-20">QUẢNG CÁO</div>
-              
+
               <div className="relative z-20 mt-auto">
                  <span className="text-[9px] font-bold text-blue-400 uppercase tracking-widest block mb-1">CỬA HÀNG TOURNA</span>
                  <h4 className="text-sm font-bold text-white mb-0.5 group-hover:text-blue-200 transition-colors">Vợt Tennis PRO 2026</h4>

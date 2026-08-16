@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { ChevronLeft, ChevronRight, Image as ImageIcon } from 'lucide-react';
+import { BRAND } from '@/constants/brand';
 
 interface GalleryCarouselProps {
   images?: string[];
@@ -42,11 +43,11 @@ export default function GalleryCarousel({ images = [], defaultBanner, className 
         {/* Decorative background branding circles */}
         <div className="absolute -right-16 -top-16 w-64 h-64 bg-white/5 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -left-16 -bottom-16 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
-        
+
         <div className="relative z-10 flex flex-col items-center gap-2">
           <img
-            src="/sporto_v1_with_text.svg"
-            alt="Sporto Logo"
+            src={BRAND.assets.logoFull}
+            alt={`${BRAND.name} Logo`}
             className="h-16 md:h-20 w-auto object-contain drop-shadow-md"
           />
           <span className="text-[11px] tracking-widest text-slate-300 font-bold uppercase mt-1">HỆ THỐNG QUẢN LÝ GIẢI ĐẤU CHUYÊN NGHIỆP</span>
@@ -62,7 +63,7 @@ export default function GalleryCarousel({ images = [], defaultBanner, className 
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Slides Container */}
-      <div 
+      <div
         className="flex w-full h-full transition-transform duration-[800ms] [transition-timing-function:cubic-bezier(0.16,1,0.3,1)]"
         style={{ transform: `translateX(-${activeIndex * 100}%)` }}
       >

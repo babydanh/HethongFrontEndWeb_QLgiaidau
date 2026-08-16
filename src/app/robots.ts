@@ -1,42 +1,15 @@
 import { MetadataRoute } from 'next';
+import { BRAND } from '@/constants/brand';
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sporto.asia';
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || BRAND.domain;
 
   return {
     rules: [
       {
         userAgent: '*',
-        allow: [
-          '/',
-          '/tournaments',
-          '/tournaments/*',
-          '/live/*',
-          '/communities',
-          '/communities/*',
-          '/matches',
-          '/download',
-          '/privacy',
-          '/*.ico',
-          '/*.png',
-          '/*.svg',
-          '/*.jpg',
-          '/*.jpeg',
-          '/*.webp',
-          '/favicon.ico',
-          '/icon.png',
-          '/apple-icon.png',
-          '/apple-touch-icon.png',
-          '/manifest.webmanifest',
-          '/manifest.json',
-        ],
+        allow: '/',
         disallow: [
-          '/admin',
-          '/organizer',
-          '/moderation',
-          '/profile',
-          '/lite',
-          '/auth',
           '/admin/*',
           '/organizer/*',
           '/moderation/*',
@@ -55,13 +28,13 @@ export default function robots(): MetadataRoute.Robots {
           '/*.jpg',
           '/*.jpeg',
           '/*.webp',
-          '/favicon.ico',
+          BRAND.assets.favicon,
           '/icon.png',
-          '/apple-touch-icon.png',
-          '/sporto_512.png',
-          '/sporto_1024.png',
-          '/sporto_v1.svg',
-          '/sporto_v1_with_text.svg',
+          BRAND.assets.appleTouchIcon,
+          BRAND.assets.logo512,
+          BRAND.assets.logo1024,
+          BRAND.assets.logoIcon,
+          BRAND.assets.logoFull,
         ],
       },
     ],

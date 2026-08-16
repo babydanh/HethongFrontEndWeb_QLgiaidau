@@ -27,27 +27,7 @@ import { getSportRulePresets, getScoreEntryGuidance, SportRulePreset } from '@/f
 import { SportRuleKind } from '@/types/tournament';
 import toast from 'react-hot-toast';
 
-// Fallback initial categories if DB is empty or API fails
-const FALLBACK_CATEGORIES: Category[] = [
-  { id: 'cat-pickleball', name: 'Pickleball', slug: 'pickleball', isActive: true, description: 'Môn thể thao vợt kết hợp giữa tennis, bóng bàn và cầu lông.' },
-  { id: 'cat-tennis', name: 'Tennis', slug: 'tennis', isActive: true, description: 'Quần vợt truyền thống với quy chuẩn luật đếm game/set.' },
-  { id: 'cat-badminton', name: 'Cầu lông', slug: 'badminton', isActive: true, description: 'Cầu lông theo thể thức Rally Point 21 điểm.' },
-  { id: 'cat-table-tennis', name: 'Bóng bàn', slug: 'table_tennis', isActive: true, description: 'Bóng bàn thi đấu theo luật 11 điểm/set.' },
-  { id: 'cat-football', name: 'Bóng đá', slug: 'football', isActive: true, description: 'Bóng đá sân 5/7/11 người theo thể thức hiệp đấu.' },
-];
 
-const getLocalActiveOverride = (catKey: string): boolean | null => {
-  if (typeof window === 'undefined') return null;
-  const saved = localStorage.getItem(`sport_active_${catKey}`);
-  if (saved === 'true') return true;
-  if (saved === 'false') return false;
-  return null;
-};
-
-const setLocalActiveOverride = (catKey: string, isActive: boolean) => {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem(`sport_active_${catKey}`, String(isActive));
-};
 
 /** Map category slug/id to default SportRuleKind */
 function mapCategoryToSportKind(category: Category): SportRuleKind {
@@ -65,10 +45,10 @@ export default function AdminCategoriesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<'ALL' | 'ACTIVE' | 'INACTIVE'>('ALL');
-  
+
   // Track updating category IDs for toggle spinner
   const [updatingIds, setUpdatingIds] = useState<Record<string, boolean>>({});
-  
+
   // Selected category for Preset Rules Detail Modal
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
 
@@ -77,51 +57,18 @@ export default function AdminCategoriesPage() {
     const loadCategories = async () => {
       setIsLoading(true);
       try {
-        const res = await categoriesApi.getCategories({ includeInactive: true });
+        const res = await categoriesApi.getAdminCategories();
         let baseList: Category[] = [];
 
-        if (res.data && res.data.length > 0) {
-          const apiCategories: Category[] = res.data.map((cat) => ({
-            ...cat,
-            isActive: cat.isActive !== false && (cat.categoryConfig as Record<string, unknown> | null | undefined)?.isActive !== false,
-          }));
-          baseList = [...apiCategories];
-          
-          FALLBACK_CATEGORIES.forEach(fallbackCat => {
-            const exists = apiCategories.some(apiCat => 
-              apiCat.slug === fallbackCat.slug || 
-              apiCat.name.toLowerCase() === fallbackCat.name.toLowerCase()
-            );
-            if (!exists) {
-              baseList.push(fallbackCat);
-            }
-          });
-        } else {
-          baseList = [...FALLBACK_CATEGORIES];
-        }
+        baseList = (res.data ?? []).map((cat: Category) => ({
+          ...cat,
+          isActive: cat.isActive !== false && (cat.categoryConfig as Record<string, unknown> | null | undefined)?.isActive !== false,
+        }));
 
-        // Apply any local storage overrides to ensure toggles stay persistent across reloads
-        const finalCategories = baseList.map((cat) => {
-          const catKey = cat.slug || cat.id;
-          const override = getLocalActiveOverride(catKey);
-          return {
-            ...cat,
-            isActive: override !== null ? override : cat.isActive,
-          };
-        });
-
-        setCategories(finalCategories);
+        setCategories(baseList);
       } catch (error) {
         console.error('Failed to fetch categories:', error);
-        const finalFallback = FALLBACK_CATEGORIES.map((cat) => {
-          const catKey = cat.slug || cat.id;
-          const override = getLocalActiveOverride(catKey);
-          return {
-            ...cat,
-            isActive: override !== null ? override : cat.isActive,
-          };
-        });
-        setCategories(finalFallback);
+        setCategories([]);
       } finally {
         setIsLoading(false);
       }
@@ -134,7 +81,6 @@ export default function AdminCategoriesPage() {
   const handleToggleActive = async (category: Category) => {
     const newStatus = !category.isActive;
     const catId = category.id;
-    const catKey = category.slug || catId;
 
     setUpdatingIds((prev) => ({ ...prev, [catId]: true }));
 
@@ -143,19 +89,8 @@ export default function AdminCategoriesPage() {
       prev.map((c) => (c.id === catId ? { ...c, isActive: newStatus } : c))
     );
 
-    // Save local override so F5 page reload will never revert the state
-    setLocalActiveOverride(catKey, newStatus);
 
     // If local fallback item (not a valid UUID), skip backend API
-    const isMockId = catId.startsWith('cat-');
-    if (isMockId) {
-      setTimeout(() => {
-        setUpdatingIds((prev) => ({ ...prev, [catId]: false }));
-        toast.success(`Đã ${newStatus ? 'bật (hiển thị)' : 'ẩn (tắt)'} bộ môn "${category.name}"`);
-      }, 200);
-      return;
-    }
-
     try {
       await categoriesApi.updateCategory(catId, { isActive: newStatus });
       toast.success(
@@ -163,7 +98,8 @@ export default function AdminCategoriesPage() {
       );
     } catch (error) {
       console.error('Failed to update category status via API:', error);
-      toast.success(`Đã ${newStatus ? 'bật (hiển thị)' : 'ẩn (tắt)'} bộ môn "${category.name}"`);
+      setCategories((prev) => prev.map((item) => item.id === catId ? { ...item, isActive: category.isActive } : item));
+      toast.error('Không thể cập nhật trạng thái bộ môn. Vui lòng thử lại.');
     } finally {
       setUpdatingIds((prev) => ({ ...prev, [catId]: false }));
     }
@@ -341,8 +277,8 @@ export default function AdminCategoriesPage() {
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0">
                       <div className={`w-11 h-11 rounded-xl flex items-center justify-center font-bold text-lg shrink-0 ${
-                        cat.isActive 
-                          ? 'bg-blue-50 text-blue-600 border border-blue-100' 
+                        cat.isActive
+                          ? 'bg-blue-50 text-blue-600 border border-blue-100'
                           : 'bg-slate-100 text-slate-400 border border-slate-200'
                       }`}>
                         <Trophy className="w-5 h-5" />
@@ -426,7 +362,7 @@ export default function AdminCategoriesPage() {
       {selectedCategory && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-fade-in">
           <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-2xl w-full overflow-hidden flex flex-col max-h-[90vh]">
-            
+
             {/* Modal Header - Sporto Slate-900 Style */}
             <div className="p-6 bg-slate-900 text-white flex items-center justify-between shrink-0 border-b border-slate-800">
               <div className="flex items-center gap-3">
@@ -453,7 +389,7 @@ export default function AdminCategoriesPage() {
 
             {/* Modal Content - Rich Structured Details */}
             <div className="p-6 overflow-y-auto space-y-6 text-slate-700 text-xs md:text-sm">
-              
+
               {/* 1. Summary Overview Banner */}
               <div className="bg-blue-50/80 border border-blue-200/80 rounded-2xl p-4 flex items-start gap-3 text-xs text-blue-900">
                 <Info className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />

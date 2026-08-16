@@ -73,6 +73,7 @@ export interface LiveMatchControlPanelProps {
   onFootballPhaseChange?: (phase: FootballMatchPhase) => void;
   onFootballEvent?: (type: FootballEventType, team: 1 | 2) => void;
   onFootballMinuteChange?: (minute: number) => void;
+  onFootballAddedMinuteChange?: (addedMinute: number) => void;
 }
 
 export function LiveMatchControlPanel({
@@ -114,6 +115,7 @@ export function LiveMatchControlPanel({
   onFootballPhaseChange,
   onFootballEvent,
   onFootballMinuteChange,
+  onFootballAddedMinuteChange,
 }: LiveMatchControlPanelProps) {
   const [confirmWinner, setConfirmWinner] = useState<1 | 2 | null>(null);
   const [activeTab, setActiveTab] = useState<'score' | 'penalty'>('score');
@@ -342,7 +344,7 @@ export function LiveMatchControlPanel({
 
         {match.status === 'ONGOING' ? (
           <div className="space-y-6">
-            {isFootball && footballScore && onFootballGoal && onFootballUndoGoal && onFootballPhaseChange && onFootballEvent && onFootballMinuteChange ? (
+            {isFootball && footballScore && onFootballGoal && onFootballUndoGoal && onFootballPhaseChange && onFootballEvent && onFootballMinuteChange && onFootballAddedMinuteChange ? (
               <FootballOfficialPanel
                 team1Name={team1Name}
                 team2Name={team2Name}
@@ -353,6 +355,7 @@ export function LiveMatchControlPanel({
                 onPhaseChange={onFootballPhaseChange}
                 onEvent={onFootballEvent}
                 onMinuteChange={onFootballMinuteChange}
+                onAddedMinuteChange={onFootballAddedMinuteChange}
               />
             ) : isTennis ? (
               <TennisOfficialPanel
@@ -395,7 +398,31 @@ export function LiveMatchControlPanel({
               />
             )}
 
-            {!isFootball ? <div className="sticky bottom-0 z-10 -mx-3 flex min-w-0 flex-col justify-between gap-3 border-t border-slate-100 bg-white/95 px-3 pb-1 pt-3 backdrop-blur sm:-mx-4 sm:flex-row sm:px-4 md:-mx-5 md:px-5">
+            {isFootball ? (
+              <div className="sticky bottom-0 z-10 -mx-3 flex min-w-0 flex-col gap-3 border-t border-slate-100 bg-white/95 px-3 pb-1 pt-3 backdrop-blur sm:-mx-4 sm:px-4 md:-mx-5 md:px-5">
+                <p className="text-center text-xs font-semibold text-slate-500">
+                  Chốt trận sẽ lưu tỷ số, diễn biến và trạng thái hiện tại. Nếu hòa ở vòng loại trực tiếp, nhập luân lưu trong bước xác nhận.
+                </p>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={() => handleCompleteMatch(1)}
+                    disabled={isSubmitting || !match.participant1Id || !match.participant2Id}
+                    className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-3 text-xs font-bold text-white shadow-sm transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
+                  >
+                    <Trophy className="h-4 w-4" /> Chốt thắng · {team1Name}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleCompleteMatch(2)}
+                    disabled={isSubmitting || !match.participant1Id || !match.participant2Id}
+                    className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-3 text-xs font-bold text-white shadow-sm transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
+                  >
+                    <Trophy className="h-4 w-4" /> Chốt thắng · {team2Name}
+                  </button>
+                </div>
+              </div>
+            ) : <div className="sticky bottom-0 z-10 -mx-3 flex min-w-0 flex-col justify-between gap-3 border-t border-slate-100 bg-white/95 px-3 pb-1 pt-3 backdrop-blur sm:-mx-4 sm:flex-row sm:px-4 md:-mx-5 md:px-5">
               <button
                 onClick={onFinishSet}
                 disabled={isSubmitting || !match.participant1Id || !match.participant2Id}
@@ -430,7 +457,7 @@ export function LiveMatchControlPanel({
                   Game hiện tại của set: {currentSet.team1Score} - {currentSet.team2Score}
                 </p>
               ) : null}
-            </div> : null}
+            </div>}
           </div>
         ) : null}
 
@@ -457,7 +484,7 @@ export function LiveMatchControlPanel({
               <AlertCircle className="h-6 w-6" />
             </div>
             <ModalTitle className="mt-3 text-lg font-bold text-slate-900 sm:mt-4">
-              Xác nhận chốt thắng ngoại lệ
+              {isFootball ? 'Xác nhận kết quả bóng đá' : 'Xác nhận chốt thắng ngoại lệ'}
             </ModalTitle>
             <ModalDescription className="mt-2 text-sm font-semibold text-slate-500 leading-relaxed">
               Bạn có chắc chắn muốn chốt kết quả chiến thắng toàn trận cho đội:
@@ -466,7 +493,7 @@ export function LiveMatchControlPanel({
               </span>
               {isFootball ? (
                 <span className="mt-2 block rounded-lg bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-800">
-                  ⚽ Trận hòa ở vòng loại trực tiếp — nhập kết quả LUÂN LƯU để phân định.
+                  ⚽ Nếu tỷ số chính đang hòa ở vòng loại trực tiếp, nhập kết quả luân lưu để phân định.
                 </span>
               ) : (
                 <>
@@ -523,7 +550,7 @@ export function LiveMatchControlPanel({
                 setConfirmWinner(null);
               }}
             >
-              {isFootball ? 'Chốt thắng (luân lưu)' : 'Chốt thắng ngoại lệ'}
+              {isFootball ? 'Chốt kết quả bóng đá' : 'Chốt thắng ngoại lệ'}
             </Button>
           </ModalFooter>
         </ModalContent>

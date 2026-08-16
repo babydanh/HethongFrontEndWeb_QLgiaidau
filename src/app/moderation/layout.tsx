@@ -7,6 +7,7 @@ import { RouteGuard } from '@/components/shared/RouteGuard';
 import { api } from '@/lib/axios';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { cn } from '@/utils/cn';
+import { BRAND } from '@/constants/brand';
 import {
   ArrowLeft,
   Building,
@@ -63,8 +64,8 @@ export default function ModerationLayout({
             <div className="flex h-16 items-center justify-between border-b border-slate-200 px-6">
               <Link href="/" className="flex items-center gap-2 py-2">
                 <img
-                  src="/sporto_v1.svg"
-                  alt="Sporto Logo"
+                  src={BRAND.assets.logoIcon}
+                  alt={`${BRAND.name} Logo`}
                   className="h-8 w-auto object-contain"
                 />
                 <span className="border-l border-slate-300 pl-2 text-sm font-bold text-slate-800">

@@ -8,6 +8,7 @@ import { useAuthStore } from "@/lib/zustand/authStore";
 import { Shield, Users, Trophy, MapPin, Search, Star, Loader2, ArrowRight } from "lucide-react";
 import { getSportLogo } from "@/constants/sports";
 import toast from "react-hot-toast";
+import { BRAND } from "@/constants/brand";
 
 // Sports-specific tinted styling helper
 const getCategoryStyles = (name: string) => {
@@ -103,7 +104,7 @@ export default function CommunitiesPage() {
         if (search) query.search = search;
         if (provinceCode) query.provinceCode = provinceCode;
         if (categoryId) query.categoryId = categoryId;
-        
+
         const res = await communitiesApi.getCommunities(query);
         setCommunities(res.data || []);
         setTotalPages(res.meta?.totalPages || 1);
@@ -114,11 +115,11 @@ export default function CommunitiesPage() {
         setIsLoading(false);
       }
     };
-    
+
     const timer = setTimeout(() => {
       fetchCommunities();
     }, 500);
-    
+
     return () => clearTimeout(timer);
   }, [page, filterKey]);
 
@@ -137,22 +138,22 @@ export default function CommunitiesPage() {
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-in fade-in duration-200">
-      
+
       {/* Filter Bar */}
       <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-sm mb-8 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
         <div className="relative">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-          <input 
+          <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs font-semibold text-slate-800 outline-none transition-all h-11" 
-            placeholder="Tìm kiếm câu lạc bộ theo tên..." 
-            type="text" 
+            className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs font-semibold text-slate-800 outline-none transition-all h-11"
+            placeholder="Tìm kiếm câu lạc bộ theo tên..."
+            type="text"
           />
         </div>
-        
+
         <div>
-          <select 
+          <select
             value={provinceCode}
             onChange={(e) => setProvinceCode(e.target.value)}
             className="w-full px-3.5 py-2.5 border border-slate-300 rounded-lg bg-slate-50 text-xs font-semibold text-slate-700 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none h-11 cursor-pointer"
@@ -163,7 +164,7 @@ export default function CommunitiesPage() {
         </div>
 
         <div>
-          <select 
+          <select
             value={categoryId}
             onChange={(e) => setCategoryId(e.target.value)}
             className="w-full px-3.5 py-2.5 border border-slate-300 rounded-lg bg-slate-50 text-xs font-semibold text-slate-700 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none h-11 cursor-pointer"
@@ -194,27 +195,27 @@ export default function CommunitiesPage() {
             const isOwner = user && (community.creatorId === user.id || community.ownerId === user.id);
             const isJoined = user && myCommunityIds.has(community.id);
             const provinceName = provinces.find(p => p.code === community.provinceCode)?.name || "Việt Nam";
-            
+
             return (
-              <div 
-                key={community.id} 
+              <div
+                key={community.id}
                 onClick={() => window.location.href = `/communities/${community.id}`}
                 className="bg-white rounded-lg border border-slate-150 overflow-hidden shadow-[0_2px_12px_rgba(15,23,42,0.04)] hover:shadow-[0_12px_24px_rgba(15,23,42,0.08)] hover:-translate-y-1 transition-all duration-500 flex flex-col justify-between group cursor-pointer"
               >
                 {/* Header Banner */}
                 <div className="h-48 sm:h-52 bg-slate-50 relative overflow-hidden shrink-0">
                   {community.bannerUrl ? (
-                    <Image 
-                      src={community.bannerUrl.split(',')[0]} 
-                      alt="Banner" 
-                      fill 
-                      className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out" 
+                    <Image
+                      src={community.bannerUrl.split(',')[0]}
+                      alt="Banner"
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
                     />
                   ) : (
                     <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-blue-50/80 to-indigo-100/90 border-b border-slate-100 flex items-center justify-center p-6 group-hover:scale-105 transition-transform duration-700 ease-out">
-                      <Image 
-                        src="/sporto_v1_with_text.svg" 
-                        alt="Sporto" 
+                      <Image
+                        src={BRAND.assets.logoFull}
+                        alt={BRAND.name}
                         fill
                         className="object-contain p-8 drop-shadow-sm"
                       />
@@ -227,10 +228,10 @@ export default function CommunitiesPage() {
                   <div className="flex items-start gap-3 relative">
                     {/* Circular Logo - Half overlap */}
                     <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-white bg-white shadow-md -mt-9 z-10 shrink-0 relative flex items-center justify-center">
-                      <Image 
-                        src={community.logoUrl || "/sporto_v1_with_text.svg"} 
-                        alt={community.name} 
-                        fill 
+                      <Image
+                        src={community.logoUrl || BRAND.assets.defaultCommunityLogo}
+                        alt={community.name}
+                        fill
                         className={`transition-transform duration-300 ${community.logoUrl ? 'object-cover' : 'object-contain p-1.5'}`}
                       />
                     </div>
@@ -296,10 +297,10 @@ export default function CommunitiesPage() {
 
                     {/* Join Mode Badge */}
                     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] sm:text-[9px] font-bold uppercase tracking-wider ${
-                      community.joinMode === 'INVITE_ONLY' 
-                        ? 'bg-rose-50 border-rose-200 text-rose-700' 
-                        : community.joinMode === 'APPROVAL' 
-                          ? 'bg-amber-50 border-amber-200 text-amber-700' 
+                      community.joinMode === 'INVITE_ONLY'
+                        ? 'bg-rose-50 border-rose-200 text-rose-700'
+                        : community.joinMode === 'APPROVAL'
+                          ? 'bg-amber-50 border-amber-200 text-amber-700'
                           : 'bg-emerald-50 border-emerald-200 text-emerald-700'
                     }`}>
                       <span className={`w-1.5 h-1.5 rounded-full ${
@@ -316,34 +317,34 @@ export default function CommunitiesPage() {
       )}
 
       {selectedCommunity && (
-        <JoinCommunityModal 
-          community={selectedCommunity} 
-          isOpen={true} 
-          onClose={() => setSelectedCommunity(null)} 
+        <JoinCommunityModal
+          community={selectedCommunity}
+          isOpen={true}
+          onClose={() => setSelectedCommunity(null)}
           onSuccess={() => {
             setSelectedCommunity(null);
             fetchMyCommunities();
             setPage(1);
-          }} 
+          }}
         />
       )}
 
       {/* Pagination */}
       {!isLoading && totalPages > 1 && (
         <div className="flex justify-center items-center mt-12 gap-2">
-          <button 
+          <button
             disabled={page === 1}
             onClick={() => setPage(p => Math.max(1, p - 1))}
             className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 transition-colors disabled:opacity-50"
           >
             <span className="material-symbols-outlined">chevron_left</span>
           </button>
-          
+
           <button className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg bg-blue-600 text-white text-xs font-semibold">
             {page}
           </button>
 
-          <button 
+          <button
             disabled={page >= totalPages}
             onClick={() => setPage(p => Math.min(totalPages, p + 1))}
             className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 transition-colors disabled:opacity-50"

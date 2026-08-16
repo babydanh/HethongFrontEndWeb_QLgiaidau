@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { TournamentSeries, SeriesStatus } from '@/types/series';
 import { Trophy, Layers, Calendar, ArrowRight, ShieldCheck } from 'lucide-react';
 import { cn } from '@/utils/cn';
+import { BRAND } from '@/constants/brand';
 
 interface SeriesCardProps {
   series: TournamentSeries;
@@ -52,8 +53,8 @@ export const SeriesCard: React.FC<SeriesCardProps> = ({ series, className }) => 
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-slate-50 via-blue-50/80 to-indigo-100/90 border-b border-slate-100 flex items-center justify-center p-6">
             <img
-              src="/sporto_v1_with_text.svg"
-              alt="Sporto"
+              src={BRAND.assets.logoFull}
+              alt={BRAND.name}
               className="w-36 md:w-40 h-auto object-contain drop-shadow-sm"
             />
           </div>

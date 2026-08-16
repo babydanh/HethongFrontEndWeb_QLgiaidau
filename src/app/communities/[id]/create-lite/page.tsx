@@ -13,6 +13,7 @@ import { getErrorMessage } from '@/utils/error';
 import { LiteInviteQr } from '@/components/tournaments/LiteInviteQr';
 import { buildLiteJoinUrl } from '@/features/tournaments/lite-qr';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { categoriesApi, Category } from '@/features/categories/api';
 
 type CreatedLiteTournament = {
   id: string;
@@ -20,15 +21,18 @@ type CreatedLiteTournament = {
   inviteCode: string;
 };
 
-const mapCategoryToLiteSport = (cat?: { slug?: string; name?: string } | null): '' | 'badminton' | 'tennis' | 'pickleball' | 'table_tennis' => {
+type LiteSport = '' | 'badminton' | 'tennis' | 'pickleball' | 'table_tennis' | 'football';
+
+const mapCategoryToLiteSport = (cat?: { slug?: string; name?: string } | null): LiteSport => {
   if (!cat) return '';
   const slug = (cat.slug || cat.name || '').toLowerCase();
   if (slug.includes('badminton') || slug.includes('cầu lông') || slug.includes('cau long')) return 'badminton';
   if (slug.includes('tennis') || slug.includes('quần vợt') || slug.includes('quan vot')) return 'tennis';
   if (slug.includes('pickleball')) return 'pickleball';
   if (slug.includes('table_tennis') || slug.includes('table-tennis') || slug.includes('bóng bàn') || slug.includes('bong ban') || slug.includes('tabletennis')) return 'table_tennis';
-  if (['badminton', 'tennis', 'pickleball', 'table_tennis'].includes(slug)) {
-    return slug as 'badminton' | 'tennis' | 'pickleball' | 'table_tennis';
+  if (slug.includes('football') || slug.includes('bóng đá') || slug.includes('bong da') || slug.includes('soccer')) return 'football';
+  if (['badminton', 'tennis', 'pickleball', 'table_tennis', 'football'].includes(slug)) {
+    return slug as Exclude<LiteSport, ''>;
   }
   return 'badminton';
 };
@@ -44,7 +48,7 @@ const mapCategoryToLiteSport = (cat?: { slug?: string; name?: string } | null): 
     { value: 0, label: 'Chủ Nhật', short: 'CN' },
   ];
 
-  
+
 export default function CreateLiteTournamentPage({
   params,
 }: {
@@ -55,14 +59,18 @@ export default function CreateLiteTournamentPage({
   const router = useRouter();
 
   const [community, setCommunity] = useState<Community | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [isLoadingCommunity, setIsLoadingCommunity] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createdTournament, setCreatedTournament] = useState<CreatedLiteTournament | null>(null);
 
   // Form fields
   const [name, setName] = useState('');
-  const [sport, setSport] = useState<'' | 'badminton' | 'tennis' | 'pickleball' | 'table_tennis'>('');
+  const [sport, setSport] = useState<LiteSport>('');
   const [format, setFormat] = useState<'singles' | 'doubles'>('singles');
+  const [genderRestriction, setGenderRestriction] = useState<'MALE' | 'FEMALE' | ''>('');
+  const [teamSize, setTeamSize] = useState<5 | 7 | 11>(7);
+  const [maxReserve, setMaxReserve] = useState(5);
   const [bracketType, setBracketType] = useState<'single_elimination' | 'double_elimination' | 'round_robin' | 'group_stage_knockout'>('single_elimination');
   const [maxTeams, setMaxTeams] = useState(16);
   const [description, setDescription] = useState('');
@@ -105,6 +113,14 @@ export default function CreateLiteTournamentPage({
     init();
   }, [communityId]);
 
+  useEffect(() => {
+    categoriesApi.getCategories().then((response) => {
+      setCategories(response.data.filter((category) => category.isActive !== false));
+    }).catch(() => {
+      setCategories([]);
+    });
+  }, []);
+
   const handleSubmit = async () => {
     if (!name.trim()) {
       toast.error('Vui lòng nhập tên giải đấu');
@@ -125,7 +141,10 @@ export default function CreateLiteTournamentPage({
         name: name.trim(),
         sport,
         communityId,
-        format,
+        format: sport === 'football' ? 'doubles' : format,
+        ...(sport === 'football'
+          ? { genderRestriction: genderRestriction || undefined, teamSize, maxReserve }
+          : {}),
         bracketType,
         maxTeams,
         description: description.trim() || `Giải đấu nhanh CLB ${community?.name || ''}`,
@@ -238,15 +257,16 @@ export default function CreateLiteTournamentPage({
                 </div>
                 <select
                   value={sport}
-                  onChange={(e) => setSport(e.target.value as typeof sport)}
+                  onChange={(e) => setSport(e.target.value as LiteSport)}
                   disabled={isClubLocked}
                   className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed"
                 >
                   <option value="">Chọn môn thể thao</option>
-                  <option value="badminton">Cầu lông (Badminton)</option>
-                  <option value="tennis">Quần vợt (Tennis)</option>
-                  <option value="pickleball">Pickleball</option>
-                  <option value="table_tennis">Bóng bàn (Table Tennis)</option>
+                  {categories.map((category) => (
+                    <option key={category.id} value={mapCategoryToLiteSport(category)}>
+                      {category.name}
+                    </option>
+                  ))}
                 </select>
                 {isClubLocked && clubCategory && (
                   <p className="text-xs text-slate-500 font-medium">
@@ -257,6 +277,28 @@ export default function CreateLiteTournamentPage({
             );
           })()}
 
+          {sport === 'football' && (
+            <div className="grid grid-cols-1 gap-4 rounded-lg border border-blue-100 bg-blue-50/60 p-4 sm:grid-cols-3">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-slate-700">Đội hình</label>
+                <select value={teamSize} onChange={(e) => setTeamSize(Number(e.target.value) as 5 | 7 | 11)} className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm">
+                  <option value={5}>Sân 5</option>
+                  <option value={7}>Sân 7</option>
+                  <option value={11}>Sân 11</option>
+                </select>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-slate-700">Giới tính</label>
+                <select value={genderRestriction} onChange={(e) => setGenderRestriction(e.target.value as 'MALE' | 'FEMALE' | '')} className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm">
+                  <option value="">Không ràng buộc</option>
+                  <option value="MALE">Nam</option>
+                  <option value="FEMALE">Nữ</option>
+                </select>
+              </div>
+              <Input label="Dự bị tối đa" type="number" min={0} max={20} value={maxReserve} onChange={(e) => setMaxReserve(Math.max(0, Math.min(20, Number(e.target.value) || 0)))} />
+            </div>
+          )}
+
           {/* Format & Bracket in grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
@@ -264,6 +306,7 @@ export default function CreateLiteTournamentPage({
               <select
                 value={format}
                 onChange={(e) => setFormat(e.target.value as typeof format)}
+                disabled={sport === 'football'}
                 className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
               >
                 <option value="singles">Đánh đơn (Singles)</option>

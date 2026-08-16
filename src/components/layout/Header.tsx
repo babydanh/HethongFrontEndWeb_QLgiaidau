@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { BRAND } from '@/constants/brand';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -288,8 +289,8 @@ export function Header() {
         <div className="flex h-full items-center gap-8">
           <Link href="/" className="relative flex h-full items-center py-0">
             <Image
-              src="/sporto_v1.svg"
-              alt="Sporto Logo"
+              src={BRAND.assets.logoIcon}
+              alt={`${BRAND.name} Logo`}
               width={120}
               height={36}
               className="h-6 md:h-7 w-auto object-contain transition-transform duration-200 hover:scale-105"
@@ -345,7 +346,7 @@ export function Header() {
 
               <AnimatePresence>
                 {isNotificationOpen && (
-                  <motion.div 
+                  <motion.div
                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
@@ -578,7 +579,7 @@ export function Header() {
 
               <AnimatePresence>
                 {isDropdownOpen && (
-                  <motion.div 
+                  <motion.div
                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}

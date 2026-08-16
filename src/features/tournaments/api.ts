@@ -214,6 +214,8 @@ export const footballTeamsApi = {
     api.get<ApiResponse<FootballTeamMemberCandidate[]>>(`/football-teams/${teamId}/member-candidates`, { params: { q: search, limit: 20 } }),
   invite: (teamId: string, userId: string) =>
     api.post<ApiResponse<unknown>>(`/football-teams/${teamId}/invites`, { userId }),
+  cancelInvite: (teamId: string, userId: string) =>
+    api.delete<ApiResponse<unknown>>(`/football-teams/${teamId}/invites/${userId}`),
   updateMember: (teamId: string, userId: string, role: 'CAPTAIN' | 'MANAGER' | 'PLAYER') =>
     api.patch<ApiResponse<unknown>>(`/football-teams/${teamId}/members/${userId}`, { role }),
   removeMember: (teamId: string, userId: string) =>
@@ -353,6 +355,11 @@ export const tournamentsApi = {
     }),
   getFootballRosterStatus: (id: string, participantId: string) =>
     api.get<ApiResponse<FootballRosterStatus>>(`/tournaments/${id}/participants/${participantId}/football-roster`),
+  updateFootballRoster: (id: string, participantId: string, data: { memberIds: string[]; reserveMemberIds: string[] }) =>
+    api.patch<ApiResponse<FootballRosterStatus>>(
+      `/tournaments/${id}/participants/${participantId}/football-roster`,
+      data,
+    ),
   respondFootballRoster: (id: string, participantId: string, action: 'CONFIRM' | 'DECLINE') =>
     api.post<ApiResponse<{ entryId: string; confirmationStatus: 'CONFIRMED' | 'DECLINED'; status: FootballRosterEntryStatus }>>(
       `/tournaments/${id}/participants/${participantId}/football-roster/respond`,
@@ -371,6 +378,8 @@ export const tournamentsApi = {
   deleteParentTournament: (id: string) => api.delete<ApiResponse<void>>(`/tournaments/parent/${id}`),
   createTournament: <T>(data: T) => api.post<ApiResponse<Tournament>>('/tournaments', data),
   updateTournament: <T>(id: string, data: T) => api.patch<ApiResponse<Tournament>>(`/tournaments/${id}`, data),
+  confirmLiteRoster: (id: string) =>
+    api.post<ApiResponse<Tournament>>(`/tournaments/${id}/confirm-roster`),
   deleteTournament: (id: string) => api.delete<ApiResponse<void>>(`/tournaments/${id}`),
   getTournamentGallery: (id: string) => api.get<ApiResponse<string[]>>(`/tournaments/${id}/gallery`),
   addTournamentGalleryImage: (id: string, url: string) => api.post<ApiResponse<Tournament>>(`/tournaments/${id}/gallery`, { url }),
@@ -488,9 +497,12 @@ export const tournamentsApi = {
 
   createLiteTournament: (data: {
     name: string;
-    sport: 'badminton' | 'tennis' | 'pickleball' | 'table_tennis';
+    sport: 'badminton' | 'tennis' | 'pickleball' | 'table_tennis' | 'football';
     communityId: string;
     format?: 'singles' | 'doubles';
+    genderRestriction?: 'MALE' | 'FEMALE';
+    teamSize?: 5 | 7 | 11;
+    maxReserve?: number;
     bracketType?: 'single_elimination' | 'double_elimination' | 'round_robin' | 'group_stage_knockout';
     maxTeams?: number;
     description?: string;

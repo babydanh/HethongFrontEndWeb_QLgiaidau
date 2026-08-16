@@ -15,6 +15,7 @@ import { EloTierBadge } from '@/components/ui/EloTierBadge';
 import { RankAvatar } from '@/components/ui/RankAvatar';
 import { ReportViolationButton } from '@/features/reports/components/ReportViolationButton';
 import { useAuthStore } from '@/lib/zustand/authStore';
+import { BRAND } from '@/constants/brand';
 
 interface UserRank {
   categoryId: string;
@@ -74,7 +75,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
   const resolvedParams = use(params);
   const id = resolvedParams.id;
   const { user } = useAuthStore();
-  
+
   const [profile, setProfile] = useState<PublicProfile | null>(null);
   const [matches, setMatches] = useState<Match[]>([]);
   const [eloHistory, setEloHistory] = useState<EloHistoryLog[]>([]);
@@ -111,7 +112,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
           api.get<ApiResponse<Match[]>>(`/matches?userId=${id}&limit=10`),
           rankingsApi.getUserEloHistory(id).catch(() => ({ data: [] }))
         ]);
-        
+
         setProfile(profileRes.data);
         setMatches(matchesRes.data || []);
         setEloHistory(eloHistoryRes?.data || []);
@@ -141,7 +142,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
       <div className="min-h-screen bg-slate-50 text-slate-800 flex items-center justify-center p-6">
         <div className="text-center bg-white border border-slate-200 p-8 rounded-xl max-w-md shadow-lg">
           <div className="w-24 h-24 flex items-center justify-center mx-auto mb-4">
-            <img src="/sporto_v1.svg" alt="Sporto" className="w-full h-full object-contain" />
+            <img src={BRAND.assets.logoIcon} alt={BRAND.name} className="w-full h-full object-contain" />
           </div>
           <h2 className="text-xl font-bold text-slate-900 mb-2">{error || 'Không tìm thấy người dùng'}</h2>
           <p className="text-slate-500 text-sm mb-6 font-medium">Tài khoản này có thể không tồn tại hoặc đã bị khóa khỏi hệ thống.</p>
@@ -190,17 +191,17 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
         {/* Cover Photo */}
         <div className="h-56 bg-slate-900 relative group overflow-hidden">
           {profile.coverUrl ? (
-            <img 
-              src={profile.coverUrl} 
-              alt="Cover" 
-              className="w-full h-full object-cover" 
+            <img
+              src={profile.coverUrl}
+              alt="Cover"
+              className="w-full h-full object-cover"
             />
           ) : (
             <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-indigo-650 to-purple-650 opacity-90"></div>
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950/40 via-transparent to-transparent"></div>
         </div>
-        
+
         <div className="px-6 md:px-10 pb-8 relative">
           {/* Avatar & Info */}
           <div className="flex flex-col md:flex-row justify-between items-end md:items-center gap-4 -mt-16 mb-5 relative z-10">
@@ -221,7 +222,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
               );
             })()}
           </div>
-          
+
           {/* Info */}
           <div className="space-y-3">
             <div>
@@ -234,7 +235,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                 )}
               </h1>
             </div>
-            
+
       <div className="flex flex-wrap items-center gap-2">
               {Array.from(new Set(profile.roles || (profile.role ? [profile.role] : ['PLAYER']))).map((role: string) => {
                 let roleLabel = 'Vận động viên';
@@ -295,8 +296,8 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`px-5 py-3 font-bold text-sm whitespace-nowrap transition-all border-b-2 cursor-pointer -mb-[2px] ${
-              activeTab === tab.id 
-                ? 'text-blue-600 border-blue-600' 
+              activeTab === tab.id
+                ? 'text-blue-600 border-blue-600'
                 : 'text-slate-550 border-transparent hover:text-slate-900'
             }`}
           >
@@ -353,7 +354,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                 {matches.map((match) => {
                   const isCompleted = match.status === 'COMPLETED';
                   const isP1 = match.participant1?.teamName?.toLowerCase() === profile.fullName?.toLowerCase();
-                  
+
                   const isWinner = isCompleted && match.winnerId && (
                     (match.winnerId === match.participant1?.id && isP1) ||
                     (match.winnerId === match.participant2?.id && !isP1)

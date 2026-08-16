@@ -57,7 +57,7 @@ export default function ChatPage() {
     const fetchMessages = async () => {
       setIsLoadingMessages(true);
       try {
-        const data = await chatApi.getMessages(activeConvId);
+            const data = await chatApi.getMessages(activeConvId);
         setMessages(data);
         // Keep read state consistent with the mobile client and other tabs.
         await chatApi.markRead(activeConvId);
@@ -81,7 +81,8 @@ export default function ChatPage() {
     socket.on('connect', joinRoom);
     joinRoom();
 
-    socket.on('chat:message', (msg: { id?: string; senderId: string; senderName?: string; senderAvatar?: string; content?: string; messageText?: string; createdAt?: string; timestamp?: string }) => {
+    socket.on('chat:message', (msg: { id?: string; roomId?: string; senderId: string; senderName?: string; senderAvatar?: string; content?: string; messageText?: string; createdAt?: string; timestamp?: string }) => {
+      if (msg.roomId && msg.roomId !== activeConvId) return;
       const activeConversation = conversations.find(c => c.id === activeConvId);
       const senderObj = activeConversation?.participants.find(p => p.id === msg.senderId) || {
         id: msg.senderId,
@@ -131,7 +132,7 @@ export default function ChatPage() {
 
   const handleToggleBlock = async () => {
     const otherUserId = activeConversation?.participants.find(p => p.id !== user?.id)?.id;
-    if (!otherUserId || activeConversation?.type !== 'PRIVATE') return;
+    if (!otherUserId || (activeConversation?.type !== 'DIRECT' && activeConversation?.type !== 'PRIVATE')) return;
     const isBlocked = blockedUserIds.includes(otherUserId);
     if (!window.confirm(isBlocked ? 'Bỏ chặn người này?' : 'Chặn người này?')) return;
     try {
@@ -215,14 +216,14 @@ export default function ChatPage() {
                 <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center">
                   <span className="font-bold text-slate-500">
                     {(activeConversation.type === 'DIRECT' || activeConversation.type === 'PRIVATE'
-                      ? activeConversation.participants.find(p => p.id !== user?.id)?.fullName 
+                      ? activeConversation.participants.find(p => p.id !== user?.id)?.fullName
                       : activeConversation.name)?.substring(0, 1).toUpperCase() || 'U'}
                   </span>
                 </div>
                 <div>
                   <h3 className="font-bold text-slate-900">
                     {activeConversation.type === 'DIRECT' || activeConversation.type === 'PRIVATE'
-                      ? activeConversation.participants.find(p => p.id !== user?.id)?.fullName 
+                      ? activeConversation.participants.find(p => p.id !== user?.id)?.fullName
                       : activeConversation.name || 'Nhóm Chat'}
                   </h3>
                   <p className="text-xs text-blue-500 font-medium">Đang trực tuyến</p>

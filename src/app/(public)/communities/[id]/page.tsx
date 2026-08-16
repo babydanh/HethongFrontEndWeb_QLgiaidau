@@ -457,17 +457,18 @@ export default function CommunityDetailPage() {
               >
                 {/* Reusing Lucide icons correctly to prevent dynamic text issues */}
                 <ChevronLeft className="w-4 h-4 rotate-180" />
-          {/* Dots indicator */}
-          {slides.length > 1 && (
-            <div className="absolute bottom-4 right-6 flex gap-1.5 z-20">
-              {slides.map((_, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setCurrentSlide(idx)}
-                  className={`w-2 h-2 rounded-full transition-all ${idx === currentSlide ? 'bg-white w-4' : 'bg-white/40'}`}
-                />
-              ))}
-            </div>
+              </button>
+              {/* Dots indicator */}
+              <div className="absolute bottom-4 right-6 flex gap-1.5 z-20">
+                {slides.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setCurrentSlide(idx)}
+                    className={`w-2 h-2 rounded-full transition-all ${idx === currentSlide ? 'bg-white w-4' : 'bg-white/40'}`}
+                  />
+                ))}
+              </div>
+            </>
           )}
         </div>
       </div>

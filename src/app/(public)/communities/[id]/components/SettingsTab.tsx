@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
-  Settings, Save, Globe, Lock, ShieldAlert,
+  Settings, Save, Globe, Lock, ShieldAlert, Sparkles,
   Plus, Image as ImageIcon, Loader2,
   Trash2, AlignLeft, ListChecks,
   Users, Activity, ShieldCheck, HelpCircle,

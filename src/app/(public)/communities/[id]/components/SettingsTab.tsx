@@ -492,7 +492,6 @@ export default function SettingsTab({ community }: { community: Community }) {
               </div>
             </div>
           </div>
-          </div>
         </div>
       </section>
 

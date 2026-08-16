@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { communitiesApi, Community } from '@/features/communities/api';
-import { regionsApi } from '@/features/regions/api';
+import { regionsApi, type Region } from '@/features/regions/api';
 import { Button } from '@/components/ui/Button';
 import { ChevronLeft, MapPin, Users, Trophy, Share2, MoreHorizontal, ShieldAlert, Settings as SettingsIcon, Loader2 } from 'lucide-react';
 import { formatDate } from '@/utils/format';
@@ -76,17 +76,20 @@ export default function CommunityDetailPage() {
 
         if (community.provinceCode) {
           const provRes = await regionsApi.getProvinces().catch(() => null);
-          const foundProv = provRes?.data?.find(p => p.code === community.provinceCode);
+          const provList: Region[] = Array.isArray(provRes) ? provRes : (provRes as { data?: Region[] })?.data ?? [];
+          const foundProv = provList.find((p: Region) => p.code === community.provinceCode);
           if (foundProv) provinceName = foundProv.name;
 
           if (community.districtCode) {
             const distRes = await regionsApi.getDistricts(community.provinceCode).catch(() => null);
-            const foundDist = distRes?.data?.find(d => d.code === community.districtCode);
+            const distList: Region[] = Array.isArray(distRes) ? distRes : (distRes as { data?: Region[] })?.data ?? [];
+            const foundDist = distList.find((d: Region) => d.code === community.districtCode);
             if (foundDist) districtName = foundDist.name;
 
             if (community.wardCode) {
               const wardRes = await regionsApi.getWards(community.districtCode).catch(() => null);
-              const foundWard = wardRes?.data?.find(w => w.code === community.wardCode);
+              const wardList: Region[] = Array.isArray(wardRes) ? wardRes : (wardRes as { data?: Region[] })?.data ?? [];
+              const foundWard = wardList.find((w: Region) => w.code === community.wardCode);
               if (foundWard) wardName = foundWard.name;
             }
           }

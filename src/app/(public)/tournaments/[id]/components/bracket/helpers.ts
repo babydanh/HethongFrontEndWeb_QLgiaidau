@@ -170,12 +170,12 @@ export function calculateStandings(
   while (i < rows.length) {
     let j = i + 1;
     const group = [rows[i]];
-    while (
-      j < rows.length &&
-      rows[j].points === rows[i].points &&
-      rows[j].setsWon - rows[j].setsLost === rows[i].setsWon - rows[i].setsLost &&
-      rows[j].pointsFor - rows[j].pointsAgainst === rows[i].pointsFor - rows[i].pointsAgainst
-    ) {
+    while (j < rows.length && rows[j].points === rows[i].points &&
+      (options?.football
+        ? rows[j].pointsFor - rows[j].pointsAgainst === rows[i].pointsFor - rows[i].pointsAgainst &&
+          rows[j].pointsFor === rows[i].pointsFor
+        : rows[j].setsWon - rows[j].setsLost === rows[i].setsWon - rows[i].setsLost &&
+          rows[j].pointsFor - rows[j].pointsAgainst === rows[i].pointsFor - rows[i].pointsAgainst)) {
       group.push(rows[j]);
       j++;
     }

@@ -93,6 +93,13 @@ export function tiebreakerSort(
   // ── Step 1: primary sort by points ──
   rows.sort((a, b) => {
     if (b.points !== a.points) return b.points - a.points;
+    if (football) {
+      const goalDiffA = a.pointsFor - a.pointsAgainst;
+      const goalDiffB = b.pointsFor - b.pointsAgainst;
+      if (goalDiffB !== goalDiffA) return goalDiffB - goalDiffA;
+      if (b.pointsFor !== a.pointsFor) return b.pointsFor - a.pointsFor;
+      return 0;
+    }
     // Provisional set-diff sort so we can detect groups
     const diffA = a.setsWon - a.setsLost;
     const diffB = b.setsWon - b.setsLost;
@@ -109,12 +116,12 @@ export function tiebreakerSort(
   while (i < rows.length) {
     const group = [rows[i]];
     let j = i + 1;
-    while (
-      j < rows.length &&
-      rows[j].points === rows[i].points &&
-      rows[j].setsWon - rows[j].setsLost === rows[i].setsWon - rows[i].setsLost &&
-      rows[j].pointsFor - rows[j].pointsAgainst === rows[i].pointsFor - rows[i].pointsAgainst
-    ) {
+    while (j < rows.length && rows[j].points === rows[i].points &&
+      (football
+        ? rows[j].pointsFor - rows[j].pointsAgainst === rows[i].pointsFor - rows[i].pointsAgainst &&
+          rows[j].pointsFor === rows[i].pointsFor
+        : rows[j].setsWon - rows[j].setsLost === rows[i].setsWon - rows[i].setsLost &&
+          rows[j].pointsFor - rows[j].pointsAgainst === rows[i].pointsFor - rows[i].pointsAgainst)) {
       group.push(rows[j]);
       j++;
     }
@@ -164,21 +171,21 @@ export function tiebreakerSort(
         }
       }
 
-      // 5. Total set diff
-      const setDiffA = a.setsWon - a.setsLost;
-      const setDiffB = b.setsWon - b.setsLost;
-      if (setDiffB !== setDiffA) return setDiffB - setDiffA;
-
-      // 6. Total point diff
-      const pdA = a.pointsFor - a.pointsAgainst;
-      const pdB = b.pointsFor - b.pointsAgainst;
-      if (pdB !== pdA) return pdB - pdA;
-
       if (football) {
         const fairA = fairPlay.get(a.participantId) || 0;
         const fairB = fairPlay.get(b.participantId) || 0;
         if (fairA !== fairB) return fairA - fairB;
         if (b.won !== a.won) return b.won - a.won;
+      } else {
+        // 5. Total set diff
+        const setDiffA = a.setsWon - a.setsLost;
+        const setDiffB = b.setsWon - b.setsLost;
+        if (setDiffB !== setDiffA) return setDiffB - setDiffA;
+
+        // 6. Total point diff
+        const pdA = a.pointsFor - a.pointsAgainst;
+        const pdB = b.pointsFor - b.pointsAgainst;
+        if (pdB !== pdA) return pdB - pdA;
       }
 
       // 7. Tiebreaker mode

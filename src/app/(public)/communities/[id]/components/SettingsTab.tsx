@@ -5,10 +5,10 @@ import { useRouter } from 'next/navigation';
 import { 
   Settings, Save, Globe, Lock, ShieldAlert,
   Plus, Image as ImageIcon, Loader2,
-  Trash2, AlignLeft, ListChecks, Sparkles,
+  Trash2, AlignLeft, ListChecks,
   Users, Activity, ShieldCheck, HelpCircle,
   Share2, MapPin, CheckCircle2, ChevronRight,
-  Sliders, MessageSquare, Tag, Eye
+  Sliders, MessageSquare, Tag, Eye, Award, X
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Community, communitiesApi } from '@/features/communities/api';
@@ -63,6 +63,7 @@ export default function SettingsTab({ community }: { community: Community }) {
   const [tagPresets, setTagPresets] = useState<Array<{ id: string; name: string; color: string }>>([]);
   const [newTagName, setNewTagName] = useState('');
   const [newTagColor, setNewTagColor] = useState('#E2E8F0');
+  const [isTagLibraryOpen, setIsTagLibraryOpen] = useState(false);
   const [isSavingSocial, setIsSavingSocial] = useState(false);
   const [newSocialType, setNewSocialType] = useState('facebook');
   const [newSocialLabel, setNewSocialLabel] = useState('');
@@ -422,152 +423,75 @@ export default function SettingsTab({ community }: { community: Community }) {
           </div>
 
           {/* Cột 3: Tag Danh hiệu Thành viên */}
-          <div className="space-y-3 rounded-xl border border-slate-150 bg-slate-50/50 p-4">
-            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500">
-              <Tag className="h-3.5 w-3.5" />
-              Tag danh hiệu thành viên
-            </div>
-            
-            <p className="text-xs text-slate-500">Tạo nhãn vinh danh (MVP tuần, Đội trưởng, Thủ môn xuất sắc...).</p>
-
-            <div className="flex gap-2">
-              <input 
-                value={newTagName} 
-                onChange={(event) => setNewTagName(event.target.value)} 
-                maxLength={24} 
-                placeholder="VD: MVP tuần" 
-                className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-900 shadow-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" 
-              />
-              <input 
-                type="color" 
-                value={newTagColor} 
-                onChange={(event) => setNewTagColor(event.target.value)} 
-                aria-label="Màu tag" 
-                className="h-8 w-10 cursor-pointer rounded border border-slate-200 bg-white p-0.5 shadow-sm" 
-              />
-              <Button 
-                type="button" 
-                onClick={handleCreateTagPreset} 
-                aria-label="Tạo tag" 
-                className="bg-blue-600 hover:bg-blue-700 px-3 text-white h-8 text-xs font-semibold shadow-sm"
-              >
-                <Plus className="h-3.5 w-3.5" />
-              </Button>
-            </div>
-
-            {/* Danh mục tag vui nhộn phân loại chuyên sâu */}
-            <div className="space-y-2 pt-1 border-t border-slate-200/60 mt-2">
+          <div className="space-y-3 rounded-xl border border-slate-150 bg-slate-50/50 p-4 flex flex-col justify-between">
+            <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold text-slate-700 flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                  Kho danh hiệu & Meme thể thao mẫu:
-                </span>
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500">
+                  <Tag className="h-3.5 w-3.5 text-blue-600" />
+                  Tag danh hiệu thành viên
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsTagLibraryOpen(true)}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-blue-50 border border-blue-200 px-2.5 py-1 text-[11px] font-semibold text-blue-700 hover:bg-blue-100 hover:text-blue-800 transition shadow-2xs cursor-pointer"
+                >
+                  <Award className="h-3.5 w-3.5 text-blue-600" />
+                  Kho danh hiệu mẫu
+                </button>
+              </div>
+              
+              <p className="text-xs text-slate-500">Tạo nhãn vinh danh (MVP tuần, Đội trưởng, Thủ môn xuất sắc...).</p>
+
+              <div className="flex gap-2">
+                <input 
+                  value={newTagName} 
+                  onChange={(event) => setNewTagName(event.target.value)} 
+                  maxLength={24} 
+                  placeholder="VD: MVP tuần" 
+                  className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-900 shadow-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" 
+                />
+                <input 
+                  type="color" 
+                  value={newTagColor} 
+                  onChange={(event) => setNewTagColor(event.target.value)} 
+                  aria-label="Màu tag" 
+                  className="h-8 w-10 cursor-pointer rounded border border-slate-200 bg-white p-0.5 shadow-sm" 
+                />
+                <Button 
+                  type="button" 
+                  onClick={handleCreateTagPreset} 
+                  aria-label="Tạo tag" 
+                  className="bg-blue-600 hover:bg-blue-700 px-3 text-white h-8 text-xs font-semibold shadow-sm cursor-pointer"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                </Button>
               </div>
 
-              {/* Tab Category Pills */}
-              <div className="space-y-2">
-                {[
-                  {
-                    category: '⚽ Bóng đá & Sân cỏ',
-                    tags: [
-                      { name: '🔥 Vua phá lưới', color: '#bbf7d0' },
-                      { name: '🧤 Bàn tay vàng', color: '#bfdbfe' },
-                      { name: '⚡ Chân chuyền ma thuật', color: '#ddd6fe' },
-                      { name: '🛡️ Lá chắn thép', color: '#cbd5e1' },
-                      { name: '🎯 Thợ săn siêu phẩm', color: '#fed7aa' },
-                      { name: '🦿 Bác sĩ cột dọc', color: '#fbcfe8' },
-                    ]
-                  },
-                  {
-                    category: '🏓 Pickleball & Cầu lông',
-                    tags: [
-                      { name: '🏓 Vua Dinking', color: '#fed7aa' },
-                      { name: '💥 Smash sấm sét', color: '#fef08a' },
-                      { name: '🎾 Bậc thầy bỏ nhỏ', color: '#bbf7d0' },
-                      { name: '🚀 Giao bóng Ace', color: '#bfdbfe' },
-                      { name: '🧱 Tường thành lưới', color: '#e2e8f0' },
-                    ]
-                  },
-                  {
-                    category: '🤣 Hài hước & Giao lưu (Meme)',
-                    tags: [
-                      { name: '🤣 Chúa hề CLB', color: '#fbcfe8' },
-                      { name: '🍻 Vua bàn nhậu', color: '#fde68a' },
-                      { name: '⏰ Chiến thần cao su', color: '#fed7aa' },
-                      { name: '🗣️ Bình luận viên dạo', color: '#ddd6fe' },
-                      { name: '📸 Idol sống ảo', color: '#fce7f3' },
-                      { name: '💸 Chúa tể quên tiền quỹ', color: '#fecdd3' },
-                      { name: '🏃‍♂️ Chạy bằng niềm tin', color: '#e0e7ff' },
-                    ]
-                  },
-                  {
-                    category: '👑 Vinh danh & Cống hiến',
-                    tags: [
-                      { name: '👑 Đội trưởng gương mẫu', color: '#fed7aa' },
-                      { name: '🔥 MVP của tuần', color: '#fef08a' },
-                      { name: '🍀 Thần tài may mắn', color: '#a7f3d0' },
-                      { name: '🌟 Chiến binh bền bỉ', color: '#fed7aa' },
-                      { name: '🤝 Cây hài gắn kết', color: '#bfdbfe' },
-                      { name: '💎 Thành viên kỳ cựu', color: '#c7d2fe' },
-                    ]
-                  }
-                ].map((group) => (
-                  <div key={group.category} className="rounded-lg bg-white p-2 border border-slate-150 shadow-2xs space-y-1.5">
-                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide block">
-                      {group.category}
-                    </span>
-                    <div className="flex flex-wrap gap-1">
-                      {group.tags.map((sug) => {
-                        const isExisting = tagPresets.some((p) => p.name === sug.name);
-                        return (
-                          <button
-                            key={sug.name}
-                            type="button"
-                            disabled={isExisting}
-                            onClick={() => {
-                              setNewTagName(sug.name);
-                              setNewTagColor(sug.color);
-                            }}
-                            className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10.5px] font-semibold transition-all border shadow-2xs cursor-pointer ${
-                              isExisting
-                                ? 'opacity-35 bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed'
-                                : 'bg-slate-50/70 border-slate-200/80 text-slate-700 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-600 hover:scale-[1.03] active:scale-[0.97]'
-                            }`}
-                          >
-                            <span className="w-1.5 h-1.5 rounded-full shrink-0 shadow-2xs" style={{ backgroundColor: sug.color }} />
-                            {sug.name}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-1.5 pt-1">
-              {tagPresets.length === 0 ? (
-                <span className="text-[11px] italic text-slate-400">Chưa tạo tag nào. Hãy chọn từ kho danh hiệu bên trên hoặc tự tạo tag riêng.</span>
-              ) : (
-                tagPresets.map((preset) => (
-                  <span 
-                    key={preset.id} 
-                    className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold shadow-sm border border-slate-200/60" 
-                    style={{ backgroundColor: preset.color, color: '#1e293b' }}
-                  >
-                    {preset.name}
-                    <button 
-                      type="button" 
-                      onClick={() => handleDeleteTagPreset(preset.id)} 
-                      aria-label={`Xóa ${preset.name}`}
-                      className="text-slate-600 hover:text-rose-600 transition-colors cursor-pointer"
+              <div className="flex flex-wrap gap-1.5 pt-1 max-h-48 overflow-y-auto">
+                {tagPresets.length === 0 ? (
+                  <span className="text-[11px] italic text-slate-400">Chưa tạo tag nào. Nhấn "Kho danh hiệu mẫu" hoặc tự nhập tên để tạo tag mới.</span>
+                ) : (
+                  tagPresets.map((preset) => (
+                    <span 
+                      key={preset.id} 
+                      className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold shadow-sm border border-slate-200/60" 
+                      style={{ backgroundColor: preset.color, color: '#1e293b' }}
                     >
-                      <Trash2 className="h-3 w-3" />
-                    </button>
-                  </span>
-                ))
-              )}
+                      {preset.name}
+                      <button 
+                        type="button" 
+                        onClick={() => handleDeleteTagPreset(preset.id)} 
+                        aria-label={`Xóa ${preset.name}`}
+                        className="text-slate-600 hover:text-rose-600 transition-colors cursor-pointer"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ))
+                )}
+              </div>
             </div>
+          </div>
           </div>
         </div>
       </section>
@@ -1121,6 +1045,141 @@ export default function SettingsTab({ community }: { community: Community }) {
           </div>
         </div>
       </div>
+
+      {/* Tag Library Modal Popup */}
+      {isTagLibraryOpen && (
+        <div 
+          onClick={() => setIsTagLibraryOpen(false)}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in duration-200"
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-w-2xl max-h-[85vh] flex flex-col rounded-2xl bg-white shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-200"
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-slate-150 px-6 py-4 bg-slate-50/80">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm">
+                  <Award className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">Kho danh hiệu & Nhãn thành viên mẫu</h3>
+                  <p className="text-xs text-slate-500">Chọn danh hiệu mẫu để tự động điền vào ô tạo tag nhanh chóng</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsTagLibraryOpen(false)}
+                className="flex h-8 w-8 items-center justify-center rounded-full text-slate-400 hover:bg-slate-200/60 hover:text-slate-700 transition"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Modal Body: Categories List */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-5">
+              {[
+                {
+                  category: '⚽ Bóng đá & Thể thao sân cỏ',
+                  desc: 'Vinh danh kỹ năng, vị trí và đóng góp trong trận đấu',
+                  tags: [
+                    { name: '🔥 Vua phá lưới', color: '#bbf7d0' },
+                    { name: '🧤 Bàn tay vàng', color: '#bfdbfe' },
+                    { name: '⚡ Chân chuyền ma thuật', color: '#ddd6fe' },
+                    { name: '🛡️ Lá chắn thép', color: '#cbd5e1' },
+                    { name: '🎯 Thợ săn siêu phẩm', color: '#fed7aa' },
+                    { name: '🦿 Bác sĩ cột dọc', color: '#fbcfe8' },
+                  ]
+                },
+                {
+                  category: '🏓 Pickleball, Cầu lông & Tennis',
+                  desc: 'Danh hiệu chuyên môn cho các tay vợt xuất sắc',
+                  tags: [
+                    { name: '🏓 Vua Dinking', color: '#fed7aa' },
+                    { name: '💥 Smash sấm sét', color: '#fef08a' },
+                    { name: '🎾 Bậc thầy bỏ nhỏ', color: '#bbf7d0' },
+                    { name: '🚀 Giao bóng Ace', color: '#bfdbfe' },
+                    { name: '🧱 Tường thành lưới', color: '#e2e8f0' },
+                  ]
+                },
+                {
+                  category: '🤣 Hài hước & Giao lưu phong trào (Meme)',
+                  desc: 'Tăng tính gắn kết, tạo tiếng cười và phong trào sôi nổi trong CLB',
+                  tags: [
+                    { name: '🤣 Chúa hề CLB', color: '#fbcfe8' },
+                    { name: '🍻 Vua bàn nhậu', color: '#fde68a' },
+                    { name: '⏰ Chiến thần cao su', color: '#fed7aa' },
+                    { name: '🗣️ Bình luận viên dạo', color: '#ddd6fe' },
+                    { name: '📸 Idol sống ảo', color: '#fce7f3' },
+                    { name: '💸 Chúa tể quên tiền quỹ', color: '#fecdd3' },
+                    { name: '🏃‍♂️ Chạy bằng niềm tin', color: '#e0e7ff' },
+                  ]
+                },
+                {
+                  category: '👑 Vinh danh & Cống hiến',
+                  desc: 'Dành tặng cho ban cán sự, thành viên kỳ cựu và gương mẫu',
+                  tags: [
+                    { name: '👑 Đội trưởng gương mẫu', color: '#fed7aa' },
+                    { name: '🔥 MVP của tuần', color: '#fef08a' },
+                    { name: '🍀 Thần tài may mắn', color: '#a7f3d0' },
+                    { name: '🌟 Chiến binh bền bỉ', color: '#fed7aa' },
+                    { name: '🤝 Cây hài gắn kết', color: '#bfdbfe' },
+                    { name: '💎 Thành viên kỳ cựu', color: '#c7d2fe' },
+                  ]
+                }
+              ].map((group) => (
+                <div key={group.category} className="rounded-xl border border-slate-200 bg-slate-50/40 p-4 space-y-2.5">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+                    <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wide">
+                      {group.category}
+                    </h4>
+                    <span className="text-[11px] text-slate-400">{group.desc}</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {group.tags.map((sug) => {
+                      const isExisting = tagPresets.some((p) => p.name === sug.name);
+                      return (
+                        <button
+                          key={sug.name}
+                          type="button"
+                          disabled={isExisting}
+                          onClick={() => {
+                            setNewTagName(sug.name);
+                            setNewTagColor(sug.color);
+                            setIsTagLibraryOpen(false);
+                            toast.success(`Đã chọn "${sug.name}"! Nhấn dấu "+" để tạo tag.`);
+                          }}
+                          className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all border shadow-2xs cursor-pointer ${
+                            isExisting
+                              ? 'opacity-40 bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed'
+                              : 'bg-white border-slate-200 text-slate-800 hover:border-blue-500 hover:bg-blue-50 hover:text-blue-700 hover:scale-105 active:scale-95'
+                          }`}
+                        >
+                          <span className="w-2.5 h-2.5 rounded-full shrink-0 shadow-2xs" style={{ backgroundColor: sug.color }} />
+                          {sug.name}
+                          {isExisting && <span className="text-[10px] text-slate-400 font-normal">(Đã có)</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex items-center justify-end border-t border-slate-150 px-6 py-3.5 bg-slate-50/60">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsTagLibraryOpen(false)}
+                className="text-xs font-semibold px-4 cursor-pointer"
+              >
+                Đóng
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Delete Community Confirmation Modal */}
       <ConfirmModal

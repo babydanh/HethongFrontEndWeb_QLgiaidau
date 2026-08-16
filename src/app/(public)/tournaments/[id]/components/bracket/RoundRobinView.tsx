@@ -131,21 +131,27 @@ export function RoundRobinView({
               <X className="w-3.5 h-3.5" />
             </button>
             <p className="font-bold mb-1.5">Cách tính xếp hạng:</p>
-            <ol className="list-decimal list-inside space-y-1 text-blue-800 font-medium">
-              <li><b>Điểm xếp hạng (Đ)</b> - Mặc định hệ thống tính Thắng <b>+3</b>, Thua <b>0</b>; giải hiện tại không phát sinh trận hòa.</li>
-              <li><b>Đối đầu (H2H)</b> - Xét điểm trong các trận giữa các đội đang bằng điểm</li>
-              <li><b>H2H Hiệu số set</b> - (Set thắng - Set thua) chỉ tính các trận đối đầu</li>
-              <li><b>H2H {statLabels.aggregateDiffLabel}</b> - ({statLabels.aggregateLabel} ghi - {statLabels.aggregateLabel.toLowerCase()} mất) chỉ tính các trận đối đầu. <span className="text-blue-600">{statLabels.aggregateExample}</span></li>
-              <li><b>Hiệu số set tổng</b> - (Tổng set thắng - Tổng set thua) tất cả trận</li>
-              <li><b>{statLabels.aggregateDiffLabel} tổng</b> - (Tổng {statLabels.aggregateLabel.toLowerCase()} ghi - tổng {statLabels.aggregateLabel.toLowerCase()} mất) của mọi set đã nhập.</li>
-              <li>
-                {tiebreakerMode === 'playoff' ? (
-                  <><b>Play-off</b> - Nếu vẫn hòa sau 6 bước, đánh trận phụ giữa các đội</>
-                ) : (
-                  <><b>Đồng hạng</b> - Nếu vẫn hòa sau 6 bước, các đội bằng chỉ số được xếp cùng hạng</>
-                )}
-              </li>
-            </ol>
+            {isFootball ? (
+              <ol className="list-decimal list-inside space-y-1 text-blue-800 font-medium">
+                <li><b>Điểm</b> - Thắng 3, hòa 1, thua 0; không cộng điểm luân lưu riêng.</li>
+                <li><b>Hiệu số bàn (GD)</b> - Bàn ghi (GF) trừ bàn thua (GA).</li>
+                <li><b>Bàn ghi (GF)</b> - Tổng số bàn thắng trong các trận vòng bảng.</li>
+                <li><b>Đối đầu (H2H)</b> - Điểm đối đầu giữa các đội vẫn bằng chỉ số.</li>
+                <li><b>Fair-play</b> - Thẻ vàng 1 điểm phạt, thẻ đỏ 3 điểm phạt; ít hơn xếp trên.</li>
+                <li><b>Số trận thắng</b> - Dùng khi các chỉ số trên vẫn bằng nhau.</li>
+                <li>{tiebreakerMode === 'playoff' ? <><b>Play-off</b> - Tạo trận phụ khi cấu hình giải yêu cầu.</> : <><b>Đồng hạng</b> - Giữ cùng hạng nếu không có tiêu chí phân định thêm.</>}</li>
+              </ol>
+            ) : (
+              <ol className="list-decimal list-inside space-y-1 text-blue-800 font-medium">
+                <li><b>Điểm xếp hạng (Đ)</b> - Theo luật chấm điểm của môn và cấu hình giải.</li>
+                <li><b>Đối đầu (H2H)</b> - Xét điểm trong các trận giữa các đội đang bằng điểm.</li>
+                <li><b>H2H Hiệu số set</b> - Set thắng trừ set thua trong các trận đối đầu.</li>
+                <li><b>H2H {statLabels.aggregateDiffLabel}</b> - Chỉ tính các trận đối đầu. <span className="text-blue-600">{statLabels.aggregateExample}</span></li>
+                <li><b>Hiệu số set tổng</b> - Tổng set thắng trừ tổng set thua.</li>
+                <li><b>{statLabels.aggregateDiffLabel} tổng</b> - Tổng {statLabels.aggregateLabel.toLowerCase()} ghi trừ tổng {statLabels.aggregateLabel.toLowerCase()} mất.</li>
+                <li>{tiebreakerMode === 'playoff' ? <><b>Play-off</b> - Đánh trận phụ khi vẫn hòa.</> : <><b>Đồng hạng</b> - Giữ cùng hạng khi không phân định được.</>}</li>
+              </ol>
+            )}
             <p className="mt-2 pt-2 border-t border-blue-200 text-blue-700">
               <b>Hiệu số</b> = Tổng {statLabels.aggregateLabel.toLowerCase()} ghi - tổng {statLabels.aggregateLabel.toLowerCase()} mất ({statLabels.aggregateLabel} +/-) từ mọi set đã nhập.<br />
               <span className="text-blue-600">{statLabels.aggregateExample}</span>

@@ -7,6 +7,7 @@ import { communitiesApi, MemberStreak, CommunityMemberRecord } from "@/features/
 import { useRouter } from "next/navigation";
 import CommunityAvatar from "@/app/(public)/communities/[id]/components/CommunityAvatar";
 import { EloTierBadge } from "@/components/ui/EloTierBadge";
+import { chatApi } from "@/features/chat/api";
 
 export interface PopoverUserProfile {
   id: string;
@@ -47,6 +48,7 @@ export default function UserProfilePopover({
   const popoverRef = useRef<HTMLDivElement>(null);
   const [fetchedDetails, setFetchedDetails] = useState<Partial<PopoverUserProfile> | null>(null);
   const [tagPresets, setTagPresets] = useState<Array<{ id: string; name: string; color: string }>>([]);
+  const [isOpeningChat, setIsOpeningChat] = useState(false);
 
   // Derive profileData by merging initial user prop with any fetched details
   const profileData = user
@@ -359,16 +361,22 @@ export default function UserProfilePopover({
         <div className="mt-3.5 flex gap-2 pt-2.5 border-t border-slate-100">
           <button
             type="button"
-            onClick={() => {
-              onClose();
-              if (communityId) {
-                router.push(`/communities/${communityId}?tab=overview`);
+            disabled={isOpeningChat}
+            onClick={async () => {
+              if (!profileData.id || isOpeningChat) return;
+              setIsOpeningChat(true);
+              try {
+                const room = await chatApi.createDirectRoom(profileData.id);
+                onClose();
+                router.push(`/chat?roomId=${encodeURIComponent(room.id)}`);
+              } catch {
+                setIsOpeningChat(false);
               }
             }}
-            className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-blue-700 active:scale-98"
+            className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-blue-700 active:scale-98 disabled:cursor-wait disabled:opacity-60"
           >
             <MessageCircle className="h-3.5 w-3.5" />
-            Nhắn tin
+            {isOpeningChat ? "Đang mở..." : "Nhắn tin"}
           </button>
 
           <button

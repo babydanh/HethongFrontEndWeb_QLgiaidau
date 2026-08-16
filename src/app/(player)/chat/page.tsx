@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { chatApi, ChatConversation, ChatMessage } from '@/features/chat/api';
 import { socketClient } from '@/lib/socket';
 import { useAuthStore } from '@/lib/zustand/authStore';
@@ -9,6 +10,8 @@ import { Button } from '@/components/ui/Button';
 
 export default function ChatPage() {
   const { user } = useAuthStore();
+  const searchParams = useSearchParams();
+  const requestedRoomId = searchParams.get('roomId');
   const [conversations, setConversations] = useState<ChatConversation[]>([]);
   const [activeConvId, setActiveConvId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -31,7 +34,11 @@ export default function ChatPage() {
         const data = await chatApi.getConversations();
         setConversations(data);
         if (data.length > 0) {
-          setActiveConvId(data[0].id);
+          setActiveConvId(
+            requestedRoomId && data.some((conversation) => conversation.id === requestedRoomId)
+              ? requestedRoomId
+              : data[0].id,
+          );
         }
       } catch (error) {
         console.error('Failed to fetch conversations', error);
@@ -41,7 +48,7 @@ export default function ChatPage() {
     };
     fetchConversations();
     chatApi.getBlockedUsers().then((items) => setBlockedUserIds(items.map((item) => item.blockedId))).catch(() => undefined);
-  }, []);
+  }, [requestedRoomId]);
 
   // Fetch messages when active conversation changes
   useEffect(() => {

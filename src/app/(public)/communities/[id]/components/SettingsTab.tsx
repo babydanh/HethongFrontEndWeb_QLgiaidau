@@ -455,47 +455,99 @@ export default function SettingsTab({ community }: { community: Community }) {
               </Button>
             </div>
 
-            {/* Gợi ý tag vui nhộn 1-click */}
-            <div className="space-y-1.5 pt-0.5">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Gợi ý tag vui nhộn nhanh:</span>
-              <div className="flex flex-wrap gap-1">
+            {/* Danh mục tag vui nhộn phân loại chuyên sâu */}
+            <div className="space-y-2 pt-1 border-t border-slate-200/60 mt-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-slate-700 flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                  Kho danh hiệu & Meme thể thao mẫu:
+                </span>
+              </div>
+
+              {/* Tab Category Pills */}
+              <div className="space-y-2">
                 {[
-                  { name: '🔥 MVP tuần', color: '#fef08a' },
-                  { name: '👑 Đội trưởng', color: '#fed7aa' },
-                  { name: '⚽ Vua phá lưới', color: '#bbf7d0' },
-                  { name: '🧤 Bàn tay vàng', color: '#bfdbfe' },
-                  { name: '⚡ Chân chuyền ma thuật', color: '#ddd6fe' },
-                  { name: '🤣 Chúa hề CLB', color: '#fbcfe8' },
-                  { name: '🍀 Thần tài may mắn', color: '#a7f3d0' },
-                  { name: '🍻 Vua bàn nhậu', color: '#fde68a' },
-                ].map((sug) => {
-                  const isExisting = tagPresets.some((p) => p.name === sug.name);
-                  return (
-                    <button
-                      key={sug.name}
-                      type="button"
-                      disabled={isExisting}
-                      onClick={() => {
-                        setNewTagName(sug.name);
-                        setNewTagColor(sug.color);
-                      }}
-                      className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10.5px] font-semibold transition-all border shadow-2xs ${
-                        isExisting
-                          ? 'opacity-40 bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed'
-                          : 'bg-white border-slate-200 text-slate-700 hover:border-blue-300 hover:text-blue-600 hover:scale-105 active:scale-95'
-                      }`}
-                    >
-                      <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: sug.color }} />
-                      {sug.name}
-                    </button>
-                  );
-                })}
+                  {
+                    category: '⚽ Bóng đá & Sân cỏ',
+                    tags: [
+                      { name: '🔥 Vua phá lưới', color: '#bbf7d0' },
+                      { name: '🧤 Bàn tay vàng', color: '#bfdbfe' },
+                      { name: '⚡ Chân chuyền ma thuật', color: '#ddd6fe' },
+                      { name: '🛡️ Lá chắn thép', color: '#cbd5e1' },
+                      { name: '🎯 Thợ săn siêu phẩm', color: '#fed7aa' },
+                      { name: '🦿 Bác sĩ cột dọc', color: '#fbcfe8' },
+                    ]
+                  },
+                  {
+                    category: '🏓 Pickleball & Cầu lông',
+                    tags: [
+                      { name: '🏓 Vua Dinking', color: '#fed7aa' },
+                      { name: '💥 Smash sấm sét', color: '#fef08a' },
+                      { name: '🎾 Bậc thầy bỏ nhỏ', color: '#bbf7d0' },
+                      { name: '🚀 Giao bóng Ace', color: '#bfdbfe' },
+                      { name: '🧱 Tường thành lưới', color: '#e2e8f0' },
+                    ]
+                  },
+                  {
+                    category: '🤣 Hài hước & Giao lưu (Meme)',
+                    tags: [
+                      { name: '🤣 Chúa hề CLB', color: '#fbcfe8' },
+                      { name: '🍻 Vua bàn nhậu', color: '#fde68a' },
+                      { name: '⏰ Chiến thần cao su', color: '#fed7aa' },
+                      { name: '🗣️ Bình luận viên dạo', color: '#ddd6fe' },
+                      { name: '📸 Idol sống ảo', color: '#fce7f3' },
+                      { name: '💸 Chúa tể quên tiền quỹ', color: '#fecdd3' },
+                      { name: '🏃‍♂️ Chạy bằng niềm tin', color: '#e0e7ff' },
+                    ]
+                  },
+                  {
+                    category: '👑 Vinh danh & Cống hiến',
+                    tags: [
+                      { name: '👑 Đội trưởng gương mẫu', color: '#fed7aa' },
+                      { name: '🔥 MVP của tuần', color: '#fef08a' },
+                      { name: '🍀 Thần tài may mắn', color: '#a7f3d0' },
+                      { name: '🌟 Chiến binh bền bỉ', color: '#fed7aa' },
+                      { name: '🤝 Cây hài gắn kết', color: '#bfdbfe' },
+                      { name: '💎 Thành viên kỳ cựu', color: '#c7d2fe' },
+                    ]
+                  }
+                ].map((group) => (
+                  <div key={group.category} className="rounded-lg bg-white p-2 border border-slate-150 shadow-2xs space-y-1.5">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide block">
+                      {group.category}
+                    </span>
+                    <div className="flex flex-wrap gap-1">
+                      {group.tags.map((sug) => {
+                        const isExisting = tagPresets.some((p) => p.name === sug.name);
+                        return (
+                          <button
+                            key={sug.name}
+                            type="button"
+                            disabled={isExisting}
+                            onClick={() => {
+                              setNewTagName(sug.name);
+                              setNewTagColor(sug.color);
+                            }}
+                            className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10.5px] font-semibold transition-all border shadow-2xs cursor-pointer ${
+                              isExisting
+                                ? 'opacity-35 bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed'
+                                : 'bg-slate-50/70 border-slate-200/80 text-slate-700 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-600 hover:scale-[1.03] active:scale-[0.97]'
+                            }`}
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full shrink-0 shadow-2xs" style={{ backgroundColor: sug.color }} />
+                            {sug.name}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
 
             <div className="flex flex-wrap gap-1.5 pt-1">
               {tagPresets.length === 0 ? (
-                <span className="text-[11px] italic text-slate-400">Chưa tạo tag nào. Nhấn gợi ý bên trên hoặc nhập tên để tạo tag mới.</span>
+                <span className="text-[11px] italic text-slate-400">Chưa tạo tag nào. Hãy chọn từ kho danh hiệu bên trên hoặc tự tạo tag riêng.</span>
               ) : (
                 tagPresets.map((preset) => (
                   <span 

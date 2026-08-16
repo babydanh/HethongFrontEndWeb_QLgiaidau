@@ -15,6 +15,11 @@ export const chatApi = {
   markRead: (roomId: string) => api.put(`/chat/rooms/${roomId}/read`),
   getUnreadCount: (roomId: string) => api.get<{ data: { count: number } }>(`/chat/rooms/${roomId}/unread`).then(res => res.data.count),
   getBlockedUsers: () => api.get<{ data: Array<{ blockedId: string }> }>('/chat/blocks').then(res => res.data),
+  createDirectRoom: (userId: string) =>
+    api.post<ApiResponse<ChatConversation>>('/chat/rooms', {
+      type: 'DIRECT',
+      memberIds: [userId],
+    }).then(res => res.data),
   blockUser: (userId: string) => api.post(`/chat/blocks/${userId}`),
   unblockUser: (userId: string) => api.delete(`/chat/blocks/${userId}`),
 };

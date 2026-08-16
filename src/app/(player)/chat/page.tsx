@@ -214,14 +214,14 @@ export default function ChatPage() {
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center">
                   <span className="font-bold text-slate-500">
-                    {(activeConversation.type === 'DIRECT' || activeConversation.type === 'PRIVATE' 
+                    {(activeConversation.type === 'DIRECT' || activeConversation.type === 'PRIVATE'
                       ? activeConversation.participants.find(p => p.id !== user?.id)?.fullName 
                       : activeConversation.name)?.substring(0, 1).toUpperCase() || 'U'}
                   </span>
                 </div>
                 <div>
                   <h3 className="font-bold text-slate-900">
-                    {activeConversation.type === 'DIRECT' || activeConversation.type === 'PRIVATE' 
+                    {activeConversation.type === 'DIRECT' || activeConversation.type === 'PRIVATE'
                       ? activeConversation.participants.find(p => p.id !== user?.id)?.fullName 
                       : activeConversation.name || 'Nhóm Chat'}
                   </h3>

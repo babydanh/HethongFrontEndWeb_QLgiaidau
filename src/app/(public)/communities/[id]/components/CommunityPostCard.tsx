@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { Flag, Heart, Loader2, MessageCircle, Maximize2, Trash2, Trophy, Calendar, ArrowUpRight } from "lucide-react";
 import toast from "react-hot-toast";

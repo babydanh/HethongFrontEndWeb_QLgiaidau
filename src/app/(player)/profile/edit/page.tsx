@@ -275,7 +275,7 @@ export default function EditProfilePage() {
       setIsRequestingEmailCode(true);
       await authApi.requestEmailVerification();
       setEmailCooldown(120);
-      toast.success('Mã kích hoạt có hiệu lực trong 120 giây (2 phút) đã được gửi tới email của bạn.');
+      toast.success('Mã kích hoạt có hiệu lực trong 15 phút đã được gửi tới email của bạn.');
       setIsEmailModalOpen(true);
     } catch (error) {
       toast.error(getErrorMessage(error));
@@ -903,7 +903,7 @@ export default function EditProfilePage() {
             </div>
 
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800 font-semibold flex items-center justify-between">
-              <span>⏱️ Mã xác thực hết hạn sau 120 giây (2 phút)</span>
+              <span>⏱️ Mã xác thực hết hạn sau 15 phút</span>
               {emailCooldown > 0 && (
                 <span className="text-blue-600 font-bold bg-white px-2 py-0.5 rounded border border-blue-200">
                   {emailCooldown}s

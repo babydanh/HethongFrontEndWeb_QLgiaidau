@@ -56,9 +56,39 @@ export default function CommunityPostCard({
   // Popover Profile State
   const [popoverUser, setPopoverUser] = useState<PopoverUserProfile | null>(null);
   const [popoverAnchorRect, setPopoverAnchorRect] = useState<DOMRect | null>(null);
+  const [tagPresets, setTagPresets] = useState<Array<{ id: string; name: string; color: string }>>([]);
+  const [authorMemberInfo, setAuthorMemberInfo] = useState<{ role?: string; tags?: string[] } | null>(null);
 
   const authorName = post.author?.fullName?.trim() || "Thành viên CLB";
   const authorAvatar = post.author?.avatarUrl;
+
+  // Fetch tag presets and author member tags for the post header
+  useState(() => {
+    if (post.communityId) {
+      communitiesApi.getTagPresets(post.communityId)
+        .then((res) => {
+          if (res.data) setTagPresets(Array.isArray(res.data) ? res.data : []);
+        })
+        .catch(() => {});
+    }
+  });
+
+  useState(() => {
+    if (post.communityId && post.author?.id) {
+      communitiesApi.getMembers(post.communityId, { limit: 100 })
+        .then((res) => {
+          const members = (Array.isArray(res.data) ? res.data : (res.data as { data?: Array<{ user?: { id?: string }; member?: { role?: string; tags?: string[] } }> })?.data) ?? [];
+          const found = members.find((m) => m.user?.id === post.author.id || (m as unknown as { userId?: string }).userId === post.author.id);
+          if (found?.member) {
+            setAuthorMemberInfo({
+              role: found.member.role,
+              tags: found.member.tags || [],
+            });
+          }
+        })
+        .catch(() => {});
+    }
+  });
 
   const handleOpenAuthorProfile = (event: React.MouseEvent<HTMLElement>) => {
     event.stopPropagation();
@@ -306,14 +336,47 @@ export default function CommunityPostCard({
             />
           </div>
           <div className="min-w-0 flex-1">
-            <button
-              type="button"
-              onClick={handleOpenAuthorProfile}
-              className="truncate text-left text-sm font-bold text-slate-900 hover:text-blue-600 transition-colors cursor-pointer"
-            >
-              {authorName}
-            </button>
-            <p className="text-xs text-slate-500 font-medium">
+            <div className="flex items-center flex-wrap gap-1.5">
+              <button
+                type="button"
+                onClick={handleOpenAuthorProfile}
+                className="truncate text-left text-sm font-bold text-slate-900 hover:text-blue-600 transition-colors cursor-pointer"
+              >
+                {authorName}
+              </button>
+
+              {/* Author Member Tags / Badges in Post Header */}
+              {authorMemberInfo?.tags && authorMemberInfo.tags.length > 0 && (
+                <div className="flex items-center flex-wrap gap-1">
+                  {authorMemberInfo.tags.slice(0, 2).map((tag) => {
+                    const preset = tagPresets.find((p) => p.name.toLowerCase() === tag.toLowerCase());
+                    return (
+                      <span
+                        key={tag}
+                        onClick={handleOpenAuthorProfile}
+                        className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10.5px] font-semibold shadow-2xs border cursor-pointer transition hover:scale-105"
+                        style={
+                          preset
+                            ? {
+                                backgroundColor: preset.color,
+                                borderColor: `${preset.color}99`,
+                                color: '#0f172a',
+                              }
+                            : {
+                                backgroundColor: '#f1f5f9',
+                                borderColor: '#cbd5e1',
+                                color: '#1e293b',
+                              }
+                        }
+                      >
+                        {tag}
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">
               {new Date(post.createdAt).toLocaleDateString("vi-VN", {
                 day: "2-digit",
                 month: "2-digit",

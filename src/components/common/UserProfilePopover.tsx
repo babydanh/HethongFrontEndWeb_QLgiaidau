@@ -325,35 +325,42 @@ export default function UserProfilePopover({
           </p>
         )}
 
-        {/* Fun / Club Member Tags (Gán tag vui vẻ) */}
+        {/* Fun / Club Member Tags (Danh hiệu & Nhãn CLB) */}
         {(profileData.tags ?? []).length > 0 && (
-          <div className="mt-2.5 flex flex-wrap gap-1">
-            {profileData.tags?.map((tag) => {
-              const preset = tagPresets.find(
-                (p) => p.name.toLowerCase() === tag.toLowerCase()
-              );
-              return (
-                <span
-                  key={tag}
-                  className="inline-flex items-center px-2 py-0.5 rounded-lg border text-[10px] font-semibold"
-                  style={
-                    preset
-                      ? {
-                          backgroundColor: `${preset.color}26`,
-                          borderColor: `${preset.color}66`,
-                          color: preset.color,
-                        }
-                      : {
-                          backgroundColor: "#EFF6FF",
-                          borderColor: "#BFDBFE",
-                          color: "#1D4ED8",
-                        }
-                  }
-                >
-                  {tag}
-                </span>
-              );
-            })}
+          <div className="mt-3 rounded-xl border border-slate-150 bg-slate-50/70 p-2.5 space-y-1.5">
+            <div className="flex items-center justify-between text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+              <span>Danh hiệu CLB</span>
+              <span className="text-[9px] text-slate-400 font-normal">{profileData.tags?.length} nhãn</span>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {profileData.tags?.map((tag) => {
+                const preset = tagPresets.find(
+                  (p) => p.name.toLowerCase() === tag.toLowerCase()
+                );
+                return (
+                  <span
+                    key={tag}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold shadow-2xs border transition-all"
+                    style={
+                      preset
+                        ? {
+                            backgroundColor: preset.color,
+                            borderColor: `${preset.color}99`,
+                            color: '#0f172a',
+                          }
+                        : {
+                            backgroundColor: "#f1f5f9",
+                            borderColor: "#cbd5e1",
+                            color: "#1e293b",
+                          }
+                    }
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-slate-900/40 shrink-0" />
+                    {tag}
+                  </span>
+                );
+              })}
+            </div>
           </div>
         )}
 

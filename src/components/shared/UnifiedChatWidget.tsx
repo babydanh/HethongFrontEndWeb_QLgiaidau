@@ -206,6 +206,8 @@ export default function UnifiedChatWidget() {
   const [isSearching, setIsSearching] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSearchMatchIndex, setActiveSearchMatchIndex] = useState(0);
+  const [clubMembersMap, setClubMembersMap] = useState<Record<string, { role?: string; tags?: string[] }>>({});
+  const [clubTagPresets, setClubTagPresets] = useState<Array<{ id: string; name: string; color: string }>>([]);
 
   const widgetRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -228,6 +230,35 @@ export default function UnifiedChatWidget() {
   const selectedRoomAvatar = selectedRoom
     ? getRoomAvatar(selectedRoom, user?.id)
     : null;
+
+  // Fetch club member tags and presets when a CLUB room is active
+  useEffect(() => {
+    if (selectedRoom?.type === 'CLUB' && selectedRoom.communityId) {
+      const commId = selectedRoom.communityId;
+      communitiesApi.getTagPresets(commId)
+        .then((res) => {
+          if (res.data) setClubTagPresets(Array.isArray(res.data) ? res.data : []);
+        })
+        .catch(() => {});
+
+      communitiesApi.getMembers(commId, { limit: 100 })
+        .then((res) => {
+          const list = (Array.isArray(res.data) ? res.data : (res.data as { data?: Array<{ user?: { id?: string }; member?: { role?: string; tags?: string[] } }> })?.data) ?? [];
+          const map: Record<string, { role?: string; tags?: string[] }> = {};
+          list.forEach((item) => {
+            const uid = item.user?.id || (item as unknown as { userId?: string }).userId;
+            if (uid && item.member) {
+              map[uid] = {
+                role: item.member.role,
+                tags: item.member.tags || [],
+              };
+            }
+          });
+          setClubMembersMap(map);
+        })
+        .catch(() => {});
+    }
+  }, [selectedRoom?.id, selectedRoom?.type, selectedRoom?.communityId]);
 
   const otherParticipant = useMemo(() => {
     if (!selectedRoom || selectedRoom.type === 'CLUB') return null;
@@ -1745,18 +1776,60 @@ export default function UnifiedChatWidget() {
                               } max-w-[78%]`}
                             >
                               {/* Sender Name & Badge (only on start of cluster for others) */}
-                              {!message.mine && !isSameSenderAsPrev && (
-                                <div className="flex items-center gap-1.5 mb-1 px-1">
-                                  <span className="text-[11px] font-bold text-slate-700">
-                                    {senderName}
-                                  </span>
-                                  {isClubChat && (
-                                    <span className="rounded bg-blue-100 px-1 py-0.2 text-[9px] font-bold text-blue-700">
-                                      Thành viên
+                              {!message.mine && !isSameSenderAsPrev && (() => {
+                                const memberMeta = clubMembersMap[message.senderId];
+                                const memberTags = memberMeta?.tags || [];
+                                const memberRole = memberMeta?.role;
+
+                                return (
+                                  <div className="flex items-center flex-wrap gap-1 mb-1 px-1">
+                                    <span className="text-[11px] font-bold text-slate-800">
+                                      {senderName}
                                     </span>
-                                  )}
-                                </div>
-                              )}
+                                    {isClubChat && (
+                                      <>
+                                        {/* Hiển thị vai trò Quản trị / Chủ nhiệm nếu có */}
+                                        {memberRole === 'OWNER' && (
+                                          <span className="rounded-md bg-amber-100 border border-amber-200/80 px-1.5 py-0.2 text-[9px] font-bold text-amber-900 shadow-2xs">
+                                            Chủ CLB
+                                          </span>
+                                        )}
+                                        {memberRole === 'MODERATOR' && (
+                                          <span className="rounded-md bg-blue-100 border border-blue-200/80 px-1.5 py-0.2 text-[9px] font-bold text-blue-900 shadow-2xs">
+                                            Quản trị
+                                          </span>
+                                        )}
+
+                                        {/* Hiển thị Tag danh hiệu thành viên (nếu có) */}
+                                        {memberTags.slice(0, 1).map((tag) => {
+                                          const preset = clubTagPresets.find((p) => p.name.toLowerCase() === tag.toLowerCase());
+                                          return (
+                                            <span
+                                              key={tag}
+                                              className="inline-flex items-center rounded-md px-1.5 py-0.2 text-[9px] font-bold shadow-2xs border"
+                                              style={
+                                                preset
+                                                  ? {
+                                                      backgroundColor: preset.color,
+                                                      borderColor: `${preset.color}99`,
+                                                      color: '#0f172a',
+                                                    }
+                                                  : {
+                                                      backgroundColor: '#f1f5f9',
+                                                      borderColor: '#cbd5e1',
+                                                      color: '#1e293b',
+                                                    }
+                                              }
+                                            >
+                                              {tag}
+                                            </span>
+                                          );
+                                        })}
+                                      </>
+                                    )}
+                                  </div>
+                                );
+                              })()}
 
                               {/* Message Bubble + Floating Action Bar Container */}
                               <div className="relative group/bubble flex items-center gap-1.5 pt-1">

@@ -26,8 +26,9 @@ export default function RootLayoutClient({
     const isGuestRoute = ['/login', '/register', '/auth'].some((route) => pathname.startsWith(route));
     if (isGuestRoute) return;
 
-    // Skip if user already has data (re-hydrated from persist)
-    if (user?.id && user?.email) return;
+    // Skip chỉ khi user trong store đã ĐẦY ĐỦ (có trạng thái xác minh email).
+    // Bản persist cũ từ login chỉ có {id, email, roles} thiếu isEmailVerified → vẫn fetch để chữa.
+    if (user?.id && user?.email && user.isEmailVerified !== undefined) return;
 
     // Only fetch once
     if (hasFetchedRef.current) return;
@@ -49,6 +50,9 @@ export default function RootLayoutClient({
             address: data.address || undefined,
             bio: data.bio || undefined,
             provinceCode: data.provinceCode || undefined,
+            isEmailVerified: data.isEmailVerified,
+            isPhoneVerified: data.isPhoneVerified,
+            isGenderLocked: data.isGenderLocked,
           });
         }
       })
@@ -57,7 +61,7 @@ export default function RootLayoutClient({
           console.error('Failed to sync user profile globally', error);
         }
       });
-  }, [pathname, setUser]);
+  }, [pathname, setUser, user?.id, user?.email, user?.isEmailVerified]);
   
   // Exclude admin & auth paths from header/footer
   const hideHeaderFooter = pathname.startsWith('/admin');

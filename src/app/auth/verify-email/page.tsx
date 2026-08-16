@@ -46,6 +46,11 @@ function VerifyEmailContent() {
             gender: freshProfile.gender || undefined,
             address: freshProfile.address || undefined,
             bio: freshProfile.bio || undefined,
+            // Bắt buộc kèm trạng thái xác minh — nếu không badge sẽ quay lại
+            // "Chưa xác minh" ngay sau khi xác thực thành công.
+            isEmailVerified: freshProfile.isEmailVerified,
+            isPhoneVerified: freshProfile.isPhoneVerified,
+            isGenderLocked: freshProfile.isGenderLocked,
           });
         } catch {
           // Ignore if user profile can't be fetched (not logged in)

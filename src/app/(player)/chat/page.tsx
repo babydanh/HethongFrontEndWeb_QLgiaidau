@@ -168,7 +168,7 @@ export default function ChatPage() {
           ) : conversations.length > 0 ? (
             conversations.map(conv => {
               const otherParticipant = conv.participants.find(p => p.id !== user?.id) || conv.participants[0];
-              const name = conv.type === 'PRIVATE' ? otherParticipant?.fullName : conv.name || 'Nhóm Chat';
+              const name = conv.type === 'DIRECT' || conv.type === 'PRIVATE' ? otherParticipant?.fullName : conv.name || 'Nhóm Chat';
               const isActive = conv.id === activeConvId;
 
               return (
@@ -214,21 +214,21 @@ export default function ChatPage() {
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center">
                   <span className="font-bold text-slate-500">
-                    {(activeConversation.type === 'PRIVATE' 
+                    {(activeConversation.type === 'DIRECT' || activeConversation.type === 'PRIVATE' 
                       ? activeConversation.participants.find(p => p.id !== user?.id)?.fullName 
                       : activeConversation.name)?.substring(0, 1).toUpperCase() || 'U'}
                   </span>
                 </div>
                 <div>
                   <h3 className="font-bold text-slate-900">
-                    {activeConversation.type === 'PRIVATE' 
+                    {activeConversation.type === 'DIRECT' || activeConversation.type === 'PRIVATE' 
                       ? activeConversation.participants.find(p => p.id !== user?.id)?.fullName 
                       : activeConversation.name || 'Nhóm Chat'}
                   </h3>
                   <p className="text-xs text-blue-500 font-medium">Đang trực tuyến</p>
                 </div>
               </div>
-              <button onClick={handleToggleBlock} title={activeConversation.type === 'PRIVATE' ? 'Chặn / bỏ chặn' : 'Chỉ áp dụng cho chat riêng'} className="w-10 h-10 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-500 transition-colors">
+              <button onClick={handleToggleBlock} title={activeConversation.type === 'DIRECT' || activeConversation.type === 'PRIVATE' ? 'Chặn / bỏ chặn' : 'Chỉ áp dụng cho chat riêng'} className="w-10 h-10 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-500 transition-colors">
                 <MoreVertical className="w-5 h-5" />
               </button>
             </div>

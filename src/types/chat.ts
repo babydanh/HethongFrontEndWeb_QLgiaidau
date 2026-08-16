@@ -13,7 +13,7 @@ export interface ChatMessage {
 export interface ChatConversation {
   id: string;
   name?: string;
-  type: 'PRIVATE' | 'GROUP';
+  type: 'DIRECT' | 'PRIVATE' | 'GROUP';
   lastMessage?: ChatMessage;
   participants: { id: string; fullName: string; avatarUrl?: string }[];
   updatedAt: string;

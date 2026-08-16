@@ -63,20 +63,26 @@ export default function CommunityPostCard({
   const authorAvatar = post.author?.avatarUrl;
 
   // Fetch tag presets and author member tags for the post header
-  useState(() => {
+  useEffect(() => {
+    let mounted = true;
     if (post.communityId) {
       communitiesApi.getTagPresets(post.communityId)
         .then((res) => {
-          if (res.data) setTagPresets(Array.isArray(res.data) ? res.data : []);
+          if (mounted && res.data) setTagPresets(Array.isArray(res.data) ? res.data : []);
         })
         .catch(() => {});
     }
-  });
+    return () => {
+      mounted = false;
+    };
+  }, [post.communityId]);
 
-  useState(() => {
+  useEffect(() => {
+    let mounted = true;
     if (post.communityId && post.author?.id) {
       communitiesApi.getMembers(post.communityId, { limit: 100 })
         .then((res) => {
+          if (!mounted) return;
           const members = (Array.isArray(res.data) ? res.data : (res.data as { data?: Array<{ user?: { id?: string }; member?: { role?: string; tags?: string[] } }> })?.data) ?? [];
           const found = members.find((m) => m.user?.id === post.author.id || (m as unknown as { userId?: string }).userId === post.author.id);
           if (found?.member) {
@@ -88,7 +94,10 @@ export default function CommunityPostCard({
         })
         .catch(() => {});
     }
-  });
+    return () => {
+      mounted = false;
+    };
+  }, [post.communityId, post.author?.id]);
 
   const handleOpenAuthorProfile = (event: React.MouseEvent<HTMLElement>) => {
     event.stopPropagation();

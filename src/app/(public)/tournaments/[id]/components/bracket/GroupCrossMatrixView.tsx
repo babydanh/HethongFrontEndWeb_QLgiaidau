@@ -42,11 +42,23 @@ export function GroupCrossMatrixView({
     if (!scoreMatrix[p1Id]) scoreMatrix[p1Id] = {};
     if (!scoreMatrix[p2Id]) scoreMatrix[p2Id] = {};
 
-    const isCompleted = m.status === 'COMPLETED' || m.winnerId != null;
-    const isOngoing = m.status === 'ONGOING' || m.status === 'IN_PROGRESS';
+      const isCompleted = m.status === 'COMPLETED' || m.winnerId != null;
+      const isOngoing = m.status === 'ONGOING' || m.status === 'IN_PROGRESS';
 
-    if (isCompleted || isOngoing) {
-      const p1Sets = m.p1SetsWon ?? 0;
+      if (isCompleted || isOngoing) {
+        const football = m.scoreDetails?.football;
+        const footballGoals = football && typeof football === 'object'
+          ? [
+              (football as Record<string, unknown>).team1Goals ?? (football as Record<string, unknown>).p1Goals,
+              (football as Record<string, unknown>).team2Goals ?? (football as Record<string, unknown>).p2Goals,
+            ].map((value) => Number(value))
+          : [];
+        if (footballGoals.length === 2 && footballGoals.every((value) => Number.isFinite(value) && value >= 0)) {
+          scoreMatrix[p1Id][p2Id] = [`${footballGoals[0]}-${footballGoals[1]}`];
+          scoreMatrix[p2Id][p1Id] = [`${footballGoals[1]}-${footballGoals[0]}`];
+          return;
+        }
+        const p1Sets = m.p1SetsWon ?? 0;
       const p2Sets = m.p2SetsWon ?? 0;
 
       // Extract all individual set scores (Bo3/Bo5: [21-15, 18-21, 21-19])

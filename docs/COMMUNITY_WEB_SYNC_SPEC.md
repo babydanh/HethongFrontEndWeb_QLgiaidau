@@ -407,3 +407,21 @@ Dưới đây là danh sách công việc cụ thể theo từng file trong dự
   - Xử lý click thông báo: Phân tích `redirectUrl` (`/communities/:id?postId=:postId`) $\rightarrow$ Mở `ClubDetailScreen` đúng ID và chuyển tới Tab Bảng tin/Bài viết tương ứng.
 - [ ] **File**: `lib/features/community/screens/club_detail_screen.dart`
   - Xử lý khi bị Kick/Ban: Kiểm tra lại `membership` khi mở CLB từ thông báo, tự động đưa trạng thái về khách chưa tham gia hoặc bị chặn tương ứng.
+
+---
+
+## 3.14. Quy định Kiến trúc Thông báo Đẩy (Firebase FCM vs PostgreSQL DB)
+
+> [!IMPORTANT]
+> **QUY ĐỊNH BẮT BUỘC VỀ VAI TRÒ CỦA FIREBASE VÀ CƠ SỞ DỮ LIỆU:**
+> 1. **Firebase CHỈ là cổng trung chuyển Push Notification (FCM Device Messaging):**
+>    - Nhiệm vụ: Đánh thức thiết bị, nhận `fcmToken`, kích hoạt rung/chuông và hiển thị banner ra màn hình khóa khi app đang tắt (Background/Kill app).
+>    - Tuyệt đối **KHÔNG dùng Firebase làm Database (Không dùng Firestore / Realtime DB)**.
+> 2. **PostgreSQL + Drizzle ORM + Redis là Cơ sở dữ liệu duy nhất và thẩm quyền:**
+>    - 100% dữ liệu (User, CLB, Giải đấu, Phân nhánh, Tin nhắn Chat, Bài viết, Bình luận, Bảng xếp hạng...) bắt buộc lưu trữ trong PostgreSQL và do Backend NestJS quản lý.
+> 3. **Xin quyền thông báo & Quản lý vòng đời Token:**
+>    - Chỉ yêu cầu quyền thông báo (`requestPermission()`) khi user đăng nhập.
+>    - Tự động đăng ký `fcmToken` qua `POST /api/v1/notifications/device-token` khi đăng nhập và hủy qua `DELETE /api/v1/notifications/device-token` khi đăng xuất.
+> 4. **Bảo mật tuyệt đối:**
+>    - Toàn bộ file cấu hình `google-services.json`, `GoogleService-Info.plist`, `firebase-service-account.json`, `*adminsdk*.json` và thư mục `secrets/` phải được `.gitignore` bảo vệ, không bao giờ được commit lên Git.
+

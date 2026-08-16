@@ -801,9 +801,9 @@ export default function SettingsTab({ community }: { community: Community }) {
                   <textarea 
                     value={rules}
                     onChange={(e) => setRules(e.target.value)}
-                    rows={2}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 shadow-sm focus:ring-1 focus:ring-blue-500 outline-none" 
-                    placeholder="Quy định ứng xử, thời gian sinh hoạt, đóng quỹ..." 
+                    rows={6}
+                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 shadow-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none leading-relaxed resize-y" 
+                    placeholder="Nhập chi tiết quy định ứng xử, thời gian sinh hoạt, thể lệ đóng quỹ, quy định điểm danh..." 
                   />
                 </div>
               </div>
@@ -972,14 +972,9 @@ export default function SettingsTab({ community }: { community: Community }) {
           <div className="sticky top-24 space-y-6">
             {/* Card 1: Gợi ý tối ưu hồ sơ CLB */}
             <div className="rounded-2xl border border-blue-100 bg-gradient-to-br from-white via-blue-50/20 to-indigo-50/30 p-6 shadow-sm">
-              <div className="flex items-center gap-2.5 mb-4 text-blue-900">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white shadow-sm">
-                  <Sparkles className="h-4 w-4" />
-                </div>
-                <div>
-                  <h4 className="font-bold text-sm text-slate-900">Gợi ý thiết lập CLB</h4>
-                  <p className="text-[11px] text-slate-500">Mẹo thu hút thêm nhiều thành viên</p>
-                </div>
+              <div className="mb-4">
+                <h4 className="font-bold text-sm text-slate-900">Gợi ý thiết lập CLB</h4>
+                <p className="text-[11px] text-slate-500">Mẹo thu hút thêm nhiều thành viên</p>
               </div>
 
               <div className="space-y-3.5 text-xs text-slate-600">

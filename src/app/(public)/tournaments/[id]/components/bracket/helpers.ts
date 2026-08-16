@@ -9,6 +9,33 @@ import type { StandingRow } from './types';
 import { parseScoreDetails } from './types';
 import { tiebreakerSort } from './tiebreaker';
 
+export type FootballFormResult = 'W' | 'D' | 'L';
+
+/** Return the latest completed football results for one participant. */
+export function getFootballForm(
+  matches: BracketMatch[],
+  participantId: string,
+  limit = 5,
+): FootballFormResult[] {
+  return matches
+    .filter(
+      (match) =>
+        !match.isBye &&
+        match.status === 'COMPLETED' &&
+        (match.participant1?.id === participantId || match.participant2?.id === participantId),
+    )
+    .sort((a, b) => {
+      const aTime = Date.parse(a.completedAt ?? a.scheduledAt ?? '') || 0;
+      const bTime = Date.parse(b.completedAt ?? b.scheduledAt ?? '') || 0;
+      return aTime - bTime || a.roundNumber - b.roundNumber || a.matchOrder - b.matchOrder;
+    })
+    .slice(-limit)
+    .map((match) => {
+      if (!match.winnerId) return 'D';
+      return match.winnerId === participantId ? 'W' : 'L';
+    });
+}
+
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // MATCH GROUPING
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -67,7 +94,7 @@ export function getRoundLabel(
  */
 export function calculateStandings(
   matches: BracketMatch[],
-  options?: { tiebreakerMode?: 'split' | 'playoff' },
+  options?: { tiebreakerMode?: 'split' | 'playoff'; football?: boolean },
 ): { standings: StandingRow[]; ties: StandingRow[][] } {
   const map = new Map<string, StandingRow>();
   const getRow = (id: string, name: string, seed: number | null): StandingRow => {
@@ -135,7 +162,7 @@ export function calculateStandings(
   let rows = Array.from(map.values());
 
   // ── Sort with full tiebreaker ──
-  rows = tiebreakerSort(rows, matches, options?.tiebreakerMode ?? 'split');
+  rows = tiebreakerSort(rows, matches, options?.tiebreakerMode ?? 'split', options?.football ?? false);
 
   // ── Detect unresolvable ties ──
   const ties: StandingRow[][] = [];

@@ -26,7 +26,7 @@ import type { SportRuleKind, StageRoundConfig } from '@/types/tournament';
 import { tournamentsApi } from '@/features/tournaments/api';
 import { formatDateTime } from '@/utils/format';
 import { getErrorMessage } from '@/utils/error';
-import { calculateStandings } from './helpers';
+import { calculateStandings, getFootballForm } from './helpers';
 import type { OnScheduleMatch, OnSelectBracketMatch } from './types';
 import { getBracketStatLabels, resolveBracketMatchRules } from './sportRuleDisplay';
 import toast from 'react-hot-toast';
@@ -66,8 +66,10 @@ export function RoundRobinView({
     ? resolveBracketMatchRules(sampleMatch, fallbackSportRuleKind).kind
     : (fallbackSportRuleKind ?? 'BADMINTON');
   const statLabels = getBracketStatLabels(effectiveRuleKind);
+  const isFootball = effectiveRuleKind === 'FOOTBALL' || Boolean(sampleMatch?.scoreDetails?.football);
   const { standings, ties } = calculateStandings(matches, {
     tiebreakerMode,
+    football: isFootball,
   });
   const tieSet = new Set(ties.flatMap((g) => g.map((r) => r.participantId)));
   const allDone = matches.length > 0 && matches.filter((m) => !m.isBye).every((m) => m.status === 'COMPLETED');
@@ -157,11 +159,26 @@ export function RoundRobinView({
               <tr>
                 <th className="px-3 py-3 text-center w-10">#</th>
                 <th className="px-3 py-3 text-left min-w-[130px]">Đội</th>
-                <th className="px-3 py-3 text-center w-12">Trận</th>
-                <th className="px-3 py-3 text-center text-blue-600 w-9">T</th>
-                <th className="px-3 py-3 text-center text-rose-500 w-9">B</th>
-                <th className="px-3 py-3 text-center text-blue-600 bg-blue-50/50 w-14">Điểm</th>
-                <th className="px-3 py-3 text-center min-w-[80px]">Hiệu số</th>
+                <th className="px-3 py-3 text-center w-12">MP</th>
+                {isFootball ? (
+                  <>
+                    <th className="px-3 py-3 text-center text-blue-600 w-9">W</th>
+                    <th className="px-3 py-3 text-center text-amber-600 w-9">D</th>
+                    <th className="px-3 py-3 text-center text-rose-500 w-9">L</th>
+                    <th className="px-3 py-3 text-center w-12">GF</th>
+                    <th className="px-3 py-3 text-center w-12">GA</th>
+                    <th className="px-3 py-3 text-center min-w-[58px]">GD</th>
+                    <th className="px-3 py-3 text-center text-blue-600 bg-blue-50/50 w-14">Pts</th>
+                    <th className="px-3 py-3 text-center min-w-[92px]">Last 5</th>
+                  </>
+                ) : (
+                  <>
+                    <th className="px-3 py-3 text-center text-blue-600 w-9">T</th>
+                    <th className="px-3 py-3 text-center text-rose-500 w-9">B</th>
+                    <th className="px-3 py-3 text-center text-blue-600 bg-blue-50/50 w-14">Điểm</th>
+                    <th className="px-3 py-3 text-center min-w-[80px]">Hiệu số</th>
+                  </>
+                )}
                 <th className="px-3 py-3 text-center w-10" />
               </tr>
             </thead>
@@ -216,19 +233,41 @@ export function RoundRobinView({
                     <td className="px-3 py-3 text-center text-slate-500 font-medium">
                       {row.played}
                     </td>
-                    <td className="px-3 py-3 text-center font-bold text-blue-600">
-                      {row.won}
-                    </td>
-                    <td className="px-3 py-3 text-center font-bold text-rose-400">
-                      {row.lost}
-                    </td>
-                    <td className="px-3 py-3 text-center font-bold text-blue-700 bg-blue-50/20">
-                      {row.points}
-                    </td>
-                    <td className={'px-3 py-3 text-center font-semibold ' + (row.pointsFor - row.pointsAgainst > 0 ? 'text-blue-600' : row.pointsFor - row.pointsAgainst < 0 ? 'text-rose-500' : 'text-slate-500')}>
-                      {row.pointsFor - row.pointsAgainst >= 0 ? '+' : ''}
-                      {row.pointsFor - row.pointsAgainst}
-                    </td>
+                    {isFootball ? (
+                      <>
+                        <td className="px-3 py-3 text-center font-bold text-blue-600">{row.won}</td>
+                        <td className="px-3 py-3 text-center font-bold text-amber-600">{row.draws}</td>
+                        <td className="px-3 py-3 text-center font-bold text-rose-400">{row.lost}</td>
+                        <td className="px-3 py-3 text-center font-medium">{row.pointsFor}</td>
+                        <td className="px-3 py-3 text-center font-medium">{row.pointsAgainst}</td>
+                        <td className={'px-3 py-3 text-center font-semibold ' + (row.pointsFor - row.pointsAgainst > 0 ? 'text-blue-600' : row.pointsFor - row.pointsAgainst < 0 ? 'text-rose-500' : 'text-slate-500')}>
+                          {row.pointsFor - row.pointsAgainst >= 0 ? '+' : ''}{row.pointsFor - row.pointsAgainst}
+                        </td>
+                        <td className="px-3 py-3 text-center font-bold text-blue-700 bg-blue-50/20">{row.points}</td>
+                        <td className="px-3 py-3">
+                          <span className="inline-flex items-center justify-center gap-1">
+                            {getFootballForm(matches, row.participantId).map((result, formIndex) => (
+                              <span
+                                key={`${row.participantId}-${formIndex}`}
+                                title={result === 'W' ? 'Thắng' : result === 'D' ? 'Hòa' : 'Thua'}
+                                className={'inline-flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-bold text-white ' + (result === 'W' ? 'bg-emerald-500' : result === 'D' ? 'bg-slate-400' : 'bg-rose-500')}
+                              >
+                                {result}
+                              </span>
+                            ))}
+                          </span>
+                        </td>
+                      </>
+                    ) : (
+                      <>
+                        <td className="px-3 py-3 text-center font-bold text-blue-600">{row.won}</td>
+                        <td className="px-3 py-3 text-center font-bold text-rose-400">{row.lost}</td>
+                        <td className="px-3 py-3 text-center font-bold text-blue-700 bg-blue-50/20">{row.points}</td>
+                        <td className={'px-3 py-3 text-center font-semibold ' + (row.pointsFor - row.pointsAgainst > 0 ? 'text-blue-600' : row.pointsFor - row.pointsAgainst < 0 ? 'text-rose-500' : 'text-slate-500')}>
+                          {row.pointsFor - row.pointsAgainst >= 0 ? '+' : ''}{row.pointsFor - row.pointsAgainst}
+                        </td>
+                      </>
+                    )}
                     <td className="px-3 py-3 text-center">
                       {isTied &&
                         (tiebreakerMode === 'playoff' ? (

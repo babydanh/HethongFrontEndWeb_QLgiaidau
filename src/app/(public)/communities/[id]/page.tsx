@@ -544,6 +544,7 @@ export default function CommunityDetailPage() {
                 communityId={id}
                 description={community.description}
                 rules={community.rules}
+                socialLinks={community.socialLinks}
                 canManageTags={isOwnerOrMod || Boolean(user?.roles?.includes('ADMIN'))}
                 onGoToTournaments={() => setActiveTab('tournaments')}
                 onGoToRankings={() => setActiveTab('rankings')}

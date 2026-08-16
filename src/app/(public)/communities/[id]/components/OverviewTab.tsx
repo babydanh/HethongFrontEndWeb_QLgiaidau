@@ -12,6 +12,7 @@ interface OverviewTabProps {
   communityId: string;
   description?: string;
   rules?: string;
+  socialLinks?: Record<string, string>;
   canManageTags?: boolean;
   onGoToTournaments?: () => void;
   onGoToRankings?: () => void;
@@ -31,6 +32,7 @@ export default function OverviewTab({
   communityId,
   description,
   rules,
+  socialLinks,
   canManageTags = false,
   onGoToGallery,
 }: OverviewTabProps) {
@@ -62,6 +64,7 @@ export default function OverviewTab({
         communityId={communityId}
         description={description}
         rules={rules}
+        socialLinks={socialLinks}
         onGoToGallery={onGoToGallery}
       />
       <main className="min-w-0">

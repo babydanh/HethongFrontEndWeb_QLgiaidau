@@ -88,6 +88,7 @@ export function tiebreakerSort(
   rows: StandingRow[],
   allMatches: BracketMatch[],
   mode: 'split' | 'playoff' = 'split',
+  football = false,
 ): StandingRow[] {
   // ── Step 1: primary sort by points ──
   rows.sort((a, b) => {
@@ -134,6 +135,19 @@ export function tiebreakerSort(
     // Multi-team tie — use minitable
     const tiedIds = new Set(group.map((r) => r.participantId));
     const mini = miniStandings(tiedIds, allMatches);
+    const fairPlay = new Map<string, number>(group.map((r) => [r.participantId, 0]));
+    for (const match of allMatches) {
+      if (match.status !== 'COMPLETED' || match.isBye) continue;
+      const events = match.scoreDetails?.football;
+      if (!events || typeof events !== 'object' || !Array.isArray((events as Record<string, unknown>).events)) continue;
+      for (const event of (events as Record<string, unknown>).events as unknown[]) {
+        if (!event || typeof event !== 'object') continue;
+        const record = event as Record<string, unknown>;
+        const penalty = record.type === 'RED_CARD' ? 3 : record.type === 'YELLOW_CARD' ? 1 : 0;
+        const target = record.team === 1 ? match.participant1?.id : record.team === 2 ? match.participant2?.id : null;
+        if (penalty && target && fairPlay.has(target)) fairPlay.set(target, (fairPlay.get(target) || 0) + penalty);
+      }
+    }
 
     // Sort the group using minitable first, then fallback
     group.sort((a, b) => {
@@ -143,10 +157,11 @@ export function tiebreakerSort(
       if (ma && mb) {
         // 2. H2H — mini points
         if (mb.points !== ma.points) return mb.points - ma.points;
-        // 3. H2H — set diff
-        if (mb.setsDiff !== ma.setsDiff) return mb.setsDiff - ma.setsDiff;
-        // 4. H2H — point diff
-        if (mb.pointsDiff !== ma.pointsDiff) return mb.pointsDiff - ma.pointsDiff;
+        // Non-football formats continue with H2H set/point differences.
+        if (!football) {
+          if (mb.setsDiff !== ma.setsDiff) return mb.setsDiff - ma.setsDiff;
+          if (mb.pointsDiff !== ma.pointsDiff) return mb.pointsDiff - ma.pointsDiff;
+        }
       }
 
       // 5. Total set diff
@@ -158,6 +173,13 @@ export function tiebreakerSort(
       const pdA = a.pointsFor - a.pointsAgainst;
       const pdB = b.pointsFor - b.pointsAgainst;
       if (pdB !== pdA) return pdB - pdA;
+
+      if (football) {
+        const fairA = fairPlay.get(a.participantId) || 0;
+        const fairB = fairPlay.get(b.participantId) || 0;
+        if (fairA !== fairB) return fairA - fairB;
+        if (b.won !== a.won) return b.won - a.won;
+      }
 
       // 7. Tiebreaker mode
       // 'split'  → remain equal (no further sort)

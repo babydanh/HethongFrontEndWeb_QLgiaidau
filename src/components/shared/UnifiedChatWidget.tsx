@@ -432,11 +432,13 @@ export default function UnifiedChatWidget() {
     return () => window.clearInterval(timer);
   }, [open, isAuthenticated, refreshRooms]);
 
+  const activeRoomId = selection.kind === 'ROOM' ? selection.room.id : null;
+
   useEffect(() => {
-    if (!open || selection.kind !== 'ROOM') return;
+    if (!open || !activeRoomId || !isAuthenticated) return;
     let active = true;
     const socket = socketClient.refreshChatAuthentication();
-    const roomId = selection.room.id;
+    const roomId = activeRoomId;
     socketRoomRef.current = roomId;
 
     const onMessage = (message: ChatMessage) => {
@@ -582,13 +584,6 @@ export default function UnifiedChatWidget() {
 
     void inboxApi
       .markRead(roomId)
-      .then(() => {
-        setRooms((current) =>
-          current.map((room) =>
-            room.id === roomId ? { ...room, unreadCount: 0 } : room,
-          ),
-        );
-      })
       .catch(() => undefined);
 
     return () => {
@@ -607,7 +602,7 @@ export default function UnifiedChatWidget() {
       if (typingTimerRef.current) window.clearTimeout(typingTimerRef.current);
       socketRoomRef.current = null;
     };
-  }, [open, selection.kind, selection.kind === 'ROOM' ? selection.room.id : null, user?.id]);
+  }, [open, activeRoomId, isAuthenticated, user?.id]);
 
   useEffect(() => {
     if (!open || selection.kind !== 'SUPPORT' || !isAuthenticated) return;

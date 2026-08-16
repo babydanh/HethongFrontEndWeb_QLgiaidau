@@ -455,14 +455,52 @@ export default function SettingsTab({ community }: { community: Community }) {
               </Button>
             </div>
 
+            {/* Gợi ý tag vui nhộn 1-click */}
+            <div className="space-y-1.5 pt-0.5">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Gợi ý tag vui nhộn nhanh:</span>
+              <div className="flex flex-wrap gap-1">
+                {[
+                  { name: '🔥 MVP tuần', color: '#fef08a' },
+                  { name: '👑 Đội trưởng', color: '#fed7aa' },
+                  { name: '⚽ Vua phá lưới', color: '#bbf7d0' },
+                  { name: '🧤 Bàn tay vàng', color: '#bfdbfe' },
+                  { name: '⚡ Chân chuyền ma thuật', color: '#ddd6fe' },
+                  { name: '🤣 Chúa hề CLB', color: '#fbcfe8' },
+                  { name: '🍀 Thần tài may mắn', color: '#a7f3d0' },
+                  { name: '🍻 Vua bàn nhậu', color: '#fde68a' },
+                ].map((sug) => {
+                  const isExisting = tagPresets.some((p) => p.name === sug.name);
+                  return (
+                    <button
+                      key={sug.name}
+                      type="button"
+                      disabled={isExisting}
+                      onClick={() => {
+                        setNewTagName(sug.name);
+                        setNewTagColor(sug.color);
+                      }}
+                      className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10.5px] font-semibold transition-all border shadow-2xs ${
+                        isExisting
+                          ? 'opacity-40 bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed'
+                          : 'bg-white border-slate-200 text-slate-700 hover:border-blue-300 hover:text-blue-600 hover:scale-105 active:scale-95'
+                      }`}
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: sug.color }} />
+                      {sug.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             <div className="flex flex-wrap gap-1.5 pt-1">
               {tagPresets.length === 0 ? (
-                <span className="text-[11px] italic text-slate-400">Chưa tạo tag nào.</span>
+                <span className="text-[11px] italic text-slate-400">Chưa tạo tag nào. Nhấn gợi ý bên trên hoặc nhập tên để tạo tag mới.</span>
               ) : (
                 tagPresets.map((preset) => (
                   <span 
                     key={preset.id} 
-                    className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold shadow-sm" 
+                    className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold shadow-sm border border-slate-200/60" 
                     style={{ backgroundColor: preset.color, color: '#1e293b' }}
                   >
                     {preset.name}
@@ -470,7 +508,7 @@ export default function SettingsTab({ community }: { community: Community }) {
                       type="button" 
                       onClick={() => handleDeleteTagPreset(preset.id)} 
                       aria-label={`Xóa ${preset.name}`}
-                      className="text-slate-600 hover:text-rose-600 transition-colors"
+                      className="text-slate-600 hover:text-rose-600 transition-colors cursor-pointer"
                     >
                       <Trash2 className="h-3 w-3" />
                     </button>

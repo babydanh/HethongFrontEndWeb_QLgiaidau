@@ -94,7 +94,11 @@ export function getRoundLabel(
  */
 export function calculateStandings(
   matches: BracketMatch[],
-  options?: { tiebreakerMode?: 'split' | 'playoff'; football?: boolean },
+  options?: {
+    tiebreakerMode?: 'split' | 'playoff';
+    football?: boolean;
+    throughRound?: number;
+  },
 ): { standings: StandingRow[]; ties: StandingRow[][] } {
   const map = new Map<string, StandingRow>();
   const getRow = (id: string, name: string, seed: number | null): StandingRow => {
@@ -126,6 +130,7 @@ export function calculateStandings(
   // Accumulate stats from completed matches
   matches.forEach((m) => {
     if (m.isBye || m.status !== 'COMPLETED' || !m.participant1 || !m.participant2) return;
+    if (options?.throughRound != null && m.roundNumber > options.throughRound) return;
 
     const r1 = getRow(m.participant1.id, m.participant1.teamName, m.participant1.seed);
     const r2 = getRow(m.participant2.id, m.participant2.teamName, m.participant2.seed);

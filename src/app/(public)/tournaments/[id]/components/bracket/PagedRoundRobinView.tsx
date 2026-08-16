@@ -116,8 +116,9 @@ export function PagedRoundRobinView({
     </div>
   );
 
-  // Cumulative matches up to currentRound (for cross table — shows progressive results)
-  // Guard: if currentRound belongs to a different leg, fall back to all legMatches
+  // Keep every team in the matrix, but calculate/display only results through
+  // the selected round. This makes round navigation progressive without
+  // dropping teams that have a BYE or play later in the leg.
   const cumulativeMatches = legMatches;
 
   // Round nav helpers
@@ -141,7 +142,7 @@ export function PagedRoundRobinView({
       >
         <ChevronLeft className="w-4 h-4" />
       </button>
-      <span className="text-xs font-semibold text-slate-600 min-w-14 text-center">{roundLabel}</span>
+      <span className="text-xs font-semibold text-slate-600 min-w-24 text-center">{`Vòng ${currentRound ?? '-'} · ${roundLabel}`}</span>
       <button
         type="button"
         onClick={() => {
@@ -173,6 +174,7 @@ export function PagedRoundRobinView({
           legCount={legCount}
           onLegChange={changeLeg}
           roundNavigation={roundNavigation}
+          throughRound={currentRound}
         />
         {/* Match list — controlled by same activeRound */}
         <RoundRobinView

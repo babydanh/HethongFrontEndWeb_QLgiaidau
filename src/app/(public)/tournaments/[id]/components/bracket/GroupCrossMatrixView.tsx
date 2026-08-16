@@ -14,6 +14,7 @@ interface Props {
   legCount?: number;
   onLegChange?: (leg: number) => void;
   roundNavigation?: React.ReactNode;
+  throughRound?: number | null;
 }
 
 export function GroupCrossMatrixView({ 
@@ -23,8 +24,12 @@ export function GroupCrossMatrixView({
   legCount = 1,
   onLegChange,
   roundNavigation,
+  throughRound = null,
 }: Props) {
-  const { standings } = calculateStandings(matches, { tiebreakerMode: 'split' });
+  const { standings } = calculateStandings(matches, {
+    tiebreakerMode: 'split',
+    throughRound: throughRound ?? undefined,
+  });
 
   // Map participant index (1-based)
   const participantMap = new Map(
@@ -35,6 +40,7 @@ export function GroupCrossMatrixView({
   const scoreMatrix: Record<string, Record<string, string[]>> = {};
 
   matches.forEach((m) => {
+    if (throughRound != null && m.roundNumber > throughRound) return;
     if (m.isBye || !m.participant1 || !m.participant2) return;
     const p1Id = m.participant1.id;
     const p2Id = m.participant2.id;

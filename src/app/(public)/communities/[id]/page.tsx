@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { communitiesApi, Community } from '@/features/communities/api';
+import { regionsApi } from '@/features/regions/api';
 import { Button } from '@/components/ui/Button';
 import { ChevronLeft, MapPin, Users, Trophy, Share2, MoreHorizontal, ShieldAlert, Settings as SettingsIcon, Loader2 } from 'lucide-react';
 import { formatDate } from '@/utils/format';
@@ -55,6 +56,61 @@ export default function CommunityDetailPage() {
   // the community header no longer exposes a redundant favorite action.
   const [isFavorite, setIsFavorite] = useState(false);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
+  const [resolvedLocation, setResolvedLocation] = useState<string>('');
+
+  // Resolve full address string including ward, district, province and specific address
+  useEffect(() => {
+    let mounted = true;
+    if (!community) return;
+
+    const resolveAddress = async () => {
+      const parts: string[] = [];
+      if (community.locationAddress?.trim()) {
+        parts.push(community.locationAddress.trim());
+      }
+
+      try {
+        let wardName = '';
+        let districtName = '';
+        let provinceName = '';
+
+        if (community.provinceCode) {
+          const provRes = await regionsApi.getProvinces().catch(() => null);
+          const foundProv = provRes?.data?.find(p => p.code === community.provinceCode);
+          if (foundProv) provinceName = foundProv.name;
+
+          if (community.districtCode) {
+            const distRes = await regionsApi.getDistricts(community.provinceCode).catch(() => null);
+            const foundDist = distRes?.data?.find(d => d.code === community.districtCode);
+            if (foundDist) districtName = foundDist.name;
+
+            if (community.wardCode) {
+              const wardRes = await regionsApi.getWards(community.districtCode).catch(() => null);
+              const foundWard = wardRes?.data?.find(w => w.code === community.wardCode);
+              if (foundWard) wardName = foundWard.name;
+            }
+          }
+        }
+
+        if (wardName) parts.push(wardName);
+        if (districtName) parts.push(districtName);
+        if (provinceName) parts.push(provinceName);
+
+        if (mounted) {
+          setResolvedLocation(parts.length > 0 ? parts.join(', ') : 'Chưa cập nhật địa điểm');
+        }
+      } catch {
+        if (mounted) {
+          setResolvedLocation(community.locationAddress || 'Chưa cập nhật địa điểm');
+        }
+      }
+    };
+
+    resolveAddress();
+    return () => {
+      mounted = false;
+    };
+  }, [community?.locationAddress, community?.provinceCode, community?.districtCode, community?.wardCode]);
 
   const fetchGallery = async () => {
     try {
@@ -401,53 +457,51 @@ export default function CommunityDetailPage() {
               >
                 {/* Reusing Lucide icons correctly to prevent dynamic text issues */}
                 <ChevronLeft className="w-4 h-4 rotate-180" />
-              </button>
-              {/* Dots indicator */}
-              <div className="absolute bottom-4 right-6 flex gap-1.5 z-20">
-                {slides.map((_, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setCurrentSlide(idx)}
-                    className={`w-2 h-2 rounded-full transition-all ${idx === currentSlide ? 'bg-white w-4' : 'bg-white/40'}`}
-                  />
-                ))}
-              </div>
-            </>
+          {/* Dots indicator */}
+          {slides.length > 1 && (
+            <div className="absolute bottom-4 right-6 flex gap-1.5 z-20">
+              {slides.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setCurrentSlide(idx)}
+                  className={`w-2 h-2 rounded-full transition-all ${idx === currentSlide ? 'bg-white w-4' : 'bg-white/40'}`}
+                />
+              ))}
+            </div>
           )}
-
-          {/* Only name inside banner, at bottom-left */}
-          <div className="absolute bottom-4 left-6 md:bottom-6 md:left-8 z-10">
-            <h1 className="text-xl md:text-2xl font-bold text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] tracking-wide uppercase">
-              {community.name}
-            </h1>
-          </div>
         </div>
       </div>
 
       {/* Info Panel below banner */}
       <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 mt-6">
-        <div className="bg-white border border-slate-200/80 rounded-lg p-5 md:p-6 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 w-full md:w-auto">
-            <div className="w-24 h-24 md:w-28 md:h-28 rounded-full border border-slate-200 overflow-hidden bg-white shadow-md relative shrink-0 p-1.5">
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-5 md:p-6 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 w-full md:w-auto min-w-0">
+            <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl border border-slate-200 overflow-hidden bg-white shadow-md relative shrink-0 p-1">
               <Image
                 src={community.logoUrl || BRAND.assets.defaultCommunityLogo}
                 alt={community.name}
                 fill
-                className="object-contain rounded-full p-2"
+                className="object-contain rounded-xl p-1.5"
               />
             </div>
-            <div className="space-y-2.5">
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-medium">
-                <span className="flex items-center gap-1.5 text-slate-700">
-                  <MapPin className="w-4 h-4 text-slate-500 shrink-0" />
-                  {community.locationAddress || 'Chưa cập nhật địa điểm'}
+            <div className="space-y-2 min-w-0 flex-1">
+              {/* Tên câu lạc bộ chuyển xuống card dưới */}
+              <h1 className="text-xl md:text-2xl font-black tracking-tight text-slate-900 truncate">
+                {community.name}
+              </h1>
+
+              {/* Thông tin địa chỉ đầy đủ & thống kê */}
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs md:text-sm font-medium">
+                <span className="flex items-center gap-1.5 text-slate-700 max-w-full" title={resolvedLocation}>
+                  <MapPin className="w-4 h-4 text-blue-600 shrink-0" />
+                  <span className="truncate">{resolvedLocation || 'Chưa cập nhật địa điểm'}</span>
                 </span>
-                <span className="flex items-center gap-1.5 text-slate-700">
-                  <Users className="w-4 h-4 text-slate-500 shrink-0" />
+                <span className="flex items-center gap-1.5 text-slate-700 shrink-0">
+                  <Users className="w-4 h-4 text-indigo-500 shrink-0" />
                   {community._count?.members || 1} thành viên
                 </span>
-                <span className="flex items-center gap-1.5 text-slate-700">
-                  <Trophy className="w-4 h-4 text-slate-500 shrink-0" />
+                <span className="flex items-center gap-1.5 text-slate-700 shrink-0">
+                  <Trophy className="w-4 h-4 text-amber-500 shrink-0" />
                   {community._count?.tournaments || 0} giải đấu
                 </span>
               </div>

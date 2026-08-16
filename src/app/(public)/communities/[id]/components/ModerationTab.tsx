@@ -472,8 +472,8 @@ export default function ModerationTab({
                 const role = invited.member?.role || 'MEMBER';
 
                 return (
-                  <div 
-                    key={invited.member?.id || targetUserId} 
+                  <div
+                    key={invited.member?.id || targetUserId}
                     className="flex items-center justify-between gap-3 rounded-xl border border-slate-200/80 bg-slate-50/70 p-3 text-xs transition-all hover:bg-slate-100/70"
                   >
                     <button
@@ -543,8 +543,8 @@ export default function ModerationTab({
                 const avatarUrl = member.user?.avatarUrl;
 
                 return (
-                  <div 
-                    key={member.member?.id || targetUserId} 
+                  <div
+                    key={member.member?.id || targetUserId}
                     className="flex items-center justify-between gap-3 rounded-xl border border-rose-100 bg-rose-50/60 p-3 text-xs"
                   >
                     <button

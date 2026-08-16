@@ -604,10 +604,6 @@ export default function CommunityDetailPage() {
         shareUrl={typeof window !== 'undefined' ? window.location.href : `/communities/${community.id}`}
         title={community.name}
       />
-
-      {membership?.status === 'JOINED' && (
-        <ClubChatLauncher communityId={community.id} />
-      )}
     </div>
   );
 }

@@ -2759,14 +2759,20 @@ export default function UnifiedChatWidget() {
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        aria-label="Mở tin nhắn"
-        className="relative flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-xl transition-all hover:scale-105 active:scale-95"
+        aria-label={open ? "Đóng tin nhắn" : "Mở tin nhắn"}
+        className="relative flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-xl transition-all hover:scale-105 active:scale-95 cursor-pointer"
       >
-        <MessageCircle className="h-6 w-6" />
-        {totalUnread > 0 && (
-          <b className="absolute -right-1 -top-1 min-w-5 rounded-full bg-rose-500 px-1.5 text-[10px] leading-5 text-white shadow">
-            {totalUnread > 99 ? '99+' : totalUnread}
-          </b>
+        {open ? (
+          <X className="h-6 w-6 text-white transition-transform duration-200 rotate-0 hover:rotate-90" />
+        ) : (
+          <>
+            <MessageCircle className="h-6 w-6 text-white" />
+            {totalUnread > 0 && (
+              <b className="absolute -right-1 -top-1 min-w-5 rounded-full bg-rose-500 px-1.5 text-[10px] leading-5 text-white shadow">
+                {totalUnread > 99 ? '99+' : totalUnread}
+              </b>
+            )}
+          </>
         )}
       </button>
     </div>

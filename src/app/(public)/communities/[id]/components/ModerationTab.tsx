@@ -17,6 +17,8 @@ import type { CommunityPost } from '@/types/community-social';
 import { usersApi } from '@/features/users/api';
 import { getErrorMessage } from '@/utils/error';
 import ConfirmModal from '@/components/ui/ConfirmModal';
+import { useUserProfileModalStore } from '@/lib/zustand/userProfileModalStore';
+import CommunityAvatar from './CommunityAvatar';
 
 interface UserSearchResult {
   id: string;
@@ -32,6 +34,7 @@ export default function ModerationTab({
   communityId: string;
   isOwner: boolean;
 }) {
+  const { openUserProfile } = useUserProfileModalStore();
   const [requests, setRequests] = useState<CommunityMemberRecord[]>([]);
   const [invitedMembers, setInvitedMembers] = useState<CommunityMemberRecord[]>([]);
   const [bannedMembers, setBannedMembers] = useState<CommunityMemberRecord[]>([]);
@@ -247,26 +250,52 @@ export default function ModerationTab({
         ) : (
           <div className="space-y-3">
             {requests.map((req) => {
-              const userId = req.member?.userId || '';
+              const userId = req.member?.userId || req.user?.id || '';
               const fullName = req.user?.fullName || req.user?.email || 'Người dùng';
+              const avatarUrl = req.user?.avatarUrl;
               const joinedAt = req.member?.joinedAt;
               const joinAnswers = req.member?.joinAnswers;
 
               return (
-                <article key={req.member?.id} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                <article key={req.member?.id || userId} className="rounded-xl border border-slate-200/90 bg-slate-50/70 p-4 shadow-2xs">
                   <div className="flex justify-between gap-4">
                     <div className="min-w-0 flex-1">
-                      <h4 className="text-sm font-bold text-slate-900">{fullName}</h4>
-                      <p className="mt-1 text-[11px] text-slate-400">
-                        Gửi đơn: {joinedAt ? new Date(joinedAt).toLocaleDateString('vi-VN') : 'Không rõ'}
-                      </p>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          if (userId) {
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            openUserProfile(
+                              {
+                                id: userId,
+                                fullName,
+                                avatarUrl,
+                                joinedAt,
+                              },
+                              rect,
+                              communityId,
+                            );
+                          }
+                        }}
+                        className="flex items-center gap-3 text-left group focus:outline-none"
+                      >
+                        <CommunityAvatar src={avatarUrl} name={fullName} size={40} />
+                        <div>
+                          <h4 className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
+                            {fullName}
+                          </h4>
+                          <p className="text-[11px] text-slate-400">
+                            Gửi đơn: {joinedAt ? new Date(joinedAt).toLocaleDateString('vi-VN') : 'Không rõ'}
+                          </p>
+                        </div>
+                      </button>
 
                       {joinAnswers && Object.keys(joinAnswers).length > 0 ? (
-                        <div className="mt-3 space-y-2 rounded-lg border border-slate-200 bg-white p-3">
+                        <div className="mt-3 space-y-2 rounded-lg border border-slate-200 bg-white p-3 shadow-2xs">
                           {Object.entries(joinAnswers).map(([question, answer]) => (
                             <div key={question} className="text-xs">
                               <p className="font-semibold text-slate-700">{question}</p>
-                              <p className="mt-1 text-slate-500">{String(answer)}</p>
+                              <p className="mt-0.5 text-slate-600 font-normal">{String(answer)}</p>
                             </div>
                           ))}
                         </div>
@@ -276,14 +305,14 @@ export default function ModerationTab({
                     <div className="flex shrink-0 flex-col gap-2">
                       <button
                         onClick={() => handleReview(userId, 'APPROVE')}
-                        className="rounded-lg bg-blue-600 p-2 text-white transition-colors hover:bg-blue-700"
-                        title="Duyệt"
+                        className="rounded-lg bg-blue-600 p-2 text-white transition-colors hover:bg-blue-700 shadow-2xs"
+                        title="Duyệt tham gia"
                       >
                         <Check className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => handleReview(userId, 'REJECT')}
-                        className="rounded-lg border border-rose-200 bg-white p-2 text-rose-600 transition-colors hover:bg-rose-50"
+                        className="rounded-lg border border-rose-200 bg-white p-2 text-rose-600 transition-colors hover:bg-rose-50 shadow-2xs"
                         title="Từ chối"
                       >
                         <X className="h-4 w-4" />
@@ -376,19 +405,38 @@ export default function ModerationTab({
           </div>
 
           {searchResults.length > 0 ? (
-            <div className="mt-3 space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-2">
+            <div className="mt-3 space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-2">
               {searchResults.map((user) => (
-                <div key={user.id} className="flex items-center justify-between gap-3 rounded-lg bg-white px-3 py-2">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-slate-900">
-                      {user.fullName || 'Người dùng'}
-                    </p>
-                    <p className="truncate text-[11px] text-slate-400">{user.email}</p>
-                  </div>
+                <div key={user.id} className="flex items-center justify-between gap-3 rounded-lg bg-white px-3 py-2 shadow-2xs">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      openUserProfile(
+                        {
+                          id: user.id,
+                          fullName: user.fullName || 'Người dùng',
+                          avatarUrl: user.avatarUrl,
+                        },
+                        rect,
+                        communityId,
+                      );
+                    }}
+                    className="flex items-center gap-2.5 min-w-0 flex-1 text-left group focus:outline-none"
+                  >
+                    <CommunityAvatar src={user.avatarUrl} name={user.fullName || 'U'} size={32} />
+                    <div className="min-w-0">
+                      <p className="truncate text-xs font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
+                        {user.fullName || 'Người dùng'}
+                      </p>
+                      <p className="truncate text-[10px] text-slate-400">{user.email}</p>
+                    </div>
+                  </button>
+
                   <button
                     onClick={() => handleInvite(user.id)}
                     disabled={isInviting[user.id]}
-                    className="shrink-0 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 disabled:opacity-60"
+                    className="shrink-0 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 disabled:opacity-60 shadow-2xs"
                   >
                     {isInviting[user.id] ? 'Đang gửi...' : 'Mời'}
                   </button>
@@ -417,26 +465,64 @@ export default function ModerationTab({
             <div className="py-6 text-center text-xs text-slate-400">Chưa có lời mời nào.</div>
           ) : (
             <div className="space-y-3">
-              {invitedMembers.map((invited) => (
-                <div key={invited.member?.id} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs">
-                  <div className="min-w-0">
-                    <p className="truncate font-bold text-slate-900">{invited.user?.fullName || 'Người dùng'}</p>
-                    <p className="truncate text-[10px] text-slate-400">{invited.member?.role}</p>
-                  </div>
-                  <button
-                    onClick={() => invited.user?.id && setCancelInviteUserId(invited.user.id)}
-                    className="rounded-lg border border-slate-200 bg-white p-1.5 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600"
-                    title="Thu hồi lời mời"
+              {invitedMembers.map((invited) => {
+                const targetUserId = invited.user?.id || invited.member?.userId || '';
+                const fullName = invited.user?.fullName || invited.user?.email || 'Người dùng';
+                const avatarUrl = invited.user?.avatarUrl;
+                const role = invited.member?.role || 'MEMBER';
+
+                return (
+                  <div 
+                    key={invited.member?.id || targetUserId} 
+                    className="flex items-center justify-between gap-3 rounded-xl border border-slate-200/80 bg-slate-50/70 p-3 text-xs transition-all hover:bg-slate-100/70"
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              ))}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        if (targetUserId) {
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          openUserProfile(
+                            {
+                              id: targetUserId,
+                              fullName,
+                              avatarUrl,
+                              role,
+                              joinedAt: invited.member?.joinedAt,
+                            },
+                            rect,
+                            communityId,
+                          );
+                        }
+                      }}
+                      className="flex items-center gap-3 min-w-0 flex-1 text-left group focus:outline-none"
+                    >
+                      <CommunityAvatar src={avatarUrl} name={fullName} size={36} />
+                      <div className="min-w-0">
+                        <p className="truncate font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
+                          {fullName}
+                        </p>
+                        <p className="truncate text-[11px] font-semibold text-slate-400">
+                          {role === 'MODERATOR' ? 'Quản trị viên' : 'Thành viên'} • Chờ chấp thuận
+                        </p>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => targetUserId && setCancelInviteUserId(targetUserId)}
+                      className="rounded-lg border border-slate-200 bg-white p-2 text-slate-400 shadow-2xs transition-colors hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 shrink-0"
+                      title="Thu hồi lời mời"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           )}
         </section>
 
-        <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+        <section className="rounded-xl border border-slate-200/90 bg-white p-6 shadow-sm">
           <div className="mb-4 flex items-center gap-2 border-b border-slate-100 pb-3">
             <Ban className="h-4 w-4 text-rose-600" />
             <h3 className="text-base font-bold text-slate-900">Thành viên đã cấm</h3>
@@ -451,21 +537,56 @@ export default function ModerationTab({
             <div className="py-6 text-center text-xs text-slate-400">Chưa có thành viên nào bị cấm.</div>
           ) : (
             <div className="space-y-3">
-              {bannedMembers.map((member) => (
-                <div key={member.member?.id} className="flex items-center justify-between gap-3 rounded-lg border border-rose-100 bg-rose-50 p-3 text-xs">
-                  <div className="min-w-0">
-                    <p className="truncate font-bold text-slate-900">{member.user?.fullName || 'Người dùng'}</p>
-                    <p className="truncate text-[10px] text-rose-500">Đang bị cấm khỏi cộng đồng</p>
-                  </div>
-                  <button
-                    onClick={() => member.user?.id && setUnbanUserId(member.user.id)}
-                    className="rounded-lg border border-slate-200 bg-white p-1.5 text-blue-600 transition-colors hover:bg-slate-50"
-                    title="Gỡ cấm"
+              {bannedMembers.map((member) => {
+                const targetUserId = member.user?.id || member.member?.userId || '';
+                const fullName = member.user?.fullName || member.user?.email || 'Người dùng';
+                const avatarUrl = member.user?.avatarUrl;
+
+                return (
+                  <div 
+                    key={member.member?.id || targetUserId} 
+                    className="flex items-center justify-between gap-3 rounded-xl border border-rose-100 bg-rose-50/60 p-3 text-xs"
                   >
-                    <Check className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              ))}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        if (targetUserId) {
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          openUserProfile(
+                            {
+                              id: targetUserId,
+                              fullName,
+                              avatarUrl,
+                              role: member.member?.role,
+                              joinedAt: member.member?.joinedAt,
+                            },
+                            rect,
+                            communityId,
+                          );
+                        }
+                      }}
+                      className="flex items-center gap-3 min-w-0 flex-1 text-left group focus:outline-none"
+                    >
+                      <CommunityAvatar src={avatarUrl} name={fullName} size={36} />
+                      <div className="min-w-0">
+                        <p className="truncate font-bold text-slate-900 group-hover:text-rose-600 transition-colors">
+                          {fullName}
+                        </p>
+                        <p className="truncate text-[11px] font-medium text-rose-500">Đang bị cấm khỏi cộng đồng</p>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => targetUserId && setUnbanUserId(targetUserId)}
+                      className="rounded-lg border border-slate-200 bg-white p-2 text-blue-600 shadow-2xs transition-colors hover:bg-blue-50 hover:border-blue-200 shrink-0"
+                      title="Gỡ cấm"
+                    >
+                      <Check className="h-4 w-4" />
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           )}
         </section>

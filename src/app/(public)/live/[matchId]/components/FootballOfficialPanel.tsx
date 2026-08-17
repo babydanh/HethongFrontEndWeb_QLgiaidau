@@ -1,5 +1,6 @@
 import { CircleAlert, CreditCard, Flag, Minus, Plus, Square, Timer, Trophy } from 'lucide-react';
 import { cn } from '@/utils/cn';
+import { useTranslations } from 'next-intl';
 import type { FootballEventType, FootballMatchPhase, FootballScoreState } from '@/features/matches/football-score';
 import { footballPhaseLabel } from '@/features/matches/football-score';
 
@@ -41,6 +42,7 @@ function TeamScore({
   onUndoGoal: () => void;
   disabled: boolean;
 }) {
+  const translate = useTranslations('LiveMatch');
   return (
     <div className="min-w-0 rounded-xl border border-slate-200 bg-white p-3 text-center shadow-sm">
       <p className="truncate text-sm font-bold text-slate-800" title={name}>{name}</p>
@@ -48,7 +50,7 @@ function TeamScore({
       <div className="mt-3 flex justify-center gap-2">
         <button
           type="button"
-          aria-label={`Giảm bàn thắng ${name}`}
+          aria-label={translate("decreaseGoals", { name })}
           disabled={disabled || goals === 0}
           onClick={onUndoGoal}
           className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
@@ -57,7 +59,7 @@ function TeamScore({
         </button>
         <button
           type="button"
-          aria-label={`Thêm bàn thắng ${name}`}
+          aria-label={translate("increaseGoals", { name })}
           disabled={disabled}
           onClick={onGoal}
           className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
@@ -81,6 +83,7 @@ export function FootballOfficialPanel({
   onMinuteChange,
   onAddedMinuteChange,
 }: FootballOfficialPanelProps) {
+  const translate = useTranslations('LiveMatch');
   return (
     <div className="space-y-4 rounded-xl border border-emerald-100 bg-emerald-50/40 p-3 sm:p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -91,7 +94,7 @@ export function FootballOfficialPanel({
         <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-600">
           <Timer className="h-4 w-4 text-emerald-600" />
           <label className="inline-flex items-center gap-1.5">
-            Phút
+            {translate('minuteLabel')}
             <input
               type="number"
               min={0}
@@ -102,7 +105,7 @@ export function FootballOfficialPanel({
             />
           </label>
           <label className="inline-flex items-center gap-1.5">
-            Bù giờ +
+            {translate('addedMinuteLabel')}
             <input
               type="number"
               min={0}
@@ -171,7 +174,7 @@ export function FootballOfficialPanel({
 
       {score.events.length > 0 ? (
         <div className="rounded-lg border border-slate-200 bg-white p-3">
-          <p className="mb-2 text-xs font-bold uppercase tracking-[0.12em] text-slate-500">Diễn biến trận</p>
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.12em] text-slate-500">{translate('matchEvents')}</p>
           <div className="space-y-1.5">
             {score.events.slice(-8).reverse().map((event) => (
               <div key={event.id} className="flex items-center justify-between gap-2 text-xs">

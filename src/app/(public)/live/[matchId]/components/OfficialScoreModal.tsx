@@ -1,6 +1,7 @@
 'use client';
 
 import { Shield, TimerReset } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/Button';
 import {
   Modal,
@@ -29,6 +30,7 @@ export function OfficialScoreModal({
   activeSetIndex,
   ...controlProps
 }: OfficialScoreModalProps) {
+  const translate = useTranslations('LiveMatch');
   return (
     <Modal open={open} onOpenChange={onOpenChange}>
       <ModalContent className="h-[96dvh] max-h-[96dvh] w-[calc(100vw-0.5rem)] max-w-[calc(100vw-0.5rem)] min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white p-0 shadow-2xl sm:h-[92dvh] sm:max-h-[92dvh] sm:w-[95vw] sm:max-w-7xl sm:rounded-[28px]">
@@ -39,8 +41,8 @@ export function OfficialScoreModal({
                 <Shield className="h-6 w-6" />
               </div>
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Bảng trọng tài</p>
-                <h3 className="mt-0.5 text-lg font-bold leading-tight text-white">Chấm điểm & Nghiệp vụ</h3>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{translate('officialBoard')}</p>
+                <h3 className="mt-0.5 text-lg font-bold leading-tight text-white">{translate('officialScoring')}</h3>
               </div>
             </div>
 
@@ -73,19 +75,19 @@ export function OfficialScoreModal({
                   <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Trạng thái trận</p>
                   <div className="mt-1.5 inline-flex rounded-full bg-blue-500/10 px-2.5 py-0.5 text-xs font-bold text-blue-400 border border-blue-500/20">
                     {match.status === 'ONGOING'
-                      ? 'Đang diễn ra'
+                      ? translate('statusInProgress')
                       : match.status === 'COMPLETED'
-                        ? 'Đã hoàn tất'
+                        ? translate('statusCompleted')
                         : match.status === 'CANCELLED'
-                          ? 'Đã hủy'
-                          : 'Sắp diễn ra'}
+                          ? translate('statusCancelled')
+                          : translate('statusUpcoming')}
                   </div>
                 </div>
               </div>
             </div>
 
             <div className="mt-3 hidden rounded-lg border border-white/5 bg-white/[0.02] p-4 text-[11px] leading-relaxed text-slate-400 lg:block">
-              <span className="font-bold text-slate-300 block mb-1">💡 Lưu ý trọng tài:</span>
+              <span className="font-bold text-slate-300 block mb-1">{translate('refereeNote')}</span>
               Mọi thay đổi điểm số sẽ cập nhật thời gian thực lên màn hình live công khai của khán giả.
             </div>
           </div>
@@ -110,7 +112,7 @@ export function OfficialScoreModal({
                   )}
                 >
                     <TimerReset className="hidden h-3.5 w-3.5 sm:block" />
-                  {isSubmitting ? 'Đang đồng bộ' : 'Sẵn sàng'}
+                  {isSubmitting ? translate('syncing') : translate('ready')}
                 </div>
               </div>
             </ModalHeader>
@@ -134,7 +136,7 @@ export function OfficialScoreModal({
                   className="w-full border-slate-200 text-slate-700 sm:w-auto"
                   onClick={() => onOpenChange(false)}
                 >
-                  Đóng bảng trọng tài
+                  {translate('closeOfficialBoard')}
                 </Button>
               </div>
             </div>

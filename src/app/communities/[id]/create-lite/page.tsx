@@ -289,6 +289,9 @@ export default function CreateLiteTournamentPage({
           <p className="text-slate-500 mt-1 text-sm">
             {community?.name ? `Câu lạc bộ: ${community.name}` : 'Tạo giải đấu nội bộ nhanh chóng'}
           </p>
+          <div className="mt-4 rounded-xl border-2 border-amber-300 bg-amber-50 px-4 py-3 text-sm font-semibold leading-relaxed text-amber-950 shadow-sm">
+            <strong className="font-extrabold">Lưu ý:</strong> Sau khi tạo, bạn có thể vào trang quản lý để chỉnh sửa các thông tin và cài đặt được phép trước khi giải bắt đầu.
+          </div>
         </div>
 
         {/* Form card */}

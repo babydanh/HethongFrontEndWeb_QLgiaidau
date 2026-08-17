@@ -16,20 +16,20 @@ interface RegistrationModeUi {
 const REGISTRATION_MODE_UI: Record<RegistrationMode, RegistrationModeUi> = {
   OPEN: {
     mode: 'OPEN',
-    ctaLabel: translate('openCta'),
-    badgeLabel: translate('openBadge'),
+    ctaLabel: 'openCta',
+    badgeLabel: 'openBadge',
     badgeClassName: 'border-blue-200 bg-blue-50 text-blue-700',
   },
   APPROVAL: {
     mode: 'APPROVAL',
-    ctaLabel: translate('approvalCta'),
-    badgeLabel: translate('approvalBadge'),
+    ctaLabel: 'approvalCta',
+    badgeLabel: 'approvalBadge',
     badgeClassName: 'border-blue-200 bg-blue-50 text-blue-700',
   },
   INVITE_ONLY: {
     mode: 'INVITE_ONLY',
-    ctaLabel: translate('inviteOnlyCta'),
-    badgeLabel: translate('inviteOnlyBadge'),
+    ctaLabel: 'inviteOnlyCta',
+    badgeLabel: 'inviteOnlyBadge',
     badgeClassName: 'border-slate-200 bg-slate-100 text-slate-600',
   },
 };

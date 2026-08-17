@@ -376,7 +376,15 @@ export default function QuickTournamentCreate() {
   const onSubmit = async (values: QuickValues) => {
     try {
       setIsSubmitting(true);
-      const { genderRestriction, teamSize, registrationStart, registrationEnd, startDate, endDate, ...restValues } = values;
+      const {
+        genderRestriction,
+        teamSize,
+        registrationStart,
+        registrationEnd,
+        startDate,
+        endDate,
+        ...restValues
+      } = values;
 
       const regStartDate = new Date(registrationStart);
       const regEndDate = new Date(registrationEnd);

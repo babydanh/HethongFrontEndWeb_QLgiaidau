@@ -146,6 +146,13 @@ export interface TournamentResult {
   matches: Array<Record<string, unknown>>;
 }
 
+/** Remove wizard-only fields at the API boundary before any create request. */
+const stripCreateWizardFields = <T>(data: T): T => {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) return data;
+  const { selectedFormats: _selectedFormats, ...payload } = data as Record<string, unknown>;
+  return payload as T;
+};
+
 export interface RoundConfigPayload {
   roundNumber: number;
   format: 'BO1' | 'BO3' | 'BO5';
@@ -376,7 +383,8 @@ export const tournamentsApi = {
   getParentTournamentById: (id: string) => api.get<ApiResponse<ParentTournament & { divisions: Tournament[] }>>(`/tournaments/parent/${id}`),
   updateParentTournament: <T>(id: string, data: T) => api.patch<ApiResponse<ParentTournament>>(`/tournaments/parent/${id}`, data),
   deleteParentTournament: (id: string) => api.delete<ApiResponse<void>>(`/tournaments/parent/${id}`),
-  createTournament: <T>(data: T) => api.post<ApiResponse<Tournament>>('/tournaments', data),
+  createTournament: <T>(data: T) =>
+    api.post<ApiResponse<Tournament>>('/tournaments', stripCreateWizardFields(data)),
   updateTournament: <T>(id: string, data: T) => api.patch<ApiResponse<Tournament>>(`/tournaments/${id}`, data),
   confirmLiteRoster: (id: string) =>
     api.post<ApiResponse<Tournament>>(`/tournaments/${id}/confirm-roster`),
@@ -537,7 +545,10 @@ export const tournamentsApi = {
     recurringDaysOfWeek?: number[];
     recurringTimeOfDay?: string;
     recurringAdvanceDays?: number;
-  }) => api.post<ApiResponse<{ id: string; name: string; status: string; inviteCode?: string; joinUrl?: string; qrPayload?: string }>>('/tournaments/lite', data).then(res => res.data),
+  }) => api.post<ApiResponse<{ id: string; name: string; status: string; inviteCode?: string; joinUrl?: string; qrPayload?: string }>>(
+    '/tournaments/lite',
+    data,
+  ).then(res => res.data),
 
   getLiteParticipants: (id: string) =>
     api.get<ApiResponse<LiteParticipant[]>>(`/tournaments/lite/${id}/participants`),

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, use } from 'react';
+import { useTranslations } from 'next-intl';
 import { api } from '@/lib/axios';
 import { ApiResponse } from '@/types/api';
 import { Trophy, Award, Calendar, ArrowLeft, Loader2, Sparkles, Star, Zap, User, Camera, ShieldCheck, MapPin, Activity, ChevronRight } from 'lucide-react';
@@ -72,6 +73,7 @@ interface Match {
 }
 
 export default function PublicUserProfilePage({ params }: { params: Promise<{ id: string }> }) {
+  const translate = useTranslations('PublicProfile');
   const resolvedParams = use(params);
   const id = resolvedParams.id;
   const { user } = useAuthStore();
@@ -86,15 +88,15 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
   const hideEloSection = profile?.isMock === true;
   const tabs = hideEloSection
     ? [
-        { id: 'overview', label: 'Tổng quan' },
-        { id: 'matches', label: 'Trận đấu' },
-        { id: 'achievements', label: 'Danh hiệu' },
+        { id: 'overview', label: translate('overview') },
+        { id: 'matches', label: translate('matches') },
+        { id: 'achievements', label: translate('achievements') },
       ] as const
     : [
-        { id: 'overview', label: 'Tổng quan' },
-        { id: 'matches', label: 'Trận đấu' },
-        { id: 'achievements', label: 'Danh hiệu' },
-        { id: 'elo', label: 'Thống kê ELO' },
+        { id: 'overview', label: translate('overview') },
+        { id: 'matches', label: translate('matches') },
+        { id: 'achievements', label: translate('achievements') },
+        { id: 'elo', label: translate('elo') },
       ] as const;
 
   useEffect(() => {
@@ -587,7 +589,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                       return (
                         <div key={item.id} className="flex justify-between items-center py-3 border-b border-slate-100 last:border-b-0">
                           <div>
-                            <p className="text-sm font-bold text-slate-800 line-clamp-1">{item.match?.tournamentName || 'Trận đấu xếp hạng'}</p>
+                            <p className="text-sm font-bold text-slate-800 line-clamp-1">{item.match?.tournamentName || translate('rankingMatch')}</p>
                             <p className="text-xs text-slate-400 mt-0.5">{formatDate(item.createdAt, 'dd/MM/yyyy HH:mm')}</p>
                           </div>
                           <div className="flex items-center gap-3 text-right">
@@ -607,7 +609,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                   </div>
                 ) : (
                   <div className="text-center py-6 text-slate-400 text-sm font-medium">
-                    Không có lịch sử biến động ELO.
+                    {translate('eloEmpty')}
                   </div>
                 )}
               </div>

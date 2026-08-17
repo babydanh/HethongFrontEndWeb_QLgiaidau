@@ -184,7 +184,6 @@ function translateStageName(name: string | null | undefined): string {
     'Semifinals': 'Bán kết',
     'Final': 'Chung kết',
     'Grand Final': 'Chung kết tổng',
-    'Grand Final Reset': 'Chung kết nhánh thua',
     'Winners Bracket': 'Nhánh thắng',
     'Losers Bracket': 'Nhánh thua',
     'First Round': 'Vòng 1',
@@ -310,6 +309,15 @@ function HomepageTournamentCard({ tournament }: { tournament: Tournament }) {
 export default function HomePage() {
   const { isAuthenticated, user } = useAuthStore();
   const translate = useTranslations('Home');
+  const getCategoryLabel = (category: Category) => {
+    const slug = category.slug || category.id;
+    if (slug === 'badminton') return translate('badminton');
+    if (slug === 'table_tennis') return translate('tableTennis');
+    if (slug === 'football') return translate('football');
+    if (slug === 'pickleball') return translate('pickleball');
+    if (slug === 'tennis') return translate('tennis');
+    return category.name;
+  };
   const [isClient, setIsClient] = useState(false);
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [communities, setCommunities] = useState<Community[]>([]);
@@ -1039,7 +1047,7 @@ export default function HomePage() {
               )}
               <span className="relative z-10 flex items-center gap-1.5">
                 <Trophy className="w-3.5 h-3.5" />
-                Tất cả
+                {translate('allSports')}
               </span>
             </button>
             {categories.filter(cat => cat.isActive !== false).map((cat) => {
@@ -1067,7 +1075,7 @@ export default function HomePage() {
                       if (logo) return <img src={logo} alt={cat.name} className="w-3.5 h-3.5 object-contain" />;
                       return <Trophy className="w-3.5 h-3.5" />;
                     })()}
-                    {cat.name}
+                    {getCategoryLabel(cat)}
                   </span>
                 </button>
               );
@@ -1122,10 +1130,10 @@ export default function HomePage() {
                     Giải đấu nổi bật
                   </span>
                   <h3 className="text-2xl md:text-3xl font-extrabold text-[#0f1b33] mb-3 tracking-tight">
-                    Chưa Có Giải Đấu Nào Sắp Diễn Ra
+                    {translate('noUpcomingTournaments')}
                   </h3>
                   <p className="text-sm leading-relaxed text-[#0f1b33] font-bold">
-                    Hãy theo dõi trang để cập nhật thông tin về các giải đấu mới nhất sắp sửa diễn ra.
+                    {translate('noUpcomingDescription')}
                   </p>
                 </div>
               </div>
@@ -1504,7 +1512,7 @@ export default function HomePage() {
 
                  {/* Name & Email */}
                  <h3 className="text-base font-semibold text-slate-900 mt-2.5 line-clamp-1 leading-snug">
-                   {user?.fullName || 'Người dùng'}
+                   {user?.fullName || translate('user')}
                  </h3>
                  <p className="text-xs text-slate-400 truncate w-full mb-3.5">
                    {user?.email}
@@ -1586,4 +1594,3 @@ export default function HomePage() {
     </div>
   );
 }
-

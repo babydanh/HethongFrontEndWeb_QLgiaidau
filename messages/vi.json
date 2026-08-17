@@ -50,7 +50,11 @@
     "next": "Tiếp tục",
     "viewMore": "Xem thêm",
     "close": "Đóng",
-    "noData": "Chưa có dữ liệu"
+    "noData": "Chưa có dữ liệu",
+    "shareCopied": "Đã sao chép liên kết chia sẻ!",
+    "instagramCopied": "Đã chép link! Hãy dán vào Instagram.",
+    "copied": "Đã chép",
+    "copy": "Sao chép"
   },
   "Profile": {
     "editCover": "Chỉnh sửa ảnh bìa",
@@ -107,8 +111,51 @@
     "noRefereeAssignments": "Bạn chưa có ca làm việc trọng tài nào được phân công.",
     "viewProfile": "Xem trang cá nhân"
   },
+  "LivePenalty": {
+    "title": "Nhật ký hình phạt",
+    "recorded": "Đã ghi: {count} mục",
+    "notePlaceholder": "Ghi chú thêm nếu cần",
+    "apply": "Áp dụng",
+    "empty": "Chưa có hình phạt nào được ghi cho trận này.",
+    "allMatch": " • Cả trận"
+  },
+  "PublicProfile": {
+    "overview": "Tổng quan",
+    "matches": "Trận đấu",
+    "achievements": "Danh hiệu",
+    "elo": "Thống kê ELO",
+    "rankingMatch": "Trận đấu xếp hạng",
+    "eloEmpty": "Không có lịch sử biến động ELO."
+  },
+  "SeriesDetail": {
+    "loadError": "Không thể tải chi tiết chuỗi giải đấu.",
+    "loading": "Đang tải thông tin chuỗi giải...",
+    "notFoundTitle": "Chuỗi giải đấu không tồn tại",
+    "notFoundDescription": "Rất tiếc, chuỗi giải đấu mà bạn đang tìm kiếm không tồn tại hoặc đã bị gỡ khỏi hệ thống.",
+    "backToList": "Quay lại danh sách",
+    "statusDraft": "📝 BẢN NHÁP",
+    "statusActive": "🟢 ĐANG DIỄN RA",
+    "statusCompleted": "✅ ĐÃ KẾT THÚC",
+    "statusCancelled": "❌ ĐÃ HỦY",
+    "overview": "Tổng Quan",
+    "schedule": "Chặng Đấu & Lịch Trình",
+    "standings": "Bảng Xếp Hạng PSR",
+    "rules": "Điều Lệ & Quy Tắc"
+  },
+  "SeriesList": {
+    "loadError": "Không thể tải danh sách chuỗi giải đấu.",
+    "eyebrow": "HỆ THỐNG LEAGUE & TOUR",
+    "title": "Chuỗi Giải Đấu Vòng Loại Tích Điểm",
+    "description": "Khám phá các chuỗi giải đấu phong trào Pickleball và Tennis trên toàn quốc. Đấu chặng tích lũy điểm PSR, tranh vé thẳng và giành tấm vé vàng tham gia Vòng Chung Kết Cup danh giá.",
+    "searchPlaceholder": "Tìm kiếm chuỗi giải...",
+    "all": "Tất cả",
+    "active": "Đang diễn ra",
+    "completed": "Đã kết thúc"
+  },
   "TournamentList": {
     "searchPlaceholder": "Tên giải đấu, địa điểm...",
+    "singles": "Đơn",
+    "doubles": "Đôi",
     "registrationOpen": "Mở đăng ký",
     "inProgress": "Đang diễn ra",
     "completed": "Đã kết thúc",
@@ -153,6 +200,9 @@
   },
   "Leaderboard": {
     "singles": "Đơn",
+    "typeLabel": "Thể loại:",
+    "hallOfFame": "SÂN KHẤU VINH DANH",
+    "topPlayers": "TOP 10 VẬN ĐỘNG VIÊN XUẤT SẮC",
     "doubles": "Đôi",
     "mixedDoubles": "Đôi Nam Nữ",
     "gender": "Giới tính",
@@ -355,6 +405,8 @@
     "wins": "Thắng",
     "winRate": "Tỷ lệ",
     "profile": "Trang cá nhân",
-    "user": "Người dùng"
+    "user": "Người dùng",
+    "noUpcomingTournaments": "Chưa Có Giải Đấu Nào Sắp Diễn Ra",
+    "noUpcomingDescription": "Hãy theo dõi trang để cập nhật thông tin về các giải đấu mới nhất sắp sửa diễn ra."
   }
 }

@@ -33,6 +33,10 @@ export const getDivisionBracketLabel = (bracketType?: string | null) => {
     return 'Vòng tròn tính điểm';
   }
 
+  if (bracketType === 'GROUP_STAGE_KNOCKOUT') {
+    return 'Vòng bảng + loại trực tiếp';
+  }
+
   return 'Chưa cấu hình bracket';
 };
 

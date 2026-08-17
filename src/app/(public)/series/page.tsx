@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { seriesApi } from '@/features/series/api';
 import { SeriesCard } from '@/features/series/components/SeriesCard';
 import { TournamentSeries } from '@/types/series';
@@ -9,6 +10,7 @@ import { cn } from '@/utils/cn';
 import { useDebounce } from '@/hooks/useDebounce';
 
 export default function SeriesListPage() {
+  const translate = useTranslations('SeriesList');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE' | 'COMPLETED'>('ALL');
   
@@ -39,7 +41,7 @@ export default function SeriesListPage() {
         }
       } catch (err: unknown) {
         if (active) {
-          const errorMessage = err instanceof Error ? err.message : 'Không thể tải danh sách chuỗi giải đấu.';
+          const errorMessage = err instanceof Error ? err.message : translate('loadError');
           setError(errorMessage);
         }
       } finally {
@@ -68,13 +70,13 @@ export default function SeriesListPage() {
 
         <div className="max-w-7xl mx-auto px-4 md:px-8 relative z-10 text-center flex flex-col items-center">
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-500/10 text-emerald-400 border border-emerald-500/25 mb-4 animate-fade-in">
-            <Trophy className="w-3.5 h-3.5" /> HỆ THỐNG LEAGUE & TOUR
+            <Trophy className="w-3.5 h-3.5" /> {translate('eyebrow')}
           </span>
           <h1 className="text-3xl md:text-5xl font-bold text-white tracking-tight mb-4 max-w-3xl leading-tight font-sans">
-            Chuỗi Giải Đấu Vòng Loại Tích Điểm
+            {translate('title')}
           </h1>
           <p className="text-slate-400 text-sm md:text-base max-w-2xl leading-relaxed">
-            Khám phá các chuỗi giải đấu phong trào Pickleball và Tennis trên toàn quốc. Đấu chặng tích lũy điểm PSR, tranh vé thẳng và giành tấm vé vàng tham gia Vòng Chung Kết Cup danh giá.
+            {translate('description')}
           </p>
         </div>
       </div>
@@ -88,7 +90,7 @@ export default function SeriesListPage() {
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
               type="text"
-              placeholder="Tìm kiếm chuỗi giải..."
+              placeholder={translate('searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full bg-slate-50 border border-slate-200 rounded-lg py-2.5 pl-10 pr-4 text-sm focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all outline-none"
@@ -101,9 +103,9 @@ export default function SeriesListPage() {
               <Filter className="w-3.5 h-3.5" /> Lọc chặng:
             </span>
             {[
-              { id: 'ALL', label: 'Tất cả' },
-              { id: 'ACTIVE', label: 'Đang diễn ra' },
-              { id: 'COMPLETED', label: 'Đã kết thúc' }
+              { id: 'ALL', label: translate('all') },
+              { id: 'ACTIVE', label: translate('active') },
+              { id: 'COMPLETED', label: translate('completed') }
             ].map((tab) => (
               <button
                 key={tab.id}

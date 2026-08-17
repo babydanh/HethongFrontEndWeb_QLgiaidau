@@ -98,6 +98,7 @@ const quickSchema = z.object({
   ward: z.string().trim().optional(),
   district: z.string().trim().optional(),
   genderRestriction: z.enum(['', 'MALE', 'FEMALE', 'MIXED']),
+  selectedFormats: z.array(z.string()).min(1, 'Vui lòng chọn ít nhất 1 nội dung thi đấu.'),
   teamSize: z.enum(['5', '7', '11']),
   maxReserve: z.number().int().min(0).max(20),
   footballHalvesCount: z.number().int().min(1).max(4),
@@ -245,14 +246,16 @@ export default function QuickTournamentCreate() {
     defaultValues: {
       sport: 'badminton', format: 'doubles', visibility: 'PRIVATE', bracketType: 'single_elimination',
       maxTeams: 16, ...scheduleDefaults,
+      selectedFormats: ['MALE_DOUBLES'],
       venueName: '', locationAddress: '', province: '', ward: '', district: '',
-      isRanked: false, description: '', genderRestriction: '', teamSize: '7', maxReserve: 5,
+      isRanked: false, description: '', genderRestriction: 'MALE', teamSize: '7', maxReserve: 5,
       footballHalvesCount: 2, footballHalfDuration: 45, footballAllowDraw: true,
     },
   });
 
   const sport = useWatch({ control, name: 'sport' });
   const format = useWatch({ control, name: 'format' });
+  const selectedFormats = useWatch({ control, name: 'selectedFormats' }) || ['MALE_DOUBLES'];
   const bracketType = useWatch({ control, name: 'bracketType' });
   const maxTeams = useWatch({ control, name: 'maxTeams' });
   const genderRestriction = useWatch({ control, name: 'genderRestriction' });
@@ -308,6 +311,57 @@ export default function QuickTournamentCreate() {
     return () => { active = false; };
   }, []);
 
+  const syncLegacyFormat = (primary: string) => {
+    if (!primary) return;
+    if (primary.includes('SINGLES')) {
+      setValue('format', 'singles');
+      setValue('genderRestriction', primary.includes('FEMALE') ? 'FEMALE' : 'MALE');
+    } else if (primary.includes('DOUBLES')) {
+      setValue('format', 'doubles');
+      if (primary.includes('MIXED')) setValue('genderRestriction', 'MIXED');
+      else if (primary.includes('FEMALE')) setValue('genderRestriction', 'FEMALE');
+      else setValue('genderRestriction', 'MALE');
+    } else if (primary.startsWith('FOOTBALL_')) {
+      setValue('format', 'doubles');
+      if (primary === 'FOOTBALL_MALE') setValue('genderRestriction', 'MALE');
+      else if (primary === 'FOOTBALL_FEMALE') setValue('genderRestriction', 'FEMALE');
+      else setValue('genderRestriction', '');
+    }
+  };
+
+  const toggleFormat = (formatKey: string) => {
+    const current = selectedFormats || [];
+    if (current.includes(formatKey)) {
+      if (current.length > 1) {
+        const next = current.filter((item) => item !== formatKey);
+        setValue('selectedFormats', next, { shouldValidate: true });
+        syncLegacyFormat(next[0]);
+      } else {
+        toast('Cần ít nhất 1 nội dung thi đấu.', { icon: 'ℹ️' });
+      }
+    } else {
+      const next = [...current, formatKey];
+      setValue('selectedFormats', next, { shouldValidate: true });
+      syncLegacyFormat(next[0]);
+    }
+  };
+
+  useEffect(() => {
+    if (sport === 'football') {
+      const hasFootball = selectedFormats.some((f) => f.startsWith('FOOTBALL_'));
+      if (!hasFootball) {
+        setValue('selectedFormats', ['FOOTBALL_MALE'], { shouldValidate: true });
+        syncLegacyFormat('FOOTBALL_MALE');
+      }
+    } else {
+      const hasRacket = selectedFormats.some((f) => f.includes('SINGLES') || f.includes('DOUBLES'));
+      if (!hasRacket) {
+        setValue('selectedFormats', ['MALE_DOUBLES'], { shouldValidate: true });
+        syncLegacyFormat('MALE_DOUBLES');
+      }
+    }
+  }, [sport]);
+
   useEffect(() => {
     let active = true;
     setWards([]);
@@ -347,6 +401,7 @@ export default function QuickTournamentCreate() {
 
       const response = await tournamentsApi.createLiteTournament({
         ...restValues,
+        selectedFormats: values.selectedFormats && values.selectedFormats.length > 0 ? values.selectedFormats : undefined,
         communityId,
         sport: values.sport,
         description: values.description || undefined,
@@ -425,29 +480,44 @@ export default function QuickTournamentCreate() {
             </label>
 
             <div>
-              <span className="text-sm font-semibold text-slate-700">
-                {sport === 'football' ? 'Nội dung bóng đá' : 'Nội dung thi đấu'}
-              </span>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-semibold text-slate-700">
+                  {sport === 'football' ? 'Nội dung bóng đá' : 'Nội dung thi đấu'}
+                </span>
+                <span className="text-xs font-medium text-blue-600">Có thể chọn nhiều</span>
+              </div>
               {sport === 'football' ? (
                 <div className="mt-2 grid grid-cols-3 gap-2">
                   <button
                     type="button"
-                    onClick={() => setValue('genderRestriction', 'MALE')}
-                    className={`rounded-lg border px-3 py-2 text-left text-sm font-medium transition ${genderRestriction === 'MALE' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-300 hover:border-blue-500'}`}
+                    onClick={() => toggleFormat('FOOTBALL_MALE')}
+                    className={`rounded-lg border px-3 py-2 text-left text-sm font-medium transition ${
+                      selectedFormats.includes('FOOTBALL_MALE')
+                        ? 'border-blue-500 bg-blue-50 text-blue-700 font-semibold shadow-2xs'
+                        : 'border-slate-300 bg-white text-slate-700 hover:border-blue-400'
+                    }`}
                   >
                     Đội nam
                   </button>
                   <button
                     type="button"
-                    onClick={() => setValue('genderRestriction', 'FEMALE')}
-                    className={`rounded-lg border px-3 py-2 text-left text-sm font-medium transition ${genderRestriction === 'FEMALE' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-300 hover:border-blue-500'}`}
+                    onClick={() => toggleFormat('FOOTBALL_FEMALE')}
+                    className={`rounded-lg border px-3 py-2 text-left text-sm font-medium transition ${
+                      selectedFormats.includes('FOOTBALL_FEMALE')
+                        ? 'border-blue-500 bg-blue-50 text-blue-700 font-semibold shadow-2xs'
+                        : 'border-slate-300 bg-white text-slate-700 hover:border-blue-400'
+                    }`}
                   >
                     Đội nữ
                   </button>
                   <button
                     type="button"
-                    onClick={() => setValue('genderRestriction', '')}
-                    className={`rounded-lg border px-3 py-2 text-left text-sm font-medium transition ${genderRestriction === '' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-300 hover:border-blue-500'}`}
+                    onClick={() => toggleFormat('FOOTBALL_MIXED')}
+                    className={`rounded-lg border px-3 py-2 text-left text-sm font-medium transition ${
+                      selectedFormats.includes('FOOTBALL_MIXED')
+                        ? 'border-blue-500 bg-blue-50 text-blue-700 font-semibold shadow-2xs'
+                        : 'border-slate-300 bg-white text-slate-700 hover:border-blue-400'
+                    }`}
                   >
                     Không giới hạn
                   </button>
@@ -456,40 +526,63 @@ export default function QuickTournamentCreate() {
                 <div className="mt-2 grid grid-cols-2 gap-2">
                   <button
                     type="button"
-                    onClick={() => { setValue('format', 'singles'); setValue('genderRestriction', 'MALE'); }}
-                    className={`rounded-lg border px-3 py-2 text-left text-sm font-medium transition ${format === 'singles' && genderRestriction === 'MALE' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-300 hover:border-blue-500'}`}
+                    onClick={() => toggleFormat('MALE_SINGLES')}
+                    className={`rounded-lg border px-3 py-2 text-left text-sm font-medium transition ${
+                      selectedFormats.includes('MALE_SINGLES')
+                        ? 'border-blue-500 bg-blue-50 text-blue-700 font-semibold shadow-2xs'
+                        : 'border-slate-300 bg-white text-slate-700 hover:border-blue-400'
+                    }`}
                   >
                     Đơn nam
                   </button>
                   <button
                     type="button"
-                    onClick={() => { setValue('format', 'singles'); setValue('genderRestriction', 'FEMALE'); }}
-                    className={`rounded-lg border px-3 py-2 text-left text-sm font-medium transition ${format === 'singles' && genderRestriction === 'FEMALE' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-300 hover:border-blue-500'}`}
+                    onClick={() => toggleFormat('FEMALE_SINGLES')}
+                    className={`rounded-lg border px-3 py-2 text-left text-sm font-medium transition ${
+                      selectedFormats.includes('FEMALE_SINGLES')
+                        ? 'border-blue-500 bg-blue-50 text-blue-700 font-semibold shadow-2xs'
+                        : 'border-slate-300 bg-white text-slate-700 hover:border-blue-400'
+                    }`}
                   >
                     Đơn nữ
                   </button>
                   <button
                     type="button"
-                    onClick={() => { setValue('format', 'doubles'); setValue('genderRestriction', 'MALE'); }}
-                    className={`rounded-lg border px-3 py-2 text-left text-sm font-medium transition ${format === 'doubles' && genderRestriction === 'MALE' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-300 hover:border-blue-500'}`}
+                    onClick={() => toggleFormat('MALE_DOUBLES')}
+                    className={`rounded-lg border px-3 py-2 text-left text-sm font-medium transition ${
+                      selectedFormats.includes('MALE_DOUBLES')
+                        ? 'border-blue-500 bg-blue-50 text-blue-700 font-semibold shadow-2xs'
+                        : 'border-slate-300 bg-white text-slate-700 hover:border-blue-400'
+                    }`}
                   >
                     Đôi nam
                   </button>
                   <button
                     type="button"
-                    onClick={() => { setValue('format', 'doubles'); setValue('genderRestriction', 'FEMALE'); }}
-                    className={`rounded-lg border px-3 py-2 text-left text-sm font-medium transition ${format === 'doubles' && genderRestriction === 'FEMALE' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-300 hover:border-blue-500'}`}
+                    onClick={() => toggleFormat('FEMALE_DOUBLES')}
+                    className={`rounded-lg border px-3 py-2 text-left text-sm font-medium transition ${
+                      selectedFormats.includes('FEMALE_DOUBLES')
+                        ? 'border-blue-500 bg-blue-50 text-blue-700 font-semibold shadow-2xs'
+                        : 'border-slate-300 bg-white text-slate-700 hover:border-blue-400'
+                    }`}
                   >
                     Đôi nữ
                   </button>
                   <button
                     type="button"
-                    onClick={() => { setValue('format', 'doubles'); setValue('genderRestriction', 'MIXED'); }}
-                    className={`col-span-2 rounded-lg border px-3 py-2 text-left text-sm font-medium transition ${format === 'doubles' && genderRestriction === 'MIXED' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-300 hover:border-blue-500'}`}
+                    onClick={() => toggleFormat('MIXED_DOUBLES')}
+                    className={`col-span-2 rounded-lg border px-3 py-2 text-left text-sm font-medium transition ${
+                      selectedFormats.includes('MIXED_DOUBLES')
+                        ? 'border-blue-500 bg-blue-50 text-blue-700 font-semibold shadow-2xs'
+                        : 'border-slate-300 bg-white text-slate-700 hover:border-blue-400'
+                    }`}
                   >
                     Đôi nam nữ
                   </button>
                 </div>
+              )}
+              {errors.selectedFormats && (
+                <span className="mt-1 block text-xs text-red-600">{errors.selectedFormats.message}</span>
               )}
             </div>
           </div>

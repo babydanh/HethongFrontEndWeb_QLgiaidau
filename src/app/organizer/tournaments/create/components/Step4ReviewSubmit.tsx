@@ -187,7 +187,11 @@ export default function Step4ReviewSubmit() {
           genderRestriction: div.genderRestriction as GenderRestriction,
           maxParticipants: formData.maxParticipants,
           entryFee: effectiveEntryFee,
-          bracketType: formData.format as 'SINGLE_ELIMINATION' | 'DOUBLE_ELIMINATION' | 'ROUND_ROBIN',
+          bracketType: formData.format as
+            | 'SINGLE_ELIMINATION'
+            | 'DOUBLE_ELIMINATION'
+            | 'ROUND_ROBIN'
+            | 'GROUP_STAGE_KNOCKOUT',
         };
         return divisionsApi.createDivision(tournamentId, divisionInput);
       });

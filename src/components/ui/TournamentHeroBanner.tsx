@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { Tournament } from '@/features/tournaments/api';
 import Link from 'next/link';
 import { Calendar, MapPin, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -14,13 +15,13 @@ interface Props {
 }
 
 /** Countdown — chỉ hiện ngày (dùng cho banner trang chủ) */
-function CountdownTimer({ targetDate }: { targetDate: string }) {
+function CountdownTimer({ targetDate, openingLabel, daysLabel }: { targetDate: string; openingLabel: string; daysLabel: (days: number) => string }) {
   const [text, setText] = useState('');
   useEffect(() => {
     const update = () => {
       const days = Math.floor((new Date(targetDate).getTime() - Date.now()) / 86400000);
-      if (days <= 0) { setText('Đang mở đăng ký'); return; }
-      setText(`Còn ${days} ngày`);
+      if (days <= 0) { setText(openingLabel); return; }
+      setText(daysLabel(days));
     };
     update();
     const timer = setInterval(update, 60000);
@@ -35,6 +36,7 @@ function CountdownTimer({ targetDate }: { targetDate: string }) {
 }
 
 export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[280px] md:h-[420px] lg:h-[460px]' }: Props) {
+  const translate = useTranslations('Home');
   const [currentIndex, setCurrentIndex] = useState(0);
   const [slideWidth, setSlideWidth] = useState(95);
   const [dragOffset, setDragOffset] = useState(0);
@@ -172,13 +174,13 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[28
         {/* Content */}
         <div className="relative z-10 max-w-[520px] flex flex-col items-center">
           <span className="inline-block text-[12px] font-bold tracking-[0.14em] uppercase text-[#1d5fe0] bg-white/70 border border-[#1d5fe0]/20 px-3.5 py-1.5 rounded-full mb-5 shadow-sm">
-            Cầu lông
+            {translate('badminton')}
           </span>
           <h1 className="text-2xl md:text-3xl font-extrabold text-[#0f1b33] mb-4 tracking-tight leading-snug">
-            Chưa Có Giải Đấu Nào Sắp Diễn Ra
+            {translate('noUpcomingTournaments')}
           </h1>
           <p className="text-sm md:text-base leading-relaxed text-[#5b6b85] font-normal">
-            Hãy theo dõi trang để cập nhật thông tin về các giải đấu tennis, pickleball và cầu lông mới nhất sắp sửa diễn ra.
+            {translate('noUpcomingDescription')}
           </p>
         </div>
       </div>
@@ -322,7 +324,7 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[28
                       </span>
                     )}
                     {tournament.status === 'UPCOMING' && tournament.registrationStartDate && (
-                      <CountdownTimer targetDate={tournament.registrationStartDate} />
+                      <CountdownTimer targetDate={tournament.registrationStartDate} openingLabel={translate('registrationOpen')} daysLabel={(days) => translate('daysRemaining', { days })} />
                     )}
                     {tournament.locationAddress && (
                       <span className="flex items-center gap-1 line-clamp-1">

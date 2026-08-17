@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { useParams, useRouter } from 'next/navigation';
 import { seriesApi } from '@/features/series/api';
 import { TournamentSeries, SeriesLeg, SeriesStatus } from '@/types/series';
@@ -13,6 +14,7 @@ import { cn } from '@/utils/cn';
 import Link from 'next/link';
 
 export default function SeriesDetailPage() {
+  const translate = useTranslations('SeriesDetail');
   const params = useParams();
   const slug = params?.slug as string;
 
@@ -38,7 +40,7 @@ export default function SeriesDetailPage() {
         }
       } catch (err: unknown) {
         if (active) {
-          setError(err instanceof Error ? err.message : 'Không thể tải chi tiết chuỗi giải đấu.');
+          setError(err instanceof Error ? err.message : translate('loadError'));
         }
       } finally {
         if (active) {
@@ -58,7 +60,7 @@ export default function SeriesDetailPage() {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center py-20 px-4">
         <Loader2 className="w-10 h-10 text-blue-600 animate-spin mb-4" />
-        <p className="text-sm text-slate-500 font-medium">Đang tải thông tin chuỗi giải...</p>
+        <p className="text-sm text-slate-500 font-medium">{translate('loading')}</p>
       </div>
     );
   }
@@ -68,15 +70,15 @@ export default function SeriesDetailPage() {
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center py-20 px-4">
         <div className="text-center max-w-md bg-white p-8 rounded-lg border border-slate-200 shadow-sm flex flex-col items-center">
           <Trophy className="w-16 h-16 text-slate-300 mb-4" />
-          <h1 className="text-xl font-bold text-slate-805 mb-2">Chuỗi giải đấu không tồn tại</h1>
+          <h1 className="text-xl font-bold text-slate-805 mb-2">{translate('notFoundTitle')}</h1>
           <p className="text-sm text-slate-500 mb-6">
-            Rất tiếc, chuỗi giải đấu mà bạn đang tìm kiếm không tồn tại hoặc đã bị gỡ khỏi hệ thống.
+            {translate('notFoundDescription')}
           </p>
           <Link
             href="/series"
             className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-lg text-sm transition-all shadow-sm"
           >
-            <ArrowLeft className="w-4 h-4" /> Quay lại danh sách
+            <ArrowLeft className="w-4 h-4" /> {translate('backToList')}
           </Link>
         </div>
       </div>
@@ -89,10 +91,10 @@ export default function SeriesDetailPage() {
   const completionPercentage = totalEvents.length > 0 ? Math.round((completedEvents / totalEvents.length) * 100) : 0;
 
   const statusConfigs: Record<SeriesStatus, { text: string; classes: string }> = {
-    DRAFT: { text: '📝 BẢN NHÁP', classes: 'bg-slate-500/10 text-slate-400 border border-slate-500/20' },
-    ACTIVE: { text: '🟢 ĐANG DIỄN RA', classes: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' },
-    COMPLETED: { text: '✅ ĐÃ KẾT THÚC', classes: 'bg-slate-500/10 text-slate-400 border border-slate-500/20' },
-    CANCELLED: { text: '❌ ĐÃ HỦY', classes: 'bg-rose-500/10 text-rose-400 border border-rose-500/20' }
+    DRAFT: { text: translate('statusDraft'), classes: 'bg-slate-500/10 text-slate-400 border border-slate-500/20' },
+    ACTIVE: { text: translate('statusActive'), classes: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' },
+    COMPLETED: { text: translate('statusCompleted'), classes: 'bg-slate-500/10 text-slate-400 border border-slate-500/20' },
+    CANCELLED: { text: translate('statusCancelled'), classes: 'bg-rose-500/10 text-rose-400 border border-rose-500/20' }
   };
   const status = statusConfigs[series.status];
 
@@ -109,7 +111,7 @@ export default function SeriesDetailPage() {
           href="/series"
           className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900 transition-colors"
         >
-          <ArrowLeft className="w-3.5 h-3.5" /> Quay lại danh sách chuỗi giải
+          <ArrowLeft className="w-3.5 h-3.5" /> {translate('backToList')} chuỗi giải
         </Link>
       </div>
 
@@ -178,10 +180,10 @@ export default function SeriesDetailPage() {
       <div className="max-w-7xl mx-auto px-4 md:px-8 mb-6">
         <div className="flex items-center gap-1 border-b border-slate-200 overflow-x-auto scrollbar-none pb-0.5">
           {[
-            { id: 'overview', label: 'Tổng Quan', icon: FileText },
-            { id: 'schedule', label: 'Chặng Đấu & Lịch Trình', icon: Calendar },
-            { id: 'standings', label: 'Bảng Xếp Hạng PSR', icon: Trophy },
-            { id: 'rules', label: 'Điều Lệ & Quy Tắc', icon: Layers }
+            { id: 'overview', label: translate('overview'), icon: FileText },
+            { id: 'schedule', label: translate('schedule'), icon: Calendar },
+            { id: 'standings', label: translate('standings'), icon: Trophy },
+            { id: 'rules', label: translate('rules'), icon: Layers }
           ].map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;

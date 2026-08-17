@@ -196,7 +196,7 @@ export default function LeaderboardPage() {
 
                 {/* Match Type Selector */}
                 <div className="flex items-center gap-2 w-full md:w-auto">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">Thể loại:</label>
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">{t('typeLabel')}</label>
                     <div className="relative flex-grow md:flex-grow-0 md:min-w-[150px]">
                         <select
                             value={selectedMatchType}
@@ -269,10 +269,10 @@ export default function LeaderboardPage() {
                                 
                                 <div className="relative z-10 text-center mb-8">
                                     <span className="text-[10px] uppercase font-bold tracking-[0.25em] text-blue-600 bg-blue-50/80 px-3 py-1.5 rounded-full border border-blue-100">
-                                        ✨ SÂN KHẤU VINH DANH ✨
+                                        ✨ {t('hallOfFame')} ✨
                                     </span>
                                     <h2 className="text-xl md:text-2xl font-bold mt-3 text-slate-900 tracking-tight">
-                                        TOP 10 VẬN ĐỘNG VIÊN XUẤT SẮC
+                                        {t('topPlayers')}
                                     </h2>
                                 </div>
 

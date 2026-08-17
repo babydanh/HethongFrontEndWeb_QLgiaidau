@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { getFacebookShareUrl, getZaloShareUrl, getMessengerShareUrl } from '@/utils/share.util';
 import toast from 'react-hot-toast';
 
@@ -14,6 +15,7 @@ interface ShareModalProps {
 
 export default function ShareModal({ isOpen, onClose, shareUrl, title, fbAppId }: ShareModalProps) {
   const [copied, setCopied] = useState(false);
+  const translate = useTranslations('Common');
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -41,7 +43,7 @@ export default function ShareModal({ isOpen, onClose, shareUrl, title, fbAppId }
     try {
       await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
-      toast.success('Đã sao chép liên kết chia sẻ!');
+      toast.success(translate('shareCopied'));
       setTimeout(() => setCopied(false), 2000); // Reset trạng thái sau 2s
     } catch (err) {
       console.error('Sao chép liên kết thất bại:', err);
@@ -63,7 +65,7 @@ export default function ShareModal({ isOpen, onClose, shareUrl, title, fbAppId }
   const handleInstagramShare = () => {
     try {
       navigator.clipboard.writeText(shareUrl);
-      toast.success('Đã chép link! Hãy dán vào Instagram.');
+      toast.success(translate('instagramCopied'));
       setTimeout(() => {
         window.open('https://instagram.com', '_blank');
       }, 800);
@@ -251,10 +253,10 @@ export default function ShareModal({ isOpen, onClose, shareUrl, title, fbAppId }
                   <svg className="h-3.5 w-3.5 fill-none stroke-current" viewBox="0 0 24 24" strokeWidth="2.5">
                     <polyline points="20 6 9 17 4 12" />
                   </svg>
-                  Đã chép
+                  {translate('copied')}
                 </>
               ) : (
-                'Sao chép'
+                translate('copy')
               )}
             </button>
           </div>

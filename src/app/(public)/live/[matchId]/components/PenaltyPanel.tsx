@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import type { MatchPenaltyRecord } from '@/types/match';
 import { cn } from '@/utils/cn';
 import { getPenaltySchema } from '@/features/matches/penalty-schema';
@@ -25,6 +26,7 @@ export function PenaltyPanel({
   isSubmitting,
   onAddPenalty,
 }: PenaltyPanelProps) {
+  const translate = useTranslations('LivePenalty');
   const schema = useMemo(() => getPenaltySchema(sportKind), [sportKind]);
   const [selectedPenaltyTeam, setSelectedPenaltyTeam] = useState<PenaltyTeamSelection>('neutral');
   const [selectedPenaltyKind, setSelectedPenaltyKind] = useState<string>(schema.groups[0]?.items[0]?.kind ?? '');
@@ -56,7 +58,7 @@ export function PenaltyPanel({
     <div className="rounded-lg border border-slate-200 bg-white p-3">
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Nhật ký hình phạt</p>
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">{translate('title')}</p>
           <p className="mt-2 text-sm font-bold text-slate-900">{schema.title}</p>
           <p className="mt-1 hidden text-xs font-medium text-slate-500 sm:block">{schema.description}</p>
         </div>
@@ -72,7 +74,7 @@ export function PenaltyPanel({
             {schema.cardStyle === 'yellow-red' ? 'Có thẻ riêng' : 'Không dùng thẻ riêng'}
           </div>
           <div className="rounded-full bg-slate-50 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-600">
-            Đã ghi: {penalties.length} mục
+            {translate('recorded', { count: penalties.length })}
           </div>
         </div>
       </div>
@@ -153,7 +155,7 @@ export function PenaltyPanel({
           type="text"
           value={penaltyNote}
           onChange={(event) => setPenaltyNote(event.target.value)}
-          placeholder="Ghi chú thêm nếu cần"
+          placeholder={translate("notePlaceholder")}
           className="h-10 rounded-lg border border-slate-200 px-3 text-sm text-slate-800"
         />
         <button
@@ -174,7 +176,7 @@ export function PenaltyPanel({
           }}
           className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-bold text-white hover:bg-slate-800 disabled:opacity-50"
         >
-          Áp dụng
+          {translate('apply')}
         </button>
       </div>
 
@@ -195,7 +197,7 @@ export function PenaltyPanel({
               <div className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
                 <div className="font-bold text-slate-900">
                   {item.label}
-                  {item.team === 1 ? ` • ${team1Name}` : item.team === 2 ? ` • ${team2Name}` : ' • Cả trận'}
+                  {item.team === 1 ? ` • ${team1Name}` : item.team === 2 ? ` • ${team2Name}` : translate('allMatch')}
                 </div>
                 <div className="text-[11px] text-slate-500">{new Date(item.createdAt).toLocaleString('vi-VN')}</div>
               </div>
@@ -205,7 +207,7 @@ export function PenaltyPanel({
         </div>
       ) : (
         <div className="mt-3 rounded-lg border border-dashed border-slate-200 bg-slate-50 px-3 py-3 text-xs font-semibold text-slate-500">
-          Chưa có hình phạt nào được ghi cho trận này.
+          {translate('empty')}
         </div>
       )}
     </div>

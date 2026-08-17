@@ -32,15 +32,15 @@ export default function TournamentsListPage() {
     const mt = matchType || '';
     const gr = genderRestriction || '';
     if (mt === 'SINGLES') {
-      return gr === 'FEMALE' ? 'Đơn Nữ' : 'Đơn Nam';
+      return gr === 'FEMALE' ? translate('singleFemale') : translate('singleMale');
     }
     if (mt === 'DOUBLES') {
-      return gr === 'FEMALE' ? 'Đôi Nữ' : 'Đôi Nam';
+      return gr === 'FEMALE' ? translate('doubleFemale') : translate('doubleMale');
     }
     if (mt === 'MIXED_DOUBLES' || mt === 'MIXED' || gr === 'MIXED') {
-      return 'Đôi Nam Nữ';
+      return translate('mixedDoubles');
     }
-    return mt === 'DOUBLES' ? 'Đôi' : mt === 'SINGLES' ? 'Đơn' : 'Đôi Nam Nữ';
+    return mt === 'DOUBLES' ? translate('doubles') : mt === 'SINGLES' ? translate('singles') : translate('mixedDoubles');
   };
 
   const getParsedDates = (startStr?: string, endStr?: string) => {

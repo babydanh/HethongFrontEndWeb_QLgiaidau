@@ -375,10 +375,10 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                         <div className="flex items-center gap-2 text-xs font-semibold text-slate-400">
                           <span>{match.group?.stage?.name || translate('tournament')}</span>
                           <span>•</span>
-                          <span>Vòng {match.roundNumber}</span>
+                          <span>{translate('round')} {match.roundNumber}</span>
                         </div>
                         <div className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                          <span className="text-slate-400">Đối thủ:</span>
+                          <span className="text-slate-400">{translate('opponent')}:</span>
                           <span className="text-blue-600 font-bold">{opponentName}</span>
                         </div>
                       </div>
@@ -423,7 +423,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
             ) : (
               <div className="text-center py-16 bg-white rounded-lg border border-slate-200 border-dashed">
                 <Activity className="w-16 h-16 text-slate-350 mx-auto mb-4" />
-                <h3 className="text-lg font-bold text-slate-700 mb-2">Chưa thi đấu trận nào</h3>
+                <h3 className="text-lg font-bold text-slate-700 mb-2">{translate('noMatchesTitle')}</h3>
                 <p className="text-slate-500 max-w-sm mx-auto text-sm font-medium">
                   Thành viên này chưa ghi nhận trận đấu chính thức nào gần đây trên hệ thống.
                 </p>
@@ -461,7 +461,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                               </span>
                               <h4 className="mt-2 text-base font-bold text-slate-900 line-clamp-1">{item.tournamentName}</h4>
                               <p className="text-xs text-slate-500 mt-1">
-                                {item.tournamentDate ? formatDate(item.tournamentDate, 'dd/MM/yyyy') : 'Chưa có ngày kết thúc'}
+                                {item.tournamentDate ? formatDate(item.tournamentDate, 'dd/MM/yyyy') : translate('noEndDate')}
                               </p>
                             </div>
                             <div className={`shrink-0 w-12 h-12 rounded-lg border flex items-center justify-center font-bold bg-white ${badgeClass}`}>
@@ -534,7 +534,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
 
               {eloHistory.length > 0 && (
                 <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
-                  <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-6">Biến động ELO theo thời gian</h3>
+                  <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-6">{translate('eloOverTime')}</h3>
                   <div className="h-80 w-full">
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart
@@ -542,7 +542,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                           name: `Trận ${index + 1}`,
                           'ELO': item.newElo,
                           date: formatDate(item.createdAt, 'dd/MM/yyyy'),
-                          reason: item.reason || (item.changedPoints > 0 ? 'Thắng' : 'Thua'),
+                          reason: item.reason || translate(item.changedPoints > 0 ? 'win' : 'loss'),
                           tournament: item.match?.tournamentName || translate('tournament')
                         }))}
                         margin={{ top: 10, right: 10, left: -20, bottom: 0 }}

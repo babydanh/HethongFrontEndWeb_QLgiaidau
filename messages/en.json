@@ -398,6 +398,12 @@
     "versionLabel": "Version:"
   },
   "Home": {
+    "allSports": "All sports",
+    "badminton": "Badminton",
+    "tableTennis": "Table Tennis",
+    "football": "Football",
+    "pickleball": "Pickleball",
+    "tennis": "Tennis",
     "featuredTournaments": "Featured Tournaments",
     "viewAll": "View all",
     "liveMatches": "Live Matches",
@@ -426,5 +432,14 @@
     "contactInfo": "Contact information",
     "closeRegistrationAfter": "Registration closes in",
     "endAfter": "Ends in"
+  },
+  "LiveMatch": {
+    "unknown": "Unknown",
+    "tournamentFallback": "Sporto Tournament",
+    "sportFallback": "Sports",
+    "matchTitle": "Live: {team1} vs {team2} | {tournamentName}",
+    "matchDescription": "View the live score and match updates between {team1} and {team2} in {sportName} on Sporto.",
+    "defaultTitle": "Live Match | Sporto",
+    "defaultDescription": "Live scores and scoreboards for sports matches on Sporto."
   }
 }

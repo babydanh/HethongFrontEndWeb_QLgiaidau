@@ -77,6 +77,7 @@ const TOURNAMENT_DETAIL_TABS: TournamentDetailTab[] = [
 ];
 
 export default function TournamentDetailClient({ tournamentId, initialTournament }: Props) {
+  const translate = useTranslations('TournamentDetail');
   const [tournament, setTournament] = useState<Tournament | null>(initialTournament);
   const [isInitialLoading, setIsInitialLoading] = useState(!initialTournament);
   const [initialLoadError, setInitialLoadError] = useState<string | null>(null);

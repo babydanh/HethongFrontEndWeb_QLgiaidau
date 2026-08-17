@@ -398,6 +398,12 @@
     "versionLabel": "Phiên bản:"
   },
   "Home": {
+    "allSports": "Tất cả môn",
+    "badminton": "Cầu lông",
+    "tableTennis": "Bóng bàn",
+    "football": "Bóng đá",
+    "pickleball": "Pickleball",
+    "tennis": "Quần vợt",
     "featuredTournaments": "Giải đấu nổi bật",
     "viewAll": "Xem tất cả",
     "liveMatches": "Trận đấu trực tiếp",
@@ -426,5 +432,14 @@
     "contactInfo": "Thông tin liên hệ",
     "closeRegistrationAfter": "Đóng đăng ký sau",
     "endAfter": "Kết thúc sau"
+  },
+  "LiveMatch": {
+    "unknown": "Chưa xác định",
+    "tournamentFallback": "Giải đấu Sporto",
+    "sportFallback": "Thể thao",
+    "matchTitle": "Trực tiếp: {team1} vs {team2} | {tournamentName}",
+    "matchDescription": "Xem tỷ số trực tuyến và diễn biến trận đấu giữa {team1} vs {team2}, bộ môn {sportName} trên Sporto.",
+    "defaultTitle": "Trực tiếp trận đấu | Sporto",
+    "defaultDescription": "Bảng điểm và tỷ số trực tiếp các trận đấu thể thao trên Sporto."
   }
 }

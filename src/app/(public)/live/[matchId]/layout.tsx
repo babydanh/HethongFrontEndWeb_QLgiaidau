@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -6,6 +7,7 @@ interface LayoutProps {
 }
 
 export async function generateMetadata({ params }: LayoutProps): Promise<Metadata> {
+  const translate = await getTranslations('LiveMatch');
   const resolvedParams = await params;
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
   const canonical = `/live/${resolvedParams.matchId}`;
@@ -19,12 +21,12 @@ export async function generateMetadata({ params }: LayoutProps): Promise<Metadat
       const res = await response.json();
       const match = res.data;
       if (match) {
-        const team1 = match.participant1?.teamName || 'Chưa xác định';
-        const team2 = match.participant2?.teamName || 'Chưa xác định';
-        const tournamentName = match.tournament?.name || 'Giải đấu Sporto';
-        const sportName = match.tournament?.category?.name || 'Thể thao';
-        const title = `Trực tiếp: ${team1} vs ${team2} | ${tournamentName}`;
-        const description = `Xem tỷ số trực tuyến và diễn biến trận đấu giữa ${team1} vs ${team2}, bộ môn ${sportName} trên Sporto.`;
+        const team1 = match.participant1?.teamName || translate('unknown');
+        const team2 = match.participant2?.teamName || translate('unknown');
+        const tournamentName = match.tournament?.name || translate('tournamentFallback');
+        const sportName = match.tournament?.category?.name || translate('sportFallback');
+        const title = translate('matchTitle', { team1, team2, tournamentName });
+        const description = translate('matchDescription', { team1, team2, sportName });
         const imageUrl = match.tournament?.bannerUrl || 'https://sporto.asia/sporto_v1.svg';
 
         return {
@@ -52,8 +54,8 @@ export async function generateMetadata({ params }: LayoutProps): Promise<Metadat
   }
 
   return {
-    title: 'Trực tiếp trận đấu | Sporto',
-    description: 'Bảng điểm và tỷ số trực tiếp các trận đấu thể thao trên Sporto.',
+    title: translate('defaultTitle'),
+    description: translate('defaultDescription'),
     alternates: { canonical },
   };
 }

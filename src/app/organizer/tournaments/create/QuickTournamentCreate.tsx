@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -56,6 +56,19 @@ const formatDateTimeInput = (d: Date) => {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 };
 
+const formatDateTimeDisplay = (val?: string) => {
+  if (!val) return '';
+  const d = new Date(val);
+  if (isNaN(d.getTime())) return val;
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const day = pad(d.getDate());
+  const month = pad(d.getMonth() + 1);
+  const year = d.getFullYear();
+  const hours = pad(d.getHours());
+  const minutes = pad(d.getMinutes());
+  return `${day}/${month}/${year} ${hours}:${minutes}`;
+};
+
 const quickDefaults = () => {
   const regStart = new Date();
   regStart.setSeconds(0, 0);
@@ -73,6 +86,82 @@ const quickDefaults = () => {
     endDate: '',
   };
 };
+
+interface CustomDateTimePickerProps {
+  label: React.ReactNode;
+  value?: string;
+  onChange: (val: string) => void;
+  error?: string;
+  isPrimary?: boolean;
+}
+
+function CustomDateTimePicker({
+  label,
+  value,
+  onChange,
+  error,
+  isPrimary = false,
+}: CustomDateTimePickerProps) {
+  const hiddenRef = useRef<HTMLInputElement>(null);
+
+  const triggerPicker = () => {
+    if (hiddenRef.current) {
+      try {
+        hiddenRef.current.showPicker();
+      } catch {
+        hiddenRef.current.focus();
+      }
+    }
+  };
+
+  const displayText = formatDateTimeDisplay(value);
+
+  return (
+    <fieldset
+      onClick={triggerPicker}
+      className={`relative cursor-pointer rounded-xl border p-3.5 shadow-2xs transition ${
+        isPrimary
+          ? 'border-blue-200 bg-blue-50/40 hover:border-blue-300'
+          : 'border-slate-200 bg-white hover:border-slate-300'
+      }`}
+    >
+      <legend className={`px-1.5 text-xs font-semibold ${isPrimary ? 'text-blue-900' : 'text-slate-700'}`}>
+        {label}
+      </legend>
+      <div className="flex w-full items-center justify-between gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm transition focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500">
+        <span className={`font-medium ${displayText ? 'text-slate-800' : 'font-normal text-slate-400'}`}>
+          {displayText || 'dd/mm/yyyy --:--'}
+        </span>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="h-4 w-4 shrink-0 text-slate-400"
+        >
+          <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
+          <line x1="16" x2="16" y1="2" y2="6" />
+          <line x1="8" x2="8" y1="2" y2="6" />
+          <line x1="3" x2="21" y1="10" y2="10" />
+        </svg>
+        <input
+          ref={hiddenRef}
+          type="datetime-local"
+          value={value || ''}
+          onChange={(e) => onChange(e.target.value)}
+          className="absolute inset-0 h-full w-full cursor-pointer opacity-0 pointer-events-none"
+          tabIndex={-1}
+        />
+      </div>
+      {error && <span className="mt-1 block text-xs text-red-600">{error}</span>}
+    </fieldset>
+  );
+}
 
 export default function QuickTournamentCreate() {
   const router = useRouter();
@@ -100,6 +189,11 @@ export default function QuickTournamentCreate() {
   const isRanked = useWatch({ control, name: 'isRanked' });
   const province = useWatch({ control, name: 'province' });
   const district = useWatch({ control, name: 'district' });
+  const registrationStart = useWatch({ control, name: 'registrationStart' });
+  const registrationEnd = useWatch({ control, name: 'registrationEnd' });
+  const startDate = useWatch({ control, name: 'startDate' });
+  const endDate = useWatch({ control, name: 'endDate' });
+
   const [provinces, setProvinces] = useState<Region[]>([]);
   const [districts, setDistricts] = useState<Region[]>([]);
   const [wards, setWards] = useState<Region[]>([]);
@@ -346,49 +440,36 @@ export default function QuickTournamentCreate() {
             </div>
           </div>
 
-          {/* Thời gian giải đấu (Tối giản, tự động giãn cách mở ĐK -> đóng ĐK -> bắt đầu giải; kết thúc để trống) */}
+          {/* Thời gian giải đấu (Chuẩn dd/mm/yyyy HH:mm, tự động nối tiếp mở ĐK -> đóng ĐK, kết thúc để trống) */}
           <div className="grid gap-4 md:grid-cols-2">
-            <fieldset className="rounded-xl border border-slate-200 bg-white p-3.5 shadow-2xs hover:border-slate-300 transition">
-              <legend className="px-1.5 text-xs font-semibold text-slate-700">Mở đăng ký <span className="text-red-500">*</span></legend>
-              <input
-                type="datetime-local"
-                {...register('registrationStart')}
-                onChange={(e) => handleRegistrationStartChange(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-800 font-medium outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-              />
-              {errors.registrationStart && <span className="mt-1 block text-xs text-red-600">{errors.registrationStart.message}</span>}
-            </fieldset>
+            <CustomDateTimePicker
+              label={<>Mở đăng ký <span className="text-red-500">*</span></>}
+              value={registrationStart}
+              onChange={handleRegistrationStartChange}
+              error={errors.registrationStart?.message}
+            />
 
-            <fieldset className="rounded-xl border border-slate-200 bg-white p-3.5 shadow-2xs hover:border-slate-300 transition">
-              <legend className="px-1.5 text-xs font-semibold text-slate-700">Đóng đăng ký <span className="text-red-500">*</span></legend>
-              <input
-                type="datetime-local"
-                {...register('registrationEnd')}
-                onChange={(e) => handleRegistrationEndChange(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-800 font-medium outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-              />
-              {errors.registrationEnd && <span className="mt-1 block text-xs text-red-600">{errors.registrationEnd.message}</span>}
-            </fieldset>
+            <CustomDateTimePicker
+              label={<>Đóng đăng ký <span className="text-red-500">*</span></>}
+              value={registrationEnd}
+              onChange={handleRegistrationEndChange}
+              error={errors.registrationEnd?.message}
+            />
 
-            <fieldset className="rounded-xl border border-blue-200 bg-blue-50/40 p-3.5 shadow-2xs hover:border-blue-300 transition">
-              <legend className="px-1.5 text-xs font-semibold text-blue-900">Bắt đầu giải <span className="text-red-500">*</span></legend>
-              <input
-                type="datetime-local"
-                {...register('startDate')}
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 font-medium outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-              />
-              {errors.startDate && <span className="mt-1 block text-xs text-red-600">{errors.startDate.message}</span>}
-            </fieldset>
+            <CustomDateTimePicker
+              label={<>Bắt đầu giải <span className="text-red-500">*</span></>}
+              value={startDate}
+              onChange={(val) => setValue('startDate', val, { shouldValidate: true })}
+              error={errors.startDate?.message}
+              isPrimary
+            />
 
-            <fieldset className="rounded-xl border border-slate-200 bg-white p-3.5 shadow-2xs hover:border-slate-300 transition">
-              <legend className="px-1.5 text-xs font-semibold text-slate-700">Kết thúc dự kiến</legend>
-              <input
-                type="datetime-local"
-                {...register('endDate')}
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 font-medium outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-              />
-              {errors.endDate && <span className="mt-1 block text-xs text-red-600">{errors.endDate.message}</span>}
-            </fieldset>
+            <CustomDateTimePicker
+              label="Kết thúc dự kiến"
+              value={endDate}
+              onChange={(val) => setValue('endDate', val, { shouldValidate: true })}
+              error={errors.endDate?.message}
+            />
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">

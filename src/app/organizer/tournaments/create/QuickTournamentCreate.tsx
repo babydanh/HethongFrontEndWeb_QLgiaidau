@@ -422,7 +422,7 @@ export default function QuickTournamentCreate() {
           footballHalfDuration: values.footballHalfDuration,
           footballAllowDraw: values.footballAllowDraw,
         } : {}),
-        registrationMode: values.visibility === 'PUBLIC' || communityId ? 'OPEN' : 'INVITE_ONLY',
+        registrationMode: values.visibility === 'PUBLIC' ? 'OPEN' : 'INVITE_ONLY',
         isRanked: values.isRanked,
       });
 
@@ -444,6 +444,9 @@ export default function QuickTournamentCreate() {
             <p className="mt-2 text-sm leading-relaxed text-slate-600">
               Tạo nhanh để bắt đầu ngay, bạn có thể thiết lập đầy đủ chi tiết và luật thi đấu bên trong trang quản lý sau. Giải phong trào không thu phí, không tính điểm ELO quốc gia.
             </p>
+            <div className="mt-4 rounded-xl border-2 border-amber-300 bg-amber-50 px-4 py-3 text-sm font-semibold leading-relaxed text-amber-950 shadow-sm">
+              <strong className="font-extrabold">Lưu ý quan trọng:</strong> Sau khi tạo xong, bạn vẫn có thể vào trang quản lý để thay đổi thông tin giải, lịch thi đấu, thể thức, luật tính điểm, danh sách nội dung và các cài đặt khác trước khi giải bắt đầu.
+            </div>
           </div>
           <button
             type="button"

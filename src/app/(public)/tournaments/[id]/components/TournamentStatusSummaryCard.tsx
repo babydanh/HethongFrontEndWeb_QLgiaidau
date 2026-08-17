@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { CalendarDays, Trophy } from 'lucide-react';
 import { Match, matchesApi } from '@/features/matches/api';
@@ -107,6 +108,7 @@ export default function TournamentStatusSummaryCard({
   tournamentId,
   divisionId,
 }: TournamentStatusSummaryCardProps) {
+  const translate = useTranslations('TournamentDetail');
   const [matches, setMatches] = useState<Match[]>([]);
   const [result, setResult] = useState<TournamentResult | null>(null);
 
@@ -206,7 +208,7 @@ export default function TournamentStatusSummaryCard({
               </div>
             </div>
           )) : (
-            <p className="rounded-md bg-slate-50 px-3 py-3 text-sm leading-5 text-slate-500">Kết quả đang được ban tổ chức xác nhận.</p>
+            <p className="rounded-md bg-slate-50 px-3 py-3 text-sm leading-5 text-slate-500">{translate('resultsPending')}</p>
           )}
         </div>
       ) : visibleMatches.length > 0 ? (
@@ -232,7 +234,7 @@ export default function TournamentStatusSummaryCard({
                     {inProgress ? '🔴 Trực tiếp' : 'Sắp đấu'}
                   </span>
                   <div className="text-slate-600 font-bold truncate max-w-[190px] text-right">
-                    <span>Trận #{match.matchOrder ?? 1}</span>
+                    <span>{translate('matchNumber', { number: match.matchOrder ?? 1 })}</span>
                     {match.stage?.type ? (
                       <span className="text-slate-400 font-semibold"> • {match.stage.type === 'ROUND_ROBIN' ? 'Vòng bảng' : 'Vòng loại'}</span>
                     ) : match.roundNumber ? (
@@ -281,9 +283,9 @@ export default function TournamentStatusSummaryCard({
         <div className="px-4 py-4 text-sm leading-5 text-slate-500">
           <div className="flex items-center gap-2 font-semibold text-slate-600">
             <CalendarDays className="h-4 w-4 text-slate-400" />
-            {inProgress ? 'Chưa có trận đang phát trực tiếp.' : 'Chưa có cặp đấu sắp diễn ra.'}
+            {inProgress ? translate('noLiveMatch') : translate('noUpcomingMatch')}
           </div>
-          {!inProgress && tournament.startDate ? <p className="mt-1 text-xs text-slate-400">Bắt đầu {formatDateTime(tournament.startDate)}</p> : null}
+          {!inProgress && tournament.startDate ? <p className="mt-1 text-xs text-slate-400">{translate('startsAt', { date: formatDateTime(tournament.startDate) })}</p> : null}
         </div>
       )}
     </section>

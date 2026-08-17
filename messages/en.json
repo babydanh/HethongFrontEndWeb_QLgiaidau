@@ -398,12 +398,6 @@
     "versionLabel": "Version:"
   },
   "Home": {
-    "allSports": "All sports",
-    "badminton": "Badminton",
-    "tableTennis": "Table Tennis",
-    "football": "Football",
-    "pickleball": "Pickleball",
-    "tennis": "Tennis",
     "featuredTournaments": "Featured Tournaments",
     "viewAll": "View all",
     "liveMatches": "Live Matches",
@@ -431,8 +425,14 @@
     "overview": "Overview",
     "contactInfo": "Contact information",
     "closeRegistrationAfter": "Registration closes in",
-    "endAfter": "Ends in"
-  },
+    "endAfter": "Ends in",
+    "resultsPending": "Results are being confirmed by the organizer.",
+    "matchNumber": "Match #{number}",
+    "noLiveMatch": "No live match is currently available.",
+    "noUpcomingMatch": "No upcoming matchup is available.",
+    "startsAt": "Starts {date}"
+  }
+,
   "LiveMatch": {
     "unknown": "Unknown",
     "tournamentFallback": "Sporto Tournament",
@@ -440,6 +440,13 @@
     "matchTitle": "Live: {team1} vs {team2} | {tournamentName}",
     "matchDescription": "View the live score and match updates between {team1} and {team2} in {sportName} on Sporto.",
     "defaultTitle": "Live Match | Sporto",
-    "defaultDescription": "Live scores and scoreboards for sports matches on Sporto."
+    "defaultDescription": "Live scores and scoreboards for sports matches on Sporto.",
+    "tennisTiebreakHint": "Tiebreak is active. Each rally adds 1 tiebreak point.",
+    "tennisPointHint": "Tap the team that wins the rally to automatically progress 0 - 15 - 30 - 40 - A and close the game when eligible.",
+    "tennisControl": "Tennis controls",
+    "teamLabel": "Team {number}",
+    "teamWinsPoint": "Team {number} wins the rally",
+    "undoPoint": "Undo one point",
+    "undoPointHint": "Use this when a rally was entered incorrectly or you need to undo the last decision."
   }
 }

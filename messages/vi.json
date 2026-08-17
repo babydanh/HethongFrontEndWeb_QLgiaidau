@@ -398,12 +398,6 @@
     "versionLabel": "Phiên bản:"
   },
   "Home": {
-    "allSports": "Tất cả môn",
-    "badminton": "Cầu lông",
-    "tableTennis": "Bóng bàn",
-    "football": "Bóng đá",
-    "pickleball": "Pickleball",
-    "tennis": "Quần vợt",
     "featuredTournaments": "Giải đấu nổi bật",
     "viewAll": "Xem tất cả",
     "liveMatches": "Trận đấu trực tiếp",
@@ -431,8 +425,14 @@
     "overview": "Tổng quan",
     "contactInfo": "Thông tin liên hệ",
     "closeRegistrationAfter": "Đóng đăng ký sau",
-    "endAfter": "Kết thúc sau"
-  },
+    "endAfter": "Kết thúc sau",
+    "resultsPending": "Kết quả đang được ban tổ chức xác nhận.",
+    "matchNumber": "Trận #{number}",
+    "noLiveMatch": "Chưa có trận đang phát trực tiếp.",
+    "noUpcomingMatch": "Chưa có cặp đấu sắp diễn ra.",
+    "startsAt": "Bắt đầu {date}"
+  }
+,
   "LiveMatch": {
     "unknown": "Chưa xác định",
     "tournamentFallback": "Giải đấu Sporto",
@@ -440,6 +440,13 @@
     "matchTitle": "Trực tiếp: {team1} vs {team2} | {tournamentName}",
     "matchDescription": "Xem tỷ số trực tuyến và diễn biến trận đấu giữa {team1} vs {team2}, bộ môn {sportName} trên Sporto.",
     "defaultTitle": "Trực tiếp trận đấu | Sporto",
-    "defaultDescription": "Bảng điểm và tỷ số trực tiếp các trận đấu thể thao trên Sporto."
+    "defaultDescription": "Bảng điểm và tỷ số trực tiếp các trận đấu thể thao trên Sporto.",
+    "tennisTiebreakHint": "Loạt phụ đang hoạt động. Mỗi pha bóng sẽ cộng 1 điểm tiebreak.",
+    "tennisPointHint": "Bấm đội thắng pha bóng để hệ thống tự chạy 0 - 15 - 30 - 40 - A và tự chốt game khi đủ điều kiện.",
+    "tennisControl": "Điều khiển tennis",
+    "teamLabel": "Đội {number}",
+    "teamWinsPoint": "Đội {number} thắng pha bóng",
+    "undoPoint": "Lùi 1 mức điểm",
+    "undoPointHint": "Dùng khi nhập nhầm pha bóng hoặc cần tua lùi quyết định vừa chốt."
   }
 }

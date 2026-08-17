@@ -310,13 +310,32 @@ export default function HomePage() {
   const { isAuthenticated, user } = useAuthStore();
   const translate = useTranslations('Home');
   const getCategoryLabel = (category: Category) => {
-    const slug = category.slug || category.id;
-    if (slug === 'badminton') return translate('badminton');
-    if (slug === 'table_tennis') return translate('tableTennis');
-    if (slug === 'football') return translate('football');
-    if (slug === 'pickleball') return translate('pickleball');
-    if (slug === 'tennis') return translate('tennis');
-    return category.name;
+    const slug = (category.slug || category.id || '').toLowerCase();
+    try {
+      if (slug === 'badminton' || slug.includes('badminton') || slug.includes('cầu lông')) {
+        const val = translate('badminton');
+        if (val && !val.startsWith('Home.')) return val;
+      }
+      if (slug === 'table_tennis' || slug === 'tabletennis' || slug.includes('bóng bàn')) {
+        const val = translate('tableTennis');
+        if (val && !val.startsWith('Home.')) return val;
+      }
+      if (slug === 'football' || slug.includes('football') || slug.includes('bóng đá')) {
+        const val = translate('football');
+        if (val && !val.startsWith('Home.')) return val;
+      }
+      if (slug === 'pickleball' || slug.includes('pickleball')) {
+        const val = translate('pickleball');
+        if (val && !val.startsWith('Home.')) return val;
+      }
+      if (slug === 'tennis' || slug.includes('tennis') || slug.includes('quần vợt')) {
+        const val = translate('tennis');
+        if (val && !val.startsWith('Home.')) return val;
+      }
+    } catch {
+      // ignore
+    }
+    return category.name || slug;
   };
   const [isClient, setIsClient] = useState(false);
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
@@ -1047,7 +1066,15 @@ export default function HomePage() {
               )}
               <span className="relative z-10 flex items-center gap-1.5">
                 <Trophy className="w-3.5 h-3.5" />
-                {translate('allSports')}
+                {(() => {
+                  try {
+                    const val = translate('allSports');
+                    if (val && !val.startsWith('Home.')) return val;
+                  } catch {
+                    // ignore
+                  }
+                  return 'Tất cả môn';
+                })()}
               </span>
             </button>
             {categories.filter(cat => cat.isActive !== false).map((cat) => {

@@ -115,6 +115,7 @@ export default function Step4ReviewSubmit() {
 
   const handleCreateTournament = async () => {
     if (submittingRef.current) return;
+    let createdTournamentId: string | null = null;
     try {
       submittingRef.current = true;
       setIsSubmitting(true);
@@ -176,6 +177,7 @@ export default function Step4ReviewSubmit() {
       if (!tournamentId) {
         throw new Error('Không thể tạo Giải đấu. Vui lòng thử lại.');
       }
+      createdTournamentId = tournamentId;
 
       // 2. Create divisions for each selected format under the tournament.
       // Same format may intentionally appear more than once. The division name
@@ -231,6 +233,13 @@ export default function Step4ReviewSubmit() {
       router.push(`/organizer/tournaments/${tournamentId}/manage`);
     } catch (error) {
       submittingRef.current = false;
+      if (createdTournamentId) {
+        try {
+          await tournamentsApi.deleteTournament(createdTournamentId);
+        } catch {
+          // Keep the original creation error visible; cleanup is best effort.
+        }
+      }
       toast.error(getErrorMessage(error));
     } finally {
       setIsSubmitting(false);

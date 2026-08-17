@@ -184,6 +184,8 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
       return;
     }
 
+    let createdParentId: string | null = null;
+    let createdTournamentId: string | null = null;
     try {
       setIsSubmitting(true);
 
@@ -197,6 +199,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
       if (!parentId) {
         throw new Error('Không thể tạo Giải đấu mẹ. Vui lòng thử lại.');
       }
+      createdParentId = parentId;
 
       // 2. Create the first division (tournament) under this parent
       const data = {
@@ -220,6 +223,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
       };
 
       const res = await tournamentsApi.createTournament(data);
+      createdTournamentId = res?.data?.id ?? null;
       toast.success('Tạo giải đấu nội bộ thành công!');
       setIsCreateModalOpen(false);
 
@@ -237,6 +241,20 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
         router.push(`/organizer/tournaments/${newId}/manage`);
       }
     } catch (err) {
+      if (createdTournamentId) {
+        try {
+          await tournamentsApi.deleteTournament(createdTournamentId);
+        } catch {
+          // Best-effort cleanup; preserve the original error for the user.
+        }
+      }
+      if (createdParentId) {
+        try {
+          await tournamentsApi.deleteParentTournament(createdParentId);
+        } catch {
+          // Best-effort cleanup; preserve the original error for the user.
+        }
+      }
       toast.error(getErrorMessage(err));
     } finally {
       setIsSubmitting(false);

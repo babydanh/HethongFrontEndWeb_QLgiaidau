@@ -49,6 +49,9 @@ export default function Step4Fees() {
       
       // Transform and Clean data to match backend CreateTournamentDto
       const { format, ...rest } = formData;
+      // selectedFormats is wizard-only state used to create divisions. It is
+      // not part of CreateTournamentDto and must never leak into POST /tournaments.
+      delete (rest as Record<string, unknown>).selectedFormats;
       
       const finalData: CreateTournamentPayload = {
         ...rest,

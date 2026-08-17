@@ -207,6 +207,7 @@ function renderHighlightedText(text: string, query: string) {
 export default function UnifiedChatWidget() {
   const pathname = usePathname();
   const { user, isAuthenticated } = useAuthStore();
+  const userId = user?.id;
   const [open, setOpen] = useState(false);
   const [selection, setSelection] = useState<Selection>({ kind: 'AI' });
   const [rooms, setRooms] = useState<InboxRoom[]>([]);
@@ -302,11 +303,11 @@ export default function UnifiedChatWidget() {
   const otherParticipant = useMemo(() => {
     if (!selectedRoom || selectedRoom.type === 'CLUB') return null;
     return (
-      selectedRoom.participants?.find((p) => p.id !== user?.id) ||
+      selectedRoom.participants?.find((p) => p.id !== userId) ||
       selectedRoom.participants?.[0] ||
       null
     );
-  }, [selectedRoom, user?.id]);
+  }, [selectedRoom, userId]);
 
   const isOtherBlocked = useMemo(() => {
     if (!otherParticipant) return false;
@@ -322,7 +323,7 @@ export default function UnifiedChatWidget() {
   const refreshRooms = useCallback(async () => {
     if (!isAuthenticated) return;
     try {
-      const fetched = dedupeRooms(unwrapRooms(await inboxApi.getRooms()), user?.id);
+      const fetched = dedupeRooms(unwrapRooms(await inboxApi.getRooms()), userId);
       setRooms((current) => {
         const currentSelection = selectionRef.current;
         const currentActiveRoom =
@@ -340,7 +341,7 @@ export default function UnifiedChatWidget() {
     } catch {
       // background refresh
     }
-  }, [isAuthenticated, user?.id]);
+  }, [isAuthenticated, userId]);
 
   const searchMatches = useMemo(() => {
     if (!searchQuery.trim()) return [];

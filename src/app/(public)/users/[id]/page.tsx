@@ -146,7 +146,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
           <div className="w-24 h-24 flex items-center justify-center mx-auto mb-4">
             <img src={BRAND.assets.logoIcon} alt={BRAND.name} className="w-full h-full object-contain" />
           </div>
-          <h2 className="text-xl font-bold text-slate-900 mb-2">{error || '{translate('notFoundTitle')}'}</h2>
+          <h2 className="text-xl font-bold text-slate-900 mb-2">{error || translate('notFoundTitle')}</h2>
           <p className="text-slate-500 text-sm mb-6 font-medium">{translate('notFoundDescription')}</p>
           <Link
             href="/tournaments"

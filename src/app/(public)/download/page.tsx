@@ -44,7 +44,6 @@ function AppleSvg({ className = "w-8 h-8" }: { className?: string }) {
 
 export default function DownloadPage() {
   const t = useTranslations("Download");
-  const commonT = useTranslations("Common");
   const [showVersionModal, setShowVersionModal] = useState(false);
 
   return (
@@ -174,19 +173,19 @@ export default function DownloadPage() {
               </div>
               <div className="space-y-3 text-xs text-slate-600 mb-6">
                 <div className="flex justify-between py-1.5 border-b border-slate-50">
-                  <span className="text-slate-400">{t("versionLabel")}<span>
+                  <span className="text-slate-400">{t("versionLabel")}</span>
                   <span className="font-bold text-slate-900">v1.0.2</span>
                 </div>
                 <div className="flex justify-between py-1.5 border-b border-slate-50">
-                  <span className="text-slate-400">{t("buildNumberLabel")}<span>
+                  <span className="text-slate-400">{t("buildNumberLabel")}</span>
                   <span className="font-bold text-slate-900">Build 3</span>
                 </div>
                 <div className="flex justify-between py-1.5 border-b border-slate-50">
-                  <span className="text-slate-400">{t("googlePlayStatus")}<span>
+                  <span className="text-slate-400">{t("googlePlayStatus")}</span>
                   <span className="font-bold text-emerald-600">{t("released")}</span>
                 </div>
                 <div className="flex justify-between py-1.5">
-                  <span className="text-slate-400">{t("appStoreStatus")}<span>
+                  <span className="text-slate-400">{t("appStoreStatus")}</span>
                   <span className="font-bold text-emerald-600">{t("released")}</span>
                 </div>
               </div>

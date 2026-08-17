@@ -24,9 +24,6 @@ export const regionsApi = {
   getProvinces: (search?: string): Promise<Region[]> => 
     api.get<Region[]>('/regions/provinces', { params: search ? { search } : {} }).then(unwrapList),
 
-  getDistricts: (provinceCode: string, search?: string): Promise<Region[]> => 
-    api.get<Region[]>('/regions/districts', { params: { provinceCode, ...(search ? { search } : {}) } }).then(unwrapList),
-
   getWards: (provinceCode: string, search?: string): Promise<Region[]> => 
     api.get<Region[]>('/regions/wards', { 
       params: { 

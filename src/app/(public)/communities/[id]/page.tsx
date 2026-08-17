@@ -71,25 +71,13 @@ export default function CommunityDetailPage() {
 
         if (community.provinceCode) {
           const provRes = await regionsApi.getProvinces().catch(() => null);
-          const provList: Region[] = Array.isArray(provRes) ? provRes : (provRes && typeof provRes === 'object' && 'data' in provRes && Array.isArray((provRes as { data: Region[] }).data) ? (provRes as { data: Region[] }).data : []);
+          const provList: Region[] = Array.isArray(provRes) ? provRes : [];
           const foundProv = provList.find((p) => p.code === community.provinceCode);
           if (foundProv) provinceName = foundProv.name;
 
-          if (community.districtCode) {
-            const distRes = await regionsApi.getDistricts(community.provinceCode).catch(() => null);
-            const distList: Region[] = Array.isArray(distRes) ? distRes : (distRes && typeof distRes === 'object' && 'data' in distRes && Array.isArray((distRes as { data: Region[] }).data) ? (distRes as { data: Region[] }).data : []);
-            const foundDist = distList.find((d) => d.code === community.districtCode);
-            if (foundDist) districtName = foundDist.name;
-
-            if (community.wardCode) {
-              const wardRes = await regionsApi.getWards(community.districtCode).catch(() => null);
-              const wardList: Region[] = Array.isArray(wardRes) ? wardRes : (wardRes && typeof wardRes === 'object' && 'data' in wardRes && Array.isArray((wardRes as { data: Region[] }).data) ? (wardRes as { data: Region[] }).data : []);
-              const foundWard = wardList.find((w) => w.code === community.wardCode);
-              if (foundWard) wardName = foundWard.name;
-            }
-          } else if (community.wardCode) {
+          if (community.wardCode) {
             const wardRes = await regionsApi.getWardsByProvince(community.provinceCode).catch(() => null);
-            const wardList: Region[] = Array.isArray(wardRes) ? wardRes : (wardRes && typeof wardRes === 'object' && 'data' in wardRes && Array.isArray((wardRes as { data: Region[] }).data) ? (wardRes as { data: Region[] }).data : []);
+            const wardList: Region[] = Array.isArray(wardRes) ? wardRes : [];
             const foundWard = wardList.find((w) => w.code === community.wardCode);
             if (foundWard) wardName = foundWard.name;
           }

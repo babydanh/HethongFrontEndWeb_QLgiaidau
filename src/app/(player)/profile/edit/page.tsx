@@ -13,10 +13,12 @@ import { trimSpaces, trimAndNormalizeSpaces } from '@/utils/string';
 import { usersApi } from '@/features/users/api';
 import { authApi } from '@/features/auth/api';
 import { regionsApi, Region } from '@/features/regions/api';
+import { communitiesApi } from '@/features/communities/api';
 import toast from 'react-hot-toast';
 import { 
   User, Lock, Save, Camera, ArrowLeft, Loader2, Shield, MapPin,
-  Trash2, Mail, Phone, ShieldAlert, CheckCircle2, AlertTriangle, EyeOff, Eye, X, CreditCard, MessageCircle
+  Trash2, Mail, Phone, ShieldAlert, CheckCircle2, AlertTriangle, EyeOff, Eye, X, CreditCard, MessageCircle,
+  Bell, BellOff, AtSign, Users
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -103,6 +105,50 @@ export default function EditProfilePage() {
       toast.error(getErrorMessage(error));
     } finally {
       setIsSavingPrivacy(false);
+    }
+  };
+
+  // Club Notification Preferences
+  const [clubNotificationPrefs, setClubNotificationPrefs] = useState<Array<{
+    communityId: string;
+    communityName: string;
+    logoUrl: string | null;
+    role: string;
+    notificationPreference: 'ALL' | 'MENTIONS_ONLY' | 'MUTED';
+  }>>([]);
+  const [isLoadingClubPrefs, setIsLoadingClubPrefs] = useState(false);
+  const [updatingClubId, setUpdatingClubId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (activeTab === 'security') {
+      setIsLoadingClubPrefs(true);
+      communitiesApi.getMyNotificationPreferences()
+        .then((data) => setClubNotificationPrefs(data || []))
+        .catch(() => {})
+        .finally(() => setIsLoadingClubPrefs(false));
+    }
+  }, [activeTab]);
+
+  const handleUpdateClubPref = async (communityId: string, preference: 'ALL' | 'MENTIONS_ONLY' | 'MUTED') => {
+    try {
+      setUpdatingClubId(communityId);
+      await communitiesApi.updateMyNotificationPreference(communityId, preference);
+      setClubNotificationPrefs((prev) =>
+        prev.map((item) =>
+          item.communityId === communityId ? { ...item, notificationPreference: preference } : item,
+        ),
+      );
+      toast.success(
+        preference === 'ALL'
+          ? 'Đã bật nhận tất cả thông báo CLB'
+          : preference === 'MENTIONS_ONLY'
+          ? 'Chỉ nhận thông báo khi được nhắc tên (@tag)'
+          : 'Đã tắt thông báo CLB (Im lặng)',
+      );
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Không thể cập nhật cài đặt thông báo CLB.'));
+    } finally {
+      setUpdatingClubId(null);
     }
   };
 
@@ -848,6 +894,122 @@ export default function EditProfilePage() {
                       {isSavingPrivacy ? 'Đang lưu...' : user?.allowStrangerMessages === false ? 'Đang bật' : 'Tắt'}
                     </span>
                   </label>
+                </div>
+              </div>
+
+              {/* Club Notification Preferences Card */}
+              <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Bell className="w-5 h-5 text-blue-600" />
+                    <div>
+                      <h2 className="text-lg font-bold text-slate-900">Thông báo Câu lạc bộ</h2>
+                      <p className="text-xs text-slate-500">Tuỳ chỉnh cách bạn nhận thông báo và tin nhắn từ các câu lạc bộ đã tham gia.</p>
+                    </div>
+                  </div>
+                  {isLoadingClubPrefs && (
+                    <Loader2 className="w-4 h-4 text-slate-400 animate-spin" />
+                  )}
+                </div>
+
+                <div className="p-6">
+                  {isLoadingClubPrefs ? (
+                    <div className="py-8 text-center text-xs text-slate-400 flex flex-col items-center justify-center gap-2">
+                      <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+                      <span>Đang tải danh sách câu lạc bộ...</span>
+                    </div>
+                  ) : clubNotificationPrefs.length === 0 ? (
+                    <div className="py-6 text-center text-xs text-slate-500 bg-slate-50 rounded-xl border border-slate-100">
+                      <Users className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                      <p className="font-semibold text-slate-700">Bạn chưa tham gia câu lạc bộ nào</p>
+                      <p className="text-[11px] text-slate-400 mt-0.5">Khi tham gia câu lạc bộ, bạn có thể tuỳ chọn bật/tắt hoặc chỉ nhận thông báo khi được nhắc tên tại đây.</p>
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-slate-100">
+                      {clubNotificationPrefs.map((club) => {
+                        const isUpdating = updatingClubId === club.communityId;
+                        return (
+                          <div
+                            key={club.communityId}
+                            className="py-4 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className="w-10 h-10 rounded-full bg-blue-50 border border-slate-200 overflow-hidden shrink-0 flex items-center justify-center text-blue-600 font-bold text-sm">
+                                {club.logoUrl ? (
+                                  <img src={club.logoUrl} alt={club.communityName} className="w-full h-full object-cover" />
+                                ) : (
+                                  club.communityName.charAt(0).toUpperCase()
+                                )}
+                              </div>
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <h4 className="font-bold text-slate-900 text-sm truncate">{club.communityName}</h4>
+                                  <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600">
+                                    {club.role}
+                                  </span>
+                                </div>
+                                <p className="text-xs text-slate-500 mt-0.5">
+                                  {club.notificationPreference === 'ALL'
+                                    ? 'Nhận tất cả tin nhắn & thông báo'
+                                    : club.notificationPreference === 'MENTIONS_ONLY'
+                                    ? 'Chỉ nhận thông báo khi được @nhắc tên'
+                                    : 'Đã tắt thông báo (Im lặng)'}
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* Preference Segmented Buttons */}
+                            <div className="flex items-center gap-1 bg-slate-100/80 p-1 rounded-xl shrink-0 self-start sm:self-center">
+                              <button
+                                type="button"
+                                disabled={isUpdating}
+                                onClick={() => void handleUpdateClubPref(club.communityId, 'ALL')}
+                                title="Nhận tất cả thông báo"
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                                  club.notificationPreference === 'ALL'
+                                    ? 'bg-white text-blue-700 shadow-xs'
+                                    : 'text-slate-600 hover:text-slate-900'
+                                }`}
+                              >
+                                <Bell className="w-3.5 h-3.5" />
+                                <span>Tất cả</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                disabled={isUpdating}
+                                onClick={() => void handleUpdateClubPref(club.communityId, 'MENTIONS_ONLY')}
+                                title="Chỉ nhận thông báo khi được @tag"
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                                  club.notificationPreference === 'MENTIONS_ONLY'
+                                    ? 'bg-white text-amber-700 shadow-xs'
+                                    : 'text-slate-600 hover:text-slate-900'
+                                }`}
+                              >
+                                <AtSign className="w-3.5 h-3.5" />
+                                <span>Chỉ @tag</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                disabled={isUpdating}
+                                onClick={() => void handleUpdateClubPref(club.communityId, 'MUTED')}
+                                title="Tắt thông báo"
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                                  club.notificationPreference === 'MUTED'
+                                    ? 'bg-white text-rose-700 shadow-xs'
+                                    : 'text-slate-600 hover:text-slate-900'
+                                }`}
+                              >
+                                <BellOff className="w-3.5 h-3.5" />
+                                <span>Tắt</span>
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               </div>
 

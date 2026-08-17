@@ -77,4 +77,6 @@ export const inboxApi = {
     roomId: string,
     data: { name?: string; clubAvatar?: string; isAnnouncementOnly?: boolean; slowModeSeconds?: number },
   ) => api.put<ApiResponse<InboxRoom>>(`/chat/rooms/${roomId}/settings`, data),
+  clearRoomMessages: (roomId: string) =>
+    api.post<ApiResponse<{ success: boolean }>>(`/chat/rooms/${roomId}/clear`),
 };

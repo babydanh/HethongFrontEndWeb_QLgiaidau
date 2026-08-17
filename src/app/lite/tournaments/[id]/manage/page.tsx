@@ -411,6 +411,30 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                   <InfoCard label="Địa điểm" value={tournament.locationAddress} />
                 )}
               </div>
+              <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-900">Luật & ghi điểm</h4>
+                    <p className="mt-1 text-xs text-slate-600">Preset đã điền sẵn; chế độ Lite vẫn cho phép nhập điểm tự do khi cập nhật trận.</p>
+                  </div>
+                  <Badge className="bg-white text-emerald-700 border-emerald-200">Tự do (Lite)</Badge>
+                </div>
+                {tournament.sportRules?.kind === 'FOOTBALL' ? (
+                  <div className="mt-3 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
+                    <InfoCard label="Số hiệp" value={String(tournament.sportRules.halvesCount ?? 2)} />
+                    <InfoCard label="Phút/hiệp" value={String(tournament.sportRules.halfDuration ?? 45)} />
+                    <InfoCard label="Hòa" value={tournament.sportRules.allowDraw === false ? 'Không' : 'Có'} />
+                    <InfoCard label="Đội hình" value={String(tournament.tournamentConfig?.teamSize ?? '—')} />
+                  </div>
+                ) : (
+                  <div className="mt-3 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
+                    <InfoCard label="Set thắng" value={String(tournament.sportRules?.setsToWin ?? '—')} />
+                    <InfoCard label="Điểm/set" value={String(tournament.sportRules?.pointsPerSet ?? '—')} />
+                    <InfoCard label="Điểm tối đa" value={String(tournament.sportRules?.maxPoints ?? '—')} />
+                    <InfoCard label="Chạm 2" value={tournament.sportRules?.winByTwo === false ? 'Không' : 'Có'} />
+                  </div>
+                )}
+              </div>
             </div>
           )}
 

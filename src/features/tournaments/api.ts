@@ -503,6 +503,13 @@ export const tournamentsApi = {
     genderRestriction?: 'MALE' | 'FEMALE';
     teamSize?: 5 | 7 | 11;
     maxReserve?: number;
+    setsToWin?: number;
+    pointsPerSet?: number;
+    winByTwo?: boolean;
+    maxPoints?: number;
+    footballHalvesCount?: number;
+    footballHalfDuration?: number;
+    footballAllowDraw?: boolean;
     bracketType?: 'single_elimination' | 'double_elimination' | 'round_robin' | 'group_stage_knockout';
     maxTeams?: number;
     description?: string;

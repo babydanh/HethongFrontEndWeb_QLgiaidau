@@ -312,4 +312,17 @@ export const communitiesApi = {
   
   getRankings: (id: string, limit?: number) => 
     api.get<ApiResponse<CommunityRankingRecord[]>>(`/communities/${id}/rankings`, { params: { limit } }),
+
+  // Notification Preferences
+  updateMyNotificationPreference: (id: string, preference: 'ALL' | 'MENTIONS_ONLY' | 'MUTED') =>
+    api.put<ApiResponse<CommunityMemberRecord>>(`/communities/${id}/members/me/notification-preference`, { preference }),
+
+  getMyNotificationPreferences: () =>
+    api.get<ApiResponse<Array<{
+      communityId: string;
+      communityName: string;
+      logoUrl: string | null;
+      role: string;
+      notificationPreference: 'ALL' | 'MENTIONS_ONLY' | 'MUTED';
+    }>>>('/communities/my/notification-preferences').then((res) => res.data),
 };

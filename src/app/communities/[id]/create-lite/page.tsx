@@ -71,6 +71,13 @@ export default function CreateLiteTournamentPage({
   const [genderRestriction, setGenderRestriction] = useState<'MALE' | 'FEMALE' | ''>('');
   const [teamSize, setTeamSize] = useState<5 | 7 | 11>(7);
   const [maxReserve, setMaxReserve] = useState(5);
+  const [setsToWin, setSetsToWin] = useState(2);
+  const [pointsPerSet, setPointsPerSet] = useState(21);
+  const [winByTwo, setWinByTwo] = useState(true);
+  const [maxPoints, setMaxPoints] = useState(30);
+  const [footballHalvesCount, setFootballHalvesCount] = useState(2);
+  const [footballHalfDuration, setFootballHalfDuration] = useState(45);
+  const [footballAllowDraw, setFootballAllowDraw] = useState(true);
   const [bracketType, setBracketType] = useState<'single_elimination' | 'double_elimination' | 'round_robin' | 'group_stage_knockout'>('single_elimination');
   const [maxTeams, setMaxTeams] = useState(16);
   const [description, setDescription] = useState('');
@@ -121,6 +128,26 @@ export default function CreateLiteTournamentPage({
     });
   }, []);
 
+  useEffect(() => {
+    if (sport === 'football') {
+      setFootballHalvesCount(2);
+      setFootballHalfDuration(45);
+      setFootballAllowDraw(true);
+      return;
+    }
+    const defaults = sport === 'table_tennis'
+      ? { sets: 3, points: 11, max: 99 }
+      : sport === 'pickleball'
+        ? { sets: 2, points: 11, max: 15 }
+        : sport === 'tennis'
+          ? { sets: 1, points: 6, max: 7 }
+          : { sets: 2, points: 21, max: 30 };
+    setSetsToWin(defaults.sets);
+    setPointsPerSet(defaults.points);
+    setMaxPoints(defaults.max);
+    setWinByTwo(true);
+  }, [sport]);
+
   const handleSubmit = async () => {
     if (!name.trim()) {
       toast.error('Vui lòng nhập tên giải đấu');
@@ -143,8 +170,15 @@ export default function CreateLiteTournamentPage({
         communityId,
         format: sport === 'football' ? 'doubles' : format,
         ...(sport === 'football'
-          ? { genderRestriction: genderRestriction || undefined, teamSize, maxReserve }
-          : {}),
+          ? {
+              genderRestriction: genderRestriction || undefined,
+              teamSize,
+              maxReserve,
+              footballHalvesCount,
+              footballHalfDuration,
+              footballAllowDraw,
+            }
+          : { setsToWin, pointsPerSet, winByTwo, maxPoints }),
         bracketType,
         maxTeams,
         description: description.trim() || `Giải đấu nhanh CLB ${community?.name || ''}`,
@@ -296,6 +330,30 @@ export default function CreateLiteTournamentPage({
                 </select>
               </div>
               <Input label="Dự bị tối đa" type="number" min={0} max={20} value={maxReserve} onChange={(e) => setMaxReserve(Math.max(0, Math.min(20, Number(e.target.value) || 0)))} />
+              <Input label="Số hiệp" type="number" min={1} max={4} value={footballHalvesCount} onChange={(e) => setFootballHalvesCount(Math.max(1, Math.min(4, Number(e.target.value) || 1)))} />
+              <Input label="Phút mỗi hiệp" type="number" min={1} max={120} value={footballHalfDuration} onChange={(e) => setFootballHalfDuration(Math.max(1, Math.min(120, Number(e.target.value) || 45)))} />
+              <label className="flex items-center gap-2 rounded-lg border border-blue-100 bg-white px-3 text-sm font-medium text-slate-700">
+                <input type="checkbox" checked={footballAllowDraw} onChange={(e) => setFootballAllowDraw(e.target.checked)} className="h-4 w-4 accent-blue-600" />
+                Cho phép hòa
+              </label>
+            </div>
+          )}
+
+          {sport && sport !== 'football' && (
+            <div className="rounded-lg border border-emerald-100 bg-emerald-50/60 p-4 space-y-3">
+              <div>
+                <h2 className="text-sm font-semibold text-slate-800">Luật mặc định</h2>
+                <p className="text-xs text-slate-500 mt-1">Đã điền theo môn. Đây chỉ là giá trị bắt đầu; giải Lite vẫn cho phép nhập điểm tự do khi thi đấu.</p>
+              </div>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <Input label="Set thắng" type="number" min={1} max={5} value={setsToWin} onChange={(e) => setSetsToWin(Math.max(1, Math.min(5, Number(e.target.value) || 1)))} />
+                <Input label="Điểm/set" type="number" min={1} max={99} value={pointsPerSet} onChange={(e) => setPointsPerSet(Math.max(1, Math.min(99, Number(e.target.value) || 1)))} />
+                <Input label="Điểm tối đa" type="number" min={1} max={199} value={maxPoints} onChange={(e) => setMaxPoints(Math.max(1, Math.min(199, Number(e.target.value) || 1)))} />
+                <label className="flex items-center gap-2 self-end pb-2 text-sm font-medium text-slate-700">
+                  <input type="checkbox" checked={winByTwo} onChange={(e) => setWinByTwo(e.target.checked)} className="h-4 w-4 accent-emerald-600" />
+                  Chạm 2
+                </label>
+              </div>
             </div>
           )}
 

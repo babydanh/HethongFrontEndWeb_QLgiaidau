@@ -43,5 +43,6 @@ export const chatApi = {
     }).then(res => res.data),
   blockUser: (userId: string) => api.post(`/chat/blocks/${userId}`),
   unblockUser: (userId: string) => api.delete(`/chat/blocks/${userId}`),
+  clearRoomMessages: (roomId: string) => api.post<{ data: { success: boolean } }>(`/chat/rooms/${roomId}/clear`),
 };
 

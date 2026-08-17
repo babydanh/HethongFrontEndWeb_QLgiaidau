@@ -648,7 +648,7 @@ export default function ProfilePage() {
               })()}
               {displayUser?.createdAt && (
                 <span className="bg-[#f3f4f6] text-[#4b5563] px-3.5 py-1.5 rounded-md text-xs font-bold flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5 text-slate-400" /> Tham gia từ {formatDate(displayUser.createdAt, 'MM/yyyy')}
+                  <Calendar className="w-3.5 h-3.5 text-slate-400" /> {translate("memberSince")} {formatDate(displayUser.createdAt, 'MM/yyyy')}
                 </span>
               )}
             </div>
@@ -656,11 +656,11 @@ export default function ProfilePage() {
 
           <div className="mt-8 flex overflow-x-auto gap-2 border-b border-slate-100 no-scrollbar relative z-10">
             {([
-              { id: 'overview', label: 'Tổng quan' },
-              { id: 'tournaments', label: 'Theo dõi' },
-              { id: 'achievements', label: 'Danh hiệu' },
-              { id: 'matches', label: 'Trận đấu' },
-              { id: 'elo', label: 'Thống kê ELO' }
+              { id: 'overview', label: translate("overview") },
+              { id: 'tournaments', label: translate("following") },
+              { id: 'achievements', label: translate("achievements") },
+              { id: 'matches', label: translate("matches") },
+              { id: 'elo', label: translate("eloStats") }
             ] as const).map(tab => (
               <button
                 key={tab.id}
@@ -684,8 +684,8 @@ export default function ProfilePage() {
           <div className="flex items-center gap-3">
             <AlertTriangle className="w-5 h-5 text-blue-600 shrink-0" />
             <div>
-              <h4 className="font-bold text-amber-900 text-sm">Chưa cập nhật giới tính</h4>
-              <p className="text-amber-700 text-xs mt-0.5">Vui lòng cập nhật giới tính trong hồ sơ để có thể đăng ký tham gia các giải đấu.</p>
+              <h4 className="font-bold text-amber-900 text-sm">{translate("genderMissing")}</h4>
+              <p className="text-amber-700 text-xs mt-0.5">{translate("genderPrompt")}</p>
             </div>
           </div>
           <Link href="/profile/edit">
@@ -702,7 +702,7 @@ export default function ProfilePage() {
             <div className="md:col-span-1 flex flex-col gap-6">
               {/* Giới thiệu */}
               <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
-                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">Giới thiệu</h3>
+                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">{translate("about")}</h3>
                 {isLoading ? (
                   <div className="space-y-2">
                     <div className="h-4 bg-slate-200 animate-pulse rounded w-full"></div>
@@ -714,14 +714,14 @@ export default function ProfilePage() {
                   </p>
                 ) : (
                   <p className="text-slate-400 text-sm italic">
-                    Chưa cập nhật phần giới thiệu bản thân.
+                    {translate("bioMissing")}
                   </p>
                 )}
               </div>
 
               {/* Thông tin chi tiết */}
               <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
-                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">Thông tin chi tiết</h3>
+                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">{translate("details")}</h3>
                 {isLoading ? (
                   <div className="space-y-4">
                     <div className="h-4 bg-slate-200 animate-pulse rounded w-full"></div>
@@ -730,24 +730,24 @@ export default function ProfilePage() {
                 ) : (
                   <div className="flex flex-col gap-4 text-sm">
                     <div className="flex flex-col gap-1 border-b border-slate-100 pb-3">
-                      <span className="text-slate-500 font-medium">Ngày sinh</span>
+                      <span className="text-slate-500 font-medium">{translate("dateOfBirth")}</span>
                       <span className="text-slate-900 font-semibold">
                         {profileData?.dateOfBirth
                           ? `${new Date(profileData.dateOfBirth).getDate().toString().padStart(2, '0')}/${(new Date(profileData.dateOfBirth).getMonth() + 1).toString().padStart(2, '0')}/${new Date(profileData.dateOfBirth).getFullYear()}`
-                          : 'Chưa cập nhật'}
+                          : translate("notUpdated")}
                       </span>
                     </div>
                     <div className="flex flex-col gap-1 border-b border-slate-100 pb-3">
-                      <span className="text-slate-500 font-medium">Giới tính</span>
-                      <span className="text-slate-900 font-semibold">{profileData?.gender || 'Chưa cập nhật'}</span>
+                      <span className="text-slate-500 font-medium">{translate("gender")}</span>
+                      <span className="text-slate-900 font-semibold">{profileData?.gender || translate("notUpdated")}</span>
                     </div>
                     <div className="flex flex-col gap-1 border-b border-slate-100 pb-3">
                       <span className="text-slate-500 font-medium">Địa chỉ</span>
-                      <span className="text-slate-900 font-semibold">{profileData?.address || 'Chưa cập nhật'}</span>
+                      <span className="text-slate-900 font-semibold">{profileData?.address || translate("notUpdated")}</span>
                     </div>
                     <div className="flex flex-col gap-1">
                       <span className="text-slate-500 font-medium">Email liên hệ</span>
-                      <span className="text-slate-900 font-semibold">{profileData?.email || 'Chưa cập nhật'}</span>
+                      <span className="text-slate-900 font-semibold">{profileData?.email || translate("notUpdated")}</span>
                     </div>
                   </div>
                 )}
@@ -769,15 +769,15 @@ export default function ProfilePage() {
                 ) : profileData?.bankName ? (
                   <div className="flex flex-col gap-3 text-sm">
                     <div className="flex flex-col gap-1 border-b border-slate-100 pb-2">
-                      <span className="text-slate-500 font-medium">Ngân hàng / Ví</span>
+                      <span className="text-slate-500 font-medium">{translate("bankWallet")}</span>
                       <span className="text-slate-900 font-semibold">{profileData.bankName}</span>
                     </div>
                     <div className="flex flex-col gap-1 border-b border-slate-100 pb-2">
-                      <span className="text-slate-500 font-medium">Số tài khoản / SĐT ví</span>
+                      <span className="text-slate-500 font-medium">{translate("accountOrWalletNumber")}</span>
                       <span className="text-slate-900 font-bold text-blue-650">{profileData.bankAccountNumber}</span>
                     </div>
                     <div className="flex flex-col gap-1">
-                      <span className="text-slate-500 font-medium">Chủ tài khoản</span>
+                      <span className="text-slate-500 font-medium">{translate("accountHolder")}</span>
                       <span className="text-slate-900 font-semibold uppercase">{profileData.bankAccountName}</span>
                     </div>
                   </div>
@@ -1072,7 +1072,7 @@ export default function ProfilePage() {
                           {/* Location Overlay (Bottom-Left) */}
                           <div className="absolute bottom-3 left-3 z-10">
                             <span className="bg-white/95 text-slate-800 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm border border-slate-200 flex items-center gap-1">
-                              📍 {tournament.locationAddress ? tournament.locationAddress.split(',').slice(-1)[0]?.trim() || 'Việt Nam' : 'Chưa cập nhật'}
+                              📍 {tournament.locationAddress ? tournament.locationAddress.split(',').slice(-1)[0]?.trim() || 'Việt Nam' : translate("notUpdated")}
                             </span>
                           </div>
                         </div>
@@ -1532,8 +1532,8 @@ export default function ProfilePage() {
                     className="flex flex-col items-center justify-center py-6 cursor-pointer text-slate-400 hover:text-blue-500 text-center w-full"
                   >
                     <UploadCloud className="w-8 h-8 mb-1" />
-                    <span className="text-xs font-bold">Chọn ảnh chứng chỉ, giấy phép...</span>
-                    <span className="text-[10px] text-slate-400 mt-0.5">JPG, PNG (Tối đa 5MB)</span>
+                    <span className="text-xs font-bold">{translate("chooseEvidence")}</span>
+                    <span className="text-[10px] text-slate-400 mt-0.5">{translate("evidenceFormats")}</span>
                   </label>
                 )}
               </div>
@@ -1545,7 +1545,7 @@ export default function ProfilePage() {
                 onClick={() => setIsModalOpen(false)}
                 disabled={isSubmittingTicket}
               >
-                Hủy bỏ
+                {translate("cancel")}
               </Button>
               <Button
                 onClick={handleSubmitTicket}
@@ -1553,7 +1553,7 @@ export default function ProfilePage() {
                 variant="success"
                 className="font-bold"
               >
-                Gửi yêu cầu
+                {translate("submitVerification")}
               </Button>
             </div>
           </div>

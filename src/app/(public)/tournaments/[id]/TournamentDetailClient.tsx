@@ -78,6 +78,7 @@ const TOURNAMENT_DETAIL_TABS: TournamentDetailTab[] = [
 
 export default function TournamentDetailClient({ tournamentId, initialTournament }: Props) {
   const translate = useTranslations('TournamentDetail');
+  const registrationTranslate = useTranslations('RegistrationMode');
   const [tournament, setTournament] = useState<Tournament | null>(initialTournament);
   const [isInitialLoading, setIsInitialLoading] = useState(!initialTournament);
   const [initialLoadError, setInitialLoadError] = useState<string | null>(null);
@@ -340,7 +341,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
   const isRegistrationExpired = activeTournament.registrationEndDate ? new Date() > new Date(activeTournament.registrationEndDate) : false;
   const isRegistrationOpen = isTournamentOpenForRegistration(activeTournament.status);
   const showRegistrationDetails = !isTournamentInProgress(activeTournament.status) && !isTournamentCompleted(activeTournament.status);
-  const registrationModeUi = getRegistrationModeUi(activeTournament.tournamentConfig?.registrationMode);
+  const registrationModeUi = getRegistrationModeUi(activeTournament.tournamentConfig?.registrationMode, registrationTranslate);
   const hidePublicBannerText = activeTournament.tournamentConfig?.hideFeaturedCardText === true;
 
   let registrationButtonLabel = registrationModeUi.ctaLabel;

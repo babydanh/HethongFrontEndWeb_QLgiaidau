@@ -323,7 +323,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
           </div>
           <div className="flex items-center gap-3 flex-wrap">
             <Button
-              onClick={() => setIsLiteModalOpen(true)}
+              onClick={() => router.push(`/communities/${community.id}/create-lite`)}
               className="font-bold flex items-center gap-2 shadow-sm"
             >
               <Plus className="w-4 h-4" /> Tạo giải nhanh (Lite)

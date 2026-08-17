@@ -706,7 +706,7 @@ export default function TournamentsListPage() {
               : locationParts.length === 1
               ? locationParts[0]
               : 'Chưa cập nhật';
-            const registrationModeUi = getRegistrationModeUi(tournament.tournamentConfig?.registrationMode);
+            const registrationModeUi = getRegistrationModeUi(tournament.tournamentConfig?.registrationMode, translate);
 
             return (
               <Link

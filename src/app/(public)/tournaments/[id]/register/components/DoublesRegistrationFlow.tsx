@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -52,7 +53,8 @@ const normalizeRegistrationParticipant = (
 
 export default function DoublesRegistrationFlow({ tournament, tournamentId, inviteCode, divisionId }: Props) {
   const router = useRouter();
-  const registrationModeUi = getRegistrationModeUi(tournament.tournamentConfig?.registrationMode);
+  const registrationTranslate = useTranslations('RegistrationMode');
+  const registrationModeUi = getRegistrationModeUi(tournament.tournamentConfig?.registrationMode, registrationTranslate);
   const isApprovalMode = registrationModeUi.mode === 'APPROVAL';
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [teamName, setTeamName] = useState('');

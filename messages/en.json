@@ -17,6 +17,7 @@
     "back": "Back",
     "next": "Continue",
     "viewMore": "View more",
+    "close": "Close",
     "noData": "No data available"
   },
   "Navigation": {
@@ -31,6 +32,17 @@
     "profile": "Profile",
     "notifications": "Notifications",
     "administration": "Administration"
+  },
+  "Footer": {
+    "tagline": "Professional tournament management platform.",
+    "products": "Product",
+    "discoverTournaments": "Discover tournaments",
+    "createTournament": "Create a tournament",
+    "community": "Community",
+    "support": "Support",
+    "terms": "Terms",
+    "privacy": "Privacy",
+    "allRightsReserved": "All rights reserved."
   },
   "Auth": {
     "forgotPassword": "Forgot password",
@@ -80,6 +92,19 @@
     "confirmPasswordMismatch": "Passwords do not match",
     "registerSuccess": "Registration successful! Please sign in.",
     "registerFailed": "Registration failed.",
+    "missingVerificationToken": "The verification link is missing an activation token.",
+    "invalidVerificationToken": "The verification code is invalid or has expired.",
+    "verificationSuccessHeading": "Verification successful!",
+    "verificationFailedHeading": "Verification failed",
+    "goHome": "Back to home",
+    "verifying": "Verifying...",
+    "pleaseWait": "Please wait a moment...",
+    "enterCodeManually": "Enter code manually",
+    "authError": "Authentication failed. Please try again.",
+    "syncingGoogleAccount": "Syncing your Google account...",
+    "managementPlatform": "Tournament management platform",
+    "vietnam": "Vietnam",
+    "loginMarketingDescription": "Organize tournaments, track rankings, and connect with athletes nationwide.",
     "resetPassword": "Reset password",
     "newPassword": "New password",
     "confirmPassword": "Confirm password",

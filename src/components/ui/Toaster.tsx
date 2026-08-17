@@ -1,8 +1,10 @@
 "use client";
 
 import { Toaster as HotToaster, resolveValue, toast } from "react-hot-toast";
+import { useTranslations } from "next-intl";
 
 const Toaster = () => {
+    const translate = useTranslations('Common');
     return (
         <HotToaster
             position="top-right"
@@ -26,7 +28,7 @@ const Toaster = () => {
                     <button
                         onClick={() => toast.dismiss(t.id)}
                         className="ml-3 shrink-0 text-slate-400 hover:text-slate-600 hover:bg-slate-50 p-1.5 rounded-lg transition-all duration-150 cursor-pointer text-[10px] font-bold leading-none border border-transparent hover:border-slate-200"
-                        aria-label="Đóng"
+                        aria-label={translate("close")}
                     >
                         ✕
                     </button>

@@ -131,11 +131,11 @@ export default function LoginPage() {
         {/* Headline + highlights */}
         <div className="relative z-10 px-10 pb-4">
           <h1 className="text-4xl font-bold text-white leading-tight tracking-tight">
-            Nền tảng quản lý
+            {t('managementPlatform')}
             <br />
             <span className="text-blue-400">{t('sportsTournaments')}</span>
             <br />
-            Việt Nam
+            {t('vietnam')}
           </h1>
           <p className="mt-3 text-slate-300 text-sm leading-relaxed max-w-[320px]">
             Tổ chức giải đấu, theo dõi xếp hạng ELO và kết nối cộng đồng vận động viên toàn quốc.

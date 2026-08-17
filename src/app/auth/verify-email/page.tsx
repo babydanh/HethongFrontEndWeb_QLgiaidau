@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, Suspense } from 'react';
+import { useTranslations } from 'next-intl';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { authApi } from '@/features/auth/api';
@@ -12,6 +13,7 @@ import { Trophy, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 function VerifyEmailContent() {
+  const t = useTranslations('Auth');
   const searchParams = useSearchParams();
   const router = useRouter();
   const { setUser } = useAuthStore();
@@ -25,7 +27,7 @@ function VerifyEmailContent() {
     const verify = async () => {
       if (!token) {
         setStatus('error');
-        setErrorMsg('Đường dẫn xác minh thiếu token kích hoạt.');
+        setErrorMsg(t('missingVerificationToken'));
         return;
       }
       try {
@@ -57,7 +59,7 @@ function VerifyEmailContent() {
         }
       } catch (err) {
         setStatus('error');
-        setErrorMsg(getErrorMessage(err, 'Mã xác minh không hợp lệ hoặc đã hết hạn.'));
+        setErrorMsg(getErrorMessage(err, t('invalidVerificationToken')));
       }
     };
 
@@ -81,14 +83,14 @@ function VerifyEmailContent() {
           <div className="flex flex-col items-center py-6">
             <LoadingSpinner className="w-12 h-12 mb-4" />
             <h2 className="text-lg font-bold text-slate-800">Đang xác minh Email</h2>
-            <p className="text-xs text-slate-500 mt-2">Vui lòng chờ trong giây lát...</p>
+            <p className="text-xs text-slate-500 mt-2">{t('pleaseWait')}</p>
           </div>
         )}
 
         {status === 'success' && (
           <div className="flex flex-col items-center py-6">
             <CheckCircle className="w-14 h-14 text-blue-500 mb-4" />
-            <h2 className="text-lg font-bold text-slate-900 tracking-tight">Xác minh thành công!</h2>
+            <h2 className="text-lg font-bold text-slate-900 tracking-tight">{t('verificationSuccessHeading')}</h2>
             <p className="text-xs text-slate-500 mt-2 px-4 leading-relaxed">
               Email của bạn đã được xác thực thành công. Bây giờ bạn có thể tham gia đầy đủ các giải đấu của Sporto.
             </p>
@@ -96,7 +98,7 @@ function VerifyEmailContent() {
               href="/" 
               className="mt-8 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-6 rounded-lg text-xs shadow-md transition-colors"
             >
-              Về trang chủ
+              {t('goHome')}
             </Link>
           </div>
         )}
@@ -104,7 +106,7 @@ function VerifyEmailContent() {
         {status === 'error' && (
           <div className="flex flex-col items-center py-6">
             <XCircle className="w-14 h-14 text-rose-500 mb-4" />
-            <h2 className="text-lg font-bold text-slate-900 tracking-tight">Xác minh thất bại</h2>
+            <h2 className="text-lg font-bold text-slate-900 tracking-tight">{t('verificationFailedHeading')}</h2>
             <p className="text-xs text-rose-600 font-semibold bg-rose-50 px-4 py-2 rounded-lg mt-3 leading-relaxed">
               {errorMsg}
             </p>
@@ -113,13 +115,13 @@ function VerifyEmailContent() {
                 href="/profile/edit" 
                 className="flex-1 border border-slate-205 text-slate-650 hover:bg-slate-50 font-bold py-2.5 rounded-lg text-xs transition-colors flex items-center justify-center"
               >
-                Nhập mã thủ công
+                {t('enterCodeManually')}
               </Link>
               <Link 
                 href="/" 
                 className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg text-xs shadow-md transition-colors flex items-center justify-center"
               >
-                Về trang chủ
+                {t('goHome')}
               </Link>
             </div>
           </div>

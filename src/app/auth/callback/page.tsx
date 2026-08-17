@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, Suspense } from "react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/zustand/authStore";
 import type { User } from "@/lib/zustand/authStore";
@@ -11,6 +12,7 @@ import { Trophy } from "lucide-react";
 import { BRAND } from "@/constants/brand";
 
 const CallbackContent = () => {
+  const t = useTranslations('Auth');
   const router = useRouter();
 
   useEffect(() => {
@@ -33,12 +35,12 @@ const CallbackContent = () => {
           bio: data.bio ?? null,
         };
         useAuthStore.getState().setUser(nextUser);
-        toast.success("Đăng nhập thành công!");
+        toast.success(t("loginSuccess"));
         router.push("/");
       })
       .catch((error) => {
         console.error("Lỗi khi lấy thông tin user:", error);
-        toast.error("Lỗi xác thực, vui lòng thử lại.");
+        toast.error(t("authError"));
         router.push("/login");
       });
   }, [router]);
@@ -60,7 +62,7 @@ const CallbackContent = () => {
         </div>
 
         <div className="space-y-2 flex flex-col items-center">
-          <p className="text-slate-650 font-bold text-base">Đang đồng bộ tài khoản Google của bạn...</p>
+          <p className="text-slate-650 font-bold text-base">{t('syncingGoogleAccount')}</p>
         </div>
 
         <div className="flex items-center gap-2 mt-4">

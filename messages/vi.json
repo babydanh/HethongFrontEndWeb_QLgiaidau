@@ -17,6 +17,7 @@
     "back": "Quay lại",
     "next": "Tiếp tục",
     "viewMore": "Xem thêm",
+    "close": "Đóng",
     "noData": "Chưa có dữ liệu"
   },
   "Navigation": {
@@ -31,6 +32,17 @@
     "profile": "Hồ sơ",
     "notifications": "Thông báo",
     "administration": "Quản trị"
+  },
+  "Footer": {
+    "tagline": "Nền tảng quản lý giải đấu chuyên nghiệp.",
+    "products": "Sản phẩm",
+    "discoverTournaments": "Khám phá giải đấu",
+    "createTournament": "Tạo giải đấu mới",
+    "community": "Cộng đồng",
+    "support": "Hỗ trợ",
+    "terms": "Điều khoản",
+    "privacy": "Bảo mật",
+    "allRightsReserved": "Tất cả các quyền được bảo lưu."
   },
   "Auth": {
     "forgotPassword": "Quên mật khẩu",
@@ -80,6 +92,19 @@
     "confirmPasswordMismatch": "Mật khẩu xác nhận không khớp",
     "registerSuccess": "Đăng ký thành công! Vui lòng đăng nhập.",
     "registerFailed": "Đăng ký thất bại.",
+    "missingVerificationToken": "Đường dẫn xác minh thiếu token kích hoạt.",
+    "invalidVerificationToken": "Mã xác minh không hợp lệ hoặc đã hết hạn.",
+    "verificationSuccessHeading": "Xác minh thành công!",
+    "verificationFailedHeading": "Xác minh thất bại",
+    "goHome": "Về trang chủ",
+    "verifying": "Đang xác minh...",
+    "pleaseWait": "Vui lòng chờ trong giây lát...",
+    "enterCodeManually": "Nhập mã thủ công",
+    "authError": "Lỗi xác thực, vui lòng thử lại.",
+    "syncingGoogleAccount": "Đang đồng bộ tài khoản Google của bạn...",
+    "managementPlatform": "Nền tảng quản lý",
+    "vietnam": "Việt Nam",
+    "loginMarketingDescription": "Tổ chức giải đấu, theo dõi xếp hạng và kết nối cộng đồng vận động viên toàn quốc.",
     "resetPassword": "Đặt lại mật khẩu",
     "newPassword": "Mật khẩu mới",
     "confirmPassword": "Nhập lại mật khẩu",

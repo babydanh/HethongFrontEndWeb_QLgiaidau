@@ -3026,12 +3026,12 @@ export default function UnifiedChatWidget() {
                     </div>
                     <div>
                       <h3 className="text-sm font-bold text-slate-900">Xóa đoạn chat?</h3>
-                      <p className="text-xs text-slate-500">
+                      <p className="text-xs font-medium text-slate-600">
                         Lịch sử tin nhắn cũ sẽ được xóa khỏi tài khoản của bạn.
                       </p>
                     </div>
                   </div>
-                  <p className="text-xs text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100 leading-relaxed">
+                  <p className="text-xs font-medium text-slate-700 bg-slate-100/90 p-3 rounded-xl border border-slate-200/80 leading-relaxed">
                     Hành động này không thể hoàn tác. Các tin nhắn cũ của đoạn chat này sẽ không còn hiển thị với bạn.
                   </p>
                   <div className="flex items-center justify-end gap-2 pt-1">

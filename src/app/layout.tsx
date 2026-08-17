@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/Toaster";
 import RootLayoutClient from "@/components/layout/RootLayoutClient";
@@ -6,6 +7,13 @@ import LiveMetricsWidget from "@/components/common/LiveMetricsWidget";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import { BRAND } from "@/constants/brand";
+
+const inter = Inter({
+  subsets: ["vietnamese", "latin"],
+  display: "swap",
+  variable: "--font-sans",
+  weight: ["400", "500", "600", "700", "800", "900"],
+});
 
 export const metadataBase = new URL(BRAND.domain);
 
@@ -96,7 +104,7 @@ export default async function RootLayout({
   ];
 
   return (
-    <html lang={locale} className="h-full antialiased" suppressHydrationWarning>
+    <html lang={locale} className={`h-full antialiased ${inter.variable}`} suppressHydrationWarning>
       <head>
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="icon" href="/icon.png" type="image/png" sizes="512x512" />
@@ -111,7 +119,7 @@ export default async function RootLayout({
           />
         ))}
       </head>
-      <body className="min-h-full flex flex-col text-slate-900">
+      <body className={`min-h-full flex flex-col text-slate-900 font-sans ${inter.className}`}>
         <NextIntlClientProvider locale={locale} messages={messages}>
           <RootLayoutClient>{children}</RootLayoutClient>
           <Toaster />

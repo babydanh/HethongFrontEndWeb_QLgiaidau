@@ -2,7 +2,7 @@
 @config "../../tailwind.config.ts";
 
 :root {
-    --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-sans: var(--font-sans), Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     --color-background: #ffffff; /* pure white background */
     --color-foreground: #0f172a; /* slate-900 */
 
@@ -15,8 +15,8 @@
     --color-card: #ffffff;
     --color-card-foreground: #0f172a;
 
-    --color-muted: #64748b; /* slate-500 */
-    --color-muted-foreground: #94a3b8; /* slate-400 */
+    --color-muted: #475569; /* slate-600 */
+    --color-muted-foreground: #64748b; /* slate-500 */
 
     --color-accent: #dbeafe; /* blue-100 */
     --color-accent-foreground: #07549a; /* logo dark blue */
@@ -37,8 +37,8 @@
     --ds-surface-subtle: #f1f5f9;
     --ds-surface-elevated: #ffffff;
     --ds-text-primary: #0f172a;
-    --ds-text-secondary: #475569;
-    --ds-text-muted: #94a3b8;
+    --ds-text-secondary: #334155;
+    --ds-text-muted: #64748b;
     --ds-border: #e2e8f0;
     --ds-border-subtle: #f1f5f9;
     --ds-ring: #3ab5f6;
@@ -47,10 +47,55 @@
     --ds-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.04), 0 2px 4px -2px rgb(0 0 0 / 0.04);
 }
 
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
 body {
   background-color: var(--color-background);
   color: var(--color-foreground);
   font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* ── Typography & Readability Boost ── */
+/* Ensure small labels and captions have clear font-weight and don't look skinny */
+small,
+.text-xs,
+.text-\[10px\],
+.text-\[11px\],
+.text-\[12px\],
+.text-\[13px\] {
+  font-weight: 500;
+}
+
+/* Elevate pale grey texts to higher contrast for easy reading */
+.text-slate-400 {
+  color: #64748b !important; /* slate-500 */
+}
+
+.text-slate-500 {
+  color: #475569 !important; /* slate-600 */
+}
+
+.text-gray-400,
+.text-neutral-400,
+.text-zinc-400 {
+  color: #6b7280 !important; /* gray-500 */
+}
+
+.text-gray-500,
+.text-neutral-500,
+.text-zinc-500 {
+  color: #4b5563 !important; /* gray-600 */
+}
+
+.text-muted-foreground {
+  color: #475569 !important;
 }
 
 /* Editor.js Content View Styling */

@@ -16,7 +16,7 @@ export interface InboxRoom {
   pinnedMessageId?: string | null;
   unreadCount: number;
   updatedAt: string;
-  participants: Array<{ id: string; fullName: string | null; avatarUrl: string | null }>;
+  participants: Array<{ id: string; fullName: string | null; avatarUrl: string | null; lastReadAt?: string | null }>;
   lastMessage?: {
     id?: string;
     content: string;

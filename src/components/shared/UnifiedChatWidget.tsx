@@ -254,6 +254,8 @@ export default function UnifiedChatWidget() {
   const [showClearConfirmModal, setShowClearConfirmModal] = useState(false);
   const [clearingRoom, setClearingRoom] = useState(false);
   const [clubNotificationPref, setClubNotificationPref] = useState<'ALL' | 'MENTIONS_ONLY' | 'MUTED'>('ALL');
+  const [onlineUserIds, setOnlineUserIds] = useState<Set<string>>(new Set());
+  const [roomReadStates, setRoomReadStates] = useState<Record<string, Record<string, string>>>({});
 
   const widgetRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -642,6 +644,27 @@ export default function UnifiedChatWidget() {
       );
     };
 
+    const onUserStatus = (data: { userId: string; isOnline: boolean }) => {
+      if (!data?.userId) return;
+      setOnlineUserIds((prev) => {
+        const next = new Set(prev);
+        if (data.isOnline) next.add(data.userId);
+        else next.delete(data.userId);
+        return next;
+      });
+    };
+
+    const onRoomRead = (data: { roomId: string; userId: string; readAt: string }) => {
+      if (!data?.roomId || !data?.userId) return;
+      setRoomReadStates((prev) => ({
+        ...prev,
+        [data.roomId]: {
+          ...(prev[data.roomId] || {}),
+          [data.userId]: data.readAt,
+        },
+      }));
+    };
+
     socket.on('chat:message', onMessage);
     socket.on('chat:club:message', onMessage);
     socket.on('chat:message:revoked', onRevoked);
@@ -651,10 +674,29 @@ export default function UnifiedChatWidget() {
     socket.on('chat:room:updated', onRoomUpdated);
     socket.on('chat:poll:voted', onPollVoted);
     socket.on('chat:typing', onTyping);
+    socket.on('chat:user:status', onUserStatus);
+    socket.on('chat:room:read', onRoomRead);
 
     const joinRoom = () => socket.emit('joinChatRoom', roomId);
     socket.on('connect', joinRoom);
     joinRoom();
+
+    // Query online status for room participants
+    if (selectedRoom?.participants && selectedRoom.participants.length > 0) {
+      const participantIds = selectedRoom.participants.map((p) => p.id).filter(Boolean);
+      socket.emit('checkOnlineUsers', participantIds, (statusMap: Record<string, boolean>) => {
+        if (statusMap && typeof statusMap === 'object') {
+          setOnlineUserIds((prev) => {
+            const next = new Set(prev);
+            for (const [uid, isOnline] of Object.entries(statusMap)) {
+              if (isOnline) next.add(uid);
+              else next.delete(uid);
+            }
+            return next;
+          });
+        }
+      });
+    }
 
     const fetchRoomMessages = async () => {
       setLoading(true);
@@ -716,6 +758,8 @@ export default function UnifiedChatWidget() {
       socket.off('chat:room:updated', onRoomUpdated);
       socket.off('chat:poll:voted', onPollVoted);
       socket.off('chat:typing', onTyping);
+      socket.off('chat:user:status', onUserStatus);
+      socket.off('chat:room:read', onRoomRead);
       socket.off('connect', joinRoom);
       if (typingTimerRef.current) window.clearTimeout(typingTimerRef.current);
       socketRoomRef.current = null;
@@ -1489,12 +1533,28 @@ export default function UnifiedChatWidget() {
                       </span>
                     ) : isOtherBlocked ? (
                       <span className="text-rose-500 font-semibold">Đã chặn</span>
-                    ) : (
-                      <span className="flex items-center gap-1">
-                        <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                        Đang hoạt động
+                    ) : selectedRoom?.type === 'CLUB' ? (
+                      <span className="text-slate-500 font-normal">
+                        Kênh cộng đồng · CLB
                       </span>
-                    )}
+                    ) : (() => {
+                      const otherParticipant = selectedRoom?.participants?.find((p) => p.id !== user?.id);
+                      const isOnline = otherParticipant?.id ? onlineUserIds.has(otherParticipant.id) : false;
+                      if (isOnline) {
+                        return (
+                          <span className="flex items-center gap-1.5 text-emerald-600 font-medium">
+                            <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-xs" />
+                            Đang hoạt động
+                          </span>
+                        );
+                      }
+                      return (
+                        <span className="flex items-center gap-1.5 text-slate-400 font-normal">
+                          <span className="inline-block w-1.5 h-1.5 rounded-full bg-slate-300" />
+                          Không trực tuyến
+                        </span>
+                      );
+                    })()}
                   </p>
                 </div>
               </div>
@@ -2428,11 +2488,15 @@ export default function UnifiedChatWidget() {
                                 })()}
                               </div>
 
-                              {/* Read receipts / Seen indicator at the bottom of the latest message */}
-                              {index === roomMessages.length - 1 && message.mine && (
-                                <div className="mt-1 flex items-center justify-end gap-1 px-1">
-                                  {otherParticipant?.avatarUrl ? (
-                                    <div className="flex items-center gap-1" title={`Đã xem bởi ${otherParticipant.fullName || ''}`}>
+                              {/* Real Read receipts / Seen indicator */}
+                              {index === roomMessages.length - 1 && message.mine && (() => {
+                                const otherParticipant = selectedRoom?.participants?.find((p) => p.id !== user?.id);
+                                const otherLastRead = selectedRoom ? (roomReadStates[selectedRoom.id]?.[otherParticipant?.id || ''] || otherParticipant?.lastReadAt) : null;
+                                const isSeen = otherLastRead ? new Date(otherLastRead).getTime() >= new Date(message.createdAt).getTime() : false;
+
+                                if (isSeen && otherParticipant?.avatarUrl) {
+                                  return (
+                                    <div className="mt-1 flex items-center justify-end gap-1 px-1" title={`Đã xem bởi ${otherParticipant.fullName || ''}`}>
                                       <span className="text-[9px] text-slate-400 font-medium">Đã xem</span>
                                       <img
                                         src={otherParticipant.avatarUrl}
@@ -2440,14 +2504,18 @@ export default function UnifiedChatWidget() {
                                         className="h-3.5 w-3.5 rounded-full object-cover border border-white shadow-2xs"
                                       />
                                     </div>
-                                  ) : (
+                                  );
+                                }
+
+                                return (
+                                  <div className="mt-1 flex items-center justify-end gap-1 px-1">
                                     <span className="flex items-center gap-0.5 text-[9px] font-medium text-slate-400">
                                       <Check className="h-3 w-3 text-blue-500" />
                                       Đã gửi
                                     </span>
-                                  )}
-                                </div>
-                              )}
+                                  </div>
+                                );
+                              })()}
                             </div>
                           </div>
                         </div>

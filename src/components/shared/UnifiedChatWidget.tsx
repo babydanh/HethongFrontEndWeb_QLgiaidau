@@ -658,6 +658,9 @@ export default function UnifiedChatWidget() {
 
     const fetchRoomMessages = async () => {
       setLoading(true);
+      setMessages([]);
+      setPinnedMessage(null);
+      setReplyingTo(null);
       setNextCursor(null);
       setHasMoreMessages(false);
       setTypingUserId(null);
@@ -669,13 +672,11 @@ export default function UnifiedChatWidget() {
             ...message,
             mine: message.senderId === user?.id,
           }));
-          setMessages((current) => {
-            const merged = new Map(current.map((message) => [message.id, message]));
-            for (const message of fetchedMessages) merged.set(message.id, message);
-            return [...merged.values()].sort(
+          setMessages(
+            fetchedMessages.sort(
               (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
-            );
-          });
+            ),
+          );
           setNextCursor(page.meta?.nextCursor ?? null);
           setHasMoreMessages(page.meta?.hasMore === true);
         }
@@ -1865,22 +1866,31 @@ export default function UnifiedChatWidget() {
                       Tải tin nhắn cũ hơn
                     </button>
                   )}
-                  {messages.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-full py-12 text-center text-slate-400">
-                      <div className="w-12 h-12 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center mb-2">
-                        <MessageCircle className="w-6 h-6" />
-                      </div>
-                      <p className="text-sm font-semibold text-slate-700">
-                        Chưa có tin nhắn nào
-                      </p>
-                      <p className="text-xs text-slate-400 mt-0.5">
-                        Hãy gửi tin nhắn đầu tiên để bắt đầu trò chuyện!
-                      </p>
-                    </div>
-                  ) : (
-                    messages.map((message, index) => {
-                      const prevMsg = messages[index - 1];
-                      const nextMsg = messages[index + 1];
+                  {(() => {
+                    const currentRoomId = selection.kind === 'ROOM' ? selection.room.id : null;
+                    const roomMessages = currentRoomId
+                      ? messages.filter((m) => m.roomId === currentRoomId)
+                      : messages;
+
+                    if (roomMessages.length === 0) {
+                      return (
+                        <div className="flex flex-col items-center justify-center h-full py-12 text-center text-slate-400">
+                          <div className="w-12 h-12 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center mb-2">
+                            <MessageCircle className="w-6 h-6" />
+                          </div>
+                          <p className="text-sm font-semibold text-slate-700">
+                            Chưa có tin nhắn nào
+                          </p>
+                          <p className="text-xs text-slate-400 mt-0.5">
+                            Hãy gửi tin nhắn đầu tiên để bắt đầu trò chuyện!
+                          </p>
+                        </div>
+                      );
+                    }
+
+                    return roomMessages.map((message, index) => {
+                      const prevMsg = roomMessages[index - 1];
+                      const nextMsg = roomMessages[index + 1];
                       const isNewDay =
                         !prevMsg ||
                         new Date(message.createdAt).toDateString() !==
@@ -2419,7 +2429,7 @@ export default function UnifiedChatWidget() {
                               </div>
 
                               {/* Read receipts / Seen indicator at the bottom of the latest message */}
-                              {index === messages.length - 1 && message.mine && (
+                              {index === roomMessages.length - 1 && message.mine && (
                                 <div className="mt-1 flex items-center justify-end gap-1 px-1">
                                   {otherParticipant?.avatarUrl ? (
                                     <div className="flex items-center gap-1" title={`Đã xem bởi ${otherParticipant.fullName || ''}`}>
@@ -2442,8 +2452,8 @@ export default function UnifiedChatWidget() {
                           </div>
                         </div>
                       );
-                    })
-                  )}
+                    });
+                  })()}
                 </>
               )}
               <div ref={endRef} />

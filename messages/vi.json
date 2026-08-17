@@ -32,11 +32,43 @@
     "notifications": "Thông báo",
     "administration": "Quản trị"
   },
+  "Auth": {
+    "forgotPassword": "Quên mật khẩu",
+    "description": "Nhập email đã đăng ký tài khoản. Hệ thống sẽ gửi hướng dẫn đặt lại mật khẩu.",
+    "requestSent": "Đã gửi yêu cầu thành công!",
+    "checkInbox": "Vui lòng kiểm tra hộp thư của bạn (cả thư mục spam) để nhận hướng dẫn đặt lại mật khẩu.",
+    "resetInstructionsSent": "Hướng dẫn đặt lại mật khẩu đã được gửi thành công!",
+    "requestError": "Có lỗi xảy ra. Vui lòng thử lại sau.",
+    "invalidEmail": "Email không hợp lệ",
+    "sending": "Đang gửi...",
+    "sendRequest": "Gửi yêu cầu",
+    "resetPassword": "Đặt lại mật khẩu",
+    "newPassword": "Mật khẩu mới",
+    "confirmPassword": "Nhập lại mật khẩu",
+    "passwordMinLength": "Mật khẩu phải có ít nhất 6 ký tự",
+    "passwordMismatch": "Mật khẩu nhập lại không khớp",
+    "missingToken": "Thiếu mã xác thực. Vui lòng sử dụng liên kết từ email.",
+    "invalidToken": "Token không hợp lệ hoặc đã hết hạn.",
+    "resetSuccessToast": "Mật khẩu đã được đặt lại thành công!",
+    "resetSuccessTitle": "Đặt lại mật khẩu thành công!",
+    "resetSuccessDescription": "Bạn có thể đăng nhập bằng mật khẩu mới.",
+    "signIn": "Đăng nhập",
+    "requestNew": "Gửi yêu cầu mới",
+    "invalidLink": "Liên kết không hợp lệ",
+    "invalidLinkDescription": "Vui lòng sử dụng liên kết từ email đặt lại mật khẩu.",
+    "loading": "Đang tải...",
+    "processing": "Đang xử lý..."
+  },
   "Errors": {
     "generic": "Đã xảy ra lỗi. Vui lòng thử lại.",
     "network": "Không thể kết nối máy chủ. Vui lòng kiểm tra mạng.",
     "unauthorized": "Vui lòng đăng nhập để tiếp tục.",
     "forbidden": "Bạn không có quyền thực hiện thao tác này.",
-    "notFound": "Không tìm thấy dữ liệu."
+    "notFound": "Không tìm thấy dữ liệu.",
+    "title": "Có lỗi xảy ra",
+    "retry": "Thử lại",
+    "notFoundTitle": "Không tìm thấy trang",
+    "notFoundDescription": "Đường dẫn bạn truy cập không tồn tại, đã bị gỡ bỏ hoặc bạn không có quyền truy cập.",
+    "backHome": "Quay lại trang chủ"
   }
 }

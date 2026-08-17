@@ -32,11 +32,43 @@
     "notifications": "Notifications",
     "administration": "Administration"
   },
+  "Auth": {
+    "forgotPassword": "Forgot password",
+    "description": "Enter the email registered to your account. We will send instructions to reset your password.",
+    "requestSent": "Request sent successfully!",
+    "checkInbox": "Please check your inbox, including the spam folder, for password reset instructions.",
+    "resetInstructionsSent": "Password reset instructions were sent successfully!",
+    "requestError": "Something went wrong. Please try again later.",
+    "invalidEmail": "Invalid email address",
+    "sending": "Sending...",
+    "sendRequest": "Send request",
+    "resetPassword": "Reset password",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm password",
+    "passwordMinLength": "Password must be at least 6 characters",
+    "passwordMismatch": "Passwords do not match",
+    "missingToken": "Verification token is missing. Please use the link from your email.",
+    "invalidToken": "The token is invalid or has expired.",
+    "resetSuccessToast": "Password reset successfully!",
+    "resetSuccessTitle": "Password reset successfully!",
+    "resetSuccessDescription": "You can now sign in with your new password.",
+    "signIn": "Sign in",
+    "requestNew": "Send a new request",
+    "invalidLink": "Invalid link",
+    "invalidLinkDescription": "Please use the password reset link from your email.",
+    "loading": "Loading...",
+    "processing": "Processing..."
+  },
   "Errors": {
     "generic": "Something went wrong. Please try again.",
     "network": "Unable to connect to the server. Check your connection.",
     "unauthorized": "Please sign in to continue.",
     "forbidden": "You do not have permission to perform this action.",
-    "notFound": "The requested data could not be found."
+    "notFound": "The requested data could not be found.",
+    "title": "Something went wrong",
+    "retry": "Try again",
+    "notFoundTitle": "Page not found",
+    "notFoundDescription": "The page you are looking for does not exist, was removed, or you do not have access.",
+    "backHome": "Back to home"
   }
 }

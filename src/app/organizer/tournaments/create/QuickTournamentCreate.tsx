@@ -12,30 +12,72 @@ import { tournamentsApi } from '@/features/tournaments/api';
 import { regionsApi, Region } from '@/features/regions/api';
 import { getErrorMessage } from '@/utils/error';
 
+/* 4 Biểu tượng sơ đồ thể thức thi đấu chuyên nghiệp */
+const SingleEliminationIcon = ({ className = 'h-5 w-5' }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M3 5h4v6H3" />
+    <path d="M3 19h4v-6H3" />
+    <path d="M7 8h6v8H7" />
+    <path d="M13 12h8" />
+  </svg>
+);
+
+const RoundRobinIcon = ({ className = 'h-5 w-5' }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+    <path d="M3 3v5h5" />
+    <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+    <path d="M16 21h5v-5" />
+  </svg>
+);
+
+const GroupStageKnockoutIcon = ({ className = 'h-5 w-5' }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <rect x="3" y="4" width="6" height="6" rx="1.5" />
+    <rect x="3" y="14" width="6" height="6" rx="1.5" />
+    <path d="M9 7h4v4h4" />
+    <path d="M9 17h4v-4" />
+    <path d="M17 11h4" />
+  </svg>
+);
+
+const DoubleEliminationIcon = ({ className = 'h-5 w-5' }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M3 4h4v3H3" />
+    <path d="M7 5.5h5v2.5" />
+    <path d="M3 11h4v3H3" />
+    <path d="M7 12.5h5v-2" />
+    <path d="M12 9h4v3h-4" />
+    <path d="M16 10.5h5" />
+    <path d="M3 18h4v2H3" />
+    <path d="M7 19h9v-7" />
+  </svg>
+);
+
 const BRACKET_OPTIONS = [
   {
     id: 'single_elimination',
     label: 'Loại trực tiếp',
-    desc: 'Thua là dừng bước. Nhanh gọn & kịch tính nhất.',
-    badge: 'Phổ biến',
+    desc: 'Nhánh đấu loại trực tiếp 1 lần thua. Nhanh gọn & gay cấn.',
+    Icon: SingleEliminationIcon,
   },
   {
     id: 'round_robin',
     label: 'Vòng tròn',
-    desc: 'Mọi đội đều gặp nhau tính điểm. Công bằng nhất.',
-    badge: 'Đấu nhiều trận',
+    desc: 'Mọi đội đều được thi đấu đối đầu tính điểm xếp hạng.',
+    Icon: RoundRobinIcon,
   },
   {
     id: 'group_stage_knockout',
     label: 'Vòng bảng + Knockout',
-    desc: 'Đấu bảng chọn đội nhất/nhì vào tứ kết/bán kết.',
-    badge: 'Chuyên nghiệp',
+    desc: 'Đấu vòng bảng lấy các đội đầu bảng vào vòng loại trực tiếp.',
+    Icon: GroupStageKnockoutIcon,
   },
   {
     id: 'double_elimination',
     label: 'Nhánh thắng / thua',
-    desc: 'Cơ hội phục thù nhánh dưới khi thua 1 trận.',
-    badge: 'Kép nhánh',
+    desc: 'Hệ thống 2 nhánh đấu, có cơ hội phục thù từ nhánh thua.',
+    Icon: DoubleEliminationIcon,
   },
 ] as const;
 
@@ -501,46 +543,52 @@ export default function QuickTournamentCreate() {
             />
           </div>
 
-          {/* Thể thức thi đấu (Cards chọn trực quan chuẩn Taste Skill) */}
+          {/* Thể thức thi đấu (Cards chọn trực quan với Icon sơ đồ giải đấu chân thực) */}
           <div className="space-y-2.5">
             <div className="flex items-center justify-between">
               <label className="text-sm font-semibold text-slate-800">
                 Thể thức thi đấu <span className="text-red-500">*</span>
               </label>
-              <span className="text-xs text-slate-500">Bấm chọn thể thức</span>
+              <span className="text-xs text-slate-500">Chọn cấu trúc bảng đấu</span>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
               {BRACKET_OPTIONS.map((opt) => {
                 const isSelected = bracketType === opt.id;
+                const { Icon } = opt;
                 return (
                   <button
                     key={opt.id}
                     type="button"
                     onClick={() => setValue('bracketType', opt.id, { shouldValidate: true })}
-                    className={`group relative flex flex-col justify-between rounded-xl border p-3.5 text-left transition-all duration-200 ${
+                    className={`group relative flex items-start gap-3.5 rounded-xl border p-3.5 text-left transition-all duration-200 ${
                       isSelected
-                        ? 'border-blue-600 bg-blue-50/70 shadow-2xs ring-1 ring-blue-500/20'
+                        ? 'border-blue-600 bg-blue-50/70 shadow-2xs ring-1 ring-blue-500/30'
                         : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50'
                     }`}
                   >
-                    <div className="flex items-start justify-between gap-2">
-                      <span className={`text-sm font-bold transition ${isSelected ? 'text-blue-900' : 'text-slate-800 group-hover:text-blue-600'}`}>
-                        {opt.label}
-                      </span>
-                      <span
-                        className={`rounded-full px-2 py-0.5 text-[10px] font-semibold transition ${
-                          isSelected
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-slate-100 text-slate-600 group-hover:bg-slate-200'
-                        }`}
-                      >
-                        {opt.badge}
-                      </span>
+                    <div
+                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border transition ${
+                        isSelected
+                          ? 'border-blue-600 bg-blue-600 text-white shadow-2xs'
+                          : 'border-slate-200 bg-slate-50 text-slate-600 group-hover:border-slate-300 group-hover:text-blue-600'
+                      }`}
+                    >
+                      <Icon className="h-4.5 w-4.5" />
                     </div>
-                    <p className={`mt-1.5 text-xs leading-relaxed transition ${isSelected ? 'text-blue-700/90' : 'text-slate-500'}`}>
-                      {opt.desc}
-                    </p>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-1">
+                        <span className={`text-sm font-bold transition ${isSelected ? 'text-blue-900' : 'text-slate-800 group-hover:text-blue-600'}`}>
+                          {opt.label}
+                        </span>
+                        {isSelected && (
+                          <span className="h-2 w-2 rounded-full bg-blue-600 ring-2 ring-blue-200" />
+                        )}
+                      </div>
+                      <p className={`mt-0.5 text-xs leading-snug transition ${isSelected ? 'text-blue-800/85' : 'text-slate-500'}`}>
+                        {opt.desc}
+                      </p>
+                    </div>
                   </button>
                 );
               })}

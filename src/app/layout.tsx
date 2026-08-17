@@ -81,9 +81,9 @@ export default async function RootLayout({
     {
       '@context': 'https://schema.org',
       '@type': 'SportsOrganization',
-      name: 'Sporto',
-      alternateName: 'Sporto Asia',
-      url: 'https://sporto.asia',
+      name: BRAND.name,
+      alternateName: `${BRAND.name} Asia`,
+      url: BRAND.domain,
       logo: {
         '@type': 'ImageObject',
         url: 'https://sporto.asia/sporto_512.png',
@@ -91,15 +91,15 @@ export default async function RootLayout({
         height: '512',
       },
       image: 'https://sporto.asia/sporto_1024.png',
-      description: 'Nền tảng tổ chức, quản lý và tham gia giải đấu thể thao câu lạc bộ chuyên nghiệp.',
+      description: `${BRAND.name} - ${BRAND.tagline}. Nền tảng tổ chức và tham gia giải đấu thể thao chuyên nghiệp.`,
       sameAs: [],
     },
     {
       '@context': 'https://schema.org',
       '@type': 'WebSite',
-      name: 'Sporto',
-      alternateName: 'Sporto - Quản lý giải đấu',
-      url: 'https://sporto.asia',
+      name: BRAND.name,
+      alternateName: `${BRAND.name} - ${BRAND.tagline}`,
+      url: BRAND.domain,
     },
   ];
 

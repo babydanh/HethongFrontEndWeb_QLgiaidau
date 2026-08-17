@@ -5,8 +5,8 @@
  */
 
 export const BRAND = {
-  name: 'Sporto',
-  tagline: 'Nền tảng Quản lý & Tổ chức Giải đấu Thể thao Toàn diện',
+  name: 'SportO',
+  tagline: 'Chơi cùng nhau',
   domain: 'https://sporto.asia',
   
   // Brand Logos & Icons

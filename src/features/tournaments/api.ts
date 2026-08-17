@@ -517,6 +517,7 @@ export const tournamentsApi = {
     footballAllowDraw?: boolean;
     bracketType?: 'single_elimination' | 'double_elimination' | 'round_robin' | 'group_stage_knockout';
     maxTeams?: number;
+    entryFee?: number;
     description?: string;
     registrationMode?: 'OPEN' | 'INVITE_ONLY';
     venueName?: string;

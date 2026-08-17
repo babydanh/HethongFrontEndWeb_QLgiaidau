@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { Trophy } from "lucide-react";
 import { BRAND } from "@/constants/brand";
 
 export function Footer() {
@@ -17,8 +16,8 @@ export function Footer() {
                 className="h-10 md:h-12 w-auto object-contain"
               />
             </Link>
-            <p className="text-sm text-slate-500">
-              Nền tảng quản lý giải đấu chuyên nghiệp và dễ sử dụng nhất.
+            <p className="text-sm font-medium text-slate-600">
+              {BRAND.tagline} · Nền tảng quản lý giải đấu chuyên nghiệp.
             </p>
           </div>
           <div>
@@ -45,10 +44,9 @@ export function Footer() {
           </div>
         </div>
         <div className="mt-8 border-t border-slate-100 pt-8 text-center text-sm text-slate-500 select-none">
-          © 2026 Sporto. Tất cả các quyền được bảo lưu.
+          © 2026 {BRAND.name}. Tất cả các quyền được bảo lưu.
         </div>
       </div>
     </footer>
   );
 }
-

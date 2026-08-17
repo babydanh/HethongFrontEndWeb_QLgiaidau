@@ -12,6 +12,7 @@ import type {
 } from "@/types/community-social";
 import { cn } from "@/utils/cn";
 import { getErrorMessage } from "@/utils/error";
+import { formatRelativeTime } from "@/utils/format";
 import CommunityAvatar from "./CommunityAvatar";
 import CommunityPollCard from "./CommunityPollCard";
 import ImageLightboxModal from "@/components/common/ImageLightboxModal";
@@ -386,11 +387,7 @@ export default function CommunityPostCard({
               )}
             </div>
             <p className="text-xs text-slate-500 font-medium mt-0.5">
-              {new Date(post.createdAt).toLocaleDateString("vi-VN", {
-                day: "2-digit",
-                month: "2-digit",
-                year: "numeric",
-              })}
+              {formatRelativeTime(post.createdAt)}
               {post.status === "PENDING" ? " · Đang chờ duyệt" : ""}
             </p>
           </div>
@@ -662,10 +659,7 @@ export default function CommunityPostCard({
                           </button>
                           {comment.createdAt && (
                             <span className="text-slate-400 font-normal">
-                              {new Date(comment.createdAt).toLocaleDateString("vi-VN", {
-                                day: "2-digit",
-                                month: "2-digit",
-                              })}
+                              {formatRelativeTime(comment.createdAt)}
                             </span>
                           )}
                           {(currentUser?.id === comment.author?.id || canManage) && (

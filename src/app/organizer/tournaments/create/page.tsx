@@ -11,6 +11,7 @@ import Step3ScheduleFees from './components/Step3ScheduleFees';
 import Step4ReviewSubmit from './components/Step4ReviewSubmit';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { BRAND } from '@/constants/brand';
+import QuickTournamentCreate from './QuickTournamentCreate';
 
 const STEPS = [
   { id: 1, label: 'Thông Tin', icon: Info },
@@ -19,7 +20,7 @@ const STEPS = [
   { id: 4, label: 'Xác Nhận', icon: CheckCircle },
 ];
 
-function CreateTournamentForm() {
+function AdvancedTournamentForm() {
   const searchParams = useSearchParams();
   const communityId = searchParams.get('communityId');
   const isClubAdvanced = Boolean(communityId);
@@ -104,6 +105,11 @@ function CreateTournamentForm() {
       </div>
     </div>
   );
+}
+
+function CreateTournamentForm() {
+  const searchParams = useSearchParams();
+  return searchParams.get('mode') === 'advanced' ? <AdvancedTournamentForm /> : <QuickTournamentCreate />;
 }
 
 export default function CreateTournamentPage() {

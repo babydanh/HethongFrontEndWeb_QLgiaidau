@@ -85,6 +85,16 @@ export default function CommunityPollCard({
     }
   };
 
+  const sortedOptions = [...currentPoll.options].sort((a, b) => {
+    const getScore = (text: string) => {
+      if (text.includes('Có tham gia') || text.includes('Đăng ký') || text.includes('✅')) return 1;
+      if (text.includes('Chưa chắc chắn') || text.includes('suy nghĩ') || text.includes('⏳')) return 2;
+      if (text.includes('Không') || text.includes('Bận') || text.includes('❌')) return 3;
+      return 2;
+    };
+    return getScore(a.optionText) - getScore(b.optionText);
+  });
+
   return (
     <div className="mt-3 overflow-hidden rounded-xl border border-blue-100 bg-slate-50/60 p-4 shadow-xs">
       {/* Header: Question + Mode Badge + Expiration / Close Button */}
@@ -129,7 +139,7 @@ export default function CommunityPollCard({
 
       {/* Options List */}
       <div className="mt-3.5 space-y-2">
-        {currentPoll.options.map((option) => {
+        {sortedOptions.map((option) => {
           const percentage = totalVotes > 0 ? Math.round((option.voteCount / totalVotes) * 100) : 0;
           const isVotingThis = votingOptionId === option.id;
 

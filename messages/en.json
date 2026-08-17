@@ -474,7 +474,19 @@
     "earlyFinishConfirm": "Finish early? Unplayed matches will be cancelled.",
     "endingStage": "Finishing...",
     "stageFinished": "Stage finished!",
-    "earlyFinishStageConfirm": "Finish this stage early? Unplayed matches will be cancelled."
+    "earlyFinishStageConfirm": "Finish this stage early? Unplayed matches will be cancelled.",
+    "winnersBracket": "Winners bracket",
+    "losersBracket": "Losers bracket",
+    "grandFinal": "Grand final",
+    "resetFinal": "Reset final",
+    "upperGrandFinal": "Winners grand final",
+    "upperSemifinal": "Winners semifinal",
+    "upperQuarterfinal": "Winners quarterfinal",
+    "upperRound": "Winners round {round}",
+    "upperQualifier": "Winners qualifier",
+    "lowerGrandFinal": "Losers grand final",
+    "lowerSemifinal": "Losers semifinal",
+    "lowerRound": "Losers round {round}"
   }
 ,
   "LiveMatch": {

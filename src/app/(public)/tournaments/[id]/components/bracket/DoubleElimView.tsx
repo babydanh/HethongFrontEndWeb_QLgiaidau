@@ -11,6 +11,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Maximize2, Minimize2 } from 'lucide-react';
 import type { BracketMatch } from '@/features/tournaments/api';
 import type { SportRuleKind } from '@/types/tournament';
@@ -41,6 +42,7 @@ export function DoubleElimView({
   fallbackSportRuleKind,
   panEnabled = false,
 }: Props) {
+  const translate = useTranslations('TournamentDetail');
   const cardH = onScheduleMatch ? CARD_H_ORGANIZER : CARD_H_PUBLIC;
   const [zoom, setZoom] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -169,16 +171,16 @@ export function DoubleElimView({
   const visibleLowerMatches = visibleLbRounds.flatMap((round) => lbByRound[round] || []);
   const allMatches = [...upperMatches, ...visibleLowerMatches, ...gfSorted];
   const getUpperRoundHeader = (fromEnd: number) => {
-    if (fromEnd === 0) return 'CK NHÁNH THẮNG';
-    if (fromEnd === 1) return 'BK NHÁNH THẮNG';
-    if (fromEnd === 2) return 'TỨ KẾT NHÁNH THẮNG';
-    if (fromEnd >= 3 && fromEnd <= 5) return `VÒNG ${2 ** (fromEnd + 1)} NHÁNH THẮNG`;
-    return 'VÒNG LOẠI NHÁNH THẮNG';
+    if (fromEnd === 0) return translate('upperGrandFinal');
+    if (fromEnd === 1) return translate('upperSemifinal');
+    if (fromEnd === 2) return translate('upperQuarterfinal');
+    if (fromEnd >= 3 && fromEnd <= 5) return translate('upperRound', { round: 2 ** (fromEnd + 1) });
+    return translate('upperQualifier');
   };
   const getLowerRoundHeader = (fromEnd: number, displayRound: number) => {
-    if (fromEnd === 0) return 'CK NHÁNH THUA';
-    if (fromEnd === 1) return 'BK NHÁNH THUA';
-    return `LƯỢT NHÁNH THUA ${displayRound}`;
+    if (fromEnd === 0) return translate('lowerGrandFinal');
+    if (fromEnd === 1) return translate('lowerSemifinal');
+    return translate('lowerRound', { round: displayRound });
   };
 
   return (
@@ -312,7 +314,7 @@ export function DoubleElimView({
             >
               <div className="w-1 h-3.5 bg-blue-500 rounded-full" />
                 <span className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">
-                  Nhánh thắng
+                  {translate("winnersBracket")}
               </span>
             </div>
 
@@ -324,7 +326,7 @@ export function DoubleElimView({
               >
                 <div className="w-1 h-3.5 bg-rose-500 rounded-full" />
                   <span className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">
-                    Nhánh thua
+                    {translate("losersBracket")}
                 </span>
               </div>
             )}
@@ -381,7 +383,7 @@ export function DoubleElimView({
               >
                 <div className="w-1 h-3.5 bg-slate-1000 rounded-full" />
                 <span className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">
-                  Chung kết tổng
+                  {translate("grandFinal")}
                 </span>
               </div>
             )}
@@ -396,7 +398,7 @@ export function DoubleElimView({
                 <div className="flex items-center gap-2">
                   <div className="w-1 h-3.5 bg-slate-400 rounded-full" />
                   <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
-                    Chung kết phụ
+                    {translate("resetFinal")}
                   </span>
                 </div>
                 <div className="text-[9px] font-bold text-slate-400 bg-white/90 border border-slate-200 rounded-lg px-2 py-1 shadow-sm">

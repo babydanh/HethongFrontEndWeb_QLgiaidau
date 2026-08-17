@@ -474,7 +474,19 @@
     "earlyFinishConfirm": "Kết thúc sớm? Các trận chưa đấu sẽ bị hủy.",
     "endingStage": "Đang kết thúc...",
     "stageFinished": "Đã kết thúc stage!",
-    "earlyFinishStageConfirm": "Kết thúc sớm stage này? Các trận chưa đấu sẽ bị hủy."
+    "earlyFinishStageConfirm": "Kết thúc sớm stage này? Các trận chưa đấu sẽ bị hủy.",
+    "winnersBracket": "Nhánh thắng",
+    "losersBracket": "Nhánh thua",
+    "grandFinal": "Chung kết tổng",
+    "resetFinal": "Chung kết phụ",
+    "upperGrandFinal": "CK NHÁNH THẮNG",
+    "upperSemifinal": "BK NHÁNH THẮNG",
+    "upperQuarterfinal": "TỨ KẾT NHÁNH THẮNG",
+    "upperRound": "VÒNG {round} NHÁNH THẮNG",
+    "upperQualifier": "VÒNG LOẠI NHÁNH THẮNG",
+    "lowerGrandFinal": "CK NHÁNH THUA",
+    "lowerSemifinal": "BK NHÁNH THUA",
+    "lowerRound": "LƯỢT NHÁNH THUA {round}"
   }
 ,
   "LiveMatch": {

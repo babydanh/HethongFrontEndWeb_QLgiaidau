@@ -16,7 +16,7 @@ import { regionsApi, Region } from '@/features/regions/api';
 import toast from 'react-hot-toast';
 import { 
   User, Lock, Save, Camera, ArrowLeft, Loader2, Shield, MapPin,
-  Trash2, Mail, Phone, ShieldAlert, CheckCircle2, AlertTriangle, EyeOff, Eye, X, CreditCard
+  Trash2, Mail, Phone, ShieldAlert, CheckCircle2, AlertTriangle, EyeOff, Eye, X, CreditCard, MessageCircle
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';

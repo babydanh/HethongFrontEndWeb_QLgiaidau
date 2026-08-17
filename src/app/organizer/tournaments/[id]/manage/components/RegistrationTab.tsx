@@ -88,6 +88,7 @@ interface RegistrationTabProps {
   handleRegenerateInviteCode: () => void;
   handleApproveParticipant: (participantId: string) => Promise<void>;
   handleRejectParticipant: (participantId: string) => Promise<void>;
+  handleKickParticipant?: (participantId: string, reason?: string) => Promise<void>;
   handleSeedMockData: () => void;
   handleClearMockData: () => void;
   handleAssignWildcard: () => void;

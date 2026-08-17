@@ -18,6 +18,7 @@ export interface User {
   isEmailVerified?: boolean;
   isPhoneVerified?: boolean;
   isGenderLocked?: boolean;
+  allowStrangerMessages?: boolean;
   bankName?: string | null;
   bankAccountNumber?: string | null;
   bankAccountName?: string | null;

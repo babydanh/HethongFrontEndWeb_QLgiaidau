@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Division, Tournament, divisionsApi, tournamentsApi } from '@/features/tournaments/api';
 import { isLiteTournament } from '@/features/tournaments/lite-qr';
 import { Button } from '@/components/ui/Button';
@@ -310,7 +311,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
         <div className="rounded-lg border border-slate-200 bg-white px-6 py-5 text-sm font-semibold text-slate-600 shadow-sm">
-          Đang tải dữ liệu giải đấu...
+          {translate('loading')}
         </div>
       </div>
     );
@@ -320,13 +321,13 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
         <div className="max-w-md rounded-lg border border-slate-200 bg-white p-6 text-center shadow-sm">
-          <h1 className="text-lg font-bold text-slate-900">Không mở được trang giải đấu</h1>
+          <h1 className="text-lg font-bold text-slate-900">{translate('loadErrorTitle')}</h1>
           <p className="mt-2 text-sm font-medium text-slate-500">
-            {initialLoadError || 'Dữ liệu giải đấu không tồn tại hoặc chưa sẵn sàng trên web.'}
+            {initialLoadError || translate('loadErrorFallback')}
           </p>
           <div className="mt-4">
             <Button onClick={() => router.push('/tournaments')} className="bg-blue-600 hover:bg-blue-700 text-white">
-              Quay lại danh sách giải đấu
+              {translate('backToTournaments')}
             </Button>
           </div>
         </div>
@@ -346,27 +347,27 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
 
   if (isRegistrationOpen) {
     if (isRegistrationLocked) {
-      registrationButtonLabel = 'Đã khóa đăng ký';
+      registrationButtonLabel = translate('registrationLocked');
       isRegistrationButtonDisabled = true;
     } else if (isRegistrationExpired) {
-      registrationButtonLabel = 'Hết hạn đăng ký';
+      registrationButtonLabel = translate('registrationExpired');
       isRegistrationButtonDisabled = true;
     }
   } else if (isTournamentUpcoming(activeTournament.status) || isTournamentRegistrationClosed(activeTournament.status)) {
-    registrationButtonLabel = 'Đã đóng đăng ký';
+    registrationButtonLabel = translate('registrationClosed');
     isRegistrationButtonDisabled = true;
   } else if (isTournamentInProgress(activeTournament.status)) {
-    registrationButtonLabel = 'Đang diễn ra';
+    registrationButtonLabel = translate('inProgress');
     isRegistrationButtonDisabled = true;
   } else if (isTournamentCompleted(activeTournament.status)) {
-    registrationButtonLabel = 'Đã kết thúc';
+    registrationButtonLabel = translate('completed');
     isRegistrationButtonDisabled = true;
   } else if (isTournamentCancelled(activeTournament.status)) {
-    registrationButtonLabel = 'Đã hủy';
+    registrationButtonLabel = translate('cancelled');
     isRegistrationButtonDisabled = true;
   } else {
     isRegistrationButtonDisabled = true;
-    registrationButtonLabel = 'Chưa mở đăng ký';
+    registrationButtonLabel = translate('notOpen');
   }
 
   const participantCount = selectedDivision ? (selectedDivision._summary?.participantCount ?? selectedDivision._count?.participants ?? 0) : 0;
@@ -389,14 +390,14 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
   const registerHref = `/tournaments/${activeTournament.id}/register${registerParams.toString() ? `?${registerParams.toString()}` : ''}`;
 
   const formatDateRange = (start?: string, end?: string) => {
-    if (!start && !end) return 'Chưa cập nhật';
+    if (!start && !end) return translate('notUpdated');
     const sStr = start ? formatDate(start) : '...';
     const eStr = end ? formatDate(end) : '...';
     return `${sStr} - ${eStr}`;
   };
 
   const tabs: { id: TournamentDetailTab; label: string }[] = [
-    { id: 'overview', label: 'Tổng quan' },
+    { id: 'overview', label: translate('overview') },
     { id: 'teams', label: 'Đội tham gia' },
     { id: 'bracket', label: 'Bảng đấu' },
     { id: 'matches', label: 'Lịch thi đấu' },
@@ -789,7 +790,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                     return (
                       <CountdownTimer
                         targetDate={activeTournament.registrationEndDate!}
-                        labels={{ active: 'Đóng đăng ký sau', expired: 'Đã đóng đăng ký' }}
+                        labels={{ active: translate('closeRegistrationAfter'), expired: translate('registrationClosed') }}
                         variant="warning"
                       />
                     );
@@ -812,7 +813,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                       <div>
                         <CountdownTimer
                           targetDate={activeTournament.endDate!}
-                          labels={{ active: 'Kết thúc sau', expired: 'Đã kết thúc' }}
+                          labels={{ active: translate('endAfter'), expired: translate('completed') }}
                           variant="danger"
                         />
                         <p className="text-[10px] text-slate-400 mt-1 italic">Lịch có thể thay đổi</p>
@@ -826,7 +827,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                       <div className="mt-2 p-2.5 border rounded-lg bg-slate-50 border-slate-200 text-slate-400">
                         <div className="flex items-center gap-2">
                           <div className="w-2 h-2 rounded-full bg-slate-400" />
-                          <span className="text-xs font-bold text-slate-400">Đã kết thúc</span>
+                          <span className="text-xs font-bold text-slate-400">{translate('completed')}</span>
                         </div>
                       </div>
                     );
@@ -920,7 +921,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
             {/* Contact Info Card */}
             {activeTournament.contactInfo && (
               <div className="bg-white rounded-lg border border-slate-250/80 p-6 flex flex-col gap-2.5 shadow-sm mt-4">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Thông tin liên hệ</span>
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-0.5">{translate('contactInfo')}</span>
                 {activeTournament.contactInfo.phone && (
                   <div className="flex items-center gap-2.5">
                     <Phone className="w-4 h-4 text-slate-450 shrink-0" />

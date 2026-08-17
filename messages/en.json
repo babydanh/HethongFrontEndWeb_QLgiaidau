@@ -408,5 +408,23 @@
     "user": "User",
     "noUpcomingTournaments": "No Upcoming Tournaments",
     "noUpcomingDescription": "Follow this page for updates on upcoming tournaments."
+  },
+  "TournamentDetail": {
+    "loading": "Loading tournament data...",
+    "loadErrorTitle": "Unable to open tournament page",
+    "loadErrorFallback": "Tournament data does not exist or is not ready on the web.",
+    "backToTournaments": "Back to tournaments",
+    "registrationLocked": "Registration locked",
+    "registrationExpired": "Registration expired",
+    "registrationClosed": "Registration closed",
+    "inProgress": "In progress",
+    "completed": "Completed",
+    "cancelled": "Cancelled",
+    "notOpen": "Registration not open",
+    "notUpdated": "Not updated",
+    "overview": "Overview",
+    "contactInfo": "Contact information",
+    "closeRegistrationAfter": "Registration closes in",
+    "endAfter": "Ends in"
   }
 }

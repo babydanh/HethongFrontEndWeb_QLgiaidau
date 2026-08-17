@@ -408,5 +408,23 @@
     "user": "Người dùng",
     "noUpcomingTournaments": "Chưa Có Giải Đấu Nào Sắp Diễn Ra",
     "noUpcomingDescription": "Hãy theo dõi trang để cập nhật thông tin về các giải đấu mới nhất sắp sửa diễn ra."
+  },
+  "TournamentDetail": {
+    "loading": "Đang tải dữ liệu giải đấu...",
+    "loadErrorTitle": "Không mở được trang giải đấu",
+    "loadErrorFallback": "Dữ liệu giải đấu không tồn tại hoặc chưa sẵn sàng trên web.",
+    "backToTournaments": "Quay lại danh sách giải đấu",
+    "registrationLocked": "Đã khóa đăng ký",
+    "registrationExpired": "Hết hạn đăng ký",
+    "registrationClosed": "Đã đóng đăng ký",
+    "inProgress": "Đang diễn ra",
+    "completed": "Đã kết thúc",
+    "cancelled": "Đã hủy",
+    "notOpen": "Chưa mở đăng ký",
+    "notUpdated": "Chưa cập nhật",
+    "overview": "Tổng quan",
+    "contactInfo": "Thông tin liên hệ",
+    "closeRegistrationAfter": "Đóng đăng ký sau",
+    "endAfter": "Kết thúc sau"
   }
 }

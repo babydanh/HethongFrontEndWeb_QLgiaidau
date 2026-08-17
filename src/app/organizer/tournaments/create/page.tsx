@@ -1,9 +1,9 @@
 'use client';
 
 import { useCreateTournamentStore } from '@/lib/zustand/createTournamentStore';
-import { Info, Zap, Calendar, CheckCircle, Check } from 'lucide-react';
+import { Info, Zap, Calendar, CheckCircle, Check, ArrowLeft } from 'lucide-react';
 import Image from 'next/image';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, Suspense } from 'react';
 import Step1Info from './components/Step1Info';
 import Step2FormatMulti from './components/Step2Format_Multi';
@@ -21,6 +21,7 @@ const STEPS = [
 ];
 
 function AdvancedTournamentForm() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const communityId = searchParams.get('communityId');
   const isClubAdvanced = Boolean(communityId);
@@ -45,14 +46,19 @@ function AdvancedTournamentForm() {
   return (
     <div className="bg-slate-50 min-h-screen py-12 px-4 md:px-8">
       <div className="max-w-3xl mx-auto">
-
         {/* Header */}
-        <div className="mb-8 text-center">
-          <div className="w-24 h-24 flex items-center justify-center mx-auto mb-4">
-            <Image src={BRAND.assets.logoIcon} alt={`${BRAND.name} Logo`} width={96} height={96} className="w-full h-full object-contain" priority />
+        <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="text-left">
+            <h1 className="text-3xl font-bold text-slate-900">Tạo giải đấu (Nâng cao)</h1>
+            <p className="text-slate-500 mt-1 font-medium">Thiết lập chi tiết điều lệ, phân bảng và lệ phí qua 4 bước</p>
           </div>
-          <h1 className="text-3xl font-bold text-slate-900">Tạo Giải Đấu Mới</h1>
-          <p className="text-slate-500 mt-2 font-medium">Lập giải đấu nháp rõ ràng trong 4 bước</p>
+          <button
+            type="button"
+            onClick={() => router.push(`/organizer/tournaments/create${communityId ? `?communityId=${communityId}` : ''}`)}
+            className="inline-flex items-center gap-2 self-start md:self-auto rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition"
+          >
+            <ArrowLeft className="h-4 w-4" /> Tạo nhanh
+          </button>
         </div>
 
         {isClubAdvanced && (
@@ -101,26 +107,18 @@ function AdvancedTournamentForm() {
             {currentStep === 4 && <Step4ReviewSubmit />}
           </div>
         </div>
-
       </div>
     </div>
   );
 }
 
-function CreateTournamentForm() {
-  const searchParams = useSearchParams();
-  return searchParams.get('mode') === 'advanced' ? <AdvancedTournamentForm /> : <QuickTournamentCreate />;
-}
-
 export default function CreateTournamentPage() {
+  const searchParams = useSearchParams();
+  const isAdvanced = searchParams.get('mode') === 'advanced';
+
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <LoadingSpinner className="w-12 h-12 text-blue-600" />
-      </div>
-    }>
-      <CreateTournamentForm />
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><LoadingSpinner className="h-8 w-8 text-blue-600" /></div>}>
+      {isAdvanced ? <AdvancedTournamentForm /> : <QuickTournamentCreate />}
     </Suspense>
   );
 }
-

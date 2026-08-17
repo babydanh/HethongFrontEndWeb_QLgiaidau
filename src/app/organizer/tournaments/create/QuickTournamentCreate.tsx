@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter, useSearchParams } from 'next/navigation';
 import toast from 'react-hot-toast';
-import { ArrowRight, Settings2, Sparkles, MapPin } from 'lucide-react';
+import { ArrowRight, Settings2, MapPin } from 'lucide-react';
 import { categoriesApi, Category } from '@/features/categories/api';
 import { tournamentsApi } from '@/features/tournaments/api';
 import { regionsApi, Region } from '@/features/regions/api';
@@ -387,7 +387,7 @@ export default function QuickTournamentCreate() {
         isRanked: values.isRanked,
       });
 
-      toast.success(values.visibility === 'PUBLIC' ? 'Đã tạo, đang chờ Admin duyệt công khai.' : 'Tạo giải nhanh thành công.');
+      toast.success(values.visibility === 'PUBLIC' ? 'Đã tạo, đang chờ Admin duyệt công khai.' : 'Tạo giải đấu thành công.');
       if (response?.id) router.push(`/lite/tournaments/${response.id}/manage`);
     } catch (error: unknown) {
       toast.error(getErrorMessage(error, 'Không thể tạo giải đấu.'));
@@ -401,16 +401,15 @@ export default function QuickTournamentCreate() {
       <section className="mx-auto max-w-3xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
         <div className="mb-8 flex items-start justify-between gap-4">
           <div>
-            <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-blue-600">
-              <Sparkles className="h-4 w-4" /> Tạo nhanh
-            </div>
-            <h1 className="text-3xl font-bold text-slate-900">Tạo giải đấu nhanh</h1>
-            <p className="mt-2 text-sm text-slate-500">Preset chỉ là điểm khởi đầu. Bạn vẫn có thể chỉnh luật trong trang quản lý.</p>
+            <h1 className="text-3xl font-bold text-slate-900">Tạo giải đấu</h1>
+            <p className="mt-2 text-sm leading-relaxed text-slate-600">
+              Tạo nhanh để bắt đầu ngay, bạn có thể thiết lập đầy đủ chi tiết và luật thi đấu bên trong trang quản lý sau. Giải phong trào không thu phí, không tính điểm ELO quốc gia.
+            </p>
           </div>
           <button
             type="button"
             onClick={() => router.push(`/organizer/tournaments/create?mode=advanced${communityId ? `&communityId=${communityId}` : ''}`)}
-            className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
+            className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-slate-300 px-3.5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition shadow-2xs"
           >
             <Settings2 className="h-4 w-4" /> Nâng cao
           </button>
@@ -666,7 +665,7 @@ export default function QuickTournamentCreate() {
             />
             <span>
               <span className="block font-semibold text-slate-800">Tính ELO</span>
-              <span className="text-xs text-slate-500">Giải phong trào có thể tắt; giải lớn/toàn quốc nên mở cấu hình nâng cao.</span>
+              <span className="text-xs text-slate-500">Giải phong trào không tính ELO quốc gia. Bật tính năng này nếu là giải giao hữu tính xếp hạng nội bộ.</span>
             </span>
           </label>
 
@@ -816,7 +815,7 @@ export default function QuickTournamentCreate() {
               disabled={isSubmitting}
               className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60 transition shadow-xs"
             >
-              {isSubmitting ? 'Đang tạo...' : 'Tạo giải nhanh'}
+              {isSubmitting ? 'Đang tạo...' : 'Tạo giải đấu'}
               <ArrowRight className="h-4 w-4" />
             </button>
           </div>

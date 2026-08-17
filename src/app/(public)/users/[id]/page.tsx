@@ -133,7 +133,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
       <div className="min-h-screen bg-slate-50 text-slate-800 flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
-          <p className="text-slate-500 font-bold text-sm">Đang tải hồ sơ thành viên...</p>
+          <p className="text-slate-500 font-bold text-sm">{translate('loading')}</p>
         </div>
       </div>
     );
@@ -146,13 +146,13 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
           <div className="w-24 h-24 flex items-center justify-center mx-auto mb-4">
             <img src={BRAND.assets.logoIcon} alt={BRAND.name} className="w-full h-full object-contain" />
           </div>
-          <h2 className="text-xl font-bold text-slate-900 mb-2">{error || 'Không tìm thấy người dùng'}</h2>
-          <p className="text-slate-500 text-sm mb-6 font-medium">Tài khoản này có thể không tồn tại hoặc đã bị khóa khỏi hệ thống.</p>
+          <h2 className="text-xl font-bold text-slate-900 mb-2">{error || '{translate('notFoundTitle')}'}</h2>
+          <p className="text-slate-500 text-sm mb-6 font-medium">{translate('notFoundDescription')}</p>
           <Link
             href="/tournaments"
             className="inline-flex items-center justify-center px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-all shadow-md"
           >
-            Quay lại trang chủ
+            {translate('backHome')}
           </Link>
         </div>
       </div>
@@ -160,12 +160,12 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
   }
 
   const getMatchTypeLabel = (matchType: string) => {
-    return matchType === 'SINGLES' ? 'Đánh đơn' : 'Đánh đôi';
+    return translate(matchType === 'SINGLES' ? 'singles' : 'doubles');
   };
 
   const getGenderLabel = (gender: string | null) => {
-    if (!gender) return 'Chưa cập nhật';
-    return gender === 'MALE' ? 'Nam' : gender === 'FEMALE' ? 'Nữ' : 'Khác';
+    if (!gender) return translate('notUpdated');
+    return translate(gender === 'MALE' ? 'male' : gender === 'FEMALE' ? 'female' : 'other');
   };
 
   const displayedRanks = [...(profile.ranks || []), ...(profile.pairRanks || [])];
@@ -178,7 +178,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
           onClick={() => window.history.back()}
           className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
         >
-          <ArrowLeft className="w-4 h-4" /> Quay lại
+          <ArrowLeft className="w-4 h-4" /> {translate('back')}
         </button>
         <ReportViolationButton
           targetType="USER"
@@ -240,13 +240,13 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
 
       <div className="flex flex-wrap items-center gap-2">
               {Array.from(new Set(profile.roles || (profile.role ? [profile.role] : ['PLAYER']))).map((role: string) => {
-                let roleLabel = 'Vận động viên';
+                let roleLabel = translate('player');
                 let roleColor = 'bg-[#e0f2fe] text-[#1e3a8a]';
                 if (role === 'ORGANIZER') {
-                  roleLabel = 'Ban tổ chức';
+                  roleLabel = translate('organizer');
                   roleColor = 'bg-[#f3e8ff] text-[#6b21a8]';
                 } else if (role === 'ADMIN') {
-                  roleLabel = 'Quản trị viên';
+                  roleLabel = translate('admin');
                   roleColor = 'bg-[#fdf2e9] text-[#991b1b]';
                 }
                 return (
@@ -257,7 +257,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
               })}
               {profile.isVerified && (
                 <span className="px-3.5 py-1.5 text-xs font-bold rounded-md bg-[#dcfce7] text-[#166534] uppercase tracking-wider">
-                  Đã xác minh
+                  {translate('verified')}
                 </span>
               )}
               {!hideEloSection && (() => {
@@ -283,7 +283,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
               ) : null}
               {profile.createdAt && (
                 <span className="bg-[#f3f4f6] text-[#4b5563] px-3.5 py-1.5 rounded-md text-xs font-bold flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5 text-slate-400" /> Tham gia từ {formatDate(profile.createdAt, 'MM/yyyy')}
+                  <Calendar className="w-3.5 h-3.5 text-slate-400" /> {translate('memberSince')} {formatDate(profile.createdAt, 'MM/yyyy')}
                 </span>
               )}
             </div>
@@ -313,23 +313,23 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
         {activeTab === 'overview' && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="md:col-span-1 flex flex-col gap-6">
-              {/* Giới thiệu */}
+              {/* {translate('about')} */}
               <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
-                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">Giới thiệu</h3>
+                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">{translate('about')}</h3>
                 {profile.bio ? (
                   <p className="text-slate-650 text-sm leading-relaxed whitespace-pre-wrap font-medium">
                     {profile.bio}
                   </p>
                 ) : (
                   <p className="text-slate-400 text-sm italic font-medium">
-                    Chưa cập nhật phần giới thiệu bản thân.
+                    {translate('bioEmpty')}
                   </p>
                 )}
               </div>
 
-              {/* Thông tin chi tiết */}
+              {/* {translate('detailsHeading')} */}
               <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
-                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">Thông tin chi tiết</h3>
+                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">{translate('detailsHeading')}</h3>
                 <div className="flex flex-col gap-4 text-sm">
                   <div className="flex flex-col gap-1 border-b border-slate-100 pb-3">
                     <span className="text-slate-500 font-medium">Giới tính</span>
@@ -475,7 +475,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
               ) : (
                 <div className="text-center py-10 border-2 border-dashed border-slate-100 rounded-lg">
                   <Trophy className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                  <p className="text-slate-600 font-semibold">Chưa có danh hiệu thành tích</p>
+                  <p className="text-slate-600 font-semibold">{translate('noAchievements')}</p>
                   <p className="text-slate-400 text-sm mt-1">Danh hiệu sẽ hiện khi người chơi có top 3 ở giải public ELO.</p>
                 </div>
               )}
@@ -581,7 +581,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
               )}
 
               <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
-                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">Lịch sử thay đổi ELO</h3>
+                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">{translate('eloHistory')}</h3>
                 {eloHistory.length > 0 ? (
                   <div className="flex flex-col gap-4">
                     {eloHistory.map((item) => {

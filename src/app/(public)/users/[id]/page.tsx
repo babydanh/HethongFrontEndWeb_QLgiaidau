@@ -231,7 +231,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
               <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-2 tracking-tight">
                 {profile.fullName}
                 {profile.isVerified && (
-                  <span title="Thành viên đã xác minh" className="bg-blue-50 p-1 rounded-full border border-blue-200">
+                  <span title={translate('verifiedMember')} className="bg-blue-50 p-1 rounded-full border border-blue-200">
                     <ShieldCheck className="w-5 h-5 text-blue-600" />
                   </span>
                 )}
@@ -272,13 +272,13 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                 }
                 return (
                   <span className="bg-[#f3f4f6] text-[#4b5563] px-3.5 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider">
-                    Chưa xếp hạng
+                    {translate('unranked')}
                   </span>
                 );
               })()}
               {profile.achievements?.length ? (
                 <span className="bg-slate-50 border border-slate-200 text-slate-600 px-3.5 py-1 rounded-md text-xs font-bold flex items-center gap-1.5">
-                  <Trophy className="w-3.5 h-3.5 text-blue-500" /> {profile.achievements.length} danh hiệu
+                  <Trophy className="w-3.5 h-3.5 text-blue-500" /> {profile.achievements.length} {translate('achievementsLabel')}
                 </span>
               ) : null}
               {profile.createdAt && (
@@ -332,7 +332,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                 <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">{translate('detailsHeading')}</h3>
                 <div className="flex flex-col gap-4 text-sm">
                   <div className="flex flex-col gap-1 border-b border-slate-100 pb-3">
-                    <span className="text-slate-500 font-medium">Giới tính</span>
+                    <span className="text-slate-500 font-medium">{translate('gender')}</span>
                     <span className="text-slate-900 font-semibold">{getGenderLabel(profile.gender)}</span>
                   </div>
                 </div>
@@ -342,8 +342,8 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
             <div className="md:col-span-2 space-y-6">
               <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6 text-center py-12 border-dashed">
                 <Activity className="w-12 h-12 text-slate-350 mx-auto mb-3" />
-                <p className="text-slate-550 font-semibold text-lg">Chưa có dữ liệu hoạt động</p>
-                <p className="text-slate-450 text-xs font-medium mt-1">Hệ thống ghi nhận hoạt động tự động khi bắt đầu tham gia các giải đấu.</p>
+                <p className="text-slate-550 font-semibold text-lg">{translate('noActivity')}</p>
+                <p className="text-slate-450 text-xs font-medium mt-1">{translate('activityEmptyHint')}</p>
               </div>
             </div>
           </div>
@@ -363,8 +363,8 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                   );
 
                   const opponentName = isP1
-                    ? match.participant2?.teamName || 'Chưa xác định'
-                    : match.participant1?.teamName || 'Chưa xác định';
+                    ? match.participant2?.teamName || '{translate('unknown')}'
+                    : match.participant1?.teamName || '{translate('unknown')}';
 
                   return (
                     <div
@@ -373,7 +373,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                     >
                       <div className="space-y-1">
                         <div className="flex items-center gap-2 text-xs font-semibold text-slate-400">
-                          <span>{match.group?.stage?.name || 'Giải đấu'}</span>
+                          <span>{match.group?.stage?.name || translate('tournament')}</span>
                           <span>•</span>
                           <span>Vòng {match.roundNumber}</span>
                         </div>
@@ -413,7 +413,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                           href={`/live/${match.id}`}
                           className="text-xs font-bold text-blue-600 hover:text-blue-750 flex items-center gap-1 shrink-0"
                         >
-                          Chi tiết <ChevronRight className="w-4 h-4" />
+                          {translate('details')} <ChevronRight className="w-4 h-4" />
                         </Link>
                       </div>
                     </div>
@@ -543,7 +543,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                           'ELO': item.newElo,
                           date: formatDate(item.createdAt, 'dd/MM/yyyy'),
                           reason: item.reason || (item.changedPoints > 0 ? 'Thắng' : 'Thua'),
-                          tournament: item.match?.tournamentName || 'Giải đấu'
+                          tournament: item.match?.tournamentName || translate('tournament')
                         }))}
                         margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
                       >
@@ -594,7 +594,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                           </div>
                           <div className="flex items-center gap-3 text-right">
                             <div>
-                              <span className="text-[10px] text-slate-450 block font-bold">ELO mới</span>
+                              <span className="text-[10px] text-slate-450 block font-bold">{translate('newElo')}</span>
                               <span className="text-sm font-bold text-slate-750">{item.newElo}</span>
                             </div>
                             <span className={`inline-block px-2 py-1 rounded text-xs font-bold min-w-[45px] text-center ${

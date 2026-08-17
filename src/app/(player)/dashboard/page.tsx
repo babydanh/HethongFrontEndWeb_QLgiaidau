@@ -338,12 +338,12 @@ export default function DashboardPage() {
             <>
               <Link href="/organizer/tournaments">
                 <Button variant="outline" className="text-slate-700 border-slate-200 hover:bg-slate-50 font-bold text-xs h-9">
-                  <UserCheck className="w-3.5 h-3.5 mr-1.5 text-violet-600" /> translate("manageTournaments")
+                  <UserCheck className="w-3.5 h-3.5 mr-1.5 text-violet-600" /> {translate("manageTournaments")}
                 </Button>
               </Link>
               <Link href="/organizer/tournaments/create">
                 <Button className="font-bold text-xs h-9 bg-blue-600 hover:bg-blue-700">
-                  <Plus className="w-3.5 h-3.5 mr-1.5" /> translate("createTournament")
+                  <Plus className="w-3.5 h-3.5 mr-1.5" /> {translate("createTournament")}
                 </Button>
               </Link>
             </>
@@ -351,7 +351,7 @@ export default function DashboardPage() {
             <>
               <Link href="/tournaments">
                 <Button variant="outline" className="text-slate-700 border-slate-200 hover:bg-slate-50 font-bold text-xs h-9">
-                  <Calendar className="w-3.5 h-3.5 mr-1.5 text-blue-600" /> translate("findTournaments")
+                  <Calendar className="w-3.5 h-3.5 mr-1.5 text-blue-600" /> {translate("findTournaments")}
                 </Button>
               </Link>
               <Button
@@ -396,7 +396,7 @@ export default function DashboardPage() {
                     : 'border-transparent text-slate-500 hover:text-slate-900'
                 )}
               >
-                <Trophy className="w-4 h-4" /> translate("myTournaments")
+                <Trophy className="w-4 h-4" /> {translate("myTournaments")}
                 <span className="ml-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
                   {registeredCount + totalOrganized}
                 </span>
@@ -439,7 +439,7 @@ export default function DashboardPage() {
                             <AvatarCircle src={invite.logoUrl} name={invite.tournamentName} size={36} />
                             <div>
                               <p className="text-xs font-bold text-slate-900">{invite.tournamentName}</p>
-                              <p className="text-[11px] text-slate-500">Mời làm trọng tài • {invite.categoryName || 'translate("sport")'}</p>
+                              <p className="text-[11px] text-slate-500">Mời làm trọng tài • {invite.categoryName || translate("sport")}</p>
                             </div>
                           </div>
                           <div className="flex gap-2">
@@ -450,7 +450,7 @@ export default function DashboardPage() {
                               disabled={isBusy}
                               className="h-8 text-xs font-bold px-3"
                             >
-                              {isBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'translate("decline")'}
+                              {isBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : translate("decline")}
                             </Button>
                             <Button
                               size="sm"
@@ -707,7 +707,7 @@ export default function DashboardPage() {
                                 <span className="bg-slate-100 px-2 py-0.5 rounded">{match.categoryName || 'Môn thi đấu'}</span>
                                 <span className="bg-slate-100 px-2 py-0.5 rounded">{match.stageName} • {match.groupName}</span>
                                 <span className="bg-slate-100 px-2 py-0.5 rounded">Vòng {match.roundNumber} • Trận {match.matchOrder}</span>
-                                <span className="bg-slate-100 px-2 py-0.5 rounded">Sân: {match.courtName || 'translate("unassigned")'}</span>
+                                <span className="bg-slate-100 px-2 py-0.5 rounded">Sân: {match.courtName || translate("unassigned")}</span>
                               </div>
                             </div>
                             <span className={`shrink-0 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide border ${getTournamentStatusClassName(match.status)}`}>
@@ -726,7 +726,7 @@ export default function DashboardPage() {
                     </div>
                   ) : (
                     <div className="text-center py-8 border border-dashed border-slate-200 rounded-lg text-xs text-slate-500">
-                      translate("noRefereeAssignments")
+                      {translate("noRefereeAssignments")}
                     </div>
                   )}
                 </div>
@@ -782,7 +782,7 @@ export default function DashboardPage() {
                       <div className="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600 shrink-0">
                         <Trophy className="w-3.5 h-3.5" />
                       </div>
-                      <span>translate("manageTournaments")</span>
+                      <span>{translate("manageTournaments")}</span>
                     </div>
                     <span className="text-[9px] font-extrabold text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">BTC</span>
                   </Link>
@@ -828,7 +828,7 @@ export default function DashboardPage() {
                 <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 shrink-0">
                   <Settings className="w-3.5 h-3.5" />
                 </div>
-                translate("viewProfile")
+                {translate("viewProfile")}
               </Link>
             </div>
           </div>

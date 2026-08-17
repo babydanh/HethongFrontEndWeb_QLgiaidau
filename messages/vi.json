@@ -20,6 +20,13 @@
     "close": "Đóng",
     "noData": "Chưa có dữ liệu"
   },
+  "Profile": {
+    "editCover": "Chỉnh sửa ảnh bìa",
+    "editProfile": "Chỉnh sửa hồ sơ",
+    "anonymousUser": "Người dùng ẩn danh",
+    "systemAdmin": "Quản trị viên hệ thống",
+    "unranked": "Chưa xếp hạng"
+  },
   "PlayerDashboard": {
     "statusOngoing": "Đang diễn ra",
     "statusCompleted": "Đã xong",

@@ -20,6 +20,13 @@
     "close": "Close",
     "noData": "No data available"
   },
+  "Profile": {
+    "editCover": "Edit cover photo",
+    "editProfile": "Edit profile",
+    "anonymousUser": "Anonymous user",
+    "systemAdmin": "System administrator",
+    "unranked": "Unranked"
+  },
   "PlayerDashboard": {
     "statusOngoing": "In progress",
     "statusCompleted": "Completed",

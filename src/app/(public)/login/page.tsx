@@ -2,6 +2,8 @@
 
 import * as React from 'react';
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
+
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -18,8 +20,8 @@ import toast from 'react-hot-toast';
 import { BRAND } from '@/constants/brand';
 
 const loginSchema = z.object({
-  email: z.string().email('Email không hợp lệ'),
-  password: z.string().min(6, 'Mật khẩu phải có ít nhất 6 ký tự'),
+  email: z.string().email(),
+  password: z.string().min(6),
 });
 
 type LoginForm = z.infer<typeof loginSchema>;
@@ -28,18 +30,19 @@ interface LoginResponse {
 }
 
 const HIGHLIGHTS = [
-  'Tổ chức giải đấu chuyên nghiệp',
-  'Xếp hạng ELO thời gian thực',
-  'Kết nối cộng đồng vận động viên',
+  'professionalTournaments',
+  'liveEloRanking',
+  'athleteCommunity',
 ];
 
 const STATS = [
-  { value: '5,000+', label: 'Giải đấu' },
-  { value: '50K+', label: 'Vận động viên' },
-  { value: '120+', label: 'Tỉnh thành' },
+  { value: '5,000+', label: 'tournaments' },
+  { value: '50K+', label: 'athletes' },
+  { value: '120+', label: 'provinces' },
 ];
 
 export default function LoginPage() {
+  const t = useTranslations('Auth');
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
   const setUser = useAuthStore((state) => state.setUser);
@@ -80,16 +83,16 @@ export default function LoginPage() {
       setIsLoading(true);
       const res = await api.post<ApiResponse<LoginResponse>>('/auth/login', data);
       const user = res.data?.user;
-      if (!user) throw new Error('Không nhận được thông tin người dùng từ máy chủ.');
+      if (!user) throw new Error(t('userInfoError'));
       setUser(user);
-      toast.success('Đăng nhập thành công!');
+      toast.success(t('loginSuccess'));
       router.push('/');
     } catch (error: unknown) {
       if (error && typeof error === 'object' && 'isAxiosError' in error) {
         const axiosError = error as { response?: { data?: { message?: string } } };
-        toast.error(axiosError.response?.data?.message || 'Đăng nhập thất bại.');
+        toast.error(axiosError.response?.data?.message || t('loginFailed'));
       } else {
-        toast.error('Đăng nhập thất bại.');
+        toast.error(t('loginFailed'));
       }
     } finally {
       setIsLoading(false);
@@ -130,7 +133,7 @@ export default function LoginPage() {
           <h1 className="text-4xl font-bold text-white leading-tight tracking-tight">
             Nền tảng quản lý
             <br />
-            <span className="text-blue-400">giải đấu thể thao</span>
+            <span className="text-blue-400">{t('sportsTournaments')}</span>
             <br />
             Việt Nam
           </h1>
@@ -148,7 +151,7 @@ export default function LoginPage() {
                 className="flex items-center gap-2.5 text-sm text-slate-200"
               >
                 <CheckCircle2 className="w-4 h-4 text-blue-400 shrink-0" />
-                {item}
+                {t(item)}
               </motion.li>
             ))}
           </ul>
@@ -156,9 +159,9 @@ export default function LoginPage() {
           {/* Stats strip */}
           <div className="mt-8 flex gap-6">
             {STATS.map(({ value, label }) => (
-              <div key={label}>
+              <div key={t(label)}>
                 <p className="text-2xl font-bold text-white leading-none">{value}</p>
-                <p className="text-xs text-slate-400 mt-0.5">{label}</p>
+                <p className="text-xs text-slate-400 mt-0.5">{t(label)}</p>
               </div>
             ))}
           </div>
@@ -194,9 +197,9 @@ export default function LoginPage() {
               </Link>
             </div>
 
-            <h2 className="text-xl font-bold text-slate-900 tracking-tight">Chào mừng trở lại</h2>
+            <h2 className="text-xl font-bold text-slate-900 tracking-tight">{t('welcomeBack')}</h2>
             <p className="mt-1 text-sm text-slate-500 mb-5">
-              Đăng nhập để quản lý giải đấu và xem xếp hạng ELO
+              {t('loginSubtitle')}
             </p>
 
             {/* Social Logins Stack */}
@@ -213,35 +216,35 @@ export default function LoginPage() {
                   <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
                   <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
                 </svg>
-                Tiếp tục với Google
+                {t('continueWithGoogle')}
               </button>
             </div>
 
             <div className="flex items-center gap-3 my-4">
               <div className="flex-1 h-px bg-slate-100" />
-              <span className="text-[11px] text-slate-400 font-medium uppercase tracking-wider">hoặc</span>
+              <span className="text-[11px] text-slate-400 font-medium uppercase tracking-wider">{t('or')}</span>
               <div className="flex-1 h-px bg-slate-100" />
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Email</label>
-                <Input type="email" placeholder="name@example.com" {...register('email')} error={errors.email?.message} />
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">{t('email')}</label>
+                <Input type="email" placeholder="name@example.com" {...register('email')} error={errors.email ? t('invalidEmail') : undefined} />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Mật khẩu</label>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">{t('password')}</label>
                 <div className="relative">
                   <Input
                     type={showPassword ? 'text' : 'password'}
                     placeholder="••••••••"
                     className="pr-11"
                     {...register('password')}
-                    error={errors.password?.message}
+                    error={errors.password ? t('passwordMinLength') : undefined}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword((visible) => !visible)}
-                    aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                    aria-label={showPassword ? t('hidePassword') : t('showPassword')}
                     className="absolute right-3 top-[13px] z-10 text-slate-400 transition-colors hover:text-slate-700"
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -249,7 +252,7 @@ export default function LoginPage() {
                 </div>
                 <div className="flex justify-end mt-1">
                   <Link href="/forgot-password" className="text-xs font-semibold text-blue-600 hover:underline">
-                    Quên mật khẩu?
+                    {t('forgotPasswordLink')}
                   </Link>
                 </div>
               </div>
@@ -259,21 +262,21 @@ export default function LoginPage() {
                 disabled={isLoading}
                 className="w-full bg-blue-600 hover:bg-blue-700 active:scale-[0.98] disabled:opacity-50 text-white font-bold py-2.5 rounded-lg shadow-sm transition-all cursor-pointer text-sm mt-1"
               >
-                {isLoading ? 'Đang xử lý...' : 'Đăng nhập'}
+                {isLoading ? t('processing') : t('signIn')}
               </button>
             </form>
 
             <p className="mt-5 text-center text-sm text-slate-500">
               Chưa có tài khoản?{' '}
               <Link href="/register" className="font-bold text-blue-600 hover:underline">
-                Tạo tài khoản mới
+                {t('createNewAccount')}
               </Link>
             </p>
           </div>
 
           {/* Trust line below card */}
           <p className="text-center text-xs text-slate-400 mt-4">
-            Bảo mật SSL · Không chia sẻ thông tin cá nhân
+            {t('trustLine')}
           </p>
         </motion.div>
       </div>

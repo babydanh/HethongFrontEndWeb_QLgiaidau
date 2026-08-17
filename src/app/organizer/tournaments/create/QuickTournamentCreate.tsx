@@ -22,12 +22,12 @@ const quickSchema = z.object({
   registrationStart: z.string().min(1, 'Chọn thời gian mở đăng ký.'),
   registrationEnd: z.string().min(1, 'Chọn thời gian đóng đăng ký.'),
   startDate: z.string().min(1, 'Chọn thời gian bắt đầu giải.'),
-  endDate: z.string().min(1, 'Chọn thời gian kết thúc giải.'),
-  venueName: z.string().trim().max(160).optional(),
-  locationAddress: z.string().trim().max(300).optional(),
-  province: z.string().trim().max(100).optional(),
-  district: z.string().trim().max(100).optional(),
-  ward: z.string().trim().max(100).optional(),
+  endDate: z.string().optional(),
+  venueName: z.string().trim().min(1, 'Vui lòng nhập tên sân / nhà thi đấu.'),
+  locationAddress: z.string().trim().min(1, 'Vui lòng nhập địa chỉ sân.'),
+  province: z.string().trim().min(1, 'Vui lòng chọn Tỉnh/Thành.'),
+  district: z.string().trim().min(1, 'Vui lòng chọn Quận/Huyện.'),
+  ward: z.string().trim().optional(),
   genderRestriction: z.enum(['', 'MALE', 'FEMALE', 'MIXED']),
   teamSize: z.enum(['5', '7', '11']),
   maxReserve: z.number().int().min(0).max(20),
@@ -66,14 +66,11 @@ const quickDefaults = () => {
   // Bắt đầu giải tự động = Đóng đăng ký + 2 tiếng
   const start = new Date(regEnd.getTime() + 2 * 60 * 60 * 1000);
 
-  // Kết thúc dự kiến tự động = Bắt đầu giải + 2 tiếng
-  const end = new Date(start.getTime() + 2 * 60 * 60 * 1000);
-
   return {
     registrationStart: formatDateTimeInput(regStart),
     registrationEnd: formatDateTimeInput(regEnd),
     startDate: formatDateTimeInput(start),
-    endDate: formatDateTimeInput(end),
+    endDate: '',
   };
 };
 
@@ -90,6 +87,7 @@ export default function QuickTournamentCreate() {
     defaultValues: {
       sport: 'badminton', format: 'doubles', visibility: 'PRIVATE', bracketType: 'single_elimination',
       maxTeams: 16, ...scheduleDefaults,
+      venueName: '', locationAddress: '', province: '', district: '', ward: '',
       isRanked: false, description: '', genderRestriction: '', teamSize: '7', maxReserve: 5,
       footballHalvesCount: 2, footballHalfDuration: 45, footballAllowDraw: true,
     },
@@ -114,11 +112,9 @@ export default function QuickTournamentCreate() {
     if (isNaN(base.getTime())) return;
     const newRegEnd = new Date(base.getTime() + 2 * 60 * 60 * 1000);
     const newStart = new Date(newRegEnd.getTime() + 2 * 60 * 60 * 1000);
-    const newEnd = new Date(newStart.getTime() + 2 * 60 * 60 * 1000);
 
     setValue('registrationEnd', formatDateTimeInput(newRegEnd), { shouldValidate: true });
     setValue('startDate', formatDateTimeInput(newStart), { shouldValidate: true });
-    setValue('endDate', formatDateTimeInput(newEnd), { shouldValidate: true });
   };
 
   const handleRegistrationEndChange = (val: string) => {
@@ -127,20 +123,8 @@ export default function QuickTournamentCreate() {
     const base = new Date(val);
     if (isNaN(base.getTime())) return;
     const newStart = new Date(base.getTime() + 2 * 60 * 60 * 1000);
-    const newEnd = new Date(newStart.getTime() + 2 * 60 * 60 * 1000);
 
     setValue('startDate', formatDateTimeInput(newStart), { shouldValidate: true });
-    setValue('endDate', formatDateTimeInput(newEnd), { shouldValidate: true });
-  };
-
-  const handleStartDateChange = (val: string) => {
-    setValue('startDate', val, { shouldValidate: true });
-    if (!val) return;
-    const base = new Date(val);
-    if (isNaN(base.getTime())) return;
-    const newEnd = new Date(base.getTime() + 2 * 60 * 60 * 1000);
-
-    setValue('endDate', formatDateTimeInput(newEnd), { shouldValidate: true });
   };
 
   useEffect(() => {
@@ -193,7 +177,7 @@ export default function QuickTournamentCreate() {
       const regStartDate = new Date(registrationStart);
       const regEndDate = new Date(registrationEnd);
       const startDateTime = new Date(startDate);
-      const endDateTime = new Date(endDate);
+      const endDateTime = endDate ? new Date(endDate) : undefined;
 
       if (regStartDate >= regEndDate) {
         toast.error('Thời gian mở đăng ký phải trước thời gian đóng.');
@@ -203,7 +187,7 @@ export default function QuickTournamentCreate() {
         toast.error('Thời gian đóng đăng ký phải trước giờ bắt đầu giải.');
         return;
       }
-      if (startDateTime >= endDateTime) {
+      if (endDateTime && startDateTime >= endDateTime) {
         toast.error('Thời gian kết thúc phải sau thời gian bắt đầu.');
         return;
       }
@@ -220,11 +204,11 @@ export default function QuickTournamentCreate() {
         registrationStartDate: regStartDate.toISOString(),
         registrationEndDate: regEndDate.toISOString(),
         startDate: startDateTime.toISOString(),
-        endDate: endDateTime.toISOString(),
-        venueName: values.venueName || undefined,
-        locationAddress: values.locationAddress || undefined,
-        province: provinceName || undefined,
-        district: districtName || undefined,
+        endDate: endDateTime ? endDateTime.toISOString() : undefined,
+        venueName: values.venueName,
+        locationAddress: values.locationAddress,
+        province: provinceName,
+        district: districtName,
         ward: wardName || undefined,
         genderRestriction: genderRestriction || undefined,
         ...(values.sport === 'football' ? {
@@ -269,7 +253,7 @@ export default function QuickTournamentCreate() {
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <label className="block text-sm font-semibold text-slate-700">
-            Tên giải đấu
+            Tên giải đấu <span className="text-red-500">*</span>
             <input
               {...register('name')}
               className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
@@ -362,78 +346,49 @@ export default function QuickTournamentCreate() {
             </div>
           </div>
 
-          {/* Khu vực 4 mốc thời gian (Gộp chung 1 ô datetime-local + Auto cascade + Note) */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold text-slate-800">Thời gian giải đấu</span>
-              <span className="text-xs text-blue-600 font-medium bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-100">
-                ⚡ Tự động giãn cách 2 tiếng
-              </span>
-            </div>
+          {/* Thời gian giải đấu (Tối giản, tự động giãn cách mở ĐK -> đóng ĐK -> bắt đầu giải; kết thúc để trống) */}
+          <div className="grid gap-4 md:grid-cols-2">
+            <fieldset className="rounded-xl border border-slate-200 bg-white p-3.5 shadow-2xs hover:border-slate-300 transition">
+              <legend className="px-1.5 text-xs font-semibold text-slate-700">Mở đăng ký <span className="text-red-500">*</span></legend>
+              <input
+                type="datetime-local"
+                {...register('registrationStart')}
+                onChange={(e) => handleRegistrationStartChange(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-800 font-medium outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              />
+              {errors.registrationStart && <span className="mt-1 block text-xs text-red-600">{errors.registrationStart.message}</span>}
+            </fieldset>
 
-            <div className="grid gap-4 md:grid-cols-2">
-              <fieldset className="rounded-xl border border-slate-200 bg-white p-3.5 shadow-2xs hover:border-slate-300 transition">
-                <legend className="px-1.5 text-xs font-semibold text-slate-700">1. Mở đăng ký</legend>
-                <input
-                  type="datetime-local"
-                  {...register('registrationStart')}
-                  onChange={(e) => handleRegistrationStartChange(e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-800 font-medium outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                />
-                <span className="mt-1 block text-[11px] text-slate-400">
-                  Thời điểm mở cho VĐV / Đội đăng ký
-                </span>
-                {errors.registrationStart && <span className="mt-1 block text-xs text-red-600">{errors.registrationStart.message}</span>}
-              </fieldset>
+            <fieldset className="rounded-xl border border-slate-200 bg-white p-3.5 shadow-2xs hover:border-slate-300 transition">
+              <legend className="px-1.5 text-xs font-semibold text-slate-700">Đóng đăng ký <span className="text-red-500">*</span></legend>
+              <input
+                type="datetime-local"
+                {...register('registrationEnd')}
+                onChange={(e) => handleRegistrationEndChange(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-800 font-medium outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              />
+              {errors.registrationEnd && <span className="mt-1 block text-xs text-red-600">{errors.registrationEnd.message}</span>}
+            </fieldset>
 
-              <fieldset className="rounded-xl border border-slate-200 bg-white p-3.5 shadow-2xs hover:border-slate-300 transition">
-                <legend className="px-1.5 text-xs font-semibold text-slate-700">2. Đóng đăng ký</legend>
-                <input
-                  type="datetime-local"
-                  {...register('registrationEnd')}
-                  onChange={(e) => handleRegistrationEndChange(e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-800 font-medium outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                />
-                <span className="mt-1 block text-[11px] text-slate-400">
-                  Tự động +2h sau mở đăng ký (có thể sửa)
-                </span>
-                {errors.registrationEnd && <span className="mt-1 block text-xs text-red-600">{errors.registrationEnd.message}</span>}
-              </fieldset>
+            <fieldset className="rounded-xl border border-blue-200 bg-blue-50/40 p-3.5 shadow-2xs hover:border-blue-300 transition">
+              <legend className="px-1.5 text-xs font-semibold text-blue-900">Bắt đầu giải <span className="text-red-500">*</span></legend>
+              <input
+                type="datetime-local"
+                {...register('startDate')}
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 font-medium outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              />
+              {errors.startDate && <span className="mt-1 block text-xs text-red-600">{errors.startDate.message}</span>}
+            </fieldset>
 
-              <fieldset className="rounded-xl border border-blue-200 bg-blue-50/40 p-3.5 shadow-2xs hover:border-blue-300 transition">
-                <legend className="px-1.5 text-xs font-semibold text-blue-900">3. Bắt đầu giải</legend>
-                <input
-                  type="datetime-local"
-                  {...register('startDate')}
-                  onChange={(e) => handleStartDateChange(e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 font-medium outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                />
-                <span className="mt-1 block text-[11px] text-slate-500">
-                  Tự động +2h sau đóng đăng ký (có thể sửa)
-                </span>
-                {errors.startDate && <span className="mt-1 block text-xs text-red-600">{errors.startDate.message}</span>}
-              </fieldset>
-
-              <fieldset className="rounded-xl border border-blue-200 bg-blue-50/40 p-3.5 shadow-2xs hover:border-blue-300 transition">
-                <legend className="px-1.5 text-xs font-semibold text-blue-900">4. Kết thúc dự kiến</legend>
-                <input
-                  type="datetime-local"
-                  {...register('endDate')}
-                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 font-medium outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                />
-                <span className="mt-1 block text-[11px] text-slate-500">
-                  Tự động +2h sau bắt đầu giải (có thể sửa)
-                </span>
-                {errors.endDate && <span className="mt-1 block text-xs text-red-600">{errors.endDate.message}</span>}
-              </fieldset>
-            </div>
-
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600 flex items-start gap-2">
-              <span className="text-base leading-none">💡</span>
-              <div>
-                <strong>Ghi chú:</strong> Hệ thống tự động tính toán lịch trình nối tiếp nhau (mỗi mốc cách nhau 2 tiếng). Bạn có thể bấm trực tiếp vào bất kỳ ô nào để tùy chỉnh ngày và giờ theo ý muốn.
-              </div>
-            </div>
+            <fieldset className="rounded-xl border border-slate-200 bg-white p-3.5 shadow-2xs hover:border-slate-300 transition">
+              <legend className="px-1.5 text-xs font-semibold text-slate-700">Kết thúc dự kiến</legend>
+              <input
+                type="datetime-local"
+                {...register('endDate')}
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 font-medium outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              />
+              {errors.endDate && <span className="mt-1 block text-xs text-red-600">{errors.endDate.message}</span>}
+            </fieldset>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
@@ -491,51 +446,53 @@ export default function QuickTournamentCreate() {
             </span>
           </label>
 
-          {/* Khu vực Địa điểm & Sân thi đấu (Thiết kế thông thoáng, chọn Quận/Huyện không bị kẹt) */}
+          {/* Khu vực Địa điểm & Sân thi đấu (Bắt buộc nhập) */}
           <div className="space-y-4 rounded-xl border border-slate-200 bg-slate-50/50 p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5 text-sm font-semibold text-slate-800">
-                <MapPin className="h-4 w-4 text-blue-600" />
-                Địa điểm & Sân thi đấu
-              </div>
-              <span className="text-xs text-slate-500">Không bắt buộc</span>
+            <div className="flex items-center gap-1.5 text-sm font-semibold text-slate-800">
+              <MapPin className="h-4 w-4 text-blue-600" />
+              Địa điểm & Sân thi đấu
             </div>
 
             <div className="grid gap-3 md:grid-cols-2">
               <label className="text-xs font-semibold text-slate-700">
-                Tên sân / Nhà thi đấu
+                Tên sân / Nhà thi đấu <span className="text-red-500">*</span>
                 <input
                   {...register('venueName')}
                   className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-normal outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                   placeholder="Ví dụ: Sân Cầu Lông Kỳ Hòa"
                 />
+                {errors.venueName && <span className="mt-1 block text-xs text-red-600">{errors.venueName.message}</span>}
               </label>
               <label className="text-xs font-semibold text-slate-700">
-                Địa chỉ chi tiết
+                Địa chỉ chi tiết <span className="text-red-500">*</span>
                 <input
                   {...register('locationAddress')}
                   className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-normal outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                   placeholder="Số nhà, tên đường..."
                 />
+                {errors.locationAddress && <span className="mt-1 block text-xs text-red-600">{errors.locationAddress.message}</span>}
               </label>
             </div>
 
-            {/* 3 Dropdown Tỉnh / Quận / Phường 3 cột riêng biệt, hiển thị tên đầy đủ */}
+            {/* 3 Dropdown Tỉnh / Quận / Phường */}
             <div>
-              <span className="mb-1.5 block text-xs font-semibold text-slate-700">Khu vực hành chính</span>
+              <span className="mb-1.5 block text-xs font-semibold text-slate-700">
+                Khu vực hành chính <span className="text-red-500">*</span>
+              </span>
               <div className="grid gap-3 sm:grid-cols-3">
                 <div>
                   <select
                     {...register('province')}
                     className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500"
                   >
-                    <option value="">-- Chọn Tỉnh/Thành --</option>
+                    <option value="">-- Chọn Tỉnh/Thành * --</option>
                     {provinces.map((item) => (
                       <option key={item.code} value={item.code}>
                         {item.fullName || item.name}
                       </option>
                     ))}
                   </select>
+                  {errors.province && <span className="mt-1 block text-xs text-red-600">{errors.province.message}</span>}
                 </div>
                 <div>
                   <select
@@ -544,7 +501,7 @@ export default function QuickTournamentCreate() {
                     className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500 disabled:bg-slate-100 disabled:text-slate-400"
                   >
                     <option value="">
-                      {!province ? '-- Chọn Tỉnh trước --' : districts.length === 0 ? '-- Đang tải Quận/Huyện --' : '-- Chọn Quận/Huyện --'}
+                      {!province ? '-- Chọn Tỉnh trước --' : districts.length === 0 ? '-- Đang tải... --' : '-- Chọn Quận/Huyện * --'}
                     </option>
                     {districts.map((item) => (
                       <option key={item.code} value={item.code}>
@@ -552,6 +509,7 @@ export default function QuickTournamentCreate() {
                       </option>
                     ))}
                   </select>
+                  {errors.district && <span className="mt-1 block text-xs text-red-600">{errors.district.message}</span>}
                 </div>
                 <div>
                   <select
@@ -560,7 +518,7 @@ export default function QuickTournamentCreate() {
                     className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500 disabled:bg-slate-100 disabled:text-slate-400"
                   >
                     <option value="">
-                      {!district ? '-- Chọn Huyện trước --' : wards.length === 0 ? '-- Đang tải Phường/Xã --' : '-- Chọn Phường/Xã --'}
+                      {!district ? '-- Chọn Huyện trước --' : wards.length === 0 ? '-- Đang tải... --' : '-- Chọn Phường/Xã --'}
                     </option>
                     {wards.map((item) => (
                       <option key={item.code} value={item.code}>

@@ -291,3 +291,16 @@
 5. **Xử lý hiển thị Lỗi (Error Handling UI)**:
    - Luôn sử dụng hàm `getErrorMessage()` từ `src/utils/error.ts` để trích xuất text lỗi từ backend.
    - Sử dụng thư viện Toast (như `react-hot-toast`) để thông báo lỗi cho người dùng một cách chuyên nghiệp. Không dùng `alert()` thuần của trình duyệt.
+
+## Quy tắc làm việc khi working tree có thay đổi đồng thời
+
+Khi người dùng vẫn đang code hoặc hệ thống có cơ chế auto-commit/auto-sync, phải coi working tree là nguồn thay đổi đồng thời.
+
+- Không dùng `git reset`, `git checkout`, `git restore`, `git clean`, `git revert` hoặc thao tác ghi đè hàng loạt để xử lý xung đột nếu chưa có yêu cầu rõ ràng của người dùng.
+- Trước mỗi batch phải ghi nhận `git status --short`, commit hiện tại và danh sách file mục tiêu. Không sửa file đang có thay đổi ngoài phạm vi batch.
+- Trước khi ghi file phải đọc lại phiên bản mới nhất. Chỉ áp dụng patch nhỏ, có phạm vi rõ ràng; không rewrite toàn bộ file hoặc format lại catalog không cần thiết.
+- Sau mỗi lần sửa phải chạy `git diff --check`, kiểm tra `git status --short`, rồi chạy validation phù hợp như i18n check, TypeScript, lint và test mục tiêu.
+- Nếu file hoặc commit thay đổi trong lúc đang xử lý, phải dừng patch hiện tại, chụp baseline mới, đọc lại file và áp dụng lại thay đổi tối thiểu; không dựa vào nội dung đã đọc từ baseline cũ.
+- Không coi working tree sạch là bằng chứng không có thay đổi của người dùng. Phải kiểm tra commit mới nhất, timestamp và nội dung HEAD khi trạng thái thay đổi bất thường.
+- Khi triển khai i18n, chỉ thay đổi lớp hiển thị và translation key. Phải giữ nguyên API payload, enum/status, role guard, route param, query param, state transition, token, redirect và điều kiện nghiệp vụ.
+- Với Graphify, phải dùng graph/report hiện có làm baseline, rà lại các import edge của file đã sửa và không tạo dependency cycle mới. Sau batch lớn phải cập nhật/đối chiếu Graphify trước khi chuyển phase.

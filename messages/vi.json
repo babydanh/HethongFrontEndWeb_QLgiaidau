@@ -30,6 +30,13 @@
     "region": "Khu vực / Tỉnh thành",
     "allProvinces": "Tất cả tỉnh thành",
     "loading": "Đang tải bảng xếp hạng...",
+    "searchTooShort": "Nhập ít nhất 2 ký tự",
+    "userNotFound": "Không tìm thấy người dùng",
+    "searchFailed": "Không tìm thấy hoặc có lỗi xảy ra",
+    "eloRank": "Hạng ELO",
+    "player": "Đấu thủ",
+    "winRate": "Tỷ Lệ",
+    "unranked": "Chưa xếp hạng",
     "rankList": "Danh sách xếp hạng (Hạng 11 - 100)"
   },
   "CommunityList": {

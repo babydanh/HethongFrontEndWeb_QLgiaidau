@@ -30,6 +30,13 @@
     "region": "Region / Province",
     "allProvinces": "All provinces",
     "loading": "Loading leaderboard...",
+    "searchTooShort": "Enter at least 2 characters",
+    "userNotFound": "User not found",
+    "searchFailed": "Not found or an error occurred",
+    "eloRank": "ELO rank",
+    "player": "Player",
+    "winRate": "Win rate",
+    "unranked": "Unranked",
     "rankList": "Rank list (Ranks 11–100)"
   },
   "CommunityList": {

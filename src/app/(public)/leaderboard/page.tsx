@@ -44,7 +44,7 @@ export default function LeaderboardPage() {
         e.preventDefault();
         const trimmed = searchQuery.trim();
         if (trimmed.length < 2) {
-            setSearchError("Nhập ít nhất 2 ký tự");
+            setSearchError(t("searchTooShort"));
             return;
         }
         setSearchLoading(true);
@@ -54,7 +54,7 @@ export default function LeaderboardPage() {
             const res = await usersApi.searchUsersByQuery(trimmed);
             const foundUsers = res || [];
             if (foundUsers.length === 0) {
-                setSearchError("Không tìm thấy người dùng");
+                setSearchError(t("userNotFound"));
                 return;
             }
             
@@ -72,13 +72,13 @@ export default function LeaderboardPage() {
                         return {
                             ...u,
                             eloPoints: matchRank?.eloPoints ?? 1000,
-                            tierName: matchRank?.tier?.name || matchRank?.tierName || "Chưa xếp hạng",
+                            tierName: matchRank?.tier?.name || matchRank?.tierName || t("unranked"),
                         };
                     } catch {
                         return {
                             ...u,
                             eloPoints: 1000,
-                            tierName: "Chưa xếp hạng",
+                            tierName: t("unranked"),
                         };
                     }
                 })
@@ -86,7 +86,7 @@ export default function LeaderboardPage() {
             setSearchResult(enriched);
         } catch (err) {
             console.error(err);
-            setSearchError("Không tìm thấy hoặc có lỗi xảy ra");
+            setSearchError(t("searchFailed"));
         } finally {
             setSearchLoading(false);
         }
@@ -821,10 +821,10 @@ function RestRankingsTable({ rankings, selectedMatchType }: { rankings: PlayerRa
                         <thead>
                             <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider">
                                 <th className="py-3 px-3 w-12 text-center">Hạng</th>
-                                <th className="py-3 px-3">Đấu thủ</th>
-                                <th className="py-3 px-3">Hạng ELO</th>
+                                <th className="py-3 px-3">{t("player")}</th>
+                                <th className="py-3 px-3">{t("eloRank")}</th>
                                 <th className="py-3 px-3 text-right">ELO</th>
-                                <th className="py-3 px-3 text-right">Tỷ Lệ</th>
+                                <th className="py-3 px-3 text-right">{t("winRate")}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y text-slate-700 font-semibold">

@@ -601,5 +601,30 @@
     "footballRedCard": "Thẻ đỏ",
     "footballFoul": "Phạm lỗi",
     "footballPenaltyGoal": "Phạt đền"
+  },
+  "DeleteAccount": {
+    "metaTitle": "Yêu cầu xóa tài khoản | Quản lý Giải đấu",
+    "metaDescription": "Hướng dẫn các bước yêu cầu xóa tài khoản và dữ liệu cá nhân khỏi hệ thống Quản lý Giải đấu.",
+    "requestTitle": "Yêu cầu xóa tài khoản",
+    "intro": "Chúng tôi tôn trọng quyền riêng tư của bạn. Dưới đây là các cách để yêu cầu xóa tài khoản và dữ liệu cá nhân.",
+    "directApp": "Xóa trực tiếp trong ứng dụng",
+    "loginInstruction": "Đăng nhập vào ứng dụng, vào",
+    "personalSettings": "Cài đặt cá nhân",
+    "deleteAccount": "Xóa tài khoản",
+    "select": ", chọn",
+    "confirmDeletion": "và xác nhận.",
+    "emailRequest": "Gửi yêu cầu qua email",
+    "emailInstruction": "Gửi email từ tài khoản đã đăng ký đến",
+    "subjectLabel": "với tiêu đề",
+    "dataHeading": "Dữ liệu được xóa và giữ lại",
+    "deletedPermanently": "Xóa vĩnh viễn:",
+    "personalData": "Họ tên, email, số điện thoại, ảnh đại diện, thông tin đăng nhập.",
+    "retainedAnonymized": "Giữ lại ẩn danh:",
+    "retainedData": "Lịch sử thi đấu, kết quả giải, điểm Elo được giữ nhưng không gắn với thông tin cá nhân (hiển thị \"Người chơi đã xóa\").",
+    "processingHeading": "Thời gian xử lý",
+    "processingIntro": "Sau khi gửi yêu cầu, tài khoản sẽ bị khóa ngay. Quá trình xóa dữ liệu hoàn tất trong vòng",
+    "processingDays": "7 ngày làm việc",
+    "warning": "Hành động này không thể hoàn tác. Sau khi xóa, bạn không thể khôi phục tài khoản hay dữ liệu liên quan.",
+    "footer": "Quản lý Giải đấu."
   }
 }

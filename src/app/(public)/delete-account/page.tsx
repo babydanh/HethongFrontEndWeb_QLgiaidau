@@ -22,10 +22,10 @@ export default async function DeleteAccountPage() {
             </svg>
           </div>
           <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 tracking-tight">
-            Yêu cầu xóa tài khoản
+            {translate('requestTitle')}
           </h1>
           <p className="text-sm text-gray-500 max-w-lg mx-auto leading-relaxed">
-            Chúng tôi tôn trọng quyền riêng tư của bạn. Dưới đây là các cách để yêu cầu xóa tài khoản và dữ liệu cá nhân.
+            {translate('intro')}
           </p>
         </div>
 
@@ -35,9 +35,9 @@ export default async function DeleteAccountPage() {
             <div className="flex items-start gap-4">
               <span className="flex items-center justify-center w-7 h-7 rounded-full bg-blue-50 text-blue-600 text-xs font-semibold shrink-0 mt-0.5">1</span>
               <div className="space-y-1">
-                <h3 className="text-sm font-medium text-gray-900">Xóa trực tiếp trong ứng dụng</h3>
+                <h3 className="text-sm font-medium text-gray-900">{translate('directApp')}</h3>
                 <p className="text-sm text-gray-500 leading-relaxed">
-                  Đăng nhập vào ứng dụng, vào <span className="text-gray-700">Cài đặt cá nhân</span>, chọn <span className="text-red-600">Xóa tài khoản</span> và xác nhận.
+                  {translate('loginInstruction')} <span className="text-gray-700">{translate('personalSettings')}</span>{translate('select')} <span className="text-red-600">{translate('deleteAccount')}</span> {translate('confirmDeletion')}
                 </p>
               </div>
             </div>
@@ -47,13 +47,13 @@ export default async function DeleteAccountPage() {
             <div className="flex items-start gap-4">
               <span className="flex items-center justify-center w-7 h-7 rounded-full bg-blue-50 text-blue-600 text-xs font-semibold shrink-0 mt-0.5">2</span>
               <div className="space-y-1">
-                <h3 className="text-sm font-medium text-gray-900">Gửi yêu cầu qua email</h3>
+                <h3 className="text-sm font-medium text-gray-900">{translate('emailRequest')}</h3>
                 <p className="text-sm text-gray-500 leading-relaxed">
-                  Gửi email từ tài khoản đã đăng ký đến{' '}
+                  {translate('emailInstruction')}{' '}
                   <a href="mailto:support@sporto.asia" className="text-blue-600 hover:text-blue-700 underline underline-offset-2">
                     support@sporto.asia
                   </a>
-                  {' '}với tiêu đề <span className="text-gray-700">&quot;Yêu cầu xóa tài khoản&quot;</span>.
+                  {' '}{translate('subjectLabel')} <span className="text-gray-700">&quot;{translate('requestTitle')}&quot;</span>.
                 </p>
               </div>
             </div>
@@ -62,14 +62,14 @@ export default async function DeleteAccountPage() {
 
         {/* Dữ liệu */}
         <div className="bg-gray-50 rounded-xl p-5 mb-10">
-          <h2 className="text-sm font-medium text-gray-900 mb-3">Dữ liệu được xóa và giữ lại</h2>
+          <h2 className="text-sm font-medium text-gray-900 mb-3">{translate('dataHeading')}</h2>
           <div className="space-y-2">
             <div className="flex gap-2.5 items-start text-sm">
               <svg className="w-4 h-4 text-red-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
               </svg>
               <span className="text-gray-600">
-                <span className="font-medium text-gray-900">Xóa vĩnh viễn:</span> Họ tên, email, số điện thoại, ảnh đại diện, thông tin đăng nhập.
+                <span className="font-medium text-gray-900">{translate('deletedPermanently')}</span> {translate('personalData')}
               </span>
             </div>
             <div className="flex gap-2.5 items-start text-sm">
@@ -77,7 +77,7 @@ export default async function DeleteAccountPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
               </svg>
               <span className="text-gray-600">
-                <span className="font-medium text-gray-900">Giữ lại ẩn danh:</span> Lịch sử thi đấu, kết quả giải, điểm Elo được giữ nhưng không gắn với thông tin cá nhân (hiển thị &quot;Người chơi đã xóa&quot;).
+                <span className="font-medium text-gray-900">{translate('retainedAnonymized')}</span> {translate('retainedData')}
               </span>
             </div>
           </div>
@@ -90,9 +90,9 @@ export default async function DeleteAccountPage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
             </svg>
             <div className="space-y-1">
-              <h2 className="text-sm font-medium text-gray-900">Thời gian xử lý</h2>
+              <h2 className="text-sm font-medium text-gray-900">{translate('processingHeading')}</h2>
               <p className="text-sm text-gray-500 leading-relaxed">
-                Sau khi gửi yêu cầu, tài khoản sẽ bị khóa ngay. Quá trình xóa dữ liệu hoàn tất trong vòng <span className="font-medium text-gray-700">7 ngày làm việc</span>.
+                {translate('processingIntro')} <span className="font-medium text-gray-700">{translate('processingDays')}</span>.
               </p>
             </div>
           </div>
@@ -104,13 +104,13 @@ export default async function DeleteAccountPage() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
           </svg>
           <p className="text-sm text-amber-800 leading-relaxed">
-            Hành động này không thể hoàn tác. Sau khi xóa, bạn không thể khôi phục tài khoản hay dữ liệu liên quan.
+            {translate('warning')}
           </p>
         </div>
 
         {/* Footer */}
         <p className="text-center text-xs text-gray-400 mt-10">
-          &copy; {new Date().getFullYear()} Quản lý Giải đấu.
+          &copy; {new Date().getFullYear()} {translate('footer')}
         </p>
       </div>
     </div>

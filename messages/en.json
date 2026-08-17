@@ -601,5 +601,30 @@
     "footballRedCard": "Red card",
     "footballFoul": "Foul",
     "footballPenaltyGoal": "Penalty goal"
+  },
+  "DeleteAccount": {
+    "metaTitle": "Request account deletion | Tournament Management",
+    "metaDescription": "Instructions for requesting deletion of your account and personal data from Tournament Management.",
+    "requestTitle": "Request account deletion",
+    "intro": "We respect your privacy. Here are the ways to request deletion of your account and personal data.",
+    "directApp": "Delete directly in the app",
+    "loginInstruction": "Sign in to the app, go to",
+    "personalSettings": "Personal settings",
+    "deleteAccount": "Delete account",
+    "select": ", select",
+    "confirmDeletion": "and confirm.",
+    "emailRequest": "Request by email",
+    "emailInstruction": "Send an email from your registered account to",
+    "subjectLabel": "with the subject",
+    "dataHeading": "Data deleted and retained",
+    "deletedPermanently": "Permanently deleted:",
+    "personalData": "Name, email, phone number, avatar, and login information.",
+    "retainedAnonymized": "Retained anonymously:",
+    "retainedData": "Match history, tournament results, and ELO points are retained without personal information and displayed as \"Deleted player\".",
+    "processingHeading": "Processing time",
+    "processingIntro": "After you submit the request, the account is locked immediately. Data deletion is completed within",
+    "processingDays": "7 business days",
+    "warning": "This action cannot be undone. After deletion, you cannot recover your account or related data.",
+    "footer": "Tournament Management."
   }
 }

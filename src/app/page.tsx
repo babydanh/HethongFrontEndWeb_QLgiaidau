@@ -3,6 +3,7 @@
 // Reading this as: Sports platform homepage with live matches feed, featured tournaments, and community bento grid.
 import { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { buildMatchScoreSummary, getMatchScorePresentation, resolveMatchSportRules, extractMatchScores } from '@/features/matches/score-display';
 import Image from 'next/image';
 import {
@@ -308,6 +309,7 @@ function HomepageTournamentCard({ tournament }: { tournament: Tournament }) {
 
 export default function HomePage() {
   const { isAuthenticated, user } = useAuthStore();
+  const translate = useTranslations('Home');
   const [isClient, setIsClient] = useState(false);
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [communities, setCommunities] = useState<Community[]>([]);
@@ -1075,9 +1077,9 @@ export default function HomePage() {
           {/* Section 1: Giải đấu nổi bật */}
           <section className="flex flex-col gap-4">
             <div className="flex justify-between items-end relative z-[30]">
-              <h2 className="text-lg font-semibold text-slate-900 tracking-tight">Giải đấu nổi bật</h2>
+              <h2 className="text-lg font-semibold text-slate-900 tracking-tight">{translate('featuredTournaments')}</h2>
               <Link href="/tournaments" className="text-xs font-semibold text-blue-600 hover:underline flex items-center gap-1 relative z-[31]">
-                Xem tất cả <ArrowRight className="w-3.5 h-3.5" />
+                {translate('viewAll')} <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
 
@@ -1135,7 +1137,7 @@ export default function HomePage() {
           {/* Section 2: Trận live (Match Feed style) */}
           <section className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_2px_12px_rgba(15,23,42,0.06)] overflow-hidden">
             <div className="px-5 py-4 border-b border-slate-100 flex justify-between items-center">
-              <h2 className="text-sm font-semibold text-slate-900 tracking-tight">Trận đấu trực tiếp</h2>
+              <h2 className="text-sm font-semibold text-slate-900 tracking-tight">{translate('liveMatches')}</h2>
               <span className="flex h-2 w-2 relative">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-450 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-600"></span>
@@ -1478,7 +1480,7 @@ export default function HomePage() {
                    Đăng nhập ngay
                  </a>
                  <a href="/register" className="border border-slate-205 text-slate-650 hover:bg-slate-50 font-semibold py-2.5 px-4 rounded-xl text-center text-xs transition-colors">
-                   Đăng ký tài khoản
+                   {translate('signUp')}
                  </a>
                </div>
              </motion.div>
@@ -1523,7 +1525,7 @@ export default function HomePage() {
                        {matchesWon}
                      </span>
                      <span className="text-[9px] font-semibold text-slate-400 mt-1 uppercase tracking-wider">
-                       Thắng
+                       {translate('wins')}
                      </span>
                    </div>
                    <div className="flex flex-col items-center">
@@ -1531,7 +1533,7 @@ export default function HomePage() {
                        {winRate}%
                      </span>
                      <span className="text-[9px] font-semibold text-slate-400 mt-1 uppercase tracking-wider">
-                       Tỷ lệ
+                       {translate('winRate')}
                      </span>
                    </div>
                  </div>
@@ -1539,7 +1541,7 @@ export default function HomePage() {
                  {/* CTA */}
                  <Link href="/profile" className="w-full mt-4">
                    <button className="w-full text-xs py-2.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 hover:text-slate-900 font-semibold rounded-xl transition-all active:scale-95 duration-150 cursor-pointer shadow-sm">
-                     Trang cá nhân
+                     {translate('profile')}
                    </button>
                  </Link>
                </div>

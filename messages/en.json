@@ -346,5 +346,15 @@
     "versionDetails": "App version details",
     "versionInfo": "App version {version} (Build {build})",
     "versionLabel": "Version:"
+  },
+  "Home": {
+    "featuredTournaments": "Featured Tournaments",
+    "viewAll": "View all",
+    "liveMatches": "Live Matches",
+    "signUp": "Create an account",
+    "wins": "Wins",
+    "winRate": "Win rate",
+    "profile": "Profile",
+    "user": "User"
   }
 }

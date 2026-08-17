@@ -346,5 +346,15 @@
     "versionDetails": "Chi tiết phiên bản App",
     "versionInfo": "Thông tin phiên bản {version} (Build {build})",
     "versionLabel": "Phiên bản:"
+  },
+  "Home": {
+    "featuredTournaments": "Giải đấu nổi bật",
+    "viewAll": "Xem tất cả",
+    "liveMatches": "Trận đấu trực tiếp",
+    "signUp": "Đăng ký tài khoản",
+    "wins": "Thắng",
+    "winRate": "Tỷ lệ",
+    "profile": "Trang cá nhân",
+    "user": "Người dùng"
   }
 }

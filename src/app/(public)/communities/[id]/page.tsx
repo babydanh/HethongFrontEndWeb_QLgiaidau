@@ -87,6 +87,11 @@ export default function CommunityDetailPage() {
               const foundWard = wardList.find((w) => w.code === community.wardCode);
               if (foundWard) wardName = foundWard.name;
             }
+          } else if (community.wardCode) {
+            const wardRes = await regionsApi.getWardsByProvince(community.provinceCode).catch(() => null);
+            const wardList: Region[] = Array.isArray(wardRes) ? wardRes : (wardRes && typeof wardRes === 'object' && 'data' in wardRes && Array.isArray((wardRes as { data: Region[] }).data) ? (wardRes as { data: Region[] }).data : []);
+            const foundWard = wardList.find((w) => w.code === community.wardCode);
+            if (foundWard) wardName = foundWard.name;
           }
         }
 

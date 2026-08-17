@@ -20,7 +20,6 @@ const createCommunitySchema = z.object({
   description: z.string().max(1000, "Mô tả quá dài").optional(),
   rules: z.string().max(5000, "Nội quy quá dài").optional(),
   provinceCode: z.string().min(1, "Vui lòng chọn tỉnh/thành phố"),
-  districtCode: z.string().optional(),
   wardCode: z.string().optional(),
   locationAddress: z.string().max(255, "Địa chỉ quá dài").optional(),
   categoryIds: z.array(z.string().uuid()).length(1, "Vui lòng chọn đúng 1 môn thể thao"),
@@ -45,7 +44,6 @@ export default function CreateCommunityPage() {
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [provinces, setProvinces] = useState<Region[]>([]);
-  const [districts, setDistricts] = useState<Region[]>([]);
   const [wards, setWards] = useState<Region[]>([]);
 
   const { register, control, handleSubmit, watch, setValue, formState: { errors } } = useForm<CreateCommunityFormValues>({
@@ -55,7 +53,6 @@ export default function CreateCommunityPage() {
       description: '',
       rules: '',
       provinceCode: '',
-      districtCode: '',
       wardCode: '',
       locationAddress: '',
       categoryIds: [],
@@ -73,7 +70,6 @@ export default function CreateCommunityPage() {
   });
 
   const watchProvince = watch('provinceCode');
-  const watchDistrict = watch('districtCode');
   const watchJoinMode = watch('joinMode');
   const watchCategoryIds = watch('categoryIds');
   const watchLogoUrl = watch('logoUrl');
@@ -94,19 +90,13 @@ export default function CreateCommunityPage() {
 
   useEffect(() => {
     if (watchProvince) {
-      regionsApi.getDistricts(watchProvince).then(setDistricts).catch(console.error);
-      setValue('districtCode', '');
+      regionsApi.getWardsByProvince(watchProvince).then(setWards).catch(console.error);
       setValue('wardCode', '');
+    } else {
       setWards([]);
+      setValue('wardCode', '');
     }
   }, [watchProvince, setValue]);
-
-  useEffect(() => {
-    if (watchDistrict) {
-      regionsApi.getWards(watchDistrict).then(setWards).catch(console.error);
-      setValue('wardCode', '');
-    }
-  }, [watchDistrict, setValue]);
 
   const handleCategoryToggle = (id: string) => {
     // A club owns one primary sport. Selecting another replaces the previous one.
@@ -167,16 +157,16 @@ export default function CreateCommunityPage() {
     try {
       setIsSubmitting(true);
       const provinceName = provinces.find(p => p.code === data.provinceCode)?.name || '';
-      const districtName = districts.find(d => d.code === data.districtCode)?.name || '';
-      const combinedAddress = [districtName, provinceName].filter(Boolean).join(', ');
+      const wardName = wards.find(w => w.code === data.wardCode)?.name || '';
+      const combinedAddress = [wardName, provinceName].filter(Boolean).join(', ');
 
       const payload = {
         ...data,
         logoUrl: data.logoUrl?.trim() ? data.logoUrl : undefined,
         bannerUrl: data.bannerUrl?.trim() ? data.bannerUrl : undefined,
         locationAddress: combinedAddress,
-        districtCode: data.districtCode || null,
-        wardCode: null,
+        districtCode: null,
+        wardCode: data.wardCode || null,
         joinQuestions: data.joinQuestions?.map(q => q.value).filter(Boolean) || [],
       };
       
@@ -277,15 +267,15 @@ export default function CreateCommunityPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Quận/Huyện
+                    Phường/Xã
                   </label>
                   <select
-                    {...register('districtCode')}
+                    {...register('wardCode')}
                     className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none"
                     disabled={!watchProvince}
                   >
-                    <option value="">Chọn Quận/Huyện</option>
-                    {districts.map(d => <option key={d.code} value={d.code}>{d.name}</option>)}
+                    <option value="">Chọn Phường/Xã</option>
+                    {wards.map(w => <option key={w.code} value={w.code}>{w.name}</option>)}
                   </select>
                 </div>
               </div>

@@ -121,10 +121,8 @@ export function useManageState(id: string) {
   const [customVenueName, setCustomVenueName] = useState('');
   const [customVenueAddress, setCustomVenueAddress] = useState('');
   const [provinces, setProvinces] = useState<Region[]>([]);
-  const [districts, setDistricts] = useState<Region[]>([]);
   const [wards, setWards] = useState<Region[]>([]);
   const [provinceCode, setProvinceCode] = useState('');
-  const [districtCode, setDistrictCode] = useState('');
   const [wardCode, setWardCode] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -426,9 +424,8 @@ export function useManageState(id: string) {
     setIsSavingConfig(true);
     try {
       const pName = provinces.find(p=>p.code===provinceCode)?.name||'';
-      const dName = districts.find(d=>d.code===districtCode)?.name||'';
       const wName = wards.find(w=>w.code===wardCode)?.name||'';
-      const fullAddr = [customVenueAddress.trim(), wName, dName, pName].filter(Boolean).join(', ');
+      const fullAddr = [customVenueAddress.trim(), wName, pName].filter(Boolean).join(', ');
       if (!customVenueName.trim() || !fullAddr) { toast.error('Vui lòng điền tên sân và địa chỉ'); setIsSavingConfig(false); return; }
       if (startDate && endDate && new Date(endDate) <= new Date(startDate)) { toast.error('Ngày kết thúc phải sau ngày khai mạc'); setIsSavingConfig(false); return; }
       if (registrationStartDate && registrationEndDate && new Date(registrationEndDate) <= new Date(registrationStartDate)) { toast.error('Hạn chót đăng ký phải sau ngày mở đăng ký'); setIsSavingConfig(false); return; }
@@ -1388,26 +1385,14 @@ export function useManageState(id: string) {
 
   useEffect(() => {
     if (provinceCode) {
-      void regionsApi.getDistricts(provinceCode).then(setDistricts).catch(() => {});
+      void regionsApi.getWardsByProvince(provinceCode).then(setWards).catch(() => {});
       return;
     }
 
     void Promise.resolve().then(() => {
-      setDistricts([]);
       setWards([]);
     });
   }, [provinceCode]);
-
-  useEffect(() => {
-    if (districtCode) {
-      void regionsApi.getWards(districtCode).then(setWards).catch(() => {});
-      return;
-    }
-
-    void Promise.resolve().then(() => {
-      setWards([]);
-    });
-  }, [districtCode]);
 
   useEffect(() => {
     const tab = searchParams.get('tab');
@@ -1440,8 +1425,8 @@ export function useManageState(id: string) {
     bannerUrl, setBannerUrl, logoUrl, setLogoUrl, hideFeaturedCardText, setHideFeaturedCardText, prizeDescription, setPrizeDescription,
     contactInfo, setContactInfo, visibility, setVisibility, registrationMode, setRegistrationMode, genderRestriction, setGenderRestriction,
     venueId, setVenueId, customVenueName, setCustomVenueName, customVenueAddress, setCustomVenueAddress,
-    provinces, setProvinces, districts, setDistricts, wards, setWards,
-    provinceCode, setProvinceCode, districtCode, setDistrictCode, wardCode, setWardCode,
+    provinces, setProvinces, wards, setWards,
+    provinceCode, setProvinceCode, wardCode, setWardCode,
     startDate, setStartDate, endDate, setEndDate, registrationStartDate, setRegistrationStartDate, registrationEndDate, setRegistrationEndDate,
     entryFee, setEntryFee, platformFeePerPlayer, setPlatformFeePerPlayer,
     maxParticipants, setMaxParticipants, isLimitEnabled, setIsLimitEnabled, sportRuleKind, setSportRuleKind,

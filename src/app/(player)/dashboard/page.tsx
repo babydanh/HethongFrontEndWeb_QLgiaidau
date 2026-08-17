@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { useTranslations } from "next-intl";
 import { useRouter } from 'next/navigation';
 import {
   Activity,
@@ -75,14 +76,15 @@ function formatDate(value?: string | null, withTime = false) {
   return withTime ? dateTimeFormatter.format(date) : dateFormatter.format(date);
 }
 
-function getMatchStatusLabel(status: string) {
-  if (status === 'ONGOING') return 'Đang diễn ra';
-  if (status === 'COMPLETED') return 'Đã xong';
-  if (status === 'SCHEDULED') return 'Đã xếp lịch';
+function getMatchStatusLabel(status: string, translate: (key: string) => string) {
+  if (status === 'ONGOING') return translate("statusOngoing");
+  if (status === 'COMPLETED') return translate("statusCompleted");
+  if (status === 'SCHEDULED') return translate("statusScheduled");
   return status;
 }
 
 export default function DashboardPage() {
+  const translate = useTranslations("PlayerDashboard");
   const router = useRouter();
   const { user } = useAuthStore();
   const [userRankings, setUserRankings] = useState<{ publicRanks: PlayerRanking[]; communityRanks: PlayerRanking[] } | null>(null);
@@ -336,12 +338,12 @@ export default function DashboardPage() {
             <>
               <Link href="/organizer/tournaments">
                 <Button variant="outline" className="text-slate-700 border-slate-200 hover:bg-slate-50 font-bold text-xs h-9">
-                  <UserCheck className="w-3.5 h-3.5 mr-1.5 text-violet-600" /> Quản lý giải đấu
+                  <UserCheck className="w-3.5 h-3.5 mr-1.5 text-violet-600" /> translate("manageTournaments")
                 </Button>
               </Link>
               <Link href="/organizer/tournaments/create">
                 <Button className="font-bold text-xs h-9 bg-blue-600 hover:bg-blue-700">
-                  <Plus className="w-3.5 h-3.5 mr-1.5" /> Tạo giải đấu
+                  <Plus className="w-3.5 h-3.5 mr-1.5" /> translate("createTournament")
                 </Button>
               </Link>
             </>
@@ -349,7 +351,7 @@ export default function DashboardPage() {
             <>
               <Link href="/tournaments">
                 <Button variant="outline" className="text-slate-700 border-slate-200 hover:bg-slate-50 font-bold text-xs h-9">
-                  <Calendar className="w-3.5 h-3.5 mr-1.5 text-blue-600" /> Tìm giải đấu
+                  <Calendar className="w-3.5 h-3.5 mr-1.5 text-blue-600" /> translate("findTournaments")
                 </Button>
               </Link>
               <Button
@@ -394,7 +396,7 @@ export default function DashboardPage() {
                     : 'border-transparent text-slate-500 hover:text-slate-900'
                 )}
               >
-                <Trophy className="w-4 h-4" /> Giải đấu của tôi
+                <Trophy className="w-4 h-4" /> translate("myTournaments")
                 <span className="ml-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
                   {registeredCount + totalOrganized}
                 </span>
@@ -437,7 +439,7 @@ export default function DashboardPage() {
                             <AvatarCircle src={invite.logoUrl} name={invite.tournamentName} size={36} />
                             <div>
                               <p className="text-xs font-bold text-slate-900">{invite.tournamentName}</p>
-                              <p className="text-[11px] text-slate-500">Mời làm trọng tài • {invite.categoryName || 'Môn thể thao'}</p>
+                              <p className="text-[11px] text-slate-500">Mời làm trọng tài • {invite.categoryName || 'translate("sport")'}</p>
                             </div>
                           </div>
                           <div className="flex gap-2">
@@ -448,7 +450,7 @@ export default function DashboardPage() {
                               disabled={isBusy}
                               className="h-8 text-xs font-bold px-3"
                             >
-                              {isBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Từ chối'}
+                              {isBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'translate("decline")'}
                             </Button>
                             <Button
                               size="sm"
@@ -480,23 +482,23 @@ export default function DashboardPage() {
                   <div className="bg-slate-900 rounded-lg p-5 text-white relative overflow-hidden">
                     <div className="flex items-center justify-between gap-2 mb-4">
                       <span className="bg-blue-600 text-white px-2.5 py-0.5 rounded-full text-[10px] font-extrabold tracking-wider">
-                        {upcomingMatch.status === 'ONGOING' ? 'ĐANG DIỄN RA' : 'SẮP DIỄN RA'}
+                        {upcomingMatch.status === 'ONGOING' ? translate("ongoingUpper") : translate("upcomingUpper")}
                       </span>
                       <span className="text-xs text-slate-300 truncate max-w-[200px]">
-                        {upcomingMatch.tournament?.name || 'Giải đấu'}
+                        {upcomingMatch.tournament?.name || translate("tournament")}
                       </span>
                     </div>
 
                     <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 py-2">
                       <div className="text-center">
                         <p className="text-sm font-bold text-white line-clamp-1">
-                          {upcomingMatch.participant1?.teamName || 'Bạn'}
+                          {upcomingMatch.participant1?.teamName || translate("you")}
                         </p>
                       </div>
                       <div className="text-sm font-black text-slate-500 italic">VS</div>
                       <div className="text-center">
                         <p className="text-sm font-bold text-white line-clamp-1">
-                          {upcomingMatch.participant2?.teamName || 'Đối thủ'}
+                          {upcomingMatch.participant2?.teamName || translate("opponent")}
                         </p>
                       </div>
                     </div>
@@ -564,7 +566,7 @@ export default function DashboardPage() {
                                 {m.participant1?.teamName || 'Đội A'} vs {m.participant2?.teamName || 'Đội B'}
                               </p>
                               <p className="text-[10px] text-slate-400 mt-0.5 truncate">
-                                {m.tournament?.name || 'Giải đấu'} • {formatDate(m.updatedAt || m.scheduledAt)}
+                                {m.tournament?.name || translate("tournament")} • {formatDate(m.updatedAt || m.scheduledAt)}
                               </p>
                             </div>
                           </div>
@@ -657,7 +659,7 @@ export default function DashboardPage() {
               </div>
 
               <TournamentListSection
-                title={tournFilter === 'registered' ? 'Giải đã đăng ký' : tournFilter === 'organized' ? 'Giải đang tổ chức' : tournFilter === 'followed' ? 'Giải đang theo dõi' : 'Danh sách giải đấu'}
+                title={tournFilter === 'registered' ? translate("registeredTournaments") : tournFilter === 'organized' ? translate("organizedTournaments") : tournFilter === 'followed' ? translate("followedTournaments") : translate("tournamentList")}
                 actionHref="/tournaments"
                 actionLabel="Tìm giải mới"
                 tournaments={getFilteredTournaments()}
@@ -705,11 +707,11 @@ export default function DashboardPage() {
                                 <span className="bg-slate-100 px-2 py-0.5 rounded">{match.categoryName || 'Môn thi đấu'}</span>
                                 <span className="bg-slate-100 px-2 py-0.5 rounded">{match.stageName} • {match.groupName}</span>
                                 <span className="bg-slate-100 px-2 py-0.5 rounded">Vòng {match.roundNumber} • Trận {match.matchOrder}</span>
-                                <span className="bg-slate-100 px-2 py-0.5 rounded">Sân: {match.courtName || 'Chưa gán'}</span>
+                                <span className="bg-slate-100 px-2 py-0.5 rounded">Sân: {match.courtName || 'translate("unassigned")'}</span>
                               </div>
                             </div>
                             <span className={`shrink-0 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide border ${getTournamentStatusClassName(match.status)}`}>
-                              {getMatchStatusLabel(match.status)}
+                              {getMatchStatusLabel(match.status, translate)}
                             </span>
                           </div>
                           <div className="mt-3 pt-3 border-t border-slate-100 flex justify-end">
@@ -724,7 +726,7 @@ export default function DashboardPage() {
                     </div>
                   ) : (
                     <div className="text-center py-8 border border-dashed border-slate-200 rounded-lg text-xs text-slate-500">
-                      Bạn chưa có ca làm việc trọng tài nào được phân công.
+                      translate("noRefereeAssignments")
                     </div>
                   )}
                 </div>
@@ -780,7 +782,7 @@ export default function DashboardPage() {
                       <div className="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600 shrink-0">
                         <Trophy className="w-3.5 h-3.5" />
                       </div>
-                      <span>Quản lý giải đấu</span>
+                      <span>translate("manageTournaments")</span>
                     </div>
                     <span className="text-[9px] font-extrabold text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">BTC</span>
                   </Link>
@@ -826,7 +828,7 @@ export default function DashboardPage() {
                 <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 shrink-0">
                   <Settings className="w-3.5 h-3.5" />
                 </div>
-                Xem trang cá nhân
+                translate("viewProfile")
               </Link>
             </div>
           </div>

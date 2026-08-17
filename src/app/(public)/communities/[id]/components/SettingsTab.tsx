@@ -32,11 +32,9 @@ export default function SettingsTab({ community }: { community: Community }) {
   
   // Cascade Regions States
   const [provinces, setProvinces] = useState<Region[]>([]);
-  const [districts, setDistricts] = useState<Region[]>([]);
   const [wards, setWards] = useState<Region[]>([]);
   
   const [provinceCode, setProvinceCode] = useState(community.provinceCode || '');
-  const [districtCode, setDistrictCode] = useState(community.districtCode || '');
   const [wardCode, setWardCode] = useState(community.wardCode || '');
   const [locationAddress, setLocationAddress] = useState(community.locationAddress || '');
 
@@ -167,40 +165,16 @@ export default function SettingsTab({ community }: { community: Community }) {
     }
   };
 
-  // Fetch districts when provinceCode changes
+  // API v2 hierarchy: Province -> Ward/Commune.
   useEffect(() => {
     if (provinceCode) {
-      regionsApi.getDistricts(provinceCode)
-        .then(setDistricts)
-        .catch(err => console.error('Failed to load districts', err));
-    } else {
-      if (districts.length > 0) {
-        Promise.resolve().then(() => {
-          setDistricts([]);
-        });
-      }
-      if (wards.length > 0) {
-        Promise.resolve().then(() => {
-          setWards([]);
-        });
-      }
-    }
-  }, [provinceCode]);
-
-  // Fetch wards when districtCode changes
-  useEffect(() => {
-    if (districtCode) {
-      regionsApi.getWards(districtCode)
+      regionsApi.getWardsByProvince(provinceCode)
         .then(setWards)
         .catch(err => console.error('Failed to load wards', err));
     } else {
-      if (wards.length > 0) {
-        Promise.resolve().then(() => {
-          setWards([]);
-        });
-      }
+      setWards([]);
     }
-  }, [districtCode]);
+  }, [provinceCode]);
 
   // Image Upload handler
   const handleUploadFile = async (e: React.ChangeEvent<HTMLInputElement>, type: 'logo' | 'banner') => {
@@ -262,15 +236,14 @@ export default function SettingsTab({ community }: { community: Community }) {
     try {
       setIsSaving(true);
       const provinceName = provinces.find(p => p.code === provinceCode)?.name || '';
-      const districtName = districts.find(d => d.code === districtCode)?.name || '';
       const wardName = wards.find(w => w.code === wardCode)?.name || '';
       
-      const adminPart = [wardName, districtName, provinceName].filter(Boolean).join(', ');
+      const adminPart = [wardName, provinceName].filter(Boolean).join(', ');
       const detail = locationAddress.trim();
       let combinedAddress = '';
       if (detail) {
-        // Nếu người dùng nhập tên sân/số nhà riêng chưa có tên quận/tỉnh thì ghép kèm vào
-        if (adminPart && !detail.includes(provinceName) && !detail.includes(districtName)) {
+        // Nếu người dùng nhập tên sân/số nhà riêng chưa có tên tỉnh thì ghép kèm vào
+        if (adminPart && !detail.includes(provinceName)) {
           combinedAddress = `${detail}, ${adminPart}`;
         } else {
           combinedAddress = detail;
@@ -288,7 +261,7 @@ export default function SettingsTab({ community }: { community: Community }) {
         maxMembers: maxMembers ? Number(maxMembers) : null,
         locationAddress: combinedAddress || null,
         provinceCode,
-        districtCode: districtCode || null,
+        districtCode: null,
         wardCode: wardCode || null,
         categoryIds: selectedCategoryIds,
         logoUrl,
@@ -662,7 +635,6 @@ export default function SettingsTab({ community }: { community: Community }) {
                   value={provinceCode}
                   onChange={(e) => {
                     setProvinceCode(e.target.value);
-                    setDistrictCode('');
                     setWardCode('');
                   }}
                   className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 shadow-sm focus:ring-1 focus:ring-blue-500 outline-none"
@@ -672,22 +644,9 @@ export default function SettingsTab({ community }: { community: Community }) {
                 </select>
 
                 <select
-                  value={districtCode}
-                  onChange={(e) => {
-                    setDistrictCode(e.target.value);
-                    setWardCode('');
-                  }}
-                  disabled={!provinceCode}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 shadow-sm focus:ring-1 focus:ring-blue-500 outline-none disabled:opacity-50 disabled:bg-slate-50"
-                >
-                  <option value="">-- Quận / Huyện --</option>
-                  {districts.map(d => <option key={d.code} value={d.code}>{d.name}</option>)}
-                </select>
-
-                <select
                   value={wardCode}
                   onChange={(e) => setWardCode(e.target.value)}
-                  disabled={!districtCode}
+                  disabled={!provinceCode}
                   className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 shadow-sm focus:ring-1 focus:ring-blue-500 outline-none disabled:opacity-50 disabled:bg-slate-50"
                 >
                   <option value="">-- Phường / Xã --</option>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useTranslations } from "next-intl";
 import { Search, ChevronDown, SlidersHorizontal, Bookmark, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import Link from 'next/link';
 import { tournamentsApi, Tournament } from '@/features/tournaments/api';
@@ -24,6 +25,7 @@ import {
 import { getRegistrationModeUi } from './registrationMode';
 
 export default function TournamentsListPage() {
+  const translate = useTranslations("TournamentList");
   const { user } = useAuthStore();
 
   const getFormatLabel = (matchType?: string, genderRestriction?: string | null) => {
@@ -59,11 +61,11 @@ export default function TournamentsListPage() {
   const [featuredTournaments, setFeaturedTournaments] = useState<Tournament[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [regions, setRegions] = useState<Region[]>([]);
-  const [districts, setDistricts] = useState<Region[]>([]); // Danh sách quận huyện
+  const [wards, setWards] = useState<Region[]>([]); // Danh sách phường/xã
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
   const [selectedStatus, setSelectedStatus] = useState<string>('');
   const [selectedRegion, setSelectedRegion] = useState<string>('');
-  const [selectedDistrict, setSelectedDistrict] = useState<string>(''); // Quận huyện đang chọn
+  const [selectedWard, setSelectedWard] = useState<string>(''); // Phường/xã đang chọn
   const [selectedContent, setSelectedContent] = useState<string>(''); // Nội dung thi đấu (Đơn Nam, Đôi Nữ...)
   const [selectedIsRanked, setSelectedIsRanked] = useState<string>(''); // ELO or Recreational filter
   const [selectedBracketType, setSelectedBracketType] = useState<string>(''); // Thể thức thi đấu
@@ -83,7 +85,7 @@ export default function TournamentsListPage() {
     selectedCategoryId,
     selectedStatus,
     selectedRegion,
-    selectedDistrict,
+    selectedWard,
     selectedContent,
     selectedBracketType,
     startDate,
@@ -157,13 +159,13 @@ export default function TournamentsListPage() {
     fetchFeatured();
   }, []);
 
-  // Tự động tải Quận / Huyện khi chọn Tỉnh / Thành phố
+  // Tự động tải Phường / Xã theo Tỉnh / Thành phố (API địa chỉ v2)
   useEffect(() => {
     if (!selectedRegion) {
       return;
     }
 
-    const loadDistricts = async () => {
+    const loadWards = async () => {
       try {
         const cleanRegionName = selectedRegion.trim().toLowerCase();
         const foundRegion = regions.find(r =>
@@ -171,17 +173,17 @@ export default function TournamentsListPage() {
         );
 
         if (foundRegion) {
-          const res = await regionsApi.getDistricts(foundRegion.code);
+          const res = await regionsApi.getWardsByProvince(foundRegion.code);
           if (res) {
-            setDistricts(res);
+            setWards(res);
           }
         }
       } catch (error) {
-        console.error("Failed to fetch districts", error);
+        console.error("Failed to fetch wards", error);
       }
     };
 
-    loadDistricts();
+    loadWards();
   }, [selectedRegion, regions]);
 
   useEffect(() => {
@@ -228,8 +230,8 @@ export default function TournamentsListPage() {
       setIsLoading(true);
       try {
         let locationQuery = selectedRegion || undefined;
-        if (selectedRegion && selectedDistrict) {
-          locationQuery = `${selectedDistrict}, ${selectedRegion}`;
+        if (selectedRegion && selectedWard) {
+          locationQuery = `${selectedWard}, ${selectedRegion}`;
         }
 
         // Map lựa chọn nội dung đấu sang matchType và genderRestriction
@@ -345,13 +347,13 @@ export default function TournamentsListPage() {
                   setPage(1);
                 }}
                 className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50/50 text-slate-900 font-semibold h-[42px]"
-                placeholder="Tên giải đấu, địa điểm..."
+                placeholder={translate("searchPlaceholder")}
               />
             </div>
           </div>
 
           <div className="w-full sm:w-48 shrink-0">
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Môn thể thao</label>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">{translate("sport")}</label>
             <div className="relative">
               <select
                 value={selectedCategoryId}
@@ -361,7 +363,7 @@ export default function TournamentsListPage() {
                 }}
                 className="w-full pl-3 pr-10 py-2 border border-slate-200 rounded-lg text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50/50 text-slate-900 font-bold h-[42px]"
               >
-                <option value="">Tất cả</option>
+                <option value="">{translate("all")}</option>
                 {categories.map(cat => (
                   <option key={cat.id} value={cat.id}>{cat.name}</option>
                 ))}
@@ -381,11 +383,11 @@ export default function TournamentsListPage() {
                 }}
                 className="w-full pl-3 pr-10 py-2 border border-slate-200 rounded-lg text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50/50 text-slate-900 font-bold h-[42px]"
               >
-                <option value="">Tất cả</option>
-                <option value="REGISTRATION_OPEN">Mở đăng ký</option>
+                <option value="">{translate("all")}</option>
+                <option value="REGISTRATION_OPEN">{translate("registrationOpen")}</option>
                 <option value="UPCOMING">Sắp diễn ra</option>
-                <option value="IN_PROGRESS">Đang diễn ra</option>
-                <option value="COMPLETED">Đã kết thúc</option>
+                <option value="IN_PROGRESS">{translate("inProgress")}</option>
+                <option value="COMPLETED">{translate("completed")}</option>
               </select>
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-455 w-4.5 h-4.5 pointer-events-none" />
             </div>
@@ -394,7 +396,7 @@ export default function TournamentsListPage() {
           <button
             onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
             className={`w-full sm:w-auto px-4 py-2.5 rounded-lg text-xs font-bold border transition-all flex items-center justify-center gap-2 h-[42px] cursor-pointer shrink-0 ${
-              showAdvancedFilters || selectedContent || selectedBracketType || selectedIsRanked || selectedRegion || selectedDistrict || startDate || endDate
+              showAdvancedFilters || selectedContent || selectedBracketType || selectedIsRanked || selectedRegion || selectedWard || startDate || endDate
                 ? 'bg-blue-50 border-blue-250 text-blue-700 shadow-sm animate-pulse-subtle'
                 : 'bg-slate-105 hover:bg-slate-200 text-slate-900 border-slate-200'
             }`}
@@ -419,12 +421,12 @@ export default function TournamentsListPage() {
                   }}
                   className="w-full pl-3 pr-10 py-1.5 border border-slate-250 rounded-lg text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-950 font-bold h-10"
                 >
-                  <option value="">Tất cả</option>
-                  <option value="SINGLE_MALE">Đơn Nam</option>
-                  <option value="SINGLE_FEMALE">Đơn Nữ</option>
-                  <option value="DOUBLE_MALE">Đôi Nam</option>
-                  <option value="DOUBLE_FEMALE">Đôi Nữ</option>
-                  <option value="DOUBLE_MIXED">Đôi Nam Nữ</option>
+                  <option value="">{translate("all")}</option>
+                  <option value="SINGLE_MALE">{translate("singleMale")}</option>
+                  <option value="SINGLE_FEMALE">{translate("singleFemale")}</option>
+                  <option value="DOUBLE_MALE">{translate("doubleMale")}</option>
+                  <option value="DOUBLE_FEMALE">{translate("doubleFemale")}</option>
+                  <option value="DOUBLE_MIXED">{translate("mixedDoubles")}</option>
                 </select>
                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-455 w-4 h-4 pointer-events-none" />
               </div>
@@ -442,11 +444,11 @@ export default function TournamentsListPage() {
                   }}
                   className="w-full pl-3 pr-10 py-1.5 border border-slate-250 rounded-lg text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-950 font-bold h-10"
                 >
-                  <option value="">Tất cả</option>
-                  <option value="SINGLE_ELIMINATION">Loại trực tiếp</option>
-                  <option value="DOUBLE_ELIMINATION">Nhánh thắng/thua</option>
-                  <option value="ROUND_ROBIN">Vòng tròn</option>
-                  <option value="GROUP_STAGE_KNOCKOUT">Vòng bảng + Playoffs</option>
+                  <option value="">{translate("all")}</option>
+                  <option value="SINGLE_ELIMINATION">{translate("singleElimination")}</option>
+                  <option value="DOUBLE_ELIMINATION">{translate("doubleElimination")}</option>
+                  <option value="ROUND_ROBIN">{translate("roundRobin")}</option>
+                  <option value="GROUP_STAGE_KNOCKOUT">{translate("groupStageKnockout")}</option>
                 </select>
                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-455 w-4 h-4 pointer-events-none" />
               </div>
@@ -464,9 +466,9 @@ export default function TournamentsListPage() {
                   }}
                   className="w-full pl-3 pr-10 py-1.5 border border-slate-250 rounded-lg text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-950 font-bold h-10"
                 >
-                  <option value="">Tất cả</option>
-                  <option value="true">Tính ELO</option>
-                  <option value="false">Không tính ELO</option>
+                  <option value="">{translate("all")}</option>
+                  <option value="true">{translate("eloIncluded")}</option>
+                  <option value="false">{translate("eloExcluded")}</option>
                 </select>
                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-455 w-4 h-4 pointer-events-none" />
               </div>
@@ -481,15 +483,15 @@ export default function TournamentsListPage() {
                   onChange={(e) => {
                     const newRegion = e.target.value;
                     setSelectedRegion(newRegion);
-                    setSelectedDistrict('');
+                    setSelectedWard('');
                     if (!newRegion) {
-                      setDistricts([]);
+                      setWards([]);
                     }
                     setPage(1);
                   }}
                   className="w-full pl-3 pr-10 py-1.5 border border-slate-250 rounded-lg text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-950 font-bold h-10"
                 >
-                  <option value="">Tất cả</option>
+                  <option value="">{translate("all")}</option>
                   {regions.map(reg => (
                     <option key={reg.code} value={reg.name.replace(/^(Thành phố|Tỉnh)\s+/i, '')}>{reg.name}</option>
                   ))}
@@ -498,22 +500,22 @@ export default function TournamentsListPage() {
               </div>
             </div>
 
-            {/* Quận / Huyện */}
+            {/* Phường / Xã */}
             <div>
-              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Quận / Huyện</label>
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Phường / Xã</label>
               <div className="relative">
                 <select
-                  disabled={!selectedRegion || districts.length === 0}
-                  value={selectedDistrict}
+                  disabled={!selectedRegion || wards.length === 0}
+                  value={selectedWard}
                   onChange={(e) => {
-                    setSelectedDistrict(e.target.value);
+                    setSelectedWard(e.target.value);
                     setPage(1);
                   }}
                   className="w-full pl-3 pr-10 py-1.5 border border-slate-250 rounded-lg text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-950 font-bold disabled:opacity-50 disabled:bg-slate-100 h-10"
                 >
-                  <option value="">Tất cả</option>
-                  {districts.map(dist => (
-                    <option key={dist.code} value={dist.name}>{dist.name}</option>
+                  <option value="">{translate("all")}</option>
+                  {wards.map(ward => (
+                    <option key={ward.code} value={ward.name}>{ward.name}</option>
                   ))}
                 </select>
                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-455 w-4 h-4 pointer-events-none" />
@@ -522,7 +524,7 @@ export default function TournamentsListPage() {
 
             {/* Lọc từ ngày */}
             <div>
-              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Diễn ra từ ngày</label>
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">{translate("fromDate")}</label>
               <div className="relative">
                 <input
                   type="text"
@@ -578,7 +580,7 @@ export default function TournamentsListPage() {
 
             {/* Lọc đến ngày */}
             <div>
-              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Diễn ra đến ngày</label>
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">{translate("toDate")}</label>
               <div className="relative">
                 <input
                   type="text"
@@ -644,7 +646,7 @@ export default function TournamentsListPage() {
                   setStartDate('');
                   setEndDate('');
                   setSelectedRegion('');
-                  setSelectedDistrict('');
+                  setSelectedWard('');
                   setSearchTerm('');
                   setPage(1);
                 }}

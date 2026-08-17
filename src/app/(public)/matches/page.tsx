@@ -236,9 +236,9 @@ export default function MatchesListPage() {
   const [isRanked, setIsRanked] = useState<string>('');
 
   const [provinces, setProvinces] = useState<Region[]>([]);
-  const [districts, setDistricts] = useState<Region[]>([]);
+  const [wards, setWards] = useState<Region[]>([]);
   const [selectedProvince, setSelectedProvince] = useState('');
-  const [selectedDistrict, setSelectedDistrict] = useState('');
+  const [selectedWard, setSelectedWard] = useState('');
 
   const [isLoading, setIsLoading] = useState(true);
   const [isRateLimited, setIsRateLimited] = useState(false);
@@ -260,7 +260,7 @@ export default function MatchesListPage() {
     startDate,
     endDate,
     selectedProvince,
-    selectedDistrict,
+    selectedWard,
     isRanked,
   ].join('|');
   const matchesRequestInFlightRef = useRef(false);
@@ -307,38 +307,38 @@ export default function MatchesListPage() {
     fetchCategoriesAndProvinces();
   }, []);
 
-  // Load districts when a province is selected, clear when none
+  // Load wards from the selected province using the v2 two-level address API
   useEffect(() => {
     if (!selectedProvince) {
       // Delay the state update to ensure it does not execute during the synchronous render cycle
       const timer = setTimeout(() => {
-        if (districts.length > 0) {
-          setDistricts([]);
+        if (wards.length > 0) {
+          setWards([]);
         }
-        if (selectedDistrict !== '') {
-          setSelectedDistrict('');
+        if (selectedWard !== '') {
+          setSelectedWard('');
         }
       }, 0);
       return () => clearTimeout(timer);
     }
-    const loadDistricts = async () => {
+    const loadWards = async () => {
       try {
         const cleanName = selectedProvince.trim().toLowerCase();
         const found = provinces.find(p =>
           p.name.replace(/^(Thành phố|Tỉnh)\s+/i, '').trim().toLowerCase() === cleanName
         );
         if (found) {
-          const res = await regionsApi.getDistricts(found.code);
+          const res = await regionsApi.getWardsByProvince(found.code);
           if (res) {
-            setDistricts(res);
+            setWards(res);
           }
         }
       } catch (error) {
-        console.error("Failed to fetch districts", error);
+        console.error("Failed to fetch wards", error);
       }
     };
-    loadDistricts();
-  }, [selectedProvince, provinces, districts.length, selectedDistrict]);
+    loadWards();
+  }, [selectedProvince, provinces, wards.length, selectedWard]);
 
   // Helper: chuyển dd/mm/yyyy → yyyy-mm-dd cho API
   const formatDateForAPI = (d: string): string | undefined => {
@@ -592,7 +592,7 @@ export default function MatchesListPage() {
 
       return true;
     });
-  }, [matches, selectedCategoryName, selectedContent, selectedBracketType, selectedProvince, selectedDistrict, thirtyDaysAgo]);
+  }, [matches, selectedCategoryName, selectedContent, selectedBracketType, selectedProvince, selectedWard, thirtyDaysAgo]);
 
   // Gom nhóm trận đấu theo giải đấu
   interface GroupedMatches {
@@ -659,7 +659,7 @@ export default function MatchesListPage() {
     startDate,
     endDate,
     selectedProvince,
-    selectedDistrict,
+    selectedWard,
     isRanked,
   ].filter(Boolean).length;
 
@@ -737,7 +737,7 @@ export default function MatchesListPage() {
           <button
             onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
             className={`w-full sm:w-auto px-4 py-2.5 rounded-lg text-xs font-bold border transition-all flex items-center justify-center gap-2 h-[42px] cursor-pointer shrink-0 ${
-              showAdvancedFilters || selectedBracketType || selectedContent || isRanked || selectedProvince || selectedDistrict || startDate || endDate
+              showAdvancedFilters || selectedBracketType || selectedContent || isRanked || selectedProvince || selectedWard || startDate || endDate
                 ? 'bg-blue-50 border-blue-250 text-blue-700 shadow-sm'
                 : 'bg-slate-105 hover:bg-slate-200 text-slate-900 border-slate-200'
             }`}
@@ -853,7 +853,7 @@ export default function MatchesListPage() {
                     value={selectedProvince}
                     onChange={(event) => {
                       setSelectedProvince(event.target.value);
-                      setSelectedDistrict('');
+                      setSelectedWard('');
                       setPage(1);
                     }}
                     className="w-full h-10 appearance-none rounded-lg border border-slate-200 bg-white px-3 pr-8 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -869,22 +869,22 @@ export default function MatchesListPage() {
                 </div>
               </div>
 
-              {/* Quận / Huyện */}
+              {/* Phường / Xã */}
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Quận / Huyện</label>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Phường / Xã</label>
                 <div className="relative">
                   <select
-                    value={selectedDistrict}
+                    value={selectedWard}
                     onChange={(event) => {
-                      setSelectedDistrict(event.target.value);
+                      setSelectedWard(event.target.value);
                       setPage(1);
                     }}
                     disabled={!selectedProvince}
                     className="w-full h-10 appearance-none rounded-lg border border-slate-200 bg-white px-3 pr-8 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
                   >
-                    <option value="">Tất cả quận / huyện</option>
-                    {districts.map((district) => (
-                      <option key={district.code} value={district.name}>{district.name}</option>
+                    <option value="">Tất cả phường / xã</option>
+                    {wards.map((ward) => (
+                      <option key={ward.code} value={ward.name}>{ward.name}</option>
                     ))}
                   </select>
                   <ChevronDown className="absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 pointer-events-none" />
@@ -1014,7 +1014,7 @@ export default function MatchesListPage() {
                     setStartDate('');
                     setEndDate('');
                     setSelectedProvince('');
-                    setSelectedDistrict('');
+                    setSelectedWard('');
                     setSearchTerm('');
                     setIsRanked('');
                     setPage(1);

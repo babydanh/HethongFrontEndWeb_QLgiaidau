@@ -1,9 +1,12 @@
 'use client';
 
 import { FileText, ShieldAlert } from 'lucide-react';
+import { useTranslations } from "next-intl";
 import Link from 'next/link';
 
 export default function TermsPage() {
+  const t = useTranslations("Terms");
+
   return (
     <div className="bg-slate-50 min-h-screen py-16 px-4 md:px-8">
       <div className="max-w-3xl mx-auto bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
@@ -13,13 +16,13 @@ export default function TermsPage() {
             <div className="w-10 h-10 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center">
               <FileText className="w-5 h-5" />
             </div>
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-450">Pháp lý & Điều khoản</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-450">{t("badge")}</span>
           </div>
           <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
-            Điều khoản sử dụng Sporto
+            {t("heading")}
           </h1>
           <p className="text-slate-500 font-medium text-xs mt-2">
-            Cập nhật lần cuối: ngày 14 tháng 07 năm 2026
+            {t("lastUpdated")}
           </p>
         </div>
 
@@ -27,7 +30,7 @@ export default function TermsPage() {
         <div className="p-8 md:p-12 space-y-8 text-sm text-slate-650 leading-relaxed font-medium">
           <section className="space-y-3">
             <h2 className="text-base font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
-              1. Chấp thuận điều khoản
+              {t("section1")}
             </h2>
             <p>
               Chào mừng bạn đến với <strong>Sporto</strong> (&quot;Nền tảng&quot;). Bằng việc đăng ký tài khoản, truy cập hoặc sử dụng bất kỳ tính năng nào của Sporto trên cả hai nền tảng Web và ứng dụng di động, bạn đồng ý tuân thủ và chịu sự ràng buộc bởi các Điều khoản sử dụng này. Nếu bạn không đồng ý với bất kỳ phần nào của các điều khoản này, vui lòng ngừng sử dụng dịch vụ ngay lập tức.
@@ -36,7 +39,7 @@ export default function TermsPage() {
 
           <section className="space-y-3">
             <h2 className="text-base font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
-              2. Tài khoản và Bảo mật
+              {t("section2")}
             </h2>
             <p>
               Để sử dụng một số dịch vụ của chúng tôi, bạn có thể được yêu cầu đăng ký tài khoản và cung cấp thông tin cá nhân chính xác, đầy đủ (bao gồm tên đầy đủ, số điện thoại, địa chỉ email). Bạn tự chịu trách nhiệm bảo mật thông tin đăng nhập của mình và mọi hoạt động diễn ra dưới tài khoản của bạn. Vui lòng thông báo ngay cho chúng tôi nếu phát hiện bất kỳ hành vi truy cập trái phép nào.
@@ -45,7 +48,7 @@ export default function TermsPage() {
 
           <section className="space-y-3">
             <h2 className="text-base font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
-              3. Quy chế tổ chức &amp; tham gia giải đấu
+              {t("section3")}
             </h2>
             <ul className="list-disc pl-5 space-y-2">
               <li>
@@ -59,7 +62,7 @@ export default function TermsPage() {
 
           <section className="space-y-3">
             <h2 className="text-base font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
-              4. Giao dịch tài chính &amp; Hoàn tiền
+              {t("section4")}
             </h2>
             <p>
               Mọi giao dịch đóng lệ phí tham gia giải đấu trực tuyến được xử lý qua cổng thanh toán liên kết của Sporto. Việc rút lui khỏi giải đấu và yêu cầu hoàn tiền phải tuân thủ chính sách hoàn trả cụ thể của từng giải đấu do BTC quy định. Sporto chỉ chịu trách nhiệm chuyển tiền hoàn lại khi yêu cầu đáp ứng đủ điều kiện quy định và được BTC phê duyệt hợp lệ.
@@ -68,7 +71,7 @@ export default function TermsPage() {
 
           <section className="space-y-3">
             <h2 className="text-base font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
-              5. Quyền sở hữu trí tuệ
+              {t("section5")}
             </h2>
             <p>
               Tất cả nội dung, nhãn hiệu, logo, mã nguồn, thiết kế đồ họa và công nghệ liên quan thuộc sở hữu độc quyền của Sporto hoặc các đối tác cấp phép. Bạn không được sao chép, sửa đổi, phân phối hoặc sử dụng cho mục đích thương mại mà không có sự đồng ý trước bằng văn bản từ chúng tôi.
@@ -77,7 +80,7 @@ export default function TermsPage() {
 
           <section className="space-y-3">
             <h2 className="text-base font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
-              6. Giới hạn trách nhiệm
+              {t("section6")}
             </h2>
             <p>
               Sporto cung cấp nền tảng kết nối và quản lý kỹ thuật. Chúng tôi không chịu trách nhiệm đối với bất kỳ chấn thương thể chất, tổn thất tài sản cá nhân hay sự cố phát sinh ngoài ý muốn nào xảy ra trong quá trình diễn ra các giải đấu thực tế trên sân. BTC và người chơi tự chịu trách nhiệm đảm bảo các điều kiện an toàn sức khỏe và y tế cần thiết khi thi đấu.

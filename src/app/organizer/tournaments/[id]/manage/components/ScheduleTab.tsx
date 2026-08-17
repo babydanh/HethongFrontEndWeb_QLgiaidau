@@ -24,12 +24,9 @@ interface ScheduleTabProps {
   setCustomVenueAddress: (val: string) => void;
   provinceCode: string;
   setProvinceCode: (val: string) => void;
-  districtCode: string;
-  setDistrictCode: (val: string) => void;
   wardCode: string;
   setWardCode: (val: string) => void;
   provinces: Region[];
-  districts: Region[];
   wards: Region[];
   startDate: string;
   setStartDate: (val: string) => void;
@@ -50,12 +47,9 @@ export function ScheduleTab({
   setCustomVenueAddress,
   provinceCode,
   setProvinceCode,
-  districtCode,
-  setDistrictCode,
   wardCode,
   setWardCode,
   provinces,
-  districts,
   wards,
   startDate,
   setStartDate,
@@ -87,7 +81,7 @@ export function ScheduleTab({
             onChange={(e) => setCustomVenueAddress(e.target.value)}
           />
 
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <div className="flex flex-col gap-1">
               <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tỉnh / Thành</label>
               <select
@@ -105,28 +99,11 @@ export function ScheduleTab({
             </div>
 
             <div className="flex flex-col gap-1">
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Quận / Huyện</label>
-              <select
-                value={districtCode}
-                onChange={(e) => setDistrictCode(e.target.value)}
-                disabled={!provinceCode}
-                className="border border-slate-300 rounded-lg px-2 py-1 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs h-9 disabled:bg-slate-100 disabled:text-slate-400"
-              >
-                <option value="">Chọn Quận/Huyện</option>
-                {districts.map((d) => (
-                  <option key={d.code} value={d.code}>
-                    {d.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="flex flex-col gap-1">
               <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Phường / Xã</label>
               <select
                 value={wardCode}
                 onChange={(e) => setWardCode(e.target.value)}
-                disabled={!districtCode}
+                disabled={!provinceCode}
                 className="border border-slate-300 rounded-lg px-2 py-1 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs h-9 disabled:bg-slate-100 disabled:text-slate-400"
               >
                 <option value="">Chọn Phường/Xã</option>

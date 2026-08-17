@@ -37,6 +37,7 @@ import { cn } from '@/utils/cn';
 import { getErrorMessage, isHttpStatusError } from '@/utils/error';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
+import { LanguageSwitcher } from '@/components/i18n/LanguageSwitcher';
 
 const GUEST_ROUTES = ['/login', '/register'];
 
@@ -317,6 +318,8 @@ export function Header() {
         </div>
 
         <div className="flex items-center gap-3">
+          <LanguageSwitcher className="hidden sm:inline-flex" />
+
           {/* Nút Tải App */}
           <Link
             href="/download"
@@ -715,6 +718,7 @@ export function Header() {
               <Smartphone className="w-4 h-4" />
               {t('downloadApp')}
             </Link>
+            <LanguageSwitcher expanded className="mt-1" />
           </nav>
         </div>
       ) : null}

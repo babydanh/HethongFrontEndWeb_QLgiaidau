@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
@@ -829,7 +829,7 @@ export default function MatchesListPage() {
 
               {/* Xếp hạng */}
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Xếp hạng</label>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">{translate("ranking")}</label>
                 <div className="relative">
                   <select
                     value={isRanked}
@@ -840,8 +840,8 @@ export default function MatchesListPage() {
                     className="w-full h-10 appearance-none rounded-lg border border-slate-200 bg-white px-3 pr-8 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="">{translate("all")}</option>
-                    <option value="true">Xếp hạng</option>
-                    <option value="false">Phong trào</option>
+                    <option value="true">{translate("ranked")}</option>
+                    <option value="false">{translate("recreational")}</option>
                   </select>
                   <ChevronDown className="absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 pointer-events-none" />
                 </div>
@@ -849,7 +849,7 @@ export default function MatchesListPage() {
 
               {/* Tỉnh / Thành phố */}
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Tỉnh / Thành phố</label>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">{translate("provinceCity")}</label>
                 <div className="relative">
                   <select
                     value={selectedProvince}
@@ -860,7 +860,7 @@ export default function MatchesListPage() {
                     }}
                     className="w-full h-10 appearance-none rounded-lg border border-slate-200 bg-white px-3 pr-8 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="">Tất cả khu vực</option>
+                    <option value="">{translate("allAreas")}</option>
                     {provinces.map((province) => (
                       <option key={province.code} value={province.name.replace(/^(Thành phố|Tỉnh)\s+/i, '')}>
                         {province.name}
@@ -873,7 +873,7 @@ export default function MatchesListPage() {
 
               {/* Phường / Xã */}
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Phường / Xã</label>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">{translate("wardCommune")}</label>
                 <div className="relative">
                   <select
                     value={selectedWard}
@@ -884,7 +884,7 @@ export default function MatchesListPage() {
                     disabled={!selectedProvince}
                     className="w-full h-10 appearance-none rounded-lg border border-slate-200 bg-white px-3 pr-8 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
                   >
-                    <option value="">Tất cả phường / xã</option>
+                    <option value="">{translate("allWards")}</option>
                     {wards.map((ward) => (
                       <option key={ward.code} value={ward.name}>{ward.name}</option>
                     ))}
@@ -895,11 +895,11 @@ export default function MatchesListPage() {
 
               {/* Từ ngày */}
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Từ ngày</label>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">{translate("fromDate")}</label>
                 <div className="relative">
                   <input
                     type="text"
-                    placeholder="dd/mm/yyyy"
+                    placeholder={translate("datePlaceholder")}
                     value={startDate}
                     onChange={(e) => {
                       let val = e.target.value;
@@ -951,11 +951,11 @@ export default function MatchesListPage() {
 
               {/* Đến ngày */}
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Đến ngày</label>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">{translate("toDate")}</label>
                 <div className="relative">
                   <input
                     type="text"
-                    placeholder="dd/mm/yyyy"
+                    placeholder={translate("datePlaceholder")}
                     value={endDate}
                     onChange={(e) => {
                       let val = e.target.value;
@@ -1033,14 +1033,14 @@ export default function MatchesListPage() {
 
       <div className="flex items-end justify-between gap-4">
         <div>
-          <h2 className="text-lg font-bold text-slate-900">Danh sách trận đấu</h2>
+          <h2 className="text-lg font-bold text-slate-900">{translate("title")}</h2>
           <p className="mt-0.5 text-xs font-medium text-slate-500">Các trận được nhóm theo từng giải để dễ theo dõi.</p>
         </div>
       </div>
 
       {/* Danh sách các Giải đấu gom nhóm */}
       {isLoading ? (
-        <div className="flex justify-center items-center h-64 text-slate-500 font-bold">Đang tải danh sách trận đấu...</div>
+        <div className="flex justify-center items-center h-64 text-slate-500 font-bold">{translate("loading")}</div>
       ) : isRateLimited ? (
         <div className="flex flex-col justify-center items-center h-64 text-slate-400 bg-white border border-slate-200 rounded-lg p-6 text-center">
           <Trophy className="w-12 h-12 text-slate-300 mb-2 stroke-[1.5]" />
@@ -1057,7 +1057,7 @@ export default function MatchesListPage() {
       ) : currentTournaments.length === 0 ? (
         <div className="flex flex-col justify-center items-center h-64 text-slate-400 bg-white border border-slate-200 rounded-lg p-6 text-center">
           <Trophy className="w-12 h-12 text-slate-300 mb-2 stroke-[1.5]" />
-          <p className="text-sm font-bold text-slate-500">Không tìm thấy trận đấu nào phù hợp.</p>
+          <p className="text-sm font-bold text-slate-500">{translate("empty")}</p>
           <p className="text-xs text-slate-400 mt-1">Vui lòng thay đổi bộ lọc để thử lại.</p>
         </div>
       ) : (

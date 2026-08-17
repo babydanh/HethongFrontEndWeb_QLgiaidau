@@ -7,7 +7,29 @@
     "all": "All",
     "ongoing": "Ongoing",
     "scheduled": "Upcoming",
-    "completed": "Recently completed"
+    "completed": "Recently completed",
+    "format": "Format",
+    "singleElimination": "Single elimination",
+    "doubleElimination": "Double elimination",
+    "roundRobin": "Round robin",
+    "singleMale": "Men singles",
+    "singleFemale": "Women singles",
+    "doubleMale": "Men doubles",
+    "doubleFemale": "Women doubles",
+    "doubleMixed": "Mixed doubles",
+    "ranking": "Ranking"
+,    "ranked": "Ranked"
+,    "recreational": "Recreational"
+,    "provinceCity": "Province / City"
+,    "allAreas": "All areas"
+,    "wardCommune": "Ward / Commune"
+,    "allWards": "All wards / communes"
+,    "fromDate": "From date"
+,    "toDate": "To date"
+,    "datePlaceholder": "dd/mm/yyyy"
+,    "title": "Match list"
+,    "loading": "Loading matches..."
+,    "empty": "No matching matches found."
   },
   "LocaleSwitcher": {
     "language": "Language",
@@ -57,7 +79,10 @@
     "bankWallet": "Bank / Wallet",
     "accountOrWalletNumber": "Account or wallet number",
     "accountHolder": "Account holder",
-    "notUpdated": "Not updated"
+    "notUpdated": "Not updated",
+    "eloHistoryTitle": "ELO changes over time",
+    "matchLabel": "Match {number}",
+    "eloHistoryEmpty": "No ELO change history."
   },
   "PlayerDashboard": {
     "statusOngoing": "In progress",
@@ -93,6 +118,8 @@
     "doubleFemale": "Womens doubles",
     "mixedDoubles": "Mixed doubles",
     "singleElimination": "Single elimination",
+    "doubleMixed": "Mixed doubles",
+    "format": "Format",
     "doubleElimination": "Double elimination",
     "roundRobin": "Round robin",
     "groupStageKnockout": "Group stage + Playoffs",

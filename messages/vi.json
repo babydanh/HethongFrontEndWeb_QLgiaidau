@@ -7,7 +7,29 @@
     "all": "Tất cả",
     "ongoing": "Đang diễn ra",
     "scheduled": "Sắp diễn ra",
-    "completed": "Vừa kết thúc"
+    "completed": "Vừa kết thúc",
+    "format": "Thể thức",
+    "singleElimination": "Loại trực tiếp",
+    "doubleElimination": "Nhánh thắng/thua",
+    "roundRobin": "Vòng tròn",
+    "singleMale": "Đơn Nam",
+    "singleFemale": "Đơn Nữ",
+    "doubleMale": "Đôi Nam",
+    "doubleFemale": "Đôi Nữ",
+    "doubleMixed": "Đôi Nam Nữ",
+    "ranking": "Xếp hạng"
+,    "ranked": "Xếp hạng"
+,    "recreational": "Phong trào"
+,    "provinceCity": "Tỉnh / Thành phố"
+,    "allAreas": "Tất cả khu vực"
+,    "wardCommune": "Phường / Xã"
+,    "allWards": "Tất cả phường / xã"
+,    "fromDate": "Từ ngày"
+,    "toDate": "Đến ngày"
+,    "datePlaceholder": "dd/mm/yyyy"
+,    "title": "Danh sách trận đấu"
+,    "loading": "Đang tải danh sách trận đấu..."
+,    "empty": "Không tìm thấy trận đấu nào phù hợp."
   },
   "LocaleSwitcher": {
     "language": "Ngôn ngữ",
@@ -57,7 +79,10 @@
     "bankWallet": "Ngân hàng / Ví",
     "accountOrWalletNumber": "Số tài khoản / SĐT ví",
     "accountHolder": "Chủ tài khoản",
-    "notUpdated": "Chưa cập nhật"
+    "notUpdated": "Chưa cập nhật",
+    "eloHistoryTitle": "Biến động ELO theo thời gian",
+    "matchLabel": "Trận {number}",
+    "eloHistoryEmpty": "Không có lịch sử biến động ELO."
   },
   "PlayerDashboard": {
     "statusOngoing": "Đang diễn ra",

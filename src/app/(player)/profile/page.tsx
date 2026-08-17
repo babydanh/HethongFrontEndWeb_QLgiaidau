@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { Button } from '@/components/ui/Button';
@@ -1379,12 +1379,12 @@ export default function ProfilePage() {
 
                 {eloHistory.length > 0 && (
                   <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
-                    <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-6">Biến động ELO theo thời gian</h3>
+                    <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-6">{translate("eloHistoryTitle")}</h3>
                     <div className="h-80 w-full">
                       <ResponsiveContainer width="100%" height="100%">
                         <LineChart
                           data={[...eloHistory].reverse().map((item, index) => ({
-                            name: `Trận ${index + 1}`,
+                            name: translate("matchLabel", { number: index + 1 }),
                             'ELO': item.newElo,
                             date: formatDate(item.createdAt, 'dd/MM/yyyy'),
                             reason: item.reason || (item.changedPoints > 0 ? 'Thắng' : 'Thua'),
@@ -1454,7 +1454,7 @@ export default function ProfilePage() {
                     </div>
                   ) : (
                     <div className="text-center py-6 text-slate-400 text-sm">
-                      Không có lịch sử biến động ELO.
+                      {translate("eloHistoryEmpty")}
                     </div>
                   )}
                 </div>

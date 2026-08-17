@@ -547,10 +547,10 @@ export function useManageState(id: string) {
     await handleParticipantModeration(participantId, 'REJECTED', 'Đã từ chối đăng ký thành công!');
   };
 
-  const handleKickParticipant = async (participantId: string, reason: string) => {
+  const handleKickParticipant = async (participantId: string, reason?: string) => {
     setActiveParticipantActionId(participantId);
     try {
-      await tournamentsApi.kickParticipant(id, participantId, reason.trim() || 'Loại khỏi giải theo điều lệ');
+      await tournamentsApi.kickParticipant(id, participantId, reason?.trim() || 'Loại khỏi giải theo điều lệ');
       toast.success('Đã loại đội khỏi giải.');
       await refetchDivisionData();
     } catch (error) {

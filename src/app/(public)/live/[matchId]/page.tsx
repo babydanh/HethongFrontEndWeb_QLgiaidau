@@ -35,7 +35,8 @@ import { getErrorMessage } from '@/utils/error';
 import { cn } from '@/utils/cn';
 import { trimAndNormalizeSpaces } from '@/utils/string';
 import { formatCompact } from '@/utils/format';
-import { Trophy, Clock, MapPin, Activity, Play, AlertCircle, Camera, MessageSquare, Send, Eye, Shield, Users, Heart, Share2 } from 'lucide-react';
+import { Trophy, Clock, MapPin, Activity, Play, AlertCircle, Camera, MessageSquare, Send, Eye, Shield, Users, Heart, Share2, User } from 'lucide-react';
+import { useUserProfileModalStore } from '@/lib/zustand/userProfileModalStore';
 import { livestreamApi, tournamentsApi, type MatchPlaybackResponse } from '@/features/tournaments/api';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
@@ -121,6 +122,7 @@ export default function LiveMatchPage({ params }: Props) {
   const matchId = resolvedParams.matchId;
   const { match, scores, viewerCount, cheerCount, setCheerCount, setMatch, setScores, isLoading, error } = useLiveMatch(matchId);
   const { user } = useAuthStore();
+  const { openUserProfile, openUserById } = useUserProfileModalStore();
 
   /**
    * Single choke point for PATCH /matches/:id/score (NOTE-7/D3): injects the
@@ -166,6 +168,47 @@ export default function LiveMatchPage({ params }: Props) {
   const [participants, setParticipants] = useState<TournamentParticipant[]>([]);
   const [hearts, setHearts] = useState<{ id: string; x: number; size: number; delay: number }[]>([]);
   const [playback, setPlayback] = useState<MatchPlaybackResponse | null>(null);
+
+  // Auto fetch participants for full member/avatar details
+  useEffect(() => {
+    if (!match?.tournamentId) return;
+    tournamentsApi
+      .getTournamentParticipants(match.tournamentId)
+      .then((res) => {
+        const list = Array.isArray(res) ? res : (res as unknown as { data: TournamentParticipant[] })?.data;
+        if (Array.isArray(list) && list.length > 0) {
+          setParticipants(list);
+        }
+      })
+      .catch(() => {});
+  }, [match?.tournamentId]);
+
+  const handlePlayerClick = (
+    e: React.MouseEvent,
+    player: { userId?: string; fullName: string; avatarUrl?: string | null },
+  ) => {
+    e.stopPropagation();
+    const rect = e.currentTarget.getBoundingClientRect();
+    if (player.userId) {
+      openUserById(
+        player.userId,
+        player.fullName,
+        player.avatarUrl,
+        rect,
+        match?.tournament?.communityId || undefined,
+      );
+    } else {
+      openUserProfile(
+        {
+          id: player.userId || '',
+          fullName: player.fullName,
+          avatarUrl: player.avatarUrl,
+        },
+        rect,
+        match?.tournament?.communityId || undefined,
+      );
+    }
+  };
 
   // Share state
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -1511,67 +1554,174 @@ export default function LiveMatchPage({ params }: Props) {
             </div>
 
             {/* Score Card */}
-            <div className="bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden relative">
-              <div className="h-2 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500"></div>
+            <div className="bg-white rounded-xl shadow-lg border border-slate-200/80 overflow-hidden relative">
+              <div className="h-1 bg-slate-900"></div>
 
               <div className="p-8 md:p-12">
                 <div className="flex flex-col md:flex-row justify-between items-center gap-8 md:gap-4">
 
                   {/* Team 1 */}
                   <div className="flex flex-col items-center flex-1 w-full">
-                    {/* Large Premium Team Avatar */}
+                    {/* Large Clean Team Avatar */}
                     <div className="mb-4 flex items-center justify-center">
                       {(() => {
-                        const members = part1?.members || [];
-                        const names = team1Name.split('-').map(n => n.trim());
-                        const isDoubles = names.length > 1 || members.length > 1;
+                        const members = part1?.members || match.participant1?.members || [];
+                        const rawNames = team1Name.split(/[-&/+]|\s+và\s+/i).map(n => n.trim()).filter(Boolean);
+                        const isDoublesCategory = match.tournament?.categoryName?.toLowerCase().includes('đôi') || match.matchConfig?.format === 'DOUBLES';
+                        const isDoubles = isDoublesCategory || members.length > 1 || rawNames.length > 1;
 
                         if (!isDoubles) {
                           // ĐƠN - 1 VĐV
-                          const m = members[0];
-                          const name = m?.fullName || team1Name;
+                          const member = members[0];
+                          const registeredBy = part1?.registeredBy;
+                          const p1 = {
+                            userId: member?.userId || registeredBy?.id || '',
+                            fullName: member?.fullName || registeredBy?.fullName || team1Name,
+                            avatarUrl: member?.avatarUrl || registeredBy?.avatarUrl || null,
+                            initial: ((member?.fullName || registeredBy?.fullName || team1Name).charAt(0) || '1').toUpperCase(),
+                          };
+
                           return (
-                            <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 p-1 shadow-lg transform hover:scale-105 transition-transform">
+                            <button
+                              type="button"
+                              onClick={(e) => handlePlayerClick(e, p1)}
+                              className="group relative w-20 h-20 rounded-full border-2 border-blue-600 bg-blue-50 p-0.5 shadow-xs hover:shadow-md hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer focus:outline-none focus:ring-4 focus:ring-blue-100"
+                              title={`Xem thông tin ${p1.fullName}`}
+                            >
                               <div className="w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden">
-                                {m?.avatarUrl ? (
-                                  <img src={m.avatarUrl} alt="" className="w-full h-full object-cover" />
+                                {p1.avatarUrl ? (
+                                  <img src={p1.avatarUrl} alt={p1.fullName} className="w-full h-full object-cover" />
                                 ) : (
-                                  <span className="text-3xl font-black text-blue-700 uppercase">{name.charAt(0)}</span>
+                                  <span className="text-2xl font-black text-blue-600 uppercase">{p1.initial}</span>
                                 )}
                               </div>
-                            </div>
+                              <div className="absolute inset-0 rounded-full bg-slate-900/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <User className="w-5 h-5 text-slate-700 drop-shadow-xs" />
+                              </div>
+                            </button>
                           );
                         }
 
                         // ĐÔI - 2 VĐV
-                        const p1Name = members[0]?.fullName || names[0] || 'VĐV 1';
-                        const p2Name = members[1]?.fullName || names[1] || 'VĐV 2';
+                        const p1 = {
+                          userId: members[0]?.userId || (part1?.registeredBy?.fullName === rawNames[0] ? part1.registeredBy.id : '') || '',
+                          fullName: members[0]?.fullName || rawNames[0] || 'VĐV 1',
+                          avatarUrl: members[0]?.avatarUrl || null,
+                          initial: ((members[0]?.fullName || rawNames[0] || '1').charAt(0) || '1').toUpperCase(),
+                        };
+
+                        const p2 = {
+                          userId: members[1]?.userId || (part1?.registeredBy?.fullName === rawNames[1] ? part1.registeredBy.id : '') || '',
+                          fullName: members[1]?.fullName || rawNames[1] || 'VĐV 2',
+                          avatarUrl: members[1]?.avatarUrl || null,
+                          initial: ((members[1]?.fullName || rawNames[1] || '2').charAt(0) || '2').toUpperCase(),
+                        };
+
                         return (
-                          <div className="flex items-center -space-x-5 py-1">
-                            <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-blue-600 to-cyan-500 p-1 shadow-lg z-10">
-                              <div className="w-full h-full rounded-full bg-slate-900 border-2 border-white flex items-center justify-center overflow-hidden">
-                                {members[0]?.avatarUrl ? (
-                                  <img src={members[0].avatarUrl} alt="" className="w-full h-full object-cover" />
+                          <div className="flex items-center justify-center gap-2.5 py-1">
+                            <button
+                              type="button"
+                              onClick={(e) => handlePlayerClick(e, p1)}
+                              className="group relative w-16 h-16 rounded-full border-2 border-blue-600 bg-blue-50 p-0.5 shadow-xs hover:shadow-md hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer focus:outline-none focus:ring-4 focus:ring-blue-100"
+                              title={`Xem thông tin ${p1.fullName}`}
+                            >
+                              <div className="w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden">
+                                {p1.avatarUrl ? (
+                                  <img src={p1.avatarUrl} alt={p1.fullName} className="w-full h-full object-cover" />
                                 ) : (
-                                  <span className="text-lg font-black text-blue-400 uppercase">{p1Name.charAt(0)}</span>
+                                  <span className="text-lg font-black text-blue-600 uppercase">{p1.initial}</span>
                                 )}
                               </div>
-                            </div>
-                            <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-500 p-1 shadow-md z-0">
-                              <div className="w-full h-full rounded-full bg-slate-800 border-2 border-white flex items-center justify-center overflow-hidden">
-                                {members[1]?.avatarUrl ? (
-                                  <img src={members[1].avatarUrl} alt="" className="w-full h-full object-cover" />
+                              <div className="absolute inset-0 rounded-full bg-slate-900/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <User className="w-4 h-4 text-slate-700 drop-shadow-xs" />
+                              </div>
+                            </button>
+
+                            <span className="text-slate-300 font-bold text-xs">&</span>
+
+                            <button
+                              type="button"
+                              onClick={(e) => handlePlayerClick(e, p2)}
+                              className="group relative w-16 h-16 rounded-full border-2 border-blue-500 bg-blue-50 p-0.5 shadow-xs hover:shadow-md hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer focus:outline-none focus:ring-4 focus:ring-blue-100"
+                              title={`Xem thông tin ${p2.fullName}`}
+                            >
+                              <div className="w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden">
+                                {p2.avatarUrl ? (
+                                  <img src={p2.avatarUrl} alt={p2.fullName} className="w-full h-full object-cover" />
                                 ) : (
-                                  <span className="text-lg font-black text-purple-300 uppercase">{p2Name.charAt(0)}</span>
+                                  <span className="text-lg font-black text-blue-500 uppercase">{p2.initial}</span>
                                 )}
                               </div>
-                            </div>
+                              <div className="absolute inset-0 rounded-full bg-slate-900/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <User className="w-4 h-4 text-slate-700 drop-shadow-xs" />
+                              </div>
+                            </button>
                           </div>
                         );
                       })()}
                     </div>
 
-                    <h3 className="text-xl font-black text-slate-900 text-center leading-snug">{team1Name}</h3>
+                    {/* Team 1 Names */}
+                    {(() => {
+                      const members = part1?.members || match.participant1?.members || [];
+                      const rawNames = team1Name.split(/[-&/+]|\s+và\s+/i).map(n => n.trim()).filter(Boolean);
+                      const isDoublesCategory = match.tournament?.categoryName?.toLowerCase().includes('đôi') || match.matchConfig?.format === 'DOUBLES';
+                      const isDoubles = isDoublesCategory || members.length > 1 || rawNames.length > 1;
+
+                      if (!isDoubles) {
+                        const member = members[0];
+                        const registeredBy = part1?.registeredBy;
+                        const p1 = {
+                          userId: member?.userId || registeredBy?.id || '',
+                          fullName: member?.fullName || registeredBy?.fullName || team1Name,
+                          avatarUrl: member?.avatarUrl || registeredBy?.avatarUrl || null,
+                        };
+                        return (
+                          <button
+                            type="button"
+                            onClick={(e) => handlePlayerClick(e, p1)}
+                            className="text-xl font-black text-slate-900 text-center leading-snug hover:text-blue-600 hover:underline transition-colors cursor-pointer"
+                            title={`Xem thông tin ${p1.fullName}`}
+                          >
+                            {p1.fullName}
+                          </button>
+                        );
+                      }
+
+                      const p1 = {
+                        userId: members[0]?.userId || (part1?.registeredBy?.fullName === rawNames[0] ? part1.registeredBy.id : '') || '',
+                        fullName: members[0]?.fullName || rawNames[0] || 'VĐV 1',
+                        avatarUrl: members[0]?.avatarUrl || null,
+                      };
+                      const p2 = {
+                        userId: members[1]?.userId || (part1?.registeredBy?.fullName === rawNames[1] ? part1.registeredBy.id : '') || '',
+                        fullName: members[1]?.fullName || rawNames[1] || 'VĐV 2',
+                        avatarUrl: members[1]?.avatarUrl || null,
+                      };
+
+                      return (
+                        <div className="flex flex-wrap items-center justify-center gap-1.5 text-center">
+                          <button
+                            type="button"
+                            onClick={(e) => handlePlayerClick(e, p1)}
+                            className="text-lg font-black text-slate-900 hover:text-blue-600 hover:underline transition-colors cursor-pointer"
+                            title={`Xem thông tin ${p1.fullName}`}
+                          >
+                            {p1.fullName}
+                          </button>
+                          <span className="text-slate-400 font-bold text-sm">-</span>
+                          <button
+                            type="button"
+                            onClick={(e) => handlePlayerClick(e, p2)}
+                            className="text-lg font-black text-slate-900 hover:text-blue-600 hover:underline transition-colors cursor-pointer"
+                            title={`Xem thông tin ${p2.fullName}`}
+                          >
+                            {p2.fullName}
+                          </button>
+                        </div>
+                      );
+                    })()}
+
                     {(() => {
                       const elo = getTeamEloDisplay(part1);
                       if (elo === null) return null;
@@ -1604,59 +1754,166 @@ export default function LiveMatchPage({ params }: Props) {
 
                   {/* Team 2 */}
                   <div className="flex flex-col items-center flex-1 w-full">
-                    {/* Large Premium Team Avatar */}
+                    {/* Large Clean Team Avatar */}
                     <div className="mb-4 flex items-center justify-center">
                       {(() => {
-                        const members = part2?.members || [];
-                        const names = team2Name.split('-').map(n => n.trim());
-                        const isDoubles = names.length > 1 || members.length > 1;
+                        const members = part2?.members || match.participant2?.members || [];
+                        const rawNames = team2Name.split(/[-&/+]|\s+và\s+/i).map(n => n.trim()).filter(Boolean);
+                        const isDoublesCategory = match.tournament?.categoryName?.toLowerCase().includes('đôi') || match.matchConfig?.format === 'DOUBLES';
+                        const isDoubles = isDoublesCategory || members.length > 1 || rawNames.length > 1;
 
                         if (!isDoubles) {
                           // ĐƠN - 1 VĐV
-                          const m = members[0];
-                          const name = m?.fullName || team2Name;
+                          const member = members[0];
+                          const registeredBy = part2?.registeredBy;
+                          const p2 = {
+                            userId: member?.userId || registeredBy?.id || '',
+                            fullName: member?.fullName || registeredBy?.fullName || team2Name,
+                            avatarUrl: member?.avatarUrl || registeredBy?.avatarUrl || null,
+                            initial: ((member?.fullName || registeredBy?.fullName || team2Name).charAt(0) || '2').toUpperCase(),
+                          };
+
                           return (
-                            <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-rose-500 via-red-500 to-amber-500 p-1 shadow-lg transform hover:scale-105 transition-transform">
+                            <button
+                              type="button"
+                              onClick={(e) => handlePlayerClick(e, p2)}
+                              className="group relative w-20 h-20 rounded-full border-2 border-rose-600 bg-rose-50 p-0.5 shadow-xs hover:shadow-md hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer focus:outline-none focus:ring-4 focus:ring-rose-100"
+                              title={`Xem thông tin ${p2.fullName}`}
+                            >
                               <div className="w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden">
-                                {m?.avatarUrl ? (
-                                  <img src={m.avatarUrl} alt="" className="w-full h-full object-cover" />
+                                {p2.avatarUrl ? (
+                                  <img src={p2.avatarUrl} alt={p2.fullName} className="w-full h-full object-cover" />
                                 ) : (
-                                  <span className="text-3xl font-black text-rose-600 uppercase">{name.charAt(0)}</span>
+                                  <span className="text-2xl font-black text-rose-600 uppercase">{p2.initial}</span>
                                 )}
                               </div>
-                            </div>
+                              <div className="absolute inset-0 rounded-full bg-slate-900/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <User className="w-5 h-5 text-slate-700 drop-shadow-xs" />
+                              </div>
+                            </button>
                           );
                         }
 
                         // ĐÔI - 2 VĐV
-                        const p1Name = members[0]?.fullName || names[0] || 'VĐV 1';
-                        const p2Name = members[1]?.fullName || names[1] || 'VĐV 2';
+                        const p1 = {
+                          userId: members[0]?.userId || (part2?.registeredBy?.fullName === rawNames[0] ? part2.registeredBy.id : '') || '',
+                          fullName: members[0]?.fullName || rawNames[0] || 'VĐV 1',
+                          avatarUrl: members[0]?.avatarUrl || null,
+                          initial: ((members[0]?.fullName || rawNames[0] || '1').charAt(0) || '1').toUpperCase(),
+                        };
+
+                        const p2 = {
+                          userId: members[1]?.userId || (part2?.registeredBy?.fullName === rawNames[1] ? part2.registeredBy.id : '') || '',
+                          fullName: members[1]?.fullName || rawNames[1] || 'VĐV 2',
+                          avatarUrl: members[1]?.avatarUrl || null,
+                          initial: ((members[1]?.fullName || rawNames[1] || '2').charAt(0) || '2').toUpperCase(),
+                        };
+
                         return (
-                          <div className="flex items-center -space-x-5 py-1">
-                            <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-rose-600 to-pink-500 p-0.5 shadow-lg z-10">
-                              <div className="w-full h-full rounded-full bg-slate-900 border-2 border-white flex items-center justify-center overflow-hidden">
-                                {members[0]?.avatarUrl ? (
-                                  <img src={members[0].avatarUrl} alt="" className="w-full h-full object-cover" />
+                          <div className="flex items-center justify-center gap-2.5 py-1">
+                            <button
+                              type="button"
+                              onClick={(e) => handlePlayerClick(e, p1)}
+                              className="group relative w-16 h-16 rounded-full border-2 border-rose-600 bg-rose-50 p-0.5 shadow-xs hover:shadow-md hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer focus:outline-none focus:ring-4 focus:ring-rose-100"
+                              title={`Xem thông tin ${p1.fullName}`}
+                            >
+                              <div className="w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden">
+                                {p1.avatarUrl ? (
+                                  <img src={p1.avatarUrl} alt={p1.fullName} className="w-full h-full object-cover" />
                                 ) : (
-                                  <span className="text-lg font-black text-rose-400 uppercase">{p1Name.charAt(0)}</span>
+                                  <span className="text-lg font-black text-rose-600 uppercase">{p1.initial}</span>
                                 )}
                               </div>
-                            </div>
-                            <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-amber-500 to-orange-500 p-0.5 shadow-md z-0">
-                              <div className="w-full h-full rounded-full bg-slate-800 border-2 border-white flex items-center justify-center overflow-hidden">
-                                {members[1]?.avatarUrl ? (
-                                  <img src={members[1].avatarUrl} alt="" className="w-full h-full object-cover" />
+                              <div className="absolute inset-0 rounded-full bg-slate-900/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <User className="w-4 h-4 text-slate-700 drop-shadow-xs" />
+                              </div>
+                            </button>
+
+                            <span className="text-slate-300 font-bold text-xs">&</span>
+
+                            <button
+                              type="button"
+                              onClick={(e) => handlePlayerClick(e, p2)}
+                              className="group relative w-16 h-16 rounded-full border-2 border-rose-500 bg-rose-50 p-0.5 shadow-xs hover:shadow-md hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer focus:outline-none focus:ring-4 focus:ring-rose-100"
+                              title={`Xem thông tin ${p2.fullName}`}
+                            >
+                              <div className="w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden">
+                                {p2.avatarUrl ? (
+                                  <img src={p2.avatarUrl} alt={p2.fullName} className="w-full h-full object-cover" />
                                 ) : (
-                                  <span className="text-lg font-black text-amber-400 uppercase">{p2Name.charAt(0)}</span>
+                                  <span className="text-lg font-black text-rose-500 uppercase">{p2.initial}</span>
                                 )}
                               </div>
-                            </div>
+                              <div className="absolute inset-0 rounded-full bg-slate-900/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <User className="w-4 h-4 text-slate-700 drop-shadow-xs" />
+                              </div>
+                            </button>
                           </div>
                         );
                       })()}
                     </div>
 
-                    <h3 className="text-xl font-black text-slate-900 text-center leading-snug">{team2Name}</h3>
+                    {/* Team 2 Names */}
+                    {(() => {
+                      const members = part2?.members || match.participant2?.members || [];
+                      const rawNames = team2Name.split(/[-&/+]|\s+và\s+/i).map(n => n.trim()).filter(Boolean);
+                      const isDoublesCategory = match.tournament?.categoryName?.toLowerCase().includes('đôi') || match.matchConfig?.format === 'DOUBLES';
+                      const isDoubles = isDoublesCategory || members.length > 1 || rawNames.length > 1;
+
+                      if (!isDoubles) {
+                        const member = members[0];
+                        const registeredBy = part2?.registeredBy;
+                        const p2 = {
+                          userId: member?.userId || registeredBy?.id || '',
+                          fullName: member?.fullName || registeredBy?.fullName || team2Name,
+                          avatarUrl: member?.avatarUrl || registeredBy?.avatarUrl || null,
+                        };
+                        return (
+                          <button
+                            type="button"
+                            onClick={(e) => handlePlayerClick(e, p2)}
+                            className="text-xl font-black text-slate-900 text-center leading-snug hover:text-blue-600 hover:underline transition-colors cursor-pointer"
+                            title={`Xem thông tin ${p2.fullName}`}
+                          >
+                            {p2.fullName}
+                          </button>
+                        );
+                      }
+
+                      const p1 = {
+                        userId: members[0]?.userId || (part2?.registeredBy?.fullName === rawNames[0] ? part2.registeredBy.id : '') || '',
+                        fullName: members[0]?.fullName || rawNames[0] || 'VĐV 1',
+                        avatarUrl: members[0]?.avatarUrl || null,
+                      };
+                      const p2 = {
+                        userId: members[1]?.userId || (part2?.registeredBy?.fullName === rawNames[1] ? part2.registeredBy.id : '') || '',
+                        fullName: members[1]?.fullName || rawNames[1] || 'VĐV 2',
+                        avatarUrl: members[1]?.avatarUrl || null,
+                      };
+
+                      return (
+                        <div className="flex flex-wrap items-center justify-center gap-1.5 text-center">
+                          <button
+                            type="button"
+                            onClick={(e) => handlePlayerClick(e, p1)}
+                            className="text-lg font-black text-slate-900 hover:text-blue-600 hover:underline transition-colors cursor-pointer"
+                            title={`Xem thông tin ${p1.fullName}`}
+                          >
+                            {p1.fullName}
+                          </button>
+                          <span className="text-slate-400 font-bold text-sm">-</span>
+                          <button
+                            type="button"
+                            onClick={(e) => handlePlayerClick(e, p2)}
+                            className="text-lg font-black text-slate-900 hover:text-blue-600 hover:underline transition-colors cursor-pointer"
+                            title={`Xem thông tin ${p2.fullName}`}
+                          >
+                            {p2.fullName}
+                          </button>
+                        </div>
+                      );
+                    })()}
+
                     {(() => {
                       const elo = getTeamEloDisplay(part2);
                       if (elo === null) return null;
@@ -1899,16 +2156,36 @@ export default function LiveMatchPage({ params }: Props) {
                   const avatarUrl = comment.user?.avatarUrl || null;
                   return (
                     <div key={comment.id} className="flex gap-3 items-start animate-in fade-in slide-in-from-bottom-2 duration-300">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 border border-slate-200 flex items-center justify-center font-bold text-xs text-white shrink-0 uppercase overflow-hidden shadow-sm">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          if (comment.user?.id) {
+                            openUserById(comment.user.id, authorName, avatarUrl, e.currentTarget.getBoundingClientRect(), match.tournament?.communityId || undefined);
+                          }
+                        }}
+                        className={`w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-xs text-white shrink-0 uppercase overflow-hidden shadow-xs transition-transform ${comment.user?.id ? 'cursor-pointer hover:scale-105 hover:ring-2 hover:ring-blue-300' : ''}`}
+                        title={comment.user?.id ? `Xem thông tin ${authorName}` : authorName}
+                      >
                         {avatarUrl ? (
                           <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
                         ) : (
                           authorName.charAt(0)
                         )}
-                      </div>
+                      </button>
                       <div className="bg-slate-50 rounded-lg p-3 border border-slate-100 flex-1 min-w-0">
                         <div className="flex justify-between items-baseline gap-2">
-                          <span className="text-xs font-bold text-slate-800 truncate">{authorName}</span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              if (comment.user?.id) {
+                                openUserById(comment.user.id, authorName, avatarUrl, e.currentTarget.getBoundingClientRect(), match.tournament?.communityId || undefined);
+                              }
+                            }}
+                            className={`text-xs font-bold text-slate-800 truncate text-left ${comment.user?.id ? 'hover:text-blue-600 hover:underline cursor-pointer' : ''}`}
+                            title={comment.user?.id ? `Xem thông tin ${authorName}` : authorName}
+                          >
+                            {authorName}
+                          </button>
                           <span className="text-[9px] text-slate-400 font-medium shrink-0">
                             {new Date(comment.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
                           </span>

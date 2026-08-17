@@ -95,6 +95,7 @@ export interface Match {
   tournament?: {
     id: string;
     name: string;
+    communityId?: string | null;
     logoUrl?: string | null;
     bannerUrl?: string | null;
     createdBy?: string;
@@ -105,6 +106,7 @@ export interface Match {
     venueAddress?: string | null;
     categoryConfig?: Record<string, unknown> | null;
     tournamentConfig?: { mode?: 'LITE' | 'ADVANCED' } | null;
+    clubId?: string | null;
   } | null;
   group?: {
     id: string;

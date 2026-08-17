@@ -450,8 +450,8 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                 {tournament.startDate && (
                   <InfoCard label="Ngày bắt đầu" value={new Date(tournament.startDate).toLocaleDateString('vi-VN')} />
                 )}
-                {tournament.locationAddress && (
-                  <InfoCard label="Địa điểm" value={tournament.locationAddress} />
+                {(tournament.locationAddress || tournament.tournamentConfig?.location?.display) && (
+                  <InfoCard label="Địa điểm" value={tournament.locationAddress || tournament.tournamentConfig?.location?.display || '—'} />
                 )}
               </div>
               <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-4">

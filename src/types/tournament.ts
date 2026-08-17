@@ -187,6 +187,14 @@ export interface Tournament {
     minTeamSize?: number;
     maxTeamSize?: number;
     maxReserve?: number;
+    location?: {
+      venueName?: string;
+      address?: string;
+      province?: string;
+      district?: string;
+      ward?: string;
+      display?: string;
+    };
     twoLegged?: boolean;
     awayGoalsRule?: boolean;
     penaltyShootout?: boolean;

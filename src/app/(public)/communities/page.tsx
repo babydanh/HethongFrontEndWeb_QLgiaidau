@@ -2,12 +2,13 @@
 
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { communitiesApi, Community } from "@/features/communities/api";
 import { JoinCommunityModal } from "@/components/shared/JoinCommunityModal";
 import { useAuthStore } from "@/lib/zustand/authStore";
-import { Shield, Users, Trophy, MapPin, Search, Star, Loader2, ArrowRight } from "lucide-react";
+import { Shield, Users, Trophy, MapPin, Search, Star, Loader2 } from "lucide-react";
 import { getSportLogo } from "@/constants/sports";
-import toast from "react-hot-toast";
+
 import { BRAND } from "@/constants/brand";
 
 // Sports-specific tinted styling helper
@@ -44,6 +45,7 @@ const getCategoryStyles = (name: string) => {
 };
 
 export default function CommunitiesPage() {
+  const t = useTranslations("CommunityList");
   const { user } = useAuthStore();
   const [communities, setCommunities] = useState<Community[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -147,7 +149,7 @@ export default function CommunitiesPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs font-semibold text-slate-800 outline-none transition-all h-11"
-            placeholder="Tìm kiếm câu lạc bộ theo tên..."
+            placeholder={t("searchPlaceholder")}
             type="text"
           />
         </div>
@@ -158,7 +160,7 @@ export default function CommunitiesPage() {
             onChange={(e) => setProvinceCode(e.target.value)}
             className="w-full px-3.5 py-2.5 border border-slate-300 rounded-lg bg-slate-50 text-xs font-semibold text-slate-700 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none h-11 cursor-pointer"
           >
-            <option value="">Tất cả tỉnh/thành</option>
+            <option value="">{t("allProvinces")}</option>
             {provinces.map(p => <option key={p.code} value={p.code}>{p.name}</option>)}
           </select>
         </div>
@@ -169,7 +171,7 @@ export default function CommunitiesPage() {
             onChange={(e) => setCategoryId(e.target.value)}
             className="w-full px-3.5 py-2.5 border border-slate-300 rounded-lg bg-slate-50 text-xs font-semibold text-slate-700 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none h-11 cursor-pointer"
           >
-            <option value="">Tất cả môn thể thao</option>
+            <option value="">{t("allSports")}</option>
             {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
         </div>
@@ -179,14 +181,14 @@ export default function CommunitiesPage() {
       {isLoading ? (
         <div className="py-24 flex flex-col items-center justify-center">
           <Loader2 className="w-10 h-10 animate-spin text-blue-600 mb-3" />
-          <p className="text-xs text-slate-450 font-bold animate-pulse uppercase tracking-wider">Đang tải danh sách câu lạc bộ...</p>
+          <p className="text-xs text-slate-450 font-bold animate-pulse uppercase tracking-wider">{t("loading")}</p>
         </div>
       ) : communities.length === 0 ? (
         <div className="bg-white border rounded-lg p-16 text-center shadow-sm">
           <Shield className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-          <h3 className="text-base font-bold text-slate-900">Không tìm thấy câu lạc bộ</h3>
+          <h3 className="text-base font-bold text-slate-900">{t("emptyTitle")}</h3>
           <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto leading-relaxed">
-            Thử thay đổi từ khóa tìm kiếm hoặc lọc theo các tỉnh thành, bộ môn khác.
+            {t("emptyDescription")}
           </p>
         </div>
       ) : (

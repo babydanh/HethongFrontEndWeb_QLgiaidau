@@ -95,8 +95,8 @@ const quickSchema = z.object({
   venueName: z.string().trim().min(1, 'Vui lòng nhập tên sân / nhà thi đấu.'),
   locationAddress: z.string().trim().min(1, 'Vui lòng nhập địa chỉ sân.'),
   province: z.string().trim().min(1, 'Vui lòng chọn Tỉnh/Thành.'),
-  district: z.string().trim().min(1, 'Vui lòng chọn Quận/Huyện.'),
   ward: z.string().trim().optional(),
+  district: z.string().trim().optional(),
   genderRestriction: z.enum(['', 'MALE', 'FEMALE', 'MIXED']),
   teamSize: z.enum(['5', '7', '11']),
   maxReserve: z.number().int().min(0).max(20),
@@ -245,7 +245,7 @@ export default function QuickTournamentCreate() {
     defaultValues: {
       sport: 'badminton', format: 'doubles', visibility: 'PRIVATE', bracketType: 'single_elimination',
       maxTeams: 16, ...scheduleDefaults,
-      venueName: '', locationAddress: '', province: '', district: '', ward: '',
+      venueName: '', locationAddress: '', province: '', ward: '', district: '',
       isRanked: false, description: '', genderRestriction: '', teamSize: '7', maxReserve: 5,
       footballHalvesCount: 2, footballHalfDuration: 45, footballAllowDraw: true,
     },
@@ -259,14 +259,12 @@ export default function QuickTournamentCreate() {
   const visibility = useWatch({ control, name: 'visibility' });
   const isRanked = useWatch({ control, name: 'isRanked' });
   const province = useWatch({ control, name: 'province' });
-  const district = useWatch({ control, name: 'district' });
   const registrationStart = useWatch({ control, name: 'registrationStart' });
   const registrationEnd = useWatch({ control, name: 'registrationEnd' });
   const startDate = useWatch({ control, name: 'startDate' });
   const endDate = useWatch({ control, name: 'endDate' });
 
   const [provinces, setProvinces] = useState<Region[]>([]);
-  const [districts, setDistricts] = useState<Region[]>([]);
   const [wards, setWards] = useState<Region[]>([]);
   const selectedCategory = useMemo(() => categories.find((category) => sportFromCategory(category) === sport), [categories, sport]);
 
@@ -312,27 +310,14 @@ export default function QuickTournamentCreate() {
 
   useEffect(() => {
     let active = true;
-    setDistricts([]);
     setWards([]);
-    setValue('district', '');
     setValue('ward', '');
     if (!province || !provinces.some((item) => item.code === province)) return () => { active = false; };
-    regionsApi.getDistricts(province).then((response) => {
-      if (active) setDistricts(response ?? []);
-    }).catch(() => { if (active) toast.error('Không thể tải danh sách quận/huyện.'); });
-    return () => { active = false; };
-  }, [province, provinces, setValue]);
-
-  useEffect(() => {
-    let active = true;
-    setWards([]);
-    setValue('ward', '');
-    if (!district || !districts.some((item) => item.code === district)) return () => { active = false; };
-    regionsApi.getWards(district).then((response) => {
+    regionsApi.getWards(province).then((response) => {
       if (active) setWards(response ?? []);
     }).catch(() => { if (active) toast.error('Không thể tải danh sách phường/xã.'); });
     return () => { active = false; };
-  }, [district, districts, setValue]);
+  }, [province, provinces, setValue]);
 
   const onSubmit = async (values: QuickValues) => {
     try {
@@ -358,7 +343,6 @@ export default function QuickTournamentCreate() {
       }
 
       const provinceName = provinces.find((item) => item.code === values.province)?.fullName ?? values.province;
-      const districtName = districts.find((item) => item.code === values.district)?.fullName ?? values.district;
       const wardName = wards.find((item) => item.code === values.ward)?.fullName ?? values.ward;
 
       const response = await tournamentsApi.createLiteTournament({
@@ -373,7 +357,7 @@ export default function QuickTournamentCreate() {
         venueName: values.venueName,
         locationAddress: values.locationAddress,
         province: provinceName,
-        district: districtName,
+        district: wardName || provinceName,
         ward: wardName || undefined,
         genderRestriction: genderRestriction || undefined,
         ...(values.sport === 'football' ? {
@@ -669,7 +653,7 @@ export default function QuickTournamentCreate() {
             </span>
           </label>
 
-          {/* Khu vực Địa điểm & Sân thi đấu (Bắt buộc nhập) */}
+          {/* Khu vực Địa điểm & Sân thi đấu (Chuẩn API v2: Tỉnh/Thành ➔ Phường/Xã) */}
           <div className="space-y-4 rounded-xl border border-slate-200 bg-slate-50/50 p-4">
             <div className="flex items-center gap-1.5 text-sm font-semibold text-slate-800">
               <MapPin className="h-4 w-4 text-blue-600" />
@@ -697,12 +681,12 @@ export default function QuickTournamentCreate() {
               </label>
             </div>
 
-            {/* 3 Dropdown Tỉnh / Quận / Phường */}
+            {/* 2 Dropdown Tỉnh/Thành ➔ Phường/Xã (Chuẩn API v2 gọn gàng) */}
             <div>
               <span className="mb-1.5 block text-xs font-semibold text-slate-700">
                 Khu vực hành chính <span className="text-red-500">*</span>
               </span>
-              <div className="grid gap-3 sm:grid-cols-3">
+              <div className="grid gap-3 sm:grid-cols-2">
                 <div>
                   <select
                     {...register('province')}
@@ -719,29 +703,12 @@ export default function QuickTournamentCreate() {
                 </div>
                 <div>
                   <select
-                    {...register('district')}
-                    disabled={!province || districts.length === 0}
-                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500 disabled:bg-slate-100 disabled:text-slate-400"
-                  >
-                    <option value="">
-                      {!province ? '-- Chọn Tỉnh trước --' : districts.length === 0 ? '-- Đang tải... --' : '-- Chọn Quận/Huyện * --'}
-                    </option>
-                    {districts.map((item) => (
-                      <option key={item.code} value={item.code}>
-                        {item.fullName || item.name}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.district && <span className="mt-1 block text-xs text-red-600">{errors.district.message}</span>}
-                </div>
-                <div>
-                  <select
                     {...register('ward')}
-                    disabled={!district || wards.length === 0}
+                    disabled={!province || wards.length === 0}
                     className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500 disabled:bg-slate-100 disabled:text-slate-400"
                   >
                     <option value="">
-                      {!district ? '-- Chọn Huyện trước --' : wards.length === 0 ? '-- Đang tải... --' : '-- Chọn Phường/Xã --'}
+                      {!province ? '-- Chọn Tỉnh/Thành trước --' : wards.length === 0 ? '-- Đang tải danh sách... --' : '-- Chọn Phường/Xã (Tùy chọn) --'}
                     </option>
                     {wards.map((item) => (
                       <option key={item.code} value={item.code}>

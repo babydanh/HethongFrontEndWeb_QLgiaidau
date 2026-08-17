@@ -20,6 +20,26 @@
     "close": "Close",
     "noData": "No data available"
   },
+  "Leaderboard": {
+    "singles": "Singles",
+    "doubles": "Doubles",
+    "mixedDoubles": "Mixed doubles",
+    "gender": "Gender",
+    "male": "Male",
+    "female": "Female",
+    "region": "Region / Province",
+    "allProvinces": "All provinces",
+    "loading": "Loading leaderboard...",
+    "rankList": "Rank list (Ranks 11–100)"
+  },
+  "CommunityList": {
+    "searchPlaceholder": "Search clubs by name...",
+    "allProvinces": "All provinces/cities",
+    "allSports": "All sports",
+    "loading": "Loading club list...",
+    "emptyTitle": "No clubs found",
+    "emptyDescription": "Try changing your search keywords or filtering by province or sport."
+  },
   "Navigation": {
     "home": "Home",
     "tournaments": "Tournaments",
@@ -31,7 +51,22 @@
     "register": "Sign up",
     "profile": "Profile",
     "notifications": "Notifications",
-    "administration": "Administration"
+    "notificationStatusUpdateError": "Failed to update notification status.",
+  "markAllReadSuccess": "All notifications marked as read.",
+  "notificationUpdateError": "Unable to update notifications.",
+  "communityInviteDeclined": "Community invitation declined.",
+  "refereeInviteAccepted": "Referee role accepted.",
+  "refereeInviteDeclined": "Referee invitation declined.",
+  "notificationAria": "Open notifications",
+  "notificationsTitle": "Notifications",
+  "unreadCount": "{count} unread",
+  "updated": "Updated",
+  "accountMenuAria": "Open account menu",
+  "avatarAria": "Avatar",
+  "toggleMenuAria": "Toggle menu",
+  "refereeRole": "Receive role",
+  "accept": "Accept",
+  "administration": "Administration"
   },
   "Footer": {
     "tagline": "Professional tournament management platform.",

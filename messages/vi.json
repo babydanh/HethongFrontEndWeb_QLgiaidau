@@ -20,6 +20,26 @@
     "close": "Đóng",
     "noData": "Chưa có dữ liệu"
   },
+  "Leaderboard": {
+    "singles": "Đơn",
+    "doubles": "Đôi",
+    "mixedDoubles": "Đôi Nam Nữ",
+    "gender": "Giới tính",
+    "male": "Nam",
+    "female": "Nữ",
+    "region": "Khu vực / Tỉnh thành",
+    "allProvinces": "Tất cả tỉnh thành",
+    "loading": "Đang tải bảng xếp hạng...",
+    "rankList": "Danh sách xếp hạng (Hạng 11 - 100)"
+  },
+  "CommunityList": {
+    "searchPlaceholder": "Tìm kiếm câu lạc bộ theo tên...",
+    "allProvinces": "Tất cả tỉnh/thành",
+    "allSports": "Tất cả môn thể thao",
+    "loading": "Đang tải danh sách câu lạc bộ...",
+    "emptyTitle": "Không tìm thấy câu lạc bộ",
+    "emptyDescription": "Thử thay đổi từ khóa tìm kiếm hoặc lọc theo các tỉnh thành, bộ môn khác."
+  },
   "Navigation": {
     "home": "Trang chủ",
     "tournaments": "Giải đấu",
@@ -31,7 +51,22 @@
     "register": "Đăng ký",
     "profile": "Hồ sơ",
     "notifications": "Thông báo",
-    "administration": "Quản trị"
+    "notificationStatusUpdateError": "Thông báo cập nhật thất bại.",
+  "markAllReadSuccess": "Đã đánh dấu tất cả là đã đọc.",
+  "notificationUpdateError": "Không thể cập nhật thông báo.",
+  "communityInviteDeclined": "Đã từ chối lời mời tham gia cộng đồng.",
+  "refereeInviteAccepted": "Đã nhận vai trò trọng tài.",
+  "refereeInviteDeclined": "Đã từ chối lời mời trọng tài.",
+  "notificationAria": "Mở thông báo",
+  "notificationsTitle": "Thông báo",
+  "unreadCount": "{count} chưa đọc",
+  "updated": "Đã cập nhật",
+  "accountMenuAria": "Mở menu tài khoản",
+  "avatarAria": "Ảnh đại diện",
+  "toggleMenuAria": "Mở menu",
+  "refereeRole": "Nhận vai trò",
+  "accept": "Đồng ý",
+  "administration": "Quản trị"
   },
   "Footer": {
     "tagline": "Nền tảng quản lý giải đấu chuyên nghiệp.",

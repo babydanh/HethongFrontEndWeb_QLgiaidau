@@ -16,7 +16,6 @@ import {
   Trophy,
   User,
   X,
-  Bookmark,
   Settings,
 } from 'lucide-react';
 import { getButtonClasses } from '@/components/ui/Button';
@@ -96,7 +95,7 @@ export function Header() {
         await markNotificationAsRead(notificationId);
       }
     } catch (error) {
-      toast.error(getErrorMessage(error, 'Không thể cập nhật trạng thái thông báo.'));
+      toast.error(getErrorMessage(error, t('notificationStatusUpdateError')));
     }
 
     setIsNotificationOpen(false);
@@ -118,9 +117,9 @@ export function Header() {
   const handleMarkAllNotificationsAsRead = async () => {
     try {
       await markAllNotificationsAsRead();
-      toast.success('Đã đánh dấu tất cả là đã đọc.');
+      toast.success(t('markAllReadSuccess'));
     } catch (error) {
-      toast.error(getErrorMessage(error, 'Không thể cập nhật thông báo.'));
+      toast.error(getErrorMessage(error, t('notificationUpdateError')));
     }
   };
 
@@ -138,7 +137,7 @@ export function Header() {
       toast.success(
         action === 'accept'
           ? 'Đã chấp nhận lời mời tham gia cộng đồng.'
-          : 'Đã từ chối lời mời tham gia cộng đồng.',
+          : t('communityInviteDeclined'),
       );
     } catch (error) {
       toast.error(
@@ -166,7 +165,7 @@ export function Header() {
       setPendingNotificationAction(actionKey);
       await tournamentsApi.respondToRefereeInvite(tournamentId, refereeId, action);
       await markNotificationAsRead(notificationId);
-      toast.success(action === 'ACCEPT' ? 'Đã nhận vai trò trọng tài.' : 'Đã từ chối lời mời trọng tài.');
+      toast.success(action === 'ACCEPT' ? t('refereeInviteAccepted') : t('refereeInviteDeclined'));
     } catch (error) {
       toast.error(
         getErrorMessage(
@@ -333,7 +332,7 @@ export function Header() {
                 type="button"
                 onClick={() => setIsNotificationOpen((current) => !current)}
                 className="relative rounded-lg p-2 text-slate-500 transition-all hover:bg-slate-100 hover:text-slate-700 active:scale-95"
-                aria-label="Mở thông báo"
+                aria-label={t('notificationAria')}
                 aria-expanded={isNotificationOpen}
               >
                 <Bell className="h-6 w-6" />
@@ -355,9 +354,9 @@ export function Header() {
                   >
                     <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
                       <div>
-                        <p className="text-sm font-semibold text-slate-900">Thông báo</p>
+                        <p className="text-sm font-semibold text-slate-900">{t('notificationsTitle')}</p>
                         <p className="text-xs text-slate-500">
-                          {unreadCount > 0 ? `${unreadCount} chưa đọc` : 'Đã cập nhật'}
+                          {unreadCount > 0 ? `${t('unreadCount', { count: unreadCount })}` : t('updated')}
                         </p>
                       </div>
 
@@ -490,7 +489,7 @@ export function Header() {
                                           className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
                                         >
                                           <Check className="h-3.5 w-3.5" />
-                                          {notificationAction.kind === 'referee-invite' ? 'Nhận vai trò' : 'Đồng ý'}
+                                          {notificationAction.kind === 'referee-invite' ? t('refereeRole') : t('accept')}
                                         </button>
                                         <button
                                           type="button"
@@ -560,14 +559,14 @@ export function Header() {
                 type="button"
                 onClick={() => setIsDropdownOpen((current) => !current)}
                 className="flex items-center focus:outline-none"
-                aria-label="Mở menu tài khoản"
+                aria-label={t('accountMenuAria')}
                 aria-expanded={isDropdownOpen}
               >
                 <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-blue-100 text-sm font-semibold uppercase text-blue-600 transition-all hover:ring-2 hover:ring-blue-600 hover:ring-offset-2">
                   {user?.avatarUrl ? (
                     <span
                       role="img"
-                      aria-label="Avatar"
+                      aria-label={t('avatarAria')}
                       className="h-full w-full bg-cover bg-center"
                       style={{ backgroundImage: `url("${user.avatarUrl}")` }}
                     />
@@ -684,7 +683,7 @@ export function Header() {
             type="button"
             onClick={() => setIsMobileMenuOpen((current) => !current)}
             className="rounded-lg p-2 text-slate-500 transition-all hover:bg-slate-100 active:scale-95 md:hidden"
-            aria-label="Toggle Menu"
+            aria-label={t('toggleMenuAria')}
           >
             {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>

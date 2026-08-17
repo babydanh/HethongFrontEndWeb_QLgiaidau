@@ -2,13 +2,14 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { categoriesApi, Category } from "@/features/categories/api";
 import { rankingsApi, PlayerRanking } from "@/features/rankings/api";
 import { regionsApi, Region } from "@/features/regions/api";
 import { usersApi } from "@/features/users/api";
 import { EloTierBadge } from "@/components/ui/EloTierBadge";
-import { Trophy, ChevronDown, ChevronUp, Award, Users, Info, Loader2, Search } from "lucide-react";
-import Link from "next/link";
+import { ChevronDown, Info, Loader2, Search } from "lucide-react";
+
 import { useUserProfileModalStore } from "@/lib/zustand/userProfileModalStore";
 
 interface LeaderboardSearchResult {
@@ -21,6 +22,7 @@ interface LeaderboardSearchResult {
 }
 
 export default function LeaderboardPage() {
+  const t = useTranslations("Leaderboard");
     const { openUserProfile } = useUserProfileModalStore();
     const [categories, setCategories] = useState<Category[]>([]);
     const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
@@ -205,9 +207,9 @@ export default function LeaderboardPage() {
                             }}
                             className="w-full pl-3 pr-10 py-2 border border-slate-200 rounded-lg text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-blue-600 bg-slate-50 text-slate-800 font-bold"
                         >
-                            <option value="SINGLES">Đơn</option>
-                            <option value="DOUBLES">Đôi</option>
-                            <option value="MIXED_DOUBLES">Đôi Nam Nữ</option>
+                            <option value="SINGLES">{t("singles")}</option>
+                            <option value="DOUBLES">{t("doubles")}</option>
+                            <option value="MIXED_DOUBLES">{t("mixedDoubles")}</option>
                         </select>
                         <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
                     </div>
@@ -216,15 +218,15 @@ export default function LeaderboardPage() {
                 {/* Gender Filter - Only show for non-MIXED_DOUBLES */}
                 {selectedMatchType && selectedMatchType !== 'MIXED_DOUBLES' && (
                     <div className="flex items-center gap-2 w-full md:w-auto">
-                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">Giới tính:</label>
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">{t("gender")}:</label>
                         <div className="relative flex-grow md:flex-grow-0 md:min-w-[120px]">
                             <select
                                 value={selectedGenderFilter}
                                 onChange={(e) => setSelectedGenderFilter(e.target.value)}
                                 className="w-full pl-3 pr-10 py-2 border border-slate-200 rounded-lg text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-blue-600 bg-slate-50 text-slate-800 font-bold"
                             >
-                                <option value="MALE">Nam</option>
-                                <option value="FEMALE">Nữ</option>
+                                <option value="MALE">{t("male")}</option>
+                                <option value="FEMALE">{t("female")}</option>
                             </select>
                             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
                         </div>
@@ -233,14 +235,14 @@ export default function LeaderboardPage() {
 
                 {/* Province Selector */}
                 <div className="flex items-center gap-2 w-full md:w-auto">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">Khu vực / Tỉnh thành:</label>
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">{t("region")}:</label>
                     <div className="relative flex-grow md:flex-grow-0 md:min-w-[200px]">
                         <select
                             value={selectedProvinceCode}
                             onChange={(e) => setSelectedProvinceCode(e.target.value)}
                             className="w-full pl-3 pr-10 py-2 border border-slate-200 rounded-lg text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-blue-600 bg-slate-50 text-slate-800 font-bold"
                         >
-                            <option value="">Tất cả tỉnh thành</option>
+                            <option value="">{t("allProvinces")}</option>
                             {provinces.map(p => (
                                 <option key={p.code} value={p.code}>{p.name}</option>
                             ))}
@@ -257,7 +259,7 @@ export default function LeaderboardPage() {
                     {isLoading ? (
                         <div className="bg-white rounded-lg border border-slate-200 p-16 flex flex-col items-center justify-center min-h-[300px]">
                             <Loader2 className="w-10 h-10 animate-spin text-blue-600 mb-3" />
-                            <p className="text-slate-500 font-medium text-sm">Đang tải bảng xếp hạng...</p>
+                            <p className="text-slate-500 font-medium text-sm">{t("loading")}</p>
                         </div>
                     ) : (
                         <>
@@ -776,6 +778,7 @@ export default function LeaderboardPage() {
 }
 
 function RestRankingsTable({ rankings, selectedMatchType }: { rankings: PlayerRanking[], selectedMatchType: string }) {
+  const t = useTranslations("Leaderboard");
     const { openUserProfile } = useUserProfileModalStore();
     // Rankings starting from index 10 (Hạng 11 trở đi)
     const realData = rankings.slice(10, 100);
@@ -915,7 +918,7 @@ function RestRankingsTable({ rankings, selectedMatchType }: { rankings: PlayerRa
 
     return (
         <div className="space-y-4">
-            <h3 className="text-base font-bold text-slate-900 px-1">Danh sách xếp hạng (Hạng 11 - 100)</h3>
+            <h3 className="text-base font-bold text-slate-900 px-1">{t("rankList")}</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>

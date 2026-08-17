@@ -16,6 +16,12 @@ export const regionsApi = {
   getDistricts: (provinceCode: string, search?: string) => 
     api.get<Region[]>('/regions/districts', { params: { provinceCode, search } }).then(unwrapList),
 
-  getWards: (districtCode: string, search?: string) => 
-    api.get<Region[]>('/regions/wards', { params: { districtCode, search } }).then(unwrapList),
+  getWards: (provinceCodeOrDistrictCode: string, search?: string) => 
+    api.get<Region[]>('/regions/wards', { 
+      params: { 
+        provinceCode: provinceCodeOrDistrictCode, 
+        districtCode: provinceCodeOrDistrictCode, 
+        search 
+      } 
+    }).then(unwrapList),
 };

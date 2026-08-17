@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter, useSearchParams } from 'next/navigation';
 import toast from 'react-hot-toast';
-import { ArrowRight, Settings2, Sparkles } from 'lucide-react';
+import { ArrowRight, Settings2, Sparkles, MapPin } from 'lucide-react';
 import { categoriesApi, Category } from '@/features/categories/api';
 import { tournamentsApi } from '@/features/tournaments/api';
 import { regionsApi, Region } from '@/features/regions/api';
@@ -491,44 +491,85 @@ export default function QuickTournamentCreate() {
             </span>
           </label>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <label className="text-sm font-semibold text-slate-700">
-              Tên sân
-              <input
-                {...register('venueName')}
-                className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal"
-                placeholder="Không bắt buộc"
-              />
-            </label>
-            <div className="rounded-lg border border-amber-200 bg-amber-50 px-3.5 py-3 text-xs text-amber-800 flex items-center">
-              <div>
-                Giải thu phí hoặc quy mô lớn: mở <strong>Nâng cao</strong> để cấu hình thanh toán và kiểm duyệt đầy đủ.
+          {/* Khu vực Địa điểm & Sân thi đấu (Thiết kế thông thoáng, chọn Quận/Huyện không bị kẹt) */}
+          <div className="space-y-4 rounded-xl border border-slate-200 bg-slate-50/50 p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5 text-sm font-semibold text-slate-800">
+                <MapPin className="h-4 w-4 text-blue-600" />
+                Địa điểm & Sân thi đấu
               </div>
+              <span className="text-xs text-slate-500">Không bắt buộc</span>
             </div>
-          </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <label className="text-sm font-semibold text-slate-700">
-              Địa chỉ sân
-              <input
-                {...register('locationAddress')}
-                className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal"
-                placeholder="Số nhà, tên đường..."
-              />
-            </label>
-            <div className="grid grid-cols-3 gap-2">
-              <select {...register('province')} className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-2 py-2.5 text-sm">
-                <option value="">Tỉnh/thành</option>
-                {provinces.map((item) => <option key={item.code} value={item.code}>{item.name}</option>)}
-              </select>
-              <select {...register('district')} disabled={!province || districts.length === 0} className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-2 py-2.5 text-sm disabled:bg-slate-100 disabled:opacity-60">
-                <option value="">Quận/huyện</option>
-                {districts.map((item) => <option key={item.code} value={item.code}>{item.name}</option>)}
-              </select>
-              <select {...register('ward')} disabled={!district || wards.length === 0} className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-2 py-2.5 text-sm disabled:bg-slate-100 disabled:opacity-60">
-                <option value="">Phường/xã</option>
-                {wards.map((item) => <option key={item.code} value={item.code}>{item.name}</option>)}
-              </select>
+            <div className="grid gap-3 md:grid-cols-2">
+              <label className="text-xs font-semibold text-slate-700">
+                Tên sân / Nhà thi đấu
+                <input
+                  {...register('venueName')}
+                  className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-normal outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  placeholder="Ví dụ: Sân Cầu Lông Kỳ Hòa"
+                />
+              </label>
+              <label className="text-xs font-semibold text-slate-700">
+                Địa chỉ chi tiết
+                <input
+                  {...register('locationAddress')}
+                  className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-normal outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  placeholder="Số nhà, tên đường..."
+                />
+              </label>
+            </div>
+
+            {/* 3 Dropdown Tỉnh / Quận / Phường 3 cột riêng biệt, hiển thị tên đầy đủ */}
+            <div>
+              <span className="mb-1.5 block text-xs font-semibold text-slate-700">Khu vực hành chính</span>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div>
+                  <select
+                    {...register('province')}
+                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500"
+                  >
+                    <option value="">-- Chọn Tỉnh/Thành --</option>
+                    {provinces.map((item) => (
+                      <option key={item.code} value={item.code}>
+                        {item.fullName || item.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <select
+                    {...register('district')}
+                    disabled={!province || districts.length === 0}
+                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500 disabled:bg-slate-100 disabled:text-slate-400"
+                  >
+                    <option value="">
+                      {!province ? '-- Chọn Tỉnh trước --' : districts.length === 0 ? '-- Đang tải Quận/Huyện --' : '-- Chọn Quận/Huyện --'}
+                    </option>
+                    {districts.map((item) => (
+                      <option key={item.code} value={item.code}>
+                        {item.fullName || item.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <select
+                    {...register('ward')}
+                    disabled={!district || wards.length === 0}
+                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500 disabled:bg-slate-100 disabled:text-slate-400"
+                  >
+                    <option value="">
+                      {!district ? '-- Chọn Huyện trước --' : wards.length === 0 ? '-- Đang tải Phường/Xã --' : '-- Chọn Phường/Xã --'}
+                    </option>
+                    {wards.map((item) => (
+                      <option key={item.code} value={item.code}>
+                        {item.fullName || item.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -579,12 +620,12 @@ export default function QuickTournamentCreate() {
           )}
 
           <label className="block text-sm font-semibold text-slate-700">
-            Ghi chú
+            Mô tả giải đấu
             <textarea
               {...register('description')}
               rows={3}
               className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-              placeholder="Luật hoặc thông tin ngắn cho người tham gia"
+              placeholder="Mô tả chi tiết giải đấu, thể lệ thi đấu, quy định trang phục hoặc lưu ý cho người tham gia..."
             />
           </label>
 

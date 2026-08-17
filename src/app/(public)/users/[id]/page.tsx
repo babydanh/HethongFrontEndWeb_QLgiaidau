@@ -363,8 +363,8 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                   );
 
                   const opponentName = isP1
-                    ? match.participant2?.teamName || '{translate('unknown')}'
-                    : match.participant1?.teamName || '{translate('unknown')}';
+                    ? match.participant2?.teamName || translate('unknown')
+                    : match.participant1?.teamName || translate('unknown');
 
                   return (
                     <div
@@ -396,16 +396,16 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                         {isCompleted ? (
                           isWinner ? (
                             <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 uppercase tracking-wide">
-                              Thắng
+                              {translate('win')}
                             </span>
                           ) : (
                             <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200 uppercase tracking-wide">
-                              Thua
+                              {translate('loss')}
                             </span>
                           )
                         ) : (
                           <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 uppercase tracking-wide">
-                            Đang đấu
+                            {translate('inProgress')}
                           </span>
                         )}
 
@@ -425,7 +425,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                 <Activity className="w-16 h-16 text-slate-350 mx-auto mb-4" />
                 <h3 className="text-lg font-bold text-slate-700 mb-2">{translate('noMatchesTitle')}</h3>
                 <p className="text-slate-500 max-w-sm mx-auto text-sm font-medium">
-                  Thành viên này chưa ghi nhận trận đấu chính thức nào gần đây trên hệ thống.
+                  {translate('noRecentMatches')}
                 </p>
               </div>
             )}
@@ -437,7 +437,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
             <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
               <div className="flex items-center gap-2 mb-4">
                 <Trophy className="w-5 h-5 text-blue-600" />
-                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Danh hiệu thành tích</h3>
+                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">{translate('achievementsHeading')}</h3>
               </div>
               {profile.achievements && profile.achievements.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -450,7 +450,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                           : item.rank === 2
                             ? 'bg-slate-50 text-slate-700 border-slate-200'
                             : 'bg-amber-50 text-amber-700 border-amber-200';
-                      const title = item.rank === 1 ? 'Quán quân' : item.rank === 2 ? 'Á quân' : 'Hạng ba';
+                      const title = item.rank === 1 ? translate('champion') : item.rank === 2 ? translate('runnerUp') : translate('thirdPlace');
 
                       return (
                         <div key={`${item.tournamentId}-${item.rank}`} className={`rounded-lg border p-4 shadow-sm ${badgeClass}`}>
@@ -476,7 +476,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                 <div className="text-center py-10 border-2 border-dashed border-slate-100 rounded-lg">
                   <Trophy className="w-12 h-12 text-slate-300 mx-auto mb-3" />
                   <p className="text-slate-600 font-semibold">{translate('noAchievements')}</p>
-                  <p className="text-slate-400 text-sm mt-1">Danh hiệu sẽ hiện khi người chơi có top 3 ở giải public ELO.</p>
+                  <p className="text-slate-400 text-sm mt-1">{translate('achievementsHint')}</p>
                 </div>
               )}
             </div>
@@ -489,7 +489,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
               <div>
                 <div className="flex items-center gap-2 mb-4">
                   <Trophy className="w-5 h-5 text-blue-600" />
-                  <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Hạng Trình Độ ELO</h3>
+                  <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">{translate('eloTier')}</h3>
                 </div>
 
                 {displayedRanks.length > 0 ? (
@@ -502,7 +502,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                           </span>
                           <div className="flex items-center gap-2">
                             <Award className="w-5 h-5 text-blue-500 group-hover:scale-110 transition-transform" />
-                            <h4 className="font-bold text-slate-900 text-base">{rank.eloPoints} ELO {rank.partnerName ? `• Đôi với ${rank.partnerName}` : ''}</h4>
+                            <h4 className="font-bold text-slate-900 text-base">{rank.eloPoints} ELO {rank.partnerName ? `• {translate('withPartner')} ${rank.partnerName}` : ''}</h4>
                             <EloTierBadge elo={rank.eloPoints} tierName={rank.tierName || undefined} size="sm" />
                           </div>
                           <div className="grid grid-cols-3 gap-2 pt-2 text-center text-xs">
@@ -511,11 +511,11 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                               <div className="font-bold text-slate-700 mt-0.5">{rank.matchesPlayed}</div>
                             </div>
                             <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
-                              <div className="text-[10px] text-slate-400 font-bold uppercase">Thắng</div>
+                              <div className="text-[10px] text-slate-400 font-bold uppercase">{translate('win')}</div>
                               <div className="font-bold text-blue-600 mt-0.5">{rank.matchesWon}</div>
                             </div>
                             <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
-                              <div className="text-[10px] text-slate-400 font-bold uppercase">Chuỗi</div>
+                              <div className="text-[10px] text-slate-400 font-bold uppercase">{translate('streak')}</div>
                               <div className="font-bold text-blue-600 mt-0.5 flex items-center justify-center gap-0.5">
                                 <Zap className="w-3 h-3 fill-blue-500 text-blue-650" /> {rank.winStreak}
                               </div>
@@ -527,7 +527,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                   </div>
                 ) : (
                   <div className="bg-white rounded-lg border border-slate-200 p-8 text-center text-slate-450 text-sm font-medium">
-                    Chưa tham gia thi đấu xếp hạng ELO chính thức.
+                    {translate('eloParticipationEmpty')}
                   </div>
                 )}
               </div>
@@ -539,7 +539,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart
                         data={[...eloHistory].reverse().map((item, index) => ({
-                          name: `Trận ${index + 1}`,
+                          name: `${translate('matchNumber', { number: index + 1 })}`,
                           'ELO': item.newElo,
                           date: formatDate(item.createdAt, 'dd/MM/yyyy'),
                           reason: item.reason || translate(item.changedPoints > 0 ? 'win' : 'loss'),

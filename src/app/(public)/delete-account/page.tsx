@@ -1,11 +1,16 @@
 import React from 'react';
+import { getTranslations } from 'next-intl/server';
 
-export const metadata = {
-  title: 'Yêu cầu xóa tài khoản | Quản lý Giải đấu',
-  description: 'Hướng dẫn các bước yêu cầu xóa tài khoản và dữ liệu cá nhân khỏi hệ thống Quản lý Giải đấu.',
-};
+export async function generateMetadata() {
+  const translate = await getTranslations('DeleteAccount');
+  return {
+    title: translate('metaTitle'),
+    description: translate('metaDescription'),
+  };
+}
 
-export default function DeleteAccountPage() {
+export default async function DeleteAccountPage() {
+  const translate = await getTranslations('DeleteAccount');
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-2xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
@@ -111,4 +116,3 @@ export default function DeleteAccountPage() {
     </div>
   );
 }
-

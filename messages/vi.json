@@ -134,4 +134,22 @@
     "notFoundDescription": "Đường dẫn bạn truy cập không tồn tại, đã bị gỡ bỏ hoặc bạn không có quyền truy cập.",
     "backHome": "Quay lại trang chủ"
   }
+,
+  "Download": {
+    "appStoreDescription": "Tải trực tiếp từ cửa hàng App Store chính thức cho iPhone và iPad.",
+    "appStoreStatus": "Trạng thái App Store:",
+    "buildNumberLabel": "Build Number:",
+    "description": "Quản lý giải đấu chuyên nghiệp, cập nhật tỷ số trực tiếp và theo dõi xếp hạng trên mọi thiết bị.",
+    "googlePlayDescription": "Tải trực tiếp từ cửa hàng Google Play chính thức cho thiết bị Android.",
+    "googlePlayStatus": "Trạng thái Google Play:",
+    "instantUpdates": "Cập nhật tức thì",
+    "official": "Chính chủ 100%",
+    "openAppStore": "Mở App Store",
+    "openGooglePlay": "Mở Google Play",
+    "released": "Đã phát hành",
+    "title": "Tải Ứng Dụng Di Động",
+    "versionDetails": "Chi tiết phiên bản App",
+    "versionInfo": "Thông tin phiên bản {version} (Build {build})",
+    "versionLabel": "Phiên bản:"
+  }
 }

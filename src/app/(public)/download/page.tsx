@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Sparkles, Info, ShieldCheck, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -42,6 +43,8 @@ function AppleSvg({ className = "w-8 h-8" }: { className?: string }) {
 }
 
 export default function DownloadPage() {
+  const t = useTranslations("Download");
+  const commonT = useTranslations("Common");
   const [showVersionModal, setShowVersionModal] = useState(false);
 
   return (
@@ -59,15 +62,15 @@ export default function DownloadPage() {
           className="text-center mb-8"
         >
           <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-slate-900 mb-4">
-            Tải Ứng Dụng Di Động
+            {t("title")}
           </h1>
           <p className="text-slate-600 text-base md:text-lg max-w-xl mx-auto leading-relaxed font-normal">
             Quản lý giải đấu chuyên nghiệp, cập nhật tỷ số trực tiếp và theo dõi xếp hạng ELO tiện lợi ngay trên điện thoại của bạn.
           </p>
 
           <div className="flex items-center justify-center gap-6 mt-6 text-xs text-slate-500 font-semibold">
-            <span className="flex items-center gap-1.5"><ShieldCheck className="w-4 h-4 text-emerald-600" /> Chính chủ 100%</span>
-            <span className="flex items-center gap-1.5"><Zap className="w-4 h-4 text-blue-600" /> Cập nhật tức thì</span>
+            <span className="flex items-center gap-1.5"><ShieldCheck className="w-4 h-4 text-emerald-600" /> {t("official")}</span>
+            <span className="flex items-center gap-1.5"><Zap className="w-4 h-4 text-blue-600" /> {t("instantUpdates")}</span>
           </div>
         </motion.div>
 
@@ -92,7 +95,7 @@ export default function DownloadPage() {
               </div>
               <h3 className="text-xl font-bold text-slate-900 mb-2">Google Play</h3>
               <p className="text-xs text-slate-500 mb-8 leading-relaxed">
-                Tải trực tiếp từ cửa hàng Google Play Store chính thức cho thiết bị Android.
+              {t("googlePlayDescription")}
               </p>
             </div>
             
@@ -103,7 +106,7 @@ export default function DownloadPage() {
               className="w-full py-3.5 px-5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center justify-center gap-3 transition-all shadow-sm active:scale-[0.98]"
             >
               <GooglePlaySvg className="w-5 h-5" />
-              <span>Mở Google Play</span>
+              <span>{t("openGooglePlay")}</span>
             </a>
           </motion.div>
 
@@ -136,7 +139,7 @@ export default function DownloadPage() {
               className="w-full py-3.5 px-5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center justify-center gap-3 transition-all shadow-sm active:scale-[0.98]"
             >
               <AppleSvg className="w-5 h-5 text-white" />
-              <span>Mở App Store</span>
+              <span>{t("openAppStore")}</span>
             </a>
           </motion.div>
 
@@ -149,7 +152,7 @@ export default function DownloadPage() {
             className="inline-flex items-center gap-2 text-xs text-slate-500 hover:text-slate-700 transition-colors font-medium cursor-pointer py-2 px-4 rounded-full bg-white border border-slate-200 hover:bg-slate-50 shadow-sm"
           >
             <Info className="w-3.5 h-3.5 text-blue-600" />
-            <span>Thông tin phiên bản v1.0.2 (Build 3)</span>
+            <span>{t("versionInfo", { version: "v1.0.2", build: "3" })}</span>
           </button>
         </div>
 
@@ -160,7 +163,7 @@ export default function DownloadPage() {
               <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
                 <h4 className="font-extrabold text-sm text-slate-900 flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-emerald-600" />
-                  <span>Chi tiết phiên bản App</span>
+                  <span>{t("versionDetails")}</span>
                 </h4>
                 <button 
                   onClick={() => setShowVersionModal(false)}
@@ -171,20 +174,20 @@ export default function DownloadPage() {
               </div>
               <div className="space-y-3 text-xs text-slate-600 mb-6">
                 <div className="flex justify-between py-1.5 border-b border-slate-50">
-                  <span className="text-slate-400">Phiên bản:</span>
+                  <span className="text-slate-400">{t("versionLabel")}<span>
                   <span className="font-bold text-slate-900">v1.0.2</span>
                 </div>
                 <div className="flex justify-between py-1.5 border-b border-slate-50">
-                  <span className="text-slate-400">Build Number:</span>
+                  <span className="text-slate-400">{t("buildNumberLabel")}<span>
                   <span className="font-bold text-slate-900">Build 3</span>
                 </div>
                 <div className="flex justify-between py-1.5 border-b border-slate-50">
-                  <span className="text-slate-400">Trạng thái Google Play:</span>
-                  <span className="font-bold text-emerald-600">Đã phát hành</span>
+                  <span className="text-slate-400">{t("googlePlayStatus")}<span>
+                  <span className="font-bold text-emerald-600">{t("released")}</span>
                 </div>
                 <div className="flex justify-between py-1.5">
-                  <span className="text-slate-400">Trạng thái App Store:</span>
-                  <span className="font-bold text-emerald-600">Đã phát hành</span>
+                  <span className="text-slate-400">{t("appStoreStatus")}<span>
+                  <span className="font-bold text-emerald-600">{t("released")}</span>
                 </div>
               </div>
               <button 

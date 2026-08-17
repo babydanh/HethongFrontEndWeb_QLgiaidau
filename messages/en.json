@@ -134,4 +134,22 @@
     "notFoundDescription": "The page you are looking for does not exist, was removed, or you do not have access.",
     "backHome": "Back to home"
   }
+,
+  "Download": {
+    "appStoreDescription": "Download directly from the official App Store for iPhone and iPad.",
+    "appStoreStatus": "App Store status:",
+    "buildNumberLabel": "Build Number:",
+    "description": "Manage tournaments professionally, follow live scores, and track rankings on every device.",
+    "googlePlayDescription": "Download directly from the official Google Play Store for Android devices.",
+    "googlePlayStatus": "Google Play status:",
+    "instantUpdates": "Instant updates",
+    "official": "Official app",
+    "openAppStore": "Open App Store",
+    "openGooglePlay": "Open Google Play",
+    "released": "Released",
+    "title": "Download Mobile App",
+    "versionDetails": "App version details",
+    "versionInfo": "App version {version} (Build {build})",
+    "versionLabel": "Version:"
+  }
 }

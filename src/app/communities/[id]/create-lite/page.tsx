@@ -82,6 +82,7 @@ export default function CreateLiteTournamentPage({
   const [maxTeams, setMaxTeams] = useState(16);
   const [description, setDescription] = useState('');
   const [isRanked, setIsRanked] = useState(false);
+  const [isPublic, setIsPublic] = useState(false);
   const [startDate, setStartDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [startTime, setStartTime] = useState('18:00');
   const [registrationStartDate, setRegistrationStartDate] = useState(() => new Date().toISOString().split('T')[0]);
@@ -184,6 +185,7 @@ export default function CreateLiteTournamentPage({
         name: name.trim(),
         sport,
         communityId,
+        visibility: isPublic ? 'PUBLIC' : 'PRIVATE',
         format: sport === 'football' ? 'doubles' : format,
         ...(sport === 'football'
           ? {
@@ -198,7 +200,7 @@ export default function CreateLiteTournamentPage({
         bracketType,
         maxTeams,
         description: description.trim() || `Giải đấu nhanh CLB ${community?.name || ''}`,
-        registrationMode: 'OPEN',
+        registrationMode: isPublic ? 'OPEN' : 'INVITE_ONLY',
         venueName: venueName.trim() || undefined,
         locationAddress: locationAddress.trim() || undefined,
         province: province.trim() || undefined,
@@ -366,8 +368,8 @@ export default function CreateLiteTournamentPage({
           {sport && sport !== 'football' && (
             <div className="rounded-lg border border-emerald-100 bg-emerald-50/60 p-4 space-y-3">
               <div>
-                <h2 className="text-sm font-semibold text-slate-800">Luật mặc định</h2>
-                <p className="text-xs text-slate-500 mt-1">Đã điền theo môn. Đây chỉ là giá trị bắt đầu; giải Lite vẫn cho phép nhập điểm tự do khi thi đấu.</p>
+                <h2 className="text-sm font-semibold text-slate-800">Preset tự do theo môn</h2>
+                <p className="text-xs text-slate-500 mt-1">Hệ thống điền sẵn luật gợi ý để bắt đầu; bạn có thể sửa ngay tại đây. Khi thi đấu, Lite dùng chế độ nhập điểm tự do.</p>
               </div>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 <Input label="Set thắng" type="number" min={1} max={5} value={setsToWin} onChange={(e) => setSetsToWin(Math.max(1, Math.min(5, Number(e.target.value) || 1)))} />
@@ -468,6 +470,24 @@ export default function CreateLiteTournamentPage({
                 <Input label="Giờ đóng" type="time" value={registrationEndTime} onChange={(e) => setRegistrationEndTime(e.target.value)} />
               </div>
             </div>
+          </div>
+
+          <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4">
+            <div>
+              <p className="text-sm font-semibold text-slate-800">Công khai giải đấu</p>
+              <p className="text-xs text-slate-500">
+                {isPublic ? 'Giải sẽ chờ Admin duyệt trước khi hiển thị công khai.' : 'Chỉ thành viên CLB nhìn thấy và tham gia.'}
+              </p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={isPublic}
+              onClick={() => setIsPublic((value) => !value)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isPublic ? 'bg-blue-600' : 'bg-slate-300'}`}
+            >
+              <span className={`inline-block h-5 w-5 rounded-full bg-white shadow transition-transform ${isPublic ? 'translate-x-5' : 'translate-x-0'}`} />
+            </button>
           </div>
 
           <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">

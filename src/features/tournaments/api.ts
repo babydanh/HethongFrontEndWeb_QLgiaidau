@@ -498,7 +498,12 @@ export const tournamentsApi = {
   createLiteTournament: (data: {
     name: string;
     sport: 'badminton' | 'tennis' | 'pickleball' | 'table_tennis' | 'football';
-    communityId: string;
+    communityId?: string;
+    visibility?: 'PRIVATE' | 'PUBLIC';
+    bannerUrl?: string;
+    logoUrl?: string;
+    prizeDescription?: string;
+    contactInfo?: { phone?: string; email?: string };
     format?: 'singles' | 'doubles';
     genderRestriction?: 'MALE' | 'FEMALE';
     teamSize?: 5 | 7 | 11;

@@ -458,7 +458,7 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <h4 className="text-sm font-bold text-slate-900">Luật & ghi điểm</h4>
-                    <p className="mt-1 text-xs text-slate-600">Preset đã điền sẵn; chế độ Lite vẫn cho phép nhập điểm tự do khi cập nhật trận.</p>
+                    <p className="mt-1 text-xs text-slate-600">Đây là preset gợi ý có thể chỉnh; chế độ Lite vẫn cho phép nhập điểm tự do khi cập nhật trận.</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge className="bg-white text-emerald-700 border-emerald-200">Tự do (Lite)</Badge>

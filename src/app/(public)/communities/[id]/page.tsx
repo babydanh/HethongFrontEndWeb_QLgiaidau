@@ -18,11 +18,6 @@ import ConfirmModal from '@/components/ui/ConfirmModal';
 import ClubChatLauncher from './components/ClubChatLauncher';
 import { BRAND } from '@/constants/brand';
 
-interface CommunityMemberRecord {
-  member?: { id?: string; userId?: string; role?: string; status?: string };
-  user?: { id?: string; email?: string };
-}
-
 // Tabs
 import OverviewTab from './components/OverviewTab';
 import TournamentsTab from './components/TournamentsTab';
@@ -147,14 +142,15 @@ export default function CommunityDetailPage() {
       return;
     }
     try {
-      const res = await communitiesApi.getMembers(id);
-      const memberList = res.data || res || [];
-      const current = memberList.find((m: CommunityMemberRecord) => m.member?.userId === user.id || m.user?.id === user.id);
-      if (current) {
+      const res = await communitiesApi.getMyMembership(id);
+      type MembershipPayload = { role?: string; status?: string; memberId?: string };
+      const current = (res as unknown as { data?: MembershipPayload }).data
+        ?? (res as unknown as MembershipPayload);
+      if (current?.memberId) {
         const nextMembership = {
-          role: current.member?.role || 'MEMBER',
-          status: current.member?.status || 'JOINED',
-          memberId: current.member?.id || '',
+          role: current.role || 'MEMBER',
+          status: current.status || 'JOINED',
+          memberId: current.memberId,
         };
         setMembership(nextMembership);
       } else {
@@ -163,7 +159,9 @@ export default function CommunityDetailPage() {
         }
       }
     } catch (error) {
-      console.error('Failed to fetch membership status', error);
+      const status = (error as { response?: { status?: number } })?.response?.status;
+      if (status === 404) setMembership(null);
+      else console.error('Failed to fetch membership status', error);
     }
   };
 
@@ -238,6 +236,7 @@ export default function CommunityDetailPage() {
       const res = await communitiesApi.getCommunityById(id);
       const data = (res as { data?: Community })?.data ?? (res as unknown as Community);
       setCommunity(data);
+      if (data.access?.canViewContent) void fetchGallery();
     } catch (e: unknown) {
       const error = e as { response?: { status?: number } };
       console.error('Failed to fetch community details', error);
@@ -255,7 +254,6 @@ export default function CommunityDetailPage() {
     if (id) {
       Promise.resolve().then(() => {
         fetchCommunity();
-        fetchGallery();
       });
     }
   }, [id]);
@@ -331,6 +329,11 @@ export default function CommunityDetailPage() {
       return;
     }
 
+    if (community?.visibility === 'PRIVATE') {
+      toast.error('Câu lạc bộ riêng tư chỉ nhận thành viên qua lời mời.');
+      return;
+    }
+
     if (community?.joinMode === 'INVITE_ONLY' && membership?.status !== 'INVITED') {
       toast.error('Câu lạc bộ này ở chế độ Chỉ Mời. Bạn cần được quản trị viên mời để tham gia.');
       return;
@@ -365,6 +368,7 @@ export default function CommunityDetailPage() {
     if (membership?.status === 'JOINED') return 'Đã tham gia';
     if (membership?.status === 'PENDING') return 'Đang chờ duyệt';
     if (membership?.status === 'INVITED') return 'Chấp nhận lời mời';
+    if (community?.visibility === 'PRIVATE') return 'Chỉ nhận lời mời';
     if (community?.joinMode === 'INVITE_ONLY') return 'Chỉ nhận lời mời';
     return community?.joinMode === 'APPROVAL' ? 'Xin tham gia' : 'Tham gia';
   };
@@ -374,6 +378,7 @@ export default function CommunityDetailPage() {
     if (membership?.status === 'JOINED') return 'bg-blue-50 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 text-blue-700 border border-blue-200';
     if (membership?.status === 'PENDING') return 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200';
     if (membership?.status === 'INVITED') return 'bg-blue-600 hover:bg-blue-700 text-white animate-pulse';
+    if (community?.visibility === 'PRIVATE') return 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200';
     if (community?.joinMode === 'INVITE_ONLY') return 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200';
     return 'bg-blue-600 hover:bg-blue-700 text-white';
   };
@@ -406,6 +411,8 @@ export default function CommunityDetailPage() {
 
   const isOwner = user?.id === community.creatorId || user?.id === community.ownerId;
   const isOwnerOrMod = isOwner || (membership?.role === 'OWNER' || membership?.role === 'MODERATOR');
+  const canViewContent = Boolean(community.access?.canViewContent || membership?.status === 'JOINED' || isOwnerOrMod);
+  const canViewFeed = Boolean(community.access?.canViewFeed || canViewContent);
 
   const slides = community ? [
     ...(community.bannerUrl ? [community.bannerUrl] : []),
@@ -562,10 +569,12 @@ export default function CommunityDetailPage() {
         <div className="flex overflow-x-auto gap-2 mb-6 mt-4 hide-scrollbar">
           {[
             { id: 'overview', label: 'Tổng quan' },
-            { id: 'tournaments', label: 'Giải đấu' },
-            { id: 'members', label: 'Thành viên' },
-            { id: 'gallery', label: 'Ảnh' },
-            { id: 'rankings', label: 'Bảng xếp hạng' },
+            ...(canViewContent ? [
+              { id: 'tournaments', label: 'Giải đấu' },
+              { id: 'members', label: 'Thành viên' },
+              { id: 'gallery', label: 'Ảnh' },
+              { id: 'rankings', label: 'Bảng xếp hạng' },
+            ] : []),
             ...(isOwnerOrMod ? [{ id: 'moderation', label: 'Điều phối' }] : []),
           ].map(tab => (
             <button
@@ -603,14 +612,17 @@ export default function CommunityDetailPage() {
                 description={community.description}
                 rules={community.rules}
                 socialLinks={community.socialLinks}
+                visibility={community.visibility}
+                canViewContent={canViewContent}
+                canViewFeed={canViewFeed}
                 canManageTags={isOwnerOrMod || Boolean(user?.roles?.includes('ADMIN'))}
                 onGoToTournaments={() => setActiveTab('tournaments')}
                 onGoToRankings={() => setActiveTab('rankings')}
                 onGoToGallery={() => setActiveTab('gallery')}
               />
             )}
-            {activeTab === 'tournaments' && <TournamentsTab communityId={id} isOwnerOrMod={isOwnerOrMod} />}
-            {activeTab === 'members' && (
+            {activeTab === 'tournaments' && canViewContent && <TournamentsTab communityId={id} isOwnerOrMod={isOwnerOrMod} />}
+            {activeTab === 'members' && canViewContent && (
               <MembersTab
                 communityId={id}
                 isOwnerOrMod={isOwnerOrMod}
@@ -622,8 +634,8 @@ export default function CommunityDetailPage() {
                 }}
               />
             )}
-            {activeTab === 'gallery' && <GalleryTab communityId={id} community={community} isOwnerOrMod={isOwnerOrMod} />}
-            {activeTab === 'rankings' && <RankingsTab communityId={id} categories={community?.categories || []} onGoToTournaments={() => setActiveTab('tournaments')} />}
+            {activeTab === 'gallery' && canViewContent && <GalleryTab communityId={id} community={community} isOwnerOrMod={isOwnerOrMod} />}
+            {activeTab === 'rankings' && canViewContent && <RankingsTab communityId={id} categories={community?.categories || []} onGoToTournaments={() => setActiveTab('tournaments')} />}
             {activeTab === 'moderation' && isOwnerOrMod && (
               <ModerationTab communityId={id} isOwner={isOwner} />
             )}

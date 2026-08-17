@@ -72,7 +72,8 @@ function normalizeKind(rawKind: unknown): SportRuleKind | null {
     normalized === 'TABLE_TENNIS' ||
     normalized === 'PICKLEBALL_RALLY' ||
     normalized === 'PICKLEBALL_SIDE_OUT' ||
-    normalized === 'TENNIS'
+    normalized === 'TENNIS' ||
+    normalized === 'FOOTBALL'
   ) {
     return normalized;
   }

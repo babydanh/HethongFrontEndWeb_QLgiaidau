@@ -29,5 +29,17 @@ export interface Community {
     members: number;
     tournaments: number;
   };
+  access?: {
+    visibility: 'PUBLIC' | 'PRIVATE' | 'RESTRICTED';
+    isAuthenticated: boolean;
+    isMember: boolean;
+    membershipStatus: string | null;
+    membershipRole: string | null;
+    isAdmin: boolean;
+      canViewContent: boolean;
+      canViewFeed: boolean;
+      canViewMembers: boolean;
+    canPost: boolean;
+  };
 }
 

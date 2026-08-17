@@ -281,6 +281,16 @@ export interface TournamentParticipant {
   }[];
 }
 
+/** A football registration grouped by the stable team/division identity. */
+export interface FootballRegistrationGroup {
+  key: string;
+  footballTeamId: string;
+  teamName: string;
+  logoUrl?: string | null;
+  divisionName: string;
+  participants: TournamentParticipant[];
+}
+
 export interface BracketMatch {
   id: string;
   roundNumber: number;

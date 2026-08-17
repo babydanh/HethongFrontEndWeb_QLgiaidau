@@ -300,6 +300,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
           handleRegenerateInviteCode={s.handleRegenerateInviteCode}
           handleApproveParticipant={s.handleApproveParticipant}
           handleRejectParticipant={s.handleRejectParticipant}
+          handleKickParticipant={s.handleKickParticipant}
           handleSeedMockData={s.handleSeedMockData} handleClearMockData={s.handleClearMockData}
           handleAssignWildcard={s.handleAssignWildcard}
           eloEnabled={s.eloEnabled} setEloEnabled={s.setEloEnabled}

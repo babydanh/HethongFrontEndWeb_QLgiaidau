@@ -7,7 +7,6 @@ import { communitiesApi, MemberStreak, CommunityMemberRecord } from "@/features/
 import { useRouter } from "next/navigation";
 import CommunityAvatar from "@/app/(public)/communities/[id]/components/CommunityAvatar";
 import { EloTierBadge } from "@/components/ui/EloTierBadge";
-import { chatApi } from "@/features/chat/api";
 
 export interface PopoverUserProfile {
   id: string;
@@ -373,9 +372,12 @@ export default function UserProfilePopover({
               if (!profileData.id || isOpeningChat) return;
               setIsOpeningChat(true);
               try {
-                const room = await chatApi.createDirectRoom(profileData.id);
+                window.dispatchEvent(
+                  new CustomEvent('sporto:open-direct-chat', {
+                    detail: { userId: profileData.id },
+                  }),
+                );
                 onClose();
-                router.push(`/chat?roomId=${encodeURIComponent(room.id)}`);
               } catch {
                 setIsOpeningChat(false);
               }

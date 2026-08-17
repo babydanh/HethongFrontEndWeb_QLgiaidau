@@ -7,6 +7,7 @@ import { getErrorMessage } from "@/utils/error";
 import CommunityFeed from "./CommunityFeed";
 import CommunityInfoSidebar from "./CommunityInfoSidebar";
 import CommunityMatchPosts from "./CommunityMatchPosts";
+import { LockKeyhole } from "lucide-react";
 
 interface OverviewTabProps {
   communityId: string;
@@ -14,6 +15,9 @@ interface OverviewTabProps {
   rules?: string;
   socialLinks?: Record<string, string>;
   canManageTags?: boolean;
+  visibility?: "PUBLIC" | "RESTRICTED" | "PRIVATE";
+  canViewContent?: boolean;
+  canViewFeed?: boolean;
   onGoToTournaments?: () => void;
   onGoToRankings?: () => void;
   onGoToGallery?: () => void;
@@ -34,6 +38,9 @@ export default function OverviewTab({
   rules,
   socialLinks,
   canManageTags = false,
+  visibility = "PUBLIC",
+  canViewContent = true,
+  canViewFeed = canViewContent,
   onGoToGallery,
 }: OverviewTabProps) {
   const [dashboard, setDashboard] = useState<CommunityDashboard | null>(null);
@@ -42,6 +49,10 @@ export default function OverviewTab({
 
   useEffect(() => {
     let mounted = true;
+    if (!canViewContent) {
+      setIsLoading(false);
+      return () => { mounted = false; };
+    }
     Promise.resolve().then(async () => {
       try {
         const response = await communitiesApi.getDashboard(communityId);
@@ -53,10 +64,27 @@ export default function OverviewTab({
       }
     });
     return () => { mounted = false; };
-  }, [communityId]);
+  }, [communityId, canViewContent]);
 
   if (isLoading) return <DashboardSkeleton />;
   if (errorMessage) return <div className="rounded-lg border border-amber-200 bg-amber-50 p-5 text-sm text-amber-800">{errorMessage}</div>;
+
+  if (!canViewFeed) {
+    const isPrivate = visibility === "PRIVATE";
+    return (
+      <div className="mx-auto max-w-2xl rounded-2xl border border-slate-200 bg-white px-6 py-14 text-center shadow-sm">
+        <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-slate-500">
+          <LockKeyhole className="h-6 w-6" aria-hidden="true" />
+        </div>
+        <h2 className="text-xl font-bold text-slate-900">{isPrivate ? "CLB riêng tư" : "Nội dung dành cho thành viên"}</h2>
+        <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
+          {isPrivate
+            ? "Câu lạc bộ này chỉ hiển thị thông tin cơ bản. Hãy nhận lời mời từ ban quản trị để xem bảng tin, thành viên và hoạt động bên trong."
+            : "Hãy tham gia câu lạc bộ để xem bảng tin, lịch giải, thư viện ảnh và bảng xếp hạng."}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)]">
@@ -69,7 +97,7 @@ export default function OverviewTab({
       />
       <main className="min-w-0">
         {dashboard && <CommunityMatchPosts dashboard={dashboard} />}
-        <CommunityFeed communityId={communityId} canManageTags={canManageTags} />
+        {canViewFeed && <CommunityFeed communityId={communityId} canManageTags={canManageTags} />}
       </main>
 
     </div>

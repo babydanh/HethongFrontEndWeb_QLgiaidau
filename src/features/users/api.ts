@@ -20,6 +20,7 @@ interface RawUserProfileResponse {
     address?: string;
     provinceCode?: string;
     isGenderLocked?: boolean;
+    allowStrangerMessages?: boolean;
     bankName?: string;
     bankAccountNumber?: string;
     bankAccountName?: string;
@@ -42,6 +43,7 @@ const mapUserProfile = (data: RawUserProfileResponse): UserProfile => {
     isEmailVerified: data.isEmailVerified as boolean | undefined,
     isPhoneVerified: data.isPhoneVerified as boolean | undefined,
     isGenderLocked: data.profile?.isGenderLocked as boolean | undefined,
+    allowStrangerMessages: data.profile?.allowStrangerMessages as boolean | undefined,
     bankName: data.profile?.bankName,
     bankAccountNumber: data.profile?.bankAccountNumber,
     bankAccountName: data.profile?.bankAccountName,

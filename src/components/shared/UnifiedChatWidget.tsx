@@ -114,6 +114,44 @@ function unwrapRooms(value: InboxRoomsResponse): InboxRoom[] {
   return [];
 }
 
+function dedupeRooms(rooms: InboxRoom[], currentUserId?: string): InboxRoom[] {
+  const byConversation = new Map<string, InboxRoom>();
+  for (const room of rooms) {
+    const otherParticipants = (room.participants ?? [])
+      .filter((participant) => participant.id && participant.id !== currentUserId)
+      .map((participant) => participant.id)
+      .sort();
+    const lastSenderId = room.lastMessage?.senderId && room.lastMessage.senderId !== currentUserId
+      ? room.lastMessage.senderId
+      : null;
+    const otherParticipant = room.participants?.find((participant) => participant.id !== currentUserId);
+    const directIdentity = otherParticipants.join(',') || lastSenderId;
+    const fallbackName = otherParticipant?.fullName?.trim().toLocaleLowerCase('vi-VN');
+    const key = room.type === 'DIRECT' && (directIdentity || fallbackName)
+      ? `DIRECT:${directIdentity ?? fallbackName}`
+      : `${room.type}:${room.id}`;
+    const existing = byConversation.get(key);
+    if (!existing) {
+      byConversation.set(key, room);
+      continue;
+    }
+
+    const roomTime = Date.parse(room.updatedAt);
+    const existingTime = Date.parse(existing.updatedAt);
+    if (roomTime >= existingTime) {
+      byConversation.set(key, {
+        ...room,
+        unreadCount: Math.max(existing.unreadCount, room.unreadCount),
+      });
+    } else if (existing.unreadCount < room.unreadCount) {
+      byConversation.set(key, { ...existing, unreadCount: room.unreadCount });
+    }
+  }
+  return Array.from(byConversation.values()).sort(
+    (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+  );
+}
+
 function roomTitle(room: InboxRoom): string {
   if (room.name) return room.name;
   if (room.clubName) return room.clubName;
@@ -276,6 +314,7 @@ export default function UnifiedChatWidget() {
   }, [otherParticipant, blockedUserIds]);
 
   const selectionRef = useRef(selection);
+  const directChatRequestRef = useRef(0);
   useEffect(() => {
     selectionRef.current = selection;
   }, [selection]);
@@ -283,25 +322,25 @@ export default function UnifiedChatWidget() {
   const refreshRooms = useCallback(async () => {
     if (!isAuthenticated) return;
     try {
-      const fetched = unwrapRooms(await inboxApi.getRooms());
+      const fetched = dedupeRooms(unwrapRooms(await inboxApi.getRooms()), user?.id);
       setRooms((current) => {
         const currentSelection = selectionRef.current;
-        const currentActiveClub =
-          currentSelection.kind === 'ROOM' && currentSelection.room.type === 'CLUB'
-            ? currentSelection.room
-            : null;
-        if (
-          currentActiveClub &&
-          !fetched.some((r) => r.id === currentActiveClub.id)
-        ) {
-          return [currentActiveClub, ...fetched];
+        const currentActiveRoom =
+          currentSelection.kind === 'ROOM' ? currentSelection.room : null;
+        if (currentActiveRoom && !fetched.some((r) => r.id === currentActiveRoom.id)) {
+          return [currentActiveRoom, ...fetched];
         }
         return fetched;
       });
+      const active = selectionRef.current;
+      if (active.kind === 'ROOM') {
+        const hydrated = fetched.find((room) => room.id === active.room.id);
+        if (hydrated) setSelection({ kind: 'ROOM', room: hydrated });
+      }
     } catch {
       // background refresh
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, user?.id]);
 
   const searchMatches = useMemo(() => {
     if (!searchQuery.trim()) return [];
@@ -408,6 +447,40 @@ export default function UnifiedChatWidget() {
       isSubscribed = false;
     };
   }, [open, isAuthenticated, refreshRooms]);
+
+  // Open a direct room inside the unified widget instead of navigating away.
+  useEffect(() => {
+    const handleOpenDirectChat = async (e: Event) => {
+      const targetUserId = (e as CustomEvent<{ userId?: string }>).detail?.userId;
+      if (!targetUserId) return;
+      setOpen(true);
+      setIsMobileRoomOpen(true);
+      if (!isAuthenticated) {
+        toast.error('Vui lòng đăng nhập để nhắn tin.');
+        return;
+      }
+      const requestId = ++directChatRequestRef.current;
+      try {
+        setLoading(true);
+        const response = await chatApi.createDirectRoom(targetUserId);
+        if (requestId !== directChatRequestRef.current) return;
+        const room = {
+          ...response,
+          unreadCount: 0,
+          updatedAt: response.updatedAt || new Date().toISOString(),
+          participants: response.participants || [],
+        } as InboxRoom;
+        setSelection({ kind: 'ROOM', room });
+        setRooms((prev) => dedupeRooms([room, ...prev], user?.id));
+      } catch (err) {
+        toast.error(getErrorMessage(err, 'Không thể mở cuộc trò chuyện.'));
+      } finally {
+        if (requestId === directChatRequestRef.current) setLoading(false);
+      }
+    };
+    window.addEventListener('sporto:open-direct-chat', handleOpenDirectChat);
+    return () => window.removeEventListener('sporto:open-direct-chat', handleOpenDirectChat);
+  }, [isAuthenticated, user?.id]);
 
   // Support opening specific club room via global custom event
   useEffect(() => {
@@ -585,12 +658,17 @@ export default function UnifiedChatWidget() {
       try {
         const page = await inboxApi.getMessages(roomId);
         if (active) {
-          setMessages(
-            unwrapMessages(page).map((message) => ({
-              ...message,
-              mine: message.senderId === user?.id,
-            })),
-          );
+          const fetchedMessages = unwrapMessages(page).map((message) => ({
+            ...message,
+            mine: message.senderId === user?.id,
+          }));
+          setMessages((current) => {
+            const merged = new Map(current.map((message) => [message.id, message]));
+            for (const message of fetchedMessages) merged.set(message.id, message);
+            return [...merged.values()].sort(
+              (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+            );
+          });
           setNextCursor(page.meta?.nextCursor ?? null);
           setHasMoreMessages(page.meta?.hasMore === true);
         }

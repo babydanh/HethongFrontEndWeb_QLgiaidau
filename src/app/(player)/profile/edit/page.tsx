@@ -85,6 +85,26 @@ export default function EditProfilePage() {
   const [deletePassword, setDeletePassword] = useState('');
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [showDeletePassword, setShowDeletePassword] = useState(false);
+  const [isSavingPrivacy, setIsSavingPrivacy] = useState(false);
+
+  // Quyền riêng tư nhắn tin: bật = chặn người lạ nhắn tin (mặc định tắt).
+  const handleToggleStrangerMessages = async (blockStrangers: boolean) => {
+    try {
+      setIsSavingPrivacy(true);
+      const response = await usersApi.updateProfile({ allowStrangerMessages: !blockStrangers });
+      const responseData = ((response as unknown) as Record<string, unknown>).data || response;
+      setUser(responseData as NonNullable<typeof user>);
+      toast.success(
+        blockStrangers
+          ? 'Đã bật chặn tin nhắn từ người lạ.'
+          : 'Đã cho phép người lạ nhắn tin cho bạn.',
+      );
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    } finally {
+      setIsSavingPrivacy(false);
+    }
+  };
 
   // Fetch provinces list
   useEffect(() => {
@@ -798,6 +818,36 @@ export default function EditProfilePage() {
                       </Button>
                     </div>
                   </form>
+                </div>
+              </div>
+
+              {/* Privacy Messaging Card */}
+              <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
+                  <MessageCircle className="w-5 h-5 text-blue-600" />
+                  <h2 className="text-lg font-bold text-slate-900">Quyền riêng tư nhắn tin</h2>
+                </div>
+                <div className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <h4 className="font-bold text-slate-900 text-sm">Không nhận tin nhắn từ người lạ</h4>
+                    <p className="text-xs text-slate-500 mt-1 max-w-[60ch] leading-relaxed">
+                      Bật để chỉ nhận tin nhắn riêng từ người cùng câu lạc bộ hoặc bạn bè.
+                      Mặc định tắt — ai cũng có thể nhắn tin cho bạn.
+                    </p>
+                  </div>
+                  <label className="flex items-center gap-2 cursor-pointer select-none shrink-0">
+                    <input
+                      type="checkbox"
+                      className="sr-only peer"
+                      checked={user?.allowStrangerMessages === false}
+                      disabled={isSavingPrivacy}
+                      onChange={(e) => void handleToggleStrangerMessages(e.target.checked)}
+                    />
+                    <span className="relative w-11 h-6 rounded-full bg-slate-200 peer-checked:bg-blue-600 transition-colors after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:w-5 after:h-5 after:rounded-full after:bg-white after:transition-transform peer-checked:after:translate-x-5" />
+                    <span className="text-xs font-semibold text-slate-600">
+                      {isSavingPrivacy ? 'Đang lưu...' : user?.allowStrangerMessages === false ? 'Đang bật' : 'Tắt'}
+                    </span>
+                  </label>
                 </div>
               </div>
 

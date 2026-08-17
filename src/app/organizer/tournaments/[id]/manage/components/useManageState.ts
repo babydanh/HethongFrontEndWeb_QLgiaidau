@@ -480,7 +480,9 @@ export function useManageState(id: string) {
         registrationEndDate: registrationEndDate ? new Date(registrationEndDate).toISOString() : null,
         tournamentConfig: {
           ...tournament?.tournamentConfig,
-          registrationMode,
+          registrationMode: tournament?.isLite || tournament?.tournamentConfig?.isLite
+            ? registrationMode === 'INVITE_ONLY' ? 'INVITE_ONLY' : 'OPEN'
+            : registrationMode,
         },
       };
       await tournamentsApi.updateTournament(id, regPayload);
@@ -543,6 +545,19 @@ export function useManageState(id: string) {
     }
 
     await handleParticipantModeration(participantId, 'REJECTED', 'Đã từ chối đăng ký thành công!');
+  };
+
+  const handleKickParticipant = async (participantId: string, reason: string) => {
+    setActiveParticipantActionId(participantId);
+    try {
+      await tournamentsApi.kickParticipant(id, participantId, reason.trim() || 'Loại khỏi giải theo điều lệ');
+      toast.success('Đã loại đội khỏi giải.');
+      await refetchDivisionData();
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    } finally {
+      setActiveParticipantActionId(null);
+    }
   };
 
   const handleSaveMatchConfig = async () => {
@@ -1480,7 +1495,7 @@ export function useManageState(id: string) {
     handleTournamentStepTransition, handleOpenLockModal, handleConfirmLock,
     handleConfirmOpen,
     handleOpenEndModal, handleConfirmEnd,
-    handleSeedMockData, handleClearMockData, handleAssignWildcard, handleAutoSeed, handleSwapSeeds, handleApproveParticipant, handleRejectParticipant,
+    handleSeedMockData, handleClearMockData, handleAssignWildcard, handleAutoSeed, handleSwapSeeds, handleApproveParticipant, handleRejectParticipant, handleKickParticipant,
     handleOpenRoundModal, handleSaveStageDetails,
     handleOpenScheduling, handleSaveSchedule,
     handleSaveRoundRobinConfig, handleAdvanceStandings, handleSaveGskConfig,

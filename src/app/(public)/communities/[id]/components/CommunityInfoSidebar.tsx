@@ -108,9 +108,31 @@ export default function CommunityInfoSidebar({
           </div>
           <div className="border-t border-slate-100 pt-3.5">
             <p className="mb-1 text-[11px] font-bold uppercase tracking-wider text-slate-500">Luật lệ & quy tắc</p>
-            <p className="whitespace-pre-line break-words text-slate-800 text-xs leading-relaxed font-normal bg-slate-50 p-2.5 rounded-lg border border-slate-150">
-              {rules?.trim() || "Câu lạc bộ chưa cập nhật luật lệ riêng."}
-            </p>
+            {rules?.trim() ? (
+              <p className="whitespace-pre-line break-words text-slate-700 text-xs leading-relaxed font-normal">
+                {rules.trim().split(/(\s+)/).map((part, idx) => {
+                  if (part.startsWith('http://') || part.startsWith('https://')) {
+                    return (
+                      <a
+                        key={idx}
+                        href={part}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline inline-flex items-center gap-0.5 font-medium"
+                      >
+                        {part}
+                        <ArrowUpRight className="w-3 h-3 inline shrink-0" />
+                      </a>
+                    );
+                  }
+                  return part;
+                })}
+              </p>
+            ) : (
+              <p className="text-slate-400 text-xs font-normal italic">
+                Câu lạc bộ chưa cập nhật luật lệ riêng.
+              </p>
+            )}
           </div>
         </div>
       </section>
@@ -118,7 +140,7 @@ export default function CommunityInfoSidebar({
       {/* 🌐 Card Kênh Liên Hệ & Mạng Xã Hội */}
       {hasSocialLinks && (
         <section className="rounded-xl border border-slate-200/90 bg-white p-5 shadow-sm">
-          <div className="mb-3 flex items-center gap-2">
+          <div className="mb-3.5 flex items-center gap-2">
             <Globe className="h-4 w-4 text-blue-600" strokeWidth={2} />
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">Liên hệ & Mạng xã hội</h3>
           </div>
@@ -127,7 +149,7 @@ export default function CommunityInfoSidebar({
               const displayLabel = key.charAt(0).toUpperCase() + key.slice(1);
               const isUrl = val.startsWith("http://") || val.startsWith("https://");
               return (
-                <div key={key} className="flex items-center justify-between gap-2 bg-slate-50 px-3 py-2 rounded-lg border border-slate-150 text-xs">
+                <div key={key} className="flex items-center justify-between gap-2.5 rounded-lg border border-slate-150 bg-slate-50/70 px-3 py-2 text-xs">
                   <span className="font-bold text-slate-700 shrink-0">{displayLabel}:</span>
                   {isUrl ? (
                     <a
@@ -136,7 +158,7 @@ export default function CommunityInfoSidebar({
                       rel="noopener noreferrer"
                       className="text-blue-600 hover:underline truncate flex items-center gap-1 font-medium"
                     >
-                      {val}
+                      <span className="truncate">{val}</span>
                       <ArrowUpRight className="w-3 h-3 shrink-0" />
                     </a>
                   ) : (

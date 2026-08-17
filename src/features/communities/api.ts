@@ -161,6 +161,9 @@ export const communitiesApi = {
   getCommunityById: (id: string) => 
     api.get<ApiResponse<Community>>(`/communities/${id}`),
 
+  getMyMembership: (id: string) =>
+    api.get<ApiResponse<{ role: string; status: string; memberId: string; joinedAt: string | null; joinAnswers?: Record<string, string> }>>(`/communities/${id}/my-membership`),
+
   getDashboard: (id: string) =>
     api.get<ApiResponse<CommunityDashboard>>(`/communities/${id}/dashboard`),
 
@@ -310,4 +313,3 @@ export const communitiesApi = {
   getRankings: (id: string, limit?: number) => 
     api.get<ApiResponse<CommunityRankingRecord[]>>(`/communities/${id}/rankings`, { params: { limit } }),
 };
-

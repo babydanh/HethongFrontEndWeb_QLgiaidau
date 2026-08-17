@@ -60,26 +60,21 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy to VPS via SSH
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: 203.167.15.81
-          port: 36789
-          username: root
-          key: ${{ secrets.VPS_SSH_KEY }}
-          command_timeout: 10m
-          script: |
-            # 1. Đi tới thư mục chứa docker-compose.yml trên VPS
+      - name: Deploy to VPS via native SSH
+        env:
+          VPS_KEY: ${{ secrets.VPS_SSH_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$VPS_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -p 36789 203.167.15.81 >> ~/.ssh/known_hosts 2>/dev/null
+          ssh -p 36789 -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no root@203.167.15.81 bash -c "'
+            set -euo pipefail
             cd /usr/local/lsws/sporto.asia
-
-            # 2. Đăng nhập GHCR trên VPS
-            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-
-            # 3. Pull image frontend mới nhất về
+            echo \"$GITHUB_TOKEN\" | docker login ghcr.io -u $ACTOR --password-stdin
             docker pull ghcr.io/babydanh/hethongfrontendweb_qlgiaidau:latest
-
-            # 4. Khởi động lại service frontend với image mới
             docker compose up -d --force-recreate --no-deps frontend
-
-            # 5. Dọn dẹp image rác
             docker image prune -f
+          '"

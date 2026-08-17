@@ -810,7 +810,7 @@ export default function QuickTournamentCreate() {
                 className={`rounded-xl border p-4 text-left transition ${tournamentType === 'PUBLIC' ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-slate-300'} ${communityId ? 'cursor-not-allowed opacity-60' : ''}`}
               >
                 <span className="block font-semibold text-slate-800">Mở rộng</span>
-                <span className="mt-1 block text-xs text-slate-500">Hiển thị như giải công khai trên Sportо.</span>
+                <span className="mt-1 block text-xs text-slate-500">Hiển thị như giải công khai trên Sporto.</span>
               </button>
               <button
                 type="button"

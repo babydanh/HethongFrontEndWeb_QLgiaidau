@@ -464,7 +464,17 @@
     "standingsTitle": "Standings",
     "standingsInfoTitle": "Ranking details",
     "standingsHowItWorks": "How rankings are calculated",
-    "noMatches": "No matches yet."
+    "noMatches": "No matches yet.",
+    "teamHeader": "Team",
+    "scheduleVenueTime": "Set court & time",
+    "win": "Win",
+    "draw": "Draw",
+    "loss": "Loss",
+    "playoffCreated": "Play-off match created!",
+    "earlyFinishConfirm": "Finish early? Unplayed matches will be cancelled.",
+    "endingStage": "Finishing...",
+    "stageFinished": "Stage finished!",
+    "earlyFinishStageConfirm": "Finish this stage early? Unplayed matches will be cancelled."
   }
 ,
   "LiveMatch": {

@@ -277,7 +277,7 @@ export default function AdminTournamentsPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'PENDING_APPROVAL':
-        return <span className="bg-slate-100 text-slate-600 text-xs px-2.5 py-1 rounded-full font-semibold border border-slate-200">Chờ duyệt ELO</span>;
+        return <span className="bg-amber-50 text-amber-700 text-xs px-2.5 py-1 rounded-full font-semibold border border-amber-200">Chờ duyệt công khai</span>;
       case 'PENDING_DELETE':
         return <span className="bg-slate-100 text-slate-600 text-xs px-2.5 py-1 rounded-full font-semibold border border-slate-200">Yêu cầu xóa</span>;
       case 'SUSPENDED':
@@ -367,7 +367,7 @@ export default function AdminTournamentsPage() {
           {[
             { label: 'Tất cả', value: '' },
             { label: 'Bản nháp', value: 'DRAFT' },
-            { label: 'Chờ duyệt ELO', value: 'PENDING_APPROVAL' },
+            { label: 'Chờ duyệt công khai', value: 'PENDING_APPROVAL' },
             { label: 'Mở đăng ký', value: 'REGISTRATION_OPEN' },
             { label: 'Đóng đăng ký', value: 'REGISTRATION_CLOSED' },
             { label: 'Sắp diễn ra', value: 'UPCOMING' },

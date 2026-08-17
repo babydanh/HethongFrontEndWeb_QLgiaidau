@@ -166,7 +166,7 @@ export function RoundRobinView({
             <thead className="bg-slate-50 border-b border-slate-200 text-[10px] uppercase text-slate-500 font-bold">
               <tr>
                 <th className="px-3 py-3 text-center w-10">#</th>
-                <th className="px-3 py-3 text-left min-w-[130px]">Đội</th>
+                <th className="px-3 py-3 text-left min-w-[130px]">{translate("teamHeader")}</th>
                 <th className="px-3 py-3 text-center w-12">MP</th>
                 {isFootball ? (
                   <>
@@ -257,7 +257,7 @@ export function RoundRobinView({
                             {getFootballForm(matches, row.participantId).map((result, formIndex) => (
                               <span
                                 key={`${row.participantId}-${formIndex}`}
-                                title={result === 'W' ? 'Thắng' : result === 'D' ? 'Hòa' : 'Thua'}
+                                title={result === 'W' ? translate('win') : result === 'D' ? translate('draw') : translate('loss')}
                                 className={'inline-flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-bold text-white ' + (result === 'W' ? 'bg-emerald-500' : result === 'D' ? 'bg-slate-400' : 'bg-rose-500')}
                               >
                                 {result}
@@ -314,16 +314,16 @@ export function RoundRobinView({
                           participant1Id: group[0].participantId,
                           participant2Id: group[1].participantId,
                         });
-                        toast.success('Đã tạo trận Play-off!', { id: t });
+                        toast.success(translate('playoffCreated'), { id: t });
                         setTimeout(() => window.location.reload(), 1500);
                       } catch (err) { toast.error(getErrorMessage(err), { id: t }); }
                     }} className="text-blue-500 hover:text-blue-700 hover:underline cursor-pointer">+ Play-off</button>
                     <button onClick={async () => {
-                      if (!confirm('Kết thúc sớm? Các trận chưa đấu sẽ bị hủy.')) return;
-                      const t = toast.loading('Đang kết thúc...');
+                      if (!confirm(translate('earlyFinishConfirm'))) return;
+                      const t = toast.loading(translate('endingStage'));
                       try {
                         await tournamentsApi.finalizeStage(tournamentId!, stageId!);
-                        toast.success('Đã kết thúc stage!', { id: t });
+                        toast.success(translate('stageFinished'), { id: t });
                         setTimeout(() => window.location.reload(), 1500);
                       } catch (err) { toast.error(getErrorMessage(err), { id: t }); }
                     }} className="text-slate-300 hover:text-slate-500 cursor-pointer">(chot)</button>
@@ -338,11 +338,11 @@ export function RoundRobinView({
         {tournamentId && stageId && (
           <div className="mt-2 flex justify-end">
             <button onClick={async () => {
-              if (!confirm('Kết thúc sớm stage nay? Các trận chưa đấu sẽ bị hủy.')) return;
-              const t = toast.loading('Đang kết thúc...');
+              if (!confirm(translate('earlyFinishStageConfirm'))) return;
+              const t = toast.loading(translate('endingStage'));
               try {
                 await tournamentsApi.finalizeStage(tournamentId!, stageId!);
-                toast.success('Đã kết thúc stage!', { id: t });
+                toast.success(translate('stageFinished'), { id: t });
                 setTimeout(() => window.location.reload(), 1500);
               } catch (err) { toast.error(getErrorMessage(err), { id: t }); }
             }} className="text-[10px] text-slate-400 hover:text-slate-600 underline underline-offset-2 cursor-pointer">
@@ -447,7 +447,7 @@ export function RoundRobinView({
                           <span className="truncate">{m.courtName || m.tournament?.venueName ? (m.courtName || m.tournament?.venueName) + (m.courtAddress ? ' (' + m.courtAddress + ')' : '') : 'Chưa xếp sân'}</span>
                         </div>
                         {onScheduleMatch && !done && m.participant1 && m.participant2 && (
-                          <button onClick={() => onScheduleMatch(m)} className="mt-1 w-full text-[8px] font-bold text-blue-600 border border-blue-200 bg-white hover:bg-blue-50 rounded-lg py-1 transition-colors cursor-pointer">Xếp Sân & Giờ</button>
+                          <button onClick={() => onScheduleMatch(m)} className="mt-1 w-full text-[8px] font-bold text-blue-600 border border-blue-200 bg-white hover:bg-blue-50 rounded-lg py-1 transition-colors cursor-pointer">{translate("scheduleVenueTime")}</button>
                         )}
                       </div>
                     </div>

@@ -1521,119 +1521,119 @@ export default function UnifiedChatWidget() {
                   <Search className="w-4 h-4" />
                 </button>
 
-                {/* Room Settings & 3-dots Menu for All Rooms */}
+                {/* Room Options & 3-dots Menu for All Rooms */}
                 {selection.kind === 'ROOM' && (
-                  <div className="relative flex items-center gap-1">
-                    {selection.room.type === 'CLUB' && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSettingsClubAvatar(selection.room.clubAvatar || selection.room.communityLogo || '');
-                          setShowClubSettings(true);
-                        }}
-                        title="Cài đặt nhóm CLB"
-                        className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition"
-                      >
-                        <Settings className="w-4 h-4" />
-                      </button>
-                    )}
+                  <div className="relative flex items-center">
+                    <button
+                      type="button"
+                      onClick={() => setShowRoomMenu((prev) => !prev)}
+                      aria-label="Tùy chọn đoạn chat"
+                      className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition"
+                    >
+                      <MoreVertical className="w-4 h-4" />
+                    </button>
+                    {showRoomMenu && (
+                      <div className="absolute right-0 top-8 z-50 w-56 rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl animate-in fade-in text-xs">
+                        {/* Club Notification Preference Selector */}
+                        {selection.room.type === 'CLUB' && selection.room.communityId && (
+                          <div className="mb-1 pb-1 border-b border-slate-100">
+                            <p className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                              Thông báo CLB
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => void handleUpdateClubNotification('ALL')}
+                              className={`flex w-full items-center justify-between gap-2 rounded-lg px-3 py-1.5 transition ${
+                                clubNotificationPref === 'ALL'
+                                  ? 'bg-blue-50 text-blue-700 font-semibold'
+                                  : 'text-slate-700 hover:bg-slate-50'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <Bell className="w-3.5 h-3.5 text-blue-600" />
+                                <span>Tất cả tin nhắn</span>
+                              </div>
+                              {clubNotificationPref === 'ALL' && <Check className="w-3.5 h-3.5 text-blue-600" />}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => void handleUpdateClubNotification('MENTIONS_ONLY')}
+                              className={`flex w-full items-center justify-between gap-2 rounded-lg px-3 py-1.5 transition ${
+                                clubNotificationPref === 'MENTIONS_ONLY'
+                                  ? 'bg-blue-50 text-blue-700 font-semibold'
+                                  : 'text-slate-700 hover:bg-slate-50'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <AtSign className="w-3.5 h-3.5 text-amber-600" />
+                                <span>Chỉ khi được @tag</span>
+                              </div>
+                              {clubNotificationPref === 'MENTIONS_ONLY' && <Check className="w-3.5 h-3.5 text-blue-600" />}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => void handleUpdateClubNotification('MUTED')}
+                              className={`flex w-full items-center justify-between gap-2 rounded-lg px-3 py-1.5 transition ${
+                                clubNotificationPref === 'MUTED'
+                                  ? 'bg-rose-50 text-rose-700 font-semibold'
+                                  : 'text-slate-700 hover:bg-slate-50'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <BellOff className="w-3.5 h-3.5 text-slate-400" />
+                                <span>Tắt thông báo (Im lặng)</span>
+                              </div>
+                              {clubNotificationPref === 'MUTED' && <Check className="w-3.5 h-3.5 text-rose-600" />}
+                            </button>
+                          </div>
+                        )}
 
-                    <div className="relative">
-                      <button
-                        type="button"
-                        onClick={() => setShowRoomMenu((prev) => !prev)}
-                        aria-label="Tùy chọn đoạn chat"
-                        className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition"
-                      >
-                        <MoreVertical className="w-4 h-4" />
-                      </button>
-                      {showRoomMenu && (
-                        <div className="absolute right-0 top-8 z-50 w-56 rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl animate-in fade-in text-xs">
-                          {/* Club Notification Preference Selector */}
-                          {selection.room.type === 'CLUB' && selection.room.communityId && (
-                            <div className="mb-1 pb-1 border-b border-slate-100">
-                              <p className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                                Thông báo CLB
-                              </p>
-                              <button
-                                type="button"
-                                onClick={() => void handleUpdateClubNotification('ALL')}
-                                className={`flex w-full items-center justify-between gap-2 rounded-lg px-3 py-1.5 transition ${
-                                  clubNotificationPref === 'ALL'
-                                    ? 'bg-blue-50 text-blue-700 font-semibold'
-                                    : 'text-slate-700 hover:bg-slate-50'
-                                }`}
-                              >
-                                <div className="flex items-center gap-2">
-                                  <Bell className="w-3.5 h-3.5 text-blue-600" />
-                                  <span>Tất cả tin nhắn</span>
-                                </div>
-                                {clubNotificationPref === 'ALL' && <Check className="w-3.5 h-3.5 text-blue-600" />}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => void handleUpdateClubNotification('MENTIONS_ONLY')}
-                                className={`flex w-full items-center justify-between gap-2 rounded-lg px-3 py-1.5 transition ${
-                                  clubNotificationPref === 'MENTIONS_ONLY'
-                                    ? 'bg-blue-50 text-blue-700 font-semibold'
-                                    : 'text-slate-700 hover:bg-slate-50'
-                                }`}
-                              >
-                                <div className="flex items-center gap-2">
-                                  <AtSign className="w-3.5 h-3.5 text-amber-600" />
-                                  <span>Chỉ khi được @tag</span>
-                                </div>
-                                {clubNotificationPref === 'MENTIONS_ONLY' && <Check className="w-3.5 h-3.5 text-blue-600" />}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => void handleUpdateClubNotification('MUTED')}
-                                className={`flex w-full items-center justify-between gap-2 rounded-lg px-3 py-1.5 transition ${
-                                  clubNotificationPref === 'MUTED'
-                                    ? 'bg-rose-50 text-rose-700 font-semibold'
-                                    : 'text-slate-700 hover:bg-slate-50'
-                                }`}
-                              >
-                                <div className="flex items-center gap-2">
-                                  <BellOff className="w-3.5 h-3.5 text-slate-400" />
-                                  <span>Tắt thông báo (Im lặng)</span>
-                                </div>
-                                {clubNotificationPref === 'MUTED' && <Check className="w-3.5 h-3.5 text-rose-600" />}
-                              </button>
-                            </div>
-                          )}
-
-                          {/* Clear conversation button */}
+                        {/* Cài đặt phòng chat CLB */}
+                        {selection.room.type === 'CLUB' && (
                           <button
                             type="button"
                             onClick={() => {
                               setShowRoomMenu(false);
-                              setShowClearConfirmModal(true);
+                              setSettingsClubAvatar(selection.room.clubAvatar || selection.room.communityLogo || '');
+                              setShowClubSettings(true);
                             }}
-                            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 font-medium text-slate-700 hover:bg-rose-50 hover:text-rose-600 transition"
+                            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 font-medium text-slate-700 hover:bg-slate-100 transition"
                           >
-                            <Trash2 className="w-4 h-4 text-slate-400 hover:text-rose-600" />
-                            <span>Xóa đoạn chat</span>
+                            <Settings className="w-4 h-4 text-slate-500" />
+                            <span>Cài đặt phòng chat</span>
                           </button>
+                        )}
 
-                          {/* Block/Unblock for direct chat */}
-                          {selection.room.type !== 'CLUB' && otherParticipant && (
-                            <button
-                              type="button"
-                              onClick={handleToggleBlock}
-                              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 font-semibold text-rose-600 hover:bg-rose-50 transition border-t border-slate-100 mt-1 pt-2"
-                            >
-                              <ShieldAlert className="w-4 h-4" />
-                              <span>
-                                {isOtherBlocked
-                                  ? 'Bỏ chặn người này'
-                                  : 'Chặn tin nhắn'}
-                              </span>
-                            </button>
-                          )}
-                        </div>
-                      )}
-                    </div>
+                        {/* Clear conversation button */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowRoomMenu(false);
+                            setShowClearConfirmModal(true);
+                          }}
+                          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 font-medium text-slate-700 hover:bg-rose-50 hover:text-rose-600 transition"
+                        >
+                          <Trash2 className="w-4 h-4 text-slate-400 hover:text-rose-600" />
+                          <span>Xóa đoạn chat</span>
+                        </button>
+
+                        {/* Block/Unblock for direct chat */}
+                        {selection.room.type !== 'CLUB' && otherParticipant && (
+                          <button
+                            type="button"
+                            onClick={handleToggleBlock}
+                            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 font-semibold text-rose-600 hover:bg-rose-50 transition border-t border-slate-100 mt-1 pt-2"
+                          >
+                            <ShieldAlert className="w-4 h-4" />
+                            <span>
+                              {isOtherBlocked
+                                ? 'Bỏ chặn người này'
+                                : 'Chặn tin nhắn'}
+                            </span>
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

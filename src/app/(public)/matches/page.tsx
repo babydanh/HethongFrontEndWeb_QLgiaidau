@@ -1,6 +1,7 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Search, ChevronDown, Play, Trophy, Heart, Share2, X, SlidersHorizontal, Eye, EyeOff, MapPin } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
@@ -223,6 +224,7 @@ const getFormatLabel = (matchType?: string, genderRestriction?: string | null) =
 };
 
 export default function MatchesListPage() {
+  const translate = useTranslations('Match');
   const [searchTerm, setSearchTerm] = useState('');
   const [matches, setMatches] = useState<EnrichedMatch[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -675,7 +677,7 @@ export default function MatchesListPage() {
         <div className="flex flex-col sm:flex-row gap-4 items-end">
           {/* Tìm kiếm */}
           <div className="flex-grow w-full">
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Tìm kiếm</label>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">{translate("search")}</label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
               <input
@@ -686,14 +688,14 @@ export default function MatchesListPage() {
                   setPage(1);
                 }}
                 className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50/50 text-slate-900 font-semibold h-[42px]"
-                placeholder="Tên vận động viên, CLB..."
+                placeholder={translate("searchPlaceholder")}
               />
             </div>
           </div>
 
           {/* Môn thể thao */}
           <div className="w-full sm:w-48 shrink-0">
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Môn thể thao</label>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">{translate("sport")}</label>
             <div className="relative">
               <select
                 value={selectedCategoryId}
@@ -703,7 +705,7 @@ export default function MatchesListPage() {
                 }}
                 className="w-full pl-3 pr-10 py-2 border border-slate-200 rounded-lg text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50/50 text-slate-900 font-bold h-[42px]"
               >
-                <option value="">Tất cả</option>
+                <option value="">{translate("all")}</option>
                 {categories.map(cat => (
                   <option key={cat.id} value={cat.id}>{cat.name}</option>
                 ))}
@@ -714,7 +716,7 @@ export default function MatchesListPage() {
 
           {/* Trạng thái */}
           <div className="w-full sm:w-48 shrink-0">
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Trạng thái</label>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">{translate("status")}</label>
             <div className="relative">
               <select
                 value={selectedStatus}
@@ -724,10 +726,10 @@ export default function MatchesListPage() {
                 }}
                 className="w-full pl-3 pr-10 py-2 border border-slate-200 rounded-lg text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50/50 text-slate-900 font-bold h-[42px]"
               >
-                <option value="">Tất cả</option>
-                <option value="ONGOING">Đang diễn ra</option>
-                <option value="SCHEDULED">Sắp diễn ra</option>
-                <option value="COMPLETED">Vừa kết thúc</option>
+                <option value="">{translate("all")}</option>
+                <option value="ONGOING">{translate("ongoing")}</option>
+                <option value="SCHEDULED">{translate("scheduled")}</option>
+                <option value="COMPLETED">{translate("completed")}</option>
               </select>
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 w-4.5 h-4.5 pointer-events-none" />
             </div>
@@ -782,7 +784,7 @@ export default function MatchesListPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8 gap-4 p-4 bg-slate-50 rounded-lg border border-slate-200 animate-in fade-in slide-in-from-top-2 duration-200">
               {/* Thể thức */}
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Thể thức</label>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">{translate("format")}</label>
                 <div className="relative">
                   <select
                     value={selectedBracketType}
@@ -792,10 +794,10 @@ export default function MatchesListPage() {
                     }}
                     className="w-full h-10 appearance-none rounded-lg border border-slate-200 bg-white px-3 pr-8 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="">Tất cả</option>
-                    <option value="SINGLE_ELIMINATION">Loại trực tiếp</option>
-                    <option value="DOUBLE_ELIMINATION">Nhánh thắng/thua</option>
-                    <option value="ROUND_ROBIN">Vòng tròn</option>
+                    <option value="">{translate("all")}</option>
+                    <option value="SINGLE_ELIMINATION">{translate("singleElimination")}</option>
+                    <option value="DOUBLE_ELIMINATION">{translate("doubleElimination")}</option>
+                    <option value="ROUND_ROBIN">{translate("roundRobin")}</option>
                     <option value="GROUP_STAGE_KNOCKOUT">Vòng bảng + Playoffs</option>
                   </select>
                   <ChevronDown className="absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 pointer-events-none" />
@@ -814,12 +816,12 @@ export default function MatchesListPage() {
                     }}
                     className="w-full h-10 appearance-none rounded-lg border border-slate-200 bg-white px-3 pr-8 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="">Tất cả</option>
-                    <option value="SINGLE_MALE">Đơn Nam</option>
-                    <option value="SINGLE_FEMALE">Đơn Nữ</option>
-                    <option value="DOUBLE_MALE">Đôi Nam</option>
-                    <option value="DOUBLE_FEMALE">Đôi Nữ</option>
-                    <option value="DOUBLE_MIXED">Đôi Nam Nữ</option>
+                    <option value="">{translate("all")}</option>
+                    <option value="SINGLE_MALE">{translate("singleMale")}</option>
+                    <option value="SINGLE_FEMALE">{translate("singleFemale")}</option>
+                    <option value="DOUBLE_MALE">{translate("doubleMale")}</option>
+                    <option value="DOUBLE_FEMALE">{translate("doubleFemale")}</option>
+                    <option value="DOUBLE_MIXED">{translate("doubleMixed")}</option>
                   </select>
                   <ChevronDown className="absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 pointer-events-none" />
                 </div>
@@ -837,7 +839,7 @@ export default function MatchesListPage() {
                     }}
                     className="w-full h-10 appearance-none rounded-lg border border-slate-200 bg-white px-3 pr-8 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="">Tất cả</option>
+                    <option value="">{translate("all")}</option>
                     <option value="true">Xếp hạng</option>
                     <option value="false">Phong trào</option>
                   </select>

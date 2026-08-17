@@ -170,7 +170,7 @@ export default function SettingsTab({ community }: { community: Community }) {
     if (provinceCode) {
       regionsApi.getWardsByProvince(provinceCode)
         .then(setWards)
-        .catch(err => console.error('Failed to load wards', err));
+        .catch((err: unknown) => console.error('Failed to load wards', err));
     } else {
       setWards([]);
     }

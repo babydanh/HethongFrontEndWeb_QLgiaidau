@@ -1,4 +1,14 @@
 {
+  "Match": {
+    "search": "Search",
+    "searchPlaceholder": "Player or club name...",
+    "sport": "Sport",
+    "status": "Status",
+    "all": "All",
+    "ongoing": "Ongoing",
+    "scheduled": "Upcoming",
+    "completed": "Recently completed"
+  },
   "LocaleSwitcher": {
     "language": "Language",
     "vietnamese": "Tiếng Việt",
@@ -40,7 +50,14 @@
     "cancel": "Cancel",
     "submitVerification": "Submit request",
     "about": "About",
-    "bioMissing": "No bio has been added yet."
+    "bioMissing": "No bio has been added yet.",
+    "details": "Details",
+    "dateOfBirth": "Date of birth",
+    "gender": "Gender",
+    "bankWallet": "Bank / Wallet",
+    "accountOrWalletNumber": "Account or wallet number",
+    "accountHolder": "Account holder",
+    "notUpdated": "Not updated"
   },
   "PlayerDashboard": {
     "statusOngoing": "In progress",
@@ -139,6 +156,13 @@
     "submitVerification": "Submit request",
     "about": "About",
     "bioMissing": "No bio has been added yet.",
+    "details": "Details",
+    "dateOfBirth": "Date of birth",
+    "gender": "Gender",
+    "bankWallet": "Bank / Wallet",
+    "accountOrWalletNumber": "Account or wallet number",
+    "accountHolder": "Account holder",
+    "notUpdated": "Not updated",
     "rankList": "Rank list (Ranks 11–100)"
   },
   "CommunityList": {

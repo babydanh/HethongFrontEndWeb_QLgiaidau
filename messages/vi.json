@@ -1,4 +1,14 @@
 {
+  "Match": {
+    "search": "Tìm kiếm",
+    "searchPlaceholder": "Tên vận động viên, CLB...",
+    "sport": "Môn thể thao",
+    "status": "Trạng thái",
+    "all": "Tất cả",
+    "ongoing": "Đang diễn ra",
+    "scheduled": "Sắp diễn ra",
+    "completed": "Vừa kết thúc"
+  },
   "LocaleSwitcher": {
     "language": "Ngôn ngữ",
     "vietnamese": "Tiếng Việt",
@@ -40,7 +50,14 @@
     "cancel": "Hủy bỏ",
     "submitVerification": "Gửi yêu cầu",
     "about": "Giới thiệu",
-    "bioMissing": "Chưa cập nhật phần giới thiệu bản thân."
+    "bioMissing": "Chưa cập nhật phần giới thiệu bản thân.",
+    "details": "Thông tin chi tiết",
+    "dateOfBirth": "Ngày sinh",
+    "gender": "Giới tính",
+    "bankWallet": "Ngân hàng / Ví",
+    "accountOrWalletNumber": "Số tài khoản / SĐT ví",
+    "accountHolder": "Chủ tài khoản",
+    "notUpdated": "Chưa cập nhật"
   },
   "PlayerDashboard": {
     "statusOngoing": "Đang diễn ra",
@@ -76,6 +93,8 @@
     "doubleFemale": "Đôi Nữ",
     "mixedDoubles": "Đôi Nam Nữ",
     "singleElimination": "Loại trực tiếp",
+    "format": "Thể thức",
+    "doubleMixed": "Đôi Nam Nữ",
     "doubleElimination": "Nhánh thắng/thua",
     "roundRobin": "Vòng tròn",
     "groupStageKnockout": "Vòng bảng + Playoffs",
@@ -139,6 +158,13 @@
     "submitVerification": "Gửi yêu cầu",
     "about": "Giới thiệu",
     "bioMissing": "Chưa cập nhật phần giới thiệu bản thân.",
+    "details": "Thông tin chi tiết",
+    "dateOfBirth": "Ngày sinh",
+    "gender": "Giới tính",
+    "bankWallet": "Ngân hàng / Ví",
+    "accountOrWalletNumber": "Số tài khoản / SĐT ví",
+    "accountHolder": "Chủ tài khoản",
+    "notUpdated": "Chưa cập nhật",
     "rankList": "Danh sách xếp hạng (Hạng 11 - 100)"
   },
   "CommunityList": {

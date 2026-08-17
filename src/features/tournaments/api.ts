@@ -514,7 +514,6 @@ export const tournamentsApi = {
     contactInfo?: { phone?: string; email?: string };
     format?: 'singles' | 'doubles';
     genderRestriction?: 'MALE' | 'FEMALE' | 'MIXED';
-    selectedFormats?: string[];
     teamSize?: 5 | 7 | 11;
     maxReserve?: number;
     setsToWin?: number;

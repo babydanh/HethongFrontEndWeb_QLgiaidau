@@ -379,6 +379,7 @@ export default function QuickTournamentCreate() {
       const {
         genderRestriction,
         teamSize,
+        selectedFormats: _selectedFormats,
         registrationStart,
         registrationEnd,
         startDate,
@@ -409,7 +410,6 @@ export default function QuickTournamentCreate() {
 
       const response = await tournamentsApi.createLiteTournament({
         ...restValues,
-        selectedFormats: values.selectedFormats && values.selectedFormats.length > 0 ? values.selectedFormats : undefined,
         communityId,
         sport: values.sport,
         description: values.description || undefined,

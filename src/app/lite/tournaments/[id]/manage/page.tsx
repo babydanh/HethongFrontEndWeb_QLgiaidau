@@ -2,6 +2,7 @@
 
 import { use, useEffect, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { tournamentsApi, type Tournament } from '@/features/tournaments/api';
@@ -62,13 +63,33 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
   const [tournament, setTournament] = useState<Tournament | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<LiteTab>('overview');
+  const [rulesEditing, setRulesEditing] = useState(false);
+  const [rulesSaving, setRulesSaving] = useState(false);
+  const [ruleSetsToWin, setRuleSetsToWin] = useState(2);
+  const [rulePointsPerSet, setRulePointsPerSet] = useState(21);
+  const [ruleMaxPoints, setRuleMaxPoints] = useState(30);
+  const [ruleWinByTwo, setRuleWinByTwo] = useState(true);
+  const [ruleHalves, setRuleHalves] = useState(2);
+  const [ruleHalfDuration, setRuleHalfDuration] = useState(45);
+  const [ruleAllowDraw, setRuleAllowDraw] = useState(true);
 
   useEffect(() => {
     const fetch = async () => {
       try {
         setIsLoading(true);
         const res = await tournamentsApi.getTournamentById(id);
-        setTournament(res.data ?? null);
+        const loaded = res.data ?? null;
+        setTournament(loaded);
+        if (loaded?.sportRules?.kind === 'FOOTBALL') {
+          setRuleHalves(Number(loaded.sportRules.halvesCount ?? 2));
+          setRuleHalfDuration(Number(loaded.sportRules.halfDuration ?? 45));
+          setRuleAllowDraw(loaded.sportRules.allowDraw !== false);
+        } else if (loaded?.sportRules) {
+          setRuleSetsToWin(Number(loaded.sportRules.setsToWin ?? 2));
+          setRulePointsPerSet(Number(loaded.sportRules.pointsPerSet ?? 21));
+          setRuleMaxPoints(Number(loaded.sportRules.maxPoints ?? 30));
+          setRuleWinByTwo(loaded.sportRules.winByTwo !== false);
+        }
         const bracket = await tournamentsApi.getTournamentBracket(id);
         setHasBracket(Boolean(bracket.data?.stages?.length));
       } catch {
@@ -79,6 +100,28 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
     };
     fetch();
   }, [id]);
+
+  const handleSaveRules = async () => {
+    if (!tournament || ['IN_PROGRESS', 'ONGOING', 'COMPLETED'].includes(tournament.status)) {
+      toast.error('Không thể đổi luật sau khi giải đã bắt đầu.');
+      return;
+    }
+    const existing = tournament.sportRules ?? {};
+    const sportRules = existing.kind === 'FOOTBALL'
+      ? { ...existing, halvesCount: ruleHalves, halfDuration: ruleHalfDuration, allowDraw: ruleAllowDraw }
+      : { ...existing, setsToWin: ruleSetsToWin, pointsPerSet: rulePointsPerSet, maxPoints: ruleMaxPoints, winByTwo: ruleWinByTwo };
+    setRulesSaving(true);
+    try {
+      const response = await tournamentsApi.updateTournament(id, { sportRules });
+      setTournament(response.data ?? { ...tournament, sportRules });
+      setRulesEditing(false);
+      toast.success('Đã lưu luật thi đấu.');
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setRulesSaving(false);
+    }
+  };
 
   // --- Participants / pairing state ---
   const [participants, setParticipants] = useState<LiteParticipant[]>([]);
@@ -417,9 +460,37 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                     <h4 className="text-sm font-bold text-slate-900">Luật & ghi điểm</h4>
                     <p className="mt-1 text-xs text-slate-600">Preset đã điền sẵn; chế độ Lite vẫn cho phép nhập điểm tự do khi cập nhật trận.</p>
                   </div>
-                  <Badge className="bg-white text-emerald-700 border-emerald-200">Tự do (Lite)</Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge className="bg-white text-emerald-700 border-emerald-200">Tự do (Lite)</Badge>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setRulesEditing((value) => !value)}
+                      disabled={['IN_PROGRESS', 'ONGOING', 'COMPLETED'].includes(tournament.status)}
+                    >
+                      {rulesEditing ? 'Đóng' : 'Chỉnh luật'}
+                    </Button>
+                  </div>
                 </div>
-                {tournament.sportRules?.kind === 'FOOTBALL' ? (
+                {rulesEditing ? (
+                  <div className="mt-4 space-y-3 rounded-lg border border-emerald-200 bg-white p-3">
+                    {tournament.sportRules?.kind === 'FOOTBALL' ? (
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                        <Input label="Số hiệp" type="number" min={1} max={4} value={ruleHalves} onChange={(event) => setRuleHalves(Number(event.target.value) || 1)} />
+                        <Input label="Phút mỗi hiệp" type="number" min={1} max={120} value={ruleHalfDuration} onChange={(event) => setRuleHalfDuration(Number(event.target.value) || 1)} />
+                        <label className="flex items-center gap-2 self-end pb-2 text-sm font-medium text-slate-700"><input type="checkbox" checked={ruleAllowDraw} onChange={(event) => setRuleAllowDraw(event.target.checked)} className="h-4 w-4 accent-emerald-600" /> Cho phép hòa</label>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
+                        <Input label="Set thắng" type="number" min={1} max={5} value={ruleSetsToWin} onChange={(event) => setRuleSetsToWin(Number(event.target.value) || 1)} />
+                        <Input label="Điểm mỗi set" type="number" min={1} max={99} value={rulePointsPerSet} onChange={(event) => setRulePointsPerSet(Number(event.target.value) || 1)} />
+                        <Input label="Điểm tối đa" type="number" min={1} max={199} value={ruleMaxPoints} onChange={(event) => setRuleMaxPoints(Number(event.target.value) || 1)} />
+                        <label className="flex items-center gap-2 self-end pb-2 text-sm font-medium text-slate-700"><input type="checkbox" checked={ruleWinByTwo} onChange={(event) => setRuleWinByTwo(event.target.checked)} className="h-4 w-4 accent-emerald-600" /> Chạm 2</label>
+                      </div>
+                    )}
+                    <div className="flex justify-end"><Button size="sm" onClick={handleSaveRules} disabled={rulesSaving}>{rulesSaving ? 'Đang lưu...' : 'Lưu luật'}</Button></div>
+                  </div>
+                ) : tournament.sportRules?.kind === 'FOOTBALL' ? (
                   <div className="mt-3 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
                     <InfoCard label="Số hiệp" value={String(tournament.sportRules.halvesCount ?? 2)} />
                     <InfoCard label="Phút/hiệp" value={String(tournament.sportRules.halfDuration ?? 45)} />

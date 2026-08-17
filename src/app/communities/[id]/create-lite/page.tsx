@@ -84,6 +84,15 @@ export default function CreateLiteTournamentPage({
   const [isRanked, setIsRanked] = useState(false);
   const [startDate, setStartDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [startTime, setStartTime] = useState('18:00');
+  const [registrationStartDate, setRegistrationStartDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [registrationStartTime, setRegistrationStartTime] = useState('09:00');
+  const [registrationEndDate, setRegistrationEndDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [registrationEndTime, setRegistrationEndTime] = useState('17:00');
+  const [venueName, setVenueName] = useState('');
+  const [locationAddress, setLocationAddress] = useState('');
+  const [province, setProvince] = useState('');
+  const [district, setDistrict] = useState('');
+  const [ward, setWard] = useState('');
   const [isRecurring, setIsRecurring] = useState(false);
   const [recurringFrequency, setRecurringFrequency] = useState<'DAILY' | 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY'>('WEEKLY');
   const [recurringDaysOfWeek, setRecurringDaysOfWeek] = useState<number[]>([6]);
@@ -161,6 +170,13 @@ export default function CreateLiteTournamentPage({
       toast.error('Số đội tối đa phải từ 2 đến 32');
       return;
     }
+    const registrationStart = new Date(`${registrationStartDate}T${registrationStartTime}:00`);
+    const registrationEnd = new Date(`${registrationEndDate}T${registrationEndTime}:00`);
+    const tournamentStart = new Date(`${startDate}T${startTime}:00`);
+    if (registrationStart >= registrationEnd || registrationEnd >= tournamentStart) {
+      toast.error('Lịch đăng ký phải theo thứ tự: mở < đóng < bắt đầu giải.');
+      return;
+    }
 
     try {
       setIsSubmitting(true);
@@ -182,10 +198,18 @@ export default function CreateLiteTournamentPage({
         bracketType,
         maxTeams,
         description: description.trim() || `Giải đấu nhanh CLB ${community?.name || ''}`,
+        registrationMode: 'OPEN',
+        venueName: venueName.trim() || undefined,
+        locationAddress: locationAddress.trim() || undefined,
+        province: province.trim() || undefined,
+        district: district.trim() || undefined,
+        ward: ward.trim() || undefined,
         isRanked,
         startDate: startDate || undefined,
         startTime: startTime || undefined,
         isRecurring,
+        registrationStartDate: registrationStart.toISOString(),
+        registrationEndDate: registrationEnd.toISOString(),
         recurringFrequency: isRecurring ? recurringFrequency : undefined,
         recurringDayOfWeek: isRecurring ? (recurringDaysOfWeek[0] ?? 6) : undefined,
         recurringDaysOfWeek: isRecurring ? recurringDaysOfWeek : undefined,
@@ -426,6 +450,37 @@ export default function CreateLiteTournamentPage({
                 onChange={(e) => setStartTime(e.target.value)}
                 className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
               />
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4 space-y-3">
+            <div>
+              <h2 className="text-sm font-semibold text-slate-800">Lịch đăng ký</h2>
+              <p className="text-xs text-slate-500">Mặc định mở từ hôm nay. Bạn có thể nhập ngày và giờ cụ thể.</p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2">
+                <Input label="Mở đăng ký" type="date" value={registrationStartDate} onChange={(e) => setRegistrationStartDate(e.target.value)} />
+                <Input label="Giờ mở" type="time" value={registrationStartTime} onChange={(e) => setRegistrationStartTime(e.target.value)} />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Input label="Đóng đăng ký" type="date" value={registrationEndDate} onChange={(e) => setRegistrationEndDate(e.target.value)} />
+                <Input label="Giờ đóng" type="time" value={registrationEndTime} onChange={(e) => setRegistrationEndTime(e.target.value)} />
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
+            <div>
+              <h2 className="text-sm font-semibold text-slate-800">Địa điểm thi đấu</h2>
+              <p className="text-xs text-slate-500">Tên sân sẽ hiện trên thẻ trận; địa chỉ chi tiết hiện ở trang giải.</p>
+            </div>
+            <Input label="Tên sân" placeholder="Ví dụ: Sân Pickleball Trung tâm" value={venueName} onChange={(e) => setVenueName(e.target.value)} />
+            <Input label="Địa chỉ chi tiết" placeholder="Số nhà, đường..." value={locationAddress} onChange={(e) => setLocationAddress(e.target.value)} />
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <Input label="Tỉnh/Thành" value={province} onChange={(e) => setProvince(e.target.value)} />
+              <Input label="Quận/Huyện" value={district} onChange={(e) => setDistrict(e.target.value)} />
+              <Input label="Phường/Xã" value={ward} onChange={(e) => setWard(e.target.value)} />
             </div>
           </div>
 

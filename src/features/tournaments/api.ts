@@ -513,10 +513,18 @@ export const tournamentsApi = {
     bracketType?: 'single_elimination' | 'double_elimination' | 'round_robin' | 'group_stage_knockout';
     maxTeams?: number;
     description?: string;
+    registrationMode?: 'OPEN' | 'INVITE_ONLY';
+    venueName?: string;
+    locationAddress?: string;
+    province?: string;
+    district?: string;
+    ward?: string;
     isRanked?: boolean;
     startDate?: string;
     startTime?: string;
     endDate?: string;
+    registrationStartDate?: string;
+    registrationEndDate?: string;
     isRecurring?: boolean;
     recurringFrequency?: 'DAILY' | 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY';
     recurringDayOfWeek?: number;

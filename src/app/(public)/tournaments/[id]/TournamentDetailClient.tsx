@@ -126,7 +126,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
     if (!activeTournament) return;
     const shareData = {
       title: activeTournament.name,
-      text: `Hãy cùng tôi theo dõi và đăng ký giải đấu "${activeTournament.name}" trên Sporto!`,
+      text: translate('shareText', { name: activeTournament.name }),
       url: typeof window !== 'undefined' ? window.location.href : '',
     };
 
@@ -171,7 +171,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
         }
         setTournament(response.data ?? null);
         if (!response.data) {
-          setInitialLoadError('Không tìm thấy giải đấu.');
+          setInitialLoadError(translate('tournamentNotFound'));
         }
       } catch (error) {
         if (!isMounted) {
@@ -179,7 +179,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
         }
         console.error('Failed to hydrate tournament detail on client:', error);
         setTournament(null);
-        setInitialLoadError('Không thể tải dữ liệu giải đấu.');
+        setInitialLoadError(translate('tournamentLoadError'));
       } finally {
         if (isMounted) {
           setIsInitialLoading(false);
@@ -476,7 +476,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                       {formatDate(activeTournament.startDate)}
                       {activeTournament.endDate && ` - ${formatDate(activeTournament.endDate)}`}
                     </>
-                  ) : 'Chưa thiết lập ngày'}
+                  ) : '{translate("dateNotSet")}'}
                 </span>
                 <span className="flex min-w-0 max-w-full items-start gap-1.5 md:max-w-[min(100%,760px)]">
                   <MapPin className="w-4 h-4 text-slate-400 shrink-0" />
@@ -502,11 +502,11 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                   }`}
                 >
                   <Bookmark className={`w-3.5 h-3.5 mr-1.5 ${isFollowing ? 'fill-current' : ''}`} />
-                  {isFollowing ? 'Đang theo' : 'Theo dõi'}
+                  {isFollowing ? translate('followActive') : translate('follow')}
                 </Button>
               )}
               <Button onClick={handleShareClick} variant="outline" className="bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200/80 flex-1 md:flex-none font-bold shadow-sm h-10 text-xs md:text-sm">
-                <Share2 className="w-3.5 h-3.5 mr-1.5" /> Chia sẻ
+                <Share2 className="w-3.5 h-3.5 mr-1.5" /> {translate("share")}
               </Button>
               <ReportViolationButton
                 targetType="TOURNAMENT"
@@ -624,7 +624,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                   )}
                 </>
               ) : (
-                <p className="text-center text-slate-400 italic py-12">Không tìm thấy dữ liệu phân hạng.</p>
+                <p className="text-center text-slate-400 italic py-12">{translate("rankingDataUnavailable")}</p>
               )}
             </div>
           </div>
@@ -636,13 +636,13 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                 <>
               {/* Entry Fee */}
               <div>
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Lệ phí tham gia</span>
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">{translate("entryFee")}</span>
                 <div className="text-2xl font-bold text-blue-600">
                   {selectedDivision?.entryFee && selectedDivision.entryFee > 0
                     ? `${Number(selectedDivision.entryFee).toLocaleString('vi-VN')} VNĐ`
-                    : 'Miễn phí'}
+                    : translate('free')}
                 </div>
-                <p className="text-[11px] text-slate-500 mt-0.5">Lệ phí đóng khi đăng ký</p>
+                <p className="text-[11px] text-slate-500 mt-0.5">{translate("feeAtRegistration")}</p>
 
                 {/* Selected Division ELO Range Indicator */}
                 {(() => {
@@ -695,7 +695,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                         </span>
                       )}
                     </div>
-                    <p className="text-[11px] text-slate-500">Người sáng lập giải đấu</p>
+                    <p className="text-[11px] text-slate-500">{translate("organizerLabel")}</p>
                   </div>
                 </div>
               </div>
@@ -705,7 +705,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
               {/* Slots Progress Bar for all divisions */}
               {divisionsList.length > 0 ? (
                 <div className="border-t border-slate-100 pt-4 space-y-3">
-                  <span className="text-xs font-bold text-slate-450 uppercase tracking-wider block">Số lượng hồ sơ theo bảng</span>
+                  <span className="text-xs font-bold text-slate-450 uppercase tracking-wider block">{translate("profilesByTable")}</span>
                   {divisionsList.map((div) => {
                     const divParticipants = div._count?.participants ?? 0;
                     const divMax = div.maxParticipants ?? activeTournament.maxParticipants ?? 16;
@@ -759,7 +759,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
 
               {/* Registration Period */}
               <div className="border-t border-slate-100 pt-4">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Thời gian đăng ký</span>
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1.5">{translate("registrationPeriod")}</span>
                 <div className="flex items-start gap-2.5">
                   <Calendar className="w-4 h-4 text-slate-450 mt-0.5 shrink-0" />
                   <div className="text-xs font-semibold text-slate-700 leading-normal">
@@ -780,7 +780,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                     return (
                       <CountdownTimer
                         targetDate={activeTournament.registrationStartDate!}
-                        labels={{ active: 'Mở đăng ký sau', expired: 'Đã mở đăng ký' }}
+                        labels={{ active: translate('registrationOpensAfter'), expired: translate('registrationOpened') }}
                         variant="info"
                       />
                     );
@@ -817,7 +817,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                           labels={{ active: translate('endAfter'), expired: translate('completed') }}
                           variant="danger"
                         />
-                        <p className="text-[10px] text-slate-400 mt-1 italic">Lịch có thể thay đổi</p>
+                        <p className="text-[10px] text-slate-400 mt-1 italic">{translate("scheduleMayChange")}</p>
                       </div>
                     );
                   }
@@ -844,7 +844,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                 <div className="bg-slate-50 border border-amber-250/60 rounded-lg p-3.5 flex items-start gap-2.5">
                   <AlertCircle className="w-4.5 h-4.5 text-blue-600 shrink-0 mt-0.5" />
                   <p className="text-xs font-semibold text-amber-800 leading-normal">
-                    Giải đấu đã tạm ngưng nhận đăng ký mới từ Ban tổ chức.
+                    {translate("registrationLockedNotice")}
                   </p>
                 </div>
               )}
@@ -852,7 +852,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                 <div className="bg-rose-50 border border-rose-250/60 rounded-lg p-3.5 flex items-start gap-2.5">
                   <AlertCircle className="w-4.5 h-4.5 text-rose-600 shrink-0 mt-0.5" />
                   <p className="text-xs font-semibold text-rose-800 leading-normal">
-                    Hạn đăng ký giải đấu đã kết thúc.
+                    {translate("registrationExpiredNotice")}
                   </p>
                 </div>
               )}

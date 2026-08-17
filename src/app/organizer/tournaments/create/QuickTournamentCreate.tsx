@@ -282,7 +282,8 @@ export default function QuickTournamentCreate() {
       sport: 'badminton', format: 'doubles',
       tournamentType: communityId ? 'CLUB' : 'PUBLIC',
       visibility: communityId ? 'PRIVATE' : 'PUBLIC',
-      registrationMode: communityId ? 'OPEN' : 'APPROVAL',
+      // Người tạo tự chọn cách nhận đăng ký; không tự ép Xét duyệt.
+      registrationMode: 'OPEN',
       bracketType: 'single_elimination',
       maxTeams: 16, ...scheduleDefaults,
       selectedFormats: ['MALE_DOUBLES'],
@@ -299,7 +300,6 @@ export default function QuickTournamentCreate() {
   const maxTeams = useWatch({ control, name: 'maxTeams' });
   const genderRestriction = useWatch({ control, name: 'genderRestriction' });
   const visibility = useWatch({ control, name: 'visibility' });
-  const tournamentType = useWatch({ control, name: 'tournamentType' });
   const registrationMode = useWatch({ control, name: 'registrationMode' });
   const isRanked = useWatch({ control, name: 'isRanked' });
   const province = useWatch({ control, name: 'province' });
@@ -452,7 +452,9 @@ export default function QuickTournamentCreate() {
       const response = await tournamentsApi.createLiteTournament({
         ...restValues,
         communityId,
-        tournamentType: values.tournamentType,
+        // Tạo nhanh ngoài CLB luôn là giải mở rộng. Giải nội bộ chỉ tạo
+        // từ trang CLB và backend sẽ ép tournamentType = CLUB ở luồng đó.
+        tournamentType: communityId ? 'CLUB' : 'PUBLIC',
         sport: values.sport,
         description: values.description || undefined,
         registrationStartDate: regStartDate?.toISOString(),
@@ -797,65 +799,54 @@ export default function QuickTournamentCreate() {
             {errors.maxTeams && <span className="block text-xs text-red-600">{errors.maxTeams.message}</span>}
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/60 p-4">
             <div>
-              <p className="text-sm font-semibold text-slate-800">Phạm vi giải</p>
-              <p className="mt-1 text-xs text-slate-500">Chọn giải mở rộng hay chỉ dùng trong câu lạc bộ. Bạn vẫn có thể chỉnh chi tiết trong trang quản lý nâng cao.</p>
+              <p className="text-sm font-semibold text-slate-900">Hiển thị giải đấu <span className="text-rose-500">*</span></p>
+              <p className="mt-1 text-xs text-slate-500">Chỉ quyết định cộng đồng có tìm thấy giải hay không, độc lập với cách duyệt đăng ký.</p>
             </div>
             <div className="grid gap-3 md:grid-cols-2">
               <button
                 type="button"
-                onClick={() => !communityId && setValue('tournamentType', 'PUBLIC')}
-                disabled={Boolean(communityId)}
-                className={`rounded-xl border p-4 text-left transition ${tournamentType === 'PUBLIC' ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-slate-300'} ${communityId ? 'cursor-not-allowed opacity-60' : ''}`}
+                onClick={() => setValue('visibility', 'PUBLIC')}
+                className={`rounded-xl border bg-white p-4 text-left transition ${visibility === 'PUBLIC' ? 'border-blue-500 ring-2 ring-blue-100' : 'border-slate-200 hover:bg-slate-50'}`}
               >
-                <span className="block font-semibold text-slate-800">Mở rộng</span>
-                <span className="mt-1 block text-xs text-slate-500">Hiển thị như giải công khai trên Sporto.</span>
+                <span className="flex items-center gap-2 font-semibold text-slate-800"><span className={`h-4 w-4 rounded-full border-2 ${visibility === 'PUBLIC' ? 'border-blue-500 ring-2 ring-blue-100' : 'border-slate-400'}`} />Công khai</span>
+                <span className="mt-2 block pl-6 text-xs text-slate-500">Xuất hiện trên trang chủ, khám phá và có thể được cộng đồng theo dõi.</span>
               </button>
               <button
                 type="button"
-                onClick={() => setValue('tournamentType', 'CLUB')}
-                className={`rounded-xl border p-4 text-left transition ${tournamentType === 'CLUB' ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-slate-300'}`}
+                onClick={() => setValue('visibility', 'PRIVATE')}
+                className={`rounded-xl border bg-white p-4 text-left transition ${visibility === 'PRIVATE' ? 'border-blue-500 ring-2 ring-blue-100' : 'border-slate-200 hover:bg-slate-50'}`}
               >
-                <span className="block font-semibold text-slate-800">Nội bộ CLB</span>
-                <span className="mt-1 block text-xs text-slate-500">Chỉ dành cho thành viên hoặc người được mời.</span>
+                <span className="flex items-center gap-2 font-semibold text-slate-800"><span className={`h-4 w-4 rounded-full border-2 ${visibility === 'PRIVATE' ? 'border-blue-500 ring-2 ring-blue-100' : 'border-slate-400'}`} />Không niêm yết</span>
+                <span className="mt-2 block pl-6 text-xs text-slate-500">Không xuất hiện công khai; người có link hoặc mã mời vẫn có thể truy cập.</span>
               </button>
             </div>
           </div>
 
-          <div className="grid gap-3 md:grid-cols-2">
-            <button
-              type="button"
-              onClick={() => setValue('visibility', 'PRIVATE')}
-              className={`rounded-xl border p-4 text-left transition ${visibility === 'PRIVATE' ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-slate-300'}`}
-            >
-              <span className="block font-semibold text-slate-800">Riêng tư / nội bộ</span>
-              <span className="mt-1 block text-xs text-slate-500">Tạo trực tiếp, chia sẻ bằng liên kết hoặc trong CLB.</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setValue('visibility', 'PUBLIC')}
-              className={`rounded-xl border p-4 text-left transition ${visibility === 'PUBLIC' ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-slate-300'}`}
-            >
-              <span className="block font-semibold text-slate-800">Công khai</span>
-              <span className="mt-1 block text-xs text-slate-500">Giải gửi Admin duyệt trước khi hiển thị công khai.</span>
-            </button>
+          <div className="space-y-3">
+            <div>
+              <p className="text-sm font-semibold text-slate-900">Chế độ đăng ký giải đấu <span className="text-rose-500">*</span></p>
+              <p className="mt-1 text-xs text-slate-500">Bạn tự chọn cách tiếp nhận đăng ký phù hợp với giải.</p>
+            </div>
+            <div className="grid gap-3 md:grid-cols-3">
+              {([
+                ['OPEN', 'Tự do', 'Mọi VĐV đăng ký được tham gia ngay.'],
+                ['APPROVAL', 'Xét duyệt', 'Đăng ký chờ BTC duyệt thủ công.'],
+                ['INVITE_ONLY', 'Chỉ nhận mã mời', 'Chỉ người có mã/link mời mới đăng ký được.'],
+              ] as const).map(([value, label, description]) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setValue('registrationMode', value)}
+                  className={`rounded-xl border p-4 text-left transition ${registrationMode === value ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-200' : 'border-slate-200 hover:border-slate-300'}`}
+                >
+                  <span className="flex items-center gap-2 font-semibold text-slate-800"><span className={`h-4 w-4 rounded-full border-2 ${registrationMode === value ? 'border-blue-500 ring-2 ring-blue-100' : 'border-slate-400'}`} />{label}</span>
+                  <span className="mt-2 block text-xs text-slate-500">{description}</span>
+                </button>
+              ))}
+            </div>
           </div>
-
-          <label className="block text-sm font-semibold text-slate-800">
-            Cách nhận đăng ký
-            <select
-              {...register('registrationMode')}
-              className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm font-normal outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-            >
-              <option value="APPROVAL">Duyệt từng đăng ký</option>
-              <option value="OPEN">Tự do đăng ký</option>
-              <option value="INVITE_ONLY">Chỉ người được mời</option>
-            </select>
-            <span className="mt-1 block text-xs font-normal text-slate-500">
-              {registrationMode === 'APPROVAL' ? 'Người chơi gửi yêu cầu, BTC duyệt trong trang quản lý.' : registrationMode === 'OPEN' ? 'Ai có link cũng có thể đăng ký trong thời gian mở.' : 'Chỉ người có mã/link mời mới đăng ký được.'}
-            </span>
-          </label>
 
           <label className="flex items-start gap-3 rounded-xl border border-slate-200 p-4 text-sm cursor-pointer hover:bg-slate-50/60 transition">
             <input

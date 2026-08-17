@@ -7,6 +7,7 @@ import {
 } from '@/components/ui/Modal';
 import { isTournamentCompleted,
   isTournamentDraft,
+  isTournamentPendingApproval,
   isTournamentInProgress,
   isTournamentOpenForRegistration,
   isTournamentRegistrationClosed,
@@ -290,7 +291,17 @@ export function TournamentStepper({ tournament, onPublish, onNextStep, onPayPlat
         </div>
       )}
 
-      <div className={`relative flex flex-col md:flex-row justify-between ${isTournamentDraft(tournament.status) ? 'opacity-50 pointer-events-none' : ''}`}>
+      {isTournamentPendingApproval(tournament.status) && (
+        <div className="mb-6 flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4">
+          <span className="mt-0.5 text-lg text-amber-600" aria-hidden="true">⏳</span>
+          <div>
+            <h4 className="font-bold text-amber-900">Đang chờ Admin duyệt công khai</h4>
+            <p className="mt-1 text-sm leading-relaxed text-amber-800">Bạn có thể tiếp tục hoàn thiện cấu hình nâng cao. Các bước nhận đăng ký và thi đấu sẽ kích hoạt sau khi giải được duyệt.</p>
+          </div>
+        </div>
+      )}
+
+      <div className={`relative flex flex-col md:flex-row justify-between ${isTournamentDraft(tournament.status) || isTournamentPendingApproval(tournament.status) ? 'opacity-50 pointer-events-none' : ''}`}>
         {/* Progress bar background line for desktop */}
         <div className="hidden md:block absolute top-6 left-8 right-8 h-1 bg-slate-100 rounded -z-10" />
         {/* Active progress line */}

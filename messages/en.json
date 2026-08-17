@@ -486,7 +486,26 @@
     "upperQualifier": "Winners qualifier",
     "lowerGrandFinal": "Losers grand final",
     "lowerSemifinal": "Losers semifinal",
-    "lowerRound": "Losers round {round}"
+    "lowerRound": "Losers round {round}",
+    "shareText": "Join me in following and registering for the \"{name}\" tournament on Sporto!",
+    "followActive": "Following",
+    "follow": "Follow",
+    "share": "Share",
+    "dateNotSet": "Date not set",
+    "entryFee": "Entry fee",
+    "free": "Free",
+    "feeAtRegistration": "Fee due at registration",
+    "registrationPeriod": "Registration period",
+    "registrationOpensAfter": "Registration opens in",
+    "registrationOpened": "Registration is open",
+    "registrationLockedNotice": "The organizer has temporarily paused new registrations for this tournament.",
+    "registrationExpiredNotice": "The tournament registration deadline has passed.",
+    "tournamentNotFound": "Tournament not found.",
+    "tournamentLoadError": "Unable to load tournament data.",
+    "rankingDataUnavailable": "Ranking data is unavailable.",
+    "organizerLabel": "Tournament organizer",
+    "profilesByTable": "Profiles per table",
+    "scheduleMayChange": "Schedule may change"
   }
 ,
   "LiveMatch": {

@@ -486,7 +486,26 @@
     "upperQualifier": "VÒNG LOẠI NHÁNH THẮNG",
     "lowerGrandFinal": "CK NHÁNH THUA",
     "lowerSemifinal": "BK NHÁNH THUA",
-    "lowerRound": "LƯỢT NHÁNH THUA {round}"
+    "lowerRound": "LƯỢT NHÁNH THUA {round}",
+    "shareText": "Hãy cùng tôi theo dõi và đăng ký giải đấu \"{name}\" trên Sporto!",
+    "followActive": "Đang theo",
+    "follow": "Theo dõi",
+    "share": "Chia sẻ",
+    "dateNotSet": "Chưa thiết lập ngày",
+    "entryFee": "Lệ phí tham gia",
+    "free": "Miễn phí",
+    "feeAtRegistration": "Lệ phí đóng khi đăng ký",
+    "registrationPeriod": "Thời gian đăng ký",
+    "registrationOpensAfter": "Mở đăng ký sau",
+    "registrationOpened": "Đã mở đăng ký",
+    "registrationLockedNotice": "Giải đấu đã tạm ngưng nhận đăng ký mới từ Ban tổ chức.",
+    "registrationExpiredNotice": "Hạn đăng ký giải đấu đã kết thúc.",
+    "tournamentNotFound": "Không tìm thấy giải đấu.",
+    "tournamentLoadError": "Không thể tải dữ liệu giải đấu.",
+    "rankingDataUnavailable": "Không tìm thấy dữ liệu phân hạng.",
+    "organizerLabel": "Người sáng lập giải đấu",
+    "profilesByTable": "Số lượng hồ sơ theo bảng",
+    "scheduleMayChange": "Lịch có thể thay đổi"
   }
 ,
   "LiveMatch": {

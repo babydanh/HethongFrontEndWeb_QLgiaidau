@@ -33,6 +33,7 @@ import {
 } from '@/utils/tournament-display';
 import {
   isTournamentDraft,
+  isTournamentPendingApproval,
   isTournamentRegistrationClosed,
   isTournamentRegistrationOpen,
 } from '@/utils/tournament-status';
@@ -345,6 +346,14 @@ export function RegistrationTab({
               >
                 <CheckCircle className="w-4 h-4" /> {publishFeeAmount > 0 ? 'Thanh toán phí & công bố' : 'Công bố giải đấu'}
               </Button>
+            </div>
+          ) : isTournamentPendingApproval(tournament.status) ? (
+            <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4">
+              <span className="mt-0.5 text-lg text-amber-600" aria-hidden="true">⏳</span>
+              <div>
+                <p className="font-bold text-amber-900 text-sm">Đang chờ Admin duyệt công khai</p>
+                <p className="mt-1 text-xs leading-relaxed text-amber-800">Giải đã được lưu đầy đủ và chỉ hiển thị trong khu vực quản lý của bạn. Sau khi được duyệt, hệ thống sẽ mở trang công khai và nhận đăng ký theo cấu hình bên dưới.</p>
+              </div>
             </div>
           ) : (
             <div className="space-y-4">

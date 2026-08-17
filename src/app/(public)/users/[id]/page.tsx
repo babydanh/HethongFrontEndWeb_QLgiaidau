@@ -120,7 +120,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
         setEloHistory(eloHistoryRes?.data || []);
       } catch (err: unknown) {
         console.error('Failed to fetch public profile:', err);
-        setError(getErrorMessage(err) || 'Không tìm thấy hồ sơ người dùng.');
+        setError(getErrorMessage(err) || translate('loadError'));
       } finally {
         setIsLoading(false);
       }

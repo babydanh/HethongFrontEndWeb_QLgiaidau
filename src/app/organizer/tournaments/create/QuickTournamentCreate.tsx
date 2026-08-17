@@ -417,16 +417,7 @@ export default function QuickTournamentCreate() {
   const onSubmit = async (values: QuickValues) => {
     try {
       setIsSubmitting(true);
-      const {
-        genderRestriction,
-        teamSize,
-        selectedFormats: _selectedFormats,
-        registrationStart,
-        registrationEnd,
-        startDate,
-        endDate,
-        ...restValues
-      } = values;
+      const { registrationStart, registrationEnd, startDate, endDate } = values;
 
       const regStartDate = registrationStart ? new Date(registrationStart) : undefined;
       const regEndDate = registrationEnd ? new Date(registrationEnd) : undefined;
@@ -449,13 +440,18 @@ export default function QuickTournamentCreate() {
       const provinceName = provinces.find((item) => item.code === values.province)?.fullName ?? values.province;
       const wardName = wards.find((item) => item.code === values.ward)?.fullName ?? values.ward;
 
-      const response = await tournamentsApi.createLiteTournament({
-        ...restValues,
+      const createPayload: Parameters<typeof tournamentsApi.createLiteTournament>[0] = {
+        name: values.name.trim(),
+        sport: values.sport,
+        format: values.format,
+        bracketType: values.bracketType,
+        maxTeams: values.maxTeams,
+        visibility: values.visibility,
+        registrationMode: values.registrationMode,
         communityId,
         // Tạo nhanh ngoài CLB luôn là giải mở rộng. Giải nội bộ chỉ tạo
         // từ trang CLB và backend sẽ ép tournamentType = CLUB ở luồng đó.
         tournamentType: communityId ? 'CLUB' : 'PUBLIC',
-        sport: values.sport,
         description: values.description || undefined,
         registrationStartDate: regStartDate?.toISOString(),
         registrationEndDate: regEndDate?.toISOString(),
@@ -466,17 +462,18 @@ export default function QuickTournamentCreate() {
         province: provinceName,
         district: wardName || provinceName,
         ward: wardName || undefined,
-        genderRestriction: genderRestriction || undefined,
+        genderRestriction: values.genderRestriction || undefined,
         ...(values.sport === 'football' ? {
-          teamSize: (Number(teamSize) || 7) as 5 | 7 | 11,
+          teamSize: (Number(values.teamSize) || 7) as 5 | 7 | 11,
           maxReserve: values.maxReserve,
           footballHalvesCount: values.footballHalvesCount,
           footballHalfDuration: values.footballHalfDuration,
           footballAllowDraw: values.footballAllowDraw,
         } : {}),
-        registrationMode: values.registrationMode,
         isRanked: values.isRanked,
-      });
+      };
+
+      const response = await tournamentsApi.createLiteTournament(createPayload);
 
       // `selectedFormats` belongs to the wizard, not the create endpoint.
       // Materialize every selected format as a division after the tournament

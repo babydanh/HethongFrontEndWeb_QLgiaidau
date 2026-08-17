@@ -505,7 +505,7 @@ export const tournamentsApi = {
     prizeDescription?: string;
     contactInfo?: { phone?: string; email?: string };
     format?: 'singles' | 'doubles';
-    genderRestriction?: 'MALE' | 'FEMALE';
+    genderRestriction?: 'MALE' | 'FEMALE' | 'MIXED';
     teamSize?: 5 | 7 | 11;
     maxReserve?: number;
     setsToWin?: number;

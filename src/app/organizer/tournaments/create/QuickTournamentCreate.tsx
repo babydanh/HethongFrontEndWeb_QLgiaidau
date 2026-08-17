@@ -9,7 +9,6 @@ import toast from 'react-hot-toast';
 import { ArrowRight, Settings2, Sparkles } from 'lucide-react';
 import { categoriesApi, Category } from '@/features/categories/api';
 import { tournamentsApi } from '@/features/tournaments/api';
-import { uploadApi } from '@/features/upload/api';
 import { regionsApi, Region } from '@/features/regions/api';
 import { getErrorMessage } from '@/utils/error';
 
@@ -20,15 +19,20 @@ const quickSchema = z.object({
   visibility: z.enum(['PRIVATE', 'PUBLIC']),
   bracketType: z.enum(['single_elimination', 'double_elimination', 'round_robin', 'group_stage_knockout']),
   maxTeams: z.number().int().min(2).max(32),
-  startDate: z.string().min(1, 'Chọn ngày bắt đầu.'),
+  registrationStartDate: z.string().regex(/^\d{2}\/\d{2}\/\d{4}$/, 'Dùng định dạng dd/mm/yyyy.'),
+  registrationStartTime: z.string().min(1, 'Chọn giờ mở đăng ký.'),
+  registrationEndDate: z.string().regex(/^\d{2}\/\d{2}\/\d{4}$/, 'Dùng định dạng dd/mm/yyyy.'),
+  registrationEndTime: z.string().min(1, 'Chọn giờ đóng đăng ký.'),
+  startDate: z.string().regex(/^\d{2}\/\d{2}\/\d{4}$/, 'Dùng định dạng dd/mm/yyyy.'),
   startTime: z.string().min(1, 'Chọn giờ bắt đầu.'),
-  registrationEndDate: z.string().optional(),
+  endDate: z.string().regex(/^\d{2}\/\d{2}\/\d{4}$/, 'Dùng định dạng dd/mm/yyyy.'),
+  endTime: z.string().min(1, 'Chọn giờ kết thúc.'),
   venueName: z.string().trim().max(160).optional(),
   locationAddress: z.string().trim().max(300).optional(),
   province: z.string().trim().max(100).optional(),
   district: z.string().trim().max(100).optional(),
   ward: z.string().trim().max(100).optional(),
-  genderRestriction: z.enum(['', 'MALE', 'FEMALE']),
+  genderRestriction: z.enum(['', 'MALE', 'FEMALE', 'MIXED']),
   teamSize: z.enum(['5', '7', '11']),
   maxReserve: z.number().int().min(0).max(20),
   footballHalvesCount: z.number().int().min(1).max(4),
@@ -51,12 +55,30 @@ const sportFromCategory = (category: Category): QuickSport | null => {
   return null;
 };
 
-const today = () => new Date().toISOString().slice(0, 10);
+const dateLabel = (date: Date) => `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
+const localIso = (label: string, time: string) => {
+  const [day, month, year] = label.split('/').map(Number);
+  return new Date(year, month - 1, day, ...time.split(':').map(Number)).toISOString();
+};
+const quickDefaults = () => {
+  const start = new Date();
+  start.setMinutes(0, 0, 0);
+  start.setHours(start.getHours() + 1);
+  const end = new Date(start.getTime() + 2 * 60 * 60 * 1000);
+  const registrationEnd = new Date(start.getTime() - 60 * 60 * 1000);
+  return {
+    registrationStartDate: dateLabel(new Date()), registrationStartTime: '00:00',
+    registrationEndDate: dateLabel(registrationEnd), registrationEndTime: `${String(registrationEnd.getHours()).padStart(2, '0')}:00`,
+    startDate: dateLabel(start), startTime: `${String(start.getHours()).padStart(2, '0')}:00`,
+    endDate: dateLabel(end), endTime: `${String(end.getHours()).padStart(2, '0')}:00`,
+  };
+};
 
 export default function QuickTournamentCreate() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const communityId = searchParams.get('communityId') || undefined;
+  const scheduleDefaults = useMemo(quickDefaults, []);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -64,19 +86,18 @@ export default function QuickTournamentCreate() {
     resolver: zodResolver(quickSchema),
     defaultValues: {
       sport: 'badminton', format: 'doubles', visibility: 'PRIVATE', bracketType: 'single_elimination',
-      maxTeams: 16, startDate: today(), startTime: '18:00', registrationEndDate: '',
+      maxTeams: 16, ...scheduleDefaults,
       isRanked: false, description: '', genderRestriction: '', teamSize: '7', maxReserve: 5,
       footballHalvesCount: 2, footballHalfDuration: 45, footballAllowDraw: true,
     },
   });
   const sport = useWatch({ control, name: 'sport' });
+  const format = useWatch({ control, name: 'format' });
+  const genderRestriction = useWatch({ control, name: 'genderRestriction' });
   const visibility = useWatch({ control, name: 'visibility' });
   const isRanked = useWatch({ control, name: 'isRanked' });
   const province = useWatch({ control, name: 'province' });
   const district = useWatch({ control, name: 'district' });
-  const [logoUrl, setLogoUrl] = useState('');
-  const [bannerUrl, setBannerUrl] = useState('');
-  const [isUploading, setIsUploading] = useState<'logo' | 'banner' | null>(null);
   const [provinces, setProvinces] = useState<Region[]>([]);
   const [districts, setDistricts] = useState<Region[]>([]);
   const [wards, setWards] = useState<Region[]>([]);
@@ -127,7 +148,11 @@ export default function QuickTournamentCreate() {
   const onSubmit = async (values: QuickValues) => {
     try {
       setIsSubmitting(true);
-      const { genderRestriction, teamSize, ...restValues } = values;
+      const { genderRestriction, teamSize, registrationStartTime, registrationEndTime, endDate, endTime, ...restValues } = values;
+      void registrationStartTime;
+      void registrationEndTime;
+      void endDate;
+      void endTime;
       const provinceName = provinces.find((item) => item.code === values.province)?.fullName ?? values.province;
       const districtName = districts.find((item) => item.code === values.district)?.fullName ?? values.district;
       const wardName = wards.find((item) => item.code === values.ward)?.fullName ?? values.ward;
@@ -136,16 +161,17 @@ export default function QuickTournamentCreate() {
         communityId,
         sport: values.sport,
         description: values.description || undefined,
-        logoUrl: logoUrl || undefined,
-        bannerUrl: bannerUrl || undefined,
-        registrationEndDate: values.registrationEndDate || undefined,
+        registrationStartDate: localIso(values.registrationStartDate, values.registrationStartTime),
+        registrationEndDate: localIso(values.registrationEndDate, values.registrationEndTime),
+        startDate: localIso(values.startDate, values.startTime),
+        endDate: localIso(values.endDate, values.endTime),
         venueName: values.venueName || undefined,
         locationAddress: values.locationAddress || undefined,
         province: provinceName || undefined,
         district: districtName || undefined,
         ward: wardName || undefined,
+        genderRestriction: genderRestriction || undefined,
         ...(values.sport === 'football' ? {
-          genderRestriction: genderRestriction === 'MALE' || genderRestriction === 'FEMALE' ? genderRestriction : undefined,
           teamSize: (Number(teamSize) || 7) as 5 | 7 | 11,
           maxReserve: values.maxReserve,
           footballHalvesCount: values.footballHalvesCount,
@@ -164,17 +190,6 @@ export default function QuickTournamentCreate() {
     }
   };
 
-  const upload = async (kind: 'logo' | 'banner', file: File) => {
-    try {
-      setIsUploading(kind);
-      const result = await uploadApi.uploadImage(file);
-      if (kind === 'logo') setLogoUrl(result.url); else setBannerUrl(result.url);
-      toast.success(kind === 'logo' ? 'Đã tải logo.' : 'Đã tải banner.');
-    } catch (error: unknown) {
-      toast.error(getErrorMessage(error, 'Tải ảnh thất bại.'));
-    } finally { setIsUploading(null); }
-  };
-
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-10 md:px-8">
       <section className="mx-auto max-w-3xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
@@ -186,15 +201,14 @@ export default function QuickTournamentCreate() {
           <label className="block text-sm font-semibold text-slate-700">Tên giải đấu<input {...register('name')} className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal outline-none focus:border-blue-500" placeholder="Ví dụ: Giải giao hữu cuối tuần" />{errors.name && <span className="mt-1 block text-xs text-red-600">{errors.name.message}</span>}</label>
           <div className="grid gap-4 md:grid-cols-2">
             <label className="text-sm font-semibold text-slate-700">Môn<select {...register('sport')} disabled={loadingCategories} className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal">{categories.map((category) => { const value = sportFromCategory(category); return value ? <option key={category.id} value={value}>{category.name}</option> : null; })}</select><span className="mt-1 block text-xs font-normal text-slate-500">{selectedCategory ? `Luật mặc định: ${selectedCategory.name}` : 'Chọn môn để nạp preset linh hoạt.'}</span></label>
-            <label className="text-sm font-semibold text-slate-700">Nội dung<select {...register('format')} className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal"><option value="singles">Đơn</option><option value="doubles">Đôi</option></select></label>
+            <div><span className="text-sm font-semibold text-slate-700">Nội dung thi đấu</span><div className="mt-2 grid grid-cols-2 gap-2"><button type="button" onClick={() => { setValue('format', 'singles'); setValue('genderRestriction', 'MALE'); }} className={`rounded-lg border px-3 py-2 text-left text-sm ${format === 'singles' && genderRestriction === 'MALE' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-300 hover:border-blue-500'}`}>Đơn nam</button><button type="button" onClick={() => { setValue('format', 'singles'); setValue('genderRestriction', 'FEMALE'); }} className={`rounded-lg border px-3 py-2 text-left text-sm ${format === 'singles' && genderRestriction === 'FEMALE' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-300 hover:border-blue-500'}`}>Đơn nữ</button><button type="button" onClick={() => { setValue('format', 'doubles'); setValue('genderRestriction', 'MALE'); }} className={`rounded-lg border px-3 py-2 text-left text-sm ${format === 'doubles' && genderRestriction === 'MALE' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-300 hover:border-blue-500'}`}>Đôi nam</button><button type="button" onClick={() => { setValue('format', 'doubles'); setValue('genderRestriction', 'FEMALE'); }} className={`rounded-lg border px-3 py-2 text-left text-sm ${format === 'doubles' && genderRestriction === 'FEMALE' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-300 hover:border-blue-500'}`}>Đôi nữ</button><button type="button" onClick={() => { setValue('format', 'doubles'); setValue('genderRestriction', 'MIXED'); }} className={`col-span-2 rounded-lg border px-3 py-2 text-left text-sm ${format === 'doubles' && genderRestriction === 'MIXED' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-300 hover:border-blue-500'}`}>Đôi nam nữ</button></div></div>
           </div>
-          <div className="grid gap-4 md:grid-cols-3"><label className="text-sm font-semibold text-slate-700">Ngày bắt đầu<input type="date" {...register('startDate')} className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal" />{errors.startDate && <span className="mt-1 block text-xs text-red-600">{errors.startDate.message}</span>}</label><label className="text-sm font-semibold text-slate-700">Giờ bắt đầu<input type="time" {...register('startTime')} className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal" /></label><label className="text-sm font-semibold text-slate-700">Đóng đăng ký<input type="date" {...register('registrationEndDate')} className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal" /></label></div>
+          <div className="grid gap-4 md:grid-cols-2"><fieldset className="rounded-xl border border-slate-200 p-4"><legend className="px-1 text-sm font-semibold text-slate-700">Mở đăng ký</legend><div className="grid grid-cols-2 gap-2"><input {...register('registrationStartDate')} placeholder="dd/mm/yyyy" inputMode="numeric" className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm" /><input type="time" {...register('registrationStartTime')} className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm" /></div></fieldset><fieldset className="rounded-xl border border-slate-200 p-4"><legend className="px-1 text-sm font-semibold text-slate-700">Đóng đăng ký</legend><div className="grid grid-cols-2 gap-2"><input {...register('registrationEndDate')} placeholder="dd/mm/yyyy" inputMode="numeric" className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm" /><input type="time" {...register('registrationEndTime')} className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm" /></div></fieldset><fieldset className="rounded-xl border border-blue-200 bg-blue-50/40 p-4"><legend className="px-1 text-sm font-semibold text-slate-700">Bắt đầu giải</legend><div className="grid grid-cols-2 gap-2"><input {...register('startDate')} placeholder="dd/mm/yyyy" inputMode="numeric" className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm" /><input type="time" {...register('startTime')} className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm" /></div></fieldset><fieldset className="rounded-xl border border-blue-200 bg-blue-50/40 p-4"><legend className="px-1 text-sm font-semibold text-slate-700">Kết thúc dự kiến</legend><div className="grid grid-cols-2 gap-2"><input {...register('endDate')} placeholder="dd/mm/yyyy" inputMode="numeric" className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm" /><input type="time" {...register('endTime')} className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm" /></div><span className="mt-1 block text-xs text-slate-500">Mặc định sau giờ bắt đầu 2 tiếng, có thể sửa.</span></fieldset></div>
           <div className="grid gap-4 md:grid-cols-2"><label className="text-sm font-semibold text-slate-700">Thể thức<select {...register('bracketType')} className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal"><option value="single_elimination">Loại trực tiếp</option><option value="round_robin">Vòng tròn</option><option value="group_stage_knockout">Vòng bảng + loại trực tiếp</option><option value="double_elimination">Nhánh thắng/thua</option></select></label><label className="text-sm font-semibold text-slate-700">Số đội/người tối đa<input type="number" min={2} max={32} {...register('maxTeams', { valueAsNumber: true })} className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal" />{errors.maxTeams && <span className="mt-1 block text-xs text-red-600">{errors.maxTeams.message}</span>}</label></div>
           <div className="grid gap-3 md:grid-cols-2"><button type="button" onClick={() => setValue('visibility', 'PRIVATE')} className={`rounded-xl border p-4 text-left ${visibility === 'PRIVATE' ? 'border-blue-500 bg-blue-50' : 'border-slate-200'}`}><span className="block font-semibold text-slate-800">Riêng tư / nội bộ</span><span className="mt-1 block text-xs text-slate-500">Tạo trực tiếp, chia sẻ bằng liên kết hoặc trong CLB.</span></button><button type="button" onClick={() => setValue('visibility', 'PUBLIC')} className={`rounded-xl border p-4 text-left ${visibility === 'PUBLIC' ? 'border-blue-500 bg-blue-50' : 'border-slate-200'}`}><span className="block font-semibold text-slate-800">Công khai</span><span className="mt-1 block text-xs text-slate-500">Giải sẽ chờ Admin duyệt trước khi hiển thị công khai.</span></button></div>
           <label className="flex items-start gap-3 rounded-xl border border-slate-200 p-4 text-sm"><input type="checkbox" checked={isRanked} onChange={(event) => setValue('isRanked', event.target.checked)} className="mt-0.5 h-4 w-4" /><span><span className="block font-semibold text-slate-800">Tính ELO</span><span className="text-xs text-slate-500">Giải phong trào có thể tắt; giải lớn/toàn quốc nên mở cấu hình nâng cao.</span></span></label>
           <div className="grid gap-4 md:grid-cols-2"><label className="text-sm font-semibold text-slate-700">Tên sân<input {...register('venueName')} className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal" placeholder="Không bắt buộc" /></label><div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">Giải thu phí hoặc quy mô lớn: mở <strong>Nâng cao</strong> để cấu hình thanh toán và kiểm duyệt đầy đủ.</div></div>
           <div className="grid gap-4 md:grid-cols-2"><label className="text-sm font-semibold text-slate-700">Địa chỉ sân<input {...register('locationAddress')} className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal" /></label><div className="grid grid-cols-3 gap-2"><select {...register('province')} className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-2 py-2.5 text-sm"><option value="">Tỉnh/thành</option>{provinces.map((item) => <option key={item.code} value={item.code}>{item.name}</option>)}</select><select {...register('district')} disabled={!province || districts.length === 0} className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-2 py-2.5 text-sm"><option value="">Quận/huyện</option>{districts.map((item) => <option key={item.code} value={item.code}>{item.name}</option>)}</select><select {...register('ward')} disabled={!district || wards.length === 0} className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-2 py-2.5 text-sm"><option value="">Phường/xã</option>{wards.map((item) => <option key={item.code} value={item.code}>{item.name}</option>)}</select></div></div>
-          <div className="grid gap-3 md:grid-cols-2"><label className="rounded-xl border border-dashed border-slate-300 p-4 text-sm font-semibold">Logo tùy chọn<input type="file" accept="image/*" onChange={(event) => { const file = event.target.files?.[0]; if (file) void upload('logo', file); }} className="mt-2 w-full text-xs font-normal" />{isUploading === 'logo' ? <span className="text-xs text-blue-600">Đang tải...</span> : logoUrl ? <span className="text-xs text-emerald-600">Đã tải logo</span> : null}</label><label className="rounded-xl border border-dashed border-slate-300 p-4 text-sm font-semibold">Banner tùy chọn<input type="file" accept="image/*" onChange={(event) => { const file = event.target.files?.[0]; if (file) void upload('banner', file); }} className="mt-2 w-full text-xs font-normal" />{isUploading === 'banner' ? <span className="text-xs text-blue-600">Đang tải...</span> : bannerUrl ? <span className="text-xs text-emerald-600">Đã tải banner</span> : null}</label></div>
           {sport === 'football' && <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4"><p className="mb-3 text-sm font-semibold text-slate-800">Thiết lập bóng đá</p><div className="grid gap-3 md:grid-cols-3"><select {...register('genderRestriction')} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"><option value="">Không ràng buộc giới tính</option><option value="MALE">Nam</option><option value="FEMALE">Nữ</option></select><select {...register('teamSize')} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"><option value="5">5 người</option><option value="7">7 người</option><option value="11">11 người</option></select><input type="number" min={0} max={20} {...register('maxReserve', { valueAsNumber: true })} className="rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="Dự bị tối đa" /></div><div className="mt-3 grid gap-3 md:grid-cols-3"><input type="number" min={1} max={4} {...register('footballHalvesCount', { valueAsNumber: true })} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm" placeholder="Số hiệp" /><input type="number" min={1} max={120} {...register('footballHalfDuration', { valueAsNumber: true })} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm" placeholder="Phút/hiệp" /><label className="flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"><input type="checkbox" {...register('footballAllowDraw')} /> Cho phép hòa</label></div></div>}
           <label className="block text-sm font-semibold text-slate-700">Ghi chú<textarea {...register('description')} rows={3} className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal" placeholder="Luật hoặc thông tin ngắn cho người tham gia" /></label>
           <div className="flex justify-end"><button disabled={isSubmitting} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white disabled:opacity-60">{isSubmitting ? 'Đang tạo...' : 'Tạo giải nhanh'}<ArrowRight className="h-4 w-4" /></button></div>

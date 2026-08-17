@@ -899,7 +899,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                   </p>
                   <Link
                     href={isLiteTournament(activeTournament)
-                      ? `/lite/tournaments/${activeTournament.id}/manage`
+                      ? `/organizer/tournaments/${activeTournament.id}/manage`
                       : `/organizer/tournaments/${activeTournament.id}/manage`
                     }
                     className="mt-1.5 block text-xs text-blue-600 font-bold hover:underline"

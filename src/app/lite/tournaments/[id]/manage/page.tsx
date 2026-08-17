@@ -14,6 +14,7 @@ import {
   Unlink, Loader2, User, FlaskConical,
 } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '@/utils/error';
 import type { LiteParticipant } from '@/types/tournament';
@@ -60,6 +61,7 @@ function SportLabel({ name }: { name?: string | null }) {
 
 export default function LiteTournamentManagePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const router = useRouter();
   const [tournament, setTournament] = useState<Tournament | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<LiteTab>('overview');
@@ -135,6 +137,12 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
   const [hasBracket, setHasBracket] = useState(false);
   const [mockLoading, setMockLoading] = useState(false);
   const [rosterConfirming, setRosterConfirming] = useState(false);
+
+  // Keep old Lite links compatible, but standardize management on the full
+  // organizer workspace. Lite remains a scoring preset, not a reduced UI.
+  useEffect(() => {
+    router.replace(`/organizer/tournaments/${id}/manage`);
+  }, [id, router]);
 
   const fetchParticipants = useCallback(async () => {
     if (!id) return;

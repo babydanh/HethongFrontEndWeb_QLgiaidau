@@ -228,7 +228,7 @@ export default function CreateLiteTournamentPage({
         toast.success('Tạo giải đấu thành công! Mã QR đã sẵn sàng.');
       } else {
         toast.error('Đã tạo giải nhưng chưa nhận được mã mời. Vui lòng mở trang quản lý.');
-        if (res?.id) router.push(`/lite/tournaments/${res.id}/manage`);
+        if (res?.id) router.push(`/organizer/tournaments/${res.id}/manage`);
       }
     } catch (err) {
       toast.error(getErrorMessage(err));
@@ -261,7 +261,7 @@ export default function CreateLiteTournamentPage({
             <Button variant="outline" onClick={() => router.push(`/communities/${communityId}/manage/tournaments`)}>
               Danh sách giải
             </Button>
-            <Button onClick={() => router.push(`/lite/tournaments/${createdTournament.id}/manage`)}>
+          <Button onClick={() => router.push(`/organizer/tournaments/${createdTournament.id}/manage`)}>
               Vào quản lý giải
             </Button>
           </div>

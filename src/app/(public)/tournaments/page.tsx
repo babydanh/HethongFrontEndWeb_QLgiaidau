@@ -385,7 +385,7 @@ export default function TournamentsListPage() {
               >
                 <option value="">{translate("all")}</option>
                 <option value="REGISTRATION_OPEN">{translate("registrationOpen")}</option>
-                <option value="UPCOMING">Sắp diễn ra</option>
+                <option value="UPCOMING">{translate("upcoming")}</option>
                 <option value="IN_PROGRESS">{translate("inProgress")}</option>
                 <option value="COMPLETED">{translate("completed")}</option>
               </select>
@@ -651,35 +651,35 @@ export default function TournamentsListPage() {
                   setPage(1);
                 }}
                 className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer bg-white h-10 flex items-center justify-center"
-                title="Xóa bộ lọc"
+                title={translate("clearFilters")}
               >
-                <span className="font-bold text-rose-600">XÓA BỘ LỌC</span>
+                <span className="font-bold text-rose-600">{translate("clearFiltersUpper")}</span>
               </button>
             </div>
           </div>
         )}
         {/* Status Chips — bên trong khung filter */}
         <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-100 text-xs font-semibold">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0">Lọc nhanh:</span>
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0">{translate("quickFilter")}</span>
           <button onClick={() => { setSelectedStatus(selectedStatus === 'COMPLETED' ? '' : 'COMPLETED'); setPage(1); }}
             className={`rounded-full px-3.5 py-1.5 border transition-all cursor-pointer ${selectedStatus === 'COMPLETED' ? 'bg-[#F3F4F1] text-[#4A4E4D] border-slate-400 font-bold shadow-xs' : 'bg-[#F3F4F1]/80 text-[#4A4E4D] border-transparent hover:border-slate-300'}`}>
             Vừa kết thúc
           </button>
           <button onClick={() => { setSelectedStatus(selectedStatus === 'IN_PROGRESS' ? '' : 'IN_PROGRESS'); setPage(1); }}
             className={`rounded-full px-3.5 py-1.5 border transition-all cursor-pointer ${selectedStatus === 'IN_PROGRESS' ? 'bg-[#EBF5FF] text-[#1E56A0] border-blue-300 font-bold shadow-xs' : 'bg-[#EBF5FF]/80 text-[#1E56A0] border-transparent hover:border-blue-200'}`}>
-            Đang diễn ra
+            {translate("inProgress")}
           </button>
           <button onClick={() => { setSelectedStatus(selectedStatus === 'REGISTRATION_OPEN' ? '' : 'REGISTRATION_OPEN'); setPage(1); }}
             className={`rounded-full px-3.5 py-1.5 border transition-all cursor-pointer ${selectedStatus === 'REGISTRATION_OPEN' ? 'bg-[#EFF8E9] text-[#386629] border-emerald-300 font-bold shadow-xs' : 'bg-[#EFF8E9]/80 text-[#386629] border-transparent hover:border-emerald-200'}`}>
-            Mở đăng ký
+            {translate("registrationOpen")}
           </button>
           <button onClick={() => { setSelectedStatus(selectedStatus === 'UPCOMING' ? '' : 'UPCOMING'); setPage(1); }}
             className={`rounded-full px-3.5 py-1.5 border transition-all cursor-pointer ${selectedStatus === 'UPCOMING' ? 'bg-[#FFF5E6] text-[#995C00] border-amber-300 font-bold shadow-xs' : 'bg-[#FFF5E6]/80 text-[#995C00] border-transparent hover:border-amber-200'}`}>
-            Sắp diễn ra
+            {translate("upcoming")}
           </button>
           <button onClick={() => { setSelectedStatus(selectedStatus === 'FINISHED' ? '' : 'FINISHED'); setPage(1); }}
             className={`rounded-full px-3.5 py-1.5 border transition-all cursor-pointer ${selectedStatus === 'FINISHED' ? 'bg-[#F1F5F9] text-[#64748B] border-slate-300 font-bold shadow-xs' : 'bg-[#F1F5F9]/80 text-[#64748B] border-transparent hover:border-slate-200'}`}>
-            Đã kết thúc
+            {translate("completed")}
           </button>
           {selectedStatus && (
             <button onClick={() => { setSelectedStatus(''); setPage(1); }}
@@ -692,9 +692,9 @@ export default function TournamentsListPage() {
 
 
       {isLoading ? (
-        <div className="flex justify-center items-center h-64 text-slate-500 font-medium">Đang tải danh sách giải đấu...</div>
+        <div className="flex justify-center items-center h-64 text-slate-500 font-medium">{translate("loadingAll")}</div>
       ) : tournaments.length === 0 ? (
-        <div className="flex justify-center items-center h-64 text-slate-500 font-medium">Không tìm thấy giải đấu nào.</div>
+        <div className="flex justify-center items-center h-64 text-slate-500 font-medium">{translate("empty")}</div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
           {tournaments.map(tournament => {
@@ -802,7 +802,7 @@ export default function TournamentsListPage() {
                           <>
                             <span className="text-slate-300">•</span>
                             <span className="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded text-[8px] font-bold border border-blue-200">
-                              Chuỗi giải đấu
+                              {translate("seriesLabel")}
                             </span>
                           </>
                         )}
@@ -838,7 +838,7 @@ export default function TournamentsListPage() {
                         <>
                           <span className="text-slate-300">•</span>
                           <span>
-                            Đã ĐK: {tournament._count?.participants || 0}/{tournament.maxParticipants || '-'} Đội
+                            {translate("registeredCount", { count: tournament._count?.participants || 0, max: tournament.maxParticipants || '-' })} Đội
                           </span>
                           <span className="text-slate-300">•</span>
                           <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-650 text-[9px] border border-slate-200 font-bold">

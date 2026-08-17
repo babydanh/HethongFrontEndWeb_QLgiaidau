@@ -175,7 +175,15 @@
     "all": "Tất cả",
     "sport": "Môn thể thao",
     "fromDate": "Diễn ra từ ngày",
-    "toDate": "Diễn ra đến ngày"
+    "toDate": "Diễn ra đến ngày",
+    "quickFilter": "Lọc nhanh:",
+    "clearFilters": "Xóa bộ lọc",
+    "clearFiltersUpper": "XÓA BỘ LỌC",
+    "upcoming": "Sắp diễn ra",
+    "loadingAll": "Đang tải danh sách giải đấu...",
+    "empty": "Không tìm thấy giải đấu nào.",
+    "seriesLabel": "Chuỗi giải đấu",
+    "registeredCount": "Đã ĐK: {count}/{max}"
   },
   "Terms": {
     "badge": "Pháp lý & Điều khoản",
@@ -436,7 +444,10 @@
     "matchNumber": "Trận #{number}",
     "noLiveMatch": "Chưa có trận đang phát trực tiếp.",
     "noUpcomingMatch": "Chưa có cặp đấu sắp diễn ra.",
-    "startsAt": "Bắt đầu {date}"
+    "startsAt": "Bắt đầu {date}",
+    "overviewDescriptionFallback": "Ban tổ chức chưa cập nhật thông tin giới thiệu cho giải đấu này.",
+    "prizeTitle": "Giải thưởng",
+    "prizeFallback": "Ban tổ chức chưa cập nhật cơ cấu giải thưởng cho giải đấu này."
   }
 ,
   "LiveMatch": {

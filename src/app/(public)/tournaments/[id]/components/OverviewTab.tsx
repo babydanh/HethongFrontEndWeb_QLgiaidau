@@ -1,12 +1,14 @@
 'use client';
 
 import { Tournament } from '@/features/tournaments/api';
+import { useTranslations } from 'next-intl';
 
 interface Props {
   tournament: Tournament;
 }
 
 export default function OverviewTab({ tournament }: Props) {
+  const translate = useTranslations('TournamentDetail');
   const description = tournament.description || tournament.parent?.description;
   const prizeDescription = tournament.prizeDescription;
 
@@ -17,21 +19,21 @@ export default function OverviewTab({ tournament }: Props) {
           <div dangerouslySetInnerHTML={{ __html: description }} />
         ) : (
           <p className="italic text-slate-400 text-center">
-            Ban tổ chức chưa cập nhật thông tin giới thiệu cho giải đấu này.
+            {translate("overviewDescriptionFallback")}
           </p>
         )}
       </section>
 
       <section className="border-t border-slate-100 pt-6">
         <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-900">
-          Giải thưởng
+          {translate("prizeTitle")}
         </h3>
         <div className="prose prose-slate max-w-none text-slate-800 text-base leading-relaxed editorjs-content-view">
           {prizeDescription ? (
             <div dangerouslySetInnerHTML={{ __html: prizeDescription }} />
           ) : (
             <p className="italic text-slate-400">
-              Ban tổ chức chưa cập nhật cơ cấu giải thưởng cho giải đấu này.
+              {translate("prizeFallback")}
             </p>
           )}
         </div>

@@ -170,6 +170,14 @@
     "doubleElimination": "Double elimination",
     "roundRobin": "Round robin",
     "groupStageKnockout": "Group stage + Playoffs",
+    "quickFilter": "Quick filter:",
+    "clearFilters": "Clear filters",
+    "clearFiltersUpper": "CLEAR FILTERS",
+    "upcoming": "Upcoming",
+    "loadingAll": "Loading tournaments...",
+    "empty": "No tournaments found.",
+    "seriesLabel": "Tournament series",
+    "registeredCount": "Registered: {count}/{max}",
     "eloIncluded": "ELO included",
     "eloExcluded": "ELO excluded",
     "all": "All",
@@ -436,7 +444,10 @@
     "matchNumber": "Match #{number}",
     "noLiveMatch": "No live match is currently available.",
     "noUpcomingMatch": "No upcoming matchup is available.",
-    "startsAt": "Starts {date}"
+    "startsAt": "Starts {date}",
+    "overviewDescriptionFallback": "The organizer has not added an overview for this tournament yet.",
+    "prizeTitle": "Prizes",
+    "prizeFallback": "The organizer has not added the prize structure for this tournament yet."
   }
 ,
   "LiveMatch": {

@@ -88,13 +88,13 @@ const quickSchema = z.object({
   visibility: z.enum(['PRIVATE', 'PUBLIC']),
   bracketType: z.enum(['single_elimination', 'double_elimination', 'round_robin', 'group_stage_knockout']),
   maxTeams: z.number().int().min(2).max(32),
-  registrationStart: z.string().min(1, 'Chọn thời gian mở đăng ký.'),
-  registrationEnd: z.string().min(1, 'Chọn thời gian đóng đăng ký.'),
-  startDate: z.string().min(1, 'Chọn thời gian bắt đầu giải.'),
+  registrationStart: z.string().optional(),
+  registrationEnd: z.string().optional(),
+  startDate: z.string().optional(),
   endDate: z.string().optional(),
-  venueName: z.string().trim().min(1, 'Vui lòng nhập tên sân / nhà thi đấu.'),
-  locationAddress: z.string().trim().min(1, 'Vui lòng nhập địa chỉ sân.'),
-  province: z.string().trim().min(1, 'Vui lòng chọn Tỉnh/Thành.'),
+  venueName: z.string().trim().optional(),
+  locationAddress: z.string().trim().optional(),
+  province: z.string().trim().optional(),
   ward: z.string().trim().optional(),
   district: z.string().trim().optional(),
   genderRestriction: z.enum(['', 'MALE', 'FEMALE', 'MIXED']),
@@ -387,20 +387,20 @@ export default function QuickTournamentCreate() {
         ...restValues
       } = values;
 
-      const regStartDate = new Date(registrationStart);
-      const regEndDate = new Date(registrationEnd);
-      const startDateTime = new Date(startDate);
+      const regStartDate = registrationStart ? new Date(registrationStart) : undefined;
+      const regEndDate = registrationEnd ? new Date(registrationEnd) : undefined;
+      const startDateTime = startDate ? new Date(startDate) : undefined;
       const endDateTime = endDate ? new Date(endDate) : undefined;
 
-      if (regStartDate >= regEndDate) {
+      if (regStartDate && regEndDate && regStartDate >= regEndDate) {
         toast.error('Thời gian mở đăng ký phải trước thời gian đóng.');
         return;
       }
-      if (regEndDate >= startDateTime) {
+      if (regEndDate && startDateTime && regEndDate >= startDateTime) {
         toast.error('Thời gian đóng đăng ký phải trước giờ bắt đầu giải.');
         return;
       }
-      if (endDateTime && startDateTime >= endDateTime) {
+      if (endDateTime && startDateTime && startDateTime >= endDateTime) {
         toast.error('Thời gian kết thúc phải sau thời gian bắt đầu.');
         return;
       }
@@ -413,9 +413,9 @@ export default function QuickTournamentCreate() {
         communityId,
         sport: values.sport,
         description: values.description || undefined,
-        registrationStartDate: regStartDate.toISOString(),
-        registrationEndDate: regEndDate.toISOString(),
-        startDate: startDateTime.toISOString(),
+        registrationStartDate: regStartDate?.toISOString(),
+        registrationEndDate: regEndDate?.toISOString(),
+        startDate: startDateTime?.toISOString(),
         endDate: endDateTime ? endDateTime.toISOString() : undefined,
         venueName: values.venueName,
         locationAddress: values.locationAddress,
@@ -435,7 +435,10 @@ export default function QuickTournamentCreate() {
       });
 
       toast.success(values.visibility === 'PUBLIC' ? 'Đã tạo, đang chờ Admin duyệt công khai.' : 'Tạo giải đấu thành công.');
-      if (response?.id) router.push(`/lite/tournaments/${response.id}/manage`);
+      // Quick creation only reduces the required input. Management must use
+      // the full organizer workspace so every advanced setting remains
+      // available for gradual completion after creation.
+      if (response?.id) router.push(`/organizer/tournaments/${response.id}/manage`);
     } catch (error: unknown) {
       toast.error(getErrorMessage(error, 'Không thể tạo giải đấu.'));
     } finally {
@@ -601,21 +604,21 @@ export default function QuickTournamentCreate() {
           {/* Thời gian giải đấu (Chuẩn dd/mm/yyyy HH:mm, tự động nối tiếp mở ĐK -> đóng ĐK, kết thúc để trống) */}
           <div className="grid gap-4 md:grid-cols-2">
             <CustomDateTimePicker
-              label={<>Mở đăng ký <span className="text-red-500">*</span></>}
+              label="Mở đăng ký (tùy chọn)"
               value={registrationStart}
               onChange={handleRegistrationStartChange}
               error={errors.registrationStart?.message}
             />
 
             <CustomDateTimePicker
-              label={<>Đóng đăng ký <span className="text-red-500">*</span></>}
+              label="Đóng đăng ký (tùy chọn)"
               value={registrationEnd}
               onChange={handleRegistrationEndChange}
               error={errors.registrationEnd?.message}
             />
 
             <CustomDateTimePicker
-              label={<>Bắt đầu giải <span className="text-red-500">*</span></>}
+              label="Bắt đầu giải (tùy chọn)"
               value={startDate}
               onChange={(val) => setValue('startDate', val, { shouldValidate: true })}
               error={errors.startDate?.message}
@@ -766,7 +769,7 @@ export default function QuickTournamentCreate() {
 
             <div className="grid gap-3 md:grid-cols-2">
               <label className="text-xs font-semibold text-slate-700">
-                Tên sân / Nhà thi đấu <span className="text-red-500">*</span>
+                Tên sân / Nhà thi đấu (tùy chọn)
                 <input
                   {...register('venueName')}
                   className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-normal outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
@@ -775,7 +778,7 @@ export default function QuickTournamentCreate() {
                 {errors.venueName && <span className="mt-1 block text-xs text-red-600">{errors.venueName.message}</span>}
               </label>
               <label className="text-xs font-semibold text-slate-700">
-                Địa chỉ chi tiết <span className="text-red-500">*</span>
+                Địa chỉ chi tiết (tùy chọn)
                 <input
                   {...register('locationAddress')}
                   className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-normal outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
@@ -788,7 +791,7 @@ export default function QuickTournamentCreate() {
             {/* 2 Dropdown Tỉnh/Thành ➔ Phường/Xã (Chuẩn API v2 gọn gàng) */}
             <div>
               <span className="mb-1.5 block text-xs font-semibold text-slate-700">
-                Khu vực hành chính <span className="text-red-500">*</span>
+                Khu vực hành chính (tùy chọn)
               </span>
               <div className="grid gap-3 sm:grid-cols-2">
                 <div>

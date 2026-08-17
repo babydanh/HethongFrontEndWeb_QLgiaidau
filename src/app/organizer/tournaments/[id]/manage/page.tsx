@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useRef, useEffect } from 'react';
+import { use, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
@@ -23,7 +23,6 @@ import { getSportRulePresentation } from '@/features/tournaments/sport-rules/pre
 import { getScoreEntryGuidance, getSportRulePresets } from '@/features/tournaments/sport-rules/ui-guidance';
 import { resolveSportRuleView } from '@/features/tournaments/sport-rules/normalize';
 import { isTournamentRegistrationClosed, isTournamentRegistrationOpen } from '@/utils/tournament-status';
-import { useRouter } from 'next/navigation';
 
 function SummaryRow({ label, value }: { label: string; value: ReactNode }) {
   return (
@@ -46,7 +45,6 @@ function SummarySection({ title, children }: { title: string; children: ReactNod
 export default function TournamentManagePage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const id = resolvedParams.id;
-  const router = useRouter();
   const s = useManageState(id);
   const pendingRefereeCount = s.referees.filter((ref) => ref.status === 'INVITED').length;
   const bracketSectionRef = useRef<HTMLDivElement | null>(null);
@@ -57,13 +55,6 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
   const sportPresets = getSportRulePresets(s.sportRuleKind);
   const selectedDivision = s.divisions.find((d) => d.id === s.selectedDivisionId);
   const lockRuleView = resolveSportRuleView(selectedDivision?.roundConfig, s.sportRuleKind);
-
-  // Only redirect if tournament is explicitly marked as a quick Lite tournament (isLite), NOT based on scoring mode (mode === 'LITE')
-  useEffect(() => {
-    if (!s.isLoading && (s.tournament?.isLite === true || s.tournament?.tournamentConfig?.isLite === true)) {
-      router.replace(`/lite/tournaments/${id}/manage`);
-    }
-  }, [s.isLoading, s.tournament, id, router]);
 
   if (s.isLoading) return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center">

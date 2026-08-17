@@ -169,7 +169,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
       // Redirect directly to the manage page of the newly created tournament
       const newId = res?.id;
       if (newId) {
-        router.push(`/lite/tournaments/${newId}/manage`);
+        router.push(`/organizer/tournaments/${newId}/manage`);
       }
     } catch (err) {
       toast.error(getErrorMessage(err));
@@ -410,7 +410,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
 
                 <div className="flex gap-3 pt-3 border-t border-slate-100">
                   {isLiteTournament(t) ? (
-                    <Link href={`/lite/tournaments/${t.id}/manage`} className="flex-1">
+                    <Link href={`/organizer/tournaments/${t.id}/manage`} className="flex-1">
                       <Button variant="outline" className="w-full border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold flex items-center justify-center gap-1">
                         <Settings className="w-3.5 h-3.5" /> Quản lý giải nhanh
                       </Button>

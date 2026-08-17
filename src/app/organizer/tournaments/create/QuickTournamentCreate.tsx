@@ -12,6 +12,33 @@ import { tournamentsApi } from '@/features/tournaments/api';
 import { regionsApi, Region } from '@/features/regions/api';
 import { getErrorMessage } from '@/utils/error';
 
+const BRACKET_OPTIONS = [
+  {
+    id: 'single_elimination',
+    label: 'Loại trực tiếp',
+    desc: 'Thua là dừng bước. Nhanh gọn & kịch tính nhất.',
+    badge: 'Phổ biến',
+  },
+  {
+    id: 'round_robin',
+    label: 'Vòng tròn',
+    desc: 'Mọi đội đều gặp nhau tính điểm. Công bằng nhất.',
+    badge: 'Đấu nhiều trận',
+  },
+  {
+    id: 'group_stage_knockout',
+    label: 'Vòng bảng + Knockout',
+    desc: 'Đấu bảng chọn đội nhất/nhì vào tứ kết/bán kết.',
+    badge: 'Chuyên nghiệp',
+  },
+  {
+    id: 'double_elimination',
+    label: 'Nhánh thắng / thua',
+    desc: 'Cơ hội phục thù nhánh dưới khi thua 1 trận.',
+    badge: 'Kép nhánh',
+  },
+] as const;
+
 const quickSchema = z.object({
   name: z.string().trim().min(2, 'Nhập tên giải đấu.'),
   sport: z.enum(['badminton', 'tennis', 'pickleball', 'table_tennis', 'football']),
@@ -184,6 +211,8 @@ export default function QuickTournamentCreate() {
 
   const sport = useWatch({ control, name: 'sport' });
   const format = useWatch({ control, name: 'format' });
+  const bracketType = useWatch({ control, name: 'bracketType' });
+  const maxTeams = useWatch({ control, name: 'maxTeams' });
   const genderRestriction = useWatch({ control, name: 'genderRestriction' });
   const visibility = useWatch({ control, name: 'visibility' });
   const isRanked = useWatch({ control, name: 'isRanked' });
@@ -472,27 +501,93 @@ export default function QuickTournamentCreate() {
             />
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <label className="text-sm font-semibold text-slate-700">
-              Thể thức
-              <select {...register('bracketType')} className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 font-normal">
-                <option value="single_elimination">Loại trực tiếp</option>
-                <option value="round_robin">Vòng tròn</option>
-                <option value="group_stage_knockout">Vòng bảng + loại trực tiếp</option>
-                <option value="double_elimination">Nhánh thắng/thua</option>
-              </select>
-            </label>
-            <label className="text-sm font-semibold text-slate-700">
-              Số đội/người tối đa
-              <input
-                type="number"
-                min={2}
-                max={32}
-                {...register('maxTeams', { valueAsNumber: true })}
-                className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal"
-              />
-              {errors.maxTeams && <span className="mt-1 block text-xs text-red-600">{errors.maxTeams.message}</span>}
-            </label>
+          {/* Thể thức thi đấu (Cards chọn trực quan chuẩn Taste Skill) */}
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-semibold text-slate-800">
+                Thể thức thi đấu <span className="text-red-500">*</span>
+              </label>
+              <span className="text-xs text-slate-500">Bấm chọn thể thức</span>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              {BRACKET_OPTIONS.map((opt) => {
+                const isSelected = bracketType === opt.id;
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => setValue('bracketType', opt.id, { shouldValidate: true })}
+                    className={`group relative flex flex-col justify-between rounded-xl border p-3.5 text-left transition-all duration-200 ${
+                      isSelected
+                        ? 'border-blue-600 bg-blue-50/70 shadow-2xs ring-1 ring-blue-500/20'
+                        : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <span className={`text-sm font-bold transition ${isSelected ? 'text-blue-900' : 'text-slate-800 group-hover:text-blue-600'}`}>
+                        {opt.label}
+                      </span>
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[10px] font-semibold transition ${
+                          isSelected
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-slate-100 text-slate-600 group-hover:bg-slate-200'
+                        }`}
+                      >
+                        {opt.badge}
+                      </span>
+                    </div>
+                    <p className={`mt-1.5 text-xs leading-relaxed transition ${isSelected ? 'text-blue-700/90' : 'text-slate-500'}`}>
+                      {opt.desc}
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
+            {errors.bracketType && <span className="block text-xs text-red-600">{errors.bracketType.message}</span>}
+          </div>
+
+          {/* Quy mô giải đấu (Số đội / người tối đa) */}
+          <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-semibold text-slate-800">
+                Số đội / người tham gia tối đa <span className="text-red-500">*</span>
+              </label>
+              <span className="text-xs text-slate-500">Giới hạn 2 - 32</span>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              {[4, 8, 16, 32].map((num) => {
+                const isCurrent = maxTeams === num;
+                return (
+                  <button
+                    key={num}
+                    type="button"
+                    onClick={() => setValue('maxTeams', num, { shouldValidate: true })}
+                    className={`rounded-lg border px-3.5 py-1.5 text-xs font-semibold transition ${
+                      isCurrent
+                        ? 'border-blue-600 bg-blue-600 text-white shadow-2xs'
+                        : 'border-slate-300 bg-white text-slate-700 hover:border-blue-400'
+                    }`}
+                  >
+                    {num} đội / người
+                  </button>
+                );
+              })}
+
+              <div className="flex items-center gap-1.5 ml-auto">
+                <span className="text-xs text-slate-600 font-medium">Tùy chỉnh:</span>
+                <input
+                  type="number"
+                  min={2}
+                  max={32}
+                  {...register('maxTeams', { valueAsNumber: true })}
+                  className="w-20 rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-center text-sm font-bold text-slate-800 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+            {errors.maxTeams && <span className="block text-xs text-red-600">{errors.maxTeams.message}</span>}
           </div>
 
           <div className="grid gap-3 md:grid-cols-2">

@@ -447,7 +447,24 @@
     "startsAt": "Bắt đầu {date}",
     "overviewDescriptionFallback": "Ban tổ chức chưa cập nhật thông tin giới thiệu cho giải đấu này.",
     "prizeTitle": "Giải thưởng",
-    "prizeFallback": "Ban tổ chức chưa cập nhật cơ cấu giải thưởng cho giải đấu này."
+    "prizeFallback": "Ban tổ chức chưa cập nhật cơ cấu giải thưởng cho giải đấu này.",
+    "unscheduled": "Chưa xếp lịch",
+    "matchesEmpty": "Không tìm thấy trận đấu nào.",
+    "matchesEmptyHint": "Vui lòng chọn Vòng đấu hoặc Bộ lọc trạng thái khác.",
+    "bracketLoading": "Đang tải sơ đồ thi đấu...",
+    "bracketEmptyTitle": "Chưa có nhánh đấu",
+    "bracketEmptyDescription": "Nhánh đấu sẽ xuất hiện sau khi Ban tổ chức hoàn tất danh sách đăng ký.",
+    "rankingLabel": "Phân hạng",
+    "formatLabel": "Thể thức",
+    "unscheduledTime": "Chưa xếp giờ",
+    "matchNumber": "Trận #{number}",
+    "liveLabel": "Trực tiếp",
+    "bye": "Miễn vòng",
+    "pendingParticipant": "Chờ xác định",
+    "standingsTitle": "Bảng xếp hạng",
+    "standingsInfoTitle": "Chi tiết cách xếp hạng",
+    "standingsHowItWorks": "Cách tính xếp hạng",
+    "noMatches": "Chưa có trận đấu nào."
   }
 ,
   "LiveMatch": {

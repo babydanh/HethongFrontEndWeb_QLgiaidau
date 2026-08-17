@@ -8,9 +8,10 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { ArrowRight, Settings2, MapPin } from 'lucide-react';
 import { categoriesApi, Category } from '@/features/categories/api';
-import { tournamentsApi } from '@/features/tournaments/api';
+import { divisionsApi, tournamentsApi, type CreateDivisionInput } from '@/features/tournaments/api';
 import { regionsApi, Region } from '@/features/regions/api';
 import { getErrorMessage } from '@/utils/error';
+import { GenderRestriction, MatchTypeDB } from '@/types/tournament';
 
 /* 4 Biểu tượng sơ đồ thể thức thi đấu chuyên nghiệp */
 const SingleEliminationIcon = ({ className = 'h-5 w-5' }: { className?: string }) => (
@@ -85,7 +86,9 @@ const quickSchema = z.object({
   name: z.string().trim().min(2, 'Nhập tên giải đấu.'),
   sport: z.enum(['badminton', 'tennis', 'pickleball', 'table_tennis', 'football']),
   format: z.enum(['singles', 'doubles']),
+  tournamentType: z.enum(['CLUB', 'PUBLIC']),
   visibility: z.enum(['PRIVATE', 'PUBLIC']),
+  registrationMode: z.enum(['OPEN', 'APPROVAL', 'INVITE_ONLY']),
   bracketType: z.enum(['single_elimination', 'double_elimination', 'round_robin', 'group_stage_knockout']),
   maxTeams: z.number().int().min(2).max(32),
   registrationStart: z.string().optional(),
@@ -137,6 +140,38 @@ const formatDateTimeDisplay = (val?: string) => {
   const hours = pad(d.getHours());
   const minutes = pad(d.getMinutes());
   return `${day}/${month}/${year} ${hours}:${minutes}`;
+};
+
+const toDivisionInput = (
+  formatKey: string,
+  bracketType: QuickValues['bracketType'],
+  maxParticipants: number,
+  startDate?: string,
+  endDate?: string,
+  registrationEndDate?: string,
+): CreateDivisionInput => {
+  const definitions: Record<string, { name: string; matchType: MatchTypeDB; genderRestriction?: GenderRestriction }> = {
+    MALE_SINGLES: { name: 'Đơn Nam', matchType: MatchTypeDB.SINGLES, genderRestriction: GenderRestriction.MALE },
+    FEMALE_SINGLES: { name: 'Đơn Nữ', matchType: MatchTypeDB.SINGLES, genderRestriction: GenderRestriction.FEMALE },
+    MALE_DOUBLES: { name: 'Đôi Nam', matchType: MatchTypeDB.DOUBLES, genderRestriction: GenderRestriction.MALE },
+    FEMALE_DOUBLES: { name: 'Đôi Nữ', matchType: MatchTypeDB.DOUBLES, genderRestriction: GenderRestriction.FEMALE },
+    MIXED_DOUBLES: { name: 'Đôi Nam Nữ', matchType: MatchTypeDB.MIXED_DOUBLES, genderRestriction: GenderRestriction.MIXED },
+    FOOTBALL_MALE: { name: 'Đội Nam', matchType: MatchTypeDB.DOUBLES, genderRestriction: GenderRestriction.MALE },
+    FOOTBALL_FEMALE: { name: 'Đội Nữ', matchType: MatchTypeDB.DOUBLES, genderRestriction: GenderRestriction.FEMALE },
+    FOOTBALL_MIXED: { name: 'Không giới hạn', matchType: MatchTypeDB.DOUBLES },
+  };
+  const definition = definitions[formatKey] ?? definitions.MALE_DOUBLES;
+  return {
+    name: definition.name,
+    matchType: definition.matchType,
+    genderRestriction: definition.genderRestriction,
+    maxParticipants,
+    entryFee: 0,
+    bracketType: bracketType.toUpperCase() as CreateDivisionInput['bracketType'],
+    startDate: startDate ?? null,
+    endDate: endDate ?? null,
+    registrationEndDate: registrationEndDate ?? null,
+  };
 };
 
 const quickDefaults = () => {
@@ -244,7 +279,11 @@ export default function QuickTournamentCreate() {
   const { register, handleSubmit, setValue, control, formState: { errors } } = useForm<QuickValues>({
     resolver: zodResolver(quickSchema),
     defaultValues: {
-      sport: 'badminton', format: 'doubles', visibility: 'PRIVATE', bracketType: 'single_elimination',
+      sport: 'badminton', format: 'doubles',
+      tournamentType: communityId ? 'CLUB' : 'PUBLIC',
+      visibility: communityId ? 'PRIVATE' : 'PUBLIC',
+      registrationMode: communityId ? 'OPEN' : 'APPROVAL',
+      bracketType: 'single_elimination',
       maxTeams: 16, ...scheduleDefaults,
       selectedFormats: ['MALE_DOUBLES'],
       venueName: '', locationAddress: '', province: '', ward: '', district: '',
@@ -260,6 +299,8 @@ export default function QuickTournamentCreate() {
   const maxTeams = useWatch({ control, name: 'maxTeams' });
   const genderRestriction = useWatch({ control, name: 'genderRestriction' });
   const visibility = useWatch({ control, name: 'visibility' });
+  const tournamentType = useWatch({ control, name: 'tournamentType' });
+  const registrationMode = useWatch({ control, name: 'registrationMode' });
   const isRanked = useWatch({ control, name: 'isRanked' });
   const province = useWatch({ control, name: 'province' });
   const registrationStart = useWatch({ control, name: 'registrationStart' });
@@ -411,6 +452,7 @@ export default function QuickTournamentCreate() {
       const response = await tournamentsApi.createLiteTournament({
         ...restValues,
         communityId,
+        tournamentType: values.tournamentType,
         sport: values.sport,
         description: values.description || undefined,
         registrationStartDate: regStartDate?.toISOString(),
@@ -430,15 +472,42 @@ export default function QuickTournamentCreate() {
           footballHalfDuration: values.footballHalfDuration,
           footballAllowDraw: values.footballAllowDraw,
         } : {}),
-        registrationMode: values.visibility === 'PUBLIC' ? 'OPEN' : 'INVITE_ONLY',
+        registrationMode: values.registrationMode,
         isRanked: values.isRanked,
       });
+
+      // `selectedFormats` belongs to the wizard, not the create endpoint.
+      // Materialize every selected format as a division after the tournament
+      // exists so advanced management starts fully configured.
+      if (!response?.id) throw new Error('Không nhận được mã giải đấu vừa tạo.');
+      try {
+        const requestedDivisions = values.selectedFormats.map((formatKey) => toDivisionInput(
+            formatKey,
+            values.bracketType,
+            values.maxTeams,
+            startDateTime?.toISOString(),
+            endDateTime?.toISOString(),
+            regEndDate?.toISOString(),
+        ));
+        const existingDivisions = (await divisionsApi.getDivisions(response.id)).data ?? [];
+        // The Lite backend may create one fallback division. Reconfigure it
+        // for the first selected format, then create only the missing ones.
+        await Promise.all(requestedDivisions.map((division, index) => {
+          const existing = existingDivisions[index];
+          return existing
+            ? divisionsApi.updateDivision(existing.id, division)
+            : divisionsApi.createDivision(response.id, division);
+        }));
+      } catch (divisionError: unknown) {
+        await tournamentsApi.deleteTournament(response.id).catch(() => undefined);
+        throw divisionError;
+      }
 
       toast.success(values.visibility === 'PUBLIC' ? 'Đã tạo, đang chờ Admin duyệt công khai.' : 'Tạo giải đấu thành công.');
       // Quick creation only reduces the required input. Management must use
       // the full organizer workspace so every advanced setting remains
       // available for gradual completion after creation.
-      if (response?.id) router.push(`/organizer/tournaments/${response.id}/manage`);
+      router.push(`/organizer/tournaments/${response.id}/manage`);
     } catch (error: unknown) {
       toast.error(getErrorMessage(error, 'Không thể tạo giải đấu.'));
     } finally {
@@ -728,6 +797,32 @@ export default function QuickTournamentCreate() {
             {errors.maxTeams && <span className="block text-xs text-red-600">{errors.maxTeams.message}</span>}
           </div>
 
+          <div className="space-y-3">
+            <div>
+              <p className="text-sm font-semibold text-slate-800">Phạm vi giải</p>
+              <p className="mt-1 text-xs text-slate-500">Chọn giải mở rộng hay chỉ dùng trong câu lạc bộ. Bạn vẫn có thể chỉnh chi tiết trong trang quản lý nâng cao.</p>
+            </div>
+            <div className="grid gap-3 md:grid-cols-2">
+              <button
+                type="button"
+                onClick={() => !communityId && setValue('tournamentType', 'PUBLIC')}
+                disabled={Boolean(communityId)}
+                className={`rounded-xl border p-4 text-left transition ${tournamentType === 'PUBLIC' ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-slate-300'} ${communityId ? 'cursor-not-allowed opacity-60' : ''}`}
+              >
+                <span className="block font-semibold text-slate-800">Mở rộng</span>
+                <span className="mt-1 block text-xs text-slate-500">Hiển thị như giải công khai trên Sportо.</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setValue('tournamentType', 'CLUB')}
+                className={`rounded-xl border p-4 text-left transition ${tournamentType === 'CLUB' ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-slate-300'}`}
+              >
+                <span className="block font-semibold text-slate-800">Nội bộ CLB</span>
+                <span className="mt-1 block text-xs text-slate-500">Chỉ dành cho thành viên hoặc người được mời.</span>
+              </button>
+            </div>
+          </div>
+
           <div className="grid gap-3 md:grid-cols-2">
             <button
               type="button"
@@ -743,9 +838,24 @@ export default function QuickTournamentCreate() {
               className={`rounded-xl border p-4 text-left transition ${visibility === 'PUBLIC' ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-slate-300'}`}
             >
               <span className="block font-semibold text-slate-800">Công khai</span>
-              <span className="mt-1 block text-xs text-slate-500">Giải sẽ chờ Admin duyệt trước khi hiển thị công khai.</span>
+              <span className="mt-1 block text-xs text-slate-500">Giải gửi Admin duyệt trước khi hiển thị công khai.</span>
             </button>
           </div>
+
+          <label className="block text-sm font-semibold text-slate-800">
+            Cách nhận đăng ký
+            <select
+              {...register('registrationMode')}
+              className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm font-normal outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            >
+              <option value="APPROVAL">Duyệt từng đăng ký</option>
+              <option value="OPEN">Tự do đăng ký</option>
+              <option value="INVITE_ONLY">Chỉ người được mời</option>
+            </select>
+            <span className="mt-1 block text-xs font-normal text-slate-500">
+              {registrationMode === 'APPROVAL' ? 'Người chơi gửi yêu cầu, BTC duyệt trong trang quản lý.' : registrationMode === 'OPEN' ? 'Ai có link cũng có thể đăng ký trong thời gian mở.' : 'Chỉ người có mã/link mời mới đăng ký được.'}
+            </span>
+          </label>
 
           <label className="flex items-start gap-3 rounded-xl border border-slate-200 p-4 text-sm cursor-pointer hover:bg-slate-50/60 transition">
             <input

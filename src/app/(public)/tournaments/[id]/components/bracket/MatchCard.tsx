@@ -11,6 +11,7 @@ import React, { memo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Play, Clock } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import type { BracketMatch } from '@/features/tournaments/api';
 import { extractMatchScores } from '@/features/matches/score-display';
 import type { SportRuleKind } from '@/types/tournament';
@@ -52,6 +53,7 @@ export const MatchCard = memo(function MatchCard({
   isP2Bye?: boolean;
   fallbackSportRuleKind?: SportRuleKind;
 }) {
+  const translate = useTranslations('TournamentDetail');
   const done = match.status === 'COMPLETED';
   const live = match.status === 'ONGOING' || match.status === 'IN_PROGRESS';
   const p1Won = done && match.winnerId != null && match.winnerId === match.participant1?.id;
@@ -69,7 +71,7 @@ export const MatchCard = memo(function MatchCard({
     ? formatDateTime(match.scheduledAt)
     : rawMatch.scheduledDate
       ? String(rawMatch.scheduledDate)
-      : 'Chưa xếp giờ';
+      : translate('unscheduledTime');
 
   const cardInner = (
     <div className="flex flex-col flex-1 h-full justify-between">
@@ -83,14 +85,14 @@ export const MatchCard = memo(function MatchCard({
         }
       >
         <div className="flex items-center gap-1.5 min-w-0 truncate">
-          <span className="text-slate-600 font-bold">Trận #{match.matchOrder}</span>
+          <span className="text-slate-600 font-bold">{translate("matchNumber", { number: match.matchOrder })}</span>
           {live && (
             <span className="flex items-center gap-0.5 text-blue-700 font-extrabold animate-pulse text-[9px]">
-              <Play className="w-2.5 h-2.5 fill-blue-700" /> Trực tiếp
+              <Play className="w-2.5 h-2.5 fill-blue-700" /> {translate("liveLabel")}
             </span>
           )}
           {match.isBye && (
-            <span className="text-blue-700 font-bold uppercase tracking-wider text-[8.5px]">Miễn vòng</span>
+            <span className="text-blue-700 font-bold uppercase tracking-wider text-[8.5px]">{translate("bye")}</span>
           )}
         </div>
 
@@ -216,6 +218,7 @@ const RowSide = memo(function RowSide({
   pickScore: (s: { p1: string; p2: string }) => string;
   maxCols: number;
 }) {
+  const translate = useTranslations('TournamentDetail');
   return (
     <div
       className={
@@ -250,7 +253,7 @@ const RowSide = memo(function RowSide({
           }
           title={p?.teamName ?? undefined}
         >
-          {p?.teamName ?? (isByeSlot ? 'Miễn vòng' : 'Chờ xác định')}
+          {p?.teamName ?? (isByeSlot ? translate('bye') : translate('pendingParticipant'))}
         </span>
       </div>
 

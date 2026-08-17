@@ -447,7 +447,24 @@
     "startsAt": "Starts {date}",
     "overviewDescriptionFallback": "The organizer has not added an overview for this tournament yet.",
     "prizeTitle": "Prizes",
-    "prizeFallback": "The organizer has not added the prize structure for this tournament yet."
+    "prizeFallback": "The organizer has not added the prize structure for this tournament yet.",
+    "unscheduled": "Unscheduled",
+    "matchesEmpty": "No matches found.",
+    "matchesEmptyHint": "Try selecting a different round or status filter.",
+    "bracketLoading": "Loading bracket...",
+    "bracketEmptyTitle": "No bracket yet",
+    "bracketEmptyDescription": "The bracket will appear after the organizer completes the registration list.",
+    "rankingLabel": "Ranking",
+    "formatLabel": "Format",
+    "unscheduledTime": "Time not set",
+    "matchNumber": "Match #{number}",
+    "liveLabel": "Live",
+    "bye": "Bye",
+    "pendingParticipant": "TBD",
+    "standingsTitle": "Standings",
+    "standingsInfoTitle": "Ranking details",
+    "standingsHowItWorks": "How rankings are calculated",
+    "noMatches": "No matches yet."
   }
 ,
   "LiveMatch": {

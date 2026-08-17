@@ -9,6 +9,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Trophy,
   Play,
@@ -61,6 +62,7 @@ export function RoundRobinView({
   activeRound: controlledActiveRound,
   onRoundChange,
 }: Props) {
+  const translate = useTranslations('TournamentDetail');
   const sampleMatch = matches.find((match) => !match.isBye) ?? matches[0];
   const effectiveRuleKind = sampleMatch
     ? resolveBracketMatchRules(sampleMatch, fallbackSportRuleKind).kind
@@ -112,11 +114,11 @@ export function RoundRobinView({
       {!hideStandings && (
       <div>
         <h5 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
-          <Trophy className="w-4 h-4 text-blue-500" /> Bảng xếp hạng
+          <Trophy className="w-4 h-4 text-blue-500" /> {translate("standingsTitle")}
           <button
             onClick={() => setShowInfo(!showInfo)}
             className="ml-1 inline-flex items-center justify-center w-5 h-5 rounded-full bg-slate-300 hover:bg-slate-400 text-white transition-colors cursor-pointer flex-shrink-0"
-            title="Chi tiết cách xếp hạng"
+            title={translate("standingsInfoTitle")}
           >
             <HelpCircle className="w-3.5 h-3.5" />
           </button>
@@ -130,7 +132,7 @@ export function RoundRobinView({
             >
               <X className="w-3.5 h-3.5" />
             </button>
-            <p className="font-bold mb-1.5">Cách tính xếp hạng:</p>
+            <p className="font-bold mb-1.5">{translate("standingsHowItWorks")}:</p>
             {isFootball ? (
               <ol className="list-decimal list-inside space-y-1 text-blue-800 font-medium">
                 <li><b>Điểm</b> - Thắng 3, hòa 1, thua 0; không cộng điểm luân lưu riêng.</li>
@@ -393,7 +395,7 @@ export function RoundRobinView({
         <div className="flex gap-4 overflow-x-auto pb-4 pt-1 -mx-1 px-1 no-scrollbar">
           {visibleMatches.length === 0 ? (
             <div className="w-full text-center py-10 text-slate-400 italic text-sm border border-dashed border-slate-200 rounded-lg">
-              Chưa có trận đấu nào.
+              {translate("noMatches")}
             </div>
           ) : (
             <div className="w-full bg-slate-50/60 rounded-lg border border-slate-200 p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">

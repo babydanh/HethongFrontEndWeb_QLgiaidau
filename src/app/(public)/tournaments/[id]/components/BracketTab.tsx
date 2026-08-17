@@ -5,6 +5,7 @@ import type { Tournament, BracketStage, BracketMatch, TournamentResult } from '@
 import { tournamentsApi } from '@/features/tournaments/api';
 import { getSportRuleKind } from '@/features/tournaments/sport-rules/normalize';
 import { LayoutGrid, Maximize2, Trophy, Info, Loader2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import type { OnScheduleMatch, OnSelectBracketMatch, BracketTabProps } from './bracket';
 import { UPPER_SET, LOWER_SET } from './bracket';
 import { SingleElimView, DoubleElimView, RoundRobinView } from './bracket';
@@ -208,6 +209,7 @@ export default function BracketTab({
   fallbackSportRuleKind,
   knockoutOnly = false,
 }: Props) {
+  const translate = useTranslations('TournamentDetail');
   const effectiveTournamentId = tournamentId ?? tournament.id;
   const effectiveSportRuleKind =
     fallbackSportRuleKind ?? getSportRuleKind(tournament.sportRules);
@@ -284,7 +286,7 @@ export default function BracketTab({
       <div className="flex flex-col items-center justify-center py-20">
         <Loader2 className="w-8 h-8 animate-spin text-slate-300 mb-3" />
         <p className="text-sm text-slate-400 font-medium">
-          Đang tải sơ đồ thi đấu...
+          {translate("bracketLoading")}
         </p>
       </div>
     );
@@ -297,7 +299,7 @@ export default function BracketTab({
         <div className="flex items-center gap-2 text-xs text-slate-400 font-semibold">
           <Info className="w-3.5 h-3.5" />
           <span>
-            Phân hạng:{' '}
+            {translate("rankingLabel")}:{' '}
             <strong className="text-slate-600">{tournament.name}</strong>
           </span>
           {tournament.genderRestriction && (
@@ -308,10 +310,9 @@ export default function BracketTab({
         </div>
         <div className="flex flex-col items-center justify-center py-20 border border-dashed border-slate-200 rounded-lg">
           <Trophy className="w-12 h-12 text-slate-200 mb-3" />
-          <h4 className="font-bold text-slate-600 mb-1">Chưa có nhánh đấu</h4>
+          <h4 className="font-bold text-slate-600 mb-1">{translate("bracketEmptyTitle")}</h4>
           <p className="text-slate-400 text-sm text-center max-w-xs">
-            Nhánh đấu sẽ xuất hiện sau khi Ban tổ chức hoàn tất danh sách đăng
-            ký.
+            {translate("bracketEmptyDescription")}
           </p>
         </div>
       </div>
@@ -350,7 +351,7 @@ export default function BracketTab({
         <div className="flex items-center gap-2 text-xs text-slate-400 font-semibold">
           <Info className="w-3.5 h-3.5" />
           <span>
-            Phân hạng:{' '}
+            {translate("rankingLabel")}:{' '}
             <strong className="text-slate-700">{tournament.name}</strong>
           </span>
           {tournament.genderRestriction && (
@@ -413,7 +414,7 @@ export default function BracketTab({
               {stageNameLabel(activeStage.name)}
             </h3>
             <p className="text-xs text-slate-400 font-semibold mt-0.5">
-              Thể thức: {stageTypeLabel(activeStage.type)}
+              {translate("formatLabel")}: {stageTypeLabel(activeStage.type)}
             </p>
           </div>
 

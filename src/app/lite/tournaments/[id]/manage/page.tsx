@@ -138,8 +138,6 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
   const [mockLoading, setMockLoading] = useState(false);
   const [rosterConfirming, setRosterConfirming] = useState(false);
 
-  // Keep old Lite links compatible, but standardize management on the full
-  // organizer workspace. Lite remains a scoring preset, not a reduced UI.
   useEffect(() => {
     router.replace(`/organizer/tournaments/${id}/manage`);
   }, [id, router]);

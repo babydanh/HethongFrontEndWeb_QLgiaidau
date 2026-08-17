@@ -507,6 +507,7 @@ export const tournamentsApi = {
     name: string;
     sport: 'badminton' | 'tennis' | 'pickleball' | 'table_tennis' | 'football';
     communityId?: string;
+    tournamentType?: 'CLUB' | 'PUBLIC';
     visibility?: 'PRIVATE' | 'PUBLIC';
     bannerUrl?: string;
     logoUrl?: string;
@@ -526,7 +527,7 @@ export const tournamentsApi = {
     bracketType?: 'single_elimination' | 'double_elimination' | 'round_robin' | 'group_stage_knockout';
     maxTeams?: number;
     description?: string;
-    registrationMode?: 'OPEN' | 'INVITE_ONLY';
+    registrationMode?: 'OPEN' | 'APPROVAL' | 'INVITE_ONLY';
     venueName?: string;
     locationAddress?: string;
     province?: string;

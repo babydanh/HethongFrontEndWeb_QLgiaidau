@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { Tournament, tournamentsApi, TournamentParticipant, FootballRosterStatus } from '@/features/tournaments/api';
 import { ChevronDown, ChevronUp, User, Award, ShieldCheck, XCircle, CheckCircle } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useUserProfileModalStore } from '@/lib/zustand/userProfileModalStore';
 import toast from 'react-hot-toast';
 
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export default function TeamsTab({ tournament, tournamentId, divisionId, participantId }: Props) {
+  const translate = useTranslations('TournamentDetail');
   const { openUserProfile } = useUserProfileModalStore();
   const [participants, setParticipants] = useState<TournamentParticipant[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -58,9 +60,9 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
       await tournamentsApi.respondFootballRoster(tournamentId ?? tournament.id, participantId, action);
       const refreshed = await tournamentsApi.getFootballRosterStatus(tournamentId ?? tournament.id, participantId);
       setRosterStatus(refreshed.data ?? null);
-      toast.success(action === 'CONFIRM' ? 'Đã xác nhận đội hình.' : 'Đã từ chối tham gia đội hình.');
+      toast.success(action === 'CONFIRM' ? translate('rosterConfirmed') : translate('rosterDeclined'));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Không thể cập nhật xác nhận đội hình.');
+      toast.error(error instanceof Error ? error.message : translate('rosterUpdateFailed'));
     } finally {
       setRosterAction(false);
     }
@@ -86,11 +88,11 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
           <div className="flex items-start gap-3">
             <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
             <div className="min-w-0 flex-1">
-              <p className="font-bold text-amber-950">Bạn được chọn vào đội hình giải này</p>
-              <p className="mt-1 text-xs font-medium text-amber-800">Xác nhận trước khi Ban tổ chức khóa roster. Bạn có thể từ chối nếu chưa sẵn sàng.</p>
+              <p className="font-bold text-amber-950">{translate("rosterSelected")}</p>
+              <p className="mt-1 text-xs font-medium text-amber-800">{translate("rosterConfirmHint")}</p>
               <div className="mt-3 flex flex-wrap gap-2">
-                <button type="button" disabled={rosterAction} onClick={() => respondToRoster('CONFIRM')} className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-700 disabled:opacity-60"><CheckCircle className="h-4 w-4" /> Xác nhận tham gia</button>
-                <button type="button" disabled={rosterAction} onClick={() => respondToRoster('DECLINE')} className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-white px-3 py-2 text-xs font-bold text-rose-700 hover:bg-rose-50 disabled:opacity-60"><XCircle className="h-4 w-4" /> Từ chối</button>
+                <button type="button" disabled={rosterAction} onClick={() => respondToRoster('CONFIRM')} className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-700 disabled:opacity-60"><CheckCircle className="h-4 w-4" /> {translate("rosterConfirm")}</button>
+                <button type="button" disabled={rosterAction} onClick={() => respondToRoster('DECLINE')} className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-white px-3 py-2 text-xs font-bold text-rose-700 hover:bg-rose-50 disabled:opacity-60"><XCircle className="h-4 w-4" /> {translate("rosterDecline")}</button>
               </div>
             </div>
           </div>
@@ -99,10 +101,10 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
       <div className="flex flex-col gap-3">
         <div>
           <h3 className="text-lg font-bold text-slate-900">
-            Danh sách đội/cặp tham gia
+            {translate("teamsTitle")}
           </h3>
           <p className="text-xs font-medium text-slate-500 mt-1">
-            Chỉ hiển thị hồ sơ tham gia hợp lệ công khai.
+            {translate("publicRosterNote")}
           </p>
         </div>
         
@@ -136,7 +138,7 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
             <thead className="text-[11px] sm:text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-200">
               <tr>
                 <th className="px-3 py-3 sm:px-6 sm:py-4 font-bold w-10 sm:w-16">#</th>
-                <th className="px-3 py-3 sm:px-6 sm:py-4 font-bold">Tên đội / Tuyển thủ</th>
+                <th className="px-3 py-3 sm:px-6 sm:py-4 font-bold">{translate("teamNameHeader")}</th>
                 <th className="px-3 py-3 sm:px-6 sm:py-4 font-bold w-32 sm:w-48">Thanh toán</th>
                 <th className="px-3 py-3 sm:px-6 sm:py-4 font-bold w-16 sm:w-24 text-right">Chi tiết</th>
               </tr>
@@ -227,9 +229,9 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
                                       )}
                                     </div>
                                     <div className="min-w-0 flex-1">
-                                      <p className="font-bold text-slate-900 text-sm truncate">{member.fullName || 'Thành viên'}</p>
+                                      <p className="font-bold text-slate-900 text-sm truncate">{member.fullName || translate('teamMember')}</p>
                                       {member.isMock ? (
-                                        <p className="text-xs text-slate-400 font-medium mt-0.5">VĐV ảo</p>
+                                        <p className="text-xs text-slate-400 font-medium mt-0.5">{translate("virtualAthlete")}</p>
                                       ) : member.elo ? (
                                         <p className="text-xs text-slate-500 font-medium flex items-center gap-1 mt-0.5">
                                           <Award className="w-3.5 h-3.5 text-blue-500" />
@@ -257,7 +259,7 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
                                           openUserProfile(
                                             {
                                               id: targetUserId,
-                                              fullName: member.fullName || 'Thành viên',
+                                              fullName: member.fullName || translate('teamMember'),
                                               avatarUrl: avatarSrc,
                                             },
                                             rect,
@@ -276,7 +278,7 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
                                           ? 'bg-blue-50 text-blue-700 border-blue-200' 
                                           : 'bg-slate-50 text-slate-600 border-slate-200'
                                       }`}>
-                                        {member.role === 'CAPTAIN' ? 'Đội trưởng' : 'Thành viên'}
+                                        {member.role === 'CAPTAIN' ? translate('teamCaptain') : translate('teamMember')}
                                       </span>
                                   </div>
                                 );
@@ -294,7 +296,7 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
         </div>
       ) : (
         <div className="text-center py-12 border border-dashed border-slate-200 rounded-lg text-slate-500">
-          Chưa có đội nào đăng ký tham gia.
+          {translate("teamsEmpty")}
         </div>
       )}
     </div>

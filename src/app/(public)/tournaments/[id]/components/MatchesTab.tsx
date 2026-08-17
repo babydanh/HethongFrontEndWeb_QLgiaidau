@@ -8,6 +8,7 @@ import { socketClient } from '@/lib/socket';
 import { useCursorPagination } from '@/hooks/useCursorPagination';
 import { InfiniteScrollTrigger } from '@/components/ui/infinite-scroll-trigger';
 import { Calendar, Play, Trophy, MapPin, Info, LayoutGrid, Search } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { formatDateTime } from '@/utils/format';
 import { buildRoundFilterOptions, getMatchRoundLabel } from '@/utils/match-round-label';
@@ -22,6 +23,7 @@ interface Props {
 type StatusFilter = 'ALL' | 'ONGOING' | 'SCHEDULED' | 'COMPLETED';
 
 export default function MatchesTab({ tournament, tournamentId, divisionId }: Props) {
+  const translate = useTranslations('TournamentDetail');
   const { openUserProfile } = useUserProfileModalStore();
   const effectiveTournamentId = tournamentId ?? tournament.id;
   
@@ -613,7 +615,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                       <span>
                         {match.scheduledAt
                           ? formatDateTime(match.scheduledAt)
-                          : 'Chưa xếp lịch'}
+                          : translate('unscheduled')}
                       </span>
                     </div>
                     {(match.courtName || match.tournament?.venueName) && (
@@ -642,8 +644,8 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
       ) : (
         <div className="text-center py-16 border border-dashed border-slate-200 rounded-xl text-slate-450 bg-white">
           <Calendar className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-          <p className="font-bold text-sm text-slate-500">Không tìm thấy trận đấu nào.</p>
-          <p className="text-xs text-slate-400 mt-1">Vui lòng chọn Vòng đấu hoặc Bộ lọc trạng thái khác.</p>
+          <p className="font-bold text-sm text-slate-500">{translate('matchesEmpty')}</p>
+          <p className="text-xs text-slate-400 mt-1">{translate('matchesEmptyHint')}</p>
         </div>
       )}
     </div>

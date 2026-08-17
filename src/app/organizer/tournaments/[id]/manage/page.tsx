@@ -22,7 +22,7 @@ import { LivestreamTab } from './components/LivestreamTab';
 import { getSportRulePresentation } from '@/features/tournaments/sport-rules/presentation';
 import { getScoreEntryGuidance, getSportRulePresets } from '@/features/tournaments/sport-rules/ui-guidance';
 import { resolveSportRuleView } from '@/features/tournaments/sport-rules/normalize';
-import { isTournamentRegistrationClosed, isTournamentRegistrationOpen } from '@/utils/tournament-status';
+import { isTournamentRegistrationClosed } from '@/utils/tournament-status';
 
 function SummaryRow({ label, value }: { label: string; value: ReactNode }) {
   return (
@@ -171,7 +171,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
               <p className="text-xs text-slate-400">Chọn hình thức để xem cấu hình riêng</p>
             </div>
             <Button size="sm" onClick={() => { const current = s.availableMatchFormatOptions.find((option) => option.value === s.matchType); s.setNewDivisionMatchType(s.matchType); s.setNewDivisionName(current?.shortLabel ?? ''); s.setIsCreateDivisionModalOpen(true); }}
-              disabled={isTournamentRegistrationOpen(s.tournament.status) || isTournamentRegistrationClosed(s.tournament.status)}
+              disabled={isTournamentRegistrationClosed(s.tournament.status) || s.tournament.isRegistrationLocked || ['UPCOMING', 'IN_PROGRESS', 'ONGOING', 'COMPLETED', 'CANCELLED'].includes(s.tournament.status)}
               className="font-bold text-xs flex items-center gap-1.5 h-9 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white whitespace-nowrap">
               <Plus className="w-3.5 h-3.5" /> Thêm hình thức
             </Button>

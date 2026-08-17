@@ -468,6 +468,18 @@
     "increaseGoals": "Thêm bàn thắng {name}",
     "minuteLabel": "Phút",
     "addedMinuteLabel": "Bù giờ +",
-    "matchEvents": "Diễn biến trận"
+    "matchEvents": "Diễn biến trận",
+    "footballFirstHalf": "Hiệp 1",
+    "footballHalftime": "Nghỉ giữa hiệp",
+    "footballStoppageTime": "Bù giờ",
+    "footballFullTime": "Hết trận",
+    "footballExtraTimeFirstHalf": "Hiệp phụ 1",
+    "footballExtraTimeBreak": "Nghỉ hiệp phụ",
+    "footballExtraTimeSecondHalf": "Hiệp phụ 2",
+    "footballPenaltyShootout": "Sút luân lưu",
+    "footballYellowCard": "Thẻ vàng",
+    "footballRedCard": "Thẻ đỏ",
+    "footballFoul": "Phạm lỗi",
+    "footballPenaltyGoal": "Phạt đền"
   }
 }

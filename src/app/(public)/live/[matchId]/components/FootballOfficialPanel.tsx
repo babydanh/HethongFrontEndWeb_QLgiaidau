@@ -84,12 +84,35 @@ export function FootballOfficialPanel({
   onAddedMinuteChange,
 }: FootballOfficialPanelProps) {
   const translate = useTranslations('LiveMatch');
+
+  const localizedPhaseLabel = (phase: FootballMatchPhase) => {
+    switch (phase) {
+      case 'FIRST_HALF':
+        return translate('footballFirstHalf');
+      case 'HALFTIME':
+        return translate('footballHalftime');
+      case 'STOPPAGE_TIME':
+        return translate('footballStoppageTime');
+      case 'FULL_TIME':
+        return translate('footballFullTime');
+      case 'EXTRA_TIME_FIRST_HALF':
+        return translate('footballExtraTimeFirstHalf');
+      case 'EXTRA_TIME_BREAK':
+        return translate('footballExtraTimeBreak');
+      case 'EXTRA_TIME_SECOND_HALF':
+        return translate('footballExtraTimeSecondHalf');
+      case 'PENALTY_SHOOTOUT':
+        return translate('footballPenaltyShootout');
+      default:
+        return footballPhaseLabel(phase);
+    }
+  };
   return (
     <div className="space-y-4 rounded-xl border border-emerald-100 bg-emerald-50/40 p-3 sm:p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-emerald-700">Bóng đá · Scoring live</p>
-          <p className="mt-1 text-sm font-bold text-slate-900">{footballPhaseLabel(score.phase)}</p>
+          <p className="mt-1 text-sm font-bold text-slate-900">{localizedPhaseLabel(score.phase)}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-600">
           <Timer className="h-4 w-4 text-emerald-600" />
@@ -150,17 +173,17 @@ export function FootballOfficialPanel({
                 : 'border-emerald-200 bg-white text-emerald-800 hover:bg-emerald-50',
             )}
           >
-            {footballPhaseLabel(phase)}
+            {localizedPhaseLabel(phase)}
           </button>
         ))}
       </div>
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {([
-          ['YELLOW_CARD', 'Thẻ vàng', CreditCard],
-          ['RED_CARD', 'Thẻ đỏ', Square],
-          ['FOUL', 'Phạm lỗi', Flag],
-          ['PENALTY_GOAL', 'Phạt đền', Trophy],
+          ['YELLOW_CARD', translate('footballYellowCard'), CreditCard],
+          ['RED_CARD', translate('footballRedCard'), Square],
+          ['FOUL', translate('footballFoul'), Flag],
+          ['PENALTY_GOAL', translate('footballPenaltyGoal'), Trophy],
         ] as const).map(([type, label, Icon]) => (
           <div key={type} className="rounded-lg border border-slate-200 bg-white p-2">
             <p className="flex items-center gap-1 text-[11px] font-bold text-slate-600"><Icon className="h-3.5 w-3.5" />{label}</p>

@@ -468,6 +468,18 @@
     "increaseGoals": "Add a goal for {name}",
     "minuteLabel": "Minute",
     "addedMinuteLabel": "Added time +",
-    "matchEvents": "Match events"
+    "matchEvents": "Match events",
+    "footballFirstHalf": "First half",
+    "footballHalftime": "Halftime",
+    "footballStoppageTime": "Stoppage time",
+    "footballFullTime": "Full time",
+    "footballExtraTimeFirstHalf": "Extra time first half",
+    "footballExtraTimeBreak": "Extra time break",
+    "footballExtraTimeSecondHalf": "Extra time second half",
+    "footballPenaltyShootout": "Penalty shootout",
+    "footballYellowCard": "Yellow card",
+    "footballRedCard": "Red card",
+    "footballFoul": "Foul",
+    "footballPenaltyGoal": "Penalty goal"
   }
 }

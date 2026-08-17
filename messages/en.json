@@ -32,7 +32,16 @@
     "registeredTournaments": "Registered tournaments",
     "organizedTournaments": "Organized tournaments",
     "followedTournaments": "Followed tournaments",
-    "tournamentList": "Tournament list"
+    "tournamentList": "Tournament list",
+    "manageTournaments": "Manage tournaments",
+    "createTournament": "Create tournament",
+    "findTournaments": "Find tournaments",
+    "myTournaments": "My tournaments",
+    "decline": "Decline",
+    "sport": "Sport",
+    "unassigned": "Unassigned",
+    "noRefereeAssignments": "You have no referee assignments.",
+    "viewProfile": "View profile"
   },
   "TournamentList": {
     "searchPlaceholder": "Tournament name, location...",

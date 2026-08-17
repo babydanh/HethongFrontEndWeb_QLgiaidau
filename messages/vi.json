@@ -32,7 +32,16 @@
     "registeredTournaments": "Giải đã đăng ký",
     "organizedTournaments": "Giải đang tổ chức",
     "followedTournaments": "Giải đang theo dõi",
-    "tournamentList": "Danh sách giải đấu"
+    "tournamentList": "Danh sách giải đấu",
+    "manageTournaments": "Quản lý giải đấu",
+    "createTournament": "Tạo giải đấu",
+    "findTournaments": "Tìm giải đấu",
+    "myTournaments": "Giải đấu của tôi",
+    "decline": "Từ chối",
+    "sport": "Môn thể thao",
+    "unassigned": "Chưa gán",
+    "noRefereeAssignments": "Bạn chưa có ca làm việc trọng tài nào được phân công.",
+    "viewProfile": "Xem trang cá nhân"
   },
   "TournamentList": {
     "searchPlaceholder": "Tên giải đấu, địa điểm...",

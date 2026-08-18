@@ -381,12 +381,33 @@ export default function QuickTournamentCreate() {
     }
     const start = new Date(startDate);
     if (Number.isNaN(start.getTime())) return;
-    const endOfStartDay = new Date(start);
-    endOfStartDay.setHours(23, 59, 0, 0);
+    
+    // Tự động tính hạn đóng đăng ký: 23:59 ngày hôm trước ngày bắt đầu giải
+    const dayBeforeStart = new Date(start);
+    dayBeforeStart.setDate(dayBeforeStart.getDate() - 1);
+    dayBeforeStart.setHours(23, 59, 0, 0);
+
+    const regStart = new Date(registrationStart);
+    let targetRegEnd = dayBeforeStart;
+
+    // Nếu ngày hôm trước vẫn sau hoặc cùng ngày với registrationStart nhưng muộn hơn start thì lùi lại
+    if (!Number.isNaN(regStart.getTime()) && targetRegEnd.getTime() <= regStart.getTime()) {
+      targetRegEnd = new Date(start.getTime() - 2 * 60 * 60 * 1000);
+      if (targetRegEnd.getTime() <= regStart.getTime()) {
+        targetRegEnd = new Date((regStart.getTime() + start.getTime()) / 2);
+      }
+    }
+
+    // Luôn đảm bảo thời gian đóng đăng ký trước giờ bắt đầu giải ít nhất 1 giờ
+    if (targetRegEnd.getTime() >= start.getTime()) {
+      targetRegEnd = new Date(start.getTime() - 60 * 60 * 1000);
+    }
+
     const estimatedEnd = new Date(start);
     estimatedEnd.setDate(estimatedEnd.getDate() + 14);
     estimatedEnd.setHours(23, 59, 0, 0);
-    const nextRegistrationEnd = formatDateTimeInput(endOfStartDay);
+
+    const nextRegistrationEnd = formatDateTimeInput(targetRegEnd);
     const nextEndDate = formatDateTimeInput(estimatedEnd);
     const currentRegistrationEnd = getValues('registrationEnd');
     const currentEndDate = getValues('endDate');
@@ -446,23 +467,6 @@ export default function QuickTournamentCreate() {
       if (primary === 'FOOTBALL_MALE') setValue('genderRestriction', 'MALE');
       else if (primary === 'FOOTBALL_FEMALE') setValue('genderRestriction', 'FEMALE');
       else setValue('genderRestriction', '');
-    }
-  };
-
-  const toggleFormat = (formatKey: string) => {
-    const current = selectedFormats || [];
-    if (current.includes(formatKey)) {
-      if (current.length > 1) {
-        const next = current.filter((item) => item !== formatKey);
-        setValue('selectedFormats', next, { shouldValidate: true });
-        syncLegacyFormat(next[0]);
-      } else {
-        toast('Cần ít nhất 1 nội dung thi đấu.', { icon: 'ℹ️' });
-      }
-    } else {
-      const next = [...current, formatKey];
-      setValue('selectedFormats', next, { shouldValidate: true });
-      syncLegacyFormat(next[0]);
     }
   };
 
@@ -616,12 +620,23 @@ export default function QuickTournamentCreate() {
           );
           return {
             ...division,
+            name: config?.label?.trim() || division.name,
             minElo: config?.eloEnabled ? config.minElo : null,
             maxElo: config?.eloEnabled ? config.maxElo : null,
           };
         });
+        // createLite already materializes one safe default division for the
+        // app/legacy clients. Reuse it for the first selected format instead
+        // of leaving a hidden duplicate division behind.
+        const existingDivisionsResponse = await divisionsApi.getDivisions(response.id);
+        const existingDivisions = existingDivisionsResponse.data ?? [];
+        const [firstDivision, ...additionalDivisions] = divisionInputs;
+        if (firstDivision && existingDivisions[0]) {
+          await divisionsApi.updateDivision(existingDivisions[0].id, firstDivision);
+        }
+        const divisionsToCreate = existingDivisions[0] ? additionalDivisions : divisionInputs;
         await Promise.all(
-          divisionInputs.map((divInput) => divisionsApi.createDivision(response.id, divInput))
+          divisionsToCreate.map((divInput) => divisionsApi.createDivision(response.id, divInput))
         );
       } catch (divisionError: unknown) {
         await tournamentsApi.deleteTournament(response.id).catch(() => undefined);
@@ -777,14 +792,14 @@ export default function QuickTournamentCreate() {
                   <div className={`sm:col-span-2 grid gap-4 overflow-hidden transition-all duration-300 ease-out ${showDerivedSchedule ? 'max-h-48 translate-y-0 opacity-100' : 'pointer-events-none max-h-0 -translate-y-2 opacity-0'}`} aria-hidden={!showDerivedSchedule}>
                     <div className="grid gap-4 sm:grid-cols-2">
                       <CustomDateTimePicker
-                        label="Đóng đăng ký (tự điền 23:59 ngày bắt đầu)"
+                        label="Đóng đăng ký"
                         value={registrationEnd}
                         onChange={handleRegistrationEndChange}
                         error={errors.registrationEnd?.message}
                       />
 
                       <CustomDateTimePicker
-                        label="Kết thúc dự kiến (tự điền sau 2 tuần)"
+                        label="Kết thúc dự kiến"
                         value={endDate}
                         onChange={(val) => setValue('endDate', val, { shouldValidate: true })}
                         error={errors.endDate?.message}
@@ -792,7 +807,6 @@ export default function QuickTournamentCreate() {
                     </div>
                   </div>
                 </div>
-                <p className="text-[11px] text-slate-500">Nhập đủ hai mốc đầu tiên để hiện lịch tự điền. Bạn có thể sửa hai mốc dự kiến bất cứ lúc nào.</p>
               </section>
 
               {/* Card 3: Địa điểm & Sân thi đấu */}
@@ -980,8 +994,8 @@ export default function QuickTournamentCreate() {
                       </div>
                     );
                   })}
-                  <button type="button" onClick={() => openFormatModal()} className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-blue-300 bg-white px-3 py-2.5 text-xs font-bold text-blue-700 transition hover:border-blue-500 hover:bg-blue-50">
-                    <Plus className="h-3.5 w-3.5" /> Thêm hình thức
+                  <button type="button" disabled={selectedFormats.length >= (sport === 'football' ? DEFAULT_FOOTBALL_FORMATS.length : DEFAULT_RACKET_FORMATS.length)} onClick={() => openFormatModal()} className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-blue-300 bg-white px-3 py-2.5 text-xs font-bold text-blue-700 transition hover:border-blue-500 hover:bg-blue-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400 disabled:hover:bg-white">
+                    <Plus className="h-3.5 w-3.5" /> {selectedFormats.length >= (sport === 'football' ? DEFAULT_FOOTBALL_FORMATS.length : DEFAULT_RACKET_FORMATS.length) ? 'Đã đủ hình thức mặc định' : 'Thêm hình thức'}
                   </button>
                 </div>
                 {errors.selectedFormats && (

@@ -287,7 +287,7 @@ export default function QuickTournamentCreate() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const communityId = searchParams.get('communityId') || undefined;
-  const scheduleDefaults = useMemo(quickDefaults, []);
+  const scheduleDefaults = useMemo(() => quickDefaults(), []);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -418,15 +418,26 @@ export default function QuickTournamentCreate() {
   }, [sport]);
 
   useEffect(() => {
+    if (!province || !provinces.some((item) => item.code === province)) {
+      return;
+    }
+
     let active = true;
-    setWards([]);
-    setValue('ward', '');
-    if (!province || !provinces.some((item) => item.code === province)) return () => { active = false; };
     regionsApi.getWards(province).then((response) => {
-      if (active) setWards(response ?? []);
-    }).catch(() => { if (active) toast.error('Không thể tải danh sách phường/xã.'); });
-    return () => { active = false; };
-  }, [province, provinces, setValue]);
+      if (active) {
+        setWards(response ?? []);
+      }
+    }).catch(() => { 
+      if (active) {
+        setWards([]);
+        toast.error('Không thể tải danh sách phường/xã.'); 
+      }
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [province, provinces]);
 
   const onSubmit = async (values: QuickValues) => {
     try {
@@ -466,8 +477,8 @@ export default function QuickTournamentCreate() {
         communityId,
         tournamentType: communityId ? 'CLUB' : 'PUBLIC',
         genderRestriction: values.genderRestriction || undefined,
-        registrationStart: values.registrationStart ? new Date(values.registrationStart).toISOString() : undefined,
-        registrationEnd: values.registrationEnd ? new Date(values.registrationEnd).toISOString() : undefined,
+        registrationStartDate: values.registrationStart ? new Date(values.registrationStart).toISOString() : undefined,
+        registrationEndDate: values.registrationEnd ? new Date(values.registrationEnd).toISOString() : undefined,
         startDate: values.startDate ? new Date(values.startDate).toISOString() : undefined,
         endDate: values.endDate ? new Date(values.endDate).toISOString() : undefined,
         venueName: values.venueName ? values.venueName.trim() : undefined,
@@ -694,7 +705,12 @@ export default function QuickTournamentCreate() {
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div>
                       <select
-                        {...register('province')}
+                        {...register('province', {
+                          onChange: () => {
+                            setWards([]);
+                            setValue('ward', '');
+                          },
+                        })}
                         className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-800 outline-none transition focus:border-blue-500"
                       >
                         <option value="">-- Chọn Tỉnh / Thành phố --</option>

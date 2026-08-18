@@ -74,7 +74,10 @@
     "matchCount": "{count} trận",
     "viewAllMatches": "Xem tất cả trận →",
     "matchLabel": "Trận đấu",
-    "viewMatch": "Xem trận"
+    "viewMatch": "Xem trận",
+    "countdownDay": "ngày",
+    "progressToNextRank": "Tiến trình lên hạng",
+    "winRate": "Tỉ lệ"
   },
   "Profile": {
     "editCover": "Chỉnh sửa ảnh bìa",
@@ -646,6 +649,8 @@
     "registrationPeriod": "Thời gian đăng ký",
     "registrationOpensAfter": "Mở đăng ký sau",
     "registrationOpened": "Đã mở đăng ký",
+    "startAfter": "Khởi tranh sau",
+    "started": "Đã khởi tranh",
     "registrationLockedNotice": "Giải đấu đã tạm ngưng nhận đăng ký mới từ Ban tổ chức.",
     "registrationExpiredNotice": "Hạn đăng ký giải đấu đã kết thúc.",
     "tournamentNotFound": "Không tìm thấy giải đấu.",

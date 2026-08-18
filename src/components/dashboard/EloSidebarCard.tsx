@@ -90,7 +90,7 @@ export default function EloSidebarCard({
 
       <div className="mb-3 rounded-lg bg-slate-50 px-3 py-2.5">
         <div className="mb-1.5 flex items-center justify-between gap-2 text-[10px] font-semibold text-slate-500">
-          <span>Tiến trình lên hạng</span>
+          <span>{translate('progressToNextRank')}</span>
           <span className="tabular-nums text-slate-700">{hasRank ? `${Math.round(progress.percent)}%` : '0%'}</span>
         </div>
         <div className="h-2 overflow-hidden rounded-full bg-slate-200">
@@ -110,7 +110,7 @@ export default function EloSidebarCard({
           <p className="text-sm font-bold tabular-nums text-slate-900">{matchesWon}/{matchesPlayed}</p>
         </div>
         <div>
-          <p className="text-[10px] text-slate-400 mb-0.5">Tỉ lệ</p>
+          <p className="text-[10px] text-slate-400 mb-0.5">{translate('winRate')}</p>
           <p className="text-sm font-bold tabular-nums text-slate-900">{winRate}%</p>
         </div>
         <div>

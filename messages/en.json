@@ -75,7 +75,9 @@
     "viewAllMatches": "View all matches →",
     "matchLabel": "Match",
     "viewMatch": "View match",
-    "countdownDay": "days"
+    "countdownDay": "days",
+    "progressToNextRank": "Progress to next rank",
+    "winRate": "Win rate"
   },
   "Profile": {
     "editCover": "Edit cover photo",
@@ -647,6 +649,8 @@
     "registrationPeriod": "Registration period",
     "registrationOpensAfter": "Registration opens in",
     "registrationOpened": "Registration is open",
+    "startAfter": "Starts in",
+    "started": "Started",
     "registrationLockedNotice": "The organizer has temporarily paused new registrations for this tournament.",
     "registrationExpiredNotice": "The tournament registration deadline has passed.",
     "tournamentNotFound": "Tournament not found.",

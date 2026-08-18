@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -23,15 +24,15 @@ import CommunityPostList from "./CommunityPostList";
 import TagAssignModal from "./TagAssignModal";
 import { useCommunityMentions } from "./useCommunityMentions";
 
-const postSchema = z.object({
+const createPostSchema = (maxLengthMessage: string) => z.object({
   content: z
     .string()
     .trim()
-    .max(5000, "Bài viết tối đa 5000 ký tự.")
+    .max(5000, maxLengthMessage)
     .optional(),
 });
 
-type PostFormValues = z.infer<typeof postSchema>;
+type PostFormValues = z.infer<ReturnType<typeof createPostSchema>>;
 
 interface CommunityFeedProps {
   communityId: string;
@@ -42,6 +43,7 @@ export default function CommunityFeed({
   communityId,
   canManageTags = false,
 }: CommunityFeedProps) {
+  const translate = useTranslations("Common");
   const { user } = useAuthStore();
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
@@ -94,7 +96,7 @@ export default function CommunityFeed({
     content,
     setContent: (value) => setValue("content", value, { shouldDirty: true }),
     onLimitReached: () =>
-      toast.error("Bạn chỉ có thể nhắc tối đa 20 thành viên."),
+      toast.error(translate("mentionLimitReached")),
     onAmbiguousName: () =>
       toast.error(
         "CLB có hai thành viên trùng tên. Không thể gắn cả hai trong cùng một bài.",
@@ -123,7 +125,7 @@ export default function CommunityFeed({
         setErrorMessage(null);
       } catch (error: unknown) {
         if (!cursor) {
-          setErrorMessage(getErrorMessage(error, "Feed chưa sẵn sàng."));
+          setErrorMessage(getErrorMessage(error, translate("feedNotReady")));
         }
       } finally {
         setIsLoading(false);
@@ -250,11 +252,11 @@ export default function CommunityFeed({
 
       toast.success(
         response.data.status === "PENDING"
-          ? "Bài viết đang chờ duyệt."
-          : "Đã đăng lên câu lạc bộ.",
+          ? translate("postPendingApproval")
+          : translate("postPublished"),
       );
     } catch (error: unknown) {
-      toast.error(getErrorMessage(error, "Không thể đăng bài lúc này."));
+      toast.error(getErrorMessage(error, translate("postCreateFailed")));
     }
   };
 
@@ -268,9 +270,9 @@ export default function CommunityFeed({
         tags,
       );
       setTagTarget(null);
-      toast.success("Đã cập nhật tag thành viên.");
+      toast.success(translate("tagUpdated"));
     } catch (error: unknown) {
-      toast.error(getErrorMessage(error, "Không thể cập nhật tag."));
+      toast.error(getErrorMessage(error, translate("tagUpdateFailed")));
     } finally {
       setIsTagSaving(false);
     }

@@ -1228,7 +1228,9 @@ export function useManageState(id: string) {
   const handleOpenScheduling = (match: BracketMatch) => {
     setSelectedMatch(match); setMatchCourtName(match.courtName||''); setMatchCourtAddress(match.courtAddress||'');
     setMatchScheduledAt(match.scheduledAt ? match.scheduledAt.substring(0,16) : '');
-    setMatchRefereeId(match.refereeId || '');
+    // Referee assignment is a separate organizer action. Scheduling a match
+    // must never preload or implicitly claim a referee.
+    setMatchRefereeId('');
     setMatchCameraId('');
     void livestreamApi.getMatchPlayback(match.id).then((res) => {
       if (res.data?.cameraName) {
@@ -1289,7 +1291,6 @@ export function useManageState(id: string) {
       await tournamentsApi.updateMatchSchedule(selectedMatch.id, {
         courtName: matchCourtName || null, courtAddress: matchCourtAddress || null,
         scheduledAt: matchScheduledAt ? new Date(matchScheduledAt).toISOString() : null,
-        refereeId: matchRefereeId || null,
         matchConfig: isCustomMatchConfig ? buildSportRulesPayload({
           kind: normalizedKind,
           setsToWin: matchSetsToWin,

@@ -42,7 +42,6 @@ interface OpsMatchesProps {
 interface ScheduleDraft {
   courtName: string;
   courtAddress: string;
-  refereeId: string;
   scheduledAt: string;
 }
 
@@ -103,7 +102,6 @@ export function OpsMatches({
   const [scheduleDraft, setScheduleDraft] = useState<ScheduleDraft>({
     courtName: '',
     courtAddress: '',
-    refereeId: '',
     scheduledAt: '',
   });
   const [selectedOperationMatch, setSelectedOperationMatch] = useState<Match | null>(null);
@@ -198,7 +196,6 @@ export function OpsMatches({
     setScheduleDraft({
       courtName: match.courtName || '',
       courtAddress: '',
-      refereeId: match.refereeId || '',
       scheduledAt: match.scheduledAt ? match.scheduledAt.slice(0, 16) : '',
     });
   };
@@ -211,8 +208,6 @@ export function OpsMatches({
     await onUpdateMatchSchedule(selectedScheduleMatch, {
       courtName: scheduleDraft.courtName.trim() || null,
       courtAddress: scheduleDraft.courtAddress.trim() || null,
-              // Trọng tài không tự gán khi xếp lịch.
-              refereeId: null,
       scheduledAt: scheduleDraft.scheduledAt ? new Date(scheduleDraft.scheduledAt).toISOString() : null,
     });
     setSelectedScheduleMatch(null);

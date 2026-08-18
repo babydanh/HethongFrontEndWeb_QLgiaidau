@@ -20,12 +20,14 @@ import {
   Info,
   Check,
   Flame,
+  X,
 } from 'lucide-react';
 import { categoriesApi, Category } from '@/features/categories/api';
 import { divisionsApi, tournamentsApi, type CreateDivisionInput } from '@/features/tournaments/api';
 import { regionsApi, Region } from '@/features/regions/api';
 import { getErrorMessage } from '@/utils/error';
 import { GenderRestriction, MatchTypeDB } from '@/types/tournament';
+import RichTextEditor from '@/components/ui/RichTextEditor';
 
 /* 4 Biểu tượng sơ đồ thể thức thi đấu chuyên nghiệp */
 const SingleEliminationIcon = ({ className = 'h-5 w-5' }: { className?: string }) => (
@@ -121,7 +123,7 @@ const quickSchema = z.object({
   footballHalvesCount: z.number().int().min(1).max(4),
   footballHalfDuration: z.number().int().min(1).max(120),
   footballAllowDraw: z.boolean(),
-  description: z.string().trim().max(1000).optional(),
+  description: z.string().trim().max(10000, 'Mô tả tối đa 10.000 ký tự.').optional(),
   isRanked: z.boolean(),
 });
 
@@ -282,7 +284,7 @@ export default function QuickTournamentCreate() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { register, handleSubmit, setValue, control, formState: { errors } } = useForm<QuickValues>({
+  const { register, handleSubmit, setValue, getValues, control, formState: { errors } } = useForm<QuickValues>({
     resolver: zodResolver(quickSchema),
     defaultValues: {
       sport: 'badminton', format: 'doubles',
@@ -309,6 +311,64 @@ export default function QuickTournamentCreate() {
   const registrationEnd = useWatch({ control, name: 'registrationEnd' });
   const startDate = useWatch({ control, name: 'startDate' });
   const endDate = useWatch({ control, name: 'endDate' });
+  const description = useWatch({ control, name: 'description' }) || '';
+  const formValues = useWatch({ control });
+  const [isDescriptionEditorOpen, setIsDescriptionEditorOpen] = useState(false);
+  const draftHydratedRef = useRef(false);
+  const autoScheduleRef = useRef({ registrationEnd: '', endDate: '' });
+
+  const draftKey = `sporto:tournament-quick-draft:${communityId || 'public'}`;
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || draftHydratedRef.current) return;
+    draftHydratedRef.current = true;
+    try {
+      const raw = window.localStorage.getItem(draftKey);
+      if (!raw) return;
+      const saved = JSON.parse(raw) as Partial<QuickValues>;
+      Object.entries(saved).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) setValue(key as keyof QuickValues, value as never, { shouldDirty: false });
+      });
+      toast.success('Đã khôi phục bản nháp tạo giải.', { id: 'quick-draft-restored' });
+    } catch {
+      window.localStorage.removeItem(draftKey);
+    }
+  }, [draftKey, setValue]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !draftHydratedRef.current) return;
+    const timer = window.setTimeout(() => {
+      const draft = { ...(formValues as QuickValues) } as Partial<QuickValues>;
+      window.localStorage.setItem(draftKey, JSON.stringify(draft));
+    }, 350);
+    return () => window.clearTimeout(timer);
+  }, [draftKey, formValues]);
+
+  useEffect(() => {
+    if (!registrationStart || !startDate) {
+      return;
+    }
+    const start = new Date(startDate);
+    if (Number.isNaN(start.getTime())) return;
+    const endOfStartDay = new Date(start);
+    endOfStartDay.setHours(23, 59, 0, 0);
+    const estimatedEnd = new Date(start);
+    estimatedEnd.setDate(estimatedEnd.getDate() + 14);
+    estimatedEnd.setHours(23, 59, 0, 0);
+    const nextRegistrationEnd = formatDateTimeInput(endOfStartDay);
+    const nextEndDate = formatDateTimeInput(estimatedEnd);
+    const currentRegistrationEnd = getValues('registrationEnd');
+    const currentEndDate = getValues('endDate');
+    if (!currentRegistrationEnd || currentRegistrationEnd === autoScheduleRef.current.registrationEnd) {
+      setValue('registrationEnd', nextRegistrationEnd, { shouldValidate: true });
+    }
+    if (!currentEndDate || currentEndDate === autoScheduleRef.current.endDate) {
+      setValue('endDate', nextEndDate, { shouldValidate: true });
+    }
+    autoScheduleRef.current = { registrationEnd: nextRegistrationEnd, endDate: nextEndDate };
+  }, [registrationStart, startDate, getValues, setValue]);
+
+  const showDerivedSchedule = Boolean(registrationStart && startDate);
 
   const [provinces, setProvinces] = useState<Region[]>([]);
   const [wards, setWards] = useState<Region[]>([]);
@@ -486,6 +546,7 @@ export default function QuickTournamentCreate() {
       }
 
       toast.success(values.visibility === 'PUBLIC' ? 'Đã tạo, đang chờ Admin duyệt công khai.' : 'Tạo giải đấu thành công.');
+      if (typeof window !== 'undefined') window.localStorage.removeItem(draftKey);
       router.push(`/organizer/tournaments/${response.id}/manage`);
     } catch (error: unknown) {
       toast.error(getErrorMessage(error, 'Không thể tạo giải đấu.'));
@@ -578,17 +639,30 @@ export default function QuickTournamentCreate() {
                   </span>
                 </div>
 
-                {/* Mô tả giải đấu */}
+                {/* Mô tả giải đấu: inline preview, editor đầy đủ mở trong popup */}
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                    Mô tả giải đấu (tùy chọn)
-                  </label>
-                  <textarea
-                    {...register('description')}
-                    rows={3}
-                    className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                    placeholder="Giới thiệu sơ lược về giải đấu, đối tượng tham gia, thể lệ hoặc lưu ý cho vận động viên..."
-                  />
+                  <div className="flex items-center justify-between gap-3">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
+                      Mô tả giải đấu (tùy chọn)
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setIsDescriptionEditorOpen(true)}
+                      className="text-xs font-semibold text-blue-600 hover:text-blue-700"
+                    >
+                      Mở trình soạn thảo
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsDescriptionEditorOpen(true)}
+                    className="mt-2 flex min-h-24 w-full items-start rounded-xl border border-slate-300 bg-white px-3.5 py-3 text-left text-sm transition hover:border-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                  >
+                    <span className={description ? 'line-clamp-4 text-slate-800' : 'text-slate-400'}>
+                      {description ? description.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() : 'Tóm tắt thể thức, đối tượng tham gia...'}
+                    </span>
+                  </button>
+                  <input type="hidden" {...register('description')} />
                 </div>
               </section>
 
@@ -603,34 +677,39 @@ export default function QuickTournamentCreate() {
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <CustomDateTimePicker
-                    label="Mở đăng ký (tùy chọn)"
+                    label="Mở đăng ký"
                     value={registrationStart}
                     onChange={handleRegistrationStartChange}
                     error={errors.registrationStart?.message}
                   />
 
                   <CustomDateTimePicker
-                    label="Đóng đăng ký (tùy chọn)"
-                    value={registrationEnd}
-                    onChange={handleRegistrationEndChange}
-                    error={errors.registrationEnd?.message}
-                  />
-
-                  <CustomDateTimePicker
-                    label="Bắt đầu giải (tùy chọn)"
+                    label="Ngày bắt đầu giải"
                     value={startDate}
                     onChange={(val) => setValue('startDate', val, { shouldValidate: true })}
                     error={errors.startDate?.message}
                     isPrimary
                   />
 
-                  <CustomDateTimePicker
-                    label="Kết thúc dự kiến (bổ sung sau nếu cần)"
-                    value={endDate}
-                    onChange={(val) => setValue('endDate', val, { shouldValidate: true })}
-                    error={errors.endDate?.message}
-                  />
+                  <div className={`sm:col-span-2 grid gap-4 overflow-hidden transition-all duration-300 ease-out ${showDerivedSchedule ? 'max-h-48 translate-y-0 opacity-100' : 'pointer-events-none max-h-0 -translate-y-2 opacity-0'}`} aria-hidden={!showDerivedSchedule}>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <CustomDateTimePicker
+                        label="Đóng đăng ký (tự điền 23:59 ngày bắt đầu)"
+                        value={registrationEnd}
+                        onChange={handleRegistrationEndChange}
+                        error={errors.registrationEnd?.message}
+                      />
+
+                      <CustomDateTimePicker
+                        label="Kết thúc dự kiến (tự điền sau 2 tuần)"
+                        value={endDate}
+                        onChange={(val) => setValue('endDate', val, { shouldValidate: true })}
+                        error={errors.endDate?.message}
+                      />
+                    </div>
+                  </div>
                 </div>
+                <p className="text-[11px] text-slate-500">Nhập đủ hai mốc đầu tiên để hiện lịch tự điền. Bạn có thể sửa hai mốc dự kiến bất cứ lúc nào.</p>
               </section>
 
               {/* Card 3: Địa điểm & Sân thi đấu */}
@@ -1071,6 +1150,33 @@ export default function QuickTournamentCreate() {
           </div>
         </form>
       </div>
+      {isDescriptionEditorOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Mô tả giải đấu">
+          <div className="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+              <div>
+                <h2 className="text-base font-bold text-slate-900">Mô tả giải đấu</h2>
+                <p className="mt-0.5 text-xs text-slate-500">Thêm thể thức, đối tượng, lưu ý và hình ảnh. Nội dung được lưu vào bản nháp.</p>
+              </div>
+              <button type="button" onClick={() => setIsDescriptionEditorOpen(false)} className="rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700" aria-label="Đóng">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="min-h-0 overflow-y-auto p-5">
+              <RichTextEditor
+                value={description}
+                onChange={(value) => setValue('description', value, { shouldDirty: true, shouldValidate: true })}
+                placeholder="Nhấn Tab để bắt đầu viết..."
+              />
+            </div>
+            <div className="flex justify-end border-t border-slate-100 px-5 py-3">
+              <button type="button" onClick={() => setIsDescriptionEditorOpen(false)} className="rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-blue-700">
+                Lưu mô tả
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

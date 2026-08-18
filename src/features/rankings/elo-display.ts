@@ -19,6 +19,8 @@ import { getRankProgressInfo } from '@/utils/rank-style';
 
 export type EloMatchType = 'SINGLES' | 'DOUBLES' | 'MIXED_DOUBLES';
 
+export type EloMatchTypeLabels = Partial<Record<EloMatchType, string>>;
+
 const MATCH_TYPE_LABELS: Record<EloMatchType, string> = {
   SINGLES: 'Đơn',
   DOUBLES: 'Đôi',
@@ -26,9 +28,9 @@ const MATCH_TYPE_LABELS: Record<EloMatchType, string> = {
 };
 
 /** Human-readable label for a match type. */
-export const getEloMatchTypeLabel = (matchType?: string | null): string => {
+export const getEloMatchTypeLabel = (matchType?: string | null, labels?: EloMatchTypeLabels): string => {
   if (matchType === 'SINGLES' || matchType === 'DOUBLES' || matchType === 'MIXED_DOUBLES') {
-    return MATCH_TYPE_LABELS[matchType];
+    return labels?.[matchType] ?? MATCH_TYPE_LABELS[matchType];
   }
   return 'Tổng quan';
 };

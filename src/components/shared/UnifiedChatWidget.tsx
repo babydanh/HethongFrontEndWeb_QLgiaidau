@@ -90,18 +90,18 @@ const EMOJI_PICKER_LIST = [
   '💪', '🥳', '😎', '🙏', '🎯', '⚡',
 ];
 
-const initialAiMessages: AiMessage[] = [
+const createInitialAiMessages = (translate: (key: string) => string): AiMessage[] => [
   {
     role: 'assistant',
     content:
-      'Xin chào! Mình là trợ lý Sporto. Bạn có thể hỏi về giải đấu, ELO hoặc cách sử dụng nền tảng.',
+      translate('aiGreeting'),
   },
 ];
 
-const quickPrompts = [
-  'Cách đăng ký giải?',
-  'ELO được tính thế nào?',
-  'Tạo CLB ra sao?',
+const quickPromptKeys = [
+  'quickPromptRegistration',
+  'quickPromptElo',
+  'quickPromptClub',
 ];
 
 function unwrapMessages(
@@ -211,6 +211,7 @@ function renderHighlightedText(text: string, query: string) {
 export default function UnifiedChatWidget() {
   const pathname = usePathname();
   const translate = useTranslations('Common');
+  const quickPrompts = quickPromptKeys.map((key) => translate(key));
   const roomLabels = { club: translate('club'), conversation: translate('conversation') };
   const { user, isAuthenticated } = useAuthStore();
   const userId = user?.id;
@@ -219,7 +220,7 @@ export default function UnifiedChatWidget() {
   const [rooms, setRooms] = useState<InboxRoom[]>([]);
   const [messages, setMessages] = useState<DisplayMessage[]>([]);
   const [supportMessages, setSupportMessages] = useState<SupportMessage[]>([]);
-  const [aiMessages, setAiMessages] = useState<AiMessage[]>(initialAiMessages);
+  const [aiMessages, setAiMessages] = useState<AiMessage[]>(() => createInitialAiMessages(translate));
   const [draft, setDraft] = useState('');
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
@@ -485,7 +486,7 @@ export default function UnifiedChatWidget() {
         setSelection({ kind: 'ROOM', room });
         setRooms((prev) => dedupeRooms([room, ...prev], user?.id));
       } catch (err) {
-        toast.error(getErrorMessage(err, 'Không thể mở cuộc trò chuyện.'));
+        toast.error(getErrorMessage(err, translate('openConversationFailed')));
       } finally {
         if (requestId === directChatRequestRef.current) setLoading(false);
       }
@@ -531,7 +532,7 @@ export default function UnifiedChatWidget() {
         }
       } catch (err) {
         console.error('Failed to focus club room in unified chat:', err);
-        toast.error(getErrorMessage(err, 'Không thể mở chat CLB.'));
+        toast.error(getErrorMessage(err, translate('openClubChatFailed')));
       } finally {
         setLoading(false);
       }
@@ -573,7 +574,7 @@ export default function UnifiedChatWidget() {
                 lastMessage: {
                   id: message.id,
                   senderId: message.senderId,
-                  senderName: message.senderName || 'Thành viên',
+                  senderName: message.senderName || translate('member'),
                   content: message.messageText || (message.attachmentsUrls?.length ? '🖼️ [Hình ảnh]' : ''),
                   createdAt: message.createdAt,
                 },
@@ -605,7 +606,7 @@ export default function UnifiedChatWidget() {
           m.id === data.messageId ? { ...m, isPinned: true } : { ...m, isPinned: false },
         ),
       );
-      toast.success('Đã có tin nhắn mới được ghim!');
+      toast.success(translate('newMessagePinned'));
     };
 
     const onUnpinned = (data: { roomId: string; messageId: string }) => {
@@ -726,7 +727,7 @@ export default function UnifiedChatWidget() {
           setHasMoreMessages(page.meta?.hasMore === true);
         }
       } catch (error: unknown) {
-        if (active) toast.error(getErrorMessage(error, 'Không thể tải tin nhắn.'));
+        if (active) toast.error(getErrorMessage(error, translate('loadMessagesFailed')));
       } finally {
         if (active) setLoading(false);
       }
@@ -782,7 +783,7 @@ export default function UnifiedChatWidget() {
         }
       } catch (error: unknown) {
         if (active) {
-          toast.error(getErrorMessage(error, 'Không thể tải hỗ trợ Sporto.'));
+          toast.error(getErrorMessage(error, translate('loadSupportFailed')));
         }
       } finally {
         if (active) {
@@ -869,7 +870,7 @@ export default function UnifiedChatWidget() {
     if (!text) return;
     void navigator.clipboard.writeText(text);
     setCopiedId(id);
-    toast.success('Đã sao chép tin nhắn!');
+    toast.success(translate('messageCopied'));
     window.setTimeout(() => setCopiedId(null), 2000);
   };
 
@@ -1006,7 +1007,7 @@ export default function UnifiedChatWidget() {
         question: q,
         options: formattedOptions,
         allowMultiple: pollAllowMultiple,
-        creatorName: user?.fullName || 'Thành viên',
+        creatorName: user?.fullName || translate('member'),
         creatorId: user?.id,
         createdAt: new Date().toISOString(),
       };
@@ -1052,7 +1053,7 @@ export default function UnifiedChatWidget() {
       } else {
         await chatApi.blockUser(otherParticipant.id);
         setBlockedUserIds((prev) => [...prev, otherParticipant.id]);
-        toast.success('Đã chặn người dùng.');
+        toast.success(translate('userBlocked'));
       }
       setShowRoomMenu(false);
     } catch (err) {
@@ -1069,9 +1070,9 @@ export default function UnifiedChatWidget() {
       setShowClearConfirmModal(false);
       setShowRoomMenu(false);
       await refreshRooms();
-      toast.success('Đã xóa toàn bộ lịch sử đoạn chat.');
+      toast.success(translate('chatHistoryDeleted'));
     } catch (err) {
-      toast.error(getErrorMessage(err, 'Không thể xóa lịch sử đoạn chat.'));
+      toast.error(getErrorMessage(err, translate('deleteChatHistoryFailed')));
     } finally {
       setClearingRoom(false);
     }
@@ -1091,7 +1092,7 @@ export default function UnifiedChatWidget() {
           : 'Đã tắt thông báo CLB (Im lặng)',
       );
     } catch (err) {
-      toast.error(getErrorMessage(err, 'Không thể cập nhật thông báo CLB.'));
+      toast.error(getErrorMessage(err, translate('updateClubNotificationsFailed')));
     }
   };
 
@@ -1099,7 +1100,7 @@ export default function UnifiedChatWidget() {
     const text = (overrideText ?? draft).trim();
     if ((!text && selectedFiles.length === 0) || selection.kind !== 'ROOM' || sending) return;
     if (isOtherBlocked) {
-      toast.error('Bạn đã chặn người dùng này. Bỏ chặn để gửi tin nhắn.');
+      toast.error(translate('blockedUserCannotMessage'));
       return;
     }
     const currentReply = replyingTo;
@@ -1196,7 +1197,7 @@ export default function UnifiedChatWidget() {
       setNextCursor(page.meta?.nextCursor ?? null);
       setHasMoreMessages(page.meta?.hasMore === true);
     } catch (error: unknown) {
-      toast.error(getErrorMessage(error, 'Không thể tải thêm tin nhắn.'));
+      toast.error(getErrorMessage(error, translate('loadMoreMessagesFailed')));
     } finally {
       setLoadingOlder(false);
     }
@@ -1231,7 +1232,7 @@ export default function UnifiedChatWidget() {
       setSupportMessages(conversation.messages);
     } catch (error: unknown) {
       setDraft(text);
-      toast.error(getErrorMessage(error, 'Không thể gửi tin nhắn hỗ trợ.'));
+      toast.error(getErrorMessage(error, translate('sendSupportMessageFailed')));
     } finally {
       setSending(false);
     }
@@ -1304,7 +1305,7 @@ export default function UnifiedChatWidget() {
       }
       if (!answer) toast.error('AI chưa trả lời, thử lại sau.');
     } catch (error: unknown) {
-      toast.error(getErrorMessage(error, 'Không thể kết nối trợ lý AI.'));
+      toast.error(getErrorMessage(error, translate('connectAiFailed')));
       setAiMessages((current) => current.slice(0, -2));
       setDraft(text);
     } finally {
@@ -1838,7 +1839,7 @@ export default function UnifiedChatWidget() {
                         ) : (
                           <div className="prose prose-sm max-w-none text-slate-800 prose-p:my-1 prose-ul:my-1 prose-li:my-0.5">
                             <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                              {message.content || 'Đang suy nghĩ câu trả lời...'}
+                              {message.content || translate('thinkingReply')}
                             </ReactMarkdown>
                           </div>
                         )}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { Award, Trophy, Loader2, Crown, Search, SlidersHorizontal, X } from 'lucide-react';
 import { Category } from '@/types/category';
 import { rankingsApi, PlayerRanking, FootballTeamRanking } from '@/features/rankings/api';
@@ -19,6 +20,12 @@ interface RankingsTabProps {
 type MatchType = 'ALL' | 'SINGLES' | 'DOUBLES' | 'MIXED_DOUBLES';
 
 export default function RankingsTab({ communityId, categories, onGoToTournaments }: RankingsTabProps) {
+  const translate = useTranslations('Common');
+  const matchTypeLabels = {
+    SINGLES: translate('matchTypeSingles'),
+    DOUBLES: translate('matchTypeDoubles'),
+    MIXED_DOUBLES: translate('matchTypeMixedDoubles'),
+  };
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>(
     categories[0]?.id || ''
   );
@@ -247,7 +254,7 @@ export default function RankingsTab({ communityId, categories, onGoToTournaments
           </h3>
           <p className="text-xs text-slate-450 mt-0.5">
             Top 20 thành viên xuất sắc nhất •{' '}
-            {activeCategory?.name || ''} {getEloMatchTypeLabel(selectedMatchType)}
+            {activeCategory?.name || ''} {getEloMatchTypeLabel(selectedMatchType, matchTypeLabels)}
           </p>
         </div>
       </div>
@@ -280,7 +287,7 @@ export default function RankingsTab({ communityId, categories, onGoToTournaments
             <div className="mb-5 flex items-center justify-between"><div><h4 className="text-base font-black text-slate-900">Bộ lọc xếp hạng</h4><p className="mt-0.5 text-xs text-slate-500">Chọn môn, giới tính và thể thức</p></div><button type="button" onClick={() => setIsFilterOpen(false)} className="rounded-full p-2 text-slate-400 hover:bg-slate-100" aria-label="Đóng bộ lọc"><X className="h-4 w-4" /></button></div>
             <div className="space-y-4">
               {categories.length > 1 && <div><p className="mb-2 text-xs font-bold text-slate-500">Môn thể thao</p><div className="flex flex-wrap gap-2">{categories.map((cat) => <button key={cat.id} type="button" onClick={() => setSelectedCategoryId(cat.id)} className={`rounded-lg border px-3 py-2 text-xs font-bold ${selectedCategoryId === cat.id ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-200 text-slate-700'}`}>{cat.name}</button>)}</div></div>}
-              <div><p className="mb-2 text-xs font-bold text-slate-500">Thể thức</p><div className="flex flex-wrap gap-2">{matchTypes.map((mt) => <button key={mt} type="button" onClick={() => { setSelectedMatchType(mt); if (mt === 'MIXED_DOUBLES') setSelectedGender('MALE'); }} className={`rounded-lg border px-3 py-2 text-xs font-bold ${selectedMatchType === mt ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-200 text-slate-700'}`}>{getEloMatchTypeLabel(mt)}</button>)}</div></div>
+              <div><p className="mb-2 text-xs font-bold text-slate-500">Thể thức</p><div className="flex flex-wrap gap-2">{matchTypes.map((mt) => <button key={mt} type="button" onClick={() => { setSelectedMatchType(mt); if (mt === 'MIXED_DOUBLES') setSelectedGender('MALE'); }} className={`rounded-lg border px-3 py-2 text-xs font-bold ${selectedMatchType === mt ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-200 text-slate-700'}`}>{getEloMatchTypeLabel(mt, matchTypeLabels)}</button>)}</div></div>
               {selectedMatchType !== 'ALL' && selectedMatchType !== 'MIXED_DOUBLES' && <div><p className="mb-2 text-xs font-bold text-slate-500">Giới tính</p><div className="flex gap-2">{(['MALE', 'FEMALE'] as const).map((gender) => <button key={gender} type="button" onClick={() => setSelectedGender(gender)} className={`rounded-lg border px-4 py-2 text-xs font-bold ${selectedGender === gender ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-200 text-slate-700'}`}>{gender === 'MALE' ? 'Nam' : 'Nữ'}</button>)}</div></div>}
             </div>
             <button type="button" onClick={() => setIsFilterOpen(false)} className="mt-6 w-full rounded-lg bg-blue-600 py-2.5 text-sm font-black text-white hover:bg-blue-700">Áp dụng bộ lọc</button>

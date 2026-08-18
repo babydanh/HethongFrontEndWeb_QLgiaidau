@@ -77,7 +77,7 @@
     "viewMatch": "Xem trận",
     "countdownDay": "ngày",
     "progressToNextRank": "Tiến trình lên hạng",
-    "winRate": "Tỉ lệ", "loadMembersFailed": "Lỗi khi tải danh sách thành viên.", "promotedToModerator": "Đã thăng chức làm Quản trị viên!", "demotedToMember": "Đã hạ cấp xuống Thành viên!", "updateRoleFailed": "Lỗi khi cập nhật vai trò.", "removedMember": "Đã kích {name} khỏi nhóm.", "removeMemberFailed": "Lỗi khi mời thành viên ra khỏi cộng đồng.", "bannedMember": "Đã cấm {name} khỏi cộng đồng.", "banMemberFailed": "Lỗi khi cấm thành viên.", "ownershipTransferred": "Đã chuyển quyền sở hữu thành công sang cho {name}!",
+    "winRate": "Tỉ lệ", "loadMembersFailed": "Lỗi khi tải danh sách thành viên.", "promotedToModerator": "Đã thăng chức làm Quản trị viên!", "demotedToMember": "Đã hạ cấp xuống Thành viên!", "updateRoleFailed": "Lỗi khi cập nhật vai trò.", "removedMember": "Đã kích {name} khỏi nhóm.", "removeMemberFailed": "Lỗi khi mời thành viên ra khỏi cộng đồng.", "bannedMember": "Đã cấm {name} khỏi cộng đồng.", "banMemberFailed": "Lỗi khi cấm thành viên.", "ownershipTransferred": "Đã chuyển quyền sở hữu thành công sang cho {name}!", "tournamentDeleted": "Đã xoá giải đấu thành công!", "deleteTournamentFailed": "Có lỗi xảy ra khi xoá giải đấu.", "internalClub": "Nội bộ CLB", "publicTournament": "Giải mở rộng", "allTournaments": "Tất cả giải đấu", "clubTournaments": "Giải nội bộ CLB", "publicTournaments": "Giải đấu mở rộng", "manageClubTournaments": "Quản lý giải đấu CLB", "createClubTournament": "Tạo giải đấu cấp CLB", "allStatuses": "Tất cả trạng thái", "upcoming": "Sắp diễn ra", "ongoing": "Đang diễn ra", "completed": "Đã kết thúc", "loadingTournaments": "Đang tải danh sách giải đấu...", "noTournaments": "Chưa có giải đấu nào", "eloCounted": "Tính ELO", "eloNotCounted": "Không tính ELO", "seriesLabel": "Chuỗi giải đấu", "divisionCount": "{count, plural, one {# hình thức} other {# hình thức}}", "deleteTournamentTitle": "Xoá giải đấu", "deleteTournamentConfirm": "Xoá giải đấu", "invitationSent": "Đã gửi lời mời tham gia tới {name}", "inviteMember": "Mời thành viên", "inviteNewMember": "Mời thành viên mới", "inviting": "Đang mời...", "invite": "Mời", "noUsersFound": "Không tìm thấy người dùng phù hợp.", "kickMemberConfirm": "Bạn có chắc chắn muốn kích thành viên {name} ra khỏi cộng đồng?", "banMemberConfirm": "Bạn có chắc chắn muốn cấm {name} khỏi cộng đồng?",
     "teamElo": "ELO đội bóng",
     "manageTeam": "Quản lý đội",
     "teamCaptain": "Đội trưởng",
@@ -831,5 +831,13 @@
     "processingDays": "7 ngày làm việc",
     "warning": "Hành động này không thể hoàn tác. Sau khi xóa, bạn không thể khôi phục tài khoản hay dữ liệu liên quan.",
     "footer": "Quản lý Giải đấu."
+  },`n`n,
+  "RegistrationMode": {
+    "openCta": "Mở đăng ký",
+    "openBadge": "Mở đăng ký",
+    "approvalCta": "Chờ duyệt",
+    "approvalBadge": "Cần phê duyệt",
+    "inviteOnlyCta": "Chỉ dành cho người được mời",
+    "inviteOnlyBadge": "Chỉ dành cho người được mời"
   }
 }

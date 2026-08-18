@@ -12,7 +12,7 @@ import {
   getEloProgressInfo,
   getShieldStatus,
 } from '@/features/rankings/elo-display';
-import { getStandardRankStyleByIndex } from '@/utils/rank-style';
+import { getRankProgressInfo } from '@/utils/rank-style';
 
 export interface HomepageEloProgressCardProps {
   activeRankInfo: PlayerRanking | null;
@@ -23,32 +23,6 @@ export interface HomepageEloProgressCardProps {
   sportName: string;
   isAuthenticated: boolean;
 }
-
-/** Màu fill progress bar — index theo currentIdx từ TIER_THRESHOLDS */
-const BAR_FILL_COLORS = [
-  'bg-gradient-to-r from-slate-400 to-slate-500',  // D   (idx 0)
-  'bg-gradient-to-r from-slate-400 to-slate-500',  // D+  (idx 1)
-  'bg-gradient-to-r from-blue-400 to-blue-600',    // C   (idx 2)
-  'bg-gradient-to-r from-blue-400 to-blue-600',    // C+  (idx 3)
-  'bg-gradient-to-r from-amber-400 to-amber-600',  // B   (idx 4)
-  'bg-gradient-to-r from-amber-400 to-amber-600',  // B+  (idx 5)
-  'bg-gradient-to-r from-violet-400 to-violet-600',// A   (idx 6)
-  'bg-gradient-to-r from-violet-400 to-violet-600',// A+  (idx 7)
-  'bg-gradient-to-r from-rose-400 to-rose-600',    // S   (idx 8)
-];
-
-/** Màu nền track (phần chưa fill) — index theo currentIdx */
-const BAR_TRACK_COLORS = [
-  'bg-slate-100',       // D
-  'bg-slate-100',       // D+
-  'bg-blue-100/60',     // C
-  'bg-blue-100/60',     // C+
-  'bg-amber-100/60',    // B
-  'bg-amber-100/60',    // B+
-  'bg-blue-100/60',   // A
-  'bg-blue-100/60',   // A+
-  'bg-rose-100/60',     // S
-];
 
 export default function HomepageEloProgressCard({
   activeRankInfo,
@@ -62,8 +36,8 @@ export default function HomepageEloProgressCard({
 
   const currentTier = getEloTier(eloPoints, displayTier, activeRankInfo?.categoryName);
   const shieldStatus = getShieldStatus(activeRankInfo);
-  const progressInfo = getEloProgressInfo(eloPoints);
-  const rankStyle = getStandardRankStyleByIndex(progressInfo.currentIdx);
+  const progressInfo = getEloProgressInfo(eloPoints, activeRankInfo?.categoryName);
+  const rankProgress = getRankProgressInfo(eloPoints, activeRankInfo?.categoryName);
   const hasNoRanks = !activeRankInfo || activeRankInfo.matchesPlayed <= 0;
 
   const ShieldIcon = shieldStatus.state === 'active'
@@ -76,7 +50,7 @@ export default function HomepageEloProgressCard({
   const displayPercent = hasNoRanks ? 0 : progressInfo.percent;
   const fillColor = hasNoRanks
     ? 'bg-gradient-to-r from-slate-300 to-slate-400'
-    : rankStyle.progressClass;
+    : rankProgress.current.progressClass;
   const trackColor = hasNoRanks
     ? 'bg-slate-100'
     : 'bg-slate-100';

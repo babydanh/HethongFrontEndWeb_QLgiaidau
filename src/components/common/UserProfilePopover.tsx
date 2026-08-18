@@ -6,8 +6,17 @@ import { X, MessageCircle, User, CheckCircle2 } from "lucide-react";
 import { usersApi } from "@/features/users/api";
 import { communitiesApi, MemberStreak, CommunityMemberRecord } from "@/features/communities/api";
 import { useRouter } from "next/navigation";
-import CommunityAvatar from "@/app/(public)/communities/[id]/components/CommunityAvatar";
 import { EloTierBadge } from "@/components/ui/EloTierBadge";
+import { RankAvatar } from "@/components/ui/RankAvatar";
+
+interface PublicProfileRank {
+  categoryName?: string | null;
+  matchType?: string | null;
+  eloPoints: number;
+  tierName?: string | null;
+  matchesPlayed: number;
+  matchesWon: number;
+}
 
 export interface PopoverUserProfile {
   id: string;
@@ -22,6 +31,8 @@ export interface PopoverUserProfile {
   bio?: string | null;
   joinedAt?: string | null;
   isVerified?: boolean;
+  allowStrangerMessages?: boolean;
+  ranks?: PublicProfileRank[];
   highlightRank?: {
     eloPoints: number;
     tierName?: string | null;
@@ -80,6 +91,8 @@ export default function UserProfilePopover({
           systemRole: publicData.role || prev?.systemRole,
           roles: publicData.roles || prev?.roles,
           isVerified: publicData.isVerified ?? prev?.isVerified ?? user.isVerified,
+          allowStrangerMessages: publicData.allowStrangerMessages ?? prev?.allowStrangerMessages ?? user.allowStrangerMessages,
+          ranks: Array.isArray(publicData.ranks) ? publicData.ranks : prev?.ranks,
           highlightRank: publicData.highlightRank ?? prev?.highlightRank ?? user.highlightRank,
           joinedAt: publicData.createdAt || prev?.joinedAt || user.joinedAt,
         }));
@@ -123,7 +136,7 @@ export default function UserProfilePopover({
     return () => {
       isMounted = false;
     };
-  }, [isOpen, user?.id, user?.bio, user?.avatarUrl, user?.fullName, user?.coverUrl, user?.isVerified, user?.highlightRank, user?.joinedAt, communityId]);
+  }, [isOpen, user?.id, user?.bio, user?.avatarUrl, user?.fullName, user?.coverUrl, user?.isVerified, user?.allowStrangerMessages, user?.highlightRank, user?.joinedAt, communityId]);
 
   // Click outside and Esc key handlers
   useEffect(() => {
@@ -199,6 +212,11 @@ export default function UserProfilePopover({
   };
 
   const sysRoleBadge = getSystemRoleBadge(profileData.systemRole);
+  const primaryRank = profileData.highlightRank;
+  const canMessage = profileData.allowStrangerMessages !== false || Boolean(communityId && profileData.role);
+  const profileRanks = (profileData.ranks ?? []).filter((rank) => rank.matchesPlayed > 0).slice(0, 3);
+  const totalMatches = profileRanks.reduce((sum, rank) => sum + rank.matchesPlayed, 0);
+  const totalWins = profileRanks.reduce((sum, rank) => sum + rank.matchesWon, 0);
 
   return (
     <div
@@ -235,11 +253,17 @@ export default function UserProfilePopover({
       <div className="relative px-4 pb-4 pt-0">
         {/* Avatar positioned over header */}
         <div className="-mt-10 mb-2 flex items-end justify-between">
-          <div className="relative rounded-full ring-3 ring-white shadow-md bg-white">
-            <CommunityAvatar
+          <div className="rounded-full bg-white p-1 shadow-md">
+            <RankAvatar
               src={profileData.avatarUrl}
               name={profileData.fullName}
-              size={60}
+              size="lg"
+              className="h-[60px] w-[60px]"
+              elo={primaryRank?.eloPoints}
+              tierName={primaryRank?.tierName}
+              categoryName={primaryRank?.categoryName}
+              matchesPlayed={profileData.ranks?.find((rank) => rank.eloPoints === primaryRank?.eloPoints)?.matchesPlayed ?? 0}
+              ringClassName="ring-2"
             />
           </div>
 
@@ -327,6 +351,23 @@ export default function UserProfilePopover({
           </p>
         )}
 
+        {profileRanks.length > 0 && (
+          <div className="mt-3 grid grid-cols-3 gap-1.5 rounded-xl border border-slate-100 bg-slate-50 p-2">
+            {profileRanks.map((rank) => (
+              <div key={`${rank.categoryName}-${rank.matchType}`} className="min-w-0 text-center">
+                <div className="truncate text-[9px] font-semibold uppercase text-slate-400">{rank.categoryName || 'ELO'}</div>
+                <div className="text-xs font-bold text-slate-800">{rank.eloPoints}</div>
+                <div className="text-[9px] text-slate-500">{rank.matchesWon}/{rank.matchesPlayed} thắng</div>
+              </div>
+            ))}
+          </div>
+        )}
+        {profileRanks.length > 0 && (
+          <p className="mt-1.5 text-center text-[10px] text-slate-500">
+            {totalMatches} trận · {totalWins} thắng · {Math.max(0, totalMatches - totalWins)} thua
+          </p>
+        )}
+
         {/* Fun / Club Member Tags (Danh hiệu & Nhãn CLB) */}
         {(profileData.tags ?? []).length > 0 && (
           <div className="mt-3 rounded-xl border border-slate-150 bg-slate-50/70 p-2.5 space-y-1.5">
@@ -370,7 +411,7 @@ export default function UserProfilePopover({
         <div className="mt-3.5 flex gap-2 pt-2.5 border-t border-slate-100">
           <button
             type="button"
-            disabled={isOpeningChat}
+            disabled={isOpeningChat || !canMessage}
             onClick={async () => {
               if (!profileData.id || isOpeningChat) return;
               setIsOpeningChat(true);
@@ -385,10 +426,11 @@ export default function UserProfilePopover({
                 setIsOpeningChat(false);
               }
             }}
-            className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-blue-700 active:scale-98 disabled:cursor-wait disabled:opacity-60"
+            title={!canMessage ? 'Người này không nhận tin nhắn từ người lạ' : undefined}
+            className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-blue-700 active:scale-98 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <MessageCircle className="h-3.5 w-3.5" />
-            {isOpeningChat ? translate('chatOpening') : translate('message')}
+            {isOpeningChat ? translate('chatOpening') : canMessage ? translate('message') : 'Không nhận tin lạ'}
           </button>
 
           <button

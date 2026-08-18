@@ -50,6 +50,12 @@ const getSportKey = (categoryName?: string | null): string | null => {
   return null;
 };
 
+/** Ordered tier definitions used by badges, legends and progress bars. */
+export function getRankTierDefinitions(categoryName?: string | null): readonly RankStyle[] {
+  const sportKey = getSportKey(categoryName);
+  return sportKey ? SPORT_TIERS[sportKey] : STANDARD_TIERS;
+}
+
 const matchesTierName = (tier: TierDefinition, tierName: string): boolean => {
   const normalizedTier = normalize(tier.name);
   return tierName === normalizedTier || tierName.includes(normalizedTier);
@@ -61,9 +67,7 @@ export function getRankStyle(
   categoryName?: string | null,
 ): RankStyle {
   const points = typeof elo === 'number' && Number.isFinite(elo) ? elo : 0;
-  const sportKey = getSportKey(categoryName);
-  const sportTiers = sportKey ? SPORT_TIERS[sportKey] : null;
-  const allTiers = sportTiers ?? STANDARD_TIERS;
+  const allTiers = getRankTierDefinitions(categoryName);
   const normalizedTierName = normalize(tierName);
   const namedTier = normalizedTierName
     ? allTiers.find((tier) => matchesTierName(tier, normalizedTierName))
@@ -86,4 +90,34 @@ export function getStandardRankStyleByIndex(index: number): RankStyle {
 
 export function getStandardRankStyles(): RankStyle[] {
   return TIER_THRESHOLDS.map((_, index) => getStandardRankStyleByIndex(index));
+}
+
+export interface RankProgressInfo {
+  percent: number;
+  currentIndex: number;
+  nextIndex: number | null;
+  current: RankStyle;
+  next: RankStyle | null;
+}
+
+/** Calculate progress using the selected sport's own tier boundaries. */
+export function getRankProgressInfo(elo: number, categoryName?: string | null): RankProgressInfo {
+  const tiers = getRankTierDefinitions(categoryName);
+  const points = Number.isFinite(elo) ? Math.max(0, elo) : 0;
+  let currentIndex = 0;
+  for (let index = tiers.length - 1; index >= 0; index -= 1) {
+    if (points >= tiers[index].minElo) {
+      currentIndex = index;
+      break;
+    }
+  }
+  const nextIndex = currentIndex < tiers.length - 1 ? currentIndex + 1 : null;
+  if (nextIndex === null) {
+    return { percent: 100, currentIndex, nextIndex, current: tiers[currentIndex], next: null };
+  }
+  const current = tiers[currentIndex];
+  const next = tiers[nextIndex];
+  const range = next.minElo - current.minElo;
+  const percent = range > 0 ? Math.min(100, Math.max(0, ((points - current.minElo) / range) * 100)) : 0;
+  return { percent, currentIndex, nextIndex, current, next };
 }

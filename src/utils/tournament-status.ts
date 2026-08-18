@@ -32,27 +32,27 @@ export const normalizeTournamentStatus = (status?: string | null): TournamentSta
   }
 };
 
-export const getTournamentStatusLabel = (status?: string | null) => {
+export const getTournamentStatusLabel = (status?: string | null, labels?: Partial<Record<string, string>>) => {
   switch (normalizeTournamentStatus(status)) {
     case 'DRAFT':
-      return 'Nháp';
+      return labels?.DRAFT ?? 'Nháp';
     case 'PENDING_APPROVAL':
-      return 'Chờ duyệt công bố';
+      return labels?.PENDING_APPROVAL ?? 'Chờ duyệt công bố';
     case 'PENDING_DELETE':
-      return 'Đang chờ xóa';
+      return labels?.PENDING_DELETE ?? 'Đang chờ xóa';
     case 'UPCOMING':
-      return 'Sắp diễn ra';
+      return labels?.UPCOMING ?? 'Sắp diễn ra';
     case 'REGISTRATION_OPEN':
-      return 'Mở đăng ký';
+      return labels?.REGISTRATION_OPEN ?? 'Mở đăng ký';
     case 'REGISTRATION_CLOSED':
-      return 'Đã khóa đăng ký';
+      return labels?.REGISTRATION_CLOSED ?? 'Đã khóa đăng ký';
     case 'IN_PROGRESS':
     case 'ONGOING':
-      return 'Đang thi đấu';
+      return labels?.IN_PROGRESS ?? 'Đang thi đấu';
     case 'COMPLETED':
-      return 'Đã kết thúc';
+      return labels?.COMPLETED ?? 'Đã kết thúc';
     case 'CANCELLED':
-      return 'Đã hủy';
+      return labels?.CANCELLED ?? 'Đã hủy';
     default:
       return normalizeRawStatus(status) || 'Nháp';
   }

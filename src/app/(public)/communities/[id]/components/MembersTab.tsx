@@ -220,7 +220,7 @@ export default function MembersTab({
     try {
       setIsInvitingId(targetUser.id);
       await communitiesApi.inviteMember(communityId, { userId: targetUser.id, role: 'MEMBER' });
-      toast.success(`Đã gửi lời mời tham gia tới ${targetUser.fullName || targetUser.email}`);
+      toast.success(translate('invitationSent', { name: targetUser.fullName || targetUser.email }));
       setInviteResults(prev => prev.filter(r => r.id !== targetUser.id));
     } catch (error) {
       console.error(error);
@@ -355,7 +355,7 @@ export default function MembersTab({
             className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-sm transition-all"
           >
             <UserPlus className="w-4 h-4 mr-2" />
-            Mời thành viên
+            {translate('inviteMember')}
           </Button>
         )}
       </div>
@@ -609,7 +609,7 @@ export default function MembersTab({
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg max-w-md w-full border border-slate-200 shadow-xl overflow-hidden flex flex-col max-h-[85vh]">
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-              <h3 className="font-bold text-slate-900 text-base">Mời thành viên mới</h3>
+              <h3 className="font-bold text-slate-900 text-base">{translate('inviteMember')} mới</h3>
               <button 
                 onClick={() => {
                   setIsInviteOpen(false);
@@ -661,13 +661,13 @@ export default function MembersTab({
                         disabled={isInvitingId === user.id}
                         className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1 rounded"
                       >
-                        {isInvitingId === user.id ? 'Đang mời...' : 'Mời'}
+                        {isInvitingId === user.id ? translate('inviting') : translate('invite')}
                       </Button>
                     </div>
                   ))}
                 </div>
               ) : inviteSearch.trim().length >= 2 ? (
-                <p className="text-center text-slate-400 text-xs py-4">Không tìm thấy người dùng phù hợp.</p>
+                <p className="text-center text-slate-400 text-xs py-4">{translate('noUsersFound')}</p>
               ) : inviteSearch.trim().length > 0 ? (
                 <p className="text-center text-slate-400 text-xs py-4">Vui lòng gõ ít nhất 2 ký tự để tìm kiếm.</p>
               ) : null}
@@ -721,7 +721,7 @@ export default function MembersTab({
         title="Kích thành viên"
         description={
           kickTarget
-            ? `Bạn có chắc chắn muốn kích thành viên "${kickTarget.name}" ra khỏi cộng đồng?`
+            ? translate('kickMemberConfirm', { name: kickTarget.name })
             : undefined
         }
         confirmLabel="Kích khỏi nhóm"
@@ -746,7 +746,7 @@ export default function MembersTab({
         title="Cấm thành viên"
         description={
           banTarget
-            ? `Bạn có chắc chắn muốn cấm "${banTarget.name}" khỏi cộng đồng?`
+            ? translate('banMemberConfirm', { name: banTarget.name })
             : undefined
         }
         confirmLabel="Cấm khỏi cộng đồng"

@@ -3,7 +3,8 @@
 import { getEloTier } from '@/components/ui/EloTierBadge';
 import { Shield, ShieldCheck, TrendingUp, TrendingDown } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import { TIER_THRESHOLDS, calcEloProgress, findTierIndex, getTierBgColor } from '@/utils/elo';
+import { getTierBgColor } from '@/utils/elo';
+import { getRankProgressInfo } from '@/utils/rank-style';
 
 interface EloPeakCardProps {
   eloPoints: number;
@@ -23,8 +24,9 @@ export default function EloPeakCard({
   categoryName,
 }: EloPeakCardProps) {
   const currentTier = getEloTier(eloPoints, tierName, categoryName);
-  const { progress, currentIdx, nextIdx } = calcEloProgress(eloPoints);
-  const nextTier = nextIdx !== null ? getEloTier(TIER_THRESHOLDS[nextIdx].minElo) : null;
+  const rankProgress = getRankProgressInfo(eloPoints, categoryName);
+  const { percent: progress, current: progressTier, next: nextTierDefinition } = rankProgress;
+  const nextTier = nextTierDefinition ? getEloTier(nextTierDefinition.minElo, nextTierDefinition.name, categoryName) : null;
   const peakTier = getEloTier(peakElo, undefined, categoryName);
   const hasShield = shieldActive === true;
   const showShield = matchesPlayed > 0;
@@ -72,8 +74,8 @@ export default function EloPeakCard({
             />
           </div>
           <div className="flex justify-between text-[10px] text-slate-400 font-semibold">
-            <span>{TIER_THRESHOLDS[currentIdx].minElo}</span>
-            <span>{TIER_THRESHOLDS[currentIdx + 1]?.minElo || 'MAX'}</span>
+            <span>{progressTier.minElo}</span>
+            <span>{nextTierDefinition?.minElo ?? 'MAX'}</span>
           </div>
           <span className="text-[10px] font-medium text-slate-500 text-center block">
             {Math.round(progress)}% đến {nextTier.name}
@@ -110,7 +112,7 @@ export default function EloPeakCard({
           )}
           <span className="text-[9px] font-medium ml-auto opacity-70">
             {hasShield
-              ? `Bảo vệ mốc ${TIER_THRESHOLDS[findTierIndex(eloPoints)].minElo}`
+              ? `Bảo vệ mốc ${progressTier.minElo}`
               : 'Sẽ hồi phục khi lên rank mới'}
           </span>
         </div>

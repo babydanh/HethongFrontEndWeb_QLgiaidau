@@ -738,7 +738,7 @@ export default function TournamentsListPage() {
                       {isTournamentInProgress(tournament.status) && (
                         <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
                       )}
-                      {getTournamentStatusLabel(tournament.status)}
+                      {getTournamentStatusLabel(tournament.status, { DRAFT: translate('statusDraftPlain'), PENDING_APPROVAL: translate('statusPendingApproval'), PENDING_DELETE: translate('statusPendingDelete'), UPCOMING: translate('upcoming'), REGISTRATION_OPEN: translate('registrationOpen'), REGISTRATION_CLOSED: translate('statusRegistrationClosed'), IN_PROGRESS: translate('inProgress'), ONGOING: translate('inProgress'), COMPLETED: translate('completed'), CANCELLED: translate('statusCancelled') })}
                       {isRecentlyCompletedTournament(tournament) && (
                         <span className="ml-1 inline-flex items-center rounded-full bg-slate-900/75 px-2 py-0.5 text-[9px] font-bold text-white">
                           Vừa kết thúc

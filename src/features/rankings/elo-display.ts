@@ -11,6 +11,7 @@ import {
   TIER_THRESHOLDS,
   findTierIndex,
 } from '@/utils/elo';
+import { getRankProgressInfo } from '@/utils/rank-style';
 
 /* ------------------------------------------------------------------ */
 /*  Match type labels                                                  */
@@ -120,7 +121,18 @@ export interface EloProgressInfo {
 }
 
 /** Compute tier progress info from raw ELO points. */
-export const getEloProgressInfo = (eloPoints: number): EloProgressInfo => {
+export const getEloProgressInfo = (eloPoints: number, categoryName?: string | null): EloProgressInfo => {
+  if (categoryName) {
+    const sportProgress = getRankProgressInfo(eloPoints, categoryName);
+    const nextName = sportProgress.next?.name;
+    const remaining = sportProgress.next ? Math.max(0, sportProgress.next.minElo - Math.max(0, eloPoints)) : 0;
+    return {
+      percent: sportProgress.percent,
+      currentIdx: sportProgress.currentIndex,
+      nextIdx: sportProgress.nextIndex,
+      label: nextName ? `Còn ${remaining} ELO tới ${nextName}` : '🏆 Đã đạt đỉnh',
+    };
+  }
   const clamped = Math.max(0, eloPoints);
   const currentIdx = findTierIndex(clamped);
   const nextIdx = currentIdx < TIER_THRESHOLDS.length - 1 ? currentIdx + 1 : null;

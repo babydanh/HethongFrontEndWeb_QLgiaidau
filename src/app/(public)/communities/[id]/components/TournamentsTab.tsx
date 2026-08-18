@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { Trophy, Calendar, DollarSign, Loader2, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
@@ -32,6 +33,7 @@ export default function TournamentsTab({
   isOwnerOrMod: boolean; 
 }) {
   const router = useRouter();
+  const translate = useTranslations('Common');
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<'ALL' | 'UPCOMING' | 'ONGOING' | 'COMPLETED'>('ALL');
@@ -72,11 +74,11 @@ export default function TournamentsTab({
       } else {
         await tournamentsApi.deleteTournament(id);
       }
-      toast.success('Đã xoá giải đấu thành công!');
+      toast.success(translate('tournamentDeleted'));
       fetchTournaments();
     } catch (err) {
       console.error(err);
-      toast.error(getErrorMessage(err, 'Có lỗi xảy ra khi xoá giải đấu.'));
+      toast.error(getErrorMessage(err, translate('deleteTournamentFailed')));
     }
   };
 
@@ -220,9 +222,9 @@ export default function TournamentsTab({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
         <div className="flex flex-wrap gap-2">
           {([
-            { key: 'ALL', label: 'Tất cả giải đấu' },
-            { key: 'CLUB', label: 'Giải nội bộ CLB' },
-            { key: 'PUBLIC', label: 'Giải đấu mở rộng' },
+            { key: 'ALL', label: translate('allTournaments') },
+            { key: 'CLUB', label: translate('clubTournaments') },
+            { key: 'PUBLIC', label: translate('publicTournaments') },
           ] as const).map(opt => (
             <button
               key={opt.key}
@@ -259,10 +261,10 @@ export default function TournamentsTab({
       {/* Status Filters */}
       <div className="flex flex-wrap gap-2">
         {([
-          { key: 'ALL', label: 'Tất cả trạng thái' },
-          { key: 'UPCOMING', label: 'Sắp diễn ra' },
-          { key: 'ONGOING', label: 'Đang diễn ra' },
-          { key: 'COMPLETED', label: 'Đã kết thúc' },
+          { key: 'ALL', label: translate('allStatuses') },
+          { key: 'UPCOMING', label: translate('upcoming') },
+          { key: 'ONGOING', label: translate('ongoing') },
+          { key: 'COMPLETED', label: translate('completed') },
         ] as const).map(opt => (
           <button
             key={opt.key}
@@ -281,12 +283,12 @@ export default function TournamentsTab({
       {isLoading ? (
         <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-12 flex flex-col items-center justify-center">
           <Loader2 className="w-8 h-8 animate-spin text-blue-500 mb-2" />
-          <p className="text-slate-500 text-sm">Đang tải danh sách giải đấu...</p>
+          <p className="text-slate-500 text-sm">{translate('loadingTournaments')}</p>
         </div>
       ) : groupedTournaments.length === 0 ? (
         <div className="bg-white rounded-lg shadow-sm border border-slate-200 border-dashed p-12 text-center">
           <Trophy className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-          <p className="text-slate-700 font-medium text-lg">Chưa có giải đấu nào</p>
+          <p className="text-slate-700 font-medium text-lg">{translate('noTournaments')}</p>
           <p className="text-slate-500 mt-1 max-w-sm mx-auto text-sm">
             Hiện không tìm thấy giải đấu nào phù hợp với bộ lọc này.
           </p>
@@ -324,13 +326,13 @@ export default function TournamentsTab({
                             ? 'bg-amber-50 text-amber-700 border-amber-200'
                             : 'bg-slate-50 text-slate-600 border-slate-200'
                         }`}>
-                          {t.divisions[0]?.isRanked ? 'Tính ELO' : 'Không tính ELO'}
+                          {t.divisions[0]?.isRanked ? translate('eloCounted') : translate('eloNotCounted')}
                         </span>
 
                         {/* Series / Parent Badge */}
                         {t.divisions[0]?.parentId && (
                           <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
-                            Chuỗi giải đấu
+                            {translate('seriesLabel')}
                           </span>
                         )}
 
@@ -356,7 +358,7 @@ export default function TournamentsTab({
                         )}
                       </div>
                       <span className="px-1.5 py-0.5 bg-slate-900 text-white rounded text-[9px] font-bold uppercase tracking-wider">
-                        {t.divisions.length} hình thức
+                        {t.divisions.length} {translate('divisionCount', { count: t.divisions.length })}
                       </span>
                     </div>
                     <h3 className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors text-base line-clamp-1 mt-1">
@@ -429,9 +431,9 @@ export default function TournamentsTab({
             setDeleteTarget(null);
           }
         }}
-        title="Xoá giải đấu"
-        description="Bạn có chắc chắn muốn xoá giải đấu này không? Toàn bộ các hình thức thi đấu bên trong giải đấu này cũng sẽ bị xoá."
-        confirmLabel="Xoá giải đấu"
+        title={translate('deleteTournamentTitle')}
+        description="Bạn có chắc chắn muốn xoá giải đấu này không? Toàn bộ các {translate('divisionCount', { count: t.divisions.length })} thi đấu bên trong giải đấu này cũng sẽ bị xoá."
+        confirmLabel={translate('deleteTournamentConfirm')}
         variant="danger"
         onConfirm={() => {
           if (deleteTarget) {

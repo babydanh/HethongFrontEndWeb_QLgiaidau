@@ -1,6 +1,7 @@
 'use client';
 
 import { use, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Modal, ModalContent, ModalHeader, ModalTitle } from '@/components/ui/Modal';
@@ -20,15 +21,16 @@ import { getMatchRoundLabel } from '@/utils/match-round-label';
 import type { BracketMatch, LivestreamCamera } from '@/features/tournaments/api';
 
 const TOURNAMENT_STATUS_LABELS: Record<string, string> = {
-  DRAFT: 'Bản nháp',
-  REGISTRATION_OPEN: 'Đang mở đăng ký',
-  IN_PROGRESS: 'Đang diễn ra',
-  ONGOING: 'Đang diễn ra',
-  COMPLETED: 'Đã kết thúc',
-  CANCELLED: 'Đã hủy',
+  DRAFT: 'statusDraft',
+  REGISTRATION_OPEN: 'statusRegistrationOpen',
+  IN_PROGRESS: 'statusInProgress',
+  ONGOING: 'statusInProgress',
+  COMPLETED: 'statusCompleted',
+  CANCELLED: 'statusCancelled',
 };
 
 export default function OrganizerTournamentOpsPage({ params }: { params: Promise<{ id: string }> }) {
+  const translate = useTranslations('OrganizerOps');
   const resolvedParams = use(params);
   const bracketManager = useManageState(resolvedParams.id);
   const bracketSectionRef = useRef<HTMLDivElement | null>(null);
@@ -379,9 +381,9 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
         <div className="flex items-start gap-3">
           <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0" />
           <div>
-            <h1 className="text-lg font-bold">Không tải được dữ liệu giải đấu</h1>
+            <h1 className="text-lg font-bold">{translate('loadFailedTitle')}</h1>
             <p className="mt-1 text-sm font-medium">
-              Giải đấu không tồn tại hoặc bạn không có quyền truy cập panel vận hành.
+              {translate('accessUnavailable')}
             </p>
           </div>
         </div>
@@ -416,14 +418,14 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
                 {getSportLogo(tournament.category?.name) ? (
                   <img src={getSportLogo(tournament.category?.name)!} alt="" className="h-3 w-3 object-contain" />
                 ) : null}
-                {tournament.category?.name || 'Bộ môn'}
+                {tournament.category?.name || translate('sportFallback')}
               </span>
               <span className={`rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-wider ${
                 tournament.status === 'IN_PROGRESS' || tournament.status === 'ONGOING'
                   ? 'bg-blue-50 text-blue-700 border-blue-200 animate-pulse'
                   : 'bg-slate-100 text-slate-655 border-slate-200'
               }`}>
-                {TOURNAMENT_STATUS_LABELS[tournament.status] || tournament.status}
+                {TOURNAMENT_STATUS_LABELS[tournament.status] ? translate(TOURNAMENT_STATUS_LABELS[tournament.status] as Parameters<typeof translate>[0]) : tournament.status}
               </span>
             </div>
             <div>

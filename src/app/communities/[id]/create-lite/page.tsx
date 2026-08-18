@@ -10,7 +10,6 @@ import { communitiesApi, Community } from '@/features/communities/api';
 import {
   Calendar,
   ChevronLeft,
-  Clock,
   Info,
   Loader2,
   Lock,
@@ -20,7 +19,7 @@ import {
   Users,
   Trophy,
   Shield,
-  CheckCircle2,
+  Clock,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '@/utils/error';
@@ -125,8 +124,7 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
   const [maxTeams, setMaxTeams] = useState(16);
   const [description, setDescription] = useState('');
   const [isRanked, setIsRanked] = useState(false);
-  const [startDate, setStartDate] = useState('');
-  const [startTime, setStartTime] = useState('18:00');
+  const [startDateTime, setStartDateTime] = useState('');
   const [isRecurring, setIsRecurring] = useState(false);
   const [recurringFrequency, setRecurringFrequency] = useState<'WEEKLY' | 'BIWEEKLY' | 'MONTHLY'>('WEEKLY');
   const [isLoading, setIsLoading] = useState(true);
@@ -153,6 +151,10 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
     }
     if (maxTeams < 2 || maxTeams > 128) return toast.error('Số đội tối đa phải từ 2 đến 128');
 
+    const isoStartDate = startDateTime ? new Date(startDateTime).toISOString() : undefined;
+    const timeOfDay = startDateTime && startDateTime.includes('T') ? startDateTime.split('T')[1] : '18:00';
+    const dayOfWeek = startDateTime ? new Date(startDateTime).getDay() : undefined;
+
     try {
       setIsSubmitting(true);
       const result = await tournamentsApi.createLiteTournament({
@@ -167,12 +169,12 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
         visibility: 'PRIVATE',
         registrationMode: 'OPEN',
         isRanked,
-        startDate: startDate ? new Date(`${startDate}T${startTime || '18:00'}:00`).toISOString() : undefined,
-        startTime: startTime || undefined,
+        startDate: isoStartDate,
+        startTime: timeOfDay,
         isRecurring,
         recurringFrequency: isRecurring ? recurringFrequency : undefined,
-        recurringDayOfWeek: isRecurring && startDate ? new Date(`${startDate}T12:00:00`).getDay() : undefined,
-        recurringTimeOfDay: isRecurring ? (startTime || '18:00') : undefined,
+        recurringDayOfWeek: isRecurring ? dayOfWeek : undefined,
+        recurringTimeOfDay: isRecurring ? timeOfDay : undefined,
       });
       toast.success('Tạo giải đấu thành công!');
       if (result?.id) router.push(`/organizer/tournaments/${result.id}/manage`);
@@ -194,44 +196,44 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
   const isFootball = sport === 'football';
 
   return (
-    <div className="min-h-screen bg-slate-50 py-8 px-4 md:px-8">
-      <div className="max-w-5xl mx-auto space-y-6">
+    <div className="min-h-screen bg-slate-50 py-7 px-4 md:px-8">
+      <div className="max-w-5xl mx-auto space-y-5">
         
         {/* Navigation & Header */}
         <div>
           <Link
             href={`/communities/${communityId}`}
-            className="inline-flex items-center gap-1.5 text-slate-500 hover:text-slate-800 text-sm font-semibold mb-4 transition"
+            className="inline-flex items-center gap-1.5 text-slate-500 hover:text-slate-800 text-sm font-semibold mb-3 transition"
           >
             <ChevronLeft className="w-4 h-4" /> Quay lại câu lạc bộ
           </Link>
           
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
                 <Zap className="w-6 h-6 text-amber-500 fill-amber-500" />
                 Tạo giải đấu nhanh (Lite)
               </h1>
-              <p className="text-slate-500 mt-1 text-sm font-medium">
+              <p className="text-slate-500 mt-0.5 text-sm font-medium">
                 {community?.name ? `Câu lạc bộ: ${community.name}` : 'Tạo giải đấu nội bộ nhanh chóng cho câu lạc bộ'}
               </p>
             </div>
           </div>
 
-          <div className="mt-4 rounded-xl border border-amber-300 bg-amber-50/90 px-4 py-3 text-xs sm:text-sm font-medium leading-relaxed text-amber-950 shadow-2xs">
-            <strong className="font-bold text-amber-950">Lưu ý:</strong> Đây là luồng tạo siêu nhanh cho CLB. Sau khi tạo thành công, bạn có thể vào trang <strong>Quản lý giải</strong> để cấu hình chi tiết sân bãi, phân hạt giống và điều hành tỷ số trực tiếp.
+          <div className="mt-3 rounded-xl border border-amber-300 bg-amber-50/90 px-4 py-2.5 text-xs sm:text-sm font-medium leading-relaxed text-amber-950 shadow-2xs">
+            <strong className="font-bold text-amber-950">Lưu ý:</strong> Luồng tạo siêu nhanh cho CLB. Giải tự động mở đăng ký ngay khi tạo. Mọi chi tiết sân bãi, hạt giống và điều hành tỷ số có thể tùy chỉnh trong <strong>Quản lý giải</strong>.
           </div>
         </div>
 
-        {/* 2-Column Grid Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* 2-Column Grid Layout (50% / 50% split - perfectly balanced) */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
           
-          {/* CỘT TRÁI (7 CỘT): Thông tin cơ bản & Lịch trình */}
-          <div className="lg:col-span-7 space-y-5">
+          {/* CỘT TRÁI: Thông tin cơ bản, Thời gian 1 ô & Quy mô ELO */}
+          <div className="space-y-5">
             
             {/* Card 1: Thông tin giải đấu */}
-            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs space-y-4">
-              <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs space-y-3.5">
+              <div className="flex items-center gap-2 border-b border-slate-100 pb-2.5">
                 <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
                   <Trophy className="h-4 w-4" />
                 </div>
@@ -246,7 +248,7 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
                   placeholder="VD: Giải Cầu lông Giao hữu Cuối Tuần / Mini Cup CLB"
                   value={name}
                   onChange={(event) => setName(event.target.value)}
-                  className="h-11"
+                  className="h-10.5"
                 />
               </div>
 
@@ -259,12 +261,9 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
                     <Lock className="w-3 h-3" /> Theo bộ môn CLB
                   </span>
                 </div>
-                <div className="h-11 flex items-center rounded-xl border border-slate-200 bg-slate-50 px-3.5 text-sm font-bold text-slate-800">
+                <div className="h-10.5 flex items-center rounded-xl border border-slate-200 bg-slate-50 px-3.5 text-sm font-bold text-slate-800">
                   {community?.categories?.[0]?.name || sportLabel[sport]}
                 </div>
-                <p className="mt-1 text-[11px] text-slate-400">
-                  Lite CLB tự động kế thừa bộ môn chính của câu lạc bộ để tổ chức nhanh nhất.
-                </p>
               </div>
 
               <div>
@@ -275,51 +274,42 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
                   value={description}
                   onChange={(event) => setDescription(event.target.value)}
                   placeholder="Tóm tắt thể thức, giải thưởng, đối tượng tham gia..."
-                  rows={3}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none resize-none transition"
+                  rows={2}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none resize-none transition"
                 />
               </div>
             </section>
 
-            {/* Card 2: Lịch trình & Tự động lặp lại */}
-            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs space-y-4">
-              <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+            {/* Card 2: Thời gian bắt đầu (1 ô duy nhất) & Định kỳ */}
+            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs space-y-3.5">
+              <div className="flex items-center gap-2 border-b border-slate-100 pb-2.5">
                 <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
                   <Calendar className="h-4 w-4" />
                 </div>
-                <h2 className="text-sm font-bold text-slate-900">Lịch trình thi đấu</h2>
+                <h2 className="text-sm font-bold text-slate-900">Thời gian bắt đầu giải</h2>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 flex items-center gap-1">
-                    <Calendar className="w-3.5 h-3.5 text-blue-600" />
-                    Ngày bắt đầu
-                  </label>
-                  <input
-                    type="date"
-                    value={startDate}
-                    onChange={(event) => setStartDate(event.target.value)}
-                    className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-800 focus:border-blue-500 outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 flex items-center gap-1">
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
                     <Clock className="w-3.5 h-3.5 text-blue-600" />
-                    Giờ thi đấu
-                  </label>
-                  <input
-                    type="time"
-                    value={startTime}
-                    onChange={(event) => setStartTime(event.target.value)}
-                    className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-800 focus:border-blue-500 outline-none"
-                  />
-                </div>
+                    Ngày & Giờ bắt đầu
+                  </span>
+                  <span className="text-[11px] font-normal text-emerald-600">Mở đăng ký ngay khi tạo</span>
+                </label>
+                <input
+                  type="datetime-local"
+                  value={startDateTime}
+                  onChange={(event) => setStartDateTime(event.target.value)}
+                  className="h-10.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-medium text-slate-800 focus:border-blue-500 outline-none transition"
+                />
+                <p className="mt-1 text-[11px] text-slate-400">
+                  Giải sẽ mở đăng ký ngay và nhận đăng ký cho đến khi giờ thi đấu bắt đầu.
+                </p>
               </div>
 
               {/* Tự động định kỳ */}
-              <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 space-y-3">
+              <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3 space-y-2.5">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
@@ -327,7 +317,7 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
                       Tự động tạo giải định kỳ (Cron)
                     </span>
                     <p className="text-[11px] text-slate-500 mt-0.5">
-                      Hệ thống tự tạo giải mới và mở đăng ký theo chu kỳ đã chọn.
+                      Hệ thống tự tạo giải mới và mở đăng ký theo chu kỳ.
                     </p>
                   </div>
                   <button
@@ -348,12 +338,12 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
                 </div>
 
                 {isRecurring && (
-                  <div className="border-t border-slate-200/80 pt-3 flex flex-col gap-1.5">
+                  <div className="border-t border-slate-200/80 pt-2.5 flex flex-col gap-1.5">
                     <label className="text-xs font-bold text-slate-700">Chu kỳ lặp lại</label>
                     <select
                       value={recurringFrequency}
                       onChange={(event) => setRecurringFrequency(event.target.value as typeof recurringFrequency)}
-                      className="h-10 rounded-lg border border-slate-300 bg-white px-3 text-xs font-bold text-slate-800 outline-none focus:border-blue-500"
+                      className="h-9.5 rounded-lg border border-slate-300 bg-white px-3 text-xs font-bold text-slate-800 outline-none focus:border-blue-500"
                     >
                       <option value="WEEKLY">Hằng tuần (Weekly)</option>
                       <option value="BIWEEKLY">Hai tuần một lần (Bi-weekly)</option>
@@ -363,135 +353,9 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
                 )}
               </div>
             </section>
-          </div>
 
-          {/* CỘT PHẢI (5 CỘT): Nội dung, 4 Thể thức & Quy mô */}
-          <div className="lg:col-span-5 space-y-5">
-            
-            {/* Card 3: Nội dung thi đấu (Đơn / Đôi hoặc Quy mô sân Bóng đá) */}
+            {/* Card 3: Quy mô & ELO */}
             <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs space-y-3.5">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <div className="flex items-center gap-2">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-                    <User className="h-4 w-4" />
-                  </div>
-                  <h2 className="text-sm font-bold text-slate-900">Nội dung thi đấu</h2>
-                </div>
-                <span className="text-[11px] text-slate-400 font-medium">
-                  {isFootball ? 'Quy mô sân' : 'Đơn / Đôi'}
-                </span>
-              </div>
-
-              {isFootball ? (
-                <div className="grid grid-cols-3 gap-2">
-                  {([5, 7, 11] as const).map((size) => (
-                    <button
-                      key={size}
-                      type="button"
-                      onClick={() => setFootballTeamSize(size)}
-                      className={`flex flex-col items-center justify-center gap-1 rounded-xl border p-2.5 text-center transition ${
-                        footballTeamSize === size
-                          ? 'border-blue-600 bg-blue-50/80 shadow-2xs ring-1 ring-blue-500/30 text-blue-950 font-bold'
-                          : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
-                      }`}
-                    >
-                      <Shield className={`h-4 w-4 ${footballTeamSize === size ? 'text-blue-600' : 'text-slate-400'}`} />
-                      <span className="text-xs">Sân {size}</span>
-                      <span className="text-[10px] text-slate-400">{size} người</span>
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 gap-2.5">
-                  <button
-                    type="button"
-                    onClick={() => setFormat('singles')}
-                    className={`flex flex-col items-center justify-center gap-1.5 rounded-xl border p-3 text-center transition ${
-                      format === 'singles'
-                        ? 'border-blue-600 bg-blue-50/80 shadow-2xs ring-1 ring-blue-500/30 text-blue-950 font-bold'
-                        : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
-                    }`}
-                  >
-                    <User className={`h-5 w-5 ${format === 'singles' ? 'text-blue-600' : 'text-slate-400'}`} />
-                    <span className="text-xs">Đánh đơn (Singles)</span>
-                    <span className="text-[10px] text-slate-400">1 vs 1 cá nhân</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setFormat('doubles')}
-                    className={`flex flex-col items-center justify-center gap-1.5 rounded-xl border p-3 text-center transition ${
-                      format === 'doubles'
-                        ? 'border-blue-600 bg-blue-50/80 shadow-2xs ring-1 ring-blue-500/30 text-blue-950 font-bold'
-                        : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
-                    }`}
-                  >
-                    <Users className={`h-5 w-5 ${format === 'doubles' ? 'text-blue-600' : 'text-slate-400'}`} />
-                    <span className="text-xs">Đánh đôi (Doubles)</span>
-                    <span className="text-[10px] text-slate-400">2 vs 2 theo cặp</span>
-                  </button>
-                </div>
-              )}
-            </section>
-
-            {/* Card 4: Thể thức bảng đấu (4 thể thức chuẩn) */}
-            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs space-y-3.5">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <div className="flex items-center gap-2">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-                    <Trophy className="h-4 w-4" />
-                  </div>
-                  <h2 className="text-sm font-bold text-slate-900">Thể thức bảng đấu</h2>
-                </div>
-                <span className="text-[11px] text-slate-400 font-medium">Chọn 1</span>
-              </div>
-
-              <div className="grid grid-cols-1 gap-2.5">
-                {BRACKET_OPTIONS.map((opt) => {
-                  const isSelected = bracketType === opt.id;
-                  const { Icon } = opt;
-                  return (
-                    <button
-                      key={opt.id}
-                      type="button"
-                      onClick={() => setBracketType(opt.id)}
-                      className={`group flex items-start gap-3 rounded-xl border p-3 text-left transition-all ${
-                        isSelected
-                          ? 'border-blue-600 bg-blue-50/80 shadow-2xs ring-1 ring-blue-500/30'
-                          : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60'
-                      }`}
-                    >
-                      <div
-                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border transition ${
-                          isSelected
-                            ? 'border-blue-600 bg-blue-600 text-white shadow-2xs'
-                            : 'border-slate-200 bg-slate-50 text-slate-600 group-hover:text-blue-600'
-                        }`}
-                      >
-                        <Icon className="h-4 w-4" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between">
-                          <span className={`text-xs font-bold transition ${isSelected ? 'text-blue-950' : 'text-slate-800'}`}>
-                            {opt.label}
-                          </span>
-                          {isSelected && (
-                            <span className="h-2 w-2 rounded-full bg-blue-600 ring-2 ring-blue-200" />
-                          )}
-                        </div>
-                        <p className={`mt-0.5 text-[11px] leading-snug transition ${isSelected ? 'text-blue-900/80' : 'text-slate-500'}`}>
-                          {opt.desc}
-                        </p>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </section>
-
-            {/* Card 5: Quy mô & ELO */}
-            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs space-y-4">
-              {/* Quy mô */}
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
@@ -535,7 +399,7 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
 
                 {/* Smart suggestion when Round Robin > 15 */}
                 {bracketType === 'round_robin' && maxTeams > 15 && (
-                  <div className="mt-2.5 rounded-xl border border-amber-200 bg-amber-50/90 p-3 text-xs text-amber-900 shadow-2xs">
+                  <div className="mt-2.5 rounded-xl border border-amber-200 bg-amber-50/90 p-2.5 text-xs text-amber-900 shadow-2xs">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                       <p className="leading-relaxed">
                         <strong className="font-bold text-amber-950">💡 Gợi ý:</strong> Thể thức Vòng tròn tối đa <strong>15 đội/bảng</strong>. Với <strong>{maxTeams} đội</strong>, bạn nên chọn <strong>Vòng bảng + Knockout</strong>.
@@ -582,30 +446,155 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
               </div>
             </section>
           </div>
+
+          {/* CỘT PHẢI: Nội dung thi đấu & 4 Thể thức bảng đấu */}
+          <div className="space-y-5">
+            
+            {/* Card 4: Nội dung thi đấu (Đơn / Đôi hoặc Sân Bóng đá) */}
+            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs space-y-3">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                    <User className="h-4 w-4" />
+                  </div>
+                  <h2 className="text-sm font-bold text-slate-900">Nội dung thi đấu</h2>
+                </div>
+                <span className="text-[11px] text-slate-400 font-medium">
+                  {isFootball ? 'Quy mô sân' : 'Đơn / Đôi'}
+                </span>
+              </div>
+
+              {isFootball ? (
+                <div className="grid grid-cols-3 gap-2">
+                  {([5, 7, 11] as const).map((size) => (
+                    <button
+                      key={size}
+                      type="button"
+                      onClick={() => setFootballTeamSize(size)}
+                      className={`flex flex-col items-center justify-center gap-1 rounded-xl border p-2.5 text-center transition ${
+                        footballTeamSize === size
+                          ? 'border-blue-600 bg-blue-50/80 shadow-2xs ring-1 ring-blue-500/30 text-blue-950 font-bold'
+                          : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
+                      }`}
+                    >
+                      <Shield className={`h-4 w-4 ${footballTeamSize === size ? 'text-blue-600' : 'text-slate-400'}`} />
+                      <span className="text-xs">Sân {size}</span>
+                      <span className="text-[10px] text-slate-400">{size} người</span>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setFormat('singles')}
+                    className={`flex flex-col items-center justify-center gap-1 rounded-xl border p-2.5 text-center transition ${
+                      format === 'singles'
+                        ? 'border-blue-600 bg-blue-50/80 shadow-2xs ring-1 ring-blue-500/30 text-blue-950 font-bold'
+                        : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
+                    }`}
+                  >
+                    <User className={`h-4 w-4 ${format === 'singles' ? 'text-blue-600' : 'text-slate-400'}`} />
+                    <span className="text-xs font-bold">Đánh đơn (Singles)</span>
+                    <span className="text-[10px] text-slate-400">1 vs 1 cá nhân</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setFormat('doubles')}
+                    className={`flex flex-col items-center justify-center gap-1 rounded-xl border p-2.5 text-center transition ${
+                      format === 'doubles'
+                        ? 'border-blue-600 bg-blue-50/80 shadow-2xs ring-1 ring-blue-500/30 text-blue-950 font-bold'
+                        : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
+                    }`}
+                  >
+                    <Users className={`h-4 w-4 ${format === 'doubles' ? 'text-blue-600' : 'text-slate-400'}`} />
+                    <span className="text-xs font-bold">Đánh đôi (Doubles)</span>
+                    <span className="text-[10px] text-slate-400">2 vs 2 theo cặp</span>
+                  </button>
+                </div>
+              )}
+            </section>
+
+            {/* Card 5: Thể thức bảng đấu (4 thể thức chuẩn) */}
+            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs space-y-3">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                    <Trophy className="h-4 w-4" />
+                  </div>
+                  <h2 className="text-sm font-bold text-slate-900">Thể thức bảng đấu</h2>
+                </div>
+                <span className="text-[11px] text-slate-400 font-medium">Chọn 1</span>
+              </div>
+
+              <div className="grid grid-cols-1 gap-2">
+                {BRACKET_OPTIONS.map((opt) => {
+                  const isSelected = bracketType === opt.id;
+                  const { Icon } = opt;
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => setBracketType(opt.id)}
+                      className={`group flex items-start gap-3 rounded-xl border p-2.5 text-left transition-all ${
+                        isSelected
+                          ? 'border-blue-600 bg-blue-50/80 shadow-2xs ring-1 ring-blue-500/30'
+                          : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60'
+                      }`}
+                    >
+                      <div
+                        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border transition ${
+                          isSelected
+                            ? 'border-blue-600 bg-blue-600 text-white shadow-2xs'
+                            : 'border-slate-200 bg-slate-50 text-slate-600 group-hover:text-blue-600'
+                        }`}
+                      >
+                        <Icon className="h-3.5 w-3.5" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between">
+                          <span className={`text-xs font-bold transition ${isSelected ? 'text-blue-950' : 'text-slate-800'}`}>
+                            {opt.label}
+                          </span>
+                          {isSelected && (
+                            <span className="h-2 w-2 rounded-full bg-blue-600 ring-2 ring-blue-200" />
+                          )}
+                        </div>
+                        <p className={`mt-0.5 text-[11px] leading-snug transition ${isSelected ? 'text-blue-900/80' : 'text-slate-500'}`}>
+                          {opt.desc}
+                        </p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          </div>
         </div>
 
         {/* Bottom Tip & Action Buttons */}
-        <div className="space-y-4 pt-2">
-          <div className="flex items-start gap-2.5 text-xs text-blue-700 bg-blue-50/70 p-3.5 rounded-xl border border-blue-100">
+        <div className="space-y-3 pt-1">
+          <div className="flex items-start gap-2.5 text-xs text-blue-700 bg-blue-50/70 p-3 rounded-xl border border-blue-100">
             <Info className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
             <span>
               Sau khi tạo, giải sẽ ở trạng thái mở đăng ký nội bộ trong CLB. Bạn có thể vào <strong>Quản lý giải</strong> bất kỳ lúc nào để bổ sung sân bãi, phân cặp hạt giống hoặc điều hành tỷ số trực tiếp.
             </span>
           </div>
 
-          <div className="flex items-center justify-end gap-3 border-t border-slate-200/80 pt-4">
+          <div className="flex items-center justify-end gap-3 border-t border-slate-200/80 pt-3.5">
             <Button
               variant="outline"
               onClick={() => router.back()}
               disabled={isSubmitting}
-              className="px-5 h-11 text-xs font-bold"
+              className="px-5 h-10.5 text-xs font-bold"
             >
               Hủy
             </Button>
             <Button
               onClick={handleSubmit}
               isLoading={isSubmitting}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 h-11 shadow-sm"
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 h-10.5 shadow-sm"
             >
               {isSubmitting ? 'Đang tạo giải...' : 'Tạo giải đấu CLB'}
             </Button>

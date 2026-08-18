@@ -105,7 +105,7 @@ export default function Step2Confirm() {
           </div>
 
           <div className="flex flex-col gap-1">
-            <span className="text-slate-400 font-medium">Hình thức thi đấu</span>
+            <span className="text-slate-400 font-medium">Nội dung thi đấu</span>
             <span className="font-semibold text-slate-900">
               {resolveMatchFormat(formData.matchFormat || 'MALE_DOUBLES').divisionName}
             </span>

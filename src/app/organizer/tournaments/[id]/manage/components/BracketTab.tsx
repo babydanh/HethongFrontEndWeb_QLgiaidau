@@ -470,7 +470,7 @@ export function BracketTab({
             <div>
               <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
                 <Settings className="w-5 h-5 text-blue-600" />
-                Cấu hình mặc định hình thức thi đấu
+                Cấu hình mặc định nội dung thi đấu
               </h3>
               <p className="text-xs text-slate-500 mt-0.5 font-semibold">
                 {presentation.sportLabel}: {presentation.scoringLabel}. {presentation.presetSummary}
@@ -1101,7 +1101,7 @@ export function BracketTab({
                   : 'Khởi tạo sơ đồ thi đấu'}
           </Button>
           {!selectedDivisionId && (
-            <p className="text-xs text-blue-600 font-semibold">⚠ Vui lòng chọn hình thức thi đấu trước</p>
+            <p className="text-xs text-blue-600 font-semibold">⚠ Vui lòng chọn nội dung thi đấu trước</p>
           )}
           {participants.length < 2 && selectedDivisionId && (
             <p className="text-xs text-blue-600 font-semibold">⚠ Cần ít nhất 2 đội/VĐV để tạo sơ đồ</p>

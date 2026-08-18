@@ -71,7 +71,7 @@ export default function MyTournamentsPage() {
   const fetchTournaments = async () => {
     try {
       setIsLoading(true);
-      // Fetch giải đấu lớn (parent tournaments) - mỗi giải chứa nhiều hình thức thi đấu
+      // Fetch giải đấu lớn (parent tournaments) - mỗi giải chứa nhiều nội dung thi đấu
       const res = await tournamentsApi.getMyParentTournaments();
       let parentsWithDivisions: ParentWithDivisions[] = [];
 
@@ -145,7 +145,7 @@ export default function MyTournamentsPage() {
 
   const handleDeleteParent = async (id: string, isStandalone: boolean, e: React.MouseEvent) => {
     e.preventDefault();
-    if (!confirm('Bạn có chắc chắn muốn xoá giải đấu này không? Toàn bộ các hình thức thi đấu bên trong (nếu có) cũng sẽ bị xoá và không thể khôi phục.')) return;
+    if (!confirm('Bạn có chắc chắn muốn xoá giải đấu này không? Toàn bộ các nội dung thi đấu bên trong (nếu có) cũng sẽ bị xoá và không thể khôi phục.')) return;
     try {
       let res;
       if (isStandalone) {
@@ -387,4 +387,3 @@ export default function MyTournamentsPage() {
     </div>
   );
 }
-

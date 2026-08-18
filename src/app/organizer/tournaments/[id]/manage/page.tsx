@@ -170,13 +170,13 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
         <div className="bg-white rounded-lg border border-slate-200 p-4 mb-4 shadow-sm">
           <div className="flex justify-between items-center mb-4">
             <div>
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Hình thức thi đấu</p>
-              <p className="text-xs text-slate-400">Chọn hình thức để xem cấu hình riêng</p>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Nội dung thi đấu</p>
+              <p className="text-xs text-slate-400">Chọn nội dung để xem cấu hình riêng</p>
             </div>
             <Button size="sm" onClick={() => { s.resetDivisionEditor(); s.setIsCreateDivisionModalOpen(true); }}
               disabled={isTournamentRegistrationClosed(s.tournament.status) || s.tournament.isRegistrationLocked || ['IN_PROGRESS', 'ONGOING', 'COMPLETED', 'CANCELLED'].includes(s.tournament.status)}
               className="font-bold text-xs flex items-center gap-1.5 h-9 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white whitespace-nowrap">
-              <Plus className="w-3.5 h-3.5" /> Thêm hình thức
+              <Plus className="w-3.5 h-3.5" /> Thêm nội dung
             </Button>
           </div>
           {s.divisions.length > 0 && (
@@ -201,14 +201,14 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                     </button>
                     <button type="button" onClick={() => { s.requestDeleteDivision(div); }}
                       className={`p-2.5 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer ${isActive ? 'text-white hover:bg-blue-700' : 'text-slate-400 hover:text-rose-600'}`}
-                      title="Xóa hình thức này"
+                      title="Xóa nội dung này"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
                     <button type="button" onClick={() => s.openDivisionEditor(div)}
                       disabled={!s.tournament || isTournamentRegistrationClosed(s.tournament?.status ?? '') || s.tournament?.isRegistrationLocked || ['IN_PROGRESS', 'ONGOING', 'COMPLETED', 'CANCELLED'].includes(s.tournament?.status ?? '')}
                       className={`p-2.5 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer disabled:cursor-not-allowed disabled:opacity-30 ${isActive ? 'text-white hover:bg-blue-700' : 'text-slate-400 hover:text-blue-600'}`}
-                      title="Chỉnh sửa hình thức"
+                      title="Chỉnh sửa nội dung"
                     >
                       <Pencil className="w-3.5 h-3.5" />
                     </button>
@@ -592,7 +592,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
         {s.divisionPendingDelete && (
           <Modal open={!!s.divisionPendingDelete} onOpenChange={() => s.setDivisionPendingDelete(null)}>
             <ModalContent className="bg-white rounded-lg p-6">
-              <ModalHeader><ModalTitle className="text-lg font-bold">Xóa hình thức này?</ModalTitle></ModalHeader>
+              <ModalHeader><ModalTitle className="text-lg font-bold">Xóa nội dung này?</ModalTitle></ModalHeader>
               <p className="text-sm text-slate-600 mt-2">Không thể hoàn tác sau khi xóa.</p>
               <div className="flex justify-end gap-3 mt-6">
                 <Button variant="outline" onClick={() => s.setDivisionPendingDelete(null)}>Hủy</Button>
@@ -608,7 +608,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
         {s.isCreateDivisionModalOpen && (
           <Modal open={s.isCreateDivisionModalOpen} onOpenChange={s.setIsCreateDivisionModalOpen}>
             <ModalContent className="bg-white rounded-lg p-6">
-            <ModalHeader><ModalTitle className="text-lg font-bold">{s.editingDivision ? 'Chỉnh sửa hình thức thi đấu' : 'Thêm hình thức thi đấu'}</ModalTitle></ModalHeader>
+            <ModalHeader><ModalTitle className="text-lg font-bold">{s.editingDivision ? 'Chỉnh sửa nội dung thi đấu' : 'Thêm nội dung thi đấu'}</ModalTitle></ModalHeader>
               <div className="space-y-4 mt-4">
                 <div><label className="text-xs font-bold text-slate-500">Loại</label>
                   <select value={s.newDivisionMatchType} onChange={e => { const value = e.target.value; const option = s.availableMatchFormatOptions.find((item) => item.value === value); s.setNewDivisionMatchType(value); s.setNewDivisionName(option?.shortLabel ?? ''); }} className="w-full border rounded-lg p-2 text-sm">
@@ -639,7 +639,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                 <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-3">
                   <label className="flex items-center gap-2 text-sm font-bold text-slate-800">
                     <input type="checkbox" checked={s.newDivisionEloEnabled} onChange={(e) => s.setNewDivisionEloEnabled(e.target.checked)} />
-                    Giới hạn ELO riêng cho hình thức này
+                    Giới hạn ELO riêng cho nội dung này
                   </label>
                   {s.newDivisionEloEnabled && (
                     <div className="grid grid-cols-2 gap-3">

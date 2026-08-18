@@ -110,7 +110,7 @@ export function ConfigTab({
         </div>
 
         <div className="flex flex-col gap-1.5 bg-slate-50 border p-4 rounded-lg">
-          <label className="text-sm font-semibold text-slate-700">Hình thức / Thể loại thi đấu</label>
+          <label className="text-sm font-semibold text-slate-700">Nội dung / Thể loại thi đấu</label>
           <select
             value={matchType}
             onChange={(e) => setMatchType(e.target.value)}
@@ -125,7 +125,7 @@ export function ConfigTab({
           </select>
           {isRegistrationOpen && (
             <p className="text-xs text-blue-600 font-semibold mt-1 flex items-center gap-1">
-              <span>⚠</span> Không thể thay đổi hình thức thi đấu khi đang mở đăng ký.
+              <span>⚠</span> Không thể thay đổi nội dung thi đấu khi đang mở đăng ký.
             </p>
           )}
         </div>

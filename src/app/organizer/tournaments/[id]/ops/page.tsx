@@ -501,7 +501,7 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
           <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center">
             <p className="text-sm font-bold text-slate-700">Giải chưa có division để vận hành</p>
             <p className="mt-1 text-xs font-medium text-slate-500">
-              Hãy quay về cấu hình để tạo hoặc kích hoạt các hình thức thi đấu trước.
+              Hãy quay về cấu hình để tạo hoặc kích hoạt các nội dung thi đấu trước.
             </p>
           </div>
         )}

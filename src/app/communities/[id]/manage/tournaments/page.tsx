@@ -483,7 +483,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-semibold text-slate-700">Hình thức thi đấu</label>
+                    <label className="text-sm font-semibold text-slate-700">Nội dung thi đấu</label>
                     <select
                       value={newTourneyMatchType}
                       onChange={(e) => setNewTourneyMatchType(e.target.value as CommunityTournamentMatchType)}

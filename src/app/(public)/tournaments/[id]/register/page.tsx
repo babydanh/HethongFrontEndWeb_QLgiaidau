@@ -785,7 +785,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
               <div className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-sm flex flex-col gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                    Chọn hình thức thi đấu
+                    Chọn nội dung thi đấu
                   </label>
                   <p className="text-[11px] text-slate-500 font-medium">
                     Chọn đúng nội dung bạn muốn tham gia trước khi điền thông tin đăng ký.
@@ -884,7 +884,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                     <AlertTriangle className="w-10 h-10 text-rose-500 mx-auto" />
                     <p className="text-base font-bold text-rose-900">Giới tính không phù hợp</p>
                     <p className="text-xs text-slate-600 font-semibold leading-relaxed max-w-md mx-auto">
-                      Hình thức thi đấu này ({selectedDivision?.name || 'Đơn'}) chỉ dành cho giới tính{' '}
+                      Nội dung thi đấu này ({selectedDivision?.name || 'Đơn'}) chỉ dành cho giới tính{' '}
                       <strong>{divisionGender === 'MALE' ? 'Nam' : 'Nữ'}</strong>. Giới tính trong hồ sơ của bạn hiện tại là{' '}
                       <strong>{userGender === 'MALE' ? 'Nam' : userGender === 'FEMALE' ? 'Nữ' : 'Khác'}</strong>.
                     </p>
@@ -1089,7 +1089,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                 )
               ) : (
                 <div className="py-12 text-center text-slate-400">
-                  <p className="text-sm font-semibold">Vui lòng chọn hình thức thi đấu ở cột bên trái để tiếp tục</p>
+                  <p className="text-sm font-semibold">Vui lòng chọn nội dung thi đấu ở cột bên trái để tiếp tục</p>
                 </div>
               )}
             </div>

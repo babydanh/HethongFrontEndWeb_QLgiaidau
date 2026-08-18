@@ -146,7 +146,7 @@ export default function Step2FormatMulti() {
 
   const handleNext = () => {
     if (!isFootball && selected.length === 0) {
-      setStep2Error('Vui lòng chọn ít nhất một hình thức thi đấu.');
+      setStep2Error('Vui lòng chọn ít nhất một nội dung thi đấu.');
       return;
     }
     const next: Record<string, unknown> = { format: bracketType };

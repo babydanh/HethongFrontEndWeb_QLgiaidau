@@ -1069,7 +1069,7 @@ export function RegistrationTab({
           {/* Division Selector */}
           {divisions.length > 1 && (
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Chọn hình thức</label>
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Chọn nội dung thi đấu</label>
               <div className="grid grid-cols-1 gap-2">
                 {divisions.map((div) => {
                   const isActive = div.id === selectedDivisionId;

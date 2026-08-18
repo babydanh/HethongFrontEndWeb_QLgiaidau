@@ -581,7 +581,7 @@ export function useManageState(id: string) {
   };
 
   const handleSaveMatchConfig = async () => {
-    if (!tournament || !selectedDivisionId) { toast.error('Vui lòng chọn hình thức'); return; }
+    if (!tournament || !selectedDivisionId) { toast.error('Vui lòng chọn nội dung thi đấu'); return; }
     setIsSavingConfig(true);
     try {
       const pm: Record<string,{mt:MatchTypeDB;gr:GenderRestriction|null}> = {
@@ -645,7 +645,7 @@ export function useManageState(id: string) {
   };
 
   const handleSaveRoundRobinConfig = async () => {
-    if (!tournament || !selectedDivisionId) { toast.error('Vui lòng chọn hình thức'); return; }
+    if (!tournament || !selectedDivisionId) { toast.error('Vui lòng chọn nội dung thi đấu'); return; }
     setIsSavingRoundRobinConfig(true);
     try {
       const selected = divisions.find((division) => division.id === selectedDivisionId);
@@ -677,7 +677,7 @@ export function useManageState(id: string) {
   };
 
   const handleAdvanceStandings = async () => {
-    if (!tournament || !selectedDivisionId) { toast.error('Vui lòng chọn hình thức'); return; }
+    if (!tournament || !selectedDivisionId) { toast.error('Vui lòng chọn nội dung thi đấu'); return; }
     setIsAdvancingStandings(true);
     try {
       const rrStage = bracket?.stages?.find((s) => s.type === 'ROUND_ROBIN');
@@ -697,7 +697,7 @@ export function useManageState(id: string) {
   };
 
   const handleSaveGskConfig = async () => {
-    if (!tournament || !selectedDivisionId) { toast.error('Vui lòng chọn hình thức'); return; }
+    if (!tournament || !selectedDivisionId) { toast.error('Vui lòng chọn nội dung thi đấu'); return; }
     const eligibleParticipants = participants.filter((participant) => participant.teamStatus === 'COMPLETE' && participant.isPaid).length;
     if (numGroups < 2) { toast.error('Vòng bảng + loại trực tiếp phải có ít nhất 2 bảng'); return; }
     if (teamsPerGroup < 2) { toast.error('Mỗi bảng phải có ít nhất 2 đội'); return; }
@@ -751,7 +751,7 @@ export function useManageState(id: string) {
   };
 
   const handleSaveFinanceConfig = async () => {
-    if (!tournament || !selectedDivisionId) { toast.error('Vui lòng chọn hình thức'); return; }
+    if (!tournament || !selectedDivisionId) { toast.error('Vui lòng chọn nội dung thi đấu'); return; }
     setIsSavingConfig(true);
     try { await divisionsApi.updateDivision(selectedDivisionId, { entryFee }); toast.success('Lưu cài đặt tài chính thành công!'); await fetchDivisions(tournament.id); }
     catch (err) { toast.error(getErrorMessage(err)); }
@@ -853,7 +853,7 @@ export function useManageState(id: string) {
   };
 
   const requestDeleteDivision = (div: Division) => {
-    if (divisions.length <= 1) { toast.error('Giải phải có ít nhất 1 hình thức'); return; }
+    if (divisions.length <= 1) { toast.error('Giải phải có ít nhất 1 nội dung thi đấu'); return; }
     setDivisionPendingDelete(div);
   };
   const handleConfirmDeleteDivision = async () => {
@@ -1069,7 +1069,7 @@ export function useManageState(id: string) {
 
   const handleAssignWildcard = async () => {
     if (!wildcardEmailOrPhone.trim() || !wildcardTeamName.trim()) { toast.error('Nhập đầy đủ thông tin'); return; }
-    if (divisions.length > 0 && !selectedDivisionId) { toast.error('Chọn hình thức trước'); return; }
+    if (divisions.length > 0 && !selectedDivisionId) { toast.error('Chọn nội dung thi đấu trước'); return; }
     setIsAssigningWildcard(true);
     try { await tournamentsApi.assignReservedSlot(id, wildcardEmailOrPhone.trim(), wildcardTeamName.trim(), wildcardPartnerEmailOrPhone.trim() || undefined, selectedDivisionId||undefined); toast.success('Gán suất đặc cách thành công!'); setWildcardEmailOrPhone(''); setWildcardPartnerEmailOrPhone(''); setWildcardTeamName(''); await refetchDivisionData(); }
     catch (err) { toast.error(getErrorMessage(err)); }

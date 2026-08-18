@@ -135,7 +135,7 @@
     "approvalCta": "Request approval",
     "approvalBadge": "Approval required",
     "inviteOnlyCta": "Invite only",
-    "inviteOnlyBadge": "Invite only"
+    "inviteOnlyBadge": "Invite only", "rankedBadgeLabel": "ELO ranked", "recreationalBadgeLabel": "Recreational", "locationNotUpdated": "Location not updated"
   }
 ,
   "TournamentDisplay": {

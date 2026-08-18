@@ -451,7 +451,7 @@
     "statusPendingApproval": "Chờ duyệt công bố",
     "statusPendingDelete": "Đang chờ xóa",
     "statusRegistrationClosed": "Đã khóa đăng ký",
-    "statusCancelled": "Đã hủy"
+    "statusCancelled": "Đã hủy", "rankedBadgeLabel": "Xếp hạng ELO", "recreationalBadgeLabel": "Phong trào", "locationNotUpdated": "Chưa cập nhật"
   },
   "Terms": {
     "badge": "Pháp lý & Điều khoản",

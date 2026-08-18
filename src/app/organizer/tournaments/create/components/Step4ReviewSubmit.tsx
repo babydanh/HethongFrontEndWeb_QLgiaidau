@@ -62,7 +62,7 @@ export default function Step4ReviewSubmit() {
     if (!formData.sportRules || typeof formData.sportRules !== 'object' || !('kind' in formData.sportRules)) {
       invalid(1, 'categoryId', 'Chưa xác định được bộ luật theo môn đã chọn. Vui lòng chọn lại bộ môn.');
     }
-    if (!primaryDivision || divisions.length === 0) invalid(2, 'selectedFormats', 'Vui lòng chọn ít nhất một hình thức thi đấu.');
+    if (!primaryDivision || divisions.length === 0) invalid(2, 'selectedFormats', 'Vui lòng chọn ít nhất một nội dung thi đấu.');
     if (!formData.registrationStartDate) invalid(3, 'registrationStartDate', 'Vui lòng chọn ngày bắt đầu đăng ký.');
     if (!formData.registrationEndDate) invalid(3, 'registrationEndDate', 'Vui lòng chọn ngày kết thúc đăng ký.');
     if (!formData.startDate) invalid(3, 'startDate', 'Vui lòng chọn ngày bắt đầu thi đấu.');
@@ -81,7 +81,7 @@ export default function Step4ReviewSubmit() {
     if (!formData.sportRules || typeof formData.sportRules !== 'object' || !('kind' in formData.sportRules)) {
       throw new Error('Chưa xác định được bộ luật theo môn đã chọn. Vui lòng quay lại chọn môn.');
     }
-    if (!primaryDivision || divisions.length === 0) throw new Error('Bạn chưa chọn hình thức thi đấu ở Bước 2.');
+    if (!primaryDivision || divisions.length === 0) throw new Error('Bạn chưa chọn nội dung thi đấu ở Bước 2.');
 
     if (formData.registrationStartDate && formData.registrationEndDate) {
       const registrationStart = new Date(formData.registrationStartDate);
@@ -122,7 +122,7 @@ export default function Step4ReviewSubmit() {
       validateTournamentDraft();
 
       if (!primaryDivision) {
-        throw new Error('Vui lòng chọn ít nhất một hình thức thi đấu.');
+        throw new Error('Vui lòng chọn ít nhất một nội dung thi đấu.');
       }
 
       // 1. Create one tournament. Match formats are stored as tournament_divisions.

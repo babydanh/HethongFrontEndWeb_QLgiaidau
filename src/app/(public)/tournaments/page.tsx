@@ -794,7 +794,7 @@ export default function TournamentsListPage() {
                             ? 'bg-blue-50 text-blue-700 border border-blue-200'
                             : 'bg-slate-50 text-slate-600 border border-slate-200'
                         }`}>
-                          {tournament.isRanked ? 'Xếp hạng ELO' : 'Phong trào'}
+                          {tournament.isRanked ? translate('rankedBadgeLabel') : translate('recreationalBadgeLabel')}
                         </span>
 
                         {/* Series / Parent Badge */}

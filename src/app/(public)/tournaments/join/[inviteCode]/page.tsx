@@ -263,7 +263,7 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
             {availableDivisions.length > 0 && selectedDivision && (
               <div className="space-y-3 pb-2 border-b border-slate-100">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-700 block">Hình thức thi đấu</label>
+                  <label className="text-xs font-bold text-slate-700 block">Nội dung thi đấu</label>
                   <div className="rounded-lg border border-blue-100 bg-blue-50 px-3.5 py-3 text-xs text-blue-900">
                     Bạn đang đăng ký cho hình thức: <span className="font-bold">{selectedDivision.name} ({selectedDivisionLabel})</span>
                   </div>

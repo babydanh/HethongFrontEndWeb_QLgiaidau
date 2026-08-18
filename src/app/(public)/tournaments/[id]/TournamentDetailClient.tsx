@@ -590,7 +590,7 @@ const commonTranslate = useTranslations('Common');
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b pb-4 mb-6 gap-3">
                   <div className="space-y-0.5">
                     <h3 className="font-bold text-slate-900 text-sm">Nội dung thi đấu</h3>
-                    <p className="text-[11px] text-slate-400 font-bold">Chọn phân hạng hoặc hình thức thi đấu để xem chi tiết</p>
+                    <p className="text-[11px] text-slate-400 font-bold">Chọn phân hạng hoặc nội dung thi đấu để xem chi tiết</p>
                   </div>
                   <select
                     value={selectedDivisionId}

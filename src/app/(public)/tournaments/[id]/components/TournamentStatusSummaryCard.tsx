@@ -55,7 +55,7 @@ function ParticipantAvatars({ participant }: { participant: Match['participant1'
             <img
               key={m.userId || idx}
               src={m.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${fallbackInitials}`}
-              alt={m.fullName || translate('player')}
+              alt={m.fullName || participant.teamName || 'Vận động viên'}
               className="w-9 h-9 rounded-full border-2 border-white object-cover shadow-sm bg-slate-100"
               onError={(e) => {
                 (e.currentTarget as HTMLImageElement).src = `https://api.dicebear.com/7.x/initials/svg?seed=${fallbackInitials}`;

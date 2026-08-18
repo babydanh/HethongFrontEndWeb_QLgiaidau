@@ -18,10 +18,10 @@ const step3Schema = z.object({
 }).refine(data => new Date(data.registrationEndDate) >= new Date(data.registrationStartDate), {
   message: 'Ngày đóng đăng ký phải sau ngày mở',
   path: ['registrationEndDate']
-}).refine(data => new Date(data.startDate) >= new Date(data.registrationEndDate), {
+}).refine(data => new Date(data.startDate) > new Date(data.registrationEndDate), {
   message: 'Giải đấu chỉ được bắt đầu sau khi đóng đăng ký',
   path: ['startDate']
-}).refine(data => new Date(data.endDate) >= new Date(data.startDate), {
+}).refine(data => new Date(data.endDate) > new Date(data.startDate), {
   message: 'Ngày bế mạc phải sau ngày khai mạc',
   path: ['endDate']
 });

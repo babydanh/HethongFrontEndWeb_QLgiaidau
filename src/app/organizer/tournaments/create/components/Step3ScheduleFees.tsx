@@ -67,7 +67,7 @@ const step3Schema = z.object({
   if (data.registrationEndDate && data.startDate) {
     const regEnd = new Date(data.registrationEndDate);
     const start = new Date(data.startDate);
-    if (regEnd > start) {
+    if (regEnd >= start) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: 'Ngày kết thúc đăng ký phải trước ngày bắt đầu thi đấu',

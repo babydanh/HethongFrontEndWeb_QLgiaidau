@@ -745,11 +745,11 @@ export default function ProfilePage() {
                       <span className="text-slate-900 font-semibold">{profileData?.gender || translate("notUpdated")}</span>
                     </div>
                     <div className="flex flex-col gap-1 border-b border-slate-100 pb-3">
-                      <span className="text-slate-500 font-medium">Địa chỉ</span>
+                      <span className="text-slate-500 font-medium">{translate("addressLabel")}</span>
                       <span className="text-slate-900 font-semibold">{profileData?.address || translate("notUpdated")}</span>
                     </div>
                     <div className="flex flex-col gap-1">
-                      <span className="text-slate-500 font-medium">Email liên hệ</span>
+                      <span className="text-slate-500 font-medium">{translate("contactEmailLabel")}</span>
                       <span className="text-slate-900 font-semibold">{profileData?.email || translate("notUpdated")}</span>
                     </div>
                   </div>
@@ -786,10 +786,10 @@ export default function ProfilePage() {
                   </div>
                 ) : (
                   <div className="text-center py-4 bg-slate-50 rounded-lg border border-dashed border-slate-200">
-                    <p className="text-slate-400 text-xs italic">Chưa cấu hình tài khoản nhận hoàn tiền.</p>
+                    <p className="text-slate-400 text-xs italic">{translate("refundAccountMissing")}</p>
                     <Link href="/profile/edit">
                       <Button size="sm" className="mt-2.5 text-xs font-bold px-3 py-1.5 h-auto">
-                        Cấu hình ngay
+                        {translate("configureNow")}
                       </Button>
                     </Link>
                   </div>
@@ -868,7 +868,7 @@ export default function ProfilePage() {
                   <Link href="/communities/create">
                     <Button variant="success" size="sm" className="rounded-lg px-4 flex items-center gap-2">
                       <Users className="w-4 h-4" />
-                      Tạo câu lạc bộ
+                      {translate("createClub")}
                     </Button>
                   </Link>
                 </div>
@@ -892,7 +892,7 @@ export default function ProfilePage() {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           {createdCommunities.map(community => {
                             const isOwner = community.creatorId === displayUser?.id || community.myRole === 'OWNER';
-                            const roleBadgeLabel = isOwner ? 'Người tạo / Chủ sở hữu' : community.myRole === 'MODERATOR' ? 'Quản trị viên' : 'Thành viên';
+                            const roleBadgeLabel = isOwner ? translate("clubOwner") : community.myRole === 'MODERATOR' ? translate("clubModerator") : translate("clubMember");
                             const roleBadgeStyle = isOwner ? 'bg-blue-50 text-blue-700 border-blue-200' : community.myRole === 'MODERATOR' ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-slate-100 text-slate-700 border-slate-200';
 
                             return (
@@ -911,7 +911,7 @@ export default function ProfilePage() {
                                       </span>
                                       <p className={`text-xs flex items-center gap-1 ${community.status === 'ACTIVE' ? 'text-emerald-600' : 'text-amber-700'}`}>
                                         <span className={`w-2 h-2 rounded-full inline-block ${community.status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
-                                        {community.status === 'ACTIVE' ? 'Đang hoạt động' : 'Đã vô hiệu hoá'}
+                                        {community.status === 'ACTIVE' ? translate("clubActive") : 'Đã vô hiệu hoá'}
                                       </p>
                                     </div>
                                   </div>
@@ -931,7 +931,7 @@ export default function ProfilePage() {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           {joinedCommunities.map(community => {
                             const isOwner = community.creatorId === displayUser?.id || community.myRole === 'OWNER';
-                            const roleBadgeLabel = isOwner ? 'Người tạo / Chủ sở hữu' : community.myRole === 'MODERATOR' ? 'Quản trị viên' : 'Thành viên';
+                            const roleBadgeLabel = isOwner ? translate("clubOwner") : community.myRole === 'MODERATOR' ? translate("clubModerator") : translate("clubMember");
                             const roleBadgeStyle = isOwner ? 'bg-blue-50 text-blue-700 border-blue-200' : community.myRole === 'MODERATOR' ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200';
 
                             return (
@@ -950,7 +950,7 @@ export default function ProfilePage() {
                                       </span>
                                       <p className={`text-xs flex items-center gap-1 ${community.status === 'ACTIVE' ? 'text-emerald-600' : 'text-amber-700'}`}>
                                         <span className={`w-2 h-2 rounded-full inline-block ${community.status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
-                                        {community.status === 'ACTIVE' ? 'Đang hoạt động' : 'Đã vô hiệu hoá'}
+                                        {community.status === 'ACTIVE' ? translate("clubActive") : 'Đã vô hiệu hoá'}
                                       </p>
                                     </div>
                                   </div>
@@ -978,8 +978,8 @@ export default function ProfilePage() {
 
               <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6 text-center py-12 border-dashed">
                 <Activity className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                <p className="text-slate-500 font-medium text-lg">Chưa có dữ liệu hoạt động</p>
-                <p className="text-slate-400 text-sm mt-1">Hãy tham gia giải đấu để bắt đầu ghi nhận thành tích!</p>
+                <p className="text-slate-500 font-medium text-lg">{translate("activityEmpty")}</p>
+                <p className="text-slate-400 text-sm mt-1">{translate("activityHint")}</p>
               </div>
             </div>
           </div>
@@ -1472,7 +1472,7 @@ export default function ProfilePage() {
       <Modal open={isModalOpen} onOpenChange={setIsModalOpen}>
         <ModalContent className="max-w-md p-6">
           <ModalHeader>
-            <ModalTitle className="text-xl font-bold text-slate-900">Đăng ký Ban tổ chức giải</ModalTitle>
+            <ModalTitle className="text-xl font-bold text-slate-900">{translate("organizerRegistrationTitle")}</ModalTitle>
             <p className="text-slate-500 text-xs mt-1 font-medium leading-relaxed">
               (Dùng để tạo chuỗi giải đấu hoặc giải đấu công khai tính Rank ELO. Nếu chỉ tổ chức giải nội bộ CLB thì bạn không cần đăng ký quyền này).
             </p>

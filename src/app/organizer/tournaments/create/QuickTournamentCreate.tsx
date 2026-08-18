@@ -126,6 +126,21 @@ const quickSchema = z.object({
   footballAllowDraw: z.boolean(),
   description: z.string().trim().max(10000, 'Mô tả tối đa 10.000 ký tự.').optional(),
   isRanked: z.boolean(),
+}).superRefine((data, ctx) => {
+  const registrationStart = data.registrationStart ? new Date(data.registrationStart) : null;
+  const registrationEnd = data.registrationEnd ? new Date(data.registrationEnd) : null;
+  const tournamentStart = data.startDate ? new Date(data.startDate) : null;
+  const tournamentEnd = data.endDate ? new Date(data.endDate) : null;
+
+  if (registrationStart && registrationEnd && registrationStart >= registrationEnd) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['registrationEnd'], message: 'Thời gian đóng đăng ký phải sau thời gian mở.' });
+  }
+  if (registrationEnd && tournamentStart && registrationEnd >= tournamentStart) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['registrationEnd'], message: 'Thời gian đóng đăng ký phải trước giờ bắt đầu giải.' });
+  }
+  if (tournamentStart && tournamentEnd && tournamentStart >= tournamentEnd) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['endDate'], message: 'Thời gian kết thúc phải sau giờ bắt đầu giải.' });
+  }
 });
 
 type QuickValues = z.infer<typeof quickSchema>;
@@ -229,6 +244,7 @@ interface CustomDateTimePickerProps {
   onChange: (val: string) => void;
   error?: string;
   isPrimary?: boolean;
+  max?: string;
 }
 
 function CustomDateTimePicker({
@@ -237,6 +253,7 @@ function CustomDateTimePicker({
   onChange,
   error,
   isPrimary = false,
+  max,
 }: CustomDateTimePickerProps) {
   const hiddenRef = useRef<HTMLInputElement>(null);
 
@@ -289,6 +306,7 @@ function CustomDateTimePicker({
           ref={hiddenRef}
           type="datetime-local"
           value={value || ''}
+          max={max}
           onChange={(e) => onChange(e.target.value)}
           className="absolute inset-0 h-full w-full cursor-pointer opacity-0 pointer-events-none"
           tabIndex={-1}
@@ -344,7 +362,6 @@ export default function QuickTournamentCreate() {
   const [formatConfigs, setFormatConfigs] = useState<QuickFormatConfig[]>([
     ...QUICK_FORMAT_OPTIONS.slice(0, 5).map((item) => ({ key: item.key, label: item.label, eloEnabled: false, minElo: null, maxElo: null })),
   ]);
-  const formatDefaultsAppliedRef = useRef(false);
   const draftHydratedRef = useRef(false);
   const autoScheduleRef = useRef({ registrationEnd: '', endDate: '' });
 
@@ -411,7 +428,10 @@ export default function QuickTournamentCreate() {
     const nextEndDate = formatDateTimeInput(estimatedEnd);
     const currentRegistrationEnd = getValues('registrationEnd');
     const currentEndDate = getValues('endDate');
-    if (!currentRegistrationEnd || currentRegistrationEnd === autoScheduleRef.current.registrationEnd) {
+    const registrationEndIsAfterStart = currentRegistrationEnd
+      ? new Date(currentRegistrationEnd).getTime() >= start.getTime()
+      : false;
+    if (!currentRegistrationEnd || currentRegistrationEnd === autoScheduleRef.current.registrationEnd || registrationEndIsAfterStart) {
       setValue('registrationEnd', nextRegistrationEnd, { shouldValidate: true });
     }
     if (!currentEndDate || currentEndDate === autoScheduleRef.current.endDate) {
@@ -514,12 +534,8 @@ export default function QuickTournamentCreate() {
     setIsFormatModalOpen(false);
   };
 
-  useEffect(() => {
-    if (!formatDefaultsAppliedRef.current) {
-      formatDefaultsAppliedRef.current = true;
-      return;
-    }
-    if (sport === 'football') {
+  const handleSportChange = (newSport: QuickSport) => {
+    if (newSport === 'football') {
       setValue('selectedFormats', [DEFAULT_FOOTBALL_FORMATS[0]], { shouldValidate: true });
       setFormatConfigs(QUICK_FORMAT_OPTIONS.slice(5).map((item) => {
         return { key: item.key, label: item.label, eloEnabled: false, minElo: null, maxElo: null };
@@ -530,7 +546,7 @@ export default function QuickTournamentCreate() {
       setFormatConfigs(QUICK_FORMAT_OPTIONS.slice(0, 5).map((item) => ({ key: item.key, label: item.label, eloEnabled: false, minElo: null, maxElo: null })));
       syncLegacyFormat('MALE_DOUBLES');
     }
-  }, [sport]);
+  };
 
   useEffect(() => {
     if (!province || !provinces.some((item) => item.code === province)) {
@@ -724,7 +740,9 @@ export default function QuickTournamentCreate() {
                     Môn thể thao <span className="text-rose-500">*</span>
                   </label>
                   <select
-                    {...register('sport')}
+                    {...register('sport', {
+                      onChange: (e) => handleSportChange(e.target.value as QuickSport),
+                    })}
                     disabled={loadingCategories}
                     className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                   >
@@ -792,11 +810,12 @@ export default function QuickTournamentCreate() {
 
                   <div className={`sm:col-span-2 grid gap-4 overflow-hidden transition-all duration-300 ease-out ${showDerivedSchedule ? 'max-h-48 translate-y-0 opacity-100' : 'pointer-events-none max-h-0 -translate-y-2 opacity-0'}`} aria-hidden={!showDerivedSchedule}>
                     <div className="grid gap-4 sm:grid-cols-2">
-                      <CustomDateTimePicker
+                  <CustomDateTimePicker
                         label="Đóng đăng ký"
                         value={registrationEnd}
                         onChange={handleRegistrationEndChange}
                         error={errors.registrationEnd?.message}
+                        max={startDate || undefined}
                       />
 
                       <CustomDateTimePicker

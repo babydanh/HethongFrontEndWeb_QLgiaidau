@@ -24,7 +24,7 @@ import {
   resolveNotificationTarget,
 } from '@/features/notifications/utils';
 import { cn } from '@/utils/cn';
-import { getErrorMessage } from '@/utils/error';
+import { getErrorMessage, isHttpStatusError } from '@/utils/error';
 
 type NotificationFilter = 'all' | 'unread';
 
@@ -33,6 +33,9 @@ type NotificationSection = {
   title: string;
   items: NotificationItem[];
 };
+
+const isResolvedInviteError = (error: unknown): boolean =>
+  isHttpStatusError(error, 404) || isHttpStatusError(error, 409);
 
 const getNotificationSectionKey = (createdAt: string): NotificationSection['key'] => {
   const createdTime = new Date(createdAt).getTime();
@@ -141,6 +144,12 @@ export default function NotificationsPage() {
       );
       await refreshNotifications();
     } catch (error) {
+      if (isResolvedInviteError(error)) {
+        await markNotificationAsRead(notificationId);
+        toast.success('Lời mời đã được hủy hoặc xử lý trước đó.');
+        await refreshNotifications();
+        return;
+      }
       toast.error(
         getErrorMessage(
           error,
@@ -169,6 +178,12 @@ export default function NotificationsPage() {
       toast.success(action === 'ACCEPT' ? 'Đã nhận vai trò trọng tài.' : 'Đã từ chối lời mời trọng tài.');
       await refreshNotifications();
     } catch (error) {
+      if (isResolvedInviteError(error)) {
+        await markNotificationAsRead(notificationId);
+        toast.success('Lời mời trọng tài đã được hủy hoặc xử lý trước đó.');
+        await refreshNotifications();
+        return;
+      }
       toast.error(
         getErrorMessage(
           error,
@@ -204,6 +219,12 @@ export default function NotificationsPage() {
       );
       await refreshNotifications();
     } catch (error) {
+      if (isResolvedInviteError(error)) {
+        await markNotificationAsRead(notificationId);
+        toast.success('Lời mời ghép đôi đã được hủy hoặc xử lý trước đó.');
+        await refreshNotifications();
+        return;
+      }
       toast.error(
         getErrorMessage(
           error,
@@ -230,6 +251,12 @@ export default function NotificationsPage() {
       toast.success(action === 'ACCEPTED' ? 'Đã tham gia đội bóng.' : 'Đã từ chối lời mời vào đội bóng.');
       await refreshNotifications();
     } catch (error) {
+      if (isResolvedInviteError(error)) {
+        await markNotificationAsRead(notificationId);
+        toast.success('Lời mời đội bóng đã được hủy hoặc xử lý trước đó.');
+        await refreshNotifications();
+        return;
+      }
       toast.error(getErrorMessage(error, action === 'ACCEPTED' ? 'Không thể nhận lời mời đội bóng.' : 'Không thể từ chối lời mời đội bóng.'));
     } finally {
       setPendingActionKey(null);

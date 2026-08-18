@@ -19,7 +19,8 @@ import {
   User,
   Users,
   Trophy,
-  AlertTriangle,
+  Shield,
+  CheckCircle2,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '@/utils/error';
@@ -119,6 +120,7 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
   const [sport, setSport] = useState<LiteSport>('badminton');
   const [name, setName] = useState('');
   const [format, setFormat] = useState<'singles' | 'doubles'>('singles');
+  const [footballTeamSize, setFootballTeamSize] = useState<5 | 7 | 11>(7);
   const [bracketType, setBracketType] = useState<'single_elimination' | 'double_elimination' | 'round_robin' | 'group_stage_knockout'>('single_elimination');
   const [maxTeams, setMaxTeams] = useState(16);
   const [description, setDescription] = useState('');
@@ -134,7 +136,13 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
     communitiesApi.getCommunityById(communityId).then((response) => {
       const data = (response as { data?: Community }).data || (response as unknown as Community);
       setCommunity(data);
-      if (data.categories?.[0]) setSport(mapCategoryToLiteSport(data.categories[0]));
+      if (data.categories?.[0]) {
+        const detectedSport = mapCategoryToLiteSport(data.categories[0]);
+        setSport(detectedSport);
+        if (detectedSport === 'football') {
+          setFormat('doubles');
+        }
+      }
     }).catch(() => toast.error('Không thể tải thông tin câu lạc bộ')).finally(() => setIsLoading(false));
   }, [communityId]);
 
@@ -151,7 +159,8 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
         name: name.trim(),
         sport,
         communityId,
-        format,
+        format: sport === 'football' ? 'doubles' : format,
+        teamSize: sport === 'football' ? footballTeamSize : undefined,
         bracketType,
         maxTeams,
         description: description.trim() || undefined,
@@ -182,6 +191,8 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
     );
   }
 
+  const isFootball = sport === 'football';
+
   return (
     <div className="min-h-screen bg-slate-50 py-8 px-4 md:px-8">
       <div className="max-w-5xl mx-auto space-y-6">
@@ -208,7 +219,7 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
           </div>
 
           <div className="mt-4 rounded-xl border border-amber-300 bg-amber-50/90 px-4 py-3 text-xs sm:text-sm font-medium leading-relaxed text-amber-950 shadow-2xs">
-            <strong className="font-bold text-amber-950">Lưu ý:</strong> Đây là luồng tạo siêu nhanh cho CLB. Sau khi tạo thành công, bạn có thể vào trang <strong>Quản lý giải</strong> để cấu hình chi tiết sân bãi, phân hạt giống và điều hành trận đấu.
+            <strong className="font-bold text-amber-950">Lưu ý:</strong> Đây là luồng tạo siêu nhanh cho CLB. Sau khi tạo thành công, bạn có thể vào trang <strong>Quản lý giải</strong> để cấu hình chi tiết sân bãi, phân hạt giống và điều hành tỷ số trực tiếp.
           </div>
         </div>
 
@@ -249,7 +260,7 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
                   </span>
                 </div>
                 <div className="h-11 flex items-center rounded-xl border border-slate-200 bg-slate-50 px-3.5 text-sm font-bold text-slate-800">
-                  {sportLabel[sport]}
+                  {community?.categories?.[0]?.name || sportLabel[sport]}
                 </div>
                 <p className="mt-1 text-[11px] text-slate-400">
                   Lite CLB tự động kế thừa bộ môn chính của câu lạc bộ để tổ chức nhanh nhất.
@@ -357,7 +368,7 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
           {/* CỘT PHẢI (5 CỘT): Nội dung, 4 Thể thức & Quy mô */}
           <div className="lg:col-span-5 space-y-5">
             
-            {/* Card 3: Nội dung thi đấu (Đơn / Đôi) */}
+            {/* Card 3: Nội dung thi đấu (Đơn / Đôi hoặc Quy mô sân Bóng đá) */}
             <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs space-y-3.5">
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                 <div className="flex items-center gap-2">
@@ -366,38 +377,61 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
                   </div>
                   <h2 className="text-sm font-bold text-slate-900">Nội dung thi đấu</h2>
                 </div>
-                <span className="text-[11px] text-slate-400 font-medium">Đơn / Đôi</span>
+                <span className="text-[11px] text-slate-400 font-medium">
+                  {isFootball ? 'Quy mô sân' : 'Đơn / Đôi'}
+                </span>
               </div>
 
-              <div className="grid grid-cols-2 gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => setFormat('singles')}
-                  className={`flex flex-col items-center justify-center gap-1.5 rounded-xl border p-3 text-center transition ${
-                    format === 'singles'
-                      ? 'border-blue-600 bg-blue-50/80 shadow-2xs ring-1 ring-blue-500/30 text-blue-950 font-bold'
-                      : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
-                  }`}
-                >
-                  <User className={`h-5 w-5 ${format === 'singles' ? 'text-blue-600' : 'text-slate-400'}`} />
-                  <span className="text-xs">Đánh đơn (Singles)</span>
-                  <span className="text-[10px] text-slate-400">1 vs 1 cá nhân</span>
-                </button>
+              {isFootball ? (
+                <div className="grid grid-cols-3 gap-2">
+                  {([5, 7, 11] as const).map((size) => (
+                    <button
+                      key={size}
+                      type="button"
+                      onClick={() => setFootballTeamSize(size)}
+                      className={`flex flex-col items-center justify-center gap-1 rounded-xl border p-2.5 text-center transition ${
+                        footballTeamSize === size
+                          ? 'border-blue-600 bg-blue-50/80 shadow-2xs ring-1 ring-blue-500/30 text-blue-950 font-bold'
+                          : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
+                      }`}
+                    >
+                      <Shield className={`h-4 w-4 ${footballTeamSize === size ? 'text-blue-600' : 'text-slate-400'}`} />
+                      <span className="text-xs">Sân {size}</span>
+                      <span className="text-[10px] text-slate-400">{size} người</span>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setFormat('singles')}
+                    className={`flex flex-col items-center justify-center gap-1.5 rounded-xl border p-3 text-center transition ${
+                      format === 'singles'
+                        ? 'border-blue-600 bg-blue-50/80 shadow-2xs ring-1 ring-blue-500/30 text-blue-950 font-bold'
+                        : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
+                    }`}
+                  >
+                    <User className={`h-5 w-5 ${format === 'singles' ? 'text-blue-600' : 'text-slate-400'}`} />
+                    <span className="text-xs">Đánh đơn (Singles)</span>
+                    <span className="text-[10px] text-slate-400">1 vs 1 cá nhân</span>
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={() => setFormat('doubles')}
-                  className={`flex flex-col items-center justify-center gap-1.5 rounded-xl border p-3 text-center transition ${
-                    format === 'doubles'
-                      ? 'border-blue-600 bg-blue-50/80 shadow-2xs ring-1 ring-blue-500/30 text-blue-950 font-bold'
-                      : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
-                  }`}
-                >
-                  <Users className={`h-5 w-5 ${format === 'doubles' ? 'text-blue-600' : 'text-slate-400'}`} />
-                  <span className="text-xs">Đánh đôi (Doubles)</span>
-                  <span className="text-[10px] text-slate-400">2 vs 2 theo cặp</span>
-                </button>
-              </div>
+                  <button
+                    type="button"
+                    onClick={() => setFormat('doubles')}
+                    className={`flex flex-col items-center justify-center gap-1.5 rounded-xl border p-3 text-center transition ${
+                      format === 'doubles'
+                        ? 'border-blue-600 bg-blue-50/80 shadow-2xs ring-1 ring-blue-500/30 text-blue-950 font-bold'
+                        : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
+                    }`}
+                  >
+                    <Users className={`h-5 w-5 ${format === 'doubles' ? 'text-blue-600' : 'text-slate-400'}`} />
+                    <span className="text-xs">Đánh đôi (Doubles)</span>
+                    <span className="text-[10px] text-slate-400">2 vs 2 theo cặp</span>
+                  </button>
+                </div>
+              )}
             </section>
 
             {/* Card 4: Thể thức bảng đấu (4 thể thức chuẩn) */}
@@ -462,7 +496,7 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
                     <Users className="h-3.5 w-3.5 text-blue-600" />
-                    Quy mô giải đấu (Số đội/người)
+                    Quy mô giải đấu ({isFootball ? 'Số đội' : 'Số đội/người'})
                   </span>
                   <span className="text-xs text-slate-400">
                     {bracketType === 'round_robin' ? 'Tối đa 15 đội/bảng' : 'Tối đa 128'}

@@ -1039,9 +1039,9 @@ export default function UnifiedChatWidget() {
       setPollQuestion('');
       setPollOptions(['', '']);
       setPollAllowMultiple(false);
-      toast.success('Đã tạo cuộc bình chọn thành công!');
+      toast.success(translate('pollCreated'));
     } catch (err) {
-      toast.error(getErrorMessage(err, 'Không thể tạo bình chọn.'));
+      toast.error(getErrorMessage(err, translate('pollCreateFailed')));
     } finally {
       setCreatingPoll(false);
     }
@@ -1052,8 +1052,8 @@ export default function UnifiedChatWidget() {
     const isBlocked = blockedUserIds.includes(otherParticipant.id);
     const confirmed = window.confirm(
       isBlocked
-        ? `Bỏ chặn người dùng ${otherParticipant.fullName || ''}?`
-        : `Chặn người dùng ${otherParticipant.fullName || ''}?`,
+        ? translate('unblockUserConfirm', { name: otherParticipant.fullName || '' })
+        : translate('blockUserConfirm', { name: otherParticipant.fullName || '' }),
     );
     if (!confirmed) return;
 
@@ -2033,7 +2033,7 @@ export default function UnifiedChatWidget() {
 
                       const senderName =
                         message.senderName ||
-                        (message.mine ? user?.fullName || 'Tôi' : 'Thành viên');
+                        (message.mine ? user?.fullName || translate('you') : translate('member'));
 
                       const isClubChat =
                         selection.kind === 'ROOM' && selection.room.type === 'CLUB';

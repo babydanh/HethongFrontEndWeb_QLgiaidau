@@ -65,6 +65,7 @@
     "galleryTab": "Gallery",
     "rankingsTab": "Rankings",
     "moderationTab": "Moderation",
+    "pollCreateFailed": "Unable to create poll.",
     "chatSettingsSaved": "Chat room settings saved!",
     "chatSettingsUpdateFailed": "Unable to update chat settings.",
     "deleteChat": "Delete chat",

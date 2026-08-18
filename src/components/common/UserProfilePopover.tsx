@@ -253,7 +253,7 @@ export default function UserProfilePopover({
       <div className="relative px-4 pb-4 pt-0">
         {/* Avatar positioned over header */}
         <div className="-mt-10 mb-2 flex items-end justify-between">
-          <div className="rounded-full bg-white p-1 shadow-md">
+          <div className="rounded-full shadow-md">
             <RankAvatar
               src={profileData.avatarUrl}
               name={profileData.fullName}

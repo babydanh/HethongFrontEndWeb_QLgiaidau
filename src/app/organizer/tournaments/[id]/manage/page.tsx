@@ -129,6 +129,9 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                 {s.tournament.category?.name || 'Bộ môn'}
               </span>
               {s.getStatusLabel(s.tournament.status)}
+              {s.draftStatus === 'saving' && <span className="text-[10px] font-semibold text-slate-400">Đang lưu nháp…</span>}
+              {s.draftStatus === 'saved' && <span className="text-[10px] font-semibold text-emerald-600">Đã lưu nháp</span>}
+              {s.draftStatus === 'restored' && <span className="text-[10px] font-semibold text-amber-600">Đã khôi phục nháp</span>}
             </div>
             <h1 className="text-xl md:text-3xl font-bold text-slate-900">{s.tournament.name}</h1>
             <p className="text-slate-500 font-medium text-xs md:text-sm flex items-center gap-1">

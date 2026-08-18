@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { TournamentSeries, SeriesLeg } from '@/types/series';
 import { Trophy, Calendar, MapPin, Sparkles, Star } from 'lucide-react';
 import Link from 'next/link';
@@ -10,6 +11,7 @@ interface SeriesOverviewTabProps {
 }
 
 export const SeriesOverviewTab: React.FC<SeriesOverviewTabProps> = ({ series, legs }) => {
+  const translate = useTranslations('SeriesDetail');
   // Find the next upcoming tournament event in the ongoing/upcoming legs
   const allEvents = legs.flatMap(l => l.events || []);
   const upcomingEvent = allEvents
@@ -31,7 +33,7 @@ export const SeriesOverviewTab: React.FC<SeriesOverviewTabProps> = ({ series, le
         {/* Editor.js Content View */}
         <div className="bg-white p-6 md:p-8 rounded-lg border border-slate-200 shadow-sm">
           <h2 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-blue-600" /> Về Chuỗi Giải Đấu
+            <Sparkles className="w-5 h-5 text-blue-600" /> {translate('overviewHeading')}
           </h2>
           {series.description ? (
             <div 
@@ -39,7 +41,7 @@ export const SeriesOverviewTab: React.FC<SeriesOverviewTabProps> = ({ series, le
               dangerouslySetInnerHTML={{ __html: series.description }}
             />
           ) : (
-            <p className="text-slate-400 text-sm">Chưa có thông tin giới thiệu chi tiết.</p>
+            <p className="text-slate-400 text-sm">{translate('descriptionMissing')}</p>
           )}
         </div>
       </div>
@@ -52,12 +54,12 @@ export const SeriesOverviewTab: React.FC<SeriesOverviewTabProps> = ({ series, le
           <div className="absolute bottom-0 left-0 w-32 h-32 bg-emerald-600/10 rounded-full blur-2xl"></div>
           
           <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-1.5">
-            <Star className="w-4 h-4 text-amber-400" /> Thông tin nhanh
+            <Star className="w-4 h-4 text-amber-400" /> {translate('quickInfo')}
           </h3>
 
           <div className="flex flex-col gap-4">
             <div>
-              <span className="text-xs text-slate-400">Tổng giải thưởng chuỗi</span>
+              <span className="text-xs text-slate-400">{translate('totalPrize')}</span>
               <div className="text-2xl font-bold text-amber-400 mt-0.5">{formattedPrize}</div>
             </div>
             
@@ -65,7 +67,7 @@ export const SeriesOverviewTab: React.FC<SeriesOverviewTabProps> = ({ series, le
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <span className="text-xs text-slate-400">Số chặng đấu</span>
+                <span className="text-xs text-slate-400">{translate('legsPlayed')}</span>
                 <div className="text-lg font-bold text-white mt-0.5">{series._count?.legs || 0} chặng</div>
               </div>
               <div>

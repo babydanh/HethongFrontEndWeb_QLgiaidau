@@ -49,7 +49,7 @@ export function RankAvatar({
     <div
       className={cn(
         sizeClass,
-        'relative flex shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-slate-100 shadow-sm',
+        'relative flex shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-slate-300 bg-slate-100 shadow-sm',
         ringClassName,
         getRankRingClass(elo, tierName, matchesPlayed, categoryName),
         className,

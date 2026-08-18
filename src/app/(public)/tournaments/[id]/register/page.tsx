@@ -723,70 +723,76 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
     userGender !== divisionGender;
 
   return (
-    <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-xl mx-auto">
+    <div className="min-h-screen bg-slate-50 py-8 md:py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto">
         <button
           onClick={() => router.push(buildTournamentDetailHref(tournament.id))}
-          className="flex items-center gap-2 text-slate-500 hover:text-slate-800 font-bold text-sm mb-6 transition-colors"
+          className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-800 font-bold text-sm mb-6 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" /> Quay lại giải đấu
         </button>
 
-        <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
-          {/* Header Card */}
-          <div className="p-6 md:p-8 bg-gradient-to-br from-slate-900 to-slate-800 text-white relative">
-            {tournament.visibility === 'PRIVATE' && (
-              <div className="absolute top-4 right-4 bg-blue-600 text-white font-bold text-[10px] px-2.5 py-1 rounded-md tracking-wider">
-                {translate('privateInvite')}
-              </div>
-            )}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Left Column (5/12) - Sticky tournament info and division selector */}
+          <div className="lg:col-span-5 flex flex-col gap-6 lg:sticky lg:top-24">
+            {/* Header Card */}
+            <div className="bg-gradient-to-br from-slate-900 via-slate-850 to-slate-800 text-white rounded-2xl border border-slate-700/60 shadow-md p-6 sm:p-7 relative overflow-hidden">
+              {tournament.visibility === 'PRIVATE' && (
+                <div className="absolute top-4 right-4 bg-blue-600 text-white font-bold text-[10px] px-2.5 py-1 rounded-md tracking-wider">
+                  {translate('privateInvite')}
+                </div>
+              )}
 
-            <span className="flex items-center gap-1 bg-blue-600/20 text-blue-300 text-[10px] font-bold px-2 py-0.5 rounded border border-blue-500/20 uppercase tracking-wider w-fit">
-              {(() => {
-                const logo = getSportLogo(tournament.category?.name);
-                return logo ? (
-                  <img src={logo} alt={tournament.category?.name || ''} className="w-3 h-3 object-contain" />
-                ) : null;
-              })()}
-              {tournament.category?.name || 'Tennis'}
-            </span>
-            <h1 className="text-xl md:text-2xl font-bold mt-2 mb-3 leading-tight text-white">{tournament.name}</h1>
+              <span className="inline-flex items-center gap-1.5 bg-blue-500/20 text-blue-300 text-[10px] font-bold px-2.5 py-1 rounded-full border border-blue-400/20 uppercase tracking-wider mb-3">
+                {(() => {
+                  const logo = getSportLogo(tournament.category?.name);
+                  return logo ? (
+                    <img src={logo} alt={tournament.category?.name || ''} className="w-3 h-3 object-contain" />
+                  ) : null;
+                })()}
+                {tournament.category?.name || 'Thể thao'}
+              </span>
 
-            <div className="grid grid-cols-2 gap-y-2 gap-x-4 text-xs font-semibold text-slate-350 border-t border-slate-700/50 pt-4 mt-4">
-              <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-blue-400" />
-                <span>{translate('openingDate')}: {tournament.startDate ? formatDate(tournament.startDate) : translate('notUpdated')}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-rose-400" />
-                <span className="truncate">{tournament.locationAddress || translate('notUpdated')}</span>
-              </div>
-              <div className="flex items-center gap-2 col-span-2">
-                <Trophy className="w-4 h-4 text-amber-400" />
-                <span>
-                  Định dạng giải đấu: {
-                    tournament.format === 'SINGLE_ELIMINATION' ? 'Loại trực tiếp (Single)' :
-                    tournament.format === 'DOUBLE_ELIMINATION' ? 'Nhánh thắng thua (Double)' :
-                    tournament.format === 'ROUND_ROBIN' ? 'Vòng tròn tính điểm' :
-                    tournament.format === 'GROUP_STAGE_KNOCKOUT' ? 'Vòng bảng + Loại trực tiếp' : tournament.format
-                  }
-                </span>
+              <h1 className="text-xl sm:text-2xl font-bold leading-tight text-white mb-4">
+                {tournament.name}
+              </h1>
+
+              <div className="space-y-2.5 text-xs font-medium text-slate-300 border-t border-slate-700/60 pt-4">
+                <div className="flex items-center gap-2.5">
+                  <Calendar className="w-4 h-4 text-blue-400 shrink-0" />
+                  <span>{translate('openingDate')}: <strong className="text-white">{tournament.startDate ? formatDate(tournament.startDate) : translate('notUpdated')}</strong></span>
+                </div>
+                <div className="flex items-center gap-2.5">
+                  <MapPin className="w-4 h-4 text-rose-400 shrink-0" />
+                  <span className="truncate">{tournament.locationAddress || translate('notUpdated')}</span>
+                </div>
+                <div className="flex items-center gap-2.5">
+                  <Trophy className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span>
+                    Định dạng: <strong className="text-white">{
+                      tournament.format === 'SINGLE_ELIMINATION' ? 'Loại trực tiếp (Single)' :
+                      tournament.format === 'DOUBLE_ELIMINATION' ? 'Nhánh thắng thua (Double)' :
+                      tournament.format === 'ROUND_ROBIN' ? 'Vòng tròn tính điểm' :
+                      tournament.format === 'GROUP_STAGE_KNOCKOUT' ? 'Vòng bảng + Loại trực tiếp' : tournament.format
+                    }</strong>
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Form / Flow Content */}
-          <div className="p-6 md:p-8">
-            {/* Division selector — animated cards */}
+            {/* Division selector cards */}
             {allDivisions.length > 0 && (
-              <div className="flex flex-col gap-3 mb-6">
+              <div className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-sm flex flex-col gap-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Chọn hình thức thi đấu</label>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    Chọn hình thức thi đấu
+                  </label>
                   <p className="text-[11px] text-slate-500 font-medium">
                     Chọn đúng nội dung bạn muốn tham gia trước khi điền thông tin đăng ký.
                   </p>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2.5">
                   {allDivisions.map((div) => {
                     const isActive = selectedDivisionId === div.id;
                     const matchLabel = getDivisionMatchLabel(div.matchType, div.genderRestriction);
@@ -799,80 +805,67 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                         onClick={() => setSelectedDivisionId(div.id)}
                         disabled={isSubmitting}
                         className={cn(
-                          'relative min-h-[136px] w-full cursor-pointer rounded-lg border px-4 py-3 text-xs font-bold transition-all',
-                          'flex flex-col items-center justify-center gap-1',
+                          'relative w-full cursor-pointer rounded-xl border p-3.5 text-xs font-bold transition-all text-left',
+                          'flex items-center justify-between gap-3',
                           isActive
                             ? 'border-transparent text-white shadow-md'
-                            : 'bg-white border-slate-200 text-slate-650 hover:border-blue-300 hover:text-blue-700',
+                            : 'bg-white border-slate-200 text-slate-700 hover:border-blue-300 hover:bg-blue-50/20',
                         )}
                       >
                         {isActive && (
                           <motion.div
                             layoutId="activeDivision"
-                            className="absolute inset-0 bg-blue-600 rounded-lg z-0"
+                            className="absolute inset-0 bg-blue-600 rounded-xl z-0"
                             transition={{ type: 'spring', stiffness: 380, damping: 30 }}
                           />
                         )}
-                        <span className="relative z-10 flex flex-col items-center gap-0.5">
-                          <span className="text-sm font-bold leading-tight">{div.name}</span>
+                        <div className="relative z-10 flex flex-col gap-0.5 min-w-0">
+                          <span className="text-sm font-bold leading-tight truncate">{div.name}</span>
                           <span className={`text-[10px] font-bold ${isActive ? 'text-blue-100' : 'text-slate-500'}`}>
-                            {matchLabel}
+                            {matchLabel} • {bracketLabel}
                           </span>
-                          <span className={`text-[9px] font-bold ${isActive ? 'text-blue-200' : 'text-slate-400'}`}>
-                            {bracketLabel} • {participantCount}{div.maxParticipants ? ` / ${div.maxParticipants}` : ''} hồ sơ
+                          <span className={`text-[9px] font-semibold ${isActive ? 'text-blue-200' : 'text-slate-400'}`}>
+                            {participantCount}{div.maxParticipants ? ` / ${div.maxParticipants}` : ''} hồ sơ
+                            {(div.minElo != null || div.maxElo != null) && ` • ELO: ${div.minElo ?? 0} - ${div.maxElo ?? '∞'}`}
                           </span>
-                          <span className={`text-[9px] font-semibold ${isActive ? 'text-blue-100' : 'text-slate-500'}`}>
-                            Lệ phí: {Number(div.entryFee ?? 0) > 0 ? formatCurrency(Number(div.entryFee)) : translate('free')}
-                          </span>
-                          {(div.minElo != null || div.maxElo != null) && (
-                            <span className={`text-[9px] font-semibold ${isActive ? 'text-blue-100' : 'text-slate-500'}`}>
-                              ELO: {div.minElo ?? 0} - {div.maxElo ?? 'không giới hạn'}
-                            </span>
-                          )}
+                        </div>
+                        <span className={cn(
+                          'relative z-10 shrink-0 text-xs font-bold px-2.5 py-1 rounded-full',
+                          isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700',
+                        )}>
+                          {Number(div.entryFee ?? 0) > 0 ? formatCurrency(Number(div.entryFee)) : translate('free')}
                         </span>
                       </button>
                     );
                   })}
                 </div>
+
                 {selectedDivision && (
-                  <div className="rounded-lg border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-4 shadow-sm">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div className="space-y-1">
-                        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">
-                          Nội dung đang chọn
-                        </p>
-                        <h3 className="text-base font-bold text-slate-900">{selectedDivision.name}</h3>
-                        <p className="text-xs font-semibold text-slate-500">
-                          {getDivisionMatchLabel(selectedDivision.matchType, selectedDivision.genderRestriction)}
-                        </p>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        <span className="px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-100 text-[11px] font-bold">
-                          {getDivisionBracketLabel(selectedDivision.format)}
-                        </span>
-                        <span className="px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200 text-[11px] font-bold">
-                          {selectedDivision._count?.participants ?? 0}
-                          {selectedDivision.maxParticipants ? ` / ${selectedDivision.maxParticipants}` : ''} đăng ký
-                        </span>
-                        <span className="px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-[11px] font-bold">
-                          {entryFeeVal > 0 ? formatCurrency(entryFeeVal) : translate('free')}
-                        </span>
-                      </div>
+                  <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-3.5 shadow-sm space-y-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-slate-500 font-semibold">Nội dung đang chọn:</span>
+                      <span className="font-bold text-slate-900">{selectedDivision.name}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-slate-500 font-semibold">Lệ phí thi đấu:</span>
+                      <span className="font-bold text-blue-600">
+                        {entryFeeVal > 0 ? formatCurrency(entryFeeVal) : translate('free')}
+                      </span>
                     </div>
 
                     {/* ELO Check UI */}
-                    {selectedDivisionData?.categoryId && eloLoading && (
-                      <div className="mt-3 text-xs text-slate-400 flex items-center gap-2">
+                    {selectedDivision && eloLoading && (
+                      <div className="pt-1 text-xs text-slate-400 flex items-center gap-2">
                         <Loader2 className="w-3 h-3 animate-spin" /> Đang kiểm tra ELO...
                       </div>
                     )}
                     {eloCheck && !eloCheck.ok && (
-                      <div className="mt-3 text-xs text-blue-600 bg-slate-50 border border-slate-200 rounded-lg p-2.5 font-semibold">
+                      <div className="mt-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2 font-semibold">
                         ⚠️ {eloCheck.message}
                       </div>
                     )}
                     {eloCheck?.ok && (
-                      <div className="mt-3 text-xs text-blue-600 font-medium">
+                      <div className="mt-1 text-xs text-emerald-700 font-medium">
                         ✓ {eloCheck.message}
                       </div>
                     )}
@@ -880,217 +873,226 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                 )}
               </div>
             )}
+          </div>
 
-            {selectedDivision ? (
-              isGenderMismatched ? (
-                <div className="bg-rose-50 border border-rose-100 rounded-lg p-5 text-center space-y-3 animate-in fade-in duration-200">
-                  <AlertTriangle className="w-8 h-8 text-rose-500 mx-auto" />
-                  <p className="text-sm font-bold text-rose-900">Giới tính không phù hợp</p>
-                  <p className="text-xs text-slate-600 font-semibold leading-relaxed">
-                    Hình thức thi đấu này ({selectedDivision?.name || 'Đơn'}) chỉ dành cho giới tính{' '}
-                    <strong>{divisionGender === 'MALE' ? 'Nam' : 'Nữ'}</strong>. Giới tính trong hồ sơ của bạn hiện tại là{' '}
-                    <strong>{userGender === 'MALE' ? 'Nam' : userGender === 'FEMALE' ? 'Nữ' : 'Khác'}</strong>.
-                  </p>
-                  <Button
-                    onClick={() => router.push('/profile')}
-                    variant="outline"
-                    className="border-slate-200 text-rose-700 hover:bg-rose-100 text-xs font-bold px-4 h-9 mx-auto block"
-                  >
-                    Thay đổi giới tính trong hồ sơ
-                  </Button>
-                </div>
-              ) : isTeamSport ? (
-                <TeamRegistrationFlow
-                  tournamentId={id}
-                  inviteCode={inviteCode}
-                  divisionId={selectedDivisionId || undefined}
-                  categoryId={selectedDivision?.categoryId}
-                  currentUserId={user?.id}
-                  participantId={participant?.id}
-                  participantTeamId={participant?.footballTeamId}
-                  rosterLockedAt={participant?.rosterLockedAt}
-                  teamSize={effectiveFootballTeamSize}
-                  maxTeamSize={tournament?.tournamentConfig?.maxTeamSize}
-                  maxReserve={tournament?.tournamentConfig?.maxReserve ?? 0}
-                  registrationMode={tournament?.tournamentConfig?.registrationMode}
-                  onRegistrationChanged={() => fetchTournament()}
-                />
-              ) : isDoubles ? (
-                <DoublesRegistrationFlow
-                  tournament={selectedDivision}
-                  tournamentId={id}
-                  inviteCode={inviteCode}
-                  divisionId={selectedDivisionId || undefined}
-                />
-              ) : isRegistered && participant ? (
-                <div className="space-y-6 animate-in fade-in duration-300">
-                  <div className="text-center space-y-2">
-                    <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 mb-2">
-                      <CheckCircle className="w-6 h-6" />
-                    </div>
-                    <h3 className="text-lg font-bold text-slate-900 font-bold">
-                      {participant.teamStatus === 'COMPLETE'
-                        ? 'Đăng ký thành công! / BTC đã duyệt'
-                        : (tournament?.tournamentConfig?.registrationMode === 'APPROVAL') ? 'Đã gửi yêu cầu tham gia!' : 'Đăng ký tham gia thành công!'}
-                    </h3>
-                    <p className="text-slate-500 text-xs max-w-sm mx-auto">
-                      {participant.teamStatus === 'COMPLETE'
-                        ? 'Yêu cầu tham gia của bạn đã được xét duyệt thành công.'
-                        : (tournament?.tournamentConfig?.registrationMode === 'APPROVAL')
-                          ? 'Yêu cầu tham gia của bạn đang chờ BTC duyệt.'
-                          : <>Bạn đã đăng ký thi đấu đơn ở nội dung: <strong className="text-slate-700">{selectedDivision?.name}</strong>.</>}
+          {/* Right Column (7/12) - Main Form & Registration Flow */}
+          <div className="lg:col-span-7">
+            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 sm:p-8">
+              {selectedDivision ? (
+                isGenderMismatched ? (
+                  <div className="bg-rose-50 border border-rose-100 rounded-xl p-6 text-center space-y-3 animate-in fade-in duration-200">
+                    <AlertTriangle className="w-10 h-10 text-rose-500 mx-auto" />
+                    <p className="text-base font-bold text-rose-900">Giới tính không phù hợp</p>
+                    <p className="text-xs text-slate-600 font-semibold leading-relaxed max-w-md mx-auto">
+                      Hình thức thi đấu này ({selectedDivision?.name || 'Đơn'}) chỉ dành cho giới tính{' '}
+                      <strong>{divisionGender === 'MALE' ? 'Nam' : 'Nữ'}</strong>. Giới tính trong hồ sơ của bạn hiện tại là{' '}
+                      <strong>{userGender === 'MALE' ? 'Nam' : userGender === 'FEMALE' ? 'Nữ' : 'Khác'}</strong>.
                     </p>
+                    <Button
+                      onClick={() => router.push('/profile')}
+                      variant="outline"
+                      className="border-slate-200 text-rose-700 hover:bg-rose-100 text-xs font-bold px-4 h-9 mx-auto block"
+                    >
+                      Thay đổi giới tính trong hồ sơ
+                    </Button>
                   </div>
+                ) : isTeamSport ? (
+                  <TeamRegistrationFlow
+                    tournamentId={id}
+                    inviteCode={inviteCode}
+                    divisionId={selectedDivisionId || undefined}
+                    categoryId={selectedDivision?.categoryId}
+                    currentUserId={user?.id}
+                    participantId={participant?.id}
+                    participantTeamId={participant?.footballTeamId}
+                    rosterLockedAt={participant?.rosterLockedAt}
+                    teamSize={effectiveFootballTeamSize}
+                    maxTeamSize={tournament?.tournamentConfig?.maxTeamSize}
+                    maxReserve={tournament?.tournamentConfig?.maxReserve ?? 0}
+                    registrationMode={tournament?.tournamentConfig?.registrationMode}
+                    onRegistrationChanged={() => fetchTournament()}
+                  />
+                ) : isDoubles ? (
+                  <DoublesRegistrationFlow
+                    tournament={selectedDivision}
+                    tournamentId={id}
+                    inviteCode={inviteCode}
+                    divisionId={selectedDivisionId || undefined}
+                  />
+                ) : isRegistered && participant ? (
+                  <div className="space-y-6 animate-in fade-in duration-300">
+                    <div className="text-center space-y-2">
+                      <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 mb-2">
+                        <CheckCircle className="w-6 h-6" />
+                      </div>
+                      <h3 className="text-lg font-bold text-slate-900">
+                        {participant.teamStatus === 'COMPLETE'
+                          ? 'Đăng ký thành công! / BTC đã duyệt'
+                          : (tournament?.tournamentConfig?.registrationMode === 'APPROVAL') ? 'Đã gửi yêu cầu tham gia!' : 'Đăng ký tham gia thành công!'}
+                      </h3>
+                      <p className="text-slate-500 text-xs max-w-sm mx-auto">
+                        {participant.teamStatus === 'COMPLETE'
+                          ? 'Yêu cầu tham gia của bạn đã được xét duyệt thành công.'
+                          : (tournament?.tournamentConfig?.registrationMode === 'APPROVAL')
+                            ? 'Yêu cầu tham gia của bạn đang chờ BTC duyệt.'
+                            : <>Bạn đã đăng ký thi đấu đơn ở nội dung: <strong className="text-slate-700">{selectedDivision?.name}</strong>.</>}
+                      </p>
+                    </div>
 
-                  <div className="border border-slate-200 rounded-lg overflow-hidden divide-y">
-                    <div className="bg-slate-50 px-4 py-2.5 text-xs font-bold text-slate-500 uppercase tracking-wider">
-                      Thông tin đăng ký: {participant.teamName}
+                    <div className="border border-slate-200 rounded-xl overflow-hidden divide-y divide-slate-100">
+                      <div className="bg-slate-50 px-4 py-2.5 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                        Thông tin đăng ký: {participant.teamName}
+                      </div>
+                      <div className="px-4 py-3 flex justify-between text-sm">
+                        <span className="text-slate-500 font-medium">Họ và tên:</span>
+                        <span className="text-slate-900 font-bold">{user?.fullName}</span>
+                      </div>
+                      <div className="px-4 py-3 flex justify-between text-sm">
+                        <span className="text-slate-500 font-medium">Trạng thái lệ phí:</span>
+                        {participant.isPaid ? (
+                          <span className="text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100 text-xs">Đã đóng</span>
+                        ) : (
+                          <span className="text-amber-600 font-bold bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100 text-xs">{translate('pendingPayment')}</span>
+                        )}
+                      </div>
                     </div>
-                    <div className="px-4 py-3 flex justify-between text-sm">
-                      <span className="text-slate-500 font-medium">Họ và tên:</span>
-                      <span className="text-slate-900 font-bold">{user?.fullName}</span>
-                    </div>
-                    <div className="px-4 py-3 flex justify-between text-sm">
-                      <span className="text-slate-500 font-medium">Trạng thái lệ phí:</span>
-                      {participant.isPaid ? (
-                        <span className="text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">Đã đóng</span>
-                      ) : (
-                        <span className="text-amber-600 font-bold bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100">{translate('pendingPayment')}</span>
-                      )}
-                    </div>
-                  </div>
 
-                  {entryFeeVal > 0 ? (
-                    <div className="space-y-4">
-                      {!participant.isPaid && (
-                        <div className="flex gap-3 pt-2">
-                          <Button
-                            variant="outline"
-                            onClick={handleWithdrawClick}
-                            disabled={isWithdrawing}
-                            className="flex-1 border-rose-200 hover:bg-rose-50 text-rose-600 font-bold py-3 text-sm flex items-center justify-center gap-1.5 animate-all h-12"
-                          >
-                            <Trash2 className="w-4 h-4" /> Hủy & Rút
-                          </Button>
-                          <Button
-                            onClick={() => {
-                              router.push(buildCheckoutHref(participant.id));
-                            }}
-                            className="flex-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 text-sm flex items-center justify-center gap-2 shadow-md shadow-blue-500/10 h-12"
-                          >
-                            <CreditCard className="w-4 h-4" /> Thanh toán
-                          </Button>
+                    {entryFeeVal > 0 ? (
+                      <div className="space-y-4">
+                        {!participant.isPaid && (
+                          <div className="flex gap-3 pt-2">
+                            <Button
+                              variant="outline"
+                              onClick={handleWithdrawClick}
+                              disabled={isWithdrawing}
+                              className="flex-1 border-rose-200 hover:bg-rose-50 text-rose-600 font-bold py-3 text-sm flex items-center justify-center gap-1.5 h-12"
+                            >
+                              <Trash2 className="w-4 h-4" /> Hủy & Rút
+                            </Button>
+                            <Button
+                              onClick={() => {
+                                router.push(buildCheckoutHref(participant.id));
+                              }}
+                              className="flex-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 text-sm flex items-center justify-center gap-2 shadow-md shadow-blue-500/10 h-12"
+                            >
+                              <CreditCard className="w-4 h-4" /> Thanh toán
+                            </Button>
+                          </div>
+                        )}
+
+                        {participant.isPaid && (
+                          <div className="space-y-3">
+                            <Button
+                              variant="outline"
+                              onClick={handleWithdrawClick}
+                              disabled={isWithdrawing}
+                              className="w-full border-rose-200 hover:bg-rose-50 text-rose-600 font-bold py-2.5 text-sm flex items-center justify-center gap-1.5 h-11"
+                            >
+                              <Trash2 className="w-4 h-4" /> {translate('withdraw')}
+                            </Button>
+                            <Button
+                              onClick={() => router.push(buildTournamentDetailHref(id))}
+                              className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 text-sm h-11"
+                            >
+                              Quay lại trang giải đấu
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <div className="bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold p-4 rounded-xl text-center">
+                          {translate('freeRegistrationComplete')}
                         </div>
-                      )}
 
-                      {participant.isPaid && (
-                        <div className="space-y-3">
+                        <div className="flex gap-3">
                           <Button
                             variant="outline"
                             onClick={handleWithdrawClick}
                             disabled={isWithdrawing}
-                            className="w-full border-rose-200 hover:bg-rose-50 text-rose-600 font-bold py-2.5 text-sm flex items-center justify-center gap-1.5 h-11"
+                            className="flex-1 border-rose-200 hover:bg-rose-50 text-rose-600 font-bold py-3 text-sm flex items-center justify-center gap-1.5 h-12"
                           >
                             <Trash2 className="w-4 h-4" /> {translate('withdraw')}
                           </Button>
                           <Button
                             onClick={() => router.push(buildTournamentDetailHref(id))}
-                            className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 text-sm h-11"
+                            className="flex-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 text-sm h-12"
                           >
-                            Quay lại trang giải đấu
+                            {translate('openTournament')}
                           </Button>
                         </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      <div className="bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold p-4 rounded-lg text-center">
-                        {translate('freeRegistrationComplete')}
                       </div>
-
-                      <div className="flex gap-3">
-                        <Button
-                          variant="outline"
-                          onClick={handleWithdrawClick}
-                          disabled={isWithdrawing}
-                          className="flex-1 border-rose-200 hover:bg-rose-50 text-rose-600 font-bold py-3 text-sm flex items-center justify-center gap-1.5 h-12"
-                        >
-                          <Trash2 className="w-4 h-4" /> {translate('withdraw')}
-                        </Button>
-                        <Button
-                          onClick={() => router.push(buildTournamentDetailHref(id))}
-                          className="flex-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 text-sm h-12"
-                        >
-                          {translate('openTournament')}
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  <div>
-                    <h2 className="text-lg font-bold text-slate-950 flex items-center gap-2">
-                      <Users className="w-5 h-5 text-blue-600" /> {translate('registerSingles')}
-                    </h2>
-                    <p className="text-slate-500 text-xs mt-1">
-                      {translate('enterCompetitionName')}
-                    </p>
-                  </div>
-
-                  <form onSubmit={handleSubmit(onSubmitSingles)} className="space-y-5">
-                    {tournament?.isRanked && (
-                      <label className="flex items-start gap-3 rounded-xl border border-sky-200 bg-sky-50 p-3 text-sm text-slate-700">
-                        <input
-                          type="checkbox"
-                          checked={rankingConsent}
-                          onChange={(event) => setRankingConsent(event.target.checked)}
-                          className="mt-1 h-4 w-4 accent-sky-600"
-                        />
-                        <span>
-                          {translate('registrationConsent')} ELO trên bảng xếp hạng.
-                          <span className="mt-1 block text-xs text-slate-500">
-                            Đây là điều kiện của nội dung giải có xếp hạng; giải không xếp hạng không cập nhật ELO.
-                          </span>
-                        </span>
-                      </label>
                     )}
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                      <p className="text-xs text-blue-600 font-medium mb-1">Tên thi đấu</p>
-                      <p className="text-sm font-bold text-slate-900">{user?.fullName || translate('notUpdated')}</p>
-                      <p className="text-xs text-slate-500 mt-1">Tên sẽ được lấy từ tài khoản của bạn</p>
-                      <input type="hidden" {...register('teamName')} value={user?.fullName || 'Vận động viên'} />
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    <div>
+                      <h2 className="text-lg font-bold text-slate-950 flex items-center gap-2">
+                        <Users className="w-5 h-5 text-blue-600" /> {translate('registerSingles')}
+                      </h2>
+                      <p className="text-slate-500 text-xs mt-1">
+                        {translate('enterCompetitionName')}
+                      </p>
                     </div>
 
-                    <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 space-y-3">
-                      <div className="flex justify-between items-center text-sm">
-                        <span className="text-slate-500 font-semibold">{translate('entryFee')}:</span>
-                        <span className="font-bold text-slate-900">
-                          {entryFeeVal > 0 ? formatCurrency(entryFeeVal) : translate('free')}
-                        </span>
-                      </div>
-                    </div>
-
-                    <Button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 shadow-md shadow-blue-500/10 flex items-center justify-center gap-1.5"
-                    >
-                      {isSubmitting ? (
-                        <>
-                          <Loader2 className="w-4 h-4 animate-spin" /> {translate('processingRegistration')}
-                        </>
-                      ) : (
-                        <>
-                          <CheckCircle className="w-4 h-4" />
-                          {translate('confirmTournamentRegistration')}
-                        </>
+                    <form onSubmit={handleSubmit(onSubmitSingles)} className="space-y-5">
+                      {tournament?.isRanked && (
+                        <label className="flex items-start gap-3 rounded-xl border border-sky-200 bg-sky-50 p-3.5 text-sm text-slate-700">
+                          <input
+                            type="checkbox"
+                            checked={rankingConsent}
+                            onChange={(event) => setRankingConsent(event.target.checked)}
+                            className="mt-1 h-4 w-4 accent-sky-600"
+                          />
+                          <span>
+                            {translate('registrationConsent')} ELO trên bảng xếp hạng.
+                            <span className="mt-1 block text-xs text-slate-500">
+                              Đây là điều kiện của nội dung giải có xếp hạng; giải không xếp hạng không cập nhật ELO.
+                            </span>
+                          </span>
+                        </label>
                       )}
-                    </Button>
-                  </form>
+                      <div className="bg-blue-50 border border-blue-200 rounded-xl p-3.5">
+                        <p className="text-xs text-blue-600 font-medium mb-1">Tên thi đấu</p>
+                        <p className="text-sm font-bold text-slate-900">{user?.fullName || translate('notUpdated')}</p>
+                        <p className="text-xs text-slate-500 mt-1">Tên sẽ được lấy từ tài khoản của bạn</p>
+                        <input type="hidden" {...register('teamName')} value={user?.fullName || 'Vận động viên'} />
+                      </div>
+
+                      <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="text-slate-500 font-semibold">{translate('entryFee')}:</span>
+                          <span className="font-bold text-slate-900">
+                            {entryFeeVal > 0 ? formatCurrency(entryFeeVal) : translate('free')}
+                          </span>
+                        </div>
+                      </div>
+
+                      <Button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl shadow-md shadow-blue-500/10 flex items-center justify-center gap-1.5 text-sm"
+                      >
+                        {isSubmitting ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" /> {translate('processingRegistration')}
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle className="w-4 h-4" />
+                            {translate('confirmTournamentRegistration')}
+                          </>
+                        )}
+                      </Button>
+                    </form>
+                  </div>
+                )
+              ) : (
+                <div className="py-12 text-center text-slate-400">
+                  <p className="text-sm font-semibold">Vui lòng chọn hình thức thi đấu ở cột bên trái để tiếp tục</p>
                 </div>
-              )
-            ) : null}
+              )}
+            </div>
           </div>
         </div>
       </div>

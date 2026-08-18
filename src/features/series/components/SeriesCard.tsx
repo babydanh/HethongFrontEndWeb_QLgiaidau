@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { TournamentSeries, SeriesStatus } from '@/types/series';
 import { Trophy, Layers, Calendar, ArrowRight, ShieldCheck } from 'lucide-react';
 import { cn } from '@/utils/cn';
@@ -11,21 +12,22 @@ interface SeriesCardProps {
 }
 
 export const SeriesCard: React.FC<SeriesCardProps> = ({ series, className }) => {
+  const translate = useTranslations('SeriesDetail');
   const statusConfigs: Record<SeriesStatus, { text: string; classes: string }> = {
     DRAFT: {
-      text: '📝 Bản nháp',
+      text: '📝 ' + translate('statusDraft'),
       classes: 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20'
     },
     ACTIVE: {
-      text: '🟢 Đang diễn ra',
+      text: '🟢 ' + translate('statusActive'),
       classes: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
     },
     COMPLETED: {
-      text: '✅ Đã kết thúc',
+      text: '✅ ' + translate('statusCompleted'),
       classes: 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20'
     },
     CANCELLED: {
-      text: '❌ Đã hủy',
+      text: '❌ ' + translate('statusCancelled'),
       classes: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20'
     }
   };
@@ -33,7 +35,7 @@ export const SeriesCard: React.FC<SeriesCardProps> = ({ series, className }) => 
   const status = statusConfigs[series.status];
   const formattedPrize = series.totalPrize
     ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(series.totalPrize)
-    : 'Thỏa thuận';
+    : translate('formatAgreement');
 
   return (
     <div
@@ -104,24 +106,24 @@ export const SeriesCard: React.FC<SeriesCardProps> = ({ series, className }) => 
           <span>
             {series.startDate && series.endDate
               ? `${new Date(series.startDate).toLocaleDateString('vi-VN')} — ${new Date(series.endDate).toLocaleDateString('vi-VN')}`
-              : 'Chưa xác định thời gian'}
+              : translate('timeNotSet')}
           </span>
         </div>
 
         {/* Stats Row */}
         <div className="grid grid-cols-2 gap-4 py-3 px-4 bg-slate-50 rounded-lg border border-slate-100 mt-auto">
           <div className="flex flex-col items-start">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Số chặng</span>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{translate('legsLabel')}</span>
             <div className="flex items-center gap-1.5 mt-0.5 text-slate-700 font-bold text-sm">
               <Layers className="w-4 h-4 text-blue-500 shrink-0" />
-              <span>{series._count?.legs || 0} chặng</span>
+              <span>{translate('legCount', { count: series._count?.legs || 0 })}</span>
             </div>
           </div>
           <div className="flex flex-col items-start border-l border-slate-200 pl-4">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Số giải đấu</span>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{translate('eventsLabel')}</span>
             <div className="flex items-center gap-1.5 mt-0.5 text-slate-700 font-bold text-sm">
               <Trophy className="w-4 h-4 text-blue-500 shrink-0" />
-              <span>{series._count?.events || 0} giải</span>
+              <span>{translate('eventCount', { count: series._count?.events || 0 })}</span>
             </div>
           </div>
         </div>
@@ -131,7 +133,7 @@ export const SeriesCard: React.FC<SeriesCardProps> = ({ series, className }) => 
           href={`/series/${series.slug}`}
           className="mt-4 inline-flex items-center justify-center gap-1.5 w-full bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 group/btn"
         >
-          Chi tiết chuỗi giải
+          {translate('detailsLink')}
           <ArrowRight className="w-4 h-4 transform group-hover/btn:translate-x-1 transition-transform" />
         </Link>
       </div>

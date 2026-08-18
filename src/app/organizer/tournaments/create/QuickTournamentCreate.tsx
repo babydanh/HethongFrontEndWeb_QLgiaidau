@@ -19,6 +19,7 @@ import {
   Trophy,
   Info,
   Check,
+  Plus,
   Flame,
   X,
 } from 'lucide-react';
@@ -106,7 +107,7 @@ const quickSchema = z.object({
   visibility: z.enum(['PRIVATE', 'PUBLIC']),
   registrationMode: z.enum(['OPEN', 'APPROVAL', 'INVITE_ONLY']),
   bracketType: z.enum(['single_elimination', 'double_elimination', 'round_robin', 'group_stage_knockout']),
-  maxTeams: z.number().int().min(2).max(32),
+  maxTeams: z.number().int().min(2).max(64),
   registrationStart: z.string().optional(),
   registrationEnd: z.string().optional(),
   startDate: z.string().optional(),
@@ -129,6 +130,26 @@ const quickSchema = z.object({
 
 type QuickValues = z.infer<typeof quickSchema>;
 type QuickSport = QuickValues['sport'];
+
+type QuickFormatConfig = {
+  key: string;
+  label: string;
+  bracketType: QuickValues['bracketType'];
+  eloEnabled: boolean;
+  minElo: number | null;
+  maxElo: number | null;
+};
+
+const QUICK_FORMAT_OPTIONS = [
+  { key: 'MALE_SINGLES', label: 'Đơn nam' },
+  { key: 'FEMALE_SINGLES', label: 'Đơn nữ' },
+  { key: 'MALE_DOUBLES', label: 'Đôi nam' },
+  { key: 'FEMALE_DOUBLES', label: 'Đôi nữ' },
+  { key: 'MIXED_DOUBLES', label: 'Đôi nam nữ' },
+  { key: 'FOOTBALL_MALE', label: 'Đội nam' },
+  { key: 'FOOTBALL_FEMALE', label: 'Đội nữ' },
+  { key: 'FOOTBALL_MIXED', label: 'Không giới hạn' },
+] as const;
 
 const sportFromCategory = (category: Category): QuickSport | null => {
   const value = `${category.slug ?? ''} ${category.name ?? ''}`.toLowerCase();
@@ -314,6 +335,13 @@ export default function QuickTournamentCreate() {
   const description = useWatch({ control, name: 'description' }) || '';
   const formValues = useWatch({ control });
   const [isDescriptionEditorOpen, setIsDescriptionEditorOpen] = useState(false);
+  const [isFormatModalOpen, setIsFormatModalOpen] = useState(false);
+  const [formatDraft, setFormatDraft] = useState<QuickFormatConfig>({
+    key: 'MALE_DOUBLES', label: 'Đôi nam', bracketType: 'single_elimination', eloEnabled: false, minElo: null, maxElo: null,
+  });
+  const [formatConfigs, setFormatConfigs] = useState<QuickFormatConfig[]>([
+    { key: 'MALE_DOUBLES', label: 'Đôi nam', bracketType: 'single_elimination', eloEnabled: false, minElo: null, maxElo: null },
+  ]);
   const draftHydratedRef = useRef(false);
   const autoScheduleRef = useRef({ registrationEnd: '', endDate: '' });
 
@@ -435,6 +463,44 @@ export default function QuickTournamentCreate() {
     }
   };
 
+  const openFormatModal = (formatKey?: string) => {
+    const option = QUICK_FORMAT_OPTIONS.find((item) => item.key === formatKey) ?? QUICK_FORMAT_OPTIONS.find((item) => !selectedFormats.includes(item.key)) ?? QUICK_FORMAT_OPTIONS[0];
+    const existing = formatConfigs.find((config) => config.key === option.key);
+    setFormatDraft(existing ?? {
+      key: option.key,
+      label: option.label,
+      bracketType,
+      eloEnabled: false,
+      minElo: null,
+      maxElo: null,
+    });
+    setIsFormatModalOpen(true);
+  };
+
+  const saveFormatConfig = () => {
+    if (formatDraft.eloEnabled && formatDraft.minElo !== null && formatDraft.maxElo !== null && formatDraft.minElo > formatDraft.maxElo) {
+      toast.error('ELO tối thiểu phải nhỏ hơn hoặc bằng ELO tối đa.');
+      return;
+    }
+    setFormatConfigs((current) => [...current.filter((item) => item.key !== formatDraft.key), formatDraft]);
+    if (!selectedFormats.includes(formatDraft.key)) {
+      setValue('selectedFormats', [...selectedFormats, formatDraft.key], { shouldValidate: true });
+    }
+    syncLegacyFormat(formatDraft.key);
+    setIsFormatModalOpen(false);
+  };
+
+  const removeFormatConfig = (formatKey: string) => {
+    if (selectedFormats.length <= 1) {
+      toast('Cần ít nhất 1 nội dung thi đấu.', { icon: 'ℹ️' });
+      return;
+    }
+    const next = selectedFormats.filter((item) => item !== formatKey);
+    setValue('selectedFormats', next, { shouldValidate: true });
+    setFormatConfigs((current) => current.filter((item) => item.key !== formatKey));
+    syncLegacyFormat(next[0]);
+  };
+
   useEffect(() => {
     if (sport === 'football') {
       const hasFootball = selectedFormats.some((f) => f.startsWith('FOOTBALL_'));
@@ -529,15 +595,21 @@ export default function QuickTournamentCreate() {
       const response = await tournamentsApi.createLiteTournament(createPayload);
 
       try {
-        const divisionInputs = values.selectedFormats.map((formatKey) =>
-          toDivisionInput(
+        const divisionInputs = values.selectedFormats.map((formatKey) => {
+          const config = formatConfigs.find((item) => item.key === formatKey);
+          const division = toDivisionInput(
             formatKey,
-            values.bracketType,
+            config?.bracketType ?? values.bracketType,
             values.maxTeams,
             values.startDate ? new Date(values.startDate).toISOString() : undefined,
             values.registrationEnd ? new Date(values.registrationEnd).toISOString() : undefined,
-          )
-        );
+          );
+          return {
+            ...division,
+            minElo: config?.eloEnabled ? config.minElo : null,
+            maxElo: config?.eloEnabled ? config.maxElo : null,
+          };
+        });
         await Promise.all(
           divisionInputs.map((divInput) => divisionsApi.createDivision(response.id, divInput))
         );
@@ -879,61 +951,30 @@ export default function QuickTournamentCreate() {
                   </span>
                 </div>
 
-                {sport === 'football' ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                    {[
-                      { key: 'FOOTBALL_MALE', label: 'Đội nam' },
-                      { key: 'FOOTBALL_FEMALE', label: 'Đội nữ' },
-                      { key: 'FOOTBALL_MIXED', label: 'Không giới hạn' },
-                    ].map((fmt) => {
-                      const isSelected = selectedFormats.includes(fmt.key);
-                      return (
-                        <button
-                          key={fmt.key}
-                          type="button"
-                          onClick={() => toggleFormat(fmt.key)}
-                          className={`flex items-center justify-between rounded-xl border px-3 py-2.5 text-xs font-semibold transition ${
-                            isSelected
-                              ? 'border-blue-500 bg-blue-50/80 text-blue-700 ring-1 ring-blue-500/20 shadow-2xs'
-                              : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
-                          }`}
-                        >
-                          <span>{fmt.label}</span>
-                          {isSelected && <Check className="h-3.5 w-3.5 text-blue-600" />}
+                <div className="space-y-2">
+                  {selectedFormats.map((formatKey) => {
+                    const fallback = QUICK_FORMAT_OPTIONS.find((item) => item.key === formatKey);
+                    const config = formatConfigs.find((item) => item.key === formatKey);
+                    return (
+                      <div key={formatKey} className="flex items-center justify-between rounded-xl border border-blue-200 bg-blue-50/60 px-3 py-2.5">
+                        <button type="button" onClick={() => openFormatModal(formatKey)} className="min-w-0 text-left">
+                          <span className="block truncate text-xs font-bold text-blue-800">{config?.label ?? fallback?.label ?? formatKey}</span>
+                          <span className="mt-0.5 block text-[10px] text-blue-700/70">
+                            {config?.bracketType === 'round_robin' ? 'Vòng tròn' : config?.bracketType === 'double_elimination' ? 'Nhánh thắng / thua' : config?.bracketType === 'group_stage_knockout' ? 'Vòng bảng + Knockout' : 'Loại trực tiếp'}
+                            {config?.eloEnabled ? ` · ELO ${config.minElo ?? 0}–${config.maxElo ?? '∞'}` : ' · Không giới hạn ELO'}
+                          </span>
                         </button>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 gap-2">
-                    {[
-                      { key: 'MALE_SINGLES', label: 'Đơn nam' },
-                      { key: 'FEMALE_SINGLES', label: 'Đơn nữ' },
-                      { key: 'MALE_DOUBLES', label: 'Đôi nam' },
-                      { key: 'FEMALE_DOUBLES', label: 'Đôi nữ' },
-                      { key: 'MIXED_DOUBLES', label: 'Đôi nam nữ', span2: true },
-                    ].map((fmt) => {
-                      const isSelected = selectedFormats.includes(fmt.key);
-                      return (
-                        <button
-                          key={fmt.key}
-                          type="button"
-                          onClick={() => toggleFormat(fmt.key)}
-                          className={`flex items-center justify-between rounded-xl border px-3 py-2.5 text-xs font-semibold transition ${
-                            fmt.span2 ? 'col-span-2' : ''
-                          } ${
-                            isSelected
-                              ? 'border-blue-500 bg-blue-50/80 text-blue-700 ring-1 ring-blue-500/20 shadow-2xs'
-                              : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
-                          }`}
-                        >
-                          <span>{fmt.label}</span>
-                          {isSelected && <Check className="h-3.5 w-3.5 text-blue-600" />}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
+                        <div className="flex items-center gap-1">
+                          <Check className="h-4 w-4 text-blue-600" />
+                          <button type="button" onClick={() => removeFormatConfig(formatKey)} className="rounded-lg p-1 text-slate-400 hover:bg-white hover:text-rose-600" aria-label={`Xóa ${fallback?.label ?? formatKey}`}><X className="h-3.5 w-3.5" /></button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  <button type="button" onClick={() => openFormatModal()} className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-blue-300 bg-white px-3 py-2.5 text-xs font-bold text-blue-700 transition hover:border-blue-500 hover:bg-blue-50">
+                    <Plus className="h-3.5 w-3.5" /> Thêm hình thức
+                  </button>
+                </div>
                 {errors.selectedFormats && (
                   <span className="block text-xs text-rose-600 font-medium">{errors.selectedFormats.message}</span>
                 )}
@@ -1005,10 +1046,10 @@ export default function QuickTournamentCreate() {
                       <Users className="h-3.5 w-3.5 text-blue-600" />
                       Quy mô giải đấu (Số đội/người)
                     </span>
-                    <span className="text-xs text-slate-400">Tối đa 32</span>
+                    <span className="text-xs text-slate-400">Tối đa 64</span>
                   </div>
                   <div className="flex flex-wrap items-center gap-1.5">
-                    {[4, 8, 16, 32].map((num) => {
+                    {[4, 8, 16, 32, 64].map((num) => {
                       const isCurrent = maxTeams === num;
                       return (
                         <button
@@ -1030,7 +1071,7 @@ export default function QuickTournamentCreate() {
                       <input
                         type="number"
                         min={2}
-                        max={32}
+                        max={64}
                         {...register('maxTeams', { valueAsNumber: true })}
                         className="w-14 rounded-lg border border-slate-300 bg-white px-2 py-1 text-center text-xs font-bold text-slate-800 outline-none focus:border-blue-500"
                       />
@@ -1151,6 +1192,33 @@ export default function QuickTournamentCreate() {
           </div>
         </form>
       </div>
+      {isFormatModalOpen && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Thêm hình thức thi đấu">
+          <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+              <div><h2 className="text-base font-bold text-slate-900">Thêm hình thức thi đấu</h2><p className="mt-0.5 text-xs text-slate-500">Mỗi hình thức có thể dùng thể thức và giới hạn ELO riêng.</p></div>
+              <button type="button" onClick={() => setIsFormatModalOpen(false)} className="rounded-full p-2 text-slate-400 hover:bg-slate-100" aria-label="Đóng"><X className="h-4 w-4" /></button>
+            </div>
+            <div className="space-y-4 p-5">
+              <label className="block text-xs font-semibold text-slate-700">Loại
+                <select value={formatDraft.key} onChange={(event) => { const option = QUICK_FORMAT_OPTIONS.find((item) => item.key === event.target.value); if (option) setFormatDraft((current) => ({ ...current, key: option.key, label: option.label })); }} className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm">
+                  {QUICK_FORMAT_OPTIONS.filter((option) => (sport === 'football' ? option.key.startsWith('FOOTBALL_') : !option.key.startsWith('FOOTBALL_')) && (option.key === formatDraft.key || !selectedFormats.includes(option.key))).map((option) => <option key={option.key} value={option.key}>{option.label}</option>)}
+                </select>
+              </label>
+              <label className="block text-xs font-semibold text-slate-700">Thể thức
+                <select value={formatDraft.bracketType} onChange={(event) => setFormatDraft((current) => ({ ...current, bracketType: event.target.value as QuickValues['bracketType'] }))} className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm">
+                  {BRACKET_OPTIONS.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}
+                </select>
+              </label>
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <label className="flex items-center gap-2 text-xs font-bold text-slate-800"><input type="checkbox" checked={formatDraft.eloEnabled} onChange={(event) => setFormatDraft((current) => ({ ...current, eloEnabled: event.target.checked }))} className="h-4 w-4 rounded text-blue-600" /> Giới hạn ELO cho nội dung này</label>
+                {formatDraft.eloEnabled && <div className="mt-3 grid grid-cols-2 gap-3"><label className="text-xs font-semibold text-slate-600">ELO tối thiểu<input type="number" min={0} value={formatDraft.minElo ?? ''} onChange={(event) => setFormatDraft((current) => ({ ...current, minElo: event.target.value === '' ? null : Number(event.target.value) }))} className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm" /></label><label className="text-xs font-semibold text-slate-600">ELO tối đa<input type="number" min={0} value={formatDraft.maxElo ?? ''} onChange={(event) => setFormatDraft((current) => ({ ...current, maxElo: event.target.value === '' ? null : Number(event.target.value) }))} className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm" /></label></div>}
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 border-t border-slate-100 px-5 py-3"><button type="button" onClick={() => setIsFormatModalOpen(false)} className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50">Hủy</button><button type="button" onClick={saveFormatConfig} className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-700"><Plus className="h-3.5 w-3.5" /> Thêm</button></div>
+          </div>
+        </div>
+      )}
       {isDescriptionEditorOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Mô tả giải đấu">
           <div className="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">

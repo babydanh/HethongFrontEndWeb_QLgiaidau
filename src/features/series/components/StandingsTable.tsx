@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { SeriesStanding } from '@/types/series';
 import { TicketStatusBadge } from './TicketStatusBadge';
 import { cn } from '@/utils/cn';
@@ -9,6 +10,7 @@ interface StandingsTableProps {
 }
 
 export const StandingsTable: React.FC<StandingsTableProps> = ({ standings, className }) => {
+  const translate = useTranslations('SeriesDetail');
   
   const getRankMedal = (rank: number) => {
     if (rank === 1) return <span className="text-xl">🥇</span>;
@@ -31,12 +33,12 @@ export const StandingsTable: React.FC<StandingsTableProps> = ({ standings, class
         <table className="w-full border-collapse text-left text-sm text-slate-700">
           <thead>
             <tr className="bg-slate-50 border-b border-slate-200 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
-              <th className="py-3.5 px-6 w-16 text-center">Hạng</th>
-              <th className="py-3.5 px-6">VĐV / Đội chơi</th>
-              <th className="py-3.5 px-6 text-center">Điểm PSR</th>
-              <th className="py-3.5 px-6 text-center">Giải đã đấu</th>
-              <th className="py-3.5 px-6 text-center">Hạng tốt nhất</th>
-              <th className="py-3.5 px-6 text-right">Trạng thái vé</th>
+              <th className="py-3.5 px-6 w-16 text-center">{translate('ranking')}</th>
+              <th className="py-3.5 px-6">{translate('playerTeam')}</th>
+              <th className="py-3.5 px-6 text-center">{translate('psrPoints')}</th>
+              <th className="py-3.5 px-6 text-center">{translate('eventsPlayed')}</th>
+              <th className="py-3.5 px-6 text-center">{translate('bestRank')}</th>
+              <th className="py-3.5 px-6 text-right">{translate('ticketStatus')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200">
@@ -80,7 +82,7 @@ export const StandingsTable: React.FC<StandingsTableProps> = ({ standings, class
                       {standing.eventsPlayed}
                     </td>
                     <td className="py-4 px-6 text-center font-semibold text-slate-500 text-sm">
-                      {standing.bestRank ? `Hạng ${standing.bestRank}` : '—'}
+                      {standing.bestRank ? translate('rankLabel', { rank: standing.bestRank }) : '—'}
                     </td>
                     <td className="py-4 px-6 text-right">
                       <TicketStatusBadge status={status} />
@@ -91,7 +93,7 @@ export const StandingsTable: React.FC<StandingsTableProps> = ({ standings, class
             ) : (
               <tr>
                 <td colSpan={6} className="py-12 text-center text-slate-400 text-sm">
-                  Chưa có dữ liệu xếp hạng cho nội dung này.
+                  {translate('noStandings')}
                 </td>
               </tr>
             )}
@@ -100,11 +102,11 @@ export const StandingsTable: React.FC<StandingsTableProps> = ({ standings, class
       </div>
       <div className="bg-slate-50 border-t border-slate-200 px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 text-xs text-slate-400 font-medium">
         <div className="flex items-center gap-4 flex-wrap">
-          <span className="flex items-center gap-1">🟢 Top 2 = Vé Thẳng (Direct Entry)</span>
+          <span className="flex items-center gap-1">🟢 {translate('topTwoDirect')}</span>
           <span className="flex items-center gap-1">🔵 Top 16 PSR = Vé Vớt (Wildcard)</span>
         </div>
         <div>
-          <span>🔒 Đã khóa: VĐV đã đoạt vé thẳng (không được đấu giải tiếp trong chặng)</span>
+          <span>🔒 {translate('lockedExplanation')}</span>
         </div>
       </div>
     </div>

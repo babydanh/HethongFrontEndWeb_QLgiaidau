@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { TicketStatus } from '@/types/series';
 import { cn } from '@/utils/cn';
 
@@ -8,21 +9,22 @@ interface TicketStatusBadgeProps {
 }
 
 export const TicketStatusBadge: React.FC<TicketStatusBadgeProps> = ({ status, className }) => {
+  const translate = useTranslations('SeriesDetail');
   const configs = {
     DIRECT_ENTRY: {
-      text: '🎫 Vé Thẳng',
+      text: '🎫 ' + translate('ticketDirect'),
       classes: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
     },
     WILDCARD: {
-      text: '🎫 Vé Vớt',
+      text: '🎫 ' + translate('ticketWaitlist'),
       classes: 'bg-blue-500/15 text-blue-400 border border-blue-500/30'
     },
     IN_CONTENTION: {
-      text: '⏳ Đang chờ',
+      text: '⏳ ' + translate('ticketPending'),
       classes: 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
     },
     LOCKED_OUT: {
-      text: '🔒 Đã khóa',
+      text: '🔒 ' + translate('ticketLocked'),
       classes: 'bg-slate-800/80 text-slate-400 border border-slate-700/50 line-through'
     },
     NOT_QUALIFIED: {

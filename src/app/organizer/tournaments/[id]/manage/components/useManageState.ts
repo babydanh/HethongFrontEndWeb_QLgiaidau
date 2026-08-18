@@ -2,7 +2,7 @@
 
 import type { SportRuleKind } from '@/types/tournament';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   tournamentsApi, divisionsApi, livestreamApi, LivestreamCamera, Tournament, TournamentFeesConfig, TournamentParticipant,
@@ -149,6 +149,19 @@ export function useManageState(id: string) {
   // ⚠️ isLiteMode = CÁCH TÍNH ĐIỂM (scoring): LITE (tự do) vs STRICT (preset).
   // KHÔNG phải loại giải "giải lite". Loại giải dùng field riêng tournamentConfig.isLite.
   const [isLiteMode, setIsLiteMode] = useState(true);
+
+  // Local safety net for unfinished management forms. This is deliberately
+  // separate from the server model: a draft must never change tournament
+  // visibility/status until the organizer explicitly saves it.
+  const manageDraftKey = `sporto:tournament-manage-draft:${id}`;
+  const manageDraftReadyRef = useRef(false);
+  const manageDraftTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [draftStatus, setDraftStatus] = useState<'idle' | 'saving' | 'saved' | 'restored'>('idle');
+
+  const clearManageDraft = useCallback(() => {
+    if (typeof window !== 'undefined') window.localStorage.removeItem(manageDraftKey);
+    setDraftStatus('idle');
+  }, [manageDraftKey]);
 
   // Round Robin scoring config
   const [rrWinPoints, setRrWinPoints] = useState(3);
@@ -415,6 +428,7 @@ export function useManageState(id: string) {
         await fetchDivisions(id);
       }
       toast.success('Lưu thông tin giải đấu thành công!');
+      clearManageDraft();
       await fetchTournamentData();
     } catch (err) { toast.error(getErrorMessage(err)); }
     finally { setIsSavingConfig(false); }
@@ -441,6 +455,7 @@ export function useManageState(id: string) {
         registrationEndDate: registrationEndDate ? new Date(registrationEndDate).toISOString() : null,
       });
       toast.success('Lưu thông tin lịch và địa điểm thành công!');
+      clearManageDraft();
       await fetchTournamentData();
     } catch (err) { toast.error(getErrorMessage(err)); }
     finally { setIsSavingConfig(false); }
@@ -494,6 +509,7 @@ export function useManageState(id: string) {
         await tournamentsApi.updateDivisionConfig(id, selectedDivisionId, divData);
       }
       toast.success('Lưu thông tin đăng ký thành công!');
+      clearManageDraft();
       await fetchTournamentData();
     } catch (err) {
       toast.error(getErrorMessage(err));
@@ -1333,6 +1349,54 @@ export function useManageState(id: string) {
     });
   }, [fetchDivisions, fetchTournamentData]);
 
+  // Restore an unfinished form once the canonical server values are loaded.
+  useEffect(() => {
+    if (isLoading || !tournament || manageDraftReadyRef.current || typeof window === 'undefined') return;
+    manageDraftReadyRef.current = true;
+    const raw = window.localStorage.getItem(manageDraftKey);
+    if (!raw) return;
+    try {
+      const draft = JSON.parse(raw) as Record<string, unknown>;
+      if (draft.tournamentId !== tournament.id) return;
+      const text = (key: string, fallback: string) => typeof draft[key] === 'string' ? String(draft[key]) : fallback;
+      setName(text('name', name)); setCategoryId(text('categoryId', categoryId)); setDescription(text('description', description));
+      setBannerUrl(text('bannerUrl', bannerUrl)); setLogoUrl(text('logoUrl', logoUrl));
+      setPrizeDescription(text('prizeDescription', prizeDescription));
+      setCustomVenueName(text('customVenueName', customVenueName)); setCustomVenueAddress(text('customVenueAddress', customVenueAddress));
+      setProvinceCode(text('provinceCode', provinceCode)); setWardCode(text('wardCode', wardCode));
+      setStartDate(text('startDate', startDate)); setEndDate(text('endDate', endDate));
+      setRegistrationStartDate(text('registrationStartDate', registrationStartDate)); setRegistrationEndDate(text('registrationEndDate', registrationEndDate));
+      if (draft.visibility === 'PUBLIC' || draft.visibility === 'PRIVATE') setVisibility(draft.visibility);
+      if (draft.registrationMode === 'OPEN' || draft.registrationMode === 'APPROVAL' || draft.registrationMode === 'INVITE_ONLY') setRegistrationMode(draft.registrationMode);
+      if (typeof draft.maxParticipants === 'number') setMaxParticipants(draft.maxParticipants);
+      if (typeof draft.entryFee === 'number') setEntryFee(draft.entryFee);
+      if (typeof draft.genderRestriction === 'string') setGenderRestriction(draft.genderRestriction as typeof genderRestriction);
+      if (typeof draft.matchType === 'string') setMatchType(draft.matchType);
+      if (typeof draft.eloEnabled === 'boolean') setEloEnabled(draft.eloEnabled);
+      setDraftStatus('restored');
+      toast.success('Đã khôi phục bản nháp quản lý giải.', { id: 'manage-draft-restored' });
+    } catch {
+      window.localStorage.removeItem(manageDraftKey);
+    }
+  }, [isLoading, tournament, manageDraftKey]);
+
+  // Debounced autosave for the fields people most often forget to save.
+  useEffect(() => {
+    if (!manageDraftReadyRef.current || !tournament || typeof window === 'undefined') return;
+    if (manageDraftTimerRef.current) clearTimeout(manageDraftTimerRef.current);
+    manageDraftTimerRef.current = setTimeout(() => {
+      const draft = {
+        tournamentId: tournament.id, updatedAt: new Date().toISOString(),
+        name, categoryId, description, bannerUrl, logoUrl, prizeDescription, customVenueName, customVenueAddress,
+        provinceCode, wardCode, startDate, endDate, registrationStartDate, registrationEndDate,
+        visibility, registrationMode, maxParticipants, entryFee, genderRestriction, matchType, eloEnabled,
+      };
+      window.localStorage.setItem(manageDraftKey, JSON.stringify(draft));
+      setDraftStatus('saved');
+    }, 700);
+    return () => { if (manageDraftTimerRef.current) clearTimeout(manageDraftTimerRef.current); };
+  }, [tournament, manageDraftKey, name, categoryId, description, bannerUrl, logoUrl, prizeDescription, customVenueName, customVenueAddress, provinceCode, wardCode, startDate, endDate, registrationStartDate, registrationEndDate, visibility, registrationMode, maxParticipants, entryFee, genderRestriction, matchType, eloEnabled]);
+
   useEffect(() => {
     if (!tournament) {
       return;
@@ -1447,6 +1511,7 @@ export function useManageState(id: string) {
     tournament, setTournament, participants, setParticipants, matches, setMatches, bracket, setBracket,
     venues, setVenues, categories, setCategories, feesConfig, setFeesConfig, courts, setCourts,
     isLoading, setIsLoading, activeTab, setActiveTab, validationField, setValidationField, basicSubTab, setBasicSubTab,
+    draftStatus, clearManageDraft,
     referees, setReferees, refereeEmail, setRefereeEmail, isAddingReferee, setIsAddingReferee,
     divisions, setDivisions, selectedDivisionId, setSelectedDivisionId,
     isCreateDivisionModalOpen, setIsCreateDivisionModalOpen,

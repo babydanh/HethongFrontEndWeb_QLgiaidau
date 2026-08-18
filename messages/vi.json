@@ -30,7 +30,7 @@
 ,    "title": "Danh sách trận đấu"
 ,    "loading": "Đang tải danh sách trận đấu..."
 ,    "empty": "Không tìm thấy trận đấu nào phù hợp."
-  , "bracketGroupStageKnockout": "Vòng bảng + Playoffs", "emptyHint": "Vui lòng thay đổi bộ lọc để thử lại.", "venueLabel": "Sân", "venuePending": "Chờ xếp sân", "cheerLabel": "Cổ vũ", "cheerFailed": "Không thể gửi cổ vũ, vui lòng thử lại."},
+  , "bracketGroupStageKnockout": "Vòng bảng + Playoffs", "emptyHint": "Vui lòng thay đổi bộ lọc để thử lại.", "venueLabel": "Sân", "venuePending": "Chờ xếp sân", "cheerLabel": "Cổ vũ", "moreFilters": "Thêm bộ lọc", "quickFinished": "Đã kết thúc", "quickOngoing": "Đang diễn ra", "quickUpcoming": "Sắp diễn ra", "statusScheduled": "Đã lên lịch", "cheerFailed": "Không thể gửi cổ vũ, vui lòng thử lại."},
   "LocaleSwitcher": {
     "language": "Ngôn ngữ",
     "vietnamese": "Tiếng Việt",
@@ -172,7 +172,7 @@
     "membersTab": "Thành viên",
     "galleryTab": "Ảnh",
     "rankingsTab": "Bảng xếp hạng",
-    "moderationTab": "Điều phối", "supportNotifications": "Thông báo hỗ trợ", "newSupportRequests": "Hỗ trợ mới", "unreadSupportMessages": "{count} tin chưa đọc", "noSupportRequests": "Chưa có yêu cầu hỗ trợ.", "openSupportInbox": "Mở hộp thư hỗ trợ", "supportRequestOpened": "Đã mở yêu cầu hỗ trợ",
+    "moderationTab": "Điều phối", "supportNotifications": "Thông báo hỗ trợ", "confirmCancel": "Huỷ", "confirmProcessing": "Đang xử lý...", "reportFiltersTitle": "Bộ lọc hồ sơ", "reportSearchPlaceholder": "Tên, email hoặc nội dung...", "allReportStatuses": "Tất cả trạng thái", "allReportTargets": "Tất cả đối tượng", "allViolationTypes": "Tất cả loại vi phạm", "clearReportFilters": "Xóa bộ lọc", "newSupportRequests": "Hỗ trợ mới", "unreadSupportMessages": "{count} tin chưa đọc", "noSupportRequests": "Chưa có yêu cầu hỗ trợ.", "openSupportInbox": "Mở hộp thư hỗ trợ", "supportRequestOpened": "Đã mở yêu cầu hỗ trợ",
     "allStatuses": "Tất cả trạng thái",
     "allTournaments": "Tất cả giải đấu",
     "clubTournaments": "Giải đấu CLB",
@@ -386,7 +386,7 @@
     "timeNotSet": "Chưa xác định thời gian",
     "prizeLabel": "Giải thưởng:",
     "progressLabel": "TIẾN ĐỘ CHUỖI GIẢI",
-    "eventsCompleted": "{completed}/{total} GIẢI ĐÃ ĐẤU",
+    "eventsCompleted": "{completed}/{total} GIẢI ĐÃ ĐẤU", "ticketDirect": "Vé Thẳng", "ticketWaitlist": "Vé Vớt", "ticketPending": "Đang chờ", "ticketLocked": "Đã khóa", "overviewHeading": "Về Chuỗi Giải Đấu", "descriptionMissing": "Chưa có thông tin giới thiệu chi tiết.", "quickInfo": "Thông tin nhanh", "totalPrize": "Tổng giải thưởng chuỗi", "legsPlayed": "Số chặng đấu", "ranking": "Hạng", "playerTeam": "VĐV / Đội chơi", "psrPoints": "Điểm PSR", "eventsPlayed": "Giải đã đấu", "bestRank": "Hạng tốt nhất", "ticketStatus": "Trạng thái vé", "rankLabel": "Hạng {rank}", "noStandings": "Chưa có dữ liệu xếp hạng cho nội dung này.", "topTwoDirect": "Top 2 = Vé Thẳng (Direct Entry)", "lockedExplanation": "Đã khóa: VĐV đã đoạt vé thẳng (không được đấu giải tiếp trong chặng)", "cumulativeStandings": "Bảng Điểm Tích Lũy", "legsLabel": "Chặng", "legCount": "{count} chặng", "eventsLabel": "Giải đấu", "eventCount": "{count} giải", "detailsLink": "Chi tiết chuỗi giải",
     "overview": "Tổng Quan",
     "schedule": "Chặng Đấu & Lịch Trình",
     "standings": "Bảng Xếp Hạng PSR",
@@ -784,7 +784,7 @@
     "noLiveMatch": "Chưa có trận đang phát trực tiếp.",
     "noUpcomingMatch": "Chưa có cặp đấu sắp diễn ra.",
     "startsAt": "Bắt đầu {date}",
-    "overviewDescriptionFallback": "Ban tổ chức chưa cập nhật thông tin giới thiệu cho giải đấu này.",
+    "overviewDescriptionFallback": "Ban tổ chức chưa cập nhật thông tin giới thiệu cho giải đấu này.", "teamsTitle": "Đội tham gia", "publicRosterNote": "Chọn phân hạng hoặc hình thức thi đấu để xem chi tiết",
     "prizeTitle": "Giải thưởng",
     "prizeFallback": "Ban tổ chức chưa cập nhật cơ cấu giải thưởng cho giải đấu này.",
     "unscheduled": "Chưa xếp lịch",

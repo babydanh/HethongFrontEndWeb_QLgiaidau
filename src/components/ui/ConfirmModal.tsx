@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 import { AlertTriangle, TriangleAlert } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import {
@@ -38,13 +39,15 @@ export default function ConfirmModal({
   title,
   description,
   confirmLabel,
-  cancelLabel = 'Huỷ',
+  cancelLabel,
   variant = 'default',
   onConfirm,
   isLoading = false,
   confirmDisabled = false,
   children,
 }: ConfirmModalProps) {
+  const translate = useTranslations('Common');
+  const resolvedCancelLabel = cancelLabel ?? translate('confirmCancel');
   const isDanger = variant === 'danger';
   const Icon = isDanger ? TriangleAlert : AlertTriangle;
 
@@ -91,7 +94,7 @@ export default function ConfirmModal({
               onClick={() => onOpenChange(false)}
               className="h-9 px-4 text-xs font-semibold"
             >
-              {cancelLabel}
+              {resolvedCancelLabel}
             </Button>
             <Button
               type="submit"
@@ -100,7 +103,7 @@ export default function ConfirmModal({
               disabled={isLoading || confirmDisabled}
               className="h-9 px-4 text-xs font-semibold"
             >
-              {isLoading ? 'Đang xử lý...' : confirmLabel}
+              {isLoading ? translate('confirmProcessing') : confirmLabel}
             </Button>
           </div>
         </form>

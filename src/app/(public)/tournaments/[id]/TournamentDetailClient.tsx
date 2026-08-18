@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Division, Tournament, divisionsApi, tournamentsApi } from '@/features/tournaments/api';
-import { isLiteTournament } from '@/features/tournaments/lite-qr';
+import { isClubLiteTournament } from '@/features/tournaments/lite-qr';
 import { Button } from '@/components/ui/Button';
 import { Calendar, MapPin, Users, Trophy, Share2, AlertCircle, User, Phone, Mail, Globe, Bookmark } from 'lucide-react';
 import Link from 'next/link';
@@ -529,7 +529,7 @@ const commonTranslate = useTranslations('Common');
                 } font-bold w-full md:w-auto shadow-sm h-10 text-xs md:text-sm`}
                 onClick={() => {
                   if (isRegistrationButtonDisabled) return;
-                  if (isLiteTournament(activeTournament)) {
+                  if (isClubLiteTournament(activeTournament)) {
                     if (activeTournament.inviteCode) {
                       router.push(`/lite/tournaments/join/${activeTournament.inviteCode}`);
                     } else {
@@ -862,7 +862,7 @@ const commonTranslate = useTranslations('Common');
               {/* Action Button */}
               {!isOwner && !isTournamentDraft(activeTournament.status) && (
                   <div className="mt-1 block w-full">
-                    {isLiteTournament(activeTournament) ? (
+                    {isClubLiteTournament(activeTournament) ? (
                       activeTournament.inviteCode ? (
                         <Link
                           href={`/lite/tournaments/join/${activeTournament.inviteCode}`}
@@ -900,13 +900,13 @@ const commonTranslate = useTranslations('Common');
                     Bạn là quản trị viên giải đấu
                   </p>
                   <Link
-                    href={isLiteTournament(activeTournament)
+                    href={isClubLiteTournament(activeTournament)
                       ? `/organizer/tournaments/${activeTournament.id}/manage`
                       : `/organizer/tournaments/${activeTournament.id}/manage`
                     }
                     className="mt-1.5 block text-xs text-blue-600 font-bold hover:underline"
                   >
-                    {isLiteTournament(activeTournament)
+                    {isClubLiteTournament(activeTournament)
                       ? 'Quản lý giải nhanh'
                       : 'Quản lý sơ đồ & lịch thi đấu'
                     }

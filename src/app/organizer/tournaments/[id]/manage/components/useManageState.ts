@@ -477,7 +477,10 @@ export function useManageState(id: string) {
         registrationEndDate: registrationEndDate ? new Date(registrationEndDate).toISOString() : null,
         tournamentConfig: {
           ...tournament?.tournamentConfig,
-          registrationMode: tournament?.isLite || tournament?.tournamentConfig?.isLite
+          // Club Lite keeps its frictionless OPEN policy by default, but a
+          // public Quick tournament must retain APPROVAL just like the
+          // Advanced registration flow.
+          registrationMode: tournament?.communityId && (tournament?.isLite || tournament?.tournamentConfig?.isLite)
             ? registrationMode === 'INVITE_ONLY' ? 'INVITE_ONLY' : 'OPEN'
             : registrationMode,
         },

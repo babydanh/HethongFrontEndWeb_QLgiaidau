@@ -30,6 +30,8 @@ type JoinStatus = {
     bannerUrl?: string;
     locationName?: string;
     startDate?: string;
+    matchType?: 'SINGLES' | 'DOUBLES' | 'MIXED_DOUBLES' | string;
+    communityId?: string | null;
   };
   participantId?: string;
   communityId?: string;
@@ -49,7 +51,17 @@ export default function LiteJoinPage({ params }: { params: Promise<{ inviteCode:
   const fetchStatus = useCallback(async () => {
     try {
       const res = await tournamentsApi.getLiteJoinStatus(inviteCode);
-      setStatus(res as unknown as JoinStatus);
+      const nextStatus = res as unknown as JoinStatus;
+      setStatus(nextStatus);
+
+      // A public Quick tournament is not a super-lite club event. Keep the
+      // legacy URL working, but hand it to the standard registration page so
+      // doubles can invite/confirm a partner and singles still get the same
+      // roster, ELO and approval rules as Advanced tournaments.
+      if (nextStatus.tournament?.id && !nextStatus.tournament.communityId) {
+        const params = new URLSearchParams({ invite: inviteCode });
+        router.replace(`/tournaments/${nextStatus.tournament.id}/register?${params.toString()}`);
+      }
     } catch {
       setStatus(null);
     } finally {

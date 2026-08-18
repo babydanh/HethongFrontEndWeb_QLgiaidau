@@ -21,6 +21,26 @@ export function isLiteTournament(t: {
   return false;
 }
 
+/**
+ * Club Lite is the intentionally short, one-tap registration flow.
+ *
+ * Public Quick Create still uses the Lite creation API for backwards
+ * compatibility, but it must use the normal registration workspace (including
+ * partner/roster registration for doubles). Community ownership is the
+ * durable discriminator between those two products.
+ */
+export function isClubLiteTournament(t: {
+  communityId?: string | null;
+  isLite?: boolean;
+  tournamentConfig?: {
+    isLite?: boolean;
+    mode?: 'LITE' | 'ADVANCED' | 'STRICT' | string;
+    hideAdvancedSettings?: boolean;
+  } | null;
+} | null | undefined): boolean {
+  return isLiteTournament(t) && Boolean(t?.communityId);
+}
+
 export function buildLiteJoinUrl(inviteCode: string, origin: string): string {
   const cleanCode = inviteCode.trim();
   if (!cleanCode) return '';
@@ -85,4 +105,3 @@ export function isScannableJoinUrl(value: string): boolean {
     return false;
   }
 }
-

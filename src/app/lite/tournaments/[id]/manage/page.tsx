@@ -250,7 +250,9 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
 
   const handleCopyInvite = async () => {
     if (!tournament?.inviteCode) return;
-    const joinUrl = `${window.location.origin}/lite/tournaments/join/${tournament.inviteCode}`;
+    const joinUrl = tournament.communityId
+      ? `${window.location.origin}/lite/tournaments/join/${tournament.inviteCode}`
+      : `${window.location.origin}/tournaments/${tournament.id}/register?invite=${encodeURIComponent(tournament.inviteCode)}`;
     try {
       await navigator.clipboard.writeText(joinUrl);
       toast.success('Đã sao chép link mời!');
@@ -347,7 +349,9 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
   }
 
   const inviteUrl = tournament.inviteCode && typeof window !== 'undefined'
-    ? buildLiteJoinUrl(tournament.inviteCode, window.location.origin)
+    ? tournament.communityId
+      ? buildLiteJoinUrl(tournament.inviteCode, window.location.origin)
+      : `${window.location.origin}/tournaments/${tournament.id}/register?invite=${encodeURIComponent(tournament.inviteCode)}`
     : null;
 
   return (

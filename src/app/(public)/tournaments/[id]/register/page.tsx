@@ -30,7 +30,7 @@ import toast from 'react-hot-toast';
 import DoublesRegistrationFlow from './components/DoublesRegistrationFlow';
 import TeamRegistrationFlow from './components/TeamRegistrationFlow';
 import { divisionsApi } from '@/features/tournaments/api';
-import { isLiteTournament } from '@/features/tournaments/lite-qr';
+import { isClubLiteTournament } from '@/features/tournaments/lite-qr';
 import { WithdrawModal } from '@/components/shared/WithdrawModal';
 import { isTournamentDraft, isTournamentOpenForRegistration, isTournamentUpcoming } from '@/utils/tournament-status';
 
@@ -240,8 +240,10 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
         const t = res.data;
         setTournament(t);
 
-        // Lite tournament → redirect to dedicated join page
-        if (isLiteTournament(t)) {
+        // Only Club Lite uses the one-tap join page. Public Quick Create is
+        // persisted through the Lite API for compatibility, but registration
+        // must use this full flow (especially doubles partner registration).
+        if (isClubLiteTournament(t)) {
           if (t.inviteCode) {
             router.replace(`/lite/tournaments/join/${t.inviteCode}`);
           } else {

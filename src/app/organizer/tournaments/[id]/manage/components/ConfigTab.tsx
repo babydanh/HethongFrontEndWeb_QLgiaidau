@@ -148,11 +148,11 @@ export function ConfigTab({
               <span>⚠</span> Không thể thay đổi thể thức thi đấu khi đang mở đăng ký.
             </p>
           )}
-          {bracketTypeState === 'ROUND_ROBIN' && isLimitEnabled && maxParticipants > 8 && (
-            <div className="mt-2 bg-amber-50 border border-amber-250/80 rounded-lg p-3 flex items-start gap-2.5">
+          {bracketTypeState === 'ROUND_ROBIN' && isLimitEnabled && maxParticipants > 15 && (
+            <div className="mt-2 bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-start gap-2.5">
               <AlertTriangle className="w-4.5 h-4.5 text-amber-600 shrink-0 mt-0.5" />
               <div className="text-xs text-amber-900 leading-relaxed font-medium">
-                <strong className="font-bold text-amber-950">⚠️ Cảnh báo số lượng đội:</strong> Thể thức Vòng Tròn khuyến nghị tối đa <strong>8 đội/bảng</strong> để tránh quá tải lịch thi đấu. Nếu giải có <strong>{maxParticipants} đội</strong>, nên dùng thể thức <strong>Vòng Bảng + Loại Trực Tiếp</strong>.
+                <strong className="font-bold text-amber-950">⚠️ Giới hạn số lượng đội:</strong> Thể thức Vòng Tròn hỗ trợ tối đa <strong>15 đội/bảng</strong> để đảm bảo lịch thi đấu khả thi. Với quy mô <strong>{maxParticipants} đội</strong>, bạn nên chuyển sang thể thức <strong>Vòng Bảng + Loại Trực Tiếp (Group Stage + Knockout)</strong>.
               </div>
             </div>
           )}

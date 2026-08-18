@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { communitiesApi } from '@/features/communities/api';
-import { tournamentsApi } from '@/features/tournaments/api';
+import { footballTeamsApi, tournamentsApi } from '@/features/tournaments/api';
 import type { NotificationItem } from '@/features/notifications/types';
 import { useSocket } from '@/hooks/useSocket';
 import {
@@ -212,6 +212,25 @@ export default function NotificationsPage() {
             : 'Không thể từ chối lời mời lúc này.',
         ),
       );
+    } finally {
+      setPendingActionKey(null);
+    }
+  };
+
+  const handleFootballTeamInviteAction = async (
+    notificationId: string,
+    teamId: string,
+    action: 'ACCEPTED' | 'DECLINED',
+  ) => {
+    const actionKey = `${notificationId}:${action}`;
+    try {
+      setPendingActionKey(actionKey);
+      await footballTeamsApi.respondInvite(teamId, action);
+      await markNotificationAsRead(notificationId);
+      toast.success(action === 'ACCEPTED' ? 'Đã tham gia đội bóng.' : 'Đã từ chối lời mời vào đội bóng.');
+      await refreshNotifications();
+    } catch (error) {
+      toast.error(getErrorMessage(error, action === 'ACCEPTED' ? 'Không thể nhận lời mời đội bóng.' : 'Không thể từ chối lời mời đội bóng.'));
     } finally {
       setPendingActionKey(null);
     }
@@ -424,7 +443,7 @@ export default function NotificationsPage() {
                                 </button>
 
                                 <div className="flex flex-wrap items-center gap-2 pt-1 md:ml-4 md:justify-end">
-                                  {(notificationAction?.kind === 'community-invite' || notificationAction?.kind === 'referee-invite' || notificationAction?.kind === 'partner-invite') && !notification.isRead ? (
+                                  {(notificationAction?.kind === 'community-invite' || notificationAction?.kind === 'referee-invite' || notificationAction?.kind === 'partner-invite' || notificationAction?.kind === 'football-team-invite') && !notification.isRead ? (
                                     <>
                                       <button
                                         type="button"
@@ -454,6 +473,14 @@ export default function NotificationsPage() {
                                             notificationAction.participantId
                                           ) {
                                             void handlePartnerInviteAction(notification.id, notificationAction.participantId, 'accept');
+                                            return;
+                                          }
+
+                                          if (
+                                            notificationAction.kind === 'football-team-invite' &&
+                                            notificationAction.teamId
+                                          ) {
+                                            void handleFootballTeamInviteAction(notification.id, notificationAction.teamId, 'ACCEPTED');
                                           }
                                         }}
                                         className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
@@ -489,6 +516,14 @@ export default function NotificationsPage() {
                                             notificationAction.participantId
                                           ) {
                                             void handlePartnerInviteAction(notification.id, notificationAction.participantId, 'decline');
+                                            return;
+                                          }
+
+                                          if (
+                                            notificationAction.kind === 'football-team-invite' &&
+                                            notificationAction.teamId
+                                          ) {
+                                            void handleFootballTeamInviteAction(notification.id, notificationAction.teamId, 'DECLINED');
                                           }
                                         }}
                                         className="inline-flex items-center gap-1 rounded-lg border border-rose-200 bg-white px-3.5 py-2 text-sm font-semibold text-rose-700 transition-colors hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"

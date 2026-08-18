@@ -177,13 +177,13 @@ export default function Step2Format() {
           error={errors.maxParticipants?.message}
         />
 
-        {selectedFormat === 'ROUND_ROBIN' && Number(watch('maxParticipants')) > 8 && (
-          <div className="bg-amber-50 border border-amber-250/80 rounded-lg p-4 flex items-start gap-3">
+        {selectedFormat === 'ROUND_ROBIN' && Number(watch('maxParticipants')) > 15 && (
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
             <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
             <div className="text-xs text-amber-900 leading-relaxed font-medium">
-              <strong className="font-bold text-amber-950">⚠️ Cảnh báo số lượng đội:</strong> Với thể thức <strong>Vòng Tròn Tính Điểm</strong>, số đội khuyên dùng tối đa là <strong>8 đội/bảng</strong> để tránh quá tải số trận thi đấu.
+              <strong className="font-bold text-amber-950">⚠️ Giới hạn số lượng đội:</strong> Với thể thức <strong>Vòng Tròn Tính Điểm</strong>, số đội tối đa trong 1 bảng là <strong>15 đội/bảng</strong> để đảm bảo lịch thi đấu khả thi.
               <br />
-              Nếu giải đấu có <strong>{watch('maxParticipants')} đội</strong>, hệ thống sẽ tự động chia thành nhiều bảng nhỏ (hoặc khuyến nghị chọn thể thức <strong>Vòng Bảng + Loại Trực Tiếp</strong>).
+              Nếu giải đấu có <strong>{watch('maxParticipants')} đội</strong>, bạn nên chọn thể thức <strong>Vòng Bảng + Loại Trực Tiếp (Group Stage + Knockout)</strong> để chia nhánh đấu hợp lý.
             </div>
           </div>
         )}

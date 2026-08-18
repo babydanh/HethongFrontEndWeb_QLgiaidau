@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { footballTeamsApi, type FootballTeam, type FootballTeamMemberCandidate } from '@/features/tournaments/api';
 import { categoriesApi, type Category } from '@/features/categories/api';
 import { Button } from '@/components/ui/Button';
@@ -11,6 +12,8 @@ import { Shield, Users, Plus, Search, UserPlus, Save, LogOut, Trash2 } from 'luc
 import toast from 'react-hot-toast';
 
 export default function FootballTeamsPage() {
+  const searchParams = useSearchParams();
+  const requestedTeamId = searchParams.get('teamId');
   const [teams, setTeams] = useState<FootballTeam[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedId, setSelectedId] = useState('');
@@ -34,8 +37,8 @@ export default function FootballTeamsPage() {
       const activeTeams = (teamRes.data ?? []).map((item) => item.team).filter((team) => team.status === 'ACTIVE');
       setTeams(activeTeams);
       setCategories(categoryRes.data ?? []);
-      const first = activeTeams[0];
-      if (first) { setSelectedId(first.id); setName(first.name); }
+      const selectedTeam = activeTeams.find((team) => team.id === requestedTeamId) ?? activeTeams[0];
+      if (selectedTeam) { setSelectedId(selectedTeam.id); setName(selectedTeam.name); }
     } catch (error) { toast.error(getErrorMessage(error)); }
     finally { setLoading(false); }
   };

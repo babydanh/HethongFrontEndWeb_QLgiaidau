@@ -84,7 +84,7 @@ const BRACKET_OPTIONS = [
   {
     id: 'round_robin',
     label: 'Vòng tròn',
-    desc: 'Mọi đội đều được thi đấu tính điểm xếp hạng.',
+    desc: 'Mọi đội đều thi đấu tính điểm (Tối đa 15 đội/bảng).',
     Icon: RoundRobinIcon,
   },
   {
@@ -129,6 +129,13 @@ const quickSchema = z.object({
   description: z.string().trim().max(10000, 'Mô tả tối đa 10.000 ký tự.').optional(),
   isRanked: z.boolean(),
 }).superRefine((data, ctx) => {
+  if (data.bracketType === 'round_robin' && data.maxTeams > 15) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['maxTeams'],
+      message: 'Thể thức Vòng tròn tối đa 15 đội/bảng. Với quy mô lớn hơn (>15 đội), bạn nên chọn thể thức "Vòng bảng + Knockout" để chia nhánh đấu hợp lý.',
+    });
+  }
   const registrationStart = data.registrationStart ? new Date(data.registrationStart) : null;
   const registrationEnd = data.registrationEnd ? new Date(data.registrationEnd) : null;
   const tournamentStart = data.startDate ? new Date(data.startDate) : null;
@@ -1272,10 +1279,12 @@ export default function QuickTournamentCreate() {
                       <Users className="h-3.5 w-3.5 text-blue-600" />
                       Quy mô giải đấu (Số đội/người)
                     </span>
-                    <span className="text-xs text-slate-400">Tối đa 128</span>
+                    <span className="text-xs text-slate-400">
+                      {bracketType === 'round_robin' ? 'Tối đa 15 đội/bảng' : 'Tối đa 128'}
+                    </span>
                   </div>
                   <div className="flex flex-wrap items-center gap-1.5">
-                    {[4, 8, 16, 32, 64, 128].map((num) => {
+                    {(bracketType === 'round_robin' ? [4, 6, 8, 10, 12, 15] : [4, 8, 16, 32, 64, 128]).map((num) => {
                       const isCurrent = maxTeams === num;
                       return (
                         <button
@@ -1297,13 +1306,31 @@ export default function QuickTournamentCreate() {
                       <input
                         type="number"
                         min={2}
-                        max={128}
+                        max={bracketType === 'round_robin' ? 15 : 128}
                         {...register('maxTeams', { valueAsNumber: true })}
                         className="w-14 rounded-lg border border-slate-300 bg-white px-2 py-1 text-center text-xs font-bold text-slate-800 outline-none focus:border-blue-500"
                       />
                     </div>
                   </div>
-                  {errors.maxTeams && <span className="mt-1 block text-xs text-rose-600">{errors.maxTeams.message}</span>}
+                  {errors.maxTeams && <span className="mt-1 block text-xs text-rose-600 font-medium">{errors.maxTeams.message}</span>}
+
+                  {/* Smart suggestion when Round Robin > 15 */}
+                  {bracketType === 'round_robin' && maxTeams > 15 && (
+                    <div className="mt-2.5 rounded-xl border border-amber-200 bg-amber-50/90 p-3 text-xs text-amber-900 shadow-2xs">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <p className="leading-relaxed">
+                          <strong className="font-bold text-amber-950">💡 Gợi ý:</strong> Thể thức Vòng tròn tối đa <strong>15 đội/bảng</strong> để đảm bảo lịch thi đấu. Với <strong>{maxTeams} đội</strong>, bạn nên chọn <strong>Vòng bảng + Knockout</strong>.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => setValue('bracketType', 'group_stage_knockout', { shouldValidate: true })}
+                          className="shrink-0 rounded-lg bg-amber-200 hover:bg-amber-300 px-2.5 py-1 text-[11px] font-bold text-amber-950 transition"
+                        >
+                          Đổi sang Vòng bảng
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="h-px bg-slate-100" />

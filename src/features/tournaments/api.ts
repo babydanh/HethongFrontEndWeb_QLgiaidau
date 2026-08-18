@@ -223,6 +223,8 @@ export const footballTeamsApi = {
     api.get<ApiResponse<FootballTeamMemberCandidate[]>>(`/football-teams/${teamId}/member-candidates`, { params: { q: search, limit: 20 } }),
   invite: (teamId: string, userId: string) =>
     api.post<ApiResponse<unknown>>(`/football-teams/${teamId}/invites`, { userId }),
+  respondInvite: (teamId: string, status: 'ACCEPTED' | 'DECLINED') =>
+    api.post<ApiResponse<unknown>>(`/football-teams/${teamId}/invites/respond`, { status }),
   cancelInvite: (teamId: string, userId: string) =>
     api.delete<ApiResponse<unknown>>(`/football-teams/${teamId}/invites/${userId}`),
   updateMember: (teamId: string, userId: string, role: 'CAPTAIN' | 'MANAGER' | 'PLAYER') =>

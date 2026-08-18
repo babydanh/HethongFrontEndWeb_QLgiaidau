@@ -10,8 +10,9 @@ import {
 } from '@/features/notifications/constants';
 
 export interface NotificationActionConfig {
-  kind: 'community-invite' | 'referee-invite' | 'partner-invite';
+  kind: 'community-invite' | 'referee-invite' | 'partner-invite' | 'football-team-invite';
   communityId?: string;
+  teamId?: string;
   tournamentId?: string;
   refereeId?: string;
   participantId?: string;
@@ -166,7 +167,8 @@ export const getNotificationTone = (
     normalizedType.includes('CANCELLED') ||
     normalizedType.includes('KICKED') ||
     normalizedType.includes('BANNED') ||
-    normalizedType.includes('REVOKED')
+    normalizedType.includes('REVOKED') ||
+    normalizedType.includes('INVITE_DECLINED')
   ) {
     return 'danger';
   }
@@ -180,7 +182,8 @@ export const getNotificationTone = (
     normalizedType.includes('COMPLETED') ||
     normalizedType.includes('UNBANNED') ||
     normalizedType.includes('UNSUSPENDED') ||
-    normalizedType === 'PARTNER_INVITE_ACCEPTED'
+    normalizedType === 'PARTNER_INVITE_ACCEPTED' ||
+    normalizedType === 'FOOTBALL_TEAM_INVITE_ACCEPTED'
   ) {
     return 'success';
   }
@@ -196,7 +199,8 @@ export const getNotificationTone = (
   if (
     normalizedType.includes('COMMUNITY_INVITED') ||
     normalizedType.includes('REFEREE_INVITED') ||
-    normalizedType.includes('PARTNER_INVITE_RECEIVED')
+    normalizedType.includes('PARTNER_INVITE_RECEIVED') ||
+    normalizedType === 'FOOTBALL_TEAM_INVITED'
   ) {
     return 'accent';
   }
@@ -268,6 +272,15 @@ export const getNotificationActionConfig = (
       tournamentId,
       refereeId,
     };
+  }
+
+  if (notificationType === 'FOOTBALL_TEAM_INVITED') {
+    const target = resolveNotificationTarget(notification.redirectUrl);
+    if (!target.href) return null;
+    const url = new URL(target.href, 'http://local');
+    const teamId = url.searchParams.get('teamId');
+    if (!teamId) return null;
+    return { kind: 'football-team-invite', teamId };
   }
 
   if (notificationType === 'PARTNER_INVITE_RECEIVED') {

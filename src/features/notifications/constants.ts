@@ -1,4 +1,11 @@
 export const NOTIFICATION_TYPE_LABELS: Record<string, string> = {
+  FOOTBALL_TEAM_INVITED: 'Lời mời vào đội bóng',
+  FOOTBALL_TEAM_INVITE_ACCEPTED: 'Lời mời đội bóng được nhận',
+  FOOTBALL_TEAM_INVITE_DECLINED: 'Lời mời đội bóng bị từ chối',
+  FOOTBALL_TEAM_INVITE_CANCELLED: 'Lời mời đội bóng bị hủy',
+  FOOTBALL_TEAM_ROLE_CHANGED: 'Vai trò đội bóng thay đổi',
+  FOOTBALL_TEAM_MEMBER_REMOVED: 'Bị xóa khỏi đội bóng',
+  FOOTBALL_TEAM_MEMBER_LEFT: 'Thành viên rời đội bóng',
   COMMUNITY_INVITED: 'Lời mời cộng đồng',
   COMMUNITY_ROLE_PROMOTED: 'Được thăng quyền',
   COMMUNITY_ROLE_DEMOTED: 'Bị hạ quyền',
@@ -59,6 +66,48 @@ export interface NotificationTypeMeta {
 }
 
 export const NOTIFICATION_TYPE_META: Record<string, NotificationTypeMeta> = {
+  FOOTBALL_TEAM_INVITED: {
+    badgeClassName: 'bg-emerald-100 text-emerald-800',
+    cardClassName: 'hover:border-emerald-200 hover:bg-emerald-50/50',
+    unreadCardClassName: 'border-emerald-200 bg-emerald-50/70 shadow-sm',
+    dotClassName: 'bg-emerald-500',
+  },
+  FOOTBALL_TEAM_INVITE_ACCEPTED: {
+    badgeClassName: 'bg-emerald-100 text-emerald-800',
+    cardClassName: 'hover:border-emerald-200 hover:bg-emerald-50/50',
+    unreadCardClassName: 'border-emerald-200 bg-emerald-50/70 shadow-sm',
+    dotClassName: 'bg-emerald-500',
+  },
+  FOOTBALL_TEAM_INVITE_DECLINED: {
+    badgeClassName: 'bg-rose-100 text-rose-800',
+    cardClassName: 'hover:border-rose-200 hover:bg-rose-50/50',
+    unreadCardClassName: 'border-rose-200 bg-rose-50/70 shadow-sm',
+    dotClassName: 'bg-rose-500',
+  },
+  FOOTBALL_TEAM_INVITE_CANCELLED: {
+    badgeClassName: 'bg-slate-200 text-slate-700',
+    cardClassName: 'hover:border-slate-300 hover:bg-slate-50',
+    unreadCardClassName: 'border-slate-300 bg-slate-100 shadow-sm',
+    dotClassName: 'bg-slate-500',
+  },
+  FOOTBALL_TEAM_ROLE_CHANGED: {
+    badgeClassName: 'bg-blue-100 text-blue-800',
+    cardClassName: 'hover:border-blue-200 hover:bg-blue-50/50',
+    unreadCardClassName: 'border-blue-200 bg-blue-50/70 shadow-sm',
+    dotClassName: 'bg-blue-500',
+  },
+  FOOTBALL_TEAM_MEMBER_REMOVED: {
+    badgeClassName: 'bg-rose-100 text-rose-800',
+    cardClassName: 'hover:border-rose-200 hover:bg-rose-50/50',
+    unreadCardClassName: 'border-rose-200 bg-rose-50/70 shadow-sm',
+    dotClassName: 'bg-rose-500',
+  },
+  FOOTBALL_TEAM_MEMBER_LEFT: {
+    badgeClassName: 'bg-amber-100 text-amber-800',
+    cardClassName: 'hover:border-amber-200 hover:bg-amber-50/50',
+    unreadCardClassName: 'border-amber-200 bg-amber-50/70 shadow-sm',
+    dotClassName: 'bg-amber-500',
+  },
   COMMUNITY_INVITED: {
     badgeClassName: 'bg-blue-100 text-blue-800',
     cardClassName: 'hover:border-blue-200 hover:bg-blue-50/50',

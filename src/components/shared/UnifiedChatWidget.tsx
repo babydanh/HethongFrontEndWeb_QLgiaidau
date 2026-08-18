@@ -625,6 +625,11 @@ export default function UnifiedChatWidget() {
         ...prev,
         [data.messageId]: data.reactions,
       }));
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === data.messageId ? { ...m, reactions: data.reactions } : m,
+        ),
+      );
     };
 
     const onRoomUpdated = (data: { roomId: string; room: Partial<InboxRoom> }) => {
@@ -718,6 +723,13 @@ export default function UnifiedChatWidget() {
             ...message,
             mine: message.senderId === user?.id,
           }));
+          const rxMap: Record<string, string[]> = {};
+          fetchedMessages.forEach((m) => {
+            if (m.reactions && m.reactions.length > 0) {
+              rxMap[m.id] = m.reactions;
+            }
+          });
+          setReactions((prev) => ({ ...prev, ...rxMap }));
           setMessages(
             fetchedMessages.sort(
               (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),

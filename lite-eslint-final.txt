@@ -1,0 +1,6 @@
+
+D:\Duancanhan\Project_QuanLyGiaiDau\frontend-web_qlgiaidau\src\app\lite\tournaments\[id]\manage\page.tsx
+  849:37  error  Parsing error: ':' expected
+
+✖ 1 problem (1 error, 0 warnings)
+

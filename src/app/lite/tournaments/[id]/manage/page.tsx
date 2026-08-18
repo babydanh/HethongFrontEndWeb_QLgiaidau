@@ -224,7 +224,7 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
       const unpairedIds = res.data?.unpairedParticipantIds ?? [];
       if (unpairedIds.length > 0) {
         toast.success(
-          `Đã ghép cặp ${label}. ${unpairedIds.length} người chơi lẻ giữ lại chờ ghép sau.`
+          translate('pairAllPartial', { label, count: unpairedIds.length })
         );
       } else {
       toast.success(translate('pairAllSuccess'));
@@ -261,7 +261,7 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
       await navigator.clipboard.writeText(joinUrl);
       toast.success('Đã sao chép link mời!');
     } catch {
-      toast.error('Không thể sao chép. Vui lòng thử lại.');
+      toast.error(translate('copyFailed'));
     }
   };
 
@@ -272,7 +272,7 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
       await tournamentsApi.generateLiteBracket(id);
       const bracket = await tournamentsApi.getTournamentBracket(id);
       setHasBracket(Boolean(bracket.data?.stages?.length));
-      toast.success('Đã tạo bracket thành công!');
+      toast.success(translate('bracketCreatedSuccess'));
     } catch (err) {
       toast.error(getErrorMessage(err));
     } finally {
@@ -460,7 +460,7 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                 } />
                 <InfoCard label={translate('maxParticipants')} value={tournament.maxParticipants?.toString() || '—'} />
                 <InfoCard label="Người tham gia" value={tournament._count?.participants?.toString() || '0'} />
-                <InfoCard label="Trận đấu" value={tournament._count?.matches?.toString() || '0'} />
+                <InfoCard label={translate('matchesTitle')} value={tournament._count?.matches?.toString() || '0'} />
                 {tournament.startDate && (
                   <InfoCard label="Ngày bắt đầu" value={new Date(tournament.startDate).toLocaleDateString('vi-VN')} />
                 )}
@@ -502,7 +502,7 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                         <label className="flex items-center gap-2 self-end pb-2 text-sm font-medium text-slate-700"><input type="checkbox" checked={ruleWinByTwo} onChange={(event) => setRuleWinByTwo(event.target.checked)} className="h-4 w-4 accent-emerald-600" /> Chạm 2</label>
                       </div>
                     )}
-                    <div className="flex justify-end"><Button size="sm" onClick={handleSaveRules} disabled={rulesSaving}>{rulesSaving ? 'Đang lưu...' : 'Lưu luật'}</Button></div>
+                    <div className="flex justify-end"><Button size="sm" onClick={handleSaveRules} disabled={rulesSaving}>{rulesSaving ? translate('saving') : translate('saveRules')}</Button></div>
                   </div>
                 ) : tournament.sportRules?.kind === 'FOOTBALL' ? (
                   <div className="mt-3 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
@@ -691,7 +691,7 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                       <div>
                         <h4 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
                           <CheckCircle className="w-4 h-4 text-emerald-500" />
-                          Đã ghép cặp ({pairedParticipants.length})
+                          {translate('pairedCount', { count: pairedParticipants.length })}
                         </h4>
                         {pairedParticipants.length === 0 ? (
                           <p className="text-xs text-slate-400 italic p-3 bg-slate-50 rounded-lg text-center">
@@ -794,8 +794,8 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                     <div className="pt-4 border-t border-slate-100">
                       <div className="mb-3 flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
                         <div className="min-w-0">
-                          <p className="text-sm font-bold text-amber-900">Danh sách tham gia</p>
-                          <p className="text-xs text-amber-700">Chốt tùy chọn trước khi tạo bracket. Không bắt buộc.</p>
+                          <p className="text-sm font-bold text-amber-900">{translate('participantListTitle')}</p>
+                          <p className="text-xs text-amber-700">{translate('participantListDescription')}</p>
                         </div>
                         {tournament?.isRegistrationLocked ? (
                           <Badge className="shrink-0 border-emerald-200 bg-emerald-50 text-emerald-700">Đã chốt</Badge>
@@ -816,7 +816,7 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                         ) : (
                           <Swords className="w-4 h-4" />
                         )}
-                        {bracketLoading ? 'Đang tạo...' : 'Tạo bracket'}
+                        {bracketLoading ? translate('creatingBracket') : translate('createBracketAction')}
                       </Button>}
                     </div>
                   )}
@@ -846,8 +846,8 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                   <Swords className="w-10 h-10 mx-auto mb-3 text-slate-300" />
                   <p className="text-sm text-slate-500 mb-4">
                     {tournament?.matchType === 'DOUBLES'
-                      ? 'Đã ghép cặp xong? Hãy tạo bracket để bắt đầu giải đấu.'
-                      : 'Đã có người tham gia? Hãy tạo bracket để bắt đầu giải đấu.'}
+                      ? translate('pairingCompletePrompt')
+                      : translate('createBracketPrompt')}
                   </p>
                   {!hasBracket && <Button
                     onClick={handleGenerateBracket}
@@ -859,14 +859,14 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                     ) : (
                       <Swords className="w-4 h-4" />
                     )}
-                    {bracketLoading ? 'Đang tạo...' : 'Tạo bracket'}
+                    {bracketLoading ? translate('creatingBracket') : translate('createBracketAction')}
                   </Button>}
                 </div>
               )}
               {participants.length === 0 && (
                 <div className="bg-slate-50 rounded-lg p-6 text-center">
                   <Swords className="w-8 h-8 mx-auto mb-2 text-slate-300" />
-                  <p className="text-sm text-slate-400">Chưa có người tham gia. Hãy chia sẻ link mời.</p>
+                  <p className="text-sm text-slate-400">{translate('noParticipantsInvite')}</p>
                 </div>
               )}
             </div>
@@ -876,7 +876,7 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
             <div className="space-y-4">
               <h3 className="text-base font-bold text-slate-900">{translate('matchesTitle')}</h3>
               <p className="text-sm text-slate-500">
-                Danh sách các trận đấu sẽ xuất hiện sau khi bracket được tạo.
+                {translate('matchesAfterBracket')}
               </p>
               <div className="bg-slate-50 rounded-lg p-6 text-center text-sm text-slate-400">
                 <Calendar className="w-8 h-8 mx-auto mb-2 text-slate-300" />

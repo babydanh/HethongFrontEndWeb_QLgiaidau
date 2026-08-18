@@ -7,7 +7,20 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { tournamentsApi } from '@/features/tournaments/api';
 import { communitiesApi, Community } from '@/features/communities/api';
-import { Calendar, ChevronLeft, Clock, Info, Loader2, Lock, RotateCw, Zap } from 'lucide-react';
+import {
+  Calendar,
+  ChevronLeft,
+  Clock,
+  Info,
+  Loader2,
+  Lock,
+  RotateCw,
+  Zap,
+  User,
+  Users,
+  Trophy,
+  AlertTriangle,
+} from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '@/utils/error';
 
@@ -30,6 +43,75 @@ const sportLabel: Record<LiteSport, string> = {
   football: 'Bóng đá (Football)',
 };
 
+/* 4 Biểu tượng thể thức thi đấu chuyên nghiệp */
+const SingleEliminationIcon = ({ className = 'h-5 w-5' }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M3 5h4v6H3" />
+    <path d="M3 19h4v-6H3" />
+    <path d="M7 8h6v8H7" />
+    <path d="M13 12h8" />
+  </svg>
+);
+
+const RoundRobinIcon = ({ className = 'h-5 w-5' }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+    <path d="M3 3v5h5" />
+    <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+    <path d="M16 21h5v-5" />
+  </svg>
+);
+
+const GroupStageKnockoutIcon = ({ className = 'h-5 w-5' }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <rect x="3" y="4" width="6" height="6" rx="1.5" />
+    <rect x="3" y="14" width="6" height="6" rx="1.5" />
+    <path d="M9 7h4v4h4" />
+    <path d="M9 17h4v-4" />
+    <path d="M17 11h4" />
+  </svg>
+);
+
+const DoubleEliminationIcon = ({ className = 'h-5 w-5' }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M3 4h4v3H3" />
+    <path d="M7 5.5h5v2.5" />
+    <path d="M3 11h4v3H3" />
+    <path d="M7 12.5h5v-2" />
+    <path d="M12 9h4v3h-4" />
+    <path d="M16 10.5h5" />
+    <path d="M3 18h4v2H3" />
+    <path d="M7 19h9v-7" />
+  </svg>
+);
+
+const BRACKET_OPTIONS = [
+  {
+    id: 'single_elimination' as const,
+    label: 'Loại trực tiếp',
+    desc: 'Nhánh đấu 1 lần thua. Nhanh gọn & gay cấn.',
+    Icon: SingleEliminationIcon,
+  },
+  {
+    id: 'round_robin' as const,
+    label: 'Vòng tròn',
+    desc: 'Mọi đội đều thi đấu tính điểm (Tối đa 15 đội/bảng).',
+    Icon: RoundRobinIcon,
+  },
+  {
+    id: 'group_stage_knockout' as const,
+    label: 'Vòng bảng + Knockout',
+    desc: 'Đấu vòng bảng lấy đội đầu bảng vào Play-off.',
+    Icon: GroupStageKnockoutIcon,
+  },
+  {
+    id: 'double_elimination' as const,
+    label: 'Nhánh thắng / thua',
+    desc: 'Hệ thống 2 nhánh đấu có cơ hội phục thù.',
+    Icon: DoubleEliminationIcon,
+  },
+];
+
 export default function CreateLiteTournamentPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: communityId } = use(params);
   const router = useRouter();
@@ -37,7 +119,7 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
   const [sport, setSport] = useState<LiteSport>('badminton');
   const [name, setName] = useState('');
   const [format, setFormat] = useState<'singles' | 'doubles'>('singles');
-  const [bracketType, setBracketType] = useState<'single_elimination' | 'double_elimination' | 'round_robin'>('single_elimination');
+  const [bracketType, setBracketType] = useState<'single_elimination' | 'double_elimination' | 'round_robin' | 'group_stage_knockout'>('single_elimination');
   const [maxTeams, setMaxTeams] = useState(16);
   const [description, setDescription] = useState('');
   const [isRanked, setIsRanked] = useState(false);
@@ -58,13 +140,24 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
 
   const handleSubmit = async () => {
     if (!name.trim()) return toast.error('Vui lòng nhập tên giải đấu');
+    if (bracketType === 'round_robin' && maxTeams > 15) {
+      return toast.error('Thể thức Vòng tròn tối đa 15 đội/bảng. Vui lòng giảm số đội hoặc chọn thể thức "Vòng bảng + Knockout".');
+    }
     if (maxTeams < 2 || maxTeams > 128) return toast.error('Số đội tối đa phải từ 2 đến 128');
+
     try {
       setIsSubmitting(true);
       const result = await tournamentsApi.createLiteTournament({
-        name: name.trim(), sport, communityId, format, bracketType, maxTeams,
+        name: name.trim(),
+        sport,
+        communityId,
+        format,
+        bracketType,
+        maxTeams,
         description: description.trim() || undefined,
-        visibility: 'PRIVATE', registrationMode: 'OPEN', isRanked,
+        visibility: 'PRIVATE',
+        registrationMode: 'OPEN',
+        isRanked,
         startDate: startDate ? new Date(`${startDate}T${startTime || '18:00'}:00`).toISOString() : undefined,
         startTime: startTime || undefined,
         isRecurring,
@@ -81,45 +174,410 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
     }
   };
 
-  if (isLoading) return <div className="min-h-screen bg-slate-50 flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-blue-500" /></div>;
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 py-8 px-4 md:px-8">
-      <div className="max-w-2xl mx-auto">
-        <Link href={`/communities/${communityId}`} className="inline-flex items-center gap-1.5 text-slate-500 hover:text-slate-800 text-sm font-semibold mb-6"><ChevronLeft className="w-4 h-4" /> Quay lại</Link>
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2"><Zap className="w-6 h-6 text-amber-500" /> Tạo giải đấu nhanh (Lite)</h1>
-          <p className="text-slate-500 mt-1 text-sm">{community?.name ? `Câu lạc bộ: ${community.name}` : 'Tạo giải đấu nội bộ nhanh chóng'}</p>
-          <div className="mt-4 rounded-xl border-2 border-amber-300 bg-amber-50 px-4 py-3 text-sm font-semibold leading-relaxed text-amber-950"><strong>Lưu ý:</strong> Đây là luồng tạo siêu nhanh cho CLB. Luật, lịch, sân, đăng ký và các cài đặt nâng cao sẽ được bổ sung trong trang quản lý sau khi tạo.</div>
-        </div>
-        <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6 space-y-5">
-          <Input label="Tên giải đấu *" placeholder="VD: Giải Cầu lông Cuối Tuần" value={name} onChange={(event) => setName(event.target.value)} />
-          <div className="flex flex-col gap-1.5">
-            <div className="flex items-center justify-between"><label className="text-sm font-medium text-slate-700">Môn thể thao</label><span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200"><Lock className="w-3 h-3" /> Theo bộ môn CLB</span></div>
-            <div className="h-11 flex items-center rounded-lg border border-slate-200 bg-slate-100 px-3 text-sm text-slate-700">{sportLabel[sport]}</div>
-            <p className="text-xs text-slate-500">Lite CLB tự dùng bộ môn của câu lạc bộ; không tạo giải khác môn trong luồng này.</p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5"><label className="text-sm font-medium text-slate-700">Nội dung thi đấu</label><select value={format} onChange={(event) => setFormat(event.target.value as typeof format)} className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"><option value="singles">Đánh đơn (Singles)</option><option value="doubles">Đánh đôi (Doubles)</option></select></div>
-            <div className="flex flex-col gap-1.5"><label className="text-sm font-medium text-slate-700">Thể thức</label><select value={bracketType} onChange={(event) => setBracketType(event.target.value as typeof bracketType)} className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"><option value="single_elimination">Loại trực tiếp</option><option value="double_elimination">Loại kép</option><option value="round_robin">Vòng tròn</option></select></div>
-          </div>
-          <Input label="Số đội / người tối đa (2-128)" type="number" min={2} max={128} value={maxTeams} onChange={(event) => setMaxTeams(Number(event.target.value))} />
-          <div className="flex flex-col gap-1.5"><label className="text-sm font-medium text-slate-700">Mô tả (không bắt buộc)</label><textarea value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Thông tin thêm về giải đấu..." rows={3} className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm resize-none" /></div>
-          <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-4 space-y-3">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="flex flex-col gap-1.5"><label className="text-sm font-medium text-slate-700 flex items-center gap-1.5"><Calendar className="w-4 h-4 text-slate-500" /> Ngày bắt đầu (tùy chọn)</label><input type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm" /></div>
-              <div className="flex flex-col gap-1.5"><label className="text-sm font-medium text-slate-700 flex items-center gap-1.5"><Clock className="w-4 h-4 text-slate-500" /> Giờ thi đấu</label><input type="time" value={startTime} onChange={(event) => setStartTime(event.target.value)} className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm" /></div>
+      <div className="max-w-5xl mx-auto space-y-6">
+        
+        {/* Navigation & Header */}
+        <div>
+          <Link
+            href={`/communities/${communityId}`}
+            className="inline-flex items-center gap-1.5 text-slate-500 hover:text-slate-800 text-sm font-semibold mb-4 transition"
+          >
+            <ChevronLeft className="w-4 h-4" /> Quay lại câu lạc bộ
+          </Link>
+          
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                <Zap className="w-6 h-6 text-amber-500 fill-amber-500" />
+                Tạo giải đấu nhanh (Lite)
+              </h1>
+              <p className="text-slate-500 mt-1 text-sm font-medium">
+                {community?.name ? `Câu lạc bộ: ${community.name}` : 'Tạo giải đấu nội bộ nhanh chóng cho câu lạc bộ'}
+              </p>
             </div>
-            <div className="flex items-center justify-between gap-4">
-              <div><span className="text-sm font-semibold text-slate-800 flex items-center gap-1.5"><RotateCw className="w-4 h-4 text-slate-500" /> Tự động tạo giải định kỳ</span><p className="text-xs text-slate-500 mt-0.5">Cron sẽ tự tạo giải mới và mở đăng ký theo lịch này.</p></div>
-              <button type="button" role="switch" aria-checked={isRecurring} onClick={() => setIsRecurring((value) => !value)} className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${isRecurring ? 'bg-emerald-600' : 'bg-slate-300'}`}><span className={`inline-block h-5 w-5 rounded-full bg-white shadow transition-transform ${isRecurring ? 'translate-x-5' : 'translate-x-0'}`} /></button>
-            </div>
-            {isRecurring && <div className="flex flex-col gap-1.5 border-t border-slate-200 pt-3"><label className="text-xs font-semibold text-slate-700">Chu kỳ</label><select value={recurringFrequency} onChange={(event) => setRecurringFrequency(event.target.value as typeof recurringFrequency)} className="h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm"><option value="WEEKLY">Hằng tuần</option><option value="BIWEEKLY">Hai tuần một lần</option><option value="MONTHLY">Hằng tháng</option></select><p className="text-xs text-slate-500">Ngày chạy lấy theo ngày bắt đầu; nếu bỏ trống, hệ thống dùng lịch mặc định.</p></div>}
           </div>
-          <div className="flex items-center justify-between p-4 rounded-lg border border-slate-200 bg-slate-50/50"><div><span className="text-sm font-semibold text-slate-800">{isRanked ? 'Xếp hạng ELO CLB' : 'Phong trào'}</span><p className="text-xs text-slate-500 mt-0.5">{isRanked ? 'Kết quả ảnh hưởng đến điểm ELO nội bộ CLB.' : 'Giải giao hữu, không tính ELO quốc gia.'}</p></div><button type="button" role="switch" aria-checked={isRanked} onClick={() => setIsRanked((value) => !value)} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isRanked ? 'bg-amber-500' : 'bg-slate-300'}`}><span className={`inline-block h-5 w-5 rounded-full bg-white shadow transition-transform ${isRanked ? 'translate-x-5' : 'translate-x-0'}`} /></button></div>
-          <div className="flex items-start gap-2 text-xs text-slate-500 bg-blue-50/50 p-3 rounded-lg border border-blue-100"><Info className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" /><span>Sau khi tạo, giải ở trạng thái mở đăng ký nội bộ và bạn có thể vào <strong>Quản lý giải</strong> để bổ sung mọi thông tin nâng cao. Không có preset điểm bắt buộc trong Lite.</span></div>
-          <div className="flex justify-end gap-3 pt-2 border-t border-slate-100"><Button variant="outline" onClick={() => router.back()} disabled={isSubmitting}>Hủy</Button><Button onClick={handleSubmit} isLoading={isSubmitting} className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold">{isSubmitting ? 'Đang tạo...' : 'Tạo giải đấu'}</Button></div>
+
+          <div className="mt-4 rounded-xl border border-amber-300 bg-amber-50/90 px-4 py-3 text-xs sm:text-sm font-medium leading-relaxed text-amber-950 shadow-2xs">
+            <strong className="font-bold text-amber-950">Lưu ý:</strong> Đây là luồng tạo siêu nhanh cho CLB. Sau khi tạo thành công, bạn có thể vào trang <strong>Quản lý giải</strong> để cấu hình chi tiết sân bãi, phân hạt giống và điều hành trận đấu.
+          </div>
         </div>
+
+        {/* 2-Column Grid Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          
+          {/* CỘT TRÁI (7 CỘT): Thông tin cơ bản & Lịch trình */}
+          <div className="lg:col-span-7 space-y-5">
+            
+            {/* Card 1: Thông tin giải đấu */}
+            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs space-y-4">
+              <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                  <Trophy className="h-4 w-4" />
+                </div>
+                <h2 className="text-sm font-bold text-slate-900">Thông tin giải đấu</h2>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                  Tên giải đấu <span className="text-rose-500">*</span>
+                </label>
+                <Input
+                  placeholder="VD: Giải Cầu lông Giao hữu Cuối Tuần / Mini Cup CLB"
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                  className="h-11"
+                />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                    Môn thể thao
+                  </label>
+                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                    <Lock className="w-3 h-3" /> Theo bộ môn CLB
+                  </span>
+                </div>
+                <div className="h-11 flex items-center rounded-xl border border-slate-200 bg-slate-50 px-3.5 text-sm font-bold text-slate-800">
+                  {sportLabel[sport]}
+                </div>
+                <p className="mt-1 text-[11px] text-slate-400">
+                  Lite CLB tự động kế thừa bộ môn chính của câu lạc bộ để tổ chức nhanh nhất.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                  Mô tả giải đấu (Tùy chọn)
+                </label>
+                <textarea
+                  value={description}
+                  onChange={(event) => setDescription(event.target.value)}
+                  placeholder="Tóm tắt thể thức, giải thưởng, đối tượng tham gia..."
+                  rows={3}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none resize-none transition"
+                />
+              </div>
+            </section>
+
+            {/* Card 2: Lịch trình & Tự động lặp lại */}
+            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs space-y-4">
+              <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                  <Calendar className="h-4 w-4" />
+                </div>
+                <h2 className="text-sm font-bold text-slate-900">Lịch trình thi đấu</h2>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 flex items-center gap-1">
+                    <Calendar className="w-3.5 h-3.5 text-blue-600" />
+                    Ngày bắt đầu
+                  </label>
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(event) => setStartDate(event.target.value)}
+                    className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-800 focus:border-blue-500 outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5 text-blue-600" />
+                    Giờ thi đấu
+                  </label>
+                  <input
+                    type="time"
+                    value={startTime}
+                    onChange={(event) => setStartTime(event.target.value)}
+                    className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-800 focus:border-blue-500 outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Tự động định kỳ */}
+              <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                      <RotateCw className="w-3.5 h-3.5 text-blue-600" />
+                      Tự động tạo giải định kỳ (Cron)
+                    </span>
+                    <p className="text-[11px] text-slate-500 mt-0.5">
+                      Hệ thống tự tạo giải mới và mở đăng ký theo chu kỳ đã chọn.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={isRecurring}
+                    onClick={() => setIsRecurring((val) => !val)}
+                    className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${
+                      isRecurring ? 'bg-blue-600' : 'bg-slate-300'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
+                        isRecurring ? 'translate-x-5' : 'translate-x-0.5'
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                {isRecurring && (
+                  <div className="border-t border-slate-200/80 pt-3 flex flex-col gap-1.5">
+                    <label className="text-xs font-bold text-slate-700">Chu kỳ lặp lại</label>
+                    <select
+                      value={recurringFrequency}
+                      onChange={(event) => setRecurringFrequency(event.target.value as typeof recurringFrequency)}
+                      className="h-10 rounded-lg border border-slate-300 bg-white px-3 text-xs font-bold text-slate-800 outline-none focus:border-blue-500"
+                    >
+                      <option value="WEEKLY">Hằng tuần (Weekly)</option>
+                      <option value="BIWEEKLY">Hai tuần một lần (Bi-weekly)</option>
+                      <option value="MONTHLY">Hằng tháng (Monthly)</option>
+                    </select>
+                  </div>
+                )}
+              </div>
+            </section>
+          </div>
+
+          {/* CỘT PHẢI (5 CỘT): Nội dung, 4 Thể thức & Quy mô */}
+          <div className="lg:col-span-5 space-y-5">
+            
+            {/* Card 3: Nội dung thi đấu (Đơn / Đôi) */}
+            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs space-y-3.5">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                    <User className="h-4 w-4" />
+                  </div>
+                  <h2 className="text-sm font-bold text-slate-900">Nội dung thi đấu</h2>
+                </div>
+                <span className="text-[11px] text-slate-400 font-medium">Đơn / Đôi</span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setFormat('singles')}
+                  className={`flex flex-col items-center justify-center gap-1.5 rounded-xl border p-3 text-center transition ${
+                    format === 'singles'
+                      ? 'border-blue-600 bg-blue-50/80 shadow-2xs ring-1 ring-blue-500/30 text-blue-950 font-bold'
+                      : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
+                  }`}
+                >
+                  <User className={`h-5 w-5 ${format === 'singles' ? 'text-blue-600' : 'text-slate-400'}`} />
+                  <span className="text-xs">Đánh đơn (Singles)</span>
+                  <span className="text-[10px] text-slate-400">1 vs 1 cá nhân</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setFormat('doubles')}
+                  className={`flex flex-col items-center justify-center gap-1.5 rounded-xl border p-3 text-center transition ${
+                    format === 'doubles'
+                      ? 'border-blue-600 bg-blue-50/80 shadow-2xs ring-1 ring-blue-500/30 text-blue-950 font-bold'
+                      : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
+                  }`}
+                >
+                  <Users className={`h-5 w-5 ${format === 'doubles' ? 'text-blue-600' : 'text-slate-400'}`} />
+                  <span className="text-xs">Đánh đôi (Doubles)</span>
+                  <span className="text-[10px] text-slate-400">2 vs 2 theo cặp</span>
+                </button>
+              </div>
+            </section>
+
+            {/* Card 4: Thể thức bảng đấu (4 thể thức chuẩn) */}
+            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs space-y-3.5">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                    <Trophy className="h-4 w-4" />
+                  </div>
+                  <h2 className="text-sm font-bold text-slate-900">Thể thức bảng đấu</h2>
+                </div>
+                <span className="text-[11px] text-slate-400 font-medium">Chọn 1</span>
+              </div>
+
+              <div className="grid grid-cols-1 gap-2.5">
+                {BRACKET_OPTIONS.map((opt) => {
+                  const isSelected = bracketType === opt.id;
+                  const { Icon } = opt;
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => setBracketType(opt.id)}
+                      className={`group flex items-start gap-3 rounded-xl border p-3 text-left transition-all ${
+                        isSelected
+                          ? 'border-blue-600 bg-blue-50/80 shadow-2xs ring-1 ring-blue-500/30'
+                          : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60'
+                      }`}
+                    >
+                      <div
+                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border transition ${
+                          isSelected
+                            ? 'border-blue-600 bg-blue-600 text-white shadow-2xs'
+                            : 'border-slate-200 bg-slate-50 text-slate-600 group-hover:text-blue-600'
+                        }`}
+                      >
+                        <Icon className="h-4 w-4" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between">
+                          <span className={`text-xs font-bold transition ${isSelected ? 'text-blue-950' : 'text-slate-800'}`}>
+                            {opt.label}
+                          </span>
+                          {isSelected && (
+                            <span className="h-2 w-2 rounded-full bg-blue-600 ring-2 ring-blue-200" />
+                          )}
+                        </div>
+                        <p className={`mt-0.5 text-[11px] leading-snug transition ${isSelected ? 'text-blue-900/80' : 'text-slate-500'}`}>
+                          {opt.desc}
+                        </p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+
+            {/* Card 5: Quy mô & ELO */}
+            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs space-y-4">
+              {/* Quy mô */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                    <Users className="h-3.5 w-3.5 text-blue-600" />
+                    Quy mô giải đấu (Số đội/người)
+                  </span>
+                  <span className="text-xs text-slate-400">
+                    {bracketType === 'round_robin' ? 'Tối đa 15 đội/bảng' : 'Tối đa 128'}
+                  </span>
+                </div>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {(bracketType === 'round_robin' ? [4, 6, 8, 10, 12, 15] : [4, 8, 16, 32, 64]).map((num) => {
+                    const isCurrent = maxTeams === num;
+                    return (
+                      <button
+                        key={num}
+                        type="button"
+                        onClick={() => setMaxTeams(num)}
+                        className={`rounded-lg border px-3 py-1.5 text-xs font-bold transition ${
+                          isCurrent
+                            ? 'border-blue-600 bg-blue-600 text-white shadow-2xs'
+                            : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-slate-300 hover:bg-white'
+                        }`}
+                      >
+                        {num}
+                      </button>
+                    );
+                  })}
+                  <div className="flex items-center gap-1 ml-auto">
+                    <span className="text-[11px] text-slate-500">Khác:</span>
+                    <input
+                      type="number"
+                      min={2}
+                      max={bracketType === 'round_robin' ? 15 : 128}
+                      value={maxTeams}
+                      onChange={(event) => setMaxTeams(Number(event.target.value))}
+                      className="w-14 rounded-lg border border-slate-300 bg-white px-2 py-1 text-center text-xs font-bold text-slate-800 outline-none focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+
+                {/* Smart suggestion when Round Robin > 15 */}
+                {bracketType === 'round_robin' && maxTeams > 15 && (
+                  <div className="mt-2.5 rounded-xl border border-amber-200 bg-amber-50/90 p-3 text-xs text-amber-900 shadow-2xs">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <p className="leading-relaxed">
+                        <strong className="font-bold text-amber-950">💡 Gợi ý:</strong> Thể thức Vòng tròn tối đa <strong>15 đội/bảng</strong>. Với <strong>{maxTeams} đội</strong>, bạn nên chọn <strong>Vòng bảng + Knockout</strong>.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setBracketType('group_stage_knockout')}
+                        className="shrink-0 rounded-lg bg-amber-200 hover:bg-amber-300 px-2.5 py-1 text-[11px] font-bold text-amber-950 transition"
+                      >
+                        Đổi sang Vòng bảng
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="h-px bg-slate-100" />
+
+              {/* Tính điểm ELO CLB */}
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <span className="text-xs font-bold text-slate-900">
+                    {isRanked ? 'Xếp hạng ELO nội bộ CLB' : 'Giải đấu phong trào'}
+                  </span>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    {isRanked ? 'Kết quả các trận đấu sẽ cập nhật BXH ELO của thành viên CLB.' : 'Giải giao hữu nội bộ, không ghi nhận biến động ELO.'}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={isRanked}
+                  onClick={() => setIsRanked((val) => !val)}
+                  className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${
+                    isRanked ? 'bg-blue-600' : 'bg-slate-300'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
+                      isRanked ? 'translate-x-5' : 'translate-x-0.5'
+                    }`}
+                  />
+                </button>
+              </div>
+            </section>
+          </div>
+        </div>
+
+        {/* Bottom Tip & Action Buttons */}
+        <div className="space-y-4 pt-2">
+          <div className="flex items-start gap-2.5 text-xs text-blue-700 bg-blue-50/70 p-3.5 rounded-xl border border-blue-100">
+            <Info className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
+            <span>
+              Sau khi tạo, giải sẽ ở trạng thái mở đăng ký nội bộ trong CLB. Bạn có thể vào <strong>Quản lý giải</strong> bất kỳ lúc nào để bổ sung sân bãi, phân cặp hạt giống hoặc điều hành tỷ số trực tiếp.
+            </span>
+          </div>
+
+          <div className="flex items-center justify-end gap-3 border-t border-slate-200/80 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => router.back()}
+              disabled={isSubmitting}
+              className="px-5 h-11 text-xs font-bold"
+            >
+              Hủy
+            </Button>
+            <Button
+              onClick={handleSubmit}
+              isLoading={isSubmitting}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 h-11 shadow-sm"
+            >
+              {isSubmitting ? 'Đang tạo giải...' : 'Tạo giải đấu CLB'}
+            </Button>
+          </div>
+        </div>
+
       </div>
     </div>
   );

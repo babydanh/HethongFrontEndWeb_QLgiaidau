@@ -79,6 +79,7 @@ const TOURNAMENT_DETAIL_TABS: TournamentDetailTab[] = [
 export default function TournamentDetailClient({ tournamentId, initialTournament }: Props) {
   const translate = useTranslations('TournamentDetail');
   const registrationTranslate = useTranslations('RegistrationMode');
+const commonTranslate = useTranslations('Common');
   const [tournament, setTournament] = useState<Tournament | null>(initialTournament);
   const [isInitialLoading, setIsInitialLoading] = useState(!initialTournament);
   const [initialLoadError, setInitialLoadError] = useState<string | null>(null);
@@ -781,7 +782,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                     return (
                       <CountdownTimer
                         targetDate={activeTournament.registrationStartDate!}
-                        labels={{ active: translate('registrationOpensAfter'), expired: translate('registrationOpened') }}
+                        labels={{ active: translate('registrationOpensAfter'), expired: translate('registrationOpened'), dayLabel: commonTranslate('countdownDay') }}
                         variant="info"
                       />
                     );
@@ -792,7 +793,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                     return (
                       <CountdownTimer
                         targetDate={activeTournament.registrationEndDate!}
-                        labels={{ active: translate('closeRegistrationAfter'), expired: translate('registrationClosed') }}
+                        labels={{ active: translate('closeRegistrationAfter'), expired: translate('registrationClosed'), dayLabel: commonTranslate('countdownDay') }}
                         variant="warning"
                       />
                     );
@@ -803,7 +804,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                     return (
                       <CountdownTimer
                         targetDate={activeTournament.startDate!}
-                        labels={{ active: 'Khởi tranh sau', expired: 'Đã khởi tranh' }}
+                        labels={{ active: translate('startAfter'), expired: translate('started'), dayLabel: commonTranslate('countdownDay') }}
                         variant="danger"
                       />
                     );
@@ -815,7 +816,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
                       <div>
                         <CountdownTimer
                           targetDate={activeTournament.endDate!}
-                          labels={{ active: translate('endAfter'), expired: translate('completed') }}
+                          labels={{ active: translate('endAfter'), expired: translate('completed'), dayLabel: commonTranslate('countdownDay') }}
                           variant="danger"
                         />
                         <p className="text-[10px] text-slate-400 mt-1 italic">{translate("scheduleMayChange")}</p>

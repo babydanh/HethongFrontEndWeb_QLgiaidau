@@ -316,7 +316,7 @@ export default function QuickTournamentCreate() {
       registrationMode: communityId ? 'OPEN' : 'APPROVAL',
       bracketType: 'single_elimination',
       maxTeams: 16, ...scheduleDefaults,
-      selectedFormats: DEFAULT_RACKET_FORMATS,
+      selectedFormats: ['MALE_DOUBLES'],
       venueName: '', locationAddress: '', province: '', ward: '', district: '',
       isRanked: false, description: '', genderRestriction: 'MALE', teamSize: '7', maxReserve: 5,
       footballHalvesCount: 2, footballHalfDuration: 45, footballAllowDraw: true,
@@ -470,6 +470,22 @@ export default function QuickTournamentCreate() {
     }
   };
 
+  const toggleFormat = (formatKey: string) => {
+    if (selectedFormats.includes(formatKey)) {
+      if (selectedFormats.length <= 1) {
+        toast('Cần ít nhất 1 nội dung thi đấu.', { icon: 'ℹ️' });
+        return;
+      }
+      const next = selectedFormats.filter((item) => item !== formatKey);
+      setValue('selectedFormats', next, { shouldValidate: true });
+      syncLegacyFormat(next[0]);
+      return;
+    }
+    const next = [...selectedFormats, formatKey];
+    setValue('selectedFormats', next, { shouldValidate: true });
+    syncLegacyFormat(next[0]);
+  };
+
   const openFormatModal = (formatKey?: string) => {
     const option = QUICK_FORMAT_OPTIONS.find((item) => item.key === formatKey) ?? QUICK_FORMAT_OPTIONS.find((item) => !selectedFormats.includes(item.key)) ?? QUICK_FORMAT_OPTIONS[0];
     const existing = formatConfigs.find((config) => config.key === option.key);
@@ -498,36 +514,21 @@ export default function QuickTournamentCreate() {
     setIsFormatModalOpen(false);
   };
 
-  const removeFormatConfig = (formatKey: string) => {
-    if (selectedFormats.length <= 1) {
-      toast('Cần ít nhất 1 nội dung thi đấu.', { icon: 'ℹ️' });
-      return;
-    }
-    const next = selectedFormats.filter((item) => item !== formatKey);
-    setValue('selectedFormats', next, { shouldValidate: true });
-    setFormatConfigs((current) => current.filter((item) => item.key !== formatKey));
-    syncLegacyFormat(next[0]);
-  };
-
   useEffect(() => {
     if (!formatDefaultsAppliedRef.current) {
       formatDefaultsAppliedRef.current = true;
       return;
     }
     if (sport === 'football') {
-      setValue('selectedFormats', DEFAULT_FOOTBALL_FORMATS, { shouldValidate: true });
-      setFormatConfigs(DEFAULT_FOOTBALL_FORMATS.map((key) => {
-        const option = QUICK_FORMAT_OPTIONS.find((item) => item.key === key)!;
-        return { key, label: option.label, eloEnabled: false, minElo: null, maxElo: null };
+      setValue('selectedFormats', [DEFAULT_FOOTBALL_FORMATS[0]], { shouldValidate: true });
+      setFormatConfigs(QUICK_FORMAT_OPTIONS.slice(5).map((item) => {
+        return { key: item.key, label: item.label, eloEnabled: false, minElo: null, maxElo: null };
       }));
       syncLegacyFormat(DEFAULT_FOOTBALL_FORMATS[0]);
     } else {
-      setValue('selectedFormats', DEFAULT_RACKET_FORMATS, { shouldValidate: true });
-      setFormatConfigs(DEFAULT_RACKET_FORMATS.map((key) => {
-        const option = QUICK_FORMAT_OPTIONS.find((item) => item.key === key)!;
-        return { key, label: option.label, eloEnabled: false, minElo: null, maxElo: null };
-      }));
-      syncLegacyFormat(DEFAULT_RACKET_FORMATS[0]);
+      setValue('selectedFormats', ['MALE_DOUBLES'], { shouldValidate: true });
+      setFormatConfigs(QUICK_FORMAT_OPTIONS.slice(0, 5).map((item) => ({ key: item.key, label: item.label, eloEnabled: false, minElo: null, maxElo: null })));
+      syncLegacyFormat('MALE_DOUBLES');
     }
   }, [sport]);
 
@@ -976,27 +977,21 @@ export default function QuickTournamentCreate() {
                 </div>
 
                 <div className="space-y-2">
-                  {selectedFormats.map((formatKey) => {
-                    const fallback = QUICK_FORMAT_OPTIONS.find((item) => item.key === formatKey);
-                    const config = formatConfigs.find((item) => item.key === formatKey);
+                  {QUICK_FORMAT_OPTIONS.filter((option) => sport === 'football' ? option.key.startsWith('FOOTBALL_') : !option.key.startsWith('FOOTBALL_')).map((option) => {
+                    const formatKey = option.key;
+                    const isSelected = selectedFormats.includes(formatKey);
+                    const config = formatConfigs.find((item) => item.key === formatKey) ?? { key: formatKey, label: option.label, eloEnabled: false, minElo: null, maxElo: null };
                     return (
-                      <div key={formatKey} className="flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50/60 px-3 py-2.5">
-                        <button type="button" onClick={() => openFormatModal(formatKey)} className="min-w-0 text-left">
-                          <span className="block truncate text-xs font-bold text-blue-800">{config?.label ?? fallback?.label ?? formatKey}</span>
-                          <span className="mt-0.5 block text-[10px] text-blue-700/70">
-                            {config?.eloEnabled ? `ELO ${config.minElo ?? 0}–${config.maxElo ?? '∞'}` : 'Không giới hạn ELO'}
-                          </span>
+                      <div key={formatKey} className={`group flex items-center justify-between rounded-lg border px-3 py-2.5 transition ${isSelected ? 'border-blue-500 bg-blue-50/80 text-blue-800 shadow-2xs' : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'}`}>
+                        <button type="button" onClick={() => toggleFormat(formatKey)} className="flex min-w-0 flex-1 items-center gap-2 text-left">
+                          <span className={`h-4 w-4 shrink-0 rounded border text-center text-[11px] leading-[14px] ${isSelected ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-300 bg-white'}`}>{isSelected ? '✓' : ''}</span>
+                          <span className="min-w-0"><span className="block truncate text-xs font-bold">{config.label}</span><span className="mt-0.5 block text-[10px] text-slate-500">{config.eloEnabled ? `ELO ${config.minElo ?? 0}–${config.maxElo ?? '∞'}` : 'Không giới hạn ELO'}</span></span>
                         </button>
-                        <div className="flex items-center gap-1">
-                          <Check className="h-4 w-4 text-blue-600" />
-                          <button type="button" onClick={() => removeFormatConfig(formatKey)} className="rounded-lg p-1 text-slate-400 hover:bg-white hover:text-rose-600" aria-label={`Xóa ${fallback?.label ?? formatKey}`}><X className="h-3.5 w-3.5" /></button>
-                        </div>
+                        <button type="button" onClick={() => openFormatModal(formatKey)} className="ml-2 inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-[10px] font-bold text-slate-500 opacity-0 transition group-hover:opacity-100 hover:border-blue-300 hover:text-blue-700" aria-label={`Sửa ${config.label}`}><Settings2 className="h-3 w-3" /> Sửa</button>
                       </div>
                     );
                   })}
-                  <button type="button" disabled={selectedFormats.length >= (sport === 'football' ? DEFAULT_FOOTBALL_FORMATS.length : DEFAULT_RACKET_FORMATS.length)} onClick={() => openFormatModal()} className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-blue-300 bg-white px-3 py-2.5 text-xs font-bold text-blue-700 transition hover:border-blue-500 hover:bg-blue-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400 disabled:hover:bg-white">
-                    <Plus className="h-3.5 w-3.5" /> {selectedFormats.length >= (sport === 'football' ? DEFAULT_FOOTBALL_FORMATS.length : DEFAULT_RACKET_FORMATS.length) ? 'Đã đủ hình thức mặc định' : 'Thêm hình thức'}
-                  </button>
+                  <button type="button" onClick={() => openFormatModal()} className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-blue-300 bg-white px-3 py-2.5 text-xs font-bold text-blue-700 transition hover:border-blue-500 hover:bg-blue-50"><Plus className="h-3.5 w-3.5" /> Thêm hình thức</button>
                 </div>
                 {errors.selectedFormats && (
                   <span className="block text-xs text-rose-600 font-medium">{errors.selectedFormats.message}</span>

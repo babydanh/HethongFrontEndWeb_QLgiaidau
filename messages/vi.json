@@ -172,7 +172,7 @@
     "membersTab": "Thành viên",
     "galleryTab": "Ảnh",
     "rankingsTab": "Bảng xếp hạng",
-    "moderationTab": "Điều phối",
+    "moderationTab": "Điều phối", "supportNotifications": "Thông báo hỗ trợ", "newSupportRequests": "Hỗ trợ mới", "unreadSupportMessages": "{count} tin chưa đọc", "noSupportRequests": "Chưa có yêu cầu hỗ trợ.", "openSupportInbox": "Mở hộp thư hỗ trợ", "supportRequestOpened": "Đã mở yêu cầu hỗ trợ",
     "allStatuses": "Tất cả trạng thái",
     "allTournaments": "Tất cả giải đấu",
     "clubTournaments": "Giải đấu CLB",
@@ -279,7 +279,7 @@
     "notUpdated": "Chưa cập nhật",
     "eloHistoryTitle": "Biến động ELO theo thời gian",
     "matchLabel": "Trận {number}",
-    "eloHistoryEmpty": "Không có lịch sử biến động ELO.",     "achievementChampion": "Quán quân",     "achievementRunnerUp": "Á quân",     "achievementThirdPlace": "Hạng ba",     "formatSinglesMale": "Đơn Nam",     "formatSinglesFemale": "Đơn Nữ",     "formatDoublesMale": "Đôi Nam",     "formatDoublesFemale": "Đôi Nữ",     "formatMixedDoubles": "Đôi Nam Nữ",     "formatDoubles": "Đôi",     "formatSingles": "Đơn",     "formatUnknown": "Chưa rõ",     "imageTooLarge": "Kích thước ảnh không được vượt quá 5MB",     "coverUpdated": "Đã cập nhật ảnh bìa",     "coverUploadFailed": "Lỗi khi tải ảnh bìa lên",     "evidenceUploadSuccess": "Tải ảnh minh chứng lên thành công",     "evidenceUploadFailed": "Lỗi khi tải ảnh minh chứng lên",     "phoneRequired": "Vui lòng nhập số điện thoại liên hệ",     "evidenceRequired": "Vui lòng tải lên ảnh minh chứng năng lực",     "verificationSubmitted": "Gửi yêu cầu xác minh thành công! Đang chờ Admin duyệt"
+    "eloHistoryEmpty": "Không có lịch sử biến động ELO.",     "achievementChampion": "Quán quân",     "achievementRunnerUp": "Á quân",     "achievementThirdPlace": "Hạng ba",     "formatSinglesMale": "Đơn Nam",     "formatSinglesFemale": "Đơn Nữ",     "formatDoublesMale": "Đôi Nam",     "formatDoublesFemale": "Đôi Nữ",     "formatMixedDoubles": "Đôi Nam Nữ",     "formatDoubles": "Đôi",     "formatSingles": "Đơn",     "formatUnknown": "Chưa rõ",     "imageTooLarge": "Kích thước ảnh không được vượt quá 5MB",     "coverUpdated": "Đã cập nhật ảnh bìa",     "coverUploadFailed": "Lỗi khi tải ảnh bìa lên",     "evidenceUploadSuccess": "Tải ảnh minh chứng lên thành công",     "evidenceUploadFailed": "Lỗi khi tải ảnh minh chứng lên",     "phoneRequired": "Vui lòng nhập số điện thoại liên hệ",     "evidenceRequired": "Vui lòng tải lên ảnh minh chứng năng lực",     "verificationSubmitted": "Gửi yêu cầu xác minh thành công! Đang chờ Admin duyệt", "verificationSubmitFailed": "Có lỗi xảy ra khi gửi yêu cầu", "rolePlayer": "Vận động viên", "roleOrganizer": "Ban tổ chức", "roleModerator": "Quản trị viên", "followUser": "Theo dõi", "updateNow": "Cập nhật ngay", "aboutSection": "Giới thiệu", "detailsSection": "Thông tin chi tiết", "locationMissing": "Địa chỉ chưa cập nhật", "followedTournamentsEmpty": "Theo dõi giải đấu để xem nhanh các giải bạn quan tâm ngay trong hồ sơ."
   },
   "PlayerDashboard": {
     "statusOngoing": "Đang diễn ra",
@@ -380,7 +380,13 @@
     "statusDraft": "📝 BẢN NHÁP",
     "statusActive": "🟢 ĐANG DIỄN RA",
     "statusCompleted": "✅ ĐÃ KẾT THÚC",
-    "statusCancelled": "❌ ĐÃ HỦY",,     "formatAgreement": "Thỏa thuận",     "seriesLabel": "chuỗi giải",     "timeNotSet": "Chưa xác định thời gian",     "prizeLabel": "Giải thưởng:",     "progressLabel": "TIẾN ĐỘ CHUỖI GIẢI",     "eventsCompleted": "{completed}/{total} GIẢI ĐÃ ĐẤU"
+    "statusCancelled": "❌ ĐÃ HỦY",
+    "formatAgreement": "Thỏa thuận",
+    "seriesLabel": "chuỗi giải",
+    "timeNotSet": "Chưa xác định thời gian",
+    "prizeLabel": "Giải thưởng:",
+    "progressLabel": "TIẾN ĐỘ CHUỖI GIẢI",
+    "eventsCompleted": "{completed}/{total} GIẢI ĐÃ ĐẤU",
     "overview": "Tổng Quan",
     "schedule": "Chặng Đấu & Lịch Trình",
     "standings": "Bảng Xếp Hạng PSR",
@@ -390,12 +396,16 @@
     "loadError": "Không thể tải danh sách chuỗi giải đấu.",
     "eyebrow": "HỆ THỐNG LEAGUE & TOUR",
     "title": "Chuỗi Giải Đấu Vòng Loại Tích Điểm",
-    "description": "Khám phá các chuỗi giải đấu phong trào Pickleball và Tennis trên toàn quốc. Đấu chặng tích lũy điểm PSR, tranh vé thẳng và giành tấm vé vàng tham gia Vòng Chung Kết Cup danh giá.",
+    "description": "Khám phá các chuỗi giải đấu phong trào Pickleball và Tennis trên toàn quốc. Tích lũy điểm PSR, tranh vé thẳng và giành tấm vé vàng đến Vòng Chung Kết Cup danh giá.",
     "searchPlaceholder": "Tìm kiếm chuỗi giải...",
     "all": "Tất cả",
     "active": "Đang diễn ra",
-    "completed": "Đã kết thúc"
-  },,     "filterStages": "Lọc chặng:",     "errorTitle": "Đã xảy ra lỗi",     "emptyTitle": "Không tìm thấy chuỗi giải nào",     "emptyHint": "Thử tìm kiếm với từ khóa khác hoặc chuyển bộ lọc chặng để khám phá thêm."
+    "completed": "Đã kết thúc",
+    "filterStages": "Lọc chặng:",
+    "errorTitle": "Đã xảy ra lỗi",
+    "emptyTitle": "Không tìm thấy chuỗi giải nào",
+    "emptyHint": "Thử tìm kiếm với từ khóa khác hoặc chuyển bộ lọc chặng để khám phá thêm."
+  },
   "TournamentList": {
     "searchPlaceholder": "Tên giải đấu, địa điểm...",
     "singles": "Đơn",
@@ -619,7 +629,7 @@
     "registerFailed": "Đăng ký thất bại.",
     "missingVerificationToken": "Đường dẫn xác minh thiếu token kích hoạt.",
     "invalidVerificationToken": "Mã xác minh không hợp lệ hoặc đã hết hạn.",
-    "verificationSuccessHeading": "Xác minh thành công!",
+    "verificationSuccessHeading": "Xác minh thành công!", "verificationSuccessDescription": "Email của bạn đã được xác thực thành công. Bây giờ bạn có thể tham gia đầy đủ các giải đấu của Sporto.", "verificationLoadingHeading": "Đang xác minh Email",
     "verificationFailedHeading": "Xác minh thất bại",
     "goHome": "Về trang chủ",
     "verifying": "Đang xác minh...",

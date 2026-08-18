@@ -75,6 +75,7 @@ export interface CommunityPostTournament {
   status?: string | null;
   bannerUrl?: string | null;
   maxParticipants?: number | null;
+  inviteCode?: string | null;
 }
 
 export interface CommunityPollVoter {

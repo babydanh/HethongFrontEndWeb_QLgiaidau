@@ -483,6 +483,7 @@ export default function CommunityPostCard({
           <CommunityPollCard
             communityId={post.communityId}
             poll={post.poll}
+            tournamentInviteCode={post.tournament?.inviteCode}
           />
         )}
 

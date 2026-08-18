@@ -5,6 +5,8 @@ import Image from 'next/image';
 import { BarChart3, CheckCircle2, Circle, CheckSquare2, Square, Plus, Loader2, Users } from 'lucide-react';
 import type { CommunityPoll, CommunityPollOption } from '@/types/community-social';
 import { communitiesApi } from '@/features/communities/api';
+import { tournamentsApi } from '@/features/tournaments/api';
+import toast from 'react-hot-toast';
 import { useUserProfileModalStore } from '@/lib/zustand/userProfileModalStore';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { cn } from '@/utils/cn';
@@ -12,12 +14,14 @@ import { cn } from '@/utils/cn';
 interface CommunityPollCardProps {
   communityId: string;
   poll: CommunityPoll;
+  tournamentInviteCode?: string | null;
   onPollUpdated?: (updatedPoll: CommunityPoll) => void;
 }
 
 export default function CommunityPollCard({
   communityId,
   poll,
+  tournamentInviteCode,
   onPollUpdated,
 }: CommunityPollCardProps) {
   const { user } = useAuthStore();
@@ -42,6 +46,20 @@ export default function CommunityPollCard({
       if (res.data) {
         setCurrentPoll(res.data);
         onPollUpdated?.(res.data);
+        const selected = res.data.options.find((option: CommunityPollOption) => option.id === optionId);
+        const shouldRegister = selected?.isVoted === true && tournamentInviteCode && (
+          selected.optionText.includes('Có tham gia') ||
+          selected.optionText.includes('Đăng ký') ||
+          selected.optionText.includes('✅')
+        );
+        if (shouldRegister) {
+          try {
+            await tournamentsApi.joinLite(tournamentInviteCode);
+            toast.success('Đã bình chọn và đăng ký tham gia giải.');
+          } catch {
+            toast('Đã ghi nhận bình chọn. Bạn có thể đã đăng ký giải này trước đó.');
+          }
+        }
       }
     } catch (err) {
       console.error('Failed to vote poll:', err);

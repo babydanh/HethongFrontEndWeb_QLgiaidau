@@ -67,18 +67,18 @@ interface AchievementCard {
   tournamentDate?: string | null;
 }
 
-const getAchievementMeta = (rank: AchievementRank) => {
+const getAchievementMeta = (rank: AchievementRank, labels?: { champion: string; runnerUp: string; thirdPlace: string }) => {
   switch (rank) {
     case 1:
       return {
-        label: 'Quán quân',
+        label: labels?.champion ?? 'Quán quân',
         colorClass: 'bg-amber-50',
         textClass: 'text-amber-700',
         borderClass: 'border-amber-200',
       };
     case 2:
       return {
-        label: 'Á quân',
+        label: labels?.runnerUp ?? 'Á quân',
         colorClass: 'bg-slate-50',
         textClass: 'text-slate-700',
         borderClass: 'border-slate-200',
@@ -86,7 +86,7 @@ const getAchievementMeta = (rank: AchievementRank) => {
     case 3:
     default:
       return {
-        label: 'Hạng ba',
+        label: labels?.thirdPlace ?? 'Hạng ba',
         colorClass: 'bg-amber-50',
         textClass: 'text-amber-700',
         borderClass: 'border-amber-200',
@@ -103,6 +103,7 @@ const deriveTournamentPlacement = (
   tournament: Tournament,
   stages: BracketStage[],
   userId: string,
+  labels: { champion: string; runnerUp: string; thirdPlace: string },
 ): AchievementCard | null => {
   const allMatches = stages.flatMap((stage) =>
     stage.groups.flatMap((group) =>
@@ -161,7 +162,7 @@ const deriveTournamentPlacement = (
   const finalUserMatch = finalMatches.find((match) => hasUserInParticipant(match.participant1, userId) || hasUserInParticipant(match.participant2, userId));
   if (finalUserMatch) {
     const result = userInMatch(finalUserMatch);
-    const meta = getAchievementMeta(result.isWinner ? 1 : 2);
+    const meta = getAchievementMeta(result.isWinner ? 1 : 2, labels);
     return {
       tournamentId: tournament.id,
       tournamentName: tournament.name,
@@ -176,7 +177,7 @@ const deriveTournamentPlacement = (
   if (bronzeUserMatch) {
     const result = userInMatch(bronzeUserMatch);
     if (result.isWinner) {
-      const meta = getAchievementMeta(3);
+      const meta = getAchievementMeta(3, labels);
       return {
         tournamentId: tournament.id,
         tournamentName: tournament.name,
@@ -192,7 +193,7 @@ const deriveTournamentPlacement = (
   const latestResult = userInMatch(latestUserMatch);
   const isSemiFinalLoser = latestUserMatch.stageOrder < maxStageOrder && !latestResult.isWinner;
   if (isSemiFinalLoser) {
-    const meta = getAchievementMeta(3);
+    const meta = getAchievementMeta(3, labels);
     return {
       tournamentId: tournament.id,
       tournamentName: tournament.name,
@@ -208,6 +209,7 @@ const deriveTournamentPlacement = (
 
 export default function ProfilePage() {
   const translate = useTranslations("Profile");
+  const achievementLabels = { champion: translate("achievementChampion"), runnerUp: translate("achievementRunnerUp"), thirdPlace: translate("achievementThirdPlace") };
   const { user } = useAuthStore();
   const [profileData, setProfileData] = useState<UserProfile | null>(null);
   const [createdCommunities, setCreatedCommunities] = useState<Community[]>([]);
@@ -243,15 +245,15 @@ export default function ProfilePage() {
     const mt = matchType || '';
     const gr = genderRestriction || '';
     if (mt === 'SINGLES') {
-      return gr === 'FEMALE' ? 'Đơn Nữ' : 'Đơn Nam';
+      return gr === 'FEMALE' ? translate("formatSinglesFemale") : translate("formatSinglesMale");
     }
     if (mt === 'DOUBLES') {
-      return gr === 'FEMALE' ? 'Đôi Nữ' : 'Đôi Nam';
+      return gr === 'FEMALE' ? translate("formatDoublesFemale") : translate("formatDoublesMale");
     }
     if (mt === 'MIXED_DOUBLES' || mt === 'MIXED' || gr === 'MIXED') {
-      return 'Đôi Nam Nữ';
+      return translate("formatMixedDoubles");
     }
-    return mt === 'DOUBLES' ? 'Đôi' : mt === 'SINGLES' ? 'Đơn' : 'Đôi Nam Nữ';
+    return mt === 'DOUBLES' ? translate("formatDoubles") : mt === 'SINGLES' ? translate("formatSingles") : translate("formatMixedDoubles");
   };
 
   const handleCoverClick = () => {
@@ -263,7 +265,7 @@ export default function ProfilePage() {
     if (!file) return;
 
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('Kích thước ảnh không được vượt quá 5MB');
+      toast.error(translate("imageTooLarge"));
       return;
     }
 
@@ -283,10 +285,10 @@ export default function ProfilePage() {
         setProfileData({ ...user, coverUrl: url } as UserProfile);
       }
 
-      toast.success('Đã cập nhật ảnh bìa');
+      toast.success(translate("coverUpdated"));
     } catch (error) {
       console.error(error);
-      toast.error('Lỗi khi tải ảnh bìa lên');
+      toast.error(translate("coverUploadFailed"));
     } finally {
       setIsUploadingCover(false);
     }
@@ -349,7 +351,7 @@ export default function ProfilePage() {
     if (!file) return;
 
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('Kích thước ảnh không được vượt quá 5MB');
+      toast.error(translate("imageTooLarge"));
       return;
     }
 
@@ -357,10 +359,10 @@ export default function ProfilePage() {
       setIsUploading(true);
       const res = await uploadApi.uploadImage(file);
       setEvidenceUrl(res.url);
-      toast.success('Tải ảnh minh chứng lên thành công!');
+      toast.success(translate("evidenceUploadSuccess"));
     } catch (error) {
       console.error(error);
-      toast.error('Lỗi khi tải ảnh minh chứng lên');
+      toast.error(translate("evidenceUploadFailed"));
     } finally {
       setIsUploading(false);
     }
@@ -368,11 +370,11 @@ export default function ProfilePage() {
 
   const handleSubmitTicket = async () => {
     if (!phone.trim()) {
-      toast.error('Vui lòng nhập số điện thoại liên hệ');
+      toast.error(translate("phoneRequired"));
       return;
     }
     if (!evidenceUrl) {
-      toast.error('Vui lòng tải lên ảnh minh chứng năng lực');
+      toast.error(translate("evidenceRequired"));
       return;
     }
 
@@ -382,7 +384,7 @@ export default function ProfilePage() {
         evidenceUrls: [evidenceUrl],
         contactPhone: phone.trim()
       });
-      toast.success('Gửi yêu cầu xác minh thành công! Đang chờ Admin duyệt.');
+      toast.success(translate("verificationSubmitted"));
       setIsModalOpen(false);
       setPhone('');
       setEvidenceUrl('');
@@ -391,7 +393,7 @@ export default function ProfilePage() {
       setTickets(res.data || []);
     } catch (error) {
       console.error(error);
-      toast.error('Có lỗi xảy ra khi gửi yêu cầu');
+      toast.error(translate("verificationSubmitFailed"));
     } finally {
       setIsSubmittingTicket(false);
     }
@@ -485,7 +487,7 @@ export default function ProfilePage() {
           completedRankedTournaments.map(async (tournament) => {
             try {
               const response = await tournamentsApi.getTournamentBracket(tournament.id);
-              return deriveTournamentPlacement(tournament, response.data.stages || [], displayUser.id);
+              return deriveTournamentPlacement(tournament, response.data.stages || [], displayUser.id, achievementLabels);
             } catch (error) {
               console.error('Failed to load bracket for achievement', tournament.id, error);
               return null;
@@ -582,7 +584,7 @@ export default function ProfilePage() {
                 onClick={() => setActiveTab('tournaments')}
               >
                 <Bookmark className="w-4 h-4 mr-2" />
-                Theo dõi
+                {translate("followUser")}
               </Button>
             </div>
           </div>
@@ -616,13 +618,13 @@ export default function ProfilePage() {
                 let roleLabel = role;
                 let roleColor = 'bg-[#e0f2fe] text-[#1e3a8a]';
                 if (role === 'PLAYER') {
-                  roleLabel = 'Vận động viên';
+                  roleLabel = translate("rolePlayer");
                   roleColor = 'bg-[#e0f2fe] text-[#1e3a8a]';
                 } else if (role === 'ORGANIZER') {
-                  roleLabel = 'Ban tổ chức';
+                  roleLabel = translate("roleOrganizer");
                   roleColor = 'bg-[#f3e8ff] text-[#6b21a8]';
                 } else if (role === 'ADMIN') {
-                  roleLabel = 'Quản trị viên';
+                  roleLabel = translate("roleModerator");
                   roleColor = 'bg-[#fdf2e9] text-[#991b1b]';
                 }
                 return (
@@ -691,7 +693,7 @@ export default function ProfilePage() {
           </div>
           <Link href="/profile/edit">
             <Button size="sm" variant="warning" className="font-bold text-xs">
-              Cập nhật ngay
+              {translate("updateNow")}
             </Button>
           </Link>
         </div>
@@ -1159,7 +1161,7 @@ export default function ProfilePage() {
                 <Bookmark className="w-16 h-16 text-slate-200 mx-auto mb-4" />
                 <h3 className="text-lg font-bold text-slate-700 mb-2">Chưa theo dõi giải đấu nào</h3>
                 <p className="text-slate-500 max-w-sm mx-auto text-sm">
-                  Theo dõi giải đấu để xem nhanh các giải bạn quan tâm ngay trong profile.
+                  {translate("followedTournamentsEmpty")}
                 </p>
               </div>
             )}

@@ -1261,12 +1261,13 @@ export function useManageState(id: string) {
         setHideFeaturedCardText(t.tournamentConfig?.hideFeaturedCardText === true);
         setRegistrationMode(t.tournamentConfig?.registrationMode || 'OPEN');
         setVenueId(t.venueId||'');
-        const quickLocation = t.tournamentConfig?.location as {
+        const quickConfig = t.tournamentConfig as Record<string, unknown> | undefined;
+        const quickLocation = quickConfig?.location as {
           venueName?: string;
           address?: string;
           display?: string;
         } | undefined;
-        const quickSchedule = t.tournamentConfig?.schedule as {
+        const quickSchedule = quickConfig?.schedule as {
           registrationStartDate?: string;
           registrationEndDate?: string;
           startDate?: string;
@@ -1343,8 +1344,9 @@ export function useManageState(id: string) {
     // Lite creation stores the free-scoring policy in tournamentConfig. Older
     // Lite records may have sportRules without an explicit mode, so keep the
     // management UI on Lite instead of silently switching them to Strict.
+    const tournamentConfig = tournament.tournamentConfig as Record<string, unknown> | undefined;
     const resolvedWithTournamentMode =
-      tournament.tournamentConfig?.mode === 'LITE' || tournament.tournamentConfig?.scoringMode === 'FREE'
+      tournamentConfig?.mode === 'LITE' || tournamentConfig?.scoringMode === 'FREE'
         ? { ...resolvedRules, mode: 'LITE' as const }
         : resolvedRules;
 

@@ -360,7 +360,7 @@ export default function DashboardPage() {
                 className="font-bold text-xs h-9 bg-blue-600 hover:bg-blue-700"
               >
                 {isLiteLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <Plus className="w-3.5 h-3.5 mr-1.5" />}
-                Tạo giải nhanh (Lite)
+                {translate("quickCreateLite")}
               </Button>
             </>
           )}
@@ -384,7 +384,7 @@ export default function DashboardPage() {
                     : 'border-transparent text-slate-500 hover:text-slate-900'
                 )}
               >
-                <Activity className="w-4 h-4" /> Tổng quan
+                <Activity className="w-4 h-4" /> {translate("overviewTab")}
               </button>
               <button
                 type="button"
@@ -411,7 +411,7 @@ export default function DashboardPage() {
                     : 'border-transparent text-slate-500 hover:text-slate-900'
                 )}
               >
-                <ShieldCheck className="w-4 h-4" /> Ca trọng tài
+                <ShieldCheck className="w-4 h-4" /> {translate("refereeAssignmentsTab")}
                 {refereeCount > 0 && (
                   <span className="ml-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
                     {refereeCount}
@@ -428,7 +428,7 @@ export default function DashboardPage() {
               {workspace && workspace.refereeInvites.length > 0 && (
                 <section className="bg-amber-50/70 border border-amber-200 rounded-xl p-5 shadow-sm">
                   <h2 className="text-sm font-bold text-amber-900 flex items-center gap-2 mb-3">
-                    <ShieldCheck className="w-4 h-4 text-amber-600" /> Lời mời trọng tài chờ phản hồi ({workspace.refereeInvites.length})
+                    <ShieldCheck className="w-4 h-4 text-amber-600" /> {translate("refereeInvitesTitle")} ({workspace.refereeInvites.length})
                   </h2>
                   <div className="flex flex-col gap-3">
                     {workspace.refereeInvites.map((invite) => {
@@ -439,7 +439,7 @@ export default function DashboardPage() {
                             <AvatarCircle src={invite.logoUrl} name={invite.tournamentName} size={36} />
                             <div>
                               <p className="text-xs font-bold text-slate-900">{invite.tournamentName}</p>
-                              <p className="text-[11px] text-slate-500">Mời làm trọng tài • {invite.categoryName || translate("sport")}</p>
+                              <p className="text-[11px] text-slate-500">{translate("inviteAsReferee")} • {invite.categoryName || translate("sport")}</p>
                             </div>
                           </div>
                           <div className="flex gap-2">
@@ -661,7 +661,7 @@ export default function DashboardPage() {
               <TournamentListSection
                 title={tournFilter === 'registered' ? translate("registeredTournaments") : tournFilter === 'organized' ? translate("organizedTournaments") : tournFilter === 'followed' ? translate("followedTournaments") : translate("tournamentList")}
                 actionHref="/tournaments"
-                actionLabel="Tìm giải mới"
+                actionLabel={translate("findNewTournament")}
                 tournaments={getFilteredTournaments()}
                 roleLabels={participantRoleLabels}
                     emptyLabel={translate("noMatchingTournaments")}
@@ -751,7 +751,7 @@ export default function DashboardPage() {
             winRate={winRate}
             tierName={tierName}
             activeRank={activeRank}
-            sportLabel={activeRank?.matchType === 'SINGLES' ? 'Đơn' : activeRank?.matchType === 'DOUBLES' ? 'Đôi' : activeRank?.matchType === 'MIXED_DOUBLES' ? 'Đôi nam nữ' : undefined}
+            sportLabel={activeRank?.matchType === 'SINGLES' ? translate("singlesShort") : activeRank?.matchType === 'DOUBLES' ? 'Đôi' : activeRank?.matchType === 'MIXED_DOUBLES' ? 'Đôi nam nữ' : undefined}
             sportOptions={categories.map((category) => ({ id: category.id, name: category.name }))}
             selectedSportId={selectedEloCategoryId}
             onSportChange={setEloCategoryId}

@@ -91,9 +91,13 @@ export function useManageState(id: string) {
   const [divisions, setDivisions] = useState<Division[]>([]);
   const [selectedDivisionId, setSelectedDivisionId] = useState<string>('');
   const [isCreateDivisionModalOpen, setIsCreateDivisionModalOpen] = useState(false);
+  const [editingDivision, setEditingDivision] = useState<Division | null>(null);
   const [newDivisionMatchType, setNewDivisionMatchType] = useState('MALE_DOUBLES');
   const [newDivisionName, setNewDivisionName] = useState('');
   const [newDivisionBracketType, setNewDivisionBracketType] = useState('SINGLE_ELIMINATION');
+  const [newDivisionEloEnabled, setNewDivisionEloEnabled] = useState(false);
+  const [newDivisionMinElo, setNewDivisionMinElo] = useState<number | null>(null);
+  const [newDivisionMaxElo, setNewDivisionMaxElo] = useState<number | null>(null);
   const [isCreatingDivision, setIsCreatingDivision] = useState(false);
   const [divisionPendingDelete, setDivisionPendingDelete] = useState<Division | null>(null);
   const [isDeletingDivision, setIsDeletingDivision] = useState(false);
@@ -762,6 +766,35 @@ export function useManageState(id: string) {
     finally { setIsAddingReferee(false); }
   };
 
+  const openDivisionEditor = (division: Division) => {
+    const divisionFormatKey: MatchFormatOptionValue = division.matchType === MatchTypeDB.MIXED_DOUBLES || division.genderRestriction === GenderRestriction.MIXED
+      ? 'MIXED_DOUBLES'
+      : division.matchType === MatchTypeDB.SINGLES
+        ? division.genderRestriction === GenderRestriction.FEMALE ? 'FEMALE_SINGLES' : 'MALE_SINGLES'
+        : division.genderRestriction === GenderRestriction.FEMALE ? 'FEMALE_DOUBLES' : 'MALE_DOUBLES';
+    setEditingDivision(division);
+    setNewDivisionMatchType(normalizeMatchFormatForCategory(
+      divisionFormatKey,
+      selectedCategory,
+    ));
+    setNewDivisionName(division.name);
+    setNewDivisionBracketType(division.bracketType ?? 'SINGLE_ELIMINATION');
+    setNewDivisionEloEnabled(division.minElo != null || division.maxElo != null);
+    setNewDivisionMinElo(division.minElo ?? null);
+    setNewDivisionMaxElo(division.maxElo ?? null);
+    setIsCreateDivisionModalOpen(true);
+  };
+
+  const resetDivisionEditor = () => {
+    setEditingDivision(null);
+    setNewDivisionMatchType(normalizeMatchFormatForCategory('MALE_DOUBLES', selectedCategory));
+    setNewDivisionName('');
+    setNewDivisionBracketType(divisions[0]?.bracketType ?? 'SINGLE_ELIMINATION');
+    setNewDivisionEloEnabled(eloEnabled);
+    setNewDivisionMinElo(eloEnabled ? eloMin : null);
+    setNewDivisionMaxElo(eloEnabled ? eloMax : null);
+  };
+
   const handleCreateDivision = async () => {
     if (!tournament?.id) { toast.error('Không tìm thấy giải đấu'); return; }
     setIsCreatingDivision(true);
@@ -783,7 +816,7 @@ export function useManageState(id: string) {
         selectedCategory,
       );
       const defaultRules = buildDefaultSportRules(normalizedKind);
-      const res = await divisionsApi.createDivision(tournament.id, {
+      const divisionPayload = {
         name: divisionName,
         matchType: mapped.mt,
         genderRestriction: mapped.gr,
@@ -793,7 +826,9 @@ export function useManageState(id: string) {
         startDate: tournament.startDate ?? null,
         endDate: tournament.endDate ?? null,
         isConfigOverride: true,
-        roundConfig: buildStageRoundConfigPayload({
+        // Never reset an existing division's detailed scoring setup just
+        // because its label, bracket, or ELO limits are being edited.
+        roundConfig: editingDivision?.roundConfig ?? buildStageRoundConfigPayload({
           kind: normalizedKind,
           setsToWin: defaultRules.setsToWin,
           pointsPerSet: defaultRules.pointsPerSet,
@@ -802,12 +837,15 @@ export function useManageState(id: string) {
           tiebreakPoints: defaultRules.tiebreakPoints,
           roundsToPlay: 1,
         }),
-      });
-      toast.success(`Đã thêm "${divisionName}" thành công!`);
+        minElo: newDivisionEloEnabled ? newDivisionMinElo : null,
+        maxElo: newDivisionEloEnabled ? newDivisionMaxElo : null,
+      };
+      const res = editingDivision
+        ? await divisionsApi.updateDivision(editingDivision.id, divisionPayload)
+        : await divisionsApi.createDivision(tournament.id, divisionPayload);
+      toast.success(editingDivision ? `Đã cập nhật "${divisionName}".` : `Đã thêm "${divisionName}" thành công!`);
       setIsCreateDivisionModalOpen(false);
-      setNewDivisionMatchType(normalizeMatchFormatForCategory('MALE_DOUBLES', selectedCategory));
-      setNewDivisionName('');
-      setNewDivisionBracketType('SINGLE_ELIMINATION');
+      resetDivisionEditor();
       await fetchDivisions(tournament.id);
       if (res.data) setSelectedDivisionId(res.data.id);
     } catch (err) { toast.error(getErrorMessage(err)); }
@@ -1514,8 +1552,9 @@ export function useManageState(id: string) {
     draftStatus, clearManageDraft,
     referees, setReferees, refereeEmail, setRefereeEmail, isAddingReferee, setIsAddingReferee,
     divisions, setDivisions, selectedDivisionId, setSelectedDivisionId,
-    isCreateDivisionModalOpen, setIsCreateDivisionModalOpen,
+    isCreateDivisionModalOpen, setIsCreateDivisionModalOpen, editingDivision, openDivisionEditor, resetDivisionEditor,
     newDivisionMatchType, setNewDivisionMatchType, newDivisionName, setNewDivisionName, newDivisionBracketType, setNewDivisionBracketType,
+    newDivisionEloEnabled, setNewDivisionEloEnabled, newDivisionMinElo, setNewDivisionMinElo, newDivisionMaxElo, setNewDivisionMaxElo,
     isCreatingDivision, setIsCreatingDivision, divisionPendingDelete, setDivisionPendingDelete, isDeletingDivision, setIsDeletingDivision,
     name, setName, categoryId, setCategoryId, description, setDescription,
     bannerUrl, setBannerUrl, logoUrl, setLogoUrl, hideFeaturedCardText, setHideFeaturedCardText, prizeDescription, setPrizeDescription,

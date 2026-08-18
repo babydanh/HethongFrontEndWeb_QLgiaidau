@@ -37,7 +37,7 @@ export default function RoleSummaryCard(props: Props) {
 
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
-      <h3 className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-3">Vai trò của tôi</h3>
+      <h3 className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-3">{translate("roleSummaryTitle")}</h3>
       <div className="divide-y divide-slate-100 rounded-lg border border-slate-100 bg-slate-50/60">
         {ROLES.map(role => {
           const label = translate(role.labelKey);

@@ -338,7 +338,7 @@ export default function LeaderboardPage() {
                                                 )}
                                             </div>
                                             <h3 className="font-bold text-slate-800 text-center text-sm mb-1 truncate max-w-[200px] group-hover/podium:text-blue-600 transition-colors">
-                                                {rankings[1]?.user?.fullName || "Đang chờ..."}
+                                                {rankings[1]?.user?.fullName || t("waiting")}
                                             </h3>
                                             {selectedMatchType.includes('DOUBLES') && rankings[1] && (
                                                 <span className="text-[10px] text-slate-600 font-bold bg-slate-100 px-2 py-0.5 rounded-md mb-1.5 border border-slate-200">
@@ -411,7 +411,7 @@ export default function LeaderboardPage() {
                                                 )}
                                             </div>
                                             <h3 className="font-bold text-amber-600 text-center text-base mb-1 truncate max-w-[220px] group-hover/podium:text-amber-700 transition-colors">
-                                                {rankings[0]?.user?.fullName || "Đang chờ..."}
+                                                {rankings[0]?.user?.fullName || t("waiting")}
                                             </h3>
                                             {selectedMatchType.includes('DOUBLES') && rankings[0] && (
                                                 <span className="text-[10px] text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded-md mb-1.5 border border-amber-200">
@@ -484,7 +484,7 @@ export default function LeaderboardPage() {
                                                 )}
                                             </div>
                                             <h3 className="font-bold text-[#C2410C] text-center text-sm mb-1 truncate max-w-[200px] group-hover/podium:text-amber-800 transition-colors">
-                                                {rankings[2]?.user?.fullName || "Đang chờ..."}
+                                                {rankings[2]?.user?.fullName || t("waiting")}
                                             </h3>
                                             {selectedMatchType.includes('DOUBLES') && rankings[2] && (
                                                 <span className="text-[10px] text-[#C2410C] font-bold bg-amber-50 px-2 py-0.5 rounded-md mb-1.5 border border-amber-200">
@@ -564,7 +564,7 @@ export default function LeaderboardPage() {
                                                     )}
                                                     
                                                     <span className="font-bold text-slate-700 text-xs text-center truncate w-full mb-1">
-                                                        {player?.user?.fullName || "Đang chờ..."}
+                                                        {player?.user?.fullName || t("waiting")}
                                                     </span>
                                                     {player ? (
                                                         <span className="text-[11px] font-bold text-blue-600">{player.eloPoints} ELO</span>
@@ -603,9 +603,9 @@ export default function LeaderboardPage() {
                                         >
                                             <Info className="w-4 h-4" />
                                         </button>
-                                        Hệ thống phân hạng ELO
+                                        {t("eloSystemTitle")}
                                     </h3>
-                                    <p className="text-slate-500 text-[11px] leading-relaxed">Điểm ELO tích lũy sau mỗi trận đấu sẽ xếp người chơi vào các Tier trình độ tương ứng.</p>
+                                    <p className="text-slate-500 text-[11px] leading-relaxed">{t("eloSystemDescription")}</p>
                                 </div>
                             </div>
 
@@ -698,15 +698,15 @@ export default function LeaderboardPage() {
                             <div className="space-y-1">
                                 <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
                                     <Search className="w-4 h-4 text-blue-600" />
-                                    Tra cứu ELO kỳ thủ
+                                    {t("eloLookupTitle")}
                                 </h3>
-                                <p className="text-slate-500 text-[11px] leading-relaxed">Nhập Gmail hoặc Số điện thoại để tìm thứ hạng và Tier trình độ.</p>
+                                <p className="text-slate-500 text-[11px] leading-relaxed">{t("eloLookupDescription")}</p>
                             </div>
 
                             <form onSubmit={handleSearchUser} className="flex gap-2">
                                 <input
                                     type="text"
-                                    placeholder="gmail hoặc sđt..."
+                                    placeholder={t("eloLookupPlaceholder")}
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-600 bg-slate-50 text-slate-800 placeholder-slate-400"
@@ -719,7 +719,7 @@ export default function LeaderboardPage() {
                                     {searchLoading ? (
                                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
                                     ) : (
-                                        "Tìm"
+                                        t("eloLookupButton")
                                     )}
                                 </button>
                             </form>
@@ -792,7 +792,7 @@ function RestRankingsTable({ rankings, selectedMatchType }: { rankings: PlayerRa
     // Rankings starting from index 10 (Hạng 11 trở đi)
     const realData = rankings.slice(10, 100);
     
-    // Tạo danh sách 90 phần tử (từ hạng 11 đến 100), nếu thiếu thì điền placeholder "Đang chờ..."
+    // Tạo danh sách 90 phần tử (từ hạng 11 đến 100), nếu thiếu thì điền placeholder t("waiting")
     const listData = [...realData];
     const targetLength = 90; // 11 to 100 is 90 slots
     
@@ -807,7 +807,7 @@ function RestRankingsTable({ rankings, selectedMatchType }: { rankings: PlayerRa
             updatedAt: new Date().toISOString(),
             user: {
                 id: `placeholder-user-${i}`,
-                fullName: "Đang chờ...",
+                fullName: t("waiting"),
                 avatarUrl: undefined
             },
             tier: {
@@ -890,7 +890,7 @@ function RestRankingsTable({ rankings, selectedMatchType }: { rankings: PlayerRa
                                                     </div>
                                                 )}
                                                 <span className={`font-bold truncate max-w-[100px] sm:max-w-[150px] ${isPlaceholder ? "text-slate-400 font-medium" : "text-slate-900"}`}>
-                                                    {rank.user?.fullName || "Đang chờ..."}
+                                                    {rank.user?.fullName || t("waiting")}
                                                 </span>
                                             </button>
                                         </td>

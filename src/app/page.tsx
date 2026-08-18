@@ -855,18 +855,18 @@ export default function HomePage() {
     return (
       <motion.div
         key={match.id}
-        whileHover={{ y: -3, scale: 1.005 }}
+        whileHover={{ y: -2, scale: 1.003 }}
         transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-        className={`bg-white rounded-lg border ${
+        className={`bg-white rounded-xl border ${
           isLive
-            ? 'border-rose-100 shadow-[0_4px_20px_rgba(244,63,94,0.03)]'
-            : 'border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.015)]'
+            ? 'border-rose-200/80 shadow-xs shadow-rose-100/50'
+            : 'border-slate-200/70 shadow-2xs hover:border-slate-300'
         } overflow-hidden flex flex-col justify-between group relative`}
       >
         {/* Whole Card Link */}
-        <Link href={`/live/${match.id}`} className="block flex-1">
+        <Link href={`/live/${match.id}`} className="block flex-1 p-3.5 pb-2">
           {/* Match Header */}
-          <div className={`px-4 py-2.5 ${isLive ? 'bg-rose-50/30' : 'bg-slate-50/50'} border-b border-slate-100 flex items-center justify-between text-[10px] font-semibold text-slate-500`}>
+          <div className="flex items-center justify-between text-[11px] font-semibold text-slate-500 mb-2">
             <div className="flex items-center gap-1.5 truncate max-w-[70%]">
               {isLive && (
                 <span className="relative flex h-2 w-2 shrink-0">
@@ -874,29 +874,19 @@ export default function HomePage() {
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-600"></span>
                 </span>
               )}
-              <span className={`uppercase tracking-wider shrink-0 ${
-                isLive ? 'text-rose-600 font-bold animate-pulse' : isCompleted ? 'text-slate-500' : 'text-blue-600'
+              <span className={`uppercase tracking-wider shrink-0 text-[10px] ${
+                isLive ? 'text-rose-600 font-bold animate-pulse' : isCompleted ? 'text-slate-400 font-bold' : 'text-blue-600 font-bold'
               }`}>
                 {isLive ? translate('statusLive') : isCompleted ? translate('statusCompleted') : translate('statusUpcoming')}
               </span>
-              <span className="text-slate-300">•</span>
-              <span className="shrink-0 text-slate-600 font-medium">{roundLabel}</span>
-              {match.courtName && (
-                <>
-                  <span className="text-slate-300">•</span>
-                  <span className="flex items-center gap-0.5 truncate max-w-[120px]">
-                    <MapPin className="w-2.5 h-2.5 text-slate-400" />
-                    {match.courtName}
-                  </span>
-                </>
-              )}
+              <span className="text-slate-200">•</span>
+              <span className="shrink-0 text-slate-500 font-medium text-[11px]">{roundLabel}</span>
             </div>
             {(() => {
               const stageBadgeText = translateStageName(match.group?.stage?.name, translate);
-              // Hide right stage badge if roundLabel already covers it (e.g. "Vòng bảng - Vòng 1")
               const shouldShowStageBadge = stageBadgeText && !roundLabel.toLowerCase().includes(stageBadgeText.toLowerCase());
               return shouldShowStageBadge ? (
-                <span className="uppercase text-slate-650 bg-slate-100/80 px-2 py-0.5 rounded text-[8px] font-bold truncate max-w-[40%] md:max-w-[28%]">
+                <span className="uppercase text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md text-[8px] font-bold truncate max-w-[40%] md:max-w-[28%]">
                   {stageBadgeText}
                 </span>
               ) : null;
@@ -904,29 +894,25 @@ export default function HomePage() {
           </div>
 
           {/* Opponents Match Grid */}
-          <div className="p-4 flex items-center justify-between gap-3 relative group-hover:bg-slate-50/30 transition-colors">
+          <div className="flex items-center justify-between gap-3 py-1.5">
             {/* Player 1 */}
-            <div className="flex items-center gap-2.5 w-5/12 min-w-0">
-              <div className="min-w-0">
-                <div className="flex items-center gap-1 min-w-0">
-                  <span className={`text-xs font-bold block leading-snug line-clamp-2 break-words group-hover:text-blue-600 transition-colors ${isCompleted && match.winnerId === match.participant1?.id ? 'text-emerald-600' : 'text-slate-800'}`}>
-                    {getTeamShortName(match.participant1?.teamName, translate('pendingTeam'))}
-                  </span>
-                </div>
-              </div>
+            <div className="flex items-center gap-2 w-5/12 min-w-0">
+              <span className={`text-xs font-bold block leading-snug line-clamp-2 break-words group-hover:text-blue-600 transition-colors ${isCompleted && match.winnerId === match.participant1?.id ? 'text-emerald-600' : 'text-slate-800'}`}>
+                {getTeamShortName(match.participant1?.teamName, translate('pendingTeam'))}
+              </span>
             </div>
 
-            {/* Score Display Panel */}
-            <div className="flex flex-col items-center justify-center shrink-0 min-w-[75px]">
+            {/* Score / Status Display Panel */}
+            <div className="flex flex-col items-center justify-center shrink-0 min-w-[65px]">
               {isScheduled ? (
-                <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-100/50">
+                <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2.5 py-0.5 rounded-full">
                   {match.scheduledAt ? new Date(match.scheduledAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : 'VS'}
                 </span>
               ) : (
-                <div className={`flex items-center justify-center px-2.5 py-1 rounded-full font-mono text-[10px] font-bold leading-none tracking-wider shadow-sm border ${
+                <div className={`flex items-center justify-center px-2.5 py-0.5 rounded-full font-mono text-[11px] font-bold leading-none tracking-wider ${
                   isLive
-                    ? 'bg-blue-50 text-blue-700 border-blue-200'
-                    : 'bg-slate-100 text-slate-700 border-slate-200'
+                    ? 'bg-rose-50 text-rose-700'
+                    : 'bg-slate-100 text-slate-700'
                 }`}>
                   {(() => {
                     const scores = extractMatchScores(match.scoreDetails);
@@ -938,39 +924,30 @@ export default function HomePage() {
             </div>
 
             {/* Player 2 */}
-            <div className="flex items-center gap-2.5 w-5/12 min-w-0 justify-end text-right">
-              <div className="min-w-0">
-                <div className="flex items-center justify-end gap-1 min-w-0">
-                  <span className={`text-xs font-bold block leading-snug line-clamp-2 break-words group-hover:text-blue-600 transition-colors ${isCompleted && match.winnerId === match.participant2?.id ? 'text-emerald-600' : 'text-slate-800'}`}>
-                    {getTeamShortName(match.participant2?.teamName, translate('pendingTeam'))}
-                  </span>
-                </div>
-              </div>
+            <div className="flex items-center gap-2 w-5/12 min-w-0 justify-end text-right">
+              <span className={`text-xs font-bold block leading-snug line-clamp-2 break-words group-hover:text-blue-600 transition-colors ${isCompleted && match.winnerId === match.participant2?.id ? 'text-emerald-600' : 'text-slate-800'}`}>
+                {getTeamShortName(match.participant2?.teamName, translate('pendingTeam'))}
+              </span>
             </div>
           </div>
 
           {/* Location & Sport Row */}
-          <div className="px-4 pb-2.5 pt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] text-slate-500 font-medium border-t border-slate-100 bg-slate-50/10">
-            <div className="shrink-0 text-slate-650 flex items-center gap-1">
-              <span className="font-semibold text-slate-700 text-[10px] whitespace-nowrap">
-                {getFormatLabel((match as EnrichedMatch).tournament?.matchType || ((match as unknown) as Record<string, unknown>).matchType as string | undefined, (match as EnrichedMatch).tournament?.genderRestriction || ((match as unknown) as Record<string, unknown>).genderRestriction as string | undefined, translate)}
-              </span>
-            </div>
+          <div className="pt-2 flex flex-wrap items-center justify-between gap-x-2 gap-y-1 text-[10px] text-slate-400 font-medium">
+            <span className="font-semibold text-slate-500 whitespace-nowrap">
+              {getFormatLabel((match as EnrichedMatch).tournament?.matchType || ((match as unknown) as Record<string, unknown>).matchType as string | undefined, (match as EnrichedMatch).tournament?.genderRestriction || ((match as unknown) as Record<string, unknown>).genderRestriction as string | undefined, translate)}
+            </span>
             {match.courtName || match.tournament?.venueName ? (
-              <div className="truncate max-w-[220px]" title={match.courtAddress ? `${match.courtName || match.tournament?.venueName} - ${match.courtAddress}` : match.courtName || match.tournament?.venueName || ''}>
-                <span className="text-slate-400 font-semibold">{translate('courtLabel')}</span>{' '}
-                <span className="font-semibold text-slate-750">
-                  {match.courtName || match.tournament?.venueName}{match.courtAddress ? ` (${match.courtAddress})` : ''}
-                </span>
-              </div>
+              <span className="truncate max-w-[180px] text-slate-500" title={match.courtAddress ? `${match.courtName || match.tournament?.venueName} - ${match.courtAddress}` : match.courtName || match.tournament?.venueName || ''}>
+                {match.courtName || match.tournament?.venueName}
+              </span>
             ) : (
-              <div className="text-slate-400 italic">Chưa xếp sân</div>
+              <span className="text-slate-400 italic">Chưa xếp sân</span>
             )}
           </div>
         </Link>
 
-        {/* Interactive Footer (Full Hitbox Action Bar) */}
-        <div className="grid grid-cols-2 border-t border-slate-100 bg-slate-50/50 divide-x divide-slate-100 relative z-10">
+        {/* Interactive Footer (Subtle, borderless action bar) */}
+        <div className="px-3 pb-2.5 pt-0.5 flex items-center justify-between text-slate-400 text-[11px]">
           {/* Cổ vũ Button */}
           <button
             onClick={(e) => {
@@ -979,11 +956,11 @@ export default function HomePage() {
               handleHighFive(match.id);
             }}
             title={`${translate('cheer')} (${currentHighFives})`}
-            className="flex items-center justify-center gap-1.5 py-1.5 px-3 hover:bg-rose-50/70 hover:text-rose-600 text-slate-600 transition-colors active:scale-[0.98] cursor-pointer group/cheer"
+            className="inline-flex items-center gap-1.5 py-1 px-2.5 rounded-lg hover:bg-rose-50 hover:text-rose-600 text-slate-500 transition-colors cursor-pointer group/cheer"
           >
-            <Heart className="w-4 h-4 text-rose-500 fill-rose-500/15 group-hover/cheer:scale-110 transition-transform" />
-            <span className="text-[11px] font-bold text-slate-600 group-hover/cheer:text-rose-600">
-              {translate('cheer')} <span className="text-slate-500 group-hover/cheer:text-rose-600">({currentHighFives})</span>
+            <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500/15 group-hover/cheer:scale-110 transition-transform" />
+            <span className="text-[11px] font-medium text-slate-500 group-hover/cheer:text-rose-600">
+              {translate('cheer')} {currentHighFives > 0 && `(${currentHighFives})`}
             </span>
           </button>
 
@@ -999,10 +976,10 @@ export default function HomePage() {
               setIsShareModalOpen(true);
             }}
             title={translate('shareMatchTitle')}
-            className="flex items-center justify-center gap-1.5 py-1.5 px-3 hover:bg-blue-50/70 hover:text-blue-600 text-slate-600 transition-colors active:scale-[0.98] cursor-pointer group/share"
+            className="inline-flex items-center gap-1.5 py-1 px-2.5 rounded-lg hover:bg-blue-50 hover:text-blue-600 text-slate-500 transition-colors cursor-pointer group/share"
           >
-            <Share2 className="w-3.5 h-3.5 text-blue-500 group-hover/share:scale-110 transition-transform" />
-            <span className="text-[11px] font-bold text-slate-600 group-hover/share:text-blue-600">
+            <Share2 className="w-3.5 h-3.5 text-slate-400 group-hover/share:text-blue-500 group-hover/share:scale-110 transition-transform" />
+            <span className="text-[11px] font-medium text-slate-500 group-hover/share:text-blue-600">
               {translate('share')}
             </span>
           </button>
@@ -1221,22 +1198,22 @@ export default function HomePage() {
                     const matchedTournament = tournaments.find(t => t.id === group.id);
                     const isRanked = getMatchRankedStatus(group.matches[0], matchedTournament);
                     return (
-                      <div key={tournamentName} className="bg-slate-50/60 rounded-xl border border-slate-200/80 overflow-hidden flex flex-col">
+                      <div key={tournamentName} className="bg-slate-50/50 rounded-2xl p-3.5 md:p-4 flex flex-col gap-3">
                         {/* Group Tournament Header */}
-                        <div className="px-4 py-3 bg-white border-b border-slate-100 flex items-center justify-between">
+                        <div className="flex items-center justify-between">
                           <Link
                             href={group.id ? `/tournaments/${group.id}` : '#'}
                             className="flex items-center gap-3 group/header hover:opacity-90 transition-opacity flex-1 min-w-0"
                           >
-                            <div className="w-12 h-12 rounded-full overflow-hidden border border-slate-200 bg-white relative flex-shrink-0 shadow-sm">
+                            <div className="w-10 h-10 rounded-full overflow-hidden border border-slate-200/80 bg-white relative flex-shrink-0 shadow-2xs">
                               <TournamentLogoAvatar src={group.logoUrl} alt={group.name} />
                             </div>
                             <div className="min-w-0">
                               <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
-                                <span className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded ${isRanked ? 'text-sky-700 bg-sky-50' : 'text-slate-600 bg-slate-100'}`}>
+                                <span className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md ${isRanked ? 'text-sky-700 bg-sky-50' : 'text-slate-600 bg-slate-200/60'}`}>
                                   {isRanked ? translate('rankedBadge') : translate('communityBadge')}
                                 </span>
-                                <span className="text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded text-violet-700 bg-violet-50">
+                                <span className="text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md text-violet-700 bg-violet-50">
                                   <LiveMatchSportLabel match={group.matches[0]} tournament={matchedTournament} tournamentName={group.name} />
                                 </span>
                               </div>
@@ -1247,7 +1224,7 @@ export default function HomePage() {
                           </Link>
                         </div>
                         {/* Matches List Grid */}
-                        <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           {group.matches.map((match) => renderMatchCard(match, true, group.matches, matchedTournament ?? null))}
                         </div>
                       </div>
@@ -1321,22 +1298,22 @@ export default function HomePage() {
                   const isRanked = getMatchRankedStatus(group.matches[0], matchedTournament);
 
                   return (
-                    <div key={tournamentName} className="bg-slate-50/60 rounded-xl border border-slate-200/80 overflow-hidden flex flex-col">
+                    <div key={tournamentName} className="bg-slate-50/50 rounded-2xl p-3.5 md:p-4 flex flex-col gap-3">
                       {/* Group Tournament Header */}
-                      <div className="px-4 py-3 bg-white border-b border-slate-100 flex items-center justify-between">
+                      <div className="flex items-center justify-between">
                         <Link
                           href={group.id ? `/tournaments/${group.id}` : '#'}
                           className="flex items-center gap-3 group/header hover:opacity-90 transition-opacity flex-1 min-w-0"
                         >
-                          <div className="w-12 h-12 rounded-full overflow-hidden border border-slate-200 bg-white relative flex-shrink-0 shadow-sm">
+                          <div className="w-10 h-10 rounded-full overflow-hidden border border-slate-200/80 bg-white relative flex-shrink-0 shadow-2xs">
                             <TournamentLogoAvatar src={group.logoUrl} alt={group.name} />
                           </div>
                             <div className="min-w-0">
                               <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
-                                <span className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded ${isRanked ? 'text-sky-700 bg-sky-50' : 'text-slate-600 bg-slate-100'}`}>
+                                <span className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md ${isRanked ? 'text-sky-700 bg-sky-50' : 'text-slate-600 bg-slate-200/60'}`}>
                                   {isRanked ? translate('rankedBadge') : translate('communityBadge')}
                                 </span>
-                                <span className="text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded text-violet-700 bg-violet-50">
+                                <span className="text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md text-violet-700 bg-violet-50">
                                   <LiveMatchSportLabel match={group.matches[0]} tournament={matchedTournament} tournamentName={group.name} />
                                 </span>
                               </div>
@@ -1347,33 +1324,32 @@ export default function HomePage() {
                         </Link>
 
                         <div className="flex items-center gap-3 shrink-0">
-
                           {/* Mini Pagination controls */}
                           {totalPages > 1 && (
                             <div className="flex items-center gap-1">
                               <button
                                 onClick={() => setTournamentPages(prev => ({ ...prev, [tournamentId]: Math.max(1, currentPage - 1) }))}
                                 disabled={currentPage === 1}
-                                className="w-8 h-8 flex items-center justify-center p-1 text-slate-500 bg-white border border-slate-200 rounded-lg hover:border-slate-350 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                                className="w-7 h-7 flex items-center justify-center p-1 text-slate-500 bg-white border border-slate-200/80 rounded-lg hover:border-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
                               >
-                                <ChevronLeft className="w-4 h-4" />
+                                <ChevronLeft className="w-3.5 h-3.5" />
                               </button>
-                              <span className="text-[11px] font-semibold text-slate-450 px-0.5">
+                              <span className="text-[11px] font-semibold text-slate-400 px-1">
                                 {currentPage}/{totalPages}
                               </span>
                               <button
                                 onClick={() => setTournamentPages(prev => ({ ...prev, [tournamentId]: Math.min(totalPages, currentPage + 1) }))}
                                 disabled={currentPage === totalPages}
-                                className="w-8 h-8 flex items-center justify-center p-1 text-slate-500 bg-white border border-slate-200 rounded-lg hover:border-slate-350 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                                className="w-7 h-7 flex items-center justify-center p-1 text-slate-500 bg-white border border-slate-200/80 rounded-lg hover:border-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
                               >
-                                <ChevronRight className="w-4 h-4" />
+                                <ChevronRight className="w-3.5 h-3.5" />
                               </button>
                             </div>
                           )}
                         </div>
                       </div>
                       {/* Matches List Grid */}
-                      <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         {displayMatches.map((match) => renderMatchCard(match, true, group.matches, matchedTournament ?? null))}
                       </div>
                     </div>
@@ -1411,22 +1387,22 @@ export default function HomePage() {
                   const isRanked = getMatchRankedStatus(group.matches[0], matchedTournament);
 
                   return (
-                    <div key={tournamentName} className="bg-slate-50/60 rounded-xl border border-slate-200/80 overflow-hidden flex flex-col">
+                    <div key={tournamentName} className="bg-slate-50/50 rounded-2xl p-3.5 md:p-4 flex flex-col gap-3">
                       {/* Group Tournament Header */}
-                      <div className="px-4 py-3 bg-white border-b border-slate-100 flex items-center justify-between">
+                      <div className="flex items-center justify-between">
                         <Link
                           href={group.id ? `/tournaments/${group.id}` : '#'}
                           className="flex items-center gap-3 group/header hover:opacity-90 transition-opacity flex-1 min-w-0"
                         >
-                          <div className="w-12 h-12 rounded-full overflow-hidden border border-slate-200 bg-white relative flex-shrink-0 shadow-sm">
+                          <div className="w-10 h-10 rounded-full overflow-hidden border border-slate-200/80 bg-white relative flex-shrink-0 shadow-2xs">
                             <TournamentLogoAvatar src={group.logoUrl} alt={group.name} />
                           </div>
                             <div className="min-w-0">
                               <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
-                                <span className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded ${isRanked ? 'text-sky-700 bg-sky-50' : 'text-slate-600 bg-slate-100'}`}>
+                                <span className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md ${isRanked ? 'text-sky-700 bg-sky-50' : 'text-slate-600 bg-slate-200/60'}`}>
                                   {isRanked ? translate('rankedBadge') : translate('communityBadge')}
                                 </span>
-                                <span className="text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded text-violet-700 bg-violet-50">
+                                <span className="text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md text-violet-700 bg-violet-50">
                                   <LiveMatchSportLabel match={group.matches[0]} tournament={matchedTournament} tournamentName={group.name} />
                                 </span>
                               </div>
@@ -1443,26 +1419,26 @@ export default function HomePage() {
                               <button
                                 onClick={() => setTournamentPages(prev => ({ ...prev, [tournamentId]: Math.max(1, currentPage - 1) }))}
                                 disabled={currentPage === 1}
-                                className="w-8 h-8 flex items-center justify-center p-1 text-slate-500 bg-white border border-slate-200 rounded-lg hover:border-slate-350 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                                className="w-7 h-7 flex items-center justify-center p-1 text-slate-500 bg-white border border-slate-200/80 rounded-lg hover:border-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
                               >
-                                <ChevronLeft className="w-4 h-4" />
+                                <ChevronLeft className="w-3.5 h-3.5" />
                               </button>
-                              <span className="text-[11px] font-semibold text-slate-450 px-0.5">
+                              <span className="text-[11px] font-semibold text-slate-400 px-1">
                                 {currentPage}/{totalPages}
                               </span>
                               <button
                                 onClick={() => setTournamentPages(prev => ({ ...prev, [tournamentId]: Math.min(totalPages, currentPage + 1) }))}
                                 disabled={currentPage === totalPages}
-                                className="w-8 h-8 flex items-center justify-center p-1 text-slate-500 bg-white border border-slate-200 rounded-lg hover:border-slate-350 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                                className="w-7 h-7 flex items-center justify-center p-1 text-slate-500 bg-white border border-slate-200/80 rounded-lg hover:border-slate-350 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
                               >
-                                <ChevronRight className="w-4 h-4" />
+                                <ChevronRight className="w-3.5 h-3.5" />
                               </button>
                             </div>
                           )}
                         </div>
                       </div>
                       {/* Matches List Grid */}
-                      <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         {displayMatches.map((match) => renderMatchCard(match, true, group.matches, matchedTournament ?? null))}
                       </div>
                     </div>

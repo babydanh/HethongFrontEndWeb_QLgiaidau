@@ -911,7 +911,7 @@ export default function ProfilePage() {
                                       </span>
                                       <p className={`text-xs flex items-center gap-1 ${community.status === 'ACTIVE' ? 'text-emerald-600' : 'text-amber-700'}`}>
                                         <span className={`w-2 h-2 rounded-full inline-block ${community.status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
-                                        {community.status === 'ACTIVE' ? translate("clubActive") : 'Đã vô hiệu hoá'}
+                                        {community.status === 'ACTIVE' ? translate("clubActive") : translate("clubInactive")}
                                       </p>
                                     </div>
                                   </div>
@@ -950,7 +950,7 @@ export default function ProfilePage() {
                                       </span>
                                       <p className={`text-xs flex items-center gap-1 ${community.status === 'ACTIVE' ? 'text-emerald-600' : 'text-amber-700'}`}>
                                         <span className={`w-2 h-2 rounded-full inline-block ${community.status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
-                                        {community.status === 'ACTIVE' ? translate("clubActive") : 'Đã vô hiệu hoá'}
+                                        {community.status === 'ACTIVE' ? translate("clubActive") : translate("clubInactive")}
                                       </p>
                                     </div>
                                   </div>

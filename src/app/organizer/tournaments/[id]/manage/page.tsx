@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Modal, ModalContent, ModalHeader, ModalTitle } from '@/components/ui/Modal';
 import { DateTimePicker } from '@/components/ui/Input';
-import { Calendar, AlertTriangle, ExternalLink, Plus, X, Loader2, Trash2, Lock, Trophy, Settings, DollarSign, FileText, Users, Video, Zap } from 'lucide-react';
+import { Calendar, AlertTriangle, ExternalLink, Plus, X, Loader2, Trash2, Lock, Trophy, Settings, DollarSign, FileText, Users, Video, Zap, Pencil } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { formatDate } from '@/utils/format';
 import { getSportLogo } from '@/constants/sports';
@@ -173,8 +173,8 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
               <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Hình thức thi đấu</p>
               <p className="text-xs text-slate-400">Chọn hình thức để xem cấu hình riêng</p>
             </div>
-            <Button size="sm" onClick={() => { const current = s.availableMatchFormatOptions.find((option) => option.value === s.matchType); s.setNewDivisionMatchType(s.matchType); s.setNewDivisionName(current?.shortLabel ?? ''); s.setIsCreateDivisionModalOpen(true); }}
-              disabled={isTournamentRegistrationClosed(s.tournament.status) || s.tournament.isRegistrationLocked || ['UPCOMING', 'IN_PROGRESS', 'ONGOING', 'COMPLETED', 'CANCELLED'].includes(s.tournament.status)}
+            <Button size="sm" onClick={() => { s.resetDivisionEditor(); s.setIsCreateDivisionModalOpen(true); }}
+              disabled={isTournamentRegistrationClosed(s.tournament.status) || s.tournament.isRegistrationLocked || ['IN_PROGRESS', 'ONGOING', 'COMPLETED', 'CANCELLED'].includes(s.tournament.status)}
               className="font-bold text-xs flex items-center gap-1.5 h-9 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white whitespace-nowrap">
               <Plus className="w-3.5 h-3.5" /> Thêm hình thức
             </Button>
@@ -204,6 +204,13 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                       title="Xóa hình thức này"
                     >
                       <X className="w-3.5 h-3.5" />
+                    </button>
+                    <button type="button" onClick={() => s.openDivisionEditor(div)}
+                      disabled={!s.tournament || isTournamentRegistrationClosed(s.tournament?.status ?? '') || s.tournament?.isRegistrationLocked || ['IN_PROGRESS', 'ONGOING', 'COMPLETED', 'CANCELLED'].includes(s.tournament?.status ?? '')}
+                      className={`p-2.5 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer disabled:cursor-not-allowed disabled:opacity-30 ${isActive ? 'text-white hover:bg-blue-700' : 'text-slate-400 hover:text-blue-600'}`}
+                      title="Chỉnh sửa hình thức"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 );
@@ -601,7 +608,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
         {s.isCreateDivisionModalOpen && (
           <Modal open={s.isCreateDivisionModalOpen} onOpenChange={s.setIsCreateDivisionModalOpen}>
             <ModalContent className="bg-white rounded-lg p-6">
-              <ModalHeader><ModalTitle className="text-lg font-bold">Thêm hình thức thi đấu</ModalTitle></ModalHeader>
+            <ModalHeader><ModalTitle className="text-lg font-bold">{s.editingDivision ? 'Chỉnh sửa hình thức thi đấu' : 'Thêm hình thức thi đấu'}</ModalTitle></ModalHeader>
               <div className="space-y-4 mt-4">
                 <div><label className="text-xs font-bold text-slate-500">Loại</label>
                   <select value={s.newDivisionMatchType} onChange={e => { const value = e.target.value; const option = s.availableMatchFormatOptions.find((item) => item.value === value); s.setNewDivisionMatchType(value); s.setNewDivisionName(option?.shortLabel ?? ''); }} className="w-full border rounded-lg p-2 text-sm">
@@ -629,10 +636,27 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                     <option value="ROUND_ROBIN">Vòng tròn</option>
                     <option value="GROUP_STAGE_KNOCKOUT">Vòng bảng + Loại trực tiếp</option>
                   </select></div>
+                <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-3">
+                  <label className="flex items-center gap-2 text-sm font-bold text-slate-800">
+                    <input type="checkbox" checked={s.newDivisionEloEnabled} onChange={(e) => s.setNewDivisionEloEnabled(e.target.checked)} />
+                    Giới hạn ELO riêng cho hình thức này
+                  </label>
+                  {s.newDivisionEloEnabled && (
+                    <div className="grid grid-cols-2 gap-3">
+                      <label className="text-xs font-semibold text-slate-600">ELO tối thiểu
+                        <input type="number" min={0} max={3000} value={s.newDivisionMinElo ?? ''} onChange={(e) => s.setNewDivisionMinElo(e.target.value === '' ? null : Number(e.target.value))} className="mt-1 w-full border rounded-lg p-2 text-sm" placeholder="Không giới hạn" />
+                      </label>
+                      <label className="text-xs font-semibold text-slate-600">ELO tối đa
+                        <input type="number" min={0} max={3000} value={s.newDivisionMaxElo ?? ''} onChange={(e) => s.setNewDivisionMaxElo(e.target.value === '' ? null : Number(e.target.value))} className="mt-1 w-full border rounded-lg p-2 text-sm" placeholder="Không giới hạn" />
+                      </label>
+                    </div>
+                  )}
+                  <p className="text-[11px] text-slate-500">Tắt để dùng cấu hình ELO chung của giải.</p>
+                </div>
                 <div className="flex justify-end gap-3">
-                  <Button variant="outline" onClick={() => s.setIsCreateDivisionModalOpen(false)}>Hủy</Button>
+                  <Button variant="outline" onClick={() => { s.setIsCreateDivisionModalOpen(false); s.resetDivisionEditor(); }}>Hủy</Button>
                   <Button onClick={s.handleCreateDivision} disabled={s.isCreatingDivision} className="bg-blue-600 text-white px-4 py-2 rounded-lg">
-                    {s.isCreatingDivision ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />} Thêm
+                    {s.isCreatingDivision ? <Loader2 className="w-4 h-4 animate-spin" /> : s.editingDivision ? <Pencil className="w-4 h-4" /> : <Plus className="w-4 h-4" />} {s.editingDivision ? 'Lưu thay đổi' : 'Thêm'}
                   </Button>
                 </div>
               </div>

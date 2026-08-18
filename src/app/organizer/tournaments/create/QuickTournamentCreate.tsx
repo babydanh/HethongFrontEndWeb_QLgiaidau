@@ -507,7 +507,13 @@ export default function QuickTournamentCreate() {
   };
 
   const openFormatModal = (formatKey?: string) => {
-    const option = QUICK_FORMAT_OPTIONS.find((item) => item.key === formatKey) ?? QUICK_FORMAT_OPTIONS.find((item) => !selectedFormats.includes(item.key)) ?? QUICK_FORMAT_OPTIONS[0];
+    const isFootball = sport === 'football';
+    const sportOptions = QUICK_FORMAT_OPTIONS.filter((item) =>
+      isFootball ? item.key.startsWith('FOOTBALL_') : !item.key.startsWith('FOOTBALL_')
+    );
+    const option = sportOptions.find((item) => item.key === formatKey)
+      ?? sportOptions.find((item) => !selectedFormats.includes(item.key))
+      ?? sportOptions[0];
     const existing = formatConfigs.find((config) => config.key === option.key);
     setFormatDraft(existing ?? {
       key: option.key,
@@ -1238,12 +1244,36 @@ export default function QuickTournamentCreate() {
             </div>
             <div className="space-y-4 p-5">
               <label className="block text-xs font-semibold text-slate-700">Loại
-                <select value={formatDraft.key} onChange={(event) => { const option = QUICK_FORMAT_OPTIONS.find((item) => item.key === event.target.value); if (option) setFormatDraft((current) => ({ ...current, key: option.key, label: option.label })); }} className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm">
-                  {QUICK_FORMAT_OPTIONS.filter((option) => (sport === 'football' ? option.key.startsWith('FOOTBALL_') : !option.key.startsWith('FOOTBALL_')) && (option.key === formatDraft.key || !selectedFormats.includes(option.key))).map((option) => <option key={option.key} value={option.key}>{option.label}</option>)}
+                <select
+                  value={formatDraft.key}
+                  onChange={(event) => {
+                    const option = QUICK_FORMAT_OPTIONS.find((item) => item.key === event.target.value);
+                    if (option) {
+                      setFormatDraft((current) => ({
+                        ...current,
+                        key: option.key,
+                        label: option.label,
+                      }));
+                    }
+                  }}
+                  className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-blue-500"
+                >
+                  {QUICK_FORMAT_OPTIONS
+                    .filter((option) => (sport === 'football' ? option.key.startsWith('FOOTBALL_') : !option.key.startsWith('FOOTBALL_')))
+                    .map((option) => (
+                      <option key={option.key} value={option.key}>
+                        {option.label}
+                      </option>
+                    ))}
                 </select>
               </label>
               <label className="block text-xs font-semibold text-slate-700">Tên nội dung riêng
-                <input value={formatDraft.label} onChange={(event) => setFormatDraft((current) => ({ ...current, label: event.target.value }))} placeholder="Để trống dùng tên mặc định" className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm" />
+                <input
+                  value={formatDraft.label}
+                  onChange={(event) => setFormatDraft((current) => ({ ...current, label: event.target.value }))}
+                  placeholder="Để trống dùng tên mặc định"
+                  className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-blue-500"
+                />
                 <span className="mt-1 block text-[10px] font-normal text-slate-500">Tên này sẽ hiển thị trong danh sách nội dung và trang quản lý.</span>
               </label>
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">

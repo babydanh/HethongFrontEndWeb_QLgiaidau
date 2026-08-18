@@ -35,8 +35,8 @@ const REGISTRATION_MODE_UI: Record<RegistrationMode, RegistrationModeUi> = {
 };
 
 export function getRegistrationModeUi(
-  mode?: TournamentConfig['registrationMode'],
   translate: RegistrationModeTranslate,
+  mode?: TournamentConfig['registrationMode'],
 ): RegistrationModeUi {
   const ui = REGISTRATION_MODE_UI[mode ?? 'OPEN'];
   return { ...ui, ctaLabel: translate(ui.ctaLabel), badgeLabel: translate(ui.badgeLabel) };

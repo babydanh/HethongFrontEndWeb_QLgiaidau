@@ -6,7 +6,22 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter, useSearchParams } from 'next/navigation';
 import toast from 'react-hot-toast';
-import { ArrowRight, Settings2, MapPin } from 'lucide-react';
+import {
+  ArrowRight,
+  Settings2,
+  MapPin,
+  Calendar,
+  Layers,
+  GitBranch,
+  Users,
+  Eye,
+  ShieldCheck,
+  Sparkles,
+  Trophy,
+  Info,
+  Check,
+  Flame,
+} from 'lucide-react';
 import { categoriesApi, Category } from '@/features/categories/api';
 import { divisionsApi, tournamentsApi, type CreateDivisionInput } from '@/features/tournaments/api';
 import { regionsApi, Region } from '@/features/regions/api';
@@ -59,25 +74,25 @@ const BRACKET_OPTIONS = [
   {
     id: 'single_elimination',
     label: 'Loại trực tiếp',
-    desc: 'Nhánh đấu loại trực tiếp 1 lần thua. Nhanh gọn & gay cấn.',
+    desc: 'Nhánh đấu 1 lần thua. Nhanh gọn & gay cấn.',
     Icon: SingleEliminationIcon,
   },
   {
     id: 'round_robin',
     label: 'Vòng tròn',
-    desc: 'Mọi đội đều được thi đấu đối đầu tính điểm xếp hạng.',
+    desc: 'Mọi đội đều được thi đấu tính điểm xếp hạng.',
     Icon: RoundRobinIcon,
   },
   {
     id: 'group_stage_knockout',
     label: 'Vòng bảng + Knockout',
-    desc: 'Đấu vòng bảng lấy các đội đầu bảng vào vòng loại trực tiếp.',
+    desc: 'Đấu vòng bảng lấy đội đầu bảng vào Play-off.',
     Icon: GroupStageKnockoutIcon,
   },
   {
     id: 'double_elimination',
     label: 'Nhánh thắng / thua',
-    desc: 'Hệ thống 2 nhánh đấu, có cơ hội phục thù từ nhánh thua.',
+    desc: 'Hệ thống 2 nhánh đấu có cơ hội phục thù.',
     Icon: DoubleEliminationIcon,
   },
 ] as const;
@@ -233,7 +248,7 @@ function CustomDateTimePicker({
       <legend className={`px-1.5 text-xs font-semibold ${isPrimary ? 'text-blue-900' : 'text-slate-700'}`}>
         {label}
       </legend>
-      <div className="flex w-full items-center justify-between gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm transition focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500">
+      <div className="flex w-full items-center justify-between gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm transition focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500">
         <span className={`font-medium ${displayText ? 'text-slate-800' : 'font-normal text-slate-400'}`}>
           {displayText || 'dd/mm/yyyy --:--'}
         </span>
@@ -282,7 +297,6 @@ export default function QuickTournamentCreate() {
       sport: 'badminton', format: 'doubles',
       tournamentType: communityId ? 'CLUB' : 'PUBLIC',
       visibility: communityId ? 'PRIVATE' : 'PUBLIC',
-      // Người tạo tự chọn cách nhận đăng ký; không tự ép Xét duyệt.
       registrationMode: 'OPEN',
       bracketType: 'single_elimination',
       maxTeams: 16, ...scheduleDefaults,
@@ -448,64 +462,46 @@ export default function QuickTournamentCreate() {
         maxTeams: values.maxTeams,
         visibility: values.visibility,
         registrationMode: values.registrationMode,
-        communityId,
-        // Tạo nhanh ngoài CLB luôn là giải mở rộng. Giải nội bộ chỉ tạo
-        // từ trang CLB và backend sẽ ép tournamentType = CLUB ở luồng đó.
-        tournamentType: communityId ? 'CLUB' : 'PUBLIC',
-        description: values.description || undefined,
-        registrationStartDate: regStartDate?.toISOString(),
-        registrationEndDate: regEndDate?.toISOString(),
-        startDate: startDateTime?.toISOString(),
-        endDate: endDateTime ? endDateTime.toISOString() : undefined,
-        venueName: values.venueName,
-        locationAddress: values.locationAddress,
-        province: provinceName,
-        district: wardName || provinceName,
-        ward: wardName || undefined,
-        genderRestriction: values.genderRestriction || undefined,
-        ...(values.sport === 'football' ? {
-          teamSize: (Number(values.teamSize) || 7) as 5 | 7 | 11,
-          maxReserve: values.maxReserve,
-          footballHalvesCount: values.footballHalvesCount,
-          footballHalfDuration: values.footballHalfDuration,
-          footballAllowDraw: values.footballAllowDraw,
-        } : {}),
         isRanked: values.isRanked,
+        communityId,
+        tournamentType: communityId ? 'CLUB' : 'PUBLIC',
+        genderRestriction: values.genderRestriction || undefined,
+        registrationStart: values.registrationStart ? new Date(values.registrationStart).toISOString() : undefined,
+        registrationEnd: values.registrationEnd ? new Date(values.registrationEnd).toISOString() : undefined,
+        startDate: values.startDate ? new Date(values.startDate).toISOString() : undefined,
+        endDate: values.endDate ? new Date(values.endDate).toISOString() : undefined,
+        venueName: values.venueName ? values.venueName.trim() : undefined,
+        locationAddress: values.locationAddress ? values.locationAddress.trim() : undefined,
+        province: provinceName || undefined,
+        ward: wardName || undefined,
+        description: values.description ? values.description.trim() : undefined,
+        teamSize: values.sport === 'football' ? Number(values.teamSize) : undefined,
+        maxReserve: values.sport === 'football' ? values.maxReserve : undefined,
+        footballHalvesCount: values.sport === 'football' ? values.footballHalvesCount : undefined,
+        footballHalfDuration: values.sport === 'football' ? values.footballHalfDuration : undefined,
+        footballAllowDraw: values.sport === 'football' ? values.footballAllowDraw : undefined,
       };
 
       const response = await tournamentsApi.createLiteTournament(createPayload);
 
-      // `selectedFormats` belongs to the wizard, not the create endpoint.
-      // Materialize every selected format as a division after the tournament
-      // exists so advanced management starts fully configured.
-      if (!response?.id) throw new Error('Không nhận được mã giải đấu vừa tạo.');
       try {
-        const requestedDivisions = values.selectedFormats.map((formatKey) => toDivisionInput(
+        const divisionInputs = values.selectedFormats.map((formatKey) =>
+          toDivisionInput(
             formatKey,
             values.bracketType,
             values.maxTeams,
-            startDateTime?.toISOString(),
-            endDateTime?.toISOString(),
-            regEndDate?.toISOString(),
-        ));
-        const existingDivisions = (await divisionsApi.getDivisions(response.id)).data ?? [];
-        // The Lite backend may create one fallback division. Reconfigure it
-        // for the first selected format, then create only the missing ones.
-        await Promise.all(requestedDivisions.map((division, index) => {
-          const existing = existingDivisions[index];
-          return existing
-            ? divisionsApi.updateDivision(existing.id, division)
-            : divisionsApi.createDivision(response.id, division);
-        }));
+            values.startDate ? new Date(values.startDate).toISOString() : undefined,
+            values.endDate ? new Date(values.endDate).toISOString() : undefined,
+            values.registrationEnd ? new Date(values.registrationEnd).toISOString() : undefined,
+          )
+        );
+        await divisionsApi.bulkCreate(response.id, divisionInputs);
       } catch (divisionError: unknown) {
         await tournamentsApi.deleteTournament(response.id).catch(() => undefined);
         throw divisionError;
       }
 
       toast.success(values.visibility === 'PUBLIC' ? 'Đã tạo, đang chờ Admin duyệt công khai.' : 'Tạo giải đấu thành công.');
-      // Quick creation only reduces the required input. Management must use
-      // the full organizer workspace so every advanced setting remains
-      // available for gradual completion after creation.
       router.push(`/organizer/tournaments/${response.id}/manage`);
     } catch (error: unknown) {
       toast.error(getErrorMessage(error, 'Không thể tạo giải đấu.'));
@@ -515,484 +511,593 @@ export default function QuickTournamentCreate() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-10 md:px-8">
-      <section className="mx-auto max-w-3xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-        <div className="mb-8 flex items-start justify-between gap-4">
+    <main className="min-h-screen bg-slate-50/70 px-4 py-8 md:px-8">
+      <div className="mx-auto max-w-7xl">
+        {/* Header Bar */}
+        <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">Tạo giải đấu</h1>
-            <p className="mt-2 text-sm leading-relaxed text-slate-600">
-              Tạo nhanh để bắt đầu ngay, bạn có thể thiết lập đầy đủ chi tiết và luật thi đấu bên trong trang quản lý sau. Giải phong trào không thu phí, không tính điểm ELO quốc gia.
-            </p>
-            <div className="mt-4 rounded-xl border-2 border-amber-300 bg-amber-50 px-4 py-3 text-sm font-semibold leading-relaxed text-amber-950 shadow-sm">
-              <strong className="font-extrabold">Lưu ý quan trọng:</strong> Sau khi tạo xong, bạn vẫn có thể vào trang quản lý để thay đổi thông tin giải, lịch thi đấu, thể thức, luật tính điểm, danh sách nội dung và các cài đặt khác trước khi giải bắt đầu.
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm shadow-blue-500/25">
+                <Trophy className="h-5 w-5" />
+              </div>
+              <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">Tạo giải đấu nhanh</h1>
             </div>
+            <p className="mt-1.5 text-xs md:text-sm text-slate-500">
+              Khởi tạo giải đấu nhanh gọn trong 1 phút. Bạn có thể bổ sung luật chi tiết và phân nhánh bên trong trang quản lý bất cứ lúc nào.
+            </p>
           </div>
           <button
             type="button"
             onClick={() => router.push(`/organizer/tournaments/create?mode=advanced${communityId ? `&communityId=${communityId}` : ''}`)}
-            className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-slate-300 px-3.5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition shadow-2xs"
+            className="inline-flex shrink-0 items-center gap-2 self-start md:self-auto rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 hover:border-slate-400 transition"
           >
-            <Settings2 className="h-4 w-4" /> Nâng cao
+            <Settings2 className="h-4 w-4 text-slate-500" /> Tạo bản nâng cao (4 bước)
           </button>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <label className="block text-sm font-semibold text-slate-700">
-            Tên giải đấu <span className="text-red-500">*</span>
-            <input
-              {...register('name')}
-              className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-              placeholder="Ví dụ: Giải giao hữu cuối tuần"
-            />
-            {errors.name && <span className="mt-1 block text-xs text-red-600">{errors.name.message}</span>}
-          </label>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <label className="text-sm font-semibold text-slate-700">
-              Môn
-              <select {...register('sport')} disabled={loadingCategories} className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 font-normal">
-                {categories.map((category) => {
-                  const value = sportFromCategory(category);
-                  return value ? <option key={category.id} value={value}>{category.name}</option> : null;
-                })}
-              </select>
-              <span className="mt-1 block text-xs font-normal text-slate-500">
-                {selectedCategory ? `Luật mặc định: ${selectedCategory.name}` : 'Chọn môn để nạp preset linh hoạt.'}
-              </span>
-            </label>
-
-            <div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold text-slate-700">
-                  {sport === 'football' ? 'Nội dung bóng đá' : 'Nội dung thi đấu'}
-                </span>
-                <span className="text-xs font-medium text-blue-600">Có thể chọn nhiều</span>
-              </div>
-              {sport === 'football' ? (
-                <div className="mt-2 grid grid-cols-3 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => toggleFormat('FOOTBALL_MALE')}
-                    className={`rounded-lg border px-3 py-2 text-left text-sm font-medium transition ${
-                      selectedFormats.includes('FOOTBALL_MALE')
-                        ? 'border-blue-500 bg-blue-50 text-blue-700 font-semibold shadow-2xs'
-                        : 'border-slate-300 bg-white text-slate-700 hover:border-blue-400'
-                    }`}
-                  >
-                    Đội nam
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => toggleFormat('FOOTBALL_FEMALE')}
-                    className={`rounded-lg border px-3 py-2 text-left text-sm font-medium transition ${
-                      selectedFormats.includes('FOOTBALL_FEMALE')
-                        ? 'border-blue-500 bg-blue-50 text-blue-700 font-semibold shadow-2xs'
-                        : 'border-slate-300 bg-white text-slate-700 hover:border-blue-400'
-                    }`}
-                  >
-                    Đội nữ
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => toggleFormat('FOOTBALL_MIXED')}
-                    className={`rounded-lg border px-3 py-2 text-left text-sm font-medium transition ${
-                      selectedFormats.includes('FOOTBALL_MIXED')
-                        ? 'border-blue-500 bg-blue-50 text-blue-700 font-semibold shadow-2xs'
-                        : 'border-slate-300 bg-white text-slate-700 hover:border-blue-400'
-                    }`}
-                  >
-                    Không giới hạn
-                  </button>
-                </div>
-              ) : (
-                <div className="mt-2 grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => toggleFormat('MALE_SINGLES')}
-                    className={`rounded-lg border px-3 py-2 text-left text-sm font-medium transition ${
-                      selectedFormats.includes('MALE_SINGLES')
-                        ? 'border-blue-500 bg-blue-50 text-blue-700 font-semibold shadow-2xs'
-                        : 'border-slate-300 bg-white text-slate-700 hover:border-blue-400'
-                    }`}
-                  >
-                    Đơn nam
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => toggleFormat('FEMALE_SINGLES')}
-                    className={`rounded-lg border px-3 py-2 text-left text-sm font-medium transition ${
-                      selectedFormats.includes('FEMALE_SINGLES')
-                        ? 'border-blue-500 bg-blue-50 text-blue-700 font-semibold shadow-2xs'
-                        : 'border-slate-300 bg-white text-slate-700 hover:border-blue-400'
-                    }`}
-                  >
-                    Đơn nữ
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => toggleFormat('MALE_DOUBLES')}
-                    className={`rounded-lg border px-3 py-2 text-left text-sm font-medium transition ${
-                      selectedFormats.includes('MALE_DOUBLES')
-                        ? 'border-blue-500 bg-blue-50 text-blue-700 font-semibold shadow-2xs'
-                        : 'border-slate-300 bg-white text-slate-700 hover:border-blue-400'
-                    }`}
-                  >
-                    Đôi nam
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => toggleFormat('FEMALE_DOUBLES')}
-                    className={`rounded-lg border px-3 py-2 text-left text-sm font-medium transition ${
-                      selectedFormats.includes('FEMALE_DOUBLES')
-                        ? 'border-blue-500 bg-blue-50 text-blue-700 font-semibold shadow-2xs'
-                        : 'border-slate-300 bg-white text-slate-700 hover:border-blue-400'
-                    }`}
-                  >
-                    Đôi nữ
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => toggleFormat('MIXED_DOUBLES')}
-                    className={`col-span-2 rounded-lg border px-3 py-2 text-left text-sm font-medium transition ${
-                      selectedFormats.includes('MIXED_DOUBLES')
-                        ? 'border-blue-500 bg-blue-50 text-blue-700 font-semibold shadow-2xs'
-                        : 'border-slate-300 bg-white text-slate-700 hover:border-blue-400'
-                    }`}
-                  >
-                    Đôi nam nữ
-                  </button>
-                </div>
-              )}
-              {errors.selectedFormats && (
-                <span className="mt-1 block text-xs text-red-600">{errors.selectedFormats.message}</span>
-              )}
+        {/* Notice Banner */}
+        <div className="mb-8 rounded-xl border border-amber-200/90 bg-gradient-to-r from-amber-50/90 to-amber-50/40 p-4 text-amber-950 shadow-2xs">
+          <div className="flex items-start gap-3">
+            <Info className="h-5 w-5 shrink-0 text-amber-600 mt-0.5" />
+            <div className="text-xs md:text-sm leading-relaxed">
+              <strong className="font-bold text-amber-900">Lưu ý quan trọng:</strong> Giải phong trào được tạo tức thì và hoàn toàn miễn phí. Sau khi tạo xong, bạn có thể chỉnh sửa mọi thông tin (lịch thi đấu, thể thức, điều lệ, danh sách VĐV) trước khi bấm Bắt đầu giải.
             </div>
           </div>
+        </div>
 
-          {/* Thời gian giải đấu (Chuẩn dd/mm/yyyy HH:mm, tự động nối tiếp mở ĐK -> đóng ĐK, kết thúc để trống) */}
-          <div className="grid gap-4 md:grid-cols-2">
-            <CustomDateTimePicker
-              label="Mở đăng ký (tùy chọn)"
-              value={registrationStart}
-              onChange={handleRegistrationStartChange}
-              error={errors.registrationStart?.message}
-            />
+        {/* Form Container with 2-Column Responsive Layout */}
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 items-start">
+            
+            {/* ─── CỘT TRÁI (7 CỘT): THÔNG TIN CƠ BẢN, LỊCH TRÌNH, ĐỊA ĐIỂM, MÔ TẢ ─── */}
+            <div className="space-y-6 lg:col-span-7 xl:col-span-7">
+              
+              {/* Card 1: Thông tin cơ bản */}
+              <section className="rounded-2xl border border-slate-200 bg-white p-5 md:p-6 shadow-2xs space-y-5">
+                <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                    <Trophy className="h-4 w-4" />
+                  </div>
+                  <h2 className="text-base font-bold text-slate-900">Thông tin giải đấu</h2>
+                </div>
 
-            <CustomDateTimePicker
-              label="Đóng đăng ký (tùy chọn)"
-              value={registrationEnd}
-              onChange={handleRegistrationEndChange}
-              error={errors.registrationEnd?.message}
-            />
+                {/* Tên giải đấu */}
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
+                    Tên giải đấu <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    {...register('name')}
+                    className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 placeholder:font-normal placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                    placeholder="Ví dụ: Giải Cầu Lông Mùa Hè 2026 / Giao Hữu Sporto"
+                  />
+                  {errors.name && <span className="mt-1 block text-xs text-rose-600 font-medium">{errors.name.message}</span>}
+                </div>
 
-            <CustomDateTimePicker
-              label="Bắt đầu giải (tùy chọn)"
-              value={startDate}
-              onChange={(val) => setValue('startDate', val, { shouldValidate: true })}
-              error={errors.startDate?.message}
-              isPrimary
-            />
+                {/* Môn thể thao */}
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
+                    Môn thể thao <span className="text-rose-500">*</span>
+                  </label>
+                  <select
+                    {...register('sport')}
+                    disabled={loadingCategories}
+                    className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                  >
+                    {categories.map((category) => {
+                      const value = sportFromCategory(category);
+                      return value ? <option key={category.id} value={value}>{category.name}</option> : null;
+                    })}
+                  </select>
+                  <span className="mt-1.5 block text-xs text-slate-500">
+                    {selectedCategory ? `Áp dụng bộ luật mặc định: ${selectedCategory.name}` : 'Chọn môn để nạp luật thi đấu.'}
+                  </span>
+                </div>
 
-            <CustomDateTimePicker
-              label="Kết thúc dự kiến"
-              value={endDate}
-              onChange={(val) => setValue('endDate', val, { shouldValidate: true })}
-              error={errors.endDate?.message}
-            />
-          </div>
+                {/* Mô tả giải đấu */}
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
+                    Mô tả giải đấu (tùy chọn)
+                  </label>
+                  <textarea
+                    {...register('description')}
+                    rows={3}
+                    className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                    placeholder="Giới thiệu sơ lược về giải đấu, đối tượng tham gia, thể lệ hoặc lưu ý cho vận động viên..."
+                  />
+                </div>
+              </section>
 
-          {/* Thể thức thi đấu (Cards chọn trực quan với Icon sơ đồ giải đấu chân thực) */}
-          <div className="space-y-2.5">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-semibold text-slate-800">
-                Thể thức thi đấu <span className="text-red-500">*</span>
-              </label>
-              <span className="text-xs text-slate-500">Chọn cấu trúc bảng đấu</span>
+              {/* Card 2: Lịch trình thời gian */}
+              <section className="rounded-2xl border border-slate-200 bg-white p-5 md:p-6 shadow-2xs space-y-5">
+                <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+                    <Calendar className="h-4 w-4" />
+                  </div>
+                  <h2 className="text-base font-bold text-slate-900">Lịch trình thi đấu</h2>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <CustomDateTimePicker
+                    label="Mở đăng ký (tùy chọn)"
+                    value={registrationStart}
+                    onChange={handleRegistrationStartChange}
+                    error={errors.registrationStart?.message}
+                  />
+
+                  <CustomDateTimePicker
+                    label="Đóng đăng ký (tùy chọn)"
+                    value={registrationEnd}
+                    onChange={handleRegistrationEndChange}
+                    error={errors.registrationEnd?.message}
+                  />
+
+                  <CustomDateTimePicker
+                    label="Bắt đầu giải (tùy chọn)"
+                    value={startDate}
+                    onChange={(val) => setValue('startDate', val, { shouldValidate: true })}
+                    error={errors.startDate?.message}
+                    isPrimary
+                  />
+
+                  <CustomDateTimePicker
+                    label="Kết thúc dự kiến (tùy chọn)"
+                    value={endDate}
+                    onChange={(val) => setValue('endDate', val, { shouldValidate: true })}
+                    error={errors.endDate?.message}
+                  />
+                </div>
+              </section>
+
+              {/* Card 3: Địa điểm & Sân thi đấu */}
+              <section className="rounded-2xl border border-slate-200 bg-white p-5 md:p-6 shadow-2xs space-y-5">
+                <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                    <MapPin className="h-4 w-4" />
+                  </div>
+                  <h2 className="text-base font-bold text-slate-900">Địa điểm & Sân thi đấu</h2>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
+                      Tên sân / Nhà thi đấu
+                    </label>
+                    <input
+                      {...register('venueName')}
+                      className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                      placeholder="Ví dụ: Sân Cầu Lông Kỳ Hòa"
+                    />
+                    {errors.venueName && <span className="mt-1 block text-xs text-rose-600">{errors.venueName.message}</span>}
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
+                      Địa chỉ chi tiết
+                    </label>
+                    <input
+                      {...register('locationAddress')}
+                      className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                      placeholder="Số nhà, tên đường..."
+                    />
+                    {errors.locationAddress && <span className="mt-1 block text-xs text-rose-600">{errors.locationAddress.message}</span>}
+                  </div>
+                </div>
+
+                {/* Dropdowns Tỉnh/Thành ➔ Phường/Xã */}
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
+                    Khu vực hành chính
+                  </label>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <select
+                        {...register('province')}
+                        className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-800 outline-none transition focus:border-blue-500"
+                      >
+                        <option value="">-- Chọn Tỉnh / Thành phố --</option>
+                        {provinces.map((item) => (
+                          <option key={item.code} value={item.code}>
+                            {item.fullName || item.name}
+                          </option>
+                        ))}
+                      </select>
+                      {errors.province && <span className="mt-1 block text-xs text-rose-600">{errors.province.message}</span>}
+                    </div>
+                    <div>
+                      <select
+                        {...register('ward')}
+                        disabled={!province || wards.length === 0}
+                        className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-800 outline-none transition focus:border-blue-500 disabled:bg-slate-100 disabled:text-slate-400"
+                      >
+                        <option value="">
+                          {!province ? '-- Chọn Tỉnh/Thành trước --' : wards.length === 0 ? '-- Đang tải danh sách... --' : '-- Chọn Phường / Xã --'}
+                        </option>
+                        {wards.map((item) => (
+                          <option key={item.code} value={item.code}>
+                            {item.fullName || item.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              {/* Card 4: Thiết lập chuyên biệt bóng đá (nếu là môn bóng đá) */}
+              {sport === 'football' && (
+                <section className="rounded-2xl border border-blue-200 bg-blue-50/40 p-5 md:p-6 shadow-2xs space-y-4">
+                  <div className="flex items-center gap-2 border-b border-blue-100 pb-3">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600 text-white">
+                      <Flame className="h-4 w-4" />
+                    </div>
+                    <h2 className="text-base font-bold text-slate-900">Thiết lập luật bóng đá</h2>
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">Số lượng cầu thủ</label>
+                      <select {...register('teamSize')} className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm">
+                        <option value="5">Sân 5 người</option>
+                        <option value="7">Sân 7 người</option>
+                        <option value="11">Sân 11 người</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">Dự bị tối đa</label>
+                      <input
+                        type="number"
+                        min={0}
+                        max={20}
+                        {...register('maxReserve', { valueAsNumber: true })}
+                        className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
+                        placeholder="Số dự bị"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">Số hiệp thi đấu</label>
+                      <input
+                        type="number"
+                        min={1}
+                        max={4}
+                        {...register('footballHalvesCount', { valueAsNumber: true })}
+                        className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
+                        placeholder="2 hiệp"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-2 pt-2">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">Thời lượng mỗi hiệp (phút)</label>
+                      <input
+                        type="number"
+                        min={1}
+                        max={120}
+                        {...register('footballHalfDuration', { valueAsNumber: true })}
+                        className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
+                        placeholder="45 phút"
+                      />
+                    </div>
+                    <div className="flex items-end">
+                      <label className="flex w-full items-center gap-2.5 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm font-medium text-slate-800 cursor-pointer hover:bg-slate-50">
+                        <input type="checkbox" {...register('footballAllowDraw')} className="h-4 w-4 rounded text-blue-600 focus:ring-blue-500" />
+                        Cho phép tỷ số hòa
+                      </label>
+                    </div>
+                  </div>
+                </section>
+              )}
+
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2">
-              {BRACKET_OPTIONS.map((opt) => {
-                const isSelected = bracketType === opt.id;
-                const { Icon } = opt;
-                return (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    onClick={() => setValue('bracketType', opt.id, { shouldValidate: true })}
-                    className={`group relative flex items-start gap-3.5 rounded-xl border p-3.5 text-left transition-all duration-200 ${
-                      isSelected
-                        ? 'border-blue-600 bg-blue-50/70 shadow-2xs ring-1 ring-blue-500/30'
-                        : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50'
-                    }`}
-                  >
-                    <div
-                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border transition ${
-                        isSelected
-                          ? 'border-blue-600 bg-blue-600 text-white shadow-2xs'
-                          : 'border-slate-200 bg-slate-50 text-slate-600 group-hover:border-slate-300 group-hover:text-blue-600'
+            {/* ─── CỘT PHẢI (5 CỘT - STICKY): NỘI DUNG, THỂ THỨC, ELO, QUY MÔ, HIỂN THỊ, NÚT SUBMIT ─── */}
+            <div className="space-y-5 lg:col-span-5 xl:col-span-5 lg:sticky lg:top-6 self-start">
+              
+              {/* Card Phải 1: Nội dung thi đấu */}
+              <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                      <Layers className="h-4 w-4" />
+                    </div>
+                    <h3 className="text-sm font-bold text-slate-900">
+                      {sport === 'football' ? 'Nội dung bóng đá' : 'Nội dung thi đấu'}
+                    </h3>
+                  </div>
+                  <span className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-bold text-blue-700 border border-blue-200">
+                    {selectedFormats.length} đã chọn
+                  </span>
+                </div>
+
+                {sport === 'football' ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    {[
+                      { key: 'FOOTBALL_MALE', label: 'Đội nam' },
+                      { key: 'FOOTBALL_FEMALE', label: 'Đội nữ' },
+                      { key: 'FOOTBALL_MIXED', label: 'Không giới hạn' },
+                    ].map((fmt) => {
+                      const isSelected = selectedFormats.includes(fmt.key);
+                      return (
+                        <button
+                          key={fmt.key}
+                          type="button"
+                          onClick={() => toggleFormat(fmt.key)}
+                          className={`flex items-center justify-between rounded-xl border px-3 py-2.5 text-xs font-semibold transition ${
+                            isSelected
+                              ? 'border-blue-500 bg-blue-50/80 text-blue-700 ring-1 ring-blue-500/20 shadow-2xs'
+                              : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
+                          }`}
+                        >
+                          <span>{fmt.label}</span>
+                          {isSelected && <Check className="h-3.5 w-3.5 text-blue-600" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { key: 'MALE_SINGLES', label: 'Đơn nam' },
+                      { key: 'FEMALE_SINGLES', label: 'Đơn nữ' },
+                      { key: 'MALE_DOUBLES', label: 'Đôi nam' },
+                      { key: 'FEMALE_DOUBLES', label: 'Đôi nữ' },
+                      { key: 'MIXED_DOUBLES', label: 'Đôi nam nữ', span2: true },
+                    ].map((fmt) => {
+                      const isSelected = selectedFormats.includes(fmt.key);
+                      return (
+                        <button
+                          key={fmt.key}
+                          type="button"
+                          onClick={() => toggleFormat(fmt.key)}
+                          className={`flex items-center justify-between rounded-xl border px-3 py-2.5 text-xs font-semibold transition ${
+                            fmt.span2 ? 'col-span-2' : ''
+                          } ${
+                            isSelected
+                              ? 'border-blue-500 bg-blue-50/80 text-blue-700 ring-1 ring-blue-500/20 shadow-2xs'
+                              : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
+                          }`}
+                        >
+                          <span>{fmt.label}</span>
+                          {isSelected && <Check className="h-3.5 w-3.5 text-blue-600" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+                {errors.selectedFormats && (
+                  <span className="block text-xs text-rose-600 font-medium">{errors.selectedFormats.message}</span>
+                )}
+              </section>
+
+              {/* Card Phải 2: Thể thức thi đấu */}
+              <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-3">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                      <GitBranch className="h-4 w-4" />
+                    </div>
+                    <h3 className="text-sm font-bold text-slate-900">Thể thức bảng đấu</h3>
+                  </div>
+                  <span className="text-xs text-slate-400">Chọn 1</span>
+                </div>
+
+                <div className="grid grid-cols-1 gap-2.5">
+                  {BRACKET_OPTIONS.map((opt) => {
+                    const isSelected = bracketType === opt.id;
+                    const { Icon } = opt;
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => setValue('bracketType', opt.id, { shouldValidate: true })}
+                        className={`group flex items-start gap-3 rounded-xl border p-3 text-left transition-all ${
+                          isSelected
+                            ? 'border-blue-600 bg-blue-50/80 shadow-2xs ring-1 ring-blue-500/30'
+                            : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60'
+                        }`}
+                      >
+                        <div
+                          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border transition ${
+                            isSelected
+                              ? 'border-blue-600 bg-blue-600 text-white shadow-2xs'
+                              : 'border-slate-200 bg-slate-50 text-slate-600 group-hover:text-blue-600'
+                          }`}
+                        >
+                          <Icon className="h-4 w-4" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between">
+                            <span className={`text-xs font-bold transition ${isSelected ? 'text-blue-950' : 'text-slate-800'}`}>
+                              {opt.label}
+                            </span>
+                            {isSelected && (
+                              <span className="h-2 w-2 rounded-full bg-blue-600 ring-2 ring-blue-200" />
+                            )}
+                          </div>
+                          <p className={`mt-0.5 text-[11px] leading-snug transition ${isSelected ? 'text-blue-900/80' : 'text-slate-500'}`}>
+                            {opt.desc}
+                          </p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+                {errors.bracketType && <span className="block text-xs text-rose-600">{errors.bracketType.message}</span>}
+              </section>
+
+              {/* Card Phải 3: Quy mô, ELO, Hiển thị & Chế độ đăng ký */}
+              <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
+                
+                {/* 1. Quy mô số đội */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                      <Users className="h-3.5 w-3.5 text-blue-600" />
+                      Quy mô giải đấu (Số đội/người)
+                    </span>
+                    <span className="text-xs text-slate-400">Tối đa 32</span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {[4, 8, 16, 32].map((num) => {
+                      const isCurrent = maxTeams === num;
+                      return (
+                        <button
+                          key={num}
+                          type="button"
+                          onClick={() => setValue('maxTeams', num, { shouldValidate: true })}
+                          className={`rounded-lg border px-3 py-1.5 text-xs font-bold transition ${
+                            isCurrent
+                              ? 'border-blue-600 bg-blue-600 text-white shadow-2xs'
+                              : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-slate-300 hover:bg-white'
+                          }`}
+                        >
+                          {num}
+                        </button>
+                      );
+                    })}
+                    <div className="flex items-center gap-1 ml-auto">
+                      <span className="text-[11px] text-slate-500">Khác:</span>
+                      <input
+                        type="number"
+                        min={2}
+                        max={32}
+                        {...register('maxTeams', { valueAsNumber: true })}
+                        className="w-14 rounded-lg border border-slate-300 bg-white px-2 py-1 text-center text-xs font-bold text-slate-800 outline-none focus:border-blue-500"
+                      />
+                    </div>
+                  </div>
+                  {errors.maxTeams && <span className="mt-1 block text-xs text-rose-600">{errors.maxTeams.message}</span>}
+                </div>
+
+                <div className="h-px bg-slate-100" />
+
+                {/* 2. Hiển thị giải đấu */}
+                <div>
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5 mb-2">
+                    <Eye className="h-3.5 w-3.5 text-blue-600" />
+                    Hiển thị giải đấu
+                  </span>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setValue('visibility', 'PUBLIC')}
+                      className={`rounded-xl border p-2.5 text-left transition ${
+                        visibility === 'PUBLIC'
+                          ? 'border-blue-500 bg-blue-50/70 ring-1 ring-blue-200'
+                          : 'border-slate-200 bg-white hover:bg-slate-50'
                       }`}
                     >
-                      <Icon className="h-4.5 w-4.5" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between gap-1">
-                        <span className={`text-sm font-bold transition ${isSelected ? 'text-blue-900' : 'text-slate-800 group-hover:text-blue-600'}`}>
-                          {opt.label}
-                        </span>
-                        {isSelected && (
-                          <span className="h-2 w-2 rounded-full bg-blue-600 ring-2 ring-blue-200" />
-                        )}
+                      <div className="flex items-center gap-1.5 font-bold text-xs text-slate-800">
+                        <span className={`h-3 w-3 rounded-full border-2 ${visibility === 'PUBLIC' ? 'border-blue-600 bg-blue-600' : 'border-slate-300'}`} />
+                        Công khai
                       </div>
-                      <p className={`mt-0.5 text-xs leading-snug transition ${isSelected ? 'text-blue-800/85' : 'text-slate-500'}`}>
-                        {opt.desc}
-                      </p>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-            {errors.bracketType && <span className="block text-xs text-red-600">{errors.bracketType.message}</span>}
-          </div>
-
-          {/* Quy mô giải đấu (Số đội / người tối đa) */}
-          <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-semibold text-slate-800">
-                Số đội / người tham gia tối đa <span className="text-red-500">*</span>
-              </label>
-              <span className="text-xs text-slate-500">Giới hạn 2 - 32</span>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2">
-              {[4, 8, 16, 32].map((num) => {
-                const isCurrent = maxTeams === num;
-                return (
-                  <button
-                    key={num}
-                    type="button"
-                    onClick={() => setValue('maxTeams', num, { shouldValidate: true })}
-                    className={`rounded-lg border px-3.5 py-1.5 text-xs font-semibold transition ${
-                      isCurrent
-                        ? 'border-blue-600 bg-blue-600 text-white shadow-2xs'
-                        : 'border-slate-300 bg-white text-slate-700 hover:border-blue-400'
-                    }`}
-                  >
-                    {num} đội / người
-                  </button>
-                );
-              })}
-
-              <div className="flex items-center gap-1.5 ml-auto">
-                <span className="text-xs text-slate-600 font-medium">Tùy chỉnh:</span>
-                <input
-                  type="number"
-                  min={2}
-                  max={32}
-                  {...register('maxTeams', { valueAsNumber: true })}
-                  className="w-20 rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-center text-sm font-bold text-slate-800 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-            {errors.maxTeams && <span className="block text-xs text-red-600">{errors.maxTeams.message}</span>}
-          </div>
-
-          <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/60 p-4">
-            <div>
-              <p className="text-sm font-semibold text-slate-900">Hiển thị giải đấu <span className="text-rose-500">*</span></p>
-              <p className="mt-1 text-xs text-slate-500">Chỉ quyết định cộng đồng có tìm thấy giải hay không, độc lập với cách duyệt đăng ký.</p>
-            </div>
-            <div className="grid gap-3 md:grid-cols-2">
-              <button
-                type="button"
-                onClick={() => setValue('visibility', 'PUBLIC')}
-                className={`rounded-xl border bg-white p-4 text-left transition ${visibility === 'PUBLIC' ? 'border-blue-500 ring-2 ring-blue-100' : 'border-slate-200 hover:bg-slate-50'}`}
-              >
-                <span className="flex items-center gap-2 font-semibold text-slate-800"><span className={`h-4 w-4 rounded-full border-2 ${visibility === 'PUBLIC' ? 'border-blue-500 ring-2 ring-blue-100' : 'border-slate-400'}`} />Công khai</span>
-                <span className="mt-2 block pl-6 text-xs text-slate-500">Xuất hiện trên trang chủ, khám phá và có thể được cộng đồng theo dõi.</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setValue('visibility', 'PRIVATE')}
-                className={`rounded-xl border bg-white p-4 text-left transition ${visibility === 'PRIVATE' ? 'border-blue-500 ring-2 ring-blue-100' : 'border-slate-200 hover:bg-slate-50'}`}
-              >
-                <span className="flex items-center gap-2 font-semibold text-slate-800"><span className={`h-4 w-4 rounded-full border-2 ${visibility === 'PRIVATE' ? 'border-blue-500 ring-2 ring-blue-100' : 'border-slate-400'}`} />Không niêm yết</span>
-                <span className="mt-2 block pl-6 text-xs text-slate-500">Không xuất hiện công khai; người có link hoặc mã mời vẫn có thể truy cập.</span>
-              </button>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <div>
-              <p className="text-sm font-semibold text-slate-900">Chế độ đăng ký giải đấu <span className="text-rose-500">*</span></p>
-              <p className="mt-1 text-xs text-slate-500">Bạn tự chọn cách tiếp nhận đăng ký phù hợp với giải.</p>
-            </div>
-            <div className="grid gap-3 md:grid-cols-3">
-              {([
-                ['OPEN', 'Tự do', 'Mọi VĐV đăng ký được tham gia ngay.'],
-                ['APPROVAL', 'Xét duyệt', 'Đăng ký chờ BTC duyệt thủ công.'],
-                ['INVITE_ONLY', 'Chỉ nhận mã mời', 'Chỉ người có mã/link mời mới đăng ký được.'],
-              ] as const).map(([value, label, description]) => (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => setValue('registrationMode', value)}
-                  className={`rounded-xl border p-4 text-left transition ${registrationMode === value ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-200' : 'border-slate-200 hover:border-slate-300'}`}
-                >
-                  <span className="flex items-center gap-2 font-semibold text-slate-800"><span className={`h-4 w-4 rounded-full border-2 ${registrationMode === value ? 'border-blue-500 ring-2 ring-blue-100' : 'border-slate-400'}`} />{label}</span>
-                  <span className="mt-2 block text-xs text-slate-500">{description}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <label className="flex items-start gap-3 rounded-xl border border-slate-200 p-4 text-sm cursor-pointer hover:bg-slate-50/60 transition">
-            <input
-              type="checkbox"
-              checked={isRanked}
-              onChange={(event) => setValue('isRanked', event.target.checked)}
-              className="mt-0.5 h-4 w-4 rounded text-blue-600 focus:ring-blue-500"
-            />
-            <span>
-              <span className="block font-semibold text-slate-800">Tính ELO</span>
-              <span className="text-xs text-slate-500">Giải phong trào không tính ELO quốc gia. Bật tính năng này nếu là giải giao hữu tính xếp hạng nội bộ.</span>
-            </span>
-          </label>
-
-          {/* Khu vực Địa điểm & Sân thi đấu (Chuẩn API v2: Tỉnh/Thành ➔ Phường/Xã) */}
-          <div className="space-y-4 rounded-xl border border-slate-200 bg-slate-50/50 p-4">
-            <div className="flex items-center gap-1.5 text-sm font-semibold text-slate-800">
-              <MapPin className="h-4 w-4 text-blue-600" />
-              Địa điểm & Sân thi đấu
-            </div>
-
-            <div className="grid gap-3 md:grid-cols-2">
-              <label className="text-xs font-semibold text-slate-700">
-                Tên sân / Nhà thi đấu (tùy chọn)
-                <input
-                  {...register('venueName')}
-                  className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-normal outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                  placeholder="Ví dụ: Sân Cầu Lông Kỳ Hòa"
-                />
-                {errors.venueName && <span className="mt-1 block text-xs text-red-600">{errors.venueName.message}</span>}
-              </label>
-              <label className="text-xs font-semibold text-slate-700">
-                Địa chỉ chi tiết (tùy chọn)
-                <input
-                  {...register('locationAddress')}
-                  className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-normal outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                  placeholder="Số nhà, tên đường..."
-                />
-                {errors.locationAddress && <span className="mt-1 block text-xs text-red-600">{errors.locationAddress.message}</span>}
-              </label>
-            </div>
-
-            {/* 2 Dropdown Tỉnh/Thành ➔ Phường/Xã (Chuẩn API v2 gọn gàng) */}
-            <div>
-              <span className="mb-1.5 block text-xs font-semibold text-slate-700">
-                Khu vực hành chính (tùy chọn)
-              </span>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div>
-                  <select
-                    {...register('province')}
-                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500"
-                  >
-                    <option value="">-- Chọn Tỉnh/Thành * --</option>
-                    {provinces.map((item) => (
-                      <option key={item.code} value={item.code}>
-                        {item.fullName || item.name}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.province && <span className="mt-1 block text-xs text-red-600">{errors.province.message}</span>}
+                      <span className="mt-1 block text-[10.5px] text-slate-500 leading-tight">Xuất hiện trên bảng Khám phá</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setValue('visibility', 'PRIVATE')}
+                      className={`rounded-xl border p-2.5 text-left transition ${
+                        visibility === 'PRIVATE'
+                          ? 'border-blue-500 bg-blue-50/70 ring-1 ring-blue-200'
+                          : 'border-slate-200 bg-white hover:bg-slate-50'
+                      }`}
+                    >
+                      <div className="flex items-center gap-1.5 font-bold text-xs text-slate-800">
+                        <span className={`h-3 w-3 rounded-full border-2 ${visibility === 'PRIVATE' ? 'border-blue-600 bg-blue-600' : 'border-slate-300'}`} />
+                        Không niêm yết
+                      </div>
+                      <span className="mt-1 block text-[10.5px] text-slate-500 leading-tight">Chỉ truy cập bằng liên kết/mã</span>
+                    </button>
+                  </div>
                 </div>
-                <div>
-                  <select
-                    {...register('ward')}
-                    disabled={!province || wards.length === 0}
-                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500 disabled:bg-slate-100 disabled:text-slate-400"
-                  >
-                    <option value="">
-                      {!province ? '-- Chọn Tỉnh/Thành trước --' : wards.length === 0 ? '-- Đang tải danh sách... --' : '-- Chọn Phường/Xã (Tùy chọn) --'}
-                    </option>
-                    {wards.map((item) => (
-                      <option key={item.code} value={item.code}>
-                        {item.fullName || item.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </div>
-          </div>
 
-          {sport === 'football' && (
-            <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4">
-              <p className="mb-3 text-sm font-semibold text-slate-800">Thiết lập bóng đá</p>
-              <div className="grid gap-3 md:grid-cols-3">
-                <select {...register('teamSize')} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm">
-                  <option value="5">5 người</option>
-                  <option value="7">7 người</option>
-                  <option value="11">11 người</option>
-                </select>
-                <input
-                  type="number"
-                  min={0}
-                  max={20}
-                  {...register('maxReserve', { valueAsNumber: true })}
-                  className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                  placeholder="Dự bị tối đa"
-                />
-                <span className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-500 flex items-center">
-                  Giới tính theo nội dung đã chọn
-                </span>
-              </div>
-              <div className="mt-3 grid gap-3 md:grid-cols-3">
-                <input
-                  type="number"
-                  min={1}
-                  max={4}
-                  {...register('footballHalvesCount', { valueAsNumber: true })}
-                  className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
-                  placeholder="Số hiệp"
-                />
-                <input
-                  type="number"
-                  min={1}
-                  max={120}
-                  {...register('footballHalfDuration', { valueAsNumber: true })}
-                  className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
-                  placeholder="Phút/hiệp"
-                />
-                <label className="flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm cursor-pointer">
-                  <input type="checkbox" {...register('footballAllowDraw')} />
-                  Cho phép hòa
+                <div className="h-px bg-slate-100" />
+
+                {/* 3. Chế độ nhận đăng ký */}
+                <div>
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5 mb-2">
+                    <ShieldCheck className="h-3.5 w-3.5 text-blue-600" />
+                    Chế độ tiếp nhận đăng ký
+                  </span>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {[
+                      { val: 'OPEN', label: 'Tự do', sub: 'Vào ngay' },
+                      { val: 'APPROVAL', label: 'Xét duyệt', sub: 'BTC duyệt' },
+                      { val: 'INVITE_ONLY', label: 'Mã mời', sub: 'Cần mã' },
+                    ].map((item) => {
+                      const isSelected = registrationMode === item.val;
+                      return (
+                        <button
+                          key={item.val}
+                          type="button"
+                          onClick={() => setValue('registrationMode', item.val as QuickValues['registrationMode'])}
+                          className={`rounded-xl border p-2 text-center transition ${
+                            isSelected
+                              ? 'border-blue-500 bg-blue-50/80 font-bold text-blue-700 ring-1 ring-blue-200'
+                              : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                          }`}
+                        >
+                          <div className="text-xs font-bold">{item.label}</div>
+                          <div className="text-[10px] text-slate-400 mt-0.5">{item.sub}</div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="h-px bg-slate-100" />
+
+                {/* 4. Tính điểm ELO */}
+                <label className="flex items-start gap-3 rounded-xl border border-slate-200/90 bg-slate-50/50 p-3 text-xs cursor-pointer hover:bg-slate-50 transition">
+                  <input
+                    type="checkbox"
+                    checked={isRanked}
+                    onChange={(event) => setValue('isRanked', event.target.checked)}
+                    className="mt-0.5 h-4 w-4 rounded text-blue-600 focus:ring-blue-500"
+                  />
+                  <div>
+                    <span className="font-bold text-slate-900 flex items-center gap-1">
+                      <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+                      Tính điểm ELO xếp hạng
+                    </span>
+                    <span className="text-[11px] text-slate-500 block mt-0.5">
+                      Bật nếu giải có tính điểm trình độ xếp hạng nội bộ.
+                    </span>
+                  </div>
                 </label>
+              </section>
+
+              {/* Card Phải 4: Action Buttons (Sticky Submit) */}
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm space-y-3">
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-blue-600 py-3.5 text-sm font-bold text-white shadow-md shadow-blue-500/20 hover:bg-blue-700 disabled:opacity-60 transition active:scale-[0.99]"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                      Đang khởi tạo giải...
+                    </>
+                  ) : (
+                    <>
+                      Tạo giải đấu ngay
+                      <ArrowRight className="h-4 w-4" />
+                    </>
+                  )}
+                </button>
+
+                <p className="text-center text-[11px] text-slate-400">
+                  Nhấn Tạo giải để khởi tạo và chuyển tới trang quản lý bảng đấu
+                </p>
               </div>
+
             </div>
-          )}
 
-          <label className="block text-sm font-semibold text-slate-700">
-            Mô tả giải đấu
-            <textarea
-              {...register('description')}
-              rows={3}
-              className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-              placeholder="Mô tả chi tiết giải đấu, thể lệ thi đấu, quy định trang phục hoặc lưu ý cho người tham gia..."
-            />
-          </label>
-
-          <div className="flex justify-end">
-            <button
-              disabled={isSubmitting}
-              className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60 transition shadow-xs"
-            >
-              {isSubmitting ? 'Đang tạo...' : 'Tạo giải đấu'}
-              <ArrowRight className="h-4 w-4" />
-            </button>
           </div>
         </form>
-      </section>
+      </div>
     </main>
   );
 }

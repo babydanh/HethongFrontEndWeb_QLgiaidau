@@ -26,19 +26,19 @@ export function Footer() {
             <h3 className="mb-4 text-sm font-medium text-slate-900">{t('products')}</h3>
             <ul className="space-y-2 text-sm text-slate-500">
               <li><Link href="/tournaments" className="hover:text-blue-600">{t('discoverTournaments')}</Link></li>
-              <li><Link href="/leaderboard" className="hover:text-blue-600">Bảng xếp hạng</Link></li>
+              <li><Link href="/leaderboard" className="hover:text-blue-600">{t('leaderboard')}</Link></li>
               <li><Link href="/communities" className="hover:text-blue-600">{t('community')}</Link></li>
             </ul>
           </div>
           <div>
-            <h3 className="mb-4 text-sm font-medium text-slate-900">Ban tổ chức</h3>
+            <h3 className="mb-4 text-sm font-medium text-slate-900">{t('organizer')}</h3>
             <ul className="space-y-2 text-sm text-slate-500">
-              <li><Link href="/organizer" className="hover:text-blue-600">Bảng điều khiển</Link></li>
+              <li><Link href="/organizer" className="hover:text-blue-600">{t('dashboard')}</Link></li>
               <li><Link href="/organizer/tournaments/create" className="hover:text-blue-600">{t('createTournament')}</Link></li>
             </ul>
           </div>
           <div>
-            <h3 className="mb-4 text-sm font-medium text-slate-900">Pháp lý</h3>
+            <h3 className="mb-4 text-sm font-medium text-slate-900">{t('legal')}</h3>
             <ul className="space-y-2 text-sm text-slate-500">
               <li><Link href="/terms" className="hover:text-blue-600">{t('terms')}</Link></li>
               <li><Link href="/privacy" className="hover:text-blue-600">{t('privacy')}</Link></li>

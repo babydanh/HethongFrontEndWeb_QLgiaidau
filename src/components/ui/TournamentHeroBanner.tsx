@@ -215,19 +215,19 @@ export default function TournamentHeroBanner({ tournaments, heightClass = 'h-[28
         return (
           <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[9px] uppercase font-bold bg-emerald-500 text-white shadow-sm">
             <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
-            Mở Đăng Ký
+            {translate('registrationOpen')}
           </span>
         );
       case 'REGISTRATION_CLOSED':
         return (
           <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[9px] uppercase font-bold bg-amber-600 text-white shadow-sm">
-            Đóng Đăng Ký
+            {translate('registrationClosed')}
           </span>
         );
       default:
         return (
           <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[9px] uppercase font-bold bg-blue-600 text-white shadow-sm">
-            Sắp Diễn Ra
+            {translate('upcoming')}
           </span>
         );
     }

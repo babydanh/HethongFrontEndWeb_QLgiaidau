@@ -54,7 +54,7 @@ const normalizeRegistrationParticipant = (
 export default function DoublesRegistrationFlow({ tournament, tournamentId, inviteCode, divisionId }: Props) {
   const router = useRouter();
   const registrationTranslate = useTranslations('RegistrationMode');
-  const registrationModeUi = getRegistrationModeUi(tournament.tournamentConfig?.registrationMode, registrationTranslate);
+  const registrationModeUi = getRegistrationModeUi(registrationTranslate, tournament.tournamentConfig?.registrationMode);
   const isApprovalMode = registrationModeUi.mode === 'APPROVAL';
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [teamName, setTeamName] = useState('');

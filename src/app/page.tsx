@@ -72,8 +72,8 @@ const getShortName = (fullName: string | null | undefined): string => {
   return fullName;
 };
 
-const getTeamShortName = (teamName: string | null | undefined): string => {
-  if (!teamName) return 'Chờ xác định';
+const getTeamShortName = (teamName: string | null | undefined, fallback = 'TBD'): string => {
+  if (!teamName) return fallback;
   if (teamName.includes(' - ')) {
     return teamName.split(' - ').map(name => getShortName(name)).join(' - ');
   }
@@ -99,19 +99,19 @@ const getMatchRankedStatus = (
   return fallbackTournament?.isRanked === true;
 };
 
-const getFormatLabel = (matchType?: string, genderRestriction?: string | null) => {
+const getFormatLabel = (matchType?: string, genderRestriction?: string | null, translate?: (key: string) => string) => {
   const mt = matchType || '';
   const gr = genderRestriction || '';
   if (mt === 'SINGLES') {
-    return gr === 'FEMALE' ? 'Đơn Nữ' : 'Đơn Nam';
+    return gr === 'FEMALE' ? (translate?.('formatSinglesWomen') ?? 'Singles (Women)') : (translate?.('formatSinglesMen') ?? 'Singles (Men)');
   }
   if (mt === 'DOUBLES') {
-    return gr === 'FEMALE' ? 'Đôi Nữ' : 'Đôi Nam';
+    return gr === 'FEMALE' ? (translate?.('formatDoublesWomen') ?? 'Doubles (Women)') : (translate?.('formatDoublesMen') ?? 'Doubles (Men)');
   }
   if (mt === 'MIXED_DOUBLES' || mt === 'MIXED' || gr === 'MIXED') {
-    return 'Đôi Nam Nữ';
+    return translate?.('formatMixedDoubles') ?? 'Mixed doubles';
   }
-  return mt === 'DOUBLES' ? 'Đôi' : mt === 'SINGLES' ? 'Đơn' : 'Đôi Nam Nữ';
+  return mt === 'DOUBLES' ? (translate?.('formatDoubles') ?? 'Đôi') : mt === 'SINGLES' ? (translate?.('formatSingles') ?? 'Đơn') : (translate?.('formatMixedDoubles') ?? 'Mixed doubles');
 };
 
 function CommunityLogoAvatar({ src, alt }: { src?: string | null; alt: string }) {
@@ -167,51 +167,56 @@ function LiveMatchSportLabel({ match, tournament, tournamentName }: { match?: Br
 }
 
 /** Dịch tên stage từ backend (tiếng Anh) sang tiếng Việt */
-function translateStageName(name: string | null | undefined): string {
+function translateStageName(name: string | null | undefined, translate?: (key: string) => string): string {
   if (!name) return '';
   const map: Record<string, string> = {
-    'Elimination Stage': 'Vòng loại trực tiếp',
-    'Knockout Stage': 'Vòng loại trực tiếp',
-    'Group Stage': 'Vòng bảng',
-    'Round Robin': 'Vòng tròn tính điểm',
-    'Final Stage': 'Vòng chung kết',
-    'Qualification Stage': 'Vòng loại',
-    'Preliminary Stage': 'Vòng sơ loại',
-    'Main Stage': 'Vòng chính',
-    'Quarter Finals': 'Tứ kết',
-    'Quarterfinals': 'Tứ kết',
-    'Semi Finals': 'Bán kết',
-    'Semifinals': 'Bán kết',
-    'Final': 'Chung kết',
-    'Grand Final': 'Chung kết tổng',
-    'Winners Bracket': 'Nhánh thắng',
-    'Losers Bracket': 'Nhánh thua',
-    'First Round': 'Vòng 1',
-    'Second Round': 'Vòng 2',
-    'Third Round': 'Vòng 3',
-    'Round of 16': 'Vòng 16',
-    'Round of 8': 'Tứ kết',
-    'Round of 4': 'Bán kết',
-    'Round of 2': 'Chung kết',
+    'Elimination Stage': 'stageElimination',
+    'Knockout Stage': 'stageElimination',
+    'Group Stage': 'stageGroup',
+    'Round Robin': 'stageRoundRobin',
+    'Final Stage': 'stageFinal',
+    'Qualification Stage': 'stageQualification',
+    'Preliminary Stage': 'stagePreliminary',
+    'Main Stage': 'stageMain',
+    'Quarter Finals': 'stageQuarterfinal',
+    'Quarterfinals': 'stageQuarterfinal',
+    'Semi Finals': 'stageSemifinal',
+    'Semifinals': 'stageSemifinal',
+    'Final': 'stageFinal',
+    'Grand Final': 'stageGrandFinal',
+    'Winners Bracket': 'stageWinnersBracket',
+    'Losers Bracket': 'stageLosersBracket',
+    'First Round': 'stageRound1',
+    'Second Round': 'stageRound2',
+    'Third Round': 'stageRound3',
+    'Round of 16': 'stageRound16',
+    'Round 16': 'stageRound16',
+    'Round of 32': 'stageRound32',
+    'Round 32': 'stageRound32',
+    'Round of 8': 'stageQuarterfinal',
+    'Round of 4': 'stageSemifinal',
+    'Round of 2': 'stageFinal',
   };
-  return map[name] || name;
+  const key = map[name];
+  return key ? (translate?.(key) ?? key) : name;
 }
 
 /** Đếm ngược — chỉ hiện ngày (dùng cho trang chủ / danh sách) */
 function RegistrationCountdown({ targetDate }: { targetDate: string }) {
+  const translate = useTranslations('Home');
   const [text, setText] = useState('');
   const target = useMemo(() => new Date(targetDate), [targetDate]);
 
   useEffect(() => {
     const update = () => {
       const days = Math.floor((target.getTime() - Date.now()) / 86400000);
-      if (days <= 0) { setText('Đang mở đăng ký'); return; }
-      setText(`Còn ${days} ngày`);
+      if (days <= 0) { setText(translate('registrationOpen')); return; }
+      setText(translate('countdownDays', { days }));
     };
     update();
     const timer = setInterval(update, 60000);
     return () => clearInterval(timer);
-  }, [target]);
+  }, [target, translate]);
 
   if (!text) return null;
   return (
@@ -245,6 +250,7 @@ function TournamentLogoAvatar({ src, alt }: { src?: string | null; alt: string }
 }
 
 function HomepageTournamentCard({ tournament }: { tournament: Tournament }) {
+  const translate = useTranslations('Home');
   const [imgError, setImgError] = useState(false);
   const fallbackSrc = BRAND.assets.defaultFallback;
   const hasBanner = !imgError && Boolean(tournament.bannerUrl?.trim());
@@ -278,10 +284,10 @@ function HomepageTournamentCard({ tournament }: { tournament: Tournament }) {
         <div className="absolute top-4 left-4 z-10 flex gap-2">
           <span className="px-3 py-1 bg-white/95 backdrop-blur-md rounded-full shadow-sm text-slate-800 text-[9px] font-bold tracking-wider uppercase border border-white/20">
             <Trophy className="w-3 h-3 inline-block mr-1" />
-            {tournament.category?.name || 'Giải đấu'}
+            {tournament.category?.name || translate('tournamentFallback')}
           </span>
           <span className="px-3 py-1 bg-emerald-600/90 backdrop-blur-md rounded-full shadow-sm text-white text-[9px] font-bold tracking-wider uppercase">
-            Vừa kết thúc
+            {translate('tournamentEnded')}
           </span>
         </div>
         )}
@@ -863,7 +869,7 @@ export default function HomePage() {
               <span className={`uppercase tracking-wider shrink-0 ${
                 isLive ? 'text-rose-600 font-bold animate-pulse' : isCompleted ? 'text-slate-500' : 'text-blue-600'
               }`}>
-                {isLive ? 'Trực tiếp' : isCompleted ? 'Đã kết thúc' : 'Sắp diễn ra'}
+                {isLive ? translate('statusLive') : isCompleted ? translate('statusCompleted') : translate('statusUpcoming')}
               </span>
               <span className="text-slate-300">•</span>
               <span className="shrink-0 text-slate-600 font-medium">{roundLabel}</span>
@@ -878,7 +884,7 @@ export default function HomePage() {
               )}
             </div>
             {(() => {
-              const stageBadgeText = translateStageName(match.group?.stage?.name);
+              const stageBadgeText = translateStageName(match.group?.stage?.name, translate);
               // Hide right stage badge if roundLabel already covers it (e.g. "Vòng bảng - Vòng 1")
               const shouldShowStageBadge = stageBadgeText && !roundLabel.toLowerCase().includes(stageBadgeText.toLowerCase());
               return shouldShowStageBadge ? (
@@ -896,7 +902,7 @@ export default function HomePage() {
               <div className="min-w-0">
                 <div className="flex items-center gap-1 min-w-0">
                   <span className={`text-xs font-bold block leading-snug line-clamp-2 break-words group-hover:text-blue-600 transition-colors ${isCompleted && match.winnerId === match.participant1?.id ? 'text-emerald-600' : 'text-slate-800'}`}>
-                    {getTeamShortName(match.participant1?.teamName)}
+                    {getTeamShortName(match.participant1?.teamName, translate('pendingTeam'))}
                   </span>
                 </div>
               </div>
@@ -928,7 +934,7 @@ export default function HomePage() {
               <div className="min-w-0">
                 <div className="flex items-center justify-end gap-1 min-w-0">
                   <span className={`text-xs font-bold block leading-snug line-clamp-2 break-words group-hover:text-blue-600 transition-colors ${isCompleted && match.winnerId === match.participant2?.id ? 'text-emerald-600' : 'text-slate-800'}`}>
-                    {getTeamShortName(match.participant2?.teamName)}
+                    {getTeamShortName(match.participant2?.teamName, translate('pendingTeam'))}
                   </span>
                 </div>
               </div>
@@ -939,12 +945,12 @@ export default function HomePage() {
           <div className="px-4 pb-2.5 pt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] text-slate-500 font-medium border-t border-slate-100 bg-slate-50/10">
             <div className="shrink-0 text-slate-650 flex items-center gap-1">
               <span className="font-semibold text-slate-700 text-[10px] whitespace-nowrap">
-                {getFormatLabel((match as EnrichedMatch).tournament?.matchType || ((match as unknown) as Record<string, unknown>).matchType as string | undefined, (match as EnrichedMatch).tournament?.genderRestriction || ((match as unknown) as Record<string, unknown>).genderRestriction as string | undefined)}
+                {getFormatLabel((match as EnrichedMatch).tournament?.matchType || ((match as unknown) as Record<string, unknown>).matchType as string | undefined, (match as EnrichedMatch).tournament?.genderRestriction || ((match as unknown) as Record<string, unknown>).genderRestriction as string | undefined, translate)}
               </span>
             </div>
             {match.courtName || match.tournament?.venueName ? (
               <div className="truncate max-w-[220px]" title={match.courtAddress ? `${match.courtName || match.tournament?.venueName} - ${match.courtAddress}` : match.courtName || match.tournament?.venueName || ''}>
-                <span className="text-slate-400 font-semibold">Sân:</span>{' '}
+                <span className="text-slate-400 font-semibold">{translate('courtLabel')}</span>{' '}
                 <span className="font-semibold text-slate-750">
                   {match.courtName || match.tournament?.venueName}{match.courtAddress ? ` (${match.courtAddress})` : ''}
                 </span>
@@ -964,12 +970,12 @@ export default function HomePage() {
               e.stopPropagation();
               handleHighFive(match.id);
             }}
-            title={`Cổ vũ (${currentHighFives})`}
+            title={`${translate('cheer')} (${currentHighFives})`}
             className="flex items-center justify-center gap-1.5 py-1.5 px-3 hover:bg-rose-50/70 hover:text-rose-600 text-slate-600 transition-colors active:scale-[0.98] cursor-pointer group/cheer"
           >
             <Heart className="w-4 h-4 text-rose-500 fill-rose-500/15 group-hover/cheer:scale-110 transition-transform" />
             <span className="text-[11px] font-bold text-slate-600 group-hover/cheer:text-rose-600">
-              Cổ vũ <span className="text-slate-500 group-hover/cheer:text-rose-600">({currentHighFives})</span>
+              {translate('cheer')} <span className="text-slate-500 group-hover/cheer:text-rose-600">({currentHighFives})</span>
             </span>
           </button>
 
@@ -978,18 +984,18 @@ export default function HomePage() {
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              const p1Name = getTeamShortName(match.participant1?.teamName);
-              const p2Name = getTeamShortName(match.participant2?.teamName);
+              const p1Name = getTeamShortName(match.participant1?.teamName, translate('pendingTeam'));
+              const p2Name = getTeamShortName(match.participant2?.teamName, translate('pendingTeam'));
               setActiveShareUrl(`${window.location.origin}/live/${match.id}`);
               setActiveShareTitle(`Trận đấu: ${p1Name} vs ${p2Name}`);
               setIsShareModalOpen(true);
             }}
-            title="Chia sẻ trận đấu"
+            title={translate('shareMatchTitle')}
             className="flex items-center justify-center gap-1.5 py-1.5 px-3 hover:bg-blue-50/70 hover:text-blue-600 text-slate-600 transition-colors active:scale-[0.98] cursor-pointer group/share"
           >
             <Share2 className="w-3.5 h-3.5 text-blue-500 group-hover/share:scale-110 transition-transform" />
             <span className="text-[11px] font-bold text-slate-600 group-hover/share:text-blue-600">
-              Chia sẻ
+              {translate('share')}
             </span>
           </button>
         </div>
@@ -1073,7 +1079,7 @@ export default function HomePage() {
                   } catch {
                     // ignore
                   }
-                  return 'Tất cả môn';
+                  return translate('allSports');
                 })()}
               </span>
             </button>
@@ -1154,7 +1160,7 @@ export default function HomePage() {
                 </div>
                 <div className="relative z-10 max-w-md">
                   <span className="inline-block text-[11px] font-bold tracking-[0.14em] uppercase text-blue-700 bg-white/70 border border-blue-200/50 px-3.5 py-1.5 rounded-full mb-5">
-                    Giải đấu nổi bật
+                    {translate('featuredTournaments')}
                   </span>
                   <h3 className="text-2xl md:text-3xl font-extrabold text-[#0f1b33] mb-3 tracking-tight">
                     {translate('noUpcomingTournaments')}
@@ -1191,7 +1197,7 @@ export default function HomePage() {
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-slate-350 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-slate-400"></span>
                 </div>
-                <span className="text-xs font-medium text-slate-450">Hiện chưa có trận đấu nào đang trực tiếp.</span>
+                <span className="text-xs font-medium text-slate-450">{translate('noLiveMatches')}</span>
               </div>
             ) : (
               <div className="space-y-4">
@@ -1220,7 +1226,7 @@ export default function HomePage() {
                             <div className="min-w-0">
                               <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
                                 <span className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded ${isRanked ? 'text-sky-700 bg-sky-50' : 'text-slate-600 bg-slate-100'}`}>
-                                  {isRanked ? 'XẾP HẠNG' : 'PHONG TRÀO'}
+                                  {isRanked ? translate('rankedBadge') : translate('communityBadge')}
                                 </span>
                                 <span className="text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded text-violet-700 bg-violet-50">
                                   <LiveMatchSportLabel match={group.matches[0]} tournament={matchedTournament} tournamentName={group.name} />
@@ -1248,7 +1254,7 @@ export default function HomePage() {
                       onClick={() => setLiveMatchPage(p => Math.max(1, p - 1))}
                       disabled={liveMatchPage === 1}
                       className="px-3 py-1.5 text-xs font-bold text-slate-600 bg-white border border-slate-200 hover:border-slate-350 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer">
-                      Trước
+                      {translate('previous')}
                     </button>
                     {Array.from({ length: totalLivePages }).map((_, idx) => {
                       const pageNum = idx + 1;
@@ -1283,7 +1289,7 @@ export default function HomePage() {
           {/* Section 2.2: Trận đấu vừa kết thúc */}
           <section className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_2px_12px_rgba(15,23,42,0.06)] overflow-hidden">
             <div className="px-5 py-4 border-b border-slate-100 flex justify-between items-center">
-              <h2 className="text-sm font-semibold text-slate-900 tracking-tight">Kết quả trận đấu vừa qua</h2>
+              <h2 className="text-sm font-semibold text-slate-900 tracking-tight">{translate('recentMatchResults')}</h2>
             </div>
             <div className="p-4 flex flex-col gap-4">
 
@@ -1293,7 +1299,7 @@ export default function HomePage() {
               </div>
             ) : completedMatches.length === 0 ? (
               <div className="py-10 text-center text-slate-500 font-medium text-xs">
-                Hiện chưa có trận đấu nào kết thúc gần đây.
+                {translate('noRecentMatches')}
               </div>
             ) : (
               <div className="space-y-4">
@@ -1320,7 +1326,7 @@ export default function HomePage() {
                             <div className="min-w-0">
                               <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
                                 <span className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded ${isRanked ? 'text-sky-700 bg-sky-50' : 'text-slate-600 bg-slate-100'}`}>
-                                  {isRanked ? 'XẾP HẠNG' : 'PHONG TRÀO'}
+                                  {isRanked ? translate('rankedBadge') : translate('communityBadge')}
                                 </span>
                                 <span className="text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded text-violet-700 bg-violet-50">
                                   <LiveMatchSportLabel match={group.matches[0]} tournament={matchedTournament} tournamentName={group.name} />
@@ -1373,7 +1379,7 @@ export default function HomePage() {
           {/* Section 2.5: Trận đấu sắp diễn ra */}
           <section className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_2px_12px_rgba(15,23,42,0.06)] overflow-hidden">
             <div className="px-5 py-4 border-b border-slate-100 flex justify-between items-center">
-              <h2 className="text-sm font-semibold text-slate-900 tracking-tight">Lịch thi đấu sắp diễn ra</h2>
+              <h2 className="text-sm font-semibold text-slate-900 tracking-tight">{translate('upcomingSchedule')}</h2>
             </div>
             <div className="p-4 flex flex-col gap-4">
 
@@ -1383,7 +1389,7 @@ export default function HomePage() {
               </div>
             ) : upcomingMatches.length === 0 ? (
               <div className="py-10 text-center text-slate-500 font-medium text-xs">
-                Hiện chưa có lịch thi đấu sắp diễn ra.
+                {translate('noUpcomingMatches')}
               </div>
             ) : (
               <div className="space-y-4">
@@ -1410,7 +1416,7 @@ export default function HomePage() {
                             <div className="min-w-0">
                               <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
                                 <span className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded ${isRanked ? 'text-sky-700 bg-sky-50' : 'text-slate-600 bg-slate-100'}`}>
-                                  {isRanked ? 'XẾP HẠNG' : 'PHONG TRÀO'}
+                                  {isRanked ? translate('rankedBadge') : translate('communityBadge')}
                                 </span>
                                 <span className="text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded text-violet-700 bg-violet-50">
                                   <LiveMatchSportLabel match={group.matches[0]} tournament={matchedTournament} tournamentName={group.name} />
@@ -1465,11 +1471,11 @@ export default function HomePage() {
           <section className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_2px_12px_rgba(15,23,42,0.06)] overflow-hidden">
             <div className="px-5 py-4 border-b border-slate-100 flex justify-between items-center">
               <div>
-                <h2 className="text-sm font-semibold text-slate-900 tracking-tight">Giải vừa kết thúc</h2>
-                <p className="text-[11px] font-medium text-slate-500 mt-0.5">14 ngày gần đây</p>
+                <h2 className="text-sm font-semibold text-slate-900 tracking-tight">{translate('recentTournaments')}</h2>
+                <p className="text-[11px] font-medium text-slate-500 mt-0.5">{translate('last14Days')}</p>
               </div>
               <Link href="/tournaments" className="text-xs font-semibold text-blue-600 hover:underline flex items-center gap-1">
-                Khám phá <ArrowRight className="w-3.5 h-3.5" />
+                {translate('explore')} <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
             <div className="p-4">
@@ -1481,7 +1487,7 @@ export default function HomePage() {
               </div>
             ) : recentCompletedTournaments.length === 0 ? (
               <div className="py-10 text-center text-slate-500 font-medium text-xs">
-                Hiện chưa có giải nào vừa kết thúc trong 14 ngày gần đây.
+                {translate('noRecentTournaments')}
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1508,11 +1514,11 @@ export default function HomePage() {
                <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mb-3 shrink-0">
                  <UserPlus className="w-6 h-6 text-slate-400" />
                </div>
-               <h3 className="text-sm font-semibold text-slate-900 mb-1">Chưa đăng nhập</h3>
-               <p className="text-xs text-slate-500 mb-4">Đăng nhập để xem giải đấu và CLB của bạn.</p>
+               <h3 className="text-sm font-semibold text-slate-900 mb-1">{translate('notSignedIn')}</h3>
+               <p className="text-xs text-slate-500 mb-4">{translate('loginToSee')}</p>
                <div className="flex flex-col w-full gap-2">
                  <a href="/login" className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 rounded-xl text-center text-xs shadow-sm transition-colors cursor-pointer">
-                   Đăng nhập ngay
+                   {translate('signInNow')}
                  </a>
                  <a href="/register" className="border border-slate-205 text-slate-650 hover:bg-slate-50 font-semibold py-2.5 px-4 rounded-xl text-center text-xs transition-colors">
                    {translate('signUp')}
@@ -1552,7 +1558,7 @@ export default function HomePage() {
                        {matchesPlayed}
                      </span>
                      <span className="text-[9px] font-semibold text-slate-400 mt-1 uppercase tracking-wider">
-                       Trận
+                       {translate('matchLabel')}
                      </span>
                    </div>
                    <div className="flex flex-col items-center border-l border-r border-slate-100">
@@ -1603,8 +1609,8 @@ export default function HomePage() {
 
               <div className="relative z-20 mt-auto">
                  <span className="text-[9px] font-bold text-blue-400 uppercase tracking-widest block mb-1">CỬA HÀNG TOURNA</span>
-                 <h4 className="text-sm font-bold text-white mb-0.5 group-hover:text-blue-200 transition-colors">Vợt Tennis PRO 2026</h4>
-                 <p className="text-[10px] text-white/80 font-medium line-clamp-2">Ưu đãi độc quyền giảm giá 20% cho tất cả người chơi đạt ELO trên 1200.</p>
+                 <h4 className="text-sm font-bold text-white mb-0.5 group-hover:text-blue-200 transition-colors">{translate('promoProduct')}</h4>
+                 <p className="text-[10px] text-white/80 font-medium line-clamp-2">{translate('promoOffer')}</p>
               </div>
             </div>
           </div>

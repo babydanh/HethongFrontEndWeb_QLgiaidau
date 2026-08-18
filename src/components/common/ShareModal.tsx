@@ -109,7 +109,7 @@ export default function ShareModal({ isOpen, onClose, shareUrl, title, fbAppId }
         
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-          <h3 className="text-lg font-semibold tracking-tight text-slate-950">Chia sẻ thông tin</h3>
+          <h3 className="text-lg font-semibold tracking-tight text-slate-950">{translate('shareTitle')}</h3>
           <button 
             onClick={onClose}
             className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-550 transition-all hover:bg-slate-200/70 hover:text-slate-800 cursor-pointer"
@@ -121,7 +121,7 @@ export default function ShareModal({ isOpen, onClose, shareUrl, title, fbAppId }
         {/* Info Title */}
         <div className="mt-4">
           <p className="text-xs font-medium text-slate-500 leading-relaxed">
-            Chia sẻ <span className="font-semibold text-slate-800">&ldquo;{title}&rdquo;</span> đến bạn bè của bạn:
+             {translate('shareDescription', { title })}
           </p>
         </div>
 
@@ -232,7 +232,7 @@ export default function ShareModal({ isOpen, onClose, shareUrl, title, fbAppId }
 
         {/* Copy Link Input Area */}
         <div className="mt-6 border-t border-slate-100 pt-5">
-          <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-2">Đường dẫn sao chép</label>
+          <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-2">{translate('copyLinkLabel')}</label>
           <div className="flex items-center gap-2 rounded-lg bg-slate-50 p-2 border border-slate-100 focus-within:border-emerald-500/30 focus-within:bg-white focus-within:ring-2 focus-within:ring-emerald-100 transition-all">
             <input
               type="text"

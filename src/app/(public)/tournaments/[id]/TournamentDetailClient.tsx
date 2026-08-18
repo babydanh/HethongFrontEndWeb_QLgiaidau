@@ -341,7 +341,7 @@ export default function TournamentDetailClient({ tournamentId, initialTournament
   const isRegistrationExpired = activeTournament.registrationEndDate ? new Date() > new Date(activeTournament.registrationEndDate) : false;
   const isRegistrationOpen = isTournamentOpenForRegistration(activeTournament.status);
   const showRegistrationDetails = !isTournamentInProgress(activeTournament.status) && !isTournamentCompleted(activeTournament.status);
-  const registrationModeUi = getRegistrationModeUi(activeTournament.tournamentConfig?.registrationMode, registrationTranslate);
+  const registrationModeUi = getRegistrationModeUi(registrationTranslate, activeTournament.tournamentConfig?.registrationMode);
   const hidePublicBannerText = activeTournament.tournamentConfig?.hideFeaturedCardText === true;
 
   let registrationButtonLabel = registrationModeUi.ctaLabel;

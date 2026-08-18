@@ -137,7 +137,7 @@ export function Header() {
       await markNotificationAsRead(notificationId);
       toast.success(
         action === 'accept'
-          ? 'Đã chấp nhận lời mời tham gia cộng đồng.'
+          ? t('communityInviteAccepted')
           : t('communityInviteDeclined'),
       );
     } catch (error) {
@@ -145,8 +145,8 @@ export function Header() {
         getErrorMessage(
           error,
           action === 'accept'
-            ? 'Không thể chấp nhận lời mời lúc này.'
-            : 'Không thể từ chối lời mời lúc này.',
+            ? t('communityInviteAcceptError')
+            : t('communityInviteDeclineError'),
         ),
       );
     } finally {
@@ -172,8 +172,8 @@ export function Header() {
         getErrorMessage(
           error,
           action === 'ACCEPT'
-            ? 'Không thể chấp nhận lời mời trọng tài lúc này.'
-            : 'Không thể từ chối lời mời trọng tài lúc này.',
+            ? t('refereeInviteAcceptError')
+            : t('refereeInviteDeclineError'),
         ),
       );
     } finally {
@@ -369,7 +369,7 @@ export function Header() {
                           onClick={handleMarkAllNotificationsAsRead}
                           className="text-xs font-medium text-blue-600 transition-colors hover:text-blue-800"
                         >
-                          Đánh dấu tất cả
+                          {t('markAllNotifications')}
                         </button>
                       ) : null}
                     </div>
@@ -444,11 +444,11 @@ export function Header() {
                                         </div>
                                         {!notification.isRead ? (
                                           <span className="inline-flex shrink-0 whitespace-nowrap rounded-full bg-blue-600 px-2 py-1 text-[10px] font-medium text-white">
-                                            Chưa đọc
+                                            {t('unread')}
                                           </span>
                                         ) : (
                                           <span className="inline-flex shrink-0 whitespace-nowrap text-[10px] font-medium text-slate-400">
-                                            Đã đọc
+                                            {t('read')}
                                           </span>
                                         )}
                                       </div>
@@ -518,7 +518,7 @@ export function Header() {
                                           }}
                                           className="rounded-lg border border-rose-200 px-3 py-1.5 text-xs font-medium text-rose-700 transition-colors hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
                                         >
-                                          Từ chối
+                                          {t('decline')}
                                         </button>
                                       </div>
                                     ) : null}
@@ -531,10 +531,10 @@ export function Header() {
                       ) : (
                         <div className="px-6 py-10 text-center">
                           <p className="text-sm font-medium text-slate-700">
-                            Chưa có thông báo nào
+                            {t('noNotifications')}
                           </p>
                           <p className="mt-1 text-xs text-slate-500">
-                            Thông tin mới sẽ xuất hiện ở đây khi hệ thống gửi đến bạn.
+                            {t('notificationsEmptyDescription')}
                           </p>
                         </div>
                       )}
@@ -545,7 +545,7 @@ export function Header() {
                         href="/notifications"
                         className="block rounded-lg px-3 py-2 text-center text-sm font-medium text-blue-600 transition-colors hover:bg-blue-100/50 hover:text-blue-750"
                       >
-                        Xem tất cả thông báo
+                        {t('viewAllNotifications')}
                       </Link>
                     </div>
                   </motion.div>
@@ -615,32 +615,32 @@ export function Header() {
                       </div>
                     )}
 
-                    {/* Nhóm Cá nhân */}
+                    {/* Nhóm {t('personal')} */}
                     <div className="border-b border-slate-100/60 pb-2 mb-2">
-                      <div className="px-4 py-1 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Cá nhân</div>
+                      <div className="px-4 py-1 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">{t('personal')}</div>
                       <Link href="/profile">
                         <div className="flex cursor-pointer items-center gap-3 px-4 py-2 text-sm text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900">
                           <User className="h-4 w-4 text-slate-400" />
-                          Hồ sơ cá nhân
+                          {t('profile')}
                         </div>
                       </Link>
 
                       <Link href="/dashboard">
                         <div className="flex cursor-pointer items-center gap-3 px-4 py-2 text-sm text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900">
                           <Trophy className="h-4 w-4 text-slate-400" />
-                          Giải đấu của tôi
+                          {t('myTournaments')}
                         </div>
                       </Link>
 
                       <Link href="/profile/edit">
                         <div className="flex cursor-pointer items-center gap-3 px-4 py-2 text-sm text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900">
                           <Settings className="h-4 w-4 text-slate-400" />
-                          Cài đặt tài khoản
+                          {t('accountSettings')}
                         </div>
                       </Link>
                     </div>
 
-                    {/* Đăng xuất */}
+                    {/* {t('logout')} */}
                     <button
                       type="button"
                       onClick={async () => {
@@ -655,7 +655,7 @@ export function Header() {
                       className="flex w-full items-center gap-3 px-4 py-2.5 text-sm font-semibold text-rose-500 transition-all hover:bg-rose-50/50 hover:text-rose-600"
                     >
                       <LogOut className="h-4 w-4 text-rose-400" />
-                      Đăng xuất
+                      {t('logout')}
                     </button>
                   </motion.div>
                 )}
@@ -671,13 +671,13 @@ export function Header() {
                   'flex text-slate-600 hover:bg-blue-50 hover:text-blue-600',
                 )}
               >
-                Đăng nhập
+                {t('login')}
               </a>
               <a
                 href="/register"
                 className={getButtonClasses('default', 'sm')}
               >
-                Đăng ký
+                {t('register')}
               </a>
             </div>
           )}

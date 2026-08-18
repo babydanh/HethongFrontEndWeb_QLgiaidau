@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { socketClient } from '@/lib/socket';
 import { Activity, ShieldAlert, Cpu, Network } from 'lucide-react';
 import { useAuthStore } from '@/lib/zustand/authStore';
@@ -12,6 +13,7 @@ interface Metrics {
 }
 
 export default function LiveMetricsWidget() {
+  const translate = useTranslations('Common');
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [isMinimized, setIsMinimized] = useState(true);
   const [mounted, setMounted] = useState(false);
@@ -80,7 +82,7 @@ export default function LiveMetricsWidget() {
         <button
           onClick={() => setIsMinimized(false)}
           className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-zinc-950/85 text-zinc-400 backdrop-blur-md transition-all hover:bg-zinc-900 hover:text-white shadow-[0_8px_30px_rgb(0,0,0,0.3)] cursor-pointer"
-          title="Xem giám sát hiệu năng"
+          title={translate('performanceMonitor')}
         >
           <span className={`absolute top-0 right-0 h-2.5 w-2.5 rounded-full border border-zinc-950 animate-pulse ${getStatusColor()}`} />
           <Activity className="w-4 h-4" />
@@ -97,7 +99,7 @@ export default function LiveMetricsWidget() {
               onClick={() => setIsMinimized(true)}
               className="text-[10px] text-zinc-500 hover:text-zinc-300 font-semibold transition-all px-1.5 py-0.5 rounded hover:bg-white/5 cursor-pointer"
             >
-              Thu nhỏ
+              {translate('minimize')}
             </button>
           </div>
 
@@ -107,10 +109,10 @@ export default function LiveMetricsWidget() {
             <div className="flex items-center justify-between">
               <span className="text-zinc-500 flex items-center gap-1">
                 <Network className="w-3.5 h-3.5 text-zinc-450" />
-                Kết nối (Conns)
+                {translate('connections')}
               </span>
               <span className="font-semibold text-white text-right">
-                {metrics ? `${metrics.connections} client` : '...'}
+                {metrics ? ` ` : '...'}
               </span>
             </div>
 
@@ -118,7 +120,7 @@ export default function LiveMetricsWidget() {
             <div className="flex items-center justify-between">
               <span className="text-zinc-500 flex items-center gap-1">
                 <Cpu className="w-3.5 h-3.5 text-zinc-450" />
-                Event Loop (Lag)
+                {translate('eventLoopLag')}
               </span>
               <span className={`font-semibold text-right ${
                 metrics && metrics.eventLoopLag > 50 ? 'text-amber-400' : 'text-emerald-400'
@@ -131,7 +133,7 @@ export default function LiveMetricsWidget() {
             <div className="flex items-center justify-between">
               <span className="text-zinc-500 flex items-center gap-1">
                 <ShieldAlert className="w-3.5 h-3.5 text-zinc-450" />
-                Bộ đệm (Buffer)
+                {translate('buffer')}
               </span>
               <span className={`font-semibold text-right ${
                 metrics && metrics.bufferedSize > 100 ? 'text-rose-400 animate-pulse' : 'text-white'

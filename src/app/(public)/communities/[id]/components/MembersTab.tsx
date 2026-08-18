@@ -488,7 +488,7 @@ export default function MembersTab({
             </h4>
             
             {filteredMembers.length === 0 ? (
-              <div className="bg-slate-50 border border-slate-150 rounded-lg p-8 text-center">
+              <div className="bg-slate-50 border border-slate-200 rounded-lg p-8 text-center">
                 <p className="text-slate-400 text-sm">Chưa có thành viên nào khác hoặc không có kết quả phù hợp.</p>
               </div>
             ) : (
@@ -641,7 +641,7 @@ export default function MembersTab({
               ) : inviteResults.length > 0 ? (
                 <div className="space-y-3 max-h-[35vh] overflow-y-auto">
                   {inviteResults.map((user) => (
-                    <div key={user.id} className="flex items-center justify-between p-3 border border-slate-150 rounded-lg hover:bg-slate-50 transition-colors">
+                    <div key={user.id} className="flex items-center justify-between p-3 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
                       <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden relative">
                           {user.avatarUrl ? (

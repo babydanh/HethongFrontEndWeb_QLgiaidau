@@ -155,7 +155,7 @@ export default function AboutTab({
                   <div 
                     key={img.id}
                     onClick={() => setLightboxIndex(idx)}
-                    className="relative aspect-square rounded-lg overflow-hidden bg-slate-100 border border-slate-150 cursor-pointer group hover:opacity-95 transition-opacity"
+                    className="relative aspect-square rounded-lg overflow-hidden bg-slate-100 border border-slate-200 cursor-pointer group hover:opacity-95 transition-opacity"
                   >
                     <img 
                       src={img.imageUrl} 

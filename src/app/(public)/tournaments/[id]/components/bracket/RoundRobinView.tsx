@@ -437,7 +437,7 @@ export function RoundRobinView({
                           <span className={'font-bold text-xs ' + (m.winnerId === m.participant2?.id ? 'text-emerald-700' : 'text-slate-400')}>{done || live ? m.p2SetsWon : '-'}</span>
                         </div>
                       </div>
-                      <div className="mt-2.5 pt-2.5 border-t border-slate-150 flex flex-1 flex-col justify-end gap-1.5">
+                      <div className="mt-2.5 pt-2.5 border-t border-slate-200 flex flex-1 flex-col justify-end gap-1.5">
                         <div className="flex items-center gap-1 text-[8px] text-slate-400 font-bold">
                           <Clock className="w-2 h-2 flex-shrink-0" />
                           <span className="truncate">{m.scheduledAt ? formatDateTime(m.scheduledAt) : 'Chưa xếp giờ'}</span>

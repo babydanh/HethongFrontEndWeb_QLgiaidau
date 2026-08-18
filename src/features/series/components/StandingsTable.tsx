@@ -26,7 +26,7 @@ export const StandingsTable: React.FC<StandingsTableProps> = ({ standings, class
   };
 
   return (
-    <div className={cn('border border-slate-150 rounded-lg overflow-hidden shadow-sm bg-white', className)}>
+    <div className={cn('border border-slate-200 rounded-lg overflow-hidden shadow-sm bg-white', className)}>
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-left text-sm text-slate-700">
           <thead>
@@ -39,7 +39,7 @@ export const StandingsTable: React.FC<StandingsTableProps> = ({ standings, class
               <th className="py-3.5 px-6 text-right">Trạng thái vé</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-150">
+          <tbody className="divide-y divide-slate-200">
             {standings.length > 0 ? (
               standings.map((standing, index) => {
                 const rank = index + 1;

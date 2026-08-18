@@ -370,7 +370,7 @@ export default function UserProfilePopover({
 
         {/* Fun / Club Member Tags (Danh hiệu & Nhãn CLB) */}
         {(profileData.tags ?? []).length > 0 && (
-          <div className="mt-3 rounded-xl border border-slate-150 bg-slate-50/70 p-2.5 space-y-1.5">
+          <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50/70 p-2.5 space-y-1.5">
             <div className="flex items-center justify-between text-[10px] font-bold text-slate-500 uppercase tracking-wider">
               <span>Danh hiệu CLB</span>
               <span className="text-[9px] text-slate-400 font-normal">{profileData.tags?.length} nhãn</span>

@@ -408,7 +408,7 @@ export default function TournamentsListPage() {
 
         {/* Panel Lọc Nâng Cao trượt mở bên dưới */}
         {showAdvancedFilters && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-slate-50 rounded-lg border border-slate-150 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-slate-50 rounded-lg border border-slate-200 animate-in fade-in slide-in-from-top-2 duration-200">
             {/* Ô Lọc Nội dung thi đấu */}
             <div>
               <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Nội dung</label>

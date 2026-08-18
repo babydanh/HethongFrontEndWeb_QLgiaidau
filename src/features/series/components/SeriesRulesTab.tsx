@@ -32,7 +32,7 @@ export const SeriesRulesTab: React.FC<SeriesRulesTabProps> = ({ series }) => {
             Mỗi VĐV hoặc Đội thi đấu tại các giải đấu thành viên thuộc Chuỗi giải đấu sẽ tích lũy điểm Player Series Rating (PSR) dựa trên thành tích xếp hạng chung cuộc tại giải đấu đó. Điểm này dùng để xếp hạng chặng và xét vé vớt.
           </p>
 
-          <div className="border border-slate-150 rounded-lg overflow-hidden shadow-sm">
+          <div className="border border-slate-200 rounded-lg overflow-hidden shadow-sm">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-200 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
@@ -40,7 +40,7 @@ export const SeriesRulesTab: React.FC<SeriesRulesTabProps> = ({ series }) => {
                   <th className="py-3.5 px-6 text-right">Điểm PSR Nhận Được</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-150 text-slate-700">
+              <tbody className="divide-y divide-slate-200 text-slate-700">
                 {Object.entries(rules.pointsByRank)
                   .sort((a, b) => parseInt(a[0]) - parseInt(b[0]))
                   .map(([rankKey, points]) => (
@@ -93,7 +93,7 @@ export const SeriesRulesTab: React.FC<SeriesRulesTabProps> = ({ series }) => {
         </div>
 
         {/* FAQ/Support Info */}
-        <div className="bg-slate-50 p-6 rounded-lg border border-slate-150 shadow-sm flex items-start gap-4">
+        <div className="bg-slate-50 p-6 rounded-lg border border-slate-200 shadow-sm flex items-start gap-4">
           <HelpCircle className="w-6 h-6 text-slate-400 shrink-0 mt-0.5" />
           <div>
             <h4 className="text-sm font-bold text-slate-800 mb-1">Cần hỗ trợ về luật lệ?</h4>

@@ -136,7 +136,7 @@ export default function HomepageEloProgressCard({
             {categoryRanks.slice(0, 3).map((rank) => (
               <div
                 key={rank.id}
-                className="flex items-center justify-between gap-3 rounded-lg bg-slate-50/60 hover:bg-slate-50 border border-slate-150/70 hover:border-slate-200 px-4 py-2.5 transition-all duration-200"
+                className="flex items-center justify-between gap-3 rounded-lg bg-slate-50/60 hover:bg-slate-50 border border-slate-200/70 hover:border-slate-200 px-4 py-2.5 transition-all duration-200"
               >
                 <span className="text-[11px] font-bold text-slate-600">
                   {getEloMatchTypeLabel(rank.matchType)}

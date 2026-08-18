@@ -39,7 +39,7 @@ export function RefereesTab({
       {/* Add Referee Form */}
       <form
         onSubmit={onAddReferee}
-        className="bg-slate-50 p-5 rounded-lg border border-slate-150 flex flex-col sm:flex-row items-end gap-4 max-w-xl"
+        className="bg-slate-50 p-5 rounded-lg border border-slate-200 flex flex-col sm:flex-row items-end gap-4 max-w-xl"
       >
         <div className="flex-1 w-full">
           <label className="block text-xs font-bold text-slate-700 mb-1.5">Email trọng tài</label>

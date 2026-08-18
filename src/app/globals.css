@@ -53,6 +53,12 @@ html {
   text-rendering: optimizeLegibility;
 }
 
+*,
+::before,
+::after {
+  border-color: var(--color-border, #e2e8f0);
+}
+
 body {
   background-color: var(--color-background);
   color: var(--color-foreground);

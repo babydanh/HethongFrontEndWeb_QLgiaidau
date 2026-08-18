@@ -113,7 +113,7 @@ function VerifyEmailContent() {
             <div className="flex flex-col sm:flex-row gap-2 mt-8 w-full">
               <Link 
                 href="/profile/edit" 
-                className="flex-1 border border-slate-205 text-slate-650 hover:bg-slate-50 font-bold py-2.5 rounded-lg text-xs transition-colors flex items-center justify-center"
+                className="flex-1 border border-slate-200 text-slate-650 hover:bg-slate-50 font-bold py-2.5 rounded-lg text-xs transition-colors flex items-center justify-center"
               >
                 {t('enterCodeManually')}
               </Link>

@@ -90,7 +90,7 @@ export const SeriesScheduleTab: React.FC<SeriesScheduleTabProps> = ({ legs }) =>
         {selectedLeg ? (
           <div className="bg-white p-6 md:p-8 rounded-lg border border-slate-200 shadow-sm">
             {/* Leg Header Info */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-slate-150 pb-5 mb-6 gap-4">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-slate-200 pb-5 mb-6 gap-4">
               <div>
                 <h2 className="text-lg font-bold text-slate-900">{selectedLeg.name}</h2>
                 <p className="text-xs text-slate-400 mt-1 flex items-center gap-1.5">

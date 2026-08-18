@@ -133,7 +133,7 @@ export function WithdrawModal({
                 type="button"
                 variant="outline"
                 onClick={onClose}
-                className="px-4 py-2 border-slate-205 hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-lg"
+                className="px-4 py-2 border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-lg"
               >
                 Hủy bỏ
               </Button>
@@ -157,7 +157,7 @@ export function WithdrawModal({
                 type="button"
                 variant="outline"
                 onClick={onClose}
-                className="px-4 py-2 border-slate-205 hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-lg"
+                className="px-4 py-2 border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-lg"
               >
                 Hủy bỏ
               </Button>

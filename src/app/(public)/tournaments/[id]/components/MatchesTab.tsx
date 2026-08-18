@@ -370,7 +370,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                     className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all border shrink-0 cursor-pointer ${
                       selectedRoundKey === 'ALL'
                         ? 'bg-slate-900 text-white border-transparent'
-                        : 'bg-white text-slate-650 border-slate-205 hover:border-slate-350 hover:text-slate-900'
+                        : 'bg-white text-slate-650 border-slate-200 hover:border-slate-350 hover:text-slate-900'
                     }`}
                   >
                     Tất cả
@@ -386,7 +386,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                           className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all border shrink-0 cursor-pointer ${
                             isActive
                               ? 'bg-blue-600 text-white border-transparent shadow-sm'
-                              : 'bg-white text-slate-650 border-slate-205 hover:border-slate-350 hover:text-slate-900'
+                              : 'bg-white text-slate-650 border-slate-200 hover:border-slate-350 hover:text-slate-900'
                           }`}
                         >
                           {roundOption.label}
@@ -413,7 +413,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                             className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all border shrink-0 cursor-pointer ${
                               isActive
                                 ? 'bg-blue-600 text-white border-transparent shadow-sm'
-                                : 'bg-white text-slate-650 border-slate-205 hover:border-slate-350 hover:text-slate-900'
+                                : 'bg-white text-slate-650 border-slate-200 hover:border-slate-350 hover:text-slate-900'
                             }`}
                           >
                             {roundOption.label}
@@ -435,7 +435,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                   className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all border shrink-0 cursor-pointer ${
                     selectedRoundKey === 'ALL'
                       ? 'bg-slate-900 text-white border-transparent'
-                      : 'bg-white text-slate-650 border-slate-205 hover:border-slate-350 hover:text-slate-900'
+                      : 'bg-white text-slate-650 border-slate-200 hover:border-slate-350 hover:text-slate-900'
                   }`}
                 >
                   Tất cả vòng
@@ -449,7 +449,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                       className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all border shrink-0 cursor-pointer ${
                         isActive
                           ? 'bg-blue-600 text-white border-transparent shadow-sm'
-                          : 'bg-white text-slate-650 border-slate-205 hover:border-slate-350 hover:text-slate-900'
+                          : 'bg-white text-slate-650 border-slate-200 hover:border-slate-350 hover:text-slate-900'
                       }`}
                     >
                       {roundOption.label}
@@ -559,7 +559,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                           className={`w-7 h-7 flex items-center justify-center text-xs font-bold rounded ${
                             isCompleted 
                               ? (isP1Winner ? 'bg-blue-600 text-white shadow-sm' : 'bg-slate-100 text-slate-400')
-                              : 'bg-slate-50 text-slate-600 border border-slate-150'
+                              : 'bg-slate-50 text-slate-600 border border-slate-200'
                           }`}
                         >
                           {sets[idx]?.team1Score ?? '-'}
@@ -597,7 +597,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                           className={`w-7 h-7 flex items-center justify-center text-xs font-bold rounded ${
                             isCompleted 
                               ? (isP2Winner ? 'bg-blue-600 text-white shadow-sm' : 'bg-slate-100 text-slate-400')
-                              : 'bg-slate-50 text-slate-600 border border-slate-150'
+                              : 'bg-slate-50 text-slate-600 border border-slate-200'
                           }`}
                         >
                           {sets[idx]?.team2Score ?? '-'}

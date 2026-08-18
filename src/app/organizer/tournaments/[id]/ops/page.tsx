@@ -628,11 +628,11 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
           <h3 className="text-lg font-bold text-slate-900">Tình trạng nội dung thi đấu hiện tại</h3>
 
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-            <div className="rounded-lg border border-slate-150 bg-slate-50/50 p-4 transition-all hover:bg-slate-50">
+            <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-4 transition-all hover:bg-slate-50">
               <p className="text-[10px] font-bold uppercase tracking-wider text-slate-450">Chặng đấu</p>
               <p className="mt-2 text-2xl font-bold text-slate-900">{divisionHealth.stageCount}</p>
             </div>
-            <div className="rounded-lg border border-slate-150 bg-slate-50/50 p-4 transition-all hover:bg-slate-50">
+            <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-4 transition-all hover:bg-slate-50">
               <p className="text-[10px] font-bold uppercase tracking-wider text-slate-455">Số vòng đấu</p>
               <p className="mt-2 text-2xl font-bold text-slate-900">{divisionHealth.roundCount}</p>
             </div>
@@ -653,25 +653,25 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
           <div className="border-t border-slate-100 pt-5">
             <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-450 mb-3">Chi tiết xung đột ngày thi đấu</h4>
             <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-              <div className="flex items-center justify-between rounded-lg border border-slate-150 bg-slate-50/30 px-4 py-3 text-xs font-semibold text-slate-700">
+              <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50/30 px-4 py-3 text-xs font-semibold text-slate-700">
                 <span>Trùng sân thi đấu:</span>
                 <span className={`font-bold px-2 py-0.5 rounded ${conflictSummary.court > 0 ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-500'}`}>
                   {conflictSummary.court}
                 </span>
               </div>
-              <div className="flex items-center justify-between rounded-lg border border-slate-150 bg-slate-50/30 px-4 py-3 text-xs font-semibold text-slate-700">
+              <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50/30 px-4 py-3 text-xs font-semibold text-slate-700">
                 <span>Trùng trọng tài điều phối:</span>
                 <span className={`font-bold px-2 py-0.5 rounded ${conflictSummary.referee > 0 ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-500'}`}>
                   {conflictSummary.referee}
                 </span>
               </div>
-              <div className="flex items-center justify-between rounded-lg border border-slate-150 bg-slate-50/30 px-4 py-3 text-xs font-semibold text-slate-700">
+              <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50/30 px-4 py-3 text-xs font-semibold text-slate-700">
                 <span>Trùng vận động viên/đội:</span>
                 <span className={`font-bold px-2 py-0.5 rounded ${conflictSummary.participant > 0 ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-500'}`}>
                   {conflictSummary.participant}
                 </span>
               </div>
-              <div className="flex items-center justify-between rounded-lg border border-slate-150 bg-slate-50/30 px-4 py-3 text-xs font-semibold text-slate-700">
+              <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50/30 px-4 py-3 text-xs font-semibold text-slate-700">
                 <span>Sai thứ tự nhánh đấu:</span>
                 <span className={`font-bold px-2 py-0.5 rounded ${conflictSummary.dependency > 0 ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-500'}`}>
                   {conflictSummary.dependency}
@@ -686,7 +686,7 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
           <h3 className="text-lg font-bold text-slate-900">Nhịp vận hành theo vòng</h3>
           <div className="space-y-2.5 max-h-[360px] overflow-y-auto no-scrollbar">
             {roundSummary.map((round) => (
-              <div key={`${round.order}-${round.label}`} className="rounded-lg border border-slate-150 bg-slate-50/50 p-4 transition-all hover:bg-slate-50">
+              <div key={`${round.order}-${round.label}`} className="rounded-lg border border-slate-200 bg-slate-50/50 p-4 transition-all hover:bg-slate-50">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <p className="text-sm font-bold text-slate-900">{round.label}</p>
@@ -695,7 +695,7 @@ export default function OrganizerTournamentOpsPage({ params }: { params: Promise
                     </p>
                   </div>
                   <div className="flex flex-wrap items-center gap-1.5 text-[9px] font-bold uppercase tracking-wider">
-                    <span className="rounded-lg bg-slate-150 px-2 py-1 text-slate-700">Lịch {round.scheduled}</span>
+                    <span className="rounded-lg bg-slate-100 px-2 py-1 text-slate-700">Lịch {round.scheduled}</span>
                     <span className="rounded-lg bg-blue-50 border border-blue-200 px-2 py-1 text-blue-700">Đang đấu {round.ongoing}</span>
                     <span className="rounded-lg bg-emerald-50 border border-emerald-200 px-2 py-1 text-emerald-700">Xong {round.completed}</span>
                   </div>

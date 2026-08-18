@@ -147,7 +147,7 @@ export default function PaymentsPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-slate-50 text-slate-400 text-xs font-bold uppercase tracking-wider border-b border-slate-150">
+                  <tr className="bg-slate-50 text-slate-400 text-xs font-bold uppercase tracking-wider border-b border-slate-200">
                     <th className="py-4 px-6">Thời gian</th>
                     <th className="py-4 px-6">Giải đấu</th>
                     <th className="py-4 px-6">Số tiền</th>

@@ -243,7 +243,7 @@ export function PermissionsTab({ id, tournament }: PermissionsTabProps) {
 
       <form
         onSubmit={handleAdd}
-        className="bg-slate-50 p-5 rounded-lg border border-slate-150 flex sm:flex-row items-end gap-4 max-w-xl"
+        className="bg-slate-50 p-5 rounded-lg border border-slate-200 flex sm:flex-row items-end gap-4 max-w-xl"
       >
         <div className="flex-1 w-full space-y-1">
           <label className="block text-xs font-bold text-slate-700">

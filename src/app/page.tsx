@@ -1520,7 +1520,7 @@ export default function HomePage() {
                  <a href="/login" className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 rounded-xl text-center text-xs shadow-sm transition-colors cursor-pointer">
                    {translate('signInNow')}
                  </a>
-                 <a href="/register" className="border border-slate-205 text-slate-650 hover:bg-slate-50 font-semibold py-2.5 px-4 rounded-xl text-center text-xs transition-colors">
+                 <a href="/register" className="border border-slate-200 text-slate-650 hover:bg-slate-50 font-semibold py-2.5 px-4 rounded-xl text-center text-xs transition-colors">
                    {translate('signUp')}
                  </a>
                </div>

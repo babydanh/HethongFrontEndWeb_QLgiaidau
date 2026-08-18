@@ -439,7 +439,7 @@ export default function AdminCategoriesPage() {
 
               {/* 3. Sport Rule Presets List (Variants per Sport) */}
               {selectedPresets.length > 0 && (
-                <div className="space-y-3 pt-2 border-t border-slate-150">
+                <div className="space-y-3 pt-2 border-t border-slate-200">
                   <h4 className="font-extrabold text-xs uppercase tracking-wider text-slate-500 flex items-center gap-2">
                     <BookOpen className="w-4 h-4 text-blue-600" />
                     <span>2. Danh Sách Biến Thể Luật Preset Theo Môn ({selectedPresets.length} Cấu Hình)</span>
@@ -479,7 +479,7 @@ export default function AdminCategoriesPage() {
 
               {/* 4. Score Entry Guidance & Examples */}
               {selectedGuidance && (
-                <div className="space-y-3 pt-2 border-t border-slate-150">
+                <div className="space-y-3 pt-2 border-t border-slate-200">
                   <h4 className="font-extrabold text-xs uppercase tracking-wider text-slate-500 flex items-center gap-2">
                     <Target className="w-4 h-4 text-blue-600" />
                     <span>3. Hướng Dẫn Nhập Tỷ Số & Ví Dụ Cho Trọng Tài</span>

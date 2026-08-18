@@ -310,7 +310,7 @@ export default function SettingsTab({ community }: { community: Community }) {
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           {/* Cột 1: Quyền hạn */}
-          <div className="space-y-4 rounded-xl border border-slate-150 bg-slate-50/50 p-4">
+          <div className="space-y-4 rounded-xl border border-slate-200 bg-slate-50/50 p-4">
             <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500">
               <Sliders className="h-3.5 w-3.5" />
               Quyền hạn & Chính sách
@@ -346,7 +346,7 @@ export default function SettingsTab({ community }: { community: Community }) {
           </div>
 
           {/* Cột 2: Bật/Tắt tính năng */}
-          <div className="space-y-3 rounded-xl border border-slate-150 bg-slate-50/50 p-4">
+          <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/50 p-4">
             <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500">
               <MessageSquare className="h-3.5 w-3.5" />
               Tính năng cộng đồng
@@ -396,7 +396,7 @@ export default function SettingsTab({ community }: { community: Community }) {
           </div>
 
           {/* Cột 3: Tag Danh hiệu Thành viên */}
-          <div className="space-y-3 rounded-xl border border-slate-150 bg-slate-50/50 p-4 flex flex-col justify-between">
+          <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/50 p-4 flex flex-col justify-between">
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500">
@@ -515,7 +515,7 @@ export default function SettingsTab({ community }: { community: Community }) {
               {/* Logo & Banner Uploads */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2">
                 {/* Logo */}
-                <div className="rounded-xl border border-slate-150 bg-slate-50/50 p-4">
+                <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4">
                   <label className="block text-xs font-bold text-slate-700 mb-3 flex items-center gap-1.5">
                     <ImageIcon className="w-3.5 h-3.5 text-blue-600" />
                     Ảnh đại diện (Logo)
@@ -555,7 +555,7 @@ export default function SettingsTab({ community }: { community: Community }) {
                 </div>
 
                 {/* Banner */}
-                <div className="rounded-xl border border-slate-150 bg-slate-50/50 p-4">
+                <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4">
                   <label className="block text-xs font-bold text-slate-700 mb-3 flex items-center gap-1.5">
                     <ImageIcon className="w-3.5 h-3.5 text-blue-600" />
                     Ảnh bìa CLB (Cover Banner)
@@ -1015,7 +1015,7 @@ export default function SettingsTab({ community }: { community: Community }) {
             className="relative w-full max-w-2xl max-h-[85vh] flex flex-col rounded-2xl bg-white shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-200"
           >
             {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-slate-150 px-6 py-4 bg-slate-50/80">
+            <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4 bg-slate-50/80">
               <div className="flex items-center gap-2.5">
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm">
                   <Award className="h-5 w-5" />
@@ -1125,7 +1125,7 @@ export default function SettingsTab({ community }: { community: Community }) {
             </div>
 
             {/* Modal Footer */}
-            <div className="flex items-center justify-end border-t border-slate-150 px-6 py-3.5 bg-slate-50/60">
+            <div className="flex items-center justify-end border-t border-slate-200 px-6 py-3.5 bg-slate-50/60">
               <Button
                 type="button"
                 variant="outline"

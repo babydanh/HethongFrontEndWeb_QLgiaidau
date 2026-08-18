@@ -474,7 +474,7 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
 
             {/* Partner Search Form (only if not inviting later) */}
             {!inviteLater && (
-              <div className="border border-slate-150 rounded-lg p-4 bg-slate-50/50 space-y-4">
+              <div className="border border-slate-200 rounded-lg p-4 bg-slate-50/50 space-y-4">
                 <span className="text-xs font-bold text-slate-600 uppercase tracking-wider block">Thông tin đồng đội</span>
                 
                 {searchedPartner ? (
@@ -559,7 +559,7 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
             )}
 
             {/* Fee summary block */}
-            <div className="bg-slate-50 border border-slate-205 rounded-lg p-4 space-y-2.5 text-xs">
+            <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 space-y-2.5 text-xs">
               <div className="flex justify-between items-center font-semibold">
                 <span className="text-slate-500">Lệ phí cơ bản:</span>
                 <span className="text-slate-800 font-bold">{Number(tournament.entryFee) > 0 ? formatCurrency(Number(tournament.entryFee)) : 'Miễn phí'} / người</span>
@@ -631,7 +631,7 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
                   <Button
                     onClick={copyToClipboard}
                     variant="outline"
-                    className="border-slate-205 hover:bg-slate-50 text-slate-700 shrink-0 flex items-center gap-1.5 font-bold h-11"
+                    className="border-slate-200 hover:bg-slate-50 text-slate-700 shrink-0 flex items-center gap-1.5 font-bold h-11"
                   >
                     {copied ? <Check className="w-4 h-4 text-blue-600" /> : <Copy className="w-4 h-4" />}
                     {copied ? 'Đã copy' : 'Sao chép'}
@@ -883,7 +883,7 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
                   type="button"
                   variant="outline"
                   onClick={() => setShowWithdrawModal(false)}
-                  className="px-4 py-2 border-slate-205 hover:bg-slate-100 text-slate-700 text-xs font-bold rounded-lg"
+                  className="px-4 py-2 border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-bold rounded-lg"
                 >
                   Hủy bỏ
                 </Button>

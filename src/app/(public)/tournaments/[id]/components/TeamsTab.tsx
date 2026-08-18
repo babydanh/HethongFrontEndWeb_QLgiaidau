@@ -200,7 +200,7 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
                     </tr>
                     {isExpanded && (
                       <tr className="bg-slate-50/50">
-                        <td colSpan={4} className="px-4 py-3 sm:px-8 sm:py-5 border-b border-slate-150">
+                        <td colSpan={4} className="px-4 py-3 sm:px-8 sm:py-5 border-b border-slate-200">
                           <div className="flex flex-col gap-4">
                             <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 uppercase tracking-widest">
                               <User className="w-4 h-4 text-slate-400" /> Thành viên đăng ký ({members.length})

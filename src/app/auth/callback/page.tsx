@@ -75,9 +75,14 @@ const CallbackContent = () => {
   );
 };
 
+function AuthCallbackLoading() {
+  const t = useTranslations('Auth');
+  return <div className="flex h-screen items-center justify-center">{t("loading")}</div>;
+}
+
 export default function AuthCallbackPage() {
   return (
-    <Suspense fallback={<div className="flex h-screen items-center justify-center">Đang tải...</div>}>
+    <Suspense fallback={<AuthCallbackLoading />}>
       <CallbackContent />
     </Suspense>
   );

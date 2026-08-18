@@ -149,7 +149,7 @@ export default function CommunityInfoSidebar({
               const displayLabel = key.charAt(0).toUpperCase() + key.slice(1);
               const isUrl = val.startsWith("http://") || val.startsWith("https://");
               return (
-                <div key={key} className="flex items-center justify-between gap-2.5 rounded-lg border border-slate-150 bg-slate-50/70 px-3 py-2 text-xs">
+                <div key={key} className="flex items-center justify-between gap-2.5 rounded-lg border border-slate-200 bg-slate-50/70 px-3 py-2 text-xs">
                   <span className="font-bold text-slate-700 shrink-0">{displayLabel}:</span>
                   {isUrl ? (
                     <a

@@ -749,7 +749,7 @@ export default function LeaderboardPage() {
                                                     rect,
                                                 );
                                             }}
-                                            className="w-full flex items-center gap-3 p-2.5 rounded-lg border border-slate-150 bg-slate-50/50 hover:bg-blue-50/20 hover:border-blue-200 transition-all cursor-pointer group text-left"
+                                            className="w-full flex items-center gap-3 p-2.5 rounded-lg border border-slate-200 bg-slate-50/50 hover:bg-blue-50/20 hover:border-blue-200 transition-all cursor-pointer group text-left"
                                         >
                                             <div className="w-9 h-9 rounded-full object-cover relative overflow-hidden bg-slate-100 shrink-0">
                                                 {u.avatarUrl ? (

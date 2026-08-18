@@ -522,7 +522,7 @@ export default function ProfilePage() {
     <div className="max-w-5xl mx-auto px-4 md:px-8 py-8 flex flex-col gap-6">
 
       {/* Profile Header */}
-      <div className="bg-white rounded-xl border border-slate-150 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
         {/* Cover Photo */}
         <div className="h-56 bg-slate-900 relative group overflow-hidden">
           <input

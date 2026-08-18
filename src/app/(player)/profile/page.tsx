@@ -564,6 +564,7 @@ export default function ProfilePage() {
               name={displayUser?.fullName}
               elo={featuredRank?.eloPoints}
               tierName={featuredRank?.tier?.name || featuredRank?.tierName}
+              categoryName={featuredRank?.categoryName}
               matchesPlayed={featuredRank?.matchesPlayed || 0}
               size="lg"
               ringClassName="ring-4 shadow-xl transition-transform duration-300 hover:scale-[1.03]"
@@ -636,7 +637,7 @@ export default function ProfilePage() {
                   return activeRanks.map((rank) => (
                     <div key={rank.id} className="flex items-center gap-1.5 shrink-0 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-md">
                       <span className="text-[10px] font-bold text-slate-500 uppercase">{rank.categoryName}:</span>
-                      <EloTierBadge elo={rank.eloPoints} size="sm" />
+                      <EloTierBadge elo={rank.eloPoints} tierName={rank.tier?.name || rank.tierName} categoryName={rank.categoryName} size="sm" />
                     </div>
                   ));
                 }

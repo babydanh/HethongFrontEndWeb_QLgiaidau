@@ -217,6 +217,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                   name={profile.fullName}
                   elo={featuredRank?.eloPoints}
                   tierName={featuredRank?.tierName}
+                  categoryName={featuredRank?.categoryName}
                   matchesPlayed={featuredRank?.matchesPlayed || 0}
                   size="lg"
                   ringClassName="ring-4 shadow-xl transition-transform duration-300 hover:scale-[1.03]"
@@ -266,7 +267,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                   return activeRanks.map((rank) => (
                     <div key={`${rank.categoryId}-${rank.matchType}`} className="flex items-center gap-1 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-md text-xs font-bold shrink-0">
                       <span className="text-[10px] font-bold text-slate-550 uppercase mr-1">{rank.categoryName}:</span>
-                      <EloTierBadge elo={rank.eloPoints} tierName={rank.tierName || undefined} size="sm" className="scale-90 origin-left" />
+                      <EloTierBadge elo={rank.eloPoints} tierName={rank.tierName || undefined} categoryName={rank.categoryName} size="sm" className="scale-90 origin-left" />
                     </div>
                   ));
                 }
@@ -503,7 +504,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                           <div className="flex items-center gap-2">
                             <Award className="w-5 h-5 text-blue-500 group-hover:scale-110 transition-transform" />
                             <h4 className="font-bold text-slate-900 text-base">{rank.eloPoints} ELO {rank.partnerName ? `• {translate('withPartner')} ${rank.partnerName}` : ''}</h4>
-                            <EloTierBadge elo={rank.eloPoints} tierName={rank.tierName || undefined} size="sm" />
+                            <EloTierBadge elo={rank.eloPoints} tierName={rank.tierName || undefined} categoryName={rank.categoryName} size="sm" />
                           </div>
                           <div className="grid grid-cols-3 gap-2 pt-2 text-center text-xs">
                             <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, use } from 'react';
+import { useTranslations } from 'next-intl';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -141,6 +142,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
   const id = resolvedParams.id;
 
   const router = useRouter();
+  const translate = useTranslations('Common');
   const searchParams = useSearchParams();
   const urlInvite = searchParams.get('invite') || '';
   const requestedDivisionId = searchParams.get('divisionId') || '';
@@ -733,7 +735,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
           <div className="p-6 md:p-8 bg-gradient-to-br from-slate-900 to-slate-800 text-white relative">
             {tournament.visibility === 'PRIVATE' && (
               <div className="absolute top-4 right-4 bg-blue-600 text-white font-bold text-[10px] px-2.5 py-1 rounded-md tracking-wider">
-                MỜI RIÊNG TƯ
+                {translate('privateInvite')}
               </div>
             )}
 
@@ -751,11 +753,11 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
             <div className="grid grid-cols-2 gap-y-2 gap-x-4 text-xs font-semibold text-slate-350 border-t border-slate-700/50 pt-4 mt-4">
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-blue-400" />
-                <span>Khai mạc: {tournament.startDate ? formatDate(tournament.startDate) : 'Chưa cập nhật'}</span>
+                <span>{translate('openingDate')}: {tournament.startDate ? formatDate(tournament.startDate) : translate('notUpdated')}</span>
               </div>
               <div className="flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-rose-400" />
-                <span className="truncate">{tournament.locationAddress || 'Chưa cập nhật'}</span>
+                <span className="truncate">{tournament.locationAddress || translate('notUpdated')}</span>
               </div>
               <div className="flex items-center gap-2 col-span-2">
                 <Trophy className="w-4 h-4 text-amber-400" />
@@ -818,7 +820,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                             {bracketLabel} • {participantCount}{div.maxParticipants ? ` / ${div.maxParticipants}` : ''} hồ sơ
                           </span>
                           <span className={`text-[9px] font-semibold ${isActive ? 'text-blue-100' : 'text-slate-500'}`}>
-                            Lệ phí: {Number(div.entryFee ?? 0) > 0 ? formatCurrency(Number(div.entryFee)) : 'Miễn phí'}
+                            Lệ phí: {Number(div.entryFee ?? 0) > 0 ? formatCurrency(Number(div.entryFee)) : translate('free')}
                           </span>
                           {(div.minElo != null || div.maxElo != null) && (
                             <span className={`text-[9px] font-semibold ${isActive ? 'text-blue-100' : 'text-slate-500'}`}>
@@ -851,7 +853,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                           {selectedDivision.maxParticipants ? ` / ${selectedDivision.maxParticipants}` : ''} đăng ký
                         </span>
                         <span className="px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-[11px] font-bold">
-                          {entryFeeVal > 0 ? formatCurrency(entryFeeVal) : 'Miễn phí'}
+                          {entryFeeVal > 0 ? formatCurrency(entryFeeVal) : translate('free')}
                         </span>
                       </div>
                     </div>
@@ -951,7 +953,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                       {participant.isPaid ? (
                         <span className="text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">Đã đóng</span>
                       ) : (
-                        <span className="text-amber-600 font-bold bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100">Chờ thanh toán</span>
+                        <span className="text-amber-600 font-bold bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100">{translate('pendingPayment')}</span>
                       )}
                     </div>
                   </div>
@@ -987,7 +989,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                             disabled={isWithdrawing}
                             className="w-full border-rose-200 hover:bg-rose-50 text-rose-600 font-bold py-2.5 text-sm flex items-center justify-center gap-1.5 h-11"
                           >
-                            <Trash2 className="w-4 h-4" /> Hủy & Rút lui
+                            <Trash2 className="w-4 h-4" /> {translate('withdraw')}
                           </Button>
                           <Button
                             onClick={() => router.push(buildTournamentDetailHref(id))}
@@ -1001,7 +1003,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                   ) : (
                     <div className="space-y-4">
                       <div className="bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold p-4 rounded-lg text-center">
-                        Nội dung này được miễn phí lệ phí tham gia. Bạn đã hoàn tất đăng ký!
+                        {translate('freeRegistrationComplete')}
                       </div>
 
                       <div className="flex gap-3">
@@ -1011,13 +1013,13 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                           disabled={isWithdrawing}
                           className="flex-1 border-rose-200 hover:bg-rose-50 text-rose-600 font-bold py-3 text-sm flex items-center justify-center gap-1.5 h-12"
                         >
-                          <Trash2 className="w-4 h-4" /> Hủy & Rút lui
+                          <Trash2 className="w-4 h-4" /> {translate('withdraw')}
                         </Button>
                         <Button
                           onClick={() => router.push(buildTournamentDetailHref(id))}
                           className="flex-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 text-sm h-12"
                         >
-                          Truy cập trang giải đấu
+                          {translate('openTournament')}
                         </Button>
                       </div>
                     </div>
@@ -1027,10 +1029,10 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                 <div className="space-y-6">
                   <div>
                     <h2 className="text-lg font-bold text-slate-950 flex items-center gap-2">
-                      <Users className="w-5 h-5 text-blue-600" /> Đăng ký thi đấu đơn
+                      <Users className="w-5 h-5 text-blue-600" /> {translate('registerSingles')}
                     </h2>
                     <p className="text-slate-500 text-xs mt-1">
-                      Nhập tên thi đấu của bạn (hoặc tên đội cá nhân đại diện).
+                      {translate('enterCompetitionName')}
                     </p>
                   </div>
 
@@ -1044,7 +1046,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                           className="mt-1 h-4 w-4 accent-sky-600"
                         />
                         <span>
-                          Tôi đồng ý cho phép hệ thống lưu và hiển thị tên, kết quả trận đấu và điểm ELO trên bảng xếp hạng.
+                          {translate('registrationConsent')} ELO trên bảng xếp hạng.
                           <span className="mt-1 block text-xs text-slate-500">
                             Đây là điều kiện của nội dung giải có xếp hạng; giải không xếp hạng không cập nhật ELO.
                           </span>
@@ -1053,16 +1055,16 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                     )}
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                       <p className="text-xs text-blue-600 font-medium mb-1">Tên thi đấu</p>
-                      <p className="text-sm font-bold text-slate-900">{user?.fullName || 'Chưa cập nhật'}</p>
+                      <p className="text-sm font-bold text-slate-900">{user?.fullName || translate('notUpdated')}</p>
                       <p className="text-xs text-slate-500 mt-1">Tên sẽ được lấy từ tài khoản của bạn</p>
                       <input type="hidden" {...register('teamName')} value={user?.fullName || 'Vận động viên'} />
                     </div>
 
                     <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 space-y-3">
                       <div className="flex justify-between items-center text-sm">
-                        <span className="text-slate-500 font-semibold">Lệ phí giải đấu:</span>
+                        <span className="text-slate-500 font-semibold">{translate('entryFee')}:</span>
                         <span className="font-bold text-slate-900">
-                          {entryFeeVal > 0 ? formatCurrency(entryFeeVal) : 'Miễn phí'}
+                          {entryFeeVal > 0 ? formatCurrency(entryFeeVal) : translate('free')}
                         </span>
                       </div>
                     </div>
@@ -1074,12 +1076,12 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                     >
                       {isSubmitting ? (
                         <>
-                          <Loader2 className="w-4 h-4 animate-spin" /> Đang xử lý đăng ký...
+                          <Loader2 className="w-4 h-4 animate-spin" /> {translate('processingRegistration')}
                         </>
                       ) : (
                         <>
                           <CheckCircle className="w-4 h-4" />
-                          Xác nhận Đăng ký tham gia
+                          {translate('confirmTournamentRegistration')}
                         </>
                       )}
                     </Button>

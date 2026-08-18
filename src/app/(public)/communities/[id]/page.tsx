@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { communitiesApi, Community } from '@/features/communities/api';
@@ -30,6 +31,7 @@ import ModerationTab from './components/ModerationTab';
 export default function CommunityDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const translate = useTranslations('Common');
   const id = params.id as string;
   const { user } = useAuthStore();
 
@@ -88,11 +90,11 @@ export default function CommunityDetailPage() {
         if (provinceName) parts.push(provinceName);
 
         if (mounted) {
-          setResolvedLocation(parts.length > 0 ? parts.join(', ') : 'Chưa cập nhật địa điểm');
+          setResolvedLocation(parts.length > 0 ? parts.join(', ') : translate('communityLocationMissing'));
         }
       } catch {
         if (mounted) {
-          setResolvedLocation(community.locationAddress || 'Chưa cập nhật địa điểm');
+          setResolvedLocation(community.locationAddress || translate('communityLocationMissing'));
         }
       }
     };
@@ -172,7 +174,7 @@ export default function CommunityDetailPage() {
 
   const handleToggleFollow = async () => {
     if (!user) {
-      toast.error('Vui lòng đăng nhập để theo dõi câu lạc bộ.');
+      toast.error(translate('loginToFollow'));
       router.push('/login');
       return;
     }
@@ -181,15 +183,15 @@ export default function CommunityDetailPage() {
       if (isFollowing) {
         await communitiesApi.unfollowCommunity(id);
         setIsFollowing(false);
-        toast.success('Đã bỏ theo dõi câu lạc bộ.');
+        toast.success(translate('unfollowSuccess')); 
       } else {
         await communitiesApi.followCommunity(id);
         setIsFollowing(true);
-        toast.success('Đã theo dõi câu lạc bộ.');
+        toast.success(translate('followSuccess')); 
       }
     } catch (error) {
       console.error('Failed to toggle follow', error);
-      toast.error(getErrorMessage(error, 'Không thể cập nhật trạng thái theo dõi.'));
+      toast.error(getErrorMessage(error, translate('followUpdateFailed')));
     } finally {
       setIsFollowLoading(false);
     }
@@ -197,7 +199,7 @@ export default function CommunityDetailPage() {
 
   const handleToggleFavorite = async () => {
     if (!user) {
-      toast.error('Vui lòng đăng nhập để lưu câu lạc bộ yêu thích.');
+      toast.error(translate('loginToFavorite')); 
       router.push('/login');
       return;
     }
@@ -206,15 +208,15 @@ export default function CommunityDetailPage() {
       if (isFavorite) {
         await communitiesApi.unfavoriteCommunity(id);
         setIsFavorite(false);
-        toast.success('Đã bỏ yêu thích câu lạc bộ.');
+        toast.success(translate('unfavoriteSuccess')); 
       } else {
         await communitiesApi.favoriteCommunity(id);
         setIsFavorite(true);
-        toast.success('Đã thêm vào danh sách yêu thích.');
+        toast.success(translate('favoriteSuccess')); 
       }
     } catch (error) {
       console.error('Failed to toggle favorite', error);
-      toast.error(getErrorMessage(error, 'Không thể cập nhật trạng thái yêu thích.'));
+      toast.error(getErrorMessage(error, translate('favoriteUpdateFailed')));
     } finally {
       setIsFollowLoading(false);
     }
@@ -234,9 +236,9 @@ export default function CommunityDetailPage() {
       const error = e as { response?: { status?: number } };
       console.error('Failed to fetch community details', error);
       if (error.response?.status === 403) {
-        setFetchError('Cộng đồng này đã bị vô hiệu hoá bởi quản trị viên.');
+        setFetchError(translate('communityDisabled')); 
       } else {
-        setFetchError('Không thể tải thông tin câu lạc bộ.');
+        setFetchError(translate('communityLoadFailed')); 
       }
     } finally {
       setIsLoading(false);
@@ -272,13 +274,13 @@ export default function CommunityDetailPage() {
     try {
       setIsJoinLoading(true);
       await communitiesApi.removeMember(id, currentUserId);
-      toast.success('Đã rời khỏi câu lạc bộ.');
+      toast.success(translate('leaveSuccess')); 
       setMembership(null);
       setIsLeaveConfirmOpen(false);
       fetchCommunity();
     } catch (error) {
       console.error('Failed to leave community', error);
-      toast.error(getErrorMessage(error, 'Lỗi khi thực hiện rời câu lạc bộ.'));
+      toast.error(getErrorMessage(error, translate('leaveFailed')));
     } finally {
       setIsJoinLoading(false);
     }
@@ -286,7 +288,7 @@ export default function CommunityDetailPage() {
 
   const handleJoinAction = async () => {
     if (!user) {
-      toast.error('Vui lòng đăng nhập để tham gia câu lạc bộ.');
+      toast.error(translate('loginToJoin')); 
       router.push('/login');
       return;
     }
@@ -302,7 +304,7 @@ export default function CommunityDetailPage() {
     }
 
     if (membership?.status === 'PENDING') {
-      toast.error('Đơn xin tham gia của bạn đang chờ phê duyệt.');
+      toast.error(translate('membershipPending')); 
       return;
     }
 
@@ -310,12 +312,12 @@ export default function CommunityDetailPage() {
       try {
         setIsJoinLoading(true);
         await communitiesApi.respondToInvite(id, 'accept');
-        toast.success('Đã tham gia câu lạc bộ thành công!');
+        toast.success(translate('joinSuccess')); 
         fetchMembership();
         fetchCommunity();
       } catch (error) {
         console.error('Failed to accept invitation', error);
-        toast.error(getErrorMessage(error, 'Lỗi khi chấp nhận lời mời.'));
+        toast.error(getErrorMessage(error, translate('acceptInviteFailed')));
       } finally {
         setIsJoinLoading(false);
       }
@@ -323,12 +325,12 @@ export default function CommunityDetailPage() {
     }
 
     if (community?.visibility === 'PRIVATE') {
-      toast.error('Câu lạc bộ riêng tư chỉ nhận thành viên qua lời mời.');
+      toast.error(translate('privateInviteOnly')); 
       return;
     }
 
     if (community?.joinMode === 'INVITE_ONLY' && membership?.status !== 'INVITED') {
-      toast.error('Câu lạc bộ này ở chế độ Chỉ Mời. Bạn cần được quản trị viên mời để tham gia.');
+      toast.error(translate('inviteOnlyCommunity'));
       return;
     }
 
@@ -338,7 +340,7 @@ export default function CommunityDetailPage() {
       try {
         setIsJoinLoading(true);
         await communitiesApi.joinCommunity(id);
-        toast.success('Đã tham gia câu lạc bộ thành công!');
+        toast.success(translate('joinSuccess')); 
         fetchMembership();
         fetchCommunity();
       } catch (e) {
@@ -498,7 +500,7 @@ export default function CommunityDetailPage() {
               <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs md:text-sm font-medium">
                 <span className="flex items-center gap-1.5 text-slate-700 max-w-full" title={resolvedLocation}>
                   <MapPin className="w-4 h-4 text-blue-600 shrink-0" />
-                  <span className="truncate">{resolvedLocation || 'Chưa cập nhật địa điểm'}</span>
+                  <span className="truncate">{resolvedLocation || translate('communityLocationMissing')}</span>
                 </span>
                 <span className="flex items-center gap-1.5 text-slate-700 shrink-0">
                   <Users className="w-4 h-4 text-indigo-500 shrink-0" />

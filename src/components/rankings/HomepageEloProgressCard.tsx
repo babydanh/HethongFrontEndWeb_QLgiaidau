@@ -12,6 +12,7 @@ import {
   getEloProgressInfo,
   getShieldStatus,
 } from '@/features/rankings/elo-display';
+import { getStandardRankStyleByIndex } from '@/utils/rank-style';
 
 export interface HomepageEloProgressCardProps {
   activeRankInfo: PlayerRanking | null;
@@ -59,9 +60,10 @@ export default function HomepageEloProgressCard({
 }: HomepageEloProgressCardProps) {
   if (!isAuthenticated) return null;
 
-  const currentTier = getEloTier(eloPoints, displayTier);
+  const currentTier = getEloTier(eloPoints, displayTier, activeRankInfo?.categoryName);
   const shieldStatus = getShieldStatus(activeRankInfo);
   const progressInfo = getEloProgressInfo(eloPoints);
+  const rankStyle = getStandardRankStyleByIndex(progressInfo.currentIdx);
   const hasNoRanks = !activeRankInfo || activeRankInfo.matchesPlayed <= 0;
 
   const ShieldIcon = shieldStatus.state === 'active'
@@ -74,10 +76,10 @@ export default function HomepageEloProgressCard({
   const displayPercent = hasNoRanks ? 0 : progressInfo.percent;
   const fillColor = hasNoRanks
     ? 'bg-gradient-to-r from-slate-300 to-slate-400'
-    : BAR_FILL_COLORS[progressInfo.currentIdx] ?? BAR_FILL_COLORS[0];
+    : rankStyle.progressClass;
   const trackColor = hasNoRanks
     ? 'bg-slate-100'
-    : BAR_TRACK_COLORS[progressInfo.currentIdx] ?? BAR_TRACK_COLORS[0];
+    : 'bg-slate-100';
 
   const rankLabel = hasNoRanks ? 'Chưa xếp hạng' : getRankTierName(activeRankInfo!);
 

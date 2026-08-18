@@ -295,6 +295,7 @@ export default function UserProfilePopover({
               <EloTierBadge
                 elo={profileData.highlightRank.eloPoints}
                 tierName={profileData.highlightRank.tierName || undefined}
+                categoryName={profileData.highlightRank.categoryName || undefined}
                 size="sm"
               />
             )}

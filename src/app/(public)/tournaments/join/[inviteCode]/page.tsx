@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, use } from 'react';
+import { useTranslations } from 'next-intl';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -59,6 +60,7 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
   const inviteCode = resolvedParams.inviteCode;
   
   const router = useRouter();
+  const translate = useTranslations('Common');
   const searchParams = useSearchParams();
   const { user, isAuthenticated } = useAuthStore();
   const [tournament, setTournament] = useState<Tournament | null>(null);
@@ -98,11 +100,11 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
             setDivisions([]);
           }
         } else {
-          toast.error('Không tìm thấy giải đấu hoặc mã mời không hợp lệ');
+          toast.error(translate('invalidInvite'));
           router.push('/tournaments');
         }
       } catch (err) {
-        toast.error('Không tìm thấy giải đấu hoặc mã mời không hợp lệ');
+        toast.error(translate('invalidInvite'));
         router.push('/tournaments');
       } finally {
         setIsLoading(false);
@@ -116,7 +118,7 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
 
   const onSubmit = async (data: RegisterFormValues) => {
     if (!isAuthenticated || !user) {
-      toast.error('Vui lòng đăng nhập để đăng ký tham gia giải đấu');
+      toast.error(translate('loginToRegister'));
       const redirectParams = new URLSearchParams();
       if (selectedDivisionId) {
         redirectParams.set('divisionId', selectedDivisionId);
@@ -138,7 +140,7 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
       const res = await tournamentsApi.joinTournamentByInviteCode(inviteCode, cleanData);
       const participantId = res?.data?.participantId;
 
-      toast.success('Đăng ký tham gia thành công!');
+      toast.success(translate('registrationSuccess'));
       
       const entryFee = Number(selectedDivision?.entryFee || tournament?.entryFee || 0);
       if (entryFee > 0 && participantId && tournament) {
@@ -170,7 +172,7 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <Loader2 className="w-10 h-10 animate-spin text-blue-600 mb-4" />
-        <p className="text-slate-500 font-medium text-sm">Đang tải thông tin giải đấu...</p>
+        <p className="text-slate-500 font-medium text-sm">{translate('loadingTournament')}</p>
       </div>
     );
   }
@@ -193,14 +195,14 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
           onClick={() => router.push('/tournaments')}
           className="flex items-center gap-2 text-slate-500 hover:text-slate-800 font-bold text-sm mb-6 transition-colors"
         >
-          <ArrowLeft className="w-4 h-4" /> Quay lại danh sách
+          <ArrowLeft className="w-4 h-4" /> {translate('backToList')}
         </button>
 
         <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
           {/* Header */}
           <div className="p-6 md:p-8 bg-gradient-to-br from-slate-900 to-slate-800 text-white relative">
             <div className="absolute top-4 right-4 bg-emerald-500 text-white font-bold text-xs px-2.5 py-1 rounded-md">
-              ĐƯỢC MỜI
+              {translate('invited')}
             </div>
             
             <h1 className="text-2xl md:text-3xl font-bold mb-3 leading-tight text-white">{tournament.name}</h1>
@@ -214,11 +216,11 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
             <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-xs font-semibold text-slate-300 border-t border-slate-700/50 pt-4 mt-2">
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-blue-400" />
-                <span>{tournament.startDate ? formatDate(tournament.startDate) : 'Chưa xếp lịch'}</span>
+                <span>{tournament.startDate ? formatDate(tournament.startDate) : translate('notScheduled')}</span>
               </div>
               <div className="flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-rose-400 text-xs" />
-                <span className="truncate">{tournament.locationAddress || 'Chưa cập nhật'}</span>
+                <span className="truncate">{tournament.locationAddress || translate('notUpdated')}</span>
               </div>
               <div className="flex items-center gap-2 col-span-2">
                 <Trophy className="w-4 h-4 text-amber-400" />
@@ -331,7 +333,7 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
               {effectiveDivision.matchType === 'SINGLES' ? (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                   <p className="text-xs text-blue-600 font-medium mb-1">Tên thi đấu</p>
-                  <p className="text-sm font-bold text-slate-900">{user?.fullName || 'Chưa cập nhật'}</p>
+                  <p className="text-sm font-bold text-slate-900">{user?.fullName || translate('notUpdated')}</p>
                   <p className="text-xs text-slate-500 mt-1">Tên sẽ được lấy từ tài khoản của bạn</p>
                 </div>
               ) : (
@@ -346,13 +348,13 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
               {(effectiveDivision.matchType === 'DOUBLES' || effectiveDivision.matchType === 'MIXED_DOUBLES') && (
                 <>
                   <Input
-                    label="Email hoặc SĐT đồng đội"
-                    placeholder="partner@Sporto.com hoặc 0912***"
+                    label={translate('partnerLabel')}
+                    placeholder={translate('partnerInvitePlaceholder')}
                     {...register('partnerEmailOrPhone')}
                     error={errors.partnerEmailOrPhone?.message}
                   />
                   <p className="text-xs text-slate-400 -mt-3">
-                    Đồng đội cần có tài khoản Sporto. Nếu chưa có, hãy đăng ký trước khi điền.
+                    {translate('partnerAccountHint')}
                   </p>
                 </>
               )}
@@ -368,7 +370,7 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
 
               {!isAuthenticated ? (
                 <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 text-xs text-slate-700 leading-relaxed">
-                  Bạn cần đăng nhập tài khoản trước khi hoàn tất đăng ký. Hệ thống sẽ tự động chuyển hướng bạn quay lại trang này sau khi đăng nhập thành công.
+                  {translate('loginBeforeComplete')} chuyển hướng bạn quay lại trang này sau khi đăng nhập thành công.
                 </div>
               ) : null}
 
@@ -379,12 +381,12 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
               >
                 {isSubmitting ? (
                   <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Đang xử lý đăng ký...
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" /> {translate('processingRegistration')}
                   </>
                 ) : (
                   <>
                     <CheckCircle className="w-4 h-4 mr-2" />
-                    {!isAuthenticated ? 'Đăng nhập & Đăng ký' : 'Xác nhận tham gia'}
+                    {!isAuthenticated ? translate('loginAndRegister') : translate('confirmParticipation')}
                   </>
                 )}
               </Button>

@@ -22,10 +22,10 @@ export default function EloPeakCard({
   matchesPlayed,
   categoryName,
 }: EloPeakCardProps) {
-  const currentTier = getEloTier(eloPoints, tierName);
+  const currentTier = getEloTier(eloPoints, tierName, categoryName);
   const { progress, currentIdx, nextIdx } = calcEloProgress(eloPoints);
   const nextTier = nextIdx !== null ? getEloTier(TIER_THRESHOLDS[nextIdx].minElo) : null;
-  const peakTier = getEloTier(peakElo);
+  const peakTier = getEloTier(peakElo, undefined, categoryName);
   const hasShield = shieldActive === true;
   const showShield = matchesPlayed > 0;
 

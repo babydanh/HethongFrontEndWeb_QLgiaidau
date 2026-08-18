@@ -454,7 +454,6 @@ export default function QuickTournamentCreate() {
         registrationMode: values.registrationMode,
         isRanked: values.isRanked,
         communityId,
-        tournamentType: communityId ? 'CLUB' : 'PUBLIC',
         genderRestriction: values.genderRestriction || undefined,
         registrationStartDate: values.registrationStart ? new Date(values.registrationStart).toISOString() : undefined,
         registrationEndDate: values.registrationEnd ? new Date(values.registrationEnd).toISOString() : undefined,

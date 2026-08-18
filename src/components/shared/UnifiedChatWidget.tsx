@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import {
   Bot,
   ChevronLeft,
@@ -155,14 +156,14 @@ function dedupeRooms(rooms: InboxRoom[], currentUserId?: string): InboxRoom[] {
   );
 }
 
-function roomTitle(room: InboxRoom): string {
+function roomTitle(room: InboxRoom, labels: { club: string; conversation: string }): string {
   if (room.name) return room.name;
   if (room.clubName) return room.clubName;
   if (room.communityName) return room.communityName;
   const other = room.participants?.find((participant) => participant.fullName);
   return (
     other?.fullName ||
-    (room.type === 'CLUB' ? 'Câu lạc bộ' : 'Cuộc trò chuyện')
+    (room.type === 'CLUB' ? labels.club : labels.conversation)
   );
 }
 
@@ -174,14 +175,14 @@ function getRoomAvatar(room: InboxRoom, currentUserId?: string): string | null {
   return other?.avatarUrl || null;
 }
 
-function formatDateSeparator(dateStr: string): string {
+function formatDateSeparator(dateStr: string, labels: { today: string; yesterday: string }): string {
   const d = new Date(dateStr);
   const today = new Date();
   const yesterday = new Date();
   yesterday.setDate(today.getDate() - 1);
 
-  if (d.toDateString() === today.toDateString()) return 'Hôm nay';
-  if (d.toDateString() === yesterday.toDateString()) return 'Hôm qua';
+  if (d.toDateString() === today.toDateString()) return labels.today;
+  if (d.toDateString() === yesterday.toDateString()) return labels.yesterday;
 
   return d.toLocaleDateString('vi-VN', {
     weekday: 'short',
@@ -209,6 +210,8 @@ function renderHighlightedText(text: string, query: string) {
 
 export default function UnifiedChatWidget() {
   const pathname = usePathname();
+  const translate = useTranslations('Common');
+  const roomLabels = { club: translate('club'), conversation: translate('conversation') };
   const { user, isAuthenticated } = useAuthStore();
   const userId = user?.id;
   const [open, setOpen] = useState(false);
@@ -270,10 +273,10 @@ export default function UnifiedChatWidget() {
   const selectedRoom = selection.kind === 'ROOM' ? selection.room : null;
   const selectedTitle =
     selection.kind === 'AI'
-      ? 'Trợ lý AI Sporto'
+      ? translate('aiAssistant')
       : selection.kind === 'SUPPORT'
-        ? 'Hỗ trợ Sporto'
-        : roomTitle(selectedRoom!);
+        ? translate('support')
+        : roomTitle(selectedRoom!, roomLabels);
 
   const selectedRoomAvatar = selectedRoom
     ? getRoomAvatar(selectedRoom, user?.id)
@@ -465,7 +468,7 @@ export default function UnifiedChatWidget() {
       setOpen(true);
       setIsMobileRoomOpen(true);
       if (!isAuthenticated) {
-        toast.error('Vui lòng đăng nhập để nhắn tin.');
+        toast.error(translate('loginToMessage'));
         return;
       }
       const requestId = ++directChatRequestRef.current;
@@ -1444,14 +1447,14 @@ export default function UnifiedChatWidget() {
                       {avatar ? (
                         <img
                           src={avatar}
-                          alt={roomTitle(room)}
+                          alt={roomTitle(room, roomLabels)}
                           className="h-full w-full object-cover"
                         />
                       ) : isClub ? (
                         <MessageCircle className="h-4 w-4" />
                       ) : (
                         <span className="text-xs font-bold">
-                          {roomTitle(room).charAt(0).toUpperCase()}
+                          {roomTitle(room, roomLabels).charAt(0).toUpperCase()}
                         </span>
                       )}
                       {room.unreadCount > 0 && (
@@ -1463,7 +1466,7 @@ export default function UnifiedChatWidget() {
                     <span className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5">
                         <strong className="block truncate text-xs font-semibold">
-                          {roomTitle(room)}
+                          {roomTitle(room, roomLabels)}
                         </strong>
                         {isClub && (
                           <span className="rounded bg-blue-200/80 px-1 py-0.2 text-[9px] font-bold text-blue-800 shrink-0">
@@ -1999,7 +2002,7 @@ export default function UnifiedChatWidget() {
                           {isNewDay && (
                             <div className="flex items-center justify-center my-3">
                               <span className="rounded-full bg-slate-200/80 px-3 py-0.5 text-[10px] font-bold text-slate-600 uppercase tracking-wider shadow-2xs">
-                                {formatDateSeparator(message.createdAt)}
+                                {formatDateSeparator(message.createdAt, { today: translate('today'), yesterday: translate('yesterday') })}
                               </span>
                             </div>
                           )}
@@ -2496,11 +2499,11 @@ export default function UnifiedChatWidget() {
 
                                 if (isSeen && otherParticipant?.avatarUrl) {
                                   return (
-                                    <div className="mt-1 flex items-center justify-end gap-1 px-1" title={`Đã xem bởi ${otherParticipant.fullName || ''}`}>
-                                      <span className="text-[9px] text-slate-400 font-medium">Đã xem</span>
+                                    <div className="mt-1 flex items-center justify-end gap-1 px-1" title={translate('seenBy', { name: otherParticipant.fullName || '' })}>
+                                      <span className="text-[9px] text-slate-400 font-medium">{translate('seen')}</span>
                                       <img
                                         src={otherParticipant.avatarUrl}
-                                        alt={otherParticipant.fullName || 'Đã xem'}
+                                        alt={otherParticipant.fullName || translate('seen')}
                                         className="h-3.5 w-3.5 rounded-full object-cover border border-white shadow-2xs"
                                       />
                                     </div>
@@ -2535,11 +2538,11 @@ export default function UnifiedChatWidget() {
                     setShowScrollBottom(false);
                     setUnreadSinceScrolledUp(0);
                   }}
-                  aria-label="Cuộn xuống tin nhắn mới nhất"
+                  aria-label={translate('scrollToNewest')}
                   className="sticky bottom-2 ml-auto mr-2 z-30 flex items-center gap-1.5 rounded-full bg-white/95 backdrop-blur-md px-3.5 py-1.5 text-xs font-bold text-slate-700 shadow-xl border border-slate-200/90 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 transition-all duration-200 animate-in fade-in slide-in-from-bottom-2 hover:scale-105 active:scale-95 group"
                 >
                   <ChevronDown className="h-4 w-4 text-blue-600 group-hover:translate-y-0.5 transition-transform" />
-                  <span>Tin mới nhất</span>
+                  <span>{translate('newestMessages')}</span>
                   {unreadSinceScrolledUp > 0 && (
                     <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white shadow-2xs">
                       {unreadSinceScrolledUp > 99 ? '99+' : unreadSinceScrolledUp}
@@ -2661,7 +2664,7 @@ export default function UnifiedChatWidget() {
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    title="Gửi hình ảnh"
+                    title={translate('sendImage')}
                     disabled={isOtherBlocked || sending}
                     className="p-2 rounded-full text-slate-500 hover:bg-slate-100 hover:text-blue-600 transition disabled:opacity-40"
                   >
@@ -2671,7 +2674,7 @@ export default function UnifiedChatWidget() {
                   <button
                     type="button"
                     onClick={() => setShowPollCreator(true)}
-                    title="Tạo cuộc bình chọn"
+                    title={translate('createPoll')}
                     disabled={isOtherBlocked || sending}
                     className="p-2 rounded-full text-slate-500 hover:bg-slate-100 hover:text-blue-600 transition disabled:opacity-40"
                   >
@@ -2689,7 +2692,7 @@ export default function UnifiedChatWidget() {
                     ? 'bg-blue-100 text-blue-600'
                     : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
                 }`}
-                title="Chọn biểu tượng cảm xúc"
+                title={translate('chooseEmoji')}
               >
                 <Smile className="h-5 w-5" />
               </button>
@@ -2705,7 +2708,7 @@ export default function UnifiedChatWidget() {
                       ? 'Hỏi trợ lý Sporto...'
                       : replyingTo
                         ? `Trả lời ${replyingTo.senderName || 'thành viên'}...`
-                        : 'Nhập tin nhắn...'
+                        : translate('enterMessage')
                 }
                 disabled={isOtherBlocked}
                 className="min-w-0 flex-1 rounded-full border border-slate-200 bg-slate-50/70 px-4 py-2 text-sm outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20 disabled:bg-slate-100 disabled:text-slate-400"
@@ -2716,7 +2719,7 @@ export default function UnifiedChatWidget() {
                 <button
                   type="submit"
                   disabled={sending || isOtherBlocked}
-                  aria-label="Gửi tin nhắn"
+                  aria-label={translate('sendMessage')}
                   className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-white shadow-md shadow-blue-500/20 transition hover:bg-blue-700 active:scale-95 disabled:opacity-40 shrink-0"
                 >
                   {sending ? (
@@ -2730,8 +2733,8 @@ export default function UnifiedChatWidget() {
                   type="button"
                   onClick={() => void sendRoomMessage('👍')}
                   disabled={sending || isOtherBlocked}
-                  aria-label="Thả Like nhanh"
-                  title="Thả Like nhanh"
+                  aria-label={translate('quickLike')}
+                  title={translate('quickLike')}
                   className="flex h-9 w-9 items-center justify-center rounded-full text-blue-600 hover:bg-blue-50 transition active:scale-125 shrink-0"
                 >
                   <ThumbsUp className="h-5 w-5 fill-blue-600 text-blue-600" />
@@ -2740,7 +2743,7 @@ export default function UnifiedChatWidget() {
                 <button
                   type="submit"
                   disabled={true}
-                  aria-label="Gửi tin nhắn"
+                  aria-label={translate('sendMessage')}
                   className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-200 text-slate-400 transition shrink-0 cursor-not-allowed"
                 >
                   <Send className="h-4 w-4" />

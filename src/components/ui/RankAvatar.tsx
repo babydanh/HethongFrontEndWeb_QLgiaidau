@@ -1,45 +1,17 @@
 import * as React from 'react';
 import { cn } from '@/utils/cn';
+import { getRankStyle } from '@/utils/rank-style';
 
 type RankRingSize = 'sm' | 'md' | 'lg';
-
-const ringByTier: Record<string, string> = {
-  'Tier S': 'ring-amber-400',
-  'High Tier A': 'ring-rose-500',
-  'Low Tier A': 'ring-rose-300',
-  'High Tier B': 'ring-blue-500',
-  'Low Tier B': 'ring-blue-300',
-  'High Tier C': 'ring-emerald-500',
-  'Low Tier C': 'ring-emerald-300',
-  'High Tier D': 'ring-slate-500',
-  'Low Tier D': 'ring-slate-300',
-};
 
 export function getRankRingClass(
   elo: number | null | undefined,
   tierName?: string | null,
   matchesPlayed = 0,
+  categoryName?: string | null,
 ): string {
   if (matchesPlayed <= 0 || elo == null) return 'ring-slate-300';
-  const normalized = tierName?.trim().toLowerCase() || '';
-  const tier = normalized.includes('tier s') ? 'Tier S'
-    : normalized.includes('high tier a') ? 'High Tier A'
-    : normalized.includes('low tier a') ? 'Low Tier A'
-    : normalized.includes('high tier b') ? 'High Tier B'
-    : normalized.includes('low tier b') ? 'Low Tier B'
-    : normalized.includes('high tier c') ? 'High Tier C'
-    : normalized.includes('low tier c') ? 'Low Tier C'
-    : normalized.includes('high tier d') ? 'High Tier D'
-    : elo >= 1800 ? 'Tier S'
-    : elo >= 1700 ? 'High Tier A'
-    : elo >= 1600 ? 'Low Tier A'
-    : elo >= 1500 ? 'High Tier B'
-    : elo >= 1400 ? 'Low Tier B'
-    : elo >= 1300 ? 'High Tier C'
-    : elo >= 1200 ? 'Low Tier C'
-    : elo >= 1100 ? 'High Tier D'
-    : 'Low Tier D';
-  return ringByTier[tier];
+  return getRankStyle(elo, tierName, categoryName).ringClass;
 }
 
 export interface RankAvatarProps {
@@ -47,6 +19,7 @@ export interface RankAvatarProps {
   name?: string | null;
   elo?: number | null;
   tierName?: string | null;
+  categoryName?: string | null;
   matchesPlayed?: number;
   size?: RankRingSize;
   className?: string;
@@ -59,6 +32,7 @@ export function RankAvatar({
   name,
   elo,
   tierName,
+  categoryName,
   matchesPlayed = 0,
   size = 'md',
   className,
@@ -77,7 +51,7 @@ export function RankAvatar({
         sizeClass,
         'relative flex shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-slate-100 shadow-sm',
         ringClassName,
-        getRankRingClass(elo, tierName, matchesPlayed),
+        getRankRingClass(elo, tierName, matchesPlayed, categoryName),
         className,
       )}
       title={title || rankTitle}

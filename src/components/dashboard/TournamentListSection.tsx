@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, type ReactNode } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { ChevronDown, ChevronUp, Users } from 'lucide-react';
 import type { Tournament } from '@/features/tournaments/api';
-import { getTournamentStatusClassName, getTournamentStatusLabel } from '@/utils/tournament-status';
+import { getTournamentStatusClassName, normalizeTournamentStatus } from '@/utils/tournament-status';
 import { BRAND } from '@/constants/brand';
 
 interface Props {
@@ -48,6 +49,7 @@ export default function TournamentListSection({
   emptyActionHref, emptyActionLabel, icon, count, partners, matchTypeMap, roleLabels,
 }: Props) {
   const [showAll, setShowAll] = useState(false);
+  const translate = useTranslations('TournamentList');
   const initialShow = 5;
   const visible = showAll ? tournaments : tournaments.slice(0, initialShow);
   const hasMore = tournaments.length > initialShow;
@@ -84,9 +86,9 @@ export default function TournamentListSection({
                 className="mt-3 w-full flex items-center justify-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-800 py-2 rounded-lg hover:bg-slate-50 transition-colors"
               >
                 {showAll ? (
-                  <><ChevronUp className="w-3.5 h-3.5" /> Thu gọn</>
+                  <><ChevronUp className="w-3.5 h-3.5" />{translate('collapse')}</>
                 ) : (
-                  <><ChevronDown className="w-3.5 h-3.5" /> Xem thêm {tournaments.length - initialShow} giải</>
+                  <><ChevronDown className="w-3.5 h-3.5" />{translate('viewMore', { count: tournaments.length - initialShow })}</>
                 )}
               </button>
             )}
@@ -105,6 +107,11 @@ export default function TournamentListSection({
 }
 
 function TournamentRow({ tournament, partnerName, matchType, roleLabel }: { tournament: Tournament; partnerName?: string; matchType?: string; roleLabel?: string }) {
+  const translate = useTranslations('TournamentList');
+  const locale = useLocale();
+  const normalizedStatus = normalizeTournamentStatus(tournament.status);
+  const statusLabelKey = normalizedStatus === 'PENDING_APPROVAL' ? 'statusPendingApproval' : normalizedStatus === 'PENDING_DELETE' ? 'statusPendingDelete' : normalizedStatus === 'REGISTRATION_CLOSED' ? 'statusRegistrationClosed' : normalizedStatus === 'CANCELLED' ? 'statusCancelled' : normalizedStatus === 'DRAFT' ? 'statusDraftPlain' : normalizedStatus === 'UPCOMING' ? 'upcoming' : normalizedStatus === 'REGISTRATION_OPEN' ? 'registrationOpen' : normalizedStatus === 'IN_PROGRESS' || normalizedStatus === 'ONGOING' ? 'inProgress' : normalizedStatus === 'COMPLETED' ? 'completed' : 'statusDraftPlain';
+  const statusLabel = translate(statusLabelKey);
   const isDoubles = matchType === 'DOUBLES' || matchType === 'MIXED_DOUBLES';
   const sport = tournament.category?.name;
   return (
@@ -129,18 +136,18 @@ function TournamentRow({ tournament, partnerName, matchType, roleLabel }: { tour
             <p className="mt-0.5 text-[11px] text-slate-400 line-clamp-1">
               {sport}
               {tournament.locationAddress && ` · ${tournament.locationAddress}`}
-              {tournament.startDate && ` · ${new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(tournament.startDate))}`}
+              {tournament.startDate && ` · ${new Intl.DateTimeFormat(locale, { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(tournament.startDate))}`}
             </p>
             {(isDoubles && partnerName) && (
               <p className="mt-0.5 text-[11px] text-slate-500 flex items-center gap-1">
                 <Users className="w-3 h-3" />
-                Đồng đội: <span className="font-semibold text-slate-700">{partnerName}</span>
+                {translate('teammate')}: <span className="font-semibold text-slate-700">{partnerName}</span>
               </p>
             )}
           </div>
         </div>
         <span className={`shrink-0 px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wide border ${getTournamentStatusClassName(tournament.status)}`}>
-          {getTournamentStatusLabel(tournament.status)}
+          {statusLabel}
         </span>
       </div>
     </div>

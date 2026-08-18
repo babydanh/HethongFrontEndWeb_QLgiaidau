@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Community } from '@/features/communities/api';
 import { formatDate } from '@/utils/format';
 import { MapPin, Info, FileText, Image as ImageIcon, X, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -18,6 +19,7 @@ export default function AboutTab({
   galleryImages?: GalleryImage[]; 
 }) {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const translate = useTranslations('Common');
 
   // Limit to maximum 50 images in the sidebar
   const visibleImages = galleryImages.slice(0, 50);
@@ -30,7 +32,7 @@ export default function AboutTab({
         <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-5 md:p-6">
           <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2 border-b pb-3">
             <Info className="w-5 h-5 text-blue-600" />
-            Về câu lạc bộ này
+            {translate('aboutClub')}
           </h3>
           
           {community.description ? (
@@ -39,36 +41,36 @@ export default function AboutTab({
               dangerouslySetInnerHTML={{ __html: community.description }}
             />
           ) : (
-            <p className="text-slate-400 italic mb-6">Câu lạc bộ này chưa có thông tin giới thiệu.</p>
+            <p className="text-slate-400 italic mb-6">{translate('noClubDescription')}</p>
           )}
  
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2 border-t border-slate-100">
             <div className="space-y-4">
               <div>
                 <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-3 flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-slate-400" /> Thông tin
+                  <MapPin className="w-4 h-4 text-slate-400" /> {translate('information')}
                 </h4>
                 <div className="space-y-2.5 text-xs">
                   <div className="grid grid-cols-3">
-                    <span className="text-slate-500 font-semibold">Khu vực:</span>
-                    <span className="col-span-2 text-slate-800">{community.locationAddress || 'Chưa cập nhật'}</span>
+                    <span className="text-slate-500 font-semibold">{translate('location')}:</span>
+                    <span className="col-span-2 text-slate-800">{community.locationAddress || translate('notUpdated')}</span>
                   </div>
                   <div className="grid grid-cols-3">
-                    <span className="text-slate-500 font-semibold">Chế độ:</span>
+                    <span className="text-slate-500 font-semibold">{translate('visibility')}:</span>
                     <span className="col-span-2 text-slate-800">
-                      {community.visibility === 'PUBLIC' ? 'Công khai' : community.visibility === 'PRIVATE' ? 'Riêng tư' : 'Hạn chế'}
+                      {community.visibility === 'PUBLIC' ? translate('public') : community.visibility === 'PRIVATE' ? translate('private') : translate('restricted')}
                       {' · '}
                       {community.joinMode === 'OPEN' ? 'Mở tự do' : community.joinMode === 'APPROVAL' ? 'Cần duyệt' : 'Chỉ mời'}
                     </span>
                   </div>
                   <div className="grid grid-cols-3">
-                    <span className="text-slate-500 font-semibold">Ngày lập:</span>
+                    <span className="text-slate-500 font-semibold">{translate('createdAt')}:</span>
                     <span className="col-span-2 text-slate-800">
                       {community.createdAt ? formatDate(community.createdAt) : 'N/A'}
                     </span>
                   </div>
                   <div className="grid grid-cols-3">
-                    <span className="text-slate-500 font-semibold">Bộ môn:</span>
+                    <span className="text-slate-500 font-semibold">{translate('sport')}:</span>
                     <span className="col-span-2 text-slate-800 flex flex-wrap gap-1">
                       {community.categories && community.categories.length > 0 ? (
                         community.categories.map((cat) => (
@@ -82,7 +84,7 @@ export default function AboutTab({
                     </span>
                   </div>
                   <div className="grid grid-cols-3">
-                    <span className="text-slate-500 font-semibold">Liên hệ:</span>
+                    <span className="text-slate-500 font-semibold">{translate('contact')}:</span>
                     <span className="col-span-2 text-slate-800">
                       {community.socialLinks && Object.values(community.socialLinks).some(v => v) ? (
                         <div className="flex flex-wrap gap-1.5">
@@ -117,7 +119,7 @@ export default function AboutTab({
               {community.rules && (
                 <div>
                   <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-3 flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-slate-400" /> Nội quy
+                    <FileText className="w-4 h-4 text-slate-400" /> {translate('rules')}
                   </h4>
                   <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 text-xs text-slate-700 whitespace-pre-wrap leading-relaxed">
                     {community.rules}
@@ -141,7 +143,7 @@ export default function AboutTab({
           {galleryImages.length === 0 ? (
             <div className="py-10 text-center border-2 border-dashed border-slate-200 rounded-lg bg-slate-50/50">
               <ImageIcon className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-              <p className="text-xs text-slate-450 font-bold uppercase tracking-wider animate-pulse">Chưa có ảnh nào</p>
+              <p className="text-xs text-slate-450 font-bold uppercase tracking-wider animate-pulse">{translate('noImages')}</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-2">

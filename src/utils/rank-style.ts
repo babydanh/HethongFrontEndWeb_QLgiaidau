@@ -1,0 +1,89 @@
+import { TIER_THRESHOLDS } from '@/utils/elo';
+
+export interface RankStyle {
+  name: string;
+  ringClass: string;
+  badgeClass: string;
+  progressClass: string;
+  minElo: number;
+  maxElo: number | null;
+}
+
+type TierDefinition = Omit<RankStyle, 'ringClass' | 'badgeClass' | 'progressClass'> & {
+  ringClass: string;
+  badgeClass: string;
+  progressClass: string;
+};
+
+const STANDARD_TIERS: TierDefinition[] = [
+  { name: 'Low Tier D', minElo: 0, maxElo: 1099, ringClass: 'ring-slate-300', badgeClass: 'bg-slate-50 text-slate-600 border-slate-300', progressClass: 'bg-slate-400' },
+  { name: 'High Tier D', minElo: 1100, maxElo: 1199, ringClass: 'ring-slate-500', badgeClass: 'bg-slate-100 text-slate-700 border-slate-400', progressClass: 'bg-slate-500' },
+  { name: 'Low Tier C', minElo: 1200, maxElo: 1299, ringClass: 'ring-emerald-300', badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-300', progressClass: 'bg-emerald-400' },
+  { name: 'High Tier C', minElo: 1300, maxElo: 1399, ringClass: 'ring-emerald-500', badgeClass: 'bg-emerald-100 text-emerald-800 border-emerald-500', progressClass: 'bg-emerald-600' },
+  { name: 'Low Tier B', minElo: 1400, maxElo: 1499, ringClass: 'ring-blue-300', badgeClass: 'bg-blue-50 text-blue-700 border-blue-300', progressClass: 'bg-blue-400' },
+  { name: 'High Tier B', minElo: 1500, maxElo: 1599, ringClass: 'ring-blue-500', badgeClass: 'bg-blue-100 text-blue-800 border-blue-500', progressClass: 'bg-blue-600' },
+  { name: 'Low Tier A', minElo: 1600, maxElo: 1699, ringClass: 'ring-rose-300', badgeClass: 'bg-rose-50 text-rose-700 border-rose-300', progressClass: 'bg-rose-400' },
+  { name: 'High Tier A', minElo: 1700, maxElo: 1799, ringClass: 'ring-rose-500', badgeClass: 'bg-rose-100 text-rose-800 border-rose-500', progressClass: 'bg-rose-600' },
+  { name: 'Tier S', minElo: 1800, maxElo: null, ringClass: 'ring-amber-400', badgeClass: 'bg-amber-50 text-amber-800 border-amber-400', progressClass: 'bg-amber-500' },
+];
+
+const SPORT_TIERS: Record<string, TierDefinition[]> = {
+  pickleball: [
+    { name: 'Beginner', minElo: 0, maxElo: 1499, ringClass: 'ring-slate-400', badgeClass: 'bg-slate-50 text-slate-600 border-slate-300', progressClass: 'bg-slate-400' },
+    { name: 'Intermediate', minElo: 1500, maxElo: 1999, ringClass: 'ring-blue-500', badgeClass: 'bg-blue-50 text-blue-700 border-blue-300', progressClass: 'bg-blue-500' },
+    { name: 'Advanced', minElo: 2000, maxElo: 2499, ringClass: 'ring-emerald-500', badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-300', progressClass: 'bg-emerald-500' },
+    { name: 'Pro', minElo: 2500, maxElo: 4000, ringClass: 'ring-amber-400', badgeClass: 'bg-amber-50 text-amber-800 border-amber-400', progressClass: 'bg-amber-500' },
+  ],
+  tennis: [
+    { name: 'NTRP 2.0-3.0 (Beginner)', minElo: 0, maxElo: 1499, ringClass: 'ring-slate-400', badgeClass: 'bg-slate-50 text-slate-600 border-slate-300', progressClass: 'bg-slate-400' },
+    { name: 'NTRP 3.5-4.0 (Intermediate)', minElo: 1500, maxElo: 1999, ringClass: 'ring-blue-500', badgeClass: 'bg-blue-50 text-blue-700 border-blue-300', progressClass: 'bg-blue-500' },
+    { name: 'NTRP 4.5+ (Advanced)', minElo: 2000, maxElo: 2500, ringClass: 'ring-emerald-500', badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-300', progressClass: 'bg-emerald-500' },
+  ],
+};
+
+const normalize = (value?: string | null): string => value?.trim().toLowerCase() || '';
+
+const getSportKey = (categoryName?: string | null): string | null => {
+  const category = normalize(categoryName);
+  if (category.includes('pickle')) return 'pickleball';
+  if (category.includes('tennis') || category.includes('quần vợt')) return 'tennis';
+  return null;
+};
+
+const matchesTierName = (tier: TierDefinition, tierName: string): boolean => {
+  const normalizedTier = normalize(tier.name);
+  return tierName === normalizedTier || tierName.includes(normalizedTier);
+};
+
+export function getRankStyle(
+  elo: number | null | undefined,
+  tierName?: string | null,
+  categoryName?: string | null,
+): RankStyle {
+  const points = typeof elo === 'number' && Number.isFinite(elo) ? elo : 0;
+  const sportKey = getSportKey(categoryName);
+  const sportTiers = sportKey ? SPORT_TIERS[sportKey] : null;
+  const allTiers = sportTiers ?? STANDARD_TIERS;
+  const normalizedTierName = normalize(tierName);
+  const namedTier = normalizedTierName
+    ? allTiers.find((tier) => matchesTierName(tier, normalizedTierName))
+      ?? STANDARD_TIERS.find((tier) => matchesTierName(tier, normalizedTierName))
+      ?? Object.values(SPORT_TIERS).flat().find((tier) => matchesTierName(tier, normalizedTierName))
+    : undefined;
+  if (namedTier) return namedTier;
+
+  const fallback = [...allTiers].reverse().find((tier) => points >= tier.minElo) ?? allTiers[0];
+  // Preserve a future/custom backend tier label while using the closest
+  // ELO-based visual palette until that tier receives an explicit style.
+  return tierName?.trim() ? { ...fallback, name: tierName.trim() } : fallback;
+}
+
+/** Standard progress metadata remains available to legacy ELO progress cards. */
+export function getStandardRankStyleByIndex(index: number): RankStyle {
+  const threshold = TIER_THRESHOLDS[index] ?? TIER_THRESHOLDS[0];
+  return getRankStyle(threshold.minElo, threshold.name);
+}
+
+export function getStandardRankStyles(): RankStyle[] {
+  return TIER_THRESHOLDS.map((_, index) => getStandardRankStyleByIndex(index));
+}

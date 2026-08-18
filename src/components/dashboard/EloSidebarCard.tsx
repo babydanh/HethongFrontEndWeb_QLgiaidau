@@ -4,6 +4,7 @@ import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { PlayerRanking } from '@/features/rankings/api';
 import { getEloProgressInfo } from '@/features/rankings/elo-display';
+import { getRankStyle } from '@/utils/rank-style';
 
 const ELO_PER_STREAK_WIN = 15;
 
@@ -18,15 +19,6 @@ interface Props {
   sportOptions?: Array<{ id: string; name: string }>;
   selectedSportId?: string;
   onSportChange?: (categoryId: string) => void;
-}
-
-function getTierColor(name: string): string {
-  const n = name.trim().toLowerCase();
-  if (n.includes('bán chuyên') || n.includes('pro')) return 'text-blue-600 border-blue-200 bg-blue-50';
-  if (n.includes('vàng') || n.includes('gold')) return 'text-yellow-700 border-yellow-200 bg-yellow-50';
-  if (n.includes('bạc') || n.includes('silver')) return 'text-slate-600 border-slate-300 bg-slate-100';
-  if (n.includes('đồng') || n.includes('bronze')) return 'text-amber-700 border-amber-200 bg-amber-50';
-  return 'text-slate-500 border-slate-200 bg-slate-50';
 }
 
 export default function EloSidebarCard({
@@ -46,7 +38,7 @@ export default function EloSidebarCard({
   const recentDelta = streak * ELO_PER_STREAK_WIN;
   const TrendIcon = recentDelta > 0 ? TrendingUp : recentDelta < 0 ? TrendingDown : Minus;
   const trendColor = recentDelta > 0 ? 'text-emerald-600' : recentDelta < 0 ? 'text-rose-500' : 'text-slate-400';
-  const tierColor = getTierColor(tierName);
+  const tierColor = getRankStyle(eloPoints, tierName, activeRank?.categoryName).badgeClass;
   const tierBorder = tierColor.split(' ').find((token) => token.startsWith('border-')) || 'border-slate-200';
   const hasRank = matchesPlayed > 0;
   const progress = getEloProgressInfo(eloPoints);

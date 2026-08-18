@@ -507,7 +507,6 @@ export const tournamentsApi = {
     name: string;
     sport: 'badminton' | 'tennis' | 'pickleball' | 'table_tennis' | 'football';
     communityId?: string;
-    tournamentType?: 'CLUB' | 'PUBLIC';
     visibility?: 'PRIVATE' | 'PUBLIC';
     bannerUrl?: string;
     logoUrl?: string;
@@ -545,10 +544,14 @@ export const tournamentsApi = {
     recurringDaysOfWeek?: number[];
     recurringTimeOfDay?: string;
     recurringAdvanceDays?: number;
-  }) => api.post<ApiResponse<{ id: string; name: string; status: string; inviteCode?: string; joinUrl?: string; qrPayload?: string }>>(
-    '/tournaments/lite',
-    data,
-  ).then(res => res.data),
+  }) => {
+    // Lite API derives the scope from communityId (PUBLIC when standalone,
+    // CLUB when communityId is present), so no tournamentType is sent.
+    return api.post<ApiResponse<{ id: string; name: string; status: string; inviteCode?: string; joinUrl?: string; qrPayload?: string }>>(
+      '/tournaments/lite',
+      data,
+    ).then(res => res.data);
+  },
 
   getLiteParticipants: (id: string) =>
     api.get<ApiResponse<LiteParticipant[]>>(`/tournaments/lite/${id}/participants`),

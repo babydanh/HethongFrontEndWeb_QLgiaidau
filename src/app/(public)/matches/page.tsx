@@ -17,6 +17,7 @@ import { BRAND } from '@/constants/brand';
 interface EnrichedTournament {
   id: string;
   name: string;
+  status?: string;
   createdBy?: string;
   sportRules?: SportRulesEnvelope | null;
   categoryName?: string | null;
@@ -425,6 +426,8 @@ export default function MatchesListPage() {
         const cursor = cursorByPageRef.current[page] ?? null;
         const res = await matchesApi.getMatches({
           limit: 100,
+          publicOnly: true,
+          isPublicOnly: true,
           ...(cursor ? { cursor } : {}),
           search: searchTerm || undefined,
           categoryId: selectedCategoryId || undefined,
@@ -531,6 +534,10 @@ export default function MatchesListPage() {
     }
 
     return matches.filter(match => {
+      // Bỏ qua giải đã bị hủy hoặc bản nháp
+      if (match.tournament?.status === 'CANCELLED' || match.tournament?.status === 'DRAFT' || match.tournament?.status === 'PENDING_DELETE') {
+        return false;
+      }
       // Bỏ qua trận đấu có cờ isBye (trận đấu bye/miễn đấu/vô thẳng)
       if (match.isBye) {
         return false;

@@ -152,6 +152,13 @@ small,
   border-radius: 0.75rem;
   border: 1px solid var(--color-border);
   box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+  cursor: zoom-in;
+  transition: transform 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease;
+}
+
+.editorjs-content-view img:hover {
+  opacity: 0.96;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
 }
 
 .editorjs-content-view figcaption {

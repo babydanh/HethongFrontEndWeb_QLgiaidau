@@ -30,7 +30,7 @@
 ,    "title": "Danh sách trận đấu"
 ,    "loading": "Đang tải danh sách trận đấu..."
 ,    "empty": "Không tìm thấy trận đấu nào phù hợp."
-  },
+  , "bracketGroupStageKnockout": "Vòng bảng + Playoffs", "emptyHint": "Vui lòng thay đổi bộ lọc để thử lại.", "venueLabel": "Sân", "venuePending": "Chờ xếp sân", "cheerLabel": "Cổ vũ", "cheerFailed": "Không thể gửi cổ vũ, vui lòng thử lại."},
   "LocaleSwitcher": {
     "language": "Ngôn ngữ",
     "vietnamese": "Tiếng Việt",
@@ -915,4 +915,29 @@
     "inviteOnlyCta": "Chỉ dành cho người được mời",
     "inviteOnlyBadge": "Chỉ dành cho người được mời"
   }
-}
+,
+  "TournamentDisplay": {
+    "maleGender": "Nam",
+    "femaleGender": "Nữ",
+    "mixedGender": "Nam Nữ",
+    "singlesFormat": "Đơn {gender}",
+    "doublesFormat": "Đôi {gender}",
+    "mixedDoublesFormat": "Đôi Nam Nữ",
+    "unknownFormat": "Chưa rõ hình thức",
+    "bracketSingleElimination": "Loại trực tiếp",
+    "bracketDoubleElimination": "Nhánh thắng/thua",
+    "bracketRoundRobin": "Vòng tròn tính điểm",
+    "bracketGroupStageKnockout": "Vòng bảng + loại trực tiếp",
+    "unknownBracket": "Chưa cấu hình bracket",
+    "participantComplete": "Đã duyệt",
+    "participantPendingPartner": "Chờ đồng đội",
+    "participantPendingApproval": "Chờ duyệt",
+    "participantWaitlisted": "Hàng chờ",
+    "participantRejected": "Đã từ chối",
+    "participantWithdrawn": "Đã rút",
+    "participantKicked": "Đã loại",
+    "participantDisqualified": "Bị truất quyền",
+    "participantNoShow": "Vắng mặt",
+    "participantReplaced": "Đã thay thế",
+    "unknownParticipant": "Chưa rõ"
+  }}

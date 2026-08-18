@@ -1,7 +1,9 @@
 'use client';
 
+import { useState, useCallback } from 'react';
 import { Tournament } from '@/features/tournaments/api';
 import { useTranslations } from 'next-intl';
+import ImageLightboxModal from '@/components/common/ImageLightboxModal';
 
 interface Props {
   tournament: Tournament;
@@ -12,9 +14,32 @@ export default function OverviewTab({ tournament }: Props) {
   const description = tournament.description || tournament.parent?.description;
   const prizeDescription = tournament.prizeDescription;
 
+  const [lightboxImages, setLightboxImages] = useState<string[]>([]);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+
+  const handleContentClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    if (target.tagName === 'IMG') {
+      const img = target as HTMLImageElement;
+      const src = img.getAttribute('src');
+      if (src) {
+        const container = e.currentTarget;
+        const allImgs = Array.from(container.querySelectorAll('img'))
+          .map((i) => i.getAttribute('src') || i.src)
+          .filter(Boolean);
+        const clickedIdx = allImgs.indexOf(src);
+        setLightboxImages(allImgs.length > 0 ? allImgs : [src]);
+        setLightboxIndex(clickedIdx >= 0 ? clickedIdx : 0);
+      }
+    }
+  }, []);
+
   return (
     <div className="space-y-8">
-      <section className="prose prose-slate max-w-none text-slate-800 text-base leading-relaxed editorjs-content-view">
+      <section
+        className="prose prose-slate max-w-none text-slate-800 text-base leading-relaxed editorjs-content-view"
+        onClick={handleContentClick}
+      >
         {description ? (
           <div dangerouslySetInnerHTML={{ __html: description }} />
         ) : (
@@ -28,7 +53,10 @@ export default function OverviewTab({ tournament }: Props) {
         <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-900">
           {translate("prizeTitle")}
         </h3>
-        <div className="prose prose-slate max-w-none text-slate-800 text-base leading-relaxed editorjs-content-view">
+        <div
+          className="prose prose-slate max-w-none text-slate-800 text-base leading-relaxed editorjs-content-view"
+          onClick={handleContentClick}
+        >
           {prizeDescription ? (
             <div dangerouslySetInnerHTML={{ __html: prizeDescription }} />
           ) : (
@@ -38,6 +66,16 @@ export default function OverviewTab({ tournament }: Props) {
           )}
         </div>
       </section>
+
+      {/* Image Lightbox Preview */}
+      {lightboxIndex !== null && lightboxImages.length > 0 && (
+        <ImageLightboxModal
+          images={lightboxImages}
+          initialIndex={lightboxIndex}
+          isOpen={lightboxIndex !== null}
+          onClose={() => setLightboxIndex(null)}
+        />
+      )}
     </div>
   );
 }

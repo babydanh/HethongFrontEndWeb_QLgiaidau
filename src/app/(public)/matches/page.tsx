@@ -186,12 +186,12 @@ const renderTeamAvatars = (part: EnrichedParticipant | null | undefined, default
   );
 };
 
-const getBracketTypeLabel = (type?: string) => {
+const getBracketTypeLabel = (type?: string, labels?: { singleElimination?: string; doubleElimination?: string; roundRobin?: string; groupStageKnockout?: string }) => {
   if (!type) return '';
-  if (type === 'SINGLE_ELIMINATION') return 'LOẠI TRỰC TIẾP';
-  if (type === 'DOUBLE_ELIMINATION') return 'NHÁNH THẮNG THUA';
-  if (type === 'ROUND_ROBIN') return 'VÒNG TRÒN';
-  if (type === 'GROUP_STAGE_KNOCKOUT') return 'VÒNG BẢNG + PLAYOFFS';
+  if (type === 'SINGLE_ELIMINATION') return labels?.singleElimination ?? 'LOẠI TRỰC TIẾP';
+  if (type === 'DOUBLE_ELIMINATION') return labels?.doubleElimination ?? 'NHÁNH THẮNG THUA';
+  if (type === 'ROUND_ROBIN') return labels?.roundRobin ?? 'VÒNG TRÒN';
+  if (type === 'GROUP_STAGE_KNOCKOUT') return labels?.groupStageKnockout ?? 'VÒNG BẢNG + PLAYOFFS';
   return type;
 };
 
@@ -1070,7 +1070,7 @@ export default function MatchesListPage() {
         <div className="flex flex-col justify-center items-center h-64 text-slate-400 bg-white border border-slate-200 rounded-lg p-6 text-center">
           <Trophy className="w-12 h-12 text-slate-300 mb-2 stroke-[1.5]" />
           <p className="text-sm font-bold text-slate-500">{translate("empty")}</p>
-          <p className="text-xs text-slate-400 mt-1">Vui lòng thay đổi bộ lọc để thử lại.</p>
+          <p className="text-xs text-slate-400 mt-1">{translate('emptyHint')}</p>
         </div>
       ) : (
         <div className="flex flex-col gap-6">
@@ -1110,7 +1110,7 @@ export default function MatchesListPage() {
                           const tConfig = firstMatch?.tournament as Record<string, unknown> | undefined;
                           const tConfigObj = tConfig?.tournamentConfig as Record<string, unknown> | undefined;
                           const bType = tConfig?.bracketType as string || tConfigObj?.bracketType as string || firstMatch?.stage?.type;
-                          const label = getBracketTypeLabel(bType);
+                          const label = getBracketTypeLabel(bType, { singleElimination: translate('bracketSingleElimination'), doubleElimination: translate('bracketDoubleElimination'), roundRobin: translate('bracketRoundRobin'), groupStageKnockout: translate('bracketGroupStageKnockout') });
                           return label ? ` • ${label}` : '';
                         })()}
                       </span>
@@ -1136,7 +1136,7 @@ export default function MatchesListPage() {
                     const isRoundRobin = match.stage?.type === 'ROUND_ROBIN';
 
                     const matchTypeLabel = isGroupStage
-                      ? 'Vòng bảng'
+                      ? translate('bracketGroupStageKnockout')
                       : isDoubleElim
                       ? translate('bracketDoubleElimination')
                       : isSingleElim
@@ -1378,8 +1378,8 @@ export default function MatchesListPage() {
                               <span className="text-slate-200">|</span>
                               <span>
                                  {match.courtName
-                                   ? `Sân: ${match.courtName}`
-                                   : (match.tournament?.venueName ? `Sân: ${match.tournament.venueName}` : 'Chờ xếp sân')}
+                                   ? `${translate('venueLabel')}: ${match.courtName}`
+                                   : (match.tournament?.venueName ? `${translate('venueLabel')}: ${match.tournament.venueName}` : translate('venuePending'))}
                               </span>
                             </div>
                           </div>
@@ -1407,15 +1407,15 @@ export default function MatchesListPage() {
                                   ...prev,
                                   [match.id]: Math.max(0, (prev[match.id] ?? 1) - 1),
                                 }));
-                                toast.error('Không thể gửi cổ vũ, vui lòng thử lại.');
+                                toast.error(translate('cheerFailed'));
                               }
                             }}
-                            title={`Cổ vũ (${cheerCounts[match.id] || 0})`}
+                            title={`${translate('cheerLabel')} (${cheerCounts[match.id] || 0})`}
                             className="flex items-center justify-center gap-1.5 py-1.5 px-3 hover:bg-rose-50/70 hover:text-rose-600 text-slate-600 transition-colors active:scale-[0.98] cursor-pointer group/cheer"
                           >
                             <Heart className="w-4 h-4 text-rose-500 fill-rose-500/15 group-hover/cheer:scale-110 transition-transform" />
                             <span className="text-[11px] font-bold text-slate-600 group-hover/cheer:text-rose-600">
-                              Cổ vũ <span className="text-slate-500 group-hover/cheer:text-rose-600">({cheerCounts[match.id] || 0})</span>
+                              {translate('cheerLabel')} <span className="text-slate-500 group-hover/cheer:text-rose-600">({cheerCounts[match.id] || 0})</span>
                             </span>
                           </button>
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { MoreHorizontal, Search, ShieldAlert, Users } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -55,6 +56,20 @@ export function OpsParticipants({
   activeParticipantActionId,
   onKickParticipant,
 }: OpsParticipantsProps) {
+  const translate = useTranslations('TournamentDisplay');
+  const participantStatusLabels = {
+    participantComplete: translate('participantComplete'),
+    participantPendingPartner: translate('participantPendingPartner'),
+    participantPendingApproval: translate('participantPendingApproval'),
+    participantWaitlisted: translate('participantWaitlisted'),
+    participantRejected: translate('participantRejected'),
+    participantWithdrawn: translate('participantWithdrawn'),
+    participantKicked: translate('participantKicked'),
+    participantDisqualified: translate('participantDisqualified'),
+    participantNoShow: translate('participantNoShow'),
+    participantReplaced: translate('participantReplaced'),
+    unknownParticipant: translate('unknownParticipant'),
+  };
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<ParticipantFilter>('ALL');
   const [kickDraft, setKickDraft] = useState<KickDraft | null>(null);
@@ -215,7 +230,7 @@ export function OpsParticipants({
                         </td>
                       <td className="py-4 pr-4">
                         <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-bold ${getParticipantStatusClassName(participant.teamStatus)}`}>
-                          {getParticipantStatusLabel(participant.teamStatus)}
+                          {getParticipantStatusLabel(participant.teamStatus, participantStatusLabels)}
                         </span>
                       </td>
                       <td className="py-4 pr-4">

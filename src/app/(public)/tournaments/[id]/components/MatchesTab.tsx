@@ -7,7 +7,7 @@ import { matchesApi } from '@/features/matches/api';
 import { socketClient } from '@/lib/socket';
 import { useCursorPagination } from '@/hooks/useCursorPagination';
 import { InfiniteScrollTrigger } from '@/components/ui/infinite-scroll-trigger';
-import { Calendar, Play, Trophy, MapPin, Info, LayoutGrid, Search } from 'lucide-react';
+import { Calendar, Play, Trophy, MapPin, Info, Search } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { formatDateTime } from '@/utils/format';
@@ -72,6 +72,8 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
   const [hasDetectedRound, setHasDetectedRound] = useState(false);
   useEffect(() => {
     if (matches.length > 0 && !hasDetectedRound) {
+      // This effect intentionally initializes the first visible round from fetched matches.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setHasDetectedRound(true);
       const ongoingMatch = matches.find(m => m.status === 'ONGOING');
       if (ongoingMatch && ongoingMatch.roundNumber) {
@@ -126,30 +128,30 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
 
   // Translate Stage Name helper
   const getStageVietnameseName = (rawName?: string | null) => {
-    if (!rawName) return 'Vòng đấu';
+    if (!rawName) return translate('stageDefault');
     const map: Record<string, string> = {
-      'Elimination Stage': 'Vòng loại trực tiếp',
-      'Knockout Stage': 'Vòng loại trực tiếp',
-      'Group Stage': 'Vòng bảng',
-      'Round Robin': 'Vòng tròn tính điểm',
-      'Vong tron tinh diem': 'Vòng tròn tính điểm',
-      'Vong loai truc tiep': 'Vòng loại trực tiếp',
-      'Vong bang': 'Vòng bảng',
-      'Vong Playoffs': 'Vòng Playoffs',
-      'Nhanh thang': 'Nhánh thắng',
-      'Nhanh thua': 'Nhánh thua',
-      'Final Stage': 'Vòng chung kết',
-      'Qualification Stage': 'Vòng loại',
-      'Preliminary Stage': 'Vòng sơ loại',
-      'Main Stage': 'Vòng chính',
-      'Quarter Finals': 'Tứ kết',
-      'Quarterfinals': 'Tứ kết',
-      'Semi Finals': 'Bán kết',
-      'Semifinals': 'Bán kết',
-      'Final': 'Chung kết',
-      'Grand Final': 'Chung kết tổng',
-      'Winners Bracket': 'Nhánh thắng',
-      'Losers Bracket': 'Nhánh thua',
+      'Elimination Stage': translate('stageElimination'),
+      'Knockout Stage': translate('stageElimination'),
+      'Group Stage': translate('stageGroup'),
+      'Round Robin': translate('stageRoundRobin'),
+      'Vong tron tinh diem': translate('stageRoundRobin'),
+      'Vong loai truc tiep': translate('stageElimination'),
+      'Vong bang': translate('stageGroup'),
+      'Vong Playoffs': translate('stagePlayoffs'),
+      'Nhanh thang': translate('stageWinners'),
+      'Nhanh thua': translate('stageLosers'),
+      'Final Stage': translate('stageFinal'),
+      'Qualification Stage': translate('stageQualification'),
+      'Preliminary Stage': translate('stagePreliminary'),
+      'Main Stage': translate('stageMain'),
+      'Quarter Finals': translate('stageQuarterfinal'),
+      'Quarterfinals': translate('stageQuarterfinal'),
+      'Semi Finals': translate('stageSemifinal'),
+      'Semifinals': translate('stageSemifinal'),
+      'Final': translate('stageFinal'),
+      'Grand Final': translate('stageGrandFinal'),
+      'Winners Bracket': translate('stageWinners'),
+      'Losers Bracket': translate('stageLosers'),
     };
     return map[rawName] || rawName;
   };

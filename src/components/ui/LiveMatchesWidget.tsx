@@ -144,7 +144,7 @@ export default function LiveMatchesWidget({ limit = 5, showAllLink = true }: Pro
               {/* Match context */}
               <div className="flex flex-col items-center md:items-start text-center md:text-left md:w-1/3">
                 <span className="text-xs font-medium text-blue-400 font-sans line-clamp-1">
-                  {roundLabel} {match.courtName ? `— Sân: ${match.courtName}` : ''}
+                  {roundLabel} {match.courtName ? `${translate('courtLabel')} ${match.courtName}` : ''}
                 </span>
                 <span className="text-xs text-slate-400 font-medium line-clamp-1">
                   {match.group?.stage?.name || match.group?.name || translate('matchLabel')}
@@ -156,7 +156,7 @@ export default function LiveMatchesWidget({ limit = 5, showAllLink = true }: Pro
                 {/* Team 1 */}
                 <div className="flex-1 text-right max-w-[180px]">
                   <span className="text-sm font-semibold text-white tracking-wide block truncate group-hover:text-blue-300 transition-colors">
-                    {match.participant1?.teamName || 'Chưa xác định'}
+                    {match.participant1?.teamName || translate('unknown')}
                   </span>
                   {match.participant1?.seed && (
                     <span className="text-[10px] bg-slate-800 text-slate-400 border border-slate-700 px-1 py-0.2 rounded font-medium ml-1">
@@ -191,7 +191,7 @@ export default function LiveMatchesWidget({ limit = 5, showAllLink = true }: Pro
                 {/* Team 2 */}
                 <div className="flex-1 text-left max-w-[180px]">
                   <span className="text-sm font-semibold text-white tracking-wide block truncate group-hover:text-blue-300 transition-colors">
-                    {match.participant2?.teamName || 'Chưa xác định'}
+                    {match.participant2?.teamName || translate('unknown')}
                   </span>
                   {match.participant2?.seed && (
                     <span className="text-[10px] bg-slate-800 text-slate-400 border border-slate-700 px-1 py-0.2 rounded font-medium ml-1">

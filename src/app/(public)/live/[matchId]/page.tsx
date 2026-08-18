@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { startTransition, useEffect, useRef, useState, use } from 'react';
 import { BRAND } from '@/constants/brand';
 import { matchesApi, Match, MatchComment } from '@/features/matches/api';
@@ -117,6 +118,8 @@ interface Props {
 }
 
 export default function LiveMatchPage({ params }: Props) {
+  const translate = useTranslations('Common');
+  const matchTranslate = useTranslations('Match');
   const router = useRouter();
   const resolvedParams = use(params);
   const matchId = resolvedParams.matchId;
@@ -494,7 +497,7 @@ export default function LiveMatchPage({ params }: Props) {
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-slate-500 font-medium">Đang kết nối live scoreboard...</p>
+          <p className="text-slate-500 font-medium">{translate("liveScoreboardConnecting")}</p>
         </div>
       </div>
     );
@@ -505,7 +508,7 @@ export default function LiveMatchPage({ params }: Props) {
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center bg-white p-8 rounded-xl shadow-sm border border-slate-100 max-w-md">
           <img src={BRAND.assets.logoIcon} alt={`${BRAND.name} Logo`} className="w-20 h-20 object-contain mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-slate-900 mb-2">{error || 'Không tìm thấy trận đấu'}</h2>
+          <h2 className="text-xl font-bold text-slate-900 mb-2">{error || translate('liveMatchNotFound')}</h2>
           <p className="text-slate-500 text-sm mb-6">Trận đấu này có thể không tồn tại hoặc đã bị hủy.</p>
           <Link href="/tournaments" className="inline-flex items-center justify-center px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-all shadow-sm">
             Quay lại giải đấu
@@ -1340,12 +1343,12 @@ export default function LiveMatchPage({ params }: Props) {
   const handlePostComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) {
-      toast.error('Bạn cần đăng nhập để gửi bình luận.');
+      toast.error(translate('loginToComment'));
       router.push('/login');
       return;
     }
     if (!normalizedCommentText) {
-      toast.error('Bình luận đang trống. Vui lòng nhập nội dung trước khi gửi.');
+      toast.error(translate('emptyComment'));
       return;
     }
     if (isCommentSubmitting) return;
@@ -1363,10 +1366,10 @@ export default function LiveMatchPage({ params }: Props) {
         };
         setComments(prev => [enrichedComment, ...prev]);
       }
-      toast.success('Đã gửi bình luận vào phòng thảo luận trận đấu.', { id: `comment-${matchId}` });
+      toast.success(translate('postPublished'), { id: `comment-${matchId}` });
     } catch (err: unknown) {
       console.error(err);
-      toast.error(getErrorMessage(err, 'Không thể gửi bình luận vào trận đấu này.'));
+      toast.error(getErrorMessage(err, translate('commentPostFailed')));
     } finally {
       setIsCommentSubmitting(false);
     }
@@ -1438,7 +1441,7 @@ export default function LiveMatchPage({ params }: Props) {
               }>
                 <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0" />
                 <span className="truncate">
-                  {match.courtName ? `Sân: ${match.courtName}` : `Sân: ${match.tournament?.venueName}`}
+                  {match.courtName ? `${matchTranslate('courtLabel')} ${match.courtName}` : `${matchTranslate('courtLabel')} ${match.tournament?.venueName}`}
                   {(match.courtAddress || match.tournament?.venueAddress) ? ` (${match.courtAddress || match.tournament?.venueAddress})` : ''}
                 </span>
               </span>
@@ -1456,7 +1459,7 @@ export default function LiveMatchPage({ params }: Props) {
             <ReportViolationButton
               targetType="MATCH"
               targetId={match.id}
-              targetLabel={`Trận vòng ${match.roundNumber}`}
+              targetLabel={translate('roundMatchShareLabel', { round: match.roundNumber })}
               className="h-9 text-xs px-3.5 rounded-lg shadow-xs"
             />
             <Link
@@ -2053,8 +2056,8 @@ export default function LiveMatchPage({ params }: Props) {
                   <MapPin className="w-4 h-4 text-slate-400 shrink-0" />
                   <span className="truncate">
                     {match.courtName
-                      ? `Sân: ${match.courtName}`
-                      : (match.tournament?.venueName ? `Sân: ${match.tournament.venueName}` : 'Sân trung tâm')}
+                      ? `${matchTranslate('courtLabel')} ${match.courtName}`
+                      : (match.tournament?.venueName ? `${matchTranslate('courtLabel')} ${match.tournament.venueName}` : translate('defaultCourt'))}
                     {(match.courtAddress || match.tournament?.venueAddress) ? ` (${match.courtAddress || match.tournament?.venueAddress})` : ''}
                   </span>
                 </div>
@@ -2197,7 +2200,7 @@ export default function LiveMatchPage({ params }: Props) {
                 })}
                 {comments.length === 0 && (
                   <div className="text-center py-8 text-slate-400 text-sm my-auto">
-                    Chưa có thảo luận nào. Hãy gửi bình luận đầu tiên!
+                    {translate('communityNoPosts')}
                   </div>
                 )}
                 <div ref={commentsEndRef} />
@@ -2209,12 +2212,12 @@ export default function LiveMatchPage({ params }: Props) {
                   <MessageSquare className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
                   <input
                     type="text"
-                    placeholder={user ? `Bình luận dưới tên ${user.fullName || user.email}...` : 'Đăng nhập để gửi bình luận...'}
+                    placeholder={user ? translate('commentAsUser', { name: user.fullName || user.email }) : translate('loginToComment')}
                     value={commentText}
                     onChange={(e) => setCommentText(e.target.value)}
                     onFocus={() => {
                       if (!user) {
-                        toast.error('Vui lòng đăng nhập để bình luận!');
+                        toast.error(translate('loginToComment'));
                       }
                     }}
                     disabled={isCommentSubmitting || isCommentDisabled()}
@@ -2280,7 +2283,7 @@ export default function LiveMatchPage({ params }: Props) {
           isOpen={isShareModalOpen}
           onClose={() => setIsShareModalOpen(false)}
           shareUrl={typeof window !== 'undefined' ? window.location.href : ''}
-          title={`Thảo luận & Theo dõi tỉ số trực tiếp: ${team1Name} vs ${team2Name}`}
+          title={translate("liveDiscussionTitle", { team1: team1Name, team2: team2Name })}
         />
 
       </div>

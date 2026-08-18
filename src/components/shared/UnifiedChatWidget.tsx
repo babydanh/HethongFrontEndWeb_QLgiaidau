@@ -514,7 +514,7 @@ export default function UnifiedChatWidget() {
         if (roomData?.id) {
           const clubRoom: InboxRoom = {
             id: roomData.id,
-            name: roomData.name || roomData.clubName || 'Phòng Chat CLB',
+            name: roomData.name || roomData.clubName || translate('clubChatRoom'),
             type: 'CLUB',
             communityId,
             clubName: roomData.clubName || roomData.name,
@@ -575,7 +575,7 @@ export default function UnifiedChatWidget() {
                   id: message.id,
                   senderId: message.senderId,
                   senderName: message.senderName || translate('member'),
-                  content: message.messageText || (message.attachmentsUrls?.length ? '🖼️ [Hình ảnh]' : ''),
+                  content: message.messageText || (message.attachmentsUrls?.length ? translate('imageAttachment') : ''),
                   createdAt: message.createdAt,
                 },
                 updatedAt: message.createdAt,
@@ -902,7 +902,7 @@ export default function UnifiedChatWidget() {
   };
 
   const handleRevokeMessage = async (messageId: string) => {
-    const confirmed = window.confirm('Bạn có chắc muốn thu hồi tin nhắn này với mọi người?');
+    const confirmed = window.confirm(translate('revokeMessageConfirm'));
     if (!confirmed) return;
     try {
       await inboxApi.revokeMessage(messageId);
@@ -913,9 +913,9 @@ export default function UnifiedChatWidget() {
             : m,
         ),
       );
-      toast.success('Đã thu hồi tin nhắn.');
+      toast.success(translate('messageRevoked'));
     } catch (err) {
-      toast.error(getErrorMessage(err, 'Không thể thu hồi tin nhắn.'));
+      toast.error(getErrorMessage(err, translate('revokeMessageFailed')));
     }
   };
 
@@ -1171,7 +1171,7 @@ export default function UnifiedChatWidget() {
                   id: message.id,
                   senderId: message.senderId,
                   senderName: message.senderName || (user?.fullName || 'Tôi'),
-                  content: message.messageText || (attachmentsUrls.length ? '🖼️ [Hình ảnh]' : ''),
+                  content: message.messageText || (attachmentsUrls.length ? translate('imageAttachment') : ''),
                   createdAt: message.createdAt,
                 },
                 updatedAt: message.createdAt,
@@ -1488,7 +1488,7 @@ export default function UnifiedChatWidget() {
                         )}
                       </div>
                       <small className="block truncate text-[10px] text-slate-500 mt-0.5">
-                        {room.lastMessage?.content || (room.lastMessage ? '🖼️ [Hình ảnh]' : 'Chưa có tin nhắn')}
+                        {room.lastMessage?.content || (room.lastMessage ? translate('imageAttachment') : translate('noMessages'))}
                       </small>
                     </span>
                   </button>
@@ -1755,7 +1755,7 @@ export default function UnifiedChatWidget() {
                       setSearchQuery('');
                     }
                   }}
-                  placeholder="Tìm kiếm trong đoạn chat..."
+                  placeholder={translate('chatSearchPlaceholder')}
                   className="min-w-0 flex-1 bg-transparent text-xs text-slate-800 outline-none placeholder:text-slate-400"
                   autoFocus
                 />
@@ -1821,7 +1821,7 @@ export default function UnifiedChatWidget() {
                     {pinnedMessage.senderName || 'Thành viên'}:
                   </span>
                   <span className="text-amber-900/80 truncate flex-1">
-                    {pinnedMessage.messageText || (pinnedMessage.attachmentsUrls?.length ? '🖼️ [Hình ảnh]' : '')}
+                    {pinnedMessage.messageText || (pinnedMessage.attachmentsUrls?.length ? translate('imageAttachment') : '')}
                   </span>
                 </button>
                 <button

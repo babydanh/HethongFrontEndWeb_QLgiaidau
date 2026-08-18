@@ -336,7 +336,7 @@ export default function TournamentsListPage() {
         {/* Hàng bộ lọc chính */}
         <div className="flex flex-col sm:flex-row gap-4 items-end">
           <div className="flex-grow w-full">
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Tìm kiếm</label>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">{translate("searchLabel")}</label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
               <input
@@ -373,7 +373,7 @@ export default function TournamentsListPage() {
           </div>
 
           <div className="w-full sm:w-48 shrink-0">
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Trạng thái</label>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">{translate("statusLabel")}</label>
             <div className="relative">
               <select
                 value={selectedStatus}
@@ -411,7 +411,7 @@ export default function TournamentsListPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-slate-50 rounded-lg border border-slate-200 animate-in fade-in slide-in-from-top-2 duration-200">
             {/* Ô Lọc Nội dung thi đấu */}
             <div>
-              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Nội dung</label>
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">{translate("contentLabel")}</label>
               <div className="relative">
                 <select
                   value={selectedContent}
@@ -571,7 +571,7 @@ export default function TournamentsListPage() {
                     }
                   }}
                   className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-600 transition-colors p-1 cursor-pointer"
-                  title="Chọn ngày"
+                  title={translate("selectDateAria")}
                 >
                   📅
                 </button>
@@ -627,7 +627,7 @@ export default function TournamentsListPage() {
                     }
                   }}
                   className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-600 transition-colors p-1 cursor-pointer"
-                  title="Chọn ngày"
+                  title={translate("selectDateAria")}
                 >
                   📅
                 </button>

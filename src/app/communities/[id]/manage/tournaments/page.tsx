@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, use } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Input } from '@/components/ui/Input';
@@ -33,17 +34,18 @@ const mapCategoryToLiteSport = (cat?: { slug?: string; name?: string } | null): 
   return 'badminton';
 };
 
-const DAYS_OF_WEEK: { value: number; label: string; short: string }[] = [
-  { value: 1, label: 'Thứ 2', short: 'T2' },
-  { value: 2, label: 'Thứ 3', short: 'T3' },
-  { value: 3, label: 'Thứ 4', short: 'T4' },
-  { value: 4, label: 'Thứ 5', short: 'T5' },
-  { value: 5, label: 'Thứ 6', short: 'T6' },
-  { value: 6, label: 'Thứ 7', short: 'T7' },
-  { value: 0, label: 'Chủ Nhật', short: 'CN' },
+const DAYS_OF_WEEK: { value: number; key: string }[] = [
+  { value: 1, key: 'monday' },
+  { value: 2, key: 'tuesday' },
+  { value: 3, key: 'wednesday' },
+  { value: 4, key: 'thursday' },
+  { value: 5, key: 'friday' },
+  { value: 6, key: 'saturday' },
+  { value: 0, key: 'sunday' },
 ];
 
 export default function ClubTournamentsPage({ params }: { params: Promise<{ id: string }> }) {
+  const translate = useTranslations('Common');
   type CommunityTournamentMatchType = 'SINGLES' | 'DOUBLES' | 'MIXED_DOUBLES';
   const resolvedParams = use(params);
   const id = resolvedParams.id;
@@ -106,7 +108,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
         }
       }
     } catch (err) {
-      toast.error('Không thể tải thông tin giải đấu câu lạc bộ');
+      toast.error(translate('communityClubTournamentLoadFailed'));
     }
   };
 
@@ -266,7 +268,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
       case 'DRAFT':
         return <Badge className="bg-slate-100 text-slate-700">Nháp (Ẩn)</Badge>;
       case 'REGISTRATION_OPEN':
-        return <Badge className="bg-blue-50 text-blue-700 border-blue-200">Mở Đăng Ký</Badge>;
+        return <Badge className="bg-blue-50 text-blue-700 border-blue-200">{translate("communityOpenRegistrationBadge")}</Badge>;
       case 'REGISTRATION_CLOSED':
         return <Badge className="bg-amber-50 text-amber-700 border-amber-200">Đóng Đăng Ký</Badge>;
       case 'UPCOMING':
@@ -671,10 +673,10 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
                     <div className="flex flex-col">
                       <span className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
                         <RotateCw className={`w-4 h-4 ${liteIsRecurring ? 'text-emerald-600' : 'text-slate-500'}`} />
-                        Tự động tạo giải theo chu kỳ định kỳ
+                        {translate('recurringTitle')}
                       </span>
                       <span className="text-xs text-slate-500 mt-0.5">
-                        Tự động tạo giải mới và mở đăng ký theo lịch lặp lại
+                        {translate('recurringDescription')}
                       </span>
                     </div>
                     <button
@@ -704,10 +706,10 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
                             onChange={(e) => setLiteRecurringFrequency(e.target.value as typeof liteRecurringFrequency)}
                             className="border border-slate-300 rounded-lg px-2.5 py-1.5 bg-white text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-600"
                           >
-                            <option value="WEEKLY">Hằng tuần (Weekly)</option>
-                            <option value="BIWEEKLY">2 tuần một lần (Bi-weekly)</option>
-                            <option value="DAILY">Hằng ngày (Daily)</option>
-                            <option value="MONTHLY">Hằng tháng (Monthly)</option>
+                            <option value="WEEKLY">{translate('frequencyWeekly')}</option>
+                            <option value="BIWEEKLY">{translate('frequencyBiweekly')}</option>
+                            <option value="DAILY">{translate('frequencyDaily')}</option>
+                            <option value="MONTHLY">{translate('frequencyMonthly')}</option>
                           </select>
                         </div>
 
@@ -727,10 +729,10 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
                       {liteRecurringFrequency !== 'DAILY' && liteRecurringFrequency !== 'MONTHLY' && (
                         <div className="flex flex-col gap-1.5">
                           <label className="text-xs font-semibold text-slate-700">
-                            Các ngày trong tuần ({liteRecurringDaysOfWeek.length} ngày đã chọn)
+                            {translate('recurringWeekdaysLabel', { count: liteRecurringDaysOfWeek.length })}
                           </label>
                           <div className="flex flex-wrap gap-1.5">
-                            {DAYS_OF_WEEK.map(({ value, label }: { value: number; label: string }) => {
+                            {DAYS_OF_WEEK.map(({ value, key }: { value: number; key: string }) => {
                               const isSelected = liteRecurringDaysOfWeek.includes(value);
                               return (
                                 <button
@@ -752,7 +754,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
                                       : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
                                   }`}
                                 >
-                                  {label}
+                                  {translate(key)}
                                 </button>
                               );
                             })}
@@ -763,35 +765,35 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
                                             {/* Mở đăng ký trước bao nhiêu ngày */}
                       <div className="flex flex-col gap-1">
                         <label className="text-xs font-semibold text-slate-700">
-                          Thời điểm tự động tạo giải & mở đăng ký
+                          {translate('advanceDaysLabel')}
                         </label>
                         <select
                           value={liteRecurringAdvanceDays}
                           onChange={(e) => setLiteRecurringAdvanceDays(Number(e.target.value))}
                           className="border border-slate-300 rounded-lg px-2.5 py-1.5 bg-white text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-600 font-medium"
                         >
-                          <option value={0}>Tạo đúng ngày thi đấu (Cùng ngày)</option>
-                          <option value={1}>Tạo trước 1 ngày (Mở đăng ký trước 24h)</option>
-                          <option value={2}>Tạo trước 2 ngày (Mở đăng ký trước 48h)</option>
-                          <option value={3}>Tạo trước 3 ngày</option>
-                          <option value={7}>Tạo trước 1 tuần (Mở đăng ký trước 7 ngày)</option>
+                          <option value={0}>{translate('advanceSameDay')}</option>
+                          <option value={1}>{translate('advanceOneDay')}</option>
+                          <option value={2}>{translate('advanceTwoDays')}</option>
+                          <option value={3}>{translate('advanceThreeDays')}</option>
+                          <option value={7}>{translate('advanceOneWeek')}</option>
                         </select>
                       </div>
 
                       <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-xs text-emerald-900 leading-relaxed">
-                        🔄 <strong>Lịch trình tự động:</strong> Giải đấu sẽ tự động được tạo và mở đăng ký vào{' '}
+                        🔄 <strong>{translate('automaticScheduleLabel')}</strong> {translate('automaticScheduleDescription')}{' '}
                         <strong className="text-emerald-950 font-bold">{liteRecurringTimeOfDay}</strong>{' '}
                         {liteRecurringFrequency === 'DAILY'
-                          ? 'hằng ngày'
+                          ? translate('frequencyDailyShort')
                           : liteRecurringFrequency === 'MONTHLY'
                           ? `ngày ${liteStartDate ? new Date(liteStartDate).getDate() : 15} hàng tháng`
                           : `các ngày ${liteRecurringDaysOfWeek
-                              .map((d) => DAYS_OF_WEEK.find((item) => item.value === d)?.label)
+                              .map((d) => { const day = DAYS_OF_WEEK.find((item) => item.value === d); return day ? translate(day.key) : null; })
                               .filter(Boolean)
-                              .join(', ')} hằng ${liteRecurringFrequency === 'BIWEEKLY' ? '2 tuần' : 'tuần'}`}.
+                              .join(', ')} hằng ${liteRecurringFrequency === 'BIWEEKLY' ? translate('frequencyBiweeklyShort') : translate('frequencyWeeklyShort')}`}.
                         <br />
                         <span className="text-emerald-700 text-[11px] mt-1 inline-block">
-                          📢 Toàn bộ thành viên CLB sẽ nhận được thông báo & bài đăng bảng tin để tham gia.
+                          📢 {translate('memberNotificationDescription')} để tham gia.
                         </span>
                       </div>
                     </div>

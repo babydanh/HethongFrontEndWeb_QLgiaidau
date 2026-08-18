@@ -212,7 +212,7 @@ export default function MembersTab({
       }
     } catch (error) {
       console.error(error);
-      toast.error(getErrorMessage(error, 'Lỗi khi chuyển quyền sở hữu.'));
+      toast.error(getErrorMessage(error, translate('transferOwnershipFailed')));
     }
   };
 
@@ -224,7 +224,7 @@ export default function MembersTab({
       setInviteResults(prev => prev.filter(r => r.id !== targetUser.id));
     } catch (error) {
       console.error(error);
-      toast.error(getErrorMessage(error, 'Lỗi khi gửi lời mời.'));
+      toast.error(getErrorMessage(error, translate('inviteMemberFailed')));
     } finally {
       setIsInvitingId(null);
     }
@@ -265,7 +265,7 @@ export default function MembersTab({
           {item.streak.label ||
             (item.streak.type === 'ELO_UP'
               ? `+${item.streak.count} ELO`
-              : `${item.streak.type === 'WIN' ? 'Thắng' : 'Thua'} x${item.streak.count}`)}
+              : `${item.streak.type === 'WIN' ? translate('streakWin') : translate('streakLoss')} x${item.streak.count}`)}
         </span>
       );
     }
@@ -278,12 +278,12 @@ export default function MembersTab({
     try {
       setIsSavingTags(true);
       await communitiesApi.updateMemberTags(communityId, tagAssignTarget.user.id, tags);
-      toast.success('Đã cập nhật tag thành công.');
+      toast.success(translate('tagUpdated'));
       setTagAssignTarget(null);
       fetchMembers();
     } catch (error) {
       console.error(error);
-      toast.error(getErrorMessage(error, 'Lỗi khi cập nhật tag.'));
+      toast.error(getErrorMessage(error, translate('tagUpdateFailed')));
     } finally {
       setIsSavingTags(false);
     }
@@ -302,7 +302,7 @@ export default function MembersTab({
     openUserProfile(
       {
         id: targetUserId,
-        fullName: targetMember?.user?.fullName || 'Thành viên',
+        fullName: targetMember?.user?.fullName || translate('memberFallback'),
         avatarUrl: targetMember?.user?.avatarUrl || null,
         role: targetMember?.member?.role,
         tags: targetMember?.member?.tags,
@@ -461,13 +461,13 @@ export default function MembersTab({
                                   onClick={() => setKickTarget({ userId: item.user.id, name: item.user.fullName })}
                                   className="w-full text-left px-4 py-2 text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2 transition-colors"
                                 >
-                                  <Trash2 className="w-4 h-4 text-rose-500" /> Kích khỏi nhóm
+                                  <Trash2 className="w-4 h-4 text-rose-500" /> {translate('kickFromGroup')}
                                 </button>
                                 <button
                                   onClick={() => setBanTarget({ userId: item.user.id, name: item.user.fullName })}
                                   className="w-full text-left px-4 py-2 text-xs text-rose-700 hover:bg-rose-50 flex items-center gap-2 transition-colors"
                                 >
-                                  <Ban className="w-4 h-4 text-rose-600" /> Cấm khỏi cộng đồng
+                                  <Ban className="w-4 h-4 text-rose-600" /> {translate('banFromCommunity')}
                                 </button>
                               </div>
                             )}
@@ -569,13 +569,13 @@ export default function MembersTab({
                                 onClick={() => setKickTarget({ userId: item.user.id, name: item.user.fullName })}
                                 className="w-full text-left px-4 py-2 text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2 transition-colors"
                               >
-                                <Trash2 className="w-4 h-4 text-rose-500" /> Kích khỏi nhóm
+                                <Trash2 className="w-4 h-4 text-rose-500" /> {translate('kickFromGroup')}
                               </button>
                               <button
                                 onClick={() => setBanTarget({ userId: item.user.id, name: item.user.fullName })}
                                 className="w-full text-left px-4 py-2 text-xs text-rose-700 hover:bg-rose-50 flex items-center gap-2 transition-colors"
                               >
-                                <Ban className="w-4 h-4 text-rose-600" /> Cấm khỏi cộng đồng
+                                <Ban className="w-4 h-4 text-rose-600" /> {translate('banFromCommunity')}
                               </button>
                             </div>
                           )}
@@ -718,13 +718,13 @@ export default function MembersTab({
             setKickTarget(null);
           }
         }}
-        title="Kích thành viên"
+        title={translate('kickMemberTitle')}
         description={
           kickTarget
             ? translate('kickMemberConfirm', { name: kickTarget.name })
             : undefined
         }
-        confirmLabel="Kích khỏi nhóm"
+        confirmLabel={translate('kickFromGroup')}
         variant="danger"
         onConfirm={() => {
           if (kickTarget) {
@@ -743,13 +743,13 @@ export default function MembersTab({
             setBanTarget(null);
           }
         }}
-        title="Cấm thành viên"
+        title={translate('banMemberTitle')}
         description={
           banTarget
             ? translate('banMemberConfirm', { name: banTarget.name })
             : undefined
         }
-        confirmLabel="Cấm khỏi cộng đồng"
+        confirmLabel={translate('banFromCommunity')}
         variant="danger"
         onConfirm={() => {
           if (banTarget) {

@@ -7,7 +7,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { motion } from 'framer-motion';
-import { Trophy, Calendar, MapPin, Users, DollarSign, ArrowLeft, Loader2, CheckCircle } from 'lucide-react';
+import { Trophy, Calendar, MapPin, Users, ArrowLeft, Loader2, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { divisionsApi, Division, tournamentsApi, Tournament } from '@/features/tournaments/api';
@@ -118,7 +118,7 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
           toast.error(translate('invalidInvite'));
           router.push('/tournaments');
         }
-      } catch (err) {
+      } catch {
         toast.error(translate('invalidInvite'));
         router.push('/tournaments');
       } finally {

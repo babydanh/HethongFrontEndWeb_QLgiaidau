@@ -35,7 +35,7 @@ function sortBySchedule(first: Match, second: Match) {
 /**
  * Avatar stack for team/doubles/singles
  */
-function ParticipantAvatars({ participant }: { participant: Match['participant1'] }) {
+function ParticipantAvatars({ participant, playerLabel }: { participant: Match['participant1']; playerLabel: string }) {
   if (!participant) {
     return (
       <div className="w-9 h-9 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-xs font-bold text-slate-400 shrink-0 shadow-sm">
@@ -55,7 +55,7 @@ function ParticipantAvatars({ participant }: { participant: Match['participant1'
             <img
               key={m.userId || idx}
               src={m.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${fallbackInitials}`}
-              alt={m.fullName || participant.teamName || 'Vận động viên'}
+              alt={m.fullName || participant.teamName || playerLabel}
               className="w-9 h-9 rounded-full border-2 border-white object-cover shadow-sm bg-slate-100"
               onError={(e) => {
                 (e.currentTarget as HTMLImageElement).src = `https://api.dicebear.com/7.x/initials/svg?seed=${fallbackInitials}`;
@@ -250,7 +250,7 @@ export default function TournamentStatusSummaryCard({
                 <div className="flex items-center justify-between gap-3 bg-slate-50/80 p-3.5 rounded-2xl border border-slate-200/70 group-hover:border-blue-200 transition-all">
                   {/* Participant 1 (Left) */}
                   <div className="flex flex-col items-center min-w-0 flex-1 text-center">
-                    <ParticipantAvatars participant={match.participant1} />
+                    <ParticipantAvatars participant={match.participant1} playerLabel={translate('player')} />
                     <span className="mt-1.5 text-xs font-bold text-slate-800 line-clamp-2 leading-tight">
                       {getParticipantDisplayName(match.participant1)}
                     </span>
@@ -269,7 +269,7 @@ export default function TournamentStatusSummaryCard({
 
                   {/* Participant 2 (Right) */}
                   <div className="flex flex-col items-center min-w-0 flex-1 text-center">
-                    <ParticipantAvatars participant={match.participant2} />
+                    <ParticipantAvatars participant={match.participant2} playerLabel={translate('player')} />
                     <span className="mt-1.5 text-xs font-bold text-slate-800 line-clamp-2 leading-tight">
                       {getParticipantDisplayName(match.participant2)}
                     </span>

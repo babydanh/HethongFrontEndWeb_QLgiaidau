@@ -671,8 +671,12 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
               <ModalHeader><ModalTitle className="text-lg font-bold">Xếp lịch thi đấu</ModalTitle></ModalHeader>
               <div className="space-y-4 mt-4">
                 <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
-                  <p className="text-sm font-bold text-slate-900">{sportPresentation.sportLabel}: {sportPresentation.scoringLabel}</p>
-                  <p className="mt-1 text-xs font-semibold text-slate-500">{sportPresentation.presetSummary}</p>
+                  <p className="text-sm font-bold text-slate-900">{sportPresentation.sportLabel}: {s.isLiteMode ? 'Lite theo cấu hình giải' : 'Luật chuẩn theo cấu hình giải'}</p>
+                  <p className="mt-1 text-xs font-semibold text-slate-500">
+                    {s.isCustomMatchConfig
+                      ? 'Trận này đang dùng cấu hình riêng đã lưu.'
+                      : 'Trận này kế thừa cài đặt điểm của giải; không tự tạo preset khác.'}
+                  </p>
                 </div>
                 <div><label className="text-xs font-bold text-slate-500">Sân</label>
                   <input value={s.matchCourtName} onChange={e => s.setMatchCourtName(e.target.value)} placeholder="Tên sân" className="w-full border rounded-lg p-2 text-sm" /></div>
@@ -682,7 +686,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                   <DateTimePicker value={s.matchScheduledAt} onChange={s.setMatchScheduledAt} /></div>
                 <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
                   <p className="text-xs font-bold text-slate-600">Trọng tài</p>
-                  <p className="mt-1 text-xs text-slate-500">Chưa phân công. BTC phân công trọng tài ở luồng riêng sau khi lưu lịch.</p>
+                  <p className="mt-1 text-xs text-slate-500">Chưa ghi nhận. Khi trọng tài được chấp nhận bấm “Bắt đầu trận” trên Live, hệ thống tự lưu tên người bắt trận.</p>
                 </div>
                 <div><label className="text-xs font-bold text-slate-500">Camera / Livestream</label>
                   <select value={s.matchCameraId} onChange={e => s.setMatchCameraId(e.target.value)} className="w-full border rounded-lg p-2 text-sm bg-white text-slate-800">
@@ -698,7 +702,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                 {s.isCustomMatchConfig && (
                   <>
                     <div className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3">
-                      <p className="text-xs font-bold uppercase tracking-[0.12em] text-blue-700">Preset nhanh cho trận này</p>
+                      <p className="text-xs font-bold uppercase tracking-[0.12em] text-blue-700">Điều chỉnh luật riêng cho trận này</p>
                       <div className="mt-3 grid gap-3">
                         {sportPresets.map((preset) => (
                           <button

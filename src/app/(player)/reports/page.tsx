@@ -2,6 +2,7 @@
 
 import { ChevronLeft, ChevronRight, ExternalLink, FileWarning, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/Button';
@@ -20,6 +21,7 @@ function targetHref(report: ViolationReport): string | null {
 }
 
 export default function MyReportsPage() {
+  const translate = useTranslations('Common');
   const [reports, setReports] = useState<ViolationReport[]>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -37,25 +39,25 @@ export default function MyReportsPage() {
         setTotalPages(response.meta?.totalPages ?? 1);
         cursorByPageRef.current[page + 1] = response.meta?.nextCursor ?? null;
       } catch (error: unknown) {
-        if (active) toast.error(getErrorMessage(error) || 'Không thể tải báo cáo của bạn.');
+        if (active) toast.error(getErrorMessage(error) || translate('loadReportsFailed'));
       } finally {
         if (active) setLoading(false);
       }
     };
     void loadReports();
     return () => { active = false; };
-  }, [page]);
+  }, [page, translate]);
 
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-8 md:px-8">
       <div className="mx-auto max-w-5xl space-y-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-rose-600">An toàn tài khoản</p>
-            <h1 className="mt-1 text-3xl font-bold text-slate-950">Báo cáo của tôi</h1>
-            <p className="mt-2 text-sm text-slate-600">Theo dõi tiến độ tiếp nhận, xác minh và kết luận từ bộ phận điều phối.</p>
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-rose-600">{translate('myReportsKicker')}</p>
+            <h1 className="mt-1 text-3xl font-bold text-slate-950">{translate('myReportsTitle')}</h1>
+            <p className="mt-2 text-sm text-slate-600">{translate('myReportsSubtitle')}</p>
           </div>
-          <Button asChild variant="outline"><Link href="/dashboard">Về trang cá nhân</Link></Button>
+          <Button asChild variant="outline"><Link href="/dashboard">{translate('backToProfile')}</Link></Button>
         </div>
 
         {loading ? (
@@ -107,7 +109,7 @@ export default function MyReportsPage() {
             <Button variant="outline" size="icon" disabled={page === 1} onClick={() => setPage((value) => value - 1)} aria-label="Trang trước">
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <span className="text-sm font-semibold text-slate-600">Trang {page}/{totalPages}</span>
+            <span className="text-sm font-semibold text-slate-600">{translate('reportPageCount', { page, totalPages })}</span>
             <Button variant="outline" size="icon" disabled={page === totalPages} onClick={() => setPage((value) => value + 1)} aria-label="Trang sau">
               <ChevronRight className="h-4 w-4" />
             </Button>

@@ -768,7 +768,7 @@ export default function MatchesListPage() {
 
         {/* Status Chips — bên trong khung filter */}
         <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-100 text-xs font-semibold">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0">Lọc nhanh:</span>
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0">{translate("quickFilters")}</span>
           {[
             { label: translate('quickFinished'), value: 'COMPLETED', activeClass: 'bg-[#F3F4F1] text-[#4A4E4D] border-slate-400 font-bold shadow-xs', inactiveClass: 'bg-[#F3F4F1]/80 text-[#4A4E4D] border-transparent hover:border-slate-300' },
             { label: translate('quickOngoing'), value: 'ONGOING', activeClass: 'bg-[#EBF5FF] text-[#1E56A0] border-blue-300 font-bold shadow-xs', inactiveClass: 'bg-[#EBF5FF]/80 text-[#1E56A0] border-transparent hover:border-blue-200' },
@@ -812,7 +812,7 @@ export default function MatchesListPage() {
                     <option value="SINGLE_ELIMINATION">{translate("singleElimination")}</option>
                     <option value="DOUBLE_ELIMINATION">{translate("doubleElimination")}</option>
                     <option value="ROUND_ROBIN">{translate("roundRobin")}</option>
-                    <option value="GROUP_STAGE_KNOCKOUT">Vòng bảng + Playoffs</option>
+                    <option value="GROUP_STAGE_KNOCKOUT">{translate("groupStagePlayoffs")}</option>
                   </select>
                   <ChevronDown className="absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 pointer-events-none" />
                 </div>
@@ -1038,7 +1038,7 @@ export default function MatchesListPage() {
                   className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer bg-white h-10 flex items-center justify-center"
                   title="Xóa bộ lọc"
                 >
-                  <span className="font-bold text-rose-650">Xóa hết</span>
+                  <span className="font-bold text-rose-650">{translate("clearAll")}</span>
                 </button>
               </div>
             </div>
@@ -1207,7 +1207,7 @@ export default function MatchesListPage() {
                             {isLive && typeof match.viewerCount === 'number' && match.viewerCount > 0 && (
                               <span className="flex items-center gap-1 text-[9px] font-bold text-blue-700 bg-blue-50 border border-blue-100/60 px-2 py-0.5 rounded-full">
                                 <Eye className="w-3 h-3 text-blue-600 animate-pulse" />
-                                <span>{match.viewerCount} đang xem</span>
+                                <span>{match.viewerCount} {translate("watchingNow")}</span>
                               </span>
                             )}
                           </div>

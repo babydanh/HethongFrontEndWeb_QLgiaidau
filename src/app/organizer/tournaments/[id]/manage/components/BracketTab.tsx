@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -184,6 +185,7 @@ export function BracketTab({
   isSavingGskConfig = false,
   bracketType,
 }: BracketTabProps) {
+  const translate = useTranslations('TournamentDetail');
   const presentation = getSportRulePresentation(sportRuleKind);
   const setUnitLabel = presentation.setUnitLabel;
   const winByTwoLabel = presentation.winByTwoLabel;
@@ -215,15 +217,15 @@ export function BracketTab({
     setSuperTiebreakPoints(preset.tiebreakPoints ?? preset.pointsPerSet);
   };
 
-  const getKnockoutRoundLabel = (roundIndex: number, totalRounds: number) => {
+  const getKnockoutRoundLabel = (roundIndex: number, totalRounds: number, translate: (key: string, values?: { round?: number }) => string) => {
     const fromEnd = totalRounds - 1 - roundIndex;
-    if (fromEnd === 0) return 'Chung kết';
-    if (fromEnd === 1) return 'Bán kết';
-    if (fromEnd === 2) return 'Tứ kết';
-    if (fromEnd === 3) return 'Vòng 16';
-    if (fromEnd === 4) return 'Vòng 32';
-    if (fromEnd === 5) return 'Vòng 64';
-    return `Vòng ${2 ** fromEnd}`;
+    if (fromEnd === 0) return translate('stageFinal');
+    if (fromEnd === 1) return translate('stageSemifinal');
+    if (fromEnd === 2) return translate('stageQuarterfinal');
+    if (fromEnd === 3) return translate('roundOf', { round: 16 });
+    if (fromEnd === 4) return translate('roundOf', { round: 32 });
+    if (fromEnd === 5) return translate('roundOf', { round: 64 });
+    return translate('roundOf', { round: 2 ** fromEnd });
   };
 
   const getKnockoutBracketSize = (teamCount: number) => {
@@ -277,7 +279,7 @@ export function BracketTab({
           const totalRounds = Math.max(1, Math.round(Math.log2(round.capacity)));
           const name = round.isGrandFinal
             ? 'Chung kết'
-            : getKnockoutRoundLabel(0, totalRounds);
+            : getKnockoutRoundLabel(0, totalRounds, translate);
           return {
             stage,
             roundNumber,
@@ -323,7 +325,7 @@ export function BracketTab({
   const gskKnockoutBracketSize = getKnockoutBracketSize(gskAdvancingTotal);
   const gskKnockoutRoundCount = gskKnockoutBracketSize > 0 ? Math.log2(gskKnockoutBracketSize) : 0;
   const gskDisplayStartRoundLabel = gskKnockoutRoundCount > 0
-    ? getKnockoutRoundLabel(0, gskKnockoutRoundCount)
+    ? getKnockoutRoundLabel(0, gskKnockoutRoundCount, translate)
     : 'Chưa đủ đội';
   const gskDraftStage: BracketStage = {
     id: '__draft_gsk_knockout__',
@@ -346,7 +348,7 @@ export function BracketTab({
     return {
       stage: gskDraftStage,
       roundNumber,
-      name: getKnockoutRoundLabel(idx, gskKnockoutRoundCount),
+      name: getKnockoutRoundLabel(idx, gskKnockoutRoundCount, translate),
       override: divisionRoundConfig?.rounds?.[roundNumber.toString()],
     };
   });

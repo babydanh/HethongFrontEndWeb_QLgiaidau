@@ -516,8 +516,8 @@ export default function DashboardPage() {
                   </div>
                 ) : (
                   <div className="rounded-lg border border-dashed border-slate-200 p-6 text-center">
-                    <p className="text-xs font-semibold text-slate-700">Bạn chưa có trận đấu nào sắp diễn ra</p>
-                    <p className="text-[11px] text-slate-400 mt-1">Đăng ký tham gia giải đấu để bắt đầu tích lũy ELO!</p>
+                    <p className="text-xs font-semibold text-slate-700">{translate("noUpcomingMatches")}</p>
+                    <p className="text-[11px] text-slate-400 mt-1">{translate("joinTournamentToEarnElo")}</p>
                     <div className="mt-3">
                       <Link href="/tournaments">
                         <Button size="sm" variant="outline" className="text-xs font-bold border-slate-200">
@@ -535,7 +535,7 @@ export default function DashboardPage() {
                   <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
                     <Activity className="w-4 h-4 text-emerald-600" /> Phong độ & Trận đấu vừa qua
                   </h2>
-                  <span className="text-xs text-slate-400">{completedMatches.length} trận đã xong</span>
+                  <span className="text-xs text-slate-400">{translate("completedMatchesCount", { count: completedMatches.length })}</span>
                 </div>
 
                 {isLoading ? (
@@ -696,7 +696,7 @@ export default function DashboardPage() {
                                 <div className="min-w-0">
                                   <div className="flex flex-wrap items-center gap-2">
                                     <h3 className="font-bold text-slate-900 text-sm">{match.tournamentName}</h3>
-                                    <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-amber-700">Trọng tài</span>
+                                    <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-amber-700">{translate("referee")}</span>
                                   </div>
                                 </div>
                               </div>

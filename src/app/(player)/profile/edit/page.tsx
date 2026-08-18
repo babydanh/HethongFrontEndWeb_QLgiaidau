@@ -142,13 +142,13 @@ export default function EditProfilePage() {
       );
       toast.success(
         preference === 'ALL'
-          ? 'Đã bật nhận tất cả thông báo CLB'
+          ? translate('clubNotificationsAll')
           : preference === 'MENTIONS_ONLY'
-          ? 'Chỉ nhận thông báo khi được nhắc tên (@tag)'
-          : 'Đã tắt thông báo CLB (Im lặng)',
+          ? translate('clubNotificationsMentions')
+          : translate('clubNotificationsMuted'),
       );
     } catch (err) {
-      toast.error(getErrorMessage(err, 'Không thể cập nhật cài đặt thông báo CLB.'));
+      toast.error(getErrorMessage(err, translate('profileNotificationUpdateFailed')));
     } finally {
       setUpdatingClubId(null);
     }
@@ -229,7 +229,7 @@ export default function EditProfilePage() {
       const response = await usersApi.updateProfile(cleanData);
       const responseData = ((response as unknown) as Record<string, unknown>).data || response;
       setUser(responseData as NonNullable<typeof user>);
-      toast.success('Cập nhật hồ sơ thành công');
+      toast.success(translate('profileUpdated'));
       router.push('/profile');
     } catch (error) {
       toast.error(getErrorMessage(error));
@@ -245,7 +245,7 @@ export default function EditProfilePage() {
         oldPassword: data.currentPassword,
         newPassword: data.newPassword,
       });
-      toast.success('Đổi mật khẩu thành công!');
+      toast.success(translate('passwordChanged'));
       passwordForm.reset();
     } catch (error) {
       toast.error(getErrorMessage(error));
@@ -271,7 +271,7 @@ export default function EditProfilePage() {
       if (currentUser && url) {
         useAuthStore.getState().setUser({ ...currentUser, avatarUrl: url });
       }
-      toast.success('Đã cập nhật ảnh đại diện');
+      toast.success(translate('avatarUpdated'));
     } catch (error) {
       toast.error(getErrorMessage(error));
     } finally {
@@ -284,7 +284,7 @@ export default function EditProfilePage() {
     if (!file) return;
 
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('Kích thước ảnh không được vượt quá 5MB');
+      toast.error(translate('imageTooLarge'));
       return;
     }
 
@@ -297,7 +297,7 @@ export default function EditProfilePage() {
       if (currentUser && url) {
         useAuthStore.getState().setUser({ ...currentUser, coverUrl: url });
       }
-      toast.success('Đã cập nhật ảnh bìa');
+      toast.success(translate('coverUpdated'));
     } catch (error) {
       toast.error(getErrorMessage(error));
     } finally {
@@ -313,7 +313,7 @@ export default function EditProfilePage() {
         requestType: 'GENDER',
         newValue: requestGender,
       });
-      toast.success('Gửi yêu cầu thay đổi giới tính thành công. Vui lòng chờ Admin duyệt.');
+      toast.success(translate('profileGenderRequestSuccess'));
       setIsGenderModalOpen(false);
     } catch (error) {
       toast.error(getErrorMessage(error));
@@ -420,13 +420,13 @@ export default function EditProfilePage() {
   // Delete Account Flow
   const handleDeleteAccountSubmit = async () => {
     if (!deletePassword) {
-      toast.error('Vui lòng nhập mật khẩu xác nhận');
+      toast.error(translate('profileDeletePasswordRequired'));
       return;
     }
     try {
       setIsDeletingAccount(true);
       await usersApi.deleteAccount({ password: deletePassword });
-      toast.success('Tài khoản của bạn đã được xóa thành công.');
+      toast.success(translate('profileAccountDeleted'));
       setIsDeleteModalOpen(false);
       logout();
       router.push('/');

@@ -67,18 +67,18 @@ interface AchievementCard {
   tournamentDate?: string | null;
 }
 
-const getAchievementMeta = (rank: AchievementRank, labels?: { champion: string; runnerUp: string; thirdPlace: string }) => {
+const getAchievementMeta = (rank: AchievementRank, labels: { champion: string; runnerUp: string; thirdPlace: string }) => {
   switch (rank) {
     case 1:
       return {
-        label: labels?.champion ?? 'Quán quân',
+        label: labels.champion,
         colorClass: 'bg-amber-50',
         textClass: 'text-amber-700',
         borderClass: 'border-amber-200',
       };
     case 2:
       return {
-        label: labels?.runnerUp ?? 'Á quân',
+        label: labels.runnerUp,
         colorClass: 'bg-slate-50',
         textClass: 'text-slate-700',
         borderClass: 'border-slate-200',
@@ -86,7 +86,7 @@ const getAchievementMeta = (rank: AchievementRank, labels?: { champion: string; 
     case 3:
     default:
       return {
-        label: labels?.thirdPlace ?? 'Hạng ba',
+        label: labels.thirdPlace,
         colorClass: 'bg-amber-50',
         textClass: 'text-amber-700',
         borderClass: 'border-amber-200',
@@ -1516,7 +1516,7 @@ export default function ProfilePage() {
                 {isUploading ? (
                   <div className="flex flex-col items-center justify-center py-4 text-slate-500">
                     <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
-                    <span className="text-xs mt-2 font-medium">Đang tải ảnh lên...</span>
+                    <span className="text-xs mt-2 font-medium">{translate("uploadingImage")}</span>
                   </div>
                 ) : evidenceUrl ? (
                   <div className="relative w-full h-32 rounded-lg overflow-hidden group">

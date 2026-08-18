@@ -638,7 +638,7 @@ export function OpsMatches({
             <div className="space-y-2 md:col-span-2">
               <label className="text-sm font-bold text-slate-700">Trọng tài</label>
               <div className="flex h-11 items-center rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm text-slate-500">
-                Chưa phân công — {referees.length > 0 ? 'BTC phân công riêng sau khi lưu lịch.' : 'Chưa có trọng tài được chấp nhận.'}
+                Chưa ghi nhận — {referees.length > 0 ? 'Trọng tài được chấp nhận sẽ tự ghi nhận khi bấm Bắt đầu trên Live.' : 'Chưa có trọng tài được chấp nhận.'}
               </div>
             </div>
           </div>

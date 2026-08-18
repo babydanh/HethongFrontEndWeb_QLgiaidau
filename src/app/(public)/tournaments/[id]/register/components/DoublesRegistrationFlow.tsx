@@ -92,13 +92,13 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
       if (diff <= 0) {
         if (handledExpiry) return;
         handledExpiry = true;
-        setTimeLeft('Đã hết hạn');
+        setTimeLeft(registrationTranslate('inviteExpired'));
         tournamentsApi.getMyRegistration(tournamentId, divisionId).then((res) => {
           if (!res.data?.registered || (res.data.participant?.teamStatus as string) === 'EXPIRED') {
             setParticipant(null);
             setStep(1);
           }
-          toast.error('Lời mời ghép đôi đã hết hạn hoặc giải đã đóng đăng ký.');
+          toast.error(registrationTranslate('partnerInviteExpiredOrClosed'));
         }).catch(() => undefined);
         return;
       }
@@ -192,7 +192,7 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
   const handleSearchPartner = async () => {
     const q = trimAndNormalizeSpaces(partnerQuery);
     if (!q) {
-      setPartnerSearchError('Vui lòng nhập Email hoặc Số điện thoại để tìm kiếm.');
+      setPartnerSearchError(registrationTranslate('partnerSearchRequired'));
       return;
     }
     try {
@@ -218,12 +218,12 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
     e.preventDefault();
     const cleanName = trimAndNormalizeSpaces(teamName);
     if (cleanName.length < 3) {
-      toast.error('Tên đội phải chứa ít nhất 3 ký tự');
+      toast.error(registrationTranslate('teamNameMinLength'));
       return;
     }
 
     if (!inviteLater && !searchedPartner) {
-      toast.error('Vui lòng tìm kiếm và xác nhận đồng đội hoặc chọn "Mời đồng đội sau"');
+      toast.error(registrationTranslate('partnerSearchConfirm'));
       return;
     }
 
@@ -256,7 +256,7 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
             ? 'Đã gửi yêu cầu tham gia. Vui lòng chờ BTC duyệt.'
             : partnerEmailOrPhone
               ? 'Đăng ký ghép cặp thành công!'
-              : 'Tạo đội thành công! Bây giờ hãy gửi link mời đồng đội.',
+              : registrationTranslate('teamCreatedInviteNextStep'),
         );
         if (isParticipantReadyForNextStep(part.teamStatus)) {
           setStep(3);
@@ -327,7 +327,7 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
     try {
       setIsWithdrawing(true);
       await tournamentsApi.withdraw(tournamentId, bankData, divisionId);
-      toast.success('Đã rút khỏi giải đấu thành công.');
+      toast.success(registrationTranslate('withdrawSuccess'));
       setParticipant(null);
       setTeamName('');
       setStep(1);
@@ -380,7 +380,7 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
     if (!partnerLink) return;
     navigator.clipboard.writeText(partnerLink);
     setCopied(true);
-    toast.success('Đã sao chép link mời đồng đội!');
+    toast.success(registrationTranslate('copiedInviteLink'));
     setTimeout(() => setCopied(false), 2000);
   };
 

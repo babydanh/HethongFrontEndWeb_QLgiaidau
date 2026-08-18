@@ -599,7 +599,7 @@ export default function LeaderboardPage() {
                                                 if (modal) modal.showModal();
                                             }}
                                             className="p-1 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors cursor-pointer"
-                                            title="Xem chi tiết quy tắc ELO"
+                                            title={t("viewEloRules")}
                                         >
                                             <Info className="w-4 h-4" />
                                         </button>
@@ -829,7 +829,7 @@ function RestRankingsTable({ rankings, selectedMatchType }: { rankings: PlayerRa
                      <table className="w-full text-left border-collapse text-xs">
                         <thead>
                             <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider">
-                                <th className="py-3 px-3 w-12 text-center">Hạng</th>
+                                <th className="py-3 px-3 w-12 text-center">{t("rankHeader")}</th>
                                 <th className="py-3 px-3">{t("player")}</th>
                                 <th className="py-3 px-3">{t("eloRank")}</th>
                                 <th className="py-3 px-3 text-right">ELO</th>

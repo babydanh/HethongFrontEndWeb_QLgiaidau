@@ -1,17 +1,18 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { api } from '@/lib/axios';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { toast } from 'react-hot-toast';
 import type { ApiResponse } from '@/types/api';
 import { getSportLogo } from '@/constants/sports';
 import {
-  Trophy, 
-  Search, 
-  Lock, 
-  Unlock, 
-  XCircle, 
+  Trophy,
+  Search,
+  Lock,
+  Unlock,
+  XCircle,
   AlertTriangle,
   Loader2,
   Calendar,
@@ -66,17 +67,19 @@ interface TournamentDetail extends TournamentItem {
 
 /** Countdown đầy đủ giờ:phút:giây cho admin */
 function FullCountdownAdmin({ targetDate }: { targetDate: string }) {
+  const translate = useTranslations('AdminTournaments');
   const [text, setText] = useState('');
   useEffect(() => {
     const update = () => {
       const diff = new Date(targetDate).getTime() - Date.now();
-      if (diff <= 0) { setText('Đang mở đăng ký'); return; }
+      if (diff <= 0) { setText(translate('countdownOpen')); return; }
       const d = Math.floor(diff / 86400000);
       const h = Math.floor((diff % 86400000) / 3600000);
       const m = Math.floor((diff % 3600000) / 60000);
       const s = Math.floor((diff % 60000) / 1000);
-      if (d > 0) setText(`Còn ${d} ngày ${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`);
-      else setText(`Còn ${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`);
+      const formattedTime = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+      if (d > 0) setText(translate('countdownDays', { days: d, time: formattedTime }));
+      else setText(translate('countdownTime', { time: formattedTime }));
     };
     update();
     const timer = setInterval(update, 1000);
@@ -91,6 +94,7 @@ function FullCountdownAdmin({ targetDate }: { targetDate: string }) {
 }
 
 export default function AdminTournamentsPage() {
+  const translate = useTranslations('AdminTournaments');
   const { user } = useAuthStore();
   const isModeratorOnly =
     Boolean(user?.roles?.includes('MODERATOR')) && !user?.roles?.includes('ADMIN');
@@ -123,7 +127,7 @@ export default function AdminTournamentsPage() {
       setDetailTournament(response.data);
     } catch (error) {
       console.error(error);
-      toast.error('Không thể lấy thông tin chi tiết giải đấu');
+      toast.error(translate('detailLoadFailed'));
       setSelectedTournamentId(null);
     } finally {
       setLoadingDetail(false);
@@ -145,7 +149,7 @@ export default function AdminTournamentsPage() {
       cursorByPageRef.current[page + 1] = response.meta?.nextCursor ?? null;
     } catch (error) {
       console.error(error);
-      toast.error('Không thể lấy danh sách giải đấu');
+      toast.error(translate('listLoadFailed'));
     } finally {
       setLoading(false);
     }
@@ -153,6 +157,8 @@ export default function AdminTournamentsPage() {
 
   useEffect(() => {
     cursorByPageRef.current = { 1: null };
+    // Reset pagination when the status filter changes.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPage(1);
   }, [selectedStatus]);
 
@@ -193,16 +199,15 @@ export default function AdminTournamentsPage() {
     note?: string,
   ) => {
     if (processing) return;
-    
-    const confirmMsg = 
-      action === 'suspend' ? 'Bạn có chắc chắn muốn tạm đình chỉ giải đấu này?' :
-      action === 'unsuspend' ? 'Bạn có chắc chắn muốn khôi phục hoạt động giải đấu này?' :
-      action === 'approve' ? 'Bạn có chắc chắn muốn phê duyệt giải đấu này không?' :
-      action === 'reject' ? 'Bạn có chắc chắn muốn từ chối/bác bỏ giải đấu này không?' :
-      action === 'approve-delete' ? 'Bạn có chắc chắn muốn phê duyệt YÊU CẦU XÓA giải đấu này không? Hành động này sẽ xóa giải đấu vĩnh viễn.' :
-      action === 'reject-delete' ? 'Bạn có chắc chắn muốn từ chối yêu cầu xóa giải đấu này không? Giải đấu sẽ được khôi phục hoạt động bình thường.' :
-      'CẢNH BÁO: Bạn có chắc chắn muốn HỦY và CẤM vĩnh viễn giải đấu này? Hành động này không thể hoàn tác!';
-    
+
+    const confirmMsg =
+      action === 'suspend' ? translate('confirmSuspend') :
+      action === 'unsuspend' ? translate('confirmUnsuspend') :
+      action === 'approve' ? translate('confirmApprove') :
+      action === 'reject' ? translate('confirmReject') :
+      action === 'approve-delete' ? translate('confirmApproveDelete') :
+      action === 'reject-delete' ? translate('confirmRejectDelete') :
+      translate('confirmBan');
     if (!window.confirm(confirmMsg)) {
       return;
     }
@@ -212,17 +217,17 @@ export default function AdminTournamentsPage() {
       await api.post(`/admin/tournaments/${id}/${action}`, note ? { note } : undefined);
       toast.success(
         action === 'suspend' ? 'Đã đình chỉ giải đấu thành công!' :
-        action === 'unsuspend' ? 'Đã khôi phục hoạt động giải đấu!' : 
-        action === 'approve' ? 'Đã phê duyệt giải đấu thành công!' : 
-        action === 'reject' ? 'Đã bác bỏ/từ chối giải đấu!' : 
-        action === 'approve-delete' ? 'Đã duyệt yêu cầu xóa giải đấu thành công!' :
-        action === 'reject-delete' ? 'Đã từ chối yêu cầu xóa giải đấu!' :
-        'Đã cấm/hủy giải đấu vĩnh viễn!'
+        action === 'unsuspend' ? translate('actionUnsuspended') :
+        action === 'approve' ? translate('actionApproved') :
+        action === 'reject' ? translate('actionRejected') :
+        action === 'approve-delete' ? translate('actionApprovedDelete') :
+        action === 'reject-delete' ? translate('actionRejectedDelete') :
+        translate('actionBanned')
       );
       fetchTournaments(search);
     } catch (error) {
       console.error(error);
-      toast.error('Lỗi khi thực hiện hành động trên giải đấu');
+      toast.error(translate('actionFailed'));
     } finally {
       setProcessing(false);
     }
@@ -249,7 +254,7 @@ export default function AdminTournamentsPage() {
       actionModal.action === 'ban';
 
     if (requiresNote && !actionNote.trim()) {
-      toast.error('Vui lòng nhập ghi chú xử lý');
+      toast.error(translate('noteRequired'));
       return;
     }
 
@@ -262,11 +267,11 @@ export default function AdminTournamentsPage() {
     ? actionModal.action === 'reject'
       ? 'Từ chối duyệt giải đấu'
       : actionModal.action === 'reject-delete'
-      ? 'Từ chối yêu cầu xóa giải'
+      ? translate('adminActionRejectDelete')
       : actionModal.action === 'suspend'
-      ? 'Tạm đình chỉ giải đấu'
+      ? translate('adminActionSuspend')
       : actionModal.action === 'ban'
-      ? 'Hủy vĩnh viễn giải đấu'
+      ? translate('adminActionBan')
       : actionModal.action === 'approve-delete'
       ? 'Duyệt yêu cầu xóa giải'
       : actionModal.action === 'approve'
@@ -277,13 +282,13 @@ export default function AdminTournamentsPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'PENDING_APPROVAL':
-        return <span className="bg-amber-50 text-amber-700 text-xs px-2.5 py-1 rounded-full font-semibold border border-amber-200">Chờ duyệt công khai</span>;
+        return <span className="bg-amber-50 text-amber-700 text-xs px-2.5 py-1 rounded-full font-semibold border border-amber-200">{translate('adminStatusPendingApproval')}</span>;
       case 'PENDING_DELETE':
-        return <span className="bg-slate-100 text-slate-600 text-xs px-2.5 py-1 rounded-full font-semibold border border-slate-200">Yêu cầu xóa</span>;
+        return <span className="bg-slate-100 text-slate-600 text-xs px-2.5 py-1 rounded-full font-semibold border border-slate-200">{translate('adminStatusPendingDelete')}</span>;
       case 'SUSPENDED':
-        return <span className="bg-rose-50 text-rose-600 text-xs px-2.5 py-1 rounded-full font-semibold border border-slate-200">Bị đình chỉ</span>;
+        return <span className="bg-rose-50 text-rose-600 text-xs px-2.5 py-1 rounded-full font-semibold border border-slate-200">{translate('adminStatusSuspended')}</span>;
       case 'CANCELLED':
-        return <span className="bg-rose-50 text-rose-600 text-xs px-2.5 py-1 rounded-full font-semibold border border-slate-200">Đã cấm/hủy</span>;
+        return <span className="bg-rose-50 text-rose-600 text-xs px-2.5 py-1 rounded-full font-semibold border border-slate-200">{translate('adminStatusCancelled')}</span>;
       case 'REGISTRATION_OPEN':
         return <span className="bg-emerald-50 text-emerald-600 text-xs px-2.5 py-1 rounded-full font-semibold border border-emerald-200">Mở đăng ký</span>;
       case 'REGISTRATION_CLOSED':
@@ -370,7 +375,7 @@ export default function AdminTournamentsPage() {
             { label: 'Chờ duyệt công khai', value: 'PENDING_APPROVAL' },
             { label: 'Mở đăng ký', value: 'REGISTRATION_OPEN' },
             { label: 'Đóng đăng ký', value: 'REGISTRATION_CLOSED' },
-            { label: 'Sắp diễn ra', value: 'UPCOMING' },
+            { label: translate('adminStatusUpcoming'), value: 'UPCOMING' },
             { label: 'Đang diễn ra', value: 'IN_PROGRESS' },
             { label: 'Đã kết thúc', value: 'COMPLETED' },
             { label: 'Bị đình chỉ', value: 'SUSPENDED' },
@@ -418,9 +423,9 @@ export default function AdminTournamentsPage() {
                 <tr className="border-b border-slate-200 bg-slate-50 text-slate-600 text-xs font-semibold uppercase tracking-wider">
                   <th className="p-4 pl-6">Thông tin giải đấu</th>
                   <th className="p-4">Người tổ chức</th>
-                  <th className="p-4">Lệ phí & Thể thức</th>
-                  <th className="p-4">Trạng thái</th>
-                  <th className="p-4 pr-6 text-right">Hành động điều hành</th>
+                  <th className="p-4">{translate("adminFeeFormat")}</th>
+                  <th className="p-4">{translate("status")}</th>
+                  <th className="p-4 pr-6 text-right">{translate("adminActionColumn")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-600 text-sm">
@@ -431,13 +436,13 @@ export default function AdminTournamentsPage() {
                         <p className="font-semibold text-slate-800">{item.name}</p>
                         <div className="flex items-center gap-2 mt-1.5">
                           <span className="bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded">
-                            {item.tournamentType === 'CLUB' ? 'Nội Bộ' : 'Mở Rộng'}
+                            {item.tournamentType === 'CLUB' ? translate('adminInternalTournament') : translate('adminOpenTournament')}
                           </span>
                           <span className="bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded">
-                            {item.visibility === 'PRIVATE' ? 'Không Niêm Yết' : 'Công Khai'}
+                            {item.visibility === 'PRIVATE' ? translate('adminPrivateTournament') : translate('adminPublicTournament')}
                           </span>
                           <span className="bg-blue-50 text-blue-600 border border-blue-100 text-[10px] font-bold px-2 py-0.5 rounded">
-                            {item.tournamentConfig?.registrationMode === 'APPROVAL' ? 'Duyệt Đăng Ký' : item.tournamentConfig?.registrationMode === 'INVITE_ONLY' ? 'Chỉ Mã Mời' : 'Tự Do Đăng Ký'}
+                            {item.tournamentConfig?.registrationMode === 'APPROVAL' ? translate('adminApprovalRegistration') : item.tournamentConfig?.registrationMode === 'INVITE_ONLY' ? 'Chỉ Mã Mời' : 'Tự Do Đăng Ký'}
                           </span>
                         </div>
                         <p className="text-[10px] text-slate-400 mt-1 flex items-center gap-1">
@@ -598,7 +603,7 @@ export default function AdminTournamentsPage() {
               {loadingDetail ? (
                 <div className="flex flex-col items-center justify-center py-20">
                   <Loader2 className="w-8 h-8 text-blue-600 animate-spin mb-2" />
-                  <p className="text-xs text-slate-500 font-medium">Đang tải thông tin chi tiết...</p>
+                  <p className="text-xs text-slate-500 font-medium">{translate("adminLoadingDetails")}</p>
                 </div>
               ) : detailTournament ? (
                 <div className="space-y-6">
@@ -645,8 +650,8 @@ export default function AdminTournamentsPage() {
                             {detailTournament.tournamentType === 'CLUB' ? 'Nội bộ CLB' : 'Mở rộng (PUBLIC)'}
                           </span>
                           <span className={`text-xs px-2.5 py-1 rounded-lg font-semibold border ${
-                            detailTournament.isRanked 
-                              ? 'bg-amber-50 text-amber-600 border-amber-200' 
+                            detailTournament.isRanked
+                              ? 'bg-amber-50 text-amber-600 border-amber-200'
                               : 'bg-slate-50 text-slate-500 border-slate-200'
                           }`}>
                             {detailTournament.isRanked ? 'Tính điểm ELO' : 'Giải phong trào'}
@@ -870,7 +875,7 @@ export default function AdminTournamentsPage() {
                 className="w-full rounded-lg border border-slate-200 px-4 py-3 text-sm text-slate-800 outline-none transition-colors focus:border-blue-500"
               />
               <p className="text-xs text-slate-500">
-                Ghi chú này sẽ được dùng làm lý do xử lý cho các nhánh từ chối hoặc chế tài.
+                {translate('adminActionNoteHelp')}
               </p>
             </div>
 
@@ -889,7 +894,7 @@ export default function AdminTournamentsPage() {
                 disabled={processing}
                 className="rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-blue-500 disabled:opacity-50"
               >
-                {processing ? 'Đang xử lý...' : 'Xác nhận'}
+                {processing ? translate('adminProcessing') : translate('adminConfirm')}
               </button>
             </div>
           </div>

@@ -21,10 +21,12 @@ type MatchType = 'ALL' | 'SINGLES' | 'DOUBLES' | 'MIXED_DOUBLES';
 
 export default function RankingsTab({ communityId, categories, onGoToTournaments }: RankingsTabProps) {
   const translate = useTranslations('Common');
+  const eloTranslate = useTranslations('EloDisplay');
   const matchTypeLabels = {
     SINGLES: translate('matchTypeSingles'),
     DOUBLES: translate('matchTypeDoubles'),
     MIXED_DOUBLES: translate('matchTypeMixedDoubles'),
+    categoryFallback: eloTranslate('categoryFallback'),
   };
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>(
     categories[0]?.id || ''

@@ -81,7 +81,7 @@ export default function HomepageEloProgressCard({
             )}
             {activeRankInfo?.matchType && (
               <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded uppercase tracking-wider">
-                {getEloMatchTypeLabel(activeRankInfo.matchType)}
+                {getEloMatchTypeLabel(activeRankInfo.matchType, eloLabels)}
               </span>
             )}
           </div>
@@ -139,7 +139,7 @@ export default function HomepageEloProgressCard({
                 className="flex items-center justify-between gap-3 rounded-lg bg-slate-50/60 hover:bg-slate-50 border border-slate-200/70 hover:border-slate-200 px-4 py-2.5 transition-all duration-200"
               >
                 <span className="text-[11px] font-bold text-slate-600">
-                  {getEloMatchTypeLabel(rank.matchType)}
+                  {getEloMatchTypeLabel(rank.matchType, eloLabels)}
                 </span>
                 <span className="text-[11px] font-bold text-slate-800 tabular-nums">
                   {rank.eloPoints} ELO

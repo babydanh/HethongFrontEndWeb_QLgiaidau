@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { useAuthStore, User as AuthUser } from '@/lib/zustand/authStore';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -59,6 +60,7 @@ type PasswordFormValues = z.infer<typeof passwordSchema>;
 export default function EditProfilePage() {
   const { user, setUser, logout } = useAuthStore();
   const router = useRouter();
+  const translate = useTranslations('Profile');
   const [activeTab, setActiveTab] = useState<'profile' | 'refund' | 'security'>('profile');
   const [isSubmittingProfile, setIsSubmittingProfile] = useState(false);
   const [isSubmittingPassword, setIsSubmittingPassword] = useState(false);
@@ -504,7 +506,7 @@ export default function EditProfilePage() {
                 }`}
               >
                 <CreditCard className="w-5 h-5" />
-                Tài khoản hoàn tiền
+                {translate("bankWallet")}
               </button>
               <button
                 onClick={() => setActiveTab('security')}
@@ -916,13 +918,13 @@ export default function EditProfilePage() {
                   {isLoadingClubPrefs ? (
                     <div className="py-8 text-center text-xs text-slate-400 flex flex-col items-center justify-center gap-2">
                       <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
-                      <span>Đang tải danh sách câu lạc bộ...</span>
+                      <span>{translate("clubPreferencesLoading")}</span>
                     </div>
                   ) : clubNotificationPrefs.length === 0 ? (
                     <div className="py-6 text-center text-xs text-slate-500 bg-slate-50 rounded-xl border border-slate-100">
                       <Users className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                      <p className="font-semibold text-slate-700">Bạn chưa tham gia câu lạc bộ nào</p>
-                      <p className="text-[11px] text-slate-400 mt-0.5">Khi tham gia câu lạc bộ, bạn có thể tuỳ chọn bật/tắt hoặc chỉ nhận thông báo khi được nhắc tên tại đây.</p>
+                      <p className="font-semibold text-slate-700">{translate("clubsEmptyTitle")}</p>
+                      <p className="text-[11px] text-slate-400 mt-0.5">{translate("clubNotificationHint")}</p>
                     </div>
                   ) : (
                     <div className="divide-y divide-slate-100">

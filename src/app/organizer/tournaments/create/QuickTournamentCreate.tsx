@@ -147,12 +147,14 @@ type QuickValues = z.infer<typeof quickSchema>;
 type QuickSport = QuickValues['sport'];
 
 type QuickFormatConfig = {
+  id: string;
   key: string;
   label: string;
   bracketType?: QuickValues['bracketType'];
   eloEnabled: boolean;
   minElo: number | null;
   maxElo: number | null;
+  isCustom?: boolean;
 };
 
 const QUICK_FORMAT_OPTIONS = [
@@ -357,11 +359,25 @@ export default function QuickTournamentCreate() {
   const formValues = useWatch({ control });
   const [isDescriptionEditorOpen, setIsDescriptionEditorOpen] = useState(false);
   const [isFormatModalOpen, setIsFormatModalOpen] = useState(false);
+  const [editingFormatId, setEditingFormatId] = useState<string | null>(null);
   const [formatDraft, setFormatDraft] = useState<QuickFormatConfig>({
-    key: 'MALE_DOUBLES', label: 'Đôi nam', eloEnabled: false, minElo: null, maxElo: null,
+    id: 'MALE_DOUBLES',
+    key: 'MALE_DOUBLES',
+    label: 'Đôi nam',
+    bracketType: 'single_elimination',
+    eloEnabled: false,
+    minElo: null,
+    maxElo: null,
   });
   const [formatConfigs, setFormatConfigs] = useState<QuickFormatConfig[]>([
-    ...QUICK_FORMAT_OPTIONS.slice(0, 5).map((item) => ({ key: item.key, label: item.label, eloEnabled: false, minElo: null, maxElo: null })),
+    ...QUICK_FORMAT_OPTIONS.slice(0, 5).map((item) => ({
+      id: item.key,
+      key: item.key,
+      label: item.label,
+      eloEnabled: false,
+      minElo: null,
+      maxElo: null,
+    })),
   ]);
   const draftHydratedRef = useRef(false);
   const autoScheduleRef = useRef({ registrationEnd: '', endDate: '' });
@@ -491,40 +507,68 @@ export default function QuickTournamentCreate() {
     }
   };
 
-  const toggleFormat = (formatKey: string) => {
-    if (selectedFormats.includes(formatKey)) {
+  const toggleFormat = (formatId: string) => {
+    const isSelected = selectedFormats.includes(formatId);
+    if (isSelected) {
       if (selectedFormats.length <= 1) {
         toast('Cần ít nhất 1 nội dung thi đấu.', { icon: 'ℹ️' });
         return;
       }
-      const next = selectedFormats.filter((item) => item !== formatKey);
+      const next = selectedFormats.filter((item) => item !== formatId);
       setValue('selectedFormats', next, { shouldValidate: true });
-      syncLegacyFormat(next[0]);
+      const firstConfig = formatConfigs.find((c) => c.id === next[0] || c.key === next[0]);
+      if (firstConfig) syncLegacyFormat(firstConfig.key);
       return;
     }
-    const next = [...selectedFormats, formatKey];
+    const next = [...selectedFormats, formatId];
     setValue('selectedFormats', next, { shouldValidate: true });
-    syncLegacyFormat(next[0]);
+    const firstConfig = formatConfigs.find((c) => c.id === next[0] || c.key === next[0]);
+    if (firstConfig) syncLegacyFormat(firstConfig.key);
   };
 
-  const openFormatModal = (formatKey?: string) => {
+  const openFormatModal = (formatId?: string) => {
     const isFootball = sport === 'football';
     const sportOptions = QUICK_FORMAT_OPTIONS.filter((item) =>
       isFootball ? item.key.startsWith('FOOTBALL_') : !item.key.startsWith('FOOTBALL_')
     );
-    const option = sportOptions.find((item) => item.key === formatKey)
-      ?? sportOptions.find((item) => !selectedFormats.includes(item.key))
-      ?? sportOptions[0];
-    const existing = formatConfigs.find((config) => config.key === option.key);
-    setFormatDraft(existing ?? {
-      key: option.key,
-      label: option.label,
+
+    if (formatId) {
+      const existing = formatConfigs.find((config) => config.id === formatId || config.key === formatId);
+      if (existing) {
+        setEditingFormatId(existing.id);
+        setFormatDraft({ ...existing });
+        setIsFormatModalOpen(true);
+        return;
+      }
+    }
+
+    const defaultOpt = sportOptions.find((item) => !selectedFormats.includes(item.key)) ?? sportOptions[0];
+    const newId = `format-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    setEditingFormatId(null);
+    setFormatDraft({
+      id: newId,
+      key: defaultOpt.key,
+      label: defaultOpt.label,
       bracketType,
       eloEnabled: false,
       minElo: null,
       maxElo: null,
+      isCustom: true,
     });
     setIsFormatModalOpen(true);
+  };
+
+  const removeFormat = (formatId: string) => {
+    const nextSelected = selectedFormats.filter((id) => id !== formatId);
+    if (nextSelected.length === 0) {
+      toast.error('Cần giữ lại ít nhất 1 nội dung thi đấu.');
+      return;
+    }
+    setFormatConfigs((current) => current.filter((item) => item.id !== formatId));
+    setValue('selectedFormats', nextSelected, { shouldValidate: true });
+    const firstConfig = formatConfigs.find((c) => c.id === nextSelected[0] || c.key === nextSelected[0]);
+    if (firstConfig) syncLegacyFormat(firstConfig.key);
+    toast.success('Đã xóa nội dung thi đấu.');
   };
 
   const saveFormatConfig = () => {
@@ -533,25 +577,54 @@ export default function QuickTournamentCreate() {
       return;
     }
     const defaultOption = QUICK_FORMAT_OPTIONS.find((item) => item.key === formatDraft.key);
-    const normalizedDraft = { ...formatDraft, label: formatDraft.label.trim() || defaultOption?.label || formatDraft.key };
-    setFormatConfigs((current) => [...current.filter((item) => item.key !== normalizedDraft.key), normalizedDraft]);
-    if (!selectedFormats.includes(normalizedDraft.key)) {
-      setValue('selectedFormats', [...selectedFormats, normalizedDraft.key], { shouldValidate: true });
+    const normalizedLabel = formatDraft.label.trim() || defaultOption?.label || formatDraft.key;
+    const normalizedDraft: QuickFormatConfig = {
+      ...formatDraft,
+      label: normalizedLabel,
+      bracketType: formatDraft.bracketType || bracketType,
+    };
+
+    if (editingFormatId) {
+      setFormatConfigs((current) =>
+        current.map((item) => (item.id === editingFormatId ? normalizedDraft : item))
+      );
+      toast.success('Đã cập nhật nội dung thi đấu.');
+    } else {
+      setFormatConfigs((current) => [...current, normalizedDraft]);
+      setValue('selectedFormats', [...selectedFormats, normalizedDraft.id], { shouldValidate: true });
+      toast.success('Đã thêm nội dung thi đấu mới.');
     }
-    syncLegacyFormat(formatDraft.key);
+
+    syncLegacyFormat(normalizedDraft.key);
     setIsFormatModalOpen(false);
   };
 
   const handleSportChange = (newSport: QuickSport) => {
     if (newSport === 'football') {
-      setValue('selectedFormats', [DEFAULT_FOOTBALL_FORMATS[0]], { shouldValidate: true });
-      setFormatConfigs(QUICK_FORMAT_OPTIONS.slice(5).map((item) => {
-        return { key: item.key, label: item.label, eloEnabled: false, minElo: null, maxElo: null };
+      const defaultFootball = QUICK_FORMAT_OPTIONS.slice(5).map((item) => ({
+        id: item.key,
+        key: item.key,
+        label: item.label,
+        bracketType,
+        eloEnabled: false,
+        minElo: null,
+        maxElo: null,
       }));
+      setValue('selectedFormats', [defaultFootball[0].id], { shouldValidate: true });
+      setFormatConfigs(defaultFootball);
       syncLegacyFormat(DEFAULT_FOOTBALL_FORMATS[0]);
     } else {
+      const defaultRacket = QUICK_FORMAT_OPTIONS.slice(0, 5).map((item) => ({
+        id: item.key,
+        key: item.key,
+        label: item.label,
+        bracketType,
+        eloEnabled: false,
+        minElo: null,
+        maxElo: null,
+      }));
       setValue('selectedFormats', ['MALE_DOUBLES'], { shouldValidate: true });
-      setFormatConfigs(QUICK_FORMAT_OPTIONS.slice(0, 5).map((item) => ({ key: item.key, label: item.label, eloEnabled: false, minElo: null, maxElo: null })));
+      setFormatConfigs(defaultRacket);
       syncLegacyFormat('MALE_DOUBLES');
     }
   };
@@ -634,8 +707,9 @@ export default function QuickTournamentCreate() {
       const response = await tournamentsApi.createLiteTournament(createPayload);
 
       try {
-        const divisionInputs = values.selectedFormats.map((formatKey) => {
-          const config = formatConfigs.find((item) => item.key === formatKey);
+        const divisionInputs = values.selectedFormats.map((formatId) => {
+          const config = formatConfigs.find((item) => item.id === formatId || item.key === formatId);
+          const formatKey = config?.key || formatId;
           const division = toDivisionInput(
             formatKey,
             config?.bracketType ?? values.bracketType,
@@ -1019,23 +1093,73 @@ export default function QuickTournamentCreate() {
                   </span>
                 </div>
 
-                <div className="space-y-2">
-                  {QUICK_FORMAT_OPTIONS.filter((option) => sport === 'football' ? option.key.startsWith('FOOTBALL_') : !option.key.startsWith('FOOTBALL_')).map((option) => {
-                    const formatKey = option.key;
-                    const isSelected = selectedFormats.includes(formatKey);
-                    const config = formatConfigs.find((item) => item.key === formatKey) ?? { key: formatKey, label: option.label, eloEnabled: false, minElo: null, maxElo: null };
-                    return (
-                      <div key={formatKey} className={`group flex items-center justify-between rounded-lg border px-3 py-2.5 transition ${isSelected ? 'border-blue-500 bg-blue-50/80 text-blue-800 shadow-2xs' : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'}`}>
-                        <button type="button" onClick={() => toggleFormat(formatKey)} className="flex min-w-0 flex-1 items-center gap-2 text-left">
-                          <span className={`h-4 w-4 shrink-0 rounded border text-center text-[11px] leading-[14px] ${isSelected ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-300 bg-white'}`}>{isSelected ? '✓' : ''}</span>
-                          <span className="min-w-0"><span className="block truncate text-xs font-bold">{config.label}</span><span className="mt-0.5 block text-[10px] text-slate-500">{config.bracketType ? `${BRACKET_OPTIONS.find((item) => item.id === config.bracketType)?.label ?? config.bracketType} · ` : ''}{config.eloEnabled ? `ELO ${config.minElo ?? 0}–${config.maxElo ?? '∞'}` : 'Không giới hạn ELO'}</span></span>
-                        </button>
-                        <button type="button" onClick={() => openFormatModal(formatKey)} className="ml-2 inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-[10px] font-bold text-slate-500 opacity-0 transition group-hover:opacity-100 hover:border-blue-300 hover:text-blue-700" aria-label={`Sửa ${config.label}`}><Settings2 className="h-3 w-3" /> Sửa</button>
-                      </div>
-                    );
-                  })}
-                  <button type="button" onClick={() => openFormatModal()} className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-blue-300 bg-white px-3 py-2.5 text-xs font-bold text-blue-700 transition hover:border-blue-500 hover:bg-blue-50"><Plus className="h-3.5 w-3.5" /> Thêm hình thức</button>
+                <div className="space-y-2 max-h-[380px] overflow-y-auto pr-1">
+                  {formatConfigs
+                    .filter((config) => (sport === 'football' ? config.key.startsWith('FOOTBALL_') : !config.key.startsWith('FOOTBALL_')))
+                    .map((config) => {
+                      const formatId = config.id;
+                      const isSelected = selectedFormats.includes(formatId);
+                      return (
+                        <div
+                          key={formatId}
+                          className={`group flex items-center justify-between rounded-xl border px-3 py-2.5 transition ${
+                            isSelected
+                              ? 'border-blue-500 bg-blue-50/80 text-blue-800 shadow-2xs'
+                              : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
+                          }`}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => toggleFormat(formatId)}
+                            className="flex min-w-0 flex-1 items-center gap-2.5 text-left cursor-pointer"
+                          >
+                            <span
+                              className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px] font-bold leading-none ${
+                                isSelected ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-300 bg-white'
+                              }`}
+                            >
+                              {isSelected ? '✓' : ''}
+                            </span>
+                            <span className="min-w-0">
+                              <span className="block truncate text-xs font-bold">{config.label}</span>
+                              <span className="mt-0.5 block text-[10.5px] text-slate-500">
+                                {config.bracketType ? `${BRACKET_OPTIONS.find((item) => item.id === config.bracketType)?.label ?? config.bracketType} · ` : ''}
+                                {config.eloEnabled ? `ELO ${config.minElo ?? 0}–${config.maxElo ?? '∞'}` : 'Không giới hạn ELO'}
+                              </span>
+                            </span>
+                          </button>
+                          <div className="ml-2 flex items-center gap-1 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => openFormatModal(formatId)}
+                              className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-[10px] font-bold text-slate-600 opacity-0 transition group-hover:opacity-100 hover:border-blue-300 hover:text-blue-700 cursor-pointer shadow-2xs"
+                              aria-label={`Sửa ${config.label}`}
+                            >
+                              <Settings2 className="h-3 w-3" /> Sửa
+                            </button>
+                            {config.isCustom && (
+                              <button
+                                type="button"
+                                onClick={() => removeFormat(formatId)}
+                                className="inline-flex items-center justify-center rounded-md border border-slate-200 bg-white p-1 text-slate-400 opacity-0 transition group-hover:opacity-100 hover:border-rose-300 hover:text-rose-600 hover:bg-rose-50 cursor-pointer shadow-2xs"
+                                title="Xóa nội dung này"
+                                aria-label={`Xóa ${config.label}`}
+                              >
+                                <X className="h-3.5 w-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
                 </div>
+                <button
+                  type="button"
+                  onClick={() => openFormatModal()}
+                  className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-blue-300 bg-white px-3 py-2.5 text-xs font-bold text-blue-700 transition hover:border-blue-500 hover:bg-blue-50 cursor-pointer"
+                >
+                  <Plus className="h-3.5 w-3.5" /> Thêm hình thức
+                </button>
                 {errors.selectedFormats && (
                   <span className="block text-xs text-rose-600 font-medium">{errors.selectedFormats.message}</span>
                 )}
@@ -1255,7 +1379,12 @@ export default function QuickTournamentCreate() {
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Thêm hình thức thi đấu">
           <div className="w-full max-w-lg rounded-xl border border-slate-200 bg-white shadow-2xl">
             <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-              <div><h2 className="text-base font-bold text-slate-900">Thêm / sửa hình thức thi đấu</h2><p className="mt-0.5 text-xs text-slate-500">Mặc định dùng thể thức chung của giải; bạn có thể chọn riêng cho nội dung này.</p></div>
+              <div>
+                <h2 className="text-base font-bold text-slate-900">
+                  {editingFormatId ? 'Chỉnh sửa hình thức thi đấu' : 'Thêm hình thức thi đấu mới'}
+                </h2>
+                <p className="mt-0.5 text-xs text-slate-500">Mặc định dùng thể thức chung của giải; bạn có thể chọn riêng cho nội dung này.</p>
+              </div>
               <button type="button" onClick={() => setIsFormatModalOpen(false)} className="rounded-full p-2 text-slate-400 hover:bg-slate-100" aria-label="Đóng"><X className="h-4 w-4" /></button>
             </div>
             <div className="space-y-4 p-5">
@@ -1307,7 +1436,7 @@ export default function QuickTournamentCreate() {
                 {formatDraft.eloEnabled && <div className="mt-3 grid grid-cols-2 gap-3"><label className="text-xs font-semibold text-slate-600">ELO tối thiểu<input type="number" min={0} value={formatDraft.minElo ?? ''} onChange={(event) => setFormatDraft((current) => ({ ...current, minElo: event.target.value === '' ? null : Number(event.target.value) }))} className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm" /></label><label className="text-xs font-semibold text-slate-600">ELO tối đa<input type="number" min={0} value={formatDraft.maxElo ?? ''} onChange={(event) => setFormatDraft((current) => ({ ...current, maxElo: event.target.value === '' ? null : Number(event.target.value) }))} className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm" /></label></div>}
               </div>
             </div>
-            <div className="flex justify-end gap-2 border-t border-slate-100 px-5 py-3"><button type="button" onClick={() => setIsFormatModalOpen(false)} className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50">Hủy</button><button type="button" onClick={saveFormatConfig} className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-700"><Plus className="h-3.5 w-3.5" /> Lưu</button></div>
+            <div className="flex justify-end gap-2 border-t border-slate-100 px-5 py-3"><button type="button" onClick={() => setIsFormatModalOpen(false)} className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50">Hủy</button><button type="button" onClick={saveFormatConfig} className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-700">{editingFormatId ? 'Lưu thay đổi' : <><Plus className="h-3.5 w-3.5" /> Thêm hình thức</>}</button></div>
           </div>
         </div>
       )}

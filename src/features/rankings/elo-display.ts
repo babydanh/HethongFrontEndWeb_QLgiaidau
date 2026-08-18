@@ -19,7 +19,7 @@ import { getRankProgressInfo } from '@/utils/rank-style';
 
 export type EloMatchType = 'SINGLES' | 'DOUBLES' | 'MIXED_DOUBLES';
 
-export type EloMatchTypeLabels = Partial<Record<EloMatchType, string>>;
+export type EloMatchTypeLabels = Partial<Record<EloMatchType, string>> & { categoryFallback?: string };
 
 export type EloDisplayLabels = {
   categoryFallback?: string;
@@ -42,7 +42,7 @@ export const getEloMatchTypeLabel = (matchType?: string | null, labels?: EloMatc
   if (matchType === 'SINGLES' || matchType === 'DOUBLES' || matchType === 'MIXED_DOUBLES') {
     return labels?.[matchType] ?? MATCH_TYPE_LABELS[matchType];
   }
-  return 'Tổng quan';
+  return labels?.categoryFallback ?? 'Tổng quan';
 };
 
 /** Display name combining category and match type. */

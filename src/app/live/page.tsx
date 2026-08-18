@@ -1,9 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 export default function LiveScorePage() {
+    const translate = useTranslations("Common");
     return (
         <div className="w-full px-margin-mobile md:px-margin-desktop max-w-container-max-width mx-auto py-8">
             <style dangerouslySetInnerHTML={{__html: `
@@ -20,7 +21,7 @@ export default function LiveScorePage() {
             {/* Page Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                 <div className="flex items-center gap-4">
-                    <h1 className="font-headline-lg text-headline-lg md:font-display md:text-display text-on-surface">Trận đấu trực tiếp</h1>
+                    <h1 className="font-headline-lg text-headline-lg md:font-display md:text-display text-on-surface">{translate('livePageTitle')}</h1>
                     <span className="bg-error text-on-error font-label-sm text-label-sm px-2 py-1 rounded-full flex items-center gap-1">
                         <span className="w-2 h-2 bg-on-error rounded-full pulse-dot"></span>
                         3 trận

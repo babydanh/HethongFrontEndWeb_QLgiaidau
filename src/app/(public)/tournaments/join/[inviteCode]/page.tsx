@@ -241,9 +241,9 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
               <div className="flex items-center gap-2 col-span-2">
                 <Trophy className="w-4 h-4 text-amber-400" />
                 <span>
-                  Thể thức: {tournament.format === 'SINGLE_ELIMINATION' ? 'Loại trực tiếp' :
-                             tournament.format === 'DOUBLE_ELIMINATION' ? 'Nhánh thắng/thua' :
-                             tournament.format === 'ROUND_ROBIN' ? 'Vòng tròn tính điểm' : tournament.format}
+                  {translate('format')}: {tournament.format === 'SINGLE_ELIMINATION' ? displayTranslate('bracketSingleElimination') :
+                             tournament.format === 'DOUBLE_ELIMINATION' ? displayTranslate('bracketDoubleElimination') :
+                             tournament.format === 'ROUND_ROBIN' ? displayTranslate('bracketRoundRobin') : tournament.format}
                 </span>
               </div>
             </div>

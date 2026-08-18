@@ -149,7 +149,8 @@ export interface TournamentResult {
 /** Remove wizard-only fields at the API boundary before any create request. */
 const stripCreateWizardFields = <T>(data: T): T => {
   if (!data || typeof data !== 'object' || Array.isArray(data)) return data;
-  const { selectedFormats: _selectedFormats, ...payload } = data as Record<string, unknown>;
+  const payload = { ...(data as Record<string, unknown>) };
+  delete payload.selectedFormats;
   return payload as T;
 };
 
@@ -535,7 +536,6 @@ export const tournamentsApi = {
     isRanked?: boolean;
     startDate?: string;
     startTime?: string;
-    endDate?: string;
     registrationStartDate?: string;
     registrationEndDate?: string;
     isRecurring?: boolean;
@@ -575,8 +575,13 @@ export const tournamentsApi = {
 export const divisionsApi = {
   getDivisions: (tournamentId: string) =>
     api.get<ApiResponse<Division[]>>(`/tournaments/${tournamentId}/divisions`),
-  createDivision: (tournamentId: string, data: CreateDivisionInput) =>
-    api.post<ApiResponse<Division>>(`/tournaments/${tournamentId}/divisions`, data),
+  createDivision: (tournamentId: string, data: CreateDivisionInput) => {
+    // Division DTO does not accept endDate; the tournament owns the full
+    // schedule. Keep the legacy UI field readable without sending it.
+    const payload = { ...data };
+    delete payload.endDate;
+    return api.post<ApiResponse<Division>>(`/tournaments/${tournamentId}/divisions`, payload);
+  },
   updateDivision: (divisionId: string, data: UpdateDivisionInput) =>
     api.patch<ApiResponse<Division>>(`/tournaments/divisions/${divisionId}`, data),
   updateDivisionConfig: (tournamentId: string, divisionId: string, data: UpdateDivisionInput) =>

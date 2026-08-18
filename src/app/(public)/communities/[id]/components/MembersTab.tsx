@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { Users, Search, UserPlus, MoreVertical, ShieldAlert, ShieldCheck, Trash2, Crown, Loader2, X, Ban, Tag } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
@@ -52,6 +53,7 @@ export default function MembersTab({
   onMembershipChange?: () => void;
 }) {
   const router = useRouter();
+  const translate = useTranslations('Common');
   const [members, setMembers] = useState<MemberData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -112,7 +114,7 @@ export default function MembersTab({
       setMembers((prev) => (append ? [...prev, ...joinedOnly] : joinedOnly));
     } catch (error) {
       console.error('Failed to fetch members', error);
-      toast.error('Lỗi khi tải danh sách thành viên.');
+      toast.error(translate('loadMembersFailed'));
     } finally {
       setIsLoading(false);
       setIsLoadingMore(false);
@@ -161,19 +163,19 @@ export default function MembersTab({
   const handleUpdateRole = async (targetUserId: string, newRole: 'MODERATOR' | 'MEMBER') => {
     try {
       await communitiesApi.updateMemberRole(communityId, targetUserId, newRole);
-      toast.success(newRole === 'MODERATOR' ? 'Đã thăng chức làm Quản trị viên!' : 'Đã hạ cấp xuống Thành viên!');
+      toast.success(newRole === 'MODERATOR' ? translate('promotedToModerator') : translate('demotedToMember'));
       fetchMembers();
       setActiveMenuUserId(null);
     } catch (error) {
       console.error(error);
-      toast.error(getErrorMessage(error, 'Lỗi khi cập nhật vai trò.'));
+      toast.error(getErrorMessage(error, translate('updateRoleFailed')));
     }
   };
 
   const handleKickMember = async (targetUserId: string, targetName: string) => {
     try {
       await communitiesApi.removeMember(communityId, targetUserId);
-      toast.success(`Đã kích "${targetName}" khỏi nhóm.`);
+      toast.success(translate('removedMember', { name: targetName }));
       fetchMembers();
       setActiveMenuUserId(null);
       if (onMembershipChange && targetUserId === userId) {
@@ -181,19 +183,19 @@ export default function MembersTab({
       }
     } catch (error) {
       console.error(error);
-      toast.error(getErrorMessage(error, 'Lỗi khi mời thành viên ra khỏi cộng đồng.'));
+      toast.error(getErrorMessage(error, translate('removeMemberFailed')));
     }
   };
 
   const handleBanMember = async (targetUserId: string, targetName: string) => {
     try {
       await communitiesApi.banMember(communityId, targetUserId);
-      toast.success(`Đã cấm "${targetName}" khỏi cộng đồng.`);
+      toast.success(translate('bannedMember', { name: targetName }));
       fetchMembers();
       setActiveMenuUserId(null);
     } catch (error) {
       console.error(error);
-      toast.error(getErrorMessage(error, 'Lỗi khi cấm thành viên.'));
+      toast.error(getErrorMessage(error, translate('banMemberFailed')));
     }
   };
 
@@ -201,7 +203,7 @@ export default function MembersTab({
     if (!confirmTransferUserId) return;
     try {
       await communitiesApi.updateMemberRole(communityId, confirmTransferUserId, 'OWNER');
-      toast.success(`Đã chuyển quyền sở hữu thành công sang cho ${confirmTransferName}!`);
+      toast.success(translate('ownershipTransferred', { name: confirmTransferName }));
       setConfirmTransferUserId(null);
       fetchMembers();
       setActiveMenuUserId(null);

@@ -183,7 +183,7 @@ export default function CommunityDetailPage() {
       if (isFollowing) {
         await communitiesApi.unfollowCommunity(id);
         setIsFollowing(false);
-        toast.success(translate('unfollowSuccess')); 
+        toast.success(translate('unfollowSuccess'));
       } else {
         await communitiesApi.followCommunity(id);
         setIsFollowing(true);
@@ -504,11 +504,11 @@ export default function CommunityDetailPage() {
                 </span>
                 <span className="flex items-center gap-1.5 text-slate-700 shrink-0">
                   <Users className="w-4 h-4 text-indigo-500 shrink-0" />
-                  {community._count?.members || 1} thành viên
+                  {community._count?.members || 1} {translate('communityMembers')}
                 </span>
                 <span className="flex items-center gap-1.5 text-slate-700 shrink-0">
                   <Trophy className="w-4 h-4 text-amber-500 shrink-0" />
-                  {community._count?.tournaments || 0} giải đấu
+                  {community._count?.tournaments || 0} {translate('communityTournaments')}
                 </span>
               </div>
             </div>
@@ -528,7 +528,7 @@ export default function CommunityDetailPage() {
               variant="outline"
               onClick={() => setIsShareModalOpen(true)}
               className="h-10 px-3 bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700 rounded-lg shadow-sm"
-              aria-label={`Chia sẻ câu lạc bộ ${community.name}`}
+              aria-label={translate('shareClubAria', { name: community.name })}
             >
               <Share2 className="w-4 h-4" />
             </Button>
@@ -563,14 +563,14 @@ export default function CommunityDetailPage() {
         {/* Navigation Tabs */}
         <div className="flex overflow-x-auto gap-2 mb-6 mt-4 hide-scrollbar">
           {[
-            { id: 'overview', label: 'Tổng quan' },
+            { id: 'overview', label: translate('overviewTab') },
             ...(canViewContent ? [
-              { id: 'tournaments', label: 'Giải đấu' },
-              { id: 'members', label: 'Thành viên' },
-              { id: 'gallery', label: 'Ảnh' },
-              { id: 'rankings', label: 'Bảng xếp hạng' },
+              { id: 'tournaments', label: translate('tournamentsTab') },
+              { id: 'members', label: translate('membersTab') },
+              { id: 'gallery', label: translate('galleryTab') },
+              { id: 'rankings', label: translate('rankingsTab') },
             ] : []),
-            ...(isOwnerOrMod ? [{ id: 'moderation', label: 'Điều phối' }] : []),
+            ...(isOwnerOrMod ? [{ id: 'moderation', label: translate('moderationTab') }] : []),
           ].map(tab => (
             <button
               key={tab.id}

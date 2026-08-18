@@ -161,7 +161,6 @@ const toDivisionInput = (
   bracketType: QuickValues['bracketType'],
   maxParticipants: number,
   startDate?: string,
-  endDate?: string,
   registrationEndDate?: string,
 ): CreateDivisionInput => {
   const definitions: Record<string, { name: string; matchType: MatchTypeDB; genderRestriction?: GenderRestriction }> = {
@@ -183,7 +182,6 @@ const toDivisionInput = (
     entryFee: 0,
     bracketType: bracketType.toUpperCase() as CreateDivisionInput['bracketType'],
     startDate: startDate ?? null,
-    endDate: endDate ?? null,
     registrationEndDate: registrationEndDate ?? null,
   };
 };
@@ -301,14 +299,11 @@ export default function QuickTournamentCreate() {
   });
 
   const sport = useWatch({ control, name: 'sport' });
-  const format = useWatch({ control, name: 'format' });
   const selectedFormats = useWatch({ control, name: 'selectedFormats' }) || ['MALE_DOUBLES'];
   const bracketType = useWatch({ control, name: 'bracketType' });
   const maxTeams = useWatch({ control, name: 'maxTeams' });
-  const genderRestriction = useWatch({ control, name: 'genderRestriction' });
   const visibility = useWatch({ control, name: 'visibility' });
   const registrationMode = useWatch({ control, name: 'registrationMode' });
-  const isRanked = useWatch({ control, name: 'isRanked' });
   const province = useWatch({ control, name: 'province' });
   const registrationStart = useWatch({ control, name: 'registrationStart' });
   const registrationEnd = useWatch({ control, name: 'registrationEnd' });
@@ -458,7 +453,6 @@ export default function QuickTournamentCreate() {
         registrationStartDate: values.registrationStart ? new Date(values.registrationStart).toISOString() : undefined,
         registrationEndDate: values.registrationEnd ? new Date(values.registrationEnd).toISOString() : undefined,
         startDate: values.startDate ? new Date(values.startDate).toISOString() : undefined,
-        endDate: values.endDate ? new Date(values.endDate).toISOString() : undefined,
         venueName: values.venueName ? values.venueName.trim() : undefined,
         locationAddress: values.locationAddress ? values.locationAddress.trim() : undefined,
         province: provinceName || undefined,
@@ -480,7 +474,6 @@ export default function QuickTournamentCreate() {
             values.bracketType,
             values.maxTeams,
             values.startDate ? new Date(values.startDate).toISOString() : undefined,
-            values.endDate ? new Date(values.endDate).toISOString() : undefined,
             values.registrationEnd ? new Date(values.registrationEnd).toISOString() : undefined,
           )
         );
@@ -632,7 +625,7 @@ export default function QuickTournamentCreate() {
                   />
 
                   <CustomDateTimePicker
-                    label="Kết thúc dự kiến (tùy chọn)"
+                    label="Kết thúc dự kiến (bổ sung sau nếu cần)"
                     value={endDate}
                     onChange={(val) => setValue('endDate', val, { shouldValidate: true })}
                     error={errors.endDate?.message}

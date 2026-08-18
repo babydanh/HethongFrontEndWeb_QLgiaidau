@@ -196,7 +196,7 @@ export default function CommunitiesPage() {
           {communities.map(community => {
             const isOwner = user && (community.creatorId === user.id || community.ownerId === user.id);
             const isJoined = user && myCommunityIds.has(community.id);
-            const provinceName = provinces.find(p => p.code === community.provinceCode)?.name || "Việt Nam";
+            const provinceName = provinces.find(p => p.code === community.provinceCode)?.name || t('vietnam');
 
             return (
               <div
@@ -253,12 +253,12 @@ export default function CommunitiesPage() {
                       <div className="flex items-center gap-2 mt-0.5 text-[10px] text-slate-500 font-semibold flex-wrap">
                         <span className="flex items-center gap-0.5">
                           <Users className="w-3 h-3 text-slate-400" />
-                          {community._count?.members || 0} thành viên
+                          {community._count?.members || 0} {t('members')}
                         </span>
                         <span>•</span>
                         <span className="flex items-center gap-0.5">
                           <Trophy className="w-3 h-3 text-slate-400" />
-                          {community._count?.tournaments || 0} giải đấu
+                          {community._count?.tournaments || 0} {t('tournaments')}
                         </span>
                       </div>
                     </div>
@@ -287,7 +287,7 @@ export default function CommunitiesPage() {
                     ) : (
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-slate-100 bg-slate-50 text-slate-500 text-[10px] sm:text-[9px] font-bold uppercase tracking-wider">
                         <span className="w-1 h-1 rounded-full bg-slate-400" />
-                        Giao hữu
+                        {t('friendly')}
                       </span>
                     )}
 
@@ -308,7 +308,7 @@ export default function CommunitiesPage() {
                       <span className={`w-1.5 h-1.5 rounded-full ${
                         community.joinMode === 'INVITE_ONLY' ? 'bg-rose-500 animate-pulse' : community.joinMode === 'APPROVAL' ? 'bg-amber-500' : 'bg-emerald-500'
                       }`} />
-                      {community.joinMode === 'INVITE_ONLY' ? 'Chỉ mời' : community.joinMode === 'APPROVAL' ? 'Xét duyệt' : 'Tự do'}
+                      {community.joinMode === 'INVITE_ONLY' ? t('inviteOnly') : community.joinMode === 'APPROVAL' ? t('approval') : t('openJoin')}
                     </span>
                   </div>
                 </div>

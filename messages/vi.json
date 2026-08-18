@@ -77,7 +77,7 @@
     "viewMatch": "Xem trận",
     "countdownDay": "ngày",
     "progressToNextRank": "Tiến trình lên hạng",
-    "winRate": "Tỉ lệ",
+    "winRate": "Tỉ lệ", "loadMembersFailed": "Lỗi khi tải danh sách thành viên.", "promotedToModerator": "Đã thăng chức làm Quản trị viên!", "demotedToMember": "Đã hạ cấp xuống Thành viên!", "updateRoleFailed": "Lỗi khi cập nhật vai trò.", "removedMember": "Đã kích {name} khỏi nhóm.", "removeMemberFailed": "Lỗi khi mời thành viên ra khỏi cộng đồng.", "bannedMember": "Đã cấm {name} khỏi cộng đồng.", "banMemberFailed": "Lỗi khi cấm thành viên.", "ownershipTransferred": "Đã chuyển quyền sở hữu thành công sang cho {name}!",
     "teamElo": "ELO đội bóng",
     "manageTeam": "Quản lý đội",
     "teamCaptain": "Đội trưởng",
@@ -163,7 +163,16 @@
     "acceptInviteFailed": "Lỗi khi chấp nhận lời mời.",
     "privateInviteOnly": "Câu lạc bộ riêng tư chỉ nhận thành viên qua lời mời.",
     "inviteOnlyCommunity": "Câu lạc bộ này ở chế độ Chỉ Mời. Bạn cần được quản trị viên mời.",
-    "aboutClub": "Về câu lạc bộ này"
+    "aboutClub": "Về câu lạc bộ này",
+    "communityMembers": "thành viên",
+    "communityTournaments": "giải đấu",
+    "shareClubAria": "Chia sẻ câu lạc bộ {name}",
+    "overviewTab": "Tổng quan",
+    "tournamentsTab": "Giải đấu",
+    "membersTab": "Thành viên",
+    "galleryTab": "Ảnh",
+    "rankingsTab": "Bảng xếp hạng",
+    "moderationTab": "Điều phối"
   },
   "Profile": {
     "editCover": "Chỉnh sửa ảnh bìa",
@@ -424,7 +433,7 @@
     "allSports": "Tất cả môn thể thao",
     "loading": "Đang tải danh sách câu lạc bộ...",
     "emptyTitle": "Không tìm thấy câu lạc bộ",
-    "emptyDescription": "Thử thay đổi từ khóa tìm kiếm hoặc lọc theo các tỉnh thành, bộ môn khác."
+    "emptyDescription": "Thử thay đổi từ khóa tìm kiếm hoặc lọc theo các tỉnh thành, bộ môn khác.", "vietnam": "Việt Nam", "members": "thành viên", "tournaments": "giải đấu", "friendly": "Giao hữu", "inviteOnly": "Chỉ mời", "approval": "Xét duyệt", "openJoin": "Tự do"
   },
   "Navigation": {
     "home": "Trang chủ",

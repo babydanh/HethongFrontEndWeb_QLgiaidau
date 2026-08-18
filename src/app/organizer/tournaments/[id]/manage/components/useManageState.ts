@@ -223,7 +223,6 @@ export function useManageState(id: string) {
   const [matchCourtId, setMatchCourtId] = useState('');
   const [matchCourtName, setMatchCourtName] = useState('');
   const [matchCourtAddress, setMatchCourtAddress] = useState('');
-  const [matchRefereeId, setMatchRefereeId] = useState('');
   const [matchScheduledAt, setMatchScheduledAt] = useState('');
   const [isCustomMatchConfig, setIsCustomMatchConfig] = useState(false);
   const [matchSetsToWin, setMatchSetsToWin] = useState(2);
@@ -1228,9 +1227,6 @@ export function useManageState(id: string) {
   const handleOpenScheduling = (match: BracketMatch) => {
     setSelectedMatch(match); setMatchCourtName(match.courtName||''); setMatchCourtAddress(match.courtAddress||'');
     setMatchScheduledAt(match.scheduledAt ? match.scheduledAt.substring(0,16) : '');
-    // Referee assignment is a separate organizer action. Scheduling a match
-    // must never preload or implicitly claim a referee.
-    setMatchRefereeId('');
     setMatchCameraId('');
     void livestreamApi.getMatchPlayback(match.id).then((res) => {
       if (res.data?.cameraName) {
@@ -1591,7 +1587,7 @@ export function useManageState(id: string) {
     isEndModalOpen, setIsEndModalOpen, isEnding, setIsEnding, endChecklist, setEndChecklist,
     selectedCategory,
     selectedMatch, setSelectedMatch, matchCourtId, setMatchCourtId, matchCourtName, setMatchCourtName,
-    matchCourtAddress, setMatchCourtAddress, matchRefereeId, setMatchRefereeId, matchScheduledAt, setMatchScheduledAt,
+    matchCourtAddress, setMatchCourtAddress, matchScheduledAt, setMatchScheduledAt,
     cameras, setCameras, fetchCameras, matchCameraId, setMatchCameraId,
     isCustomMatchConfig, setIsCustomMatchConfig,
     matchSetsToWin, setMatchSetsToWin, matchPointsPerSet, setMatchPointsPerSet,

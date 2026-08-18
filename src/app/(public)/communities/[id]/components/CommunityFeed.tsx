@@ -69,6 +69,7 @@ export default function CommunityFeed({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const previewUrlsRef = useRef<string[]>([]);
 
+  const postSchema = createPostSchema(translate("postMaxLength"));
   const {
     register,
     handleSubmit,
@@ -132,7 +133,7 @@ export default function CommunityFeed({
         setIsLoadingMore(false);
       }
     },
-    [communityId],
+    [communityId, translate],
   );
 
   useEffect(() => {

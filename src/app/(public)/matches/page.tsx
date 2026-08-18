@@ -1369,14 +1369,12 @@ export default function MatchesListPage() {
                             </div>
 
                             {/* Phân môn & Sân */}
-                            <div className="text-[10px] font-bold text-slate-400 flex items-center gap-2.5 justify-center border-t border-slate-100 pt-2.5">
-                              <span className="flex items-center gap-1 text-slate-500">
-                                <span className="font-bold text-slate-800 whitespace-nowrap">
-                                  {getFormatLabel(match.tournament?.matchType, match.tournament?.genderRestriction)}
-                                </span>
+                            <div className="text-[11px] font-semibold text-slate-500 flex items-center gap-2 justify-center pt-1">
+                              <span className="text-slate-700 whitespace-nowrap">
+                                {getFormatLabel(match.tournament?.matchType, match.tournament?.genderRestriction)}
                               </span>
-                              <span className="text-slate-200">|</span>
-                              <span>
+                              <span className="text-slate-300">•</span>
+                              <span className="text-slate-500 truncate max-w-[180px]">
                                  {match.courtName
                                    ? `${translate('venueLabel')}: ${match.courtName}`
                                    : (match.tournament?.venueName ? `${translate('venueLabel')}: ${match.tournament.venueName}` : translate('venuePending'))}

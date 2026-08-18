@@ -107,7 +107,7 @@ const quickSchema = z.object({
   visibility: z.enum(['PRIVATE', 'PUBLIC']),
   registrationMode: z.enum(['OPEN', 'APPROVAL', 'INVITE_ONLY']),
   bracketType: z.enum(['single_elimination', 'double_elimination', 'round_robin', 'group_stage_knockout']),
-  maxTeams: z.number().int().min(2).max(64),
+  maxTeams: z.number().int().min(2).max(128),
   registrationStart: z.string().optional(),
   registrationEnd: z.string().optional(),
   startDate: z.string().optional(),
@@ -1046,10 +1046,10 @@ export default function QuickTournamentCreate() {
                       <Users className="h-3.5 w-3.5 text-blue-600" />
                       Quy mô giải đấu (Số đội/người)
                     </span>
-                    <span className="text-xs text-slate-400">Tối đa 64</span>
+                    <span className="text-xs text-slate-400">Tối đa 128</span>
                   </div>
                   <div className="flex flex-wrap items-center gap-1.5">
-                    {[4, 8, 16, 32, 64].map((num) => {
+                    {[4, 8, 16, 32, 64, 128].map((num) => {
                       const isCurrent = maxTeams === num;
                       return (
                         <button
@@ -1071,7 +1071,7 @@ export default function QuickTournamentCreate() {
                       <input
                         type="number"
                         min={2}
-                        max={64}
+                        max={128}
                         {...register('maxTeams', { valueAsNumber: true })}
                         className="w-14 rounded-lg border border-slate-300 bg-white px-2 py-1 text-center text-xs font-bold text-slate-800 outline-none focus:border-blue-500"
                       />

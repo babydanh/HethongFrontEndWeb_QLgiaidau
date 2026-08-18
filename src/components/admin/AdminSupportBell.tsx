@@ -2,12 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { Bell, CircleUserRound, MessageSquareText } from 'lucide-react';
 import { supportApi, type AdminSupportRoom } from '@/features/support/api';
 import { socketClient } from '@/lib/socket';
 import { useAuthStore } from '@/lib/zustand/authStore';
 
 export function AdminSupportBell() {
+  const translate = useTranslations('Common');
   const userId = useAuthStore((state) => state.user?.id);
   const [rooms, setRooms] = useState<AdminSupportRoom[]>([]);
   const [open, setOpen] = useState(false);
@@ -76,7 +78,7 @@ export function AdminSupportBell() {
     <div ref={rootRef} className="relative z-[100]">
       <button
         type="button"
-        aria-label="Thông báo hỗ trợ"
+        aria-label={translate("supportNotifications")}
         onClick={() => setOpen((current) => !current)}
         className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:border-blue-300 hover:text-blue-700"
       >
@@ -92,15 +94,15 @@ export function AdminSupportBell() {
         <div className="absolute right-0 top-12 z-[110] w-[min(360px,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
           <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
             <div>
-              <p className="font-bold text-slate-950">Hỗ trợ mới</p>
-              <p className="text-xs text-slate-500">{unreadCount} tin chưa đọc</p>
+              <p className="font-bold text-slate-950">{translate('newSupportRequests')}</p>
+              <p className="text-xs text-slate-500">{translate('unreadSupportMessages', { count: unreadCount })}</p>
             </div>
             <MessageSquareText className="h-5 w-5 text-blue-600" />
           </div>
           <div className="max-h-80 overflow-y-auto p-2">
             {rooms.length === 0 ? (
               <p className="px-4 py-8 text-center text-sm text-slate-500">
-                Chưa có yêu cầu hỗ trợ.
+                {translate('noSupportRequests')}
               </p>
             ) : (
               rooms.slice(0, 6).map((room) => {
@@ -131,7 +133,7 @@ export function AdminSupportBell() {
                         {customer?.fullName || customer?.email || 'Người dùng'}
                       </span>
                       <span className="mt-0.5 block truncate text-xs text-slate-500">
-                        {room.lastMessage?.content || 'Đã mở yêu cầu hỗ trợ'}
+                        {room.lastMessage?.content || translate('supportRequestOpened')}
                       </span>
                     </span>
                     {(room.unreadCount ?? 0) > 0 && (
@@ -149,7 +151,7 @@ export function AdminSupportBell() {
             onClick={() => setOpen(false)}
             className="block border-t border-slate-100 px-4 py-3 text-center text-sm font-bold text-blue-700 hover:bg-blue-50"
           >
-            Mở hộp thư hỗ trợ
+            {translate('openSupportInbox')}
           </Link>
         </div>
       )}

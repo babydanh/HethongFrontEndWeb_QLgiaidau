@@ -315,6 +315,12 @@ function HomepageTournamentCard({ tournament }: { tournament: Tournament }) {
 export default function HomePage() {
   const { isAuthenticated, user } = useAuthStore();
   const translate = useTranslations('Home');
+  // Bóng bàn đang tạm ẩn khỏi các bộ lọc/khám phá công khai. Vẫn giữ
+  // support trong luồng quản trị và dữ liệu giải cũ để không làm mất dữ liệu.
+  const isHiddenPublicSport = (category: Category) => {
+    const key = `${category.slug ?? ''} ${category.id ?? ''} ${category.name ?? ''}`.toLowerCase();
+    return key.includes('table_tennis') || key.includes('table tennis') || key.includes('table-tennis') || key.includes('bóng bàn') || key.includes('bong ban');
+  };
   const getCategoryLabel = (category: Category) => {
     const slug = (category.slug || category.id || '').toLowerCase();
     try {
@@ -382,7 +388,7 @@ export default function HomePage() {
         { id: 'table_tennis', name: 'Bóng bàn', slug: 'table_tennis', isActive: true },
         { id: 'football', name: 'Bóng đá', slug: 'football', isActive: true },
       ];
-      const CACHE_KEY = 'homepage_categories_v5';
+      const CACHE_KEY = 'homepage_categories_v6';
       const CACHE_TTL = 5 * 60 * 1000;
       try {
         if (typeof window !== 'undefined') {
@@ -390,8 +396,8 @@ export default function HomePage() {
           if (cached) {
             try {
               const parsed = JSON.parse(cached);
-              if (Date.now() - parsed.timestamp < CACHE_TTL && Array.isArray(parsed.data) && parsed.data.length >= 5) {
-                setCategories(parsed.data);
+              if (Date.now() - parsed.timestamp < CACHE_TTL && Array.isArray(parsed.data) && parsed.data.length >= 1) {
+                setCategories(parsed.data.filter((category: Category) => !isHiddenPublicSport(category)));
                 return;
               }
             } catch {
@@ -414,6 +420,7 @@ export default function HomePage() {
         });
 
         const activeCategories = mergedCategories.filter((cat) => {
+          if (isHiddenPublicSport(cat)) return false;
           const catKey = cat.slug || cat.id;
           if (typeof window !== 'undefined') {
             const localOverride = localStorage.getItem(`sport_active_${catKey}`);
@@ -432,6 +439,7 @@ export default function HomePage() {
           console.error('Failed to load categories on homepage', error);
         }
         const activeDefaults = DEFAULT_CATEGORIES.filter((cat) => {
+          if (isHiddenPublicSport(cat)) return false;
           const catKey = cat.slug || cat.id;
           if (typeof window !== 'undefined') {
             const localOverride = localStorage.getItem(`sport_active_${catKey}`);
@@ -1083,7 +1091,7 @@ export default function HomePage() {
                 })()}
               </span>
             </button>
-            {categories.filter(cat => cat.isActive !== false).map((cat) => {
+            {categories.filter(cat => cat.isActive !== false && !isHiddenPublicSport(cat)).map((cat) => {
               const isActive = selectedCategoryId === cat.id;
               return (
                 <button

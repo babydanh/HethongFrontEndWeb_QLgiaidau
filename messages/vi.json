@@ -17,20 +17,52 @@
     "doubleMale": "Đôi Nam",
     "doubleFemale": "Đôi Nữ",
     "doubleMixed": "Đôi Nam Nữ",
-    "ranking": "Xếp hạng"
-,    "ranked": "Xếp hạng"
-,    "recreational": "Phong trào"
-,    "provinceCity": "Tỉnh / Thành phố"
-,    "allAreas": "Tất cả khu vực"
-,    "wardCommune": "Phường / Xã"
-,    "allWards": "Tất cả phường / xã"
-,    "fromDate": "Từ ngày"
-,    "toDate": "Đến ngày"
-,    "datePlaceholder": "dd/mm/yyyy"
-,    "title": "Danh sách trận đấu"
-,    "loading": "Đang tải danh sách trận đấu..."
-,    "empty": "Không tìm thấy trận đấu nào phù hợp."
-  , "bracketGroupStageKnockout": "Vòng bảng + Playoffs", "emptyHint": "Vui lòng thay đổi bộ lọc để thử lại.", "venueLabel": "Sân", "venuePending": "Chờ xếp sân", "cheerLabel": "Cổ vũ", "moreFilters": "Thêm bộ lọc", "quickFinished": "Đã kết thúc", "quickOngoing": "Đang diễn ra", "quickUpcoming": "Sắp diễn ra", "statusScheduled": "Đã lên lịch", "cheerFailed": "Không thể gửi cổ vũ, vui lòng thử lại."},
+    "ranking": "Xếp hạng",
+    "ranked": "Xếp hạng",
+    "recreational": "Phong trào",
+    "provinceCity": "Tỉnh / Thành phố",
+    "allAreas": "Tất cả khu vực",
+    "wardCommune": "Phường / Xã",
+    "allWards": "Tất cả phường / xã",
+    "fromDate": "Từ ngày",
+    "toDate": "Đến ngày",
+    "datePlaceholder": "dd/mm/yyyy",
+    "title": "Danh sách trận đấu",
+    "loading": "Đang tải danh sách trận đấu...",
+    "empty": "Không tìm thấy trận đấu nào phù hợp.",
+    "bracketGroupStageKnockout": "Vòng bảng + Playoffs",
+    "emptyHint": "Vui lòng thay đổi bộ lọc để thử lại.",
+    "venueLabel": "Sân",
+    "venuePending": "Chờ xếp sân",
+    "cheerLabel": "Cổ vũ",
+    "moreFilters": "Thêm bộ lọc",
+    "quickFinished": "Đã kết thúc",
+    "quickOngoing": "Đang diễn ra",
+    "quickUpcoming": "Sắp diễn ra",
+    "statusScheduled": "Sắp diễn ra",
+    "statusLive": "Đang diễn ra",
+    "statusFinished": "Đã kết thúc",
+    "rankedTournament": "GIẢI ĐẤU HẠNG",
+    "roundGrandFinal": "Chung kết tổng",
+    "roundFinal": "Chung kết",
+    "roundSemifinal": "Bán kết",
+    "roundQuarterfinal": "Tứ kết",
+    "roundGroupStage": "Vòng bảng",
+    "winnersBracket": "Nhánh thắng",
+    "losersBracket": "Nhánh thua",
+    "leg": "Lượt",
+    "roundOf": "Vòng {round}",
+    "matchTypeSingles": "Đơn",
+    "matchTypeDoubles": "Đôi",
+    "matchTypeMixedDoubles": "Đôi Nam Nữ",
+    "shareMatch": "Chia sẻ trận đấu",
+    "matchShareTitle": "Trận đấu: {p1} vs {p2}",
+    "tournamentFallback": "Giải đấu",
+    "bracketDoubleElimination": "Nhánh thắng/thua",
+    "bracketSingleElimination": "Loại trực tiếp",
+    "bracketRoundRobin": "Vòng tròn",
+    "cheerFailed": "Không thể gửi cổ vũ, vui lòng thử lại."
+  },
   "LocaleSwitcher": {
     "language": "Ngôn ngữ",
     "vietnamese": "Tiếng Việt",
@@ -221,33 +253,7 @@
     "deleteChatHistoryFailed": "Không thể xóa lịch sử đoạn chat.",
     "updateClubNotificationsFailed": "Không thể cập nhật thông báo CLB.",
     "blockedUserCannotMessage": "Bạn đã chặn người dùng này. Bỏ chặn để gửi tin nhắn.",
-    "typingMessage": "Đang soạn tin nhắn...",
-    "matchTypeSingles": "Đơn",
-    "matchTypeDoubles": "Đôi",
-    "matchTypeMixedDoubles": "Đôi nam nữ",
-    "roundGrandFinal": "Chung kết tổng",
-    "roundFinal": "Chung kết",
-    "roundSemifinal": "Bán kết",
-    "roundQuarterfinal": "Tứ kết",
-    "roundGroupStage": "Vòng bảng",
-    "winnersBracket": "Nhánh thắng",
-    "losersBracket": "Nhánh thua",
-    "leg": "Lượt",
-    "roundOf": "Vòng {round}",
-    "quickFinished": "Vừa kết thúc",
-    "quickOngoing": "Đang diễn ra",
-    "quickUpcoming": "Sắp diễn ra",
-    "moreFilters": "Lọc thêm",
-    "rankedTournament": "GIẢI ĐẤU HẠNG",
-    "shareMatch": "Chia sẻ trận đấu",
-    "matchShareTitle": "Trận đấu: {p1} vs {p2}",
-    "tournamentFallback": "Giải đấu",
-    "statusLive": "Đang diễn ra",
-    "statusScheduled": "Sắp đấu",
-    "statusFinished": "Đã kết thúc",
-    "bracketDoubleElimination": "Nhánh thắng/thua",
-    "bracketSingleElimination": "Loại trực tiếp",
-    "bracketRoundRobin": "Vòng tròn"
+    "typingMessage": "Đang soạn tin nhắn..."
   },
   "Profile": {
     "editCover": "Chỉnh sửa ảnh bìa",
@@ -284,7 +290,7 @@
   "PlayerDashboard": {
     "statusOngoing": "Đang diễn ra",
     "statusCompleted": "Đã xong",
-    "statusScheduled": "Đã xếp lịch",
+    "statusScheduled": "Sắp diễn ra",
     "ongoingUpper": "ĐANG DIỄN RA",
     "upcomingUpper": "SẮP DIỄN RA",
     "tournament": "Giải đấu",

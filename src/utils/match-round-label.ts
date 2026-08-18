@@ -99,7 +99,7 @@ const getPhasePrefix = (match: RoundLabelMatch, tournamentFormat?: TournamentFor
   if (branch === 'MAIN' && (format === 'DOUBLE_ELIMINATION' || normalizeText(stage?.type) === 'DOUBLE_ELIMINATION')) {
     return 'Nhánh thắng';
   }
-  if (stageName.includes('PLAYOFF') || stageName.includes('KNOCKOUT') || stageName.includes('ELIMINATION')) {
+  if ((format === 'GROUP_STAGE_KNOCKOUT' || normalizeText(stage?.type) === 'GROUP_STAGE_KNOCKOUT') && (stageName.includes('PLAYOFF') || stageName.includes('KNOCKOUT') || stageName.includes('ELIMINATION'))) {
     return 'Playoff';
   }
   return null;
@@ -207,11 +207,11 @@ export const getMatchRoundLabel = <TMatch extends RoundLabelMatch>({
     const groupLabel = normalizeText(tournamentFormat) === 'GROUP_STAGE_KNOCKOUT' || normalizeText(stage?.type) === 'GROUP_STAGE'
       ? 'Vòng bảng'
       : null;
-    return groupLabel ? `${groupLabel} - Vòng ${match.roundNumber}` : `Vòng ${match.roundNumber}`;
+    return groupLabel ? `${groupLabel} • Vòng ${match.roundNumber}` : `Vòng ${match.roundNumber}`;
   }
 
   const knockoutLabel = getKnockoutRoundLabel(match, matches, bracketSize);
-  return phasePrefix ? `${phasePrefix} - ${knockoutLabel}` : knockoutLabel;
+  return phasePrefix ? `${phasePrefix} • ${knockoutLabel}` : knockoutLabel;
 };
 
 export const buildRoundFilterOptions = <TMatch extends RoundLabelMatch>(

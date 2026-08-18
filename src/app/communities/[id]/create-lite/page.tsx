@@ -58,7 +58,7 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
 
   const handleSubmit = async () => {
     if (!name.trim()) return toast.error('Vui lòng nhập tên giải đấu');
-    if (maxTeams < 2 || maxTeams > 64) return toast.error('Số đội tối đa phải từ 2 đến 64');
+    if (maxTeams < 2 || maxTeams > 128) return toast.error('Số đội tối đa phải từ 2 đến 128');
     try {
       setIsSubmitting(true);
       const result = await tournamentsApi.createLiteTournament({
@@ -103,7 +103,7 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
             <div className="flex flex-col gap-1.5"><label className="text-sm font-medium text-slate-700">Hình thức</label><select value={format} onChange={(event) => setFormat(event.target.value as typeof format)} className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"><option value="singles">Đánh đơn (Singles)</option><option value="doubles">Đánh đôi (Doubles)</option></select></div>
             <div className="flex flex-col gap-1.5"><label className="text-sm font-medium text-slate-700">Thể thức</label><select value={bracketType} onChange={(event) => setBracketType(event.target.value as typeof bracketType)} className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"><option value="single_elimination">Loại trực tiếp</option><option value="double_elimination">Loại kép</option><option value="round_robin">Vòng tròn</option></select></div>
           </div>
-          <Input label="Số đội / người tối đa (2-64)" type="number" min={2} max={64} value={maxTeams} onChange={(event) => setMaxTeams(Number(event.target.value))} />
+          <Input label="Số đội / người tối đa (2-128)" type="number" min={2} max={128} value={maxTeams} onChange={(event) => setMaxTeams(Number(event.target.value))} />
           <div className="flex flex-col gap-1.5"><label className="text-sm font-medium text-slate-700">Mô tả (không bắt buộc)</label><textarea value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Thông tin thêm về giải đấu..." rows={3} className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm resize-none" /></div>
           <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-4 space-y-3">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

@@ -1108,25 +1108,6 @@ export default function UnifiedChatWidget() {
     }
   };
 
-  const handleClubAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    try {
-      setUploadingClubAvatar(true);
-      const res = await uploadApi.uploadImage(file);
-      const url = (res.data as unknown as { url?: string })?.url || (res as unknown as { url?: string }).url || '';
-      if (url) {
-        setSettingsClubAvatar(url);
-        toast.success('Đã tải ảnh lên thành công!');
-      }
-    } catch (err) {
-      toast.error(getErrorMessage(err, 'Không thể tải ảnh lên.'));
-    } finally {
-      setUploadingClubAvatar(false);
-      if (e.target) e.target.value = '';
-    }
-  };
-
   const sendRoomMessage = async (overrideText?: string) => {
     const text = (overrideText ?? draft).trim();
     if ((!text && selectedFiles.length === 0) || selection.kind !== 'ROOM' || sending) return;

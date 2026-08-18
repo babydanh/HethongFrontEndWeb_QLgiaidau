@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { tournamentsApi } from '@/features/tournaments/api';
 import { communitiesApi, Community } from '@/features/communities/api';
-import { ChevronLeft, Info, Loader2, Lock, Zap } from 'lucide-react';
+import { Calendar, ChevronLeft, Clock, Info, Loader2, Lock, RotateCw, Zap } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '@/utils/error';
 
@@ -41,6 +41,10 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
   const [maxTeams, setMaxTeams] = useState(16);
   const [description, setDescription] = useState('');
   const [isRanked, setIsRanked] = useState(false);
+  const [startDate, setStartDate] = useState('');
+  const [startTime, setStartTime] = useState('18:00');
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [recurringFrequency, setRecurringFrequency] = useState<'WEEKLY' | 'BIWEEKLY' | 'MONTHLY'>('WEEKLY');
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -61,6 +65,12 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
         name: name.trim(), sport, communityId, format, bracketType, maxTeams,
         description: description.trim() || undefined,
         visibility: 'PRIVATE', registrationMode: 'OPEN', isRanked,
+        startDate: startDate ? new Date(`${startDate}T${startTime || '18:00'}:00`).toISOString() : undefined,
+        startTime: startTime || undefined,
+        isRecurring,
+        recurringFrequency: isRecurring ? recurringFrequency : undefined,
+        recurringDayOfWeek: isRecurring && startDate ? new Date(`${startDate}T12:00:00`).getDay() : undefined,
+        recurringTimeOfDay: isRecurring ? (startTime || '18:00') : undefined,
       });
       toast.success('Tạo giải đấu thành công!');
       if (result?.id) router.push(`/organizer/tournaments/${result.id}/manage`);
@@ -95,6 +105,17 @@ export default function CreateLiteTournamentPage({ params }: { params: Promise<{
           </div>
           <Input label="Số đội / người tối đa (2-32)" type="number" min={2} max={32} value={maxTeams} onChange={(event) => setMaxTeams(Number(event.target.value))} />
           <div className="flex flex-col gap-1.5"><label className="text-sm font-medium text-slate-700">Mô tả (không bắt buộc)</label><textarea value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Thông tin thêm về giải đấu..." rows={3} className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm resize-none" /></div>
+          <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-4 space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1.5"><label className="text-sm font-medium text-slate-700 flex items-center gap-1.5"><Calendar className="w-4 h-4 text-slate-500" /> Ngày bắt đầu (tùy chọn)</label><input type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm" /></div>
+              <div className="flex flex-col gap-1.5"><label className="text-sm font-medium text-slate-700 flex items-center gap-1.5"><Clock className="w-4 h-4 text-slate-500" /> Giờ thi đấu</label><input type="time" value={startTime} onChange={(event) => setStartTime(event.target.value)} className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm" /></div>
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <div><span className="text-sm font-semibold text-slate-800 flex items-center gap-1.5"><RotateCw className="w-4 h-4 text-slate-500" /> Tự động tạo giải định kỳ</span><p className="text-xs text-slate-500 mt-0.5">Cron sẽ tự tạo giải mới và mở đăng ký theo lịch này.</p></div>
+              <button type="button" role="switch" aria-checked={isRecurring} onClick={() => setIsRecurring((value) => !value)} className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${isRecurring ? 'bg-emerald-600' : 'bg-slate-300'}`}><span className={`inline-block h-5 w-5 rounded-full bg-white shadow transition-transform ${isRecurring ? 'translate-x-5' : 'translate-x-0'}`} /></button>
+            </div>
+            {isRecurring && <div className="flex flex-col gap-1.5 border-t border-slate-200 pt-3"><label className="text-xs font-semibold text-slate-700">Chu kỳ</label><select value={recurringFrequency} onChange={(event) => setRecurringFrequency(event.target.value as typeof recurringFrequency)} className="h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm"><option value="WEEKLY">Hằng tuần</option><option value="BIWEEKLY">Hai tuần một lần</option><option value="MONTHLY">Hằng tháng</option></select><p className="text-xs text-slate-500">Ngày chạy lấy theo ngày bắt đầu; nếu bỏ trống, hệ thống dùng lịch mặc định.</p></div>}
+          </div>
           <div className="flex items-center justify-between p-4 rounded-lg border border-slate-200 bg-slate-50/50"><div><span className="text-sm font-semibold text-slate-800">{isRanked ? 'Xếp hạng ELO CLB' : 'Phong trào'}</span><p className="text-xs text-slate-500 mt-0.5">{isRanked ? 'Kết quả ảnh hưởng đến điểm ELO nội bộ CLB.' : 'Giải giao hữu, không tính ELO quốc gia.'}</p></div><button type="button" role="switch" aria-checked={isRanked} onClick={() => setIsRanked((value) => !value)} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isRanked ? 'bg-amber-500' : 'bg-slate-300'}`}><span className={`inline-block h-5 w-5 rounded-full bg-white shadow transition-transform ${isRanked ? 'translate-x-5' : 'translate-x-0'}`} /></button></div>
           <div className="flex items-start gap-2 text-xs text-slate-500 bg-blue-50/50 p-3 rounded-lg border border-blue-100"><Info className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" /><span>Sau khi tạo, giải ở trạng thái mở đăng ký nội bộ và bạn có thể vào <strong>Quản lý giải</strong> để bổ sung mọi thông tin nâng cao. Không có preset điểm bắt buộc trong Lite.</span></div>
           <div className="flex justify-end gap-3 pt-2 border-t border-slate-100"><Button variant="outline" onClick={() => router.back()} disabled={isSubmitting}>Hủy</Button><Button onClick={handleSubmit} isLoading={isSubmitting} className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold">{isSubmitting ? 'Đang tạo...' : 'Tạo giải đấu'}</Button></div>

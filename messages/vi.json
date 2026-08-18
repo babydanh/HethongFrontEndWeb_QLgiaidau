@@ -279,7 +279,7 @@
     "notUpdated": "Chưa cập nhật",
     "eloHistoryTitle": "Biến động ELO theo thời gian",
     "matchLabel": "Trận {number}",
-    "eloHistoryEmpty": "Không có lịch sử biến động ELO."
+    "eloHistoryEmpty": "Không có lịch sử biến động ELO.",     "achievementChampion": "Quán quân",     "achievementRunnerUp": "Á quân",     "achievementThirdPlace": "Hạng ba",     "formatSinglesMale": "Đơn Nam",     "formatSinglesFemale": "Đơn Nữ",     "formatDoublesMale": "Đôi Nam",     "formatDoublesFemale": "Đôi Nữ",     "formatMixedDoubles": "Đôi Nam Nữ",     "formatDoubles": "Đôi",     "formatSingles": "Đơn",     "formatUnknown": "Chưa rõ",     "imageTooLarge": "Kích thước ảnh không được vượt quá 5MB",     "coverUpdated": "Đã cập nhật ảnh bìa",     "coverUploadFailed": "Lỗi khi tải ảnh bìa lên",     "evidenceUploadSuccess": "Tải ảnh minh chứng lên thành công",     "evidenceUploadFailed": "Lỗi khi tải ảnh minh chứng lên",     "phoneRequired": "Vui lòng nhập số điện thoại liên hệ",     "evidenceRequired": "Vui lòng tải lên ảnh minh chứng năng lực",     "verificationSubmitted": "Gửi yêu cầu xác minh thành công! Đang chờ Admin duyệt"
   },
   "PlayerDashboard": {
     "statusOngoing": "Đang diễn ra",
@@ -301,7 +301,7 @@
     "decline": "Từ chối",
     "sport": "Môn thể thao",
     "unassigned": "Chưa gán",
-    "noRefereeAssignments": "Bạn chưa có ca làm việc trọng tài nào được phân công.",
+    "noRefereeAssignments": "Bạn chưa có ca làm việc trọng tài nào được phân công.",     "notUpdated": "Chưa cập nhật",     "unranked": "Chưa xếp hạng",     "sportBadminton": "Cầu lông",     "sportTableTennis": "Bóng bàn",     "athlete": "VĐV",     "assistantOrganizer": "Hỗ trợ BTC",     "dashboardTitle": "Bảng điều khiển của {name}",     "dashboardSubtitle": "Theo dõi lịch đấu, phong độ ELO và các hoạt động thể thao của bạn.",     "quickCreateTournament": "Tạo giải nhanh (Lite)",     "allSports": "Tất cả môn",     "noMatchingTournaments": "Chưa tìm thấy giải đấu phù hợp.",     "quickShortcuts": "Lối tắt nhanh",     "myTeam": "Đội bóng của tôi",     "manageSeries": "Quản lý chuỗi giải",     "series": "Chuỗi giải đấu",
     "viewProfile": "Xem trang cá nhân"
   },
   "LivePenalty": {
@@ -380,7 +380,7 @@
     "statusDraft": "📝 BẢN NHÁP",
     "statusActive": "🟢 ĐANG DIỄN RA",
     "statusCompleted": "✅ ĐÃ KẾT THÚC",
-    "statusCancelled": "❌ ĐÃ HỦY",
+    "statusCancelled": "❌ ĐÃ HỦY",,     "formatAgreement": "Thỏa thuận",     "seriesLabel": "chuỗi giải",     "timeNotSet": "Chưa xác định thời gian",     "prizeLabel": "Giải thưởng:",     "progressLabel": "TIẾN ĐỘ CHUỖI GIẢI",     "eventsCompleted": "{completed}/{total} GIẢI ĐÃ ĐẤU"
     "overview": "Tổng Quan",
     "schedule": "Chặng Đấu & Lịch Trình",
     "standings": "Bảng Xếp Hạng PSR",
@@ -395,7 +395,7 @@
     "all": "Tất cả",
     "active": "Đang diễn ra",
     "completed": "Đã kết thúc"
-  },
+  },,     "filterStages": "Lọc chặng:",     "errorTitle": "Đã xảy ra lỗi",     "emptyTitle": "Không tìm thấy chuỗi giải nào",     "emptyHint": "Thử tìm kiếm với từ khóa khác hoặc chuyển bộ lọc chặng để khám phá thêm."
   "TournamentList": {
     "searchPlaceholder": "Tên giải đấu, địa điểm...",
     "singles": "Đơn",

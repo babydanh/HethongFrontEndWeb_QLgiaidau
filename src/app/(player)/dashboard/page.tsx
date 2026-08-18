@@ -69,10 +69,10 @@ const dateTimeFormatter = new Intl.DateTimeFormat('vi-VN', {
   minute: '2-digit',
 });
 
-function formatDate(value?: string | null, withTime = false) {
-  if (!value) return 'Chưa cập nhật';
+function formatDate(value?: string | null, withTime = false, fallback = 'Chưa cập nhật') {
+  if (!value) return fallback;
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return 'Chưa cập nhật';
+  if (Number.isNaN(date.getTime())) return fallback;
   return withTime ? dateTimeFormatter.format(date) : dateFormatter.format(date);
 }
 
@@ -221,7 +221,7 @@ export default function DashboardPage() {
   const matchesPlayed = activeRank ? activeRank.matchesPlayed : 0;
   const matchesWon = activeRank ? activeRank.matchesWon : 0;
   const winRate = matchesPlayed > 0 ? Math.round((matchesWon / matchesPlayed) * 100) : 0;
-  const tierName = matchesPlayed > 0 ? (activeRank?.tier?.name || activeRank?.tierName || 'Chưa xếp hạng') : 'Chưa xếp hạng';
+  const tierName = matchesPlayed > 0 ? (activeRank?.tier?.name || activeRank?.tierName || translate("unranked")) : translate("unranked");
 
   const bestFootballTeam = [...footballTeams].sort((a, b) => {
     const eloDelta = (b.rank?.eloPoints ?? 1000) - (a.rank?.eloPoints ?? 1000);
@@ -246,7 +246,7 @@ export default function DashboardPage() {
     ...(workspace?.organizedTournaments ?? []),
     ...(workspace?.coOrganizerTournaments ?? []),
   ];
-  const sportSet = new Set<string>(['Cầu lông', 'Bóng bàn', 'Pickleball', 'Tennis']);
+  const sportSet = new Set<string>([translate("sportBadminton"), translate("sportTableTennis"), 'Pickleball', 'Tennis']);
   allTournaments.forEach((t) => {
     const s = t.category?.name;
     if (s) sportSet.add(s);
@@ -264,7 +264,7 @@ export default function DashboardPage() {
 
   const participantRoleLabels: Record<string, string> = {};
   (workspace?.participatingTournaments ?? []).forEach((tournament) => {
-    participantRoleLabels[tournament.id] = 'VĐV';
+    participantRoleLabels[tournament.id] = translate("athlete");
   });
 
   const organizerRoleLabels: Record<string, string> = {};
@@ -272,7 +272,7 @@ export default function DashboardPage() {
     organizerRoleLabels[tournament.id] = 'BTC';
   });
   (workspace?.coOrganizerTournaments ?? []).forEach((tournament) => {
-    organizerRoleLabels[tournament.id] = 'Hỗ trợ BTC';
+    organizerRoleLabels[tournament.id] = translate("assistantOrganizer");
   });
 
   const matchTypeMap: Record<string, string> = {};
@@ -326,9 +326,9 @@ export default function DashboardPage() {
             )}
           </div>
           <div>
-            <h1 className="text-xl font-bold text-slate-900">Bảng điều khiển của {user?.fullName?.split(' ').pop() || 'bạn'}</h1>
+            <h1 className="text-xl font-bold text-slate-900">{translate("dashboardTitle", { name: user?.fullName?.split(' ').pop() || translate("you") })}</h1>
             <p className="text-xs text-slate-500 mt-1">
-              Theo dõi lịch đấu, phong độ ELO và các hoạt động thể thao của bạn.
+              {translate("dashboardSubtitle")}
             </p>
           </div>
         </div>
@@ -566,7 +566,7 @@ export default function DashboardPage() {
                                 {m.participant1?.teamName || 'Đội A'} vs {m.participant2?.teamName || 'Đội B'}
                               </p>
                               <p className="text-[10px] text-slate-400 mt-0.5 truncate">
-                                {m.tournament?.name || translate("tournament")} • {formatDate(m.updatedAt || m.scheduledAt)}
+                                {m.tournament?.name || translate("tournament")} • {formatDate(m.updatedAt || m.scheduledAt, false, translate("notUpdated"))}
                               </p>
                             </div>
                           </div>
@@ -649,7 +649,7 @@ export default function DashboardPage() {
                       onChange={(e) => setSportFilter(e.target.value)}
                       className="text-xs font-semibold text-slate-700 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 outline-none"
                     >
-                      <option value="">Tất cả môn</option>
+                      <option value="">{translate("allSports")}</option>
                       {sportOptions.map((s) => (
                         <option key={s} value={s}>{s}</option>
                       ))}
@@ -664,7 +664,7 @@ export default function DashboardPage() {
                 actionLabel="Tìm giải mới"
                 tournaments={getFilteredTournaments()}
                 roleLabels={participantRoleLabels}
-                emptyLabel="Chưa tìm thấy giải đấu phù hợp."
+                    emptyLabel={translate("noMatchingTournaments")}
                 matchTypeMap={matchTypeMap}
                 partners={partnerMap}
               />
@@ -766,12 +766,12 @@ export default function DashboardPage() {
 
           {/* Quick Shortcuts (Lối tắt nhanh) */}
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
-            <h3 className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-3">Lối tắt nhanh</h3>
+            <h3 className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-3">{translate("quickShortcuts")}</h3>
             <div className="flex flex-col gap-2">
               <Link href="/football-teams" className="flex items-center justify-between p-3 rounded-lg hover:bg-emerald-50/60 text-slate-800 font-bold text-xs transition-all border border-slate-200/80 hover:border-emerald-200">
                 <div className="flex items-center gap-2.5">
                   <div className="w-7 h-7 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0"><Users className="w-3.5 h-3.5" /></div>
-                  <span>Đội bóng của tôi</span>
+                  <span>{translate("myTeam")}</span>
                 </div>
                 <span className="text-[9px] font-extrabold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">ELO</span>
               </Link>
@@ -792,7 +792,7 @@ export default function DashboardPage() {
                       <div className="w-7 h-7 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-600 shrink-0">
                         <Trophy className="w-3.5 h-3.5" />
                       </div>
-                      <span>Quản lý chuỗi giải</span>
+                      <span>{translate("manageSeries")}</span>
                     </div>
                     <span className="text-[9px] font-extrabold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">Series</span>
                   </Link>
@@ -809,7 +809,7 @@ export default function DashboardPage() {
                   <div className="w-7 h-7 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
                     {isLiteLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
                   </div>
-                  <span>Tạo giải nhanh (Lite)</span>
+                <span>{translate("quickCreateTournament")}</span>
                 </div>
                 <span className="text-[9px] font-extrabold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">CLB</span>
               </button>
@@ -819,7 +819,7 @@ export default function DashboardPage() {
                   <div className="w-7 h-7 rounded-lg bg-purple-100 flex items-center justify-center text-purple-600 shrink-0">
                     <Trophy className="w-3.5 h-3.5" />
                   </div>
-                  <span>Chuỗi giải đấu</span>
+                  <span>{translate("series")}</span>
                 </div>
                 <span className="text-[9px] font-extrabold text-purple-600 bg-purple-50 px-2 py-0.5 rounded border border-purple-100">Series</span>
               </Link>

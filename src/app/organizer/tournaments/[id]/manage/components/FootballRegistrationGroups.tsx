@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { ChevronDown, ChevronRight, Shield, Users } from 'lucide-react';
 import type { FootballRegistrationGroup, TournamentParticipant } from '@/types/tournament';
 import { cn } from '@/utils/cn';
@@ -68,6 +69,20 @@ export function FootballRegistrationGroups({
   renderParticipantActions,
   renderParticipantIdentity,
 }: FootballRegistrationGroupsProps) {
+  const translate = useTranslations('TournamentDisplay');
+  const participantStatusLabels = {
+    participantComplete: translate('participantComplete'),
+    participantPendingPartner: translate('participantPendingPartner'),
+    participantPendingApproval: translate('participantPendingApproval'),
+    participantWaitlisted: translate('participantWaitlisted'),
+    participantRejected: translate('participantRejected'),
+    participantWithdrawn: translate('participantWithdrawn'),
+    participantKicked: translate('participantKicked'),
+    participantDisqualified: translate('participantDisqualified'),
+    participantNoShow: translate('participantNoShow'),
+    participantReplaced: translate('participantReplaced'),
+    unknownParticipant: translate('unknownParticipant'),
+  };
   const groups = React.useMemo(
     () => groupFootballRegistrations(participants, divisionNames),
     [divisionNames, participants],
@@ -143,7 +158,7 @@ export function FootballRegistrationGroups({
                   <span className="hidden shrink-0 items-center gap-1.5 sm:flex">
                     {statuses.map((status) => (
                       <span key={status ?? 'unknown'} className={cn('rounded-full border px-2.5 py-1 text-[11px] font-bold', getParticipantStatusClassName(status))}>
-                        {getParticipantStatusLabel(status)}
+                        {getParticipantStatusLabel(status, participantStatusLabels)}
                       </span>
                     ))}
                   </span>
@@ -175,6 +190,7 @@ export function FootballRegistrationGroups({
                                     directParticipation && (participant.teamStatus === 'PENDING_APPROVAL' || participant.teamStatus === 'PENDING')
                                       ? 'COMPLETE'
                                       : participant.teamStatus,
+                                    participantStatusLabels,
                                   )}
                                 </span>
                                 <span className="text-[11px] font-medium text-slate-500">{participant.isPaid ? 'Đã thanh toán' : 'Chưa thanh toán'}</span>

@@ -513,7 +513,7 @@ export const tournamentsApi = {
     logoUrl?: string;
     prizeDescription?: string;
     contactInfo?: { phone?: string; email?: string };
-    format?: 'singles' | 'doubles';
+    format?: 'singles' | 'doubles' | 'mixed_doubles';
     genderRestriction?: 'MALE' | 'FEMALE' | 'MIXED';
     teamSize?: 5 | 7 | 11;
     maxReserve?: number;
@@ -535,6 +535,7 @@ export const tournamentsApi = {
     ward?: string;
     isRanked?: boolean;
     startDate?: string;
+    endDate?: string;
     startTime?: string;
     registrationStartDate?: string;
     registrationEndDate?: string;

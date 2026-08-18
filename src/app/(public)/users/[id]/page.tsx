@@ -508,7 +508,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                           </div>
                           <div className="grid grid-cols-3 gap-2 pt-2 text-center text-xs">
                             <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
-                              <div className="text-[10px] text-slate-400 font-bold uppercase">Số Trận</div>
+                               <div className="text-[10px] text-slate-400 font-bold uppercase">{translate('matches')}</div>
                               <div className="font-bold text-slate-700 mt-0.5">{rank.matchesPlayed}</div>
                             </div>
                             <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">

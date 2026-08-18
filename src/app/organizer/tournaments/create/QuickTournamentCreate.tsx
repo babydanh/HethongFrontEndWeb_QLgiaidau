@@ -513,6 +513,7 @@ export default function QuickTournamentCreate() {
         registrationStartDate: values.registrationStart ? new Date(values.registrationStart).toISOString() : undefined,
         registrationEndDate: values.registrationEnd ? new Date(values.registrationEnd).toISOString() : undefined,
         startDate: values.startDate ? new Date(values.startDate).toISOString() : undefined,
+        endDate: values.endDate ? new Date(values.endDate).toISOString() : undefined,
         venueName: values.venueName ? values.venueName.trim() : undefined,
         locationAddress: values.locationAddress ? values.locationAddress.trim() : undefined,
         province: provinceName || undefined,

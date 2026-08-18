@@ -100,7 +100,7 @@ export default function SeriesListPage() {
           {/* Status Tabs */}
           <div className="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto pb-1 md:pb-0 scrollbar-none">
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wide mr-2 hidden lg:inline flex items-center gap-1">
-              <Filter className="w-3.5 h-3.5" /> Lọc chặng:
+              <Filter className="w-3.5 h-3.5" /> {translate('filterStages')}
             </span>
             {[
               { id: 'ALL', label: translate('all') },
@@ -140,7 +140,7 @@ export default function SeriesListPage() {
           </div>
         ) : error ? (
           <div className="text-center py-20 bg-white rounded-lg border border-slate-200 max-w-xl mx-auto p-8 text-rose-500">
-            <h3 className="text-base font-bold mb-1">Đã xảy ra lỗi</h3>
+            <h3 className="text-base font-bold mb-1">{translate('errorTitle')}</h3>
             <p className="text-sm max-w-xs mx-auto leading-relaxed">{error}</p>
           </div>
         ) : seriesList.length > 0 ? (
@@ -152,9 +152,9 @@ export default function SeriesListPage() {
         ) : (
           <div className="text-center py-20 bg-white rounded-lg border border-slate-200 border-dashed max-w-xl mx-auto flex flex-col items-center justify-center p-8">
             <Trophy className="w-12 h-12 text-slate-300 mb-4" />
-            <h3 className="text-base font-bold text-slate-800 mb-1">Không tìm thấy chuỗi giải nào</h3>
+            <h3 className="text-base font-bold text-slate-800 mb-1">{translate('emptyTitle')}</h3>
             <p className="text-sm text-slate-400 max-w-xs leading-relaxed">
-              Thử tìm kiếm với từ khóa khác hoặc chuyển bộ lọc chặng để khám phá thêm.
+              {translate('emptyHint')}
             </p>
           </div>
         )}

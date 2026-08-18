@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { ChevronLeft, ChevronRight, Image as ImageIcon } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ZoomIn } from 'lucide-react';
 import { BRAND } from '@/constants/brand';
+import ImageLightboxModal from '@/components/common/ImageLightboxModal';
 
 interface GalleryCarouselProps {
   images?: string[];
@@ -17,6 +18,7 @@ export default function GalleryCarousel({ images = [], defaultBanner, className 
   ];
   const [activeIndex, setActiveIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
 
   const handleNext = useCallback(() => {
     if (allImages.length <= 1) return;
@@ -30,12 +32,12 @@ export default function GalleryCarousel({ images = [], defaultBanner, className 
 
   // Autoplay functionality
   useEffect(() => {
-    if (allImages.length <= 1 || isHovered) return;
+    if (allImages.length <= 1 || isHovered || isLightboxOpen) return;
     const interval = setInterval(() => {
       handleNext();
     }, 4000);
     return () => clearInterval(interval);
-  }, [allImages.length, isHovered, handleNext]);
+  }, [allImages.length, isHovered, isLightboxOpen, handleNext]);
 
   if (allImages.length === 0) {
     return (
@@ -57,64 +59,91 @@ export default function GalleryCarousel({ images = [], defaultBanner, className 
   }
 
   return (
-    <div
-      className={`relative overflow-hidden group select-none ${className}`}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      {/* Slides Container */}
+    <>
       <div
-        className="flex w-full h-full transition-transform duration-[800ms] [transition-timing-function:cubic-bezier(0.16,1,0.3,1)]"
-        style={{ transform: `translateX(-${activeIndex * 100}%)` }}
+        className={`relative overflow-hidden group select-none cursor-pointer ${className}`}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        onClick={() => setIsLightboxOpen(true)}
       >
-        {allImages.map((src, idx) => (
-          <div key={idx} className="w-full h-full flex-shrink-0 relative overflow-hidden flex items-center justify-center">
-            {/* Sharp crisp full-size dynamic height image */}
-            <img
-              src={src}
-              alt={`Slide ${idx + 1}`}
-              className="w-full h-full object-cover"
-            />
-          </div>
-        ))}
-      </div>
-
-      {/* Navigation Arrows */}
-      {allImages.length > 1 && (
-        <>
-          <button
-            onClick={handlePrev}
-            className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/40 hover:bg-black/75 border border-white/10 hover:border-white/20 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 transform -translate-x-2 group-hover:translate-x-0 cursor-pointer backdrop-blur-sm shadow-lg"
-            aria-label="Previous image"
-          >
-            <ChevronLeft className="w-6 h-6" />
-          </button>
-          <button
-            onClick={handleNext}
-            className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/40 hover:bg-black/75 border border-white/10 hover:border-white/20 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0 cursor-pointer backdrop-blur-sm shadow-lg"
-            aria-label="Next image"
-          >
-            <ChevronRight className="w-6 h-6" />
-          </button>
-        </>
-      )}
-
-      {/* Dot Indicators */}
-      {allImages.length > 1 && (
-        <div className="absolute bottom-6 left-1/2 -translate-y-0 -translate-x-1/2 flex gap-2.5 z-10 bg-black/25 px-3 py-1.5 rounded-full backdrop-blur-sm border border-white/5">
-          {allImages.map((_, idx) => (
-            <button
-              key={idx}
-              onClick={() => setActiveIndex(idx)}
-              className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
-                idx === activeIndex ? 'w-6 bg-blue-500' : 'w-2 bg-white/40 hover:bg-white/80'
-              }`}
-              aria-label={`Go to slide ${idx + 1}`}
-            ></button>
+        {/* Slides Container */}
+        <div
+          className="flex w-full h-full transition-transform duration-[800ms] [transition-timing-function:cubic-bezier(0.16,1,0.3,1)]"
+          style={{ transform: `translateX(-${activeIndex * 100}%)` }}
+        >
+          {allImages.map((src, idx) => (
+            <div key={idx} className="w-full h-full flex-shrink-0 relative overflow-hidden flex items-center justify-center">
+              {/* Sharp crisp full-size dynamic height image */}
+              <img
+                src={src}
+                alt={`Slide ${idx + 1}`}
+                className="w-full h-full object-cover"
+              />
+            </div>
           ))}
         </div>
+
+        {/* Zoom Hint Badge on Hover */}
+        <div className="absolute top-4 right-4 z-10 hidden sm:flex items-center gap-1.5 rounded-full bg-black/60 px-3 py-1 text-xs font-semibold text-white backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 border border-white/10 shadow-md">
+          <ZoomIn className="w-3.5 h-3.5 text-white" />
+          <span>Nhấn để xem & phóng to</span>
+        </div>
+
+        {/* Navigation Arrows */}
+        {allImages.length > 1 && (
+          <>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handlePrev();
+              }}
+              className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/40 hover:bg-black/75 border border-white/10 hover:border-white/20 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 transform -translate-x-2 group-hover:translate-x-0 cursor-pointer backdrop-blur-sm shadow-lg z-20"
+              aria-label="Previous image"
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleNext();
+              }}
+              className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/40 hover:bg-black/75 border border-white/10 hover:border-white/20 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0 cursor-pointer backdrop-blur-sm shadow-lg z-20"
+              aria-label="Next image"
+            >
+              <ChevronRight className="w-6 h-6" />
+            </button>
+          </>
+        )}
+
+        {/* Dot Indicators */}
+        {allImages.length > 1 && (
+          <div
+            className="absolute bottom-6 left-1/2 -translate-y-0 -translate-x-1/2 flex gap-2.5 z-20 bg-black/25 px-3 py-1.5 rounded-full backdrop-blur-sm border border-white/5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {allImages.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => setActiveIndex(idx)}
+                className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
+                  idx === activeIndex ? 'w-6 bg-blue-500' : 'w-2 bg-white/40 hover:bg-white/80'
+                }`}
+                aria-label={`Go to slide ${idx + 1}`}
+              ></button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Lightbox Modal */}
+      {isLightboxOpen && (
+        <ImageLightboxModal
+          images={allImages}
+          initialIndex={activeIndex}
+          isOpen={isLightboxOpen}
+          onClose={() => setIsLightboxOpen(false)}
+        />
       )}
-    </div>
+    </>
   );
 }
-

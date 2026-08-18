@@ -1261,9 +1261,28 @@ export function useManageState(id: string) {
         setHideFeaturedCardText(t.tournamentConfig?.hideFeaturedCardText === true);
         setRegistrationMode(t.tournamentConfig?.registrationMode || 'OPEN');
         setVenueId(t.venueId||'');
-        if (t.venue) { setCustomVenueName(t.venue.name||''); setCustomVenueAddress(t.venue.locationAddress||''); }
-        setStartDate(t.startDate?.substring(0,16)||''); setEndDate(t.endDate?.substring(0,16)||'');
-        setRegistrationStartDate(t.registrationStartDate?.substring(0,16)||''); setRegistrationEndDate(t.registrationEndDate?.substring(0,16)||'');
+        const quickLocation = t.tournamentConfig?.location as {
+          venueName?: string;
+          address?: string;
+          display?: string;
+        } | undefined;
+        const quickSchedule = t.tournamentConfig?.schedule as {
+          registrationStartDate?: string;
+          registrationEndDate?: string;
+          startDate?: string;
+          endDate?: string;
+        } | undefined;
+        if (t.venue) {
+          setCustomVenueName(t.venue.name || '');
+          setCustomVenueAddress(t.venue.locationAddress || '');
+        } else if (quickLocation) {
+          setCustomVenueName(quickLocation.venueName || '');
+          setCustomVenueAddress(quickLocation.address || quickLocation.display || '');
+        }
+        setStartDate((t.startDate || quickSchedule?.startDate)?.substring(0,16) || '');
+        setEndDate((t.endDate || quickSchedule?.endDate)?.substring(0,16) || '');
+        setRegistrationStartDate((t.registrationStartDate || quickSchedule?.registrationStartDate)?.substring(0,16) || '');
+        setRegistrationEndDate((t.registrationEndDate || quickSchedule?.registrationEndDate)?.substring(0,16) || '');
         setEntryFee(t.entryFee||0); setMaxParticipants(t.maxParticipants||16); setIsLimitEnabled(!!t.maxParticipants);
         let ui = MatchTypeUI.MALE_DOUBLES;
         if (t.matchType === MatchTypeDB.SINGLES) ui = t.genderRestriction === GenderRestriction.FEMALE ? MatchTypeUI.FEMALE_SINGLES : MatchTypeUI.MALE_SINGLES;
@@ -1321,15 +1340,22 @@ export function useManageState(id: string) {
     const selectedCategory = tournament.category || categories.find((category) => category.id === categoryId || category.slug === categoryId) || null;
     const fallbackKind = inferSportRuleKindFromCategory(selectedCategory);
     const resolvedRules = resolveSportRuleView(tournament.sportRules, fallbackKind);
+    // Lite creation stores the free-scoring policy in tournamentConfig. Older
+    // Lite records may have sportRules without an explicit mode, so keep the
+    // management UI on Lite instead of silently switching them to Strict.
+    const resolvedWithTournamentMode =
+      tournament.tournamentConfig?.mode === 'LITE' || tournament.tournamentConfig?.scoringMode === 'FREE'
+        ? { ...resolvedRules, mode: 'LITE' as const }
+        : resolvedRules;
 
     void Promise.resolve().then(() => {
-      const normalizedKind = normalizeSportRuleKindForCategory(resolvedRules.kind, selectedCategory);
-      const effectiveRules = normalizedKind === resolvedRules.kind
-        ? resolvedRules
+      const normalizedKind = normalizeSportRuleKindForCategory(resolvedWithTournamentMode.kind, selectedCategory);
+      const effectiveRules = normalizedKind === resolvedWithTournamentMode.kind
+        ? resolvedWithTournamentMode
         : resolveSportRuleView(buildDefaultSportRules(normalizedKind), normalizedKind);
 
       applyResolvedRuleState(effectiveRules);
-      if (normalizedKind !== resolvedRules.kind) {
+      if (normalizedKind !== resolvedWithTournamentMode.kind) {
         setTournament((current) => current ? {
           ...current,
           sportRules: buildSportRulesPayload({

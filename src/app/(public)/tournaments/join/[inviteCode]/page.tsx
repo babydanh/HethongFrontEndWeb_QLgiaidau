@@ -15,6 +15,7 @@ import { useAuthStore } from '@/lib/zustand/authStore';
 import { getErrorMessage } from '@/utils/error';
 import { trimAndNormalizeSpaces } from '@/utils/string';
 import { formatDate, formatCurrency } from '@/utils/format';
+import type { TournamentDisplayLabels } from '@/utils/tournament-display';
 import toast from 'react-hot-toast';
 
 const registerSchema = z.object({
@@ -24,35 +25,35 @@ const registerSchema = z.object({
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
-const getDivisionMatchLabel = (matchType?: string | null, genderRestriction?: string | null) => {
+const getDivisionMatchLabel = (matchType?: string | null, genderRestriction?: string | null, labels?: TournamentDisplayLabels) => {
   const genderLabel =
-    genderRestriction === 'MALE' ? 'Nam' :
-    genderRestriction === 'FEMALE' ? 'Nữ' :
-    genderRestriction === 'MIXED' ? 'Nam Nữ' : '';
+    genderRestriction === 'MALE' ? (labels?.maleGender ?? 'Nam') :
+    genderRestriction === 'FEMALE' ? (labels?.femaleGender ?? 'Nữ') :
+    genderRestriction === 'MIXED' ? (labels?.mixedGender ?? 'Nam Nữ') : '';
 
   if (matchType === 'SINGLES') {
-    return genderLabel ? `Đơn ${genderLabel}` : 'Đơn';
+    return (labels?.singlesFormat ?? 'Đơn {gender}').replace('{gender}', genderLabel).replace(/\s+/g, ' ').trim();
   }
   if (matchType === 'DOUBLES') {
-    return genderLabel ? `Đôi ${genderLabel}` : 'Đôi';
+    return (labels?.doublesFormat ?? 'Đôi {gender}').replace('{gender}', genderLabel).replace(/\s+/g, ' ').trim();
   }
   if (matchType === 'MIXED_DOUBLES') {
-    return 'Đôi Nam Nữ';
+    return labels?.mixedDoublesFormat ?? 'Đôi Nam Nữ';
   }
-  return 'Chưa rõ';
+  return labels?.unknownFormat ?? 'Chưa rõ';
 };
 
-const getDivisionBracketLabel = (bracketType?: string | null) => {
+const getDivisionBracketLabel = (bracketType?: string | null, labels?: TournamentDisplayLabels) => {
   if (bracketType === 'SINGLE_ELIMINATION') {
-    return 'Loại trực tiếp';
+    return labels?.bracketSingleElimination ?? 'Loại trực tiếp';
   }
   if (bracketType === 'DOUBLE_ELIMINATION') {
-    return 'Nhánh thắng/thua';
+    return labels?.bracketDoubleElimination ?? 'Nhánh thắng/thua';
   }
   if (bracketType === 'ROUND_ROBIN') {
-    return 'Vòng tròn';
+    return labels?.bracketRoundRobin ?? 'Vòng tròn';
   }
-  return 'Chưa rõ';
+  return labels?.unknownBracket ?? 'Chưa rõ';
 };
 
 export default function JoinTournamentPage({ params }: { params: Promise<{ inviteCode: string }> }) {
@@ -61,6 +62,20 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
   
   const router = useRouter();
   const translate = useTranslations('Common');
+  const displayTranslate = useTranslations('TournamentDisplay');
+  const displayLabels: TournamentDisplayLabels = {
+    maleGender: displayTranslate('maleGender'),
+    femaleGender: displayTranslate('femaleGender'),
+    mixedGender: displayTranslate('mixedGender'),
+    singlesFormat: displayTranslate('singlesFormat'),
+    doublesFormat: displayTranslate('doublesFormat'),
+    mixedDoublesFormat: displayTranslate('mixedDoublesFormat'),
+    unknownFormat: displayTranslate('unknownFormat'),
+    bracketSingleElimination: displayTranslate('bracketSingleElimination'),
+    bracketDoubleElimination: displayTranslate('bracketDoubleElimination'),
+    bracketRoundRobin: displayTranslate('bracketRoundRobin'),
+    bracketGroupStageKnockout: displayTranslate('bracketGroupStageKnockout'),
+  };
   const searchParams = useSearchParams();
   const { user, isAuthenticated } = useAuthStore();
   const [tournament, setTournament] = useState<Tournament | null>(null);
@@ -186,6 +201,7 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
   const selectedDivisionLabel = getDivisionMatchLabel(
     effectiveDivision.matchType,
     effectiveDivision.genderRestriction,
+    displayLabels,
   );
 
   return (
@@ -253,7 +269,7 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
                   </div>
                   <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold text-slate-500">
                     <span className="px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200">
-                      {getDivisionBracketLabel(selectedDivision.bracketType)}
+                      {getDivisionBracketLabel(selectedDivision.bracketType, displayLabels)}
                     </span>
                     <span className="px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200">
                       {selectedDivision._count?.participants ?? 0} hồ sơ tham gia
@@ -264,8 +280,8 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {availableDivisions.map((div) => {
                       const isActive = selectedDivisionId === div.id;
-                      const matchLabel = getDivisionMatchLabel(div.matchType, div.genderRestriction);
-                      const bracketLabel = getDivisionBracketLabel(div.bracketType);
+                      const matchLabel = getDivisionMatchLabel(div.matchType, div.genderRestriction, displayLabels);
+                      const bracketLabel = getDivisionBracketLabel(div.bracketType, displayLabels);
                       const participantCount = div._count?.participants ?? 0;
 
                       return (
@@ -314,7 +330,7 @@ export default function JoinTournamentPage({ params }: { params: Promise<{ invit
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <span className="px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-100 text-[11px] font-bold">
-                        {getDivisionBracketLabel(selectedDivision.bracketType)}
+                        {getDivisionBracketLabel(selectedDivision.bracketType, displayLabels)}
                       </span>
                       <span className="px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200 text-[11px] font-bold">
                         {selectedDivision._count?.participants ?? 0}

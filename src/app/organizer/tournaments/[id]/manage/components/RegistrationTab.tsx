@@ -172,6 +172,20 @@ export function RegistrationTab({
 }: RegistrationTabProps) {
   const translate = useTranslations('TournamentDetail');
   const commonTranslate = useTranslations('Common');
+  const displayTranslate = useTranslations('TournamentDisplay');
+  const participantStatusLabels = {
+    participantComplete: displayTranslate('participantComplete'),
+    participantPendingPartner: displayTranslate('participantPendingPartner'),
+    participantPendingApproval: displayTranslate('participantPendingApproval'),
+    participantWaitlisted: displayTranslate('participantWaitlisted'),
+    participantRejected: displayTranslate('participantRejected'),
+    participantWithdrawn: displayTranslate('participantWithdrawn'),
+    participantKicked: displayTranslate('participantKicked'),
+    participantDisqualified: displayTranslate('participantDisqualified'),
+    participantNoShow: displayTranslate('participantNoShow'),
+    participantReplaced: displayTranslate('participantReplaced'),
+    unknownParticipant: displayTranslate('unknownParticipant'),
+  };
   const [search, setSearch] = React.useState('');
   const [filter, setFilter] = React.useState<'ALL' | 'PENDING' | 'COMPLETE' | 'UNPAID' | 'REJECTED'>('ALL');
   const [editingSeed, setEditingSeed] = React.useState<string | null>(null);
@@ -813,7 +827,7 @@ export function RegistrationTab({
                             'inline-flex rounded-full border px-2.5 py-1 text-xs font-bold',
                             getParticipantStatusClassName(participant.teamStatus),
                           ].join(' ')}>
-                            {getParticipantStatusLabel(participant.teamStatus)}
+                            {getParticipantStatusLabel(participant.teamStatus, participantStatusLabels)}
                           </span>
                         </td>
                         <td className="py-4 pr-4">

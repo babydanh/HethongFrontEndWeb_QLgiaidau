@@ -940,4 +940,13 @@
     "participantNoShow": "Vắng mặt",
     "participantReplaced": "Đã thay thế",
     "unknownParticipant": "Chưa rõ"
+  },
+  "EloDisplay": {
+    "categoryFallback": "Môn thi đấu",
+    "progressToNext": "Còn {remaining} ELO tới {nextName}",
+    "progressPeak": "🏆 Đã đạt đỉnh",
+    "onboardingShield": "Đánh 1 trận xếp hạng để mở khóa ELO và khiên rank.",
+    "shieldActive": "Khiên còn nguyên — đỡ 1 lần rớt khỏi mốc rank hiện tại.",
+    "shieldBroken": "Khiên đã vỡ — cần lên rank hoặc rớt rank để hồi lại khiên.",
+    "onboardingCopy": "Đánh 1 trận xếp hạng để bắt đầu tiến trình ELO."
   }}

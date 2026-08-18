@@ -1,4 +1,5 @@
 'use client';
+import { useTranslations } from 'next-intl';
 
 import React from 'react';
 import { Shield, ShieldCheck, ShieldOff } from 'lucide-react';
@@ -32,11 +33,21 @@ export default function HomepageEloProgressCard({
   sportName,
   isAuthenticated,
 }: HomepageEloProgressCardProps) {
+  const eloTranslate = useTranslations('EloDisplay');
+  const eloLabels = {
+    categoryFallback: eloTranslate('categoryFallback'),
+    progressToNext: eloTranslate('progressToNext'),
+    progressPeak: eloTranslate('progressPeak'),
+    onboardingShield: eloTranslate('onboardingShield'),
+    shieldActive: eloTranslate('shieldActive'),
+    shieldBroken: eloTranslate('shieldBroken'),
+    onboardingCopy: eloTranslate('onboardingCopy'),
+  };
   if (!isAuthenticated) return null;
 
   const currentTier = getEloTier(eloPoints, displayTier, activeRankInfo?.categoryName);
-  const shieldStatus = getShieldStatus(activeRankInfo);
-  const progressInfo = getEloProgressInfo(eloPoints, activeRankInfo?.categoryName);
+  const shieldStatus = getShieldStatus(activeRankInfo, eloLabels);
+  const progressInfo = getEloProgressInfo(eloPoints, activeRankInfo?.categoryName, eloLabels);
   const rankProgress = getRankProgressInfo(eloPoints, activeRankInfo?.categoryName);
   const hasNoRanks = !activeRankInfo || activeRankInfo.matchesPlayed <= 0;
 

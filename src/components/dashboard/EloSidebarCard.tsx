@@ -34,6 +34,12 @@ export default function EloSidebarCard({
   onSportChange,
 }: Props) {
   const translate = useTranslations('Common');
+  const eloTranslate = useTranslations('EloDisplay');
+  const eloLabels = {
+    categoryFallback: eloTranslate('categoryFallback'),
+    progressToNext: eloTranslate('progressToNext'),
+    progressPeak: eloTranslate('progressPeak'),
+  };
   const streak = activeRank?.winStreak ?? 0;
   const recentDelta = streak * ELO_PER_STREAK_WIN;
   const TrendIcon = recentDelta > 0 ? TrendingUp : recentDelta < 0 ? TrendingDown : Minus;
@@ -41,7 +47,7 @@ export default function EloSidebarCard({
   const tierColor = getRankStyle(eloPoints, tierName, activeRank?.categoryName).badgeClass;
   const tierBorder = tierColor.split(' ').find((token) => token.startsWith('border-')) || 'border-slate-200';
   const hasRank = matchesPlayed > 0;
-  const progress = getEloProgressInfo(eloPoints);
+  const progress = getEloProgressInfo(eloPoints, undefined, eloLabels);
 
   return (
     <div className={`bg-white rounded-xl border-2 ${tierBorder} p-5 shadow-sm`}>

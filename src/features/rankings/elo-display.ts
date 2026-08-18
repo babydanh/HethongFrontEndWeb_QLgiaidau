@@ -21,6 +21,16 @@ export type EloMatchType = 'SINGLES' | 'DOUBLES' | 'MIXED_DOUBLES';
 
 export type EloMatchTypeLabels = Partial<Record<EloMatchType, string>>;
 
+export type EloDisplayLabels = {
+  categoryFallback?: string;
+  progressToNext?: string;
+  progressPeak?: string;
+  onboardingShield?: string;
+  shieldActive?: string;
+  shieldBroken?: string;
+  onboardingCopy?: string;
+};
+
 const MATCH_TYPE_LABELS: Record<EloMatchType, string> = {
   SINGLES: 'Đơn',
   DOUBLES: 'Đôi',
@@ -123,7 +133,7 @@ export interface EloProgressInfo {
 }
 
 /** Compute tier progress info from raw ELO points. */
-export const getEloProgressInfo = (eloPoints: number, categoryName?: string | null): EloProgressInfo => {
+export const getEloProgressInfo = (eloPoints: number, categoryName?: string | null, labels?: EloDisplayLabels): EloProgressInfo => {
   if (categoryName) {
     const sportProgress = getRankProgressInfo(eloPoints, categoryName);
     const nextName = sportProgress.next?.name;
@@ -132,7 +142,7 @@ export const getEloProgressInfo = (eloPoints: number, categoryName?: string | nu
       percent: sportProgress.percent,
       currentIdx: sportProgress.currentIndex,
       nextIdx: sportProgress.nextIndex,
-      label: nextName ? `Còn ${remaining} ELO tới ${nextName}` : '🏆 Đã đạt đỉnh',
+      label: nextName ? (labels?.progressToNext ?? 'Còn {remaining} ELO tới {nextName}').replace('{remaining}', String(remaining)).replace('{nextName}', nextName) : (labels?.progressPeak ?? '🏆 Đã đạt đỉnh'),
     };
   }
   const clamped = Math.max(0, eloPoints);
@@ -160,9 +170,9 @@ export const getEloProgressInfo = (eloPoints: number, categoryName?: string | nu
     const remaining = nextMin - clamped;
     const nextName = TIER_THRESHOLDS[nextIdx].name;
     if (remaining <= 0) {
-      label = `Còn ${nextMin - currentMin} ELO tới ${nextName}`;
+      label = (labels?.progressToNext ?? 'Còn {remaining} ELO tới {nextName}').replace('{remaining}', String(nextMin - currentMin)).replace('{nextName}', nextName);
     } else {
-      label = `Còn ${remaining} ELO tới ${nextName}`;
+      label = (labels?.progressToNext ?? 'Còn {remaining} ELO tới {nextName}').replace('{remaining}', String(remaining)).replace('{nextName}', nextName);
     }
   }
 
@@ -188,14 +198,14 @@ export interface ShieldStatus {
  * - shieldActive === true      → active
  * - shieldActive !== true && matchesPlayed > 0 → broken
  */
-export const getShieldStatus = (rank: PlayerRanking | null | undefined): ShieldStatus => {
+export const getShieldStatus = (rank: PlayerRanking | null | undefined, labels?: EloDisplayLabels): ShieldStatus => {
   const mp = rank?.matchesPlayed ?? 0;
   const shieldActive = rank?.shieldActive;
 
   if (mp <= 0) {
     return {
       state: 'onboarding',
-      copy: 'Đánh 1 trận xếp hạng để mở khóa ELO và khiên rank.',
+      copy: labels?.onboardingShield ?? 'Đánh 1 trận xếp hạng để mở khóa ELO và khiên rank.',
       themeClass: 'text-slate-400',
     };
   }
@@ -203,14 +213,14 @@ export const getShieldStatus = (rank: PlayerRanking | null | undefined): ShieldS
   if (shieldActive === true) {
     return {
       state: 'active',
-      copy: 'Khiên còn nguyên — đỡ 1 lần rớt khỏi mốc rank hiện tại.',
+      copy: labels?.shieldActive ?? 'Khiên còn nguyên — đỡ 1 lần rớt khỏi mốc rank hiện tại.',
       themeClass: 'text-blue-600',
     };
   }
 
   return {
     state: 'broken',
-    copy: 'Khiên đã vỡ — cần lên rank hoặc rớt rank để hồi lại khiên.',
+    copy: labels?.shieldBroken ?? 'Khiên đã vỡ — cần lên rank hoặc rớt rank để hồi lại khiên.',
     themeClass: 'text-blue-600',
   };
 };
@@ -233,7 +243,7 @@ export const getShieldIconName = (state: ShieldStatus['state']): string => {
 /**
  * Get the "no rank yet" onboarding copy.
  */
-export const getOnboardingCopy = (): string => {
-  return 'Đánh 1 trận xếp hạng để bắt đầu tiến trình ELO.';
+export const getOnboardingCopy = (labels?: EloDisplayLabels): string => {
+  return labels?.onboardingCopy ?? 'Đánh 1 trận xếp hạng để bắt đầu tiến trình ELO.';
 };
 

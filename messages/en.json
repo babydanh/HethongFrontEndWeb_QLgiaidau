@@ -174,4 +174,13 @@
     "participantNoShow": "No show",
     "participantReplaced": "Replaced",
     "unknownParticipant": "Unknown"
+  },
+  "EloDisplay": {
+    "categoryFallback": "Sport",
+    "progressToNext": "{remaining} ELO to {nextName}",
+    "progressPeak": "🏆 Peak reached",
+    "onboardingShield": "Play one ranked match to unlock ELO and your rank shield.",
+    "shieldActive": "Shield intact — protects against one demotion from the current rank.",
+    "shieldBroken": "Shield broken — rank up or drop rank to restore it.",
+    "onboardingCopy": "Play one ranked match to start your ELO progress."
   }}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useTranslations } from 'next-intl';
 import { X, MessageCircle, User, CheckCircle2 } from "lucide-react";
 import { usersApi } from "@/features/users/api";
 import { communitiesApi, MemberStreak, CommunityMemberRecord } from "@/features/communities/api";
@@ -43,6 +44,7 @@ export default function UserProfilePopover({
   onClose,
   communityId,
 }: UserProfilePopoverProps) {
+  const translate = useTranslations('Common');
   const router = useRouter();
   const popoverRef = useRef<HTMLDivElement>(null);
   const [fetchedDetails, setFetchedDetails] = useState<Partial<PopoverUserProfile> | null>(null);
@@ -222,7 +224,7 @@ export default function UserProfilePopover({
         <button
           type="button"
           onClick={onClose}
-          aria-label="Đóng"
+          aria-label={translate('close')}
           className="absolute right-2.5 top-2.5 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-md transition hover:bg-black/60 active:scale-95"
         >
           <X className="h-4 w-4" />
@@ -385,7 +387,7 @@ export default function UserProfilePopover({
             className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-blue-700 active:scale-98 disabled:cursor-wait disabled:opacity-60"
           >
             <MessageCircle className="h-3.5 w-3.5" />
-            {isOpeningChat ? "Đang mở..." : "Nhắn tin"}
+            {isOpeningChat ? translate('chatOpening') : translate('message')}
           </button>
 
           <button

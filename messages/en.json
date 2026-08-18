@@ -63,7 +63,18 @@
     "connections": "Connections (Conns)",
     "clients": "clients",
     "eventLoopLag": "Event Loop (Lag)",
-    "buffer": "Buffer"
+    "buffer": "Buffer",
+    "chatOpening": "Opening...",
+    "message": "Message",
+    "eloRanking": "ELO ranking",
+    "wins": "Wins",
+    "highest": "Highest",
+    "playRankedMatch": "Play a ranked match to start progress",
+    "liveNow": "Live now",
+    "matchCount": "{count} matches",
+    "viewAllMatches": "View all matches →",
+    "matchLabel": "Match",
+    "viewMatch": "View match"
   },
   "Profile": {
     "editCover": "Edit cover photo",

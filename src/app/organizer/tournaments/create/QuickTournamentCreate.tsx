@@ -297,7 +297,7 @@ export default function QuickTournamentCreate() {
       sport: 'badminton', format: 'doubles',
       tournamentType: communityId ? 'CLUB' : 'PUBLIC',
       visibility: communityId ? 'PRIVATE' : 'PUBLIC',
-      registrationMode: 'OPEN',
+      registrationMode: communityId ? 'OPEN' : 'APPROVAL',
       bracketType: 'single_elimination',
       maxTeams: 16, ...scheduleDefaults,
       selectedFormats: ['MALE_DOUBLES'],
@@ -475,7 +475,7 @@ export default function QuickTournamentCreate() {
         province: provinceName || undefined,
         ward: wardName || undefined,
         description: values.description ? values.description.trim() : undefined,
-        teamSize: values.sport === 'football' ? Number(values.teamSize) : undefined,
+        teamSize: values.sport === 'football' ? (Number(values.teamSize) as 5 | 7 | 11) : undefined,
         maxReserve: values.sport === 'football' ? values.maxReserve : undefined,
         footballHalvesCount: values.sport === 'football' ? values.footballHalvesCount : undefined,
         footballHalfDuration: values.sport === 'football' ? values.footballHalfDuration : undefined,
@@ -495,7 +495,9 @@ export default function QuickTournamentCreate() {
             values.registrationEnd ? new Date(values.registrationEnd).toISOString() : undefined,
           )
         );
-        await divisionsApi.bulkCreate(response.id, divisionInputs);
+        await Promise.all(
+          divisionInputs.map((divInput) => divisionsApi.createDivision(response.id, divInput))
+        );
       } catch (divisionError: unknown) {
         await tournamentsApi.deleteTournament(response.id).catch(() => undefined);
         throw divisionError;
@@ -1014,8 +1016,8 @@ export default function QuickTournamentCreate() {
 
                 <div className="h-px bg-slate-100" />
 
-                {/* 3. Chế độ nhận đăng ký */}
-                <div>
+                {/* 3. Chế độ nhận đăng ký — Public Quick mặc định xét duyệt; CLB Quick vẫn cho chọn */}
+                {communityId ? <div>
                   <span className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5 mb-2">
                     <ShieldCheck className="h-3.5 w-3.5 text-blue-600" />
                     Chế độ tiếp nhận đăng ký
@@ -1044,7 +1046,12 @@ export default function QuickTournamentCreate() {
                       );
                     })}
                   </div>
-                </div>
+                </div> : (
+                  <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-3 text-xs text-blue-900">
+                    <span className="font-bold">Đăng ký: Xét duyệt</span>
+                    <p className="mt-1 text-blue-800/80">Đăng ký sẽ chờ BTC duyệt. Có thể thay đổi trong trang quản lý sau khi tạo.</p>
+                  </div>
+                )}
 
                 <div className="h-px bg-slate-100" />
 

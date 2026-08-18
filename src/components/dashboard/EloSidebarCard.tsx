@@ -1,6 +1,7 @@
 'use client';
 
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import type { PlayerRanking } from '@/features/rankings/api';
 import { getEloProgressInfo } from '@/features/rankings/elo-display';
 
@@ -40,6 +41,7 @@ export default function EloSidebarCard({
   selectedSportId = '',
   onSportChange,
 }: Props) {
+  const translate = useTranslations('Common');
   const streak = activeRank?.winStreak ?? 0;
   const recentDelta = streak * ELO_PER_STREAK_WIN;
   const TrendIcon = recentDelta > 0 ? TrendingUp : recentDelta < 0 ? TrendingDown : Minus;
@@ -52,7 +54,7 @@ export default function EloSidebarCard({
   return (
     <div className={`bg-white rounded-xl border-2 ${tierBorder} p-5 shadow-sm`}>
       <div className="flex items-center justify-between mb-3">
-        <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">ELO Xếp hạng</span>
+        <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">{translate('eloRanking')}</span>
         {sportOptions.length > 1 && onSportChange ? (
           <select
             aria-label="Chọn môn thể thao để xem ELO"
@@ -98,13 +100,13 @@ export default function EloSidebarCard({
           />
         </div>
         <p className="mt-1.5 text-[10px] text-slate-500">
-          {hasRank ? progress.label : 'Thi đấu một trận xếp hạng để bắt đầu tiến trình.'}
+          {hasRank ? progress.label : translate('playRankedMatch')}
         </p>
       </div>
 
       <div className="grid grid-cols-3 gap-2 pt-3 border-t border-slate-100">
         <div>
-          <p className="text-[10px] text-slate-400 mb-0.5">Trận thắng</p>
+          <p className="text-[10px] text-slate-400 mb-0.5">{translate('wins')}</p>
           <p className="text-sm font-bold tabular-nums text-slate-900">{matchesWon}/{matchesPlayed}</p>
         </div>
         <div>
@@ -112,7 +114,7 @@ export default function EloSidebarCard({
           <p className="text-sm font-bold tabular-nums text-slate-900">{winRate}%</p>
         </div>
         <div>
-          <p className="text-[10px] text-slate-400 mb-0.5">Cao nhất</p>
+          <p className="text-[10px] text-slate-400 mb-0.5">{translate('highest')}</p>
           <p className="text-sm font-bold tabular-nums text-blue-600">{activeRank?.peakElo ?? '--'}</p>
         </div>
       </div>

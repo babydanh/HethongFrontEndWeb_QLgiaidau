@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { extractMatchScores } from '@/features/matches/score-display';
 import { BracketMatch } from '@/features/tournaments/api';
 import { matchesApi } from '@/features/matches/api';
@@ -15,6 +16,7 @@ interface Props {
 }
 
 export default function LiveMatchesWidget({ limit = 5, showAllLink = true }: Props) {
+  const translate = useTranslations('Common');
   const [matches, setMatches] = useState<BracketMatch[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -104,10 +106,10 @@ export default function LiveMatchesWidget({ limit = 5, showAllLink = true }: Pro
             <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
           </span>
           <h3 className="text-sm font-bold uppercase tracking-wider text-rose-500 font-sans">
-            Đang Thi Đấu
+              {translate('liveNow')}
           </h3>
           <span className="text-xs bg-rose-500/10 text-rose-400 border border-rose-500/20 px-2 py-0.5 rounded-full font-semibold">
-            {matches.length} Trận
+              {translate('matchCount', { count: matches.length })}
           </span>
         </div>
         {showAllLink && (
@@ -115,7 +117,7 @@ export default function LiveMatchesWidget({ limit = 5, showAllLink = true }: Pro
             href="/tournaments"
             className="text-xs font-medium text-blue-400 hover:text-blue-300 transition-colors"
           >
-            Xem Tất Cả Trận →
+                {translate('viewAllMatches')}
           </Link>
         )}
       </div>
@@ -145,7 +147,7 @@ export default function LiveMatchesWidget({ limit = 5, showAllLink = true }: Pro
                   {roundLabel} {match.courtName ? `— Sân: ${match.courtName}` : ''}
                 </span>
                 <span className="text-xs text-slate-400 font-medium line-clamp-1">
-                  {match.group?.stage?.name || match.group?.name || 'Trận Đấu'}
+                  {match.group?.stage?.name || match.group?.name || translate('matchLabel')}
                 </span>
               </div>
 
@@ -205,7 +207,7 @@ export default function LiveMatchesWidget({ limit = 5, showAllLink = true }: Pro
                   href={`/live/${match.id}`}
                   className="w-full md:w-auto px-4 py-2 rounded-lg text-xs font-semibold text-slate-300 hover:text-white bg-slate-800/50 hover:bg-blue-600 border border-slate-700/50 hover:border-blue-500 transition-all text-center cursor-pointer"
                 >
-                  Xem Trận
+                    {translate('viewMatch')}
                 </Link>
               </div>
             </div>

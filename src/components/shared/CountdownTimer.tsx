@@ -7,6 +7,7 @@ interface CountdownTimerProps {
   onExpired?: () => void;
   labels: {
     active: string;   // "Còn X ngày Y:Z:T"
+    dayLabel: string;
     expired: string;  // "Đã hết hạn"
   };
   variant?: 'info' | 'warning' | 'danger';
@@ -41,7 +42,7 @@ export default function CountdownTimer({
 
       let timeStr: string;
       if (d > 0) {
-        timeStr = `${d} ngày ${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        timeStr = `${d} ${labels.dayLabel} ${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
       } else {
         timeStr = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
       }

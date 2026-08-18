@@ -63,7 +63,18 @@
     "connections": "Kết nối (Conns)",
     "clients": "client",
     "eventLoopLag": "Độ trễ Event Loop",
-    "buffer": "Bộ đệm (Buffer)"
+    "buffer": "Bộ đệm (Buffer)",
+    "chatOpening": "Đang mở...",
+    "message": "Nhắn tin",
+    "eloRanking": "ELO Xếp hạng",
+    "wins": "Trận thắng",
+    "highest": "Cao nhất",
+    "playRankedMatch": "Thi đấu một trận xếp hạng để bắt đầu tiến trình.",
+    "liveNow": "Đang thi đấu",
+    "matchCount": "{count} trận",
+    "viewAllMatches": "Xem tất cả trận →",
+    "matchLabel": "Trận đấu",
+    "viewMatch": "Xem trận"
   },
   "Profile": {
     "editCover": "Chỉnh sửa ảnh bìa",

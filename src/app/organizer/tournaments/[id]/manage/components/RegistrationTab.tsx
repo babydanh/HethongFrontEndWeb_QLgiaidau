@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/Button';
 import { DateTimePicker, Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
@@ -169,6 +170,8 @@ export function RegistrationTab({
   handleAutoSeed,
   handleSwapSeeds,
 }: RegistrationTabProps) {
+  const translate = useTranslations('TournamentDetail');
+  const commonTranslate = useTranslations('Common');
   const [search, setSearch] = React.useState('');
   const [filter, setFilter] = React.useState<'ALL' | 'PENDING' | 'COMPLETE' | 'UNPAID' | 'REJECTED'>('ALL');
   const [editingSeed, setEditingSeed] = React.useState<string | null>(null);
@@ -466,7 +469,7 @@ export function RegistrationTab({
                     <div className="mt-1">
                       <CountdownTimer
                         targetDate={registrationStartDate}
-                        labels={{ active: 'Mở đăng ký sau', expired: 'Đã mở đăng ký' }}
+                        labels={{ active: translate('registrationOpensAfter'), expired: translate('registrationOpened'), dayLabel: commonTranslate('countdownDay') }}
                         variant="info"
                         size="sm"
                       />
@@ -489,7 +492,7 @@ export function RegistrationTab({
                     <div className="mt-1">
                       <CountdownTimer
                         targetDate={registrationEndDate}
-                        labels={{ active: 'Đóng đăng ký sau', expired: 'Đã đóng đăng ký' }}
+                        labels={{ active: translate('closeRegistrationAfter'), expired: translate('registrationClosed'), dayLabel: commonTranslate('countdownDay') }}
                         variant="warning"
                         size="sm"
                       />

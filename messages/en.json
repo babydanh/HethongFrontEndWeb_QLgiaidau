@@ -74,7 +74,8 @@
     "matchCount": "{count} matches",
     "viewAllMatches": "View all matches →",
     "matchLabel": "Match",
-    "viewMatch": "View match"
+    "viewMatch": "View match",
+    "countdownDay": "days"
   },
   "Profile": {
     "editCover": "Edit cover photo",

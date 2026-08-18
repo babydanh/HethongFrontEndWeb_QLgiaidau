@@ -759,9 +759,9 @@ export default function ProfilePage() {
               {/* Tài khoản hoàn tiền */}
               <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Tài khoản hoàn tiền</h3>
+                  <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">{translate("bankWallet")}</h3>
                   <Link href="/profile/edit" className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline">
-                    Chỉnh sửa
+                    {translate("editProfile")}
                   </Link>
                 </div>
                 {isLoading ? (
@@ -796,19 +796,19 @@ export default function ProfilePage() {
                 )}
               </div>
 
-              {/* Yêu cầu quyền Ban tổ chức (Organizer) */}
+              {/* {translate("requestOrganizerRole")} (Organizer) */}
               {!isLoading && (
                 <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6 flex flex-col gap-4">
-                  <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Vai trò Ban tổ chức</h3>
+                  <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">{translate("roleOrganizer")}</h3>
                   {(profileData?.roles || user?.roles || []).includes('ORGANIZER') ||
                    (profileData?.roles || user?.roles || []).includes('ADMIN') ? (
                     <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 text-xs font-semibold text-slate-700 space-y-2">
                       <div className="flex items-center gap-1.5 font-bold text-sm text-emerald-950">
                         <ShieldCheck className="w-5 h-5 text-blue-600" />
-                        Đã xác minh Ban tổ chức
+                        {translate("organizerVerifiedLabel")}
                       </div>
                       <p className="text-emerald-700 leading-relaxed">
-                        Chúc mừng! Tài khoản của bạn đã được phê duyệt quyền Ban tổ chức giải. Hiện tại bạn có quyền quản lý giải đấu và tạo chuỗi giải đấu chuyên nghiệp tính Rank ELO.
+                        {translate("organizerApprovedDescription")}
                       </p>
                     </div>
                   ) : tickets.length > 0 && tickets[0].status === 'PENDING' ? (
@@ -852,7 +852,7 @@ export default function ProfilePage() {
                         variant="success"
                         className="w-full font-bold"
                       >
-                        Yêu cầu quyền Ban tổ chức
+                        {translate("requestOrganizerRole")}
                       </Button>
                     </div>
                   )}
@@ -965,8 +965,8 @@ export default function ProfilePage() {
                 ) : (
                   <div className="text-center py-8 border-2 border-dashed border-slate-100 rounded-lg">
                     <Users className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-                    <p className="text-slate-600 font-medium">Bạn chưa tham gia câu lạc bộ nào</p>
-                    <p className="text-slate-400 text-sm mt-1 mb-4">Tham gia các câu lạc bộ thể thao để giao lưu và thi đấu</p>
+                    <p className="text-slate-600 font-medium">{translate("clubsEmptyTitle")}</p>
+                    <p className="text-slate-400 text-sm mt-1 mb-4">{translate("clubsEmptyDescription")}</p>
                     <Link href="/communities">
                       <Button variant="outline">
                         Khám phá câu lạc bộ
@@ -1479,7 +1479,7 @@ export default function ProfilePage() {
           </ModalHeader>
           <div className="mt-4 space-y-5">
             <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Gmail liên hệ</label>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">{translate("contactEmailLabel")}</label>
               <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-lg border border-slate-200 text-sm text-slate-500 font-semibold">
                 <Mail className="w-4 h-4 text-slate-400" />
                 {displayUser?.email}

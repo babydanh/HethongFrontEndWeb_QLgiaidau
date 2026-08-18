@@ -655,14 +655,30 @@ export default function QuickTournamentCreate() {
         // of leaving a hidden duplicate division behind.
         const existingDivisionsResponse = await divisionsApi.getDivisions(response.id);
         const existingDivisions = existingDivisionsResponse.data ?? [];
-        const [firstDivision, ...additionalDivisions] = divisionInputs;
-        if (firstDivision && existingDivisions[0]) {
-          await divisionsApi.updateDivision(existingDivisions[0].id, firstDivision);
+        const divisionIdentity = (division: { matchType: string; genderRestriction?: string | null }) =>
+          `${division.matchType}:${division.genderRestriction ?? ''}`;
+        const usedExistingDivisionIds = new Set<string>();
+        const divisionsToCreate: CreateDivisionInput[] = [];
+
+        for (const [index, divInput] of divisionInputs.entries()) {
+          let existingDivision = existingDivisions.find((division) =>
+            !usedExistingDivisionIds.has(division.id) &&
+            divisionIdentity(division) === divisionIdentity(divInput),
+          );
+          // The Lite endpoint may have materialized a legacy default whose
+          // identity differs from the first selected card. Reuse it once
+          // instead of creating a second default division.
+          if (!existingDivision && index === 0) {
+            existingDivision = existingDivisions.find((division) => !usedExistingDivisionIds.has(division.id));
+          }
+          if (existingDivision) {
+            usedExistingDivisionIds.add(existingDivision.id);
+            await divisionsApi.updateDivision(existingDivision.id, divInput);
+          } else {
+            divisionsToCreate.push(divInput);
+          }
         }
-        const divisionsToCreate = existingDivisions[0] ? additionalDivisions : divisionInputs;
-        await Promise.all(
-          divisionsToCreate.map((divInput) => divisionsApi.createDivision(response.id, divInput))
-        );
+        await Promise.all(divisionsToCreate.map((divInput) => divisionsApi.createDivision(response.id, divInput)));
       } catch (divisionError: unknown) {
         await tournamentsApi.deleteTournament(response.id).catch(() => undefined);
         throw divisionError;
@@ -781,9 +797,9 @@ export default function QuickTournamentCreate() {
                   <button
                     type="button"
                     onClick={() => setIsDescriptionEditorOpen(true)}
-                    className="mt-2 flex min-h-24 w-full items-start rounded-xl border border-slate-300 bg-white px-3.5 py-3 text-left text-sm transition hover:border-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                    className="mt-2 flex min-h-36 w-full items-start rounded-xl border border-slate-300 bg-white px-3.5 py-3 text-left text-sm transition hover:border-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                   >
-                    <span className={description ? 'line-clamp-4 text-slate-800' : 'text-slate-400'}>
+                    <span className={description ? 'line-clamp-6 text-slate-800' : 'text-slate-400'}>
                       {description ? description.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() : 'Tóm tắt thể thức, đối tượng tham gia...'}
                     </span>
                   </button>
@@ -1167,43 +1183,41 @@ export default function QuickTournamentCreate() {
                   </div>
                 </div>
 
-                <div className="h-px bg-slate-100" />
-
-                {/* 3. Chế độ nhận đăng ký — Public Quick mặc định xét duyệt; CLB Quick vẫn cho chọn */}
-                {communityId ? <div>
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5 mb-2">
-                    <ShieldCheck className="h-3.5 w-3.5 text-blue-600" />
-                    Chế độ tiếp nhận đăng ký
-                  </span>
-                  <div className="grid grid-cols-3 gap-1.5">
-                    {[
-                      { val: 'OPEN', label: 'Tự do', sub: 'Vào ngay' },
-                      { val: 'APPROVAL', label: 'Xét duyệt', sub: 'BTC duyệt' },
-                      { val: 'INVITE_ONLY', label: 'Mã mời', sub: 'Cần mã' },
-                    ].map((item) => {
-                      const isSelected = registrationMode === item.val;
-                      return (
-                        <button
-                          key={item.val}
-                          type="button"
-                          onClick={() => setValue('registrationMode', item.val as QuickValues['registrationMode'])}
-                          className={`rounded-xl border p-2 text-center transition ${
-                            isSelected
-                              ? 'border-blue-500 bg-blue-50/80 font-bold text-blue-700 ring-1 ring-blue-200'
-                              : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
-                          }`}
-                        >
-                          <div className="text-xs font-bold">{item.label}</div>
-                          <div className="text-[10px] text-slate-400 mt-0.5">{item.sub}</div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div> : (
-                  <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-3 text-xs text-blue-900">
-                    <span className="font-bold">Đăng ký: Xét duyệt</span>
-                    <p className="mt-1 text-blue-800/80">Đăng ký sẽ chờ BTC duyệt. Có thể thay đổi trong trang quản lý sau khi tạo.</p>
-                  </div>
+                {/* 3. Chế độ nhận đăng ký (Chỉ hiện khi tạo trong CLB) */}
+                {communityId && (
+                  <>
+                    <div className="h-px bg-slate-100" />
+                    <div>
+                      <span className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5 mb-2">
+                        <ShieldCheck className="h-3.5 w-3.5 text-blue-600" />
+                        Chế độ tiếp nhận đăng ký
+                      </span>
+                      <div className="grid grid-cols-3 gap-1.5">
+                        {[
+                          { val: 'OPEN', label: 'Tự do', sub: 'Vào ngay' },
+                          { val: 'APPROVAL', label: 'Xét duyệt', sub: 'BTC duyệt' },
+                          { val: 'INVITE_ONLY', label: 'Mã mời', sub: 'Cần mã' },
+                        ].map((item) => {
+                          const isSelected = registrationMode === item.val;
+                          return (
+                            <button
+                              key={item.val}
+                              type="button"
+                              onClick={() => setValue('registrationMode', item.val as QuickValues['registrationMode'])}
+                              className={`rounded-xl border p-2 text-center transition ${
+                                isSelected
+                                  ? 'border-blue-500 bg-blue-50/80 font-bold text-blue-700 ring-1 ring-blue-200'
+                                  : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                              }`}
+                            >
+                              <div className="text-xs font-bold">{item.label}</div>
+                              <div className="text-[10px] text-slate-400 mt-0.5">{item.sub}</div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </>
                 )}
               </section>
 

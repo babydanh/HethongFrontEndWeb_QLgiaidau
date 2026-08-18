@@ -208,19 +208,21 @@ const detectMatchGender = (match: EnrichedMatch): 'MALE' | 'FEMALE' | 'MIXED' | 
   return 'OPEN';
 };
 
-const getFormatLabel = (matchType?: string, genderRestriction?: string | null) => {
+type MatchFormatLabels = { singleMale: string; singleFemale: string; doubleMale: string; doubleFemale: string; mixedDoubles: string; singles: string; doubles: string };
+
+const getFormatLabel = (matchType?: string, genderRestriction?: string | null, labels?: MatchFormatLabels) => {
   const mt = matchType || '';
   const gr = genderRestriction || '';
   if (mt === 'SINGLES') {
-    return gr === 'FEMALE' ? 'Đơn Nữ' : 'Đơn Nam';
+    return gr === 'FEMALE' ? (labels?.singleFemale ?? 'Đơn Nữ') : (labels?.singleMale ?? 'Đơn Nam');
   }
   if (mt === 'DOUBLES') {
-    return gr === 'FEMALE' ? 'Đôi Nữ' : 'Đôi Nam';
+    return gr === 'FEMALE' ? (labels?.doubleFemale ?? 'Đôi Nữ') : (labels?.doubleMale ?? 'Đôi Nam');
   }
   if (mt === 'MIXED_DOUBLES' || mt === 'MIXED' || gr === 'MIXED') {
-    return 'Đôi Nam Nữ';
+    return labels?.mixedDoubles ?? 'Đôi Nam Nữ';
   }
-  return mt === 'DOUBLES' ? 'Đôi' : mt === 'SINGLES' ? 'Đơn' : 'Đôi Nam Nữ';
+  return mt === 'DOUBLES' ? (labels?.doubles ?? 'Đôi') : mt === 'SINGLES' ? (labels?.singles ?? 'Đơn') : (labels?.mixedDoubles ?? 'Đôi Nam Nữ');
 };
 
 export default function MatchesListPage() {
@@ -1371,7 +1373,7 @@ export default function MatchesListPage() {
                             {/* Phân môn & Sân */}
                             <div className="text-[11px] font-semibold text-slate-500 flex items-center gap-2 justify-center pt-1">
                               <span className="text-slate-700 whitespace-nowrap">
-                                {getFormatLabel(match.tournament?.matchType, match.tournament?.genderRestriction)}
+                                {getFormatLabel(match.tournament?.matchType, match.tournament?.genderRestriction, { singleMale: translate('singleMale'), singleFemale: translate('singleFemale'), doubleMale: translate('doubleMale'), doubleFemale: translate('doubleFemale'), mixedDoubles: translate('doubleMixed'), singles: translate('matchTypeSingles'), doubles: translate('matchTypeDoubles') })}
                               </span>
                               <span className="text-slate-300">•</span>
                               <span className="text-slate-500 truncate max-w-[180px]">
@@ -1433,7 +1435,7 @@ export default function MatchesListPage() {
                           >
                             <Share2 className="w-3.5 h-3.5 text-blue-500 group-hover/share:scale-110 transition-transform" />
                             <span className="text-[11px] font-bold text-slate-600 group-hover/share:text-blue-600">
-                              Chia sẻ
+                              {translate('shareMatch')}
                             </span>
                           </button>
                         </div>

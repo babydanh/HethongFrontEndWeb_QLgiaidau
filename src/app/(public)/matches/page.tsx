@@ -225,6 +225,18 @@ const getFormatLabel = (matchType?: string, genderRestriction?: string | null) =
 
 export default function MatchesListPage() {
   const translate = useTranslations('Match');
+
+  const localizeMatchRoundLabel = (label: string) => label
+    .replaceAll('Chung kết tổng', translate('roundGrandFinal'))
+    .replaceAll('Chung kết', translate('roundFinal'))
+    .replaceAll('Bán kết', translate('roundSemifinal'))
+    .replaceAll('Tứ kết', translate('roundQuarterfinal'))
+    .replaceAll('Vòng bảng', translate('roundGroupStage'))
+    .replaceAll('Nhánh thắng', translate('winnersBracket'))
+    .replaceAll('Nhánh thua', translate('losersBracket'))
+    .replaceAll('Lượt', translate('leg'))
+    .replace(/Vòng (\d+)/g, (_, round) => translate('roundOf', { round }))
+
   const [searchTerm, setSearchTerm] = useState('');
   const [matches, setMatches] = useState<EnrichedMatch[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -1136,11 +1148,12 @@ export default function MatchesListPage() {
                     const p1Won = isFinished && match.winnerId === match.participant1Id;
                     const p2Won = isFinished && match.winnerId === match.participant2Id;
 
-                    const friendlyRoundName = getMatchRoundLabel({
+                    const friendlyRoundNameRaw = getMatchRoundLabel({
                       match,
                       matches: group.matches,
                       tournamentFormat: match.stage?.type,
                     });
+                    const friendlyRoundName = localizeMatchRoundLabel(friendlyRoundNameRaw);
 
                     // Lấy thông tin chi tiết các set đấu
                     const scoreSets = (match.scoreDetails?.sets as Array<{ team1Score?: number; team2Score?: number; isFinished?: boolean }> | undefined) || [];

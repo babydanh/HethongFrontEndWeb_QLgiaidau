@@ -23,6 +23,15 @@ interface LeaderboardSearchResult {
 
 export default function LeaderboardPage() {
   const t = useTranslations("Leaderboard");
+
+  const getCategoryLabel = (category: Category) => {
+    switch (category.slug) {
+      case "badminton": return t("sportBadminton");
+      case "table_tennis": return t("sportTableTennis");
+      case "pickleball": return t("sportPickleball");
+      default: return category.name;
+    }
+  };
     const { openUserProfile } = useUserProfileModalStore();
     const [categories, setCategories] = useState<Category[]>([]);
     const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
@@ -189,7 +198,7 @@ export default function LeaderboardPage() {
                                     : "bg-white border-slate-200 text-slate-600 hover:bg-slate-55"
                             }`}
                         >
-                            {cat.name}
+                            {getCategoryLabel(cat)}
                         </button>
                     ))}
                 </div>
@@ -548,7 +557,7 @@ export default function LeaderboardPage() {
                                                                 <Image src={player.user.avatarUrl} alt={`Rank ${rankNum}`} fill className="object-cover" />
                                                             ) : (
                                                                 <span className="text-slate-400 font-bold text-sm">
-                                                                    {player ? (player.user?.fullName?.substring(0, 2) || 'VĐ') : '?'}
+                                                                    {player ? (player.user?.fullName?.substring(0, 2)  || t("initialsFallback")) : '?'}
                                                                 </span>
                                                             )}
                                                         </div>
@@ -747,7 +756,7 @@ export default function LeaderboardPage() {
                                                     <Image src={u.avatarUrl} alt="Avatar" fill className="object-cover" />
                                                 ) : (
                                                     <div className="w-full h-full flex items-center justify-center bg-blue-50 text-blue-600 font-bold text-xs uppercase">
-                                                        {u.fullName?.substring(0, 2) || "VĐ"}
+                                                        {u.fullName?.substring(0, 2) || t("initialsFallback")}
                                                     </div>
                                                 )}
                                             </div>
@@ -875,7 +884,7 @@ function RestRankingsTable({ rankings, selectedMatchType }: { rankings: PlayerRa
                                                             <Image src={rank.user.avatarUrl} alt="Player" fill className="object-cover" />
                                                         ) : (
                                                             <div className="w-full h-full flex items-center justify-center bg-slate-200 text-slate-500 font-bold text-[9px] uppercase">
-                                                                {isPlaceholder ? "?" : (rank.user?.fullName?.substring(0, 2) || 'VĐ')}
+                                                                {isPlaceholder ? "?" : (rank.user?.fullName?.substring(0, 2)  || t("initialsFallback"))}
                                                             </div>
                                                         )}
                                                     </div>

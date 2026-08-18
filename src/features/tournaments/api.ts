@@ -179,6 +179,7 @@ export interface RegisterTournamentPayload {
   tournamentDivisionId?: string;
   matchType?: 'SINGLES' | 'DOUBLES' | 'MIXED_DOUBLES';
   rankingConsent?: boolean;
+  customResponses?: Record<string, unknown>;
 }
 
 export interface FootballTeam {

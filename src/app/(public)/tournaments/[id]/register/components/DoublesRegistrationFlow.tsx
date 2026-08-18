@@ -30,6 +30,7 @@ interface Props {
   tournamentId: string;
   inviteCode?: string;
   divisionId?: string;
+  customResponses?: Record<string, unknown>;
 }
 
 type RegistrationParticipant = TournamentParticipant & {
@@ -51,7 +52,7 @@ const normalizeRegistrationParticipant = (
   };
 };
 
-export default function DoublesRegistrationFlow({ tournament, tournamentId, inviteCode, divisionId }: Props) {
+export default function DoublesRegistrationFlow({ tournament, tournamentId, inviteCode, divisionId, customResponses }: Props) {
   const router = useRouter();
   const registrationTranslate = useTranslations('RegistrationMode');
   const registrationModeUi = getRegistrationModeUi(registrationTranslate, tournament.tournamentConfig?.registrationMode);
@@ -240,6 +241,7 @@ export default function DoublesRegistrationFlow({ tournament, tournamentId, invi
         partnerEmailOrPhone,
         tournamentDivisionId: divisionId,
         rankingConsent,
+        customResponses,
       });
 
       if (res.data) {

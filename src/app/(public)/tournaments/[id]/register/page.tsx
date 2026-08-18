@@ -33,6 +33,8 @@ import { divisionsApi } from '@/features/tournaments/api';
 import { isClubLiteTournament } from '@/features/tournaments/lite-qr';
 import { WithdrawModal } from '@/components/shared/WithdrawModal';
 import { isTournamentDraft, isTournamentOpenForRegistration, isTournamentUpcoming } from '@/utils/tournament-status';
+import { readRegistrationFormConfig } from '@/features/tournaments/registration-form';
+import RegistrationCustomFields, { validateRegistrationResponses } from './components/RegistrationCustomFields';
 
 const registerSchema = z.object({
   teamName: z.string().min(3, 'Tên đội phải có ít nhất 3 ký tự').max(100, 'Tên đội quá dài'),
@@ -143,6 +145,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
 
   const router = useRouter();
   const translate = useTranslations('Common');
+  const tournamentTranslate = useTranslations('TournamentDetail');
   const searchParams = useSearchParams();
   const urlInvite = searchParams.get('invite') || '';
   const requestedDivisionId = searchParams.get('divisionId') || '';
@@ -165,6 +168,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
   const [inviteInput, setInviteInput] = useState('');
   const [isValidatingInvite, setIsValidatingInvite] = useState(false);
   const [rankingConsent, setRankingConsent] = useState(false);
+  const [customResponses, setCustomResponses] = useState<Record<string, unknown>>({});
 
   const { register, handleSubmit } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -433,7 +437,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
         toast.success('Xác nhận mã mời thành công!');
       }
     } catch (err) {
-      toast.error('Mã mời không đúng hoặc đã hết hạn.');
+      toast.error(translate('invalidInvite'))
     } finally {
       setIsValidatingInvite(false);
     }
@@ -441,7 +445,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
 
   const onSubmitSingles = async (data: RegisterFormValues) => {
     if (!isAuthenticated || !user) {
-      toast.error('Vui lòng đăng nhập để đăng ký tham gia giải đấu');
+      toast.error(translate('loginToRegister'))
       const params = new URLSearchParams();
       if (inviteCode) {
         params.set('invite', inviteCode);
@@ -469,6 +473,12 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
       return;
     }
 
+    const customError = validateRegistrationResponses(registrationFields, customResponses);
+    if (customError) {
+      toast.error(customError);
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       const cleanData = {
@@ -476,12 +486,13 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
         inviteCode: inviteCode || undefined,
         tournamentDivisionId: selectedDivisionId || undefined,
         rankingConsent,
+        customResponses,
       };
 
       const res = await tournamentsApi.register(id, cleanData);
       const participantId = res?.data?.participant?.id;
 
-      toast.success('Đăng ký tham gia thành công!');
+      toast.success(translate('registrationSuccess'))
 
       if (entryFeeVal > 0 && participantId) {
         const params = new URLSearchParams({
@@ -515,7 +526,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
   // If user is not logged in, show redirect info
   useEffect(() => {
     if (!isLoading && !needInviteValidation && !isAuthenticated) {
-      toast.error('Vui lòng đăng nhập trước khi tiến hành đăng ký.');
+      toast.error(translate('loginToRegister'))
       const params = new URLSearchParams();
       if (inviteCode) {
         params.set('invite', inviteCode);
@@ -674,14 +685,14 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
   }
 
   if (isLocked || isExpired || isNotOpen) {
-    let title = 'Đăng ký đã đóng';
-    let message = 'Giải đấu hiện không nhận đăng ký mới.';
+    let title = tournamentTranslate('registrationClosed');
+    let message = tournamentTranslate('registrationClosed');
     if (isLocked) {
-      title = 'Đăng ký đã khóa';
-      message = 'Giải đấu đã tạm ngưng nhận đăng ký mới từ Ban tổ chức.';
+      title = tournamentTranslate('registrationLocked');
+      message = tournamentTranslate('registrationLockedNotice');
     } else if (isExpired) {
-      title = 'Đăng ký hết hạn';
-      message = 'Hạn đăng ký giải đấu này đã kết thúc.';
+      title = tournamentTranslate('registrationExpired');
+      message = tournamentTranslate('registrationExpiredNotice');
     }
 
     return (
@@ -713,6 +724,10 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
   const isFootballCategory = tournament?.category?.slug?.toLowerCase() === 'football' || tournament?.sportRules?.kind === 'FOOTBALL';
   const isTeamSport = isFootballCategory || (tournament?.tournamentConfig?.teamSize != null || tournament?.tournamentConfig?.minTeamSize != null);
   const effectiveFootballTeamSize = tournament?.tournamentConfig?.teamSize ?? (isFootballCategory ? 11 : 7);
+  const configuredRegistrationForm = readRegistrationFormConfig(tournament.tournamentConfig?.registrationForm, allDivisions.map((division) => division.id));
+  const registrationFields = configuredRegistrationForm.status === 'PUBLISHED' && (configuredRegistrationForm.divisionIds.length === 0 || configuredRegistrationForm.divisionIds.includes(selectedDivisionId))
+    ? configuredRegistrationForm.fields
+    : [];
 
   const userGender = normalizeGenderValue(user?.gender);
   const divisionGender = normalizeGenderValue(selectedDivision?.genderRestriction);
@@ -879,7 +894,9 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
           <div className="lg:col-span-7">
             <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 sm:p-8">
               {selectedDivision ? (
-                isGenderMismatched ? (
+                <>
+                {!isRegistered && !isGenderMismatched && <RegistrationCustomFields fields={registrationFields} responses={customResponses} onChange={(fieldId, value) => setCustomResponses((current) => ({ ...current, [fieldId]: value }))} />}
+                {isGenderMismatched ? (
                   <div className="bg-rose-50 border border-rose-100 rounded-xl p-6 text-center space-y-3 animate-in fade-in duration-200">
                     <AlertTriangle className="w-10 h-10 text-rose-500 mx-auto" />
                     <p className="text-base font-bold text-rose-900">Giới tính không phù hợp</p>
@@ -910,6 +927,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                     maxTeamSize={tournament?.tournamentConfig?.maxTeamSize}
                     maxReserve={tournament?.tournamentConfig?.maxReserve ?? 0}
                     registrationMode={tournament?.tournamentConfig?.registrationMode}
+                    customResponses={customResponses}
                     onRegistrationChanged={() => fetchTournament()}
                   />
                 ) : isDoubles ? (
@@ -918,6 +936,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                     tournamentId={id}
                     inviteCode={inviteCode}
                     divisionId={selectedDivisionId || undefined}
+                    customResponses={customResponses}
                   />
                 ) : isRegistered && participant ? (
                   <div className="space-y-6 animate-in fade-in duration-300">
@@ -1086,7 +1105,8 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
                       </Button>
                     </form>
                   </div>
-                )
+                )}
+                </>
               ) : (
                 <div className="py-12 text-center text-slate-400">
                   <p className="text-sm font-semibold">Vui lòng chọn nội dung thi đấu ở cột bên trái để tiếp tục</p>

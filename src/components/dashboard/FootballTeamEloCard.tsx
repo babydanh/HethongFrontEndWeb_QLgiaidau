@@ -37,7 +37,7 @@ export default function FootballTeamEloCard({ team, ranking, position }: Props) 
       <div className="mt-4 grid grid-cols-3 gap-2 border-t border-slate-100 pt-3">
         <div><p className="text-[10px] text-slate-400">ELO</p><p className="text-lg font-black tabular-nums text-emerald-700">{eloPoints}</p></div>
         <div><p className="text-[10px] text-slate-400">{translate('rank')}</p><p className="text-sm font-black tabular-nums text-slate-900">{position ? `#${position}` : '—'}</p></div>
-        <div><p className="text-[10px] text-slate-400">Trạng thái</p><p className="truncate text-xs font-bold text-slate-700">{tierLabel}</p></div>
+        <div><p className="text-[10px] text-slate-400">{translate('status')}</p><p className="truncate text-xs font-bold text-slate-700">{tierLabel}</p></div>
       </div>
       <p className="mt-3 flex items-center gap-1.5 text-[11px] text-slate-500">
         {matchesPlayed > 0 ? <Trophy className="h-3.5 w-3.5 text-amber-500" /> : <Shield className="h-3.5 w-3.5 text-slate-400" />}

@@ -55,7 +55,7 @@ export default function EloSidebarCard({
         <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">{translate('eloRanking')}</span>
         {sportOptions.length > 1 && onSportChange ? (
           <select
-            aria-label="Chọn môn thể thao để xem ELO"
+            aria-label={translate('selectSportForElo')}
             value={selectedSportId}
             onChange={(event) => onSportChange(event.target.value)}
             className="max-w-32 rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-semibold text-slate-700 outline-none transition-colors hover:border-slate-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100"

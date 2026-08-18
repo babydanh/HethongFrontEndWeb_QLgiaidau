@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 import { getEloTier } from '@/components/ui/EloTierBadge';
 import { Shield, ShieldCheck, TrendingUp, TrendingDown } from 'lucide-react';
 import { cn } from '@/utils/cn';
@@ -23,6 +25,7 @@ export default function EloPeakCard({
   matchesPlayed,
   categoryName,
 }: EloPeakCardProps) {
+  const translate = useTranslations('EloDisplay');
   const currentTier = getEloTier(eloPoints, tierName, categoryName);
   const rankProgress = getRankProgressInfo(eloPoints, categoryName);
   const { percent: progress, current: progressTier, next: nextTierDefinition } = rankProgress;
@@ -41,12 +44,12 @@ export default function EloPeakCard({
       {/* Peak & Current ELO */}
       <div className="grid grid-cols-2 gap-2">
         <div className="bg-slate-50 rounded-lg p-3 text-center">
-          <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Cao nhất</span>
+          <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">{translate('peakLabel')}</span>
           <span className="text-2xl font-bold text-blue-600 leading-none mt-1 block">{peakElo}</span>
           <span className="text-[9px] font-medium text-slate-500 mt-1 block">{peakTier.name}</span>
         </div>
         <div className="bg-slate-50 rounded-lg p-3 text-center">
-          <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Hiện tại</span>
+          <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">{translate('currentLabel')}</span>
           <span className="text-2xl font-bold text-slate-900 leading-none mt-1 block">{eloPoints}</span>
           <span className="text-[9px] font-medium text-slate-500 mt-1 block">{currentTier.name}</span>
         </div>
@@ -102,18 +105,18 @@ export default function EloPeakCard({
           {hasShield ? (
             <>
               <ShieldCheck className="w-4 h-4 text-blue-500" />
-              <span>🛡️ Khiên bảo vệ: <span className="text-emerald-700">Còn nguyên</span></span>
+              <span>🛡️ {translate('shieldLabel')}:  <span className="text-emerald-700">{translate('shieldActiveLabel')}</span></span>
             </>
           ) : (
             <>
               <Shield className="w-4 h-4 text-rose-400" />
-              <span>🛡️ Khiên bảo vệ: <span className="text-rose-500">Đã vỡ</span></span>
+              <span>🛡️ {translate('shieldLabel')}:  <span className="text-rose-500">{translate('shieldBrokenLabel')}</span></span>
             </>
           )}
           <span className="text-[9px] font-medium ml-auto opacity-70">
             {hasShield
-              ? `Bảo vệ mốc ${progressTier.minElo}`
-              : 'Sẽ hồi phục khi lên rank mới'}
+              ? `${translate('shieldProtectionLabel')} ${progressTier.minElo}`
+              : translate('shieldRecoveryLabel')}
           </span>
         </div>
       )}
@@ -121,7 +124,7 @@ export default function EloPeakCard({
       {/* Category */}
       {categoryName && categoryName !== 'Chung' && (
         <div className="text-[9px] font-medium text-slate-400 text-center">
-          Bộ môn: {categoryName}
+          {translate('categoryLabel')}: {categoryName}
         </div>
       )}
     </div>

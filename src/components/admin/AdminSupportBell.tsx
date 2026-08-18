@@ -118,7 +118,7 @@ export function AdminSupportBell() {
                       {customer?.avatarUrl ? (
                         <img
                           src={customer.avatarUrl}
-                          alt={customer.fullName || customer.email || 'Người dùng'}
+                          alt={customer.fullName || customer.email || translate('user')}
                           className="h-full w-full object-cover"
                         />
                       ) : (
@@ -130,7 +130,7 @@ export function AdminSupportBell() {
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-bold text-slate-900">
-                        {customer?.fullName || customer?.email || 'Người dùng'}
+                        {customer?.fullName || customer?.email || translate('user')}
                       </span>
                       <span className="mt-0.5 block truncate text-xs text-slate-500">
                         {room.lastMessage?.content || translate('supportRequestOpened')}

@@ -180,6 +180,12 @@ export interface Tournament {
     maxCombinedElo?: number | null;
     maxTeammateGap?: number | null;
     registrationMode?: 'OPEN' | 'APPROVAL' | 'INVITE_ONLY';
+    registrationForm?: {
+      version: 1;
+      status: 'DRAFT' | 'PUBLISHED';
+      fields: Array<Record<string, unknown>>;
+      divisionIds: string[];
+    };
     hideFeaturedCardText?: boolean;
     // Team sport (bóng đá)
     teamSize?: 5 | 7 | 11;
@@ -256,6 +262,7 @@ export interface TournamentParticipant {
   isWildcard?: boolean;
   tournamentDivisionId?: string | null;
   registeredAt: string;
+  customResponses?: Record<string, unknown> | null;
   partnerInviteExpiresAt?: string | null;
   teamInviteToken?: string | null;
   teamStatus?:

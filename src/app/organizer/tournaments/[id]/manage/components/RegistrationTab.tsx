@@ -20,10 +20,18 @@ import {
   Search,
   Shuffle,
   GripVertical,
+  FileSpreadsheet,
+  Download,
+  Upload,
 } from 'lucide-react';
 import { Tournament, TournamentParticipant } from '@/types/tournament';
 import { Division, tournamentsApi } from '@/features/tournaments/api';
 import { formatDate } from '@/utils/format';
+import {
+  exportParticipantsExcel,
+  downloadParticipantsTemplateExcel,
+  parseParticipantsExcel,
+} from '@/utils/exportTournament';
 import CountdownTimer from '@/components/shared/CountdownTimer';
 import {
   getParticipantStatusClassName,
@@ -660,9 +668,37 @@ export function RegistrationTab({
                 Theo dõi toàn bộ trạng thái đăng ký, thanh toán và quyết định duyệt trước khi chốt danh sách.
               </p>
             </div>
-            <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-right">
-              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-amber-600">Chờ duyệt</p>
-              <p className="mt-1 text-lg font-bold text-amber-800">{participantSummary.pending}</p>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const selDiv = divisions.find((d) => d.id === selectedDivisionId);
+                  exportParticipantsExcel(
+                    tournament.name,
+                    selDiv?.name || 'TatCa',
+                    participants,
+                  );
+                  toast.success('Đã xuất file Excel danh sách VĐV!');
+                }}
+                className="border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-bold text-xs"
+              >
+                <FileSpreadsheet className="mr-1.5 h-3.5 w-3.5 text-emerald-600" />
+                Xuất Excel
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={downloadParticipantsTemplateExcel}
+                className="border-slate-200 bg-white text-slate-700 hover:bg-slate-50 font-bold text-xs"
+              >
+                <Download className="mr-1.5 h-3.5 w-3.5 text-slate-500" />
+                Mẫu Excel
+              </Button>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-right">
+                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-amber-600">Chờ duyệt</p>
+                <p className="text-base font-bold text-amber-800 leading-none">{participantSummary.pending}</p>
+              </div>
             </div>
           </div>
 
@@ -923,7 +959,39 @@ export function RegistrationTab({
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Danh sách VĐV ảo</label>
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Danh sách VĐV ảo</label>
+              <label className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 hover:text-emerald-700 cursor-pointer bg-emerald-50 hover:bg-emerald-100 px-2 py-0.5 rounded transition-colors">
+                <Upload className="w-3 h-3" />
+                Đọc từ Excel
+                <input
+                  type="file"
+                  accept=".xlsx, .xls, .csv"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    try {
+                      const res = await parseParticipantsExcel(file);
+                      const p1Col = res.detectedMapping.player1NameCol || res.headers[0];
+                      const names = res.rows
+                        .map((r) => {
+                          const p1 = r[p1Col];
+                          const p2 = res.detectedMapping.player2NameCol ? r[res.detectedMapping.player2NameCol] : '';
+                          if (p1 && p2) return `${p1}\n${p2}`;
+                          return p1 ? String(p1) : '';
+                        })
+                        .filter(Boolean)
+                        .join('\n');
+                      setMockNamesText(names);
+                      toast.success(`Đã nạp ${res.rows.length} VĐV từ Excel!`);
+                    } catch (err: any) {
+                      toast.error('Lỗi khi đọc file: ' + err.message);
+                    }
+                  }}
+                />
+              </label>
+            </div>
             <Textarea
               value={mockNamesText}
               onChange={(e) => setMockNamesText(e.target.value)}

@@ -111,7 +111,7 @@ const getFormatLabel = (matchType?: string, genderRestriction?: string | null, t
   if (mt === 'MIXED_DOUBLES' || mt === 'MIXED' || gr === 'MIXED') {
     return translate?.('formatMixedDoubles') ?? 'Mixed doubles';
   }
-  return mt === 'DOUBLES' ? (translate?.('formatDoubles') ?? 'Đôi') : mt === 'SINGLES' ? (translate?.('formatSingles') ?? 'Đơn') : (translate?.('formatMixedDoubles') ?? 'Mixed doubles');
+  return mt === 'DOUBLES' ? (translate?.('formatDoubles') ?? 'Doubles') : mt === 'SINGLES' ? (translate?.('formatSingles') ?? 'Singles') : (translate?.('formatMixedDoubles') ?? 'Mixed doubles');
 };
 
 function CommunityLogoAvatar({ src, alt }: { src?: string | null; alt: string }) {
@@ -1589,10 +1589,10 @@ export default function HomePage() {
             <div className="aspect-[4/3] bg-slate-900 relative p-5 flex flex-col justify-end">
               <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/35 to-transparent z-10"></div>
               <div className="absolute inset-0 bg-blue-600 opacity-20 group-hover:opacity-35 transition-opacity duration-300"></div>
-              <div className="absolute top-3 right-3 bg-white/20 backdrop-blur-md text-white/90 text-[9px] px-2 py-0.5 rounded font-bold tracking-wider uppercase z-20">QUẢNG CÁO</div>
+              <div className="absolute top-3 right-3 bg-white/20 backdrop-blur-md text-white/90 text-[9px] px-2 py-0.5 rounded font-bold tracking-wider uppercase z-20">{translate('advertisement')}</div>
 
               <div className="relative z-20 mt-auto">
-                 <span className="text-[9px] font-bold text-blue-400 uppercase tracking-widest block mb-1">CỬA HÀNG TOURNA</span>
+                 <span className="text-[9px] font-bold text-blue-400 uppercase tracking-widest block mb-1">{translate('promoStore')}</span>
                  <h4 className="text-sm font-bold text-white mb-0.5 group-hover:text-blue-200 transition-colors">{translate('promoProduct')}</h4>
                  <p className="text-[10px] text-white/80 font-medium line-clamp-2">{translate('promoOffer')}</p>
               </div>

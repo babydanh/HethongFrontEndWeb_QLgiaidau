@@ -100,13 +100,13 @@ export default function TournamentsTab({
     if (type === 'CLUB') {
       return (
         <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
-          Nội bộ CLB
+          {translate('communityClubOnlyBadge')}
         </span>
       );
     }
     return (
       <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
-        Giải mở rộng
+        {translate('communityOpenBadge')}
       </span>
     );
   };
@@ -205,15 +205,15 @@ export default function TournamentsTab({
     const mt = matchType || '';
     const gr = genderRestriction || '';
     if (mt === 'SINGLES') {
-      return gr === 'FEMALE' ? 'Đơn Nữ' : 'Đơn Nam';
+      return gr === 'FEMALE' ? translate('communitySinglesFemale') : translate('communitySinglesMale');
     }
     if (mt === 'DOUBLES') {
-      return gr === 'FEMALE' ? 'Đôi Nữ' : 'Đôi Nam';
+      return gr === 'FEMALE' ? translate('communityDoublesFemale') : translate('communityDoublesMale');
     }
     if (mt === 'MIXED_DOUBLES' || mt === 'MIXED' || gr === 'MIXED') {
-      return 'Đôi Nam Nữ';
+      return translate('communityMixedDoubles');
     }
-    return mt === 'DOUBLES' ? 'Đôi' : mt === 'SINGLES' ? 'Đơn' : 'Đôi Nam Nữ';
+    return mt === 'DOUBLES' ? translate('communityDoubles') : mt === 'SINGLES' ? translate('communitySingles') : translate('communityMixedDoubles');
   };
 
   return (

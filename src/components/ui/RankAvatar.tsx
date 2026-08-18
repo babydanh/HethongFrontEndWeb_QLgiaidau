@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 import { cn } from '@/utils/cn';
 import { getRankStyle } from '@/utils/rank-style';
 
@@ -39,11 +40,12 @@ export function RankAvatar({
   ringClassName = 'ring-2',
   title,
 }: RankAvatarProps) {
+  const translate = useTranslations('EloDisplay');
   const sizeClass = size === 'lg' ? 'h-32 w-32' : size === 'sm' ? 'h-8 w-8' : 'h-12 w-12';
   const initial = name?.trim().charAt(0).toUpperCase() || 'U';
   const rankTitle = matchesPlayed > 0 && elo != null
-    ? `${tierName || 'Đã xếp hạng'} • ${elo} ELO`
-    : 'Chưa xếp hạng';
+    ? `${tierName || translate('ranked')} • ${elo} ELO`
+    : translate('unranked');
 
   return (
     <div

@@ -22,11 +22,12 @@ interface Props {
   maxTeamSize?: number;
   maxReserve?: number;
   registrationMode?: string;
+  customResponses?: Record<string, unknown>;
   onRegistrationChanged?: () => Promise<void> | void;
 }
 
 export default function TeamRegistrationFlow({
-  tournamentId, inviteCode, divisionId, categoryId, currentUserId, participantId, participantTeamId, rosterLockedAt, teamSize, maxTeamSize, maxReserve = 0, registrationMode,
+  tournamentId, inviteCode, divisionId, categoryId, currentUserId, participantId, participantTeamId, rosterLockedAt, teamSize, maxTeamSize, maxReserve = 0, registrationMode, customResponses,
   onRegistrationChanged,
 }: Props) {
   const router = useRouter();
@@ -126,6 +127,7 @@ export default function TeamRegistrationFlow({
         divisionId,
         tournamentDivisionId: divisionId,
         rankingConsent: true,
+        customResponses,
       });
       const createdParticipantId = res.data?.participant?.id;
       if (createdParticipantId) router.push(`/payments/checkout?participantId=${createdParticipantId}&tournamentId=${tournamentId}&divisionId=${divisionId || ''}`);

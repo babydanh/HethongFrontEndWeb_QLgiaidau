@@ -16,7 +16,6 @@ import {
   Users,
   Eye,
   ShieldCheck,
-  Sparkles,
   Trophy,
   Info,
   Check,
@@ -1068,27 +1067,6 @@ export default function QuickTournamentCreate() {
                     <p className="mt-1 text-blue-800/80">Đăng ký sẽ chờ BTC duyệt. Có thể thay đổi trong trang quản lý sau khi tạo.</p>
                   </div>
                 )}
-
-                <div className="h-px bg-slate-100" />
-
-                {/* 4. Tính điểm ELO */}
-                <label className="flex items-start gap-3 rounded-xl border border-slate-200/90 bg-slate-50/50 p-3 text-xs cursor-pointer hover:bg-slate-50 transition">
-                  <input
-                    type="checkbox"
-                    checked={isRanked}
-                    onChange={(event) => setValue('isRanked', event.target.checked)}
-                    className="mt-0.5 h-4 w-4 rounded text-blue-600 focus:ring-blue-500"
-                  />
-                  <div>
-                    <span className="font-bold text-slate-900 flex items-center gap-1">
-                      <Sparkles className="h-3.5 w-3.5 text-amber-500" />
-                      Tính điểm ELO xếp hạng
-                    </span>
-                    <span className="text-[11px] text-slate-500 block mt-0.5">
-                      Bật nếu giải có tính điểm trình độ xếp hạng nội bộ.
-                    </span>
-                  </div>
-                </label>
               </section>
 
               {/* Card Phải 4: Action Buttons (Sticky Submit) */}

@@ -613,7 +613,7 @@ export default function MatchesListPage() {
     if (!group) {
       group = {
         tournamentId: tId,
-        tournamentName: match.tournament?.name || 'Giải đấu',
+        tournamentName: match.tournament?.name || translate('tournamentFallback'),
         tournamentCategory: match.tournament?.category?.name || match.tournament?.categoryName || 'Chưa cập nhật',
         tournamentLogoUrl: match.tournament?.logoUrl || match.tournament?.community?.logoUrl || null,
         tournamentVenueName: match.tournament?.venueName || null,
@@ -745,7 +745,7 @@ export default function MatchesListPage() {
             }`}
           >
             <SlidersHorizontal className="w-4 h-4" />
-            Lọc thêm
+            {translate("moreFilters")}
             {activeFilterCount > 0 && (
               <span className="ml-1 px-1.5 py-0.5 bg-blue-200 text-blue-800 text-[9px] rounded-full font-bold">{activeFilterCount}</span>
             )}
@@ -756,9 +756,9 @@ export default function MatchesListPage() {
         <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-100 text-xs font-semibold">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0">Lọc nhanh:</span>
           {[
-            { label: 'Vừa kết thúc', value: 'COMPLETED', activeClass: 'bg-[#F3F4F1] text-[#4A4E4D] border-slate-400 font-bold shadow-xs', inactiveClass: 'bg-[#F3F4F1]/80 text-[#4A4E4D] border-transparent hover:border-slate-300' },
-            { label: 'Đang diễn ra', value: 'ONGOING', activeClass: 'bg-[#EBF5FF] text-[#1E56A0] border-blue-300 font-bold shadow-xs', inactiveClass: 'bg-[#EBF5FF]/80 text-[#1E56A0] border-transparent hover:border-blue-200' },
-            { label: 'Sắp diễn ra', value: 'SCHEDULED', activeClass: 'bg-[#FFF5E6] text-[#995C00] border-amber-300 font-bold shadow-xs', inactiveClass: 'bg-[#FFF5E6]/80 text-[#995C00] border-transparent hover:border-amber-200' },
+            { label: translate('quickFinished'), value: 'COMPLETED', activeClass: 'bg-[#F3F4F1] text-[#4A4E4D] border-slate-400 font-bold shadow-xs', inactiveClass: 'bg-[#F3F4F1]/80 text-[#4A4E4D] border-transparent hover:border-slate-300' },
+            { label: translate('quickOngoing'), value: 'ONGOING', activeClass: 'bg-[#EBF5FF] text-[#1E56A0] border-blue-300 font-bold shadow-xs', inactiveClass: 'bg-[#EBF5FF]/80 text-[#1E56A0] border-transparent hover:border-blue-200' },
+            { label: translate('quickUpcoming'), value: 'SCHEDULED', activeClass: 'bg-[#FFF5E6] text-[#995C00] border-amber-300 font-bold shadow-xs', inactiveClass: 'bg-[#FFF5E6]/80 text-[#995C00] border-transparent hover:border-amber-200' },
           ].map((chip) => {
             const isActive = selectedStatus === chip.value;
             return (
@@ -1092,7 +1092,7 @@ export default function MatchesListPage() {
                   <div>
                     <div className="flex flex-wrap items-center gap-2 mb-1">
                       <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                        GIẢI ĐẤU HẠNG • {group.tournamentCategory}
+                        {translate("rankedTournament")} • {group.tournamentCategory}
                         {(() => {
                           const firstMatch = group.matches[0];
                           const tConfig = firstMatch?.tournament as Record<string, unknown> | undefined;
@@ -1126,12 +1126,12 @@ export default function MatchesListPage() {
                     const matchTypeLabel = isGroupStage
                       ? 'Vòng bảng'
                       : isDoubleElim
-                      ? 'Nhánh thắng/thua'
+                      ? translate('bracketDoubleElimination')
                       : isSingleElim
-                      ? 'Loại trực tiếp'
+                      ? translate('bracketSingleElimination')
                       : isRoundRobin
-                      ? 'Vòng tròn'
-                      : 'Giải đấu';
+                      ? translate('bracketRoundRobin')
+                      : translate('tournamentFallback');
 
                     const p1Won = isFinished && match.winnerId === match.participant1Id;
                     const p2Won = isFinished && match.winnerId === match.participant2Id;
@@ -1168,18 +1168,18 @@ export default function MatchesListPage() {
                                 <>
                                   <span className="inline-flex items-center gap-1 text-rose-600 font-bold animate-pulse">
                                     <span className="w-1.5 h-1.5 rounded-full bg-rose-600" />
-                                    Đang diễn ra
+                                    {translate("statusLive")}
                                   </span>
                                   <span>• {friendlyRoundName}</span>
                                 </>
                               ) : isFinished ? (
                                 <>
-                                  <span className="text-slate-400">Đã kết thúc</span>
+                                  <span className="text-slate-400">{translate("statusFinished")}</span>
                                   <span>• {friendlyRoundName}</span>
                                 </>
                               ) : (
                                 <>
-                                  <span className="text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded font-bold border border-blue-100">Sắp đấu</span>
+                                  <span className="text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded font-bold border border-blue-100">{translate("statusScheduled")}</span>
                                   {match.scheduledAt ? (
                                     <span>• {new Date(match.scheduledAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} {new Date(match.scheduledAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })} • {friendlyRoundName}</span>
                                   ) : (
@@ -1414,10 +1414,10 @@ export default function MatchesListPage() {
                               const p1Name = getTeamShortName(match.participant1?.teamName);
                               const p2Name = getTeamShortName(match.participant2?.teamName);
                               setActiveShareUrl(`${window.location.origin}/live/${match.id}`);
-                              setActiveShareTitle(`Trận đấu: ${p1Name} vs ${p2Name}`);
+                              setActiveShareTitle(translate("matchShareTitle", { p1: p1Name, p2: p2Name }));
                               setIsShareModalOpen(true);
                             }}
-                            title="Chia sẻ trận đấu"
+                            title={translate("shareMatch")}
                             className="flex items-center justify-center gap-1.5 py-1.5 px-3 hover:bg-blue-50/70 hover:text-blue-600 text-slate-600 transition-colors active:scale-[0.98] cursor-pointer group/share"
                           >
                             <Share2 className="w-3.5 h-3.5 text-blue-500 group-hover/share:scale-110 transition-transform" />

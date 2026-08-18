@@ -22,6 +22,30 @@ const getSocketUrl = () => {
 const SOCKET_URL = getSocketUrl();
 const isSocketDebugEnabled = process.env.NEXT_PUBLIC_SOCKET_DEBUG === 'true';
 
+const getSocketAccessToken = (): string | null => {
+  if (typeof document === 'undefined') {
+    return null;
+  }
+
+  const bearerCookie = document.cookie
+    .split('; ')
+    .find((entry) => entry.startsWith('accessToken='));
+
+  if (bearerCookie) {
+    const tokenValue = bearerCookie.slice('accessToken='.length);
+    if (tokenValue) return decodeURIComponent(tokenValue);
+  }
+
+  try {
+    const localToken = localStorage.getItem('token') || localStorage.getItem('accessToken');
+    if (localToken) return localToken;
+  } catch {
+    // Ignore storage error in SSR / restricted iframe
+  }
+
+  return null;
+};
+
 class SocketClient {
   private static instance: SocketClient;
   private chatSocket: Socket | null = null;
@@ -50,13 +74,13 @@ class SocketClient {
     if (!this.chatSocket) {
       this.chatSocket = io(`${SOCKET_URL}/chat`, {
         autoConnect: false,
-        auth: this.getNotificationAuthPayload(),
+        auth: (cb) => {
+          cb(this.getNotificationAuthPayload());
+        },
         withCredentials: true,
-        // Polling first works behind the current reverse proxy; Socket.IO can
-        // upgrade later when websocket support is available.
-        transports: ['polling', 'websocket'],
-        reconnectionAttempts: 3,
-        reconnectionDelay: 3000,
+        transports: ['websocket', 'polling'],
+        reconnectionAttempts: 5,
+        reconnectionDelay: 2000,
       });
 
       this.chatSocket.on('connect_error', (err: Error) => {
@@ -71,9 +95,9 @@ class SocketClient {
       this.matchSocket = io(`${SOCKET_URL}/live`, {
         autoConnect: false,
         withCredentials: true,
-        transports: ['polling', 'websocket'],
-        reconnectionAttempts: 3,
-        reconnectionDelay: 3000,
+        transports: ['websocket', 'polling'],
+        reconnectionAttempts: 5,
+        reconnectionDelay: 2000,
       });
 
       this.matchSocket.on('connect_error', (err: Error) => {
@@ -87,11 +111,13 @@ class SocketClient {
     if (!this.notificationSocket) {
       this.notificationSocket = io(`${SOCKET_URL}/notifications`, {
         autoConnect: false,
-        auth: this.getNotificationAuthPayload(),
+        auth: (cb) => {
+          cb(this.getNotificationAuthPayload());
+        },
         withCredentials: true,
-        transports: ['polling', 'websocket'],
-        reconnectionAttempts: 2,
-        timeout: 5000,
+        transports: ['websocket', 'polling'],
+        reconnectionAttempts: 5,
+        timeout: 6000,
       });
 
       this.notificationSocket.on('connect_error', (err: Error) => {
@@ -117,12 +143,9 @@ class SocketClient {
     const socket = this.getChatSocket();
     socket.auth = this.getNotificationAuthPayload();
 
-    // A socket opened before login keeps the old handshake cookies until it
-    // reconnects. Reconnect once when entering an authenticated chat surface.
-    if (socket.connected) {
-      socket.disconnect();
+    if (!socket.connected) {
+      socket.connect();
     }
-    socket.connect();
 
     return socket;
   }
@@ -140,17 +163,19 @@ class SocketClient {
   }
 
   private getNotificationAuthPayload(): SocketAuthPayload {
-    if (!this.notificationAuthToken) {
+    const token = this.notificationAuthToken || getSocketAccessToken();
+    if (!token) {
       return {};
     }
 
     return {
-      token: this.notificationAuthToken.startsWith('Bearer ')
-        ? this.notificationAuthToken
-        : `Bearer ${this.notificationAuthToken}`,
+      token: token.startsWith('Bearer ')
+        ? token
+        : `Bearer ${token}`,
     };
   }
 }
 
 export const socketClient = SocketClient.getInstance();
+
 

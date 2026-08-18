@@ -134,7 +134,6 @@ type QuickSport = QuickValues['sport'];
 type QuickFormatConfig = {
   key: string;
   label: string;
-  bracketType: QuickValues['bracketType'];
   eloEnabled: boolean;
   minElo: number | null;
   maxElo: number | null;
@@ -150,6 +149,9 @@ const QUICK_FORMAT_OPTIONS = [
   { key: 'FOOTBALL_FEMALE', label: 'Đội nữ' },
   { key: 'FOOTBALL_MIXED', label: 'Không giới hạn' },
 ] as const;
+
+const DEFAULT_RACKET_FORMATS = QUICK_FORMAT_OPTIONS.slice(0, 5).map((item) => item.key);
+const DEFAULT_FOOTBALL_FORMATS = QUICK_FORMAT_OPTIONS.slice(5).map((item) => item.key);
 
 const sportFromCategory = (category: Category): QuickSport | null => {
   const value = `${category.slug ?? ''} ${category.name ?? ''}`.toLowerCase();
@@ -314,7 +316,7 @@ export default function QuickTournamentCreate() {
       registrationMode: communityId ? 'OPEN' : 'APPROVAL',
       bracketType: 'single_elimination',
       maxTeams: 16, ...scheduleDefaults,
-      selectedFormats: ['MALE_DOUBLES'],
+      selectedFormats: DEFAULT_RACKET_FORMATS,
       venueName: '', locationAddress: '', province: '', ward: '', district: '',
       isRanked: false, description: '', genderRestriction: 'MALE', teamSize: '7', maxReserve: 5,
       footballHalvesCount: 2, footballHalfDuration: 45, footballAllowDraw: true,
@@ -337,11 +339,12 @@ export default function QuickTournamentCreate() {
   const [isDescriptionEditorOpen, setIsDescriptionEditorOpen] = useState(false);
   const [isFormatModalOpen, setIsFormatModalOpen] = useState(false);
   const [formatDraft, setFormatDraft] = useState<QuickFormatConfig>({
-    key: 'MALE_DOUBLES', label: 'Đôi nam', bracketType: 'single_elimination', eloEnabled: false, minElo: null, maxElo: null,
+    key: 'MALE_DOUBLES', label: 'Đôi nam', eloEnabled: false, minElo: null, maxElo: null,
   });
   const [formatConfigs, setFormatConfigs] = useState<QuickFormatConfig[]>([
-    { key: 'MALE_DOUBLES', label: 'Đôi nam', bracketType: 'single_elimination', eloEnabled: false, minElo: null, maxElo: null },
+    ...QUICK_FORMAT_OPTIONS.slice(0, 5).map((item) => ({ key: item.key, label: item.label, eloEnabled: false, minElo: null, maxElo: null })),
   ]);
+  const formatDefaultsAppliedRef = useRef(false);
   const draftHydratedRef = useRef(false);
   const autoScheduleRef = useRef({ registrationEnd: '', endDate: '' });
 
@@ -469,7 +472,6 @@ export default function QuickTournamentCreate() {
     setFormatDraft(existing ?? {
       key: option.key,
       label: option.label,
-      bracketType,
       eloEnabled: false,
       minElo: null,
       maxElo: null,
@@ -482,9 +484,11 @@ export default function QuickTournamentCreate() {
       toast.error('ELO tối thiểu phải nhỏ hơn hoặc bằng ELO tối đa.');
       return;
     }
-    setFormatConfigs((current) => [...current.filter((item) => item.key !== formatDraft.key), formatDraft]);
-    if (!selectedFormats.includes(formatDraft.key)) {
-      setValue('selectedFormats', [...selectedFormats, formatDraft.key], { shouldValidate: true });
+    const defaultOption = QUICK_FORMAT_OPTIONS.find((item) => item.key === formatDraft.key);
+    const normalizedDraft = { ...formatDraft, label: formatDraft.label.trim() || defaultOption?.label || formatDraft.key };
+    setFormatConfigs((current) => [...current.filter((item) => item.key !== normalizedDraft.key), normalizedDraft]);
+    if (!selectedFormats.includes(normalizedDraft.key)) {
+      setValue('selectedFormats', [...selectedFormats, normalizedDraft.key], { shouldValidate: true });
     }
     syncLegacyFormat(formatDraft.key);
     setIsFormatModalOpen(false);
@@ -502,18 +506,24 @@ export default function QuickTournamentCreate() {
   };
 
   useEffect(() => {
+    if (!formatDefaultsAppliedRef.current) {
+      formatDefaultsAppliedRef.current = true;
+      return;
+    }
     if (sport === 'football') {
-      const hasFootball = selectedFormats.some((f) => f.startsWith('FOOTBALL_'));
-      if (!hasFootball) {
-        setValue('selectedFormats', ['FOOTBALL_MALE'], { shouldValidate: true });
-        syncLegacyFormat('FOOTBALL_MALE');
-      }
+      setValue('selectedFormats', DEFAULT_FOOTBALL_FORMATS, { shouldValidate: true });
+      setFormatConfigs(DEFAULT_FOOTBALL_FORMATS.map((key) => {
+        const option = QUICK_FORMAT_OPTIONS.find((item) => item.key === key)!;
+        return { key, label: option.label, eloEnabled: false, minElo: null, maxElo: null };
+      }));
+      syncLegacyFormat(DEFAULT_FOOTBALL_FORMATS[0]);
     } else {
-      const hasRacket = selectedFormats.some((f) => f.includes('SINGLES') || f.includes('DOUBLES'));
-      if (!hasRacket) {
-        setValue('selectedFormats', ['MALE_DOUBLES'], { shouldValidate: true });
-        syncLegacyFormat('MALE_DOUBLES');
-      }
+      setValue('selectedFormats', DEFAULT_RACKET_FORMATS, { shouldValidate: true });
+      setFormatConfigs(DEFAULT_RACKET_FORMATS.map((key) => {
+        const option = QUICK_FORMAT_OPTIONS.find((item) => item.key === key)!;
+        return { key, label: option.label, eloEnabled: false, minElo: null, maxElo: null };
+      }));
+      syncLegacyFormat(DEFAULT_RACKET_FORMATS[0]);
     }
   }, [sport]);
 
@@ -599,7 +609,7 @@ export default function QuickTournamentCreate() {
           const config = formatConfigs.find((item) => item.key === formatKey);
           const division = toDivisionInput(
             formatKey,
-            config?.bracketType ?? values.bracketType,
+            values.bracketType,
             values.maxTeams,
             values.startDate ? new Date(values.startDate).toISOString() : undefined,
             values.registrationEnd ? new Date(values.registrationEnd).toISOString() : undefined,
@@ -936,7 +946,7 @@ export default function QuickTournamentCreate() {
             <div className="space-y-5 lg:col-span-5 xl:col-span-5 lg:sticky lg:top-6 self-start">
               
               {/* Card Phải 1: Nội dung thi đấu */}
-              <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
+              <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                   <div className="flex items-center gap-2">
                     <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
@@ -956,12 +966,11 @@ export default function QuickTournamentCreate() {
                     const fallback = QUICK_FORMAT_OPTIONS.find((item) => item.key === formatKey);
                     const config = formatConfigs.find((item) => item.key === formatKey);
                     return (
-                      <div key={formatKey} className="flex items-center justify-between rounded-xl border border-blue-200 bg-blue-50/60 px-3 py-2.5">
+                      <div key={formatKey} className="flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50/60 px-3 py-2.5">
                         <button type="button" onClick={() => openFormatModal(formatKey)} className="min-w-0 text-left">
                           <span className="block truncate text-xs font-bold text-blue-800">{config?.label ?? fallback?.label ?? formatKey}</span>
                           <span className="mt-0.5 block text-[10px] text-blue-700/70">
-                            {config?.bracketType === 'round_robin' ? 'Vòng tròn' : config?.bracketType === 'double_elimination' ? 'Nhánh thắng / thua' : config?.bracketType === 'group_stage_knockout' ? 'Vòng bảng + Knockout' : 'Loại trực tiếp'}
-                            {config?.eloEnabled ? ` · ELO ${config.minElo ?? 0}–${config.maxElo ?? '∞'}` : ' · Không giới hạn ELO'}
+                            {config?.eloEnabled ? `ELO ${config.minElo ?? 0}–${config.maxElo ?? '∞'}` : 'Không giới hạn ELO'}
                           </span>
                         </button>
                         <div className="flex items-center gap-1">
@@ -971,7 +980,7 @@ export default function QuickTournamentCreate() {
                       </div>
                     );
                   })}
-                  <button type="button" onClick={() => openFormatModal()} className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-blue-300 bg-white px-3 py-2.5 text-xs font-bold text-blue-700 transition hover:border-blue-500 hover:bg-blue-50">
+                  <button type="button" onClick={() => openFormatModal()} className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-blue-300 bg-white px-3 py-2.5 text-xs font-bold text-blue-700 transition hover:border-blue-500 hover:bg-blue-50">
                     <Plus className="h-3.5 w-3.5" /> Thêm hình thức
                   </button>
                 </div>
@@ -1194,9 +1203,9 @@ export default function QuickTournamentCreate() {
       </div>
       {isFormatModalOpen && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Thêm hình thức thi đấu">
-          <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white shadow-2xl">
+          <div className="w-full max-w-lg rounded-xl border border-slate-200 bg-white shadow-2xl">
             <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-              <div><h2 className="text-base font-bold text-slate-900">Thêm hình thức thi đấu</h2><p className="mt-0.5 text-xs text-slate-500">Mỗi hình thức có thể dùng thể thức và giới hạn ELO riêng.</p></div>
+              <div><h2 className="text-base font-bold text-slate-900">Thêm hình thức thi đấu</h2><p className="mt-0.5 text-xs text-slate-500">Thể thức bảng đấu dùng chung cho toàn giải; nội dung có thể đặt tên và giới hạn ELO riêng.</p></div>
               <button type="button" onClick={() => setIsFormatModalOpen(false)} className="rounded-full p-2 text-slate-400 hover:bg-slate-100" aria-label="Đóng"><X className="h-4 w-4" /></button>
             </div>
             <div className="space-y-4 p-5">
@@ -1205,10 +1214,9 @@ export default function QuickTournamentCreate() {
                   {QUICK_FORMAT_OPTIONS.filter((option) => (sport === 'football' ? option.key.startsWith('FOOTBALL_') : !option.key.startsWith('FOOTBALL_')) && (option.key === formatDraft.key || !selectedFormats.includes(option.key))).map((option) => <option key={option.key} value={option.key}>{option.label}</option>)}
                 </select>
               </label>
-              <label className="block text-xs font-semibold text-slate-700">Thể thức
-                <select value={formatDraft.bracketType} onChange={(event) => setFormatDraft((current) => ({ ...current, bracketType: event.target.value as QuickValues['bracketType'] }))} className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm">
-                  {BRACKET_OPTIONS.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}
-                </select>
+              <label className="block text-xs font-semibold text-slate-700">Tên nội dung riêng
+                <input value={formatDraft.label} onChange={(event) => setFormatDraft((current) => ({ ...current, label: event.target.value }))} placeholder="Để trống dùng tên mặc định" className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm" />
+                <span className="mt-1 block text-[10px] font-normal text-slate-500">Tên này sẽ hiển thị trong danh sách nội dung và trang quản lý.</span>
               </label>
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                 <label className="flex items-center gap-2 text-xs font-bold text-slate-800"><input type="checkbox" checked={formatDraft.eloEnabled} onChange={(event) => setFormatDraft((current) => ({ ...current, eloEnabled: event.target.checked }))} className="h-4 w-4 rounded text-blue-600" /> Giới hạn ELO cho nội dung này</label>

@@ -189,19 +189,13 @@ const toDivisionInput = (
 };
 
 const quickDefaults = () => {
-  const regStart = new Date();
+  const regStart = new Date(Date.now() + 3 * 60 * 60 * 1000);
   regStart.setSeconds(0, 0);
-
-  // Đóng đăng ký tự động = Mở đăng ký + 2 tiếng
-  const regEnd = new Date(regStart.getTime() + 2 * 60 * 60 * 1000);
-
-  // Bắt đầu giải tự động = Đóng đăng ký + 2 tiếng
-  const start = new Date(regEnd.getTime() + 2 * 60 * 60 * 1000);
 
   return {
     registrationStart: formatDateTimeInput(regStart),
-    registrationEnd: formatDateTimeInput(regEnd),
-    startDate: formatDateTimeInput(start),
+    registrationEnd: '',
+    startDate: '',
     endDate: '',
   };
 };
@@ -327,24 +321,10 @@ export default function QuickTournamentCreate() {
 
   const handleRegistrationStartChange = (val: string) => {
     setValue('registrationStart', val, { shouldValidate: true });
-    if (!val) return;
-    const base = new Date(val);
-    if (isNaN(base.getTime())) return;
-    const newRegEnd = new Date(base.getTime() + 2 * 60 * 60 * 1000);
-    const newStart = new Date(newRegEnd.getTime() + 2 * 60 * 60 * 1000);
-
-    setValue('registrationEnd', formatDateTimeInput(newRegEnd), { shouldValidate: true });
-    setValue('startDate', formatDateTimeInput(newStart), { shouldValidate: true });
   };
 
   const handleRegistrationEndChange = (val: string) => {
     setValue('registrationEnd', val, { shouldValidate: true });
-    if (!val) return;
-    const base = new Date(val);
-    if (isNaN(base.getTime())) return;
-    const newStart = new Date(base.getTime() + 2 * 60 * 60 * 1000);
-
-    setValue('startDate', formatDateTimeInput(newStart), { shouldValidate: true });
   };
 
   useEffect(() => {

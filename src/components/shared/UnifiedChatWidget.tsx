@@ -1108,6 +1108,25 @@ export default function UnifiedChatWidget() {
     }
   };
 
+  const handleClubAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setUploadingClubAvatar(true);
+      const res = await uploadApi.uploadImage(file);
+      const url = (res.data as unknown as { url?: string })?.url || (res as unknown as { url?: string }).url || '';
+      if (url) {
+        setSettingsClubAvatar(url);
+        toast.success('Đã tải ảnh lên thành công!');
+      }
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Không thể tải ảnh lên.'));
+    } finally {
+      setUploadingClubAvatar(false);
+      if (e.target) e.target.value = '';
+    }
+  };
+
   const sendRoomMessage = async (overrideText?: string) => {
     const text = (overrideText ?? draft).trim();
     if ((!text && selectedFiles.length === 0) || selection.kind !== 'ROOM' || sending) return;
@@ -1505,11 +1524,25 @@ export default function UnifiedChatWidget() {
           >
             {/* Header */}
             <header className="flex items-center justify-between border-b border-slate-200 px-4 sm:px-5 py-3.5 shadow-xs">
-              <div className="flex items-center gap-2.5 min-w-0">
+              <div
+                onClick={() => {
+                  if (selection.kind === 'ROOM') {
+                    setSettingsClubAvatar(selection.room.clubAvatar || selection.room.communityLogo || '');
+                    setShowClubSettings(true);
+                  }
+                }}
+                className={`flex items-center gap-2.5 min-w-0 ${
+                  selection.kind === 'ROOM' ? 'cursor-pointer hover:opacity-85' : ''
+                }`}
+                title={selection.kind === 'ROOM' ? 'Nhấn để đổi logo / cài đặt phòng chat' : undefined}
+              >
                 <button
                   type="button"
                   className="md:hidden p-1 text-slate-500 hover:text-slate-700 rounded-md hover:bg-slate-100 transition"
-                  onClick={() => setIsMobileRoomOpen(false)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsMobileRoomOpen(false);
+                  }}
                   title="Quay lại danh sách tin nhắn"
                 >
                   <ChevronLeft className="h-5 w-5" />
@@ -1691,7 +1724,7 @@ export default function UnifiedChatWidget() {
                           className="flex w-full items-center gap-2 rounded-lg px-3 py-2 font-medium text-slate-700 hover:bg-rose-50 hover:text-rose-600 transition"
                         >
                           <Trash2 className="w-4 h-4 text-slate-400 hover:text-rose-600" />
-                          <span>Xóa đoạn chat</span>
+                          <span>{translate('deleteChat')}</span>
                         </button>
 
                         {/* Block/Unblock for direct chat */}
@@ -2211,78 +2244,104 @@ export default function UnifiedChatWidget() {
                                     /* Clean Borderless Image-Only View (Messenger Standard) */
                                     <div className="relative group/img-only">
                                       {message.replyTo && (
-                                        <div
-                                          className={`mb-1.5 rounded-lg px-2.5 py-1 text-xs border-l-2 ${
-                                            message.mine
-                                              ? 'bg-blue-700/60 border-white/70 text-blue-100'
-                                              : 'bg-slate-100 border-blue-500 text-slate-600'
-                                          }`}
-                                        >
-                                          <p className="font-bold text-[11px] truncate">
-                                            {message.replyTo.senderName}
-                                          </p>
-                                          <p className="line-clamp-1 italic text-[11px] opacity-90">
-                                            {message.replyTo.text}
-                                          </p>
-                                        </div>
-                                      )}
+                                         <div
+                                           onClick={(e) => {
+                                             e.stopPropagation();
+                                             const targetId = message.replyToId || (message.replyTo as unknown as { id?: string })?.id;
+                                             if (targetId) {
+                                               const el = document.getElementById(`msg-${targetId}`);
+                                               if (el) {
+                                                 el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                                 el.classList.add('ring-2', 'ring-blue-500', 'bg-blue-50/80', 'transition-all');
+                                                 window.setTimeout(() => el.classList.remove('ring-2', 'ring-blue-500', 'bg-blue-50/80'), 2200);
+                                               }
+                                             }
+                                           }}
+                                           className={`mb-1.5 rounded-lg px-2.5 py-1 text-xs border-l-2 cursor-pointer hover:opacity-90 active:scale-[0.99] transition ${
+                                             message.mine
+                                               ? 'bg-blue-700/60 border-white/70 text-blue-100'
+                                               : 'bg-slate-100 border-blue-500 text-slate-600'
+                                           }`}
+                                           title="Nhấn để cuộn đến tin nhắn này"
+                                         >
+                                           <p className="font-bold text-[11px] truncate">
+                                             {message.replyTo.senderName}
+                                           </p>
+                                           <p className="line-clamp-1 italic text-[11px] opacity-90">
+                                             {message.replyTo.text}
+                                           </p>
+                                         </div>
+                                       )}
 
-                                      <div
-                                        className={`grid gap-1.5 rounded-2xl overflow-hidden ${
-                                          message.attachmentsUrls.length === 1
-                                            ? 'grid-cols-1 max-w-[280px] sm:max-w-[320px]'
-                                            : message.attachmentsUrls.length === 2
-                                              ? 'grid-cols-2 max-w-[280px]'
-                                              : 'grid-cols-3 max-w-[320px]'
-                                        }`}
-                                      >
-                                        {message.attachmentsUrls.map((url, imgIdx) => (
-                                          <div
-                                            key={`${url}-${imgIdx}`}
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              setLightboxUrl(url);
-                                            }}
-                                            className="group/img relative cursor-pointer overflow-hidden rounded-2xl bg-slate-100 border border-slate-200/50 shadow-sm"
-                                          >
-                                            <img
-                                              src={url}
-                                              alt="Hình đính kèm"
-                                              className="h-auto max-h-[320px] w-full object-cover transition duration-200 group-hover/img:scale-103"
-                                            />
-                                            <div className="absolute inset-0 bg-black/25 opacity-0 group-hover/img:opacity-100 flex items-center justify-center transition">
-                                              <ZoomIn className="h-5 w-5 text-white" />
-                                            </div>
-                                          </div>
-                                        ))}
-                                      </div>
+                                       <div
+                                         className={`grid gap-1.5 rounded-2xl overflow-hidden ${
+                                           message.attachmentsUrls.length === 1
+                                             ? 'grid-cols-1 max-w-[280px] sm:max-w-[320px]'
+                                             : message.attachmentsUrls.length === 2
+                                               ? 'grid-cols-2 max-w-[280px]'
+                                               : 'grid-cols-3 max-w-[320px]'
+                                         }`}
+                                       >
+                                         {message.attachmentsUrls.map((url, imgIdx) => (
+                                           <div
+                                             key={`${url}-${imgIdx}`}
+                                             onClick={(e) => {
+                                               e.stopPropagation();
+                                               setLightboxUrl(url);
+                                             }}
+                                             className="group/img relative cursor-pointer overflow-hidden rounded-2xl bg-slate-100 border border-slate-200/50 shadow-sm"
+                                           >
+                                             <img
+                                               src={url}
+                                               alt="Hình đính kèm"
+                                               className="h-auto max-h-[320px] w-full object-cover transition duration-200 group-hover/img:scale-103"
+                                             />
+                                             <div className="absolute inset-0 bg-black/25 opacity-0 group-hover/img:opacity-100 flex items-center justify-center transition">
+                                               <ZoomIn className="h-5 w-5 text-white" />
+                                             </div>
+                                           </div>
+                                         ))}
+                                       </div>
 
-                                      <span className="absolute bottom-2 right-2 rounded-full bg-black/55 backdrop-blur-xs px-2 py-0.5 text-[9px] text-white font-medium shadow">
-                                        {new Date(message.createdAt).toLocaleTimeString('vi-VN', {
-                                          hour: '2-digit',
-                                          minute: '2-digit',
-                                        })}
-                                      </span>
-                                    </div>
-                                  ) : (
-                                    <>
-                                      {/* Quoted Reply Preview inside bubble */}
-                                      {message.replyTo && (
-                                        <div
-                                          className={`mb-1.5 rounded-lg px-2.5 py-1 text-xs border-l-2 ${
-                                            message.mine
-                                              ? 'bg-blue-700/60 border-white/70 text-blue-100'
-                                              : 'bg-slate-100 border-blue-500 text-slate-600'
-                                          }`}
-                                        >
-                                          <p className="font-bold text-[11px] truncate">
-                                            {message.replyTo.senderName}
-                                          </p>
-                                          <p className="line-clamp-1 italic text-[11px] opacity-90">
-                                            {message.replyTo.text}
-                                          </p>
-                                        </div>
-                                      )}
+                                       <span className="absolute bottom-2 right-2 rounded-full bg-black/55 backdrop-blur-xs px-2 py-0.5 text-[9px] text-white font-medium shadow">
+                                         {new Date(message.createdAt).toLocaleTimeString('vi-VN', {
+                                           hour: '2-digit',
+                                           minute: '2-digit',
+                                         })}
+                                       </span>
+                                     </div>
+                                   ) : (
+                                     <>
+                                       {/* Quoted Reply Preview inside bubble */}
+                                       {message.replyTo && (
+                                         <div
+                                           onClick={(e) => {
+                                             e.stopPropagation();
+                                             const targetId = message.replyToId || (message.replyTo as unknown as { id?: string })?.id;
+                                             if (targetId) {
+                                               const el = document.getElementById(`msg-${targetId}`);
+                                               if (el) {
+                                                 el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                                 el.classList.add('ring-2', 'ring-blue-500', 'bg-blue-50/80', 'transition-all');
+                                                 window.setTimeout(() => el.classList.remove('ring-2', 'ring-blue-500', 'bg-blue-50/80'), 2200);
+                                               }
+                                             }
+                                           }}
+                                           className={`mb-1.5 rounded-lg px-2.5 py-1 text-xs border-l-2 cursor-pointer hover:opacity-90 active:scale-[0.99] transition ${
+                                             message.mine
+                                               ? 'bg-blue-700/60 border-white/70 text-blue-100'
+                                               : 'bg-slate-100 border-blue-500 text-slate-600'
+                                           }`}
+                                           title="Nhấn để cuộn đến tin nhắn này"
+                                         >
+                                           <p className="font-bold text-[11px] truncate">
+                                             {message.replyTo.senderName}
+                                           </p>
+                                           <p className="line-clamp-1 italic text-[11px] opacity-90">
+                                             {message.replyTo.text}
+                                           </p>
+                                         </div>
+                                       )}
 
                                       {/* Attached Images Grid */}
                                       {message.attachmentsUrls && message.attachmentsUrls.length > 0 && (
@@ -2938,7 +2997,7 @@ export default function UnifiedChatWidget() {
                                 ),
                               );
                               setShowClubSettings(false);
-                              toast.success('Đã lưu cài đặt phòng chat!');
+                              toast.success(translate('chatSettingsSaved'));
                             } catch (err) {
                               toast.error(getErrorMessage(err, 'Không thể cập nhật cài đặt.'));
                             }
@@ -3119,9 +3178,9 @@ export default function UnifiedChatWidget() {
                       <Trash2 className="h-5 w-5" />
                     </div>
                     <div>
-                      <h3 className="text-sm font-bold text-slate-900">Xóa đoạn chat?</h3>
+                      <h3 className="text-sm font-bold text-slate-900">{translate('deleteChatConfirmTitle')}</h3>
                       <p className="text-xs font-medium text-slate-600">
-                        Lịch sử tin nhắn cũ sẽ được xóa khỏi tài khoản của bạn.
+                        {translate('deleteChatHistoryDescription')}
                       </p>
                     </div>
                   </div>
@@ -3146,10 +3205,10 @@ export default function UnifiedChatWidget() {
                       {clearingRoom ? (
                         <>
                           <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                          <span>Đang xóa...</span>
+                          <span>{translate('deleting')}</span>
                         </>
                       ) : (
-                        <span>Xóa đoạn chat</span>
+                        <span>{translate('deleteChat')}</span>
                       )}
                     </button>
                   </div>
@@ -3164,7 +3223,7 @@ export default function UnifiedChatWidget() {
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        aria-label={open ? "Đóng tin nhắn" : "Mở tin nhắn"}
+        aria-label={open ? translate('closeMessages') : translate('openMessages')}
         className="relative flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-xl transition-all hover:scale-105 active:scale-95 cursor-pointer"
       >
         {open ? (

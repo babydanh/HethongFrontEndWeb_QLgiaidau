@@ -100,7 +100,7 @@ export default function SeriesDetailPage() {
 
   const formattedPrize = series.totalPrize
     ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(series.totalPrize)
-    : 'Thỏa thuận';
+    : translate('formatAgreement');
 
   return (
     <div className="bg-slate-50 min-h-screen text-slate-900 font-sans selection:bg-blue-100 selection:text-blue-900">
@@ -111,7 +111,7 @@ export default function SeriesDetailPage() {
           href="/series"
           className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900 transition-colors"
         >
-          <ArrowLeft className="w-3.5 h-3.5" /> {translate('backToList')} chuỗi giải
+          <ArrowLeft className="w-3.5 h-3.5" /> {translate('backToList')} {translate('seriesLabel')}
         </Link>
       </div>
 
@@ -149,11 +149,11 @@ export default function SeriesDetailPage() {
                 <Calendar className="w-4 h-4 text-slate-400" />
                 {series.startDate && series.endDate
                   ? `${new Date(series.startDate).toLocaleDateString('vi-VN')} — ${new Date(series.endDate).toLocaleDateString('vi-VN')}`
-                  : 'Chưa xác định thời gian'}
+                  : translate('timeNotSet')}
               </span>
               <span className="text-slate-600 font-normal">|</span>
               <span className="text-amber-400 font-bold">
-                Giải thưởng: {formattedPrize}
+                {translate('prizeLabel')} {formattedPrize}
               </span>
             </div>
 
@@ -162,7 +162,7 @@ export default function SeriesDetailPage() {
               <div className="flex flex-col gap-1.5 mt-4 max-w-md bg-white/5 backdrop-blur-md p-3.5 rounded-lg border border-white/5">
                 <div className="flex justify-between items-center text-[10px] font-bold text-slate-300">
                   <span>TIẾN ĐỘ CHUỖI GIẢI</span>
-                  <span>{completedEvents}/{totalEvents.length} GIẢI ĐÃ ĐẤU ({completionPercentage}%)</span>
+                  <span>{translate('eventsCompleted', { completed: completedEvents, total: totalEvents.length })} ({completionPercentage}%)</span>
                 </div>
                 <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
                   <div

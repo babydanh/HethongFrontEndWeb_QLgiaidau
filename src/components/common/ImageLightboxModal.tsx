@@ -8,9 +8,8 @@ import {
   ZoomIn,
   ZoomOut,
   RotateCw,
-  RotateCcw,
-  Maximize2,
   RefreshCw,
+  Maximize2,
 } from "lucide-react";
 
 interface ImageLightboxModalProps {
@@ -83,23 +82,46 @@ export default function ImageLightboxModal({
         positionRef.current = { x: 0, y: 0 };
         return 1;
       }
-      return 2.5;
+      return 2.0;
     });
   }, []);
 
-  // Wheel zoom handler
+  // Wheel handler: Zoom on Ctrl+Wheel or when scale == 1; Scroll Pan when scale > 1
   const handleWheel = useCallback((e: React.WheelEvent) => {
     e.preventDefault();
-    const delta = e.deltaY > 0 ? -0.25 : 0.25;
-    setScale((prev) => {
-      const next = Math.min(Math.max(prev + delta, 0.5), 5);
-      if (next <= 1) {
-        setPosition({ x: 0, y: 0 });
-        positionRef.current = { x: 0, y: 0 };
+    if (e.ctrlKey || e.metaKey) {
+      // Ctrl + Wheel: Zoom in / out
+      const delta = e.deltaY > 0 ? -0.25 : 0.25;
+      setScale((prev) => {
+        const next = Math.min(Math.max(prev + delta, 0.5), 5);
+        if (next <= 1) {
+          setPosition({ x: 0, y: 0 });
+          positionRef.current = { x: 0, y: 0 };
+        }
+        return next;
+      });
+    } else if (scale > 1) {
+      // Khi đang phóng to: Cuộn chuột cuộn ảnh lên/xuống hoặc qua/lại (Shift)
+      if (e.shiftKey) {
+        setPosition((prev) => {
+          const next = { ...prev, x: prev.x - e.deltaY };
+          positionRef.current = next;
+          return next;
+        });
+      } else {
+        setPosition((prev) => {
+          const next = { ...prev, y: prev.y - e.deltaY * 1.2 };
+          positionRef.current = next;
+          return next;
+        });
       }
-      return next;
-    });
-  }, []);
+    } else {
+      // Khi scale == 1: Cuộn chuột lăn lên sẽ tự động phóng to
+      if (e.deltaY < 0) {
+        setScale(1.6);
+      }
+    }
+  }, [scale]);
 
   // Mouse Drag handlers
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -212,7 +234,7 @@ export default function ImageLightboxModal({
     >
       {/* Top Floating Control Bar */}
       <div
-        className="absolute top-4 left-1/2 -translate-x-1/2 z-[10000] flex items-center gap-1.5 rounded-full bg-slate-900/80 px-3.5 py-2 text-white backdrop-blur-md border border-white/10 shadow-2xl"
+        className="absolute top-4 left-1/2 -translate-x-1/2 z-[10000] flex items-center gap-2 rounded-full bg-slate-900/90 px-4 py-2 text-white backdrop-blur-md border border-white/15 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <button
@@ -222,12 +244,17 @@ export default function ImageLightboxModal({
           title="Thu nhỏ (-)"
           className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-white/15 active:scale-95 transition"
         >
-          <ZoomOut className="h-4.5 w-4.5 text-white" />
+          <ZoomOut className="h-5 w-5 text-white" />
         </button>
 
-        <span className="px-2 text-xs font-mono font-bold tracking-wider text-white/90 min-w-[52px] text-center">
+        <button
+          type="button"
+          onClick={() => (scale !== 1 ? resetTransform() : setScale(2))}
+          title="Tỷ lệ phóng to (bấm để chuyển 100% / 200%)"
+          className="px-2.5 py-1 rounded-md hover:bg-white/10 text-xs font-mono font-bold tracking-wider text-white min-w-[56px] text-center transition"
+        >
           {Math.round(scale * 100)}%
-        </span>
+        </button>
 
         <button
           type="button"
@@ -236,7 +263,7 @@ export default function ImageLightboxModal({
           title="Phóng to (+)"
           className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-white/15 active:scale-95 transition"
         >
-          <ZoomIn className="h-4.5 w-4.5 text-white" />
+          <ZoomIn className="h-5 w-5 text-white" />
         </button>
 
         <div className="h-4 w-px bg-white/20 mx-1" />
@@ -255,7 +282,7 @@ export default function ImageLightboxModal({
           type="button"
           onClick={resetTransform}
           aria-label="Mặc định"
-          title="Đặt lại kích thước (0)"
+          title="Đặt lại kích thước gốc (phím 0)"
           className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-white/15 active:scale-95 transition"
         >
           <RefreshCw className="h-4 w-4 text-white" />
@@ -268,7 +295,7 @@ export default function ImageLightboxModal({
         onClick={onClose}
         aria-label="Đóng xem ảnh"
         title="Đóng (Esc)"
-        className="absolute right-5 top-4 z-[10000] flex h-11 w-11 items-center justify-center rounded-full bg-slate-900/80 text-white backdrop-blur-md border border-white/10 hover:bg-white/20 active:scale-95 transition shadow-lg"
+        className="absolute right-5 top-4 z-[10000] flex h-11 w-11 items-center justify-center rounded-full bg-slate-900/90 text-white backdrop-blur-md border border-white/15 hover:bg-white/20 active:scale-95 transition shadow-lg"
       >
         <X className="h-6 w-6" />
       </button>
@@ -283,7 +310,7 @@ export default function ImageLightboxModal({
           }}
           aria-label="Ảnh trước"
           title="Ảnh trước (←)"
-          className="absolute left-4 top-1/2 z-[10000] flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-slate-900/80 text-white backdrop-blur-md border border-white/10 transition hover:bg-white/25 active:scale-95 sm:left-8 shadow-xl"
+          className="absolute left-4 top-1/2 z-[10000] flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-slate-900/90 text-white backdrop-blur-md border border-white/15 transition hover:bg-white/25 active:scale-95 sm:left-8 shadow-xl"
         >
           <ChevronLeft className="h-7 w-7" />
         </button>
@@ -299,7 +326,7 @@ export default function ImageLightboxModal({
           }}
           aria-label="Ảnh kế tiếp"
           title="Ảnh kế tiếp (→)"
-          className="absolute right-4 top-1/2 z-[10000] flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-slate-900/80 text-white backdrop-blur-md border border-white/10 transition hover:bg-white/25 active:scale-95 sm:right-8 shadow-xl"
+          className="absolute right-4 top-1/2 z-[10000] flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-slate-900/90 text-white backdrop-blur-md border border-white/15 transition hover:bg-white/25 active:scale-95 sm:right-8 shadow-xl"
         >
           <ChevronRight className="h-7 w-7" />
         </button>
@@ -325,7 +352,7 @@ export default function ImageLightboxModal({
           onDoubleClick={handleDoubleClick}
           style={{
             transform: `translate(${position.x}px, ${position.y}px) scale(${scale}) rotate(${rotation}deg)`,
-            transition: isDragging ? "none" : "transform 0.15s ease-out",
+            transition: isDragging ? "none" : "transform 0.12s ease-out",
           }}
           className="flex items-center justify-center"
         >
@@ -339,9 +366,11 @@ export default function ImageLightboxModal({
       </div>
 
       {/* Bottom Floating Hint & Counter */}
-      <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-[10000] flex flex-col items-center gap-1 pointer-events-none">
-        <div className="rounded-full bg-black/60 px-4 py-1 text-[11px] font-medium text-white/80 backdrop-blur-md border border-white/5 shadow-lg">
-          Cuộn chuột hoặc click đúp để phóng to • Kéo để di chuyển
+      <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-[10000] flex flex-col items-center gap-1.5 pointer-events-none">
+        <div className="rounded-full bg-slate-900/90 px-4 py-1.5 text-xs font-medium text-white/90 backdrop-blur-md border border-white/15 shadow-xl">
+          {scale > 1
+            ? "Lăn chuột để cuộn lên/xuống • Giữ chuột để kéo di chuyển"
+            : "Lăn chuột hoặc bấm nút + để phóng to • Click đúp để mở rộng"}
         </div>
         {images.length > 1 && (
           <div className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold tracking-widest text-white/90 backdrop-blur-md">

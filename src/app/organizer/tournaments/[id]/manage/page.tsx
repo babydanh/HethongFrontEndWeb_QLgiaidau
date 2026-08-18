@@ -680,13 +680,10 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                   <input value={s.matchCourtAddress} onChange={e => s.setMatchCourtAddress(e.target.value)} placeholder="Địa chỉ sân" className="w-full border rounded-lg p-2 text-sm" /></div>
                 <div><label className="text-xs font-bold text-slate-500">Giờ thi đấu</label>
                   <DateTimePicker value={s.matchScheduledAt} onChange={s.setMatchScheduledAt} /></div>
-                <div><label className="text-xs font-bold text-slate-500">Trọng tài</label>
-                  <select value={s.matchRefereeId} onChange={e => s.setMatchRefereeId(e.target.value)} className="w-full border rounded-lg p-2 text-sm">
-                    <option value="">Chưa phân công</option>
-                    {s.referees.filter(r => r.status === 'ACCEPTED').map(ref => (
-                      <option key={ref.userId} value={ref.userId}>{ref.fullName}</option>
-                    ))}
-                  </select></div>
+                <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                  <p className="text-xs font-bold text-slate-600">Trọng tài</p>
+                  <p className="mt-1 text-xs text-slate-500">Chưa phân công. BTC phân công trọng tài ở luồng riêng sau khi lưu lịch.</p>
+                </div>
                 <div><label className="text-xs font-bold text-slate-500">Camera / Livestream</label>
                   <select value={s.matchCameraId} onChange={e => s.setMatchCameraId(e.target.value)} className="w-full border rounded-lg p-2 text-sm bg-white text-slate-800">
                     <option value="">-- Chưa gán camera --</option>

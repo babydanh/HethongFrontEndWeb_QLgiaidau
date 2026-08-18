@@ -795,40 +795,23 @@ export default function QuickTournamentCreate() {
               Khởi tạo giải đấu nhanh gọn trong 1 phút. Bạn có thể bổ sung luật chi tiết và phân nhánh bên trong trang quản lý bất cứ lúc nào.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={() => router.push(`/organizer/tournaments/create?mode=advanced${communityId ? `&communityId=${communityId}` : ''}`)}
-            className="inline-flex shrink-0 items-center gap-2 self-start md:self-auto rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 hover:border-slate-400 transition"
-          >
-            <Settings2 className="h-4 w-4 text-slate-500" /> Tạo bản nâng cao (4 bước)
-          </button>
-        </div>
-
-        {/* AI Tournament Creator Banner */}
-        <div className="mb-6 rounded-2xl border border-indigo-200/80 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-5 text-white shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-start gap-3.5">
-            <div className="p-2.5 bg-white/20 rounded-xl backdrop-blur-md shrink-0">
-              <Sparkles className="h-6 w-6 text-amber-300 animate-pulse" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="font-bold text-base md:text-lg">Tạo giải tự động bằng AI &amp; Excel</h3>
-                <span className="px-2 py-0.5 bg-amber-400/90 text-slate-900 text-[10px] font-black uppercase tracking-wider rounded-md">MỚI</span>
-              </div>
-              <p className="text-xs md:text-sm text-blue-100 mt-1 max-w-xl">
-                Có sẵn Link Google Form hoặc file Excel danh sách VĐV? Hãy để AI tự động trích xuất thông tin, tạo các hạng đấu và nạp VĐV vào giải trong 5 giây.
-              </p>
-            </div>
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0 self-start md:self-auto">
+            <button
+              type="button"
+              onClick={() => setIsAiModalOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs md:text-sm font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 hover:border-slate-300 hover:text-blue-600 transition"
+            >
+              <Sparkles className="h-4 w-4 text-amber-500" />
+              Tạo bằng AI / Excel
+            </button>
+            <button
+              type="button"
+              onClick={() => router.push(`/organizer/tournaments/create?mode=advanced${communityId ? `&communityId=${communityId}` : ''}`)}
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs md:text-sm font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 hover:border-slate-300 transition"
+            >
+              <Settings2 className="h-4 w-4 text-slate-500" /> Tạo bản nâng cao (4 bước)
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={() => setIsAiModalOpen(true)}
-            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-white text-indigo-700 hover:bg-blue-50 font-bold text-xs md:text-sm rounded-xl shadow-md transition-all shrink-0 hover:scale-[1.02] active:scale-[0.98]"
-          >
-            <Sparkles className="h-4 w-4 text-amber-500" />
-            Thử Ngay Với AI
-            <ArrowRight className="h-4 w-4" />
-          </button>
         </div>
 
         {/* Notice Banner */}

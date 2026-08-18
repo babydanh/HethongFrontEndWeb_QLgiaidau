@@ -432,7 +432,7 @@ export default function TournamentsTab({
           }
         }}
         title={translate('deleteTournamentTitle')}
-        description="Bạn có chắc chắn muốn xoá giải đấu này không? Toàn bộ các {translate('divisionCount', { count: t.divisions.length })} thi đấu bên trong giải đấu này cũng sẽ bị xoá."
+        description={translate('deleteTournamentDescription')}
         confirmLabel={translate('deleteTournamentConfirm')}
         variant="danger"
         onConfirm={() => {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { communitiesApi } from "@/features/communities/api";
 import type { CommunityDashboard } from "@/types/community-social";
 import { getErrorMessage } from "@/utils/error";
@@ -43,6 +44,7 @@ export default function OverviewTab({
   canViewFeed = canViewContent,
   onGoToGallery,
 }: OverviewTabProps) {
+  const translate = useTranslations("Common");
   const [dashboard, setDashboard] = useState<CommunityDashboard | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -58,7 +60,7 @@ export default function OverviewTab({
         const response = await communitiesApi.getDashboard(communityId);
         if (mounted) setDashboard(response.data);
       } catch (error: unknown) {
-        if (mounted) setErrorMessage(getErrorMessage(error, "Không thể tải tổng quan câu lạc bộ."));
+        if (mounted) setErrorMessage(getErrorMessage(error, translate('overviewLoadFailed')));
       } finally {
         if (mounted) setIsLoading(false);
       }
@@ -76,11 +78,11 @@ export default function OverviewTab({
         <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-slate-500">
           <LockKeyhole className="h-6 w-6" aria-hidden="true" />
         </div>
-        <h2 className="text-xl font-bold text-slate-900">{isPrivate ? "CLB riêng tư" : "Nội dung dành cho thành viên"}</h2>
+        <h2 className="text-xl font-bold text-slate-900">{isPrivate ? translate('privateClubTitle') : translate('membersOnlyTitle')}</h2>
         <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
           {isPrivate
-            ? "Câu lạc bộ này chỉ hiển thị thông tin cơ bản. Hãy nhận lời mời từ ban quản trị để xem bảng tin, thành viên và hoạt động bên trong."
-            : "Hãy tham gia câu lạc bộ để xem bảng tin, lịch giải, thư viện ảnh và bảng xếp hạng."}
+            ? translate('privateClubDescription')
+            : translate('joinClubDescription')}
         </p>
       </div>
     );

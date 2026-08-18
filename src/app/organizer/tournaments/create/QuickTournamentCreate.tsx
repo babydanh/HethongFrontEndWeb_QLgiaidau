@@ -149,6 +149,7 @@ type QuickSport = QuickValues['sport'];
 type QuickFormatConfig = {
   key: string;
   label: string;
+  bracketType?: QuickValues['bracketType'];
   eloEnabled: boolean;
   minElo: number | null;
   maxElo: number | null;
@@ -518,6 +519,7 @@ export default function QuickTournamentCreate() {
     setFormatDraft(existing ?? {
       key: option.key,
       label: option.label,
+      bracketType,
       eloEnabled: false,
       minElo: null,
       maxElo: null,
@@ -636,7 +638,7 @@ export default function QuickTournamentCreate() {
           const config = formatConfigs.find((item) => item.key === formatKey);
           const division = toDivisionInput(
             formatKey,
-            values.bracketType,
+            config?.bracketType ?? values.bracketType,
             values.maxTeams,
             values.startDate ? new Date(values.startDate).toISOString() : undefined,
             values.registrationEnd ? new Date(values.registrationEnd).toISOString() : undefined,
@@ -1010,7 +1012,7 @@ export default function QuickTournamentCreate() {
                       <div key={formatKey} className={`group flex items-center justify-between rounded-lg border px-3 py-2.5 transition ${isSelected ? 'border-blue-500 bg-blue-50/80 text-blue-800 shadow-2xs' : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'}`}>
                         <button type="button" onClick={() => toggleFormat(formatKey)} className="flex min-w-0 flex-1 items-center gap-2 text-left">
                           <span className={`h-4 w-4 shrink-0 rounded border text-center text-[11px] leading-[14px] ${isSelected ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-300 bg-white'}`}>{isSelected ? '✓' : ''}</span>
-                          <span className="min-w-0"><span className="block truncate text-xs font-bold">{config.label}</span><span className="mt-0.5 block text-[10px] text-slate-500">{config.eloEnabled ? `ELO ${config.minElo ?? 0}–${config.maxElo ?? '∞'}` : 'Không giới hạn ELO'}</span></span>
+                          <span className="min-w-0"><span className="block truncate text-xs font-bold">{config.label}</span><span className="mt-0.5 block text-[10px] text-slate-500">{config.bracketType ? `${BRACKET_OPTIONS.find((item) => item.id === config.bracketType)?.label ?? config.bracketType} · ` : ''}{config.eloEnabled ? `ELO ${config.minElo ?? 0}–${config.maxElo ?? '∞'}` : 'Không giới hạn ELO'}</span></span>
                         </button>
                         <button type="button" onClick={() => openFormatModal(formatKey)} className="ml-2 inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-[10px] font-bold text-slate-500 opacity-0 transition group-hover:opacity-100 hover:border-blue-300 hover:text-blue-700" aria-label={`Sửa ${config.label}`}><Settings2 className="h-3 w-3" /> Sửa</button>
                       </div>
@@ -1239,7 +1241,7 @@ export default function QuickTournamentCreate() {
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Thêm hình thức thi đấu">
           <div className="w-full max-w-lg rounded-xl border border-slate-200 bg-white shadow-2xl">
             <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-              <div><h2 className="text-base font-bold text-slate-900">Thêm hình thức thi đấu</h2><p className="mt-0.5 text-xs text-slate-500">Thể thức bảng đấu dùng chung cho toàn giải; nội dung có thể đặt tên và giới hạn ELO riêng.</p></div>
+              <div><h2 className="text-base font-bold text-slate-900">Thêm / sửa hình thức thi đấu</h2><p className="mt-0.5 text-xs text-slate-500">Mặc định dùng thể thức chung của giải; bạn có thể chọn riêng cho nội dung này.</p></div>
               <button type="button" onClick={() => setIsFormatModalOpen(false)} className="rounded-full p-2 text-slate-400 hover:bg-slate-100" aria-label="Đóng"><X className="h-4 w-4" /></button>
             </div>
             <div className="space-y-4 p-5">
@@ -1267,6 +1269,16 @@ export default function QuickTournamentCreate() {
                     ))}
                 </select>
               </label>
+              <label className="block text-xs font-semibold text-slate-700">Thể thức bảng đấu
+                <select
+                  value={formatDraft.bracketType ?? bracketType}
+                  onChange={(event) => setFormatDraft((current) => ({ ...current, bracketType: event.target.value as QuickValues['bracketType'] }))}
+                  className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-blue-500"
+                >
+                  {BRACKET_OPTIONS.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}
+                </select>
+                <span className="mt-1 block text-[10px] font-normal text-slate-500">Chọn lại thể thức chung để nội dung này kế thừa cấu hình ban đầu.</span>
+              </label>
               <label className="block text-xs font-semibold text-slate-700">Tên nội dung riêng
                 <input
                   value={formatDraft.label}
@@ -1281,7 +1293,7 @@ export default function QuickTournamentCreate() {
                 {formatDraft.eloEnabled && <div className="mt-3 grid grid-cols-2 gap-3"><label className="text-xs font-semibold text-slate-600">ELO tối thiểu<input type="number" min={0} value={formatDraft.minElo ?? ''} onChange={(event) => setFormatDraft((current) => ({ ...current, minElo: event.target.value === '' ? null : Number(event.target.value) }))} className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm" /></label><label className="text-xs font-semibold text-slate-600">ELO tối đa<input type="number" min={0} value={formatDraft.maxElo ?? ''} onChange={(event) => setFormatDraft((current) => ({ ...current, maxElo: event.target.value === '' ? null : Number(event.target.value) }))} className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm" /></label></div>}
               </div>
             </div>
-            <div className="flex justify-end gap-2 border-t border-slate-100 px-5 py-3"><button type="button" onClick={() => setIsFormatModalOpen(false)} className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50">Hủy</button><button type="button" onClick={saveFormatConfig} className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-700"><Plus className="h-3.5 w-3.5" /> Thêm</button></div>
+            <div className="flex justify-end gap-2 border-t border-slate-100 px-5 py-3"><button type="button" onClick={() => setIsFormatModalOpen(false)} className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50">Hủy</button><button type="button" onClick={saveFormatConfig} className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-700"><Plus className="h-3.5 w-3.5" /> Lưu</button></div>
           </div>
         </div>
       )}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { X, MessageCircle, User, CheckCircle2 } from "lucide-react";
 import { usersApi } from "@/features/users/api";
 import { communitiesApi, MemberStreak, CommunityMemberRecord } from "@/features/communities/api";
@@ -56,6 +56,7 @@ export default function UserProfilePopover({
   communityId,
 }: UserProfilePopoverProps) {
   const translate = useTranslations('Common');
+  const locale = useLocale();
   const router = useRouter();
   const popoverRef = useRef<HTMLDivElement>(null);
   const [fetchedDetails, setFetchedDetails] = useState<Partial<PopoverUserProfile> | null>(null);
@@ -188,11 +189,11 @@ export default function UserProfilePopover({
   // Community Role
   const communityRoleLabel =
     profileData.role === "OWNER"
-      ? "Chủ CLB"
+      ? translate('communityOwner')
       : profileData.role === "MODERATOR"
-        ? "Quản trị viên"
+        ? translate('communityModerator')
         : profileData.role === "MEMBER"
-          ? "Thành viên"
+          ? translate('communityMember')
           : null;
 
   // System Role helper
@@ -202,12 +203,12 @@ export default function UserProfilePopover({
       case "ADMIN":
         return { label: "Admin", color: "bg-purple-50 text-purple-700 border-purple-200" };
       case "ORGANIZER":
-        return { label: "Ban tổ chức", color: "bg-indigo-50 text-indigo-700 border-indigo-200" };
+        return { label: translate('organizerRole'), color: "bg-indigo-50 text-indigo-700 border-indigo-200" };
       case "REFEREE":
-        return { label: "Trọng tài", color: "bg-amber-50 text-amber-700 border-amber-200" };
+        return { label: translate('refereeRole'), color: "bg-amber-50 text-amber-700 border-amber-200" };
       case "PLAYER":
       default:
-        return { label: "VĐV", color: "bg-sky-50 text-sky-700 border-sky-200" };
+        return { label: translate('athleteRole'), color: "bg-sky-50 text-sky-700 border-sky-200" };
     }
   };
 
@@ -234,7 +235,7 @@ export default function UserProfilePopover({
         {profileData.coverUrl && (
           <img
             src={profileData.coverUrl}
-            alt="Cover"
+            alt={translate('cover')}
             className="w-full h-full object-cover"
           />
         )}
@@ -301,7 +302,7 @@ export default function UserProfilePopover({
               {profileData.fullName}
             </h4>
             {profileData.isVerified && (
-              <span title="Tài khoản đã xác minh" className="inline-flex items-center shrink-0">
+                <span title={translate('verifiedAccount')} className="inline-flex items-center shrink-0">
                 <CheckCircle2 className="h-4 w-4 text-blue-500" />
               </span>
             )}
@@ -310,8 +311,8 @@ export default function UserProfilePopover({
           <div className="flex items-center flex-wrap gap-2 mt-0.5">
             <p className="text-xs text-slate-500">
               {profileData.joinedAt
-                ? `Tham gia từ ${new Date(profileData.joinedAt).toLocaleDateString("vi-VN")}`
-                : "Thành viên"}
+                ? translate('joinedSince', { date: new Date(profileData.joinedAt).toLocaleDateString(locale === 'vi' ? 'vi-VN' : 'en-US') })
+                : translate('member')}
             </p>
 
             {/* ELO Tier Badge if present */}
@@ -338,7 +339,7 @@ export default function UserProfilePopover({
                 {profileData.streak.label ||
                   (profileData.streak.type === "ELO_UP"
                     ? `+${profileData.streak.count} ELO`
-                    : `${profileData.streak.type === "WIN" ? "Thắng" : "Thua"} x${profileData.streak.count}`)}
+                    : translate(profileData.streak.type === "WIN" ? 'winStreak' : 'lossStreak', { count: profileData.streak.count }))}
               </span>
             )}
           </div>
@@ -357,14 +358,14 @@ export default function UserProfilePopover({
               <div key={`${rank.categoryName}-${rank.matchType}`} className="min-w-0 text-center">
                 <div className="truncate text-[9px] font-semibold uppercase text-slate-400">{rank.categoryName || 'ELO'}</div>
                 <div className="text-xs font-bold text-slate-800">{rank.eloPoints}</div>
-                <div className="text-[9px] text-slate-500">{rank.matchesWon}/{rank.matchesPlayed} thắng</div>
+                <div className="text-[9px] text-slate-500">{rank.matchesWon}/{rank.matchesPlayed} {translate('winsShort')}</div>
               </div>
             ))}
           </div>
         )}
         {profileRanks.length > 0 && (
           <p className="mt-1.5 text-center text-[10px] text-slate-500">
-            {totalMatches} trận · {totalWins} thắng · {Math.max(0, totalMatches - totalWins)} thua
+            {translate('matchSummary', { matches: totalMatches, wins: totalWins, losses: Math.max(0, totalMatches - totalWins) })}
           </p>
         )}
 
@@ -372,8 +373,8 @@ export default function UserProfilePopover({
         {(profileData.tags ?? []).length > 0 && (
           <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50/70 p-2.5 space-y-1.5">
             <div className="flex items-center justify-between text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-              <span>Danh hiệu CLB</span>
-              <span className="text-[9px] text-slate-400 font-normal">{profileData.tags?.length} nhãn</span>
+              <span>{translate('clubTitles')}</span>
+              <span className="text-[9px] text-slate-400 font-normal">{translate('tagCount', { count: profileData.tags?.length ?? 0 })}</span>
             </div>
             <div className="flex flex-wrap gap-1.5">
               {profileData.tags?.map((tag) => {
@@ -426,11 +427,11 @@ export default function UserProfilePopover({
                 setIsOpeningChat(false);
               }
             }}
-            title={!canMessage ? 'Người này không nhận tin nhắn từ người lạ' : undefined}
+            title={!canMessage ? translate('strangerMessagesDisabled') : undefined}
             className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-blue-700 active:scale-98 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <MessageCircle className="h-3.5 w-3.5" />
-            {isOpeningChat ? translate('chatOpening') : canMessage ? translate('message') : 'Không nhận tin lạ'}
+            {isOpeningChat ? translate('chatOpening') : canMessage ? translate('message') : translate('strangerMessagesShort')}
           </button>
 
           <button
@@ -444,7 +445,7 @@ export default function UserProfilePopover({
             className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-slate-100 px-3.5 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-200 active:scale-98 border border-slate-200/80"
           >
             <User className="h-3.5 w-3.5" />
-            Trang cá nhân
+            {translate('profile')}
           </button>
         </div>
       </div>

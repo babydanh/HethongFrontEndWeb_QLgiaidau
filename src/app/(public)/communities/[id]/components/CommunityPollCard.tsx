@@ -1,5 +1,6 @@
 'use client';
 
+import { useLocale, useTranslations } from 'next-intl';
 import { useState } from 'react';
 import Image from 'next/image';
 import { BarChart3, CheckCircle2, Circle, CheckSquare2, Square, Plus, Loader2, Users } from 'lucide-react';
@@ -24,6 +25,8 @@ export default function CommunityPollCard({
   tournamentInviteCode,
   onPollUpdated,
 }: CommunityPollCardProps) {
+  const translate = useTranslations('Match');
+  const locale = useLocale();
   const { user } = useAuthStore();
   const { openUserProfile } = useUserProfileModalStore();
   const [currentPoll, setCurrentPoll] = useState<CommunityPoll>(poll);
@@ -55,9 +58,9 @@ export default function CommunityPollCard({
         if (shouldRegister) {
           try {
             await tournamentsApi.joinLite(tournamentInviteCode);
-            toast.success('Đã bình chọn và đăng ký tham gia giải.');
+            toast.success(translate('communityPollVoteAndJoinSuccess'));
           } catch {
-            toast('Đã ghi nhận bình chọn. Bạn có thể đã đăng ký giải này trước đó.');
+            toast(translate('communityPollVoteRecordedAlreadyJoined'));
           }
         }
       }
@@ -69,7 +72,7 @@ export default function CommunityPollCard({
   };
 
   const handleClosePollEarly = async () => {
-    if (!window.confirm('Bạn có chắc muốn kết thúc cuộc bình chọn này sớm không?')) return;
+    if (!window.confirm(translate('communityPollCloseEarlyConfirm'))) return;
     try {
       setIsClosingPoll(true);
       const res = await communitiesApi.closePoll(communityId, currentPoll.id);
@@ -120,18 +123,18 @@ export default function CommunityPollCard({
         <div className="space-y-1">
           <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-bold text-blue-600">
             <BarChart3 className="h-3.5 w-3.5" />
-            <span>Thăm dò ý kiến</span>
+            <span>{translate('communityPollTitle')}</span>
             {currentPoll.allowMultipleAnswers ? (
-              <span className="rounded bg-blue-100/70 px-1.5 py-0.5 text-[10px] text-blue-700">Chọn nhiều</span>
+              <span className="rounded bg-blue-100/70 px-1.5 py-0.5 text-[10px] text-blue-700">{translate('communityPollChooseMultiple')}</span>
             ) : (
-              <span className="rounded bg-slate-200/70 px-1.5 py-0.5 text-[10px] text-slate-700">Chọn một</span>
+              <span className="rounded bg-slate-200/70 px-1.5 py-0.5 text-[10px] text-slate-700">{translate('communityPollChooseOne')}</span>
             )}
 
             {isExpired ? (
-              <span className="rounded bg-rose-100 px-1.5 py-0.5 text-[10px] font-bold text-rose-700">Đã kết thúc</span>
+              <span className="rounded bg-rose-100 px-1.5 py-0.5 text-[10px] font-bold text-rose-700">{translate('communityPollEnded')}</span>
             ) : currentPoll.expiresAt ? (
               <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">
-                Hết hạn: {new Date(currentPoll.expiresAt).toLocaleDateString('vi-VN')}
+                {translate('communityPollExpiresOn', { date: new Date(currentPoll.expiresAt).toLocaleDateString(locale === 'vi' ? 'vi-VN' : 'en-US') })}
               </span>
             ) : null}
           </div>
@@ -140,7 +143,7 @@ export default function CommunityPollCard({
 
         <div className="flex flex-col items-end gap-1 shrink-0">
           <span className="text-xs font-semibold text-slate-500 whitespace-nowrap">
-            {totalVotes} lượt bình chọn
+            {translate('communityPollVotes', { count: totalVotes })}
           </span>
           {canClosePoll && (
             <button
@@ -149,7 +152,7 @@ export default function CommunityPollCard({
               onClick={handleClosePollEarly}
               className="text-[11px] font-bold text-rose-600 hover:text-rose-700 hover:underline cursor-pointer disabled:opacity-50"
             >
-              {isClosingPoll ? 'Đang kết thúc...' : 'Kết thúc sớm'}
+              {isClosingPoll ? translate('communityPollClosing') : translate('communityPollCloseEarly')}
             </button>
           )}
         </div>
@@ -209,7 +212,7 @@ export default function CommunityPollCard({
                       setSelectedOptionForVoters(option);
                     }}
                     className="flex items-center -space-x-1.5 hover:opacity-80 transition-opacity"
-                    title="Xem người đã chọn"
+                    title={translate('communityPollVotersAria')}
                   >
                     {option.voters.slice(0, 3).map((voter) => (
                       <div
@@ -262,7 +265,7 @@ export default function CommunityPollCard({
             <form onSubmit={handleAddOption} className="flex gap-2">
               <input
                 type="text"
-                placeholder="Nhập lựa chọn của bạn..."
+                placeholder={translate('communityPollAddOptionPlaceholder')}
                 value={newOptionText}
                 onChange={(e) => setNewOptionText(e.target.value)}
                 autoFocus
@@ -273,7 +276,7 @@ export default function CommunityPollCard({
                 disabled={isSubmittingOption || !newOptionText.trim()}
                 className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
               >
-                {isSubmittingOption ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Thêm'}
+                {isSubmittingOption ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : translate('communityPollAddOptionSubmit')}
               </button>
               <button
                 type="button"
@@ -283,7 +286,7 @@ export default function CommunityPollCard({
                 }}
                 className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer"
               >
-                Hủy
+                {translate('communityPollCancel')}
               </button>
             </form>
           ) : (
@@ -293,13 +296,13 @@ export default function CommunityPollCard({
               className="flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-700 cursor-pointer"
             >
               <Plus className="h-3.5 w-3.5" />
-              <span>Thêm lựa chọn</span>
+              <span>{translate('communityPollAddOption')}</span>
             </button>
           )}
         </div>
       )}
 
-      {/* Modal / Dialog xem danh sách người đã vote cho một option */}
+      {/* Voter list modal */}
       {selectedOptionForVoters && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-2xs p-4"
@@ -312,19 +315,19 @@ export default function CommunityPollCard({
             <div className="flex items-center justify-between border-b pb-3">
               <div className="flex items-center gap-2">
                 <Users className="h-4 w-4 text-blue-600" />
-                <h3 className="text-sm font-bold text-slate-900">Người đã bình chọn</h3>
+                <h3 className="text-sm font-bold text-slate-900">{translate('communityPollVotersTitle')}</h3>
               </div>
               <button
                 type="button"
                 onClick={() => setSelectedOptionForVoters(null)}
                 className="text-slate-400 hover:text-slate-600 cursor-pointer text-xs font-bold"
               >
-                Đóng
+                {translate('communityPollCloseDialog')}
               </button>
             </div>
 
             <p className="mt-2 text-xs font-medium text-slate-500 italic">
-              &quot;{selectedOptionForVoters.optionText}&quot; ({selectedOptionForVoters.voteCount} lượt)
+              &quot;{selectedOptionForVoters.optionText}&quot; ({translate('communityPollVotes', { count: selectedOptionForVoters.voteCount })})
             </p>
 
             <div className="mt-3 max-h-64 space-y-2 overflow-y-auto pr-1">

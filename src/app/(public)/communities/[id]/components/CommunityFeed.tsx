@@ -43,7 +43,7 @@ export default function CommunityFeed({
   communityId,
   canManageTags = false,
 }: CommunityFeedProps) {
-  const translate = useTranslations("Common");
+  const translate = useTranslations("Match");
   const { user } = useAuthStore();
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);

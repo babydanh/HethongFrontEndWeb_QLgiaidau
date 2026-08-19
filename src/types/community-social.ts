@@ -76,6 +76,8 @@ export interface CommunityPostTournament {
   bannerUrl?: string | null;
   maxParticipants?: number | null;
   inviteCode?: string | null;
+  isLite?: boolean | null;
+  bracketType?: string | null;
 }
 
 export interface CommunityPollVoter {

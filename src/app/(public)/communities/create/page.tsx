@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -15,26 +16,39 @@ import { ChevronLeft, Plus, Trash2, UploadCloud, X, Loader2 } from 'lucide-react
 import { Button } from '@/components/ui/Button';
 import Image from 'next/image';
 
-const createCommunitySchema = z.object({
-  name: z.string().min(3, "Tên câu lạc bộ phải có ít nhất 3 ký tự").max(255, "Tên quá dài"),
-  description: z.string().max(1000, "Mô tả quá dài").optional(),
-  rules: z.string().max(5000, "Nội quy quá dài").optional(),
-  provinceCode: z.string().min(1, "Vui lòng chọn tỉnh/thành phố"),
-  wardCode: z.string().optional(),
-  locationAddress: z.string().max(255, "Địa chỉ quá dài").optional(),
-  categoryIds: z.array(z.string().uuid()).length(1, "Vui lòng chọn đúng 1 môn thể thao"),
-  visibility: z.enum(['PUBLIC', 'PRIVATE', 'RESTRICTED']),
-  joinMode: z.enum(['OPEN', 'APPROVAL', 'INVITE_ONLY']),
-  joinQuestions: z.array(z.object({ value: z.string() })).optional(),
-  logoUrl: z.string().optional(),
-  bannerUrl: z.string().optional(),
-});
-
-type CreateCommunityFormValues = z.infer<typeof createCommunitySchema>;
+type CreateCommunityFormValues = {
+  name: string;
+  description?: string;
+  rules?: string;
+  provinceCode: string;
+  wardCode?: string;
+  locationAddress?: string;
+  categoryIds: string[];
+  visibility: 'PUBLIC' | 'PRIVATE' | 'RESTRICTED';
+  joinMode: 'OPEN' | 'APPROVAL' | 'INVITE_ONLY';
+  joinQuestions?: { value: string }[];
+  logoUrl?: string;
+  bannerUrl?: string;
+};
 
 export default function CreateCommunityPage() {
   const router = useRouter();
   const { user } = useAuthStore();
+  const translate = useTranslations('CommunityCreate');
+  const createCommunitySchema = z.object({
+    name: z.string().min(3, translate('validation.nameMin')).max(255, translate('validation.nameMax')),
+    description: z.string().max(1000, translate('validation.descriptionMax')).optional(),
+    rules: z.string().max(5000, translate('validation.rulesMax')).optional(),
+    provinceCode: z.string().min(1, translate('validation.provinceRequired')),
+    wardCode: z.string().optional(),
+    locationAddress: z.string().max(255, translate('validation.locationMax')).optional(),
+    categoryIds: z.array(z.string().uuid()).length(1, translate('validation.categoryExactOne')),
+    visibility: z.enum(['PUBLIC', 'PRIVATE', 'RESTRICTED']),
+    joinMode: z.enum(['OPEN', 'APPROVAL', 'INVITE_ONLY']),
+    joinQuestions: z.array(z.object({ value: z.string() })).optional(),
+    logoUrl: z.string().optional(),
+    bannerUrl: z.string().optional(),
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
@@ -108,7 +122,7 @@ export default function CreateCommunityPage() {
     if (!file) return;
     
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('Kích thước ảnh Logo không được vượt quá 5MB');
+      toast.error(translate('logoTooLarge'));
       return;
     }
 
@@ -116,10 +130,10 @@ export default function CreateCommunityPage() {
       setIsUploadingLogo(true);
       const res = await uploadApi.uploadImage(file);
       setValue('logoUrl', res.url, { shouldValidate: true });
-      toast.success('Tải ảnh Logo lên thành công!');
+      toast.success(translate('logoUploaded'));
     } catch (error) {
       console.error(error);
-      toast.error('Lỗi khi tải ảnh Logo lên');
+      toast.error(translate('logoUploadError'));
     } finally {
       setIsUploadingLogo(false);
     }
@@ -130,7 +144,7 @@ export default function CreateCommunityPage() {
     if (!file) return;
 
     if (file.size > 10 * 1024 * 1024) {
-      toast.error('Kích thước ảnh bìa không được vượt quá 10MB');
+      toast.error(translate('bannerTooLarge'));
       return;
     }
 
@@ -138,10 +152,10 @@ export default function CreateCommunityPage() {
       setIsUploadingBanner(true);
       const res = await uploadApi.uploadImage(file);
       setValue('bannerUrl', res.url, { shouldValidate: true });
-      toast.success('Tải ảnh bìa lên thành công!');
+      toast.success(translate('bannerUploaded'));
     } catch (error) {
       console.error(error);
-      toast.error('Lỗi khi tải ảnh bìa lên');
+      toast.error(translate('bannerUploadError'));
     } finally {
       setIsUploadingBanner(false);
     }
@@ -149,7 +163,7 @@ export default function CreateCommunityPage() {
 
   const onSubmit = async (data: CreateCommunityFormValues) => {
     if (!user) {
-      toast.error('Vui lòng đăng nhập để tạo câu lạc bộ');
+      toast.error(translate('loginRequired'));
       router.push('/login?redirect=/communities/create');
       return;
     }
@@ -171,7 +185,7 @@ export default function CreateCommunityPage() {
       };
       
       const res = await communitiesApi.createCommunity(payload);
-      toast.success('Tạo câu lạc bộ thành công! Đang chờ duyệt.');
+      toast.success(translate('createSuccess'));
       
       const responseData = res as { data?: { id?: string }, id?: string };
       const communityId = responseData?.data?.id || responseData?.id;
@@ -181,7 +195,7 @@ export default function CreateCommunityPage() {
         router.push('/communities');
       }
     } catch (error) {
-      toast.error('Có lỗi xảy ra khi tạo câu lạc bộ');
+      toast.error(translate('createError'));
       console.error(error);
     } finally {
       setIsSubmitting(false);
@@ -196,27 +210,27 @@ export default function CreateCommunityPage() {
           className="flex items-center text-slate-500 hover:text-slate-900 mb-6 transition-colors"
         >
           <ChevronLeft className="w-5 h-5 mr-1" />
-          Quay lại
+          {translate('back')}
         </button>
 
         <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
           <div className="bg-blue-600 px-8 py-10 text-white text-center rounded-t-xl">
-            <h1 className="text-3xl font-bold mb-2">Tạo Câu Lạc Bộ Mới</h1>
-            <p className="text-blue-100">Xây dựng và phát triển câu lạc bộ thể thao của riêng bạn</p>
+            <h1 className="text-3xl font-bold mb-2">{translate('title')}</h1>
+            <p className="text-blue-100">{translate('subtitle')}</p>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="p-8 space-y-10">
             {/* BƯỚC 1: THÔNG TIN CƠ BẢN */}
             <section className="space-y-6">
-              <h2 className="text-xl font-semibold text-slate-800 border-b pb-2">BƯỚC 1: THÔNG TIN CƠ BẢN</h2>
+              <h2 className="text-xl font-semibold text-slate-800 border-b pb-2">{translate('step1')}</h2>
               
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Tên câu lạc bộ <span className="text-rose-500">*</span>
+                  {translate('clubName')} <span className="text-rose-500">*</span>
                 </label>
                 <input 
                   {...register('name')}
-                  placeholder="VD: CLB Cầu Lông Ba Đình"
+                  placeholder={translate('namePlaceholder')}
                   className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                 />
                 {errors.name && <p className="text-rose-500 text-sm mt-1">{errors.name.message}</p>}
@@ -224,24 +238,24 @@ export default function CreateCommunityPage() {
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Mô tả
+                  {translate('description')}
                 </label>
                 <textarea 
                   {...register('description')}
                   rows={3}
-                  placeholder="Giới thiệu ngắn về câu lạc bộ..."
+                  placeholder={translate('descriptionPlaceholder')}
                   className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Nội quy
+                  {translate('rules')}
                 </label>
                 <textarea 
                   {...register('rules')}
                   rows={4}
-                  placeholder="1. Tôn trọng lẫn nhau&#10;2. Đúng giờ..."
+                  placeholder={translate('rulesPlaceholder')}
                   className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                 />
               </div>
@@ -249,32 +263,32 @@ export default function CreateCommunityPage() {
 
             {/* BƯỚC 2: KHU VỰC & MÔN THỂ THAO */}
             <section className="space-y-6">
-              <h2 className="text-xl font-semibold text-slate-800 border-b pb-2">BƯỚC 2: KHU VỰC & MÔN THỂ THAO</h2>
+              <h2 className="text-xl font-semibold text-slate-800 border-b pb-2">{translate('step2')}</h2>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Tỉnh/Thành phố <span className="text-rose-500">*</span>
+                    {translate('province')} <span className="text-rose-500">*</span>
                   </label>
                   <select
                     {...register('provinceCode')}
                     className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none"
                   >
-                    <option value="">Chọn Tỉnh/Thành phố</option>
+                    <option value="">{translate('provincePlaceholder')}</option>
                     {provinces.map(p => <option key={p.code} value={p.code}>{p.name}</option>)}
                   </select>
                   {errors.provinceCode && <p className="text-rose-500 text-sm mt-1">{errors.provinceCode.message}</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Phường/Xã
+                    {translate('ward')}
                   </label>
                   <select
                     {...register('wardCode')}
                     className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none"
                     disabled={!watchProvince}
                   >
-                    <option value="">Chọn Phường/Xã</option>
+                    <option value="">{translate('wardPlaceholder')}</option>
                     {wards.map(w => <option key={w.code} value={w.code}>{w.name}</option>)}
                   </select>
                 </div>
@@ -282,9 +296,9 @@ export default function CreateCommunityPage() {
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-3">
-                  Môn thể thao chính <span className="text-rose-500">*</span>
+                  {translate('primarySport')} <span className="text-rose-500">*</span>
                 </label>
-                <p className="mb-3 text-sm text-slate-500">Mỗi câu lạc bộ chỉ chọn một môn. Bạn có thể tạo các đội khác nhau trong cùng CLB.</p>
+                <p className="mb-3 text-sm text-slate-500">{translate('primarySportHint')}</p>
                 <div className="flex flex-wrap gap-3">
                   {categories.map(cat => {
                     const isSelected = watchCategoryIds?.includes(cat.id);
@@ -310,14 +324,14 @@ export default function CreateCommunityPage() {
 
             {/* BƯỚC 3: HÌNH ẢNH CÂU LẠC BỘ */}
             <section className="space-y-6">
-              <h2 className="text-xl font-semibold text-slate-800 border-b pb-2">BƯỚC 3: HÌNH ẢNH CÂU LẠC BỘ</h2>
-              <p className="text-sm text-slate-500">Tải lên Logo đại diện và Ảnh bìa (Banner) để thu hút thành viên. Bạn có thể bỏ qua bước này và cập nhật sau.</p>
+              <h2 className="text-xl font-semibold text-slate-800 border-b pb-2">{translate('step3')}</h2>
+              <p className="text-sm text-slate-500">{translate('imagesDescription')}</p>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 {/* Logo Uploader */}
                 <div className="flex flex-col items-center justify-center p-6 bg-slate-50 rounded-lg border border-slate-200">
                   <label className="block text-sm font-semibold text-slate-700 mb-4 text-center">
-                    Logo / Avatar nhóm <span className="text-slate-400 font-normal text-xs">(Không bắt buộc)</span>
+                    {translate('logoAvatar')} <span className="text-slate-400 font-normal text-xs">({translate('optional')})</span>
                   </label>
                   
                   <input
@@ -339,21 +353,21 @@ export default function CreateCommunityPage() {
                     {isUploadingLogo ? (
                       <div className="flex flex-col items-center justify-center text-slate-500">
                         <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-                        <span className="text-[10px] mt-1">Đang tải...</span>
+                        <span className="text-[10px] mt-1">{translate('loading')}</span>
                       </div>
                     ) : watchLogoUrl ? (
                       <>
                         <div className="relative w-full h-full">
-                          <Image src={watchLogoUrl} alt="Logo Preview" fill className="object-cover" />
+                          <Image src={watchLogoUrl} alt={translate('logoPreview')} fill className="object-cover" />
                         </div>
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs font-medium transition-opacity">
-                          Thay đổi
+                          {translate('change')}
                         </div>
                       </>
                     ) : (
                       <div className="flex flex-col items-center justify-center text-slate-400 group-hover:text-blue-500 p-4 text-center">
                         <UploadCloud className="w-8 h-8 mb-1" />
-                        <span className="text-xs font-medium">Chọn Logo</span>
+                        <span className="text-xs font-medium">{translate('chooseLogo')}</span>
                       </div>
                     )}
                   </div>
@@ -364,7 +378,7 @@ export default function CreateCommunityPage() {
                       onClick={() => setValue('logoUrl', '')}
                       className="mt-3 text-xs text-rose-500 hover:text-rose-600 flex items-center gap-1 font-medium transition-colors"
                     >
-                      <X className="w-3.5 h-3.5" /> Gỡ ảnh Logo
+                      <X className="w-3.5 h-3.5" /> {translate('removeLogo')}
                     </button>
                   )}
                   {errors.logoUrl && <p className="text-rose-500 text-sm mt-2 text-center">{errors.logoUrl.message}</p>}
@@ -373,7 +387,7 @@ export default function CreateCommunityPage() {
                 {/* Banner Uploader */}
                 <div className="md:col-span-2 flex flex-col p-6 bg-slate-50 rounded-lg border border-slate-200">
                   <label className="block text-sm font-semibold text-slate-700 mb-4">
-                    Ảnh bìa (Cover Banner) <span className="text-slate-400 font-normal text-xs">(Không bắt buộc)</span>
+                    {translate('bannerLabel')} <span className="text-slate-400 font-normal text-xs">({translate('optional')})</span>
                   </label>
                   
                   <input
@@ -395,22 +409,22 @@ export default function CreateCommunityPage() {
                     {isUploadingBanner ? (
                       <div className="flex flex-col items-center justify-center text-slate-500">
                         <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-                        <span className="text-xs mt-1">Đang tải ảnh lên...</span>
+                        <span className="text-xs mt-1">{translate('loadingBanner')}</span>
                       </div>
                     ) : watchBannerUrl ? (
                       <>
                         <div className="relative w-full h-full">
-                          <Image src={watchBannerUrl} alt="Banner Preview" fill className="object-cover" />
+                          <Image src={watchBannerUrl} alt={translate('bannerPreview')} fill className="object-cover" />
                         </div>
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-sm font-medium transition-opacity">
-                          Thay đổi ảnh bìa
+                          {translate('changeBanner')}
                         </div>
                       </>
                     ) : (
                       <div className="flex flex-col items-center justify-center text-slate-400 group-hover:text-blue-500 p-6">
                         <UploadCloud className="w-10 h-10 mb-2" />
-                        <span className="text-sm font-medium">Nhấp chọn hoặc kéo thả ảnh bìa nhóm vào đây</span>
-                        <span className="text-xs text-slate-400 mt-1">Hỗ trợ JPG, PNG (tối đa 10MB)</span>
+                        <span className="text-sm font-medium">{translate('dropBanner')}</span>
+                        <span className="text-xs text-slate-400 mt-1">{translate('supportedFormats')}</span>
                       </div>
                     )}
                   </div>
@@ -421,7 +435,7 @@ export default function CreateCommunityPage() {
                       onClick={() => setValue('bannerUrl', '')}
                       className="mt-3 text-xs text-rose-500 hover:text-rose-600 flex items-center gap-1 font-medium self-start transition-colors"
                     >
-                      <X className="w-3.5 h-3.5" /> Gỡ ảnh bìa
+                      <X className="w-3.5 h-3.5" /> {translate('removeBanner')}
                     </button>
                   )}
                   {errors.bannerUrl && <p className="text-rose-500 text-sm mt-2">{errors.bannerUrl.message}</p>}
@@ -432,16 +446,16 @@ export default function CreateCommunityPage() {
 
             {/* BƯỚC 4: CÀI ĐẶT QUYỀN RIÊNG TƯ */}
             <section className="space-y-6">
-              <h2 className="text-xl font-semibold text-slate-800 border-b pb-2">BƯỚC 4: CÀI ĐẶT QUYỀN RIÊNG TƯ</h2>
+              <h2 className="text-xl font-semibold text-slate-800 border-b pb-2">{translate('step4')}</h2>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-800 mb-4">Chế độ hiển thị</label>
+                  <label className="block text-sm font-semibold text-slate-800 mb-4">{translate('visibility')}</label>
                   <div className="space-y-3">
                     {[
-                      { value: 'PUBLIC', label: 'Công khai', desc: 'Ai cũng thấy và tìm được' },
-                      { value: 'PRIVATE', label: 'Riêng tư', desc: 'Chỉ thành viên mới thấy nội dung' },
-                      { value: 'RESTRICTED', label: 'Hạn chế', desc: 'Hiện trong tìm kiếm, cần vào mới xem' }
+                      { value: 'PUBLIC', label: translate('publicLabel'), desc: translate('publicDescription') },
+                      { value: 'PRIVATE', label: translate('privateLabel'), desc: translate('privateDescription') },
+                      { value: 'RESTRICTED', label: translate('restrictedLabel'), desc: translate('restrictedDescription') }
                     ].map(opt => (
                       <label key={opt.value} className="flex items-start cursor-pointer group">
                         <div className="flex items-center h-5">
@@ -462,12 +476,12 @@ export default function CreateCommunityPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-slate-800 mb-4">Chế độ tham gia</label>
+                  <label className="block text-sm font-semibold text-slate-800 mb-4">{translate('joinMode')}</label>
                   <div className="space-y-3">
                     {[
-                      { value: 'OPEN', label: 'Mở tự do', desc: 'Ai cũng vào được' },
-                      { value: 'APPROVAL', label: 'Cần duyệt', desc: 'Gửi đơn xin vào (có thể kèm form)' },
-                      { value: 'INVITE_ONLY', label: 'Chỉ mời', desc: 'Chỉ vào qua lời mời của Quản trị viên' }
+                      { value: 'OPEN', label: translate('openLabel'), desc: translate('openDescription') },
+                      { value: 'APPROVAL', label: translate('approvalLabel'), desc: translate('approvalDescription') },
+                      { value: 'INVITE_ONLY', label: translate('inviteOnlyLabel'), desc: translate('inviteOnlyDescription') }
                     ].map(opt => (
                       <label key={opt.value} className="flex items-start cursor-pointer group">
                         <div className="flex items-center h-5">
@@ -490,15 +504,15 @@ export default function CreateCommunityPage() {
 
               {watchJoinMode === 'APPROVAL' && (
                 <div className="mt-8 bg-slate-50 p-6 rounded-lg border border-slate-200">
-                  <label className="block text-sm font-semibold text-slate-800 mb-4">Câu hỏi xin vào nhóm</label>
-                  <p className="text-sm text-slate-500 mb-4">Người xin vào nhóm sẽ phải trả lời các câu hỏi này.</p>
+                  <label className="block text-sm font-semibold text-slate-800 mb-4">{translate('joinQuestions')}</label>
+                  <p className="text-sm text-slate-500 mb-4">{translate('joinQuestionsDescription')}</p>
                   
                   <div className="space-y-3 mb-4">
                     {questionFields.map((field, index) => (
                       <div key={field.id} className="flex gap-2">
                         <input
                           {...register(`joinQuestions.${index}.value` as const)}
-                          placeholder={`Câu hỏi ${index + 1}...`}
+                          placeholder={translate('questionPlaceholder', { number: index + 1 })}
                           className="flex-1 px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none"
                         />
                         <button
@@ -517,7 +531,7 @@ export default function CreateCommunityPage() {
                     onClick={() => appendQuestion({ value: '' })}
                     className="flex items-center text-sm text-blue-600 font-medium hover:text-blue-700"
                   >
-                    <Plus className="w-4 h-4 mr-1" /> Thêm câu hỏi
+                    <Plus className="w-4 h-4 mr-1" /> {translate('addQuestion')}
                   </button>
                 </div>
               )}
@@ -529,14 +543,14 @@ export default function CreateCommunityPage() {
                 variant="outline" 
                 onClick={() => router.back()}
               >
-                Hủy bỏ
+                {translate('cancel')}
               </Button>
               <Button 
                 type="submit" 
                 isLoading={isSubmitting}
                 className="bg-blue-600 hover:bg-blue-700 text-white font-bold min-w-[140px] shadow-md shadow-blue-500/20"
               >
-                Tạo Câu Lạc Bộ
+                {translate('submit')}
               </Button>
             </div>
           </form>

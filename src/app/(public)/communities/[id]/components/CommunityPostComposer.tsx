@@ -74,7 +74,7 @@ export default function CommunityPostComposer({
   pollExpiresInDays,
   onChangePollExpiresInDays,
 }: CommunityPostComposerProps) {
-  const translate = useTranslations('Common');
+  const translate = useTranslations('Match');
   return (
     <form
       onSubmit={onSubmit}
@@ -90,7 +90,7 @@ export default function CommunityPostComposer({
             composerRef.current = element;
           }}
           onKeyDown={onComposerKeyDown}
-          placeholder="{translate('communityPostComposerPlaceholder')}"
+          placeholder={translate('communityPostComposerPlaceholder')}
           rows={3}
           className="mt-3 w-full resize-none rounded-xl border border-slate-200 bg-slate-50/50 p-3.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:outline-hidden transition"
         />

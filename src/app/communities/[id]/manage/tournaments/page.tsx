@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, use } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Input } from '@/components/ui/Input';
@@ -46,6 +46,7 @@ const DAYS_OF_WEEK: { value: number; key: string }[] = [
 
 export default function ClubTournamentsPage({ params }: { params: Promise<{ id: string }> }) {
   const translate = useTranslations('Match');
+  const locale = useLocale();
   type CommunityTournamentMatchType = 'SINGLES' | 'DOUBLES' | 'MIXED_DOUBLES';
   const resolvedParams = use(params);
   const id = resolvedParams.id;
@@ -143,7 +144,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
           : {}),
         bracketType: liteBracketType,
         maxTeams: liteMaxTeams,
-        description: `Giải đấu giao hữu nhanh CLB ${community?.name || ''}`,
+        description: translate('communityQuickTournamentDescription', { club: community?.name || '' }),
         isRanked: liteIsRanked,
         startDate: liteStartDate || undefined,
         startTime: liteStartTime || undefined,
@@ -194,7 +195,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
       // 1. Create Parent Tournament first
       const parentRes = await tournamentsApi.createParentTournament({
         name: newTourneyName.trim(),
-        description: `Giải đấu nội bộ của Câu lạc bộ ${community?.name || ''}`,
+        description: translate('communityInternalTournamentDescription', { club: community?.name || '' }),
       });
 
       const parentId = parentRes.data?.id;
@@ -406,7 +407,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-slate-500 text-xs font-semibold pt-1">
                     <span className="flex items-center gap-1">
                       <Calendar className="w-3.5 h-3.5 text-slate-450" />
-                      {t.startDate ? new Date(t.startDate).toLocaleDateString('vi-VN') : translate('communityTournamentScheduledFallback')}
+                      {t.startDate ? new Date(t.startDate).toLocaleDateString(locale === 'vi' ? 'vi-VN' : 'en-US') : translate('communityTournamentScheduledFallback')}
                     </span>
                     <span className="flex items-center gap-1">
                       <Users className="w-3.5 h-3.5 text-slate-450" />

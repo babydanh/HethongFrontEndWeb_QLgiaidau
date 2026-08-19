@@ -35,8 +35,16 @@ export function getAllowedSportRuleKinds(category: Category | null | undefined):
   }
 
   const fallbackKind = category?.categoryConfig?.ruleKind;
+  if (fallbackKind === 'PICKLEBALL_RALLY' || fallbackKind === 'PICKLEBALL_SIDE_OUT') {
+    return ['PICKLEBALL_RALLY', 'PICKLEBALL_SIDE_OUT'];
+  }
   if (isSportRuleKind(fallbackKind)) {
     return [fallbackKind];
+  }
+
+  const inferred = inferSportRuleKindFromCategory(category);
+  if (inferred === 'PICKLEBALL_RALLY' || inferred === 'PICKLEBALL_SIDE_OUT') {
+    return ['PICKLEBALL_RALLY', 'PICKLEBALL_SIDE_OUT'];
   }
 
   return [];

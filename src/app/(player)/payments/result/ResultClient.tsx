@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { paymentsApi } from '@/features/payments/api';
 import { Button } from '@/components/ui/Button';
@@ -24,6 +25,8 @@ interface PaymentDetails {
 }
 
 export default function ResultClient() {
+  const translate = useTranslations('PaymentResult');
+  const locale = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
   
@@ -62,7 +65,7 @@ export default function ResultClient() {
     const paymentData: Payment | undefined = res?.data;
 
     if (paymentData) {
-      let tName = 'Giải đấu thể thao';
+      let tName = translate('defaultTournamentName');
       if (paymentData.tournament?.name) {
         tName = paymentData.tournament.name;
       }
@@ -82,17 +85,17 @@ export default function ResultClient() {
 
       if (paymentData.status === 'COMPLETED') {
         setStatus('SUCCESS');
-        toast.success('Thanh toán lệ phí thành công!');
+        toast.success(translate('successToast'));
         return true; // done
       } else if (['FAILED', 'CANCELLED', 'EXPIRED', 'REFUNDED'].includes(paymentData.status)) {
         setStatus('FAILED');
-        toast.error('Thanh toán thất bại');
+        toast.error(translate('failedToast'));
         return true; // done
       } else {
         const createdAtMs = new Date(paymentData.createdAt).getTime();
         if (Number.isFinite(createdAtMs) && Date.now() - createdAtMs > 15 * 60 * 1000) {
           setStatus('FAILED');
-          toast.error('Giao dịch đã quá thời gian chờ thanh toán.');
+          toast.error(translate('expiredToast'));
           return true;
         }
         setStatus('PENDING');
@@ -102,11 +105,11 @@ export default function ResultClient() {
       setStatus('ERROR');
       return true; // error, stop polling
     }
-  }, []);
+  }, [translate]);
 
   useEffect(() => {
     if (!paymentId) {
-      toast.error('Không tìm thấy thông tin giao dịch');
+      toast.error(translate('missingTransaction'));
       Promise.resolve().then(() => {
         setStatus('ERROR');
         setLoading(false);
@@ -164,7 +167,7 @@ export default function ResultClient() {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center gap-3">
         <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
-        <p className="text-slate-500 font-medium">Đang kiểm tra kết quả giao dịch...</p>
+        <p className="text-slate-500 font-medium">{translate('loading')}</p>
       </div>
     );
   }
@@ -181,11 +184,11 @@ export default function ResultClient() {
               <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-4">
                 <CheckCircle2 className="w-10 h-10" />
               </div>
-              <h1 className="text-2xl font-bold text-slate-900 mb-2">Thành Công!</h1>
+              <h1 className="text-2xl font-bold text-slate-900 mb-2">{translate('successTitle')}</h1>
               <p className="text-slate-500 text-sm mb-6 leading-relaxed">
                 {details?.participantId
-                  ? 'Đăng ký và thanh toán của bạn đã hoàn tất. Bạn đã chính thức có suất tham gia giải đấu.'
-                  : 'Phí công bố giải đấu đã được thanh toán. Trạng thái giải đấu đã được cập nhật.'}
+                  ? translate('participantSuccess')
+                  : translate('publishFeeSuccess')}
               </p>
             </div>
           )}
@@ -195,9 +198,9 @@ export default function ResultClient() {
               <div className="w-16 h-16 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mb-4">
                 <XCircle className="w-10 h-10" />
               </div>
-              <h1 className="text-2xl font-bold text-slate-900 mb-2">Thất Bại</h1>
+              <h1 className="text-2xl font-bold text-slate-900 mb-2">{translate('failedTitle')}</h1>
               <p className="text-slate-500 text-sm mb-6 leading-relaxed">
-                Giao dịch thanh toán lệ phí không thành công hoặc đã bị hủy từ phía cổng thanh toán.
+                {translate('failedDescription')}
               </p>
             </div>
           )}
@@ -207,13 +210,13 @@ export default function ResultClient() {
               <div className="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mb-4">
                 <AlertCircle className="w-10 h-10 animate-pulse" />
               </div>
-              <h1 className="text-2xl font-bold text-slate-900 mb-2">Đang Chờ Xử Lý</h1>
+              <h1 className="text-2xl font-bold text-slate-900 mb-2">{translate('pendingTitle')}</h1>
               <p className="text-slate-500 text-sm mb-4 leading-relaxed">
-                Hóa đơn đang được kiểm tra. Trạng thái có thể cập nhật sau vài phút.
+                {translate('pendingDescription')}
               </p>
               <div className="flex items-center gap-2 text-xs text-slate-400 mb-6">
                 <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                <span>Đang tự động kiểm tra trạng thái...</span>
+                <span>{translate('autoChecking')}</span>
               </div>
             </div>
           )}
@@ -223,9 +226,9 @@ export default function ResultClient() {
               <div className="w-16 h-16 bg-slate-100 text-slate-500 rounded-full flex items-center justify-center mb-4">
                 <AlertCircle className="w-10 h-10" />
               </div>
-              <h1 className="text-2xl font-bold text-slate-900 mb-2">Lỗi Giao Dịch</h1>
+              <h1 className="text-2xl font-bold text-slate-900 mb-2">{translate('errorTitle')}</h1>
               <p className="text-slate-500 text-sm mb-6 leading-relaxed">
-                Không thể tải thông tin thanh toán. Vui lòng liên hệ hỗ trợ hoặc thử lại sau.
+                {translate('errorDescription')}
               </p>
             </div>
           )}
@@ -239,28 +242,28 @@ export default function ResultClient() {
               
               <div className="flex flex-col gap-2.5 text-slate-600">
                 <div className="flex justify-between">
-                  <span>Mã giao dịch:</span>
+                  <span>{translate('transactionId')}</span>
                   <span className="font-semibold text-slate-800 text-xs truncate max-w-[150px]">{details.id}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>
                     {details.purpose === 'PLATFORM_FEE'
-                      ? 'Phí nền tảng:'
+                      ? translate('platformFee')
                       : details.purpose === 'TOURNAMENT_PUBLISH_FEE'
-                        ? 'Phí công bố:'
-                        : 'Lệ phí tham gia:'}
+                        ? translate('publicationFee')
+                        : translate('registrationFee')}
                   </span>
                   <span className="font-bold text-slate-900">{formatCurrency(Number(details.amount))}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Cổng thanh toán:</span>
+                  <span>{translate('paymentGateway')}</span>
                   <span className="font-semibold text-slate-800">{details.paymentGateway || 'PAYOS'}</span>
                 </div>
                 {details.paidAt && (
                   <div className="flex justify-between">
-                    <span>Thời gian:</span>
+                    <span>{translate('paidAt')}</span>
                     <span className="font-semibold text-slate-800 text-xs flex items-center gap-1">
-                      <Calendar className="w-3 h-3" /> {new Date(details.paidAt).toLocaleString('vi-VN')}
+                      <Calendar className="w-3 h-3" /> {new Date(details.paidAt).toLocaleString(locale)}
                     </span>
                   </div>
                 )}
@@ -275,7 +278,7 @@ export default function ResultClient() {
                 onClick={() => router.push(details.participantId ? buildTournamentDetailHref(details.tournamentId) : `/organizer/tournaments/${details.tournamentId}/manage`)}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2.5 font-bold"
               >
-                {details.participantId ? 'Về Trang Giải Đấu' : 'Về Trang Quản Lý Giải'}
+                {details.participantId ? translate('backToTournament') : translate('backToManage')}
               </Button>
             )}
             <Button
@@ -283,7 +286,7 @@ export default function ResultClient() {
               onClick={() => router.push('/tournaments')}
               className="w-full border-slate-200 text-slate-600 hover:bg-slate-50 rounded-lg py-2.5"
             >
-              Xem Các Giải Khác
+              {translate('viewOtherTournaments')}
             </Button>
           </div>
 

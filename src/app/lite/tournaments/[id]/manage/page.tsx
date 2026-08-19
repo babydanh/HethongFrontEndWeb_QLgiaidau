@@ -1,7 +1,7 @@
 'use client';
 
 import { use, useEffect, useState, useCallback } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
@@ -27,7 +27,7 @@ type LiteTab = 'overview' | 'participants' | 'bracket' | 'matches';
 const TAB_CONFIG: { key: LiteTab; label: string; icon: typeof Trophy }[] = [
   { key: 'overview', label: 'overviewTab', icon: Trophy },
   { key: 'participants', label: 'participantsTab', icon: Users },
-  { key: 'bracket', label: 'Bracket', icon: Swords },
+  { key: 'bracket', label: 'bracketTab', icon: Swords },
   { key: 'matches', label: 'matchesTab', icon: Calendar },
 ];
 
@@ -64,6 +64,7 @@ function SportLabel({ name }: { name?: string | null }) {
 
 export default function LiteTournamentManagePage({ params }: { params: Promise<{ id: string }> }) {
   const translate = useTranslations('LiteManage');
+  const locale = useLocale();
   const { id } = use(params);
   const router = useRouter();
   const [tournament, setTournament] = useState<Tournament | null>(null);
@@ -216,7 +217,7 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
   };
 
   const handleGeneratePairs = async (strategy: 'RANDOM' | 'ELO_BALANCED') => {
-    const label = strategy === 'RANDOM' ? 'ngẫu nhiên' : 'ELO cân bằng';
+    const label = strategy === 'RANDOM' ? translate('randomPair') : translate('balancedEloPair');
     if (!confirm(translate('pairAllConfirm', { label }))) return;
     setGeneratingStrategy(strategy);
     try {
@@ -259,7 +260,7 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
       : `${window.location.origin}/tournaments/${tournament.id}/register?invite=${encodeURIComponent(tournament.inviteCode)}`;
     try {
       await navigator.clipboard.writeText(joinUrl);
-      toast.success('Đã sao chép link mời!');
+      toast.success(translate('copyInviteSuccess'));
     } catch {
       toast.error(translate('copyFailed'));
     }
@@ -345,7 +346,7 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
           <AlertTriangle className="w-12 h-12 text-rose-500 mb-4" />
           <h2 className="text-xl font-bold text-slate-900">{translate('tournamentNotFound')}</h2>
           <p className="text-slate-500 mt-2">
-            Giải đấu không tồn tại hoặc bạn không có quyền truy cập.
+            {translate('accessUnavailable')}
           </p>
         </div>
       </div>
@@ -367,7 +368,7 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
           href="/organizer/tournaments"
           className="inline-flex items-center gap-1.5 text-slate-500 hover:text-slate-800 text-sm font-semibold"
         >
-          <ChevronLeft className="w-4 h-4" /> Giải đấu của tôi
+          <ChevronLeft className="w-4 h-4" /> {translate('myTournaments')}
         </Link>
 
         {/* Header card */}
@@ -387,7 +388,7 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                 {tournament.maxParticipants && (
                   <>
                     <span className="text-slate-300">|</span>
-                    <span>Tối đa {tournament.maxParticipants} đội</span>
+                    <span>{translate('maxTeams', { count: tournament.maxParticipants })}</span>
                   </>
                 )}
               </div>
@@ -396,12 +397,12 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
             <div className="flex items-center gap-2 shrink-0">
               <Link href={`/tournaments/${tournament.id}`} target="_blank">
                 <Button variant="outline" size="sm" className="gap-1.5 text-xs font-semibold">
-                  <ExternalLink className="w-3.5 h-3.5" /> Xem trang giải
+                  <ExternalLink className="w-3.5 h-3.5" /> {translate('viewTournament')}
                 </Button>
               </Link>
               {inviteUrl && (
                 <Button size="sm" className="gap-1.5 text-xs font-semibold" onClick={handleCopyInvite}>
-                  <Copy className="w-3.5 h-3.5" /> Sao chép link mời
+                  <Copy className="w-3.5 h-3.5" /> {translate('copyInvite')}
                 </Button>
               )}
             </div>
@@ -445,44 +446,45 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
               <h3 className="text-base font-bold text-slate-900">{translate('overviewTitle')}</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <InfoCard label={translate('sportLabel')} value={tournament.category?.name || translate('unknownValue')} />
-                <InfoCard label="Hình thức" value={
+                <InfoCard label={translate('matchTypeLabel')} value={
                   tournament.matchType === 'SINGLES' ? translate('matchTypeSingles')
                   : tournament.matchType === 'DOUBLES' ? translate('matchTypeDoubles')
                   : tournament.matchType === 'MIXED_DOUBLES' ? translate('matchTypeMixedDoubles')
                   : tournament.matchType || translate('unknownValue')
                 } />
-                <InfoCard label="Thể thức" value={
-                  tournament.format === 'SINGLE_ELIMINATION' ? 'Loại trực tiếp'
-                  : tournament.format === 'DOUBLE_ELIMINATION' ? 'Nhánh thắng/thua'
-                  : tournament.format === 'ROUND_ROBIN' ? 'Vòng tròn'
-                  : tournament.format === 'GROUP_STAGE_KNOCKOUT' ? 'Vòng bảng + loại'
+                <InfoCard label={translate('formatLabel')} value={
+                                    tournament.format === 'SINGLE_ELIMINATION' ? translate('formatSingleElimination')
+                  : tournament.format === 'DOUBLE_ELIMINATION' ? translate('formatDoubleElimination')
+                  : tournament.format === 'ROUND_ROBIN' ? translate('formatRoundRobin')
+                  : tournament.format === 'GROUP_STAGE_KNOCKOUT' ? translate('formatGroupStageKnockout')
+
                   : tournament.format || translate('unknownValue')
                 } />
                 <InfoCard label={translate('maxParticipants')} value={tournament.maxParticipants?.toString() || '—'} />
-                <InfoCard label="Người tham gia" value={tournament._count?.participants?.toString() || '0'} />
+                <InfoCard label={translate('participantLabel')} value={tournament._count?.participants?.toString() || '0'} />
                 <InfoCard label={translate('matchesTitle')} value={tournament._count?.matches?.toString() || '0'} />
                 {tournament.startDate && (
-                  <InfoCard label="Ngày bắt đầu" value={new Date(tournament.startDate).toLocaleDateString('vi-VN')} />
+                  <InfoCard label={translate('startDate')} value={new Date(tournament.startDate).toLocaleDateString(locale)} />
                 )}
                 {(tournament.locationAddress || tournament.tournamentConfig?.location?.display) && (
-                  <InfoCard label="Địa điểm" value={tournament.locationAddress || tournament.tournamentConfig?.location?.display || '—'} />
+                  <InfoCard label={translate('locationLabel')} value={tournament.locationAddress || tournament.tournamentConfig?.location?.display || '—'} />
                 )}
               </div>
               <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <h4 className="text-sm font-bold text-slate-900">{translate('rulesTitle')}</h4>
-                    <p className="mt-1 text-xs text-slate-600">Đây là preset gợi ý có thể chỉnh; chế độ Lite vẫn cho phép nhập điểm tự do khi cập nhật trận.</p>
+                    <p className="mt-1 text-xs text-slate-600">{translate('rulesPresetDescription')}</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge className="bg-white text-emerald-700 border-emerald-200">Tự do (Lite)</Badge>
+                    <Badge className="bg-white text-emerald-700 border-emerald-200">{translate('liteFreeBadge')}</Badge>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => setRulesEditing((value) => !value)}
                       disabled={['IN_PROGRESS', 'ONGOING', 'COMPLETED'].includes(tournament.status)}
                     >
-                      {rulesEditing ? 'Đóng' : 'Chỉnh luật'}
+                      {rulesEditing ? translate('closeRules') : translate('editRules')}
                     </Button>
                   </div>
                 </div>
@@ -490,33 +492,33 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                   <div className="mt-4 space-y-3 rounded-lg border border-emerald-200 bg-white p-3">
                     {tournament.sportRules?.kind === 'FOOTBALL' ? (
                       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                        <Input label="Số hiệp" type="number" min={1} max={4} value={ruleHalves} onChange={(event) => setRuleHalves(Number(event.target.value) || 1)} />
-                        <Input label="Phút mỗi hiệp" type="number" min={1} max={120} value={ruleHalfDuration} onChange={(event) => setRuleHalfDuration(Number(event.target.value) || 1)} />
-                        <label className="flex items-center gap-2 self-end pb-2 text-sm font-medium text-slate-700"><input type="checkbox" checked={ruleAllowDraw} onChange={(event) => setRuleAllowDraw(event.target.checked)} className="h-4 w-4 accent-emerald-600" /> Cho phép hòa</label>
+                        <Input label={translate('halves')} type="number" min={1} max={4} value={ruleHalves} onChange={(event) => setRuleHalves(Number(event.target.value) || 1)} />
+                        <Input label={translate('minutesPerHalf')} type="number" min={1} max={120} value={ruleHalfDuration} onChange={(event) => setRuleHalfDuration(Number(event.target.value) || 1)} />
+                        <label className="flex items-center gap-2 self-end pb-2 text-sm font-medium text-slate-700"><input type="checkbox" checked={ruleAllowDraw} onChange={(event) => setRuleAllowDraw(event.target.checked)} className="h-4 w-4 accent-emerald-600" /> {translate('allowDraw')}</label>
                       </div>
                     ) : (
                       <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
-                        <Input label="Set thắng" type="number" min={1} max={5} value={ruleSetsToWin} onChange={(event) => setRuleSetsToWin(Number(event.target.value) || 1)} />
-                        <Input label="Điểm mỗi set" type="number" min={1} max={99} value={rulePointsPerSet} onChange={(event) => setRulePointsPerSet(Number(event.target.value) || 1)} />
-                        <Input label="Điểm tối đa" type="number" min={1} max={199} value={ruleMaxPoints} onChange={(event) => setRuleMaxPoints(Number(event.target.value) || 1)} />
-                        <label className="flex items-center gap-2 self-end pb-2 text-sm font-medium text-slate-700"><input type="checkbox" checked={ruleWinByTwo} onChange={(event) => setRuleWinByTwo(event.target.checked)} className="h-4 w-4 accent-emerald-600" /> Chạm 2</label>
+                        <Input label={translate('setsToWin')} type="number" min={1} max={5} value={ruleSetsToWin} onChange={(event) => setRuleSetsToWin(Number(event.target.value) || 1)} />
+                        <Input label={translate('pointsPerSet')} type="number" min={1} max={99} value={rulePointsPerSet} onChange={(event) => setRulePointsPerSet(Number(event.target.value) || 1)} />
+                        <Input label={translate('maxPoints')} type="number" min={1} max={199} value={ruleMaxPoints} onChange={(event) => setRuleMaxPoints(Number(event.target.value) || 1)} />
+                        <label className="flex items-center gap-2 self-end pb-2 text-sm font-medium text-slate-700"><input type="checkbox" checked={ruleWinByTwo} onChange={(event) => setRuleWinByTwo(event.target.checked)} className="h-4 w-4 accent-emerald-600" /> {translate('winByTwoShort')}</label>
                       </div>
                     )}
                     <div className="flex justify-end"><Button size="sm" onClick={handleSaveRules} disabled={rulesSaving}>{rulesSaving ? translate('saving') : translate('saveRules')}</Button></div>
                   </div>
                 ) : tournament.sportRules?.kind === 'FOOTBALL' ? (
                   <div className="mt-3 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
-                    <InfoCard label="Số hiệp" value={String(tournament.sportRules.halvesCount ?? 2)} />
-                    <InfoCard label="Phút/hiệp" value={String(tournament.sportRules.halfDuration ?? 45)} />
-                    <InfoCard label="Hòa" value={tournament.sportRules.allowDraw === false ? 'Không' : 'Có'} />
-                    <InfoCard label="Đội hình" value={String(tournament.tournamentConfig?.teamSize ?? '—')} />
+                    <InfoCard label={translate('halves')} value={String(tournament.sportRules.halvesCount ?? 2)} />
+                    <InfoCard label={translate('minutesPerHalf')} value={String(tournament.sportRules.halfDuration ?? 45)} />
+                    <InfoCard label={translate('allowDraw')} value={tournament.sportRules.allowDraw === false ? translate('no') : translate('yes')} />
+                    <InfoCard label={translate('teamSize')} value={String(tournament.tournamentConfig?.teamSize ?? '—')} />
                   </div>
                 ) : (
                   <div className="mt-3 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
-                    <InfoCard label="Set thắng" value={String(tournament.sportRules?.setsToWin ?? '—')} />
-                    <InfoCard label="Điểm/set" value={String(tournament.sportRules?.pointsPerSet ?? '—')} />
-                    <InfoCard label="Điểm tối đa" value={String(tournament.sportRules?.maxPoints ?? '—')} />
-                    <InfoCard label="Chạm 2" value={tournament.sportRules?.winByTwo === false ? 'Không' : 'Có'} />
+                    <InfoCard label={translate('setsToWin')} value={String(tournament.sportRules?.setsToWin ?? '—')} />
+                    <InfoCard label={translate('pointsPerSet')} value={String(tournament.sportRules?.pointsPerSet ?? '—')} />
+                    <InfoCard label={translate('maxPoints')} value={String(tournament.sportRules?.maxPoints ?? '—')} />
+                    <InfoCard label={translate('winByTwoShort')} value={tournament.sportRules?.winByTwo === false ? translate('no') : translate('yes')} />
                   </div>
                 )}
               </div>
@@ -527,10 +529,11 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
             <div className="space-y-5">
               <div className="flex items-center justify-between">
                 <h3 className="text-base font-semibold text-slate-900">
-                  Người tham gia
+                                    {translate('participantLabel')}
+
                   {!participantsLoading && (
                     <span className="ml-2 text-sm font-medium text-slate-400">
-                      ({participants.length} hồ sơ)
+                      ({translate('participantProfiles', { count: participants.length })})
                     </span>
                   )}
                 </h3>
@@ -542,7 +545,7 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                   className="gap-1 text-xs font-semibold"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${participantsLoading ? 'animate-spin' : ''}`} />
-                  Làm mới
+                  {translate('refresh')}
                 </Button>
                 <Button
                   variant="outline"
@@ -552,7 +555,7 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                   className="gap-1 text-xs font-semibold text-amber-700 border-amber-300 hover:bg-amber-50"
                 >
                   <FlaskConical className={`w-3.5 h-3.5 ${mockLoading ? 'animate-pulse' : ''}`} />
-                  {mockLoading ? 'Đang tạo...' : 'Tạo VĐV ảo'}
+                  {mockLoading ? translate('creating') : translate('createMockParticipant')}
                 </Button>
               </div>
 
@@ -565,7 +568,7 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                   <AlertTriangle className="w-8 h-8 text-rose-500 mx-auto mb-2" />
                   <p className="text-sm font-semibold text-rose-800">{participantsError}</p>
                   <Button variant="outline" size="sm" onClick={fetchParticipants} className="mt-3 text-xs">
-                    Thử lại
+                    {translate('retry')}
                   </Button>
                 </div>
               ) : participants.length === 0 ? (
@@ -573,7 +576,7 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                   <Users className="w-10 h-10 mx-auto mb-2 text-slate-300" />
                   <p className="text-sm text-slate-500 font-medium">{translate('noParticipants')}</p>
                   <p className="text-xs text-slate-400 mt-1">
-                    Chia sẻ link mời để người chơi đăng ký
+                    {translate('shareInviteToRegister')}
                   </p>
                 </div>
               ) : (
@@ -585,11 +588,11 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                       <div>
                         <h4 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
                           <Users className="w-4 h-4 text-amber-500" />
-                          Chờ ghép cặp ({pendingParticipants.length})
+                          {translate('pendingPairingsCount', { count: pendingParticipants.length })}
                         </h4>
                         {pendingParticipants.length === 0 ? (
                           <p className="text-xs text-slate-400 italic p-3 bg-slate-50 rounded-lg text-center">
-                            Không có người chơi nào đang chờ ghép
+                            {translate('noPendingPairingsShort')}
                           </p>
                         ) : (
                           <div className="space-y-2">
@@ -630,7 +633,8 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                                     </div>
                                   </div>
                                   <Badge className="bg-amber-50 text-amber-700 border-amber-200 text-[10px] font-semibold">
-                                    Chờ ghép
+                                                                        {translate('pendingPairingBadge')}
+
                                   </Badge>
                                 </div>
                               );
@@ -653,7 +657,7 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                             ) : (
                               <UserPlus className="w-3.5 h-3.5" />
                             )}
-                            Ghép thủ công ({selectedIds.length}/2)
+                            {translate('manualPair', { count: selectedIds.length })}
                           </Button>
                           <div className="flex-1" />
                           <Button
@@ -668,7 +672,7 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                             ) : (
                               <Shuffle className="w-3.5 h-3.5" />
                             )}
-                            Ghép ngẫu nhiên
+                            {translate('randomPair')}
                           </Button>
                           <Button
                             variant="outline"
@@ -682,7 +686,7 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                             ) : (
                               <Shuffle className="w-3.5 h-3.5" />
                             )}
-                            Ghép ELO cân bằng
+                            {translate('balancedEloPair')}
                           </Button>
                         </div>
                       )}
@@ -695,7 +699,7 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                         </h4>
                         {pairedParticipants.length === 0 ? (
                           <p className="text-xs text-slate-400 italic p-3 bg-slate-50 rounded-lg text-center">
-                            Chưa có cặp nào được ghép
+                            {translate('noPairsCreated')}
                           </p>
                         ) : (
                           <div className="space-y-3">
@@ -711,12 +715,14 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                                     </span>
                                     {p.teamStatus === 'PENDING_APPROVAL' && (
                                       <Badge className="bg-amber-50 text-amber-700 border-amber-200 text-[10px]">
-                                        Chờ duyệt
+                                                                                {translate('pendingApproval')}
+
                                       </Badge>
                                     )}
                                     {p.teamStatus === 'COMPLETE' && (
                                       <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px]">
-                                        Sẵn sàng
+                                                                                {translate('ready')}
+
                                       </Badge>
                                     )}
                                   </div>
@@ -782,14 +788,15 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                             )}
                           </div>
                           <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px] font-semibold">
-                            Đã tham gia
+                                                        {translate('joined')}
+
                           </Badge>
                         </div>
                       ))}
                     </div>
                   )}
 
-                  {/* Tạo bracket */}
+                  {/* Create bracket */}
                   {(tournament?.matchType === 'DOUBLES' ? pairedParticipants.length > 0 : participants.length > 0) && (
                     <div className="pt-4 border-t border-slate-100">
                       <div className="mb-3 flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
@@ -798,11 +805,12 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
                           <p className="text-xs text-amber-700">{translate('participantListDescription')}</p>
                         </div>
                         {tournament?.isRegistrationLocked ? (
-                          <Badge className="shrink-0 border-emerald-200 bg-emerald-50 text-emerald-700">Đã chốt</Badge>
+                          <Badge className="shrink-0 border-emerald-200 bg-emerald-50 text-emerald-700">{translate('rosterLockedBadgeShort')}</Badge>
                         ) : (
                           <Button variant="outline" onClick={handleConfirmRoster} disabled={rosterConfirming} className="shrink-0 border-amber-300 text-amber-800 hover:bg-amber-100">
                             {rosterConfirming ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}
-                            Chốt danh sách
+                                                        {translate('lockRoster')}
+
                           </Button>
                         )}
                       </div>
@@ -827,17 +835,17 @@ export default function LiteTournamentManagePage({ params }: { params: Promise<{
 
           {activeTab === 'bracket' && (
             <div className="space-y-4">
-              <h3 className="text-base font-bold text-slate-900">Bracket</h3>
+              <h3 className="text-base font-bold text-slate-900">{translate('bracketTitle')}</h3>
               <p className="text-sm text-slate-500">
-                {hasBracket ? 'Bracket đã được lưu trên hệ thống và sẽ được dùng để tạo các trận đấu.' : 'Chưa có bracket được lưu.'}
+                {hasBracket ? translate('bracketSavedDescriptionShort') : translate('noBracketSavedShort')}
               </p>
               {hasBracket && (
                 <div className="flex flex-wrap gap-2">
                   <Link href={`/tournaments/${id}?tab=bracket`} target="_blank">
-                    <Button variant="outline" className="gap-2"><ExternalLink className="w-4 h-4" /> Xem sơ đồ</Button>
+                    <Button variant="outline" className="gap-2"><ExternalLink className="w-4 h-4" /> {translate('viewBracket')}</Button>
                   </Link>
                   <Button variant="outline" onClick={handleResetBracket} disabled={bracketLoading} className="gap-2 border-amber-200 text-amber-700 hover:bg-amber-50">
-                    <RefreshCw className="w-4 h-4" /> Reset bracket
+                    <RefreshCw className="w-4 h-4" /> {translate('resetBracketAction')}
                   </Button>
                 </div>
               )}

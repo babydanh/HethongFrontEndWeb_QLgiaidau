@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import {
   Bot,
   ChevronLeft,
@@ -211,6 +211,7 @@ function renderHighlightedText(text: string, query: string) {
 export default function UnifiedChatWidget() {
   const pathname = usePathname();
   const translate = useTranslations('Common');
+  const locale = useLocale();
   const quickPrompts = quickPromptKeys.map((key) => translate(key));
   const roomLabels = { club: translate('club'), conversation: translate('conversation') };
   const { user, isAuthenticated } = useAuthStore();
@@ -928,9 +929,9 @@ export default function UnifiedChatWidget() {
       setMessages((current) =>
         current.map((m) => (m.id === messageId ? { ...m, isPinned: true } : { ...m, isPinned: false })),
       );
-      toast.success('Đã ghim tin nhắn lên đầu phòng chat.');
+      toast.success(translate('chatPinSuccess'));
     } catch (err) {
-      toast.error(getErrorMessage(err, 'Không thể ghim tin nhắn.'));
+      toast.error(getErrorMessage(err, translate('chatPinFailed')));
     }
   };
 
@@ -942,9 +943,9 @@ export default function UnifiedChatWidget() {
       setMessages((current) =>
         current.map((m) => (m.id === messageId ? { ...m, isPinned: false } : m)),
       );
-      toast.success('Đã bỏ ghim tin nhắn.');
+      toast.success(translate('chatUnpinSuccess'));
     } catch (err) {
-      toast.error(getErrorMessage(err, 'Không thể bỏ ghim tin nhắn.'));
+      toast.error(getErrorMessage(err, translate('chatUnpinFailed')));
     }
   };
 
@@ -955,9 +956,9 @@ export default function UnifiedChatWidget() {
       setUploadingClubAvatar(true);
       const res = await uploadApi.uploadImage(file);
       setSettingsClubAvatar(res.url);
-      toast.success('Đã tải ảnh logo lên thành công!');
+      toast.success(translate('chatClubAvatarUploadSuccess'));
     } catch (err) {
-      toast.error(getErrorMessage(err, 'Không thể tải ảnh logo lên.'));
+      toast.error(getErrorMessage(err, translate('chatClubAvatarUploadFailed')));
     } finally {
       setUploadingClubAvatar(false);
       if (clubAvatarInputRef.current) clubAvatarInputRef.current.value = '';
@@ -990,7 +991,7 @@ export default function UnifiedChatWidget() {
     try {
       await inboxApi.votePoll(messageId, optionId);
     } catch (err) {
-      toast.error(getErrorMessage(err, 'Không thể gửi bình chọn.'));
+      toast.error(getErrorMessage(err, translate('chatPollVoteFailed')));
     }
   };
 
@@ -998,12 +999,12 @@ export default function UnifiedChatWidget() {
     if (selection.kind !== 'ROOM') return;
     const q = pollQuestion.trim();
     if (!q) {
-      toast.error('Vui lòng nhập câu hỏi bình chọn.');
+      toast.error(translate('chatPollQuestionRequired'));
       return;
     }
     const validOpts = pollOptions.map((o) => o.trim()).filter(Boolean);
     if (validOpts.length < 2) {
-      toast.error('Cần ít nhất 2 lựa chọn để tạo bình chọn.');
+      toast.error(translate('chatPollMinOptions'));
       return;
     }
 
@@ -1061,7 +1062,7 @@ export default function UnifiedChatWidget() {
       if (isBlocked) {
         await chatApi.unblockUser(otherParticipant.id);
         setBlockedUserIds((prev) => prev.filter((id) => id !== otherParticipant.id));
-        toast.success('Đã bỏ chặn người dùng.');
+        toast.success(translate('chatUnblockSuccess'));
       } else {
         await chatApi.blockUser(otherParticipant.id);
         setBlockedUserIds((prev) => [...prev, otherParticipant.id]);
@@ -1069,7 +1070,7 @@ export default function UnifiedChatWidget() {
       }
       setShowRoomMenu(false);
     } catch (err) {
-      toast.error(getErrorMessage(err, 'Thao tác chặn thất bại.'));
+      toast.error(getErrorMessage(err, translate('chatBlockFailed')));
     }
   };
 
@@ -1098,10 +1099,10 @@ export default function UnifiedChatWidget() {
       setShowRoomMenu(false);
       toast.success(
         preference === 'ALL'
-          ? 'Đã bật nhận tất cả thông báo CLB'
+          ? translate('chatNotificationAll')
           : preference === 'MENTIONS_ONLY'
-          ? 'Chỉ nhận thông báo khi được nhắc tên (@tag)'
-          : 'Đã tắt thông báo CLB (Im lặng)',
+          ? translate('chatNotificationMentions')
+          : translate('chatNotificationMuted'),
       );
     } catch (err) {
       toast.error(getErrorMessage(err, translate('updateClubNotificationsFailed')));
@@ -1155,7 +1156,7 @@ export default function UnifiedChatWidget() {
                       id: currentReply.id,
                       senderName:
                         currentReply.senderName ||
-                        (currentReply.mine ? 'Tôi' : 'Thành viên'),
+                        (currentReply.mine ? translate('chatCurrentUser') : translate('member')),
                       text: currentReply.messageText || '',
                     }
                   : undefined,
@@ -1170,7 +1171,7 @@ export default function UnifiedChatWidget() {
                 lastMessage: {
                   id: message.id,
                   senderId: message.senderId,
-                  senderName: message.senderName || (user?.fullName || 'Tôi'),
+                  senderName: message.senderName || (user?.fullName || translate('chatCurrentUser')),
                   content: message.messageText || (attachmentsUrls.length ? translate('imageAttachment') : ''),
                   createdAt: message.createdAt,
                 },
@@ -1184,7 +1185,7 @@ export default function UnifiedChatWidget() {
       setSelectedFiles(filesToUpload);
       setPreviewUrls(filesToUpload.map((file) => URL.createObjectURL(file)));
       setReplyingTo(currentReply);
-      toast.error(getErrorMessage(error, 'Không thể gửi tin nhắn.'));
+      toast.error(getErrorMessage(error, translate('chatSendFailed')));
     } finally {
       setSending(false);
       setUploadingMedia(false);
@@ -1326,7 +1327,7 @@ export default function UnifiedChatWidget() {
           }),
         );
       }
-      if (!answer) toast.error('AI chưa trả lời, thử lại sau.');
+      if (!answer)       toast.error(translate('chatAiNoReply'));
     } catch (error: unknown) {
       toast.error(getErrorMessage(error, translate('connectAiFailed')));
       setAiMessages((current) => current.slice(0, -2));
@@ -1370,11 +1371,11 @@ export default function UnifiedChatWidget() {
             } w-full md:w-[240px] shrink-0 flex-col border-r border-slate-100 bg-slate-50`}
           >
             <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3.5">
-              <p className="text-sm font-bold text-slate-900">Tin nhắn</p>
+              <p className="text-sm font-bold text-slate-900">{translate('chatMessagesTitle')}</p>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                aria-label="Đóng"
+                aria-label={translate('chatClose')}
                 className="p-1 text-slate-400 hover:text-slate-600 rounded-md hover:bg-slate-200/60 transition"
               >
                 <X className="h-4 w-4" />
@@ -1400,11 +1401,12 @@ export default function UnifiedChatWidget() {
                 </span>
                 <span className="min-w-0 flex-1">
                   <strong className="block truncate text-xs font-semibold">
-                    Trợ lý AI Sporto
+                    {translate('chatAiTitle')}
                   </strong>
                   <small className="text-[10px] text-slate-500 flex items-center gap-1">
                     <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    Luôn sẵn sàng
+                                        {translate('chatAiAvailable')}
+
                   </small>
                 </span>
                 <Sparkles className="ml-auto h-3.5 w-3.5 text-blue-500 shrink-0" />
@@ -1428,16 +1430,19 @@ export default function UnifiedChatWidget() {
                 </span>
                 <span className="min-w-0 flex-1">
                   <strong className="block truncate text-xs font-semibold">
-                    Hỗ trợ Sporto
+                                        {translate('chatSupportTitle')}
+
                   </strong>
                   <small className="text-[10px] text-slate-500">
-                    Admin trực tuyến
+                                        {translate('chatSupportOnline')}
+
                   </small>
                 </span>
               </button>
 
               <div className="my-2 border-t border-slate-200/60 px-2 pt-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                Phòng Chat & CLB
+                                {translate('chatRoomsTitle')}
+
               </div>
 
               {/* Chat & Club Rooms */}
@@ -1526,7 +1531,7 @@ export default function UnifiedChatWidget() {
                 className={`flex items-center gap-2.5 min-w-0 ${
                   selection.kind === 'ROOM' ? 'cursor-pointer hover:opacity-85' : ''
                 }`}
-                title={selection.kind === 'ROOM' ? 'Nhấn để đổi logo / cài đặt phòng chat' : undefined}
+                title={selection.kind === 'ROOM' ? translate('chatChangeRoomSettings') : undefined}
               >
                 <button
                   type="button"
@@ -1535,7 +1540,7 @@ export default function UnifiedChatWidget() {
                     e.stopPropagation();
                     setIsMobileRoomOpen(false);
                   }}
-                  title="Quay lại danh sách tin nhắn"
+                  title={translate('chatBackToMessages')}
                 >
                   <ChevronLeft className="h-5 w-5" />
                 </button>
@@ -1567,26 +1572,30 @@ export default function UnifiedChatWidget() {
                   </div>
                   <p className="text-[11px] text-slate-500 flex items-center gap-1">
                     {selection.kind === 'AI' ? (
-                      'Trợ lý AI Sporto 24/7'
+                      translate('chatAi24x7')
                     ) : typingUserId ? (
                       <span className="text-blue-600 font-medium animate-pulse">
-                        Đang soạn tin nhắn...
+                                                {translate('chatTyping')}
+
                       </span>
                     ) : isOtherBlocked ? (
-                      <span className="text-rose-500 font-semibold">Đã chặn</span>
+                      <span className="text-rose-500 font-semibold">{translate('chatBlocked')}</span>
                     ) : selectedRoom?.type === 'CLUB' ? (
                       <span className="text-slate-500 font-normal">
-                        Kênh cộng đồng · CLB
+                                                {translate('chatCommunityChannel')}
+
                       </span>
                     ) : selectedRoom?.participants?.some((p) => p.id !== user?.id && onlineUserIds.has(p.id)) ? (
                       <span className="flex items-center gap-1.5 text-emerald-600 font-medium">
                         <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-xs" />
-                        Đang hoạt động
+                                                {translate('chatOnline')}
+
                       </span>
                     ) : (
                       <span className="flex items-center gap-1.5 text-slate-400 font-normal">
                         <span className="inline-block w-1.5 h-1.5 rounded-full bg-slate-300" />
-                        Không trực tuyến
+                                                {translate('chatOffline')}
+
                       </span>
                     )}
                   </p>
@@ -1606,7 +1615,7 @@ export default function UnifiedChatWidget() {
                       window.setTimeout(() => searchInputRef.current?.focus(), 100);
                     }
                   }}
-                  title="Tìm kiếm tin nhắn"
+                  title={translate('chatSearch')}
                   className={`p-1.5 rounded-lg transition ${
                     isSearching
                       ? 'bg-blue-100 text-blue-600'
@@ -1622,7 +1631,7 @@ export default function UnifiedChatWidget() {
                     <button
                       type="button"
                       onClick={() => setShowRoomMenu((prev) => !prev)}
-                      aria-label="Tùy chọn đoạn chat"
+                      aria-label={translate('chatOptions')}
                       className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition"
                     >
                       <MoreVertical className="w-4 h-4" />
@@ -1633,7 +1642,8 @@ export default function UnifiedChatWidget() {
                         {selection.room.type === 'CLUB' && selection.room.communityId && (
                           <div className="mb-1 pb-1 border-b border-slate-100">
                             <p className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                              Thông báo CLB
+                                                            {translate('chatClubNotifications')}
+
                             </p>
                             <button
                               type="button"
@@ -1646,7 +1656,7 @@ export default function UnifiedChatWidget() {
                             >
                               <div className="flex items-center gap-2">
                                 <Bell className="w-3.5 h-3.5 text-blue-600" />
-                                <span>Tất cả tin nhắn</span>
+                                <span>{translate('chatAllMessages')}</span>
                               </div>
                               {clubNotificationPref === 'ALL' && <Check className="w-3.5 h-3.5 text-blue-600" />}
                             </button>
@@ -1661,7 +1671,7 @@ export default function UnifiedChatWidget() {
                             >
                               <div className="flex items-center gap-2">
                                 <AtSign className="w-3.5 h-3.5 text-amber-600" />
-                                <span>Chỉ khi được @tag</span>
+                                <span>{translate('chatMentionsOnly')}</span>
                               </div>
                               {clubNotificationPref === 'MENTIONS_ONLY' && <Check className="w-3.5 h-3.5 text-blue-600" />}
                             </button>
@@ -1676,14 +1686,14 @@ export default function UnifiedChatWidget() {
                             >
                               <div className="flex items-center gap-2">
                                 <BellOff className="w-3.5 h-3.5 text-slate-400" />
-                                <span>Tắt thông báo (Im lặng)</span>
+                                <span>{translate('chatMuteNotifications')}</span>
                               </div>
                               {clubNotificationPref === 'MUTED' && <Check className="w-3.5 h-3.5 text-rose-600" />}
                             </button>
                           </div>
                         )}
 
-                        {/* Cài đặt phòng chat CLB */}
+                        {/* Club chat room settings */}
                         {selection.room.type === 'CLUB' && (
                           <button
                             type="button"
@@ -1695,7 +1705,7 @@ export default function UnifiedChatWidget() {
                             className="flex w-full items-center gap-2 rounded-lg px-3 py-2 font-medium text-slate-700 hover:bg-slate-100 transition"
                           >
                             <Settings className="w-4 h-4 text-slate-500" />
-                            <span>Cài đặt phòng chat</span>
+                            <span>{translate('chatClubSettings')}</span>
                           </button>
                         )}
 
@@ -1722,8 +1732,8 @@ export default function UnifiedChatWidget() {
                             <ShieldAlert className="w-4 h-4" />
                             <span>
                               {isOtherBlocked
-                                ? 'Bỏ chặn người này'
-                                : 'Chặn tin nhắn'}
+                                                                ? translate('chatUnblock')
+                                : translate('chatBlock')}
                             </span>
                           </button>
                         )}
@@ -1767,7 +1777,7 @@ export default function UnifiedChatWidget() {
                   <span className="shrink-0 text-[11px] font-medium text-slate-500">
                     {searchMatches.length > 0
                       ? `${activeSearchMatchIndex + 1}/${searchMatches.length}`
-                      : '0 kết quả'}
+                      : translate('chatSearchNoResults')}
                   </span>
                 )}
                 {searchMatches.length > 0 && (
@@ -1775,7 +1785,7 @@ export default function UnifiedChatWidget() {
                     <button
                       type="button"
                       onClick={handlePrevSearchMatch}
-                      title="Kết quả trước (Shift+Enter)"
+                      title={translate('chatPrevResult')}
                       className="p-1 rounded text-slate-500 hover:bg-slate-200/70 hover:text-slate-800 transition"
                     >
                       <ChevronUp className="h-3.5 w-3.5" />
@@ -1783,7 +1793,7 @@ export default function UnifiedChatWidget() {
                     <button
                       type="button"
                       onClick={handleNextSearchMatch}
-                      title="Kết quả tiếp theo (Enter)"
+                      title={translate('chatNextResult')}
                       className="p-1 rounded text-slate-500 hover:bg-slate-200/70 hover:text-slate-800 transition"
                     >
                       <ChevronDown className="h-3.5 w-3.5" />
@@ -1796,7 +1806,7 @@ export default function UnifiedChatWidget() {
                     setIsSearching(false);
                     setSearchQuery('');
                   }}
-                  title="Đóng tìm kiếm (Esc)"
+                  title={translate('chatCloseSearch')}
                   className="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-200/70 transition shrink-0"
                 >
                   <X className="h-3.5 w-3.5" />
@@ -1820,9 +1830,9 @@ export default function UnifiedChatWidget() {
                   className="flex items-center gap-2 min-w-0 text-left group/pin flex-1"
                 >
                   <Pin className="h-3.5 w-3.5 text-amber-600 shrink-0 group-hover/pin:scale-110 transition" />
-                  <span className="font-bold text-amber-900 shrink-0">Tin ghim:</span>
+                  <span className="font-bold text-amber-900 shrink-0">{translate('chatPinned')}</span>
                   <span className="font-semibold text-amber-800 truncate max-w-[120px]">
-                    {pinnedMessage.senderName || 'Thành viên'}:
+                    {pinnedMessage.senderName || translate('member')}:
                   </span>
                   <span className="text-amber-900/80 truncate flex-1">
                     {pinnedMessage.messageText || (pinnedMessage.attachmentsUrls?.length ? translate('imageAttachment') : '')}
@@ -1831,7 +1841,7 @@ export default function UnifiedChatWidget() {
                 <button
                   type="button"
                   onClick={() => void handleUnpinMessage(pinnedMessage.id)}
-                  title="Bỏ ghim tin nhắn"
+                  title={translate('chatUnpin')}
                   className="p-1 text-amber-600 hover:text-amber-800 rounded-md hover:bg-amber-200/60 transition ml-2 shrink-0"
                 >
                   <PinOff className="h-3.5 w-3.5" />
@@ -1879,7 +1889,8 @@ export default function UnifiedChatWidget() {
                   {aiMessages.length === 1 && !sending && (
                     <div className="mt-6 space-y-2 max-w-sm mx-auto">
                       <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 text-center">
-                        Gợi ý câu hỏi nhanh
+                                                {translate('chatQuickQuestions')}
+
                       </p>
                       {quickPrompts.map((prompt) => (
                         <button
@@ -1899,7 +1910,8 @@ export default function UnifiedChatWidget() {
                         className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-amber-200 bg-amber-50/80 px-3.5 py-2.5 text-center text-xs font-bold text-amber-800 hover:bg-amber-100 transition shadow-xs"
                       >
                         <Headset className="h-4 w-4 text-amber-600" />
-                        Chat trực tiếp với Ban Quản Trị
+                                                {translate('chatContactAdmins')}
+
                       </button>
                     </div>
                   )}
@@ -1907,7 +1919,7 @@ export default function UnifiedChatWidget() {
               ) : loading ? (
                 <div className="flex flex-col items-center justify-center h-full py-12 text-slate-400 gap-2">
                   <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
-                  <span className="text-xs">Đang tải tin nhắn...</span>
+                  <span className="text-xs">{translate('chatLoadingMessages')}</span>
                 </div>
               ) : selection.kind === 'SUPPORT' ? (
                 supportMessages.map((message) => (
@@ -1957,7 +1969,8 @@ export default function UnifiedChatWidget() {
                       {loadingOlder && (
                         <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-600" />
                       )}
-                      Tải tin nhắn cũ hơn
+                                            {translate('chatLoadOlder')}
+
                     </button>
                   )}
                   {(() => {
@@ -1973,10 +1986,12 @@ export default function UnifiedChatWidget() {
                             <MessageCircle className="w-6 h-6" />
                           </div>
                           <p className="text-sm font-semibold text-slate-700">
-                            Chưa có tin nhắn nào
+                                                        {translate('chatNoMessagesTitle')}
+
                           </p>
                           <p className="text-xs text-slate-400 mt-0.5">
-                            Hãy gửi tin nhắn đầu tiên để bắt đầu trò chuyện!
+                                                        {translate('chatNoMessagesDescription')}
+
                           </p>
                         </div>
                       );
@@ -2289,7 +2304,7 @@ export default function UnifiedChatWidget() {
                                        </div>
 
                                        <span className="absolute bottom-2 right-2 rounded-full bg-black/55 backdrop-blur-xs px-2 py-0.5 text-[9px] text-white font-medium shadow">
-                                         {new Date(message.createdAt).toLocaleTimeString('vi-VN', {
+                                         {new Date(message.createdAt).toLocaleTimeString(locale, {
                                            hour: '2-digit',
                                            minute: '2-digit',
                                          })}
@@ -2477,7 +2492,7 @@ export default function UnifiedChatWidget() {
                                               {message.metadata.startDate && (
                                                 <div className="flex items-center gap-1.5">
                                                   <Calendar className="h-3.5 w-3.5 text-amber-600" />
-                                                  <span>Khởi tranh: {new Date(message.metadata.startDate).toLocaleDateString('vi-VN')}</span>
+                                                  <span>{translate('chatTournamentStarts', { date: new Date(message.metadata.startDate).toLocaleDateString(locale) })}</span>
                                                 </div>
                                               )}
                                             </div>
@@ -2506,7 +2521,7 @@ export default function UnifiedChatWidget() {
                                             : 'text-slate-400'
                                         }`}
                                       >
-                                        {new Date(message.createdAt).toLocaleTimeString('vi-VN', {
+                                        {new Date(message.createdAt).toLocaleTimeString(locale, {
                                           hour: '2-digit',
                                           minute: '2-digit',
                                         })}
@@ -2531,7 +2546,7 @@ export default function UnifiedChatWidget() {
                                         message.mine ? 'left-2' : 'right-2'
                                       } z-10 flex items-center gap-0.5 rounded-full bg-white px-1.5 py-0.5 text-xs shadow-md border border-slate-200 cursor-pointer hover:scale-105 active:scale-95 transition`}
                                       onClick={() => void toggleReaction(message.id, msgReactions[0])}
-                                      title={`${msgReactions.length} cảm xúc: ${reactionSummary} (Nhấn để thả/bỏ cảm xúc)`}
+                                      title={translate('chatReactionTooltip', { count: msgReactions.length, summary: reactionSummary })}
                                     >
                                       {Object.keys(reactionCounts).map((emoji) => (
                                         <span key={emoji} className="text-xs leading-none">
@@ -2571,7 +2586,8 @@ export default function UnifiedChatWidget() {
                                   <div className="mt-1 flex items-center justify-end gap-1 px-1">
                                     <span className="flex items-center gap-0.5 text-[9px] font-medium text-slate-400">
                                       <Check className="h-3 w-3 text-blue-500" />
-                                      Đã gửi
+                                                                            {translate('chatSent')}
+
                                     </span>
                                   </div>
                                 );
@@ -2640,7 +2656,7 @@ export default function UnifiedChatWidget() {
                     key={`${url}-${idx}`}
                     className="relative h-14 w-14 shrink-0 rounded-xl overflow-hidden border border-slate-200 shadow-2xs group"
                   >
-                    <img src={url} alt="Preview" className="h-full w-full object-cover" />
+                    <img src={url} alt={translate('chatImage')} className="h-full w-full object-cover" />
                     <button
                       type="button"
                       onClick={() => removeSelectedFile(idx)}
@@ -2653,7 +2669,7 @@ export default function UnifiedChatWidget() {
                 {uploadingMedia && (
                   <div className="flex items-center gap-1.5 text-xs text-blue-600">
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>Đang tải ảnh...</span>
+                    <span>{translate('chatUploadingImage')}</span>
                   </div>
                 )}
               </div>
@@ -2664,7 +2680,7 @@ export default function UnifiedChatWidget() {
               <div className="relative">
                 <div className="absolute bottom-full left-4 mb-2 z-50 w-72 rounded-2xl border border-slate-200 bg-white p-3 shadow-xl animate-in fade-in zoom-in-95">
                   <div className="flex items-center justify-between mb-2 pb-1 border-b border-slate-100">
-                    <span className="text-xs font-bold text-slate-700">Biểu tượng cảm xúc</span>
+                    <span className="text-xs font-bold text-slate-700">{translate('chatEmojiPicker')}</span>
                     <button
                       type="button"
                       onClick={() => setShowEmojiPicker(false)}
@@ -3179,7 +3195,8 @@ export default function UnifiedChatWidget() {
                       disabled={clearingRoom}
                       className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition"
                     >
-                      Hủy
+                                            {translate('cancel')}
+
                     </button>
                     <button
                       type="button"

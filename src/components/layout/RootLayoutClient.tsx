@@ -74,11 +74,7 @@ export default function RootLayoutClient({
         "flex-grow flex flex-col",
         hideHeaderFooter && "h-screen overflow-hidden",
       )}>
-        {hideHeaderFooter || isGuestRoute ? (
-          children
-        ) : (
-          <PageTransition>{children}</PageTransition>
-        )}
+        {children}
       </main>
       {!hideHeaderFooter && !isGuestRoute && <Footer />}
       {!hideHeaderFooter && !isGuestRoute && <UnifiedChatWidget />}

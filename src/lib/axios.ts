@@ -182,8 +182,8 @@ api.interceptors.request.use(
   (config) => {
     config.headers = config.headers ?? {};
 
-    const appApiKey = process.env.NEXT_PUBLIC_APP_API_KEY || 'sporto-secret-key-2026-VNDC';
-    if (!config.headers['x-app-key']) {
+    const appApiKey = process.env.NEXT_PUBLIC_APP_API_KEY;
+    if (appApiKey && !config.headers['x-app-key']) {
       config.headers['x-app-key'] = appApiKey;
     }
 

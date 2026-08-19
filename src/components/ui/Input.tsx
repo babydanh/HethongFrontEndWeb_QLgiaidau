@@ -34,10 +34,10 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           ref={ref}
           {...props}
         />
-        {error && (
-          <p className="absolute -bottom-5 text-xs font-medium text-rose-500 left-1">{error}</p>
-        )}
         </div>
+        {error && (
+          <p className="text-xs font-medium text-rose-500 mt-1 pl-0.5">{error}</p>
+        )}
       </div>
     )
   }
@@ -182,10 +182,10 @@ export const DateTimePicker = React.forwardRef<HTMLInputElement, DateTimePickerP
             className="absolute inset-0 opacity-0 pointer-events-none w-full h-full"
             />
           </button>
-          {error && (
-            <p className="absolute -bottom-5 text-xs font-medium text-rose-500 left-1">{error}</p>
-          )}
         </div>
+        {error && (
+          <p className="text-xs font-medium text-rose-500 mt-1 pl-0.5">{error}</p>
+        )}
       </div>
     );
   }
@@ -297,10 +297,10 @@ const DatePicker = React.forwardRef<HTMLInputElement, DatePickerProps>(
             className="absolute inset-0 opacity-0 pointer-events-none w-full h-full"
           />
           </button>
-          {error && (
-            <p className="absolute -bottom-5 text-xs font-medium text-rose-500 left-1">{error}</p>
-          )}
         </div>
+        {error && (
+          <p className="text-xs font-medium text-rose-500 mt-1 pl-0.5">{error}</p>
+        )}
       </div>
     );
   }

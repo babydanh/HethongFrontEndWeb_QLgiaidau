@@ -280,6 +280,11 @@ export function Header() {
               <Link
                 key={link.path}
                 href={link.path}
+                onClick={(e) => {
+                  if (e.button === 0 && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.altKey) {
+                    closeOverlays();
+                  }
+                }}
                 className={cn(
                   'flex h-full items-center border-b-2 text-sm transition-colors',
                   isActive(link.path)

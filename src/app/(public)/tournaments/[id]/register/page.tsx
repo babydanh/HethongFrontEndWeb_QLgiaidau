@@ -789,47 +789,60 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Left Column (5/12) - Sticky tournament info and division selector */}
           <div className="lg:col-span-5 flex flex-col gap-6 lg:sticky lg:top-24">
-            {/* Header Card */}
-            <div className="bg-gradient-to-br from-slate-900 via-slate-850 to-slate-800 text-white rounded-2xl border border-slate-700/60 shadow-md p-6 sm:p-7 relative overflow-hidden">
-              {tournament.visibility === 'PRIVATE' && (
-                <div className="absolute top-4 right-4 bg-blue-600 text-white font-bold text-[10px] px-2.5 py-1 rounded-md tracking-wider">
-                  {translate('privateInvite')}
-                </div>
-              )}
+            {/* Tournament Hero Card with Banner & Modern Clean Look */}
+            <div className="group relative overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm transition-all">
+              {/* Banner Image or Sport Gradient Cover */}
+              <div className="relative h-32 sm:h-36 w-full overflow-hidden bg-slate-100">
+                {tournament.bannerUrl ? (
+                  <img
+                    src={tournament.bannerUrl}
+                    alt={tournament.name}
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                ) : (
+                  <div className="h-full w-full bg-gradient-to-br from-blue-600 via-indigo-600 to-slate-900" />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/30 to-transparent" />
 
-              <span className="inline-flex items-center gap-1.5 bg-blue-500/20 text-blue-300 text-[10px] font-bold px-2.5 py-1 rounded-full border border-blue-400/20 uppercase tracking-wider mb-3">
-                {(() => {
-                  const logo = getSportLogo(tournament.category?.name);
-                  return logo ? (
-                    <img src={logo} alt={tournament.category?.name || ''} className="w-3 h-3 object-contain" />
-                  ) : null;
-                })()}
-                {tournament.category?.name || registrationTranslate('sportFallback')}
-              </span>
-
-              <h1 className="text-xl sm:text-2xl font-bold leading-tight text-white mb-4">
-                {tournament.name}
-              </h1>
-
-              <div className="space-y-2.5 text-xs font-medium text-slate-300 border-t border-slate-700/60 pt-4">
-                <div className="flex items-center gap-2.5">
-                  <Calendar className="w-4 h-4 text-blue-400 shrink-0" />
-                  <span>{translate('openingDate')}: <strong className="text-white">{tournament.startDate ? formatDate(tournament.startDate) : translate('notUpdated')}</strong></span>
+                {/* Badges on Banner */}
+                <div className="absolute bottom-3 left-4 right-4 flex items-center justify-between">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/90 backdrop-blur-md px-2.5 py-1 text-[11px] font-bold text-slate-800 shadow-sm">
+                    {tournament.category?.name || registrationTranslate('sportFallback')}
+                  </span>
+                  {tournament.visibility === 'PRIVATE' && (
+                    <span className="rounded-full bg-blue-600/90 backdrop-blur-md px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white">
+                      {translate('privateInvite')}
+                    </span>
+                  )}
                 </div>
-                <div className="flex items-center gap-2.5">
-                  <MapPin className="w-4 h-4 text-rose-400 shrink-0" />
-                  <span className="truncate">{tournament.locationAddress || translate('notUpdated')}</span>
-                </div>
-                <div className="flex items-center gap-2.5">
-                  <Trophy className="w-4 h-4 text-amber-400 shrink-0" />
-                  <span>
-                    {registrationTranslate('formatLabel')}: <strong className="text-white">{
+              </div>
+
+              {/* Tournament Details Content */}
+              <div className="p-5 sm:p-6 space-y-4">
+                <h1 className="text-lg sm:text-xl font-bold tracking-tight text-slate-900 leading-snug">
+                  {tournament.name}
+                </h1>
+
+                <div className="grid grid-cols-1 gap-2.5 text-xs text-slate-600 border-t border-slate-100 pt-3.5">
+                  <div className="flex items-center justify-between py-0.5">
+                    <span className="text-slate-500 font-medium">{translate('openingDate')}:</span>
+                    <span className="font-semibold text-slate-900">{tournament.startDate ? formatDate(tournament.startDate) : translate('notUpdated')}</span>
+                  </div>
+                  {tournament.locationAddress && (
+                    <div className="flex items-center justify-between py-0.5">
+                      <span className="text-slate-500 font-medium">Địa điểm:</span>
+                      <span className="font-semibold text-slate-900 truncate max-w-[200px]" title={tournament.locationAddress}>{tournament.locationAddress}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between py-0.5">
+                    <span className="text-slate-500 font-medium">{registrationTranslate('formatLabel')}:</span>
+                    <span className="font-bold text-blue-600">{
                       tournament.format === 'SINGLE_ELIMINATION' ? registrationTranslate('singleElimination') :
                       tournament.format === 'DOUBLE_ELIMINATION' ? registrationTranslate('doubleElimination') :
                       tournament.format === 'ROUND_ROBIN' ? registrationTranslate('roundRobin') :
                       tournament.format === 'GROUP_STAGE_KNOCKOUT' ? registrationTranslate('groupStageKnockout') : tournament.format
-                    }</strong>
-                  </span>
+                    }</span>
+                  </div>
                 </div>
               </div>
             </div>

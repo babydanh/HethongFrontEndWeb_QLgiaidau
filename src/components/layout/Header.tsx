@@ -240,36 +240,6 @@ export function Header() {
     });
   }, [pathname]);
 
-  useEffect(() => {
-    const isGuestRoute = GUEST_ROUTES.some((route) => pathname.startsWith(route));
-
-    if (!isClient || isGuestRoute || (isAuthenticated && user)) {
-      return;
-    }
-
-    void usersApi
-      .getProfile()
-      .then((profile) => {
-        setUser({
-          id: profile.id,
-          email: profile.email,
-          fullName: profile.fullName,
-          avatarUrl: profile.avatarUrl || undefined,
-          roles: profile.roles || (profile.role ? [profile.role] : []),
-          phoneNumber: profile.phoneNumber || undefined,
-          dateOfBirth: profile.dateOfBirth || undefined,
-          gender: profile.gender || undefined,
-          address: profile.address || undefined,
-          bio: profile.bio || undefined,
-        });
-      })
-      .catch((error: unknown) => {
-        if (isAuthenticated && (isHttpStatusError(error, 401) || isHttpStatusError(error, 403))) {
-          logout();
-        }
-      });
-  }, [isAuthenticated, isClient, logout, pathname, setUser, user]);
-
   const navLinks = [
     { name: t('home'), path: '/' },
     { name: t('tournaments'), path: '/tournaments' },

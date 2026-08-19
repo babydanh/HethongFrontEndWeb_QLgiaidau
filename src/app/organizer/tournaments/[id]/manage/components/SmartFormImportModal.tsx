@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Upload,
   FileSpreadsheet,
@@ -53,6 +54,7 @@ export default function SmartFormImportModal({
   selectedDivisionId,
   onSuccess,
 }: SmartFormImportModalProps) {
+  const translate = useTranslations('SmartFormImport');
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [fileName, setFileName] = useState<string>('');
   const [excelResult, setExcelResult] = useState<ParsedExcelResult | null>(null);
@@ -70,8 +72,8 @@ export default function SmartFormImportModal({
   });
 
   // Import options
-  const [autoApprove, setAutoApprove] = useState<boolean>(true);
-  const [isPaid, setIsPaid] = useState<boolean>(true);
+  const [autoApprove, setAutoApprove] = useState<boolean>(false);
+  const [isPaid, setIsPaid] = useState<boolean>(Number(tournament.entryFee ?? 0) <= 0);
   const [sendInvitationEmail, setSendInvitationEmail] = useState<boolean>(true);
   const [splitDoublesIntoSingles, setSplitDoublesIntoSingles] = useState<boolean>(false);
   const [excludedRowIndices, setExcludedRowIndices] = useState<Set<number>>(new Set());
@@ -82,6 +84,10 @@ export default function SmartFormImportModal({
   const targetDivision = useMemo(() => {
     return divisions.find((d) => d.id === targetDivisionId) ?? null;
   }, [divisions, targetDivisionId]);
+
+  React.useEffect(() => {
+    setIsPaid(Number(targetDivision?.entryFee ?? tournament.entryFee ?? 0) <= 0);
+  }, [targetDivision?.entryFee, tournament.entryFee, targetDivisionId]);
 
   const isTargetDoubles = useMemo(() => {
     const matchType = targetDivision?.matchType || tournament.matchType;
@@ -96,7 +102,7 @@ export default function SmartFormImportModal({
       setFileName(file.name);
       const res = await parseParticipantsExcel(file);
       if (!res.rows.length) {
-        toast.error('File Excel không có dữ liệu dòng nào!');
+        toast.error(translate('fileNoRows'));
         return;
       }
       setExcelResult(res);
@@ -134,9 +140,9 @@ export default function SmartFormImportModal({
 
       setExcludedRowIndices(new Set());
       setStep(2);
-      toast.success(`Đã đọc ${res.rows.length} dòng từ Google Form!`);
+      toast.success(translate('uploadReadSuccess', { count: res.rows.length }));
     } catch (err: any) {
-      toast.error('Lỗi khi đọc file: ' + (err?.message || 'Không hợp lệ'));
+      toast.error(translate('readFileError', { message: err?.message || 'Invalid file' }));
     } finally {
       if (e.target) e.target.value = '';
     }
@@ -183,7 +189,7 @@ export default function SmartFormImportModal({
         if (p1Name && p2Name) {
           defaultTeam = `${p1Name} / ${p2Name}`;
         } else {
-          defaultTeam = p1Name || p2Name || `Đội #${idx + 1}`;
+          defaultTeam = p1Name || p2Name || translate('teamNumber', { index: idx + 1 });
         }
       }
 
@@ -220,18 +226,37 @@ export default function SmartFormImportModal({
 
       if (!isTargetDoubles && p2Name && !splitDoublesIntoSingles) {
         hasFormatMismatch = true;
-        mismatchReason = 'Bảng Đơn nhưng có VĐV 2 (Cặp đôi)';
+        mismatchReason = translate('singlesWithDoubles');
       } else if (isTargetDoubles && !p2Name) {
         hasFormatMismatch = true;
-        mismatchReason = 'Bảng Đôi nhưng thiếu VĐV 2';
+        mismatchReason = translate('doublesMissingPlayer2');
       }
 
       if (p1Email) {
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p1Email)) {
+          hasFormatMismatch = true;
+          mismatchReason = `Email không hợp lệ: ${p1Email}`;
+        }
         if (seenEmails.has(p1Email.toLowerCase())) {
           hasFormatMismatch = true;
-          mismatchReason = mismatchReason ? `${mismatchReason}, Trùng Email ${p1Email}` : `Trùng Email ${p1Email}`;
+          const duplicateMessage = translate('duplicateEmail', { email: p1Email });
+          mismatchReason = mismatchReason ? `${mismatchReason}, ${duplicateMessage}` : duplicateMessage;
         } else {
           seenEmails.add(p1Email.toLowerCase());
+        }
+      }
+      if (p2Email) {
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p2Email)) {
+          hasFormatMismatch = true;
+          const invalidMessage = `Email không hợp lệ: ${p2Email}`;
+          mismatchReason = mismatchReason ? `${mismatchReason}, ${invalidMessage}` : invalidMessage;
+        }
+        if (seenEmails.has(p2Email.toLowerCase())) {
+          hasFormatMismatch = true;
+          const duplicateMessage = translate('duplicateEmail', { email: p2Email });
+          mismatchReason = mismatchReason ? `${mismatchReason}, ${duplicateMessage}` : duplicateMessage;
+        } else {
+          seenEmails.add(p2Email.toLowerCase());
         }
       }
 
@@ -251,7 +276,7 @@ export default function SmartFormImportModal({
     });
 
     return items;
-  }, [excelResult, columnMapping, isTargetDoubles, splitDoublesIntoSingles]);
+  }, [excelResult, columnMapping, isTargetDoubles, splitDoublesIntoSingles, translate]);
 
   const activeItemsToImport = useMemo(() => {
     return parsedItems.filter((item) => !excludedRowIndices.has(item.rowIndex));
@@ -280,7 +305,7 @@ export default function SmartFormImportModal({
 
   const handleSubmitImport = async () => {
     if (!activeItemsToImport.length) {
-      toast.error('Không có dòng VĐV nào được chọn để nạp!');
+      toast.error(translate('importNoRows'));
       return;
     }
 
@@ -305,7 +330,7 @@ export default function SmartFormImportModal({
         sendInvitationEmail,
       });
 
-      toast.success(res.data?.message || `Đã nạp thành công ${payloadParticipants.length} hồ sơ!`);
+      toast.success(res.data?.message || translate('importSuccess', { count: payloadParticipants.length }));
       await onSuccess();
       onOpenChange(false);
       setStep(1);
@@ -328,20 +353,20 @@ export default function SmartFormImportModal({
             </div>
             <div>
               <ModalTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
-                Nhập danh sách từ Google Form / Excel
+                {translate('title')}
                 <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-700">
-                  <Sparkles className="w-3 h-3 text-blue-600" /> AI Heuristic
+                  <Sparkles className="w-3 h-3 text-blue-600" /> {translate('aiHeuristic')}
                 </span>
               </ModalTitle>
               <p className="text-xs text-slate-500 font-medium mt-0.5">
-                Trích xuất danh sách VĐV, tự động đoán cột, kiểm tra thể thức Đơn/Đôi và gửi email thư mời
+                {translate('subtitle')}
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold text-slate-400">
-              Bước {step}/3
+              {translate('step', { step })}
             </span>
           </div>
         </ModalHeader>
@@ -354,7 +379,7 @@ export default function SmartFormImportModal({
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                    Nội dung thi đấu đích (Division)
+                    {translate('targetDivision')}
                   </label>
                   <select
                     value={targetDivisionId}
@@ -367,14 +392,14 @@ export default function SmartFormImportModal({
                       </option>
                     ))}
                     {divisions.length === 0 && (
-                      <option value="">-- Toàn giải đấu chung --</option>
+                      <option value="">{translate('allTournament')}</option>
                     )}
                   </select>
                 </div>
 
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                    Định dạng file hỗ trợ
+                    {translate('supportedFormat')}
                   </label>
                   <div className="flex h-11 items-center gap-2 rounded-xl border border-slate-100 bg-slate-50 px-3 text-xs font-medium text-slate-600">
                     <span className="font-bold text-emerald-600">.xlsx</span>,{' '}
@@ -432,14 +457,14 @@ export default function SmartFormImportModal({
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-slate-100 pb-3">
                 <div>
                   <h4 className="text-sm font-bold text-slate-900">
-                    Kiểm tra và khớp cột dữ liệu ({fileName})
+                    {translate('checkMapping', { fileName })}
                   </h4>
                   <p className="text-xs text-slate-500 font-medium">
-                    AI đã tự động dò tìm các cột tương ứng. Bạn có thể kiểm tra và thay đổi nếu cần.
+                    {translate('mappingHelp')}
                   </p>
                 </div>
                 <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full shrink-0">
-                  Tổng {excelResult.rows.length} dòng
+                  {translate('totalRows', { count: excelResult.rows.length })}
                 </span>
               </div>
 
@@ -447,14 +472,14 @@ export default function SmartFormImportModal({
                 {/* Tên đội */}
                 <div className="space-y-1">
                   <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600">
-                    Tên Đội / Cặp đấu
+                    {translate('teamColumn')}
                   </label>
                   <select
                     value={columnMapping.teamNameCol}
                     onChange={(e) => setColumnMapping({ ...columnMapping, teamNameCol: e.target.value })}
                     className="h-9 w-full rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-800"
                   >
-                    <option value="">-- Tự động ghép từ tên VĐV --</option>
+                    <option value="">{translate('autoTeam')}</option>
                     {excelResult.headers.map((h) => (
                       <option key={h} value={h}>
                         {h}
@@ -466,14 +491,14 @@ export default function SmartFormImportModal({
                 {/* Họ tên VĐV 1 */}
                 <div className="space-y-1">
                   <label className="text-[11px] font-bold uppercase tracking-wider text-blue-700 flex items-center gap-1">
-                    Họ tên VĐV 1 <span className="text-rose-500">*</span>
+                    {translate('playerName1')} <span className="text-rose-500">*</span>
                   </label>
                   <select
                     value={columnMapping.player1NameCol}
                     onChange={(e) => setColumnMapping({ ...columnMapping, player1NameCol: e.target.value })}
                     className="h-9 w-full rounded-lg border border-blue-300 bg-blue-50/30 px-2.5 text-xs font-bold text-slate-900"
                   >
-                    <option value="">-- Chọn cột --</option>
+                    <option value="">{translate('chooseColumn')}</option>
                     {excelResult.headers.map((h) => (
                       <option key={h} value={h}>
                         {h}
@@ -485,14 +510,14 @@ export default function SmartFormImportModal({
                 {/* Email VĐV 1 */}
                 <div className="space-y-1">
                   <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1">
-                    Email VĐV 1 (Gửi thư mời)
+                    {translate('playerEmail1')}
                   </label>
                   <select
                     value={columnMapping.player1EmailCol}
                     onChange={(e) => setColumnMapping({ ...columnMapping, player1EmailCol: e.target.value })}
                     className="h-9 w-full rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-800"
                   >
-                    <option value="">-- Không có / Bỏ qua --</option>
+                    <option value="">{translate('noColumn')}</option>
                     {excelResult.headers.map((h) => (
                       <option key={h} value={h}>
                         {h}
@@ -504,14 +529,14 @@ export default function SmartFormImportModal({
                 {/* SĐT VĐV 1 */}
                 <div className="space-y-1">
                   <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600">
-                    SĐT VĐV 1
+                    {translate('playerPhone1')}
                   </label>
                   <select
                     value={columnMapping.player1PhoneCol}
                     onChange={(e) => setColumnMapping({ ...columnMapping, player1PhoneCol: e.target.value })}
                     className="h-9 w-full rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-800"
                   >
-                    <option value="">-- Không có / Bỏ qua --</option>
+                    <option value="">{translate('noColumn')}</option>
                     {excelResult.headers.map((h) => (
                       <option key={h} value={h}>
                         {h}
@@ -523,14 +548,14 @@ export default function SmartFormImportModal({
                 {/* Họ tên VĐV 2 */}
                 <div className="space-y-1">
                   <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600">
-                    Họ tên VĐV 2 (Đồng đội)
+                    {translate('playerName2')}
                   </label>
                   <select
                     value={columnMapping.player2NameCol}
                     onChange={(e) => setColumnMapping({ ...columnMapping, player2NameCol: e.target.value })}
                     className="h-9 w-full rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-800"
                   >
-                    <option value="">-- Không có / Bỏ qua --</option>
+                    <option value="">{translate('noColumn')}</option>
                     {excelResult.headers.map((h) => (
                       <option key={h} value={h}>
                         {h}
@@ -542,14 +567,14 @@ export default function SmartFormImportModal({
                 {/* Email VĐV 2 */}
                 <div className="space-y-1">
                   <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600">
-                    Email VĐV 2
+                    {translate('playerEmail2')}
                   </label>
                   <select
                     value={columnMapping.player2EmailCol}
                     onChange={(e) => setColumnMapping({ ...columnMapping, player2EmailCol: e.target.value })}
                     className="h-9 w-full rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-800"
                   >
-                    <option value="">-- Không có / Bỏ qua --</option>
+                    <option value="">{translate('noColumn')}</option>
                     {excelResult.headers.map((h) => (
                       <option key={h} value={h}>
                         {h}
@@ -561,14 +586,14 @@ export default function SmartFormImportModal({
                 {/* SĐT VĐV 2 */}
                 <div className="space-y-1">
                   <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600">
-                    SĐT VĐV 2
+                    {translate('playerPhone2')}
                   </label>
                   <select
                     value={columnMapping.player2PhoneCol}
                     onChange={(e) => setColumnMapping({ ...columnMapping, player2PhoneCol: e.target.value })}
                     className="h-9 w-full rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-800"
                   >
-                    <option value="">-- Không có / Bỏ qua --</option>
+                    <option value="">{translate('noColumn')}</option>
                     {excelResult.headers.map((h) => (
                       <option key={h} value={h}>
                         {h}
@@ -580,14 +605,14 @@ export default function SmartFormImportModal({
                 {/* ELO */}
                 <div className="space-y-1">
                   <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600">
-                    Điểm ELO / Trình độ
+                    {translate('elo')}
                   </label>
                   <select
                     value={columnMapping.eloCol}
                     onChange={(e) => setColumnMapping({ ...columnMapping, eloCol: e.target.value })}
                     className="h-9 w-full rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-800"
                   >
-                    <option value="">-- Không có / Mặc định --</option>
+                    <option value="">{translate('defaultColumn')}</option>
                     {excelResult.headers.map((h) => (
                       <option key={h} value={h}>
                         {h}
@@ -608,11 +633,11 @@ export default function SmartFormImportModal({
                   <div className="flex items-center gap-2 font-bold text-amber-800">
                     <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0" />
                     <span>
-                      Phát hiện {formatMismatchCount} dòng có xung đột thể thức hoặc thông tin:
+                      {translate('mismatchFound', { count: formatMismatchCount })}
                     </span>
                   </div>
                   <p className="text-amber-700 font-medium">
-                    Nội dung đang chọn: <strong>{targetDivision?.name} ({targetDivision?.matchType})</strong>.
+                    {translate('selectedContent', { name: targetDivision?.name || '', type: targetDivision?.matchType || '' })}
                   </p>
                   {!isTargetDoubles && columnMapping.player2NameCol && (
                     <div className="rounded-lg border border-amber-300 bg-white/80 p-3">
@@ -623,7 +648,7 @@ export default function SmartFormImportModal({
                           onChange={(e) => setSplitDoublesIntoSingles(e.target.checked)}
                           className="rounded border-amber-400 text-blue-600 focus:ring-blue-500 w-4 h-4"
                         />
-                        <span>Tự động tách cặp đôi trong mỗi dòng thành 2 VĐV thi đấu Đơn độc lập</span>
+                        <span>{translate('splitDoubles')}</span>
                       </label>
                     </div>
                   )}
@@ -639,7 +664,7 @@ export default function SmartFormImportModal({
                     onChange={(e) => setAutoApprove(e.target.checked)}
                     className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-4 h-4"
                   />
-                  <span>Tự động duyệt (APPROVED)</span>
+                  <span>{translate('autoApprove')}</span>
                 </label>
 
                 <label className="flex items-center gap-2.5 cursor-pointer text-xs font-bold text-slate-700 select-none">
@@ -649,7 +674,7 @@ export default function SmartFormImportModal({
                     onChange={(e) => setIsPaid(e.target.checked)}
                     className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-4 h-4"
                   />
-                  <span>Đã đóng lệ phí (PAID)</span>
+                  <span>{translate('paid')}</span>
                 </label>
 
                 <label className="flex items-center gap-2.5 cursor-pointer text-xs font-bold text-slate-700 select-none">
@@ -661,7 +686,7 @@ export default function SmartFormImportModal({
                   />
                   <span className="flex items-center gap-1">
                     <Mail className="w-3.5 h-3.5 text-blue-600" />
-                    Gửi email thư mời
+                    {translate('sendInvite')}
                   </span>
                 </label>
               </div>
@@ -669,13 +694,13 @@ export default function SmartFormImportModal({
               {/* Preview Table */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-xs font-bold text-slate-600 px-1">
-                  <span>Danh sách đối soát ({activeItemsToImport.length}/{parsedItems.length} dòng được chọn)</span>
+                  <span>{translate('reconciliationList', { selected: activeItemsToImport.length, total: parsedItems.length })}</span>
                   <button
                     type="button"
                     onClick={handleToggleAll}
                     className="text-blue-600 hover:text-blue-700 text-xs font-semibold cursor-pointer"
                   >
-                    {excludedRowIndices.size === 0 ? 'Bỏ chọn tất cả' : 'Chọn tất cả'}
+                    {excludedRowIndices.size === 0 ? translate('deselectAll') : translate('selectAll')}
                   </button>
                 </div>
 
@@ -684,11 +709,11 @@ export default function SmartFormImportModal({
                     <thead className="sticky top-0 bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase text-[10px] tracking-wider z-10">
                       <tr>
                         <th className="p-3 w-10 text-center">#</th>
-                        <th className="p-3">Tên Đội / VĐV</th>
-                        <th className="p-3">VĐV 1 & Liên hệ</th>
-                        <th className="p-3">VĐV 2 (Đồng đội)</th>
-                        <th className="p-3 text-center">Trình/ELO</th>
-                        <th className="p-3 text-center">Trạng thái</th>
+                        <th className="p-3">{translate('teamOrPlayer')}</th>
+                        <th className="p-3">{translate('player1Contact')}</th>
+                        <th className="p-3">{translate('player2Teammate')}</th>
+                        <th className="p-3 text-center">{translate('skillElo')}</th>
+                        <th className="p-3 text-center">{translate('status')}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
@@ -736,7 +761,7 @@ export default function SmartFormImportModal({
                                   )}
                                 </div>
                               ) : (
-                                <span className="text-slate-400 italic">-- Không có --</span>
+                                <span className="text-slate-400 italic">{translate('noPlayer2')}</span>
                               )}
                             </td>
                             <td className="p-3 text-center font-bold text-slate-800">
@@ -748,11 +773,11 @@ export default function SmartFormImportModal({
                                   className="inline-flex items-center gap-1 rounded bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700"
                                   title={item.mismatchReason}
                                 >
-                                  <AlertTriangle className="w-2.5 h-2.5" /> Lưu ý
+                                  <AlertTriangle className="w-2.5 h-2.5" /> {translate('caution')}
                                 </span>
                               ) : (
                                 <span className="inline-flex items-center gap-1 rounded bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
-                                  <CheckCircle2 className="w-2.5 h-2.5" /> Hợp lệ
+                                  <CheckCircle2 className="w-2.5 h-2.5" /> {translate('valid')}
                                 </span>
                               )}
                             </td>
@@ -778,7 +803,7 @@ export default function SmartFormImportModal({
                 disabled={isImporting}
                 className="h-9 px-4 text-xs font-bold border-slate-200 bg-white hover:bg-slate-50"
               >
-                <ChevronLeft className="w-3.5 h-3.5 mr-1" /> Quay lại
+                <ChevronLeft className="w-3.5 h-3.5 mr-1" /> {translate('back')}
               </Button>
             )}
           </div>
@@ -791,7 +816,7 @@ export default function SmartFormImportModal({
               disabled={isImporting}
               className="h-9 px-4 text-xs font-semibold"
             >
-              Đóng
+              {translate('close')}
             </Button>
 
             {step === 1 && (
@@ -800,7 +825,7 @@ export default function SmartFormImportModal({
                 onClick={() => fileInputRef.current?.click()}
                 className="h-9 px-5 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
               >
-                Chọn file Excel
+                {translate('chooseExcel')}
               </Button>
             )}
 
@@ -809,14 +834,14 @@ export default function SmartFormImportModal({
                 type="button"
                 onClick={() => {
                   if (!columnMapping.player1NameCol && !columnMapping.teamNameCol) {
-                    toast.error('Vui lòng chọn ít nhất cột Họ tên VĐV 1 hoặc Tên đội!');
+                    toast.error(translate('missingNameOrTeam'));
                     return;
                   }
                   setStep(3);
                 }}
                 className="h-9 px-5 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
               >
-                Tiếp tục đối soát <ArrowRight className="w-3.5 h-3.5 ml-1" />
+                {translate('continueReview')} <ArrowRight className="w-3.5 h-3.5 ml-1" />
               </Button>
             )}
 
@@ -829,11 +854,11 @@ export default function SmartFormImportModal({
               >
                 {isImporting ? (
                   <>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" /> Đang nạp {activeItemsToImport.length} VĐV...
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" /> {translate('importing', { count: activeItemsToImport.length })}
                   </>
                 ) : (
                   <>
-                    <ShieldCheck className="w-4 h-4" /> Xác nhận nạp {activeItemsToImport.length} VĐV
+                    <ShieldCheck className="w-4 h-4" /> {translate('confirmImport', { count: activeItemsToImport.length })}
                   </>
                 )}
               </Button>

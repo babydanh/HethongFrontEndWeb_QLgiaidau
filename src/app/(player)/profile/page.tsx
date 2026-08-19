@@ -596,7 +596,7 @@ export default function ProfilePage() {
                 {isLoading ? (
                   <span className="w-48 h-8 bg-slate-200 animate-pulse rounded-lg"></span>
                 ) : (
-                  displayUser?.fullName || '{translate("anonymousUser")}'
+                  displayUser?.fullName || translate("anonymousUser")
                 )}
                 {((displayUser as unknown as Record<string, unknown>)?.roles as string[] | undefined)?.includes('ADMIN') && (
                   <span title={translate("systemAdmin")} className="bg-blue-50 p-1 rounded-full border border-blue-200">
@@ -813,39 +813,39 @@ export default function ProfilePage() {
                     </div>
                   ) : tickets.length > 0 && tickets[0].status === 'PENDING' ? (
                     <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 text-xs font-semibold text-slate-700 space-y-2">
-                      <div className="flex items-center gap-1.5 font-bold text-sm text-amber-900">
-                        <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
-                        Đang chờ duyệt...
-                      </div>
-                      <p className="text-amber-700 leading-relaxed">
-                        Yêu cầu nâng cấp tài khoản của bạn đang được Ban quản trị hệ thống xử lý.
-                      </p>
-                      <div className="pt-2 border-t border-amber-100/50 text-[10px] text-blue-600">
-                        SĐT liên hệ: {tickets[0].contactPhone}
-                      </div>
+                        <div className="flex items-center gap-1.5 font-bold text-sm text-amber-900">
+                          <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                          {translate("organizerPendingLabel")}
+                        </div>
+                        <p className="text-amber-700 leading-relaxed">
+                          {translate("organizerPendingDescription")}
+                        </p>
+                        <div className="pt-2 border-t border-amber-100/50 text-[10px] text-blue-600">
+                          {translate("contactPhoneDisplay")}: {tickets[0].contactPhone}
+                        </div>
                     </div>
                   ) : tickets.length > 0 && tickets[0].status === 'REJECTED' ? (
                     <div className="space-y-4">
                       <div className="bg-rose-50 border border-rose-100 rounded-lg p-4 text-xs font-semibold text-rose-800 space-y-2">
                         <div className="flex items-center gap-1.5 font-bold text-sm text-rose-900">
                           <X className="w-4 h-4 text-rose-600" />
-                          Yêu cầu bị từ chối
+                          {translate("organizerRejectedLabel")}
                         </div>
                         <p className="text-rose-700 leading-relaxed">
-                          Lý do: <span className="font-bold text-rose-900">{tickets[0].rejectReason || 'Không có lý do chi tiết'}</span>
+                          {translate("reasonLabel")}: <span className="font-bold text-rose-900">{tickets[0].rejectReason || translate("noDetailedReason")}</span>
                         </p>
                       </div>
                       <Button
                         onClick={() => setIsModalOpen(true)}
                         className="w-full font-bold"
                       >
-                        Gửi lại yêu cầu
+                        {translate("resubmitRequest")}
                       </Button>
                     </div>
                   ) : (
                     <div className="space-y-4">
                       <p className="text-slate-600 text-xs leading-relaxed font-semibold">
-                        Bạn mặc định có thể tự do tạo giải đấu nội bộ miễn phí trong Câu lạc bộ của mình. Chỉ gửi yêu cầu nếu bạn muốn tạo giải đấu công khai tính ELO toàn hệ thống hoặc chuỗi giải đấu lớn.
+                        {translate("organizerInfoDescription")}
                       </p>
                       <Button
                         onClick={() => setIsModalOpen(true)}
@@ -864,7 +864,7 @@ export default function ProfilePage() {
               {/* Câu lạc bộ của tôi */}
               <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
                 <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Câu lạc bộ của tôi</h3>
+                      <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">{translate("myClubs")}</h3>
                   <Link href="/communities/create">
                     <Button variant="success" size="sm" className="rounded-lg px-4 flex items-center gap-2">
                       <Users className="w-4 h-4" />
@@ -887,7 +887,7 @@ export default function ProfilePage() {
                       <div>
                         <div className="flex items-center gap-2 mb-3">
                           <ShieldCheck className="w-4 h-4 text-blue-600" />
-                          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600">CLB đã tạo / quản lý</h4>
+                          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600">{translate("clubsManagedLabel")}</h4>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           {createdCommunities.map(community => {
@@ -926,7 +926,7 @@ export default function ProfilePage() {
                       <div>
                         <div className="flex items-center gap-2 mb-3">
                           <Users className="w-4 h-4 text-emerald-600" />
-                          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600">CLB đã tham gia</h4>
+                          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600">{translate("clubsJoinedLabel")}</h4>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           {joinedCommunities.map(community => {
@@ -969,7 +969,7 @@ export default function ProfilePage() {
                     <p className="text-slate-400 text-sm mt-1 mb-4">{translate("clubsEmptyDescription")}</p>
                     <Link href="/communities">
                       <Button variant="outline">
-                        Khám phá câu lạc bộ
+                        {translate("exploreClubs")}
                       </Button>
                     </Link>
                   </div>
@@ -994,15 +994,26 @@ export default function ProfilePage() {
             ) : followedTournaments.length > 0 ? (
               <>
                 <div className="flex flex-wrap items-center gap-2 mb-3 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                  <span className="rounded-full bg-slate-100 px-2.5 py-1 border border-slate-200">Vừa kết thúc</span>
-                  <span className="rounded-full bg-rose-50 px-2.5 py-1 border border-rose-100 text-rose-700">Đang diễn ra</span>
-                  <span className="rounded-full bg-emerald-50 px-2.5 py-1 border border-emerald-100 text-emerald-700">Mở đăng ký</span>
-                  <span className="rounded-full bg-blue-50 px-2.5 py-1 border border-blue-100 text-blue-700">Sắp diễn ra</span>
+                  <span className="rounded-full bg-slate-100 px-2.5 py-1 border border-slate-200">{translate("statusEnded")}</span>
+                  <span className="rounded-full bg-rose-50 px-2.5 py-1 border border-rose-100 text-rose-700">{translate("statusInProgress")}</span>
+                  <span className="rounded-full bg-emerald-50 px-2.5 py-1 border border-emerald-100 text-emerald-700">{translate("statusRegistrationOpen")}</span>
+                  <span className="rounded-full bg-blue-50 px-2.5 py-1 border border-blue-100 text-blue-700">{translate("statusUpcoming")}</span>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
                   {followedTournaments.map((tournament) => (
                   (() => {
-                      const statusLabel = getTournamentStatusLabel(tournament.status);
+                      const statusLabel = getTournamentStatusLabel(tournament.status, {
+                        DRAFT: translate("statusDraft"),
+                        PENDING_APPROVAL: translate("statusPendingApproval"),
+                        PENDING_DELETE: translate("statusPendingDelete"),
+                        UPCOMING: translate("statusUpcoming"),
+                        REGISTRATION_OPEN: translate("statusRegistrationOpen"),
+                        REGISTRATION_CLOSED: translate("statusRegistrationClosed"),
+                        IN_PROGRESS: translate("statusInProgress"),
+                        ONGOING: translate("statusInProgress"),
+                        COMPLETED: translate("statusEnded"),
+                        CANCELLED: translate("statusCancelled"),
+                      });
                       const statusClassName = getTournamentStatusClassName(tournament.status);
                       const isEnded = isTournamentCompleted(tournament.status);
                     const isLive = isTournamentInProgress(tournament.status);
@@ -1012,17 +1023,17 @@ export default function ProfilePage() {
                     const coverImage = tournament.logoUrl || tournament.bannerUrl || null;
                     const formattedStartDate = tournament.startDate ? formatDate(tournament.startDate, 'dd/MM/yyyy') : null;
                     const formattedEndDate = tournament.endDate ? formatDate(tournament.endDate, 'dd/MM/yyyy') : null;
-                    const statusHint = isEnded
-                      ? (formattedEndDate ? `Kết thúc ${formattedEndDate}` : 'Giải đấu đã kết thúc')
-                      : isLive
-                        ? 'Đang diễn ra'
-                        : isOpen
-                          ? 'Mở đăng ký'
-                          : isUpcoming
-                            ? 'Sắp diễn ra'
-                            : isCancelled
-                              ? 'Đã hủy'
-                              : 'Đang theo dõi';
+                      const statusHint = isEnded
+                        ? (formattedEndDate ? translate("endedOn", { date: formattedEndDate }) : translate("statusEndedHint"))
+                        : isLive
+                          ? translate("statusInProgress")
+                          : isOpen
+                            ? translate("statusRegistrationOpen")
+                            : isUpcoming
+                              ? translate("statusUpcoming")
+                              : isCancelled
+                                ? translate("statusCancelled")
+                                : translate("statusFollowing");
 
                     return (
                       <Link
@@ -1075,7 +1086,7 @@ export default function ProfilePage() {
                           {/* Location Overlay (Bottom-Left) */}
                           <div className="absolute bottom-3 left-3 z-10">
                             <span className="bg-white/95 text-slate-800 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm border border-slate-200 flex items-center gap-1">
-                              📍 {tournament.locationAddress ? tournament.locationAddress.split(',').slice(-1)[0]?.trim() || 'Việt Nam' : translate("notUpdated")}
+                              {tournament.locationAddress ? tournament.locationAddress.split(',').slice(-1)[0]?.trim() || translate("locationFallback") : translate("notUpdated")}
                             </span>
                           </div>
                         </div>
@@ -1106,7 +1117,7 @@ export default function ProfilePage() {
                                     ? 'bg-amber-50 text-amber-700 border border-amber-200'
                                     : 'bg-slate-50 text-slate-600 border border-slate-200'
                                 }`}>
-                                  {tournament.isRanked ? 'Xếp hạng ELO' : 'Phong trào'}
+                                  {tournament.isRanked ? translate("rankedElo") : translate("recreational")}
                                 </span>
                               </div>
 
@@ -1123,7 +1134,7 @@ export default function ProfilePage() {
                             {/* Metadata summary */}
                             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[9px] text-slate-500 font-bold mt-2 uppercase tracking-wider">
                               <span className="text-blue-600 font-bold">
-                                {tournament.entryFee ? formatCurrency(tournament.entryFee) : 'Miễn phí'}
+                                {tournament.entryFee ? formatCurrency(tournament.entryFee) : translate("free")}
                               </span>
                               {tournament.divisions && tournament.divisions.length > 0 ? (
                                 <>
@@ -1159,7 +1170,7 @@ export default function ProfilePage() {
             ) : (
               <div className="text-center py-16 bg-white rounded-lg border border-slate-200 border-dashed">
                 <Bookmark className="w-16 h-16 text-slate-200 mx-auto mb-4" />
-                <h3 className="text-lg font-bold text-slate-700 mb-2">Chưa theo dõi giải đấu nào</h3>
+                <h3 className="text-lg font-bold text-slate-700 mb-2">{translate("followedTournamentsEmptyTitle")}</h3>
                 <p className="text-slate-500 max-w-sm mx-auto text-sm">
                   {translate("followedTournamentsEmpty")}
                 </p>
@@ -1173,7 +1184,7 @@ export default function ProfilePage() {
             <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
               <div className="flex items-center gap-2 mb-4">
                 <Award className="w-5 h-5 text-blue-600" />
-                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Danh hiệu thành tích</h3>
+                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">{translate("achievementsTitle")}</h3>
               </div>
               {achievements.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1189,12 +1200,12 @@ export default function ProfilePage() {
                               {item.label}
                             </span>
                             <span className="text-[10px] font-bold text-slate-500 uppercase">
-                              Giải public ELO
+                              {translate("publicEloTournament")}
                             </span>
                           </div>
                           <h4 className="mt-2 text-base font-bold text-slate-900 line-clamp-1">{item.tournamentName}</h4>
                           <p className="text-xs text-slate-500 mt-1">
-                            {item.tournamentDate ? formatDate(item.tournamentDate, 'dd/MM/yyyy') : 'Chưa có ngày kết thúc'}
+                            {item.tournamentDate ? formatDate(item.tournamentDate, 'dd/MM/yyyy') : translate("noEndDate")}
                           </p>
                         </div>
                         <div className={`shrink-0 w-12 h-12 rounded-lg border flex items-center justify-center font-bold ${item.textClass} ${item.borderClass} bg-white`}>
@@ -1207,8 +1218,8 @@ export default function ProfilePage() {
               ) : (
                 <div className="text-center py-10 border-2 border-dashed border-slate-100 rounded-lg">
                   <Trophy className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                  <p className="text-slate-600 font-semibold">Chưa có danh hiệu thành tích</p>
-                  <p className="text-slate-400 text-sm mt-1">Khi tham gia giải public ELO và vào top 3, badge sẽ tự hiện ở đây.</p>
+                  <p className="text-slate-600 font-semibold">{translate("achievementsEmptyTitle")}</p>
+                  <p className="text-slate-400 text-sm mt-1">{translate("achievementsEmptyDescription")}</p>
                 </div>
               )}
             </div>
@@ -1233,8 +1244,8 @@ export default function ProfilePage() {
                   );
 
                   const opponentName = isP1
-                    ? match.participant2?.teamName || 'Chưa xác định'
-                    : match.participant1?.teamName || 'Chưa xác định';
+                    ? match.participant2?.teamName || translate("opponentUnknown")
+                    : match.participant1?.teamName || translate("opponentUnknown");
 
                   return (
                     <div
@@ -1243,12 +1254,12 @@ export default function ProfilePage() {
                     >
                       <div className="space-y-1">
                         <div className="flex items-center gap-2 text-xs font-semibold text-slate-450">
-                          <span>{match.tournament?.name || 'Giải đấu'}</span>
+                          <span>{match.tournament?.name || translate("tournamentFallback")}</span>
                           <span>•</span>
-                          <span>Vòng {match.roundNumber}</span>
+                          <span>{translate("round", { number: match.roundNumber })}</span>
                         </div>
                         <div className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                          <span className="text-slate-400">Đối thủ:</span>
+                          <span className="text-slate-400">{translate("opponent")}:</span>
                           <span className="text-blue-650 font-bold">{opponentName}</span>
                         </div>
                       </div>
@@ -1266,16 +1277,16 @@ export default function ProfilePage() {
                         {isCompleted ? (
                           isWinner ? (
                             <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-emerald-250 uppercase tracking-wide">
-                              Thắng
+                              {translate("win")}
                             </span>
                           ) : (
                             <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-rose-250 uppercase tracking-wide">
-                              Thua
+                              {translate("loss")}
                             </span>
                           )
                         ) : (
                           <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-250 uppercase tracking-wide">
-                            Đang đấu
+                            {translate("matchInProgress")}
                           </span>
                         )}
 
@@ -1283,7 +1294,7 @@ export default function ProfilePage() {
                           href={`/live/${match.id}`}
                           className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 shrink-0"
                         >
-                          Chi tiết <ChevronRight className="w-4 h-4" />
+                          {translate("details")} <ChevronRight className="w-4 h-4" />
                         </Link>
                       </div>
                     </div>
@@ -1299,9 +1310,9 @@ export default function ProfilePage() {
                       onClick={() => setMatchesPage(p => Math.max(1, p - 1))}
                       className="border-slate-200 text-slate-650 hover:bg-slate-50"
                     >
-                      Trước
+                      {translate("previous")}
                     </Button>
-                    <span className="text-xs font-bold text-slate-500">Trang {matchesPage} / {matchesTotalPages}</span>
+                    <span className="text-xs font-bold text-slate-500">{translate("pageOf", { page: matchesPage, total: matchesTotalPages })}</span>
                     <Button
                       variant="outline"
                       size="sm"
@@ -1309,7 +1320,7 @@ export default function ProfilePage() {
                       onClick={() => setMatchesPage(p => Math.min(matchesTotalPages, p + 1))}
                       className="border-slate-200 text-slate-650 hover:bg-slate-50"
                     >
-                      Sau
+                      {translate("next")}
                     </Button>
                   </div>
                 )}
@@ -1317,9 +1328,9 @@ export default function ProfilePage() {
             ) : (
               <div className="text-center py-16 bg-white rounded-lg border border-slate-200 border-dashed">
                 <Activity className="w-16 h-16 text-slate-200 mx-auto mb-4" />
-                <h3 className="text-lg font-bold text-slate-700 mb-2">Chưa thi đấu trận nào</h3>
+                <h3 className="text-lg font-bold text-slate-700 mb-2">{translate("matchesEmptyTitle")}</h3>
                 <p className="text-slate-500 max-w-sm mx-auto text-sm">
-                  Hãy tham gia giải đấu và cập nhật kết quả thi đấu để xem lịch sử trận đấu của bạn tại đây.
+                  {translate("matchesEmptyDescription")}
                 </p>
               </div>
             )}
@@ -1337,7 +1348,7 @@ export default function ProfilePage() {
                 <div>
                   <div className="flex items-center gap-2 mb-4">
                     <Trophy className="w-5 h-5 text-blue-600" />
-                    <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Hạng Trình Độ ELO</h3>
+                    <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">{translate("eloRankTitle")}</h3>
                   </div>
 
                   {userRankings?.publicRanks && userRankings.publicRanks.length > 0 ? (
@@ -1346,7 +1357,7 @@ export default function ProfilePage() {
                         <div key={rank.id} className="bg-white rounded-lg border border-slate-200 p-5 shadow-sm hover:shadow-md transition-all flex items-center justify-between group">
                           <div className="space-y-1.5 flex-1">
                             <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-slate-100 text-slate-550 border border-slate-200">
-                              {rank.categoryName} • {rank.matchType === 'SINGLES' ? 'Đánh đơn' : 'Đánh đôi'}
+                              {rank.categoryName} • {rank.matchType === 'SINGLES' ? translate("singles") : translate("doubles")}
                             </span>
                             <div className="flex items-center gap-2 flex-wrap">
                               <Award className="w-5 h-5 text-blue-500 group-hover:scale-110 transition-transform" />
@@ -1355,15 +1366,15 @@ export default function ProfilePage() {
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2 text-center text-xs">
                               <div className="bg-slate-50/80 p-2 rounded-lg border border-slate-100">
-                                <div className="text-[10px] text-slate-400 font-bold uppercase">Số Trận</div>
+                                <div className="text-[10px] text-slate-400 font-bold uppercase">{translate("matchesPlayed")}</div>
                                 <div className="font-bold text-slate-700 mt-0.5">{rank.matchesPlayed}</div>
                               </div>
                               <div className="bg-slate-50/80 p-2 rounded-lg border border-slate-100">
-                                <div className="text-[10px] text-slate-400 font-bold uppercase">Thắng</div>
+                                <div className="text-[10px] text-slate-400 font-bold uppercase">{translate("wins")}</div>
                                 <div className="font-bold text-blue-600 mt-0.5">{rank.matchesWon}</div>
                               </div>
                               <div className="bg-slate-50/80 p-2 rounded-lg border border-slate-100">
-                                <div className="text-[10px] text-slate-400 font-bold uppercase">Chuỗi</div>
+                                <div className="text-[10px] text-slate-400 font-bold uppercase">{translate("streak")}</div>
                                 <div className="font-bold text-blue-600 mt-0.5 flex items-center justify-center gap-0.5">
                                   <Zap className="w-3 h-3 fill-blue-500 text-blue-600" /> {rank.winStreak}
                                 </div>
@@ -1375,7 +1386,7 @@ export default function ProfilePage() {
                     </div>
                   ) : (
                     <div className="bg-white rounded-lg border border-slate-200 p-8 text-center text-slate-400 text-sm">
-                      Bạn chưa tham gia thi đấu xếp hạng ELO chính thức.
+                      {translate("eloEmptyDescription")}
                     </div>
                   )}
                 </div>
@@ -1390,8 +1401,8 @@ export default function ProfilePage() {
                             name: translate("matchLabel", { number: index + 1 }),
                             'ELO': item.newElo,
                             date: formatDate(item.createdAt, 'dd/MM/yyyy'),
-                            reason: item.reason || (item.changedPoints > 0 ? 'Thắng' : 'Thua'),
-                            tournament: item.match?.tournamentName || 'Giải đấu'
+                            reason: item.reason || (item.changedPoints > 0 ? translate("win") : translate("loss")),
+                            tournament: item.match?.tournamentName || translate("tournamentFallback")
                           }))}
                           margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
                         >
@@ -1429,7 +1440,7 @@ export default function ProfilePage() {
                 )}
 
                 <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
-                  <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">Lịch sử thay đổi ELO</h3>
+                  <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">{translate("eloHistorySectionTitle")}</h3>
                   {eloHistory.length > 0 ? (
                     <div className="flex flex-col gap-4">
                       {eloHistory.map((item) => {
@@ -1437,12 +1448,12 @@ export default function ProfilePage() {
                         return (
                           <div key={item.id} className="flex justify-between items-center py-3 border-b border-slate-100 last:border-b-0">
                             <div>
-                              <p className="text-sm font-bold text-slate-800 line-clamp-1">{item.match?.tournamentName || 'Trận đấu xếp hạng'}</p>
+                              <p className="text-sm font-bold text-slate-800 line-clamp-1">{item.match?.tournamentName || translate("rankedMatchFallback")}</p>
                               <p className="text-xs text-slate-400 mt-0.5">{formatDate(item.createdAt, 'dd/MM/yyyy HH:mm')}</p>
                             </div>
                             <div className="flex items-center gap-3 text-right">
                               <div>
-                                <span className="text-[10px] text-slate-400 block font-bold">ELO mới</span>
+                                <span className="text-[10px] text-slate-400 block font-bold">{translate("newElo")}</span>
                                 <span className="text-sm font-bold text-slate-700">{item.newElo}</span>
                               </div>
                               <span className={`inline-block px-2 py-1 rounded text-xs font-bold min-w-[45px] text-center ${
@@ -1474,7 +1485,7 @@ export default function ProfilePage() {
           <ModalHeader>
             <ModalTitle className="text-xl font-bold text-slate-900">{translate("organizerRegistrationTitle")}</ModalTitle>
             <p className="text-slate-500 text-xs mt-1 font-medium leading-relaxed">
-              (Dùng để tạo chuỗi giải đấu hoặc giải đấu công khai tính Rank ELO. Nếu chỉ tổ chức giải nội bộ CLB thì bạn không cần đăng ký quyền này).
+              {translate("organizerModalDescription")}
             </p>
           </ModalHeader>
           <div className="mt-4 space-y-5">
@@ -1488,11 +1499,11 @@ export default function ProfilePage() {
 
             <div>
               <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                Số điện thoại liên hệ <span className="text-rose-500">*</span>
+                {translate("contactPhoneLabel")} <span className="text-rose-500">*</span>
               </label>
               <Input
                 type="text"
-                placeholder="Nhập số điện thoại liên lạc..."
+                placeholder={translate("contactPhonePlaceholder")}
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 className="w-full"
@@ -1501,7 +1512,7 @@ export default function ProfilePage() {
 
             <div>
               <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                Ảnh minh chứng năng lực <span className="text-rose-500">*</span>
+                {translate("evidenceLabel")} <span className="text-rose-500">*</span>
               </label>
 
               <div className="flex flex-col items-center justify-center p-4 bg-slate-50 rounded-lg border border-slate-200">

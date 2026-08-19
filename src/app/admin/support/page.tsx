@@ -7,6 +7,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import {
   CircleUserRound,
   Inbox,
@@ -27,8 +28,8 @@ import { useAuthStore } from '@/lib/zustand/authStore';
 import { getErrorMessage } from '@/utils/error';
 import { socketClient } from '@/lib/socket';
 
-const formatTime = (value: string) =>
-  new Intl.DateTimeFormat('vi-VN', {
+const formatTime = (value: string, locale: string) =>
+  new Intl.DateTimeFormat(locale === 'vi' ? 'vi-VN' : 'en-US', {
     hour: '2-digit',
     minute: '2-digit',
     day: '2-digit',
@@ -57,6 +58,8 @@ const mergeMessages = (
 };
 
 export default function AdminSupportPage() {
+  const translate = useTranslations('AdminSupport');
+  const locale = useLocale();
   const { user } = useAuthStore();
   const [rooms, setRooms] = useState<AdminSupportRoom[]>([]);
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
@@ -89,11 +92,11 @@ export default function AdminSupportPage() {
         return data[0]?.id ?? null;
       });
     } catch (error) {
-      if (!quiet) toast.error(getErrorMessage(error, 'Không tải được hộp thư hỗ trợ.'));
+      if (!quiet) toast.error(getErrorMessage(error, translate('loadRoomsError')));
     } finally {
       setLoadingRooms(false);
     }
-  }, []);
+  }, [translate]);
 
   const loadMessages = useCallback(async (roomId: string, quiet = false) => {
     try {
@@ -101,11 +104,11 @@ export default function AdminSupportPage() {
       if (selectedRoomIdRef.current !== roomId) return;
       setMessages((current) => mergeMessages(current, data));
     } catch (error) {
-      if (!quiet) toast.error(getErrorMessage(error, 'Không tải được cuộc hội thoại.'));
+      if (!quiet) toast.error(getErrorMessage(error, translate('loadConversationError')));
     } finally {
       if (!quiet) setLoadingMessages(false);
     }
-  }, []);
+  }, [translate]);
 
   useEffect(() => {
     let active = true;
@@ -126,7 +129,7 @@ export default function AdminSupportPage() {
       setLoadingRooms(false);
     }).catch((error) => {
       if (!active) return;
-      toast.error(getErrorMessage(error, 'Không tải được hộp thư hỗ trợ.'));
+      toast.error(getErrorMessage(error, translate('loadRoomsError')));
       setLoadingRooms(false);
     });
 
@@ -163,7 +166,7 @@ export default function AdminSupportPage() {
       setLoadingMessages(false);
     }).catch((error) => {
       if (!active) return;
-      toast.error(getErrorMessage(error, 'Không tải được cuộc hội thoại.'));
+      toast.error(getErrorMessage(error, translate('loadConversationError')));
       setLoadingMessages(false);
     });
 
@@ -353,7 +356,7 @@ export default function AdminSupportPage() {
       setDraft('');
       void loadRooms(true);
     } catch (error) {
-      toast.error(getErrorMessage(error, 'Không gửi được tin nhắn.'));
+      toast.error(getErrorMessage(error, translate('sendMessageError')));
     } finally {
       setSending(false);
     }
@@ -363,9 +366,9 @@ export default function AdminSupportPage() {
     <div className="space-y-4">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-950">Hỗ trợ người dùng</h2>
+          <h2 className="text-2xl font-bold text-slate-950">{translate('title')}</h2>
           <p className="mt-1 text-sm text-slate-500">
-            Tiếp nhận các cuộc hội thoại được chuyển từ trợ lý trên website.
+            {translate('description')}
           </p>
         </div>
         <button
@@ -374,7 +377,7 @@ export default function AdminSupportPage() {
           className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:border-blue-300 hover:text-blue-700"
         >
           <RefreshCw className="h-4 w-4" />
-          Làm mới
+          {translate('refresh')}
         </button>
       </div>
 
@@ -383,7 +386,7 @@ export default function AdminSupportPage() {
           <div className="shrink-0 space-y-3 border-b border-slate-200 px-4 py-4">
             <div className="flex items-center gap-2 font-bold text-slate-900">
               <Inbox className="h-5 w-5 text-blue-600" />
-              Hộp thư
+              {translate('inbox')}
               <span className="ml-auto rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700">
                 {filteredRooms.length}/{rooms.length}
               </span>
@@ -394,7 +397,7 @@ export default function AdminSupportPage() {
                 type="search"
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
-                placeholder="Tìm tên, email hoặc nội dung..."
+                placeholder={translate('searchPlaceholder')}
                 className="h-10 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-sm text-slate-800 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
               />
             </label>
@@ -407,12 +410,12 @@ export default function AdminSupportPage() {
             ) : rooms.length === 0 ? (
               <div className="px-5 py-16 text-center text-sm text-slate-500">
                 <MessageSquareText className="mx-auto mb-3 h-10 w-10 text-slate-300" />
-                Chưa có yêu cầu hỗ trợ.
+                {translate('noSupportRequests')}
               </div>
             ) : filteredRooms.length === 0 ? (
               <div className="px-5 py-16 text-center text-sm text-slate-500">
                 <Search className="mx-auto mb-3 h-9 w-9 text-slate-300" />
-                Không tìm thấy cuộc hội thoại phù hợp.
+                {translate('noMatchingConversations')}
               </div>
             ) : (
               filteredRooms.map((room) => {
@@ -446,14 +449,14 @@ export default function AdminSupportPage() {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
                           <p className="truncate text-sm font-bold text-slate-900">
-                            {participant?.fullName || participant?.email || 'Người dùng'}
+                            {participant?.fullName || participant?.email || translate('unknownUser')}
                           </p>
                           <span className="ml-auto shrink-0 text-[10px] text-slate-400">
-                            {formatTime(room.updatedAt)}
+                            {formatTime(room.updatedAt, locale)}
                           </span>
                         </div>
                         <p className="mt-1 truncate text-xs text-slate-500">
-                          {room.lastMessage?.content || 'Đã mở yêu cầu hỗ trợ'}
+                          {room.lastMessage?.content || translate('supportRequestOpened')}
                         </p>
                       </div>
                     </div>
@@ -468,8 +471,8 @@ export default function AdminSupportPage() {
           {!selectedRoomId ? (
             <div className="flex flex-1 flex-col items-center justify-center text-center text-slate-500">
               <MessageSquareText className="mb-4 h-14 w-14 text-slate-300" />
-              <p className="font-semibold text-slate-700">Chọn một cuộc hội thoại</p>
-              <p className="mt-1 text-sm">Tin nhắn của người dùng sẽ hiển thị tại đây.</p>
+              <p className="font-semibold text-slate-700">{translate('selectConversation')}</p>
+              <p className="mt-1 text-sm">{translate('messagesAppearHere')}</p>
             </div>
           ) : (
             <>
@@ -487,10 +490,10 @@ export default function AdminSupportPage() {
                 </div>
                 <div className="min-w-0">
                   <p className="truncate font-bold text-slate-950">
-                    {customer?.fullName || customer?.email || 'Người dùng'}
+                    {customer?.fullName || customer?.email || translate('unknownUser')}
                   </p>
                   <p className="truncate text-xs text-slate-500">
-                    {customer?.email || 'Hỗ trợ trực tiếp'}
+                    {customer?.email || translate('directSupport')}
                   </p>
                 </div>
               </header>
@@ -513,7 +516,7 @@ export default function AdminSupportPage() {
                             {message.senderAvatar || customer?.avatarUrl ? (
                               <img
                                 src={message.senderAvatar || customer?.avatarUrl || ''}
-                                alt={message.senderName || customer?.fullName || 'Người dùng'}
+                                alt={message.senderName || customer?.fullName || translate('unknownUser')}
                                 className="h-full w-full object-cover"
                               />
                             ) : (
@@ -530,12 +533,12 @@ export default function AdminSupportPage() {
                         >
                           <p className={`mb-1 text-[10px] font-bold ${mine ? 'text-blue-100' : 'text-slate-500'}`}>
                             {mine
-                              ? user?.fullName || 'Quản trị viên'
-                              : message.senderName || customer?.fullName || 'Người dùng'}
+                              ? user?.fullName || translate('admin')
+                              : message.senderName || customer?.fullName || translate('unknownUser')}
                           </p>
                           <p className="whitespace-pre-wrap break-words">{message.messageText}</p>
                           <p className={`mt-1.5 text-[10px] ${mine ? 'text-blue-100' : 'text-slate-400'}`}>
-                            {formatTime(message.createdAt)}
+                            {formatTime(message.createdAt, locale)}
                           </p>
                         </div>
                         {mine && (
@@ -543,7 +546,7 @@ export default function AdminSupportPage() {
                             {user?.avatarUrl ? (
                               <img
                                 src={user.avatarUrl}
-                                alt={user.fullName || 'Quản trị viên'}
+                                alt={user.fullName || translate('admin')}
                                 className="h-full w-full object-cover"
                               />
                             ) : (
@@ -561,7 +564,7 @@ export default function AdminSupportPage() {
                       {customer?.avatarUrl ? (
                         <img
                           src={customer.avatarUrl}
-                          alt={customer.fullName || 'Người dùng'}
+                          alt={customer.fullName || translate('unknownUser')}
                           className="h-full w-full object-cover"
                         />
                       ) : (
@@ -570,7 +573,7 @@ export default function AdminSupportPage() {
                     </div>
                     <div className="rounded-2xl rounded-bl-md border border-slate-200 bg-white px-4 py-2.5 shadow-sm">
                       <p className="mb-1 text-[10px] font-semibold text-slate-500">
-                        {customer?.fullName || 'Người dùng'} đang nhập
+                        {translate('typing', { name: customer?.fullName || translate('unknownUser') })}
                       </p>
                       <div className="flex items-center gap-1">
                         <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-blue-500" />
@@ -595,7 +598,7 @@ export default function AdminSupportPage() {
                       }
                     }}
                     rows={2}
-                    placeholder="Nhập câu trả lời cho người dùng..."
+                    placeholder={translate('replyPlaceholder')}
                     className="min-h-[48px] flex-1 resize-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                   />
                   <button
@@ -605,7 +608,7 @@ export default function AdminSupportPage() {
                     className="flex h-12 items-center gap-2 rounded-xl bg-blue-600 px-5 text-sm font-bold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                    Gửi
+                    {translate('send')}
                   </button>
                 </div>
               </footer>

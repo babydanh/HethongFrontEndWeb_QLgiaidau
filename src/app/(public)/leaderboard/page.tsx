@@ -29,6 +29,8 @@ export default function LeaderboardPage() {
       case "badminton": return t("sportBadminton");
       case "table_tennis": return t("sportTableTennis");
       case "pickleball": return t("sportPickleball");
+      case "tennis": return t("sportTennis");
+      case "football": return t("sportFootball");
       default: return category.name;
     }
   };
@@ -298,7 +300,7 @@ export default function LeaderboardPage() {
                                                 openUserProfile(
                                                     {
                                                         id: rankings[1].user.id,
-                                                        fullName: rankings[1].user.fullName || 'Vận động viên',
+                                                        fullName: rankings[1].user.fullName || t('athleteFallback'),
                                                         avatarUrl: rankings[1].user.avatarUrl,
                                                     },
                                                     rect,
@@ -342,7 +344,7 @@ export default function LeaderboardPage() {
                                             </h3>
                                             {selectedMatchType.includes('DOUBLES') && rankings[1] && (
                                                 <span className="text-[10px] text-slate-600 font-bold bg-slate-100 px-2 py-0.5 rounded-md mb-1.5 border border-slate-200">
-                                                    Đồng đội
+                                                    {t('teammate')}
                                                 </span>
                                             )}
                                             {rankings[1] ? (
@@ -356,7 +358,7 @@ export default function LeaderboardPage() {
                                         <div className="w-full h-36 bg-[#F1F5F9] rounded-t-2xl border-2 border-[#94A3B8]/70 flex flex-col items-center justify-center shadow-xs">
                                             <span className="text-3xl font-black text-[#64748B] select-none">II</span>
                                             <span className="text-[#64748B] text-[10px] font-bold mt-2">
-                                                {rankings[1] ? `Thắng: ${rankings[1].matchesWon}/${rankings[1].matchesPlayed}` : "Thắng: --/--"}
+                                                {rankings[1] ? t('winsSummary', { won: rankings[1].matchesWon, played: rankings[1].matchesPlayed }) : t('winsSummaryEmpty')}
                                             </span>
                                         </div>
                                     </div>
@@ -371,7 +373,7 @@ export default function LeaderboardPage() {
                                                 openUserProfile(
                                                     {
                                                         id: rankings[0].user.id,
-                                                        fullName: rankings[0].user.fullName || 'Vận động viên',
+                                                        fullName: rankings[0].user.fullName || t('athleteFallback'),
                                                         avatarUrl: rankings[0].user.avatarUrl,
                                                     },
                                                     rect,
@@ -381,7 +383,7 @@ export default function LeaderboardPage() {
                                         >
                                             <div className="relative mb-5 transition-transform duration-300 group-hover:scale-105">
                                                 <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-30 bg-amber-400 text-amber-950 font-extrabold text-[10px] px-4 py-1 rounded-full shadow-sm flex items-center gap-1 border border-amber-300 whitespace-nowrap animate-bounce">
-                                                    👑 CHAMPION
+                                                    👑 {t('champion')}
                                                 </div>
                                                 
                                                 {/* Stacked Avatar for Doubles Top 1 */}
@@ -415,7 +417,7 @@ export default function LeaderboardPage() {
                                             </h3>
                                             {selectedMatchType.includes('DOUBLES') && rankings[0] && (
                                                 <span className="text-[10px] text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded-md mb-1.5 border border-amber-200">
-                                                    Đồng đội
+                                                    {t('teammate')}
                                                 </span>
                                             )}
                                             {rankings[0] ? (
@@ -429,7 +431,7 @@ export default function LeaderboardPage() {
                                         <div className="w-full h-44 bg-amber-50/70 rounded-t-2xl border-2 border-amber-300/80 flex flex-col items-center justify-center shadow-xs relative overflow-hidden">
                                             <span className="text-4xl font-black text-amber-400 select-none">I</span>
                                             <span className="text-amber-600 text-xs font-bold mt-2">
-                                                {rankings[0] ? `Thắng: ${rankings[0].matchesWon}/${rankings[0].matchesPlayed}` : "Thắng: --/--"}
+                                                {rankings[0] ? t('winsSummary', { won: rankings[0].matchesWon, played: rankings[0].matchesPlayed }) : t('winsSummaryEmpty')}
                                             </span>
                                         </div>
                                     </div>
@@ -444,7 +446,7 @@ export default function LeaderboardPage() {
                                                 openUserProfile(
                                                     {
                                                         id: rankings[2].user.id,
-                                                        fullName: rankings[2].user.fullName || 'Vận động viên',
+                                                        fullName: rankings[2].user.fullName || t('athleteFallback'),
                                                         avatarUrl: rankings[2].user.avatarUrl,
                                                     },
                                                     rect,
@@ -488,7 +490,7 @@ export default function LeaderboardPage() {
                                             </h3>
                                             {selectedMatchType.includes('DOUBLES') && rankings[2] && (
                                                 <span className="text-[10px] text-[#C2410C] font-bold bg-amber-50 px-2 py-0.5 rounded-md mb-1.5 border border-amber-200">
-                                                    Đồng đội
+                                                    {t('teammate')}
                                                 </span>
                                             )}
                                             {rankings[2] ? (
@@ -502,7 +504,7 @@ export default function LeaderboardPage() {
                                         <div className="w-full h-32 bg-[#FFF7ED] rounded-t-2xl border-2 border-[#C2410C]/60 flex flex-col items-center justify-center shadow-xs">
                                             <span className="text-3xl font-black text-[#C2410C] select-none">III</span>
                                             <span className="text-[#C2410C] text-[10px] font-bold mt-2">
-                                                {rankings[2] ? `Thắng: ${rankings[2].matchesWon}/${rankings[2].matchesPlayed}` : "Thắng: --/--"}
+                                                {rankings[2] ? t('winsSummary', { won: rankings[2].matchesWon, played: rankings[2].matchesPlayed }) : t('winsSummaryEmpty')}
                                             </span>
                                         </div>
                                     </div>
@@ -525,7 +527,7 @@ export default function LeaderboardPage() {
                                                         openUserProfile(
                                                             {
                                                                 id: player.user.id,
-                                                                fullName: player.user.fullName || 'Vận động viên',
+                                                                fullName: player.user.fullName || t('athleteFallback'),
                                                                 avatarUrl: player.user.avatarUrl,
                                                             },
                                                             rect,
@@ -615,7 +617,7 @@ export default function LeaderboardPage() {
                                     <div className="flex items-center justify-between border-b pb-3 border-slate-100">
                                         <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
                                             <Info className="w-5 h-5 text-blue-600" />
-                                            Quy tắc tính điểm ELO & Phân hạng
+                                            {t('eloRulesTitle')}
                                         </h3>
                                         <form method="dialog">
                                             <button className="text-slate-400 hover:text-slate-600 font-bold text-lg cursor-pointer">✕</button>
@@ -624,31 +626,31 @@ export default function LeaderboardPage() {
                                     
                                     <div className="space-y-3 text-xs text-slate-600 leading-relaxed max-h-[60vh] overflow-y-auto">
                                         <div className="bg-blue-50/70 p-3 rounded-lg border border-blue-100">
-                                            <h4 className="font-bold text-blue-900 mb-1">⚡ 1. Hệ số K-Factor linh hoạt</h4>
-                                            <p className="text-slate-600">• Kỳ thủ mới (&lt;10 trận): Hệ số K = 40 (tăng/giảm điểm nhanh để xác định đúng trình độ).<br />• Kỳ thủ kinh nghiệm (10 - 30 trận): K = 24.<br />• Kỳ thủ kỳ cựu (&gt;30 trận): K = 16 (điểm số ổn định hơn).</p>
+                                            <h4 className="font-bold text-blue-900 mb-1">{t('eloRule1Title')}</h4>
+                                            <p className="text-slate-600">{t('eloRule1Body')}</p>
                                         </div>
 
                                         <div className="bg-emerald-50/70 p-3 rounded-lg border border-emerald-100">
-                                            <h4 className="font-bold text-emerald-900 mb-1">🔥 2. Thưởng chuỗi thắng & Thắng cách biệt</h4>
-                                            <p className="text-slate-600">• Chuỗi thắng 3 trận: ×1.1 điểm ELO nhận được.<br />• Chuỗi thắng 5 trận: ×1.2 điểm ELO.<br />• Chuỗi thắng 7+ trận: ×1.3 điểm ELO.<br />• Thắng cách biệt hủy diệt (tỉ số set áp đảo) được nhân thêm hệ số hiệu số điểm.</p>
+                                            <h4 className="font-bold text-emerald-900 mb-1">{t('eloRule2Title')}</h4>
+                                            <p className="text-slate-600">{t('eloRule2Body')}</p>
                                         </div>
 
                                         <div className="bg-amber-50/70 p-3 rounded-lg border border-amber-100">
-                                            <h4 className="font-bold text-amber-900 mb-1">👑 3. Thưởng lội ngược dòng (Upset Bonus)</h4>
-                                            <p className="text-slate-600">• Thắng đối thủ cao hơn 200+ ELO: Thưởng thêm +5 ELO.<br />• Thắng đối thủ vượt trội 400+ ELO: Thưởng thêm +10 ELO.</p>
+                                            <h4 className="font-bold text-amber-900 mb-1">{t('eloRule3Title')}</h4>
+                                            <p className="text-slate-600">{t('eloRule3Body')}</p>
                                         </div>
 
                                         <div className="bg-rose-50/70 p-3 rounded-lg border border-rose-100">
-                                            <h4 className="font-bold text-rose-900 mb-1">⏳ 4. Quy định không thi đấu (ELO Decay)</h4>
-                                            <p className="text-slate-600">• Không thi đấu trận chính thức trong **1 tháng liên tục**: ELO dưới 1400 được giữ nguyên; từ 1400 trở lên sẽ giảm theo tier mỗi tháng: 1400–1499 giảm 2%, 1500–1599 giảm 3%, 1600–1699 giảm 4%, từ 1700 giảm 5%.</p>
-                                            <p className="text-slate-600">• Khiên ELO được áp dụng cả khi decay làm rơi qua mốc đang bảo vệ: giữ lại đúng mốc một lần, sau đó khiên hết hiệu lực.</p>
-                                            <p className="text-slate-600">• Đánh đôi có rank riêng cho từng cặp, khởi tạo 1000 ELO; không lấy trung bình ELO cá nhân làm rank cặp.</p>
+                                            <h4 className="font-bold text-rose-900 mb-1">{t('eloRule4Title')}</h4>
+                                            <p className="text-slate-600">{t('eloRule4Body1')}</p>
+                                            <p className="text-slate-600">{t('eloRule4Body2')}</p>
+                                            <p className="text-slate-600">{t('eloRule4Body3')}</p>
                                         </div>
                                     </div>
 
                                     <div className="pt-2 flex justify-end">
                                         <form method="dialog">
-                                            <button className="px-4 py-2 bg-blue-600 text-white font-bold rounded-lg text-xs hover:bg-blue-700 cursor-pointer">Đã hiểu</button>
+                                            <button className="px-4 py-2 bg-blue-600 text-white font-bold rounded-lg text-xs hover:bg-blue-700 cursor-pointer">{t('eloRulesGotIt')}</button>
                                         </form>
                                     </div>
                                 </div>
@@ -739,7 +741,7 @@ export default function LeaderboardPage() {
                                                 openUserProfile(
                                                     {
                                                         id: u.id,
-                                                        fullName: u.fullName || 'Kỳ thủ',
+                                                        fullName: u.fullName || t('playerFallback'),
                                                         avatarUrl: u.avatarUrl,
                                                         highlightRank: {
                                                             eloPoints: u.eloPoints,
@@ -762,7 +764,7 @@ export default function LeaderboardPage() {
                                             </div>
                                             <div className="min-w-0 flex-1">
                                                 <h4 className="font-bold text-xs text-slate-800 truncate group-hover:text-blue-600 transition-colors">
-                                                    {u.fullName || "Kỳ thủ"}
+                                                    {u.fullName || t('playerFallback')}
                                                 </h4>
                                                 <p className="text-[10px] text-slate-400 font-medium truncate">{u.email}</p>
                                             </div>
@@ -856,7 +858,7 @@ function RestRankingsTable({ rankings, selectedMatchType }: { rankings: PlayerRa
                                                     openUserProfile(
                                                         {
                                                             id: rank.user.id,
-                                                            fullName: rank.user.fullName || 'Vận động viên',
+                                                            fullName: rank.user.fullName || t('athleteFallback'),
                                                             avatarUrl: rank.user.avatarUrl,
                                                         },
                                                         rect,

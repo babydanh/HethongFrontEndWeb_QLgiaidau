@@ -1,6 +1,7 @@
 'use client';
 
 import { useForm } from 'react-hook-form';
+import { useTranslations } from 'next-intl';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/Button';
@@ -8,31 +9,31 @@ import { Input } from '@/components/ui/Input';
 import { useCreateTournamentStore } from '@/lib/zustand/createTournamentStore';
 import { ChevronRight, ChevronLeft, MapPin } from 'lucide-react';
 
-// For date validation: registration starts before ends, tournament starts after registration ends, etc.
-const step3Schema = z.object({
-  registrationStartDate: z.string().min(1, 'Vui lòng chọn ngày mở đăng ký'),
-  registrationEndDate: z.string().min(1, 'Vui lòng chọn ngày đóng đăng ký'),
-  startDate: z.string().min(1, 'Vui lòng chọn ngày khai mạc'),
-  endDate: z.string().min(1, 'Vui lòng chọn ngày bế mạc'),
+const createStep3VenueSchema = (translate: ReturnType<typeof useTranslations>) => z.object({
+  registrationStartDate: z.string().min(1, translate('validationVenueRegistrationStart')),
+  registrationEndDate: z.string().min(1, translate('validationVenueRegistrationEnd')),
+  startDate: z.string().min(1, translate('validationVenueStart')),
+  endDate: z.string().min(1, translate('validationVenueEnd')),
   venueId: z.string().optional(),
 }).refine(data => new Date(data.registrationEndDate) >= new Date(data.registrationStartDate), {
-  message: 'Ngày đóng đăng ký phải sau ngày mở',
+  message: translate('validationVenueOrder'),
   path: ['registrationEndDate']
 }).refine(data => new Date(data.startDate) > new Date(data.registrationEndDate), {
-  message: 'Giải đấu chỉ được bắt đầu sau khi đóng đăng ký',
+  message: translate('validationVenueAfterRegistration'),
   path: ['startDate']
 }).refine(data => new Date(data.endDate) > new Date(data.startDate), {
-  message: 'Ngày bế mạc phải sau ngày khai mạc',
+  message: translate('validationVenueEndAfterStart'),
   path: ['endDate']
 });
 
-type Step3Values = z.infer<typeof step3Schema>;
+type Step3Values = z.infer<ReturnType<typeof createStep3VenueSchema>>;
 
 export default function Step3Venue() {
+  const translate = useTranslations('OrganizerCreateStep3');
   const { formData, updateFormData, nextStep, prevStep } = useCreateTournamentStore();
 
   const { register, handleSubmit, formState: { errors } } = useForm<Step3Values>({
-    resolver: zodResolver(step3Schema),
+    resolver: zodResolver(createStep3VenueSchema(translate)),
     defaultValues: {
       registrationStartDate: formData.registrationStartDate,
       registrationEndDate: formData.registrationEndDate,
@@ -53,25 +54,25 @@ export default function Step3Venue() {
   return (
     <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-right-4 duration-300">
       <div>
-        <h2 className="text-xl font-bold text-slate-900 mb-2">Thời gian & Địa điểm</h2>
-        <p className="text-sm text-slate-500">Lên lịch trình cụ thể để các đội tuyển có thể chuẩn bị.</p>
+        <h2 className="text-xl font-bold text-slate-900 mb-2">{translate('venueTitle')}</h2>
+        <p className="text-sm text-slate-500">{translate('venueSubtitle')}</p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 p-5 bg-white border border-slate-200 rounded-lg shadow-sm">
           <div className="md:col-span-2 border-b border-slate-100 pb-2 mb-2">
-            <h4 className="font-bold text-slate-900">Thời gian đăng ký</h4>
+            <h4 className="font-bold text-slate-900">{translate('registrationSection')}</h4>
           </div>
           
           <Input
-            label="Mở đăng ký"
+            label={translate('registrationStart')}
             type="date"
             {...register('registrationStartDate')}
             error={errors.registrationStartDate?.message}
           />
           <Input
-            label="Đóng đăng ký"
+            label={translate('registrationEnd')}
             type="date"
             {...register('registrationEndDate')}
             error={errors.registrationEndDate?.message}
@@ -80,17 +81,17 @@ export default function Step3Venue() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 p-5 bg-white border border-slate-200 rounded-lg shadow-sm">
           <div className="md:col-span-2 border-b border-slate-100 pb-2 mb-2">
-            <h4 className="font-bold text-slate-900">Thời gian diễn ra</h4>
+            <h4 className="font-bold text-slate-900">{translate('competitionSection')}</h4>
           </div>
           
           <Input
-            label="Ngày khai mạc"
+            label={translate('competitionStart')}
             type="date"
             {...register('startDate')}
             error={errors.startDate?.message}
           />
           <Input
-            label="Ngày bế mạc (Dự kiến)"
+            label={translate('competitionEnd')}
             type="date"
             {...register('endDate')}
             error={errors.endDate?.message}
@@ -99,27 +100,27 @@ export default function Step3Venue() {
 
         <div className="flex flex-col gap-1.5 p-5 bg-slate-50 border border-slate-200 rounded-lg">
           <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-            <MapPin className="w-4 h-4 text-rose-500" /> Địa điểm thi đấu (Venue)
+            <MapPin className="w-4 h-4 text-rose-500" /> {translate('venueLabel')}
           </label>
           <select 
             {...register('venueId')} 
             className="border border-slate-300 rounded-lg px-3 py-2.5 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <option value="">-- Tùy chọn (Chưa xác định) --</option>
+            <option value="">{translate('venueOptional')}</option>
             {/* Use valid UUIDs for mock values to pass backend validation */}
-            <option value="00000000-0000-0000-0000-000000000001">Cụm sân Tennis Lan Anh</option>
-            <option value="00000000-0000-0000-0000-000000000002">Sân Pickleball Quận 7</option>
-            <option value="00000000-0000-0000-0000-000000000003">Nhà thi đấu Phú Thọ</option>
+            <option value="00000000-0000-0000-0000-000000000001">{translate('venueTennis')}</option>
+            <option value="00000000-0000-0000-0000-000000000002">{translate('venuePickleball')}</option>
+            <option value="00000000-0000-0000-0000-000000000003">{translate('venuePhuTho')}</option>
           </select>
-          <p className="text-xs text-slate-500 mt-1">Việc chọn sẵn Venue hệ thống sẽ giúp bạn quản lý sơ đồ sân dễ dàng hơn.</p>
+          <p className="text-xs text-slate-500 mt-1">{translate('venueDescription')}</p>
         </div>
 
         <div className="flex justify-between mt-4 pt-6 border-t border-slate-100">
           <Button type="button" variant="outline" onClick={prevStep} className="border-slate-200 text-slate-600">
-            <ChevronLeft className="w-4 h-4 mr-1" /> Quay lại
+            <ChevronLeft className="w-4 h-4 mr-1" /> {translate('back')}
           </Button>
           <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
-            Tiếp tục <ChevronRight className="w-4 h-4 ml-1" />
+            {translate('continue')} <ChevronRight className="w-4 h-4 ml-1" />
           </Button>
         </div>
       </form>

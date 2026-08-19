@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { Search, ChevronDown, Play, Trophy, Heart, Share2, X, SlidersHorizontal, Eye, EyeOff, MapPin } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
@@ -227,7 +227,9 @@ const getFormatLabel = (matchType?: string, genderRestriction?: string | null, l
 };
 
 export default function MatchesListPage() {
+    const locale = useLocale();
   const translate = useTranslations('Match');
+  const dateLocale = locale === 'vi' ? 'vi-VN' : 'en-US';
 
   const localizeMatchRoundLabel = (label: string) => label
     .replaceAll('Chung kết tổng', translate('roundGrandFinal'))
@@ -635,7 +637,7 @@ export default function MatchesListPage() {
       group = {
         tournamentId: tId,
         tournamentName: match.tournament?.name || translate('tournamentFallback'),
-        tournamentCategory: match.tournament?.category?.name || match.tournament?.categoryName || 'Chưa cập nhật',
+        tournamentCategory: match.tournament?.category?.name || match.tournament?.categoryName || translate('categoryNotUpdated'),
         tournamentLogoUrl: match.tournament?.logoUrl || match.tournament?.community?.logoUrl || null,
         tournamentVenueName: match.tournament?.venueName || null,
         matches: []
@@ -1203,7 +1205,7 @@ export default function MatchesListPage() {
                                 <>
                                   <span className="text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded font-bold border border-blue-100">{translate("statusScheduled")}</span>
                                   {match.scheduledAt ? (
-                                    <span>• {new Date(match.scheduledAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} {new Date(match.scheduledAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })} • {friendlyRoundName}</span>
+                                    <span>• {new Date(match.scheduledAt).toLocaleTimeString(dateLocale, { hour: '2-digit', minute: '2-digit' })} {new Date(match.scheduledAt).toLocaleDateString(dateLocale, { day: '2-digit', month: '2-digit' })} • {friendlyRoundName}</span>
                                   ) : (
                                     <span>• {friendlyRoundName}</span>
                                   )}
@@ -1251,7 +1253,7 @@ export default function MatchesListPage() {
                                             const memberEloList = members as Array<{ fullName?: string | null; isMock?: boolean; elo?: { eloPoints: number } }>;
                                             return memberEloList.slice(0, 2).map((m, i) => (
                                               <span key={i} className={`text-[9px] font-medium ${p1Won ? 'text-blue-600/80' : 'text-slate-400'}`}>
-                                                {getShortName(m.fullName) || (m.isMock ? translate('virtualPlayer') : 'N/A')}
+                                                {getShortName(m.fullName) || (m.isMock ? translate('virtualPlayer') : translate('unknownMember'))}
                                               </span>
                                             ));
                                           })()}
@@ -1328,7 +1330,7 @@ export default function MatchesListPage() {
                                             const memberEloList = members as Array<{ fullName?: string | null; isMock?: boolean; elo?: { eloPoints: number } }>;
                                             return memberEloList.slice(0, 2).map((m, i) => (
                                               <span key={i} className={`text-[9px] font-medium ${p2Won ? 'text-blue-600/80' : 'text-slate-400'}`}>
-                                                {getShortName(m.fullName) || (m.isMock ? translate('virtualPlayer') : 'N/A')}
+                                                {getShortName(m.fullName) || (m.isMock ? translate('virtualPlayer') : translate('unknownMember'))}
                                               </span>
                                             ));
                                           })()}
@@ -1510,7 +1512,7 @@ export default function MatchesListPage() {
             disabled={page === totalTournamentsPages}
             className="px-3 py-1.5 text-xs font-bold text-slate-655 bg-white border border-slate-200 hover:border-slate-350 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
           >
-            Sau
+            {translate('nextPage')}
           </button>
         </div>
       )}

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from 'next/navigation';
 import {
   Activity,
@@ -55,25 +55,16 @@ import {
 } from '@/utils/tournament-status';
 import { cn } from '@/utils/cn';
 
-const dateFormatter = new Intl.DateTimeFormat('vi-VN', {
-  day: '2-digit',
-  month: '2-digit',
-  year: 'numeric',
-});
-
-const dateTimeFormatter = new Intl.DateTimeFormat('vi-VN', {
-  day: '2-digit',
-  month: '2-digit',
-  year: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-});
-
-function formatDate(value?: string | null, withTime = false, fallback = 'Chưa cập nhật') {
+function formatDate(value: string | null | undefined, locale: string, withTime = false, fallback = '') {
   if (!value) return fallback;
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return fallback;
-  return withTime ? dateTimeFormatter.format(date) : dateFormatter.format(date);
+  return new Intl.DateTimeFormat(locale === 'vi' ? 'vi-VN' : 'en-US', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    ...(withTime ? { hour: '2-digit', minute: '2-digit' } : {}),
+  }).format(date);
 }
 
 function getMatchStatusLabel(status: string, translate: (key: string) => string) {
@@ -85,6 +76,7 @@ function getMatchStatusLabel(status: string, translate: (key: string) => string)
 
 export default function DashboardPage() {
   const translate = useTranslations("PlayerDashboard");
+  const locale = useLocale();
   const router = useRouter();
   const { user } = useAuthStore();
   const [userRankings, setUserRankings] = useState<{ publicRanks: PlayerRanking[]; communityRanks: PlayerRanking[] } | null>(null);
@@ -246,7 +238,7 @@ export default function DashboardPage() {
     ...(workspace?.organizedTournaments ?? []),
     ...(workspace?.coOrganizerTournaments ?? []),
   ];
-  const sportSet = new Set<string>([translate("sportBadminton"), translate("sportTableTennis"), 'Pickleball', 'Tennis']);
+  const sportSet = new Set<string>([translate("sportBadminton"), translate("sportTableTennis"), translate("sportPickleball"), translate("sportTennis")]);
   allTournaments.forEach((t) => {
     const s = t.category?.name;
     if (s) sportSet.add(s);
@@ -459,7 +451,7 @@ export default function DashboardPage() {
                               disabled={isBusy}
                               className="h-8 text-xs font-bold px-3"
                             >
-                              {isBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Đồng ý'}
+                              {isBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : translate("accept")}
                             </Button>
                           </div>
                         </div>
@@ -472,7 +464,7 @@ export default function DashboardPage() {
               {/* Next Upcoming Match Hero Card */}
               <section className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm overflow-hidden">
                 <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2">
-                  <Clock3 className="w-4 h-4 text-blue-600" /> Trận đấu tiếp theo
+                  <Clock3 className="w-4 h-4 text-blue-600" /> {translate("nextMatchTitle")}
                 </h2>
                 {isLoading ? (
                   <div className="flex justify-center py-6">
@@ -505,11 +497,11 @@ export default function DashboardPage() {
 
                     <div className="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
                       <span>
-                        Vòng đấu: {upcomingMatch.group?.stage?.name || upcomingMatch.group?.name || 'Vòng đấu'}
+                        {translate("roundLabel", { name: upcomingMatch.group?.stage?.name || upcomingMatch.group?.name || translate("roundFallback") })}
                       </span>
                       <Link href={`/live/${upcomingMatch.id}`}>
                         <span className="inline-flex items-center gap-1 font-bold text-blue-400 hover:text-blue-300">
-                          Xem tỷ số <ChevronRight className="w-3.5 h-3.5" />
+                          {translate("viewScore")} <ChevronRight className="w-3.5 h-3.5" />
                         </span>
                       </Link>
                     </div>
@@ -521,7 +513,7 @@ export default function DashboardPage() {
                     <div className="mt-3">
                       <Link href="/tournaments">
                         <Button size="sm" variant="outline" className="text-xs font-bold border-slate-200">
-                          Khám phá giải đấu
+                          {translate("exploreTournaments")}
                         </Button>
                       </Link>
                     </div>
@@ -533,7 +525,7 @@ export default function DashboardPage() {
               <section className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
-                    <Activity className="w-4 h-4 text-emerald-600" /> Phong độ & Trận đấu vừa qua
+                    <Activity className="w-4 h-4 text-emerald-600" /> {translate("recentFormTitle")}
                   </h2>
                   <span className="text-xs text-slate-400">{translate("completedMatchesCount", { count: completedMatches.length })}</span>
                 </div>
@@ -563,10 +555,10 @@ export default function DashboardPage() {
                             </div>
                             <div className="min-w-0">
                               <p className="text-xs font-bold text-slate-900 truncate">
-                                {m.participant1?.teamName || 'Đội A'} vs {m.participant2?.teamName || 'Đội B'}
+                                {m.participant1?.teamName || translate("teamAFallback")} vs {m.participant2?.teamName || translate("teamBFallback")}
                               </p>
                               <p className="text-[10px] text-slate-400 mt-0.5 truncate">
-                                {m.tournament?.name || translate("tournament")} • {formatDate(m.updatedAt || m.scheduledAt, false, translate("notUpdated"))}
+                                {m.tournament?.name || translate("tournament")} • {formatDate(m.updatedAt || m.scheduledAt, locale, false, translate("notUpdated"))}
                               </p>
                             </div>
                           </div>
@@ -585,7 +577,7 @@ export default function DashboardPage() {
                   </div>
                 ) : (
                   <div className="py-6 text-center text-xs text-slate-400 border border-dashed border-slate-200 rounded-lg">
-                    Chưa có dữ liệu trận đấu vừa qua gần đây.
+                    {translate("noRecentMatches")}
                   </div>
                 )}
               </section>
@@ -606,7 +598,7 @@ export default function DashboardPage() {
                       tournFilter === 'all' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                     )}
                   >
-                    Tất cả
+                    {translate("allTournamentsFilter")}
                   </button>
                   <button
                     type="button"
@@ -616,7 +608,7 @@ export default function DashboardPage() {
                       tournFilter === 'registered' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                     )}
                   >
-                    Đã đăng ký ({registeredCount})
+                    {translate("registeredFilter", { count: registeredCount })}
                   </button>
                   {isOrganizerOrAdmin && (
                     <button
@@ -627,7 +619,7 @@ export default function DashboardPage() {
                         tournFilter === 'organized' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                       )}
                     >
-                      Đang tổ chức ({totalOrganized})
+                      {translate("organizedFilter", { count: totalOrganized })}
                     </button>
                   )}
                   <button
@@ -638,7 +630,7 @@ export default function DashboardPage() {
                       tournFilter === 'followed' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                     )}
                   >
-                    Đang theo dõi ({followedTournaments.length})
+                    {translate("followedFilter", { count: followedTournaments.length })}
                   </button>
                 </div>
 
@@ -677,7 +669,7 @@ export default function DashboardPage() {
               <section className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                 <div className="px-5 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/60">
                   <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                    <Clock3 className="w-4 h-4 text-rose-500" /> Ca làm việc trọng tài ({workspace?.refereeMatches.length || 0})
+                    <Clock3 className="w-4 h-4 text-rose-500" /> {translate("refereeWorkTitle")} ({workspace?.refereeMatches.length || 0})
                   </h2>
                 </div>
                 <div className="p-5">
@@ -701,13 +693,13 @@ export default function DashboardPage() {
                                 </div>
                               </div>
                               <p className="text-xs font-semibold text-slate-700 mt-1">
-                                {match.participant1Name || 'Chưa xác định'} vs {match.participant2Name || 'Chưa xác định'}
+                                {match.participant1Name || translate("unknownParticipant")} vs {match.participant2Name || translate("unknownParticipant")}
                               </p>
                               <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-slate-500">
-                                <span className="bg-slate-100 px-2 py-0.5 rounded">{match.categoryName || 'Môn thi đấu'}</span>
+                                <span className="bg-slate-100 px-2 py-0.5 rounded">{match.categoryName || translate("competitionSport")}</span>
                                 <span className="bg-slate-100 px-2 py-0.5 rounded">{match.stageName} • {match.groupName}</span>
-                                <span className="bg-slate-100 px-2 py-0.5 rounded">Vòng {match.roundNumber} • Trận {match.matchOrder}</span>
-                                <span className="bg-slate-100 px-2 py-0.5 rounded">Sân: {match.courtName || translate("unassigned")}</span>
+                                <span className="bg-slate-100 px-2 py-0.5 rounded">{translate("roundAndMatch", { round: match.roundNumber, match: match.matchOrder })}</span>
+                                <span className="bg-slate-100 px-2 py-0.5 rounded">{translate("courtLabel", { name: match.courtName || translate("unassigned") })}</span>
                               </div>
                             </div>
                             <span className={`shrink-0 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide border ${getTournamentStatusClassName(match.status)}`}>
@@ -717,7 +709,7 @@ export default function DashboardPage() {
                           <div className="mt-3 pt-3 border-t border-slate-100 flex justify-end">
                             <Link href={`/live/${match.id}`}>
                               <Button size="sm" className="h-8 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs">
-                                Vào chấm điểm Live
+                                {translate("liveScoring")}
                               </Button>
                             </Link>
                           </div>
@@ -751,7 +743,7 @@ export default function DashboardPage() {
             winRate={winRate}
             tierName={tierName}
             activeRank={activeRank}
-            sportLabel={activeRank?.matchType === 'SINGLES' ? translate("singlesShort") : activeRank?.matchType === 'DOUBLES' ? 'Đôi' : activeRank?.matchType === 'MIXED_DOUBLES' ? 'Đôi nam nữ' : undefined}
+            sportLabel={activeRank?.matchType === 'SINGLES' ? translate("singlesShort") : activeRank?.matchType === 'DOUBLES' ? translate("doublesShort") : activeRank?.matchType === 'MIXED_DOUBLES' ? translate("mixedDoublesShort") : undefined}
             sportOptions={categories.map((category) => ({ id: category.id, name: category.name }))}
             selectedSportId={selectedEloCategoryId}
             onSportChange={setEloCategoryId}

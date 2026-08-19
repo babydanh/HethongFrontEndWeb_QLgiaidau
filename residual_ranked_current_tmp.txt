@@ -1,0 +1,2309 @@
+122	D:\Duancanhan\Project_QuanLyGiaiDau\frontend-web_qlgiaidau\src\app\organizer\tournaments\[id]\manage\components\BracketTab.tsx
+  33: // Cấu hình mặc định props
+  246: // producing phantom Vòng 128/duplicate Vòng 64 rows for a 32-team bracket.
+  258: return name.includes('winner') || name.includes('thắng') || name.includes('grand') || name.includes('chung');
+  285: ? 'Chung kết'
+  320: ? 'Vòng 32'
+  322: ? 'Vòng 16'
+  324: ? 'Tứ kết'
+  326: ? 'Bán kết'
+  328: ? 'Chung kết'
+  329: : 'Chưa đủ đội';
+  336: : 'Chưa đủ đội';
+  339: name: 'Knockout dự kiến',
+  347: name: 'Vòng bảng dự kiến',
+  381: // Show per-LEG config (Lượt 1, Lượt 2...), not per-round.
+  388: name: `Lượt ${legNumber}`,
+  409: text: '1 bảng duy nhất, thi đấu vòng tròn 1 lượt tính điểm. Xếp hạng trực tiếp bằng điểm số.',
+  413: text: '1 bảng duy nhất, đấu 2 lượt (đi + về). Số đội vừa phải, nếu bằng điểm thì đánh play-off phân hạng.',
+  417: text: '1 bảng duy nhất, đấu 2 lượt. Số đội khá đông, bắt buộc xử lý hòa bằng play-off.',
+  421: text: '1 bảng duy nhất, đấu 2 lượt. CẢNH BÁO: Số trận sẽ rất lớn. Khuyến nghị chọn thể thức "Vòng Bảng + Knockout" (Group Stage Knockout) thay vì Round Robin thuần túy để giảm số trận.',
+  430: text: '2 bảng, top 1 mỗi bảng vào chung kết',
+  434: text: '2 bảng, top 2 mỗi bảng → bán kết',
+  438: text: '4 bảng, top 1 hoặc 2 mỗi bảng → tứ kết',
+  442: text: '4-8 bảng, top 1 mỗi bảng → tứ kết',
+  455: ? `Cảnh báo: ${participantCount} đội trong 1 bảng duy nhất sẽ tạo rất nhiều trận`
+  456: : `Gợi ý dựa trên ${participantCount} người đã đăng ký:`
+  465: {isWarning ? 'Áp dụng cấu hình đề xuất' : 'Áp dụng gợi ý này'}
+  474: {/* 2 Cấp độ Cấu hình bên trong tab Bracket */}
+  477: {/* Banner ngang chọn chế độ ghi điểm Lite / Strict */}
+  483: <h3 className="font-bold text-slate-900 text-base">Cấu hình luật & sơ đồ thi đấu</h3>
+  486: {presentation.sportLabel}: {isLiteMode ? 'Chế độ tự do (Lite)' : presentation.scoringLabel}. {isLiteMode ? 'Trọng tài tự do ghi điểm linh hoạt.' : presentation.presetSummary}
+  501: <span>⚡</span> Tự do (Lite)
+  512: <span>🛡️</span> Tiêu chuẩn (Strict)
+  522: Ở chế độ tự do, trọng tài có thể tùy ý cộng điểm mà không bị giới hạn bởi {sportRuleKind === 'TENNIS' ? 'luật Tennis' : 'luật cách biệt 2 điểm hay điểm chạm'}. Giao diện bảng điểm sẽ tối giản nhất để dễ điều phối.
+  530: {isSavingConfig ? 'Đang lưu...' : 'Lưu chế độ Lite'}
+  536: {/* Nội dung cấu hình: 1 cột (nếu Lite) hoặc 2 cột (nếu Strict) */}
+  538: {/* Cột 1: Cấu hình luật tiêu chuẩn (Chỉ hiển thị khi !isLiteMode) */}
+  544: Cấu hình luật thi đấu tiêu chuẩn
+  557: { kind: 'PICKLEBALL_RALLY', title: 'Rally Scoring', description: 'Pha bóng nào thắng cũng có điểm.' },
+  558: { kind: 'PICKLEBALL_SIDE_OUT', title: 'Side-out Scoring', description: 'Chỉ đội giao bóng mới được cộng điểm.' },
+  582: <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-600">Preset theo môn</p>
+  597: {preset.setsToWin} chạm • {preset.pointsPerSet}
+  606: <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Số Set chạm thắng</label>
+  658: placeholder={sportRuleKind === 'TENNIS' ? 'Ví dụ: 7' : 'Ví dụ: 11'}
+  665: Thiết lập hiện tại: thắng {setsToWin} {sportRuleKind === 'PICKLEBALL_SIDE_OUT' ? 'game' : 'set'}
+  667: {pointsPerSet} {sportRuleKind === 'TENNIS' ? 'game/set' : 'điểm'}
+  668: {winByTwo ? ' • hơn 2' : ' • chạm đích là chốt'}
+  678: {isSavingConfig ? 'Đang lưu...' : 'Lưu cấu hình mặc định'}
+  684: {/* Cột 2 (hoặc Full Width ở Lite): Cấu hình thể thức vòng đấu */}
+  692: Cấu hình Vòng Tròn (Round Robin)
+  695: Thiết lập số lượt đấu, điểm số và cách xử lý khi các đội bằng điểm.
+  700: <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Số vòng (roundsToPlay)</label>
+  709: <p className="text-[9px] text-slate-400 font-semibold mt-0.5">2 = lượt đi + lượt về, 3+ = thêm vòng</p>
+  713: <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Thắng</label>
+  740: <option value="H2H_POINTS">Đối đầu (Head-to-Head)</option>
+  741: <option value="SET_DIFF">Hiệu số set (Set Diff)</option>
+  742: <option value="POINT_DIFF">Hiệu số điểm (Point Diff)</option>
+  746: <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Xử lý hoà điểm</label>
+  748: <option value="split">Chia đôi (đồng hạng)</option>
+  749: <option value="playoff">Đánh play-off (trận phụ)</option>
+  760: Lưu cấu hình
+  772: Cấu hình Vòng Bảng + Knockout
+  776: ? `${numGroups} bảng, ${teamsPerGroup} đội/bảng, top ${teamsAdvancing} mỗi bảng vào knockout`
+  777: : 'Thiết lập bảng đấu, số đội đi tiếp và thể thức loại trực tiếp.'}
+  781: <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-600">Vòng bảng</p>
+  784: <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Số bảng</label>
+  788: <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Đội/bảng</label>
+  792: <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Top vào knockout</label>
+  796: <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Lượt đấu vòng bảng</label>
+  806: <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Thể thức playoff</label>
+  808: <option value="SINGLE_ELIMINATION">Loại trực tiếp</option>
+  809: <option value="DOUBLE_ELIMINATION">Nhánh thắng/thua</option>
+  813: <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Xếp hạt giống</label>
+  816: <option value="RANDOM">Ngẫu nhiên</option>
+  822: <p className="text-[10px] uppercase text-slate-400">Qua vòng bảng</p>
+  823: <p>{gskAdvancingTotal} đội</p>
+  826: <p className="text-[10px] uppercase text-slate-400">Bắt đầu knockout</p>
+  836: Lưu cấu hình thể thức
+  846: Cấu hình theo vòng đấu
+  860: `${override.sets_to_win === 1 ? 'Thắng 1 set' : override.sets_to_win === 2 ? 'Thắng 2 set' : 'Thắng 3 set'}, ${override.points_per_set || 21} điểm/set, ${override.deuce_enabled ? 'có cách biệt 2 điểm' : 'không áp dụng cách biệt 2 điểm'}`
+  862: 'Kế thừa luật mặc định của hình thức'
+  872: Cấu hình vòng
+  880: <p className="text-xs font-semibold text-slate-455">Sơ đồ thi đấu chưa được khởi tạo.</p>
+  881: <p className="text-[11px] text-slate-400 mt-0.5">Khởi tạo sơ đồ ở bên dưới để thiết lập luật thi đấu chi tiết cho từng vòng.</p>
+  891: {/* Cấp độ 2 (Dành cho GSK): Khối cấu hình chi tiết từng vòng đấu toàn diện */}
+  897: Cấu hình luật chi tiết theo từng vòng đấu
+  900: Tùy chỉnh số set thắng, điểm chạm riêng biệt cho vòng bảng và từng vòng loại trực tiếp.
+  905: {/* Vòng bảng */}
+  909: <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-700">Vòng bảng</p>
+  914: <p className="text-sm font-bold text-slate-900">Vòng bảng dùng chung</p>
+  916: Chung toàn vòng bảng
+  920: Áp dụng cho tất cả bảng và mọi lượt đấu.
+  931: return `${setsLabel} set thắng, ${rc?.points_per_set || pointsPerSet} điểm/set`;
+  933: : 'Kế thừa luật mặc định của hình thức'}
+  936: Cấu hình vòng
+  948: {override ? `${override.sets_to_win} set thắng, ${override.points_per_set || pointsPerSet} điểm/set` : 'Kế thừa luật mặc định'}
+  952: Cấu hình vòng
+  960: {/* Vòng Knockout */}
+  964: <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-700">Từng vòng Knockout</p>
+  974: {override ? `${override.sets_to_win} set thắng, ${override.points_per_set || pointsPerSet} điểm/set` : 'Kế thừa luật mặc định'}
+  978: Cấu hình vòng
+  985: <p className="text-xs font-semibold text-slate-500">Khởi tạo sơ đồ để cấu hình luật chi tiết từng vòng knockout.</p>
+  994: {/* Nút khởi tạo bracket nếu chưa có */}
+  998: <h2 className="text-xl font-bold text-slate-900 mb-1">Sơ đồ thi đấu</h2>
+  999: <p className="text-sm text-slate-500">Chưa có sơ đồ. Hãy khởi tạo để bắt đầu phân lịch và sơ đồ.</p>
+  1007: ? 'Đang khởi tạo...'
+  1009: ? 'Tạo lịch thi đấu'
+  1011: ? 'Tạo lịch vòng bảng'
+  1012: : 'Khởi tạo sơ đồ thi đấu'}
+  1015: <p className="text-xs text-blue-600 font-semibold">⚠ Vui lòng chọn nội dung thi đấu trước</p>
+  1018: <p className="text-xs text-blue-600 font-semibold">⚠ Cần ít nhất 2 đội/VĐV để tạo sơ đồ</p>
+  1028: <h3 className="font-bold text-slate-900 text-base">Sơ đồ thi đấu</h3>
+  1029: <p className="text-xs text-slate-500 mt-0.5">Sơ đồ hiện tại của bảng đấu. Bạn có thể bốc thăm hoặc tạo lại sơ đồ bất cứ lúc nào trước khi giải kết thúc.</p>
+  1040: {isGeneratingBracket ? 'Đang tạo lại...' : 'Tạo lại sơ đồ thi đấu'}
+  1048: title="Tạo lại sơ đồ thi đấu?"
+  1049: description="Toàn bộ sơ đồ, lịch thi đấu và các phân nhánh hiện tại của nội dung này sẽ được bốc thăm và khởi tạo lại theo danh sách VĐV và cấu hình mới nhất. Các dữ liệu lịch trận cũ sẽ được thiết lập lại. Bạn có chắc chắn muốn tiếp tục không?"
+  1050: confirmLabel={isGeneratingBracket ? 'Đang xử lý...' : 'Xác nhận tạo lại'}
+  1051: cancelLabel="Giữ sơ đồ hiện tại"
+  1072: <Users className="w-4 h-4 inline mr-1.5" />Vòng bảng
+  1082: <Trophy className="w-4 h-4 inline mr-1.5" />Vòng loại trực tiếp
+  1103: {group.name || `Bảng ${String.fromCharCode(65 + groupIndex)}`}
+  1106: {(group.matches ?? []).length} trận
+  1125: Chưa có dữ liệu vòng bảng.
+118	D:\Duancanhan\Project_QuanLyGiaiDau\frontend-web_qlgiaidau\src\app\organizer\tournaments\[id]\manage\page.tsx
+  64: <p className="text-slate-500 font-medium">Đang tải cấu hình quản trị...</p>
+  73: <h2 className="text-xl font-bold text-slate-900">Không tìm thấy giải đấu</h2>
+  74: <p className="text-slate-500 mt-2">Giải đấu không tồn tại hoặc bạn không có quyền truy cập quản trị.</p>
+  82: { key: 'basic', label: 'Thông tin', icon: Settings },
+  83: { key: 'schedule', label: 'Lịch & Địa điểm', icon: Calendar },
+  84: { key: 'registration', label: 'Đăng ký', icon: Users },
+  85: { key: 'bracket', label: 'Sơ đồ', icon: Trophy },
+  87: { key: 'finance', label: 'Tài chính', icon: DollarSign },
+  88: { key: 'permissions', label: 'Phân quyền', icon: FileText },
+  130: {s.tournament.category?.name || 'Bộ môn'}
+  133: {s.draftStatus === 'saving' && <span className="text-[10px] font-semibold text-slate-400">Đang lưu nháp…</span>}
+  134: {s.draftStatus === 'saved' && <span className="text-[10px] font-semibold text-emerald-600">Đã lưu nháp</span>}
+  135: {s.draftStatus === 'restored' && <span className="text-[10px] font-semibold text-amber-600">Đã khôi phục nháp</span>}
+  140: Khai mạc: {s.tournament.startDate ? formatDate(s.tournament.startDate) : 'Chưa thiết lập'}
+  148: Vận hành
+  158: <ExternalLink className="w-3.5 h-3.5" /> Trang giải
+  174: <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Nội dung thi đấu</p>
+  175: <p className="text-xs text-slate-400">Chọn nội dung để xem cấu hình riêng</p>
+  180: <Plus className="w-3.5 h-3.5" /> Thêm nội dung
+  194: title="Nhấn để xem chi tiết & thiết lập cấu hình riêng"
+  202: Tối đa: {div.maxParticipants ?? 'Theo giải'}
+  206: : 'ELO theo giải'}
+  212: title="Xóa nội dung này"
+  219: title="Chỉnh sửa nội dung"
+  325: onCopyInviteLink={() => { navigator.clipboard.writeText(s.inviteLink); toast.success('Đã sao chép link!'); }} />}
+  390: <ModalHeader><ModalTitle className="text-xl font-bold text-slate-900">Cấu hình vòng đấu</ModalTitle></ModalHeader>
+  396: <p className="font-bold text-amber-950">Chế độ Tự do (Lite) đang bật toàn giải</p>
+  398: Trọng tài có thể tùy ý cộng/nhập điểm số trực tiếp mà không bị giới hạn bởi luật thi đấu hay cách biệt điểm. Giao diện điều phối được tối giản hoàn toàn.
+  409: <p className="text-xs font-bold uppercase tracking-[0.12em] text-blue-700">Preset nhanh cho vòng đấu</p>
+  436: <label className="text-xs font-bold text-slate-500">Địa điểm sân đấu</label>
+  441: placeholder="Nhập sân thi đấu riêng cho vòng này (để trống sẽ dùng địa điểm giải đấu)..."
+  446: <label className="text-xs font-bold text-slate-500">Giờ mặc định cho vòng này</label>
+  453: <label className="text-xs font-bold text-slate-500">Số set / game tối đa</label>
+  479: Vòng này sẽ đánh: thắng {Math.ceil(s.stageMaxSets / 2)} {s.sportRuleKind === 'PICKLEBALL_SIDE_OUT' ? 'game' : 'set'}
+  481: {s.stagePointsPerSet} {s.sportRuleKind === 'TENNIS' ? 'game/set' : 'điểm'}
+  482: {s.stageWinBy2Points ? ' • hơn 2' : ' • chạm đích là chốt'}
+  487: Mode side-out: chỉ đội giao bóng mới ghi điểm. Vòng này hiện mới cấu hình score mục tiêu, chưa có state giao bóng live chi tiết.
+  491: Gợi ý nhập điểm: {scoreGuidance.targetSummary} Ví dụ: {scoreGuidance.examples.join(' • ')}.
+  497: <label className="text-xs font-bold text-slate-500">Ghi chú điều phối vòng này</label>
+  498: <textarea value={s.stageNotificationNote} onChange={e => s.setStageNotificationNote(e.target.value)} className="min-h-20 w-full border rounded-lg p-2 text-sm" placeholder="Ví dụ: ưu tiên gọi đồng loạt ở sân trung tâm lúc 08:00" />
+  502: {s.isSavingStage ? 'Đang lưu...' : 'Lưu cấu hình'}
+  513: <ModalHeader><ModalTitle className="text-xl font-bold text-slate-900">Xác nhận chốt danh sách</ModalTitle></ModalHeader>
+  516: ⚠️ Sau khi chốt, không thể thêm/sửa người chơi. Hệ thống sẽ tự động sinh sơ đồ thi đấu.
+  520: <SummarySection title="1. Đăng ký & danh sách">
+  522: label="Độ mở tìm thấy"
+  523: value={s.visibility === 'PRIVATE' ? 'Riêng tư' : 'Công khai (Tìm kiếm được)'}
+  526: label="Chế độ đăng ký"
+  528: s.registrationMode === 'APPROVAL' ? 'Xét duyệt' :
+  529: s.registrationMode === 'INVITE_ONLY' ? 'Chỉ nhận mã mời' :
+  530: 'Tự do (Vào thẳng danh sách)'
+  534: label="Hình thức đơn/đôi"
+  538: : s.matchType.startsWith('SINGLES') ? 'Đơn'
+  539: : s.matchType.startsWith('MIXED') ? 'Đôi Nam Nữ'
+  540: : 'Đôi'
+  543: <SummaryRow label="Số đội đăng ký" value={`${s.lockSummary.totalParticipants} đội`} />
+  544: <SummaryRow label="Số VĐV" value={`${s.lockSummary.totalPlayers} VĐV`} />
+  547: <SummarySection title="2. Thể thức sơ đồ">
+  548: <SummaryRow label="Bảng / Hạng" value={selectedDivision?.name || selectedDivision?.id || '—'} />
+  550: label="Loại sơ đồ"
+  555: <SummarySection title="3. Cấu hình thể lệ điểm">
+  557: label="Môn & thể điểm"
+  560: <SummaryRow label="Số set/ván" value={`Thắng ${lockRuleView.setsToWin} (tối đa ${lockRuleView.bestOf})`} />
+  564: value={lockRuleView.winByTwo ? 'Áp dụng' : 'Không áp dụng'}
+  570: <SummarySection title="4. Phí">
+  572: label="Lệ phí tham dự"
+  576: : 'Miễn phí'
+  580: label="Lệ phí sân/người"
+  581: value={`${s.lockSummary.platformFeePerPlayer.toLocaleString('vi-VN')}₫/người`}
+  583: <SummaryRow label="Quy tắc phí" value={s.lockSummary.platformFeeRuleLabel} />
+  585: label="Tổng phí sân"
+  592: <Button variant="outline" onClick={() => s.setIsLockModalOpen(false)}>Hủy</Button>
+  594: {s.isLocking ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />} Xác nhận chốt
+  606: <ModalHeader><ModalTitle className="text-lg font-bold">Xóa nội dung này?</ModalTitle></ModalHeader>
+  607: <p className="text-sm text-slate-600 mt-2">Không thể hoàn tác sau khi xóa.</p>
+  609: <Button variant="outline" onClick={() => s.setDivisionPendingDelete(null)}>Hủy</Button>
+  611: {s.isDeletingDivision ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />} Xóa
+  622: <ModalHeader><ModalTitle className="text-lg font-bold">{s.editingDivision ? 'Chỉnh sửa nội dung thi đấu' : 'Thêm nội dung thi đấu'}</ModalTitle></ModalHeader>
+  624: <div><label className="text-xs font-bold text-slate-500">Loại</label>
+  633: <label className="text-xs font-bold text-slate-500">Tên nội dung riêng</label>
+  637: placeholder="Ví dụ: Đôi Nam ELO thấp"
+  641: <p className="text-[11px] text-slate-400 mt-1">Để trống sẽ dùng tên mặc định theo loại.</p>
+  643: <div><label className="text-xs font-bold text-slate-500">Thể thức</label>
+  645: <option value="SINGLE_ELIMINATION">Loại trực tiếp</option>
+  646: <option value="DOUBLE_ELIMINATION">Nhánh thắng/thua</option>
+  647: <option value="ROUND_ROBIN">Vòng tròn</option>
+  648: <option value="GROUP_STAGE_KNOCKOUT">Vòng bảng + Loại trực tiếp</option>
+  657: Giới hạn số đội đăng ký
+  661: <label className="text-xs font-semibold text-slate-600">Số lượng tối đa
+  672: <p className="text-[11px] text-slate-500">Giới hạn áp dụng riêng cho nội dung này, không thay đổi quy mô các nội dung khác.</p>
+  679: Giới hạn ELO riêng cho nội dung này
+  683: <label className="text-xs font-semibold text-slate-600">ELO tối thiểu
+  684: <input type="number" min={0} max={3000} value={s.newDivisionMinElo ?? ''} onChange={(e) => s.setNewDivisionMinElo(e.target.value === '' ? null : Number(e.target.value))} className="mt-1 w-full border rounded-lg p-2 text-sm" placeholder="Không giới hạn" />
+  686: <label className="text-xs font-semibold text-slate-600">ELO tối đa
+  687: <input type="number" min={0} max={3000} value={s.newDivisionMaxElo ?? ''} onChange={(e) => s.setNewDivisionMaxElo(e.target.value === '' ? null : Number(e.target.value))} className="mt-1 w-full border rounded-lg p-2 text-sm" placeholder="Không giới hạn" />
+  691: <p className="text-[11px] text-slate-500">Tắt để dùng cấu hình ELO chung của giải.</p>
+  694: <Button variant="outline" onClick={() => { s.setIsCreateDivisionModalOpen(false); s.resetDivisionEditor(); }}>Hủy</Button>
+  696: {s.isCreatingDivision ? <Loader2 className="w-4 h-4 animate-spin" /> : s.editingDivision ? <Pencil className="w-4 h-4" /> : <Plus className="w-4 h-4" />} {s.editingDivision ? 'Lưu thay đổi' : 'Thêm'}
+  708: <ModalHeader><ModalTitle className="text-lg font-bold">Xếp lịch thi đấu</ModalTitle></ModalHeader>
+  711: <p className="text-sm font-bold text-slate-900">{sportPresentation.sportLabel}: {s.isLiteMode ? 'Lite theo cấu hình giải' : 'Luật chuẩn theo cấu hình giải'}</p>
+  714: ? 'Trận này đang dùng cấu hình riêng đã lưu.'
+  715: : 'Trận này kế thừa cài đặt điểm của giải; không tự tạo preset khác.'}
+  718: <div><label className="text-xs font-bold text-slate-500">Sân</label>
+  719: <input value={s.matchCourtName} onChange={e => s.setMatchCourtName(e.target.value)} placeholder="Tên sân" className="w-full border rounded-lg p-2 text-sm" /></div>
+  720: <div><label className="text-xs font-bold text-slate-500">Địa chỉ sân</label>
+  721: <input value={s.matchCourtAddress} onChange={e => s.setMatchCourtAddress(e.target.value)} placeholder="Địa chỉ sân" className="w-full border rounded-lg p-2 text-sm" /></div>
+  722: <div><label className="text-xs font-bold text-slate-500">Giờ thi đấu</label>
+  725: <p className="text-xs font-bold text-slate-600">Trọng tài</p>
+  726: <p className="mt-1 text-xs text-slate-500">Chưa ghi nhận. Khi trọng tài được chấp nhận bấm “Bắt đầu trận” trên Live, hệ thống tự lưu tên người bắt trận.</p>
+  730: <option value="">-- Chưa gán camera --</option>
+  737: Cấu hình riêng cho trận này
+  742: <p className="text-xs font-bold uppercase tracking-[0.12em] text-blue-700">Điều chỉnh luật riêng cho trận này</p>
+  765: <div><label className="text-xs text-slate-500">Số set / game chạm thắng</label><input type="number" value={s.matchSetsToWin} onChange={e => s.setMatchSetsToWin(Number(e.target.value))} className="w-full border rounded-lg p-2 text-sm" /></div>
+  774: Trận này sẽ đánh: thắng {s.matchSetsToWin} {s.sportRuleKind === 'PICKLEBALL_SIDE_OUT' ? 'game' : 'set'}
+  776: {s.matchPointsPerSet} {s.sportRuleKind === 'TENNIS' ? 'game/set' : 'điểm'}
+  777: {s.matchDeuceEnabled ? ' • hơn 2' : ' • chạm đích là chốt'}
+  781: Gợi ý nhập điểm cho trận này: {scoreGuidance.targetSummary} Ví dụ: {scoreGuidance.examples.join(' • ')}.
+  787: <Button variant="outline" onClick={() => s.setSelectedMatch(null)}>Hủy</Button>
+  789: {s.isScheduling ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Lưu'}
+104	D:\Duancanhan\Project_QuanLyGiaiDau\frontend-web_qlgiaidau\src\app\organizer\tournaments\[id]\manage\components\RegistrationTab.tsx
+  162: title="Kéo để sắp xếp"
+  239: ? (divisions.find((division) => division.id === selectedParticipant.tournamentDivisionId)?.name || 'Chưa phân nội dung')
+  349: // ─── Kéo thả hạt giống ─────────────────────────────────────────────
+  426: <p className="font-bold text-amber-900 text-sm">Đang chờ Admin duyệt công khai</p>
+  427: <p className="mt-1 text-xs leading-relaxed text-amber-800">Giải đã được lưu đầy đủ và chỉ hiển thị trong khu vực quản lý của bạn. Sau khi được duyệt, hệ thống sẽ mở trang công khai và nhận đăng ký theo cấu hình bên dưới.</p>
+  437: <p className="text-emerald-700 text-xs mt-1">Người chơi có thể đăng ký tài khoản và truy cập link để tham gia.</p>
+  447: <Lock className="w-4 h-4" /> Chốt danh sách & Tạo sơ đồ
+  458: <h3 className="font-bold text-slate-900 text-lg">Thông tin đăng ký</h3>
+  460: Quản lý cách VĐV đi vào giải, khung thời gian mở đơn và bộ công cụ mời riêng cho đăng ký.
+  466: {/* Cột 1: Chế độ & Quyền truy cập */}
+  469: <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Quyền truy cập & Xét duyệt</h4>
+  474: <label className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">Hiển thị giải đấu</label>
+  480: <option value="PUBLIC">Công khai (Tìm kiếm được)</option>
+  481: <option value="PRIVATE">Không niêm yết (Chỉ truy cập qua link)</option>
+  486: <label className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">Chế độ nhận đăng ký</label>
+  492: <option value="OPEN">Tự do (Vào thẳng danh sách)</option>
+  493: <option value="APPROVAL">Xét duyệt (Chờ BTC phê duyệt)</option>
+  494: <option value="INVITE_ONLY">Chỉ nhận mã mời (Cần mã Code)</option>
+  506: {registrationMode === 'INVITE_ONLY' && 'Đăng ký đóng kín'}
+  507: {registrationMode === 'APPROVAL' && 'Xét duyệt thủ công'}
+  508: {registrationMode === 'OPEN' && 'Mở tự do'}
+  512: {registrationMode === 'OPEN' && 'Mọi VĐV đăng ký tham gia được chốt danh sách và tham gia giải ngay lập tức.'}
+  513: {registrationMode === 'APPROVAL' && 'Đăng ký của VĐV sẽ ở trạng thái chờ duyệt. BTC xét duyệt hồ sơ thủ công.'}
+  514: {registrationMode === 'INVITE_ONLY' && 'Chỉ những ai có link hoặc mã mời mới có thể truy cập và đăng ký tham gia.'}
+  519: {/* Cột 2: Khung thời gian nhận đăng ký */}
+  522: <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Khung thời gian đăng ký</h4>
+  528: label="Thời gian mở đăng ký"
+  551: label="Thời gian đóng đăng ký"
+  574: 💡 Lưu ý: Trạng thái đóng/mở đăng ký sẽ tự động cập nhật theo dòng thời gian thiết lập ở trên.
+  589: <span className="text-sm font-bold text-slate-800">Ràng buộc ELO</span>
+  590: <p className="text-xs text-slate-500">Giới hạn trình độ VĐV khi đăng ký</p>
+  600: <label className="text-[11px] font-bold text-slate-500">ELO tối thiểu</label>
+  606: <label className="text-[11px] font-bold text-slate-500">ELO tối đa</label>
+  614: <label className="text-[11px] font-bold text-slate-500">Tổng ELO tối đa (đôi)</label>
+  620: <label className="text-[11px] font-bold text-slate-500">Chênh lệch tối đa (đôi)</label>
+  635: <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-600">Mã mời đăng ký nhanh</p>
+  636: <p className="text-xl font-bold tracking-[0.18em] text-blue-700">{tournament.inviteCode || 'Chưa có'}</p>
+  639: ? 'Giải chỉ nhận mã mời: VĐV bắt buộc dùng mã/link này mới mở được form đăng ký.'
+  641: ? 'Giải không niêm yết trong danh sách: chia sẻ link này để VĐV vào đăng ký (mã không bắt buộc).'
+  642: : 'Gửi mã hoặc link này cho VĐV khi cần vào thẳng luồng đăng ký.'}
+  650: toast.success('Đã sao chép mã mời!');
+  654: Sao chép mã
+  662: Tạo lại mã
+  675: {visibility === 'PRIVATE' ? 'Đường dẫn đăng ký riêng tư' : 'Đường dẫn đăng ký hiện tại'}
+  684: Sao chép link
+  705: {isSavingConfig ? 'Đang lưu...' : 'Lưu thông tin đăng ký'}
+  713: <h3 className="font-bold text-slate-900 text-lg">Duyệt hồ sơ đăng ký</h3>
+  715: Theo dõi toàn bộ trạng thái đăng ký, thanh toán và quyết định duyệt trước khi chốt danh sách.
+  729: toast.success('Đã xuất file Excel danh sách VĐV!');
+  734: Xuất Excel
+  743: Mẫu Excel
+  752: Nhập Excel (Google Form)
+  755: <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-amber-600">Chờ duyệt</p>
+  763: <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">Tổng hồ sơ</p>
+  767: <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-amber-600">Chờ duyệt</p>
+  771: <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-600">Đã duyệt</p>
+  775: <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-amber-600">Bị từ chối</p>
+  783: <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-600">Đang chờ ghép</p>
+  797: { value: 'ALL', label: 'Tất cả' },
+  798: { value: 'PENDING', label: 'Chờ duyệt' },
+  799: { value: 'COMPLETE', label: 'Đã duyệt' },
+  801: { value: 'REJECTED', label: 'Bị từ chối' },
+  824: <th className="pb-3 pr-4">Đội/Cặp</th>
+  825: <th className="pb-3 pr-4">Thành viên</th>
+  826: <th className="pb-3 pr-4">Trạng thái</th>
+  827: <th className="pb-3 pr-4">Thanh toán</th>
+  828: <th className="pb-3 text-right">Hành động</th>
+  839: Thử đổi bộ lọc hoặc từ khóa để rà lại toàn bộ danh sách đăng ký.
+  859: title="Nhấp để sửa seed"
+  892: Đặc cách
+  896: Chờ ghép partner
+  901: Đăng ký {formatDate(participant.registeredAt)}
+  902: {participant.seed != null ? '' : ` • Seed: Chưa có`}
+  909: {member.isMock ? 'VĐV ảo' : (member.fullName || 'Chưa rõ')}
+  912: Dự bị
+  940: title="Roster chỉ mở khóa được trước khi giải bắt đầu"
+  943: {participant.rosterLockedAt || locallyLockedRosterIds.has(participant.id) ? 'Mở khóa roster' : 'Khóa roster'}
+  952: Duyệt
+  960: : `Bạn có chắc muốn từ chối hồ sơ của "${participant.teamName}" không?`,
+  987: <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-600">Sang vận hành khi giải bắt đầu</p>
+  989: Màn hình `Ops` dùng cho điều phối chuỗi trận, sân đấu, các vấn đề phát sinh và nhật ký vận hành trong ngày thi đấu.
+  997: Mở panel vận hành
+  1011: <RefreshCw className="w-4 h-4 text-blue-600 animate-none" /> Bảng thử nghiệm dữ liệu ảo
+  1014: Tạo danh sách vận động viên ảo để thử nghiệm ghép cặp, bốc thăm và kiểm thử sơ đồ thi đấu bất kỳ lúc nào.
+  1020: <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Danh sách VĐV ảo</label>
+  1023: Đọc từ Excel
+  1044: toast.success(`Đã nạp ${res.rows.length} VĐV từ Excel!`);
+  1046: toast.error('Lỗi khi đọc file: ' + err.message);
+  1068: Sinh VĐV ảo
+  1077: Dọn dẹp
+  1082: {/* Xếp hạt giống */}
+  1086: <Shuffle className="w-4 h-4 text-purple-600" /> Xếp hạt giống
+  1088: <p className="text-xs text-slate-455 mt-1 font-semibold">Phân loại đội mạnh yếu để tránh chạm nhau sớm.</p>
+  1091: {/* Phương pháp xếp hạt giống */}
+  1093: <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Phương pháp xếp hạt giống</label>
+  1099: <option value="MANUAL">Xếp thủ công</option>
+  1100: <option value="ELO">Tự động theo ELO</option>
+  1101: <option value="RANDOM">Ngẫu nhiên</option>
+  1113: <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Đang xếp hạt giống...</>
+  1115: <><Shuffle className="w-3.5 h-3.5" /> Tự động xếp hạt giống</>
+  1134: <p className="mt-2 text-sm font-bold text-slate-500">Chưa có đội nào được đăng ký</p>
+  1180: Chưa có seed ({unseeded.length} đội)
+  1196: Gán seed
+  1282: {/* Partner Email (chỉ hiện khi đánh đôi) */}
+91	D:\Duancanhan\Project_QuanLyGiaiDau\frontend-web_qlgiaidau\src\app\(public)\live\[matchId]\page.tsx
+  146: // Bóng đá: kết quả luân lưu khi trận hòa ở knockout
+  221: // Ref tới khung chat (overflow-y-auto) — chỉ cuộn khung này, KHÔNG cuộn cả trang.
+  245: // 1. Dùng eloPoints chung từ backend trả về nếu có
+  250: // 2. Fallback nếu API cũ chưa update:
+  287: // Chỉ cuộn KHUNG chat (commentsBoxRef), KHÔNG dùng scrollIntoView vì nó cuộn
+  288: // cả các scrollable ancestor (toàn trang) → làm trang nhảy xuống khi mở.
+  534: // Cho phép bình luận tự do thoải mái
+  575: toast.error('Chỉ Ban tổ chức hoặc Trọng tài được phân công mới có quyền điều khiển trận này.');
+  586: toast.error('Bật override thì bắt buộc phải nhập lý do để lưu audit.');
+  605: return { ok: false, message: `${label} đang là 0-0. Hãy nhập điểm thực tế trước khi chốt.` };
+  609: return { ok: false, message: `${label} đang hòa ${team1Score}-${team2Score}. Hãy chỉnh lại tỉ số hoặc bật ngoại lệ.` };
+  614: return { ok: false, message: `${label} chưa đạt tối thiểu ${resolvedRules.pointsPerSet} game.` };
+  617: return { ok: false, message: `${label} vượt quá ngưỡng tối đa ${resolvedRules.maxPoints} game.` };
+  621: return { ok: false, message: `${label} chưa đủ cách biệt để chốt.` };
+  625: return { ok: false, message: `${label} chưa đủ điều kiện để chốt ở ngưỡng tối đa.` };
+  634: return { ok: false, message: `${label} chưa đạt mốc ${resolvedRules.pointsPerSet} điểm.` };
+  640: return { ok: false, message: `${label} chưa đạt tối thiểu ${resolvedRules.pointsPerSet} điểm.` };
+  644: return { ok: false, message: `${label} chưa đủ cách biệt 2 điểm để chốt.` };
+  648: return { ok: false, message: `${label} vượt quá ngưỡng tối đa ${resolvedRules.maxPoints} điểm.` };
+  676: // Bóng đá: ghi luân lưu (shootout) khi trận hòa phân định ở knockout.
+  729: toast.success('Đã đồng bộ điểm live.', { id: `score-sync-${matchId}` });
+  739: toast('Điểm đã thay đổi từ thiết bị khác. Đã làm mới số liệu.', {
+  744: toast.error(getErrorMessage(err, 'Không thể đồng bộ điểm live.'), { id: `score-sync-${matchId}` });
+  856: toast.error('Trong mode side-out, chỉ đội đang giao bóng mới được cộng điểm.');
+  906: // Không cho nút công vượt trần preset. Ngoại lệ phải được bật và có lý do trước đó.
+  908: toast.error(`Điểm set không được vượt ${resolvedRules.maxPoints}. Bật ngoại lệ nếu BTC/trọng tài đã xác nhận.`);
+  929: toast.error(getErrorMessage(err, 'Không thể cập nhật điểm số của set đang diễn ra.'));
+  973: ? `Đã bắt đầu trận ${team1Name} vs ${team2Name}. Bảng điểm live đang hoạt động.`
+  974: : `Đã chuyển trạng thái trận ${team1Name} vs ${team2Name} sang kết thúc.`,
+  978: toast.error(getErrorMessage(err, 'Không thể cập nhật trạng thái trận đấu.'));
+  1000: toast.error('Không tìm thấy set đấu đang diễn ra');
+  1009: toast.error(finishValidation.message ?? 'Không thể chốt set hiện tại.');
+  1054: : 'Không có đội';
+  1056: `Đã chốt ${scorePresentation.sequenceLabel} ${activeIdx + 1}: ${team1Name} ${setObj.team1Score} - ${setObj.team2Score} ${team2Name}. ${setWinnerName !== 'Không có đội' ? `${setWinnerName} thắng ${scorePresentation.sequenceLabel} này.` : ''}`,
+  1063: toast('Set đã thay đổi từ thiết bị khác. Đã làm mới số liệu.');
+  1065: toast.error(getErrorMessage(err, 'Không thể chốt set hiện tại.'));
+  1079: toast.error('Chốt một đội thắng thẳng là nghiệp vụ ngoại lệ. Hãy bật ngoại lệ và nhập lý do trước.');
+  1095: toast.error('Không tìm thấy ID người thắng cuộc');
+  1108: toast.error('Tráº­n hÃ²a pháº£i nháº­p tá»· sá»‘ luÃ¢n lÆ°u khÃ¡c nhau Ä‘á»ƒ phÃ¢n Ä‘á»‹nh.');
+  1115: toast.error('Äá»™i tháº¯ng pháº£i cÃ³ tá»· sá»‘ luÃ¢n lÆ°u cao hÆ¡n.');
+  1122: toast.error('Äá»™i tháº¯ng pháº£i khá»›p vá»›i tá»· sá»‘ bÃ n tháº¯ng.');
+  1145: toast.success(`ÄÃ£ hoÃ n táº¥t tráº­n Ä‘áº¥u. Äá»™i tháº¯ng: ${winnerTeam === 1 ? team1Name : team2Name}.`);
+  1163: // Bóng đá knockout hòa → ghi luân lưu (shootout) để phân định winner.
+  1175: toast.error('Tỷ số luân lưu phải là số không âm và phải có đội thắng.');
+  1182: toast.error('Đội thắng phải có tỷ số luân lưu cao hơn.');
+  1199: `Đã hoàn tất trận đấu. Đội thắng: ${winnerTeam === 1 ? team1Name : team2Name}.`,
+  1206: toast('Trận đã thay đổi từ thiết bị khác. Đã làm mới số liệu.');
+  1208: toast.error(getErrorMessage(err, 'Không thể hoàn tất trận đấu.'));
+  1236: toast.success(`Đã chuyển quyền giao bóng cho ${team === 1 ? team1Name : team2Name}.`);
+  1239: toast.error(getErrorMessage(err, 'Không thể cập nhật đội giao bóng.'));
+  1251: toast.error('Hãy chọn đội giao bóng trước khi thao tác side-out.');
+  1274: ? `Đội ${sideOutState.servingTeam === 1 ? team1Name : team2Name} chuyển sang lượt giao thứ 2.`
+  1275: : `Side-out: quyền giao bóng chuyển sang ${nextState.servingTeam === 1 ? team1Name : team2Name}.`,
+  1279: toast.error(getErrorMessage(err, 'Không thể cập nhật trạng thái giao bóng side-out.'));
+  1340: ? `Game của ${scorePresentation.sequenceLabel} ${activeSetIdx + 1}: ${currentSet.team1Score} - ${currentSet.team2Score}`
+  1361: // Thêm comment ngay lập tức vào local state với thông tin user hiện tại
+  1398: {match.tournament?.name || 'Giải đấu'}
+  1421: {match.status === 'ONGOING' ? 'Trực tiếp' : match.status === 'COMPLETED' ? 'Kết thúc' : 'Sắp diễn ra'}
+  1425: <span>Vòng {match.roundNumber}</span>
+  1430: <span>{formatCompact(viewerCount)} đang xem</span>
+  1434: <span>Môn: {scorePresentation.sportLabel}</span>
+  1457: <span>Chia sẻ</span>
+  1470: <span>{match.tournament?.name || 'Quay lại giải đấu'}</span>
+  1509: <p className="text-sm font-bold text-white">{playback.cameraName || 'Camera trận đấu'}</p>
+  1510: <p className="mt-1 text-xs font-semibold text-slate-300">Người xem chỉ có quyền xem luồng phát và bảng điểm realtime.</p>
+  1522: <h4 className="text-white font-bold text-base tracking-tight">Camera Trực Tiếp Sân Đấu</h4>
+  1523: <p className="text-xs text-slate-400 font-semibold leading-relaxed">Luồng truyền hình trực tiếp (Live Stream) từ camera thông minh của Sporto đang hoạt động.</p>
+  1530: <h4 className="text-white font-bold text-base tracking-tight">Video Phát Lại (Replay)</h4>
+  1531: <p className="text-xs text-slate-455 font-medium leading-relaxed">Trận đấu đã kết thúc. Video ghi hình tự động và các set highlight sẽ khả dụng sau khi Ban tổ chức phê duyệt và tải lên.</p>
+  1546: <h4 className="text-slate-300 font-bold text-base tracking-tight">Trực Tiếp Sắp Khả Dụng</h4>
+  1547: <p className="text-xs text-slate-500 font-medium leading-relaxed">Luồng phát sóng trực tiếp sẽ tự động bắt đầu khi trận đấu được trọng tài kích hoạt khởi tranh.</p>
+  1572: const rawNames = team1Name.split(/[-&/+]|\s+và\s+/i).map(n => n.trim()).filter(Boolean);
+  1573: const isDoublesCategory = match.tournament?.categoryName?.toLowerCase().includes('đôi') || match.matchConfig?.format === 'DOUBLES';
+  1577: // ĐƠN - 1 VĐV
+  1608: // ĐÔI - 2 VĐV
+  1670: const rawNames = team1Name.split(/[-&/+]|\s+và\s+/i).map(n => n.trim()).filter(Boolean);
+  1671: const isDoublesCategory = match.tournament?.categoryName?.toLowerCase().includes('đôi') || match.matchConfig?.format === 'DOUBLES';
+  1764: const rawNames = team2Name.split(/[-&/+]|\s+và\s+/i).map(n => n.trim()).filter(Boolean);
+  1765: const isDoublesCategory = match.tournament?.categoryName?.toLowerCase().includes('đôi') || match.matchConfig?.format === 'DOUBLES';
+  1769: // ĐƠN - 1 VĐV
+  1800: // ĐÔI - 2 VĐV
+  1862: const rawNames = team2Name.split(/[-&/+]|\s+và\s+/i).map(n => n.trim()).filter(Boolean);
+  1863: const isDoublesCategory = match.tournament?.categoryName?.toLowerCase().includes('đôi') || match.matchConfig?.format === 'DOUBLES';
+  1974: Các quyết định đã được trọng tài/BTC ghi nhận theo luật môn.
+  1978: {penalties.length} mục
+  2065: <Clock className="w-4 h-4 text-slate-400" /> {match.scheduledAt ? new Date(match.scheduledAt).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'}) : 'Chưa xếp giờ'}
+  2080: Khu điều khiển trọng tài
+  2083: Mở bảng chấm điểm chuyên dụng
+  2086: Trang live giữ giao diện xem trận gọn hơn. Toàn bộ thao tác chấm điểm, lỗi và ngoại lệ được đưa vào modal riêng.
+  2098: Tính điểm
+  2107: Trận này đang dùng chế độ ngoại lệ của trọng tài/BTC: {scoreOverride.reason}
+83	D:\Duancanhan\Project_QuanLyGiaiDau\frontend-web_qlgiaidau\src\utils\exportTournament.ts
+  6: SCHEDULED: 'Sắp đấu',
+  7: ONGOING: 'Đang đấu',
+  8: COMPLETED: 'Hoàn tất',
+  9: CANCELLED: 'Đã hủy',
+  10: DISPUTED: 'Cần xử lý',
+  14: REGISTERED: 'Đã đăng ký',
+  15: APPROVED: 'Đã duyệt',
+  16: CONFIRMED: 'Đã xác nhận',
+  17: WAITLISTED: 'Hàng chờ',
+  18: PENDING: 'Chờ duyệt',
+  19: PENDING_PAYMENT: 'Chờ thanh toán',
+  20: REJECTED: 'Bị từ chối',
+  21: WITHDRAWN: 'Đã rút lui',
+  22: CHECKED_IN: 'Đã điểm danh',
+  34: return match[key]?.teamName ?? 'Chờ xác định';
+  38: * Export tổng kết kết quả toàn giải ra file .xlsx — giống app
+  60: 'Vòng': match.roundNumber,
+  61: 'Trận số': match.matchOrder,
+  62: 'Đội 1': teamName(match, 'participant1'),
+  63: 'Điểm 1': match.p1SetsWon,
+  64: 'Điểm 2': match.p2SetsWon,
+  65: 'Đội 2': teamName(match, 'participant2'),
+  66: 'Đội thắng': winnerName,
+  67: 'Trạng thái': STATUS_VIETNAMESE[match.status] ?? match.status,
+  68: 'Thời gian kết thúc': formatVnDateTime(match.completedAt),
+  69: 'Trọng tài': match.refereeName ?? '',
+  75: 'Vòng',
+  76: 'Trận số',
+  77: 'Đội 1',
+  78: 'Điểm 1',
+  79: 'Điểm 2',
+  80: 'Đội 2',
+  81: 'Đội thắng',
+  82: 'Trạng thái',
+  83: 'Thời gian kết thúc',
+  84: 'Trọng tài',
+  89: XLSX.utils.book_append_sheet(wb, ws, 'Kết quả toàn giải');
+  96: * Export danh sách vận động viên / đội thi đấu ra file .xlsx chuẩn
+  104: const member1 = p.members?.[0]?.fullName || p.registeredBy?.fullName || p.teamName || 'VĐV ' + (index + 1);
+  106: const status = PARTICIPANT_STATUS_VI[p.teamStatus || ''] || p.teamStatus || 'Đang chờ';
+  107: const paid = p.isPaid ? 'Đã thanh toán' : 'Chưa thanh toán';
+  111: 'Tên Đội / VĐV': p.teamName || member1,
+  112: 'VĐV 1': member1,
+  113: 'VĐV 2 (Nếu Đôi)': member2,
+  114: 'Hạng đấu / Bảng': divisionName || 'Chung',
+  115: 'Hạt giống / ELO': p.seed != null ? `#${p.seed}` : p.eloPoints ?? '',
+  116: 'Trạng thái': status,
+  117: 'Thanh toán': paid,
+  118: 'Ngày đăng ký': formatVnDateTime(p.registeredAt),
+  124: XLSX.utils.book_append_sheet(wb, ws, 'Danh sách VĐV');
+  132: * Tải file mẫu danh sách VĐV đăng ký (.xlsx)
+  138: 'Họ và tên VĐV 1': 'Nguyễn Văn A',
+  139: 'Số điện thoại 1': '0901234567',
+  140: 'Họ và tên VĐV 2': 'Trần Văn B',
+  141: 'Số điện thoại 2': '0907654321',
+  142: 'Tên Đội (Tùy chọn)': 'CLB Pickleball Saigon',
+  143: 'Nội dung đăng ký': 'Đôi Nam 6.5',
+  144: 'Điểm ELO (nếu có)': 1250,
+  145: 'Ghi chú': 'Đã chuyển khoản cọc',
+  149: 'Họ và tên VĐV 1': 'Lê Thị C',
+  150: 'Số điện thoại 1': '0912345678',
+  151: 'Họ và tên VĐV 2': 'Phạm Hoàng D',
+  152: 'Số điện thoại 2': '0918765432',
+  153: 'Tên Đội (Tùy chọn)': 'Hà Nội Pickleball Team',
+  154: 'Nội dung đăng ký': 'Đôi Nam Nữ',
+  155: 'Điểm ELO (nếu có)': 1100,
+  156: 'Ghi chú': '',
+  160: 'Họ và tên VĐV 1': 'Đỗ Hữu E',
+  161: 'Số điện thoại 1': '0933445566',
+  162: 'Họ và tên VĐV 2': '',
+  163: 'Số điện thoại 2': '',
+  164: 'Tên Đội (Tùy chọn)': '',
+  165: 'Nội dung đăng ký': 'Đơn Nam',
+  166: 'Điểm ELO (nếu có)': 1300,
+  167: 'Ghi chú': '',
+  192: * Đọc file Excel / CSV tải lên và tự động đối soát nhận diện các cột
+  215: const player1NameCol = findCol(['vđv 1', 'vdv 1', 'họ và tên', 'họ tên', 'người chơi 1', 'vận động viên 1', 'tên 1', 'player 1', 'full name', 'tên']);
+  216: const player1PhoneCol = findCol(['sđt 1', 'sdt 1', 'điện thoại 1', 'phone 1', 'sđt', 'sdt', 'điện thoại', 'phone', 'mobile']);
+  217: const player2NameCol = findCol(['vđv 2', 'vdv 2', 'đồng đội', 'họ tên vđv 2', 'người chơi 2', 'vận động viên 2', 'tên 2', 'player 2', 'partner']);
+  218: const player2PhoneCol = findCol(['sđt 2', 'sdt 2', 'điện thoại 2', 'phone 2']);
+  219: const teamNameCol = findCol(['tên đội', 'team', 'cặp đôi', 'tên cặp', 'clb', 'club']);
+  220: const formatCol = findCol(['nội dung', 'hạng đấu', 'hạng mục', 'division', 'category', 'thể thức']);
+  221: const eloCol = findCol(['elo', 'trình', 'điểm', 'rating', 'level', 'rank']);
+82	D:\Duancanhan\Project_QuanLyGiaiDau\frontend-web_qlgiaidau\src\features\matches\penalty-schema.ts
+  32: title: 'Bộ xử phạt tennis',
+  33: description: 'Tennis không dùng thẻ màu như môn đối kháng khác. Hình phạt chủ yếu là cảnh cáo, trừ điểm, trừ game và vi phạm tác phong.',
+  38: label: 'Kỷ luật',
+  42: label: 'Nhắc nhở',
+  43: effectLabel: 'Ghi nhận cảnh báo',
+  44: description: 'Nhắc nhở vận động viên / đội về hành vi hoặc nhịp thi đấu.',
+  49: label: 'Vi phạm tác phong',
+  50: effectLabel: 'Ghi vi phạm luật thi đấu',
+  51: description: 'Áp dụng khi có hành vi vi phạm quy định thi đấu hoặc thái độ không phù hợp.',
+  58: label: 'Xử phạt trực tiếp',
+  62: label: 'Phạt 1 điểm',
+  63: effectLabel: 'Trừ điểm trực tiếp',
+  64: description: 'Trừ 1 điểm trong game hiện tại nếu luật hoặc trọng tài áp dụng.',
+  69: label: 'Phạt 1 game',
+  70: effectLabel: 'Trao game cho đối thủ',
+  71: description: 'Dùng khi vi phạm nặng hơn mức cảnh cáo / phạt điểm.',
+  81: title: 'Bộ xử phạt pickleball',
+  82: description: 'Side-out tập trung vào trạng thái giao bóng. Panel chỉ hiện các lỗi phù hợp với quyền giao và tính điểm rally.',
+  87: label: 'Lỗi kỹ thuật',
+  91: label: 'Cảnh cáo',
+  92: effectLabel: 'Ghi cảnh báo',
+  93: description: 'Nhắc nhở trước khi áp dụng xử phạt trực tiếp.',
+  98: label: 'Lỗi giao bóng',
+  99: effectLabel: 'Ghi lỗi giao bóng',
+  100: description: 'Ghi nhận lỗi giao bóng hoặc lỗi giao không hợp lệ.',
+  105: label: 'Lỗi kỹ thuật',
+  106: effectLabel: 'Ghi lỗi kỹ thuật',
+  107: description: 'Dùng cho lỗi kỹ thuật trong quá trình thi đấu.',
+  114: label: 'Hành vi',
+  118: label: 'Thi đấu thiếu fair-play',
+  119: effectLabel: 'Ghi vi phạm hành vi',
+  120: description: 'Ghi nhận hành vi thiếu fair-play hoặc gây ảnh hưởng đến trận đấu.',
+  130: title: 'Bộ xử phạt cầu lông',
+  131: description: 'Có thể dùng cảnh cáo và thẻ theo cấu hình trọng tài/BTC. UI sẽ cho thấy rõ phần nào là cảnh báo, phần nào là thẻ.',
+  136: label: 'Cảnh báo',
+  140: label: 'Nhắc nhở',
+  141: effectLabel: 'Ghi cảnh báo',
+  142: description: 'Nhắc nhở trước khi leo lên mức xử phạt nặng hơn.',
+  149: label: 'Lỗi kỹ thuật',
+  153: label: 'Lỗi giao cầu',
+  154: effectLabel: 'Ghi lỗi giao cầu',
+  155: description: 'Lỗi khi giao cầu không hợp lệ.',
+  160: label: 'Hành vi không đúng mực',
+  161: effectLabel: 'Ghi vi phạm hành vi',
+  162: description: 'Dùng cho hành vi phi thể thao hoặc vi phạm nội quy trận.',
+  169: label: 'Thẻ',
+  173: label: 'Thẻ vàng',
+  174: effectLabel: 'Cảnh cáo chính thức',
+  175: description: 'Hiển thị riêng khi BTC muốn ghi nhận mức cảnh cáo theo sơ đồ thẻ.',
+  177: cardLabel: 'Thẻ vàng',
+  181: label: 'Thẻ đỏ',
+  182: effectLabel: 'Truất quyền / mức phạt nặng',
+  183: description: 'Dùng khi cần hiển thị mức xử phạt nặng hoặc truất quyền theo biên bản.',
+  185: cardLabel: 'Thẻ đỏ',
+  194: title: 'Bộ xử phạt bóng bàn',
+  195: description: 'Hiện cảnh báo, lỗi kỹ thuật và thẻ theo preset của môn. Thẻ chỉ là lớp hiển thị, còn quyết định vẫn do trọng tài.',
+  200: label: 'Cảnh báo',
+  204: label: 'Nhắc nhở',
+  205: effectLabel: 'Ghi cảnh báo',
+  206: description: 'Nhắc nhở trước khi chuyển sang xử phạt nặng hơn.',
+  213: label: 'Lỗi kỹ thuật',
+  217: label: 'Lỗi giao bóng',
+  218: effectLabel: 'Ghi lỗi giao bóng',
+  219: description: 'Dùng cho lỗi giao bóng hoặc lỗi kỹ thuật liên quan đến phát bóng.',
+  224: label: 'Hành vi không đúng mực',
+  225: effectLabel: 'Ghi vi phạm hành vi',
+  226: description: 'Dùng cho hành vi phi thể thao hoặc vi phạm kỷ luật trận.',
+  233: label: 'Thẻ',
+  237: label: 'Thẻ vàng',
+  238: effectLabel: 'Cảnh cáo chính thức',
+  239: description: 'Hiển thị riêng khi trọng tài/BTC áp dụng thẻ vàng.',
+  241: cardLabel: 'Thẻ vàng',
+  245: label: 'Thẻ đỏ',
+  246: effectLabel: 'Truất quyền / mức phạt nặng',
+  247: description: 'Hiển thị riêng cho mức xử phạt nghiêm trọng.',
+  249: cardLabel: 'Thẻ đỏ',
+  258: title: 'Bộ xử phạt mặc định',
+  259: description: 'Schema mặc định cho các môn có rally point nhưng chưa gắn cấu hình riêng.',
+  264: label: 'Cảnh báo',
+  268: label: 'Nhắc nhở',
+  269: effectLabel: 'Ghi cảnh báo',
+  270: description: 'Nhắc nhở theo quyết định trọng tài.',
+80	D:\Duancanhan\Project_QuanLyGiaiDau\frontend-web_qlgiaidau\src\app\organizer\tournaments\[id]\manage\components\SmartFormImportModal.tsx
+  99: toast.error('File Excel không có dữ liệu dòng nào!');
+  113: const p1Email = findBestCol(['địa chỉ email', 'email vđv 1', 'email 1', 'gmail 1', 'email', 'gmail', 'thư điện tử']);
+  114: const p1Name = findBestCol(['họ và tên', 'họ tên vđv 1', 'họ tên', 'người chơi 1', 'vđv 1', 'vận động viên 1', 'tên 1', 'player 1', 'tên vđv', 'tên']);
+  115: const p1Phone = findBestCol(['số điện thoại vđv 1', 'sđt vđv 1', 'sđt 1', 'điện thoại 1', 'phone 1', 'sđt', 'sdt', 'điện thoại', 'phone', 'zalo']);
+  116: const p2Name = findBestCol(['họ và tên vđv 2', 'họ tên vđv 2', 'người chơi 2', 'vđv 2', 'vận động viên 2', 'tên 2', 'player 2', 'đồng đội', 'partner', 'partner name']);
+  117: const p2Email = findBestCol(['email vđv 2', 'email 2', 'gmail 2', 'email đồng đội', 'gmail đồng đội']);
+  118: const p2Phone = findBestCol(['số điện thoại vđv 2', 'sđt vđv 2', 'sđt 2', 'điện thoại 2', 'phone 2', 'sđt đồng đội']);
+  119: const teamName = findBestCol(['tên đội', 'tên cặp', 'cặp đôi', 'tên cặp đôi', 'clb', 'club', 'team', 'tên clb']);
+  120: const division = findBestCol(['nội dung đăng ký', 'nội dung', 'hạng đấu', 'hạng mục', 'division', 'category', 'thể thức']);
+  121: const elo = findBestCol(['điểm trình', 'elo', 'dupr', 'rating', 'trình độ', 'điểm', 'rank', 'level']);
+  137: toast.success(`Đã đọc ${res.rows.length} dòng từ Google Form!`);
+  139: toast.error('Lỗi khi đọc file: ' + (err?.message || 'Không hợp lệ'));
+  186: defaultTeam = p1Name || p2Name || `Đội #${idx + 1}`;
+  195: // Tách thành 2 dòng VĐV Đơn độc lập
+  223: mismatchReason = 'Bảng Đơn nhưng có VĐV 2 (Cặp đôi)';
+  226: mismatchReason = 'Bảng Đôi nhưng thiếu VĐV 2';
+  232: mismatchReason = mismatchReason ? `${mismatchReason}, Trùng Email ${p1Email}` : `Trùng Email ${p1Email}`;
+  283: toast.error('Không có dòng VĐV nào được chọn để nạp!');
+  308: toast.success(res.data?.message || `Đã nạp thành công ${payloadParticipants.length} hồ sơ!`);
+  331: Nhập danh sách từ Google Form / Excel
+  337: Trích xuất danh sách VĐV, tự động đoán cột, kiểm tra thể thức Đơn/Đôi và gửi email thư mời
+  344: Bước {step}/3
+  357: Nội dung thi đấu đích (Division)
+  370: <option value="">-- Toàn giải đấu chung --</option>
+  377: Định dạng file hỗ trợ
+  382: <span className="font-bold text-emerald-600">.csv</span> (xuất trực tiếp từ Google Sheets)
+  403: Kéo thả file Google Form vào đây hoặc bấm để chọn
+  406: Hệ thống sẽ tự động quét các cột Họ tên, Email, Số điện thoại, Tên đội và Cặp đấu mà không cần sửa file
+  413: Chọn file từ máy tính
+  420: <p className="font-bold">Mẹo từ Sporto:</p>
+  422: Trong Google Form của bạn, chỉ cần bấm <strong>&quot;Xem câu trả lời trong Trang tính&quot;</strong> &rarr; Chọn <strong>Tệp &rarr; Tải xuống &rarr; Microsoft Excel (.xlsx)</strong> rồi tải lên tại đây.
+  435: Kiểm tra và khớp cột dữ liệu ({fileName})
+  438: AI đã tự động dò tìm các cột tương ứng. Bạn có thể kiểm tra và thay đổi nếu cần.
+  442: Tổng {excelResult.rows.length} dòng
+  447: {/* Tên đội */}
+  450: Tên Đội / Cặp đấu
+  457: <option value="">-- Tự động ghép từ tên VĐV --</option>
+  466: {/* Họ tên VĐV 1 */}
+  469: Họ tên VĐV 1 <span className="text-rose-500">*</span>
+  476: <option value="">-- Chọn cột --</option>
+  485: {/* Email VĐV 1 */}
+  488: Email VĐV 1 (Gửi thư mời)
+  495: <option value="">-- Không có / Bỏ qua --</option>
+  504: {/* SĐT VĐV 1 */}
+  507: SĐT VĐV 1
+  514: <option value="">-- Không có / Bỏ qua --</option>
+  523: {/* Họ tên VĐV 2 */}
+  526: Họ tên VĐV 2 (Đồng đội)
+  533: <option value="">-- Không có / Bỏ qua --</option>
+  542: {/* Email VĐV 2 */}
+  545: Email VĐV 2
+  552: <option value="">-- Không có / Bỏ qua --</option>
+  561: {/* SĐT VĐV 2 */}
+  564: SĐT VĐV 2
+  571: <option value="">-- Không có / Bỏ qua --</option>
+  583: Điểm ELO / Trình độ
+  590: <option value="">-- Không có / Mặc định --</option>
+  611: Phát hiện {formatMismatchCount} dòng có xung đột thể thức hoặc thông tin:
+  615: Nội dung đang chọn: <strong>{targetDivision?.name} ({targetDivision?.matchType})</strong>.
+  626: <span>Tự động tách cặp đôi trong mỗi dòng thành 2 VĐV thi đấu Đơn độc lập</span>
+  642: <span>Tự động duyệt (APPROVED)</span>
+  652: <span>Đã đóng lệ phí (PAID)</span>
+  664: Gửi email thư mời
+  672: <span>Danh sách đối soát ({activeItemsToImport.length}/{parsedItems.length} dòng được chọn)</span>
+  678: {excludedRowIndices.size === 0 ? 'Bỏ chọn tất cả' : 'Chọn tất cả'}
+  687: <th className="p-3">Tên Đội / VĐV</th>
+  688: <th className="p-3">VĐV 1 & Liên hệ</th>
+  689: <th className="p-3">VĐV 2 (Đồng đội)</th>
+  690: <th className="p-3 text-center">Trình/ELO</th>
+  691: <th className="p-3 text-center">Trạng thái</th>
+  739: <span className="text-slate-400 italic">-- Không có --</span>
+  751: <AlertTriangle className="w-2.5 h-2.5" /> Lưu ý
+  755: <CheckCircle2 className="w-2.5 h-2.5" /> Hợp lệ
+  781: <ChevronLeft className="w-3.5 h-3.5 mr-1" /> Quay lại
+  794: Đóng
+  803: Chọn file Excel
+  812: toast.error('Vui lòng chọn ít nhất cột Họ tên VĐV 1 hoặc Tên đội!');
+  819: Tiếp tục đối soát <ArrowRight className="w-3.5 h-3.5 ml-1" />
+  832: <Loader2 className="w-3.5 h-3.5 animate-spin" /> Đang nạp {activeItemsToImport.length} VĐV...
+  836: <ShieldCheck className="w-4 h-4" /> Xác nhận nạp {activeItemsToImport.length} VĐV
+73	D:\Duancanhan\Project_QuanLyGiaiDau\frontend-web_qlgiaidau\src\app\(public)\matches\page.tsx
+  161: // Đôi (2 VĐV): Avatar lồng xếp lớp overlap cực sang
+  205: if (tName.includes('nam nữ') || tName.includes('mixed')) return 'MIXED';
+  206: if (tName.includes('nữ')) return 'FEMALE';
+  233: .replaceAll('Chung kết tổng', translate('roundGrandFinal'))
+  234: .replaceAll('Chung kết', translate('roundFinal'))
+  235: .replaceAll('Bán kết', translate('roundSemifinal'))
+  236: .replaceAll('Tứ kết', translate('roundQuarterfinal'))
+  237: .replaceAll('Vòng bảng', translate('roundGroupStage'))
+  238: .replaceAll('Nhánh thắng', translate('winnersBracket'))
+  239: .replaceAll('Nhánh thua', translate('losersBracket'))
+  240: .replaceAll('Lượt', translate('leg'))
+  241: .replace(/Vòng (\d+)/g, (_, round) => translate('roundOf', { round }))
+  306: // Load danh mục môn thể thao và tỉnh thành
+  345: p.name.replace(/^(Thành phố|Tỉnh)\s+/i, '').trim().toLowerCase() === cleanName
+  360: // Helper: chuyển dd/mm/yyyy → yyyy-mm-dd cho API
+  363: // Nếu đã là yyyy-mm-dd thì giữ nguyên
+  388: // Fetch danh sách trận đấu dựa trên bộ lọc
+  401: // Map lựa chọn nội dung đấu sang matchType + genderRestriction
+  422: // Convert dd/mm/yyyy → yyyy-mm-dd trước khi gửi API
+  488: // Tìm category name từ selectedCategoryId để filter client-side
+  500: // Ngưỡng 30 ngày, chỉ tính 1 lần khi deps thay đổi
+  537: // Bỏ qua giải đã bị hủy hoặc bản nháp
+  541: // Bỏ qua trận đấu có cờ isBye (trận đấu bye/miễn đấu/vô thẳng)
+  545: // Chỉ bỏ trận chưa có hai participant thật. Một số response chỉ trả ID,
+  546: // còn tên được nạp ở endpoint chi tiết; không được làm rỗng cả danh sách.
+  553: // Lọc theo Môn thể thao (client-side fallback khi API không filter đúng)
+  554: // Đặt filter này TRƯỚC filter thời gian để đảm bảo không bị skip
+  557: // Dùng exact match thay vì substring để tránh false positive
+  563: // Lọc bỏ trận đấu đã kết thúc quá 30 ngày
+  568: // Lọc theo Thể thức (client-side fallback)
+  574: // Lọc theo Nội dung (client-side fallback)
+  578: // Suy luận matchType thực tế từ tên giải đấu
+  580: if (nameLower.includes('đơn')) {
+  582: } else if (nameLower.includes('đôi')) {
+  620: // Gom nhóm trận đấu theo giải đấu
+  638: tournamentCategory: match.tournament?.category?.name || match.tournament?.categoryName || 'Chưa cập nhật',
+  648: // Sắp xếp các trận đấu trong từng giải đấu theo mức độ ưu tiên trạng thái
+  662: // Cùng trạng thái thì xếp theo ngày
+  666: return timeB - timeA; // Trận vừa kết thúc hiển thị lên trước
+  671: return timeA - timeB; // Trận sắp đấu gần nhất hiển thị lên trước
+  697: {/* Hàng bộ lọc chính */}
+  699: {/* Tìm kiếm */}
+  717: {/* Môn thể thao */}
+  738: {/* Trạng thái */}
+  759: {/* Lọc thêm button */}
+  776: {/* Status Chips — bên trong khung filter */}
+  798: ✕ Bỏ lọc
+  806: {/* Thể thức */}
+  828: {/* Nội dung */}
+  851: {/* Xếp hạng */}
+  871: {/* Tỉnh / Thành phố */}
+  886: <option key={province.code} value={province.name.replace(/^(Thành phố|Tỉnh)\s+/i, '')}>
+  895: {/* Phường / Xã */}
+  917: {/* Từ ngày */}
+  973: {/* Đến ngày */}
+  1029: {/* Xóa bộ lọc */}
+  1062: {/* Danh sách các Giải đấu gom nhóm */}
+  1087: // Cấu hình 3x2 (6 trận đấu trên mỗi trang của card giải đấu)
+  1100: {/* Header giải đấu */}
+  1137: {/* Grid 3 cột x 2 hàng */}
+  1167: // Lấy thông tin chi tiết các set đấu
+  1170: // Max sets có thể có ví dụ best of 3 là 3 sets
+  1186: {/* Header trận */}
+  1222: {/* Chi tiết đấu */}
+  1225: {/* VĐV / Đội 1 */}
+  1234: {/* Hiển thị ELO / Thành viên thông minh */}
+  1277: {/* Tỉ số các set theo cột dọc */}
+  1302: {/* VĐV / Đội 2 */}
+  1311: {/* Hiển thị ELO / Thành viên thông minh */}
+  1354: {/* Tỉ số các set theo cột dọc */}
+  1380: {/* Phân môn & Sân */}
+  1397: {/* Cổ vũ Button */}
+  1429: {/* Chia sẻ Button */}
+68	D:\Duancanhan\Project_QuanLyGiaiDau\frontend-web_qlgiaidau\src\app\organizer\tournaments\[id]\manage\components\BasicInfoTab.tsx
+  116: toast.error('Vui lòng nhập giá trị liên hệ.');
+  121: toast.error('Vui lòng nhập nhãn liên hệ.');
+  125: toast.error('Không được trùng với điện thoại hoặc email.');
+  134: toast.success('Đã thêm liên hệ mới!');
+  141: toast.success('Đã xóa liên hệ!');
+  149: toast.success('Đã thêm ảnh vào bộ sưu tập!');
+  160: if (!confirm('Bạn có chắc chắn muốn xóa ảnh này khỏi bộ sưu tập?')) return;
+  163: toast.success('Đã xóa ảnh thành công!');
+  173: <h2 className="text-xl font-bold text-slate-900">Thông tin cơ bản giải đấu</h2>
+  174: <p className="text-xs text-slate-450 mt-1 font-semibold">Quản lý tên, thương hiệu, mô tả và cấu hình liên hệ của giải đấu.</p>
+  190: <span>Thông tin chung</span>
+  202: <span>Hình ảnh & Banner</span>
+  214: <span>Cơ cấu giải thưởng</span>
+  226: <span>Liên hệ & Mã mời</span>
+  235: <h3 className="font-bold text-slate-850 text-base">Thông tin chung</h3>
+  236: <p className="text-xs text-slate-450 mt-0.5 font-semibold">Các thông tin cơ bản để định danh giải đấu trên hệ thống.</p>
+  241: label="Tên giải đấu"
+  247: <label className="text-sm font-semibold text-slate-700">Bộ môn thi đấu</label>
+  262: label="Mô tả giải đấu"
+  265: placeholder="Tóm tắt thể thức, đối tượng tham gia..."
+  276: <h3 className="font-bold text-slate-850 text-base">Hình ảnh & Banner</h3>
+  277: <p className="text-xs text-slate-450 mt-0.5 font-semibold">Tải lên các hình ảnh quảng bá giải đấu của bạn.</p>
+  283: <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Logo giải đấu</label>
+  288: placeholder="Nhập URL logo hoặc chọn file..."
+  300: toast.loading('Đang tải logo giải đấu...', { id: 'logo-upload' });
+  308: toast.success('Đã tải logo thành công!', { id: 'logo-upload' });
+  316: Chọn file
+  321: <img src={logoUrl} alt="Xem trước logo" className="max-w-full max-h-full object-contain" />
+  328: <span>Chưa có logo</span>
+  335: <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Ảnh Banner chính</label>
+  340: placeholder="Nhập URL banner hoặc chọn file..."
+  352: toast.loading('Đang tải ảnh banner...', { id: 'banner-upload' });
+  358: toast.success('Đã tải ảnh banner và thêm vào album thành công!', { id: 'banner-upload' });
+  366: Chọn file
+  370: Kích thước banner khuyến nghị: 1920 x 823px, tỉ lệ 21:9. Nội dung quan trọng nên đặt ở vùng giữa ảnh để không bị cắt trên mobile hoặc card nhỏ trang chủ.
+  374: <img src={bannerUrl} alt="Xem trước banner" className="w-full h-full object-cover" />
+  376: Xem trước Banner
+  381: <span>Chưa có banner</span>
+  386: {/* Album ảnh */}
+  396: Ẩn chữ phủ trên banner công khai
+  399: Bật tùy chọn này khi banner đã có tên/logo/text thiết kế sẵn. Trang chủ và banner trang chi tiết sẽ không phủ tên giải, badge, ngày giờ hoặc địa điểm lên ảnh.
+  405: <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block font-semibold">Album ảnh bổ sung (Gallery)</label>
+  409: placeholder="Nhập URL ảnh khác..."
+  424: toast.loading('Đang tải ảnh lên Cloudinary...', { id: 'gallery-upload' });
+  428: toast.success('Đã tải ảnh lên và thêm vào bộ sưu tập!', { id: 'gallery-upload' });
+  439: Chọn file
+  446: {isAddingImage ? 'Đang thêm...' : 'Thêm URL'}
+  461: Xóa ảnh
+  469: <p className="text-xs font-semibold italic">Chưa có ảnh nào trong album.</p>
+  480: <h3 className="font-bold text-slate-850 text-base">Cơ cấu giải thưởng</h3>
+  481: <p className="text-xs text-slate-450 mt-0.5 font-semibold">Thông tin chi tiết về phần thưởng của giải đấu.</p>
+  486: label="Mô tả giải thưởng"
+  489: placeholder="Cúp, cờ lưu niệm, tiền thưởng cho các thứ hạng..."
+  498: <h3 className="font-bold text-slate-850 text-base">Liên hệ & Mã mời</h3>
+  499: <p className="text-xs text-slate-455 mt-0.5 font-semibold">Thông tin liên hệ của Ban tổ chức và quản lý lời mời.</p>
+  504: label="Số điện thoại liên hệ"
+  510: label="Email liên hệ"
+  519: <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Liên kết mạng xã hội & liên hệ khác</h4>
+  535: title="Xóa"
+  543: <p className="text-xs text-slate-400 italic">Chưa có liên kết mạng xã hội nào.</p>
+  550: <label className="text-[10px] font-bold text-slate-500 uppercase">Loại liên hệ</label>
+  566: <option value="custom">Khác (Tự nhập nhãn)...</option>
+  572: <label className="text-[10px] font-bold text-slate-500 uppercase">Nhãn liên hệ</label>
+  584: <label className="text-[10px] font-bold text-slate-500 uppercase">Đường dẫn / Giá trị</label>
+  587: placeholder="https://facebook.com/... hoặc link liên kết"
+  599: Thêm
+  618: {isDeleting ? 'Đang xóa...' : 'Xóa giải đấu nháp'}
+  627: {isSavingConfig ? 'Đang lưu...' : 'Lưu thông tin'}
+68	D:\Duancanhan\Project_QuanLyGiaiDau\frontend-web_qlgiaidau\src\app\organizer\tournaments\[id]\manage\components\TournamentStepper.tsx
+  75: // Phase 2 — Khai mạc giải đấu (inline checklist)
+  86: { key: 'regLocked', label: 'Đã khóa đăng ký — Không còn VĐV mới nào có thể vào giải', mandatory: true, pass: phase2RegLocked },
+  87: { key: 'paid', label: 'Thanh toán phí tham gia — Tất cả VĐV đã thanh toán phí thi đấu', mandatory: true, pass: phase2PaidCheck },
+  88: { key: 'bracket', label: 'Sơ đồ thi đấu đã tạo — Các bảng/division đã được khởi tạo sơ đồ', mandatory: true, pass: phase2BracketCheck },
+  89: { key: 'minTeams', label: 'Có ít nhất 2 đội tham gia — Giải cần tối thiểu 2 đội', mandatory: true, pass: phase2HasMinTeams },
+  90: { key: 'schedule', label: 'Lịch thi đấu đã phân — Ngày khai mạc/kết thúc đã thiết lập', mandatory: false, pass: phase2HasSchedule },
+  91: { key: 'venue', label: 'Địa điểm đã set — Sân thi đấu đã được xác định', mandatory: false, pass: phase2HasVenue },
+  96: title: 'Nhận Đăng ký',
+  98: description: 'VĐV đăng ký tham gia',
+  99: actionText: 'Chốt đăng ký',
+  104: title: 'Sơ đồ & Lịch đấu',
+  106: description: 'Chốt sơ đồ nháp, phân lịch',
+  107: actionText: 'Khai mạc giải đấu',
+  112: title: 'Đang Thi đấu',
+  114: description: 'Cập nhật điểm số, kết quả',
+  115: actionText: 'Kết thúc giải đấu',
+  120: title: 'Kết thúc',
+  122: description: 'Giải đấu hoàn thành',
+  132: <FileText className="w-5 h-5 text-blue-600" /> Tiến trình giải đấu
+  137: <h4 className="font-bold text-slate-700 mb-2">Giải đấu chưa được công bố</h4>
+  139: Bạn cần công bố giải đấu để kích hoạt thanh tiến trình và bắt đầu nhận đăng ký.
+  143: Bước tiếp theo sẽ chuyển sang thanh toán phí công bố: {publishFeeAmount.toLocaleString('vi-VN')}đ
+  149: Lưu ý quan trọng trước khi công bố:
+  151: <p className="mb-2 font-medium">Thông tin cơ bản phải được điền đầy đủ và chính xác. Vui lòng kiểm tra kỹ các trường sau trước khi công bố:</p>
+  153: // Tự động kiểm tra tiến trình đã điền thông tin của giải đấu theo luật backend mới
+  158: // Validate ngày hợp lệ
+  173: {/* Mô tả giải đấu */}
+  182: Thông tin cơ bản giải đấu
+  187: Chưa điền
+  192: {/* Bảng thi đấu */}
+  201: Có ít nhất 1 bảng thi đấu (Đơn/Đôi Nam Nữ)
+  206: Thiếu bảng
+  211: {/* Địa điểm */}
+  220: Địa điểm / Sân thi đấu
+  225: Chưa điền
+  230: {/* Khung thời gian */}
+  239: Thời gian đăng ký & khai mạc hợp lệ
+  244: Sai logic ngày
+  249: {/* Thông tin liên hệ */}
+  258: Thông tin liên hệ BTC (Email / Số điện thoại)
+  263: Chưa điền
+  271: {/* Ràng buộc & Khóa thông tin sau khi công bố */}
+  273: <span className="block text-xs font-bold text-amber-950 uppercase tracking-wider">🔒 RÀNG BUỘC KHI ĐÃ CÔNG BỐ:</span>
+  275: <li><strong className="text-amber-900">Không thể sửa đổi:</strong> Thể loại môn thể thao, Phân hạng giải đấu, Lệ phí công bố, Lệ phí thi đấu, và Cấu hình phân chia hình thức (nếu đã mở).</li>
+  276: <li><strong className="text-amber-900">Bị khóa thêm/xóa:</strong> Không thể thêm mới hay xóa bớt các Bảng thi đấu hiện tại.</li>
+  277: <li><strong className="text-emerald-800">Vẫn có thể điều chỉnh linh hoạt:</strong> Lịch thi đấu cụ thể, Vận động viên đặc cách, địa điểm sân bãi và luật ghi điểm từng vòng.</li>
+  280: <p className="mt-3 text-[10px] italic text-amber-700 font-semibold">* Ngày khai mạc & bế mạc có thể linh động cập nhật sau.</p>
+  289: {publishFeeAmount > 0 ? 'Thanh toán phí & công bố giải đấu' : 'Công bố giải đấu'} <ChevronRight className="w-4 h-4 ml-1" />
+  298: <h4 className="font-bold text-amber-900">Đang chờ Admin duyệt công khai</h4>
+  299: <p className="mt-1 text-sm leading-relaxed text-amber-800">Bạn có thể tiếp tục hoàn thiện cấu hình nâng cao. Các bước nhận đăng ký và thi đấu sẽ kích hoạt sau khi giải được duyệt.</p>
+  358: {/* Step 4 — Giải đấu hoàn thành: chỉ hiện nút Export */}
+  362: <p className="text-sm font-bold text-emerald-900">Giải đấu đã hoàn thành 🏆</p>
+  364: Tải về bảng tổng kết kết quả toàn giải (Excel) để lưu trữ hoặc công bố.
+  374: {matches.length === 0 ? 'Chưa có trận đấu' : `Export kết quả (${matches.length} trận)`}
+  379: {/* Phase 2 — Khai mạc giải đấu (inline checklist, giống Phase 1) */}
+  383: <Play className="w-4 h-4 text-blue-600" /> Kiểm tra điều kiện trước khi Khai mạc giải đấu
+  405: ? <><span className="text-rose-600 mr-1">[BẮT BUỘC]</span>{check.label}</>
+  406: : <><span className="text-slate-400 mr-1">[LINH HOẠT]</span>{check.label}</>
+  412: Chưa đạt
+  421: {/* Phase 3 — Kết thúc giải đấu (Checklist Modal) */}
+  425: <ModalHeader><ModalTitle className="text-xl font-bold text-slate-900">Kết thúc giải đấu</ModalTitle></ModalHeader>
+  428: ⚠️ Sau khi kết thúc, giải đấu sẽ chuyển sang trạng thái hoàn tất. Các trận đấu chưa kết thúc sẽ không thể cập nhật điểm.
+  438: { key: 'matchesComplete', label: `Tất cả trận đấu đã kết thúc (${completed}/${total})`, pass: !hasMatches || allDone },
+  439: { key: 'noLiveMatches', label: `Không còn trận đấu LIVE (${live} trận đang thi đấu)`, pass: !hasMatches || !endChecklist?.hasLiveMatches },
+  465: Chưa đạt
+  472: Giải đấu chưa có trận đấu nào. Bạn có thể kết thúc ngay.
+  480: Hủy
+  483: {isEnding ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trophy className="w-4 h-4" />} Kết thúc giải đấu
+64	D:\Duancanhan\Project_QuanLyGiaiDau\frontend-web_qlgiaidau\src\app\(public)\communities\create\page.tsx
+  19: name: z.string().min(3, "Tên câu lạc bộ phải có ít nhất 3 ký tự").max(255, "Tên quá dài"),
+  20: description: z.string().max(1000, "Mô tả quá dài").optional(),
+  21: rules: z.string().max(5000, "Nội quy quá dài").optional(),
+  22: provinceCode: z.string().min(1, "Vui lòng chọn tỉnh/thành phố"),
+  24: locationAddress: z.string().max(255, "Địa chỉ quá dài").optional(),
+  25: categoryIds: z.array(z.string().uuid()).length(1, "Vui lòng chọn đúng 1 môn thể thao"),
+  111: toast.error('Kích thước ảnh Logo không được vượt quá 5MB');
+  119: toast.success('Tải ảnh Logo lên thành công!');
+  122: toast.error('Lỗi khi tải ảnh Logo lên');
+  133: toast.error('Kích thước ảnh bìa không được vượt quá 10MB');
+  141: toast.success('Tải ảnh bìa lên thành công!');
+  144: toast.error('Lỗi khi tải ảnh bìa lên');
+  152: toast.error('Vui lòng đăng nhập để tạo câu lạc bộ');
+  174: toast.success('Tạo câu lạc bộ thành công! Đang chờ duyệt.');
+  184: toast.error('Có lỗi xảy ra khi tạo câu lạc bộ');
+  199: Quay lại
+  204: <h1 className="text-3xl font-bold mb-2">Tạo Câu Lạc Bộ Mới</h1>
+  205: <p className="text-blue-100">Xây dựng và phát triển câu lạc bộ thể thao của riêng bạn</p>
+  209: {/* BƯỚC 1: THÔNG TIN CƠ BẢN */}
+  211: <h2 className="text-xl font-semibold text-slate-800 border-b pb-2">BƯỚC 1: THÔNG TIN CƠ BẢN</h2>
+  215: Tên câu lạc bộ <span className="text-rose-500">*</span>
+  219: placeholder="VD: CLB Cầu Lông Ba Đình"
+  227: Mô tả
+  232: placeholder="Giới thiệu ngắn về câu lạc bộ..."
+  239: Nội quy
+  244: placeholder="1. Tôn trọng lẫn nhau&#10;2. Đúng giờ..."
+  250: {/* BƯỚC 2: KHU VỰC & MÔN THỂ THAO */}
+  252: <h2 className="text-xl font-semibold text-slate-800 border-b pb-2">BƯỚC 2: KHU VỰC & MÔN THỂ THAO</h2>
+  257: Tỉnh/Thành phố <span className="text-rose-500">*</span>
+  263: <option value="">Chọn Tỉnh/Thành phố</option>
+  270: Phường/Xã
+  277: <option value="">Chọn Phường/Xã</option>
+  285: Môn thể thao chính <span className="text-rose-500">*</span>
+  287: <p className="mb-3 text-sm text-slate-500">Mỗi câu lạc bộ chỉ chọn một môn. Bạn có thể tạo các đội khác nhau trong cùng CLB.</p>
+  311: {/* BƯỚC 3: HÌNH ẢNH CÂU LẠC BỘ */}
+  313: <h2 className="text-xl font-semibold text-slate-800 border-b pb-2">BƯỚC 3: HÌNH ẢNH CÂU LẠC BỘ</h2>
+  314: <p className="text-sm text-slate-500">Tải lên Logo đại diện và Ảnh bìa (Banner) để thu hút thành viên. Bạn có thể bỏ qua bước này và cập nhật sau.</p>
+  320: Logo / Avatar nhóm <span className="text-slate-400 font-normal text-xs">(Không bắt buộc)</span>
+  342: <span className="text-[10px] mt-1">Đang tải...</span>
+  350: Thay đổi
+  356: <span className="text-xs font-medium">Chọn Logo</span>
+  367: <X className="w-3.5 h-3.5" /> Gỡ ảnh Logo
+  376: Ảnh bìa (Cover Banner) <span className="text-slate-400 font-normal text-xs">(Không bắt buộc)</span>
+  398: <span className="text-xs mt-1">Đang tải ảnh lên...</span>
+  406: Thay đổi ảnh bìa
+  412: <span className="text-sm font-medium">Nhấp chọn hoặc kéo thả ảnh bìa nhóm vào đây</span>
+  413: <span className="text-xs text-slate-400 mt-1">Hỗ trợ JPG, PNG (tối đa 10MB)</span>
+  424: <X className="w-3.5 h-3.5" /> Gỡ ảnh bìa
+  433: {/* BƯỚC 4: CÀI ĐẶT QUYỀN RIÊNG TƯ */}
+  435: <h2 className="text-xl font-semibold text-slate-800 border-b pb-2">BƯỚC 4: CÀI ĐẶT QUYỀN RIÊNG TƯ</h2>
+  439: <label className="block text-sm font-semibold text-slate-800 mb-4">Chế độ hiển thị</label>
+  442: { value: 'PUBLIC', label: 'Công khai', desc: 'Ai cũng thấy và tìm được' },
+  443: { value: 'PRIVATE', label: 'Riêng tư', desc: 'Chỉ thành viên mới thấy nội dung' },
+  444: { value: 'RESTRICTED', label: 'Hạn chế', desc: 'Hiện trong tìm kiếm, cần vào mới xem' }
+  465: <label className="block text-sm font-semibold text-slate-800 mb-4">Chế độ tham gia</label>
+  468: { value: 'OPEN', label: 'Mở tự do', desc: 'Ai cũng vào được' },
+  469: { value: 'APPROVAL', label: 'Cần duyệt', desc: 'Gửi đơn xin vào (có thể kèm form)' },
+  470: { value: 'INVITE_ONLY', label: 'Chỉ mời', desc: 'Chỉ vào qua lời mời của Quản trị viên' }
+  493: <label className="block text-sm font-semibold text-slate-800 mb-4">Câu hỏi xin vào nhóm</label>
+  494: <p className="text-sm text-slate-500 mb-4">Người xin vào nhóm sẽ phải trả lời các câu hỏi này.</p>
+  501: placeholder={`Câu hỏi ${index + 1}...`}
+  520: <Plus className="w-4 h-4 mr-1" /> Thêm câu hỏi
+  532: Hủy bỏ
+  539: Tạo Câu Lạc Bộ
+64	D:\Duancanhan\Project_QuanLyGiaiDau\frontend-web_qlgiaidau\src\components\shared\AiChatAssistant.tsx
+  69: 'Làm sao để quản lý giải đấu của tôi?',
+  70: 'Làm sao để đăng ký thi đấu đôi?',
+  71: 'Hệ thống tính điểm ELO như thế nào?',
+  75: '/dashboard': 'Dashboard cá nhân',
+  76: '/organizer/tournaments/create': 'Tạo giải đấu',
+  77: '/organizer/tournaments/': 'Quản lý giải đấu',
+  78: '/tournaments/': 'Chi tiết giải đấu',
+  79: '/profile': 'Hồ sơ cá nhân',
+  80: '/profile/edit': 'Chỉnh sửa hồ sơ',
+  81: '/notifications': 'Thông báo',
+  82: '/payments': 'Lịch sử thanh toán',
+  83: '/matches': 'Danh sách trận đấu',
+  84: '/leaderboard': 'Bảng xếp hạng',
+  85: '/communities': 'Cộng đồng / CLB',
+  86: '/communities/create': 'Tạo cộng đồng',
+  88: '/admin/tournaments': 'Admin - Quản lý giải',
+  89: '/admin/communities': 'Admin - Quản lý CLB',
+  90: '/admin/verification': 'Admin - Xác minh',
+  91: '/admin/disputes': 'Admin - Khiếu nại',
+  92: '/admin/reports': 'Admin - Báo cáo',
+  93: '/admin/transactions': 'Admin - Giao dịch',
+  95: '/admin/configs': 'Admin - Cấu hình',
+  96: '/admin/support': 'Admin - Hỗ trợ',
+  97: '/admin/moderation': 'Admin - Kiểm duyệt',
+  98: '/moderation': 'Kiểm duyệt',
+  99: '/series': 'Chuỗi giải đấu',
+  100: '/live/': 'Trận đấu trực tiếp',
+  101: '/chat': 'Tin nhắn',
+  102: '/download': 'Tải ứng dụng',
+  103: '/terms': 'Điều khoản dịch vụ',
+  104: '/privacy': 'Chính sách bảo mật',
+  105: '/login': 'Đăng nhập',
+  106: '/register': 'Đăng ký',
+  107: '/forgot-password': 'Quên mật khẩu',
+  115: if (pathname.startsWith('/tournaments/') && pathname.split('/').length === 3) return 'Chi tiết giải đấu';
+  116: if (pathname.includes('/manage')) return 'Quản lý giải đấu';
+  117: if (pathname.includes('/ops')) return 'Vận hành giải đấu';
+  118: if (pathname.startsWith('/users/')) return 'Hồ sơ người dùng';
+  119: return 'Trang chủ';
+  132: 'Xin chào! Tôi là **Trợ lý ảo Sporto**. Tôi có thể giúp gì cho bạn hôm nay? Bạn có thể hỏi tôi về cách đăng ký giải, cách tính ELO, chính sách hoàn tiền, hoặc các tính năng khác trên hệ thống.',
+  278: toast('Đăng nhập để trò chuyện trực tiếp với admin.');
+  285: input.trim() || `Tôi cần admin hỗ trợ tại trang ${pathname || '/'}.`;
+  292: toast.error(getErrorMessage(error, 'Không thể kết nối với bộ phận hỗ trợ.'));
+  312: toast.error(getErrorMessage(error, 'Không gửi được tin nhắn hỗ trợ.'));
+  346: throw new Error('Yêu cầu AI thất bại');
+  350: throw new Error('Không nhận được dữ liệu stream từ AI');
+  353: // Thêm placeholder tin nhắn trống cho Assistant trước khi stream
+  367: // Giữ lại phần chưa hoàn thành ở cuối buffer
+  390: console.error('Lỗi parse stream chunk:', e, dataStr);
+  402: lastMsg.content = 'Đã xảy ra lỗi kết nối với máy chủ AI. Vui lòng thử lại sau.';
+  410: content: 'Đã xảy ra lỗi kết nối với máy chủ AI. Vui lòng thử lại sau.',
+  457: {mode === 'support' ? 'Chat trực tiếp với admin' : 'Trợ lý AI Sporto'}
+  461: {mode === 'support' ? 'Tin nhắn được chuyển tới quản trị viên' : 'Hỗ trợ thông tin thi đấu 24/7'}
+  470: title="Quay lại trợ lý AI"
+  503: alt={user.fullName || 'Bạn'}
+  535: Cuộc hội thoại đã được chuyển tới admin
+  538: Bạn có thể gửi nội dung cần hỗ trợ ngay bên dưới.
+  561: alt={user.fullName || 'Bạn'}
+  570: alt={msg.senderName || 'Hỗ trợ'}
+  579: {mine ? user?.fullName || 'Bạn' : msg.senderName || 'Hỗ trợ Sporto'}
+  614: Admin đang nhập
+  631: Gợi ý câu hỏi
+  651: Chat trực tiếp với admin
+  665: placeholder={mode === 'support' ? 'Nhắn nội dung cần admin hỗ trợ...' : 'Hỏi trợ lý ảo về giải đấu...'}
+62	D:\Duancanhan\Project_QuanLyGiaiDau\frontend-web_qlgiaidau\src\app\(player)\profile\page.tsx
+  706: {/* Giới thiệu */}
+  725: {/* Thông tin chi tiết */}
+  759: {/* Tài khoản hoàn tiền */}
+  818: Đang chờ duyệt...
+  821: Yêu cầu nâng cấp tài khoản của bạn đang được Ban quản trị hệ thống xử lý.
+  824: SĐT liên hệ: {tickets[0].contactPhone}
+  832: Yêu cầu bị từ chối
+  835: Lý do: <span className="font-bold text-rose-900">{tickets[0].rejectReason || 'Không có lý do chi tiết'}</span>
+  842: Gửi lại yêu cầu
+  848: Bạn mặc định có thể tự do tạo giải đấu nội bộ miễn phí trong Câu lạc bộ của mình. Chỉ gửi yêu cầu nếu bạn muốn tạo giải đấu công khai tính ELO toàn hệ thống hoặc chuỗi giải đấu lớn.
+  863: {/* Câu lạc bộ của tôi */}
+  864: {/* Câu lạc bộ của tôi */}
+  867: <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Câu lạc bộ của tôi</h3>
+  890: <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600">CLB đã tạo / quản lý</h4>
+  929: <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600">CLB đã tham gia</h4>
+  972: Khám phá câu lạc bộ
+  997: <span className="rounded-full bg-slate-100 px-2.5 py-1 border border-slate-200">Vừa kết thúc</span>
+  998: <span className="rounded-full bg-rose-50 px-2.5 py-1 border border-rose-100 text-rose-700">Đang diễn ra</span>
+  999: <span className="rounded-full bg-emerald-50 px-2.5 py-1 border border-emerald-100 text-emerald-700">Mở đăng ký</span>
+  1000: <span className="rounded-full bg-blue-50 px-2.5 py-1 border border-blue-100 text-blue-700">Sắp diễn ra</span>
+  1016: ? (formattedEndDate ? `Kết thúc ${formattedEndDate}` : 'Giải đấu đã kết thúc')
+  1018: ? 'Đang diễn ra'
+  1020: ? 'Mở đăng ký'
+  1022: ? 'Sắp diễn ra'
+  1024: ? 'Đã hủy'
+  1025: : 'Đang theo dõi';
+  1078: 📍 {tournament.locationAddress ? tournament.locationAddress.split(',').slice(-1)[0]?.trim() || 'Việt Nam' : translate("notUpdated")}
+  1109: {tournament.isRanked ? 'Xếp hạng ELO' : 'Phong trào'}
+  1126: {tournament.entryFee ? formatCurrency(tournament.entryFee) : 'Miễn phí'}
+  1162: <h3 className="text-lg font-bold text-slate-700 mb-2">Chưa theo dõi giải đấu nào</h3>
+  1176: <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Danh hiệu thành tích</h3>
+  1192: Giải public ELO
+  1197: {item.tournamentDate ? formatDate(item.tournamentDate, 'dd/MM/yyyy') : 'Chưa có ngày kết thúc'}
+  1210: <p className="text-slate-600 font-semibold">Chưa có danh hiệu thành tích</p>
+  1211: <p className="text-slate-400 text-sm mt-1">Khi tham gia giải public ELO và vào top 3, badge sẽ tự hiện ở đây.</p>
+  1236: ? match.participant2?.teamName || 'Chưa xác định'
+  1237: : match.participant1?.teamName || 'Chưa xác định';
+  1246: <span>{match.tournament?.name || 'Giải đấu'}</span>
+  1248: <span>Vòng {match.roundNumber}</span>
+  1251: <span className="text-slate-400">Đối thủ:</span>
+  1269: Thắng
+  1278: Đang đấu
+  1286: Chi tiết <ChevronRight className="w-4 h-4" />
+  1302: Trước
+  1320: <h3 className="text-lg font-bold text-slate-700 mb-2">Chưa thi đấu trận nào</h3>
+  1322: Hãy tham gia giải đấu và cập nhật kết quả thi đấu để xem lịch sử trận đấu của bạn tại đây.
+  1340: <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Hạng Trình Độ ELO</h3>
+  1349: {rank.categoryName} • {rank.matchType === 'SINGLES' ? 'Đánh đơn' : 'Đánh đôi'}
+  1358: <div className="text-[10px] text-slate-400 font-bold uppercase">Số Trận</div>
+  1362: <div className="text-[10px] text-slate-400 font-bold uppercase">Thắng</div>
+  1366: <div className="text-[10px] text-slate-400 font-bold uppercase">Chuỗi</div>
+  1378: Bạn chưa tham gia thi đấu xếp hạng ELO chính thức.
+  1393: reason: item.reason || (item.changedPoints > 0 ? 'Thắng' : 'Thua'),
+  1394: tournament: item.match?.tournamentName || 'Giải đấu'
+  1432: <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">Lịch sử thay đổi ELO</h3>
+  1440: <p className="text-sm font-bold text-slate-800 line-clamp-1">{item.match?.tournamentName || 'Trận đấu xếp hạng'}</p>
+  1445: <span className="text-[10px] text-slate-400 block font-bold">ELO mới</span>
+  1471: {/* Modal gửi yêu cầu xác minh */}
+  1477: (Dùng để tạo chuỗi giải đấu hoặc giải đấu công khai tính Rank ELO. Nếu chỉ tổ chức giải nội bộ CLB thì bạn không cần đăng ký quyền này).
+  1491: Số điện thoại liên hệ <span className="text-rose-500">*</span>
+  1495: placeholder="Nhập số điện thoại liên lạc..."
+  1504: Ảnh minh chứng năng lực <span className="text-rose-500">*</span>
+62	D:\Duancanhan\Project_QuanLyGiaiDau\frontend-web_qlgiaidau\src\components\shared\UnifiedChatWidget.tsx
+  931: toast.success('Đã ghim tin nhắn lên đầu phòng chat.');
+  933: toast.error(getErrorMessage(err, 'Không thể ghim tin nhắn.'));
+  945: toast.success('Đã bỏ ghim tin nhắn.');
+  947: toast.error(getErrorMessage(err, 'Không thể bỏ ghim tin nhắn.'));
+  958: toast.success('Đã tải ảnh logo lên thành công!');
+  960: toast.error(getErrorMessage(err, 'Không thể tải ảnh logo lên.'));
+  993: toast.error(getErrorMessage(err, 'Không thể gửi bình chọn.'));
+  1001: toast.error('Vui lòng nhập câu hỏi bình chọn.');
+  1006: toast.error('Cần ít nhất 2 lựa chọn để tạo bình chọn.');
+  1029: `📊 Bình chọn: ${q}`,
+  1064: toast.success('Đã bỏ chặn người dùng.');
+  1072: toast.error(getErrorMessage(err, 'Thao tác chặn thất bại.'));
+  1101: ? 'Đã bật nhận tất cả thông báo CLB'
+  1103: ? 'Chỉ nhận thông báo khi được nhắc tên (@tag)'
+  1104: : 'Đã tắt thông báo CLB (Im lặng)',
+  1158: (currentReply.mine ? 'Tôi' : 'Thành viên'),
+  1173: senderName: message.senderName || (user?.fullName || 'Tôi'),
+  1187: toast.error(getErrorMessage(error, 'Không thể gửi tin nhắn.'));
+  1318: if (!answer) toast.error('AI chưa trả lời, thử lại sau.');
+  1362: <p className="text-sm font-bold text-slate-900">Tin nhắn</p>
+  1366: aria-label="Đóng"
+  1392: Trợ lý AI Sporto
+  1396: Luôn sẵn sàng
+  1420: Hỗ trợ Sporto
+  1423: Admin trực tuyến
+  1429: Phòng Chat & CLB
+  1518: title={selection.kind === 'ROOM' ? 'Nhấn để đổi logo / cài đặt phòng chat' : undefined}
+  1527: title="Quay lại danh sách tin nhắn"
+  1559: 'Trợ lý AI Sporto 24/7'
+  1562: Đang soạn tin nhắn...
+  1565: <span className="text-rose-500 font-semibold">Đã chặn</span>
+  1568: Kênh cộng đồng · CLB
+  1573: Đang hoạt động
+  1578: Không trực tuyến
+  1598: title="Tìm kiếm tin nhắn"
+  1614: aria-label="Tùy chọn đoạn chat"
+  1625: Thông báo CLB
+  1638: <span>Tất cả tin nhắn</span>
+  1653: <span>Chỉ khi được @tag</span>
+  1668: <span>Tắt thông báo (Im lặng)</span>
+  1675: {/* Cài đặt phòng chat CLB */}
+  1687: <span>Cài đặt phòng chat</span>
+  1714: ? 'Bỏ chặn người này'
+  1715: : 'Chặn tin nhắn'}
+  1759: : '0 kết quả'}
+  1767: title="Kết quả trước (Shift+Enter)"
+  1775: title="Kết quả tiếp theo (Enter)"
+  1788: title="Đóng tìm kiếm (Esc)"
+  1814: {pinnedMessage.senderName || 'Thành viên'}:
+  1823: title="Bỏ ghim tin nhắn"
+  1871: Gợi ý câu hỏi nhanh
+  1891: Chat trực tiếp với Ban Quản Trị
+  1899: <span className="text-xs">Đang tải tin nhắn...</span>
+  1949: Tải tin nhắn cũ hơn
+  1965: Chưa có tin nhắn nào
+  1968: Hãy gửi tin nhắn đầu tiên để bắt đầu trò chuyện!
+  2469: <span>Khởi tranh: {new Date(message.metadata.startDate).toLocaleDateString('vi-VN')}</span>
+  2523: title={`${msgReactions.length} cảm xúc: ${reactionSummary} (Nhấn để thả/bỏ cảm xúc)`}
+  2563: Đã gửi
+  2645: <span>Đang tải ảnh...</span>
+  2656: <span className="text-xs font-bold text-slate-700">Biểu tượng cảm xúc</span>
+  3171: Hủy
+61	D:\Duancanhan\Project_QuanLyGiaiDau\frontend-web_qlgiaidau\src\features\tournaments\sport-rules\presentation.ts
+  20: sportLabel: 'Cầu lông',
+  21: scoringLabel: 'Rally point 21 điểm',
+  22: setUnitLabel: 'Điểm mỗi set',
+  23: winByTwoLabel: 'Thắng cách biệt 2 điểm',
+  24: maxScoreLabel: 'Điểm tối đa của set khi hòa 2 điểm',
+  25: presetSummary: 'Mặc định thường là thắng 2 set, 21 điểm/set, chạm 30 thắng luôn.',
+  26: roundConfigHint: 'Phù hợp khi cần giảm điểm ở vòng ngoài, giữ 21 điểm cho bán kết và chung kết.',
+  29: { value: 2, label: 'Thắng 2 set' },
+  30: { value: 3, label: 'Thắng 3 set' },
+  32: maxScorePlaceholder: 'Ví dụ: 30',
+  33: tiebreakLabel: 'Điểm super tie-break / điểm chốt set',
+  37: sportLabel: 'Bóng bàn',
+  38: scoringLabel: 'Rally point 11 điểm',
+  39: setUnitLabel: 'Điểm mỗi set',
+  40: winByTwoLabel: 'Thắng cách biệt 2 điểm',
+  41: maxScoreLabel: 'Điểm trần nếu BTC muốn chốt set',
+  42: presetSummary: 'Mặc định thường là thắng 3 set, 11 điểm/set, giao bóng đổi nhịp theo luật bóng bàn.',
+  43: roundConfigHint: 'Hữu ích khi vòng đầu đánh BO3 còn các vòng sâu nâng lên BO5.',
+  46: { value: 2, label: 'Thắng 2 set (BO3)' },
+  47: { value: 3, label: 'Thắng 3 set (BO5)' },
+  48: { value: 4, label: 'Thắng 4 set (BO7)' },
+  50: maxScorePlaceholder: 'Ví dụ: 99 hoặc để luật mở',
+  51: tiebreakLabel: 'Điểm tie-break đặc biệt',
+  56: scoringLabel: 'Rally point 11 điểm',
+  57: setUnitLabel: 'Điểm mỗi set',
+  58: winByTwoLabel: 'Thắng cách biệt 2 điểm',
+  59: maxScoreLabel: 'Điểm trần của set khi deuce',
+  60: presetSummary: 'Mode rally: mỗi pha bóng đều có điểm. Mặc định thường là thắng 2 set, 11 điểm/set, chạm 15 để chốt set nếu cần.',
+  61: roundConfigHint: 'Có thể tăng điểm trần hoặc thêm super tie-break cho các vòng cuối.',
+  64: { value: 2, label: 'Thắng 2 set' },
+  65: { value: 3, label: 'Thắng 3 set' },
+  67: maxScorePlaceholder: 'Ví dụ: 15',
+  68: tiebreakLabel: 'Điểm super tie-break',
+  74: setUnitLabel: 'Điểm mục tiêu mỗi game',
+  75: winByTwoLabel: 'Chỉ bên giao mới ghi điểm, vẫn phải hơn 2',
+  76: maxScoreLabel: 'Điểm đích của game',
+  77: presetSummary: 'Mode side-out: chỉ đội giao bóng mới lên điểm. Đây là mode nghiệp vụ sâu hơn, cần quản lý lượt giao và server.',
+  78: roundConfigHint: 'Ưu tiên dùng cho live score chi tiết; nếu chỉ nhập kết quả cuối trận thì cần quy ước rõ score game hoàn chỉnh.',
+  81: { value: 2, label: 'Thắng 2 game' },
+  82: { value: 3, label: 'Thắng 3 game' },
+  84: maxScorePlaceholder: 'Ví dụ: 11',
+  85: tiebreakLabel: 'Điểm game đích',
+  91: setUnitLabel: 'Game mỗi set',
+  92: winByTwoLabel: 'Set phải hơn 2 game hoặc vào tie-break',
+  93: maxScoreLabel: 'Game tối đa của set',
+  94: presetSummary: 'Mặc định thường là thắng 2 set, 6 game/set, 6-6 vào tie-break 7 điểm.',
+  95: roundConfigHint: 'Dùng tốt khi vòng đầu đánh pro-set, các vòng sâu mới quay về best-of-3 chuẩn.',
+  98: { value: 2, label: 'Thắng 2 set (BO3)' },
+  99: { value: 3, label: 'Thắng 3 set (BO5)' },
+  101: maxScorePlaceholder: 'Ví dụ: 7',
+  102: tiebreakLabel: 'Điểm tie-break (thường là 7)',
+  106: sportLabel: 'Bóng đá',
+  107: scoringLabel: 'Tính bàn thắng',
+  108: setUnitLabel: 'Bàn thắng',
+  109: winByTwoLabel: 'Không bắt buộc',
+  110: maxScoreLabel: 'Không giới hạn',
+  111: presetSummary: 'Mặc định thường là 2 hiệp, phân định thắng thua qua tổng bàn thắng.',
+  112: roundConfigHint: 'Sử dụng cho bóng đá sân 5, 7, 11 người.',
+  114: { value: 1, label: '1 trận' },
+  116: maxScorePlaceholder: 'Để trống',
+  117: tiebreakLabel: 'Luân lưu',
+58	D:\Duancanhan\Project_QuanLyGiaiDau\frontend-web_qlgiaidau\src\app\organizer\tournaments\[id]\ops\components\scoring\ScoringPanel.tsx
+  31: // Bóng đá: luân lưu phân định khi hòa ở knockout
+  90: // Mỗi lần mở modal bắt đầu ở chế độ chuẩn; ngoại lệ cũ chỉ là lịch sử của set đã chốt.
+  108: Không có dữ liệu trận để nhập điểm.
+  130: ? match.participant1?.teamName || 'Đội 1'
+  132: ? match.participant2?.teamName || 'Đội 2'
+  153: // Bóng đá: cho phép hòa nếu đã nhập luân lưu (shootout) để phân định.
+  157: ? `${scorePresentation.sequenceLabel.charAt(0).toUpperCase() + scorePresentation.sequenceLabel.slice(1)} hiện tại ${activeSet.team1Score} - ${activeSet.team2Score}${activeSet.isFinished ? ' (đã chốt)' : ' (đang mở)'}`
+  158: : 'Chưa có ${scorePresentation.sequenceLabel} đang mở';
+  163: {scorePresentation.sportLabel} • {scorePresentation.summaryLabel} • Chạm đích: {resolvedRules.pointsPerSet}
+  164: {resolvedRules.kind === 'TENNIS' ? ` game, loạt phụ ${resolvedRules.tiebreakPoints}` : ''}
+  169: Modal này chỉ nên có 1 {scorePresentation.sequenceLabel} đang mở. Nếu có nhiều dòng 0-0 chưa chốt, backend tennis sẽ từ chối.
+  175: Ví dụ hợp lệ: {scoreGuidance.examples.join(' • ')}. {scoreGuidance.operatorHint}
+  183: <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Chế độ trọng tài / BTC</p>
+  185: {overrideEnabled ? 'Ngoại lệ đang bật' : 'Theo luật mặc định'}
+  188: Chỉ bật khi cần chốt tỷ số khác luật mặc định. Hệ thống vẫn lưu đầy đủ người quyết định và lý do.
+  207: {overrideEnabled ? 'Tắt ngoại lệ' : 'Bật ngoại lệ'}
+  214: Lý do ngoại lệ bắt buộc
+  225: placeholder="Ví dụ: trận tranh hạng ba thống nhất chơi loạt phụ rút gọn theo quyết định trọng tài và BTC..."
+  228: Hệ thống sẽ ghi lại người quyết định, thời điểm và lý do ngoại lệ của trận.
+  237: ⚡ Giải đang dùng luật Tự do (Lite Mode). Trọng tài được tùy ý ghi/chỉnh điểm số không bị giới hạn.
+  244: ? `${servingTeamLabel} đang giữ quyền giao • lượt ${sideOutState.serverNumber}. Panel này sẽ lưu luôn trạng thái giao bóng hiện tại.`
+  245: : 'Chế độ mất quyền giao đang bật nhưng trận chưa chốt đội giao hiện tại ở bảng điểm trực tiếp.'}
+  252: <p className="text-xs font-bold uppercase tracking-[0.14em] text-blue-500">Điều khiển giao bóng trong modal</p>
+  255: ? 'Chưa chọn đội giao hiện tại'
+  256: : `${servingTeamLabel} đang giao • lượt ${sideOutState.serverNumber}`}
+  259: Dùng khi cần chốt lại trạng thái giao bóng cùng lúc với việc nhập tỷ số game pickleball.
+  283: {match.participant1?.teamName || 'Đội 1'} giao
+  303: {match.participant2?.teamName || 'Đội 2'} giao
+  321: Lượt giao 1
+  336: Lượt giao 2
+  353: Mất quyền giao
+  361: <p className="font-bold">Cảnh báo bám luật mặc định</p>
+  369: Nếu biên bản trọng tài xác nhận đây là kết quả hợp lệ ngoài preset, hãy bật chế độ ngoại lệ rồi ghi rõ lý do.
+  386: Đang diễn ra
+  391: Ngoại lệ
+  395: Đã chốt
+  399: Set hiện tại
+  403: Chưa mở
+  408: Set đã chốt sẽ giữ lại. Set hiện tại mới được nhập điểm và chốt ở nút lưu.
+  412: Lý do ngoại lệ: {set.scoreOverride.reason}
+  429: {match.participant1?.teamName || 'Đội 1'} {template.winnerScore}-{template.loserScore}
+  441: {match.participant2?.teamName || 'Đội 2'} {template.loserScore}-{template.winnerScore}
+  458: Xóa nhanh {scorePresentation.sequenceLabel} này
+  464: <label className="text-xs font-bold text-slate-600">{match.participant1?.teamName || 'Đội 1'}</label>
+  488: <label className="text-xs font-bold text-slate-600">{match.participant2?.teamName || 'Đội 2'}</label>
+  516: {scorePresentation.wonSummaryLabel} {match.participant1?.teamName || 'Đội 1'}: <span className="font-bold">{p1Won}</span>
+  519: {scorePresentation.wonSummaryLabel} {match.participant2?.teamName || 'Đội 2'}: <span className="font-bold">{p2Won}</span>
+  527: ? `Set hiện tại đang ở mức ${activeSet.team1Score} - ${activeSet.team2Score}. Hãy chốt bằng một tỉ số không hòa trước khi lưu.`
+  528: : `Chưa có ${scorePresentation.sequenceLabel} nào được chốt. Hãy nhập điểm cho set hiện tại trước khi lưu.`
+  529: : `${scorePresentation.sequenceLabel.charAt(0).toUpperCase() + scorePresentation.sequenceLabel.slice(1)} không được hòa. Hãy kiểm tra lại tỉ số đã nhập.`}
+  534: Đã bật ngoại lệ, cần nhập lý do để BTC và trọng tài tra cứu lại sau.
+  541: ⚽ Trận hòa ở vòng loại trực tiếp — nhập luân lưu để phân định
+  545: <label className="text-xs font-bold text-amber-800">{match.participant1?.teamName || 'Đội 1'} (luân lưu)</label>
+  563: <label className="text-xs font-bold text-amber-800">{match.participant2?.teamName || 'Đội 2'} (luân lưu)</label>
+  599: {match.participant1?.teamName || 'Đội 1'} thắng luân lưu
+  618: {match.participant2?.teamName || 'Đội 2'} thắng luân lưu
+  626: Hủy
+  633: Lưu tỷ số
+58	D:\Duancanhan\Project_QuanLyGiaiDau\frontend-web_qlgiaidau\src\features\notifications\constants.ts
+  2: FOOTBALL_TEAM_INVITED: 'Lời mời vào đội bóng',
+  3: FOOTBALL_TEAM_INVITE_ACCEPTED: 'Lời mời đội bóng được nhận',
+  4: FOOTBALL_TEAM_INVITE_DECLINED: 'Lời mời đội bóng bị từ chối',
+  5: FOOTBALL_TEAM_INVITE_CANCELLED: 'Lời mời đội bóng bị hủy',
+  6: FOOTBALL_TEAM_ROLE_CHANGED: 'Vai trò đội bóng thay đổi',
+  7: FOOTBALL_TEAM_MEMBER_REMOVED: 'Bị xóa khỏi đội bóng',
+  8: FOOTBALL_TEAM_MEMBER_LEFT: 'Thành viên rời đội bóng',
+  9: COMMUNITY_INVITED: 'Lời mời cộng đồng',
+  10: COMMUNITY_ROLE_PROMOTED: 'Được thăng quyền',
+  11: COMMUNITY_ROLE_DEMOTED: 'Bị hạ quyền',
+  12: COMMUNITY_KICKED: 'Bị mời khỏi cộng đồng',
+  13: COMMUNITY_INVITE_REVOKED: 'Lời mời bị thu hồi',
+  14: COMMUNITY_OWNERSHIP_TRANSFERRED: 'Nhận quyền sở hữu',
+  15: COMMUNITY_BANNED: 'Bị cấm khỏi cộng đồng',
+  16: COMMUNITY_UNBANNED: 'Được gỡ cấm',
+  17: TOURNAMENT_REGISTER_PENDING: 'Chờ duyệt',
+  18: TOURNAMENT_REGISTER_SUCCESS: 'Đăng ký thành công',
+  19: TOURNAMENT_REGISTER_REJECTED: 'Đăng ký bị từ chối',
+  20: TOURNAMENT_PARTICIPANT_NEW: 'Đăng ký mới',
+  21: TOURNAMENT_TEAM_PENDING: 'Chờ đồng đội',
+  22: TOURNAMENT_TEAM_COMPLETED: 'Đội đã hoàn tất',
+  23: TOURNAMENT_TEAMMATE_JOINED: 'Đồng đội tham gia',
+  24: TOURNAMENT_WITHDRAWN: 'Rút đăng ký',
+  25: TOURNAMENT_KICKED: 'Bị loại',
+  26: TOURNAMENT_FULL_CANCELLED: 'Hủy do đầy slot',
+  27: TOURNAMENT_TEAM_TIMEOUT: 'Hết hạn xác nhận',
+  28: TOURNAMENT_FOOTBALL_ROSTER_CONFIRMATION: 'Xác nhận đội hình bóng đá',
+  29: PARTNER_INVITE_RECEIVED: 'Lời mời ghép đôi',
+  30: PARTNER_INVITE_ACCEPTED: 'Đồng đội đã nhận lời',
+  31: PARTNER_INVITE_REJECTED: 'Lời mời bị từ chối',
+  32: PARTNER_INVITE_CANCELLED: 'Lời mời bị thu hồi',
+  33: TOURNAMENT_PAYMENT_COMPLETED: 'Thanh toán',
+  34: TOURNAMENT_CANCELLED: 'Giải bị hủy',
+  35: TOURNAMENT_RESERVED_SLOT_ASSIGNED: 'Được giữ chỗ',
+  36: TOURNAMENT_PUBLISH_APPROVED: 'Được mở đăng ký',
+  37: TOURNAMENT_PUBLISH_REJECTED: 'Bị từ chối duyệt',
+  38: TOURNAMENT_SUSPENDED: 'Bị đình chỉ',
+  39: TOURNAMENT_UNSUSPENDED: 'Được khôi phục',
+  40: TOURNAMENT_DELETE_APPROVED: 'Xóa giải được duyệt',
+  41: TOURNAMENT_DELETE_REJECTED: 'Xóa giải bị từ chối',
+  42: VERIFICATION_APPROVED: 'Xác minh được duyệt',
+  43: VERIFICATION_REJECTED: 'Xác minh bị từ chối',
+  44: USER_BANNED: 'Tài khoản bị hạn chế',
+  45: USER_UNBANNED: 'Tài khoản được khôi phục',
+  46: MATCH_SCHEDULED: 'Lịch thi đấu',
+  47: MATCH_REMINDER: 'Nhắc lịch thi đấu',
+  48: MATCH_COMPLETED: 'Kết quả trận',
+  49: REFEREE_INVITED: 'Lời mời trọng tài',
+  50: REFEREE_INVITE_REVOKED: 'Lời mời bị thu hồi',
+  51: REFEREE_INVITE_ACCEPTED: 'Trọng tài đã nhận lời',
+  52: REFEREE_INVITE_DECLINED: 'Trọng tài từ chối',
+  53: REFEREE_ASSIGNED: 'Phân công trọng tài',
+  54: STAFF_ADDED: 'Thêm vào ban tổ chức',
+  55: PAYOUT_APPROVED: 'Rút tiền được duyệt',
+  56: PAYOUT_REJECTED: 'Rút tiền bị từ chối',
+  57: COMMUNITY_POST_MENTIONED: 'Được nhắc tên',
+  58: COMMUNITY_POST_COMMENTED: 'Bình luận mới',
+  59: COMMUNITY_POST_APPROVED: 'Bài viết được duyệt',
+56	D:\Duancanhan\Project_QuanLyGiaiDau\frontend-web_qlgiaidau\src\app\lite\tournaments\[id]\manage\page.tsx
+  219: const label = strategy === 'RANDOM' ? 'ngẫu nhiên' : 'ELO cân bằng';
+  262: toast.success('Đã sao chép link mời!');
+  319: const names = Array.from({ length: num }, (_, i) => `VĐV ảo ${i + 1}`);
+  348: Giải đấu không tồn tại hoặc bạn không có quyền truy cập.
+  370: <ChevronLeft className="w-4 h-4" /> Giải đấu của tôi
+  390: <span>Tối đa {tournament.maxParticipants} đội</span>
+  399: <ExternalLink className="w-3.5 h-3.5" /> Xem trang giải
+  404: <Copy className="w-3.5 h-3.5" /> Sao chép link mời
+  448: <InfoCard label="Hình thức" value={
+  454: <InfoCard label="Thể thức" value={
+  455: tournament.format === 'SINGLE_ELIMINATION' ? 'Loại trực tiếp'
+  456: : tournament.format === 'DOUBLE_ELIMINATION' ? 'Nhánh thắng/thua'
+  457: : tournament.format === 'ROUND_ROBIN' ? 'Vòng tròn'
+  458: : tournament.format === 'GROUP_STAGE_KNOCKOUT' ? 'Vòng bảng + loại'
+  462: <InfoCard label="Người tham gia" value={tournament._count?.participants?.toString() || '0'} />
+  465: <InfoCard label="Ngày bắt đầu" value={new Date(tournament.startDate).toLocaleDateString('vi-VN')} />
+  468: <InfoCard label="Địa điểm" value={tournament.locationAddress || tournament.tournamentConfig?.location?.display || '—'} />
+  475: <p className="mt-1 text-xs text-slate-600">Đây là preset gợi ý có thể chỉnh; chế độ Lite vẫn cho phép nhập điểm tự do khi cập nhật trận.</p>
+  478: <Badge className="bg-white text-emerald-700 border-emerald-200">Tự do (Lite)</Badge>
+  485: {rulesEditing ? 'Đóng' : 'Chỉnh luật'}
+  493: <Input label="Số hiệp" type="number" min={1} max={4} value={ruleHalves} onChange={(event) => setRuleHalves(Number(event.target.value) || 1)} />
+  494: <Input label="Phút mỗi hiệp" type="number" min={1} max={120} value={ruleHalfDuration} onChange={(event) => setRuleHalfDuration(Number(event.target.value) || 1)} />
+  495: <label className="flex items-center gap-2 self-end pb-2 text-sm font-medium text-slate-700"><input type="checkbox" checked={ruleAllowDraw} onChange={(event) => setRuleAllowDraw(event.target.checked)} className="h-4 w-4 accent-emerald-600" /> Cho phép hòa</label>
+  499: <Input label="Set thắng" type="number" min={1} max={5} value={ruleSetsToWin} onChange={(event) => setRuleSetsToWin(Number(event.target.value) || 1)} />
+  500: <Input label="Điểm mỗi set" type="number" min={1} max={99} value={rulePointsPerSet} onChange={(event) => setRulePointsPerSet(Number(event.target.value) || 1)} />
+  501: <Input label="Điểm tối đa" type="number" min={1} max={199} value={ruleMaxPoints} onChange={(event) => setRuleMaxPoints(Number(event.target.value) || 1)} />
+  502: <label className="flex items-center gap-2 self-end pb-2 text-sm font-medium text-slate-700"><input type="checkbox" checked={ruleWinByTwo} onChange={(event) => setRuleWinByTwo(event.target.checked)} className="h-4 w-4 accent-emerald-600" /> Chạm 2</label>
+  509: <InfoCard label="Số hiệp" value={String(tournament.sportRules.halvesCount ?? 2)} />
+  510: <InfoCard label="Phút/hiệp" value={String(tournament.sportRules.halfDuration ?? 45)} />
+  511: <InfoCard label="Hòa" value={tournament.sportRules.allowDraw === false ? 'Không' : 'Có'} />
+  512: <InfoCard label="Đội hình" value={String(tournament.tournamentConfig?.teamSize ?? '—')} />
+  516: <InfoCard label="Set thắng" value={String(tournament.sportRules?.setsToWin ?? '—')} />
+  517: <InfoCard label="Điểm/set" value={String(tournament.sportRules?.pointsPerSet ?? '—')} />
+  518: <InfoCard label="Điểm tối đa" value={String(tournament.sportRules?.maxPoints ?? '—')} />
+  519: <InfoCard label="Chạm 2" value={tournament.sportRules?.winByTwo === false ? 'Không' : 'Có'} />
+  530: Người tham gia
+  533: ({participants.length} hồ sơ)
+  545: Làm mới
+  555: {mockLoading ? 'Đang tạo...' : 'Tạo VĐV ảo'}
+  568: Thử lại
+  576: Chia sẻ link mời để người chơi đăng ký
+  588: Chờ ghép cặp ({pendingParticipants.length})
+  592: Không có người chơi nào đang chờ ghép
+  633: Chờ ghép
+  656: Ghép thủ công ({selectedIds.length}/2)
+  671: Ghép ngẫu nhiên
+  685: Ghép ELO cân bằng
+  698: Chưa có cặp nào được ghép
+  714: Chờ duyệt
+  719: Sẵn sàng
+  785: Đã tham gia
+  792: {/* Tạo bracket */}
+  801: <Badge className="shrink-0 border-emerald-200 bg-emerald-50 text-emerald-700">Đã chốt</Badge>
+  805: Chốt danh sách
+  832: {hasBracket ? 'Bracket đã được lưu trên hệ thống và sẽ được dùng để tạo các trận đấu.' : 'Chưa có bracket được lưu.'}
+  837: <Button variant="outline" className="gap-2"><ExternalLink className="w-4 h-4" /> Xem sơ đồ</Button>
+56	D:\Duancanhan\Project_QuanLyGiaiDau\frontend-web_qlgiaidau\src\app\organizer\series\[id]\manage\page.tsx
+  62: toast.error('Không thể tải chi tiết chuỗi giải đấu');
+  99: setLegName(`Chặng ${legs.length + 1}`);
+  112: toast.error('Vui lòng nhập tên chặng đấu');
+  128: toast.success('Cập nhật chặng đấu thành công');
+  131: toast.success('Thêm chặng đấu thành công');
+  137: const msg = err instanceof Error ? err.message : 'Lỗi xử lý chặng đấu';
+  143: if (!confirm('Bạn có chắc chắn muốn xóa chặng đấu này? Tất cả các liên kết sự kiện bên trong chặng sẽ bị hủy.')) return;
+  146: toast.success('Xóa chặng đấu thành công');
+  152: toast.error('Lỗi khi xóa chặng đấu');
+  158: toast.error('Vui lòng tạo chặng đấu trước khi liên kết giải đấu');
+  167: toast.error('Không còn giải đấu nào khả dụng để liên kết. Vui lòng tạo thêm giải đấu.');
+  182: toast.error('Vui lòng chọn thông tin hợp lệ');
+  195: toast.success('Liên kết giải đấu thành công!');
+  199: const msg = err instanceof Error ? err.message : 'Không thể liên kết giải đấu';
+  207: if (!confirm('Bạn có chắc chắn muốn hủy liên kết giải đấu này khỏi chặng? Điểm số PSR cũ vẫn giữ nguyên, nhưng giải sẽ không thuộc chặng này nữa.')) return;
+  210: toast.success('Hủy liên kết thành công');
+  213: toast.error('Lỗi khi hủy liên kết giải đấu');
+  222: <p className="text-slate-500 font-medium">Đang tải cấu hình chuỗi giải...</p>
+  241: <ArrowLeft className="w-4 h-4" /> Quay lại danh sách chuỗi giải
+  252: QUẢN LÝ CHUỖI GIẢI
+  260: Xem giao diện VĐV <ChevronRight className="w-4 h-4" />
+  274: <Layers className="w-4.5 h-4.5 text-blue-500" /> Các chặng đấu ({legs.length})
+  281: <Plus className="w-3.5 h-3.5" /> Thêm chặng
+  287: Chưa có chặng đấu nào. Nhấp &quot;Thêm chặng&quot; để tạo.
+  312: Vé thẳng: {leg.directEntrySlots}
+  315: Vé vớt: {leg.wildcardSlots}
+  328: title="Sửa chặng"
+  341: title="Xóa chặng"
+  361: Giải đấu trong chặng: {selectedLeg.name}
+  364: Khi giải đấu hoàn tất (COMPLETED), điểm số sẽ tự động phân phối cho VĐV.
+  372: <LinkIcon className="w-3.5 h-3.5" /> Liên kết giải đấu
+  391: GIẢI #{event.order}
+  400: Hệ số x{event.pointMultiplier}
+  408: Trạng thái: {t.status === 'COMPLETED' ? '✅ Đã kết thúc (Đã tính điểm)' : '⏳ Chưa kết thúc'}
+  419: <X className="w-3.5 h-3.5" /> Hủy liên kết
+  428: Chưa có giải đấu nào được liên kết vào chặng này.
+  434: Vui lòng tạo chặng đấu hoặc chọn chặng bên trái để quản lý giải đấu thành viên.
+  447: {editingLeg ? 'Sửa chặng đấu' : 'Thêm chặng đấu mới'}
+  456: <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wide">Tên chặng *</label>
+  460: placeholder="Ví dụ: Chặng 1: Mùa xuân"
+  467: <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wide">Thứ tự chặng</label>
+  478: <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wide">Số vé thẳng (Top đầu)</label>
+  491: <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wide">Ngày bắt đầu</label>
+  500: <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wide">Ngày kết thúc</label>
+  510: <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wide">Số suất vé vớt tích lũy PSR</label>
+  522: Hủy
+  525: Lưu chặng đấu
+  539: Liên kết giải đấu thành viên
+  548: <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wide">Chọn giải đấu khả dụng</label>
+  556: {t.name} ({t.category?.name || 'Môn đấu'})
+  564: <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wide">Thứ tự trong chặng</label>
+  575: <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wide">Hệ số điểm (Multiplier)</label>
+  588: <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wide">Khu vực / Tỉnh thành tổ chức</label>
+  592: placeholder="Ví dụ: Tây Nguyên, Hà Nội..."
+  598: Hủy
+  605: Liên kết giải
+54	D:\Duancanhan\Project_QuanLyGiaiDau\frontend-web_qlgiaidau\src\app\organizer\tournaments\[id]\manage\components\PermissionsTab.tsx
+  55: label: 'Chờ phản hồi',
+  61: label: 'Đã nhận lời',
+  67: label: 'Đã từ chối',
+  99: toast.error('Không thể tải danh sách phân quyền.');
+  128: toast.success('Đã gửi lời mời trọng tài. Họ sẽ thấy lời mời trong thông báo hệ thống và xác nhận tại đây.');
+  131: const roleLabel = currentRole === 'REFEREE' ? 'trọng tài' : currentRole === 'SPECTATOR' ? 'khách xem' : 'ban tổ chức';
+  132: toast.success(`Đã thêm ${trimmedEmail} làm ${roleLabel}. Người dùng này sẽ được gửi thông báo và xuất hiện trong danh sách ${roleLabel} bên dưới.`);
+  146: toast.success('Đã xóa nhân sự.');
+  157: toast.success('Đã gửi lại lời mời trọng tài.');
+  170: toast.success('Đã thu hồi lời mời trọng tài.');
+  180: all: 'Chưa có trọng tài nào. Hãy gửi lời mời đầu tiên bằng email ở trên.',
+  181: INVITED: 'Hiện không còn lời mời nào đang chờ phản hồi.',
+  182: ACCEPTED: 'Chưa có trọng tài nào nhận lời để sẵn sàng điều hành trận.',
+  183: DECLINED: 'Chưa có trọng tài nào từ chối lời mời.',
+  190: <h2 className="text-xl font-bold text-slate-900">Quản lý phân quyền</h2>
+  192: Mời đúng người vào đúng vai trò để vận hành giải rõ ràng và có kiểm soát.
+  207: {tab === 'organizers' ? 'Ban tổ chức' : tab === 'referees' ? 'Trọng tài' : 'Khách xem'}
+  217: <div className="text-xs font-bold uppercase tracking-wider text-amber-700">Đang chờ phản hồi</div>
+  219: <div className="mt-1 text-xs text-amber-700">Đã mời nhưng chưa nhận vai trò.</div>
+  222: <div className="text-xs font-bold uppercase tracking-wider text-emerald-700">Đã nhận lời</div>
+  224: <div className="mt-1 text-xs text-emerald-700">Có thể phân công vào các trận đấu.</div>
+  227: <div className="text-xs font-bold uppercase tracking-wider text-rose-700">Đã từ chối</div>
+  229: <div className="mt-1 text-xs text-rose-700">Cần mời người thay thế nếu vẫn thiếu.</div>
+  234: ? 'Các lời mời đang chờ phản hồi có thể được thu hồi nếu bạn muốn đổi người.'
+  236: ? 'Với người đã từ chối, bạn có thể mời lại nếu đã trao đổi xong hoặc họ đổi quyết định.'
+  238: ? 'Người đã nhận lời là nguồn trọng tài sẵn sàng để bạn gán vào lịch trận.'
+  239: : 'Theo dõi toàn bộ trạng thái trọng tài tại đây để tránh thiếu người ở ngày thi đấu.'}
+  250: {subTab === 'referees' ? 'Email trọng tài' : 'Email người dùng'}
+  268: ? 'Đang gửi mời...'
+  269: : 'Đang thêm...'
+  271: ? 'Gửi lời mời'
+  272: : 'Thêm'}
+  286: ? 'Danh sách trọng tài và trạng thái phản hồi'
+  287: : `Danh sách ${subTab === 'organizers' ? 'ban tổ chức' : 'khách xem'}`}
+  293: Đang tải dữ liệu phân quyền...
+  299: { key: 'all', label: 'Tất cả', count: referees.length },
+  300: { key: 'INVITED', label: 'Chờ phản hồi', count: pendingReferees.length },
+  301: { key: 'ACCEPTED', label: 'Đã nhận lời', count: acceptedReferees.length },
+  302: { key: 'DECLINED', label: 'Đã từ chối', count: declinedReferees.length },
+  348: ? 'Đã sẵn sàng để được gán trận.'
+  350: ? 'Người này đã từ chối lời mời hiện tại.'
+  351: : 'Đang chờ người dùng phản hồi lời mời.'}
+  370: Mời lại
+  383: Thu hồi
+  397: Chưa có ai. Nhập email bên trên để thêm vào vai trò này.
+  420: title="Xóa"
+  434: {confirmAction?.type === 'revoke' ? 'Thu hồi lời mời trọng tài?' : 'Gửi lại lời mời trọng tài?'}
+  438: ? `Lời mời đang chờ phản hồi của ${confirmAction?.referee.fullName} sẽ bị xóa khỏi danh sách chờ.`
+  439: : `Hệ thống sẽ gửi lại lời mời trọng tài cho ${confirmAction?.referee.fullName} qua email ${confirmAction?.referee.email}.`}
+  444: ? 'Chỉ nên thu hồi khi bạn đã quyết định đổi người hoặc lời mời được gửi nhầm.'
+  445: : 'Chỉ nên mời lại khi bạn đã trao đổi trước với người được mời để tránh gây phiền.'}
+  449: Hủy
+  470: 'Xác nhận thu hồi'
+  472: 'Xác nhận mời lại'
+52	D:\Duancanhan\Project_QuanLyGiaiDau\frontend-web_qlgiaidau\src\app\(public)\tournaments\[id]\register\page.tsx
+  72: if (normalized === 'FEMALE' || normalized === 'NỮ' || normalized === 'NU') {
+  82: const singlesLabel = translate?.('singlesLabel') ?? 'Đơn';
+  83: const doublesLabel = translate?.('doublesLabel') ?? 'Đôi';
+  86: genderRestriction === 'FEMALE' ? 'Nữ' :
+  87: genderRestriction === 'MIXED' ? 'Nam Nữ' : '';
+  96: return translate?.('mixedDoublesLabel') ?? 'Đôi Nam Nữ';
+  98: return translate?.('unknownLabel') ?? 'Chưa rõ';
+  103: if (normalized === 'SINGLES' || normalized === 'SINGLE' || normalized === 'ĐƠN') {
+  106: if (normalized === 'MIXED_DOUBLES' || normalized === 'MIXED-DOUBLES' || normalized === 'ĐÔI NAM NỮ') {
+  109: if (normalized === 'DOUBLES' || normalized === 'DOUBLE' || normalized === 'ĐÔI') {
+  117: return translate?.('singleElimination') ?? 'Loại trực tiếp';
+  120: return translate?.('doubleElimination') ?? 'Nhánh thắng/thua';
+  123: return translate?.('roundRobin') ?? 'Vòng tròn';
+  126: return translate?.('groupStageKnockout') ?? 'Vòng bảng + Loại trực tiếp';
+  128: return 'Chưa rõ';
+  184: // Do not default missing API data to doubles; the UI will show "Chưa rõ".
+  390: if (confirm('Bạn có chắc chắn muốn hủy đăng ký và rút lui khỏi giải đấu?')) {
+  415: setBankError('Vui lòng điền đầy đủ 3 trường thông tin ngân hàng.');
+  489: teamName: trimAndNormalizeSpaces(data.teamName) || user?.fullName || 'Vận động viên',
+  570: setEloCheck({ ok: false, message: `ELO của bạn (${elo}) thấp hơn yêu cầu tối thiểu (${minElo}) cho nội dung này.` });
+  572: setEloCheck({ ok: false, message: `ELO của bạn (${elo}) cao hơn yêu cầu tối đa (${maxElo}) cho nội dung này.` });
+  574: setEloCheck({ ok: true, message: `ELO của bạn (${elo}) phù hợp với nội dung này.` });
+  593: <p className="text-slate-500 font-medium text-sm">Đang tải thông tin giải đấu...</p>
+  609: {isInviteOnlyMode ? 'Giải đấu yêu cầu mã mời' : 'Giải đấu riêng tư'}
+  613: ? 'Giải đấu này ở chế độ chỉ nhận mã mời. Vui lòng nhập mã mời (Invite Code) do Ban tổ chức cung cấp để mở khóa trang đăng ký.'
+  614: : 'Giải đấu này đang ở chế độ riêng tư. Vui lòng nhập mã mời (Invite Code) do Ban tổ chức cung cấp để mở khóa trang đăng ký.'}
+  620: label="Mã mời đăng ký"
+  621: placeholder="Nhập mã mời 8 ký tự..."
+  634: {isValidatingInvite ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Xác thực mã mời'}
+  643: Quay lại danh sách giải
+  657: // Cho phép đăng ký sớm nếu đang là DRAFT nhưng có inviteCode trùng khớp
+  674: <h2 className="text-xl font-bold text-slate-900">Hồ sơ chưa hoàn thiện</h2>
+  676: Bạn cần cập nhật đầy đủ Họ tên, Số điện thoại và Giới tính trong hồ sơ cá nhân để được đăng ký tham gia giải đấu.
+  684: Cập nhật hồ sơ ngay
+  727: // Team sport (bóng đá): config có teamSize → đăng ký đội nhiều người.
+  751: <ArrowLeft className="w-4 h-4" /> Quay lại giải đấu
+  772: {tournament.category?.name || 'Thể thao'}
+  791: Định dạng: <strong className="text-white">{
+  807: Chọn nội dung thi đấu
+  847: {participantCount}{div.maxParticipants ? ` / ${div.maxParticipants}` : ''} hồ sơ
+  908: Nội dung thi đấu này ({selectedDivision?.name || 'Đơn'}) chỉ dành cho giới tính{' '}
+  909: <strong>{divisionGender === 'MALE' ? 'Nam' : 'Nữ'}</strong>. Giới tính trong hồ sơ của bạn hiện tại là{' '}
+  910: <strong>{userGender === 'MALE' ? 'Nam' : userGender === 'FEMALE' ? 'Nữ' : 'Khác'}</strong>.
+  917: Thay đổi giới tính trong hồ sơ
+  958: ? 'Yêu cầu tham gia của bạn đã được xét duyệt thành công.'
+  960: ? 'Yêu cầu tham gia của bạn đang chờ BTC duyệt.'
+  961: : <>Bạn đã đăng ký thi đấu đơn ở nội dung: <strong className="text-slate-700">{selectedDivision?.name}</strong>.</>}
+  967: Thông tin đăng ký: {participant.teamName}
+  970: <span className="text-slate-500 font-medium">Họ và tên:</span>
+  1071: {translate('registrationConsent')} ELO trên bảng xếp hạng.
+  1079: <p className="text-xs text-blue-600 font-medium mb-1">Tên thi đấu</p>
+  1082: <input type="hidden" {...register('teamName')} value={user?.fullName || 'Vận động viên'} />
+51	D:\Duancanhan\Project_QuanLyGiaiDau\frontend-web_qlgiaidau\src\app\admin\payouts\page.tsx
+  14: PENDING: 'Chờ duyệt',
+  15: REQUESTED: 'Mới gửi',
+  16: UNDER_REVIEW: 'Đang đối soát',
+  17: APPROVED: 'Đã duyệt hồ sơ',
+  18: PROCESSING: 'Đang chuyển tiền',
+  19: PAID: 'Đã chuyển tiền',
+  20: REJECTED: 'Đã từ chối',
+  21: FAILED: 'Chuyển tiền lỗi',
+  22: CANCELLED: 'Đã hủy',
+  49: setError('Không thể tải danh sách yêu cầu rút tiền');
+  75: setModalError('Vui lòng cung cấp link hình ảnh hóa đơn/bằng chứng chuyển khoản');
+  80: setModalError('Vui lòng nhập lý do từ chối yêu cầu rút tiền');
+  92: toast.success('Đã xác nhận chuyển tiền thành công');
+  98: toast.success(reviewAction === 'APPROVED' ? 'Đã duyệt hồ sơ giải ngân' : 'Đã từ chối yêu cầu');
+  104: setModalError(getErrorMessage(err, 'Lỗi cập nhật. Vui lòng thử lại.'));
+  173: <h2 className="text-xl font-bold text-slate-900">Yêu Cầu Rút Tiền</h2>
+  174: <p className="text-xs text-slate-500">Xem và giải ngân lệ phí các giải đấu cho Ban tổ chức sau khi hoàn thành đối soát</p>
+  190: placeholder="Từ ngày (dd/mm/yyyy)"
+  200: placeholder="Đến ngày (dd/mm/yyyy)"
+  207: <span className="text-xs text-gray-400 font-semibold">Trạng thái:</span>
+  213: <option value="ALL">Tất cả</option>
+  225: <p className="font-bold text-slate-800">Không có yêu cầu rút tiền nào</p>
+  226: <p className="text-xs text-slate-500">Mọi yêu cầu đối soát và rút tiền đã hoàn thành xong.</p>
+  239: {request.tournament?.name || 'Giải Đấu'}
+  242: Người yêu cầu: <span className="font-semibold text-slate-700">{request.organizer?.fullName || request.organizer?.email || request.organizerId}</span>
+  264: <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Đối soát tài chính</p>
+  266: <span>Tổng thu được:</span>
+  270: <span>Phí sàn (5%):</span>
+  274: <span className="font-bold text-slate-800">Thực nhận:</span>
+  283: Tài khoản thụ hưởng
+  286: <p><span className="text-slate-500">Ngân hàng:</span> <span className="font-semibold">{request.bankName}</span></p>
+  287: <p><span className="text-slate-500">Số tài khoản:</span> <span className="font-semibold tracking-wider text-slate-800 bg-white px-2 py-0.5 rounded border border-slate-200">{request.bankAccountNumber}</span></p>
+  288: <p><span className="text-slate-500">Chủ tài khoản:</span> <span className="font-semibold uppercase">{request.bankAccountName}</span></p>
+  302: Duyệt hồ sơ
+  310: Từ Chối
+  316: Hồ sơ đã duyệt. Chỉ xác nhận sau khi tiền đã được chuyển thực tế.
+  324: Xác nhận đã chuyển tiền
+  331: <span>Xử lý lúc: {request.processedAt ? new Date(request.processedAt).toLocaleString('vi-VN') : new Date(request.updatedAt).toLocaleString('vi-VN')}</span>
+  340: Xem ảnh bill chuyển khoản
+  361: ? 'Duyệt hồ sơ giải ngân'
+  363: ? 'Xác nhận đã chuyển tiền'
+  364: : 'Từ chối giải ngân'}
+  378: <p><span className="text-slate-500">Người nhận:</span> <span className="font-semibold text-slate-800">{reviewingPayout.bankAccountName}</span></p>
+  379: <p><span className="text-slate-500">Ngân hàng:</span> <span className="font-semibold text-slate-800">{reviewingPayout.bankName} - {reviewingPayout.bankAccountNumber}</span></p>
+  381: <span className="text-slate-500">Số tiền chuyển:</span> <span className="font-bold text-blue-600">{formatCurrency(reviewingPayout.amountRequested)}</span>
+  387: <label className="text-xs font-bold text-slate-700">Link ảnh bill chuyển khoản (Bắt buộc)</label>
+  396: <p className="text-[10px] text-slate-400">Nhập link hình ảnh biên lai để ban tổ chức đối chiếu kiểm tra.</p>
+  402: {reviewAction === 'REJECTED' ? 'Lý do từ chối (Bắt buộc)' : 'Ghi chú xử lý (Tùy chọn)'}
+  408: placeholder={reviewAction === 'REJECTED' ? 'Nhập lý do cụ thể từ chối yêu cầu...' : 'Nhập ghi chú đối soát nếu cần.'}
+  425: Hủy bỏ
+  436: {reviewAction === 'APPROVED' ? 'Duyệt hồ sơ' : reviewAction === 'PAID' ? 'Xác nhận đã chuyển' : 'Từ chối'}
+45	D:\Duancanhan\Project_QuanLyGiaiDau\frontend-web_qlgiaidau\src\app\admin\communities\page.tsx
+  59: setError(getErrorMessage(err, 'Không thể tải danh sách cộng đồng'));
+  73: toast.success('Đã duyệt cộng đồng thành công');
+  76: toast.error(getErrorMessage(err, 'Duyệt cộng đồng thất bại'));
+  84: setModalError('Vui lòng nhập lý do');
+  94: toast.success('Đã từ chối cộng đồng');
+  99: setModalError(getErrorMessage(err, 'Từ chối thất bại'));
+  106: if (!window.confirm('Vô hiệu hoá cộng đồng này? Thành viên sẽ không thể truy cập.')) return;
+  109: await communitiesApi.reviewCommunity(id, { status: 'REJECTED', rejectedReason: 'Vô hiệu hoá bởi Admin' });
+  110: toast.success('Đã vô hiệu hoá cộng đồng');
+  113: toast.error(getErrorMessage(err, 'Thao tác thất bại'));
+  120: if (!window.confirm('Mở lại cộng đồng này?')) return;
+  124: toast.success('Đã mở lại cộng đồng');
+  127: toast.error(getErrorMessage(err, 'Thao tác thất bại'));
+  182: <h2 className="text-xl font-bold text-gray-900">Quản lý cộng đồng</h2>
+  183: <p className="text-xs text-gray-500">Xem, duyệt và quản lý tất cả câu lạc bộ trên hệ thống</p>
+  196: <StatCard label="Tổng số" value={stats.total} color="text-gray-800" />
+  197: <StatCard label="Hoạt động" value={stats.active} color="text-blue-600" />
+  198: <StatCard label="Chờ duyệt" value={stats.pending} color="text-amber-600" />
+  199: <StatCard label="Đã khoá" value={stats.rejected} color="text-rose-600" />
+  208: placeholder="Tìm kiếm cộng đồng..."
+  216: { value: 'ALL', label: 'Tất cả', count: stats.total, color: 'text-gray-700' },
+  217: { value: 'ACTIVE', label: 'Hoạt động', count: stats.active, color: 'text-blue-600' },
+  218: { value: 'PENDING', label: 'Chờ duyệt', count: stats.pending, color: 'text-amber-600' },
+  219: { value: 'REJECTED', label: 'Đã khoá', count: stats.rejected, color: 'text-rose-600' },
+  247: <p className="mt-4 text-base font-semibold text-gray-700">Không có cộng đồng nào</p>
+  248: <p className="mt-1 text-xs text-gray-400">Thử thay đổi bộ lọc hoặc từ khoá tìm kiếm.</p>
+  260: const statusLabel = isPending ? 'Chờ duyệt' : isActive ? 'Hoạt động' : 'Đã khoá';
+  315: {/* Duyệt (nếu PENDING) */}
+  325: Duyệt
+  329: {/* Từ chối / Vô hiệu */}
+  338: Từ chối
+  347: Vô hiệu
+  355: Mở lại
+  371: <h3 className="text-sm font-bold text-gray-800">Từ chối cộng đồng</h3>
+  379: <label className="text-xs font-bold text-gray-600">Lý do từ chối</label>
+  384: placeholder="Nhập lý do cụ thể..."
+  397: Hủy
+  406: Xác nhận từ chối
+  434: <p className="text-xs text-gray-500">{selectedCommunity.locationAddress || 'Chưa cập nhật'}</p>
+  438: {selectedCommunity.status === 'ACTIVE' && <span className="px-2.5 py-0.5 bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-full text-xs font-bold">Hoạt động</span>}
+  439: {selectedCommunity.status === 'PENDING' && <span className="px-2.5 py-0.5 bg-amber-50 text-amber-600 border border-amber-200 rounded-full text-xs font-bold">Chờ duyệt</span>}
+  440: {selectedCommunity.status === 'REJECTED' && <span className="px-2.5 py-0.5 bg-gray-100 text-gray-500 border border-gray-200 rounded-full text-xs font-bold">Đã khoá</span>}
+  448: <p className="text-xs font-bold text-rose-600 mb-1">Lý do khoá</p>
+  453: <Button variant="outline" size="sm" onClick={() => setSelectedCommunity(null)} className="text-xs flex-1">Đóng</Button>
+  456: <Button size="sm" onClick={() => { setSelectedCommunity(null); handleReactivate(selectedCommunity.id); }} className="text-xs bg-emerald-600 hover:bg-emerald-700 text-white">Mở lại</Button>
+44	D:\Duancanhan\Project_QuanLyGiaiDau\frontend-web_qlgiaidau\src\app\(player)\notifications\page.tsx
+  87: { key: 'today', title: 'Hôm nay', items: [] },
+  88: { key: 'week', title: '7 ngày gần đây', items: [] },
+  89: { key: 'older', title: 'Cũ hơn', items: [] },
+  111: toast.error(getErrorMessage(error, 'Không thể cập nhật thông báo.'));
+  142: ? 'Đã chấp nhận lời mời tham gia cộng đồng.'
+  143: : 'Đã từ chối lời mời tham gia cộng đồng.',
+  149: toast.success('Lời mời đã được hủy hoặc xử lý trước đó.');
+  157: ? 'Không thể chấp nhận lời mời lúc này.'
+  158: : 'Không thể từ chối lời mời lúc này.',
+  178: toast.success(action === 'ACCEPT' ? 'Đã nhận vai trò trọng tài.' : 'Đã từ chối lời mời trọng tài.');
+  183: toast.success('Lời mời trọng tài đã được hủy hoặc xử lý trước đó.');
+  191: ? 'Không thể chấp nhận lời mời trọng tài lúc này.'
+  192: : 'Không thể từ chối lời mời trọng tài lúc này.',
+  217: ? 'Đã chấp nhận lời mời ghép đôi.'
+  218: : 'Đã từ chối lời mời ghép đôi.',
+  224: toast.success('Lời mời ghép đôi đã được hủy hoặc xử lý trước đó.');
+  232: ? 'Không thể chấp nhận lời mời lúc này.'
+  233: : 'Không thể từ chối lời mời lúc này.',
+  251: toast.success(action === 'ACCEPTED' ? 'Đã tham gia đội bóng.' : 'Đã từ chối lời mời vào đội bóng.');
+  256: toast.success('Lời mời đội bóng đã được hủy hoặc xử lý trước đó.');
+  260: toast.error(getErrorMessage(error, action === 'ACCEPTED' ? 'Không thể nhận lời mời đội bóng.' : 'Không thể từ chối lời mời đội bóng.'));
+  269: toast.success('Đã đánh dấu tất cả là đã đọc.');
+  271: toast.error(getErrorMessage(error, 'Không thể cập nhật thông báo.'));
+  283: Trung tâm thông báo
+  287: Thông báo của bạn
+  290: Theo dõi cập nhật mới nhất từ giải đấu, thanh toán và hoạt động hệ thống.
+  307: Tất cả
+  319: Chưa đọc
+  330: Đánh dấu tất cả
+  338: Tổng số
+  344: Chưa đọc
+  350: Bộ lọc hiện tại
+  353: {filter === 'all' ? 'Tất cả thông báo' : 'Chỉ thông báo chưa đọc'}
+  369: Thử lại
+  451: {notification.isRead ? 'Đã đọc' : 'Chưa đọc'}
+  516: {notificationAction.kind === 'referee-invite' ? 'Nhận vai trò' : 'Đồng ý'}
+  559: Từ chối
+  570: getErrorMessage(error, 'Không thể cập nhật thông báo.'),
+  576: Đánh dấu đã đọc
+  590: Mở
+  612: ? 'Không còn thông báo chưa đọc'
+  613: : 'Hộp thông báo đang trống'}
+  617: ? 'Mọi cập nhật gần đây của bạn đã được xử lý. Khi có thông báo mới, chúng sẽ xuất hiện ngay tại đây.'
+  618: : 'Khi hệ thống gửi cập nhật về giải đấu, thanh toán hoặc tài khoản, bạn sẽ thấy chúng trong danh sách này.'}
+43	D:\Duancanhan\Project_QuanLyGiaiDau\frontend-web_qlgiaidau\src\features\tournaments\sport-rules\ui-guidance.ts
+  31: label: 'Vòng đầu nhanh',
+  32: description: 'Đánh 1 set 21, phù hợp vòng loại hoặc giải đông VĐV.',
+  41: label: 'Chuẩn phong trào',
+  42: description: 'Thắng 2 set 21, chạm 30 thắng luôn.',
+  51: label: 'Tiết kiệm thời gian',
+  52: description: 'Thắng 2 set 15, dùng khi cần rút ngắn thời lượng.',
+  63: label: 'BO3 chuẩn nhanh',
+  64: description: 'Thắng 2 set 11 điểm, hợp vòng bảng hoặc vòng đầu.',
+  73: label: 'BO5 loại trực tiếp',
+  74: description: 'Thắng 3 set 11 điểm, hợp bán kết hoặc chung kết.',
+  83: label: '1 set chốt nhanh',
+  84: description: 'Một set 11 điểm để xoay vòng đấu thật nhanh.',
+  96: description: 'Một game 11 rally point, gọn cho vòng đầu.',
+  105: label: 'Chuẩn rally',
+  106: description: 'Thắng 2 game 11, dễ live score và dễ điều phối.',
+  116: description: 'Thắng 2 game 15 cho các trận sâu, ít biến động hơn.',
+  127: label: 'Chuẩn side-out',
+  128: description: '1 game 11, chỉ bên giao bóng mới ghi điểm.',
+  138: description: '1 game 15, hợp trận kéo dài hơn nhưng vẫn giữ side-out.',
+  148: description: 'Thắng 2 game 11, hợp bán kết/chung kết có thời lượng tốt hơn.',
+  160: description: '1 set 8 game, hợp vòng bảng hoặc vòng tính thời gian chặt.',
+  169: label: 'BO3 chuẩn',
+  170: description: 'Thắng 2 set, mỗi set 6 game, 6-6 tie-break 7.',
+  180: description: '1 set 4 game, hợp giải phong trào hoặc nhiều trận liên tiếp.',
+  191: label: 'Chuẩn',
+  192: description: '2 hiệp, mỗi hiệp 20 phút',
+  204: targetSummary: 'Mặc định chạm 21, hòa 20-20 thì hơn 2, tối đa thường 30.',
+  206: operatorHint: 'Nhập từng set đã chốt. Nếu chưa đánh tới set đó, để cả hai bên = 0.',
+  209: targetSummary: 'Mặc định chạm 11, hòa 10-10 thì hơn 2.',
+  211: operatorHint: 'Bóng bàn thường dùng BO3 hoặc BO5, nên số set nhập phải khớp cấu hình trận.',
+  214: targetSummary: 'Rally point: bên thắng pha bóng nào cũng có điểm.',
+  216: operatorHint: 'Dùng mode này nếu BTC cần nhập tỷ số nhanh và ít rủi ro hơn side-out.',
+  219: targetSummary: 'Side-out: chỉ bên giao bóng mới ghi điểm, thường chạm 11 hoặc 15 và vẫn cần hơn 2 nếu kéo dài.',
+  221: operatorHint: 'Panel này chỉ chốt score game. Trạng thái quyền giao hiện tại được giữ từ bảng điểm trực tiếp.',
+  224: targetSummary: 'Tennis nhập theo game trong từng set, không nhập điểm 15/30/40 ở đây.',
+  226: operatorHint: 'Nếu set vào tie-break, dùng kết quả cuối set như 7-6 thay vì nhập điểm tie-break riêng.',
+  229: targetSummary: 'Nhập tỷ số bàn thắng.',
+  231: operatorHint: 'Cập nhật tỷ số sau mỗi bàn thắng hoặc khi hết trận.',
+  252: label: 'Chuẩn',
+  258: label: 'Sát nút',
+  275: label: 'Chuẩn',
+  281: label: 'Sát nút',
+  287: label: 'Kéo dài',
+42	D:\Duancanhan\Project_QuanLyGiaiDau\frontend-web_qlgiaidau\src\app\organizer\tournaments\create\SmartAiTournamentModal.tsx
+  114: toast.success(`Đã đọc ${res.rows.length} dòng từ file Excel!`);
+  116: toast.error('Lỗi khi đọc file Excel: ' + (err.message || 'File không hợp lệ'));
+  122: toast.error('Vui lòng nhập Link Form, dán văn bản Điều lệ hoặc tải file Excel!');
+  138: toast.success('AI đã trích xuất dữ liệu thành công!');
+  140: toast.error('Không nhận được dữ liệu phân tích từ AI.');
+  143: toast.error(err.response?.data?.message || err.message || 'Lỗi khi phân tích AI');
+  156: const primaryFormat = parsedData.formats?.[0] || { formatKey: 'DOUBLES_MALE', name: 'Đôi Nam', bracketType: 'SINGLE_ELIMINATION' as const, maxParticipants: 16 };
+  165: name: parsedData.name.trim() || 'Giải đấu thể thao',
+  200: name: fmt.name || `Hạng đấu ${idx + 1}`,
+  242: toast.success('Đã tạo giải đấu và nạp dữ liệu thành công!');
+  246: toast.error('Lỗi khi tạo giải đấu: ' + (err.message || 'Thử lại sau'));
+  262: <h3 className="font-bold text-base md:text-lg leading-tight text-slate-900">Tạo giải đấu thông minh với AI &amp; Excel</h3>
+  264: Tự động trích xuất từ Google Form, Điều lệ và nạp danh sách VĐV
+  284: Đường dẫn Google Form hoặc Link Điều lệ giải (Tùy chọn)
+  288: placeholder="https://docs.google.com/forms/d/e/... hoặc link thông báo giải"
+  294: AI sẽ tự động đọc tiêu đề, thể thức, các hạng mục và ngày thi đấu từ biểu mẫu.
+  302: Hoặc Dán nội dung thông báo / Điều lệ giải đấu
+  306: placeholder="Dán toàn bộ bài đăng Facebook, thông báo Zalo hoặc điều lệ giải vào đây..."
+  319: <h4 className="text-sm font-bold text-slate-800">Tải lên danh sách VĐV (.xlsx, .csv)</h4>
+  320: <p className="text-xs text-slate-500">Tải file Google Sheets xuất ra hoặc file Excel danh sách</p>
+  329: Tải file mẫu
+  347: {fileName ? fileName : 'Chọn file Excel từ máy'}
+  352: Đã nạp {excelResult.rows.length} VĐV
+  361: <label className="text-xs font-semibold text-slate-600">Gợi ý môn thi đấu:</label>
+  376: <option value="badminton">Cầu lông</option>
+  378: <option value="table_tennis">Bóng bàn</option>
+  379: <option value="football">Bóng đá</option>
+  404: {parsedData.startDate ? new Date(parsedData.startDate).toLocaleDateString('vi-VN') : 'Chưa rõ ngày'}
+  410: <span className="truncate">{parsedData.venueName || parsedData.province || 'Chưa cập nhật sân'}</span>
+  419: Các Hạng đấu / Divisions được AI nhận diện ({parsedData.formats.length})
+  427: {fmt.maxParticipants || 16} đội
+  431: <span>{fmt.bracketType || 'Loại trực tiếp'}</span>
+  447: Danh sách {excelResult.rows.length} VĐV từ file Excel sẽ được nạp tự động
+  456: <th className="pb-1 font-semibold">VĐV / Đội</th>
+  457: <th className="pb-1 font-semibold">SĐT</th>
+  476: và {excelResult.rows.length - 5} vận động viên khác...
+  495: Hủy bỏ
+  506: AI Đang Phân Tích...
+  511: Phân Tích Với AI
+  524: Quay lại sửa
+  535: Đang Tạo Giải &amp; Nạp VĐV...
+  540: Tạo Giải &amp; Vào Quản Lý Ngay
+41	D:\Duancanhan\Project_QuanLyGiaiDau\frontend-web_qlgiaidau\src\app\(public)\tournaments\[id]\participants\[participantId]\accept-partner\page.tsx
+  30: toast.error('Thông tin lời mời tham gia đội không hợp lệ hoặc thiếu tham số.');
+  50: toast.error('Đội thi đấu không tồn tại hoặc đã bị hủy.');
+  55: toast.error('Không thể tải thông tin lời mời.');
+  67: toast.error('Vui lòng đăng nhập để chấp nhận lời mời.');
+  79: toast.error('Giải đấu này chỉ dành cho Nam. Giới tính của bạn không phù hợp.');
+  83: toast.error('Giải đấu này chỉ dành cho Nữ. Giới tính của bạn không phù hợp.');
+  92: toast.success('Gia nhập đội thi đấu thành công!');
+  117: toast.error('Vui lòng đăng nhập để thao tác.');
+  126: toast.success('Đã từ chối lời mời.');
+  139: <p className="text-slate-500 font-medium text-sm">Đang tải thông tin đội bóng...</p>
+  154: let title = 'Lời mời không hợp lệ';
+  155: let message = 'Lời mời này đã hết hạn hoặc đội không còn ở trạng thái chờ ghép đôi.';
+  157: title = 'Đăng ký đã khóa';
+  158: message = 'Giải đấu đã tạm ngưng nhận đăng ký mới từ Ban tổ chức.';
+  160: title = 'Đăng ký hết hạn';
+  161: message = 'Hạn đăng ký giải đấu này đã kết thúc.';
+  163: title = 'Đăng ký đã đóng';
+  164: message = 'Giải đấu hiện không nhận đăng ký mới.';
+  183: Quay lại trang giải đấu
+  199: <ArrowLeft className="w-4 h-4" /> Quay lại giải đấu
+  212: {tournament.category?.name || 'Cầu Lông'}
+  219: <span>Khai mạc: {tournament.startDate ? formatDate(tournament.startDate) : 'Chưa xếp lịch'}</span>
+  223: <span className="truncate">{tournament.locationAddress || 'Chưa cập nhật'}</span>
+  234: <h2 className="text-lg font-bold text-slate-900">Lời mời ghép đôi trực tiếp</h2>
+  236: Bạn được mời gia nhập đội <strong className="text-slate-800">{participant.teamName}</strong> tham gia giải đấu này.
+  248: <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Trưởng nhóm (Leader)</p>
+  249: <p className="text-sm font-bold text-slate-800">{leader.fullName || 'Người dùng'}</p>
+  263: <p className="font-bold text-amber-900">Yêu cầu giới tính</p>
+  265: Giải đấu yêu cầu ràng buộc giới tính: {
+  266: tournament.genderRestriction === 'MALE' ? 'Chỉ Nam' :
+  267: tournament.genderRestriction === 'FEMALE' ? 'Chỉ Nữ' :
+  268: 'Đôi Nam Nữ (1 Nam + 1 Nữ)'
+  269: }. Hệ thống sẽ đối chiếu giới tính hồ sơ của bạn.
+  279: <p className="font-bold text-blue-950">Lệ phí giải đấu</p>
+  281: Lệ phí tham gia: <strong className="text-slate-900">{formatCurrency(Number(tournament.entryFee))} / Đội</strong>.
+  282: Nếu chưa thanh toán, bạn hoặc trưởng nhóm sẽ cần đóng phí để xác nhận hoàn tất vị trí.
+  293: Bạn cần đăng nhập tài khoản để phản hồi lời mời.
+  303: <Loader2 className="w-4 h-4 animate-spin" /> Đang xử lý...
+  308: {!isAuthenticated ? 'Đăng nhập & Chấp nhận lời mời' : 'Đồng ý gia nhập đội'}
+  320: <Loader2 className="w-4 h-4 animate-spin" /> Đang xử lý...
+  325: Từ chối lời mời
+40	D:\Duancanhan\Project_QuanLyGiaiDau\frontend-web_qlgiaidau\src\app\(public)\tournaments\[id]\TournamentDetailClient.tsx
+  135: // Gọi Web Share API nếu có (trên mobile), nếu không (trên desktop) nó trả về false để mở Modal
+  170: if (!response) throw lastError ?? new Error('Không thể tải dữ liệu giải đấu');
+  404: { id: 'teams', label: 'Đội tham gia' },
+  405: { id: 'bracket', label: 'Bảng đấu' },
+  406: { id: 'matches', label: 'Lịch thi đấu' },
+  437: title="Xem chi tiết giải đấu"
+  441: alt="Logo giải đấu"
+  457: if (fmt === 'SINGLE_ELIMINATION') return 'LOẠI TRỰC TIẾP';
+  458: if (fmt === 'DOUBLE_ELIMINATION') return 'NHÁNH THẮNG/THUA';
+  459: if (fmt === 'ROUND_ROBIN') return 'VÒNG TRÒN';
+  460: if (fmt === 'GROUP_STAGE_KNOCKOUT') return 'VÒNG BẢNG + LOẠI TRỰC TIẾP';
+  469: {activeTournament.isRanked ? '⭐ GIẢI XẾP HẠNG' : '🎾 GIẢI PHONG TRÀO'}
+  486: {formatVenueSummary(activeTournament.venue?.name, activeTournament.venue?.locationAddress || activeTournament.locationAddress, activeTournament.city) || 'Chưa cập nhật địa điểm'}
+  536: toast.error('Giải đấu chưa có đường dẫn tham gia.');
+  556: Bạn là chủ sở hữu
+  592: <h3 className="font-bold text-slate-900 text-sm">Nội dung thi đấu</h3>
+  593: <p className="text-[11px] text-slate-400 font-bold">Chọn phân hạng hoặc nội dung thi đấu để xem chi tiết</p>
+  644: ? `${Number(selectedDivision.entryFee).toLocaleString('vi-VN')} VNĐ`
+  657: Yêu cầu {isDoublesDiv ? 'ELO Đôi' : 'ELO Đơn'}
+  662: {activeDiv.maxElo !== null ? activeDiv.maxElo : 'Không giới hạn'}
+  674: <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Ban tổ chức</span>
+  689: <p className="text-slate-900 font-bold text-sm">{activeTournament.organizer?.fullName || 'Ban Tổ Chức'}</p>
+  691: <span className="inline-flex items-center text-[9px] font-bold bg-blue-100 text-blue-700 px-1.5 py-0.2 rounded-md" title="Ban tổ chức uy tín">
+  692: 👑 Uy Tín
+  695: <span className="inline-flex items-center text-[9px] font-bold bg-slate-100 text-slate-650 px-1.5 py-0.2 rounded-md" title="BTC Mới">
+  696: 🔰 Mới Tạo
+  724: ELO {isDivDoubles ? 'Đôi' : 'Đơn'}: {div.minElo !== null ? div.minElo : '0'} - {div.maxElo !== null ? div.maxElo : '∞'}
+  746: <span className="text-slate-500 uppercase tracking-wider">Số lượng hồ sơ</span>
+  757: <p className="text-[10px] text-slate-400 mt-1">Đã điền đầy {percentageFilled}% tổng số slots trống</p>
+  772: {/* Smart Sequential Countdown Timer (Chỉ hiện 1 đếm ngược duy nhất) */}
+  780: // 1. Chưa tới ngày mở đăng ký -> CHỈ ĐẾM NGƯỢC THỜI GIAN MỞ ĐĂNG KÝ
+  791: // 2. Đã mở đăng ký, chưa đóng -> CHỈ ĐẾM NGƯỢC HẠN ĐÓNG ĐĂNG KÝ
+  802: // 3. Đã đóng đăng ký, chưa khởi tranh -> Đếm ngược ngày khởi tranh
+  813: // 4. Giải đang diễn ra -> Đếm ngược ngày kết thúc
+  827: // 5. Đã kết thúc
+  872: Tham gia giải nhanh
+  877: Chưa có đường dẫn tham gia
+  900: Bạn là quản trị viên giải đấu
+  910: ? 'Quản lý giải nhanh'
+  911: : 'Quản lý sơ đồ & lịch thi đấu'
+39	D:\Duancanhan\Project_QuanLyGiaiDau\frontend-web_qlgiaidau\src\app\organizer\tournaments\[id]\ops\page.tsx
+  331: customConfigSummary.push('không yêu cầu cách 2');
+  334: customConfigSummary.push(`ngưỡng chốt ${bracketMatch.matchConfig.tiebreakAt}`);
+  341: .map((item) => `Trận #${item.matchOrder} chưa xong`);
+  372: <p className="text-sm font-medium text-slate-500">Đang tải panel vận hành giải...</p>
+  435: Khai mạc: {tournament.startDate ? formatDate(tournament.startDate) : 'Chưa thiết lập'}
+  439: Theo dõi lịch đấu, tỉ số, trọng tài và các tình huống cần xử lý trong ngày thi đấu.
+  450: Về cấu hình
+  458: Mở sơ đồ công khai
+  466: Xem trang giải
+  475: <p className="text-xs font-bold uppercase tracking-wider text-slate-450">Nội dung thi đấu</p>
+  476: <p className="text-xs text-slate-400 mt-1 font-semibold">Chọn division để xem chi tiết hàng chờ vận hành, danh sách đấu thủ, lịch thi đấu và giải quyết xung đột theo ngữ cảnh.</p>
+  504: <p className="text-sm font-bold text-slate-700">Giải chưa có division để vận hành</p>
+  506: Hãy quay về cấu hình để tạo hoặc kích hoạt các nội dung thi đấu trước.
+  515: { id: 'OVERVIEW', label: 'Tổng quan', icon: BarChart3 },
+  516: { id: 'BRACKET', label: 'Sơ đồ', icon: Network },
+  517: { id: 'OPERATIONS', label: 'Điều hành', icon: Activity },
+  518: { id: 'CAMERA', label: 'Phát trực tiếp', icon: Video },
+  545: <h2 className="text-xl font-bold text-slate-900">Sơ đồ thi đấu điều phối trực tiếp</h2>
+  547: Sơ đồ này bám theo division đang chọn ở panel vận hành. Mọi thay đổi cấu hình, khởi tạo bracket, luật theo vòng và lịch trận đều thao tác ngay tại đây.
+  630: <h3 className="text-lg font-bold text-slate-900">Tình trạng nội dung thi đấu hiện tại</h3>
+  634: <p className="text-[10px] font-bold uppercase tracking-wider text-slate-450">Chặng đấu</p>
+  638: <p className="text-[10px] font-bold uppercase tracking-wider text-slate-455">Số vòng đấu</p>
+  642: <p className="text-[10px] font-bold uppercase tracking-wider text-blue-650">Chưa xếp lịch</p>
+  646: <p className="text-[10px] font-bold uppercase tracking-wider text-amber-650">Cấu hình riêng</p>
+  650: <p className="text-[10px] font-bold uppercase tracking-wider text-rose-650">Xung đột lịch</p>
+  656: <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-450 mb-3">Chi tiết xung đột ngày thi đấu</h4>
+  659: <span>Trùng sân thi đấu:</span>
+  665: <span>Trùng trọng tài điều phối:</span>
+  671: <span>Trùng vận động viên/đội:</span>
+  677: <span>Sai thứ tự nhánh đấu:</span>
+  688: <h3 className="text-lg font-bold text-slate-900">Nhịp vận hành theo vòng</h3>
+  696: {round.total} trận đấu • {round.missingAssignments} trận thiếu phân sân/trọng tài
+  700: <span className="rounded-lg bg-slate-100 px-2 py-1 text-slate-700">Lịch {round.scheduled}</span>
+  701: <span className="rounded-lg bg-blue-50 border border-blue-200 px-2 py-1 text-blue-700">Đang đấu {round.ongoing}</span>
+  709: <p className="text-xs font-bold text-slate-500">Chưa có dữ liệu vòng thi đấu được khởi tạo.</p>
+  740: <h2 className="text-xl font-bold text-slate-900">Gán camera theo trận đấu</h2>
+  742: BTC chọn camera theo từng trận. Trọng tài được phân công mới có thể bắt đầu hoặc dừng phát trực tiếp.
+  801: <label className="text-xs text-slate-500">Số {sportPresentation.setOptions[0]?.label.includes('game') ? 'game' : 'set'} cần thắng</label>
+  862: {isPickleballSideOut ? ' Nếu cần chấm pha đang diễn ra, nên dùng bảng điểm trực tiếp thay vì cấu hình tỉ số cuối game ở đây.' : ''}
+38	D:\Duancanhan\Project_QuanLyGiaiDau\frontend-web_qlgiaidau\src\app\organizer\tournaments\[id]\manage\components\LivestreamTab.tsx
+  18: IDLE: 'Sẵn sàng',
+  19: WAITING: 'Chờ tín hiệu',
+  20: LIVE: 'Đang live',
+  22: ERROR: 'Lỗi',
+  90: toast.success(`Đã sao chép ${label}`);
+  95: toast.error('Nhập tên camera trước');
+  110: toast.success('Đã tạo camera livestream');
+  125: toast.success('Đã xóa camera');
+  133: toast.error('Chọn trận và camera trước');
+  141: toast.success('Đã gán camera cho trận');
+  156: toast.success('Đã tạo link start stream cho trận');
+  169: toast.success('Đã tắt phát trực tiếp. Bạn có thể bật lại bất cứ lúc nào.');
+  186: <h2 className="text-lg font-bold text-slate-900">Trực tiếp</h2>
+  188: BTC tạo camera và gán camera vào trận. Trọng tài chỉ được start/dừng stream nếu đã được phân công đúng trận đó và trận đã có camera.
+  196: <h3 className="text-sm font-bold uppercase tracking-[0.12em] text-slate-700">Thêm camera PUSH</h3>
+  199: <label className="text-xs font-bold text-slate-500">Tên camera</label>
+  204: placeholder="Ví dụ: Camera sân 1"
+  208: <label className="text-xs font-bold text-slate-500">Giao thức</label>
+  214: <option value="RTMP">RTMP - OBS/Larix dễ dùng</option>
+  215: <option value="SRT">SRT - ổn định hơn nếu app hỗ trợ</option>
+  220: Tạo camera
+  226: <p className="text-xs font-bold uppercase tracking-[0.12em] text-blue-700">Link publish vừa tạo</p>
+  230: Sao chép
+  238: <h3 className="text-sm font-bold uppercase tracking-[0.12em] text-slate-700">Camera của giải</h3>
+  244: Chưa có camera. Tạo camera trước rồi gán vào trận.
+  267: <Button variant="destructive" size="sm" onClick={() => void handleDeleteCamera(camera.id)} title="Xóa camera">
+  279: title="Sao chép Server URL"
+  291: title="Sao chép Stream Key"
+  314: <h3 className="text-sm font-bold uppercase tracking-[0.12em] text-slate-700">Gán camera vào trận</h3>
+  321: <option value="">Chọn trận</option>
+  324: {getCameraMatchLabel(match)} • Trận {match.matchOrder} • {match.participant1?.teamName || 'Đội 1'} vs {match.participant2?.teamName || 'Đội 2'}
+  334: <option value="">Chọn camera</option>
+  347: Gán camera
+  366: {getCameraMatchLabel(match)} • Trận {match.matchOrder}
+  369: {match.participant1?.teamName || 'Đội 1'} vs {match.participant2?.teamName || 'Đội 2'} • Trọng tài: {match.refereeId ? 'đã phân công' : 'chưa phân công'}
+  372: {isLive ? 'Livestream đang phát' : hasCamera ? `Đã gán camera${stream?.cameraName ? `: ${stream.cameraName}` : ''}` : 'Chưa gán camera'}
+  382: toast('Hãy chọn camera ở mục “Gán camera vào trận” trước.');
+  392: {isLive ? 'Dừng phát' : hasCamera ? 'Bật phát' : 'Gán camera'}
+37	D:\Duancanhan\Project_QuanLyGiaiDau\frontend-web_qlgiaidau\src\app\admin\page.tsx
+  117: setError('Không lấy được dữ liệu thống kê tổng hợp');
+  121: setError('Đã xảy ra lỗi khi kết nối máy chủ');
+  175: return `Tuần ${date.getDate()}/${date.getMonth() + 1}`;
+  192: name: 'Người dùng',
+  195: subText: 'Tổng số tài khoản đã đăng ký',
+  200: name: 'Cộng đồng (CLB)',
+  203: subText: 'Tổng số câu lạc bộ thể thao',
+  208: name: 'Giải đấu',
+  211: subText: 'Giải đã và đang tổ chức',
+  216: name: 'Tổng GMV Giao dịch',
+  219: subText: 'Tổng lệ phí thanh toán qua cổng',
+  225: name: 'Hoa hồng nền tảng (Net Revenue)',
+  228: subText: `Phần doanh thu thu về (Escrow phí)`,
+  234: name: 'Escrow đang giữ',
+  237: subText: 'Lệ phí đang khóa chờ giải ngân',
+  261: <div className="text-slate-400">Đang tải biểu đồ thống kê...</div>
+  275: Tải lại trang
+  284: case 'week': return '7 ngày qua';
+  285: case 'year': return 'năm qua';
+  288: return '30 ngày qua';
+  298: Tổng Quan Hệ Thống & Tài Chính
+  301: Báo cáo chi tiết tài chính, doanh thu (GMV & Net Revenue) cùng các chỉ số vận hành
+  306: {/* Banner thông báo — hiển thị đầu trang */}
+  318: <h3 className="text-sm font-bold text-amber-900 uppercase tracking-wide">Có việc cần xử lý ngay</h3>
+  330: Sao uy tín ({pendingCounts.verifications})
+  336: Rút tiền ({pendingCounts.payouts})
+  342: Báo cáo ({pendingCounts.reports})
+  348: Đổi TT ({pendingCounts.changeRequests})
+  410: Phân Tích Doanh Thu
+  413: Đối chiếu chênh lệch giữa tổng giá trị giao dịch (GMV) và hoa hồng thực nhận của sàn (Net Revenue)
+  431: {interval === 'day' ? 'Ngày' : interval === 'week' ? 'Tuần' : interval === 'month' ? 'Tháng' : 'Năm'}
+  454: Xóa
+  467: <span>Đang đồng bộ dữ liệu...</span>
+  474: Không có dữ liệu giao dịch trong khoảng thời gian đã chọn.
+  515: if (name === 'revenue') return [formatCurrency(value as string | number), 'Hoa hồng sàn (Net)'];
+  516: if (name === 'gmv') return [formatCurrency(value as string | number), 'Tổng giao dịch (GMV)'];
+  535: formatter={(value) => value === 'gmv' ? 'Tổng giá trị giao dịch (GMV)' : 'Doanh thu sàn (Net Revenue)'}
+37	D:\Duancanhan\Project_QuanLyGiaiDau\frontend-web_qlgiaidau\src\app\admin\verification\page.tsx
+  52: toast.error('Không thể lấy danh sách đơn xác minh');
+  67: toast.success('Đã phê duyệt tài khoản thành công!');
+  71: toast.error('Lỗi khi phê duyệt yêu cầu');
+  78: if (!window.confirm('Thu hồi sao uy tín của người dùng này?')) return;
+  82: rejectReason: 'Thu hồi bởi Admin',
+  84: toast.success('Đã thu hồi sao uy tín');
+  88: toast.error('Lỗi khi thu hồi');
+  96: toast.error('Vui lòng nhập lý do từ chối');
+  104: toast.success('Đã từ chối yêu cầu xác minh');
+  111: toast.error('Lỗi khi từ chối yêu cầu');
+  145: <h2 className="text-2xl font-bold text-slate-900">Quản lý &quot;Sao Uy Tín&quot;</h2>
+  148: ? 'Xem xét, cấp và thu hồi chứng nhận tài khoản uy tín.'
+  149: : 'Cấp và thu hồi chứng nhận sao uy tín cho người dùng.'}
+  159: type="text" placeholder="Từ ngày (dd/mm/yyyy)" value={dateFrom}
+  167: type="text" placeholder="Đến ngày (dd/mm/yyyy)" value={dateTo}
+  173: <span className="text-xs text-gray-400 font-semibold">Trạng thái:</span>
+  179: <option value="PENDING">Chờ duyệt</option>
+  180: <option value="APPROVED">Đã cấp</option>
+  181: <option value="REJECTED">Đã từ chối</option>
+  193: <p className="text-base font-medium text-slate-800">Không có đơn xác minh nào</p>
+  194: <p className="text-xs text-slate-500">Thử thay đổi bộ lọc trạng thái hoặc ngày.</p>
+  202: <th className="p-4 pl-6">Người gửi</th>
+  203: <th className="p-4">Số điện thoại</th>
+  204: <th className="p-4">Ngày gửi</th>
+  205: <th className="p-4">Trạng thái</th>
+  206: <th className="p-4">Tài liệu</th>
+  207: <th className="p-4 pr-6 text-right">Thao tác</th>
+  251: {item.ticket.status === 'APPROVED' ? 'Đã cấp' : item.ticket.status === 'PENDING' ? 'Chờ' : 'Từ chối'}
+  272: ><Check className="w-3.5 h-3.5" /> Duyệt</Button>
+  275: ><X className="w-3.5 h-3.5" /> Từ chối</Button>
+  281: ><RotateCcw className="w-3.5 h-3.5" /> Thu hồi</Button>
+  298: <h3 className="text-lg font-bold text-slate-900">Từ Chối Yêu Cầu Xác Minh</h3>
+  304: <p className="text-xs text-slate-500 mb-1">Người gửi</p>
+  308: <label className="text-xs text-slate-500">Lý do từ chối</label>
+  310: placeholder="Nhập lý do chi tiết..."
+  316: className="text-xs">Hủy</Button>
+  318: variant="destructive" className="text-xs">Gửi từ chối</Button>
+37	D:\Duancanhan\Project_QuanLyGiaiDau\frontend-web_qlgiaidau\src\app\organizer\tournaments\[id]\ops\components\OpsParticipants.tsx
+  47: { value: 'ALL', label: 'Tất cả' },
+  48: { value: 'COMPLETE', label: 'Đủ điều kiện đấu' },
+  49: { value: 'UNPAID', label: 'Chưa thanh toán' },
+  50: { value: 'KICKED', label: 'Đã loại' },
+  51: { value: 'DISCIPLINED', label: 'Kỷ luật khác' },
+  76: const [kickReason, setKickReason] = useState('Vi phạm điều lệ giải');
+  115: setKickReason('Vi phạm điều lệ giải');
+  123: <h2 className="text-lg font-bold text-slate-900">Roster thi đấu & kỷ luật</h2>
+  125: Khối phụ trợ để rà roster đang thi đấu, các đội có rủi ro kỹ thuật và quyết định loại khỏi giải khi cần.
+  129: <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">Boundary vận hành</p>
+  131: Panel này không xử lý duyệt đăng ký. Nghiệp vụ còn lại là theo dõi roster thực tế, thanh toán và xử lý loại đội khi giải đang chạy.
+  140: placeholder="Tìm theo tên đội hoặc thành viên"
+  164: <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">Tổng roster</p>
+  168: <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-600">Đủ điều kiện đấu</p>
+  172: <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-rose-600">Chưa thanh toán</p>
+  176: <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-amber-600">Kỷ luật khác</p>
+  180: <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-600">Đã loại</p>
+  189: <th className="pb-3 pr-4">Đội/Cặp</th>
+  190: <th className="pb-3 pr-4">Thành viên</th>
+  191: <th className="pb-3 pr-4">Trạng thái</th>
+  192: <th className="pb-3 pr-4">Thanh toán</th>
+  193: <th className="pb-3 text-right">Hành động</th>
+  202: <p className="mt-3 text-sm font-bold text-slate-700">Không có hồ sơ phù hợp</p>
+  204: Thử đổi bộ lọc hoặc từ khóa tìm kiếm để xem đầy đủ danh sách.
+  219: Đăng ký {formatDate(participant.registeredAt)} • Seed: {participant.seed ?? 'Chưa có'}
+  226: {member.isMock ? 'VĐV ảo' : (member.fullName || 'Chưa rõ')}
+  238: {participant.isPaid ? 'Đã thanh toán' : 'Chưa thanh toán'}
+  254: <DropdownMenuLabel>Tác vụ vận hành</DropdownMenuLabel>
+  260: setKickReason('Vi phạm điều lệ giải');
+  264: Loại khỏi giải
+  288: <ModalTitle>Loại người chơi/đội khỏi giải</ModalTitle>
+  290: Nghiệp vụ này phù hợp cho chấn thương, gian lận, vi phạm điều lệ hoặc quyết định kỹ thuật của BTC.
+  296: <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-400">Đối tượng bị xử lý</p>
+  302: Lý do loại khỏi giải
+  310: placeholder="Ví dụ: Đội vi phạm điều lệ kiểm tra nhân sự trước giờ thi đấu."
+  317: Hủy
+  326: Xác nhận loại khỏi giải
+36	D:\Duancanhan\Project_QuanLyGiaiDau\frontend-web_qlgiaidau\src\app\(public)\tournaments\[id]\join-team\JoinTeamClient.tsx
+  48: toast.error('Thông tin lời mời tham gia đội không hợp lệ hoặc thiếu tham số.');
+  80: toast.error('Đội thi đấu không tồn tại hoặc đã bị hủy.');
+  85: toast.error('Không thể tải thông tin lời mời.');
+  97: toast.error('Vui lòng đăng nhập để chấp nhận lời mời tham gia đội.');
+  116: toast.error('Giải đấu này chỉ dành cho Nam. Giới tính của bạn không phù hợp.');
+  120: toast.error('Giải đấu này chỉ dành cho Nữ. Giới tính của bạn không phù hợp.');
+  132: toast.success('Gia nhập đội thi đấu thành công! Đội trưởng sẽ tiến hành hoàn tất thủ tục.');
+  155: <p className="text-slate-500 font-medium text-sm">Đang tải thông tin đội bóng...</p>
+  170: let title = 'Đăng ký đã đóng';
+  171: let message = 'Giải đấu hiện không nhận đăng ký mới.';
+  173: title = 'Đăng ký đã khóa';
+  174: message = 'Giải đấu đã tạm ngưng nhận đăng ký mới từ Ban tổ chức.';
+  176: title = 'Đăng ký hết hạn';
+  177: message = 'Hạn đăng ký giải đấu này đã kết thúc.';
+  196: Quay lại trang giải đấu
+  213: <ArrowLeft className="w-4 h-4" /> Quay lại giải đấu
+  226: {tournament.category?.name || 'Cầu Lông'}
+  233: <span>Khai mạc: {tournament.startDate ? formatDate(tournament.startDate) : 'Chưa xếp lịch'}</span>
+  237: <span className="truncate">{tournament.locationAddress || 'Chưa cập nhật'}</span>
+  248: <h2 className="text-lg font-bold text-slate-900">Lời mời tham gia đấu đôi</h2>
+  250: Bạn được mời gia nhập đội <strong className="text-slate-800">{participant.teamName}</strong> tham gia giải đấu này.
+  262: <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Trưởng nhóm (Leader)</p>
+  263: <p className="text-sm font-bold text-slate-800">{leader.fullName || 'Người dùng'}</p>
+  278: <p className="font-bold text-amber-900">Yêu cầu giới tính</p>
+  280: Giải đấu yêu cầu ràng buộc giới tính: {
+  281: tournament.genderRestriction === 'MALE' ? 'Chỉ Nam' :
+  282: tournament.genderRestriction === 'FEMALE' ? 'Chỉ Nữ' :
+  283: 'Đôi Nam Nữ (1 Nam + 1 Nữ)'
+  284: }. Hệ thống sẽ đối chiếu giới tính hồ sơ của bạn.
+  294: <p className="font-bold text-blue-950">Lệ phí giải đấu</p>
+  296: Lệ phí tham gia: <strong className="text-slate-900">{formatCurrency(Number(tournament.entryFee))} / Đội</strong>.
+  297: Nếu chưa thanh toán, bạn hoặc trưởng nhóm sẽ cần đóng phí để xác nhận hoàn tất vị trí.
+  307: Đội này đã đủ thành viên. Bạn không thể gia nhập.
+  313: Bạn cần đăng nhập tài khoản để xác nhận chấp nhận lời mời.
+  323: <Loader2 className="w-4 h-4 animate-spin" /> Đang xử lý...
+  328: {!isAuthenticated ? 'Đăng nhập & Chấp nhận lời mời' : 'Đồng ý gia nhập đội'}
+36	D:\Duancanhan\Project_QuanLyGiaiDau\frontend-web_qlgiaidau\src\app\organizer\tournaments\[id]\manage\components\FinanceTab.tsx
+  66: if (!bankName.trim()) { toast.error('Vui lòng nhập tên ngân hàng'); return; }
+  67: if (!bankAccountNumber.trim()) { toast.error('Vui lòng nhập số tài khoản'); return; }
+  68: if (!bankAccountName.trim()) { toast.error('Vui lòng nhập tên chủ tài khoản'); return; }
+  69: if (amountRequested <= 0) { toast.error('Số tiền rút phải lớn hơn 0'); return; }
+  70: if (amountRequested > netOrganizerEarnings) { toast.error('Số tiền rút không được vượt quá số dư'); return; }
+  80: toast.success('Đã gửi yêu cầu rút tiền!');
+  90: <h2 className="text-xl font-bold text-slate-900 border-b pb-2 mb-4">Quản lý Tài chính</h2>
+  94: <p className="text-sm font-bold text-amber-900">Đang khóa thiết lập lệ phí mới</p>
+  96: Cấu hình hệ thống hiện không cho phép đặt lệ phí đăng ký. Lệ phí đã có của giải vẫn được giữ nguyên.
+  104: <h4 className="font-bold text-slate-850 text-lg">Chưa thanh toán lệ phí sàn</h4>
+  106: Bạn cần hoàn tất thanh toán lệ phí sàn ({totalPlatformFee.toLocaleString('vi-VN')}đ) để xem bảng chi tiết báo cáo và quản lý các giao dịch rút tiền.
+  113: {isPayingPlatformFee ? 'Đang kết nối cổng thanh toán...' : 'Thanh toán lệ phí sàn'}
+  120: label="Lệ phí tham gia giải đấu (VNĐ)"
+  127: <label className="text-sm font-semibold text-slate-700">Lệ phí sàn / VĐV</label>
+  129: {platformFee.feePerPlayer.toLocaleString('vi-VN')} VNĐ / Người chơi
+  133: ? 'Cấu hình hệ thống hiện tại đang miễn phí lệ phí dịch vụ (0đ / người).'
+  134: : `Logic áp dụng: dưới 100.000đ lấy 5.000đ/người, từ 100.000đ trở lên lấy ${platformFee.percentage}% lệ phí/người.`}
+  146: {isSavingConfig ? 'Đang lưu...' : 'Lưu cài đặt tài chính'}
+  154: <DollarSign className="w-5 h-5 text-blue-600" /> Bảng tổng kết tài chính giải đấu
+  159: <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Tổng lệ phí thu dự kiến</p>
+  161: {totalExpectedFee.toLocaleString('vi-VN')} VNĐ
+  163: <p className="text-xs text-slate-500 font-semibold mt-1">Tính trên {participants.length} đội đăng ký</p>
+  167: <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Phí nền tảng</p>
+  169: {totalPlatformFee.toLocaleString('vi-VN')} VNĐ
+  172: {platformFee.ruleLabel} ({totalPlayers} VĐV)
+  177: <p className="text-xs font-bold text-slate-550 uppercase tracking-wider">Thực nhận của Ban tổ chức</p>
+  179: {netOrganizerEarnings.toLocaleString('vi-VN')} VNĐ
+  181: <p className="text-xs text-slate-500 font-semibold mt-1">Đã khấu trừ toàn bộ phí sàn</p>
+  189: <Gift className="w-5 h-5 text-purple-600" /> Yêu cầu rút tiền
+  192: Giải đấu đang thi đấu hoặc đã kết thúc, bạn có thể gửi yêu cầu rút tiền thực nhận về tài khoản ngân hàng của ban tổ chức.
+  195: <Input label="Ngân hàng" placeholder="Vietcombank" value={bankName} onChange={(e) => setBankName(e.target.value)} />
+  196: <Input label="Số tài khoản" placeholder="1029384756" value={bankAccountNumber} onChange={(e) => setBankAccountNumber(e.target.value)} />
+  197: <Input label="Chủ tài khoản" placeholder="NGUYEN VAN A" value={bankAccountName} onChange={(e) => setBankAccountName(e.target.value)} />
+  198: <Input label="Số tiền rút (VNĐ)" type="number" value={amountRequested} onChange={(e) => setAmountRequested(Number(e.target.value))} />
+  205: {isPayoutLoading ? <><Loader2 className="w-4 h-4 animate-spin mr-1" /> Đang gửi...</> : 'Gửi yêu cầu rút tiền'}
+  211: <p>Cổng rút tiền chỉ mở khi giải đấu <strong>đang thi đấu</strong> hoặc <strong>đã kết thúc</strong>.</p>
+35	D:\Duancanhan\Project_QuanLyGiaiDau\frontend-web_qlgiaidau\src\app\admin\change-requests\page.tsx
+  33: toast.error('Không thể tải danh sách yêu cầu thay đổi');
+  78: toast.success('Đã phê duyệt yêu cầu thành công');
+  81: toast.success('Đã từ chối yêu cầu thành công');
+  88: toast.error(getErrorMessage(error, 'Có lỗi xảy ra khi xử lý yêu cầu'));
+  99: <h2 className="text-2xl font-bold text-slate-900">Duyệt thay đổi thông tin</h2>
+  102: ? 'Người điều phối xác minh các yêu cầu thay đổi giới tính hoặc email nhạy cảm của người chơi.'
+  103: : 'Xem xét và phê duyệt các yêu cầu thay đổi giới tính hoặc email nhạy cảm của người chơi.'}
+  115: Đang chờ
+  125: Đã duyệt
+  135: Đã từ chối
+  144: <input type="text" placeholder="Từ ngày (dd/mm/yyyy)" value={dateFrom}
+  150: <input type="text" placeholder="Đến ngày (dd/mm/yyyy)" value={dateTo}
+  163: <p className="text-base font-medium text-slate-800">Không có yêu cầu nào được tìm thấy</p>
+  164: <p className="text-xs text-slate-500">Các yêu cầu thay đổi thông tin của người chơi hiện đang trống.</p>
+  172: <th className="p-4 pl-6">Người chơi</th>
+  173: <th className="p-4">Loại yêu cầu</th>
+  174: <th className="p-4">Giá trị cũ</th>
+  175: <th className="p-4">Giá trị mới</th>
+  176: <th className="p-4">Ngày gửi</th>
+  178: <th className="p-4">{isModeratorOnly ? 'Ghi chú xử lý' : 'Ghi chú admin'}</th>
+  180: {filterStatus === 'PENDING' && <th className="p-4 pr-6 text-right">Thao tác</th>}
+  196: <p className="font-semibold text-slate-800">{req.user?.profile?.fullName || 'Người chơi'}</p>
+  210: {req.requestType === 'GENDER' ? 'Giới tính' : 'Email'}
+  223: <span className="text-xs text-slate-500 italic">{req.adminNote || 'Không có ghi chú'}</span>
+  236: Duyệt
+  245: Từ chối
+  264: {actionType === 'APPROVE' ? 'Duyệt yêu cầu thay đổi' : 'Từ chối yêu cầu thay đổi'}
+  279: <p><strong>Người gửi:</strong> {selectedRequest.user?.profile?.fullName || 'Người chơi'} ({selectedRequest.user?.email})</p>
+  280: <p><strong>Loại:</strong> {selectedRequest.requestType === 'GENDER' ? 'Thay đổi giới tính' : 'Thay đổi Email'}</p>
+  281: <p><strong>Giá trị cũ:</strong> {selectedRequest.oldValue}</p>
+  282: <p><strong>Giá trị mới:</strong> {selectedRequest.newValue}</p>
+  287: {isModeratorOnly ? 'Ghi chú xử lý (Tùy chọn)' : 'Ghi chú của admin (Tùy chọn)'}
+  294: isModeratorOnly ? 'Nhập phản hồi xử lý...' : 'Nhập phản hồi của admin...'
+  309: Hủy
+  319: {actionType === 'APPROVE' ? 'Xác nhận duyệt' : 'Xác nhận từ chối'}
+34	D:\Duancanhan\Project_QuanLyGiaiDau\frontend-web_qlgiaidau\src\app\(public)\communities\[id]\components\ModerationTab.tsx
+  213: <h3 className="text-lg font-bold text-slate-900">Bài viết chờ duyệt</h3>
+  217: <p className="rounded-lg border border-dashed border-amber-200 bg-white px-4 py-8 text-center text-sm text-slate-500">Không có bài viết chờ duyệt.</p>
+  223: <p className="mt-2 whitespace-pre-wrap text-sm text-slate-700">{post.content || '(Bài viết hình ảnh)'}</p>
+  225: <button type="button" onClick={() => handleModeratePost(post.id, 'PUBLISHED')} className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700">Duyệt</button>
+  226: <button type="button" onClick={() => handleModeratePost(post.id, 'REJECTED')} className="rounded-lg border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50">Từ chối</button>
+  237: <h3 className="text-lg font-bold text-slate-900">Đơn tham gia chờ duyệt</h3>
+  246: Đang tải dữ liệu...
+  250: Chưa có đơn xin tham gia nào.
+  256: const fullName = req.user?.fullName || req.user?.email || 'Người dùng';
+  290: Gửi đơn: {joinedAt ? new Date(joinedAt).toLocaleDateString('vi-VN') : 'Không rõ'}
+  334: { label: 'Đang hoạt động', value: joinedMembers.length, tone: 'text-slate-900' },
+  335: { label: 'Chờ duyệt', value: requests.length, tone: 'text-amber-700' },
+  336: { label: 'Đã mời', value: invitedMembers.length, tone: 'text-blue-700' },
+  337: { label: 'Đã cấm', value: bannedMembers.length, tone: 'text-rose-700' },
+  351: <h3 className="text-lg font-bold text-slate-900">Mời thành viên mới</h3>
+  356: ? 'Chủ sở hữu có thể mời người dùng vào vai trò Thành viên hoặc Quản trị viên.'
+  357: : 'Quản trị viên chỉ có thể mời người dùng vào vai trò Thành viên.'}
+  362: Vai trò khi mời
+  374: Thành viên
+  390: Quản trị viên
+  420: fullName: user.fullName || 'Người dùng',
+  432: {user.fullName || 'Người dùng'}
+  443: {isInviting[user.id] ? translate('sending') : 'Mời'}
+  458: <h3 className="text-base font-bold text-slate-900">Lời mời đã gửi</h3>
+  465: <div className="py-6 text-center text-xs text-slate-400">Đang tải...</div>
+  467: <div className="py-6 text-center text-xs text-slate-400">Chưa có lời mời nào.</div>
+  472: const fullName = invited.user?.fullName || invited.user?.email || 'Người dùng';
+  507: {role === 'MODERATOR' ? 'Quản trị viên' : 'Thành viên'} • Chờ chấp thuận
+  530: <h3 className="text-base font-bold text-slate-900">Thành viên đã cấm</h3>
+  537: <div className="py-6 text-center text-xs text-slate-400">Đang tải...</div>
+  539: <div className="py-6 text-center text-xs text-slate-400">Chưa có thành viên nào bị cấm.</div>
+  544: const fullName = member.user?.fullName || member.user?.email || 'Người dùng';
+  577: <p className="truncate text-[11px] font-medium text-rose-500">{translate('bannedStatus')} khỏi cộng đồng</p>
+  585: title="Gỡ cấm"
+33	D:\Duancanhan\Project_QuanLyGiaiDau\frontend-web_qlgiaidau\src\app\(public)\tournaments\[id]\components\bracket\RoundRobinView.tsx
+  138: <li><b>Điểm</b> - Thắng 3, hòa 1, thua 0; không cộng điểm luân lưu riêng.</li>
+  139: <li><b>Hiệu số bàn (GD)</b> - Bàn ghi (GF) trừ bàn thua (GA).</li>
+  140: <li><b>Bàn ghi (GF)</b> - Tổng số bàn thắng trong các trận vòng bảng.</li>
+  141: <li><b>Đối đầu (H2H)</b> - Điểm đối đầu giữa các đội vẫn bằng chỉ số.</li>
+  142: <li><b>Fair-play</b> - Thẻ vàng 1 điểm phạt, thẻ đỏ 3 điểm phạt; ít hơn xếp trên.</li>
+  143: <li><b>Số trận thắng</b> - Dùng khi các chỉ số trên vẫn bằng nhau.</li>
+  144: <li>{tiebreakerMode === 'playoff' ? <><b>Play-off</b> - Tạo trận phụ khi cấu hình giải yêu cầu.</> : <><b>Đồng hạng</b> - Giữ cùng hạng nếu không có tiêu chí phân định thêm.</>}</li>
+  148: <li><b>Điểm xếp hạng (Đ)</b> - Theo luật chấm điểm của môn và cấu hình giải.</li>
+  149: <li><b>Đối đầu (H2H)</b> - Xét điểm trong các trận giữa các đội đang bằng điểm.</li>
+  150: <li><b>H2H Hiệu số set</b> - Set thắng trừ set thua trong các trận đối đầu.</li>
+  151: <li><b>H2H {statLabels.aggregateDiffLabel}</b> - Chỉ tính các trận đối đầu. <span className="text-blue-600">{statLabels.aggregateExample}</span></li>
+  152: <li><b>Hiệu số set tổng</b> - Tổng set thắng trừ tổng set thua.</li>
+  153: <li><b>{statLabels.aggregateDiffLabel} tổng</b> - Tổng {statLabels.aggregateLabel.toLowerCase()} ghi trừ tổng {statLabels.aggregateLabel.toLowerCase()} mất.</li>
+  154: <li>{tiebreakerMode === 'playoff' ? <><b>Play-off</b> - Đánh trận phụ khi vẫn hòa.</> : <><b>Đồng hạng</b> - Giữ cùng hạng khi không phân định được.</>}</li>
+  158: <b>Hiệu số</b> = Tổng {statLabels.aggregateLabel.toLowerCase()} ghi - tổng {statLabels.aggregateLabel.toLowerCase()} mất ({statLabels.aggregateLabel} +/-) từ mọi set đã nhập.<br />
+  186: <th className="px-3 py-3 text-center text-blue-600 bg-blue-50/50 w-14">Điểm</th>
+  187: <th className="px-3 py-3 text-center min-w-[80px]">Hiệu số</th>
+  236: Đi tiếp
+  284: Trận phụ
+  288: Đồng hạng
+  301: <span className="font-semibold">Bằng điểm:</span>
+  310: const t = toast.loading('Đang tạo Play-off...');
+  349: Kết thúc stage (hủy các trận còn lại)
+  359: <Clock className="w-4 h-4 text-slate-400" /> Lịch trận đấu
+  361: ({visibleMatches.length} trận)
+  366: <div className="mb-3 flex flex-wrap gap-2 items-center" aria-label="Chọn lượt vòng bảng">
+  379: Vòng {activeRound} / {rounds[rounds.length - 1]}
+  426: <span className="text-[8px] font-bold text-slate-500 bg-slate-200 px-1.5 py-0.5 rounded">Lượt {m.roundNumber}</span>
+  428: {live && <span className="flex items-center gap-0.5 text-[8px] font-bold text-blue-600 animate-pulse"><Play className="w-2 h-2 fill-blue-600" /> TRỰC TIẾP</span>}
+  432: <span className={'truncate flex-1 pr-2 ' + (m.winnerId === m.participant1?.id ? 'font-bold text-emerald-800' : 'text-slate-600')}>{m.participant1?.teamName ?? 'Chờ xác định'}</span>
+  436: <span className={'truncate flex-1 pr-2 ' + (m.winnerId === m.participant2?.id ? 'font-bold text-emerald-800' : 'text-slate-600')}>{m.participant2?.teamName ?? 'Chờ xác định'}</span>
+  443: <span className="truncate">{m.scheduledAt ? formatDateTime(m.scheduledAt) : 'Chưa xếp giờ'}</span>
+  447: <span className="truncate">{m.courtName || m.tournament?.venueName ? (m.courtName || m.tournament?.venueName) + (m.courtAddress ? ' (' + m.courtAddress + ')' : '') : 'Chưa xếp sân'}</span>
+33	D:\Duancanhan\Project_QuanLyGiaiDau\frontend-web_qlgiaidau\src\app\(public)\tournaments\page.tsx
+  64: const [wards, setWards] = useState<Region[]>([]); // Danh sách phường/xã
+  68: const [selectedWard, setSelectedWard] = useState<string>(''); // Phường/xã đang chọn
+  69: const [selectedContent, setSelectedContent] = useState<string>(''); // Nội dung thi đấu (Đơn Nam, Đôi Nữ...)
+  71: const [selectedBracketType, setSelectedBracketType] = useState<string>(''); // Thể thức thi đấu
+  72: const [showAdvancedFilters, setShowAdvancedFilters] = useState(false); // Toggle bộ lọc nâng cao
+  73: const [startDate, setStartDate] = useState<string>(''); // Lọc từ ngày
+  74: const [endDate, setEndDate] = useState<string>(''); // Lọc đến ngày
+  162: // Tự động tải Phường / Xã theo Tỉnh / Thành phố (API địa chỉ v2)
+  172: r.name.replace(/^(Thành phố|Tỉnh)\s+/i, '').trim().toLowerCase() === cleanRegionName
+  237: // Map lựa chọn nội dung đấu sang matchType và genderRestriction
+  336: {/* Hàng bộ lọc chính */}
+  405: Lọc thêm
+  409: {/* Panel Lọc Nâng Cao trượt mở bên dưới */}
+  412: {/* Ô Lọc Nội dung thi đấu */}
+  435: {/* Ô Lọc Thể thức thi đấu */}
+  437: <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Thể thức</label>
+  457: {/* Lọc theo việc giải có tính ELO hay không */}
+  459: <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Xếp hạng</label>
+  477: {/* Tỉnh / Thành phố */}
+  479: <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Tỉnh / Thành phố</label>
+  496: <option key={reg.code} value={reg.name.replace(/^(Thành phố|Tỉnh)\s+/i, '')}>{reg.name}</option>
+  503: {/* Phường / Xã */}
+  505: <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Phường / Xã</label>
+  525: {/* Lọc từ ngày */}
+  581: {/* Lọc đến ngày */}
+  637: {/* Xóa bộ lọc */}
+  661: {/* Status Chips — bên trong khung filter */}
+  666: Vừa kết thúc
+  687: ✕ Bỏ lọc
+  708: : 'Chưa cập nhật';
+  744: Vừa kết thúc
+  821: {tournament.entryFee ? formatCurrency(tournament.entryFee) : 'Miễn phí'}
+  841: {translate("registeredCount", { count: tournament._count?.participants || 0, max: tournament.maxParticipants || '-' })} Đội
+32	D:\Duancanhan\Project_QuanLyGiaiDau\frontend-web_qlgiaidau\src\app\(player)\payments\checkout\CheckoutClient.tsx
+  37: toast.error('Thiếu thông tin giải đấu hoặc lượt đăng ký');
+  92: toast.error('Phiên chờ thanh toán đã hết hạn.');
+  98: toast.success('Thanh toán thành công! Hệ thống đang cập nhật...');
+  120: toast.error('Thanh toán không thành công hoặc đã hết hạn.');
+  135: toast.success('Đăng ký miễn phí đã được xác nhận, không cần thanh toán.');
+  157: throw new Error('Không nhận được số tiền đã xác nhận từ hệ thống');
+  167: toast.success('Đã tạo mã QR thanh toán PayOS');
+  174: toast.success('Đang chuyển hướng đến cổng thanh toán...');
+  177: throw new Error('Không nhận được URL thanh toán từ hệ thống');
+  189: <p className="text-slate-500 font-medium">Đang tải thông tin thanh toán...</p>
+  197: <p className="text-slate-600 font-medium">Không tìm thấy thông tin giải đấu</p>
+  198: <Button onClick={() => router.push('/tournaments')}>Quay lại danh sách</Button>
+  213: <ChevronLeft className="w-4 h-4" /> Quay lại
+  221: <h1 className="text-2xl font-bold text-slate-900">Thanh Toán Lệ Phí</h1>
+  222: <p className="text-sm text-slate-500 mt-1">Hoàn thành thanh toán để xác nhận vị trí trong giải đấu</p>
+  228: <h2 className="text-slate-900 font-bold border-b border-slate-100 pb-3 mb-4">Chi tiết hóa đơn</h2>
+  232: <span className="text-sm text-slate-500">Giải đấu</span>
+  236: <span className="text-sm text-slate-500">Tên đội thi đấu</span>
+  237: <span className="text-sm font-semibold text-slate-800">{teamName || 'Đội đăng ký'}</span>
+  240: <span className="text-base font-bold text-slate-900">Tổng cộng</span>
+  249: <h2 className="text-slate-900 font-bold mb-4">Phương thức thanh toán</h2>
+  257: <p className="text-xs text-slate-500 mt-1">Quét mã bằng ứng dụng ngân hàng; hệ thống tự đối soát qua webhook.</p>
+  266: Giao dịch được bảo mật tuyệt đối. Chúng tôi không lưu trữ thông tin thẻ ngân hàng của bạn.
+  278: <Loader2 className="w-5 h-5 animate-spin" /> Đang chuẩn bị giao dịch...
+  282: Xác nhận và Thanh toán <ArrowRight className="w-5 h-5" />
+  293: Cổng Thanh Toán VietQR
+  295: <h3 className="text-xl font-bold text-slate-900">Quét mã QR để thanh toán</h3>
+  296: <p className="text-xs text-slate-500 mt-1">Mã QR động tự điền số tiền và thông tin chuyển khoản</p>
+  308: <span className="text-slate-500 font-medium">Số tiền:</span>
+  314: <span className="text-slate-500 font-medium">Nội dung thanh toán:</span>
+  321: <Loader2 className="w-4 h-4 animate-spin" /> Đang đợi giao dịch qua Banking...
+  332: Hủy giao dịch

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/Button';
 import { useCreateTournamentStore } from '@/lib/zustand/createTournamentStore';
 import { ChevronLeft, CheckCircle, Info, Loader2 } from 'lucide-react';
@@ -16,6 +17,7 @@ import { api } from '@/lib/axios';
 import { inboxApi } from '@/features/chat/inbox-api';
 
 export default function Step4ReviewSubmit() {
+  const translate = useTranslations('OrganizerCreateStep4');
   const { formData, getDivisionsFromFormats, prevStep, reset, setStep, setValidationTarget } = useCreateTournamentStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feesConfig, setFeesConfig] = useState<TournamentFeesConfig>({
@@ -56,43 +58,43 @@ export default function Step4ReviewSubmit() {
       setValidationTarget({ step, field, message });
       throw new Error(message);
     };
-    if (!formData.name.trim()) invalid(1, 'name', 'Vui lòng nhập tên giải đấu.');
-    if (formData.description.trim().length < 10) invalid(1, 'description', 'Mô tả phải có ít nhất 10 ký tự.');
-    if (!formData.categoryId) invalid(1, 'categoryId', 'Vui lòng chọn bộ môn thi đấu.');
+    if (!formData.name.trim()) invalid(1, 'name', translate('validationName'));
+    if (formData.description.trim().length < 10) invalid(1, 'description', translate('validationDescription'));
+    if (!formData.categoryId) invalid(1, 'categoryId', translate('validationCategory'));
     if (!formData.sportRules || typeof formData.sportRules !== 'object' || !('kind' in formData.sportRules)) {
-      invalid(1, 'categoryId', 'Chưa xác định được bộ luật theo môn đã chọn. Vui lòng chọn lại bộ môn.');
+      invalid(1, 'categoryId', translate('validationSportRules'));
     }
-    if (!primaryDivision || divisions.length === 0) invalid(2, 'selectedFormats', 'Vui lòng chọn ít nhất một nội dung thi đấu.');
-    if (!formData.registrationStartDate) invalid(3, 'registrationStartDate', 'Vui lòng chọn ngày bắt đầu đăng ký.');
-    if (!formData.registrationEndDate) invalid(3, 'registrationEndDate', 'Vui lòng chọn ngày kết thúc đăng ký.');
-    if (!formData.startDate) invalid(3, 'startDate', 'Vui lòng chọn ngày bắt đầu thi đấu.');
-    if (!formData.endDate) invalid(3, 'endDate', 'Vui lòng chọn ngày kết thúc thi đấu.');
+    if (!primaryDivision || divisions.length === 0) invalid(2, 'selectedFormats', translate('validationDivision'));
+    if (!formData.registrationStartDate) invalid(3, 'registrationStartDate', translate('validationRegistrationStart'));
+    if (!formData.registrationEndDate) invalid(3, 'registrationEndDate', translate('validationRegistrationEnd'));
+    if (!formData.startDate) invalid(3, 'startDate', translate('validationCompetitionStart'));
+    if (!formData.endDate) invalid(3, 'endDate', translate('validationCompetitionEnd'));
     const registrationStart = new Date(formData.registrationStartDate);
     const registrationEnd = new Date(formData.registrationEndDate);
     const tournamentStart = new Date(formData.startDate);
     const tournamentEnd = new Date(formData.endDate);
-    if (registrationStart >= registrationEnd) invalid(3, 'registrationEndDate', 'Ngày bắt đầu đăng ký phải trước ngày kết thúc đăng ký.');
-    if (registrationEnd > tournamentStart) invalid(3, 'registrationEndDate', 'Hạn chót đăng ký phải trước hoặc bằng ngày bắt đầu thi đấu.');
-    if (tournamentStart >= tournamentEnd) invalid(3, 'endDate', 'Ngày bắt đầu thi đấu phải trước ngày kết thúc.');
-    if ((formData.maxParticipants ?? 0) < 2) invalid(1, 'maxParticipants', 'Số đội tham gia tối đa phải lớn hơn hoặc bằng 2.');
-    if ((formData.entryFee ?? 0) < 0) invalid(3, 'entryFee', 'Lệ phí tham gia không được là số âm.');
-    if (!formData.name.trim()) throw new Error('Thiếu tên giải đấu ở Bước 1.');
-    if (!formData.categoryId) throw new Error('Thiếu bộ môn thi đấu ở Bước 1.');
+    if (registrationStart >= registrationEnd) invalid(3, 'registrationEndDate', translate('validationRegistrationOrder'));
+    if (registrationEnd > tournamentStart) invalid(3, 'registrationEndDate', translate('validationRegistrationBeforeCompetition'));
+    if (tournamentStart >= tournamentEnd) invalid(3, 'endDate', translate('validationCompetitionOrder'));
+    if ((formData.maxParticipants ?? 0) < 2) invalid(1, 'maxParticipants', translate('validationMaxParticipants'));
+    if ((formData.entryFee ?? 0) < 0) invalid(3, 'entryFee', translate('validationFee'));
+    if (!formData.name.trim()) throw new Error(translate('missingName'));
+    if (!formData.categoryId) throw new Error(translate('missingCategory'));
     if (!formData.sportRules || typeof formData.sportRules !== 'object' || !('kind' in formData.sportRules)) {
-      throw new Error('Chưa xác định được bộ luật theo môn đã chọn. Vui lòng quay lại chọn môn.');
+      throw new Error(translate('missingSportRules'));
     }
-    if (!primaryDivision || divisions.length === 0) throw new Error('Bạn chưa chọn nội dung thi đấu ở Bước 2.');
+    if (!primaryDivision || divisions.length === 0) throw new Error(translate('missingDivision'));
 
     if (formData.registrationStartDate && formData.registrationEndDate) {
       const registrationStart = new Date(formData.registrationStartDate);
       const registrationEnd = new Date(formData.registrationEndDate);
       if (registrationStart >= registrationEnd) {
-        throw new Error('Ngày bắt đầu đăng ký phải trước ngày kết thúc đăng ký.');
+        throw new Error(translate('validationRegistrationOrder'));
       }
       if (formData.startDate) {
         const tournamentStart = new Date(formData.startDate);
         if (registrationEnd > tournamentStart) {
-          throw new Error('Hạn chót đăng ký phải trước hoặc bằng ngày bắt đầu thi đấu.');
+          throw new Error(translate('validationRegistrationBeforeCompetition'));
         }
       }
     }
@@ -101,15 +103,15 @@ export default function Step4ReviewSubmit() {
       const tournamentStart = new Date(formData.startDate);
       const tournamentEnd = new Date(formData.endDate);
       if (tournamentStart >= tournamentEnd) {
-        throw new Error('Ngày bắt đầu thi đấu phải trước ngày kết thúc.');
+        throw new Error(translate('validationCompetitionOrder'));
       }
     }
 
     if ((formData.maxParticipants ?? 0) < 2) {
-      throw new Error('Số đội tham gia tối đa phải lớn hơn hoặc bằng 2.');
+      throw new Error(translate('validationMaxParticipants'));
     }
     if ((formData.entryFee ?? 0) < 0) {
-      throw new Error('Lệ phí tham gia không được là số âm.');
+      throw new Error(translate('validationFee'));
     }
   };
 
@@ -122,7 +124,7 @@ export default function Step4ReviewSubmit() {
       validateTournamentDraft();
 
       if (!primaryDivision) {
-        throw new Error('Vui lòng chọn ít nhất một nội dung thi đấu.');
+        throw new Error(translate('validationDivision'));
       }
 
       // 1. Create one tournament. Match formats are stored as tournament_divisions.
@@ -175,7 +177,7 @@ export default function Step4ReviewSubmit() {
       const tournamentRes = await tournamentsApi.createTournament(finalTournamentData);
       const tournamentId = tournamentRes.data?.id;
       if (!tournamentId) {
-        throw new Error('Không thể tạo Giải đấu. Vui lòng thử lại.');
+        throw new Error(translate('createFailed'));
       }
       createdTournamentId = tournamentId;
 
@@ -208,14 +210,14 @@ export default function Step4ReviewSubmit() {
           if (clubRoom?.id) {
             await inboxApi.sendMessage(
               clubRoom.id,
-              `🏆 Giải đấu mới: ${formData.name}`,
+              translate('autoShareTitle', { name: formData.name }),
               [],
               undefined,
               'TOURNAMENT_SHARE',
               {
                 tournamentId,
                 title: formData.name,
-                sportType: primaryDivision?.name || 'Giải đấu',
+                sportType: primaryDivision?.name || translate('sportFallback'),
                 totalTeams: formData.maxParticipants || 16,
                 registeredTeams: 0,
                 startDate: formData.startDate,
@@ -227,7 +229,7 @@ export default function Step4ReviewSubmit() {
         }
       }
 
-      toast.success(`Tạo giải đấu với ${divisions.length} bảng thi đấu thành công!`);
+      toast.success(translate('createdSuccess', { count: divisions.length }));
       reset();
 
       router.push(`/organizer/tournaments/${tournamentId}/manage`);
@@ -249,107 +251,107 @@ export default function Step4ReviewSubmit() {
   return (
     <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-right-4 duration-300">
       <div>
-        <h2 className="text-xl font-bold text-slate-900 mb-2">Xác Nhận & Tạo Giải Đấu</h2>
-        <p className="text-sm text-slate-500">Kiểm tra lại thông tin trước khi tạo giải đấu.</p>
+        <h2 className="text-xl font-bold text-slate-900 mb-2">{translate('title')}</h2>
+        <p className="text-sm text-slate-500">{translate('subtitle')}</p>
       </div>
 
       <div className="bg-slate-50 border border-slate-200 rounded-lg p-5 space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6 text-sm">
           <div className="flex flex-col gap-1">
-            <span className="text-slate-400 font-medium">Tên Giải Đấu</span>
+            <span className="text-slate-400 font-medium">{translate('tournamentName')}</span>
             <span className="font-semibold text-slate-900">{formData.name}</span>
           </div>
 
           <div className="flex flex-col gap-1">
-            <span className="text-slate-400 font-medium">Số Bảng Thi Đấu</span>
+            <span className="text-slate-400 font-medium">{translate('divisionCount')}</span>
             <span className="font-semibold text-slate-900">{divisions.length}</span>
           </div>
 
           <div className="flex flex-col gap-1">
-            <span className="text-slate-400 font-medium">Đối Tượng Tham Gia</span>
+            <span className="text-slate-400 font-medium">{translate('participants')}</span>
             <span className="font-semibold text-slate-900">
-              {formData.tournamentType === 'CLUB' ? 'Nội Bộ CLB' : 'Mở Rộng'}
+              {formData.tournamentType === 'CLUB' ? translate('clubInternal') : translate('open')}
             </span>
           </div>
 
           <div className="flex flex-col gap-1">
-            <span className="text-slate-400 font-medium">Cách Tính Thành Tích</span>
+            <span className="text-slate-400 font-medium">{translate('achievementMethod')}</span>
             <span className="font-semibold text-slate-900">
-              {formData.isRanked ? 'Xếp Hạng' : 'Phong Trào'}
+              {formData.isRanked ? translate('ranked') : translate('recreational')}
             </span>
           </div>
 
           <div className="flex flex-col gap-1">
-            <span className="text-slate-400 font-medium">Chế độ đăng ký</span>
+            <span className="text-slate-400 font-medium">{translate('registrationMode')}</span>
             <span className="font-semibold text-slate-900">
               {formData.registrationMode === 'OPEN'
-                ? 'Tự do đăng ký'
+                ? translate('openRegistration')
                 : formData.registrationMode === 'APPROVAL'
-                  ? 'Cần xét duyệt'
-                  : 'Chỉ nhận mã mời'}
+                  ? translate('approvalRequired')
+                  : translate('inviteOnly')}
             </span>
           </div>
 
           <div className="flex flex-col gap-1">
-            <span className="text-slate-400 font-medium">Hiển thị giải đấu</span>
+            <span className="text-slate-400 font-medium">{translate('visibility')}</span>
             <span className="font-semibold text-slate-900">
-              {formData.visibility === 'PRIVATE' ? 'Không niêm yết' : 'Công khai'}
+              {formData.visibility === 'PRIVATE' ? translate('unlisted') : translate('public')}
             </span>
           </div>
 
           <div className="flex flex-col gap-1">
-            <span className="text-slate-400 font-medium">Lệ phí tham gia / người</span>
+            <span className="text-slate-400 font-medium">{translate('entryFeePerPerson')}</span>
             <span className="font-semibold text-slate-900">
               {formatCurrency(feesConfig.allowEntryFees ? formData.entryFee || 0 : 0)}
             </span>
           </div>
 
           <div className="flex flex-col gap-1">
-            <span className="text-slate-400 font-medium">Phí tạo/công bố giải</span>
+            <span className="text-slate-400 font-medium">{translate('publicationFee')}</span>
             <span className="font-semibold text-slate-900">
               {formatCurrency(publishFee)}
             </span>
           </div>
 
           <div className="flex flex-col gap-1">
-            <span className="text-slate-400 font-medium">Đăng ký mở từ</span>
+            <span className="text-slate-400 font-medium">{translate('registrationOpens')}</span>
             <span className="font-semibold text-slate-900">
-              {formData.registrationStartDate ? formatDateTime(formData.registrationStartDate) : 'Chưa thiết lập'}
+              {formData.registrationStartDate ? formatDateTime(formData.registrationStartDate) : translate('notSet')}
             </span>
           </div>
 
           <div className="flex flex-col gap-1">
-            <span className="text-slate-400 font-medium">Đăng ký kết thúc</span>
+            <span className="text-slate-400 font-medium">{translate('registrationEnds')}</span>
             <span className="font-semibold text-slate-900">
-              {formData.registrationEndDate ? formatDateTime(formData.registrationEndDate) : 'Chưa thiết lập'}
+              {formData.registrationEndDate ? formatDateTime(formData.registrationEndDate) : translate('notSet')}
             </span>
           </div>
 
           <div className="flex flex-col gap-1">
-            <span className="text-slate-400 font-medium">Thi đấu bắt đầu</span>
+            <span className="text-slate-400 font-medium">{translate('competitionStarts')}</span>
             <span className="font-semibold text-slate-900">
-              {formData.startDate ? formatDateTime(formData.startDate) : 'Chưa thiết lập'}
+              {formData.startDate ? formatDateTime(formData.startDate) : translate('notSet')}
             </span>
           </div>
 
           <div className="flex flex-col gap-1">
-            <span className="text-slate-400 font-medium">Thi đấu kết thúc</span>
+            <span className="text-slate-400 font-medium">{translate('competitionEnds')}</span>
             <span className="font-semibold text-slate-900">
-              {formData.endDate ? formatDateTime(formData.endDate) : 'Chưa thiết lập'}
+              {formData.endDate ? formatDateTime(formData.endDate) : translate('notSet')}
             </span>
           </div>
 
           <div className="flex flex-col gap-1">
-            <span className="text-slate-400 font-medium">Số đội tối đa</span>
+            <span className="text-slate-400 font-medium">{translate('maxTeams')}</span>
             <span className="font-semibold text-slate-900">
-              {formData.maxParticipants ?? 'Chưa thiết lập'}
+              {formData.maxParticipants ?? translate('notSet')}
             </span>
           </div>
         </div>
       </div>
 
       <div className="border-t border-slate-200 pt-4">
-        <h4 className="font-bold text-slate-900 mb-3">Các Bảng Thi Đấu</h4>
+        <h4 className="font-bold text-slate-900 mb-3">{translate('divisions')}</h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {divisions.map((div, idx) => (
             <div key={idx} className="border border-slate-200 rounded-lg p-3 bg-white">
@@ -365,7 +367,7 @@ export default function Step4ReviewSubmit() {
       <div className="flex items-start gap-3 text-blue-700 bg-blue-50 p-4 rounded-lg border border-blue-100">
         <Info className="w-5 h-5 flex-shrink-0 mt-0.5" />
         <p className="text-xs font-medium leading-relaxed">
-          <strong>Lưu ý:</strong> Giải đấu sẽ được tạo ở trạng thái DRAFT. Lệ phí tham gia là khoản VĐV trả khi đăng ký; phí tạo/công bố giải sẽ được thanh toán mock khi bạn bấm công bố trong trang quản lý.
+          <strong>{translate('note')}:</strong> {translate('draftNote')}
         </p>
       </div>
 
@@ -377,7 +379,7 @@ export default function Step4ReviewSubmit() {
           disabled={isSubmitting}
           className="border-slate-200 text-slate-600"
         >
-          <ChevronLeft className="w-4 h-4 mr-1" /> Quay Lại
+          <ChevronLeft className="w-4 h-4 mr-1" /> {translate('back')}
         </Button>
         <Button
           type="button"
@@ -387,11 +389,11 @@ export default function Step4ReviewSubmit() {
         >
           {isSubmitting ? (
             <>
-              <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> Đang Tạo...
+              <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> {translate('creating')}
             </>
           ) : (
             <>
-              <CheckCircle className="w-4 h-4 mr-1.5" /> Tạo Giải Đấu
+              <CheckCircle className="w-4 h-4 mr-1.5" /> {translate('createTournament')}
             </>
           )}
         </Button>

@@ -402,7 +402,7 @@ export default function TournamentsListPage() {
             }`}
           >
             <SlidersHorizontal className="w-4 h-4" />
-            Lọc thêm
+            {translate("moreFilters")}
           </button>
         </div>
 
@@ -434,7 +434,7 @@ export default function TournamentsListPage() {
 
             {/* Ô Lọc Thể thức thi đấu */}
             <div>
-              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Thể thức</label>
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">{translate("format")}</label>
               <div className="relative">
                 <select
                   value={selectedBracketType}
@@ -456,7 +456,7 @@ export default function TournamentsListPage() {
 
             {/* Lọc theo việc giải có tính ELO hay không */}
             <div>
-              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Xếp hạng</label>
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">{translate("ranking")}</label>
               <div className="relative">
                 <select
                   value={selectedIsRanked}
@@ -476,7 +476,7 @@ export default function TournamentsListPage() {
 
             {/* Tỉnh / Thành phố */}
             <div>
-              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Tỉnh / Thành phố</label>
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">{translate("provinceCity")}</label>
               <div className="relative">
                 <select
                   value={selectedRegion}
@@ -502,7 +502,7 @@ export default function TournamentsListPage() {
 
             {/* Phường / Xã */}
             <div>
-              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Phường / Xã</label>
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">{translate("wardCommune")}</label>
               <div className="relative">
                 <select
                   disabled={!selectedRegion || wards.length === 0}
@@ -663,7 +663,7 @@ export default function TournamentsListPage() {
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0">{translate("quickFilter")}</span>
           <button onClick={() => { setSelectedStatus(selectedStatus === 'COMPLETED' ? '' : 'COMPLETED'); setPage(1); }}
             className={`rounded-full px-3.5 py-1.5 border transition-all cursor-pointer ${selectedStatus === 'COMPLETED' ? 'bg-[#F3F4F1] text-[#4A4E4D] border-slate-400 font-bold shadow-xs' : 'bg-[#F3F4F1]/80 text-[#4A4E4D] border-transparent hover:border-slate-300'}`}>
-            Vừa kết thúc
+            {translate("recentlyFinished")}
           </button>
           <button onClick={() => { setSelectedStatus(selectedStatus === 'IN_PROGRESS' ? '' : 'IN_PROGRESS'); setPage(1); }}
             className={`rounded-full px-3.5 py-1.5 border transition-all cursor-pointer ${selectedStatus === 'IN_PROGRESS' ? 'bg-[#EBF5FF] text-[#1E56A0] border-blue-300 font-bold shadow-xs' : 'bg-[#EBF5FF]/80 text-[#1E56A0] border-transparent hover:border-blue-200'}`}>
@@ -684,7 +684,7 @@ export default function TournamentsListPage() {
           {selectedStatus && (
             <button onClick={() => { setSelectedStatus(''); setPage(1); }}
               className="text-slate-400 font-bold text-xs hover:text-rose-500 transition-colors ml-1 cursor-pointer">
-              ✕ Bỏ lọc
+              ✕ {translate("clearActiveFilter")}
             </button>
           )}
         </div>
@@ -705,7 +705,7 @@ export default function TournamentsListPage() {
               ? locationParts.slice(-2).join(', ')
               : locationParts.length === 1
               ? locationParts[0]
-              : 'Chưa cập nhật';
+              : translate("locationNotUpdated");
             const registrationModeUi = getRegistrationModeUi(translate, tournament.tournamentConfig?.registrationMode);
 
             return (
@@ -741,7 +741,7 @@ export default function TournamentsListPage() {
                       {getTournamentStatusLabel(tournament.status, { DRAFT: translate('statusDraftPlain'), PENDING_APPROVAL: translate('statusPendingApproval'), PENDING_DELETE: translate('statusPendingDelete'), UPCOMING: translate('upcoming'), REGISTRATION_OPEN: translate('registrationOpen'), REGISTRATION_CLOSED: translate('statusRegistrationClosed'), IN_PROGRESS: translate('inProgress'), ONGOING: translate('inProgress'), COMPLETED: translate('completed'), CANCELLED: translate('statusCancelled') })}
                       {isRecentlyCompletedTournament(tournament) && (
                         <span className="ml-1 inline-flex items-center rounded-full bg-slate-900/75 px-2 py-0.5 text-[9px] font-bold text-white">
-                          Vừa kết thúc
+                          {translate("recentlyFinished")}
                         </span>
                       )}
                     </span>
@@ -818,7 +818,7 @@ export default function TournamentsListPage() {
                     {/* Metadata summary */}
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-[10px] text-slate-500 font-bold mt-2.5 uppercase tracking-wider">
                       <span className="text-blue-600 font-bold">
-                        {tournament.entryFee ? formatCurrency(tournament.entryFee) : 'Miễn phí'}
+                        {tournament.entryFee ? formatCurrency(tournament.entryFee) : translate("freeEntryFee")}
                       </span>
                       {tournament.divisions && tournament.divisions.length > 0 ? (
                         <>
@@ -838,7 +838,7 @@ export default function TournamentsListPage() {
                         <>
                           <span className="text-slate-300">•</span>
                           <span>
-                            {translate("registeredCount", { count: tournament._count?.participants || 0, max: tournament.maxParticipants || '-' })} Đội
+                            {translate("registeredCount", { count: tournament._count?.participants || 0, max: tournament.maxParticipants || '-' })} {translate("teamSuffix")}
                           </span>
                           <span className="text-slate-300">•</span>
                           <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-650 text-[9px] border border-slate-200 font-bold">

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { usePathname, useRouter } from 'next/navigation';
 import { getBaseUrl } from '@/lib/axios';
 import { MessageSquare, Send, X, Bot, Sparkles, ArrowRight, Headset, ChevronLeft } from 'lucide-react';
@@ -65,11 +66,7 @@ function mergeStreamContent(previous: string, incoming: string): string {
   return previous + incoming;
 }
 
-const QUICK_PROMPTS = [
-  'Làm sao để quản lý giải đấu của tôi?',
-  'Làm sao để đăng ký thi đấu đôi?',
-  'Hệ thống tính điểm ELO như thế nào?',
-];
+const QUICK_PROMPT_KEYS = ['manageTournament', 'registerDoubles', 'eloCalculation'] as const;
 
 const PAGE_TITLES: Record<string, string> = {
   '/dashboard': 'Dashboard cá nhân',
@@ -120,6 +117,7 @@ function getPageTitle(pathname: string): string {
 }
 
 export default function AiChatAssistant() {
+  const translate = useTranslations('AiChat');
   const router = useRouter();
   const getSearchParamsString = () => (typeof window !== 'undefined' ? window.location.search : '');
   const { isAuthenticated, user } = useAuthStore();
@@ -128,8 +126,7 @@ export default function AiChatAssistant() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
-      content:
-        'Xin chào! Tôi là **Trợ lý ảo Sporto**. Tôi có thể giúp gì cho bạn hôm nay? Bạn có thể hỏi tôi về cách đăng ký giải, cách tính ELO, chính sách hoàn tiền, hoặc các tính năng khác trên hệ thống.',
+      content: translate('hello'),
     },
   ]);
   const [input, setInput] = useState('');
@@ -275,21 +272,21 @@ export default function AiChatAssistant() {
   const handleOpenSupport = async () => {
     if (!isAuthenticated || !user) {
       router.push(`/login?returnUrl=${encodeURIComponent(pathname || '/')}`);
-      toast('Đăng nhập để trò chuyện trực tiếp với admin.');
+      toast(translate('loginToChat'));
       return;
     }
 
     setIsLoading(true);
     try {
       const initialMessage =
-        input.trim() || `Tôi cần admin hỗ trợ tại trang ${pathname || '/'}.`;
+        input.trim() || translate('supportFallback', { path: pathname || '/' });
       const conversation = await supportApi.send(initialMessage);
       setSupportMessages(conversation.messages);
       setSupportRoomId(conversation.id);
       setInput('');
       setMode('support');
     } catch (error) {
-      toast.error(getErrorMessage(error, 'Không thể kết nối với bộ phận hỗ trợ.'));
+      toast.error(getErrorMessage(error, translate('supportConnectionError')));
     } finally {
       setIsLoading(false);
     }
@@ -309,7 +306,7 @@ export default function AiChatAssistant() {
       );
     } catch (error) {
       setInput((current) => current || content);
-      toast.error(getErrorMessage(error, 'Không gửi được tin nhắn hỗ trợ.'));
+      toast.error(getErrorMessage(error, translate('supportSendError')));
     } finally {
       setIsSendingSupport(false);
     }
@@ -343,14 +340,14 @@ export default function AiChatAssistant() {
       });
 
       if (!response.ok) {
-        throw new Error('Yêu cầu AI thất bại');
+        throw new Error(translate('aiRequestFailed'));
       }
 
       if (!response.body) {
-        throw new Error('Không nhận được dữ liệu stream từ AI');
+        throw new Error(translate('aiStreamEmpty'));
       }
 
-      // Thêm placeholder tin nhắn trống cho Assistant trước khi stream
+      // Add an empty assistant placeholder before streaming
       setMessages((prev) => [...prev, { role: 'assistant', content: '' }]);
 
       const reader = response.body.getReader();
@@ -364,7 +361,7 @@ export default function AiChatAssistant() {
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split(/\r?\n\r?\n/);
 
-        // Giữ lại phần chưa hoàn thành ở cuối buffer
+        // Keep the incomplete trailing buffer for the next chunk
         buffer = lines.pop() || '';
 
         for (const line of lines) {
@@ -387,7 +384,7 @@ export default function AiChatAssistant() {
                 });
               }
             } catch (e) {
-              console.error('Lỗi parse stream chunk:', e, dataStr);
+              console.error(translate('aiParseError'), e, dataStr);
             }
           }
         }
@@ -399,7 +396,7 @@ export default function AiChatAssistant() {
         const lastMsg = copy[copy.length - 1];
 
         if (lastMsg?.role === 'assistant' && !lastMsg.content) {
-          lastMsg.content = 'Đã xảy ra lỗi kết nối với máy chủ AI. Vui lòng thử lại sau.';
+          lastMsg.content = translate('aiConnectionError');
           return copy;
         }
 
@@ -407,7 +404,7 @@ export default function AiChatAssistant() {
           ...copy,
           {
             role: 'assistant',
-            content: 'Đã xảy ra lỗi kết nối với máy chủ AI. Vui lòng thử lại sau.',
+            content: translate('aiConnectionError'),
           },
         ];
       });
@@ -454,11 +451,11 @@ export default function AiChatAssistant() {
                 </div>
                 <div>
                   <p className="text-white font-bold text-[13px] leading-tight flex items-center gap-1">
-                    {mode === 'support' ? 'Chat trực tiếp với admin' : 'Trợ lý AI Sporto'}
+                    {mode === 'support' ? translate('supportTitle') : translate('aiTitle')}
                     {mode === 'ai' && <Sparkles className="w-3 h-3 text-yellow-300 animate-pulse" />}
                   </p>
                   <p className="text-white/85 text-[10px] leading-tight mt-0.5">
-                    {mode === 'support' ? 'Tin nhắn được chuyển tới quản trị viên' : 'Hỗ trợ thông tin thi đấu 24/7'}
+                    {mode === 'support' ? translate('supportSubtitle') : translate('aiSubtitle')}
                   </p>
                 </div>
               </div>
@@ -467,7 +464,7 @@ export default function AiChatAssistant() {
                   <button
                     type="button"
                     onClick={() => setMode('ai')}
-                    title="Quay lại trợ lý AI"
+                    title={translate('backToAi')}
                     className="w-7 h-7 rounded-full hover:bg-white/20 flex items-center justify-center transition-colors cursor-pointer shrink-0"
                   >
                     <ChevronLeft className="w-4 h-4 text-white" />
@@ -500,7 +497,7 @@ export default function AiChatAssistant() {
                       user?.avatarUrl ? (
                         <img
                           src={user.avatarUrl}
-                          alt={user.fullName || 'Bạn'}
+                          alt={user.fullName || translate('userFallback')}
                           className="h-full w-full rounded-full object-cover"
                         />
                       ) : (
@@ -532,10 +529,10 @@ export default function AiChatAssistant() {
                 <div className="rounded-xl border border-blue-100 bg-blue-50 p-4 text-center">
                   <Headset className="mx-auto mb-2 h-7 w-7 text-blue-600" />
                   <p className="text-xs font-semibold text-slate-800">
-                    Cuộc hội thoại đã được chuyển tới admin
+                    {translate('supportTransferred')}
                   </p>
                   <p className="mt-1 text-[11px] text-slate-500">
-                    Bạn có thể gửi nội dung cần hỗ trợ ngay bên dưới.
+                    {translate('supportPrompt')}
                   </p>
                 </div>
               )}
@@ -558,7 +555,7 @@ export default function AiChatAssistant() {
                         user?.avatarUrl ? (
                           <img
                             src={user.avatarUrl}
-                            alt={user.fullName || 'Bạn'}
+                            alt={user.fullName || translate('userFallback')}
                             className="h-full w-full rounded-full object-cover"
                           />
                         ) : (
@@ -567,7 +564,7 @@ export default function AiChatAssistant() {
                       ) : msg.senderAvatar ? (
                         <img
                           src={msg.senderAvatar}
-                          alt={msg.senderName || 'Hỗ trợ'}
+                          alt={msg.senderName || translate('supportFallbackName')}
                           className="h-full w-full rounded-full object-cover"
                         />
                       ) : (
@@ -576,7 +573,7 @@ export default function AiChatAssistant() {
                     </div>
                     <div className={`max-w-[78%] ${mine ? 'text-right' : 'text-left'}`}>
                       <p className="mb-1 truncate text-[10px] font-semibold text-slate-500">
-                        {mine ? user?.fullName || 'Bạn' : msg.senderName || 'Hỗ trợ Sporto'}
+                        {mine ? user?.fullName || translate('userFallback') : msg.senderName || `${translate('supportFallbackName')} Sporto`}
                       </p>
                       <div
                         className={`px-3.5 py-2.5 rounded-lg text-[12.5px] leading-relaxed shadow-sm border whitespace-pre-wrap break-words ${
@@ -611,7 +608,7 @@ export default function AiChatAssistant() {
                   </div>
                   <div className="rounded-lg rounded-tl-sm border border-blue-100 bg-blue-50 px-3 py-2">
                     <p className="mb-1 text-[10px] font-semibold text-blue-700">
-                      Admin đang nhập
+                      {translate('agentTyping')}
                     </p>
                     <div className="flex items-center gap-1">
                       <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-blue-500" />
@@ -628,10 +625,12 @@ export default function AiChatAssistant() {
             {mode === 'ai' && messages.length <= 2 && !isLoading && (
               <div className="px-4 py-2.5 bg-white border-t border-slate-100 shrink-0">
                 <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">
-                  Gợi ý câu hỏi
+                  {translate('quickSuggestions')}
                 </p>
                 <div className="flex flex-col gap-1">
-                  {QUICK_PROMPTS.map((prompt, idx) => (
+                  {QUICK_PROMPT_KEYS.map((key, idx) => {
+                    const prompt = translate(key);
+                    return (
                     <button
                       key={idx}
                       onClick={() => handleSendMessage(prompt)}
@@ -640,7 +639,8 @@ export default function AiChatAssistant() {
                       <span className="font-semibold truncate">{prompt}</span>
                       <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 shrink-0 text-blue-500 transition-opacity" />
                     </button>
-                  ))}
+                    );
+                  })}
                   <button
                     type="button"
                     onClick={() => void handleOpenSupport()}
@@ -648,7 +648,7 @@ export default function AiChatAssistant() {
                   >
                     <span className="flex items-center gap-2">
                       <Headset className="h-3.5 w-3.5" />
-                      Chat trực tiếp với admin
+                      {translate('directSupport')}
                     </span>
                     <ArrowRight className="h-3 w-3" />
                   </button>
@@ -662,7 +662,7 @@ export default function AiChatAssistant() {
                 value={input}
                 onChange={(e) => handleInputChange(e.target.value)}
                 onKeyDown={handleKeyPress}
-                placeholder={mode === 'support' ? 'Nhắn nội dung cần admin hỗ trợ...' : 'Hỏi trợ lý ảo về giải đấu...'}
+                placeholder={mode === 'support' ? translate('supportPlaceholder') : translate('aiPlaceholder')}
                 rows={1}
                 className="flex-1 resize-none max-h-20 px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 text-[12.5px] outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all placeholder:text-slate-400"
               />

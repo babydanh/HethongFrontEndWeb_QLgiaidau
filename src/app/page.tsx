@@ -3,7 +3,7 @@
 // Reading this as: Sports platform homepage with live matches feed, featured tournaments, and community bento grid.
 import { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { buildMatchScoreSummary, getMatchScorePresentation, resolveMatchSportRules, extractMatchScores } from '@/features/matches/score-display';
 import Image from 'next/image';
 import {
@@ -251,6 +251,7 @@ function TournamentLogoAvatar({ src, alt }: { src?: string | null; alt: string }
 
 function HomepageTournamentCard({ tournament }: { tournament: Tournament }) {
   const translate = useTranslations('Home');
+  const locale = useLocale();
   const [imgError, setImgError] = useState(false);
   const fallbackSrc = BRAND.assets.defaultFallback;
   const hasBanner = !imgError && Boolean(tournament.bannerUrl?.trim());
@@ -259,10 +260,11 @@ function HomepageTournamentCard({ tournament }: { tournament: Tournament }) {
 
   const dateRange = useMemo(() => {
     if (!tournament.startDate || !tournament.endDate) return '';
-    const start = new Date(tournament.startDate).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
-    const end = new Date(tournament.endDate).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+    const dateLocale = locale === 'vi' ? 'vi-VN' : 'en-US';
+    const start = new Date(tournament.startDate).toLocaleDateString(dateLocale, { day: '2-digit', month: '2-digit' });
+    const end = new Date(tournament.endDate).toLocaleDateString(dateLocale, { day: '2-digit', month: '2-digit' });
     return `${start} - ${end}`;
-  }, [tournament.startDate, tournament.endDate]);
+  }, [locale, tournament.startDate, tournament.endDate]);
 
   return (
     <div className={`${hideFeaturedCardText ? 'aspect-[21/9] bg-slate-900' : 'bg-white'} rounded-2xl border border-slate-200/80 shadow-[0_2px_12px_rgba(15,23,42,0.06)] overflow-hidden flex flex-col group relative`}>
@@ -315,6 +317,7 @@ function HomepageTournamentCard({ tournament }: { tournament: Tournament }) {
 export default function HomePage() {
   const { isAuthenticated, user } = useAuthStore();
   const translate = useTranslations('Home');
+  const locale = useLocale();
   // Bóng bàn đang tạm ẩn khỏi các bộ lọc/khám phá công khai. Vẫn giữ
   // support trong luồng quản trị và dữ liệu giải cũ để không làm mất dữ liệu.
   const isHiddenPublicSport = (category: Category) => {
@@ -786,7 +789,7 @@ export default function HomePage() {
 
   // Group live matches by tournament name
   const liveMatchesByTournament = liveMatches.reduce<Record<string, { id?: string | null; name: string; logoUrl?: string | null; isRanked?: boolean; matches: BracketMatch[] }>>((acc, match) => {
-    const tournamentName = match.tournament?.name || 'Giải đấu khác';
+    const tournamentName = match.tournament?.name || translate('otherTournamentFallback');
     const tournament = match.tournament as { id?: string; logoUrl?: string | null; name?: string; isRanked?: boolean };
     if (!acc[tournamentName]) {
       acc[tournamentName] = {
@@ -803,7 +806,7 @@ export default function HomePage() {
 
   // Group upcoming matches by tournament name
   const upcomingMatchesByTournament = upcomingMatches.reduce<Record<string, { id?: string | null; name: string; logoUrl?: string | null; isRanked?: boolean; matches: BracketMatch[] }>>((acc, match) => {
-    const tournamentName = match.tournament?.name || 'Giải đấu khác';
+    const tournamentName = match.tournament?.name || translate('otherTournamentFallback');
     const tournament = match.tournament as { id?: string; logoUrl?: string | null; name?: string; isRanked?: boolean };
     if (!acc[tournamentName]) {
       acc[tournamentName] = {
@@ -820,7 +823,7 @@ export default function HomePage() {
 
   // Group completed matches by tournament name
   const completedMatchesByTournament = completedMatches.reduce<Record<string, { id?: string | null; name: string; logoUrl?: string | null; isRanked?: boolean; matches: BracketMatch[] }>>((acc, match) => {
-    const tournamentName = match.tournament?.name || 'Giải đấu khác';
+    const tournamentName = match.tournament?.name || translate('otherTournamentFallback');
     const tournament = match.tournament as { id?: string; logoUrl?: string | null; name?: string; isRanked?: boolean };
     if (!acc[tournamentName]) {
       acc[tournamentName] = {
@@ -943,7 +946,7 @@ export default function HomePage() {
                   {match.courtName || match.tournament?.venueName}
                 </span>
               ) : (
-                <span className="text-slate-400 italic text-[10.5px]">Chưa xếp sân</span>
+                <span className="text-slate-400 italic text-[10.5px]">{translate('courtNotAssigned')}</span>
               )}
             </div>
 
@@ -972,7 +975,7 @@ export default function HomePage() {
                   const p1Name = getTeamShortName(match.participant1?.teamName, translate('pendingTeam'));
                   const p2Name = getTeamShortName(match.participant2?.teamName, translate('pendingTeam'));
                   setActiveShareUrl(`${window.location.origin}/live/${match.id}`);
-                  setActiveShareTitle(`Trận đấu: ${p1Name} vs ${p2Name}`);
+                  setActiveShareTitle(translate('shareMatchTitleWithTeams', { p1: p1Name, p2: p2Name }));
                   setIsShareModalOpen(true);
                 }}
                 title={translate('shareMatchTitle')}
@@ -1006,8 +1009,8 @@ export default function HomePage() {
   const peakElo = activeRankInfo?.peakElo || eloPoints;
   const sportName = activeRankInfo?.categoryName
     || categories.find((c) => c.id === activeRankInfo?.categoryId)?.name
-    || (selectedCategoryId ? categories.find((c) => c.id === selectedCategoryId)?.name : 'Chung')
-    || 'Chung';
+    || (selectedCategoryId ? categories.find((c) => c.id === selectedCategoryId)?.name : translate('allSports'))
+    || translate('allSports');
 
   const [now] = useState(() => Date.now());
 
@@ -1262,7 +1265,7 @@ export default function HomePage() {
                       onClick={() => setLiveMatchPage(p => Math.min(totalLivePages, p + 1))}
                       disabled={liveMatchPage === totalLivePages}
                       className="px-3 py-1.5 text-xs font-bold text-slate-600 bg-white border border-slate-200 hover:border-slate-350 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer">
-                      Sau
+                      {translate('next')}
                     </button>
                   </div>
                 )}

@@ -28,6 +28,31 @@ export function PenaltyPanel({
 }: PenaltyPanelProps) {
   const translate = useTranslations('LivePenalty');
   const schema = useMemo(() => getPenaltySchema(sportKind), [sportKind]);
+  const schemaKey = sportKind === 'TENNIS'
+    ? 'TENNIS'
+    : sportKind === 'PICKLEBALL_RALLY' || sportKind === 'PICKLEBALL_SIDE_OUT'
+      ? 'PICKLEBALL_SIDE_OUT'
+      : sportKind === 'TABLE_TENNIS'
+        ? 'TABLE_TENNIS'
+        : sportKind === 'BADMINTON'
+          ? 'BADMINTON'
+          : 'DEFAULT';
+  const localizedSchema = useMemo(() => ({
+    ...schema,
+    title: translate(`schema.${schemaKey}.title`),
+    description: translate(`schema.${schemaKey}.description`),
+    groups: schema.groups.map((group) => ({
+      ...group,
+      label: translate(`schema.groups.${group.id}`),
+      items: group.items.map((item) => ({
+        ...item,
+        label: translate(`schema.items.${item.kind}.label`),
+        effectLabel: translate(`schema.items.${item.kind}.effectLabel`),
+        description: translate(`schema.items.${item.kind}.description`),
+        cardLabel: item.cardLabel ? translate(`schema.items.${item.kind}.cardLabel`) : undefined,
+      })),
+    })),
+  }), [schema, schemaKey, translate]);
   const [selectedPenaltyTeam, setSelectedPenaltyTeam] = useState<PenaltyTeamSelection>('neutral');
   const [selectedPenaltyKind, setSelectedPenaltyKind] = useState<string>(schema.groups[0]?.items[0]?.kind ?? '');
   const [penaltyNote, setPenaltyNote] = useState('');
@@ -35,6 +60,10 @@ export function PenaltyPanel({
   const availablePenaltyKinds = useMemo(
     () => schema.groups.flatMap((group) => group.items),
     [schema],
+  );
+  const localizedPenaltyKinds = useMemo(
+    () => localizedSchema.groups.flatMap((group) => group.items),
+    [localizedSchema],
   );
   const effectivePenaltyKind = availablePenaltyKinds.some((item) => item.kind === selectedPenaltyKind)
     ? selectedPenaltyKind
@@ -59,8 +88,8 @@ export function PenaltyPanel({
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">{translate('title')}</p>
-          <p className="mt-2 text-sm font-bold text-slate-900">{schema.title}</p>
-          <p className="mt-1 hidden text-xs font-medium text-slate-500 sm:block">{schema.description}</p>
+          <p className="mt-2 text-sm font-bold text-slate-900">{localizedSchema.title}</p>
+          <p className="mt-1 hidden text-xs font-medium text-slate-500 sm:block">{localizedSchema.description}</p>
         </div>
         <div className="flex items-center gap-2">
           <div
@@ -71,7 +100,7 @@ export function PenaltyPanel({
                 : 'bg-slate-100 text-slate-600',
             )}
           >
-            {schema.cardStyle === 'yellow-red' ? 'Có thẻ riêng' : 'Không dùng thẻ riêng'}
+            {schema.cardStyle === 'yellow-red' ? translate('hasCards') : translate('noCards')}
           </div>
           <div className="rounded-full bg-slate-50 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-600">
             {translate('recorded', { count: penalties.length })}
@@ -80,11 +109,11 @@ export function PenaltyPanel({
       </div>
 
       <div className="mt-3 space-y-2">
-        {schema.groups.map((group) => (
+        {localizedSchema.groups.map((group) => (
           <div key={group.id} className="rounded-lg border border-slate-100 bg-slate-50 p-3">
             <div className="flex items-center justify-between gap-3">
               <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">{group.label}</p>
-              <span className="text-[11px] font-semibold text-slate-500">{group.items.length} lựa chọn</span>
+              <span className="text-[11px] font-semibold text-slate-500">{translate('groupChoices', { count: group.items.length })}</span>
             </div>
             <div className="mt-2 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
               {group.items.map((item) => {
@@ -115,12 +144,12 @@ export function PenaltyPanel({
                     <p className="mt-1 hidden line-clamp-2 text-xs font-medium leading-relaxed text-slate-500 2xl:block">{item.description}</p>
                     <div className="mt-2 inline-flex rounded-full bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-600">
                       {item.impact === 'point'
-                        ? 'Ảnh hưởng điểm'
+                        ? translate('impactPoint')
                         : item.impact === 'game'
-                          ? 'Ảnh hưởng game'
+                          ? translate('impactGame')
                           : item.impact === 'set'
-                            ? 'Ảnh hưởng set'
-                            : 'Chỉ lưu'}
+                            ? translate('impactSet')
+                            : translate('impactNone')}
                     </div>
                   </button>
                 );
@@ -136,7 +165,7 @@ export function PenaltyPanel({
           onChange={(event) => setSelectedPenaltyTeam(event.target.value as PenaltyTeamSelection)}
           className="h-10 rounded-lg border border-slate-200 px-3 text-sm text-slate-800"
         >
-          <option value="neutral">Cả trận / chung</option>
+          <option value="neutral">{translate('allMatchScope')}</option>
           <option value="team1">{team1Name}</option>
           <option value="team2">{team2Name}</option>
         </select>
@@ -145,7 +174,7 @@ export function PenaltyPanel({
           onChange={(event) => setSelectedPenaltyKind(event.target.value)}
           className="h-10 rounded-lg border border-slate-200 px-3 text-sm text-slate-800"
         >
-          {availablePenaltyKinds.map((item) => (
+          {localizedPenaltyKinds.map((item) => (
             <option key={item.kind} value={item.kind}>
               {item.label}
             </option>
@@ -182,11 +211,11 @@ export function PenaltyPanel({
 
       {schema.cardStyle === 'yellow-red' ? (
         <div className="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700">
-          Môn này có lớp hiển thị thẻ riêng. UI sẽ cho thấy thẻ vàng/thẻ đỏ rõ ràng, nhưng quyết định cuối vẫn thuộc trọng tài/BTC.
+          {translate('cardsNotice')}
         </div>
       ) : (
         <div className="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-600">
-          Môn này không dùng thẻ riêng. Hình phạt chỉ được ghi như cảnh báo, lỗi kỹ thuật hoặc phạt trực tiếp theo schema của môn.
+          {translate('noCardsNotice')}
         </div>
       )}
 
@@ -196,7 +225,7 @@ export function PenaltyPanel({
             <div key={item.id} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700">
               <div className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
                 <div className="font-bold text-slate-900">
-                  {item.label}
+                  {localizedPenaltyKinds.find((penalty) => penalty.kind === item.kind)?.label ?? item.label}
                   {item.team === 1 ? ` • ${team1Name}` : item.team === 2 ? ` • ${team2Name}` : translate('allMatch')}
                 </div>
                 <div className="text-[11px] text-slate-500">{new Date(item.createdAt).toLocaleString('vi-VN')}</div>

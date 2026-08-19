@@ -749,12 +749,8 @@ export function RegistrationTab({
                 className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-sm shadow-blue-500/20 flex items-center gap-1.5 cursor-pointer"
               >
                 <Upload className="h-3.5 w-3.5" />
-                Nhập Excel (Google Form)
+                Nhập Excel
               </Button>
-              <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-right">
-                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-amber-600">Chờ duyệt</p>
-                <p className="text-base font-bold text-amber-800 leading-none">{participantSummary.pending}</p>
-              </div>
             </div>
           </div>
 
@@ -849,7 +845,22 @@ export function RegistrationTab({
                     const canReject = isParticipantPendingApproval(participant.teamStatus) || isMockParticipant;
 
                     return (
-                      <tr key={participant.id}>
+                      <tr
+                        key={participant.id}
+                        tabIndex={0}
+                        className="cursor-pointer transition-colors hover:bg-slate-50 focus:bg-blue-50/40 focus:outline-none"
+                        onClick={(event) => {
+                          const target = event.target as HTMLElement;
+                          if (target.closest('button, input, select, textarea, a')) return;
+                          setSelectedParticipant(participant);
+                        }}
+                        onKeyDown={(event) => {
+                          if ((event.key === 'Enter' || event.key === ' ') && event.target === event.currentTarget) {
+                            event.preventDefault();
+                            setSelectedParticipant(participant);
+                          }
+                        }}
+                      >
                         <td className="py-4 pr-4">
                           <div className="flex flex-wrap items-center gap-2">
                             <p className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
@@ -1042,8 +1053,9 @@ export function RegistrationTab({
                         .join('\n');
                       setMockNamesText(names);
                       toast.success(`Đã nạp ${res.rows.length} VĐV từ Excel!`);
-                    } catch (err: any) {
-                      toast.error('Lỗi khi đọc file: ' + err.message);
+                    } catch (err: unknown) {
+                      const message = err instanceof Error ? err.message : String(err);
+                      toast.error('Lỗi khi đọc file: ' + message);
                     }
                   }}
                 />

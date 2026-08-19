@@ -201,10 +201,13 @@ export function Header() {
   }, []);
 
   useEffect(() => {
+    if (!isDropdownOpen && !isNotificationOpen) return;
+
     const handlePointerDown = (event: MouseEvent) => {
       const target = event.target as Node;
 
       if (
+        isDropdownOpen &&
         profileMenuRef.current &&
         !profileMenuRef.current.contains(target)
       ) {
@@ -212,6 +215,7 @@ export function Header() {
       }
 
       if (
+        isNotificationOpen &&
         notificationMenuRef.current &&
         !notificationMenuRef.current.contains(target)
       ) {
@@ -225,14 +229,14 @@ export function Header() {
       }
     };
 
-    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('click', handlePointerDown);
     document.addEventListener('keydown', handleEscape);
 
     return () => {
-      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('click', handlePointerDown);
       document.removeEventListener('keydown', handleEscape);
     };
-  }, []);
+  }, [isDropdownOpen, isNotificationOpen]);
 
   useEffect(() => {
     Promise.resolve().then(() => {
